@@ -190,4 +190,89 @@ describe('CreateAttachmentVideoUnitComponent', () => {
             );
         });
     }));
+
+    it('should trigger transcript generation when generateTranscript is true', fakeAsync(() => {
+        const attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
+
+        const fakeFile = new File([''], 'Test-File.pdf', {
+            type: 'application/pdf',
+        });
+
+        const attachmentVideoUnit = new AttachmentVideoUnit();
+        attachmentVideoUnit.id = 1;
+        attachmentVideoUnit.videoSource = 'https://example.com/video.m3u8';
+
+        const attachmentVideoUnitFormData: AttachmentVideoUnitFormData = {
+            formProperties: {
+                name: 'test',
+                description: 'lorem ipsum',
+                releaseDate: dayjs().year(2010).month(3).date(5),
+                videoSource: attachmentVideoUnit.videoSource,
+                generateTranscript: true,
+            },
+            fileProperties: {
+                file: fakeFile,
+                fileName: 'lorem ipsum',
+            },
+            playlistUrl: 'https://example.com/playlist.m3u8',
+        };
+
+        const attachmentVideoUnitResponse: HttpResponse<AttachmentVideoUnit> = new HttpResponse({
+            body: attachmentVideoUnit,
+            status: 201,
+        });
+        jest.spyOn(attachmentVideoUnitService, 'create').mockReturnValue(of(attachmentVideoUnitResponse));
+        const startTranscriptionSpy = jest.spyOn(attachmentVideoUnitService, 'startTranscription').mockReturnValue(of(undefined));
+
+        createAttachmentVideoUnitComponentFixture.detectChanges();
+
+        const attachmentVideoUnitFormComponent = createAttachmentVideoUnitComponentFixture.debugElement.query(By.directive(AttachmentVideoUnitFormComponent)).componentInstance;
+        attachmentVideoUnitFormComponent.formSubmitted.emit(attachmentVideoUnitFormData);
+
+        createAttachmentVideoUnitComponentFixture.whenStable().then(() => {
+            expect(startTranscriptionSpy).toHaveBeenCalledWith(1, attachmentVideoUnit.id, 'https://example.com/playlist.m3u8');
+        });
+    }));
+
+    it('should not trigger transcript generation when generateTranscript is false', fakeAsync(() => {
+        const attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
+
+        const fakeFile = new File([''], 'Test-File.pdf', {
+            type: 'application/pdf',
+        });
+
+        const attachmentVideoUnit = new AttachmentVideoUnit();
+        attachmentVideoUnit.id = 1;
+        attachmentVideoUnit.videoSource = 'https://example.com/video.m3u8';
+
+        const attachmentVideoUnitFormData: AttachmentVideoUnitFormData = {
+            formProperties: {
+                name: 'test',
+                description: 'lorem ipsum',
+                releaseDate: dayjs().year(2010).month(3).date(5),
+                videoSource: attachmentVideoUnit.videoSource,
+                generateTranscript: false,
+            },
+            fileProperties: {
+                file: fakeFile,
+                fileName: 'lorem ipsum',
+            },
+        };
+
+        const attachmentVideoUnitResponse: HttpResponse<AttachmentVideoUnit> = new HttpResponse({
+            body: attachmentVideoUnit,
+            status: 201,
+        });
+        jest.spyOn(attachmentVideoUnitService, 'create').mockReturnValue(of(attachmentVideoUnitResponse));
+        const startTranscriptionSpy = jest.spyOn(attachmentVideoUnitService, 'startTranscription').mockReturnValue(of(undefined));
+
+        createAttachmentVideoUnitComponentFixture.detectChanges();
+
+        const attachmentVideoUnitFormComponent = createAttachmentVideoUnitComponentFixture.debugElement.query(By.directive(AttachmentVideoUnitFormComponent)).componentInstance;
+        attachmentVideoUnitFormComponent.formSubmitted.emit(attachmentVideoUnitFormData);
+
+        createAttachmentVideoUnitComponentFixture.whenStable().then(() => {
+            expect(startTranscriptionSpy).not.toHaveBeenCalled();
+        });
+    }));
 });

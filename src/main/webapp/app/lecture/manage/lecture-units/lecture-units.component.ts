@@ -347,7 +347,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
     }
 
     private triggerTranscriptionIfEnabled(unit: AttachmentVideoUnit | undefined, generateTranscript: boolean | undefined, playlistUrl?: string): void {
-        if (!this.isEditingLectureUnit && generateTranscript && unit?.id) {
+        if (generateTranscript && unit?.id) {
             const transcriptionUrl = playlistUrl ?? unit.videoSource;
 
             if (!transcriptionUrl) {
@@ -356,6 +356,6 @@ export class LectureUpdateUnitsComponent implements OnInit {
 
             this.attachmentVideoUnitService.startTranscription(this.lecture.id!, unit.id, transcriptionUrl).subscribe();
         }
-        // When editing, disabled, or missing data, simply do nothing
+        // When disabled or missing data, simply do nothing
     }
 }

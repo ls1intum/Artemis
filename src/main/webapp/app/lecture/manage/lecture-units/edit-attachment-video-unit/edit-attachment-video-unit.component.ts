@@ -93,9 +93,10 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
     }
 
     updateAttachmentVideoUnit(attachmentVideoUnitFormData: AttachmentVideoUnitFormData) {
-        const { description, name, releaseDate, updateNotificationText, videoSource, competencyLinks } = attachmentVideoUnitFormData.formProperties;
+        const { description, name, releaseDate, updateNotificationText, videoSource, competencyLinks, generateTranscript } = attachmentVideoUnitFormData.formProperties;
         const { file, fileName } = attachmentVideoUnitFormData.fileProperties;
         const { videoTranscription } = attachmentVideoUnitFormData.transcriptionProperties || {};
+        const { playlistUrl } = attachmentVideoUnitFormData || {};
 
         // optional update notification text for students
         if (updateNotificationText) {
@@ -128,6 +129,14 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
             .update(this.lectureId, this.attachmentVideoUnit.id!, formData, this.notificationText)
             .pipe(
                 switchMap(() => {
+                    // Trigger transcript generation if enabled
+                    if (generateTranscript && this.attachmentVideoUnit.id) {
+                        const transcriptionUrl = playlistUrl ?? this.attachmentVideoUnit.videoSource;
+                        if (transcriptionUrl) {
+                            this.attachmentVideoUnitService.startTranscription(this.lectureId, this.attachmentVideoUnit.id, transcriptionUrl).subscribe();
+                        }
+                    }
+
                     if (!videoTranscription) {
                         return of(undefined);
                     }
