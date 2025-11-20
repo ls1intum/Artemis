@@ -19,6 +19,7 @@ import org.hibernate.Hibernate;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.domain.Authority;
 import de.tum.cit.aet.artemis.core.domain.Organization;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -81,7 +82,9 @@ public class UserDTO extends AuditingEntityDTO {
      */
     private boolean askToSetupPasskey = false;
 
-    private ZonedDateTime externalLLMUsageAccepted;
+    private ZonedDateTime selectedLLMUsageTimestamp;
+
+    private AiSelectionDecision selectedLLMUsage;
 
     private boolean memirisEnabled = false;
 
@@ -92,12 +95,12 @@ public class UserDTO extends AuditingEntityDTO {
     public UserDTO(User user) {
         this(user.getId(), user.getLogin(), user.getName(), user.getFirstName(), user.getLastName(), user.getEmail(), user.getVisibleRegistrationNumber(), user.getActivated(),
                 user.getImageUrl(), user.getLangKey(), user.isInternal(), user.getCreatedBy(), user.getCreatedDate(), user.getLastModifiedBy(), user.getLastModifiedDate(),
-                user.getAuthorities(), user.getGroups(), user.getOrganizations(), user.getExternalLLMUsageAcceptedTimestamp(), user.isMemirisEnabled());
+                user.getAuthorities(), user.getGroups(), user.getOrganizations(), user.getAiSelectionDecision(), user.getSelectedLLMUsageTimestamp(), user.isMemirisEnabled());
     }
 
     public UserDTO(Long id, String login, String name, String firstName, String lastName, String email, String visibleRegistrationNumber, boolean activated, String imageUrl,
             String langKey, boolean internal, String createdBy, Instant createdDate, String lastModifiedBy, Instant lastModifiedDate, Set<Authority> authorities,
-            Set<String> groups, Set<Organization> organizations, ZonedDateTime externalLLMUsageAccepted, boolean memirisEnabled) {
+            Set<String> groups, Set<Organization> organizations, AiSelectionDecision selectedLLMUsage, ZonedDateTime selectedLLMUsageTimestamp, boolean memirisEnabled) {
 
         this.id = id;
         this.login = login;
@@ -119,7 +122,8 @@ public class UserDTO extends AuditingEntityDTO {
         }
         this.groups = groups;
         this.organizations = organizations;
-        this.externalLLMUsageAccepted = externalLLMUsageAccepted;
+        this.selectedLLMUsage = selectedLLMUsage;
+        this.selectedLLMUsageTimestamp = selectedLLMUsageTimestamp;
         this.memirisEnabled = memirisEnabled;
     }
 
@@ -264,12 +268,20 @@ public class UserDTO extends AuditingEntityDTO {
         this.internal = internal;
     }
 
-    public ZonedDateTime getExternalLLMUsageAccepted() {
-        return externalLLMUsageAccepted;
+    public AiSelectionDecision getSelectedLLMUsage() {
+        return selectedLLMUsage;
     }
 
-    public void setExternalLLMUsageAccepted(ZonedDateTime externalLLMUsageAccepted) {
-        this.externalLLMUsageAccepted = externalLLMUsageAccepted;
+    public void setSelectedLLMUsage(AiSelectionDecision selectedLLMUsage) {
+        this.selectedLLMUsage = selectedLLMUsage;
+    }
+
+    public ZonedDateTime getSelectedLLMUsageTimestamp() {
+        return selectedLLMUsageTimestamp;
+    }
+
+    public void setSelectedLLMUsageTimestamp(ZonedDateTime selectedLLMUsageTimestamp) {
+        this.selectedLLMUsageTimestamp = selectedLLMUsageTimestamp;
     }
 
     public boolean isMemirisEnabled() {

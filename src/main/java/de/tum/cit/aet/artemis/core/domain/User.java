@@ -15,6 +15,8 @@ import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
@@ -195,12 +197,13 @@ public class User extends AbstractAuditingEntity implements Participant {
     private Set<PushNotificationDeviceConfiguration> pushNotificationDeviceConfigurations = new HashSet<>();
 
     @Nullable
-    @Column(name = "external_llm_usage_accepted")
-    private ZonedDateTime externalLLMUsageAccepted = null;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "ai_selection_decision")
+    private AiSelectionDecision aiSelectionDecision = null;
 
     @Nullable
-    @Column(name = "internal_llm_usage_accepted")
-    private ZonedDateTime internalLLMUsageAccepted = null;
+    @Column(name = "ai_selection_decision_date")
+    private ZonedDateTime aiSelectionDecisionDate = null;
 
     @NonNull
     @Column(name = "memiris_enabled", nullable = false)
@@ -492,48 +495,33 @@ public class User extends AbstractAuditingEntity implements Participant {
     }
 
     @Nullable
-    public ZonedDateTime getExternalLLMUsageAcceptedTimestamp() {
-        return externalLLMUsageAccepted;
+    public ZonedDateTime getSelectedLLMUsageTimestamp() {
+        return aiSelectionDecisionDate;
     }
 
-    public void setExternalLLMUsageAcceptedTimestamp(@Nullable ZonedDateTime externalLLMUsageAccepted) {
-        this.externalLLMUsageAccepted = externalLLMUsageAccepted;
+    public void setSelectedLLMUsageTimestamp(@Nullable ZonedDateTime aiSelectionDecisionDate) {
+        this.aiSelectionDecisionDate = aiSelectionDecisionDate;
     }
 
-    @Nullable
-    public ZonedDateTime getInternalLLMUsageAcceptedTimestamp() {
-        return internalLLMUsageAccepted;
+    public boolean hasSelectedLLMUsage() {
+        return aiSelectionDecision != null;
     }
 
-    public void setInternalLLMUsageAcceptedTimestamp(@Nullable ZonedDateTime internalLLMUsageAccepted) {
-        this.internalLLMUsageAccepted = internalLLMUsageAccepted;
+    public AiSelectionDecision getAiSelectionDecision() {
+        return aiSelectionDecision;
     }
 
-    public boolean hasAcceptedExternalLLMUsage() {
-        return externalLLMUsageAccepted != null;
-    }
-
-    public boolean hasAcceptedInternalLLMUsage() {
-        return internalLLMUsageAccepted != null;
+    public void setSelectedLLMUsage(@Nullable AiSelectionDecision aiSelectionDecision) {
+        this.aiSelectionDecision = aiSelectionDecision;
     }
 
     /**
      * Checks if the user has accepted the external LLM privacy policy.
      * If not, an {@link AccessForbiddenException} is thrown.
      */
-    public void hasAcceptedExternalLLMUsageElseThrow() {
-        if (externalLLMUsageAccepted == null) {
+    public void hasSelectedLLMUsageElseThrow() {
+        if (aiSelectionDecision == null) {
             throw new AccessForbiddenException("The user has not accepted the external LLM privacy policy yet.");
-        }
-    }
-
-    /**
-     * Checks if the user has accepted the internal (=local deployment) LLM privacy policy.
-     * If not, an {@link AccessForbiddenException} is thrown.
-     */
-    public void hasAcceptedInternalLLMUsageElseThrow() {
-        if (internalLLMUsageAccepted == null) {
-            throw new AccessForbiddenException("The user has not accepted the internal LLM privacy policy yet.");
         }
     }
 

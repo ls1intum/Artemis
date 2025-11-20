@@ -30,7 +30,8 @@ export class UserService {
      * Updates consent to external LLM usage policy.
      */
     updateExternalLLMUsageConsent(accepted: boolean): Observable<HttpResponse<void>> {
-        const updateExternalLLMUsageDto: UpdateExternalLLMUsageDto = { accepted };
-        return this.http.put<void>(`${this.resourceUrl}/accept-external-llm-usage`, updateExternalLLMUsageDto, { observe: 'response' });
+        const selection = accepted ? 'CLOUD_AI' : 'NO_AI';
+        const updateExternalLLMUsageDto: UpdateExternalLLMUsageDto = { selection };
+        return this.http.put<void>(`${this.resourceUrl}/select-llm-usage`, updateExternalLLMUsageDto, { observe: 'response' });
     }
 }

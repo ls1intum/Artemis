@@ -24,8 +24,9 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.dto.AcceptExternalLLMUsageDTO;
+import de.tum.cit.aet.artemis.core.dto.SelectedLLMUsageDTO;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
 import de.tum.cit.aet.artemis.core.dto.UserInitializationDTO;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -98,7 +99,7 @@ public class UserResource {
             user.setLastModifiedDate(null);
             user.setCreatedBy(null);
             user.setCreatedDate(null);
-            user.setExternalLLMUsageAccepted(null);
+            user.setSelectedLLMUsage(null);
         });
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
@@ -127,20 +128,23 @@ public class UserResource {
     }
 
     /**
-     * PUT users/accept-external-llm-usage : sets the externalLLMUsageAccepted flag for the user to ZonedDateTime.now() or null,
-     * depending on whether the user accepted or declined the usage of external LLMs.
+     * PUT users/select-llm-usage : sets the SelectedLLMUsage and SelectedLLMUsageDate flags for the user to
+     * CLOUD_AI, LOCAL_AI or NO_AI, and ZonedDateTime.now() or null,
+     * depending on whether the user accepted or declined the usage of internal/external LLMs.
      *
-     * @param acceptExternalLLMUsageDTO the DTO containing the user's choice regarding external LLM usage
+     * @param selectedLLMUsageDTO the DTO containing the user's choice regarding LLM usage
      * @return the ResponseEntity with status 200 (OK), with status 404 (Not Found),
-     *         or with status 400 (Bad Request) if external LLM usage was already accepted
+     *         or with status 400 (Bad Request) if LLM usage was already accepted
      */
-    @PutMapping("users/accept-external-llm-usage")
+    @PutMapping("users/select-llm-usage")
     @EnforceAtLeastStudent
-    public ResponseEntity<Void> setExternalLLMUsageAcceptedToTimestamp(@RequestBody AcceptExternalLLMUsageDTO acceptExternalLLMUsageDTO) {
+    public ResponseEntity<Void> setSelectedLLMUsageToTimestampAndEnum(@RequestBody SelectedLLMUsageDTO selectedLLMUsageDTO) {
         User user = userRepository.getUser();
 
-        ZonedDateTime hasAcceptedTimestamp = acceptExternalLLMUsageDTO.accepted() ? ZonedDateTime.now() : null;
-        userRepository.updateExternalLLMUsageAcceptedToDate(user.getId(), hasAcceptedTimestamp);
+        ZonedDateTime hasSelectedTimestamp = ZonedDateTime.now();
+        AiSelectionDecision selectedLLMUsage = selectedLLMUsageDTO.selection();
+        userRepository.updateSelectedLLMUsageToDate(user.getId(), hasSelectedTimestamp);
+        userRepository.updateSelectedLLMUsageToEnum(user.getId(), selectedLLMUsage);
         return ResponseEntity.ok().build();
     }
 }

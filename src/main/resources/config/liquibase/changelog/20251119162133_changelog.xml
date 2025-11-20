@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="20251119162133" author="flbrgit">
+        <addColumn tableName="jhi_user">
+            <column name="ai_selection_decision" type="varchar(20)"/>
+        </addColumn>
+        <addColumn tableName="jhi_user">
+            <column name="ai_selection_decision_date" type="datetime(3)"/>
+        </addColumn>
+
+        <!-- Migrate User with external_llm_usage_accepted -->
+        <sql>
+            UPDATE jhi_user
+            SET ai_selection_decision = 'CLOUD_AI',
+                ai_selection_decision_date = external_llm_usage_accepted
+            WHERE external_llm_usage_accepted IS NOT NULL
+        </sql>
+
+        <!-- Remove old columns -->
+        <dropColumn tableName="jhi_user" columnName="external_llm_usage_accepted"/>
+    </changeSet>
+</databaseChangeLog>
