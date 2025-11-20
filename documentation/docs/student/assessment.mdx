@@ -14,15 +14,27 @@ import Image, {ImageSize} from "../../src/components/Image/Image";
 
 # Assessment and Feedback
 
-## Overview
+## Assessment Types
 
-Artemis uses different modes of assessment depending on the exercise type:
+Artemis offers three different modes of exercise assessment:
 
-- **Automatic Assessment:** Your submissions are automatically graded (e.g., quiz exercises, programming exercises with test cases).
-- **Manual Assessment:** Reviewers (tutors or instructors) manually grade your submissions.
-- **Semi-Automatic Assessment:** Automatic grading provides a starting point, which reviewers then improve manually.
+- **Manual:** Reviewers (tutors or instructors) manually assess your submissions.
+- **Automatic:** Your submissions are automatically assessed (e.g., quiz exercises, programming exercises with test cases).
+- **Semi-Automatic:** Automatic assessment provides a starting point, which reviewers then improve manually.
 
-After an exercise's due date passes, your submission will be assessed according to the configured assessment mode. Once the assessment is complete and the assessment due date has passed, you'll receive detailed feedback on your work.
+After an exercise's due date passes, your submission will be assessed according to the configured assessment mode.
+Once the assessment is complete and the assessment due date has passed, you'll receive detailed feedback on your work.
+
+---
+
+## Double-Blind Assessment
+
+Manual assessments in Artemis are **double-blind**:
+
+- Reviewers don't see your name when grading your submission
+- You don't see the reviewer's identity
+
+This increases objectivity and minimizes bias in the assessment process.
 
 ---
 
@@ -40,25 +52,15 @@ After the assessment due date, you can view your:
 
 ---
 
-## Double-Blind Assessment
-
-Manual assessments in Artemis are **double-blind**:
-
-- Reviewers don't see your name when grading your submission
-- You don't see the reviewer's identity
-
-This ensures objectivity and minimizes bias in the grading process.
-
----
-
 ## Complaints
 
-If you believe an assessment was incorrect or unfair, you can submit a **complaint** (if enabled by your instructor).
+If you believe an assessment was incorrect or unfair, you can submit a **complaint** _(if enabled by your instructor)_.
+Submitting a complaint is a request for a re-evaluation of your submission.
 
 ### How Complaints Work
 
 1. **Complaint Tokens:** Your instructor sets a maximum number of complaints you can submit per course. Each complaint uses one token.
-2. **Token Return:** If your complaint is accepted, the token is returned to you, so you can submit more complaints.
+2. **Token Return:** If your complaint is accepted, the token is returned to you. Throughout a course you can submit as many complaints as you want, as long as they are accepted.
 3. **Deadline:** Complaints must be submitted before the complaint due date set by your instructor.
 
 ### Submitting a Complaint
@@ -88,19 +90,19 @@ If you want additional clarification or feedback but don't want to dispute your 
 
 - **No Token Required:** More feedback requests don't use complaint tokens
 - **Score Cannot Change:** Reviewers cannot modify your score when responding to a feedback request
-- **Cannot Complain After:** Submitting a more feedback request removes your ability to complain about that exercise
+- **Cannot Complain After:** Submitting a feedback request removes your ability to complain about that exercise
 
 <Image src={moreFeedbackImg} alt={"More Feedback Request"} size={ImageSize.medium}></Image>
 
 <Callout variant={CalloutVariant.danger}>
-    <p><strong>Important:</strong> Sending a More Feedback Request removes the option to complain entirely, even if the reviewer made a mistake during the initial assessment. Choose carefully!</p>
+    <p><strong>Important:</strong> Sending a feedback request removes the option to complain entirely, even if the reviewer made a mistake during the initial assessment. Choose carefully!</p>
 </Callout>
 
 ---
 
 ## Rating Feedback Quality
 
-After receiving feedback (including responses to complaints or more feedback requests), you can rate the quality of the feedback you received.
+After receiving feedback, including responses to complaints or feedback requests, you can rate the quality of the feedback you received.
 
 <Image src={studentFeedbackImg} alt={"Student Feedback Rating"} size={ImageSize.medium}></Image>
 
