@@ -815,7 +815,7 @@ describe('NavbarComponent', () => {
         },
     ])('should calculate correct breakpoints', ({ width, account, roles, expected }) => {
         const accountService = TestBed.inject(AccountService);
-        jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockImplementation((authArray) => authArray.some((auth) => (roles as string[]).includes(auth)));
+        jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockImplementation((authArray) => authArray.some((auth) => (roles as Authority[]).includes(auth)));
 
         component.currAccount = account as User;
         window['innerWidth'] = width;
