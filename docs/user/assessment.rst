@@ -3,5 +3,12 @@
 Assessment
 ==========
 
+Student Guide
+==========
 .. note::
-    This documentation has been migrated. Please refer to the `new assessment documentation <https://docs.artemis.cit.tum.de/>`_.
+    This section has been moved to our `new documentation <https://ls1intum.github.io/Artemis/student/assessment/>`_.
+
+Instructor Guide
+==========
+.. note::
+    This section has been moved to our `new documentation <https://ls1intum.github.io/Artemis/instructor/assessment/>`_.
