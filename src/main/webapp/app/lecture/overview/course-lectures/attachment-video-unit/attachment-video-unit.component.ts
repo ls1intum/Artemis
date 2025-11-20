@@ -51,7 +51,8 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     readonly isLoading = signal<boolean>(false);
     readonly hasTranscript = computed(() => this.transcriptSegments().length > 0);
 
-    private readonly videoUrlAllowList = [RegExp('^https://live\\.rbg\\.tum\\.de/w/\\w+/\\d+(/(CAM|COMB|PRES))?\\?video_only=1$')];
+    // TODO: This must use a server configuration to make it compatible with deployments other than TUM
+    private readonly videoUrlAllowList = [RegExp('^https://(?:live\\.rbg\\.tum\\.de|tum\\.live)/w/\\w+/\\d+(/(CAM|COMB|PRES))?\\?video_only=1$')];
 
     /**
      * Return the URL of the video source
