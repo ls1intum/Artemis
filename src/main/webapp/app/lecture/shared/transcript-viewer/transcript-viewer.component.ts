@@ -6,15 +6,7 @@ import { faChevronDown, faChevronUp, faSearch, faTimes } from '@fortawesome/free
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { escapeString } from 'app/shared/util/text.utils';
 
-/**
- * A transcript segment corresponding to a portion of the video.
- */
-export interface TranscriptSegment {
-    startTime: number;
-    endTime: number;
-    text: string;
-    slideNumber?: number;
-}
+import { TranscriptSegment } from 'app/lecture/shared/models/transcript-segment.model';
 
 @Component({
     selector: 'jhi-transcript-viewer',

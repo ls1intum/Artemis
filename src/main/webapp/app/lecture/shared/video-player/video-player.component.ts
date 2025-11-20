@@ -3,15 +3,7 @@ import { CommonModule } from '@angular/common';
 import { TranscriptViewerComponent } from '../transcript-viewer/transcript-viewer.component';
 import Hls from 'hls.js';
 
-/**
- * A transcript segment corresponding to a portion of the video.
- */
-export interface TranscriptSegment {
-    startTime: number;
-    endTime: number;
-    text: string;
-    slideNumber?: number;
-}
+import { TranscriptSegment } from 'app/lecture/shared/models/transcript-segment.model';
 
 @Component({
     selector: 'jhi-video-player',

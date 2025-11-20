@@ -30,7 +30,7 @@ import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
 import { FileService } from 'app/shared/service/file.service';
 import { ScienceService } from 'app/shared/science/science.service';
 import { ScienceEventType } from 'app/shared/science/science.model';
-import { TranscriptSegment } from 'app/lecture/shared/transcript-viewer/transcript-viewer.component';
+import { TranscriptSegment } from 'app/lecture/shared/models/transcript-segment.model';
 import { map } from 'rxjs/operators';
 
 @Component({
