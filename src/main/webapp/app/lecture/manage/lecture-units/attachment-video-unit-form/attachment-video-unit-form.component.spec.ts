@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed, fakeAsync, flushMicrotasks } from '@angular/
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 import { AttachmentVideoUnitFormComponent, AttachmentVideoUnitFormData } from 'app/lecture/manage/lecture-units/attachment-video-unit-form/attachment-video-unit-form.component';
+import { TranscriptionStatus } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import dayjs from 'dayjs/esm';
@@ -147,6 +148,51 @@ describe('AttachmentVideoUnitFormComponent', () => {
         expect(attachmentVideoUnitFormComponent.updateNotificationTextControl?.value).toEqual(formData.formProperties.updateNotificationText);
         expect(attachmentVideoUnitFormComponent.fileName()).toEqual(formData.fileProperties.fileName);
         expect(attachmentVideoUnitFormComponent.file).toEqual(formData.fileProperties.file);
+    });
+
+    it('should clear transcription status when switching to a unit without transcription data', () => {
+        attachmentVideoUnitFormComponentFixture.componentRef.setInput('isEditMode', true);
+        attachmentVideoUnitFormComponentFixture.detectChanges();
+
+        const formDataWithStatus: AttachmentVideoUnitFormData = {
+            formProperties: {},
+            fileProperties: {},
+            transcriptionStatus: TranscriptionStatus.PENDING,
+        };
+        attachmentVideoUnitFormComponentFixture.componentRef.setInput('formData', formDataWithStatus);
+        attachmentVideoUnitFormComponent.ngOnChanges();
+        expect(attachmentVideoUnitFormComponent.transcriptionStatus()).toBe(TranscriptionStatus.PENDING);
+
+        const formDataWithoutStatus: AttachmentVideoUnitFormData = {
+            formProperties: {},
+            fileProperties: {},
+        };
+        attachmentVideoUnitFormComponentFixture.componentRef.setInput('formData', formDataWithoutStatus);
+        attachmentVideoUnitFormComponent.ngOnChanges();
+        expect(attachmentVideoUnitFormComponent.transcriptionStatus()).toBeUndefined();
+        expect(attachmentVideoUnitFormComponent.showTranscriptionPendingWarning()).toBeFalse();
+    });
+
+    it('should clear transcription status when leaving edit mode', () => {
+        attachmentVideoUnitFormComponentFixture.componentRef.setInput('isEditMode', true);
+        attachmentVideoUnitFormComponentFixture.detectChanges();
+
+        const formDataWithStatus: AttachmentVideoUnitFormData = {
+            formProperties: {},
+            fileProperties: {},
+            transcriptionStatus: TranscriptionStatus.PENDING,
+        };
+        attachmentVideoUnitFormComponentFixture.componentRef.setInput('formData', formDataWithStatus);
+        attachmentVideoUnitFormComponent.ngOnChanges();
+
+        expect(attachmentVideoUnitFormComponent.transcriptionStatus()).toBe(TranscriptionStatus.PENDING);
+        expect(attachmentVideoUnitFormComponent.showTranscriptionPendingWarning()).toBeTrue();
+
+        attachmentVideoUnitFormComponentFixture.componentRef.setInput('isEditMode', false);
+        attachmentVideoUnitFormComponent.ngOnChanges();
+
+        expect(attachmentVideoUnitFormComponent.transcriptionStatus()).toBeUndefined();
+        expect(attachmentVideoUnitFormComponent.showTranscriptionPendingWarning()).toBeFalse();
     });
     it('should submit valid form', () => {
         attachmentVideoUnitFormComponentFixture.detectChanges();

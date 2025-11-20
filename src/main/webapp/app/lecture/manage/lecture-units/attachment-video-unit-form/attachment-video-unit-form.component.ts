@@ -226,9 +226,10 @@ export class AttachmentVideoUnitFormComponent implements OnChanges {
         const formData = this.formData();
         if (this.isEditMode() && formData) {
             this.setFormValues(formData);
-            if (formData.transcriptionStatus) {
-                this.transcriptionStatus.set(formData.transcriptionStatus as TranscriptionStatus);
-            }
+            const newStatus = formData.transcriptionStatus ? (formData.transcriptionStatus as TranscriptionStatus) : undefined;
+            this.transcriptionStatus.set(newStatus);
+        } else {
+            this.transcriptionStatus.set(undefined);
         }
     }
 
