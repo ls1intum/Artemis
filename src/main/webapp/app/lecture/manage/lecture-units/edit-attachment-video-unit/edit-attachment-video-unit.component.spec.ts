@@ -2,7 +2,7 @@ import dayjs from 'dayjs/esm';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockProvider } from 'ng-mocks';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { AttachmentVideoUnitFormComponent, AttachmentVideoUnitFormData } from '../attachment-video-unit-form/attachment-video-unit-form.component';
 import { AttachmentVideoUnitService } from '../services/attachment-video-unit.service';
 import { EditAttachmentVideoUnitComponent } from './edit-attachment-video-unit.component';
@@ -282,5 +282,51 @@ describe('EditAttachmentVideoUnitComponent', () => {
         fixture.detectChanges();
 
         expect(createTranscriptionSpy).toHaveBeenCalledWith(1, attachmentVideoUnit.id, transcription);
+    });
+    it('should fetch playlist URL when editing existing video with videoSource', () => {
+        const playlistUrl = 'https://live.rbg.tum.de/playlist.m3u8';
+        const getPlaylistUrlSpy = jest.spyOn(attachmentVideoUnitService, 'getPlaylistUrl').mockReturnValue(of(playlistUrl));
+
+        fixture.detectChanges();
+
+        expect(getPlaylistUrlSpy).toHaveBeenCalledWith(attachmentVideoUnit.videoSource);
+
+        // Wait for async operation
+        return fixture.whenStable().then(() => {
+            const formComponent: AttachmentVideoUnitFormComponent = fixture.debugElement.query(By.directive(AttachmentVideoUnitFormComponent)).componentInstance;
+            expect(formComponent.formData()?.playlistUrl).toBe(playlistUrl);
+        });
+    });
+
+    it('should not fetch playlist URL when videoSource is missing', () => {
+        attachmentVideoUnit.videoSource = undefined;
+        jest.spyOn(attachmentVideoUnitService, 'findById').mockReturnValue(
+            of(
+                new HttpResponse({
+                    body: attachmentVideoUnit,
+                    status: 200,
+                }),
+            ),
+        );
+
+        const getPlaylistUrlSpy = jest.spyOn(attachmentVideoUnitService, 'getPlaylistUrl');
+
+        fixture.detectChanges();
+
+        expect(getPlaylistUrlSpy).not.toHaveBeenCalled();
+    });
+
+    it('should handle playlist URL fetch failure gracefully', () => {
+        const getPlaylistUrlSpy = jest.spyOn(attachmentVideoUnitService, 'getPlaylistUrl').mockReturnValue(throwError(() => new Error('Not found')));
+
+        fixture.detectChanges();
+
+        expect(getPlaylistUrlSpy).toHaveBeenCalledWith(attachmentVideoUnit.videoSource);
+
+        // Should still initialize form data without playlist URL
+        return fixture.whenStable().then(() => {
+            const formComponent: AttachmentVideoUnitFormComponent = fixture.debugElement.query(By.directive(AttachmentVideoUnitFormComponent)).componentInstance;
+            expect(formComponent.formData()?.playlistUrl).toBeUndefined();
+        });
     });
 });

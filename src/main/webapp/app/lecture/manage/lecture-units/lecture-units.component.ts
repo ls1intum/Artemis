@@ -341,6 +341,23 @@ export class LectureUpdateUnitsComponent implements OnInit {
                                 videoTranscription: transcription ? JSON.stringify(transcription) : undefined,
                             },
                         };
+                        // Check if playlist URL is available for existing video to enable transcription generation
+                        if (this.currentlyProcessedAttachmentVideoUnit.videoSource) {
+                            this.attachmentVideoUnitService.getPlaylistUrl(this.currentlyProcessedAttachmentVideoUnit.videoSource).subscribe({
+                                next: (playlist) => {
+                                    if (playlist) {
+                                        // Update formData with the playlist URL
+                                        this.attachmentVideoUnitFormData = {
+                                            ...this.attachmentVideoUnitFormData,
+                                            playlistUrl: playlist,
+                                        };
+                                    }
+                                },
+                                error: () => {
+                                    // Playlist URL not available, transcription generation won't be possible
+                                },
+                            });
+                        }
                         break;
                 }
             });

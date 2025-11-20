@@ -87,6 +87,23 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
                             videoTranscription: transcription ? JSON.stringify(transcription) : '',
                         },
                     };
+                    // Check if playlist URL is available for existing video to enable transcription generation
+                    if (this.attachmentVideoUnit.videoSource) {
+                        this.attachmentVideoUnitService.getPlaylistUrl(this.attachmentVideoUnit.videoSource).subscribe({
+                            next: (playlist) => {
+                                if (playlist) {
+                                    // Update formData with the playlist URL
+                                    this.formData = {
+                                        ...this.formData,
+                                        playlistUrl: playlist,
+                                    };
+                                }
+                            },
+                            error: () => {
+                                // Playlist URL not available, transcription generation won't be possible
+                            },
+                        });
+                    }
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });

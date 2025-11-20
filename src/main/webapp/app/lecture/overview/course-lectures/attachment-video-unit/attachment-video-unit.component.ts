@@ -32,15 +32,17 @@ import { ScienceService } from 'app/shared/science/science.service';
 import { ScienceEventType } from 'app/shared/science/science.model';
 import { TranscriptSegment } from 'app/lecture/shared/models/transcript-segment.model';
 import { map } from 'rxjs/operators';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({
     selector: 'jhi-attachment-video-unit',
-    imports: [LectureUnitComponent, ArtemisDatePipe, TranslateDirective, SafeResourceUrlPipe, VideoPlayerComponent],
+    imports: [LectureUnitComponent, ArtemisDatePipe, TranslateDirective, SafeResourceUrlPipe, VideoPlayerComponent, FaIconComponent],
     templateUrl: './attachment-video-unit.component.html',
     styleUrl: './attachment-video-unit.component.scss',
 })
 export class AttachmentVideoUnitComponent extends LectureUnitDirective<AttachmentVideoUnit> {
     protected readonly faDownload = faDownload;
+    protected readonly faFileLines = faFileLines;
 
     private readonly destroyRef = inject(DestroyRef);
     private readonly fileService = inject(FileService);
@@ -51,7 +53,31 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     readonly transcriptSegments = signal<TranscriptSegment[]>([]);
     readonly playlistUrl = signal<string | undefined>(undefined);
     readonly isLoading = signal<boolean>(false);
+
     readonly hasTranscript = computed(() => this.transcriptSegments().length > 0);
+
+    /**
+     * Determines whether the "transcription possible" badge should be displayed.
+     *
+     * The badge is only shown when:
+     * - A playlist URL is available (transcription can be generated)
+     * - No transcription job exists (no transcriptionProperties, meaning no jobId)
+     * - No transcription status exists (no transcriptionProperties)
+     * - No completed transcript is available yet
+     *
+     * @returns {boolean} True if the badge should be shown (no active transcription job and no transcript), false otherwise
+     */
+    readonly canShowTranscriptionPossibleBadge = computed(() => {
+        // Don't show badge if transcription was created (which would have a jobId)
+        if (this.lectureUnit().transcriptionProperties) {
+            return false;
+        }
+        // Don't show badge if transcript is already available
+        if (this.hasTranscript()) {
+            return false;
+        }
+        return true;
+    });
 
     // TODO: This must use a server configuration to make it compatible with deployments other than TUM
     private readonly videoUrlAllowList = [RegExp('^https://(?:live\\.rbg\\.tum\\.de|tum\\.live)/w/\\w+/\\d+(/(CAM|COMB|PRES))?\\?video_only=1$')];

@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnChanges, ViewChild, computed, inject, input, output, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, OnChanges, ViewChild, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { AbstractControl, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import urlParser from 'js-video-url-parser';
@@ -149,6 +149,16 @@ export class AttachmentVideoUnitFormComponent implements OnChanges {
 
     readonly shouldShowTranscriptionCreation = computed(() => this.accountService.isAdmin());
 
+    constructor() {
+        effect(() => {
+            const formData = this.formData();
+            if (this.isEditMode() && formData?.playlistUrl) {
+                this.playlistUrl.set(formData.playlistUrl);
+                this.canGenerateTranscript.set(true);
+            }
+        });
+    }
+
     form: FormGroup = this.formBuilder.group({
         name: [undefined as string | undefined, [Validators.required, Validators.maxLength(255)]],
         description: [undefined as string | undefined, [Validators.maxLength(1000)]],
@@ -171,9 +181,26 @@ export class AttachmentVideoUnitFormComponent implements OnChanges {
         return this.statusChanges() === 'VALID' && !this.isFileTooBig() && this.datePickerComponent()?.isValid() && (!!this.fileName() || !!this.videoSourceSignal());
     });
 
+    /**
+     * Handles changes to input properties, specifically formData.
+     *
+     * When in edit mode and formData is provided:
+     * - Sets form values from formData
+     * - If playlistUrl exists in formData, sets it and enables transcript generation
+     *   This is important for existing videos that already have a playlist URL
+     *   from a previous save or edit session
+     */
     ngOnChanges() {
-        if (this.isEditMode() && this.formData()) {
-            this.setFormValues(this.formData()!);
+        const formData = this.formData();
+
+        if (this.isEditMode() && formData) {
+            this.setFormValues(formData);
+
+            // Set playlist URL if available from formData (for existing videos)
+            if (formData.playlistUrl) {
+                this.playlistUrl.set(formData.playlistUrl);
+                this.canGenerateTranscript.set(true);
+            }
         }
     }
 
