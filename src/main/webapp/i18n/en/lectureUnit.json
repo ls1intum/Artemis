@@ -183,7 +183,8 @@
                 "previousResult": "Previous result",
                 "nextResult": "Next result",
                 "noResults": "No results",
-                "noMatchingTranscript": "No matching transcript found"
+                "noMatchingTranscript": "No matching transcript found",
+                "loading": "Loading..."
             }
         },
         "exerciseUnit": {
