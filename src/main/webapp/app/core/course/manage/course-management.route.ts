@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
-import { IS_AT_LEAST_ADMIN, IS_AT_LEAST_INSTRUCTOR, IS_AT_LEAST_TUTOR } from 'app/shared/constants/authority.constants';
+import { IS_AT_LEAST_ADMIN, IS_AT_LEAST_EDITOR, IS_AT_LEAST_INSTRUCTOR, IS_AT_LEAST_TUTOR } from 'app/shared/constants/authority.constants';
 import { TutorialGroupManagementResolve } from 'app/tutorialgroup/manage/service/tutorial-group-management-resolve.service';
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 import { LocalCIGuard } from 'app/buildagent/shared/localci-guard.service';
@@ -9,7 +9,7 @@ import { FaqResolve } from 'app/communication/faq/faq-resolve.service';
 import { CourseManagementResolve } from 'app/core/course/manage/services/course-management-resolve.service';
 import { ExerciseAssessmentDashboardComponent } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/exercise-assessment-dashboard.component';
 
-export const courseManagementState: Routes = [
+export const courseManagementRoutes: Routes = [
     {
         path: '',
         loadComponent: () => import('app/core/course/manage/course-management/course-management.component').then((m) => m.CourseManagementComponent),
@@ -52,7 +52,7 @@ export const courseManagementState: Routes = [
                     pageTitle: 'artemisApp.course.gradingSystem',
                 },
                 canActivate: [UserRouteAccessService],
-                loadChildren: () => import('app/assessment/manage/grading-system/grading-system.route').then((m) => m.gradingSystemState),
+                loadChildren: () => import('app/assessment/manage/grading-system/grading-system.route').then((m) => m.gradingSystemRoutes),
             },
             {
                 path: ':courseId/iris-settings',
@@ -67,7 +67,7 @@ export const courseManagementState: Routes = [
             },
             {
                 path: ':courseId/lectures',
-                loadChildren: () => import('app/lecture/manage/lecture.route').then((m) => m.lectureRoute),
+                loadChildren: () => import('app/lecture/manage/lecture.route').then((m) => m.lectureRoutes),
             },
             {
                 path: ':courseId/tutorial-groups',
@@ -119,7 +119,7 @@ export const courseManagementState: Routes = [
             },
             {
                 path: ':courseId/exams',
-                loadChildren: () => import('app/exam/manage/exam-management.route').then((m) => m.examManagementRoute),
+                loadChildren: () => import('app/exam/manage/exam-management.route').then((m) => m.examManagementRoutes),
             },
             {
                 path: ':courseId/tutorial-groups-checklist',
@@ -238,7 +238,7 @@ export const courseManagementState: Routes = [
                         path: 'competency-management',
                         loadComponent: () => import('app/atlas/manage/competency-management/competency-management.component').then((m) => m.CompetencyManagementComponent),
                         data: {
-                            authorities: IS_AT_LEAST_INSTRUCTOR,
+                            authorities: IS_AT_LEAST_EDITOR,
                             pageTitle: 'artemisApp.competency.manage.title',
                         },
                         canActivate: [UserRouteAccessService],
