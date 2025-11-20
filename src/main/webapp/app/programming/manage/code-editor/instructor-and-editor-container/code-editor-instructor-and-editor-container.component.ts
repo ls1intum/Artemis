@@ -1,4 +1,4 @@
-import { Component, ViewChild, inject, signal } from '@angular/core';
+import { Component, ViewChild, computed, inject, signal } from '@angular/core';
 import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/programming/shared/actions/trigger-build-button/student/programming-exercise-student-trigger-build-button.component';
 import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor/container/code-editor-container.component';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
@@ -38,6 +38,12 @@ import { ConsistencyCheckResponse } from 'app/openapi/model/consistencyCheckResp
 import { getRepoPath, humanizeCategory } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check';
 import { ArtifactLocation } from 'app/openapi/model/artifactLocation';
 
+const SEVERITY_ORDER = {
+    HIGH: 0,
+    MEDIUM: 1,
+    LOW: 2,
+} as const;
+
 @Component({
     selector: 'jhi-code-editor-instructor',
     templateUrl: './code-editor-instructor-and-editor-container.component.html',
@@ -68,7 +74,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     //TODO: Remove
     mockIssues: ConsistencyIssue[] = [
         {
-            severity: ConsistencyIssue.SeverityEnum.High,
+            severity: ConsistencyIssue.SeverityEnum.Low,
             category: ConsistencyIssue.CategoryEnum.MethodReturnTypeMismatch,
             description: 'Description 1.',
             suggestedFix: 'Fix 1',
@@ -77,13 +83,13 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                     type: ArtifactLocation.TypeEnum.TemplateRepository,
                     filePath: 'template_repository/src/TESTI/BubbleSort.java',
                     startLine: 1,
-                    endLine: 1,
+                    endLine: 10,
                 },
                 {
                     type: ArtifactLocation.TypeEnum.SolutionRepository,
                     filePath: 'solution_repository/src/TESTI/BubbleSort.java',
                     startLine: 1,
-                    endLine: 1,
+                    endLine: 10,
                 },
             ],
         },
@@ -97,19 +103,19 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                     type: ArtifactLocation.TypeEnum.SolutionRepository,
                     filePath: 'solution_repository/src/TESTI/BubbleSort.java',
                     startLine: 1,
-                    endLine: 2,
+                    endLine: 15,
                 },
                 {
                     type: ArtifactLocation.TypeEnum.TemplateRepository,
                     filePath: 'template_repository/src/TESTI/BubbleSort.java',
                     startLine: 1,
-                    endLine: 2,
+                    endLine: 15,
                 },
                 {
                     type: ArtifactLocation.TypeEnum.TestsRepository,
                     filePath: 'tests_repository/test/TESTI/MethodTest.java',
                     startLine: 1,
-                    endLine: 2,
+                    endLine: 15,
                 },
             ],
         },
@@ -123,18 +129,18 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                     type: ArtifactLocation.TypeEnum.ProblemStatement,
                     filePath: 'problem_statement.md',
                     startLine: 1,
-                    endLine: 3,
+                    endLine: 17,
                 },
                 {
                     type: ArtifactLocation.TypeEnum.TestsRepository,
                     filePath: 'tests_repository/test/TESTI/MethodTest.java',
                     startLine: 1,
-                    endLine: 3,
+                    endLine: 17,
                 },
             ],
         },
         {
-            severity: ConsistencyIssue.SeverityEnum.Low,
+            severity: ConsistencyIssue.SeverityEnum.High,
             category: ConsistencyIssue.CategoryEnum.VisibilityMismatch,
             description: 'Description 2',
             suggestedFix: 'Fix 2',
@@ -143,7 +149,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                     type: ArtifactLocation.TypeEnum.TestsRepository,
                     filePath: 'tests_repository/test/TESTI/MethodTest.java',
                     startLine: 1,
-                    endLine: 3,
+                    endLine: 18,
                 },
             ],
         },
@@ -151,10 +157,14 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
 
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly consistencyIssues = signal<ConsistencyIssue[]>(this.mockIssues);
+    readonly sortedIssues = computed(() => [...this.consistencyIssues()].sort((a, b) => SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity]));
 
     private consistencyCheckService = inject(ConsistencyCheckService);
     private artemisIntelligenceService = inject(ArtemisIntelligenceService);
     private profileService = inject(ProfileService);
+
+    private lineJumpOnFileLoad: number | undefined = undefined;
+    private fileToJumpOn: string | undefined = undefined;
 
     // Icons
     faPlus = faPlus;
@@ -274,23 +284,36 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             this.locationIndex = 0;
         }
 
+        // Set parameters for when fileLoad is called
+        this.lineJumpOnFileLoad = issue.relatedLocations[this.locationIndex].endLine;
+        this.fileToJumpOn = getRepoPath(issue.relatedLocations[this.locationIndex]);
+
         if (issue.relatedLocations[this.locationIndex].type === 'PROBLEM_STATEMENT') {
             this.codeEditorContainer.selectedFile = this.codeEditorContainer.problemStatementIdentifier;
+            this.editableInstructions.jumpToLine(issue.relatedLocations[this.locationIndex].endLine);
             return;
         }
 
-        if (issue.relatedLocations[this.locationIndex].type === 'TEMPLATE_REPOSITORY' && this.codeEditorContainer.selectedRepository !== 'TEMPLATE') {
+        if (issue.relatedLocations[this.locationIndex].type === 'TEMPLATE_REPOSITORY' && this.codeEditorContainer.selectedRepository() !== 'TEMPLATE') {
             await this.selectTemplateParticipation();
-        } else if (issue.relatedLocations[this.locationIndex].type === 'SOLUTION_REPOSITORY' && this.codeEditorContainer.selectedRepository !== 'SOLUTION') {
+        } else if (issue.relatedLocations[this.locationIndex].type === 'SOLUTION_REPOSITORY' && this.codeEditorContainer.selectedRepository() !== 'SOLUTION') {
             await this.selectSolutionParticipation();
-        } else if (issue.relatedLocations[this.locationIndex].type === 'TESTS_REPOSITORY' && this.codeEditorContainer.selectedRepository !== 'TESTS') {
+        } else if (issue.relatedLocations[this.locationIndex].type === 'TESTS_REPOSITORY' && this.codeEditorContainer.selectedRepository() !== 'TESTS') {
             await this.selectTestRepository();
         }
 
         // We need to wait for the editor to be fully loaded,
         // else the file content does not show
         setTimeout(() => {
-            this.codeEditorContainer.selectedFile = getRepoPath(issue.relatedLocations[this.locationIndex]);
+            // This will load the fill and signal to fileLoad when finished loading
+            this.codeEditorContainer.selectedFile = this.fileToJumpOn;
         }, 0);
+    }
+
+    fileLoad(fileName: string) {
+        if (this.lineJumpOnFileLoad && this.fileToJumpOn === fileName) {
+            this.codeEditorContainer.jumpToLine(this.lineJumpOnFileLoad);
+            this.lineJumpOnFileLoad = undefined;
+        }
     }
 }

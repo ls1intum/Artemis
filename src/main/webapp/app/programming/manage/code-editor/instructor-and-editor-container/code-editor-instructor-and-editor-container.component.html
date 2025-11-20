@@ -21,9 +21,11 @@
         <jhi-code-editor-container
             [participation]="selectedParticipation!"
             [buildable]="selectedRepository !== RepositoryType.TESTS"
+            [selectedRepository]="selectedRepository"
             [course]="course"
             [allowHiddenFiles]="true"
             [consistencyIssues]="consistencyIssues()"
+            (onFileLoad)="fileLoad($event)"
         >
             <div editorTitle>
                 <span>{{ exercise?.title }}</span>
@@ -153,9 +155,9 @@
                             </button>
 
                             <!-- Dropdown menu with issues -->
-                            <div ngbDropdownMenu class="px-2 py-1">
-                                @for (issue of consistencyIssues(); track issue) {
-                                    <div class="dropdown-item d-flex align-items-center justify-content-between" style="gap: 0.5rem">
+                            <div ngbDropdownMenu class="px-0 py-1">
+                                @for (issue of sortedIssues(); track issue; let last = $last) {
+                                    <div class="dropdown-item dropdown-item-nohover d-flex align-items-center justify-content-between" style="gap: 0.5rem">
                                         <div class="d-flex align-items-center" style="gap: 0.25rem">
                                             <fa-icon [icon]="getSeverityIcon(issue)" [class]="getSeverityColor(issue) + ' me-1'" />
                                             <span>{{ getIssueLabel(issue) }}</span>
@@ -171,7 +173,7 @@
                                                 @if (selectedIssue === issue) {
                                                     {{ locationIndex + 1 }}/{{ issue.relatedLocations.length }}
                                                 } @else {
-                                                    ?/{{ issue.relatedLocations.length }}
+                                                    -/{{ issue.relatedLocations.length }}
                                                 }
                                             </span>
 
@@ -180,6 +182,10 @@
                                             </button>
                                         </div>
                                     </div>
+
+                                    @if (!last) {
+                                        <div class="dropdown-divider"></div>
+                                    }
                                 }
                             </div>
                         </div>

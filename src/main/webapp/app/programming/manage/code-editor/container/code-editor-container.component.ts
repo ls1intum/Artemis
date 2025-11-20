@@ -29,6 +29,7 @@ import { Annotation, CodeEditorMonacoComponent } from 'app/programming/shared/co
 import { KeysPipe } from 'app/shared/pipes/keys.pipe';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
+import { editor } from 'monaco-editor';
 
 export enum CollapsableCodeEditorElement {
     FileBrowser,
@@ -110,6 +111,8 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
     @Input()
     course?: Course;
 
+    selectedRepository = input<RepositoryType>();
+
     /** Work in Progress: temporary properties needed to get first prototype working */
 
     @Input()
@@ -127,15 +130,6 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
 
     set selectedFile(file: string | undefined) {
         this.selectedFileValue = file;
-    }
-
-    private selectedRepositoryValue?: RepositoryType;
-    get selectedRepository(): RepositoryType | undefined {
-        return this.selectedRepositoryValue;
-    }
-
-    set selectedRepository(repository: RepositoryType | undefined) {
-        this.selectedRepositoryValue = repository;
     }
 
     get problemStatementIdentifier(): string {
@@ -210,8 +204,6 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
      */
     initializeProperties = () => {
         this.selectedFile = undefined;
-        // I assume we always load into the Template Repo at the beginning
-        this.selectedRepository = RepositoryType.TEMPLATE;
         this.unsavedFiles = {};
         this.fileBadges = {};
         this.editorState = EditorState.CLEAN;
@@ -350,6 +342,10 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
         const submission = this.participation?.submissions?.[0];
         const result = submission?.results?.[0];
         return this.showInlineFeedback && result?.feedbacks ? result.feedbacks : [];
+    }
+
+    jumpToLine(lineNumber: number) {
+        this.monacoEditor.editor().revealLine(lineNumber, editor.ScrollType.Immediate);
     }
 
     /**

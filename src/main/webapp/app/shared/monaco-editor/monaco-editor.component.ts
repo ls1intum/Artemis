@@ -223,6 +223,10 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         return this._editor.getPosition() ?? { column: 0, lineNumber: 0 };
     }
 
+    revealLine(lineNumber: number, scrollType: monaco.editor.ScrollType): void {
+        this._editor.revealLineNearTop(lineNumber, scrollType);
+    }
+
     setPosition(position: EditorPosition) {
         this._editor.setPosition(position);
     }

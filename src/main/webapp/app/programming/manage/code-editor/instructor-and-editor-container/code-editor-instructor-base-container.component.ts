@@ -223,10 +223,6 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
             this.selectedParticipation = this.exercise.templateParticipation!;
             this.selectedRepository = RepositoryType.TESTS;
         }
-
-        if (this.codeEditorContainer != undefined) {
-            this.codeEditorContainer.selectedRepository = this.selectedRepository;
-        }
     }
 
     /**
