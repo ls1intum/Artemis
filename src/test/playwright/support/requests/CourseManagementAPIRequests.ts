@@ -208,4 +208,73 @@ export class CourseManagementAPIRequests {
         const response = await this.page.request.post(`api/exam/courses/${exam.course!.id}/exams/${exam.id}/test-run`, { data });
         return response.json();
     }
+
+    /**
+     * Creates a competency for the specified course via API.
+     *
+     * @param course - The course to which the competency belongs.
+     * @param title - The title of the competency.
+     * @param description - The description of the competency (optional).
+     * @returns Promise with the created competency.
+     */
+    async createCompetency(course: Course, title: string, description?: string) {
+        const data = {
+            type: 'competency',
+            title,
+            description: description || `Description for ${title}`,
+            masteryThreshold: 100,
+        };
+        const response = await this.page.request.post(`api/atlas/courses/${course.id}/competencies`, { data });
+        if (!response.ok()) {
+            const errorBody = await response.text();
+            throw new Error(`Failed to create competency: ${response.status()} ${response.statusText()} - ${errorBody}`);
+        }
+        return response.json();
+    }
+
+    /**
+     * Creates a prerequisite for the specified course via API.
+     *
+     * @param course - The course to which the prerequisite belongs.
+     * @param title - The title of the prerequisite.
+     * @param description - The description of the prerequisite (optional).
+     * @returns Promise with the created prerequisite.
+     */
+    async createPrerequisite(course: Course, title: string, description?: string) {
+        const data = {
+            type: 'prerequisite',
+            title,
+            description: description || `Description for ${title}`,
+            masteryThreshold: 100,
+        };
+        const response = await this.page.request.post(`api/atlas/courses/${course.id}/prerequisites`, { data });
+        if (!response.ok()) {
+            const errorBody = await response.text();
+            throw new Error(`Failed to create prerequisite: ${response.status()} ${response.statusText()} - ${errorBody}`);
+        }
+        return response.json();
+    }
+
+    /**
+     * Creates a competency relation for the specified course via API.
+     *
+     * @param course - The course to which the competencies belong.
+     * @param tailCompetencyId - The ID of the tail competency.
+     * @param headCompetencyId - The ID of the head competency.
+     * @param relationType - The type of relation ('ASSUMES', 'EXTENDS', or 'MATCHES').
+     * @returns Promise with the created relation.
+     */
+    async createCompetencyRelation(course: Course, tailCompetencyId: number, headCompetencyId: number, relationType: 'ASSUMES' | 'EXTENDS' | 'MATCHES') {
+        const data = {
+            tailCompetencyId,
+            headCompetencyId,
+            relationType,
+        };
+        const response = await this.page.request.post(`api/atlas/courses/${course.id}/course-competencies/relations`, { data });
+        if (!response.ok()) {
+            const errorBody = await response.text();
+            throw new Error(`Failed to create competency relation: ${response.status()} ${response.statusText()} - ${errorBody}`);
+        }
+        return response.json();
+    }
 }
