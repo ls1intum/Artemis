@@ -114,7 +114,7 @@ const config: Config = {
                 id: 'staff',
                 path: 'docs/staff',
                 routeBasePath: 'staff',
-                sidebarPath: './sidebars.ts',
+                sidebarPath: './sidebar-staff.ts',
                 editUrl: EDIT_URL,
                 exclude: ['**/README.md'],
             },
@@ -125,7 +125,7 @@ const config: Config = {
                 id: 'admin',
                 path: 'docs/admin',
                 routeBasePath: 'admin',
-                sidebarPath: './sidebars.ts',
+                sidebarPath: './sidebar-admin.ts',
                 editUrl: EDIT_URL,
                 exclude: ['**/README.md'],
             },
@@ -160,15 +160,15 @@ const config: Config = {
                     items: [
                         {
                             label: 'AET Website',
-                            href: 'https://aet.cit.tum.de/',
+                            href: 'https://aet.cit.tum.de',
                         },
                         {
                             label: 'AET LinkedIn',
-                            href: 'https://www.linkedin.com/company/tumaet/posts/?feedView=all',
+                            href: 'https://www.linkedin.com/company/tumaet',
                         },
                         {
                             label: 'AET Instagram',
-                            href: 'https://www.instagram.com/tum.aet/',
+                            href: 'https://www.instagram.com/tum.aet',
                         },
                     ],
                 },
@@ -199,7 +199,7 @@ const config: Config = {
                     ],
                 },
             ],
-            copyright: `© 2025 Technische Universität München – Built with ❤️ by the Artemis Team at Applied Education Technologies (AET)`,
+            copyright: `© 2025 Technical University of Munich – Built with ❤️ by the Artemis Team at Applied Education Technologies (AET)`,
         },
         prism: {
             theme: prismThemes.github,

@@ -10,8 +10,7 @@ import static org.mockito.Mockito.verify;
 
 import java.util.List;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -366,7 +365,7 @@ class PlagiarismPostIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         assertThat(createdPost.getPlagiarismCase()).isEqualTo(expectedPost.getPlagiarismCase());
     }
 
-    @NotNull
+    @NonNull
     private List<Post> getPosts(LinkedMultiValueMap<String, String> params) throws Exception {
         List<Post> returnedPosts = request.getList("/api/plagiarism/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
         conversationUtilService.assertSensitiveInformationHidden(returnedPosts);
