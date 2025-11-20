@@ -62,13 +62,15 @@ def create_programming_exercise(session: Session, course_id: int, server_url: st
         else:
             raise Exception(f"Could not create programming exercise; Status code: {response.status_code}\nResponse content: {response.text}")
 
-def convert_exercise_to_zip(variant_path: str) -> None:
+def convert_variant_to_zip(variant_path: str, course_id: int) -> None:
     """Convert the programming exercise located at variant_path into a ZIP file.
     variant_path: ../../pecv-bench/data/{course}/{exercise}/variants/{variant_id}
     """
+
     REPO_TYPES: List[str] = ["solution", "template", "tests"]
     CONFIG_FILE: str = "Exercise-Details.json"
     VARIANT_ID = os.path.basename(variant_path)  # 001
+    
 
     exercise_zip_filename = f"{VARIANT_ID}-FullExercise.zip" #001-Exercise.zip
     exercise_zip_path = os.path.join(variant_path, exercise_zip_filename) #...001/001-FullExercise.zip
@@ -88,8 +90,25 @@ def convert_exercise_to_zip(variant_path: str) -> None:
     except Exception as e:
         logging.error(f"Error while creating intermediate zip files: {e}")
     
-    config_file_path = os.path.join(variant_path, CONFIG_FILE)
-    zip_files.append(config_file_path)
+
+    CONFIG_FILE_PATH = os.path.join(variant_path, CONFIG_FILE)
+    try:
+        with open(CONFIG_FILE_PATH, 'r') as config_file:
+            exercise_details: Dict[str, Any] = json.load(config_file)
+            exercise_details['id'] = None
+            exercise_details['course']['id'] = course_id
+            EXERCISE_NAME = exercise_details.get('title', 'Untitled')
+            exercise_details['title'] = f"{VARIANT_ID} - {exercise_details.get('title', 'Untitled')}"
+            exercise_details['shortName'] = sanitize_exercise_name(EXERCISE_NAME, int(VARIANT_ID))
+            exercise_details["projectKey"] = f"{VARIANT_ID}ITP2425H01E01"
+            logging.info("Overwriting exercise ID, course ID, title and shortName in the config file.")
+        with open(CONFIG_FILE_PATH, 'w') as config_file:
+            json.dump(exercise_details, config_file, indent=4)
+            logging.info(f"Updated programming exercise details in {CONFIG_FILE_PATH}")
+    except OSError as e:
+        raise Exception(f"Failed to read programming exercise JSON file at {CONFIG_FILE_PATH}: {e}")
+    
+    zip_files.append(CONFIG_FILE_PATH)
 
     with zipfile.ZipFile(exercise_zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
         for file in zip_files:
@@ -118,8 +137,7 @@ def convert_exercise_to_zip(variant_path: str) -> None:
         zip_contents = zipf.namelist()
         logging.info(f"Contents of {exercise_zip_filename}: {zip_contents}")
 
-
-def import_programming_exercise(session: Session, course_id: int, server_url: str, config_file_path: str, exercise_zip_path: str) -> requests.Response:
+def import_programming_exercise(session: Session, course_id: int, server_url: str, variant_folder_path: str) -> requests.Response:
     """
     Imports a programming exercise to the Artemis server using a multipart/form-data request.
     
@@ -130,30 +148,30 @@ def import_programming_exercise(session: Session, course_id: int, server_url: st
     Returns the JSON response from the server (the newly created exercise object).
     """
     url: str = f"{server_url}/programming/courses/{course_id}/programming-exercises/import-from-file"
+    VARIANT_ID = os.path.basename(variant_folder_path)
+    CONFIG_FILE_PATH = os.path.join(variant_folder_path, "Exercise-Details.json") 
+    EXERCISE_ZIP_PATH = os.path.join(variant_folder_path, f"{VARIANT_ID}-FullExercise.zip")
 
     logging.info("Verifying contents of the final zip file...")
-    with zipfile.ZipFile(exercise_zip_path, 'r') as zipf:
+    with zipfile.ZipFile(EXERCISE_ZIP_PATH, 'r') as zipf:
         zip_contents = zipf.namelist()
-        logging.info(f"Contents of {exercise_zip_path}: {zip_contents}")
+        logging.info(f"Contents of {EXERCISE_ZIP_PATH}: {zip_contents}")
     try:
-        with open(config_file_path, 'r') as config_file:
+        with open(CONFIG_FILE_PATH, 'r') as config_file:
             exercise_details: Dict[str, Any] = json.load(config_file)
-            exercise_details['id'] = None
-            logging.info(f"Set exercise ID to None for import.")
-            exercise_details['course'] = {'id': course_id}
-            logging.info(f"Set course ID for import.")
+            logging.info(f"Set exercise ID to None for import und updated course ID")
         exercise_details_str = json.dumps(exercise_details)
-        logging.info(f"Loaded programming exercise details from {config_file_path}")
+        logging.info(f"Loaded programming exercise details from {CONFIG_FILE_PATH}")
     except OSError as e:
-        raise Exception(f"Failed to read programming exercise JSON file at {config_file_path}: {e}")
+        raise Exception(f"Failed to read programming exercise JSON file at {CONFIG_FILE_PATH}: {e}")
     
     logging.info(f"Preparing to import exercise: {exercise_details.get('title', 'Untitled')}")
     try:
-        with open(exercise_zip_path, 'rb') as file:
+        with open(EXERCISE_ZIP_PATH, 'rb') as file:
             exercise_zip_file = file.read()
-            logging.info(f"Loaded programming exercise ZIP file from {exercise_zip_path}")
+            logging.info(f"Loaded programming exercise ZIP file from {EXERCISE_ZIP_PATH}")
     except OSError as e:
-        raise Exception(f"Failed to read programming exercise ZIP file at {exercise_zip_path}: {e}")
+        raise Exception(f"Failed to read programming exercise ZIP file at {EXERCISE_ZIP_PATH}: {e}")
     
     files_payload = {
         'programmingExercise': (
@@ -162,7 +180,7 @@ def import_programming_exercise(session: Session, course_id: int, server_url: st
             'application/json'
         ),
         'file': (
-            os.path.basename(exercise_zip_path),
+            os.path.basename(EXERCISE_ZIP_PATH),
             exercise_zip_file,
             'application/zip'
         )
