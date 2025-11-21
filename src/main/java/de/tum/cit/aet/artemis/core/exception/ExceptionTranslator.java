@@ -173,4 +173,11 @@ public class ExceptionTranslator implements ProblemHandling, SecurityAdviceTrait
         final var problem = Problem.builder().withStatus(Status.NOT_FOUND).withDetail(ex.getMessage()).build();
         return create(ex, problem, request);
     }
+
+    @ExceptionHandler(PasskeyAuthenticationException.class)
+    public ResponseEntity<Problem> handlePasskeyAuthenticationException(PasskeyAuthenticationException ex, NativeWebRequest request) {
+        Problem problem = Problem.builder().withStatus(Status.FORBIDDEN).withTitle("Forbidden").withDetail(ex.getMessage()).with(MESSAGE_KEY, ex.getErrorKey())
+                .with("reason", ex.getReason().name()).build();
+        return create(ex, problem, request);
+    }
 }
