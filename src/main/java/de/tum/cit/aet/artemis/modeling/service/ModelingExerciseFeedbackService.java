@@ -144,8 +144,8 @@ public class ModelingExerciseFeedbackService {
      */
     private Result createInitialResult(Submission submission) {
         Result result = new Result();
-        if (participation.getExercise() != null) {
-            result.setExerciseId(participation.getExercise().getId());
+        if (submission.getParticipation() != null && submission.getParticipation().getExercise() != null) {
+            result.setExerciseId(submission.getParticipation().getExercise().getId());
         }
         result.setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);
         result.setRated(true);
