@@ -365,17 +365,4 @@ export class LectureUpdateUnitsComponent implements OnInit {
                 }
             });
     }
-
-    private triggerTranscriptionIfEnabled(unit: AttachmentVideoUnit | undefined, generateTranscript: boolean | undefined, playlistUrl?: string): void {
-        if (generateTranscript && unit?.id) {
-            const transcriptionUrl = playlistUrl ?? unit.videoSource;
-
-            if (!transcriptionUrl) {
-                return; // No transcription URL available
-            }
-
-            this.attachmentVideoUnitService.startTranscription(this.lecture.id!, unit.id, transcriptionUrl).subscribe();
-        }
-        // When disabled or missing data, simply do nothing
-    }
 }
