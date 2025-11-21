@@ -119,10 +119,21 @@
             },
             "admin": {
                 "main": "Server-Administration",
+                "loginWithPasskeyToUseAdminFeatures": "Mit Passkey anmelden um Admin-Funktionen zu nutzen",
+                "setupPasskey": "Passkey registrieren",
+                "passkeyRestrictionExplanation": "Zum Schutz der Studierendendaten und zur Sicherstellung der Zuverlässigkeit von Artemis sind Administratoraktionen nur nach Passkey-Login verfügbar.",
+                "passkeyNotYetApproved": "Dein Passkey war zum Zeitpunkt deines letzten Logins noch nicht von einem Super-Administrator freigegeben.",
+                "usedPasskeyIsNotSuperAdminApproved": "Der verwendete Passkey ist nicht von einem Super-Administrator freigegeben. Melde dich bitte mit einem freigegebenen Passkey an.",
+                "passkeyApprovalInstructions": {
+                    "start": "Bitte prüfe in den ",
+                    "link": "Benutzereinstellungen",
+                    "end": " ob dein Passkey freigegeben wurde. Wenn dein Passkey freigegeben ist, melde dich bitte erneut mit deinem Passkey an."
+                },
                 "upcomingExamsAndExercises": "Kommende Prüfungen & Übungen",
                 "userManagement": "Verwaltung von Nutzer:innen",
                 "organizationManagement": "Organisationsverwaltung",
                 "systemNotifications": "Systemmitteilungen",
+                "passkey-required": "Passkey Erforderlich",
                 "featureToggles": "Feature Toggles",
                 "statistics": "Statistiken der Nutzer:innen",
                 "metrics": "Metriken",

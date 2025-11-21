@@ -1,4 +1,12 @@
-<li *jhiHasAnyAuthority="'ROLE_ADMIN'" ngbDropdown class="nav-item dropdown pointer server-administration" display="dynamic" routerLinkActive="active">
+<li
+    *jhiHasAnyAuthority="'ROLE_ADMIN'"
+    ngbDropdown
+    #adminMenuDropdown="ngbDropdown"
+    class="nav-item dropdown pointer server-administration"
+    display="dynamic"
+    routerLinkActive="active"
+    (click)="showModalForPasskeyLogin()"
+>
     @if (!isExamActive() && !isExamStarted()) {
         <a class="jh-navbar nav-link dropdown-toggle py-0" ngbDropdownToggle id="admin-menu">
             <span>
@@ -142,3 +150,4 @@
         }
     </ul>
 </li>
+<jhi-login-with-passkey-modal (justLoggedInWithPasskey)="onJustLoggedInWithPasskey($event)" />

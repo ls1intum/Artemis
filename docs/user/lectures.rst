@@ -202,6 +202,11 @@ Competencies
 Instructors can create competencies, which are desired learning objectives, and link lecture units to them.
 See :ref:`Adaptive Learning <adaptive-learning>` for more information.
 
+Lecture Series
+--------------
+
+See the new documentation’s article `Lecture Series <https://ls1intum.github.io/Artemis/instructor/lecture-series>`__.
+
 
 .. |general-menu| image:: lectures/general-menu-lecture.png
     :width: 250
