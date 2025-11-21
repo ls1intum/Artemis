@@ -27,9 +27,7 @@ import { CompetencyLectureUnitLink } from 'app/atlas/shared/entities/competency.
 import { UnitCreationCardComponent } from 'app/lecture/manage/lecture-units/unit-creation-card/unit-creation-card.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { AccountService } from 'app/core/auth/account.service';
 import { LectureTranscriptionService } from 'app/lecture/manage/services/lecture-transcription.service';
-import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 
 // Helper type so CI uses the exact method return type
 type StartTxReturn = ReturnType<AttachmentVideoUnitService['startTranscription']>;
@@ -38,7 +36,6 @@ describe('LectureUpdateUnitsComponent', () => {
     let wizardUnitComponentFixture: ComponentFixture<LectureUpdateUnitsComponent>;
     let wizardUnitComponent: LectureUpdateUnitsComponent;
     let lectureTranscriptionService: LectureTranscriptionService;
-    let accountService: AccountService;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -55,7 +52,6 @@ describe('LectureUpdateUnitsComponent', () => {
                 MockProvider(AttachmentVideoUnitService),
                 MockProvider(LectureUnitManagementComponent),
                 MockProvider(LectureTranscriptionService),
-                { provide: AccountService, useClass: MockAccountService },
                 { provide: Router, useClass: MockRouter },
                 { provide: ActivatedRoute, useValue: { queryParams: of({}) } },
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -67,7 +63,6 @@ describe('LectureUpdateUnitsComponent', () => {
         wizardUnitComponent.lecture = new Lecture();
         wizardUnitComponent.lecture.id = 1;
         lectureTranscriptionService = TestBed.inject(LectureTranscriptionService);
-        accountService = TestBed.inject(AccountService);
     });
 
     afterEach(() => {
@@ -587,6 +582,7 @@ describe('LectureUpdateUnitsComponent', () => {
 
     it('should open edit attachment form when clicked', fakeAsync(() => {
         jest.spyOn(lectureTranscriptionService, 'getTranscription').mockReturnValue(of(undefined));
+        jest.spyOn(lectureTranscriptionService, 'getTranscriptionStatus').mockReturnValue(of(undefined));
 
         wizardUnitComponentFixture.detectChanges();
         tick();
@@ -650,42 +646,16 @@ describe('LectureUpdateUnitsComponent', () => {
             segments: [],
         };
 
-        jest.spyOn(accountService, 'isAdmin').mockReturnValue(true);
         const getTranscriptionSpy = jest.spyOn(lectureTranscriptionService, 'getTranscription').mockReturnValue(of(transcript));
+        const getTranscriptionStatusSpy = jest.spyOn(lectureTranscriptionService, 'getTranscriptionStatus').mockReturnValue(of(undefined));
 
         wizardUnitComponent.startEditLectureUnit(attachmentVideoUnit);
 
         wizardUnitComponentFixture.whenStable().then(() => {
             expect(wizardUnitComponent.isAttachmentVideoUnitFormOpen()).toBeTrue();
             expect(getTranscriptionSpy).toHaveBeenCalledWith(attachmentVideoUnit.id);
+            expect(getTranscriptionStatusSpy).toHaveBeenCalledWith(attachmentVideoUnit.id);
             expect(wizardUnitComponent.currentlyProcessedAttachmentVideoUnit?.transcriptionProperties).toBe(transcript);
-        });
-    }));
-
-    it('should not fetch transcription when starting to edit a video unit as non-admin', fakeAsync(() => {
-        wizardUnitComponentFixture.detectChanges();
-        tick();
-
-        const attachment = new Attachment();
-        attachment.id = 1;
-        attachment.version = 1;
-        attachment.attachmentType = AttachmentType.FILE;
-        attachment.releaseDate = dayjs().year(2010).month(3).date(5);
-        attachment.name = 'test';
-        attachment.link = '/path/to/file';
-
-        const attachmentVideoUnit = new AttachmentVideoUnit();
-        attachmentVideoUnit.id = 1;
-        attachmentVideoUnit.attachment = attachment;
-
-        jest.spyOn(accountService, 'isAdmin').mockReturnValue(false);
-        const getTranscriptionSpy = jest.spyOn(lectureTranscriptionService, 'getTranscription');
-
-        wizardUnitComponent.startEditLectureUnit(attachmentVideoUnit);
-
-        wizardUnitComponentFixture.whenStable().then(() => {
-            expect(wizardUnitComponent.isAttachmentVideoUnitFormOpen()).toBeTrue();
-            expect(getTranscriptionSpy).not.toHaveBeenCalled();
         });
     }));
 
@@ -845,7 +815,7 @@ describe('LectureUpdateUnitsComponent', () => {
         });
     }));
 
-    it('should not start transcription when editing an existing unit', fakeAsync(() => {
+    it('should start transcription when editing an existing unit with generateTranscript enabled', fakeAsync(() => {
         const attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
 
         const formData: AttachmentVideoUnitFormData = {
@@ -862,7 +832,7 @@ describe('LectureUpdateUnitsComponent', () => {
         savedUnit.videoSource = 'https://example.com/src.m3u8';
 
         jest.spyOn(attachmentVideoUnitService, 'update').mockReturnValue(of(new HttpResponse({ body: savedUnit, status: 200 })));
-        const startSpy = jest.spyOn(attachmentVideoUnitService, 'startTranscription');
+        const startSpy = jest.spyOn(attachmentVideoUnitService, 'startTranscription').mockReturnValue(of(undefined) as StartTxReturn);
 
         wizardUnitComponentFixture.detectChanges();
         tick();
@@ -872,11 +842,12 @@ describe('LectureUpdateUnitsComponent', () => {
         wizardUnitComponent.isEditingLectureUnit = true;
         wizardUnitComponent.currentlyProcessedAttachmentVideoUnit = new AttachmentVideoUnit();
         wizardUnitComponent.currentlyProcessedAttachmentVideoUnit.attachment = new Attachment();
+        wizardUnitComponent.currentlyProcessedAttachmentVideoUnit.id = savedUnit.id;
 
         wizardUnitComponent.createEditAttachmentVideoUnit(formData);
 
         wizardUnitComponentFixture.whenStable().then(() => {
-            expect(startSpy).not.toHaveBeenCalled();
+            expect(startSpy).toHaveBeenCalledWith(wizardUnitComponent.lecture.id, savedUnit.id, savedUnit.videoSource);
         });
     }));
 
@@ -999,6 +970,63 @@ describe('LectureUpdateUnitsComponent', () => {
         wizardUnitComponentFixture.whenStable().then(() => {
             expect(alertSpy).toHaveBeenCalledWith('artemisApp.lectureUnit.attachmentVideoUnit.transcriptionInvalidJson');
             expect(createTranscriptionSpy).not.toHaveBeenCalled();
+        });
+    }));
+
+    it('should handle null transcription when editing attachment video unit', fakeAsync(() => {
+        wizardUnitComponentFixture.detectChanges();
+        tick();
+
+        const attachment = new Attachment();
+        attachment.id = 1;
+        attachment.version = 1;
+        attachment.attachmentType = AttachmentType.FILE;
+        attachment.releaseDate = dayjs().year(2010).month(3).date(5);
+        attachment.name = 'test';
+        attachment.link = '/path/to/file';
+
+        const attachmentVideoUnit = new AttachmentVideoUnit();
+        attachmentVideoUnit.id = 1;
+        attachmentVideoUnit.attachment = attachment;
+
+        const getTranscriptionSpy = jest.spyOn(lectureTranscriptionService, 'getTranscription').mockReturnValue(of(null as any));
+        const getTranscriptionStatusSpy = jest.spyOn(lectureTranscriptionService, 'getTranscriptionStatus').mockReturnValue(of(null as any));
+
+        wizardUnitComponent.startEditLectureUnit(attachmentVideoUnit);
+
+        wizardUnitComponentFixture.whenStable().then(() => {
+            expect(wizardUnitComponent.isAttachmentVideoUnitFormOpen()).toBeTrue();
+            expect(getTranscriptionSpy).toHaveBeenCalledWith(attachmentVideoUnit.id);
+            expect(getTranscriptionStatusSpy).toHaveBeenCalledWith(attachmentVideoUnit.id);
+            expect(wizardUnitComponent.currentlyProcessedAttachmentVideoUnit?.transcriptionProperties).toBeUndefined();
+        });
+    }));
+
+    it('should handle transcription status when editing attachment video unit', fakeAsync(() => {
+        wizardUnitComponentFixture.detectChanges();
+        tick();
+
+        const attachment = new Attachment();
+        attachment.id = 1;
+        attachment.version = 1;
+        attachment.attachmentType = AttachmentType.FILE;
+        attachment.releaseDate = dayjs().year(2010).month(3).date(5);
+        attachment.name = 'test';
+        attachment.link = '/path/to/file';
+
+        const attachmentVideoUnit = new AttachmentVideoUnit();
+        attachmentVideoUnit.id = 1;
+        attachmentVideoUnit.attachment = attachment;
+
+        const transcriptionStatus = { status: 'PENDING', progress: 50 };
+        jest.spyOn(lectureTranscriptionService, 'getTranscription').mockReturnValue(of(undefined));
+        jest.spyOn(lectureTranscriptionService, 'getTranscriptionStatus').mockReturnValue(of(transcriptionStatus as any));
+
+        wizardUnitComponent.startEditLectureUnit(attachmentVideoUnit);
+
+        wizardUnitComponentFixture.whenStable().then(() => {
+            expect(wizardUnitComponent.isAttachmentVideoUnitFormOpen()).toBeTrue();
+            expect(wizardUnitComponent.attachmentVideoUnitFormData?.transcriptionStatus).toEqual(transcriptionStatus);
         });
     }));
 });
