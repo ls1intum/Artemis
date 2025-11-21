@@ -134,6 +134,9 @@ public class Result extends DomainObject implements Comparable<Result> {
     @JsonIgnore
     private Instant lastModifiedDate;
 
+    @Column(name = "exercise_id", nullable = false)
+    private long exerciseId;
+
     public ZonedDateTime getCompletionDate() {
         return completionDate;
     }
@@ -169,8 +172,21 @@ public class Result extends DomainObject implements Comparable<Result> {
         return this;
     }
 
+    public Result exerciseId(long exerciseId) {
+        this.exerciseId = exerciseId;
+        return this;
+    }
+
     public Instant getLastModifiedDate() {
         return lastModifiedDate;
+    }
+
+    public long getExerciseId() {
+        return exerciseId;
+    }
+
+    public void setExerciseId(long exerciseId) {
+        this.exerciseId = exerciseId;
     }
 
     /**
