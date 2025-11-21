@@ -133,6 +133,7 @@
                 "userManagement": "User management",
                 "organizationManagement": "Organization management",
                 "systemNotifications": "System notifications",
+                "passkey-required": "Passkey required",
                 "featureToggles": "Feature Toggles",
                 "statistics": "User statistics",
                 "metrics": "Metrics",

@@ -20,7 +20,7 @@ const routes: Routes = [
         path: 'passkey-required',
         loadComponent: () => import('app/core/auth/passkey-authentication-page/passkey-authentication-page.component').then((m) => m.PasskeyAuthenticationPageComponent),
         data: {
-            pageTitle: 'artemisApp.passkeyRequired.pageTitle',
+            pageTitle: 'global.menu.admin.passkey-required',
             usesModuleBackground: false,
         },
     },
