@@ -21,7 +21,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
-import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastInstructorInLectureUnit;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastEditorInLectureUnit;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastStudentInLectureUnit;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.lecture.api.LectureTranscriptionsRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
@@ -97,7 +98,7 @@ public class LectureTranscriptionResource {
      * @return {@link ResponseEntity} containing the {@link LectureTranscriptionDTO} if found, or 404 Not Found if no transcript exists
      */
     @GetMapping("lecture-unit/{lectureUnitId}/transcript")
-    @EnforceAtLeastInstructorInLectureUnit
+    @EnforceAtLeastStudentInLectureUnit
     public ResponseEntity<LectureTranscriptionDTO> getTranscript(@PathVariable Long lectureUnitId) {
         Optional<LectureTranscriptionDTO> dtoOpt = lectureTranscriptionsRepositoryApi.getTranscript(lectureUnitId);
 
@@ -115,7 +116,7 @@ public class LectureTranscriptionResource {
      * @return ResponseEntity with the transcription status (PENDING, PROCESSING, COMPLETED, FAILED) or 404 if no transcription exists
      */
     @GetMapping("lecture-unit/{lectureUnitId}/transcript/status")
-    @EnforceAtLeastInstructorInLectureUnit
+    @EnforceAtLeastEditorInLectureUnit
     public ResponseEntity<String> getTranscriptStatus(@PathVariable Long lectureUnitId) {
         Optional<String> statusOpt = lectureTranscriptionsRepositoryApi.getTranscriptStatus(lectureUnitId);
 
