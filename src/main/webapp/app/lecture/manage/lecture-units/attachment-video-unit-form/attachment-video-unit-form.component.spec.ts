@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, flushMicrotasks } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 import { AttachmentVideoUnitFormComponent, AttachmentVideoUnitFormData } from 'app/lecture/manage/lecture-units/attachment-video-unit-form/attachment-video-unit-form.component';
@@ -443,7 +443,7 @@ describe('AttachmentVideoUnitFormComponent', () => {
         const httpMock = TestBed.inject(HttpClient);
         const spy = jest.spyOn(httpMock, 'get').mockReturnValue(of('https://live.rbg.tum.de/playlist.m3u8'));
 
-        attachmentVideoUnitFormComponent.checkTumLivePlaylist(originalUrl);
+        attachmentVideoUnitFormComponent.checkPlaylistAvailability(originalUrl);
 
         expect(spy).toHaveBeenCalled();
         expect(attachmentVideoUnitFormComponent.canGenerateTranscript()).toBeTrue();
@@ -458,7 +458,7 @@ describe('AttachmentVideoUnitFormComponent', () => {
         const httpMock = TestBed.inject(HttpClient);
         const spy = jest.spyOn(httpMock, 'get').mockReturnValue(throwError(() => new Error('Not found')));
 
-        attachmentVideoUnitFormComponent.checkTumLivePlaylist(originalUrl);
+        attachmentVideoUnitFormComponent.checkPlaylistAvailability(originalUrl);
 
         expect(spy).toHaveBeenCalled();
         expect(attachmentVideoUnitFormComponent.canGenerateTranscript()).toBeFalse();
@@ -483,7 +483,7 @@ describe('AttachmentVideoUnitFormComponent', () => {
         const http = TestBed.inject(HttpClient);
         jest.spyOn(http, 'get').mockReturnValue(of('https://live.rbg.tum.de/playlist.m3u8'));
 
-        attachmentVideoUnitFormComponent.checkTumLivePlaylist(originalUrl);
+        attachmentVideoUnitFormComponent.checkPlaylistAvailability(originalUrl);
 
         expect(attachmentVideoUnitFormComponent.playlistUrl()).toContain('playlist.m3u8');
         expect(attachmentVideoUnitFormComponent.shouldShowTranscriptCheckbox()).toBeTrue();
@@ -496,7 +496,7 @@ describe('AttachmentVideoUnitFormComponent', () => {
         const http = TestBed.inject(HttpClient);
         jest.spyOn(http, 'get').mockReturnValue(throwError(() => new Error('Not found')));
 
-        attachmentVideoUnitFormComponent.checkTumLivePlaylist(originalUrl);
+        attachmentVideoUnitFormComponent.checkPlaylistAvailability(originalUrl);
 
         expect(attachmentVideoUnitFormComponent.playlistUrl()).toBeUndefined();
         expect(attachmentVideoUnitFormComponent.shouldShowTranscriptCheckbox()).toBeFalse();
@@ -550,7 +550,7 @@ describe('AttachmentVideoUnitFormComponent', () => {
 
         // spy extract + playlist check
         const extractSpy = jest.spyOn(attachmentVideoUnitFormComponent, 'extractEmbeddedUrl').mockReturnValue(embedded);
-        const checkSpy = jest.spyOn(attachmentVideoUnitFormComponent, 'checkTumLivePlaylist');
+        const checkSpy = jest.spyOn(attachmentVideoUnitFormComponent, 'checkPlaylistAvailability');
 
         attachmentVideoUnitFormComponentFixture.detectChanges();
         attachmentVideoUnitFormComponent.urlHelperControl!.setValue(original);
@@ -568,7 +568,7 @@ describe('AttachmentVideoUnitFormComponent', () => {
         checkSpy.mockRestore();
     });
 
-    it('checkTumLivePlaylist: non-TUM hosts disable transcript, clear playlist, and reset checkbox', () => {
+    it('checkTumLivePlaylist: non-TUM hosts disable transcript, clear playlist, and reset checkbox', fakeAsync(() => {
         attachmentVideoUnitFormComponentFixture.detectChanges();
         // Pre-set to ensure reset occurs
         attachmentVideoUnitFormComponent.canGenerateTranscript.set(true);
@@ -577,12 +577,20 @@ describe('AttachmentVideoUnitFormComponent', () => {
 
         // Non TUM-Live URL
         const nonTumUrl = 'https://example.com/video/123';
-        attachmentVideoUnitFormComponent.checkTumLivePlaylist(nonTumUrl);
+
+        // Mock the service to return null (no playlist found for non-TUM URLs)
+        const http = TestBed.inject(HttpClient);
+        jest.spyOn(http, 'get').mockReturnValue(of(null));
+
+        attachmentVideoUnitFormComponent.checkPlaylistAvailability(nonTumUrl);
+
+        // Wait for async operations to complete
+        flushMicrotasks();
 
         expect(attachmentVideoUnitFormComponent.canGenerateTranscript()).toBeFalse();
         expect(attachmentVideoUnitFormComponent.playlistUrl()).toBeUndefined();
         expect(attachmentVideoUnitFormComponent.form.get('generateTranscript')!.value).toBeFalse();
-    });
+    }));
 
     it('onFileChange: auto-fills name when empty and marks large files', () => {
         attachmentVideoUnitFormComponentFixture.detectChanges();
