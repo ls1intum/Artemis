@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="20250915121343-create-separate-participations-for-quiz-practice-submissions"
+               author="KonstantinKissel">
+        <sql dbms="postgresql">
+            INSERT INTO participation (discriminator, student_id, exercise_id, initialization_state,
+                                       initialization_date, test_run, attempt)
+            SELECT 'SP', p.student_id, p.exercise_id, p.initialization_state, p.initialization_date, TRUE, 1
+            FROM participation p
+                     JOIN exercise e ON p.exercise_id = e.id
+            WHERE p.discriminator = 'SP'
+              AND e.discriminator = 'Q'
+              AND e.exercise_group_id IS NULL
+              AND p.test_run = FALSE
+              AND p.id = (SELECT MIN(p_inner.id)
+                          FROM participation p_inner
+                          WHERE p_inner.student_id = p.student_id
+                            AND p_inner.exercise_id = p.exercise_id
+                            AND p_inner.discriminator = 'SP'
+                            AND p_inner.test_run = FALSE)
+              AND EXISTS (SELECT 1
+                          FROM submission s
+                                   INNER JOIN result r ON s.id = r.submission_id
+                          WHERE s.participation_id = p.id
+                            AND r.rated = FALSE);
+
+            UPDATE submission s
+            SET participation_id = p_new.id FROM participation p_orig
+                     JOIN exercise e
+            ON p_orig.exercise_id = e.id
+                JOIN participation p_new
+                ON p_new.student_id = p_orig.student_id
+                AND p_new.exercise_id = p_orig.exercise_id
+                AND p_new.test_run = TRUE
+            WHERE s.participation_id = p_orig.id
+              AND p_orig.discriminator = 'SP'
+              AND e.discriminator = 'Q'
+              AND e.exercise_group_id IS NULL
+              AND p_orig.test_run = FALSE
+              AND p_orig.id = (SELECT MIN(p_inner.id)
+                FROM participation p_inner
+                WHERE p_inner.student_id = p_orig.student_id
+              AND p_inner.exercise_id = p_orig.exercise_id
+              AND p_inner.discriminator = 'SP'
+              AND p_inner.test_run = FALSE)
+              AND EXISTS (SELECT 1 FROM result r WHERE s.id = r.submission_id
+              AND r.rated = FALSE);
+        </sql>
+
+        <sql dbms="mysql">
+            INSERT INTO participation (discriminator, student_id, exercise_id, initialization_state,
+                                       initialization_date, test_run, attempt)
+            SELECT 'SP', p.student_id, p.exercise_id, p.initialization_state, p.initialization_date, TRUE, 1
+            FROM participation p
+                     JOIN exercise e ON p.exercise_id = e.id
+            WHERE p.discriminator = 'SP'
+              AND e.discriminator = 'Q'
+              AND e.exercise_group_id IS NULL
+              AND p.test_run = FALSE
+              AND p.id = (SELECT MIN(p_inner.id)
+                          FROM participation p_inner
+                          WHERE p_inner.student_id = p.student_id
+                            AND p_inner.exercise_id = p.exercise_id
+                            AND p_inner.discriminator = 'SP'
+                            AND p_inner.test_run = FALSE)
+              AND EXISTS (SELECT 1
+                          FROM submission s
+                                   INNER JOIN result r ON s.id = r.submission_id
+                          WHERE s.participation_id = p.id
+                            AND r.rated = FALSE);
+
+            UPDATE submission s
+                JOIN participation p_orig
+            ON s.participation_id = p_orig.id
+                JOIN exercise e ON p_orig.exercise_id = e.id
+                JOIN participation p_new
+                ON p_new.student_id = p_orig.student_id
+                AND p_new.exercise_id = p_orig.exercise_id
+                AND p_new.test_run = TRUE
+                SET s.participation_id = p_new.id
+            WHERE p_orig.discriminator = 'SP'
+              AND e.discriminator = 'Q'
+              AND e.exercise_group_id IS NULL
+              AND p_orig.test_run = FALSE
+              AND p_orig.id = (SELECT MIN(p_inner.id)
+                FROM participation p_inner
+                WHERE p_inner.student_id = p_orig.student_id
+              AND p_inner.exercise_id = p_orig.exercise_id
+              AND p_inner.discriminator = 'SP'
+              AND p_inner.test_run = FALSE)
+              AND EXISTS (SELECT 1 FROM result r WHERE s.id = r.submission_id
+              AND r.rated = FALSE);
+        </sql>
+
+        <rollback>
+            <sql dbms="postgresql">
+                UPDATE submission s
+                SET participation_id = (SELECT MIN(p_normal.id)
+                FROM participation p_normal
+                WHERE p_normal.student_id = p_test.student_id
+                AND p_normal.exercise_id = p_test.exercise_id
+                AND p_normal.test_run = FALSE
+                AND p_normal.discriminator = 'SP'
+                AND p_normal.attempt = 0)
+                FROM participation p_test
+                JOIN exercise e ON p_test.exercise_id = e.id
+                WHERE s.participation_id = p_test.id
+                AND p_test.test_run = TRUE
+                AND p_test.discriminator = 'SP'
+                AND p_test.attempt = 1
+                AND e.discriminator = 'Q'
+                AND e.exercise_group_id IS NULL
+                AND (SELECT MIN(p_normal.id)
+                FROM participation p_normal
+                WHERE p_normal.student_id = p_test.student_id
+                AND p_normal.exercise_id = p_test.exercise_id
+                AND p_normal.test_run = FALSE
+                AND p_normal.discriminator = 'SP'
+                AND p_normal.attempt = 0) IS NOT NULL;
+
+                DELETE
+                FROM participation p_test USING exercise e
+                WHERE p_test.exercise_id = e.id
+                AND p_test.test_run = TRUE
+                AND p_test.discriminator = 'SP'
+                AND p_test.attempt = 1
+                AND e.discriminator = 'Q'
+                AND e.exercise_group_id IS NULL
+                AND EXISTS (SELECT 1
+                FROM participation p_normal
+                WHERE p_normal.student_id = p_test.student_id
+                AND p_normal.exercise_id = p_test.exercise_id
+                AND p_normal.test_run = FALSE
+                AND p_normal.discriminator = 'SP'
+                AND p_normal.attempt = 0);
+            </sql>
+
+            <sql dbms="mysql">
+                UPDATE submission s
+                JOIN participation p_test ON s.participation_id = p_test.id
+                JOIN exercise e ON p_test.exercise_id = e.id
+                SET s.participation_id = (SELECT MIN(p_normal.id)
+                FROM participation p_normal
+                WHERE p_normal.student_id = p_test.student_id
+                AND p_normal.exercise_id = p_test.exercise_id
+                AND p_normal.test_run = FALSE
+                AND p_normal.discriminator = 'SP'
+                AND p_normal.attempt = 0)
+                WHERE p_test.test_run = TRUE
+                AND p_test.discriminator = 'SP'
+                AND p_test.attempt = 1
+                AND e.discriminator = 'Q'
+                AND e.exercise_group_id IS NULL
+                AND (SELECT MIN(p_normal.id)
+                FROM participation p_normal
+                WHERE p_normal.student_id = p_test.student_id
+                AND p_normal.exercise_id = p_test.exercise_id
+                AND p_normal.test_run = FALSE
+                AND p_normal.discriminator = 'SP'
+                AND p_normal.attempt = 0) IS NOT NULL;
+
+                DELETE p_test
+                FROM participation p_test
+                JOIN exercise e ON p_test.exercise_id = e.id
+                WHERE p_test.test_run = TRUE
+                AND p_test.discriminator = 'SP'
+                AND p_test.attempt = 1
+                AND e.discriminator = 'Q'
+                AND e.exercise_group_id IS NULL
+                AND EXISTS (SELECT 1
+                FROM participation p_normal
+                WHERE p_normal.student_id = p_test.student_id
+                AND p_normal.exercise_id = p_test.exercise_id
+                AND p_normal.test_run = FALSE
+                AND p_normal.discriminator = 'SP'
+                AND p_normal.attempt = 0);
+            </sql>
+        </rollback>
+    </changeSet>
+</databaseChangeLog>
