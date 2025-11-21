@@ -2,7 +2,6 @@
 id: intro
 title: Welcome to the Administrator Guide
 sidebar_label: Introduction
-sidebar_position: 1
 ---
 
 # 🔐 Administrator Setup & Security Guide
@@ -13,6 +12,7 @@ This documentation covers:
 
 - Server and production environment setup
 - Security configurations and best practices
+- Hyperion AI-assisted exercise authoring setup
 - Managing SSH access and network routing
 - Monitoring, scaling, and integrating external services
 

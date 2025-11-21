@@ -29,5 +29,4 @@ public interface TextUnitRepository extends ArtemisJpaRepository<TextUnit, Long>
             WHERE tu.id = :textUnitId
             """)
     Optional<TextUnit> findByIdWithCompetencies(@Param("textUnitId") Long textUnitId);
-
 }
