@@ -30,6 +30,7 @@ describe('EditAttachmentVideoUnitComponent', () => {
     let router: Router;
     let navigateSpy: jest.SpyInstance;
     let updateAttachmentVideoUnitSpy: jest.SpyInstance;
+    let fetchAndUpdatePlaylistUrlSpy: jest.SpyInstance;
     let attachment: Attachment;
     let attachmentVideoUnit: AttachmentVideoUnit;
     let baseFormData: FormData;
@@ -121,6 +122,7 @@ describe('EditAttachmentVideoUnitComponent', () => {
 
         jest.spyOn(lectureTranscriptionService, 'getTranscription').mockReturnValue(of(undefined));
         jest.spyOn(lectureTranscriptionService, 'getTranscriptionStatus').mockReturnValue(of(undefined));
+        fetchAndUpdatePlaylistUrlSpy = jest.spyOn(attachmentVideoUnitService, 'fetchAndUpdatePlaylistUrl').mockImplementation((_, formData) => of(formData));
     });
 
     afterEach(() => {
@@ -389,11 +391,31 @@ describe('EditAttachmentVideoUnitComponent', () => {
     });
     it('should fetch playlist URL when editing existing video with videoSource', () => {
         const playlistUrl = 'https://live.rbg.tum.de/playlist.m3u8';
-        const getPlaylistUrlSpy = jest.spyOn(attachmentVideoUnitService, 'getPlaylistUrl').mockReturnValue(of(playlistUrl));
+
+        const expectedFormData: AttachmentVideoUnitFormData = {
+            formProperties: {
+                name: attachmentVideoUnit.name,
+                description: attachmentVideoUnit.description,
+                releaseDate: attachmentVideoUnit.releaseDate,
+                version: attachmentVideoUnit.attachment?.version,
+                videoSource: attachmentVideoUnit.videoSource,
+                updateNotificationText: undefined,
+            },
+            fileProperties: {
+                fileName: attachmentVideoUnit.attachment?.link,
+            },
+            transcriptionProperties: {
+                videoTranscription: undefined,
+            },
+            transcriptionStatus: undefined,
+            playlistUrl: playlistUrl,
+        };
+
+        fetchAndUpdatePlaylistUrlSpy.mockReturnValue(of(expectedFormData));
 
         fixture.detectChanges();
 
-        expect(getPlaylistUrlSpy).toHaveBeenCalledWith(attachmentVideoUnit.videoSource);
+        expect(fetchAndUpdatePlaylistUrlSpy).toHaveBeenCalledWith(attachmentVideoUnit.videoSource, expect.anything());
 
         // Wait for async operation
         return fixture.whenStable().then(() => {
@@ -413,19 +435,67 @@ describe('EditAttachmentVideoUnitComponent', () => {
             ),
         );
 
-        const getPlaylistUrlSpy = jest.spyOn(attachmentVideoUnitService, 'getPlaylistUrl');
+        const fetchAndUpdatePlaylistUrlSpy = jest.spyOn(attachmentVideoUnitService, 'fetchAndUpdatePlaylistUrl');
 
         fixture.detectChanges();
 
-        expect(getPlaylistUrlSpy).not.toHaveBeenCalled();
+        // It is called with undefined, but returns original form data (mock needed if strict)
+        // But wait, if we don't mock it, it might return undefined if it's a mock service.
+        // We should mock it to return the form data.
+
+        const expectedFormData: AttachmentVideoUnitFormData = {
+            formProperties: {
+                name: attachmentVideoUnit.name,
+                description: attachmentVideoUnit.description,
+                releaseDate: attachmentVideoUnit.releaseDate,
+                version: attachmentVideoUnit.attachment?.version,
+                videoSource: undefined,
+                updateNotificationText: undefined,
+            },
+            fileProperties: {
+                fileName: attachmentVideoUnit.attachment?.link,
+            },
+            transcriptionProperties: {
+                videoTranscription: undefined,
+            },
+            transcriptionStatus: undefined,
+        };
+
+        // fetchAndUpdatePlaylistUrlSpy is already mocked in beforeEach, no need to re-spy
+        // We just need to ensure it returns the expected form data for this specific test case.
+
+        fixture.detectChanges();
+
+        fetchAndUpdatePlaylistUrlSpy.mockReturnValue(of(expectedFormData));
+
+        expect(fetchAndUpdatePlaylistUrlSpy).toHaveBeenCalledWith(undefined, expect.anything());
     });
 
     it('should handle playlist URL fetch failure gracefully', () => {
-        const getPlaylistUrlSpy = jest.spyOn(attachmentVideoUnitService, 'getPlaylistUrl').mockReturnValue(throwError(() => new Error('Not found')));
+        // When fetch fails (or returns null), it returns the original form data
+        const originalFormData: AttachmentVideoUnitFormData = {
+            formProperties: {
+                name: attachmentVideoUnit.name,
+                description: attachmentVideoUnit.description,
+                releaseDate: attachmentVideoUnit.releaseDate,
+                version: attachmentVideoUnit.attachment?.version,
+                videoSource: attachmentVideoUnit.videoSource,
+                updateNotificationText: undefined,
+            },
+            fileProperties: {
+                fileName: attachmentVideoUnit.attachment?.link,
+            },
+            transcriptionProperties: {
+                videoTranscription: undefined,
+            },
+            transcriptionStatus: undefined,
+        };
+
+        fetchAndUpdatePlaylistUrlSpy.mockReturnValue(of(originalFormData));
 
         fixture.detectChanges();
 
-        expect(getPlaylistUrlSpy).toHaveBeenCalledWith(attachmentVideoUnit.videoSource);
+        expect(fetchAndUpdatePlaylistUrlSpy).toHaveBeenCalledWith(attachmentVideoUnit.videoSource, expect.anything());
 
         // Should still initialize form data without playlist URL
         return fixture.whenStable().then(() => {

@@ -24,6 +24,7 @@ import { CreateExerciseUnitComponent } from 'app/lecture/manage/lecture-units/cr
 import { catchError, map, switchMap } from 'rxjs/operators';
 import { combineLatest, of } from 'rxjs';
 import { LectureTranscriptionService } from '../services/lecture-transcription.service';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     selector: 'jhi-lecture-update-units',
@@ -45,6 +46,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
     protected onlineUnitService = inject(OnlineUnitService);
     protected attachmentVideoUnitService = inject(AttachmentVideoUnitService);
     protected lectureTranscriptionService = inject(LectureTranscriptionService);
+    protected accountService = inject(AccountService);
 
     @Input() lecture: Lecture;
 
@@ -318,7 +320,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
         of(lectureUnit)
             .pipe(
                 switchMap((unit) => {
-                    if (unit.type === LectureUnitType.ATTACHMENT_VIDEO) {
+                    if (unit.type === LectureUnitType.ATTACHMENT_VIDEO && this.accountService.isAdmin()) {
                         return combineLatest({
                             transcription: this.lectureTranscriptionService.getTranscription(unit.id!),
                             transcriptionStatus: this.lectureTranscriptionService.getTranscriptionStatus(unit.id!),
@@ -362,22 +364,13 @@ export class LectureUpdateUnitsComponent implements OnInit {
                             transcriptionStatus: transcriptionStatus,
                         };
                         // Check if playlist URL is available for existing video to enable transcription generation
-                        if (this.currentlyProcessedAttachmentVideoUnit.videoSource) {
-                            this.attachmentVideoUnitService.getPlaylistUrl(this.currentlyProcessedAttachmentVideoUnit.videoSource).subscribe({
-                                next: (playlist) => {
-                                    if (playlist) {
-                                        // Update formData with the playlist URL
-                                        this.attachmentVideoUnitFormData = {
-                                            ...this.attachmentVideoUnitFormData,
-                                            playlistUrl: playlist,
-                                        };
-                                    }
-                                },
-                                error: () => {
-                                    // Playlist URL not available, transcription generation won't be possible
+                        this.attachmentVideoUnitService
+                            .fetchAndUpdatePlaylistUrl(this.currentlyProcessedAttachmentVideoUnit.videoSource, this.attachmentVideoUnitFormData)
+                            .subscribe({
+                                next: (updatedFormData) => {
+                                    this.attachmentVideoUnitFormData = updatedFormData;
                                 },
                             });
-                        }
                         break;
                 }
             });

@@ -129,7 +129,7 @@ describe('AttachmentVideoUnitFormComponent', () => {
         attachmentVideoUnitFormComponentFixture.detectChanges();
 
         attachmentVideoUnitFormComponentFixture.componentRef.setInput('formData', formData);
-        attachmentVideoUnitFormComponent.ngOnChanges();
+        attachmentVideoUnitFormComponentFixture.detectChanges();
 
         expect(attachmentVideoUnitFormComponent.nameControl?.value).toEqual(formData.formProperties.name);
         expect(attachmentVideoUnitFormComponent.releaseDateControl?.value).toEqual(formData.formProperties.releaseDate);
@@ -150,7 +150,7 @@ describe('AttachmentVideoUnitFormComponent', () => {
             transcriptionStatus: TranscriptionStatus.PENDING,
         };
         attachmentVideoUnitFormComponentFixture.componentRef.setInput('formData', formDataWithStatus);
-        attachmentVideoUnitFormComponent.ngOnChanges();
+        attachmentVideoUnitFormComponentFixture.detectChanges();
         expect(attachmentVideoUnitFormComponent.transcriptionStatus()).toBe(TranscriptionStatus.PENDING);
 
         const formDataWithoutStatus: AttachmentVideoUnitFormData = {
@@ -158,7 +158,7 @@ describe('AttachmentVideoUnitFormComponent', () => {
             fileProperties: {},
         };
         attachmentVideoUnitFormComponentFixture.componentRef.setInput('formData', formDataWithoutStatus);
-        attachmentVideoUnitFormComponent.ngOnChanges();
+        attachmentVideoUnitFormComponentFixture.detectChanges();
         expect(attachmentVideoUnitFormComponent.transcriptionStatus()).toBeUndefined();
         expect(attachmentVideoUnitFormComponent.showTranscriptionPendingWarning()).toBeFalse();
     });
@@ -173,13 +173,13 @@ describe('AttachmentVideoUnitFormComponent', () => {
             transcriptionStatus: TranscriptionStatus.PENDING,
         };
         attachmentVideoUnitFormComponentFixture.componentRef.setInput('formData', formDataWithStatus);
-        attachmentVideoUnitFormComponent.ngOnChanges();
+        attachmentVideoUnitFormComponentFixture.detectChanges();
 
         expect(attachmentVideoUnitFormComponent.transcriptionStatus()).toBe(TranscriptionStatus.PENDING);
         expect(attachmentVideoUnitFormComponent.showTranscriptionPendingWarning()).toBeTrue();
 
         attachmentVideoUnitFormComponentFixture.componentRef.setInput('isEditMode', false);
-        attachmentVideoUnitFormComponent.ngOnChanges();
+        attachmentVideoUnitFormComponentFixture.detectChanges();
 
         expect(attachmentVideoUnitFormComponent.transcriptionStatus()).toBeUndefined();
         expect(attachmentVideoUnitFormComponent.showTranscriptionPendingWarning()).toBeFalse();

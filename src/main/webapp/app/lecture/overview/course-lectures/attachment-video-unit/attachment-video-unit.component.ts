@@ -37,7 +37,6 @@ import { AccountService } from 'app/core/auth/account.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranscriptSegment } from 'app/lecture/shared/models/transcript-segment.model';
 import { map } from 'rxjs/operators';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({
     selector: 'jhi-attachment-video-unit',
@@ -84,10 +83,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             return false;
         }
         // Don't show badge if transcript is already available
-        if (this.hasTranscript()) {
-            return false;
-        }
-        return true;
+        return !this.hasTranscript();
     });
 
     // TODO: This must use a server configuration to make it compatible with deployments other than TUM

@@ -387,43 +387,45 @@ describe('AttachmentVideoUnitComponent', () => {
         expect(component.getFileName()).toBe('');
     });
 
-    it('canShowTranscriptionPossibleBadge: returns true when no transcriptionProperties and no transcript segments', () => {
-        component.lectureUnit().transcriptionProperties = undefined;
-        component.transcriptSegments.set([]);
-        fixture.detectChanges();
+    describe('canShowTranscriptionPossibleBadge', () => {
+        it('returns true when no transcriptionProperties and no transcript segments', () => {
+            component.lectureUnit().transcriptionProperties = undefined;
+            component.transcriptSegments.set([]);
+            fixture.detectChanges();
 
-        expect(component.canShowTranscriptionPossibleBadge()).toBeTrue();
-    });
+            expect(component.canShowTranscriptionPossibleBadge()).toBeTrue();
+        });
 
-    it('canShowTranscriptionPossibleBadge: returns false when transcriptionProperties exists', () => {
-        component.lectureUnit().transcriptionProperties = {
-            lectureUnitId: 1,
-            language: 'en',
-            segments: [],
-        };
-        component.transcriptSegments.set([]);
-        fixture.detectChanges();
+        it('returns false when transcriptionProperties exists', () => {
+            component.lectureUnit().transcriptionProperties = {
+                lectureUnitId: 1,
+                language: 'en',
+                segments: [],
+            };
+            component.transcriptSegments.set([]);
+            fixture.detectChanges();
 
-        expect(component.canShowTranscriptionPossibleBadge()).toBeFalse();
-    });
+            expect(component.canShowTranscriptionPossibleBadge()).toBeFalse();
+        });
 
-    it('canShowTranscriptionPossibleBadge: returns false when transcript segments exist', () => {
-        component.lectureUnit().transcriptionProperties = undefined;
-        component.transcriptSegments.set([{ startTime: 0, endTime: 1, text: 'test', slideNumber: 1 }]);
-        fixture.detectChanges();
+        it('returns false when transcript segments exist', () => {
+            component.lectureUnit().transcriptionProperties = undefined;
+            component.transcriptSegments.set([{ startTime: 0, endTime: 1, text: 'test', slideNumber: 1 }]);
+            fixture.detectChanges();
 
-        expect(component.canShowTranscriptionPossibleBadge()).toBeFalse();
-    });
+            expect(component.canShowTranscriptionPossibleBadge()).toBeFalse();
+        });
 
-    it('canShowTranscriptionPossibleBadge: returns false when both transcriptionProperties and transcript segments exist', () => {
-        component.lectureUnit().transcriptionProperties = {
-            lectureUnitId: 1,
-            language: 'en',
-            segments: [],
-        };
-        component.transcriptSegments.set([{ startTime: 0, endTime: 1, text: 'test', slideNumber: 1 }]);
-        fixture.detectChanges();
+        it('returns false when both transcriptionProperties and transcript segments exist', () => {
+            component.lectureUnit().transcriptionProperties = {
+                lectureUnitId: 1,
+                language: 'en',
+                segments: [],
+            };
+            component.transcriptSegments.set([{ startTime: 0, endTime: 1, text: 'test', slideNumber: 1 }]);
+            fixture.detectChanges();
 
-        expect(component.canShowTranscriptionPossibleBadge()).toBeFalse();
+            expect(component.canShowTranscriptionPossibleBadge()).toBeFalse();
+        });
     });
 });

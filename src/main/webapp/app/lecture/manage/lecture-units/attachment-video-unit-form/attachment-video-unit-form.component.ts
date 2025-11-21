@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnChanges, ViewChild, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, ViewChild, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { AbstractControl, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import urlParser from 'js-video-url-parser';
@@ -112,7 +112,7 @@ function validJsonOrEmpty(control: AbstractControl): ValidationErrors | null {
     templateUrl: './attachment-video-unit-form.component.html',
     imports: [FormsModule, ReactiveFormsModule, TranslateDirective, FaIconComponent, NgbTooltip, FormDateTimePickerComponent, CompetencySelectionComponent, ArtemisTranslatePipe],
 })
-export class AttachmentVideoUnitFormComponent implements OnChanges {
+export class AttachmentVideoUnitFormComponent {
     protected readonly faQuestionCircle = faQuestionCircle;
     protected readonly faTimes = faTimes;
     protected readonly faArrowLeft = faArrowLeft;
@@ -156,9 +156,18 @@ export class AttachmentVideoUnitFormComponent implements OnChanges {
     constructor() {
         effect(() => {
             const formData = this.formData();
-            if (this.isEditMode() && formData?.playlistUrl) {
-                this.playlistUrl.set(formData.playlistUrl);
-                this.canGenerateTranscript.set(true);
+            if (this.isEditMode() && formData) {
+                this.setFormValues(formData);
+                const newStatus = formData.transcriptionStatus ? (formData.transcriptionStatus as TranscriptionStatus) : undefined;
+                this.transcriptionStatus.set(newStatus);
+
+                // Set playlist URL if available from formData (for existing videos)
+                if (formData.playlistUrl) {
+                    this.playlistUrl.set(formData.playlistUrl);
+                    this.canGenerateTranscript.set(true);
+                }
+            } else {
+                this.transcriptionStatus.set(undefined);
             }
         });
     }
@@ -220,32 +229,6 @@ export class AttachmentVideoUnitFormComponent implements OnChanges {
     isFormValid = computed(() => {
         return this.statusChanges() === 'VALID' && !this.isFileTooBig() && this.datePickerComponent()?.isValid() && (!!this.fileName() || !!this.videoSourceSignal());
     });
-
-    /**
-     * Handles changes to input properties, specifically formData.
-     *
-     * When in edit mode and formData is provided:
-     * - Sets form values from formData
-     * - If playlistUrl exists in formData, sets it and enables transcript generation
-     *   This is important for existing videos that already have a playlist URL
-     *   from a previous save or edit session
-     */
-    ngOnChanges() {
-        const formData = this.formData();
-        if (this.isEditMode() && formData) {
-            this.setFormValues(formData);
-            const newStatus = formData.transcriptionStatus ? (formData.transcriptionStatus as TranscriptionStatus) : undefined;
-            this.transcriptionStatus.set(newStatus);
-           // Set playlist URL if available from formData (for existing videos)
-            if (formData.playlistUrl) {
-                this.playlistUrl.set(formData.playlistUrl);
-                this.canGenerateTranscript.set(true);
-            }
-        } else {
-            this.transcriptionStatus.set(undefined);
-
-        }
-    }
 
     onFileChange(event: Event): void {
         const input = event.target as HTMLInputElement;
