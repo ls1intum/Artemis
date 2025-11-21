@@ -3,10 +3,12 @@
 Exams
 =====
 
-Artemis now includes an online exam mode:
+.. warning::
+   This documentation has been migrated to the new documentation system.
 
-.. toctree::
+Artemis includes an online exam mode. The documentation has been moved to the new documentation system:
 
-   exams/students_guide
-   exams/instructors_guide
-   exams/exam_participation_checker
+- **Student Guide:** https://docs.artemis.cit.tum.de/student/exams
+- **Instructor Guide:** https://docs.artemis.cit.tum.de/instructor/exams
+
+Please refer to the new documentation for the most up-to-date information about exams in Artemis.
