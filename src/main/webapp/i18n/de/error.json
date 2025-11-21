@@ -158,12 +158,18 @@
             "submissionIsNull": "Diese Beispielabgabe enthält keine Lösung.",
             "submissionIdMissing": "Die Abgabe muss zuerst gespeichert werden, bevor sie umgewandelt werden kann."
         },
+        "exerciseVersionIdMismatch": "Die angeforderte Übungsversion gehört nicht zur angegebenen Übungs-ID.",
         "submissionExerciseMismatch": "Die Abgabe gehört nicht zur angegebenen Aufgabe.",
         "maxAthenaResultsReached": "Maximale Anzahl an KI-Feedback-Anfragen erreicht.",
         "submissionAlreadyHasAthenaResult": "Die Abgabe hat bereits ein Athena-Ergebnis.",
         "missingFeedbackSuggestionModule": "Die Aufgabe hat kein Feedback-Vorschlagsmodul konfiguriert.",
         "examExerciseNoAccessToAthena": "Klausuraufgaben haben keinen Zugriff auf Athena.",
         "noAccessToAthenaModule": "Die Aufgabe hat keinen Zugriff auf das ausgewählte Athena-Modul.",
-        "athenaModuleChangeAfterDueDate": "Das Athena-Modul kann nach Ablauf der Abgabefrist nicht mehr geändert werden."
+        "athenaModuleChangeAfterDueDate": "Das Athena-Modul kann nach Ablauf der Abgabefrist nicht mehr geändert werden.",
+        "passkeyAuth": {
+            "notAuthenticatedWithPasskey": "Du bist nicht mit einem Passkey authentifiziert. Bitte authentifiziere dich mit einem Passkey, um auf diese Ressource zuzugreifen.",
+            "notSuperAdminApproved": "Dein Passkey ist nicht von einem Super-Admin freigegeben. Bitte überprüfe in den Nutzereinstellungen, ob dein Passkey von einem Super-Admin freigegeben wurde und melde dich erneut mit dem entsprechendem Passkey an.",
+            "loginRequiredButFeatureNotEnabled": "Für diese Funktion ist ein Passkey-Login erforderlich. Allerdings ist die Passkey-Authentifizierung auf dieser Artemis-Instanz nicht aktiviert. Bitte aktiviere die Passkey-Authentifizierung auf dieser Artemis Instanz."
+        }
     }
 }
