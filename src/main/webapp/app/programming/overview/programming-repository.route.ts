@@ -2,7 +2,7 @@ import { Routes } from '@angular/router';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 
-export const routes: Routes = [
+export const programmingRepositoryRoutes: Routes = [
     {
         path: ':repositoryId',
         loadComponent: () => import('app/programming/shared/repository-view/repository-view.component').then((m) => m.RepositoryViewComponent),

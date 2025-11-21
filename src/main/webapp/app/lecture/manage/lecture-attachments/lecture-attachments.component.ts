@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnDestroy, ViewChild, computed, effect, inject, input, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, OnDestroy, ViewChild, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
@@ -68,8 +68,7 @@ export class LectureAttachmentsComponent implements OnDestroy {
     @ViewChild('fileInput', { static: false }) fileInput: ElementRef;
     datePickerComponent = viewChild(FormDateTimePickerComponent);
 
-    lectureId = input<number>();
-    showHeader = input<boolean>(true);
+    lectureId: number;
 
     lecture = signal<Lecture>(new Lecture());
     attachments: Attachment[] = [];
@@ -106,9 +105,9 @@ export class LectureAttachmentsComponent implements OnDestroy {
         effect(() => {
             this.notificationText = undefined;
             this.routeDataSubscription?.unsubscribe(); // in case the subscription was already defined
-            this.routeDataSubscription = this.activatedRoute.parent!.data.subscribe(({ lecture }) => {
-                if (this.lectureId()) {
-                    this.lectureService.findWithDetails(this.lectureId()!).subscribe((lectureResponse: HttpResponse<Lecture>) => {
+            this.routeDataSubscription = this.activatedRoute.data.subscribe(({ lecture }) => {
+                if (this.lectureId) {
+                    this.lectureService.findWithDetails(this.lectureId).subscribe((lectureResponse: HttpResponse<Lecture>) => {
                         this.lecture.set(lectureResponse.body!);
                         this.loadAttachments();
                     });
