@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.exercise.repository;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -143,8 +144,8 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
      * Get the number of currently locked submissions for a specific user in the given exam. These are all submissions for which the user started, but has not yet finished the
      * assessment.
      *
-     * @param userId the id of the user
-     * @param examId the id of the exam
+     * @param userId      the id of the user
+     * @param exerciseIds the ids of the exercises
      * @return the number of currently locked submissions for a specific user in the given course
      */
     @Query("""
@@ -153,15 +154,15 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
                 LEFT JOIN s.results r
             WHERE r.assessor.id = :userId
                 AND r.completionDate IS NULL
-                AND s.participation.exercise.exerciseGroup.exam.id = :examId
+                AND s.participation.exercise.id IN :exerciseIds
             """)
-    long countLockedSubmissionsByUserIdAndExamId(@Param("userId") Long userId, @Param("examId") Long examId);
+    long countLockedSubmissionsByUserIdAndExerciseIds(@Param("userId") Long userId, @Param("exerciseIds") Collection<Long> exerciseIds);
 
     /**
      * Get the number of currently locked submissions for a given exam. These are all submissions for which users started, but have not yet finished the
      * assessments.
      *
-     * @param examId the id of the exam
+     * @param exerciseIds the id of the exercises
      * @return the number of currently locked submissions for a specific user in the given course
      */
     @Query("""
@@ -170,9 +171,9 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
                 LEFT JOIN s.results r
             WHERE r.assessor.id IS NOT NULL
                 AND r.completionDate IS NULL
-                AND s.participation.exercise.exerciseGroup.exam.id = :examId
+                AND s.participation.exercise.id IN :exerciseIds
             """)
-    long countLockedSubmissionsByExamId(@Param("examId") Long examId);
+    long countLockedSubmissionsByExerciseIds(@Param("exerciseIds") Collection<Long> exerciseIds);
 
     /**
      * Get the number of currently locked submissions for a given exam. These are all submissions for which users started, but have not yet finished the
@@ -267,11 +268,11 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
             SELECT COUNT(DISTINCT submission)
             FROM Submission submission
             WHERE TYPE(submission) IN (ModelingSubmission, TextSubmission, FileUploadSubmission)
-                AND submission.participation.exercise.exerciseGroup.exam.id = :examId
+                AND submission.participation.exercise.id IN :exerciseIds
                 AND submission.submitted = TRUE
                 AND submission.participation.testRun = FALSE
             """)
-    long countByExamIdSubmittedSubmissionsIgnoreTestRuns(@Param("examId") long examId);
+    long countByExerciseIdsSubmittedSubmissionsIgnoreTestRuns(@Param("exerciseIds") Collection<Long> exerciseIds);
 
     /**
      * Count number of late submissions for course. Only submissions for Text, Modeling and File Upload exercises are included.

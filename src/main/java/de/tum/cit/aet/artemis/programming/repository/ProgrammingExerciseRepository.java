@@ -6,6 +6,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.TITLE_NAME_PATTERN;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.time.ZonedDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -482,9 +483,9 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             FROM ProgrammingExerciseStudentParticipation p
                 JOIN p.submissions s
             WHERE p.exercise.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC
-                AND p.exercise.exerciseGroup.exam.id = :examId
+                AND p.exercise.id IN :exerciseIds
             """)
-    long countSubmissionsByExamIdSubmitted(@Param("examId") long examId);
+    long countSubmissionsByExerciseIdsSubmitted(@Param("exerciseIds") Collection<Long> exerciseIds);
 
     /**
      * In distinction to other exercise types, students can have multiple submissions in a programming exercise.

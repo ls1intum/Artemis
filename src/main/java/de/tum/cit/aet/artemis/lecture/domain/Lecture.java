@@ -16,7 +16,6 @@ import jakarta.persistence.OrderBy;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
 import jakarta.validation.constraints.NotNull;
 
 import org.hibernate.Hibernate;
@@ -89,12 +88,6 @@ public class Lecture extends DomainObject {
     @ManyToOne
     @JsonIgnoreProperties(value = { "lectures", "exercises", "posts" }, allowSetters = true)
     private Course course;
-
-    /**
-     * Used for receiving the value from client.
-     */
-    @Transient
-    private String channelNameTransient;
 
     public String getTitle() {
         return title;
@@ -286,14 +279,6 @@ public class Lecture extends DomainObject {
         /* TODO: #11479 - remove visibleDate from the string representation OR leave as is */
         return "Lecture{" + "id=" + getId() + ", title='" + getTitle() + "'" + ", description='" + getDescription() + "'" + ", visibleDate='" + getVisibleDate() + "'"
                 + ", startDate='" + getStartDate() + "'" + ", endDate='" + getEndDate() + "'" + "}";
-    }
-
-    public String getChannelName() {
-        return channelNameTransient;
-    }
-
-    public void setChannelName(String channelNameTransient) {
-        this.channelNameTransient = channelNameTransient;
     }
 
     /**

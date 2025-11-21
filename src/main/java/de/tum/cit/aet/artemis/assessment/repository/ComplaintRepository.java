@@ -320,14 +320,13 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
                 JOIN r.submission s
                 JOIN s.participation p
                 JOIN p.exercise e
-                JOIN e.exerciseGroup eg
             WHERE c.complaintType = de.tum.cit.aet.artemis.assessment.domain.ComplaintType.COMPLAINT
-                AND eg.exam.id = :examId
+                AND e.id IN :exerciseIds
                 AND r.completionDate IS NOT NULL
                 AND r.assessor.id IS NOT NULL
             GROUP BY r.assessor.id
             """)
-    List<TutorLeaderboardComplaintsDTO> findTutorLeaderboardComplaintsByExamId(@Param("examId") long examId);
+    List<TutorLeaderboardComplaintsDTO> findTutorLeaderboardComplaintsByExerciseIds(@Param("exerciseIds") Collection<Long> exerciseIds);
 
     /**
      * Get the number of complaintResponses for all tutors assessments of a course
@@ -399,14 +398,13 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
                 JOIN r.submission s
                 JOIN s.participation p
                 JOIN p.exercise e
-                JOIN e.exerciseGroup eg
             WHERE c.complaintType = de.tum.cit.aet.artemis.assessment.domain.ComplaintType.COMPLAINT
-                AND eg.exam.id = :examId
+                AND e.id IN :exerciseIds
                 AND r.completionDate IS NOT NULL
                 AND c.accepted IS NOT NULL
             GROUP BY cr.reviewer.id
             """)
-    List<TutorLeaderboardComplaintResponsesDTO> findTutorLeaderboardComplaintResponsesByExamId(@Param("examId") long examId);
+    List<TutorLeaderboardComplaintResponsesDTO> findTutorLeaderboardComplaintResponsesByExerciseIds(@Param("exerciseIds") Collection<Long> exerciseIds);
 
     // Valid JPQL syntax. Only SCA fails to properly detect the types.
     /**

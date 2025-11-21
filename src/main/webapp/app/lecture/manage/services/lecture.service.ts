@@ -40,7 +40,7 @@ export class LectureService {
         return this.http.get<Lecture>(`${this.resourceUrl}/${lectureId}`, { observe: 'response' }).pipe(
             map((res: EntityResponseType) => {
                 this.convertLectureResponseDatesFromServer(res);
-                this.setAccessRightsLecture(res.body);
+                this.setAccessRightsLecture(res.body || undefined);
                 this.sendTitlesToEntityTitleService(res?.body);
                 return res;
             }),
@@ -57,7 +57,7 @@ export class LectureService {
                     }
                 }
                 this.convertLectureResponseDatesFromServer(res);
-                this.setAccessRightsLecture(res.body);
+                this.setAccessRightsLecture(res.body || undefined);
                 this.sendTitlesToEntityTitleService(res?.body);
                 return res;
             }),
@@ -138,7 +138,7 @@ export class LectureService {
             .pipe(
                 map((res: EntityResponseType) => {
                     this.convertLectureResponseDatesFromServer(res);
-                    this.setAccessRightsLecture(res.body);
+                    this.setAccessRightsLecture(res.body || undefined);
                     this.sendTitlesToEntityTitleService(res?.body);
                     return res;
                 }),
@@ -202,7 +202,7 @@ export class LectureService {
      * @param lecture for which the access rights shall be set
      * @return lecture that with set access rights if the course was set
      */
-    private setAccessRightsLecture(lecture: Lecture | null) {
+    private setAccessRightsLecture(lecture: Lecture | undefined) {
         if (lecture) {
             if (lecture.course) {
                 this.accountService.setAccessRightsForCourse(lecture.course);

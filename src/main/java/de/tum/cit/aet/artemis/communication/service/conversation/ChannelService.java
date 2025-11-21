@@ -286,13 +286,15 @@ public class ChannelService {
      * Creates a channel for a lecture and sets the channel name of the lecture accordingly.
      *
      * @param lecture     the lecture to create the channel for
-     * @param channelName the name of the channel
+     * @param channelName the name of the channel (optional), will be generated from the lecture title if not provided
+     *
+     * @return the created channel name
      */
-    public void createLectureChannel(Lecture lecture, Optional<String> channelName) {
+    public String createLectureChannel(Lecture lecture, Optional<String> channelName) {
         Channel channelToCreate = createDefaultChannel(channelName, "lecture-", lecture.getTitle());
         channelToCreate.setLecture(lecture);
-        Channel createdChannel = createChannel(lecture.getCourse(), channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
-        lecture.setChannelName(createdChannel.getName());
+        Channel createdChannel = createChannel(lecture.getCourse(), channelToCreate, Optional.of(userRepository.getUser()));
+        return createdChannel.getName();
     }
 
     /**
@@ -308,7 +310,7 @@ public class ChannelService {
         }
         Channel channelToCreate = createDefaultChannel(channelName, "exercise-", exercise.getTitle());
         channelToCreate.setExercise(exercise);
-        return createChannel(exercise.getCourseViaExerciseGroupOrCourseMember(), channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
+        return createChannel(exercise.getCourseViaExerciseGroupOrCourseMember(), channelToCreate, Optional.of(userRepository.getUser()));
     }
 
     /**

@@ -212,7 +212,6 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         lecture.setTitle("loremIpsum-()!?");
         lecture.setCourse(course);
         lecture.setDescription("loremIpsum");
-        lecture.setChannelName(channelName);
 
         lecture.setVisibleDate(ZonedDateTime.now().minusDays(1));
         lecture.setStartDate(ZonedDateTime.now());
@@ -238,7 +237,6 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void createLecture_alreadyId_shouldReturnBadRequest() throws Exception {
         Lecture lecture = new Lecture();
         lecture.setId(1L);
-        lecture.setChannelName("test");
         request.postWithResponseBody("/api/lecture/lectures", lecture, Lecture.class, HttpStatus.BAD_REQUEST);
     }
 
@@ -255,7 +253,6 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         String editedChannelName = "edited-lecture-channel";
         // create channel with same name
         conversationUtilService.createCourseWideChannel(originalLecture.getCourse(), editedChannelName);
-        originalLecture.setChannelName(editedChannelName);
         // lecture channel should be updated despite another channel with the same name
         Lecture updatedLecture = request.putWithResponseBody("/api/lecture/lectures", originalLecture, Lecture.class, HttpStatus.OK);
 
@@ -275,7 +272,6 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void updateLecture_NoId_shouldReturnBadRequest() throws Exception {
         Lecture originalLecture = lectureRepository.findByIdWithLectureUnitsAndAttachments(lecture1.getId()).orElseThrow();
         originalLecture.setId(null);
-        originalLecture.setChannelName("test");
 
         request.putWithResponseBody("/api/lecture/lectures", originalLecture, Lecture.class, HttpStatus.BAD_REQUEST);
     }
