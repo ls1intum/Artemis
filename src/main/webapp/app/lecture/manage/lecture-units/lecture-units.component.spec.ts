@@ -942,7 +942,7 @@ describe('LectureUpdateUnitsComponent', () => {
         });
     }));
 
-    it('should not start transcription when editing an existing unit', fakeAsync(() => {
+    it('should start transcription when editing an existing unit with generateTranscript enabled', fakeAsync(() => {
         const attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
 
         const formData: AttachmentVideoUnitFormData = {
@@ -959,7 +959,7 @@ describe('LectureUpdateUnitsComponent', () => {
         savedUnit.videoSource = 'https://example.com/src.m3u8';
 
         jest.spyOn(attachmentVideoUnitService, 'update').mockReturnValue(of(new HttpResponse({ body: savedUnit, status: 200 })));
-        const startSpy = jest.spyOn(attachmentVideoUnitService, 'startTranscription');
+        const startSpy = jest.spyOn(attachmentVideoUnitService, 'startTranscription').mockReturnValue(of(undefined) as StartTxReturn);
 
         wizardUnitComponentFixture.detectChanges();
         tick();
@@ -969,11 +969,12 @@ describe('LectureUpdateUnitsComponent', () => {
         wizardUnitComponent.isEditingLectureUnit = true;
         wizardUnitComponent.currentlyProcessedAttachmentVideoUnit = new AttachmentVideoUnit();
         wizardUnitComponent.currentlyProcessedAttachmentVideoUnit.attachment = new Attachment();
+        wizardUnitComponent.currentlyProcessedAttachmentVideoUnit.id = savedUnit.id;
 
         wizardUnitComponent.createEditAttachmentVideoUnit(formData);
 
         wizardUnitComponentFixture.whenStable().then(() => {
-            expect(startSpy).not.toHaveBeenCalled();
+            expect(startSpy).toHaveBeenCalledWith(wizardUnitComponent.lecture.id, savedUnit.id, savedUnit.videoSource);
         });
     }));
 
