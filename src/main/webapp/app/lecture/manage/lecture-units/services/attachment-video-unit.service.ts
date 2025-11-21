@@ -119,4 +119,16 @@ export class AttachmentVideoUnitService {
                 }),
             );
     }
+
+    /**
+     * Resolves a video page URL to its underlying playlist URL (e.g., .m3u8).
+     * This is used for video platforms that require an API call to get the actual playable URL.
+     *
+     * @param pageUrl - The public page URL of the video
+     * @returns Observable<string | null> - The playlist URL if found, null otherwise
+     */
+    getPlaylistUrl(pageUrl: string): Observable<string | null> {
+        const params = new HttpParams().set('url', pageUrl);
+        return this.httpClient.get('/api/nebula/video-utils/tum-live-playlist', { params, responseType: 'text' }).pipe(catchError(() => of(null)));
+    }
 }
