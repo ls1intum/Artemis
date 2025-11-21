@@ -59,17 +59,8 @@ public class LectureTranscriptionsRepositoryApi extends AbstractLectureApi {
      * @return Optional containing the transcript DTO if found, empty otherwise
      */
     public Optional<LectureTranscriptionDTO> getTranscript(Long lectureUnitId) {
-        Optional<LectureTranscription> transcriptionOpt = findByLectureUnit_Id(lectureUnitId);
-        if (transcriptionOpt.isEmpty()) {
-            return Optional.empty();
-        }
-
-        LectureTranscription transcription = transcriptionOpt.get();
-        if (transcription.getLanguage() == null || transcription.getSegments() == null) {
-            return Optional.empty();
-        }
-        LectureTranscriptionDTO dto = new LectureTranscriptionDTO(lectureUnitId, transcription.getLanguage(), transcription.getSegments());
-        return Optional.of(dto);
+        return findByLectureUnit_Id(lectureUnitId).filter(transcription -> transcription.getLanguage() != null && transcription.getSegments() != null)
+                .map(transcription -> new LectureTranscriptionDTO(lectureUnitId, transcription.getLanguage(), transcription.getSegments()));
     }
 
     /**
@@ -79,13 +70,7 @@ public class LectureTranscriptionsRepositoryApi extends AbstractLectureApi {
      * @return Optional containing the transcription status name if found, empty otherwise
      */
     public Optional<String> getTranscriptStatus(Long lectureUnitId) {
-        Optional<LectureTranscription> transcriptionOpt = findByLectureUnit_Id(lectureUnitId);
-        if (transcriptionOpt.isEmpty()) {
-            return Optional.empty();
-        }
-
-        LectureTranscription transcription = transcriptionOpt.get();
-        return Optional.of(transcription.getTranscriptionStatus().name());
+        return findByLectureUnit_Id(lectureUnitId).map(LectureTranscription::getTranscriptionStatus).map(TranscriptionStatus::name);
     }
 
 }
