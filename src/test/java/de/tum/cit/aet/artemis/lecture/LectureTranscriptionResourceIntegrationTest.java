@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.lecture;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -101,6 +102,7 @@ class LectureTranscriptionResourceIntegrationTest extends AbstractSpringIntegrat
         assertThat(savedTranscriptions).hasSize(1);
         assertThat(savedTranscriptions.get(0).getLanguage()).isEqualTo("en");
         assertThat(savedTranscriptions.get(0).getSegments()).hasSize(2);
+        assertThat(savedTranscriptions.get(0).getTranscriptionStatus()).isEqualTo(TranscriptionStatus.COMPLETED);
     }
 
     @Test
@@ -144,6 +146,7 @@ class LectureTranscriptionResourceIntegrationTest extends AbstractSpringIntegrat
         assertThat(savedTranscriptions).hasSize(1);
         assertThat(savedTranscriptions.get(0).getLanguage()).isEqualTo("en");
         assertThat(savedTranscriptions.get(0).getSegments().get(0).text()).isEqualTo("New content");
+        assertThat(savedTranscriptions.get(0).getTranscriptionStatus()).isEqualTo(TranscriptionStatus.COMPLETED);
     }
 
     @Test
@@ -185,5 +188,23 @@ class LectureTranscriptionResourceIntegrationTest extends AbstractSpringIntegrat
     void getTranscript_asStudent_forbidden() throws Exception {
         // Students should not be able to access transcripts without proper permissions
         restLectureTranscriptionMockMvc.perform(get("/api/lecture/lecture-unit/{lectureUnitId}/transcript", lectureUnit.getId())).andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    void getTranscriptStatus_manualTranscriptionCompleted() throws Exception {
+        var segments = List.of(new LectureTranscriptionSegment(0.0, 5.0, "Hello world", 1));
+        var transcription = new LectureTranscription("en", segments, lectureUnit);
+        transcription.setTranscriptionStatus(TranscriptionStatus.COMPLETED);
+        lectureTranscriptionRepository.save(transcription);
+
+        restLectureTranscriptionMockMvc.perform(get("/api/lecture/lecture-unit/{lectureUnitId}/transcript/status", lectureUnit.getId())).andExpect(status().isOk())
+                .andExpect(content().string("COMPLETED"));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    void getTranscriptStatus_notFound() throws Exception {
+        restLectureTranscriptionMockMvc.perform(get("/api/lecture/lecture-unit/{lectureUnitId}/transcript/status", lectureUnit.getId())).andExpect(status().isNotFound());
     }
 }
