@@ -2,7 +2,7 @@ import dayjs from 'dayjs/esm';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockProvider } from 'ng-mocks';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { AttachmentVideoUnitFormComponent, AttachmentVideoUnitFormData } from '../attachment-video-unit-form/attachment-video-unit-form.component';
 import { AttachmentVideoUnitService } from '../services/attachment-video-unit.service';
 import { EditAttachmentVideoUnitComponent } from './edit-attachment-video-unit.component';
@@ -14,14 +14,12 @@ import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker'
 
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { LectureTranscriptionService } from 'app/lecture/manage/services/lecture-transcription.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { objectToJsonBlob } from 'app/shared/util/blob-util';
 
 describe('EditAttachmentVideoUnitComponent', () => {
@@ -29,7 +27,6 @@ describe('EditAttachmentVideoUnitComponent', () => {
     let component: EditAttachmentVideoUnitComponent;
     let attachmentVideoUnitService: AttachmentVideoUnitService;
     let lectureTranscriptionService: LectureTranscriptionService;
-    let accountService: AccountService;
     let router: Router;
     let navigateSpy: jest.SpyInstance;
     let updateAttachmentVideoUnitSpy: jest.SpyInstance;
@@ -76,7 +73,6 @@ describe('EditAttachmentVideoUnitComponent', () => {
                     },
                 },
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: AccountService, useClass: MockAccountService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -86,7 +82,6 @@ describe('EditAttachmentVideoUnitComponent', () => {
         router = TestBed.inject(Router);
         attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
         lectureTranscriptionService = TestBed.inject(LectureTranscriptionService);
-        accountService = TestBed.inject(AccountService);
 
         attachment = new Attachment();
         attachment.id = 1;
@@ -125,6 +120,7 @@ describe('EditAttachmentVideoUnitComponent', () => {
         navigateSpy = jest.spyOn(router, 'navigate');
 
         jest.spyOn(lectureTranscriptionService, 'getTranscription').mockReturnValue(of(undefined));
+        jest.spyOn(lectureTranscriptionService, 'getTranscriptionStatus').mockReturnValue(of(undefined));
     });
 
     afterEach(() => {
@@ -237,31 +233,42 @@ describe('EditAttachmentVideoUnitComponent', () => {
         expect(navigateSpy).toHaveBeenCalledOnce();
     });
 
-    it('should fetch transcription when user is admin', () => {
-        jest.spyOn(accountService, 'isAdmin').mockReturnValue(true);
+    it('should fetch transcription data on initialization', () => {
         const transcription = { id: 1, videoUnitId: 1, language: 'en', content: 'test' };
         const getTranscriptionSpy = jest.spyOn(lectureTranscriptionService, 'getTranscription').mockReturnValue(of(transcription as any));
+        const getTranscriptionStatusSpy = jest.spyOn(lectureTranscriptionService, 'getTranscriptionStatus').mockReturnValue(of(undefined));
 
         fixture.detectChanges();
 
         expect(getTranscriptionSpy).toHaveBeenCalledWith(attachmentVideoUnit.id);
+        expect(getTranscriptionStatusSpy).toHaveBeenCalledWith(attachmentVideoUnit.id);
         expect(component.formData?.transcriptionProperties?.videoTranscription).toBe(JSON.stringify(transcription));
     });
 
-    it('should not fetch transcription when user is not admin', () => {
-        jest.spyOn(accountService, 'isAdmin').mockReturnValue(false);
-        const getTranscriptionSpy = jest.spyOn(lectureTranscriptionService, 'getTranscription');
+    it('should handle error when fetching transcription data', () => {
+        jest.spyOn(lectureTranscriptionService, 'getTranscription').mockReturnValue(of(undefined));
+        jest.spyOn(lectureTranscriptionService, 'getTranscriptionStatus').mockReturnValue(of(undefined));
 
         fixture.detectChanges();
 
-        expect(getTranscriptionSpy).not.toHaveBeenCalled();
+        expect(component.formData?.transcriptionProperties?.videoTranscription).toBeUndefined();
     });
 
-    it('should create transcription when form is submitted with transcription properties', () => {
+    it('should handle transcription status when present', () => {
+        const transcriptionStatus = { status: 'PENDING', progress: 50 };
+        jest.spyOn(lectureTranscriptionService, 'getTranscription').mockReturnValue(of(undefined));
+        jest.spyOn(lectureTranscriptionService, 'getTranscriptionStatus').mockReturnValue(of(transcriptionStatus as any));
+
+        fixture.detectChanges();
+
+        expect(component.formData?.transcriptionStatus).toEqual(transcriptionStatus);
+    });
+
+    it('should start transcription when generateTranscript is true and playlistUrl is provided', () => {
         fixture.detectChanges();
         const attachmentVideoUnitFormComponent: AttachmentVideoUnitFormComponent = fixture.debugElement.query(By.directive(AttachmentVideoUnitFormComponent)).componentInstance;
 
-        const transcription = { language: 'en', lectureUnitId: 1, content: 'test transcription' };
+        const playlistUrl = 'https://example.com/playlist.m3u8';
         const attachmentVideoUnitFormData: AttachmentVideoUnitFormData = {
             formProperties: {
                 name: attachmentVideoUnit.name,
@@ -269,19 +276,116 @@ describe('EditAttachmentVideoUnitComponent', () => {
                 releaseDate: attachmentVideoUnit.releaseDate,
                 videoSource: attachmentVideoUnit.videoSource,
                 version: 1,
+                generateTranscript: true,
             },
             fileProperties: {},
-            transcriptionProperties: {
-                videoTranscription: JSON.stringify(transcription),
-            },
+            playlistUrl: playlistUrl,
         };
 
-        const createTranscriptionSpy = jest.spyOn(lectureTranscriptionService, 'createTranscription').mockReturnValue(of(true));
+        const startTranscriptionSpy = jest.spyOn(attachmentVideoUnitService, 'startTranscription').mockReturnValue(of(undefined) as any);
         updateAttachmentVideoUnitSpy.mockReturnValue(of({ body: attachmentVideoUnit, status: 200 }));
         attachmentVideoUnitFormComponent.formSubmitted.emit(attachmentVideoUnitFormData);
         fixture.detectChanges();
 
-        expect(createTranscriptionSpy).toHaveBeenCalledWith(1, attachmentVideoUnit.id, transcription);
+        expect(startTranscriptionSpy).toHaveBeenCalledWith(1, attachmentVideoUnit.id, playlistUrl);
+        expect(navigateSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should start transcription with videoSource when generateTranscript is true and no playlistUrl', () => {
+        fixture.detectChanges();
+        const attachmentVideoUnitFormComponent: AttachmentVideoUnitFormComponent = fixture.debugElement.query(By.directive(AttachmentVideoUnitFormComponent)).componentInstance;
+
+        const attachmentVideoUnitFormData: AttachmentVideoUnitFormData = {
+            formProperties: {
+                name: attachmentVideoUnit.name,
+                description: attachmentVideoUnit.description,
+                releaseDate: attachmentVideoUnit.releaseDate,
+                videoSource: 'https://example.com/video.mp4',
+                version: 1,
+                generateTranscript: true,
+            },
+            fileProperties: {},
+        };
+
+        const startTranscriptionSpy = jest.spyOn(attachmentVideoUnitService, 'startTranscription').mockReturnValue(of(undefined) as any);
+        updateAttachmentVideoUnitSpy.mockReturnValue(of({ body: attachmentVideoUnit, status: 200 }));
+        attachmentVideoUnitFormComponent.formSubmitted.emit(attachmentVideoUnitFormData);
+        fixture.detectChanges();
+
+        expect(startTranscriptionSpy).toHaveBeenCalledWith(1, attachmentVideoUnit.id, 'https://example.com/video.mp4');
+    });
+
+    it('should not start transcription when generateTranscript is true but no transcriptionUrl available', () => {
+        fixture.detectChanges();
+        const attachmentVideoUnitFormComponent: AttachmentVideoUnitFormComponent = fixture.debugElement.query(By.directive(AttachmentVideoUnitFormComponent)).componentInstance;
+
+        const attachmentVideoUnitFormData: AttachmentVideoUnitFormData = {
+            formProperties: {
+                name: attachmentVideoUnit.name,
+                description: attachmentVideoUnit.description,
+                releaseDate: attachmentVideoUnit.releaseDate,
+                videoSource: undefined,
+                version: 1,
+                generateTranscript: true,
+            },
+            fileProperties: {},
+        };
+
+        const startTranscriptionSpy = jest.spyOn(attachmentVideoUnitService, 'startTranscription');
+        updateAttachmentVideoUnitSpy.mockReturnValue(of({ body: attachmentVideoUnit, status: 200 }));
+        attachmentVideoUnitFormComponent.formSubmitted.emit(attachmentVideoUnitFormData);
+        fixture.detectChanges();
+
+        expect(startTranscriptionSpy).not.toHaveBeenCalled();
+    });
+
+    it('should handle error when startTranscription fails', () => {
+        fixture.detectChanges();
+        const attachmentVideoUnitFormComponent: AttachmentVideoUnitFormComponent = fixture.debugElement.query(By.directive(AttachmentVideoUnitFormComponent)).componentInstance;
+
+        const attachmentVideoUnitFormData: AttachmentVideoUnitFormData = {
+            formProperties: {
+                name: attachmentVideoUnit.name,
+                description: attachmentVideoUnit.description,
+                releaseDate: attachmentVideoUnit.releaseDate,
+                videoSource: 'https://example.com/video.mp4',
+                version: 1,
+                generateTranscript: true,
+            },
+            fileProperties: {},
+        };
+
+        jest.spyOn(attachmentVideoUnitService, 'startTranscription').mockReturnValue(throwError(() => ({ status: 500, message: 'Error' })));
+        updateAttachmentVideoUnitSpy.mockReturnValue(of({ body: attachmentVideoUnit, status: 200 }));
+
+        attachmentVideoUnitFormComponent.formSubmitted.emit(attachmentVideoUnitFormData);
+        fixture.detectChanges();
+
+        expect(navigateSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should handle update without transcription generation', () => {
+        fixture.detectChanges();
+        const attachmentVideoUnitFormComponent: AttachmentVideoUnitFormComponent = fixture.debugElement.query(By.directive(AttachmentVideoUnitFormComponent)).componentInstance;
+
+        const attachmentVideoUnitFormData: AttachmentVideoUnitFormData = {
+            formProperties: {
+                name: attachmentVideoUnit.name,
+                description: attachmentVideoUnit.description,
+                releaseDate: attachmentVideoUnit.releaseDate,
+                videoSource: attachmentVideoUnit.videoSource,
+                version: 1,
+                generateTranscript: false,
+            },
+            fileProperties: {},
+        };
+
+        updateAttachmentVideoUnitSpy.mockReturnValue(of({ body: attachmentVideoUnit, status: 200 }));
+        attachmentVideoUnitFormComponent.formSubmitted.emit(attachmentVideoUnitFormData);
+        fixture.detectChanges();
+
+        expect(updateAttachmentVideoUnitSpy).toHaveBeenCalledWith(1, 1, expect.any(FormData), undefined);
+        expect(navigateSpy).toHaveBeenCalledOnce();
     });
 
     it('should trigger transcript generation when generateTranscript is true', () => {

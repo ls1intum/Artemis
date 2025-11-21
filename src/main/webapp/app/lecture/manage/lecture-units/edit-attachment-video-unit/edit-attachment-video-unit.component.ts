@@ -12,7 +12,6 @@ import { combineLatest, of } from 'rxjs';
 import { objectToJsonBlob } from 'app/shared/util/blob-util';
 import { LectureUnitLayoutComponent } from '../lecture-unit-layout/lecture-unit-layout.component';
 import { LectureTranscriptionService } from 'app/lecture/manage/services/lecture-transcription.service';
-import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     selector: 'jhi-edit-attachment-video-unit',
@@ -25,7 +24,6 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
     private attachmentVideoUnitService = inject(AttachmentVideoUnitService);
     private alertService = inject(AlertService);
     private lectureTranscriptionService = inject(LectureTranscriptionService);
-    private accountService = inject(AccountService);
 
     @ViewChild('attachmentVideoUnitForm') attachmentVideoUnitForm: AttachmentVideoUnitFormComponent;
 
@@ -49,13 +47,14 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
                 }),
                 switchMap((attachmentVideoUnitResponse: HttpResponse<AttachmentVideoUnit>) => {
                     const attachmentVideoUnit = attachmentVideoUnitResponse.body!;
-                    if (!this.accountService.isAdmin()) {
-                        return of({ attachmentVideoUnit, transcription: undefined });
-                    }
-                    return this.lectureTranscriptionService.getTranscription(attachmentVideoUnit.id!).pipe(
-                        map((transcription) => ({
+                    return combineLatest({
+                        transcription: this.lectureTranscriptionService.getTranscription(attachmentVideoUnit.id!),
+                        transcriptionStatus: this.lectureTranscriptionService.getTranscriptionStatus(attachmentVideoUnit.id!),
+                    }).pipe(
+                        map(({ transcription, transcriptionStatus }) => ({
                             attachmentVideoUnit,
                             transcription,
+                            transcriptionStatus,
                         })),
                     );
                 }),
@@ -64,7 +63,7 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
                 }),
             )
             .subscribe({
-                next: ({ attachmentVideoUnit, transcription }) => {
+                next: ({ attachmentVideoUnit, transcription, transcriptionStatus }) => {
                     this.attachmentVideoUnit = attachmentVideoUnit;
                     this.attachment = this.attachmentVideoUnit.attachment || {};
                     // breaking the connection to prevent errors in deserialization. will be reconnected on the server side
@@ -84,8 +83,9 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
                             fileName: this.attachment.link,
                         },
                         transcriptionProperties: {
-                            videoTranscription: transcription ? JSON.stringify(transcription) : '',
+                            videoTranscription: transcription ? JSON.stringify(transcription) : undefined,
                         },
+                        transcriptionStatus: transcriptionStatus,
                     };
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
@@ -128,30 +128,49 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
         this.attachmentVideoUnitService
             .update(this.lectureId, this.attachmentVideoUnit.id!, formData, this.notificationText)
             .pipe(
-                switchMap(() => {
-                    // Trigger transcript generation if enabled
-                    if (generateTranscript && this.attachmentVideoUnit.id) {
+                switchMap((response) => {
+                    const lectureUnit = response.body!;
+                    const lectureUnitId = lectureUnit.id!;
+
+                    // First: Handle automatic transcription generation if requested
+                    let transcriptionObservable = of(lectureUnit);
+                    if (generateTranscript && lectureUnitId) {
                         const transcriptionUrl = playlistUrl ?? this.attachmentVideoUnit.videoSource;
                         if (transcriptionUrl) {
-                            this.attachmentVideoUnitService.startTranscription(this.lectureId, this.attachmentVideoUnit.id, transcriptionUrl).subscribe();
+                            transcriptionObservable = this.attachmentVideoUnitService.startTranscription(this.lectureId, lectureUnitId, transcriptionUrl).pipe(
+                                map(() => lectureUnit),
+                                catchError((err) => {
+                                    onError(this.alertService, err);
+                                    return of(lectureUnit);
+                                }),
+                            );
                         }
                     }
 
-                    if (!videoTranscription) {
-                        return of(undefined);
+                    return transcriptionObservable;
+                }),
+                switchMap((lectureUnit) => {
+                    // Second: Handle manual transcription save if provided
+                    if (!videoTranscription || !lectureUnit.id) {
+                        return of(lectureUnit);
                     }
+
                     let transcription: LectureTranscriptionDTO;
                     try {
                         transcription = JSON.parse(videoTranscription) as LectureTranscriptionDTO;
                     } catch (e) {
                         this.alertService.error('artemisApp.lectureUnit.attachmentVideoUnit.transcriptionInvalidJson');
-                        return of(undefined);
+                        return of(lectureUnit);
                     }
-                    transcription.lectureUnitId = this.attachmentVideoUnit.id!;
-                    return this.lectureTranscriptionService.createTranscription(this.lectureId, this.attachmentVideoUnit.id!, transcription).pipe(
+
+                    transcription.lectureUnitId = lectureUnit.id;
+
+                    return this.lectureTranscriptionService.createTranscription(this.lectureId, lectureUnit.id, transcription).pipe(
+                        map(() => lectureUnit),
+                        // Swallow transcription errors so the primary save still counts as success
                         catchError((err) => {
                             onError(this.alertService, err);
-                            return of(undefined);
+                            return of(lectureUnit);
                         }),
                     );
                 }),
