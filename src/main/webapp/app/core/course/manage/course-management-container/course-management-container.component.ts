@@ -306,9 +306,12 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         this.addFaqItem(currentCourse, nonInstructorItems);
         nonInstructorItems.unshift(...communicationItem, ...tutorialGroupItem);
         sidebarItems.push(...nonInstructorItems);
+
+        // Atlas items are available for editors and instructors
+        const atlasItems = currentCourse.isAtLeastEditor ? this.getAtlasItems() : [];
+
         if (isInstructor) {
             const irisItems = this.getIrisSettingsItem();
-            const atlasItems = this.getAtlasItems();
             const scoresItem = this.getScoresItem();
             const buildAndLtiItems: SidebarItem[] = [];
             this.addBuildQueueItem(buildAndLtiItems);
@@ -319,6 +322,9 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
             sidebarItems.splice(6 + irisItems.length + tutorialGroupItem.length + communicationItem.length + atlasItems.length, 0, ...scoresItem); // After assessment
             sidebarItems.push(...buildAndLtiItems); // At the end but before settings
             sidebarItems.push(this.sidebarItemService.getCourseSettingsItem(this.courseId()));
+        } else if (currentCourse.isAtLeastEditor) {
+            // For editors (non-instructors), add Atlas items after tutorial groups
+            sidebarItems.splice(3 + tutorialGroupItem.length + communicationItem.length, 0, ...atlasItems);
         }
 
         return sidebarItems;

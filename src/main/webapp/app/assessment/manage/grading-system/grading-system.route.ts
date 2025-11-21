@@ -2,7 +2,7 @@ import { Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { Authority } from 'app/shared/constants/authority.constants';
 
-export const gradingSystemState: Routes = [
+export const gradingSystemRoutes: Routes = [
     {
         path: '',
         redirectTo: 'interval',
