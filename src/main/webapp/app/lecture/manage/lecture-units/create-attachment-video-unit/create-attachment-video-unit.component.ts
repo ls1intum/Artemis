@@ -49,7 +49,7 @@ export class CreateAttachmentVideoUnitComponent implements OnInit {
         const { name, videoSource, description, releaseDate, competencyLinks, generateTranscript } = attachmentVideoUnitFormData?.formProperties || {};
         const { file, fileName } = attachmentVideoUnitFormData?.fileProperties || {};
         const { videoTranscription } = attachmentVideoUnitFormData?.transcriptionProperties || {};
-        const playlistUrl = attachmentVideoUnitFormData.playlistUrl;
+        const { playlistUrl } = attachmentVideoUnitFormData || {};
 
         if (!name || (!(file && fileName) && !videoSource)) {
             return;

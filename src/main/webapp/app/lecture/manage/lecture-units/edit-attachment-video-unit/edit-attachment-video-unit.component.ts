@@ -96,7 +96,7 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
         const { description, name, releaseDate, updateNotificationText, videoSource, competencyLinks, generateTranscript } = attachmentVideoUnitFormData.formProperties;
         const { file, fileName } = attachmentVideoUnitFormData.fileProperties;
         const { videoTranscription } = attachmentVideoUnitFormData.transcriptionProperties || {};
-        const playlistUrl = attachmentVideoUnitFormData.playlistUrl;
+        const { playlistUrl } = attachmentVideoUnitFormData || {};
 
         // optional update notification text for students
         if (updateNotificationText) {
