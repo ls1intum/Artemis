@@ -4,6 +4,7 @@ const sidebars: SidebarsConfig = {
     default: [
         'intro',
         'programming',
+        'lecture-series',
         'assessment',
     ],
 };
