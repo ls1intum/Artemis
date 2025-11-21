@@ -425,13 +425,13 @@ public class FileResource {
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
     @GetMapping("files/exam-user/{examUserId}/*")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastTutor
     public ResponseEntity<byte[]> getExamUserImage(@PathVariable long examUserId) {
         log.debug("REST request to get image for exam user : {}", examUserId);
         ExamUserApi api = examUserApi.orElseThrow(() -> new ExamApiNotPresentException(ExamUserApi.class));
 
         ExamUser examUser = api.findWithExamById(examUserId).orElseThrow();
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, examUser.getExam().getCourse(), null);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, examUser.getExam().getCourse(), null);
 
         return buildFileResponse(getActualPathFromPublicPathString(examUser.getStudentImagePath(), FilePathType.EXAM_USER_IMAGE), true);
     }
