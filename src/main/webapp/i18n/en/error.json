@@ -158,6 +158,7 @@
             "submissionIsNull": "This example submission has no solution attached.",
             "submissionIdMissing": "The submission must be saved before it can be converted."
         },
+        "exerciseVersionIdMismatch": "The requested exercise version does not belong to the provided exercise ID.",
         "submissionExerciseMismatch": "The submission does not belong to the specified exercise.",
         "maxAthenaResultsReached": "Maximum number of AI feedback requests reached.",
         "submissionAlreadyHasAthenaResult": "Submission already has an Athena result.",
