@@ -133,7 +133,6 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
             ImageIO.write(image, "png", slidePath.toFile());
 
             Slide slide = new Slide();
-            slide.setId((long) i);
             slide.setSlideNumber(i);
             slide.setAttachmentVideoUnit(testAttachmentVideoUnit);
 
@@ -182,7 +181,6 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
         ImageIO.write(image1, "png", slidePath1.toFile());
 
         Slide slide1 = new Slide();
-        slide1.setId(1L);
         slide1.setSlideNumber(1);
         slide1.setAttachmentVideoUnit(testAttachmentVideoUnit);
         slide1.setSlideImagePath("temp/slide1.png");
@@ -194,7 +192,6 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
         ImageIO.write(image3, "png", slidePath3.toFile());
 
         Slide slide3 = new Slide();
-        slide3.setId(3L);
         slide3.setSlideNumber(3);
         slide3.setAttachmentVideoUnit(testAttachmentVideoUnit);
         slide3.setSlideImagePath("temp/slide3.png");
@@ -240,15 +237,16 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
             ImageIO.write(image, "png", slidePath.toFile());
 
             Slide slide = new Slide();
-            slide.setId((long) i);
             slide.setSlideNumber(i);
             slide.setAttachmentVideoUnit(testAttachmentVideoUnit);
 
             // The path is relative to the base path and should match what's expected
             slide.setSlideImagePath("temp/slide" + i + ".png");
             slideRepository.save(slide);
-        }
 
+            if (i == 3) {
+            }
+        }
         // Act
         slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(testDocument, testAttachmentVideoUnit, "test.pdf", hiddenPagesList, pageOrderList);
 
@@ -303,7 +301,6 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
 
         // Create existing slide with different hidden status
         Slide slide = new Slide();
-        slide.setId(1L);
         slide.setSlideNumber(1);
         slide.setAttachmentVideoUnit(testAttachmentVideoUnit);
         slide.setSlideImagePath("temp/slide1.png");
