@@ -25,6 +25,7 @@ import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
@@ -59,6 +60,9 @@ public class Lecture extends DomainObject {
     @Deprecated
     @Column(name = "visible_date")
     private ZonedDateTime visibleDate;
+
+    @Column(name = "is_tutorial_lecture")
+    private boolean isTutorialLecture;
 
     @OneToMany(mappedBy = "lecture", cascade = CascadeType.REMOVE, orphanRemoval = true)
     @JsonIgnoreProperties(value = "lecture", allowSetters = true)
@@ -297,5 +301,14 @@ public class Lecture extends DomainObject {
             return true;
         }
         return visibleDate.isBefore(ZonedDateTime.now());
+    }
+
+    @JsonProperty("isTutorialLecture")
+    public boolean isTutorialLecture() {
+        return isTutorialLecture;
+    }
+
+    public void setIsTutorialLecture(boolean isTutorialLecture) {
+        this.isTutorialLecture = isTutorialLecture;
     }
 }
