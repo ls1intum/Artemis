@@ -522,13 +522,13 @@ The previously mentioned steps concerning the multiple Artemis instance setup re
 Core nodes serve the main functionality of Artemis. In ICL, this additionally includes the [CI Management](https://artemis-platform.readthedocs.io/en/latest/dev/system-design.html#ci-management),
 responsible for managing and interacting with the build job queue (adding, cancelling and viewing build jobs), and the [Local VC system](https://artemis-platform.readthedocs.io/en/latest/user/icl/local-version-control.html#local-version-control).
 
-For ICL, the run configuration for core nodes need to include the additional profiles ``core``, ``localvc`` and ``localci``, e.g.:
+For ICL, the run configuration for core nodes need to include the additional profiles `core`, `localvc` and `localci`, e.g.:
 
 ```bash
 --spring.profiles.active=prod,core,ldap,localvc,localci,athena,scheduling,iris,lti
 ```
 
-Core nodes do not require further adjustments to the ``application-prod.yml``, as long as you have added the necessary variables as described in the [Integrated Code Lifecycle Setup](https://artemis-platform.readthedocs.io/en/latest/dev/setup/integrated-code-lifecycle.html).
+Core nodes do not require further adjustments to the `application-prod.yml`, as long as you have added the necessary variables as described in the [Integrated Code Lifecycle Setup](https://artemis-platform.readthedocs.io/en/latest/dev/setup/integrated-code-lifecycle.html).
 
 
 ### Build Agents
@@ -547,10 +547,10 @@ The run configuration contains just two profiles:
 --spring.profiles.active=prod,buildagent
 ```
 
-Build agents depend on much fewer services than the core nodes, thus we can adapt the ``application-prod.yml`` to exclude some of these dependencies.
+Build agents depend on much fewer services than the core nodes, thus we can adapt the `application-prod.yml` to exclude some of these dependencies.
 This heavily reduces the application start up time and resource demand.
 
-You can make following adaptations to the ``application-prod.yml``:
+You can make following adaptations to the `application-prod.yml`:
 
 1. Disable Liquibase and loadbalancer cache:
 
@@ -650,8 +650,8 @@ different ports and a unique instance ID for each instance.
     ```
 
 2. Create additional run configurations for each instance. You will have to add CLI arguments to each additional run
-    configuration to set the instance ID and the port, e.g. ``--server.port=8081 --eureka.instance.instanceId="Artemis:2"``.
-    Also, make sure that only one instance has the ``scheduling`` profile enabled:
+    configuration to set the instance ID and the port, e.g. `--server.port=8081 --eureka.instance.instanceId="Artemis:2"`.
+    Also, make sure that only one instance has the `scheduling` profile enabled:
 
     <Image src={runConfigImg} size={ImageSize.large} alt={"Run configuration dialog in IntelliJ."} />
 
@@ -675,9 +675,9 @@ service to discover each other and form a Hazelcast cluster. Further details can
 instances will also use a ActiveMQ Artemis broker to synchronize WebSocket messages. Further details can be found in [WebSockets](#websockets). In summary, the setup will look like this:
 
 * 3 Artemis instances:
-    * artemis-app-node-1: using following spring profile: ``prod,localvc,localci,core,scheduling,docker``
-    * artemis-app-node-2: using following profile: ``prod,localvc,localci,buildagent,core,docker``
-    * artemis-app-node-3: using following profile: ``prod,buildagent``
+    * artemis-app-node-1: using following spring profile: `prod,localvc,localci,core,scheduling,docker`
+    * artemis-app-node-2: using following profile: `prod,localvc,localci,buildagent,core,docker`
+    * artemis-app-node-3: using following profile: `prod,buildagent`
 * A MySQL database addressable on port 3306 of the host system
 * A Load balancer (nginx) addressable on ports 80/443 of the host system: `http(s)://localhost`.
 * A Registry service addressable on port 8761 of the host system: http://localhost:8761
@@ -708,7 +708,7 @@ instances will also use a ActiveMQ Artemis broker to synchronize WebSocket messa
 
 1. When running the Artemis container on a Unix system, you will have to give the user running in the container
     permission to access the Docker socket by adding them to the docker group. You can find the group ID of the docker
-    group by running ``getent group docker | cut -d: -f3``. Afterwards, create a new file ``docker/.env`` with the following content:
+    group by running `getent group docker | cut -d: -f3`. Afterwards, create a new file `docker/.env` with the following content:
 
     ```bash
     DOCKER_GROUP_ID=<REPLACE_WITH_DOCKER_GROUP_ID_OF_YOUR_SYSTEM>
