@@ -516,7 +516,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         // Create example submission
         var exampleSubmission = participationUtilService.generateExampleSubmission("model", modelingExercise, true);
         exampleSubmission = participationUtilService.addExampleSubmission(exampleSubmission);
-        participationUtilService.addResultToSubmission(exampleSubmission.getSubmission(), AssessmentType.MANUAL);
+        participationUtilService.addResultToSubmission(exampleSubmission.getSubmission(), AssessmentType.MANUAL, modelingExercise.getId());
         var submission = submissionRepository.findWithEagerResultAndFeedbackAndAssessmentNoteById(exampleSubmission.getSubmission().getId()).orElseThrow();
         participationUtilService.addFeedbackToResult(ParticipationFactory.generateFeedback().stream().findFirst().orElseThrow(),
                 Objects.requireNonNull(submission.getLatestResult()));
@@ -1116,7 +1116,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         // Create example submission
         var exampleSubmission = participationUtilService.generateExampleSubmission("model", modelingExercise, true);
         exampleSubmission = participationUtilService.addExampleSubmission(exampleSubmission);
-        participationUtilService.addResultToSubmission(exampleSubmission.getSubmission(), AssessmentType.MANUAL);
+        participationUtilService.addResultToSubmission(exampleSubmission.getSubmission(), AssessmentType.MANUAL, modelingExercise.getId());
         var submission = submissionRepository.findWithEagerResultAndFeedbackAndAssessmentNoteById(exampleSubmission.getSubmission().getId()).orElseThrow();
 
         Feedback feedback = ParticipationFactory.generateFeedback().getFirst();

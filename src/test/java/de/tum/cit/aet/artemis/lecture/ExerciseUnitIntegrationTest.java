@@ -144,16 +144,16 @@ class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationIndependentTe
         ExerciseUnit exerciseUnit = new ExerciseUnit();
         exerciseUnit.setExercise(exercise);
         exerciseUnit.setId(1L);
-        request.postWithResponseBody("/api/lecture/lectures/" + lecture1.getId() + "/exercise-units", exerciseUnit, ExerciseUnit.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/lecture/lectures/" + lecture1.getId() + "/exercise-units", exerciseUnit, ExerciseUnit.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void createExerciseUnit_notExistingLectureId_shouldReturnNotFound() throws Exception {
+    void createExerciseUnit_notExistingLectureId_shouldReturnForbidden() throws Exception {
         Exercise exercise = course1.getExercises().stream().findFirst().orElseThrow();
         ExerciseUnit exerciseUnit = new ExerciseUnit();
         exerciseUnit.setExercise(exercise);
-        request.postWithResponseBody("/api/lecture/lectures/" + 0 + "/exercise-units", exerciseUnit, ExerciseUnit.class, HttpStatus.NOT_FOUND);
+        request.postWithResponseBody("/api/lecture/lectures/" + 0 + "/exercise-units", exerciseUnit, ExerciseUnit.class, HttpStatus.FORBIDDEN);
     }
 
     @Test

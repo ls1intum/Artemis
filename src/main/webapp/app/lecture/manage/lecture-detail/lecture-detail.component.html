@@ -21,7 +21,7 @@
                         <span jhiTranslate="entity.action.units"></span>
                     </a>
                 }
-                @if (lecture.course?.isAtLeastInstructor && lectureIngestionEnabled) {
+                @if (lecture.course?.isAtLeastInstructor && !lecture.isTutorialLecture && lectureIngestionEnabled) {
                     <button (click)="ingestLectureInPyris()" class="btn btn-primary">
                         <fa-icon [icon]="faFileExport" />
                         <span jhiTranslate="entity.action.sendToIris"></span>

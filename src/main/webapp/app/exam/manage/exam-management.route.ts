@@ -21,7 +21,7 @@ import { TextExerciseResolver } from 'app/text/manage/text-exercise/service/text
 import { repositorySubRoutes } from 'app/programming/shared/routes/programming-exercise-repository.route';
 import { ExerciseAssessmentDashboardComponent } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/exercise-assessment-dashboard.component';
 
-export const examManagementRoute: Routes = [
+export const examManagementRoutes: Routes = [
     {
         path: '',
         loadComponent: () => import('app/exam/manage/exam-management/exam-management.component').then((m) => m.ExamManagementComponent),
@@ -182,7 +182,7 @@ export const examManagementRoute: Routes = [
             pageTitle: 'artemisApp.examManagement.gradingSystem',
         },
         canActivate: [UserRouteAccessService],
-        loadChildren: () => import('app/assessment/manage/grading-system/grading-system.route').then((m) => m.gradingSystemState),
+        loadChildren: () => import('app/assessment/manage/grading-system/grading-system.route').then((m) => m.gradingSystemRoutes),
     },
     {
         path: ':examId/bonus',
@@ -795,7 +795,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/exercise-groups/:exerciseGroupId/programming-exercises/:exerciseId/code-editor',
-        loadChildren: () => import('app/programming/manage/code-editor/code-editor-management-routes').then((m) => m.routes),
+        loadChildren: () => import('app/programming/manage/code-editor/code-editor-management-routes').then((m) => m.codeEditorManagementRoutes),
     },
     {
         path: ':examId/exercise-groups/:exerciseGroupId/text-exercises/:exerciseId',
