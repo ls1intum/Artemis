@@ -275,7 +275,7 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
         });
 
         this.checkIfUserAcceptedLLMUsage();
-        if (!this.userAccepted || this.userAccepted === LLMSelectionDecision.NO_AI) {
+        if (!this.userAccepted) {
             this.showAISelectionModal().then(() => {});
         }
         if (this.userAccepted === LLMSelectionDecision.LOCAL_AI || this.userAccepted === LLMSelectionDecision.CLOUD_AI) {
