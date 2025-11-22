@@ -131,4 +131,27 @@ export class AttachmentVideoUnitService {
         const params = new HttpParams().set('url', pageUrl);
         return this.httpClient.get('/api/nebula/video-utils/tum-live-playlist', { params, responseType: 'text' }).pipe(catchError(() => of(null)));
     }
+
+    /**
+     * Fetches playlist URL for a video source and updates the form data if found.
+     * This is a helper method to reduce code duplication when setting up video units for editing.
+     *
+     * @param videoSource - The video source URL to fetch playlist for
+     * @param currentFormData - The current form data to update
+     * @returns Observable that emits the updated form data with playlist URL, or original form data if not found
+     */
+    fetchAndUpdatePlaylistUrl<T extends { playlistUrl?: string }>(videoSource: string | undefined, currentFormData: T): Observable<T> {
+        if (!videoSource) {
+            return of(currentFormData);
+        }
+
+        return this.getPlaylistUrl(videoSource).pipe(
+            map((playlist) => {
+                if (playlist) {
+                    return { ...currentFormData, playlistUrl: playlist };
+                }
+                return currentFormData;
+            }),
+        );
+    }
 }
