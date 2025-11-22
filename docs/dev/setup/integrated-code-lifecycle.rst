@@ -132,7 +132,7 @@ To create a course with registered users, you can use the scripts from ``support
     </iframe>
 
 - Make sure that the result of your submission is displayed in the Artemis UI.
-- Users can access their repositories via HTTPS and SSH. For SSH to work, you must first :ref:`configure SSH <configure-ssh-access>`.
+- Users can access their repositories via HTTPS and SSH. For SSH to work, you must first `configure SSH <https://ls1intum.github.io/Artemis/admin/production-setup/security#ssh-access>`_.
 
 For unauthorized access, your Git client will display the respective error message:
 
