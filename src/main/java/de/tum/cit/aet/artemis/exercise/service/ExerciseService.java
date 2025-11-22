@@ -406,7 +406,7 @@ public class ExerciseService {
      */
     @Async
     public void updatePointsInRelatedParticipantScores(Exercise originalExercise, Exercise updatedExercise) {
-        updatePointsInRelatedParticipantScoresWithPoints(originalExercise.getMaxPoints(), originalExercise.getBonusPoints(), updatedExercise);
+        updatePointsInRelatedParticipantScores(originalExercise.getMaxPoints(), originalExercise.getBonusPoints(), updatedExercise);
     }
 
     /**
@@ -417,9 +417,10 @@ public class ExerciseService {
      * @param updatedExercise     the updatedExercise
      */
     @Async
-    public void updatePointsInRelatedParticipantScoresWithPoints(Double originalMaxPoints, Double originalBonusPoints, Exercise updatedExercise) {
-        if (Objects.equals(originalMaxPoints, updatedExercise.getMaxPoints()) && Objects.equals(originalBonusPoints, updatedExercise.getBonusPoints())) {
-            return; // nothing to do since points are still correct
+    public void updatePointsInRelatedParticipantScores(Double originalMaxPoints, Double originalBonusPoints, Exercise updatedExercise) {
+        boolean arePointsStillCorrect = Objects.equals(originalMaxPoints, updatedExercise.getMaxPoints()) && Objects.equals(originalBonusPoints, updatedExercise.getBonusPoints());
+        if (arePointsStillCorrect) {
+            return;
         }
 
         List<ParticipantScore> participantScoreList = participantScoreRepository.findAllByExercise(updatedExercise);
@@ -787,15 +788,8 @@ public class ExerciseService {
      * @param notificationText custom notification text
      */
     public void notifyAboutExerciseChanges(Exercise originalExercise, Exercise updatedExercise, String notificationText) {
-        if (originalExercise.isCourseExercise()) {
-            groupNotificationScheduleService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(originalExercise, updatedExercise, notificationText);
-        }
-        // start sending problem statement updates within the last 5 minutes before the exam starts
-        else if (now().plusMinutes(EXAM_START_WAIT_TIME_MINUTES).isAfter(originalExercise.getExam().getStartDate()) && originalExercise.isExamExercise()
-                && !Strings.CS.equals(originalExercise.getProblemStatement(), updatedExercise.getProblemStatement())) {
-            ExamLiveEventsApi api = examLiveEventsApi.orElseThrow(() -> new ExamApiNotPresentException(ExamLiveEventsApi.class));
-            api.createAndSendProblemStatementUpdateEvent(updatedExercise, notificationText);
-        }
+        notifyAboutExerciseChanges(originalExercise.getReleaseDate(), originalExercise.getAssessmentDueDate(), originalExercise.getProblemStatement(), updatedExercise,
+                notificationText);
     }
 
     /**
@@ -817,10 +811,10 @@ public class ExerciseService {
      * @param updatedExercise           the updated exercise
      * @param notificationText          custom notification text shown to students
      */
-    public void notifyAboutExerciseChangesWithStatement(ZonedDateTime originalReleaseDate, ZonedDateTime originalAssessmentDueDate, String originalProblemStatement,
-            Exercise updatedExercise, String notificationText) {
+    public void notifyAboutExerciseChanges(ZonedDateTime originalReleaseDate, ZonedDateTime originalAssessmentDueDate, String originalProblemStatement, Exercise updatedExercise,
+            String notificationText) {
         if (updatedExercise.isCourseExercise()) {
-            groupNotificationScheduleService.checkAndCreateAppropriateNotificationsWhenUpdatingExerciseWithDate(originalReleaseDate, originalAssessmentDueDate, updatedExercise,
+            groupNotificationScheduleService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(originalReleaseDate, originalAssessmentDueDate, updatedExercise,
                     notificationText);
         }
         // start sending problem statement updates within the last 5 minutes before the exam starts

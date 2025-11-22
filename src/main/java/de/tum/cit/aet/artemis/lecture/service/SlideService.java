@@ -39,7 +39,7 @@ public class SlideService {
      * @param updatedExercise  The updated exercise after the update
      */
     public void handleDueDateChange(Exercise originalExercise, Exercise updatedExercise) {
-        handleDueDateChangeWithDate(originalExercise.getDueDate(), updatedExercise);
+        handleDueDateChange(originalExercise.getDueDate(), updatedExercise);
     }
 
     /**
@@ -49,11 +49,12 @@ public class SlideService {
      * @param originalDueDate The original due date before the update
      * @param updatedExercise The updated exercise after the update
      */
-    public void handleDueDateChangeWithDate(ZonedDateTime originalDueDate, Exercise updatedExercise) {
+    public void handleDueDateChange(ZonedDateTime originalDueDate, Exercise updatedExercise) {
         ZonedDateTime updatedDueDate = updatedExercise.getDueDate();
+        boolean hasDueDateChanged = updatedDueDate != null && (originalDueDate == null || !originalDueDate.equals(updatedDueDate));
 
         // Check if the due date has changed
-        if (updatedDueDate != null && (originalDueDate == null || !originalDueDate.equals(updatedDueDate))) {
+        if (hasDueDateChanged) {
 
             updateSlidesHiddenDate(updatedExercise);
         }

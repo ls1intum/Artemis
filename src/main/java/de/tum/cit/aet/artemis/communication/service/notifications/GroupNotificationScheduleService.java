@@ -59,16 +59,13 @@ public class GroupNotificationScheduleService {
      * @param exerciseAfterUpdate       is the updated exercise (needed to check potential difference in release date)
      * @param notificationText          holds the custom change message for the notification process
      */
-    public void checkAndCreateAppropriateNotificationsWhenUpdatingExerciseWithDate(ZonedDateTime originalReleaseDate, ZonedDateTime originalAssessmentDueDate,
-            Exercise exerciseAfterUpdate, String notificationText) {
+    public void checkAndCreateAppropriateNotificationsWhenUpdatingExercise(ZonedDateTime originalReleaseDate, ZonedDateTime originalAssessmentDueDate, Exercise exerciseAfterUpdate,
+            String notificationText) {
 
-        // send exercise update notification
         groupNotificationService.notifyAboutExerciseUpdate(exerciseAfterUpdate, notificationText);
 
-        // handle and check exercise released notification
         checkAndCreateExerciseReleasedNotificationsWhenUpdatingExerciseWithDate(originalReleaseDate, exerciseAfterUpdate);
 
-        // handle and check assessed exercise submission notification
         checkAndCreateAssessedExerciseSubmissionNotificationsWhenUpdatingExerciseWithDate(originalAssessmentDueDate, exerciseAfterUpdate);
     }
 

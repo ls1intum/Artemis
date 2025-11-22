@@ -790,7 +790,7 @@ public class AuthorizationCheckService {
     }
 
     public void checkGivenExerciseIdSameForExerciseInRequestBodyElseThrow(Long exerciseId, Exercise exerciseInRequestBody) {
-        checkGivenExerciseIdSameForExerciseInRequestBodyIdElseThrow(exerciseId, exerciseInRequestBody.getId());
+        checkGivenExerciseIdSameForExerciseRequestBodyIdElseThrow(exerciseId, exerciseInRequestBody.getId());
     }
 
     public void checkIsAllowedToAssessExerciseElseThrow(Exercise exercise, User user, Long resultId) {
@@ -1078,7 +1078,7 @@ public class AuthorizationCheckService {
         }
     }
 
-    public void checkGivenExerciseIdSameForExerciseInRequestBodyIdElseThrow(@NonNull Long exerciseId, @NonNull Long exerciseInRequestBodyId) {
+    public void checkGivenExerciseIdSameForExerciseRequestBodyIdElseThrow(@NonNull Long exerciseId, @NonNull Long exerciseInRequestBodyId) {
         if (!exerciseId.equals(exerciseInRequestBodyId)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "error.exerciseIdMismatch");
         }

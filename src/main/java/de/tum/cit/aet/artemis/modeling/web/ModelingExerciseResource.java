@@ -49,6 +49,7 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.course.CourseService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
@@ -231,28 +232,26 @@ public class ModelingExerciseResource {
      */
     // NOTE: IMPORTANT we should NEVER call save on an entity retrieved from the client because it is unsafe and can lead to data loss
     @PutMapping("modeling-exercises")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastEditorInExercise
     public ResponseEntity<ModelingExercise> updateModelingExercise(@RequestBody UpdateModelingExerciseDTO updateModelingExerciseDTO,
             @RequestParam(value = "notificationText", required = false) String notificationText) {
         log.debug("REST request to update ModelingExercise : {}", updateModelingExerciseDTO);
 
         final ModelingExercise originalExercise = modelingExerciseRepository.findWithEagerExampleSubmissionsAndCompetenciesByIdElseThrow(updateModelingExerciseDTO.id());
+
+        // Check that the user is authorized to update the exercise
+        var user = userRepository.getUserWithGroupsAndAuthorities();
+        // Forbid changing the course the exercise belongs to.
+        if (!Objects.equals(originalExercise.getCourseViaExerciseGroupOrCourseMember().getId(), updateModelingExerciseDTO.courseId())) {
+            throw new ConflictException("Exercise course id does not match the stored course id", ENTITY_NAME, "cannotChangeCourseId");
+        }
+
         ZonedDateTime oldDueDate = originalExercise.getDueDate();
         ZonedDateTime oldAssessmentDueDate = originalExercise.getAssessmentDueDate();
         ZonedDateTime oldReleaseDate = originalExercise.getReleaseDate();
         Double oldMaxPoints = originalExercise.getMaxPoints();
         Double oldBonusPoints = originalExercise.getBonusPoints();
         String oldProblemStatement = originalExercise.getProblemStatement();
-
-        // Check that the user is authorized to update the exercise
-        var user = userRepository.getUserWithGroupsAndAuthorities();
-        // Important: use the original exercise for permission check
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, originalExercise, user);
-
-        // Forbid changing the course the exercise belongs to.
-        if (!Objects.equals(originalExercise.getCourseViaExerciseGroupOrCourseMember().getId(), updateModelingExerciseDTO.courseId())) {
-            throw new ConflictException("Exercise course id does not match the stored course id", ENTITY_NAME, "cannotChangeCourseId");
-        }
 
         // whether is exam exercise or course exercise are not changeable
         ModelingExercise updatedExercise = updateModelingExerciseDTO.update(originalExercise);
@@ -269,13 +268,13 @@ public class ModelingExerciseResource {
         ModelingExercise persistedExercise = exerciseService.saveWithCompetencyLinks(updatedExercise, modelingExerciseRepository::save);
 
         exerciseService.logUpdate(updatedExercise, updatedExercise.getCourseViaExerciseGroupOrCourseMember(), user);
-        exerciseService.updatePointsInRelatedParticipantScoresWithPoints(oldMaxPoints, oldBonusPoints, persistedExercise);
+        exerciseService.updatePointsInRelatedParticipantScores(oldMaxPoints, oldBonusPoints, persistedExercise);
 
         participationRepository.removeIndividualDueDatesIfBeforeDueDate(persistedExercise, oldDueDate);
         exerciseService.checkExampleSubmissions(persistedExercise);
 
-        exerciseService.notifyAboutExerciseChangesWithStatement(oldReleaseDate, oldAssessmentDueDate, oldProblemStatement, persistedExercise, notificationText);
-        slideApi.ifPresent(api -> api.handleDueDateChangeWithDate(oldDueDate, persistedExercise));
+        exerciseService.notifyAboutExerciseChanges(oldReleaseDate, oldAssessmentDueDate, oldProblemStatement, persistedExercise, notificationText);
+        slideApi.ifPresent(api -> api.handleDueDateChange(oldDueDate, persistedExercise));
 
         competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsync(originalExercise, Optional.of(persistedExercise)));
 
@@ -453,15 +452,13 @@ public class ModelingExerciseResource {
      *         Server Error) if the modelingExercise couldn't be updated
      */
     @PutMapping("modeling-exercises/{exerciseId}/re-evaluate")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastEditorInExercise
     public ResponseEntity<ModelingExercise> reEvaluateAndUpdateModelingExercise(@PathVariable long exerciseId, @RequestBody UpdateModelingExerciseDTO updateModelingExerciseDTO,
             @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterGradingInstructionUpdate) {
         log.debug("REST request to re-evaluate ModelingExercise : {}", updateModelingExerciseDTO);
 
-        // Get the existing exercise
         final ModelingExercise existingExercise = modelingExerciseRepository.findByIdWithExampleSubmissionsAndResultsElseThrow(exerciseId);
-        // Check that the exercise ID in path matches the DTO ID
-        authCheckService.checkGivenExerciseIdSameForExerciseInRequestBodyIdElseThrow(exerciseId, updateModelingExerciseDTO.id());
+        authCheckService.checkGivenExerciseIdSameForExerciseRequestBodyIdElseThrow(exerciseId, updateModelingExerciseDTO.id());
 
         var user = userRepository.getUserWithGroupsAndAuthorities();
         // make sure the course actually exists

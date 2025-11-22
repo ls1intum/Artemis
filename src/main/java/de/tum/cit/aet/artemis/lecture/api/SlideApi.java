@@ -42,7 +42,7 @@ public class SlideApi extends AbstractLectureApi {
         slideService.handleDueDateChange(originalExercise, updatedExercise);
     }
 
-    public void handleDueDateChangeWithDate(ZonedDateTime originalDueDate, Exercise updatedExercise) {
-        slideService.handleDueDateChangeWithDate(originalDueDate, updatedExercise);
+    public void handleDueDateChange(ZonedDateTime originalDueDate, Exercise updatedExercise) {
+        slideService.handleDueDateChange(originalDueDate, updatedExercise);
     }
 }
