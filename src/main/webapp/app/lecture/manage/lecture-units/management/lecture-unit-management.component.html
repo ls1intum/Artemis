@@ -124,21 +124,21 @@
                                     />
                                 }
                             </div>
-                            @if (lectureUnit.type === LectureUnitType.ATTACHMENT_VIDEO) {
-                                <button
-                                    type="button"
-                                    class="btn btn-primary btn-sm flex-grow-1"
-                                    [disabled]="!canGenerateTranscription(lectureUnit)"
-                                    (click)="generateTranscription(lectureUnit)"
-                                    [ngbTooltip]="'artemisApp.attachmentVideoUnit.generateTranscription' | artemisTranslate"
-                                >
-                                    @if (isTranscriptionLoading[lectureUnit.id!]) {
-                                        <fa-icon [icon]="faSpinner" animation="spin" />
-                                    } @else {
-                                        <fa-icon [icon]="faFileAudio" />
-                                    }
-                                </button>
-                            }
+                        }
+                        @if (lectureUnit.type === LectureUnitType.ATTACHMENT_VIDEO) {
+                            <button
+                                type="button"
+                                class="btn btn-primary btn-sm flex-grow-1"
+                                [disabled]="!canGenerateTranscription(lectureUnit) && !isTranscriptionFailed(lectureUnit)"
+                                (click)="generateTranscription(lectureUnit)"
+                                [ngbTooltip]="'artemisApp.attachmentVideoUnit.generateTranscription' | artemisTranslate"
+                            >
+                                @if (isTranscriptionLoading[lectureUnit.id!]) {
+                                    <fa-icon [icon]="faSpinner" animation="spin" />
+                                } @else {
+                                    <fa-icon [icon]="faFileAudio" />
+                                }
+                            </button>
                         }
                         @if (viewButtonAvailable[lectureUnit.id!]) {
                             <a
