@@ -168,10 +168,16 @@ This setting must be set for every instance, but you have to make sure to adjust
     systemctl enable registry.service
     ```
 
-4. Start Service
+4. Start service
 
     ```bash
     systemctl start registry
+    ```
+
+5. Check the logs for issues
+
+    ```bash
+    journalctl -u registry --since=10m -f
     ```
 
 
