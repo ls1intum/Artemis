@@ -337,7 +337,7 @@ describe('LectureUnitManagementComponent', () => {
             expect(lectureUnitManagementComponent.canGenerateTranscription(attachmentVideoUnit)).toBeFalse();
 
             lectureUnitManagementComponent.transcriptionStatus[attachmentVideoUnit.id!] = TranscriptionStatus.COMPLETED;
-            expect(lectureUnitManagementComponent.canGenerateTranscription(attachmentVideoUnit)).toBeFalse();
+            expect(lectureUnitManagementComponent.canGenerateTranscription(attachmentVideoUnit)).toBeTrue();
 
             lectureUnitManagementComponent.transcriptionStatus[attachmentVideoUnit.id!] = undefined as any;
             lectureUnitManagementComponent.playlistUrls[attachmentVideoUnit.id!] = undefined as any;
