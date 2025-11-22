@@ -13,7 +13,7 @@ import {
 } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { NgClass } from '@angular/common';
-import { TranslateDirective } from '../language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CopyToClipboardButtonComponent } from 'app/shared/components/buttons/copy-to-clipboard-button/copy-to-clipboard-button.component';
 
 @Component({
