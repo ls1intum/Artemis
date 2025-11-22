@@ -202,7 +202,7 @@ paths:
           description: OK
           content:
             application/json:
-              schema: {$ref: '#/components/schemas/CodeGenerationResultDTO'}
+              schema: {$ref: '#/components/schemas/CodeGenerationJobStartDTO'}
   /api/tutorialgroup/tutorial-groups/{tutorialGroupId}/title:
     get:
       tags: [tutorial-group]
@@ -377,6 +377,11 @@ components:
         language: {type: string}
         additionalInformation: {type: string}
         isOnline: {type: boolean}
+    CodeGenerationJobStartDTO:
+      type: object
+      properties:
+        jobId: {type: string}
+      required: [jobId]
     Student:
       type: object
       properties:
@@ -507,14 +512,3 @@ components:
           description: Type of repository to generate code for
           enum: [TEMPLATE, SOLUTION, TESTS]
           example: SOLUTION
-    CodeGenerationResultDTO:
-      type: object
-      description: Response DTO for code generation result
-      properties:
-        success: {type: boolean, description: Whether the code generation was successful,
-          example: true}
-        message: {type: string, description: Result message describing the outcome,
-          example: Solution code generated successfully and compiles without errors.}
-        attempts: {type: integer, format: int32, description: Number of generation
-            attempts made, example: 1}
-      required: [success, message, attempts]

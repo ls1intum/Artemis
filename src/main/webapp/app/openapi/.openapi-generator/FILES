@@ -9,8 +9,8 @@ configuration.ts
 encoder.ts
 model/artifactLocation.ts
 model/channel.ts
+model/codeGenerationJobStartDTO.ts
 model/codeGenerationRequestDTO.ts
-model/codeGenerationResultDTO.ts
 model/consistencyCheckResponse.ts
 model/consistencyIssue.ts
 model/conversationUser.ts

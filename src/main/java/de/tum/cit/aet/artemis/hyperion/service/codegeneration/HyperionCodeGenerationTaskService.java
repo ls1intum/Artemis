@@ -34,7 +34,7 @@ public class HyperionCodeGenerationTaskService {
      * @param exercise       target exercise
      * @param repositoryType target repository type
      */
-    @Async("taskExecutor")
+    @Async
     public void runJobAsync(String jobId, User user, ProgrammingExercise exercise, RepositoryType repositoryType) {
         var topicSuffix = "code-generation/jobs/" + jobId;
         var publisher = new WebsocketEventPublisher(websocket, user.getLogin(), topicSuffix, exercise, repositoryType, jobId);

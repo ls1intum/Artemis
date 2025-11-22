@@ -24,7 +24,6 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal/confirm-autofocus-modal.component';
 import { HyperionWebsocketService } from 'app/hyperion/services/hyperion-websocket.service';
 import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
-import { HttpClient } from '@angular/common/http';
 import { Subscription, catchError, of, switchMap, take } from 'rxjs';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { faCheckDouble } from '@fortawesome/free-solid-svg-icons';
@@ -34,6 +33,7 @@ import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actio
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
 import { ConsistencyCheckError } from 'app/programming/shared/entities/consistency-check-result.model';
 import { ConsistencyCheckResponse } from 'app/openapi/model/consistencyCheckResponse';
+import { HyperionCodeGenerationApiService } from 'app/openapi/api/hyperionCodeGenerationApi.service';
 
 @Component({
     selector: 'jhi-code-editor-instructor',
@@ -89,7 +89,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     private hyperionWs = inject(HyperionWebsocketService);
     private repoService = inject(CodeEditorRepositoryService);
     private repoFileService = inject(CodeEditorRepositoryFileService);
-    private http = inject(HttpClient);
+    private hyperionCodeGenerationApi = inject(HyperionCodeGenerationApiService);
     isGeneratingCode = signal(false);
     private jobSubscription?: Subscription;
     private jobTimeoutHandle?: number;
@@ -118,8 +118,9 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      */
     private startCodeGeneration() {
         this.isGeneratingCode.set(true);
-        const request: CodeGenerationRequestDTO = { repositoryType: this.selectedRepository as CodeGenerationRequestDTO.RepositoryTypeEnum };
-        this.http.post<{ jobId: string }>(`api/hyperion/programming-exercises/${this.exercise!.id}/generate-code`, request).subscribe({
+        const repositoryType = this.selectedRepository as CodeGenerationRequestDTO.RepositoryTypeEnum;
+        const exerciseId = this.exercise!.id!;
+        this.hyperionCodeGenerationApi.generateCode(exerciseId, { repositoryType }).subscribe({
             next: (res) => {
                 if (!res?.jobId) {
                     this.isGeneratingCode.set(false);

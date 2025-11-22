@@ -16,9 +16,9 @@ import { HttpClient,
 import { Observable }                                        from 'rxjs';
 
 // @ts-ignore
-import { CodeGenerationRequestDTO } from '../model/codeGenerationRequestDTO';
+import { CodeGenerationJobStartDTO } from '../model/codeGenerationJobStartDTO';
 // @ts-ignore
-import { CodeGenerationResultDTO } from '../model/codeGenerationResultDTO';
+import { CodeGenerationRequestDTO } from '../model/codeGenerationRequestDTO';
 
 // @ts-ignore
 import { BASE_PATH }                     from '../variables';
@@ -37,14 +37,15 @@ export class HyperionCodeGenerationApiService extends BaseService {
     }
 
     /**
+     * @endpoint post /api/hyperion/programming-exercises/{exerciseId}/generate-code
      * @param exerciseId 
      * @param codeGenerationRequestDTO 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      */
-    public generateCode(exerciseId: number, codeGenerationRequestDTO: CodeGenerationRequestDTO, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<CodeGenerationResultDTO>;
-    public generateCode(exerciseId: number, codeGenerationRequestDTO: CodeGenerationRequestDTO, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<CodeGenerationResultDTO>>;
-    public generateCode(exerciseId: number, codeGenerationRequestDTO: CodeGenerationRequestDTO, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<CodeGenerationResultDTO>>;
+    public generateCode(exerciseId: number, codeGenerationRequestDTO: CodeGenerationRequestDTO, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<CodeGenerationJobStartDTO>;
+    public generateCode(exerciseId: number, codeGenerationRequestDTO: CodeGenerationRequestDTO, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<CodeGenerationJobStartDTO>>;
+    public generateCode(exerciseId: number, codeGenerationRequestDTO: CodeGenerationRequestDTO, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<CodeGenerationJobStartDTO>>;
     public generateCode(exerciseId: number, codeGenerationRequestDTO: CodeGenerationRequestDTO, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (exerciseId === null || exerciseId === undefined) {
             throw new Error('Required parameter exerciseId was null or undefined when calling generateCode.');
@@ -89,7 +90,7 @@ export class HyperionCodeGenerationApiService extends BaseService {
 
         let localVarPath = `/api/hyperion/programming-exercises/${this.configuration.encodeParam({name: "exerciseId", value: exerciseId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/generate-code`;
         const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<CodeGenerationResultDTO>('post', `${basePath}${localVarPath}`,
+        return this.httpClient.request<CodeGenerationJobStartDTO>('post', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
                 body: codeGenerationRequestDTO,
@@ -97,7 +98,7 @@ export class HyperionCodeGenerationApiService extends BaseService {
                 ...(withCredentials ? { withCredentials } : {}),
                 headers: localVarHeaders,
                 observe: observe,
-                transferCache: localVarTransferCache,
+                ...(localVarTransferCache !== undefined ? { transferCache: localVarTransferCache } : {}),
                 reportProgress: reportProgress
             }
         );

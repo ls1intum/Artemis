@@ -7,8 +7,6 @@ import { Subject, of, throwError } from 'rxjs';
 import { CodeEditorInstructorAndEditorContainerComponent } from 'app/programming/manage/code-editor/instructor-and-editor-container/code-editor-instructor-and-editor-container.component';
 import { EditorState, RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
-import { HttpClient, provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { HyperionWebsocketService } from 'app/hyperion/services/hyperion-websocket.service';
 import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
@@ -35,12 +33,13 @@ import { ConsistencyCheckResponse } from 'app/openapi/model/consistencyCheckResp
 import { ConsistencyCheckError, ErrorType } from 'app/programming/shared/entities/consistency-check-result.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { HyperionCodeGenerationApiService } from 'app/openapi/api/hyperionCodeGenerationApi.service';
 
 describe('CodeEditorInstructorAndEditorContainerComponent - Code Generation', () => {
     let fixture: ComponentFixture<CodeEditorInstructorAndEditorContainerComponent>;
     let comp: CodeEditorInstructorAndEditorContainerComponent;
 
-    let http: jest.Mocked<Pick<HttpClient, 'post'>>;
+    let codeGenerationApi: jest.Mocked<Pick<HyperionCodeGenerationApiService, 'generateCode'>>;
     let ws: jest.Mocked<Pick<HyperionWebsocketService, 'subscribeToJob' | 'unsubscribeFromJob'>>;
     let alertService: AlertService;
     let repoService: CodeEditorRepositoryService;
@@ -68,12 +67,14 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Code Generation', ()
                 { provide: Location, useValue: { replaceState: jest.fn() } },
                 { provide: ParticipationService, useClass: MockParticipationService },
                 { provide: ActivatedRoute, useValue: { params: of({}) } },
-                { provide: HttpClient, useValue: { post: jest.fn() } },
+                { provide: HyperionCodeGenerationApiService, useValue: { generateCode: jest.fn() } },
                 { provide: NgbModal, useValue: { open: jest.fn(() => ({ componentInstance: {}, result: Promise.resolve() })) } },
                 { provide: HyperionWebsocketService, useValue: { subscribeToJob: jest.fn(), unsubscribeFromJob: jest.fn() } },
                 { provide: CodeEditorRepositoryService, useValue: { pull: jest.fn(() => of(void 0)) } },
                 { provide: CodeEditorRepositoryFileService, useValue: { getRepositoryContent: jest.fn(() => of({} as any)) } },
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ConsistencyCheckService, useValue: { checkConsistencyForProgrammingExercise: jest.fn() } },
+                { provide: ArtemisIntelligenceService, useValue: { consistencyCheck: jest.fn(), isLoading: () => false } },
             ],
         })
             // Avoid rendering heavy template dependencies for these tests
@@ -83,7 +84,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Code Generation', ()
             .compileComponents();
 
         alertService = TestBed.inject(AlertService);
-        http = TestBed.inject(HttpClient) as any;
+        codeGenerationApi = TestBed.inject(HyperionCodeGenerationApiService) as any;
         ws = TestBed.inject(HyperionWebsocketService) as any;
         profileService = TestBed.inject(ProfileService);
         repoService = TestBed.inject(CodeEditorRepositoryService) as any;
@@ -110,7 +111,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Code Generation', ()
 
         comp.generateCode();
         await Promise.resolve();
-        expect(http.post).not.toHaveBeenCalled();
+        expect(codeGenerationApi.generateCode).not.toHaveBeenCalled();
     });
 
     it('should not generate when a generation is already running', async () => {
@@ -119,7 +120,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Code Generation', ()
 
         comp.generateCode();
         await Promise.resolve();
-        expect(http.post).not.toHaveBeenCalled();
+        expect(codeGenerationApi.generateCode).not.toHaveBeenCalled();
     });
 
     it('should warn on unsupported repository types', () => {
@@ -128,7 +129,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Code Generation', ()
 
         comp.generateCode();
 
-        expect(http.post).not.toHaveBeenCalled();
+        expect(codeGenerationApi.generateCode).not.toHaveBeenCalled();
         expect(addAlertSpy).toHaveBeenCalledWith(
             expect.objectContaining({ type: AlertType.WARNING, translationKey: 'artemisApp.programmingExercise.codeGeneration.unsupportedRepository' }),
         );
@@ -138,14 +139,14 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Code Generation', ()
         const addAlertSpy = jest.spyOn(alertService, 'addAlert');
         comp.selectedRepository = RepositoryType.TEMPLATE;
 
-        (http.post as jest.Mock).mockReturnValue(of({ jobId: 'job-1' }));
+        (codeGenerationApi.generateCode as jest.Mock).mockReturnValue(of({ jobId: 'job-1' }));
         const job$ = new Subject<any>();
         (ws.subscribeToJob as jest.Mock).mockReturnValue(job$.asObservable());
 
         comp.generateCode();
         await Promise.resolve(); // resolve modal
 
-        expect(http.post).toHaveBeenCalledWith('api/hyperion/programming-exercises/42/generate-code', { repositoryType: 'TEMPLATE' });
+        expect(codeGenerationApi.generateCode).toHaveBeenCalledWith(42, { repositoryType: RepositoryType.TEMPLATE });
 
         // Emit DONE success event
         job$.next({ type: 'DONE', success: true });
@@ -164,14 +165,14 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Code Generation', ()
         const addAlertSpy = jest.spyOn(alertService, 'addAlert');
         comp.selectedRepository = RepositoryType.SOLUTION;
 
-        (http.post as jest.Mock).mockReturnValue(of({ jobId: 'job-2' }));
+        (codeGenerationApi.generateCode as jest.Mock).mockReturnValue(of({ jobId: 'job-2' }));
         const job$ = new Subject<any>();
         (ws.subscribeToJob as jest.Mock).mockReturnValue(job$.asObservable());
 
         comp.generateCode();
         await Promise.resolve();
 
-        expect(http.post).toHaveBeenCalledWith('api/hyperion/programming-exercises/42/generate-code', { repositoryType: 'SOLUTION' });
+        expect(codeGenerationApi.generateCode).toHaveBeenCalledWith(42, { repositoryType: RepositoryType.SOLUTION });
 
         job$.next({ type: 'DONE', success: false });
 
@@ -189,12 +190,12 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Code Generation', ()
         const addAlertSpy = jest.spyOn(alertService, 'addAlert');
         comp.selectedRepository = RepositoryType.TESTS;
 
-        (http.post as jest.Mock).mockReturnValue(throwError(() => new Error('fail')) as any);
+        (codeGenerationApi.generateCode as jest.Mock).mockReturnValue(throwError(() => new Error('fail')) as any);
 
         comp.generateCode();
         await Promise.resolve();
 
-        expect(http.post).toHaveBeenCalledWith('api/hyperion/programming-exercises/42/generate-code', { repositoryType: 'TESTS' });
+        expect(codeGenerationApi.generateCode).toHaveBeenCalledWith(42, { repositoryType: RepositoryType.TESTS });
         expect(comp.isGeneratingCode()).toBeFalse();
         expect(addAlertSpy).toHaveBeenCalledWith(
             expect.objectContaining({
@@ -229,7 +230,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Code Generation', ()
 
     it('should trigger repository pull on FILE_UPDATED and NEW_FILE events', async () => {
         comp.selectedRepository = RepositoryType.TEMPLATE;
-        (http.post as jest.Mock).mockReturnValue(of({ jobId: 'job-3' }));
+        (codeGenerationApi.generateCode as jest.Mock).mockReturnValue(of({ jobId: 'job-3' }));
 
         const job$ = new Subject<any>();
         (ws.subscribeToJob as jest.Mock).mockReturnValue(job$.asObservable());
@@ -246,7 +247,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Code Generation', ()
 
     it('should set editor state, refresh files and cleanup on DONE', async () => {
         comp.selectedRepository = RepositoryType.SOLUTION;
-        (http.post as jest.Mock).mockReturnValue(of({ jobId: 'job-4' }));
+        (codeGenerationApi.generateCode as jest.Mock).mockReturnValue(of({ jobId: 'job-4' }));
         const job$ = new Subject<any>();
         (ws.subscribeToJob as jest.Mock).mockReturnValue(job$.asObservable());
 
@@ -274,7 +275,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Code Generation', ()
     it('should show danger alert and cleanup on ERROR event', async () => {
         const addAlertSpy = jest.spyOn(alertService, 'addAlert');
         comp.selectedRepository = RepositoryType.TEMPLATE;
-        (http.post as jest.Mock).mockReturnValue(of({ jobId: 'job-5' }));
+        (codeGenerationApi.generateCode as jest.Mock).mockReturnValue(of({ jobId: 'job-5' }));
         const job$ = new Subject<any>();
         (ws.subscribeToJob as jest.Mock).mockReturnValue(job$.asObservable());
 
@@ -292,7 +293,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Code Generation', ()
     it('should show danger alert and cleanup when job stream errors', async () => {
         const addAlertSpy = jest.spyOn(alertService, 'addAlert');
         comp.selectedRepository = RepositoryType.TESTS;
-        (http.post as jest.Mock).mockReturnValue(of({ jobId: 'job-6' }));
+        (codeGenerationApi.generateCode as jest.Mock).mockReturnValue(of({ jobId: 'job-6' }));
         (ws.subscribeToJob as jest.Mock).mockReturnValue(throwError(() => new Error('ws')));
 
         comp.generateCode();
@@ -306,7 +307,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Code Generation', ()
     it('should show danger alert when response has no job id', async () => {
         const addAlertSpy = jest.spyOn(alertService, 'addAlert');
         comp.selectedRepository = RepositoryType.TEMPLATE;
-        (http.post as jest.Mock).mockReturnValue(of({}));
+        (codeGenerationApi.generateCode as jest.Mock).mockReturnValue(of({}));
 
         comp.generateCode();
         await Promise.resolve();
@@ -318,7 +319,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Code Generation', ()
     it('should show timeout warning and cleanup when generation exceeds time limit', async () => {
         const addAlertSpy = jest.spyOn(alertService, 'addAlert');
         comp.selectedRepository = RepositoryType.SOLUTION;
-        (http.post as jest.Mock).mockReturnValue(of({ jobId: 'job-7' }));
+        (codeGenerationApi.generateCode as jest.Mock).mockReturnValue(of({ jobId: 'job-7' }));
 
         // Intercept setTimeout to capture the scheduled callback and invoke it immediately
         const originalSetTimeout = window.setTimeout;
