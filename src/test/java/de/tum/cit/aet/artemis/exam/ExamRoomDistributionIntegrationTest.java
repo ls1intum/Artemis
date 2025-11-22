@@ -221,14 +221,14 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
     @Test
     @WithMockUser(username = TUTOR_LOGIN, roles = "TA")
     void testGetAttendanceCheckerInformationAsTutor() throws Exception {
-        request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/attendance-checker-information", HttpStatus.FORBIDDEN,
+        request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/attendance-checker-information", HttpStatus.BAD_REQUEST,
                 AttendanceCheckerAppExamInformationDTO.class);
     }
 
     @Test
     @WithMockUser(username = EDITOR_LOGIN, roles = "EDITOR")
     void testGetAttendanceCheckerInformationAsEditor() throws Exception {
-        request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/attendance-checker-information", HttpStatus.FORBIDDEN,
+        request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/attendance-checker-information", HttpStatus.BAD_REQUEST,
                 AttendanceCheckerAppExamInformationDTO.class);
     }
 
@@ -247,7 +247,7 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+    @WithMockUser(username = TUTOR_LOGIN, roles = "TA")
     void testGetAttendanceCheckerInformationRegisteredStudentsButNotDistributed() throws Exception {
         examUtilService.registerUsersForExamAndSaveExam(exam1, TEST_PREFIX, 1);
 
@@ -266,7 +266,7 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+    @WithMockUser(username = TUTOR_LOGIN, roles = "TA")
     void testGetAttendanceCheckerInformationRegisteredStudentsWithModernDistribution() throws Exception {
         examUtilService.registerUsersForExamAndSaveExam(exam1, TEST_PREFIX, 10);
         examRoomService.parseAndStoreExamRoomDataFromZipFile(ExamRoomZipFiles.zipFileSingleExamRoom);
@@ -294,7 +294,7 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+    @WithMockUser(username = TUTOR_LOGIN, roles = "TA")
     void testGetAttendanceCheckerInformationRegisteredStudentsWithLegacyDistribution() throws Exception {
         examUtilService.registerUsersForExamAndSaveExam(exam1, TEST_PREFIX, 10);
 
@@ -309,7 +309,7 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+    @WithMockUser(username = TUTOR_LOGIN, roles = "TA")
     void testGetAttendanceCheckerInformationRegisteredStudentsWithLegacyDistributionNotAllDistributed() throws Exception {
         examUtilService.registerUsersForExamAndSaveExam(exam1, TEST_PREFIX, 10);
 
@@ -324,7 +324,7 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
-    @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+    @WithMockUser(username = TUTOR_LOGIN, roles = "TA")
     void testGetAttendanceCheckerInformationWithStudentsAssignedReturnAllRegisteredRooms() throws Exception {
         examUtilService.registerUsersForExamAndSaveExam(exam1, TEST_PREFIX, 10);
         examRoomService.parseAndStoreExamRoomDataFromZipFile(ExamRoomZipFiles.zipFileFourExamRooms);
