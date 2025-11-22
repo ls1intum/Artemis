@@ -488,19 +488,26 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         Course course2 = courseUtilService.addEmptyCourse();
         courseUtilService.enableMessagingForCourse(course2);
 
-        Lecture lecture = request.postWithResponseBody("/api/lecture/lectures/import/" + lecture1.getId() + "?courseId=" + course2.getId(), null, Lecture.class,
-                HttpStatus.CREATED);
+        var importedLectureDto = request.postWithResponseBody("/api/lecture/lectures/import/" + lecture1.getId() + "?courseId=" + course2.getId(), null,
+                LectureResource.LectureDTO.class, HttpStatus.CREATED);
+
+        // load new lecture with its lecture units and attachments
+        var newlyImportedLecture = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(importedLectureDto.id());
 
         // Assert that all lecture units (except exercise units) were copied
-        assertThat(lecture.getLectureUnits().stream().map(LectureUnit::getName).toList()).containsExactlyElementsOf(
+        assertThat(newlyImportedLecture.getLectureUnits().stream().map(LectureUnit::getName).toList()).containsExactlyElementsOf(
                 this.lecture1.getLectureUnits().stream().filter(lectureUnit -> !(lectureUnit instanceof ExerciseUnit)).map(LectureUnit::getName).toList());
 
-        assertThat(lecture.getAttachments().stream().map(Attachment::getName).toList())
+        assertThat(newlyImportedLecture.getAttachments().stream().map(Attachment::getName).toList())
                 .containsExactlyElementsOf(this.lecture1.getAttachments().stream().map(Attachment::getName).toList());
 
-        Channel channel = channelRepository.findChannelByLectureId(lecture.getId());
+        Channel channel = channelRepository.findChannelByLectureId(importedLectureDto.id());
         assertThat(channel).isNotNull();
-        assertThat(channel.getName()).isEqualTo("lecture-" + lecture.getTitle().toLowerCase().replaceAll("[-\\s]+", "-")); // default name of imported lecture channel
+        assertThat(importedLectureDto.description()).isEqualTo(this.lecture1.getDescription());
+        assertThat(importedLectureDto.startDate()).isEqualTo(this.lecture1.getStartDate());
+        assertThat(importedLectureDto.endDate()).isEqualTo(this.lecture1.getEndDate());
+        assertThat(importedLectureDto.id()).isNotEqualTo(this.lecture1.getId());
+        assertThat(channel.getName()).isEqualTo("lecture-" + importedLectureDto.title().toLowerCase().replaceAll("[-\\s]+", "-")); // default name of imported lecture channel
     }
 
     @Test
