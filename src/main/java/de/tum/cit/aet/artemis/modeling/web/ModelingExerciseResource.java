@@ -49,7 +49,6 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
-import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.course.CourseService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
@@ -232,7 +231,7 @@ public class ModelingExerciseResource {
      */
     // NOTE: IMPORTANT we should NEVER call save on an entity retrieved from the client because it is unsafe and can lead to data loss
     @PutMapping("modeling-exercises")
-    @EnforceAtLeastEditorInExercise
+    @EnforceAtLeastEditor
     public ResponseEntity<ModelingExercise> updateModelingExercise(@RequestBody UpdateModelingExerciseDTO updateModelingExerciseDTO,
             @RequestParam(value = "notificationText", required = false) String notificationText) {
         log.debug("REST request to update ModelingExercise : {}", updateModelingExerciseDTO);
@@ -241,6 +240,8 @@ public class ModelingExerciseResource {
 
         // Check that the user is authorized to update the exercise
         var user = userRepository.getUserWithGroupsAndAuthorities();
+        // Important: use the original exercise for permission check
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, originalExercise, user);
         // Forbid changing the course the exercise belongs to.
         if (!Objects.equals(originalExercise.getCourseViaExerciseGroupOrCourseMember().getId(), updateModelingExerciseDTO.courseId())) {
             throw new ConflictException("Exercise course id does not match the stored course id", ENTITY_NAME, "cannotChangeCourseId");
@@ -452,7 +453,7 @@ public class ModelingExerciseResource {
      *         Server Error) if the modelingExercise couldn't be updated
      */
     @PutMapping("modeling-exercises/{exerciseId}/re-evaluate")
-    @EnforceAtLeastEditorInExercise
+    @EnforceAtLeastEditor
     public ResponseEntity<ModelingExercise> reEvaluateAndUpdateModelingExercise(@PathVariable long exerciseId, @RequestBody UpdateModelingExerciseDTO updateModelingExerciseDTO,
             @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterGradingInstructionUpdate) {
         log.debug("REST request to re-evaluate ModelingExercise : {}", updateModelingExerciseDTO);

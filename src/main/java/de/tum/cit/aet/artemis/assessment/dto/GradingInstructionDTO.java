@@ -21,19 +21,30 @@ public record GradingInstructionDTO(@NotNull Long id, double credits, String gra
     }
 
     /**
-     * Converts this DTO into a {@link GradingInstruction} entity.
-     *
-     * @param gradingInstructionDTO the DTO to convert
-     * @return a new {@link GradingInstruction} with values copied from the DTO
+     * Creates a detached {@link GradingInstruction} from this DTO.
+     * Intended for creation or non-managed use. For updating an existing
+     * managed entity, prefer {@link #applyTo(GradingInstruction)}.
      */
-    public static GradingInstruction toEntity(@NotNull GradingInstructionDTO gradingInstructionDTO) {
+    public GradingInstruction toEntity() {
         GradingInstruction gradingInstruction = new GradingInstruction();
-        gradingInstruction.setId(gradingInstructionDTO.id());
-        gradingInstruction.setCredits(gradingInstructionDTO.credits());
-        gradingInstruction.setGradingScale(gradingInstructionDTO.gradingScale());
-        gradingInstruction.setInstructionDescription(gradingInstructionDTO.instructionDescription());
-        gradingInstruction.setFeedback(gradingInstructionDTO.feedback());
-        gradingInstruction.setUsageCount(gradingInstructionDTO.usageCount());
+        gradingInstruction.setId(id);
+        gradingInstruction.setCredits(credits);
+        gradingInstruction.setGradingScale(gradingScale);
+        gradingInstruction.setInstructionDescription(instructionDescription);
+        gradingInstruction.setFeedback(feedback);
+        gradingInstruction.setUsageCount(usageCount);
         return gradingInstruction;
+    }
+
+    /**
+     * Applies this DTO's data to an existing managed {@link GradingInstruction}.
+     * Intended for update scenarios within a persistence context.
+     */
+    public void applyTo(@NotNull GradingInstruction gradingInstruction) {
+        gradingInstruction.setCredits(this.credits);
+        gradingInstruction.setGradingScale(this.gradingScale);
+        gradingInstruction.setInstructionDescription(this.instructionDescription);
+        gradingInstruction.setFeedback(this.feedback);
+        gradingInstruction.setUsageCount(this.usageCount);
     }
 }

@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.assessment.dto;
 
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -27,19 +29,53 @@ public record GradingCriterionDTO(@NotNull Long id, String title, Set<GradingIns
     /**
      * Converts this DTO into a {@link GradingCriterion} entity.
      *
-     * @param gradingCriterionDTO the DTO to convert
      * @return a new {@link GradingCriterion} with values copied from the DTO
      */
-    public static GradingCriterion toEntity(@NotNull GradingCriterionDTO gradingCriterionDTO) {
+    public GradingCriterion toEntity() {
         GradingCriterion criterion = new GradingCriterion();
-        criterion.setId(gradingCriterionDTO.id());
-        criterion.setTitle(gradingCriterionDTO.title());
-
-        if (gradingCriterionDTO.structuredGradingInstructions() != null && !gradingCriterionDTO.structuredGradingInstructions().isEmpty()) {
-            Set<GradingInstruction> instructions = gradingCriterionDTO.structuredGradingInstructions().stream().map(GradingInstructionDTO::toEntity).collect(Collectors.toSet());
+        criterion.setId(this.id);
+        criterion.setTitle(this.title);
+        if (this.structuredGradingInstructions != null && !this.structuredGradingInstructions.isEmpty()) {
+            Set<GradingInstruction> instructions = this.structuredGradingInstructions.stream().map(GradingInstructionDTO::toEntity).collect(Collectors.toSet());
             criterion.setStructuredGradingInstructions(instructions);
         }
-
         return criterion;
+    }
+
+    /**
+     * Applies this DTO's data to an existing managed {@link GradingCriterion}.
+     * Intended for update scenarios within a persistence context.
+     */
+    public void applyTo(GradingCriterion gradingCriterion) {
+        if (this.title != null) {
+            gradingCriterion.setTitle(this.title);
+        }
+
+        if (this.structuredGradingInstructions == null) {
+            return;
+        }
+
+        Set<GradingInstruction> existing = gradingCriterion.getStructuredGradingInstructions();
+        if (existing == null) {
+            existing = new HashSet<>();
+        }
+
+        Map<Long, GradingInstruction> existingById = existing.stream().filter(i -> i.getId() != null).collect(Collectors.toMap(GradingInstruction::getId, i -> i));
+
+        Set<GradingInstruction> updatedInstructions = new HashSet<>();
+
+        for (GradingInstructionDTO instructionDTO : this.structuredGradingInstructions) {
+            GradingInstruction instruction = instructionDTO.id() != null ? existingById.get(instructionDTO.id()) : null;
+
+            if (instruction == null) {
+                instruction = instructionDTO.toEntity();
+                instruction.setGradingCriterion(gradingCriterion);
+            }
+            else {
+                instructionDTO.applyTo(instruction);
+            }
+            updatedInstructions.add(instruction);
+        }
+        gradingCriterion.setStructuredGradingInstructions(updatedInstructions);
     }
 }

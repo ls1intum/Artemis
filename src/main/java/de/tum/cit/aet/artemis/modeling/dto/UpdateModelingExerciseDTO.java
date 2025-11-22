@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.modeling.dto;
 
 import java.time.ZonedDateTime;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -81,12 +82,28 @@ public record UpdateModelingExerciseDTO(long id, @Nullable String title, @Nullab
             exercise.setExampleSolutionPublicationDate(this.exampleSolutionPublicationDate);
         }
         if (this.gradingCriteria != null) {
-            exercise.setGradingCriteria(this.gradingCriteria.stream().map(GradingCriterionDTO::toEntity).collect(Collectors.toSet()));
+            Set<GradingCriterion> existingCriteria = exercise.getGradingCriteria();
+            var existingById = (existingCriteria != null && Hibernate.isInitialized(existingCriteria))
+                    ? existingCriteria.stream().filter(gc -> gc.getId() != null).collect(Collectors.toMap(GradingCriterion::getId, gc -> gc))
+                    : Map.<Long, GradingCriterion>of();
+
+            Set<GradingCriterion> updatedCriteria = this.gradingCriteria.stream().map(dto -> {
+                GradingCriterion criterion = dto.id() != null ? existingById.get(dto.id()) : null;
+                if (criterion == null) {
+                    criterion = dto.toEntity();
+                    criterion.setExercise(exercise);
+                }
+                else {
+                    dto.applyTo(criterion);
+                }
+                return criterion;
+            }).collect(Collectors.toSet());
+
+            exercise.setGradingCriteria(updatedCriteria);
         }
         if (this.gradingInstructions != null) {
             exercise.setGradingInstructions(this.gradingInstructions);
         }
-
         return exercise;
     }
 

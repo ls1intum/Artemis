@@ -238,8 +238,6 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
         ModelingExercise createdModelingExercise = request.postWithResponseBody("/api/modeling/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
         gradingCriteria = exerciseUtilService.addGradingInstructionsToExercise(modelingExercise);
-        gradingCriteria.forEach(gc -> gc.setExercise(createdModelingExercise));
-        gradingCriterionRepository.saveAllAndFlush(gradingCriteria);
 
         createdModelingExercise.setGradingCriteria(gradingCriteria);
 
