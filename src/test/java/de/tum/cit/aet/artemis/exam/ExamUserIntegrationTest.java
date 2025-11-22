@@ -121,7 +121,7 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateExamUser_DidCheckFields() throws Exception {
-        ExamUserDTO examUserDTO = new ExamUserDTO(TEST_PREFIX + "student2", "", "", "", "", "", "", "", true, true, true, true, "");
+        ExamUserDTO examUserDTO = new ExamUserDTO(TEST_PREFIX + "student2", "", "", "", "", "", "", "", true, true, true, true, "", null, null, null, null, null, null, null);
         var examUserResponse = request.performMvcRequest(buildUpdateExamUser(examUserDTO, false, course1.getId(), exam1.getId())).andExpect(status().isOk()).andReturn();
         ExamUser examUser = mapper.readValue(examUserResponse.getResponse().getContentAsString(), ExamUser.class);
         assertThat(examUser.getDidCheckRegistrationNumber()).isTrue();
@@ -134,8 +134,10 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testAddStudentsToExamWithSeatAndRoomFields() throws Exception {
         List<ExamUserDTO> examUserDTOs = new ArrayList<>();
-        ExamUserDTO examUserDTO1 = new ExamUserDTO(TEST_PREFIX + "student1", "", "", "03756882", "", "", "101", "11", true, true, true, true, "");
-        ExamUserDTO examUserDTO2 = new ExamUserDTO(TEST_PREFIX + "student2", "", "", "03756883", "", "", "102", "11", true, true, true, true, "");
+        ExamUserDTO examUserDTO1 = new ExamUserDTO(TEST_PREFIX + "student1", "", "", "03756882", "", "", "101", "11", true, true, true, true, "", null, null, null, null, null,
+                null, null);
+        ExamUserDTO examUserDTO2 = new ExamUserDTO(TEST_PREFIX + "student2", "", "", "03756883", "", "", "102", "11", true, true, true, true, "", null, null, null, null, null,
+                null, null);
         examUserDTOs.add(examUserDTO1);
         examUserDTOs.add(examUserDTO2);
 
@@ -203,9 +205,12 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
 
     private static List<ExamUserDTO> getExamUserDTOS() {
         List<ExamUserDTO> examUserDTOs = new ArrayList<>();
-        ExamUserDTO examUserDTO1 = new ExamUserDTO(TEST_PREFIX + "student1", "", "", "03756882", "", "", "101", "11", true, true, true, true, "");
-        ExamUserDTO examUserDTO3 = new ExamUserDTO(TEST_PREFIX + "student3", "", "", "03756884", "", "", "101", "11", true, true, true, true, "");
-        ExamUserDTO examUserDTO4 = new ExamUserDTO(TEST_PREFIX + "student4", "", "", "03756885", "", "", "102", "11", true, true, true, true, "");
+        ExamUserDTO examUserDTO1 = new ExamUserDTO(TEST_PREFIX + "student1", "", "", "03756882", "", "", "101", "11", true, true, true, true, "", null, null, null, null, null,
+                null, null);
+        ExamUserDTO examUserDTO3 = new ExamUserDTO(TEST_PREFIX + "student3", "", "", "03756884", "", "", "101", "11", true, true, true, true, "", null, null, null, null, null,
+                null, null);
+        ExamUserDTO examUserDTO4 = new ExamUserDTO(TEST_PREFIX + "student4", "", "", "03756885", "", "", "102", "11", true, true, true, true, "", null, null, null, null, null,
+                null, null);
         examUserDTOs.add(examUserDTO1);
         examUserDTOs.add(examUserDTO3);
         examUserDTOs.add(examUserDTO4);
@@ -215,7 +220,7 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateExamUserDidCheckFieldsAndSigningImage() throws Exception {
-        ExamUserDTO examUserDTO = new ExamUserDTO(TEST_PREFIX + "student2", "", "", "", "", "", "", "", true, true, true, true, "");
+        ExamUserDTO examUserDTO = new ExamUserDTO(TEST_PREFIX + "student2", "", "", "", "", "", "", "", true, true, true, true, "", null, null, null, null, null, null, null);
         var examUserResponse = request.performMvcRequest(buildUpdateExamUser(examUserDTO, true, course1.getId(), exam1.getId())).andExpect(status().isOk()).andReturn();
         ExamUser examUser = mapper.readValue(examUserResponse.getResponse().getContentAsString(), ExamUser.class);
         assertThat(examUser.getDidCheckRegistrationNumber()).isTrue();
@@ -253,7 +258,7 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
         // change back to instructor user
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
         // update exam user attendance
-        ExamUserDTO examUserDTO = new ExamUserDTO(TEST_PREFIX + "student1", "", "", "", "", "", "", "", true, true, true, true, "");
+        ExamUserDTO examUserDTO = new ExamUserDTO(TEST_PREFIX + "student1", "", "", "", "", "", "", "", true, true, true, true, "", null, null, null, null, null, null, null);
         var examUserResponse = request.performMvcRequest(buildUpdateExamUser(examUserDTO, true, course2.getId(), exam2.getId())).andExpect(status().isOk()).andReturn();
         ExamUser examUser = mapper.readValue(examUserResponse.getResponse().getContentAsString(), ExamUser.class);
         assertThat(examUser.getDidCheckRegistrationNumber()).isTrue();
@@ -277,7 +282,7 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
         verifySignedExamUsersHaveSignature(examId, unsignedExamUserIds);
 
         // update exam user attendance to override signature
-        ExamUserDTO examUserUpdateDTO = new ExamUserDTO(TEST_PREFIX + "student1", "", "", "", "", "", "", "", true, true, true, true, "");
+        ExamUserDTO examUserUpdateDTO = new ExamUserDTO(TEST_PREFIX + "student1", "", "", "", "", "", "", "", true, true, true, true, "", null, null, null, null, null, null, null);
         var examUserUpdateResponse = request.performMvcRequest(buildUpdateExamUser(examUserUpdateDTO, true, course2.getId(), exam2.getId())).andExpect(status().isOk()).andReturn();
         ExamUser updatedExamUser = mapper.readValue(examUserUpdateResponse.getResponse().getContentAsString(), ExamUser.class);
         assertThat(updatedExamUser.getDidCheckRegistrationNumber()).isTrue();
@@ -297,7 +302,7 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
 
         // Verify attendance
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
-        ExamUserDTO examUserDTO = new ExamUserDTO(TEST_PREFIX + "student2", "", "", "", "", "", "", "", true, true, true, true, "");
+        ExamUserDTO examUserDTO = new ExamUserDTO(TEST_PREFIX + "student2", "", "", "", "", "", "", "", true, true, true, true, "", null, null, null, null, null, null, null);
         var examUserResponse = request.performMvcRequest(buildUpdateExamUser(examUserDTO, true, course1.getId(), exam1.getId())).andExpect(status().isOk()).andReturn();
         ExamUser examUser = mapper.readValue(examUserResponse.getResponse().getContentAsString(), ExamUser.class);
         assertThat(examUser.getDidCheckRegistrationNumber()).isTrue();
