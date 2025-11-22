@@ -208,8 +208,8 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         conversationUtilService.createCourseWideChannel(course, "loremipsum");
 
-        LectureResource.LectureDTO lecture = new LectureResource.LectureDTO(null, "loremIpsum-()!?", "loremIpsum", ZonedDateTime.now(), ZonedDateTime.now().plusWeeks(1), false,
-                channelName, LectureResource.LectureDTO.CourseDTO.from(course));
+        LectureResource.SimpleLectureDTO lecture = new LectureResource.SimpleLectureDTO(null, "loremIpsum-()!?", "loremIpsum", ZonedDateTime.now(),
+                ZonedDateTime.now().plusWeeks(1), false, channelName, LectureResource.SimpleLectureDTO.CourseDTO.from(course));
         Lecture returnedLecture = request.postWithResponseBody("/api/lecture/lectures", lecture, Lecture.class, HttpStatus.CREATED);
 
         Channel channel = channelRepository.findChannelByLectureId(returnedLecture.getId());
@@ -240,13 +240,13 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         String editedChannelName = "edited-lecture-channel";
         var updatedDate = ZonedDateTime.now().plusMonths(3);
         conversationUtilService.createCourseWideChannel(originalLecture.getCourse(), editedChannelName);
-        LectureResource.LectureDTO lectureDto = new LectureResource.LectureDTO(originalLecture.getId(), "Updated", "Updated", updatedDate, updatedDate, false, editedChannelName,
-                LectureResource.LectureDTO.CourseDTO.from(originalLecture.getCourse()));
+        LectureResource.SimpleLectureDTO lectureDto = new LectureResource.SimpleLectureDTO(originalLecture.getId(), "Updated", "Updated", updatedDate, updatedDate, false,
+                editedChannelName, LectureResource.SimpleLectureDTO.CourseDTO.from(originalLecture.getCourse()));
 
         // create channel with same name
 
         // lecture channel should be updated despite another channel with the same name
-        LectureResource.LectureDTO updatedLecture = request.putWithResponseBody("/api/lecture/lectures", lectureDto, LectureResource.LectureDTO.class, HttpStatus.OK);
+        LectureResource.SimpleLectureDTO updatedLecture = request.putWithResponseBody("/api/lecture/lectures", lectureDto, LectureResource.SimpleLectureDTO.class, HttpStatus.OK);
 
         Channel channel = channelRepository.findChannelByLectureId(updatedLecture.id());
 
@@ -297,15 +297,6 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(filteredLecture.getLectureUnits()).contains(attachmentVideoUnitWithSlides);
         AttachmentVideoUnit attachmentVideoUnit = (AttachmentVideoUnit) filteredLecture.getLectureUnits().getFirst();
         assertThat(attachmentVideoUnit.getSlides()).hasSize(numberOfSlides);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void getLectureForCourse_withLectureUnits_shouldGetLecturesWithLectureUnits() throws Exception {
-        List<Lecture> returnedLectures = request.getList("/api/lecture/courses/" + course1.getId() + "/lectures?withLectureUnits=true", HttpStatus.OK, Lecture.class);
-        assertThat(returnedLectures).hasSize(2);
-        Lecture lecture = returnedLectures.stream().filter(l -> l.getId().equals(lecture1.getId())).findFirst().orElseThrow();
-        assertThat(lecture.getLectureUnits()).hasSize(4);
     }
 
     @Test
@@ -492,7 +483,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         courseUtilService.enableMessagingForCourse(course2);
 
         var importedLectureDto = request.postWithResponseBody("/api/lecture/lectures/import/" + lecture1.getId() + "?courseId=" + course2.getId(), null,
-                LectureResource.LectureDTO.class, HttpStatus.CREATED);
+                LectureResource.SimpleLectureDTO.class, HttpStatus.CREATED);
 
         // load new lecture with its lecture units and attachments
         var newlyImportedLecture = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(importedLectureDto.id());
@@ -588,7 +579,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getTutorialLecturesForCourse_shouldGetTutorialLectures() throws Exception {
-        var returnedLectures = request.getList("/api/lecture/courses/" + course1.getId() + "/tutorial-lectures", HttpStatus.OK, LectureResource.LectureDTO.class);
+        var returnedLectures = request.getList("/api/lecture/courses/" + course1.getId() + "/tutorial-lectures", HttpStatus.OK, LectureResource.SimpleLectureDTO.class);
         assertThat(returnedLectures).hasSize(1);
         var lecture = returnedLectures.getFirst();
         assertThat(lecture.id()).isEqualTo(lecture2.getId());

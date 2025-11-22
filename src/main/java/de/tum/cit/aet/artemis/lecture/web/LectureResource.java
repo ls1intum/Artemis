@@ -64,6 +64,7 @@ import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.lecture.dto.LectureDTO;
 import de.tum.cit.aet.artemis.lecture.dto.LectureSeriesCreateLectureDTO;
 import de.tum.cit.aet.artemis.lecture.dto.SlideDTO;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
@@ -128,7 +129,7 @@ public class LectureResource {
      */
     @PostMapping("lectures")
     @EnforceAtLeastEditor
-    public ResponseEntity<LectureDTO> createLecture(@RequestBody LectureDTO newLectureDto) throws URISyntaxException {
+    public ResponseEntity<SimpleLectureDTO> createLecture(@RequestBody SimpleLectureDTO newLectureDto) throws URISyntaxException {
         log.debug("REST request to save Lecture : {}", newLectureDto);
         if (newLectureDto.id() != null) {
             throw new BadRequestAlertException("A new lecture cannot already have an ID", ENTITY_NAME, "idExists");
@@ -142,21 +143,21 @@ public class LectureResource {
 
         Lecture savedLecture = lectureRepository.save(newLecture);
         String channelName = channelService.createLectureChannel(savedLecture, Optional.ofNullable(newLectureDto.channelName()));
-        LectureDTO savedLectureDTO = LectureDTO.from(savedLecture, course, channelName);
+        SimpleLectureDTO savedLectureDTO = SimpleLectureDTO.from(savedLecture, course, channelName);
         return ResponseEntity.created(new URI("/api/lecture/lectures/" + savedLecture.getId())).body(savedLectureDTO);
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record LectureDTO(Long id, String title, String description, ZonedDateTime startDate, ZonedDateTime endDate,
-            @JsonProperty("isTutorialLecture") boolean isTutorialLecture, String channelName, CourseDTO course) {
+    public record SimpleLectureDTO(Long id, String title, String description, ZonedDateTime startDate, ZonedDateTime endDate,
+            @JsonProperty("isTutorialLecture") boolean isTutorialLecture, String channelName, CourseDTO course) implements LectureDTO {
 
-        public static LectureDTO from(Lecture lecture, String channelName) {
+        public static SimpleLectureDTO from(Lecture lecture, String channelName) {
             return from(lecture, lecture.getCourse(), channelName);
         }
 
-        public static LectureDTO from(Lecture lecture, @NonNull Course course, @Nullable String channelName) {
-            return new LectureDTO(lecture.getId(), lecture.getTitle(), lecture.getDescription(), lecture.getStartDate(), lecture.getEndDate(), lecture.isTutorialLecture(),
+        public static SimpleLectureDTO from(Lecture lecture, @NonNull Course course, @Nullable String channelName) {
+            return new SimpleLectureDTO(lecture.getId(), lecture.getTitle(), lecture.getDescription(), lecture.getStartDate(), lecture.getEndDate(), lecture.isTutorialLecture(),
                     channelName, CourseDTO.from(course));
         }
 
@@ -211,7 +212,7 @@ public class LectureResource {
      */
     @PutMapping("lectures")
     @EnforceAtLeastEditor
-    public ResponseEntity<LectureDTO> updateLecture(@RequestBody LectureDTO updatedLectureDto) {
+    public ResponseEntity<SimpleLectureDTO> updateLecture(@RequestBody SimpleLectureDTO updatedLectureDto) {
         log.debug("REST request to update Lecture : {}", updatedLectureDto);
         if (updatedLectureDto.id() == null) {
             throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idNull");
@@ -226,11 +227,11 @@ public class LectureResource {
         channelService.updateLectureChannel(originalLecture, updatedLectureDto.channelName());
         Lecture result = lectureRepository.save(originalLecture);
 
-        LectureDTO resultDTO = LectureDTO.from(result, course, updatedLectureDto.channelName());
+        SimpleLectureDTO resultDTO = SimpleLectureDTO.from(result, course, updatedLectureDto.channelName());
         return ResponseEntity.ok().body(resultDTO);
     }
 
-    private static void updateLectureAttributesFromDTO(Lecture lecture, LectureDTO lectureDTO) {
+    private static void updateLectureAttributesFromDTO(Lecture lecture, SimpleLectureDTO lectureDTO) {
         lecture.setTitle(lectureDTO.title());
         lecture.setDescription(lectureDTO.description());
         lecture.setStartDate(lectureDTO.startDate());
@@ -252,26 +253,20 @@ public class LectureResource {
     }
 
     /**
-     * GET /courses/:courseId/lectures : get all the lectures of a course for the course administration page
+     * GET /courses/:courseId/lectures : get all the lectures of a course for the course management page
      *
-     * @param withLectureUnits if set associated lecture units will also be loaded
-     * @param courseId         the courseId of the course for which all lectures should be returned
+     * @param courseId the courseId of the course for which all lectures should be returned
      * @return the ResponseEntity with status 200 (OK) and the list of lectures in body
      */
     @GetMapping("courses/{courseId}/lectures")
     @EnforceAtLeastEditorInCourse
-    // TODO: use DTO here as well to avoid sending too much irrelevant data to the client
-    public ResponseEntity<Set<Lecture>> getLecturesForCourse(@PathVariable Long courseId, @RequestParam(required = false, defaultValue = "false") boolean withLectureUnits) {
+    public ResponseEntity<Set<SimpleLectureDTO>> getLecturesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all Lectures for the course with id : {}", courseId);
 
-        Set<Lecture> lectures;
-        if (withLectureUnits) {
-            lectures = lectureRepository.findAllByCourseIdWithAttachmentsAndLectureUnits(courseId);
-        }
-        else {
-            lectures = lectureRepository.findAllByCourseIdWithAttachments(courseId);
-        }
-        return ResponseEntity.ok().body(lectures);
+        Set<Lecture> lectures = lectureRepository.findAllByCourseId(courseId);
+        var lectureDtos = lectures.stream().map(lecture -> SimpleLectureDTO.from(lecture, null)).collect(Collectors.toSet());
+
+        return ResponseEntity.ok().body(lectureDtos);
     }
 
     /**
@@ -282,19 +277,20 @@ public class LectureResource {
      */
     @GetMapping("courses/{courseId}/tutorial-lectures")
     @EnforceAtLeastEditor
-    public ResponseEntity<Set<LectureDTO>> getTutorialLecturesForCourse(@PathVariable Long courseId) {
+    public ResponseEntity<Set<SimpleLectureDTO>> getTutorialLecturesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all Lectures for the course with id : {}", courseId);
 
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
         Set<Lecture> lectures = lectureRepository.findAllTutorialLecturesByCourseId(courseId);
-        var lectureDtos = lectures.stream().map(lecture -> LectureDTO.from(lecture, course, null)).collect(Collectors.toSet());
+        var lectureDtos = lectures.stream().map(lecture -> SimpleLectureDTO.from(lecture, course, null)).collect(Collectors.toSet());
         return ResponseEntity.ok().body(lectureDtos);
     }
 
     /**
-     * GET /courses/:courseId/lectures : get all the lectures of a course with their lecture units and slides
+     * GET /courses/:courseId/lectures : get all the lectures of a course with their attachment units and slides
+     * NOTE: the response does not include other types of lecture units except attachment video units
      *
      * @param courseId the courseId of the course for which all lectures should be returned
      * @return the ResponseEntity with status 200 (OK) and the set of lectures in body
@@ -335,9 +331,11 @@ public class LectureResource {
         return ResponseEntity.ok().body(lectureDTOs);
     }
 
+    // includes visible attachments and attachment video units only (no other lecture unit types)
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record GetLecturesDTO(Long id, String title, ZonedDateTime visibleDate, ZonedDateTime startDate, ZonedDateTime endDate, List<AttachmentDTO> attachments,
-            List<AttachmentVideoUnitDTO> lectureUnits) {
+    public record GetLecturesDTO(Long id, String title, String description, ZonedDateTime startDate, ZonedDateTime endDate,
+            @JsonProperty("isTutorialLecture") boolean isTutorialLecture, List<AttachmentDTO> attachments, List<AttachmentVideoUnitDTO> lectureUnits)
+            implements de.tum.cit.aet.artemis.lecture.dto.LectureDTO {
 
         /**
          * Converts a lecture to a DTO. Only the attachments and attachment video units that are visible to students are included.
@@ -353,8 +351,8 @@ public class LectureResource {
                     .map(lectureUnit -> (AttachmentVideoUnit) lectureUnit).filter(AttachmentVideoUnit::isVisibleToStudents).map(AttachmentVideoUnitDTO::from).toList();
             /* The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal */
             /* TODO: #11479 - remove the visibleDate property from the LectureDTO OR leave as is */
-            return new GetLecturesDTO(lecture.getId(), lecture.getTitle(), lecture.getVisibleDate(), lecture.getStartDate(), lecture.getEndDate(), attachmentDTOs,
-                    attachmentVideoUnitDTOs);
+            return new GetLecturesDTO(lecture.getId(), lecture.getTitle(), lecture.getDescription(), lecture.getStartDate(), lecture.getEndDate(), lecture.isTutorialLecture(),
+                    attachmentDTOs, attachmentVideoUnitDTOs);
         }
     }
 
@@ -384,11 +382,11 @@ public class LectureResource {
      */
     @GetMapping("lectures/{lectureId}")
     @EnforceAtLeastStudentInLecture
-    public ResponseEntity<LectureDTO> getLecture(@PathVariable Long lectureId) {
+    public ResponseEntity<SimpleLectureDTO> getLecture(@PathVariable Long lectureId) {
         log.debug("REST request to get lecture {}", lectureId);
         Lecture lecture = lectureRepository.findById(lectureId).orElseThrow();
         String lectureChannelName = channelRepository.findChannelNameByLectureId(lectureId);
-        LectureDTO lectureDTO = LectureDTO.from(lecture, lectureChannelName);
+        SimpleLectureDTO lectureDTO = SimpleLectureDTO.from(lecture, lectureChannelName);
         return ResponseEntity.ok(lectureDTO);
     }
 
@@ -405,7 +403,7 @@ public class LectureResource {
      */
     @PostMapping("lectures/import/{sourceLectureId}")
     @EnforceAtLeastEditor
-    public ResponseEntity<LectureDTO> importLecture(@PathVariable long sourceLectureId, @RequestParam long courseId) throws URISyntaxException {
+    public ResponseEntity<SimpleLectureDTO> importLecture(@PathVariable long sourceLectureId, @RequestParam long courseId) throws URISyntaxException {
         final var user = userRepository.getUserWithGroupsAndAuthorities();
         final var sourceLecture = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(sourceLectureId);
         final var destinationCourse = courseRepository.findByIdWithLecturesElseThrow(courseId);
@@ -421,7 +419,7 @@ public class LectureResource {
 
         final var savedLecture = lectureImportService.importLecture(sourceLecture, destinationCourse, true);
 
-        final var lectureDTO = LectureDTO.from(savedLecture, destinationCourse, null /* channel name not needed in client */);
+        final var lectureDTO = SimpleLectureDTO.from(savedLecture, destinationCourse, null /* channel name not needed in client */);
         return ResponseEntity.created(new URI("/api/lecture/lectures/" + savedLecture.getId())).body(lectureDTO);
     }
 
