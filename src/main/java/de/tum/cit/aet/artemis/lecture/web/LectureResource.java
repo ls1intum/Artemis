@@ -65,6 +65,7 @@ import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.dto.LectureDTO;
+import de.tum.cit.aet.artemis.lecture.dto.LectureDetailsDTO;
 import de.tum.cit.aet.artemis.lecture.dto.LectureSeriesCreateLectureDTO;
 import de.tum.cit.aet.artemis.lecture.dto.SlideDTO;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
@@ -156,16 +157,17 @@ public class LectureResource {
             return from(lecture, lecture.getCourse(), channelName);
         }
 
-        public static SimpleLectureDTO from(Lecture lecture, @NonNull Course course, @Nullable String channelName) {
+        public static SimpleLectureDTO from(Lecture lecture, @Nullable Course course, @Nullable String channelName) {
             return new SimpleLectureDTO(lecture.getId(), lecture.getTitle(), lecture.getDescription(), lecture.getStartDate(), lecture.getEndDate(), lecture.isTutorialLecture(),
-                    channelName, CourseDTO.from(course));
+                    channelName, course == null ? null : CourseDTO.from(course));
         }
 
-        public record CourseDTO(Long id, String title, String studentGroupName, String teachingAssistantGroupName, String editorGroupName, String instructorGroupName) {
+        public record CourseDTO(Long id, String title, String shortName, String studentGroupName, String teachingAssistantGroupName, String editorGroupName,
+                String instructorGroupName) {
 
-            public static CourseDTO from(Course course) {
-                return new CourseDTO(course.getId(), course.getTitle(), course.getStudentGroupName(), course.getTeachingAssistantGroupName(), course.getEditorGroupName(),
-                        course.getInstructorGroupName());
+            public static CourseDTO from(@NonNull Course course) {
+                return new CourseDTO(course.getId(), course.getTitle(), course.getShortName(), course.getStudentGroupName(), course.getTeachingAssistantGroupName(),
+                        course.getEditorGroupName(), course.getInstructorGroupName());
             }
         }
     }
@@ -264,6 +266,8 @@ public class LectureResource {
         log.debug("REST request to get all Lectures for the course with id : {}", courseId);
 
         Set<Lecture> lectures = lectureRepository.findAllByCourseId(courseId);
+        // Note: the course (which is set by lecture.getCourse()) is currently required in the client for access control checks
+        // While it would be enough to send it once separately, we keep it like this for now to avoid overengineering. Ideally, the course data is only sent once
         var lectureDtos = lectures.stream().map(lecture -> SimpleLectureDTO.from(lecture, null)).collect(Collectors.toSet());
 
         return ResponseEntity.ok().body(lectureDtos);
@@ -284,7 +288,8 @@ public class LectureResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
         Set<Lecture> lectures = lectureRepository.findAllTutorialLecturesByCourseId(courseId);
-        var lectureDtos = lectures.stream().map(lecture -> SimpleLectureDTO.from(lecture, course, null)).collect(Collectors.toSet());
+        // TODO: test that it's fine to set the course to null to avoid repeating it multiple times in each lecture
+        var lectureDtos = lectures.stream().map(lecture -> SimpleLectureDTO.from(lecture, null, null)).collect(Collectors.toSet());
         return ResponseEntity.ok().body(lectureDtos);
     }
 
@@ -459,8 +464,7 @@ public class LectureResource {
      */
     @GetMapping("lectures/{lectureId}/details")
     @EnforceAtLeastStudentInLecture
-    // TODO: we should use a proper DTO here to avoid sending too much irrelevant data to the client
-    public ResponseEntity<Lecture> getLectureWithDetails(@PathVariable Long lectureId) {
+    public ResponseEntity<LectureDetailsDTO> getLectureWithDetails(@PathVariable Long lectureId) {
         log.debug("REST request to get lecture {} with details", lectureId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         return ResponseEntity.ok(lectureService.getForDetails(lectureId, user));

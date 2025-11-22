@@ -8,7 +8,6 @@ import { Attachment } from 'app/lecture/shared/entities/attachment.model';
 import { AttachmentService } from 'app/lecture/manage/services/attachment.service';
 import { faPaperclip, faPencilAlt, faQuestionCircle, faSpinner, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER, ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE } from 'app/shared/constants/file-extensions.constants';
-import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
@@ -61,14 +60,11 @@ export class LectureAttachmentsComponent implements OnDestroy {
 
     private readonly activatedRoute = inject(ActivatedRoute);
     private readonly attachmentService = inject(AttachmentService);
-    private readonly lectureService = inject(LectureService);
     private readonly fileService = inject(FileService);
     private readonly formBuilder = inject(FormBuilder);
 
     @ViewChild('fileInput', { static: false }) fileInput: ElementRef;
     datePickerComponent = viewChild(FormDateTimePickerComponent);
-
-    lectureId: number;
 
     lecture = signal<Lecture>(new Lecture());
     attachments: Attachment[] = [];
@@ -104,18 +100,9 @@ export class LectureAttachmentsComponent implements OnDestroy {
     constructor() {
         effect(() => {
             this.notificationText = undefined;
-            this.routeDataSubscription?.unsubscribe(); // in case the subscription was already defined
-            this.routeDataSubscription = this.activatedRoute.data.subscribe(({ lecture }) => {
-                if (this.lectureId) {
-                    this.lectureService.findWithDetails(this.lectureId).subscribe((lectureResponse: HttpResponse<Lecture>) => {
-                        this.lecture.set(lectureResponse.body!);
-                        this.loadAttachments();
-                    });
-                } else {
-                    this.lecture.set(lecture);
-                    this.loadAttachments();
-                }
-            });
+            const { lecture } = this.activatedRoute.snapshot.data as { lecture: Lecture };
+            this.lecture.set(lecture);
+            this.loadAttachments();
         });
     }
 
