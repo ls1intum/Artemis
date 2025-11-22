@@ -27,7 +27,7 @@
 
 /* --- MODAL --- */
 .modal-content {
-    background: #fff;
+    background: var(--bs-body-bg);
     border-radius: 24px;
     max-width: 1100px;
     width: 100%;
@@ -55,17 +55,20 @@
     flex-direction: column;
     align-items: center;
 }
+
 .modal-header h1 {
     font-size: 36px;
     font-weight: 700;
     margin: 0 0 12px 0;
     letter-spacing: -0.5px;
+    color: var(--bs-body-color);
 }
+
 .subtitle {
     font-size: 16px;
     line-height: 1.6;
     margin: 0 auto;
-    color: #4b5563;
+    color: var(--secondary);
     max-width: 800px;
 }
 
@@ -79,7 +82,7 @@
 }
 
 .option-card {
-    background: #f8f9fa;
+    background: var(--ai-modal-card-bg);
     border-radius: 16px;
     padding: 20px;
     cursor: pointer;
@@ -97,27 +100,30 @@
 }
 
 .cloud-card {
-    background: linear-gradient(135deg, rgba(171, 171, 171, 0.55) 0%, rgba(188, 188, 188, 0.56) 100%);
+    background: var(--ai-modal-cloud-bg);
 }
+
 .cloud-card:hover {
-    border-color: #3b82f6;
-    background: linear-gradient(135deg, rgba(151, 151, 151, 0.55) 0%, rgba(168, 168, 168, 0.56) 100%);
+    border-color: var(--primary);
+    background: var(--ai-modal-cloud-bg-hover);
 }
 
 .local-card {
-    background: linear-gradient(135deg, rgba(206, 206, 206, 0.55) 0%, rgba(223, 223, 223, 0.56) 100%);
+    background: var(--ai-modal-local-bg);
 }
+
 .local-card:hover {
-    border-color: #1bc03f;
-    background: linear-gradient(135deg, rgba(186, 186, 186, 0.55) 0%, rgba(203, 203, 203, 0.56) 100%);
+    border-color: var(--success);
+    background: var(--ai-modal-local-bg-hover);
 }
 
 .no-ai-card {
-    background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+    background: var(--ai-modal-no-ai-bg);
 }
+
 .no-ai-card:hover {
-    border-color: #6b7280;
-    background: linear-gradient(135deg, #e5e7eb 0%, #d1d5db 100%);
+    border-color: var(--secondary);
+    background: var(--ai-modal-no-ai-bg-hover);
 }
 
 /* --- ICONS --- */
@@ -126,7 +132,7 @@
     justify-content: center;
     margin-bottom: 16px;
     padding: 16px;
-    background: rgba(0, 0, 0, 0.03);
+    background: var(--ai-modal-icons-bg);
     border-radius: 12px;
     min-height: 120px;
     align-items: center;
@@ -143,7 +149,7 @@
 .icon-circle {
     width: 110px;
     height: 110px;
-    background: #fff;
+    background: var(--bs-body-bg);
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -158,6 +164,7 @@
     left: 0;
     z-index: 2;
 }
+
 .icon-circle.openai,
 .icon-circle.ollama {
     left: 67px;
@@ -168,6 +175,7 @@
 .option-card:hover .icon-circle.gemma {
     transform: translateX(-6px);
 }
+
 .option-card:hover .icon-circle.openai,
 .option-card:hover .icon-circle.ollama {
     transform: translateX(6px);
@@ -199,52 +207,49 @@
     margin-bottom: 12px;
     flex-wrap: wrap;
     justify-content: center;
-    color: #1a1a1a;
+    color: var(--bs-body-color);
 }
+
 .card-header h2 {
     font-size: 22px;
     font-weight: 700;
     margin: 0;
+    color: var(--bs-body-color);
 }
+
 .card-header h1 {
     font-size: 22px;
     font-weight: 700;
     margin: 0;
-    color: #1a1a1a;
+    color: var(--bs-body-color);
 }
 
 .badge,
-.badge-experimental {
-    padding: 4px 12px;
-    border-radius: 20px;
-    font-size: 13px;
-    font-weight: 600;
-    color: white;
-    white-space: nowrap;
-}
-
-.badge,
+.badge-experimental,
 .badge-recommended {
     padding: 4px 12px;
     border-radius: 20px;
     font-size: 13px;
     font-weight: 600;
-    color: white;
+    color: var(--bs-body-bg);
     white-space: nowrap;
 }
+
 .badge {
-    background: #2563eb;
+    background: var(--primary);
 }
+
 .badge-experimental {
-    background: #cd881d;
+    background: var(--warning);
 }
+
 .badge-recommended {
-    background: #1b83e0;
+    background: var(--info);
 }
 
 .description {
     font-size: 14px;
-    color: #6b7280;
+    color: var(--ai-modal-description-color);
     line-height: 1.5;
     margin: 0 0 12px 0;
     text-align: center;
@@ -263,17 +268,19 @@
     gap: 10px;
     padding: 6px 0;
     font-size: 13px;
-    color: #4b5563;
+    color: var(--bs-body-color);
 }
 
 .feature-item.checked .check-icon {
-    color: #10b981;
+    color: var(--success);
 }
+
 .feature-item.neutral .neutral-icon {
-    color: #3b82f6;
+    color: var(--primary);
 }
+
 .feature-item.unchecked .cross-icon {
-    color: #ef4444;
+    color: var(--danger);
 }
 
 .check-icon,
@@ -290,16 +297,19 @@
     margin-top: 20px;
     font-size: 13px;
     line-height: 1.5;
-    color: #6b7280;
+    color: var(--secondary);
 }
+
 .learn-more-link {
-    color: #3b82f6;
+    color: var(--primary);
     text-decoration: none;
     font-weight: 500;
 }
+
 .learn-more-link:hover {
     text-decoration: underline;
-    color: #2563eb;
+    color: var(--primary);
+    opacity: 0.8;
 }
 
 /* --- RESPONSIVE --- */
@@ -313,9 +323,11 @@
     .modal-content {
         padding: 32px 24px;
     }
+
     .modal-header h1 {
         font-size: 30px;
     }
+
     .option-card {
         flex: 1 1 100%;
         max-width: 100%;
@@ -326,35 +338,44 @@
     .modal-backdrop {
         padding: 30px 12px;
     }
+
     .modal-content {
         padding: 24px 16px;
         border-radius: 16px;
     }
+
     .modal-header h1 {
         font-size: 26px;
     }
+
     .subtitle {
         font-size: 14px;
     }
+
     .card-header h2 {
         font-size: 20px;
     }
+
     .icon-circle {
         width: 80px;
         height: 80px;
     }
+
     .icon-container {
         width: 140px;
         height: 80px;
     }
+
     .icon-circle.openai,
     .icon-circle.ollama {
         left: 56px;
     }
+
     .icon-circle.no-ai-icon {
         width: 80px;
         height: 80px;
     }
+
     .azure-icon,
     .openai-icon,
     .gemma-icon,
@@ -363,85 +384,9 @@
         width: 48px;
         height: 48px;
     }
+
     .icons-wrapper {
         min-height: 100px;
         padding: 12px;
-    }
-}
-
-// Bestehende Styles bleiben...
-
-// Dark Mode Overrides
-.modal-backdrop.dark-theme {
-    background-color: rgba(0, 0, 0, 0.85);
-
-    .modal-content {
-        background: #1a1a1a;
-        color: #ffffff;
-    }
-
-    .modal-header h1 {
-        color: #ffffff;
-    }
-
-    .subtitle {
-        color: #9ca3af;
-    }
-
-    .option-card {
-        background: #2d2d2d;
-    }
-
-    .cloud-card {
-        background: linear-gradient(135deg, #5a6986 0%, #667189 100%);
-    }
-
-    .cloud-card:hover {
-        background: linear-gradient(135deg, #667189 0%, #8793b5 100%);
-    }
-
-    .local-card {
-        background: linear-gradient(135deg, #46536b 0%, #5c667c 100%);
-    }
-
-    .local-card:hover {
-        background: linear-gradient(135deg, #5c667c 0%, #6a7494 100%);
-    }
-
-    .no-ai-card {
-        background: linear-gradient(135deg, #374151 0%, #4b5563 100%);
-    }
-
-    .no-ai-card:hover {
-        background: linear-gradient(135deg, #4b5563 0%, #6b7280 100%);
-    }
-
-    .icons-wrapper {
-        background: rgba(255, 255, 255, 0.05);
-    }
-
-    .icon-circle {
-        background: #2d2d2d;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    }
-
-    .card-header h2 {
-        color: #ffffff;
-    }
-
-    .description {
-        color: #d4dae4;
-    }
-
-    .feature-item {
-        color: #d1d5db;
-    }
-
-    .feature-item.checked {
-        color: #d1d5db;
-    }
-
-    .footer-note {
-        color: #9ca3af;
     }
 }

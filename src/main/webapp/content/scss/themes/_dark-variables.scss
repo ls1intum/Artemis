@@ -6,8 +6,8 @@ $gray-100: #f8f9fa;
 $gray-200: #ebebeb;
 $gray-300: #dee2e6;
 $gray-400: #ced4da;
-$gray-500: #adb5bd;
-$gray-600: #888;
+$gray-500: #757b7f;
+$gray-600: #757474;
 $gray-700: #444;
 $gray-800: #303030;
 $gray-900: #222;
@@ -676,3 +676,14 @@ $league-badge-diamond-color: hsl(195, 60%, 60%);
 $league-badge-master-color: hsl(270, 60%, 60%);
 $league-badge-star-color: #ffd700;
 $progress-bar-background: $gray-700;
+
+// LLM Selection Popup
+$ai-modal-card-bg: $neutral-dark-l-10;
+$ai-modal-cloud-bg: linear-gradient(135deg, #5a6986 0%, #667189 100%);
+$ai-modal-cloud-bg-hover: linear-gradient(135deg, #667189 0%, #8793b5 100%);
+$ai-modal-local-bg: linear-gradient(135deg, #46536b 0%, #5c667c 100%);
+$ai-modal-local-bg-hover: linear-gradient(135deg, #5c667c 0%, #6a7494 100%);
+$ai-modal-no-ai-bg: linear-gradient(135deg, #425265 0%, #4d5669 100%);
+$ai-modal-no-ai-bg-hover: linear-gradient(135deg, #4d5669 0%, #4b5269 100%);
+$ai-modal-icons-bg: rgba(255, 255, 255, 0.05);
+$ai-modal-description-color: $gray-300;
