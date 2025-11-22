@@ -278,15 +278,16 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
         if (!this.userAccepted || this.userAccepted === LLMSelectionDecision.NO_AI) {
             this.showAISelectionModal().then(() => {});
         }
-
-        // Focus on message textarea
-        setTimeout(() => {
-            if (this.messageTextarea) {
-                this.messageTextarea.nativeElement.focus();
-            } else {
-                this.acceptButton.nativeElement.focus();
-            }
-        }, 150);
+        if (this.userAccepted === LLMSelectionDecision.LOCAL_AI || this.userAccepted === LLMSelectionDecision.CLOUD_AI) {
+            // Focus on message textarea
+            setTimeout(() => {
+                if (this.messageTextarea) {
+                    this.messageTextarea.nativeElement.focus();
+                } else {
+                    this.acceptButton.nativeElement.focus();
+                }
+            }, 150);
+        }
     }
 
     ngAfterViewInit() {

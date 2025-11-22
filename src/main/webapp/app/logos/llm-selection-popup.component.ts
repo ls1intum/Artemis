@@ -1,5 +1,7 @@
 import { ChangeDetectorRef, Component, EventEmitter, OnInit, Output, inject } from '@angular/core';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
+import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 export type LLMSelectionChoice = 'cloud' | 'local' | 'no_ai' | 'none';
 
@@ -7,10 +9,12 @@ export type LLMSelectionChoice = 'cloud' | 'local' | 'no_ai' | 'none';
     selector: 'jhi-llm-selection-modal',
     templateUrl: './llm-selection-popup.component.html',
     styleUrls: ['./llm-selection-popup.component.scss'],
+    imports: [TranslateDirective],
 })
 export class LLMSelectionModalComponent implements OnInit {
     private modalService = inject(LLMSelectionModalService);
     private cdr = inject(ChangeDetectorRef);
+    protected themeService = inject(ThemeService);
 
     @Output() choice = new EventEmitter<LLMSelectionChoice>();
 
@@ -62,4 +66,6 @@ export class LLMSelectionModalComponent implements OnInit {
         this.modalService.emitChoice('none');
         event.preventDefault();
     }
+
+    protected readonly Theme = Theme;
 }

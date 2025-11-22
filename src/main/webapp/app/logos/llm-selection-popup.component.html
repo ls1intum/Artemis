@@ -1,15 +1,14 @@
 @if (isVisible) {
-    <div class="modal-backdrop" (click)="onBackdropClick($event)">
+    <div class="modal-backdrop" [class.dark-theme]="themeService.currentTheme() === Theme.DARK" (click)="onBackdropClick($event)">
         <div class="modal-content">
             <div class="modal-header">
-                <h1 id="ai-modal-title">Choose Your AI Experience</h1>
-                <p class="subtitle">
-                    Your data, your choice. Use Artemis with cutting-edge cloud models on Azure backed by enterprise-grade safeguards, or opt for our open-source stack in the
-                    university datacenter for enhanced privacy.
-                </p>
+                <h1 id="ai-modal-title" jhiTranslate="artemisApp.llmSelectionPopup.header"></h1>
+                <p class="subtitle" jhiTranslate="artemisApp.llmSelectionPopup.subtitleOne"></p>
+                <p class="subtitle" jhiTranslate="artemisApp.llmSelectionPopup.subtitleTwo"></p>
             </div>
 
             <div class="options-container">
+                <!-- Cloud AI Card -->
                 <div class="option-card cloud-card" (click)="selectCloud()">
                     <div class="icons-wrapper">
                         <div class="icon-container">
@@ -23,46 +22,47 @@
                     </div>
 
                     <div class="card-header">
-                        <h2>Cloud AI</h2>
-                        <span class="badge">Recommended</span>
+                        <h2 jhiTranslate="artemisApp.llmSelectionPopup.cloud"></h2>
+                        <span class="badge-recommended" jhiTranslate="artemisApp.llmSelectionPopup.recommended"></span>
                     </div>
 
-                    <p class="description">Advanced models with fast response times. Processed in Microsoft Azure cloud inside the EU.</p>
+                    <p class="description" jhiTranslate="artemisApp.llmSelectionPopup.descriptionCloud"></p>
 
                     <ul class="feature-list">
                         <li class="feature-item checked">
-                            <svg class="check-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                                <path d="M13.5 4.5L6 12L2.5 8.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                            <svg class="check-icon" viewBox="0 0 16 16" fill="none">
+                                <circle cx="8" cy="8" r="7" fill="currentColor" opacity="0.15" />
+                                <path d="M11.5 5.5L7 10.5L4.5 8" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
                             </svg>
-                            Latest AI models
+                            <b jhiTranslate="artemisApp.llmSelectionPopup.featureCloudOne"></b>
                         </li>
-
                         <li class="feature-item checked">
-                            <svg class="check-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                                <path d="M13.5 4.5L6 12L2.5 8.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                            <svg class="check-icon" viewBox="0 0 16 16" fill="none">
+                                <circle cx="8" cy="8" r="7" fill="currentColor" opacity="0.15" />
+                                <path d="M11.5 5.5L7 10.5L4.5 8" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
                             </svg>
-                            Fast response times
+                            <b jhiTranslate="artemisApp.llmSelectionPopup.featureCloudTwo"></b>
                         </li>
-
                         <li class="feature-item checked">
-                            <svg class="check-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                                <path d="M13.5 4.5L6 12L2.5 8.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                            <svg class="check-icon" viewBox="0 0 16 16" fill="none">
+                                <circle cx="8" cy="8" r="7" fill="currentColor" opacity="0.15" />
+                                <path d="M11.5 5.5L7 10.5L4.5 8" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
                             </svg>
-                            Best quality responses
+                            <b jhiTranslate="artemisApp.llmSelectionPopup.featureCloudThree"></b>
                         </li>
-
                         <li class="feature-item checked">
-                            <svg class="check-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                                <path d="M13.5 4.5L6 12L2.5 8.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                            <svg class="check-icon" viewBox="0 0 16 16" fill="none">
+                                <circle cx="8" cy="8" r="7" fill="currentColor" opacity="0.15" />
+                                <path d="M11.5 5.5L7 10.5L4.5 8" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
                             </svg>
-                            Advanced reasoning capabilities
+                            <span jhiTranslate="artemisApp.llmSelectionPopup.featureCloudFour"></span>
                         </li>
-
-                        <li class="feature-item unchecked">
-                            <svg class="cross-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                                <path d="M4 4L12 12M12 4L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        <li class="feature-item checked">
+                            <svg class="check-icon" viewBox="0 0 16 16" fill="none">
+                                <circle cx="8" cy="8" r="7" fill="currentColor" opacity="0.15" />
+                                <path d="M11.5 5.5L7 10.5L4.5 8" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
                             </svg>
-                            Data processed on internal servers
+                            <span jhiTranslate="artemisApp.llmSelectionPopup.featureCloudFive"></span>
                         </li>
                     </ul>
                 </div>
@@ -81,52 +81,94 @@
                     </div>
 
                     <div class="card-header">
-                        <h2>Local AI</h2>
-                        <span class="badge-experimental">Experimental</span>
+                        <h2 jhiTranslate="artemisApp.llmSelectionPopup.onPremise"></h2>
+                        <span class="badge-experimental" jhiTranslate="artemisApp.llmSelectionPopup.experimental"></span>
                     </div>
 
-                    <p class="description">Models hosted exclusively on university infrastructure. Your data never leaves university servers.</p>
+                    <p class="description" jhiTranslate="artemisApp.llmSelectionPopup.descriptionLocal"></p>
 
                     <ul class="feature-list">
                         <li class="feature-item checked">
-                            <svg class="check-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                                <path d="M13.5 4.5L6 12L2.5 8.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                            <svg class="check-icon" viewBox="0 0 16 16" fill="none">
+                                <circle cx="8" cy="8" r="7" fill="currentColor" opacity="0.15" />
+                                <path d="M11.5 5.5L7 10.5L4.5 8" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
                             </svg>
-                            Data processed on internal servers
+                            <span jhiTranslate="artemisApp.llmSelectionPopup.featureLocalOne"></span>
                         </li>
-
+                        <li class="feature-item neutral">
+                            <svg class="neutral-icon" viewBox="0 0 16 16" fill="none">
+                                <circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5" />
+                                <path d="M8 7V11M8 5V5.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                            </svg>
+                            <span jhiTranslate="artemisApp.llmSelectionPopup.featureLocalTwo"></span>
+                        </li>
+                        <li class="feature-item neutral">
+                            <svg class="neutral-icon" viewBox="0 0 16 16" fill="none">
+                                <circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5" />
+                                <path d="M8 7V11M8 5V5.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                            </svg>
+                            <span jhiTranslate="artemisApp.llmSelectionPopup.featureLocalThree"></span>
+                        </li>
                         <li class="feature-item checked">
-                            <svg class="check-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                                <path d="M13.5 4.5L6 12L2.5 8.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                            <svg class="check-icon" viewBox="0 0 16 16" fill="none">
+                                <circle cx="8" cy="8" r="7" fill="currentColor" opacity="0.15" />
+                                <path d="M11.5 5.5L7 10.5L4.5 8" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
                             </svg>
-                            GDPR compliant
+                            <b jhiTranslate="artemisApp.llmSelectionPopup.featureLocalFour"></b>
                         </li>
-
-                        <li class="feature-item unchecked">
-                            <svg class="cross-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                                <path d="M4 4L12 12M12 4L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        <li class="feature-item checked">
+                            <svg class="check-icon" viewBox="0 0 16 16" fill="none">
+                                <circle cx="8" cy="8" r="7" fill="currentColor" opacity="0.15" />
+                                <path d="M11.5 5.5L7 10.5L4.5 8" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
                             </svg>
-                            Slower response times
+                            <span jhiTranslate="artemisApp.llmSelectionPopup.featureLocalFive"></span>
                         </li>
+                    </ul>
+                </div>
 
-                        <li class="feature-item unchecked">
-                            <svg class="cross-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                                <path d="M4 4L12 12M12 4L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                <!-- No AI Card -->
+                <div class="option-card no-ai-card" (click)="selectNone()">
+                    <div class="icons-wrapper">
+                        <div class="icon-circle no-ai-icon">
+                            <svg class="no-ai-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <circle cx="12" cy="12" r="9" stroke="red" stroke-width="2" />
+                                <path d="M6 6L18 18" stroke="red" stroke-width="2" stroke-linecap="round" />
                             </svg>
-                            Limited model capabilities
+                        </div>
+                    </div>
+
+                    <div class="card-header">
+                        <h2 jhiTranslate="artemisApp.llmSelectionPopup.noAI"></h2>
+                    </div>
+
+                    <p class="description" jhiTranslate="artemisApp.llmSelectionPopup.descriptionNo"></p>
+
+                    <ul class="feature-list">
+                        <li class="feature-item unchecked">
+                            <svg class="cross-icon" viewBox="0 0 16 16" fill="none">
+                                <path d="M4 4L12 12M12 4L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                            </svg>
+                            <span jhiTranslate="artemisApp.llmSelectionPopup.featureNoOne"></span>
+                        </li>
+                        <li class="feature-item unchecked">
+                            <svg class="cross-icon" viewBox="0 0 16 16" fill="none">
+                                <path d="M4 4L12 12M12 4L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                            </svg>
+                            <span jhiTranslate="artemisApp.llmSelectionPopup.featureNoTwo"></span>
+                        </li>
+                        <li class="feature-item unchecked">
+                            <svg class="cross-icon" viewBox="0 0 16 16" fill="none">
+                                <path d="M4 4L12 12M12 4L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                            </svg>
+                            <span jhiTranslate="artemisApp.llmSelectionPopup.featureNoThree"></span>
                         </li>
                     </ul>
                 </div>
             </div>
 
-            <button class="continue-button" (click)="selectNone()">
-                <span class="continue-button-title">Continue without AI</span>
-                <span class="continue-button-description">You can enable AI features later in your settings. Some features may not work.</span>
-            </button>
-
             <div class="footer-note">
-                All options comply with university data protection policies •
-                <a href="#" class="learn-more-link" (click)="onLearnMoreClick($event)">Learn more</a>
+                <p jhiTranslate="artemisApp.llmSelectionPopup.disclaimer"></p>
+                <a href="/privacy" class="learn-more-link" jhiTranslate="artemisApp.llmSelectionPopup.disclaimerButton"></a>
             </div>
         </div>
     </div>

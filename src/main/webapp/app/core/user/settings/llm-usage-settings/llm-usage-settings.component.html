@@ -30,41 +30,13 @@
         }
     </div>
 
-    <div class="btn-group" role="group" aria-label="LLM Selection">
-        <input
-            type="radio"
-            class="btn-check"
-            name="llmSelection"
-            id="cloudAI"
-            autocomplete="off"
-            [checked]="currentLLMSelectionDecision() === 'CLOUD_AI'"
-            (change)="updateLLMSelectionDecision(LLMSelectionDecision.CLOUD_AI)"
-        />
-
-        <label class="btn btn-outline-primary" for="cloudAI" jhiTranslate="artemisApp.userSettings.LLMUsageSettingsPage.cloudAI">Cloud AI</label>
-
-        <input
-            type="radio"
-            class="btn-check"
-            name="llmSelection"
-            id="localAI"
-            autocomplete="off"
-            [checked]="currentLLMSelectionDecision() === 'LOCAL_AI'"
-            (change)="updateLLMSelectionDecision(LLMSelectionDecision.LOCAL_AI)"
-        />
-
-        <label class="btn btn-outline-success" for="localAI" jhiTranslate="artemisApp.userSettings.LLMUsageSettingsPage.localAI">Local AI</label>
-
-        <input
-            type="radio"
-            class="btn-check"
-            name="llmSelection"
-            id="noAI"
-            autocomplete="off"
-            [checked]="currentLLMSelectionDecision() === 'NO_AI'"
-            (change)="updateLLMSelectionDecision(LLMSelectionDecision.NO_AI)"
-        />
-
-        <label class="btn btn-outline-secondary" for="noAI" jhiTranslate="artemisApp.userSettings.LLMUsageSettingsPage.noAI">No AI</label>
-    </div>
+    @if (currentLLMSelectionDecision() === 'CLOUD_AI') {
+        <button type="button" class="btn btn-primary" (click)="openSelectionModal()" jhiTranslate="artemisApp.userSettings.LLMUsageSettingsPage.cloudAI"></button>
+    } @else if (currentLLMSelectionDecision() === 'LOCAL_AI') {
+        <button type="button" class="btn btn-primary" (click)="openSelectionModal()" jhiTranslate="artemisApp.userSettings.LLMUsageSettingsPage.localAI"></button>
+    } @else if (currentLLMSelectionDecision() === 'NO_AI') {
+        <button type="button" class="btn btn-primary" (click)="openSelectionModal()" jhiTranslate="artemisApp.userSettings.LLMUsageSettingsPage.noAI"></button>
+    } @else {
+        <button type="button" class="btn btn-primary" (click)="openSelectionModal()" jhiTranslate="artemisApp.userSettings.LLMUsageSettingsPage.noAISelected"></button>
+    }
 </div>
