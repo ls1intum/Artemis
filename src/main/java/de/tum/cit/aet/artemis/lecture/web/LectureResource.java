@@ -203,7 +203,7 @@ public class LectureResource {
      */
     @PutMapping("lectures")
     @EnforceAtLeastEditor
-    public ResponseEntity<Lecture> updateLecture(@RequestBody LectureDTO lecture) {
+    public ResponseEntity<LectureDTO> updateLecture(@RequestBody LectureDTO lecture) {
         log.debug("REST request to update Lecture : {}", lecture);
         if (lecture.id() == null) {
             throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idNull");
@@ -221,7 +221,9 @@ public class LectureResource {
         channelService.updateLectureChannel(originalLecture, lecture.channelName());
 
         Lecture result = lectureRepository.save(originalLecture);
-        return ResponseEntity.ok().body(result);
+        LectureDTO resultDTO = new LectureDTO(result.getId(), result.getTitle(), result.getDescription(), result.getStartDate(), result.getEndDate(),
+                channelRepository.findChannelNameByLectureId(result.getId()), LectureDTO.CourseDTO.from(course));
+        return ResponseEntity.ok().body(resultDTO);
     }
 
     /**
@@ -246,6 +248,7 @@ public class LectureResource {
      */
     @GetMapping("courses/{courseId}/lectures")
     @EnforceAtLeastEditorInCourse
+    // TODO: use DTO here as well to avoid sending too much irrelevant data to the client
     public ResponseEntity<Set<Lecture>> getLecturesForCourse(@PathVariable Long courseId, @RequestParam(required = false, defaultValue = "false") boolean withLectureUnits) {
         log.debug("REST request to get all Lectures for the course with id : {}", courseId);
 

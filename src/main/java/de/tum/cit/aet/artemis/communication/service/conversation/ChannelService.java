@@ -322,7 +322,7 @@ public class ChannelService {
     public void createExamChannel(Exam exam, Optional<String> channelName) {
         Channel channelToCreate = createDefaultChannel(channelName, "exam-", exam.getTitle());
         channelToCreate.setExam(exam);
-        Channel createdChannel = createChannel(exam.getCourse(), channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
+        Channel createdChannel = createChannel(exam.getCourse(), channelToCreate, Optional.of(userRepository.getUser()));
         exam.setChannelName(createdChannel.getName());
     }
 
