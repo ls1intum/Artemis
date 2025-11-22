@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,6 +38,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
@@ -120,37 +122,43 @@ public class LectureResource {
     /**
      * POST /lectures : Create a new lecture.
      *
-     * @param lecture the lecture to create with a unique channel name
+     * @param newLectureDto the lecture to create with a unique channel name
      * @return the ResponseEntity with status 201 (Created) and with body the new lecture, or with status 400 (Bad Request) if the lecture has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("lectures")
     @EnforceAtLeastEditor
-    public ResponseEntity<LectureDTO> createLecture(@RequestBody LectureDTO lecture) throws URISyntaxException {
-        log.debug("REST request to save Lecture : {}", lecture);
-        if (lecture.id() != null) {
+    public ResponseEntity<LectureDTO> createLecture(@RequestBody LectureDTO newLectureDto) throws URISyntaxException {
+        log.debug("REST request to save Lecture : {}", newLectureDto);
+        if (newLectureDto.id() != null) {
             throw new BadRequestAlertException("A new lecture cannot already have an ID", ENTITY_NAME, "idExists");
         }
-        Course course = courseRepository.findByIdElseThrow(lecture.course.id());
+        Course course = courseRepository.findByIdElseThrow(newLectureDto.course.id());
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
         Lecture newLecture = new Lecture();
-        newLecture.setTitle(lecture.title());
-        newLecture.setDescription(lecture.description());
-        newLecture.setStartDate(lecture.startDate());
-        newLecture.setEndDate(lecture.endDate());
+        updateLectureAttributesFromDTO(newLecture, newLectureDto);
         newLecture.setCourse(course);
 
         Lecture savedLecture = lectureRepository.save(newLecture);
-        String channelName = channelService.createLectureChannel(savedLecture, Optional.ofNullable(lecture.channelName()));
-        LectureDTO savedLectureDTO = new LectureDTO(savedLecture.getId(), savedLecture.getTitle(), savedLecture.getDescription(), savedLecture.getStartDate(),
-                savedLecture.getEndDate(), channelName, LectureDTO.CourseDTO.from(course));
+        String channelName = channelService.createLectureChannel(savedLecture, Optional.ofNullable(newLectureDto.channelName()));
+        LectureDTO savedLectureDTO = LectureDTO.from(savedLecture, course, channelName);
         return ResponseEntity.created(new URI("/api/lecture/lectures/" + savedLecture.getId())).body(savedLectureDTO);
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record LectureDTO(Long id, String title, String description, ZonedDateTime startDate, ZonedDateTime endDate, String channelName, CourseDTO course) {
+    public record LectureDTO(Long id, String title, String description, ZonedDateTime startDate, ZonedDateTime endDate,
+            @JsonProperty("isTutorialLecture") boolean isTutorialLecture, String channelName, CourseDTO course) {
+
+        public static LectureDTO from(Lecture lecture, String channelName) {
+            return from(lecture, lecture.getCourse(), channelName);
+        }
+
+        public static LectureDTO from(Lecture lecture, @NonNull Course course, @Nullable String channelName) {
+            return new LectureDTO(lecture.getId(), lecture.getTitle(), lecture.getDescription(), lecture.getStartDate(), lecture.getEndDate(), lecture.isTutorialLecture(),
+                    channelName, CourseDTO.from(course));
+        }
 
         public record CourseDTO(Long id, String title, String studentGroupName, String teachingAssistantGroupName, String editorGroupName, String instructorGroupName) {
 
@@ -197,33 +205,37 @@ public class LectureResource {
     /**
      * PUT /lectures : Updates an existing lecture.
      *
-     * @param lecture the lecture to update and the updated channel name
+     * @param updatedLectureDto the lecture to update and the updated channel name
      * @return the ResponseEntity with status 200 (OK) and with body the updated lecture, or with status 400 (Bad Request) if the lecture is not valid, or with status 500 (Internal
      *         Server Error) if the lecture couldn't be updated
      */
     @PutMapping("lectures")
     @EnforceAtLeastEditor
-    public ResponseEntity<LectureDTO> updateLecture(@RequestBody LectureDTO lecture) {
-        log.debug("REST request to update Lecture : {}", lecture);
-        if (lecture.id() == null) {
+    public ResponseEntity<LectureDTO> updateLecture(@RequestBody LectureDTO updatedLectureDto) {
+        log.debug("REST request to update Lecture : {}", updatedLectureDto);
+        if (updatedLectureDto.id() == null) {
             throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idNull");
         }
-        Course course = courseRepository.findByIdElseThrow(lecture.course.id());
+        Course course = courseRepository.findByIdElseThrow(updatedLectureDto.course.id());
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
-        // Make sure that the original references are preserved.
-        Lecture originalLecture = lectureRepository.findByIdElseThrow(lecture.id());
-        originalLecture.setTitle(lecture.title());
-        originalLecture.setDescription(lecture.description());
-        originalLecture.setStartDate(lecture.startDate());
-        originalLecture.setEndDate(lecture.endDate());
+        // This explicitly does NOT change any relationships such as attachments or lecture units
+        Lecture originalLecture = lectureRepository.findByIdElseThrow(updatedLectureDto.id());
+        updateLectureAttributesFromDTO(originalLecture, updatedLectureDto);
 
-        channelService.updateLectureChannel(originalLecture, lecture.channelName());
-
+        channelService.updateLectureChannel(originalLecture, updatedLectureDto.channelName());
         Lecture result = lectureRepository.save(originalLecture);
-        LectureDTO resultDTO = new LectureDTO(result.getId(), result.getTitle(), result.getDescription(), result.getStartDate(), result.getEndDate(),
-                channelRepository.findChannelNameByLectureId(result.getId()), LectureDTO.CourseDTO.from(course));
+
+        LectureDTO resultDTO = LectureDTO.from(result, course, updatedLectureDto.channelName());
         return ResponseEntity.ok().body(resultDTO);
+    }
+
+    private static void updateLectureAttributesFromDTO(Lecture lecture, LectureDTO lectureDTO) {
+        lecture.setTitle(lectureDTO.title());
+        lecture.setDescription(lectureDTO.description());
+        lecture.setStartDate(lectureDTO.startDate());
+        lecture.setEndDate(lectureDTO.endDate());
+        lecture.setIsTutorialLecture(lectureDTO.isTutorialLecture());
     }
 
     /**
@@ -270,14 +282,15 @@ public class LectureResource {
      */
     @GetMapping("courses/{courseId}/tutorial-lectures")
     @EnforceAtLeastEditor
-    public ResponseEntity<Set<Lecture>> getTutorialLecturesForCourse(@PathVariable Long courseId) {
+    public ResponseEntity<Set<LectureDTO>> getTutorialLecturesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all Lectures for the course with id : {}", courseId);
 
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
         Set<Lecture> lectures = lectureRepository.findAllTutorialLecturesByCourseId(courseId);
-        return ResponseEntity.ok().body(lectures);
+        var lectureDtos = lectures.stream().map(lecture -> LectureDTO.from(lecture, course, null)).collect(Collectors.toSet());
+        return ResponseEntity.ok().body(lectureDtos);
     }
 
     /**
@@ -374,10 +387,8 @@ public class LectureResource {
     public ResponseEntity<LectureDTO> getLecture(@PathVariable Long lectureId) {
         log.debug("REST request to get lecture {}", lectureId);
         Lecture lecture = lectureRepository.findById(lectureId).orElseThrow();
-
         String lectureChannelName = channelRepository.findChannelNameByLectureId(lectureId);
-        LectureDTO lectureDTO = new LectureDTO(lecture.getId(), lecture.getTitle(), lecture.getDescription(), lecture.getStartDate(), lecture.getEndDate(), lectureChannelName,
-                LectureDTO.CourseDTO.from(lecture.getCourse()));
+        LectureDTO lectureDTO = LectureDTO.from(lecture, lectureChannelName);
         return ResponseEntity.ok(lectureDTO);
     }
 
@@ -409,8 +420,8 @@ public class LectureResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, destinationCourse, user);
 
         final var savedLecture = lectureImportService.importLecture(sourceLecture, destinationCourse, true);
-        final var lectureDTO = new LectureDTO(savedLecture.getId(), savedLecture.getTitle(), savedLecture.getDescription(), savedLecture.getStartDate(), savedLecture.getEndDate(),
-                null /* channel name not needed in client */, LectureDTO.CourseDTO.from(destinationCourse));
+
+        final var lectureDTO = LectureDTO.from(savedLecture, destinationCourse, null /* channel name not needed in client */);
         return ResponseEntity.created(new URI("/api/lecture/lectures/" + savedLecture.getId())).body(lectureDTO);
     }
 

@@ -208,7 +208,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         conversationUtilService.createCourseWideChannel(course, "loremipsum");
 
-        LectureResource.LectureDTO lecture = new LectureResource.LectureDTO(null, "loremIpsum-()!?", "loremIpsum", ZonedDateTime.now(), ZonedDateTime.now().plusWeeks(1),
+        LectureResource.LectureDTO lecture = new LectureResource.LectureDTO(null, "loremIpsum-()!?", "loremIpsum", ZonedDateTime.now(), ZonedDateTime.now().plusWeeks(1), false,
                 channelName, LectureResource.LectureDTO.CourseDTO.from(course));
         Lecture returnedLecture = request.postWithResponseBody("/api/lecture/lectures", lecture, Lecture.class, HttpStatus.CREATED);
 
@@ -240,7 +240,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         String editedChannelName = "edited-lecture-channel";
         var updatedDate = ZonedDateTime.now().plusMonths(3);
         conversationUtilService.createCourseWideChannel(originalLecture.getCourse(), editedChannelName);
-        LectureResource.LectureDTO lectureDto = new LectureResource.LectureDTO(originalLecture.getId(), "Updated", "Updated", updatedDate, updatedDate, editedChannelName,
+        LectureResource.LectureDTO lectureDto = new LectureResource.LectureDTO(originalLecture.getId(), "Updated", "Updated", updatedDate, updatedDate, false, editedChannelName,
                 LectureResource.LectureDTO.CourseDTO.from(originalLecture.getCourse()));
 
         // create channel with same name
@@ -588,9 +588,10 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getTutorialLecturesForCourse_shouldGetTutorialLectures() throws Exception {
-        List<Lecture> returnedLectures = request.getList("/api/lecture/courses/" + course1.getId() + "/tutorial-lectures", HttpStatus.OK, Lecture.class);
+        var returnedLectures = request.getList("/api/lecture/courses/" + course1.getId() + "/tutorial-lectures", HttpStatus.OK, LectureResource.LectureDTO.class);
         assertThat(returnedLectures).hasSize(1);
-        Lecture lecture = returnedLectures.getFirst();
-        assertThat(lecture.getId()).isEqualTo(lecture2.getId());
+        var lecture = returnedLectures.getFirst();
+        assertThat(lecture.id()).isEqualTo(lecture2.getId());
+        assertThat(lecture.isTutorialLecture()).isTrue();
     }
 }
