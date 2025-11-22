@@ -244,8 +244,6 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
             slide.setSlideImagePath("temp/slide" + i + ".png");
             slideRepository.save(slide);
 
-            if (i == 3) {
-            }
         }
         // Act
         slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(testDocument, testAttachmentVideoUnit, "test.pdf", hiddenPagesList, pageOrderList);
