@@ -24,7 +24,6 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.transaction.PlatformTransactionManager;
 
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
@@ -48,6 +47,7 @@ import de.tum.cit.aet.artemis.lecture.test_repository.AttachmentVideoUnitTestRep
 import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureFactory;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
+import de.tum.cit.aet.artemis.lecture.web.LectureResource;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
@@ -69,7 +69,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     private AttachmentVideoUnitTestRepository attachmentVideoUnitRepository;
 
     @Autowired
-    ChannelRepository channelRepository;
+    private ChannelRepository channelRepository;
 
     @Autowired
     private LectureUtilService lectureUtilService;
@@ -101,9 +101,6 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     private AttachmentVideoUnit attachmentVideoUnit;
 
     private Competency competency;
-
-    @Autowired
-    private PlatformTransactionManager txManager;
 
     private final String lectureTitle = "Lecture 7349";
 
@@ -208,26 +205,19 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         conversationUtilService.createCourseWideChannel(course, "loremipsum");
 
-        Lecture lecture = new Lecture();
-        lecture.setTitle("loremIpsum-()!?");
-        lecture.setCourse(course);
-        lecture.setDescription("loremIpsum");
-
-        lecture.setVisibleDate(ZonedDateTime.now().minusDays(1));
-        lecture.setStartDate(ZonedDateTime.now());
-        lecture.setEndDate(ZonedDateTime.now().plusWeeks(1));
+        LectureResource.LectureDTO lecture = new LectureResource.LectureDTO(null, "loremIpsum-()!?", "loremIpsum", ZonedDateTime.now(), ZonedDateTime.now().plusWeeks(1),
+                channelName, LectureResource.LectureDTO.CourseDTO.from(course));
         Lecture returnedLecture = request.postWithResponseBody("/api/lecture/lectures", lecture, Lecture.class, HttpStatus.CREATED);
 
         Channel channel = channelRepository.findChannelByLectureId(returnedLecture.getId());
 
         assertThat(returnedLecture).isNotNull();
         assertThat(returnedLecture.getId()).isNotNull();
-        assertThat(returnedLecture.getTitle()).isEqualTo(lecture.getTitle());
-        assertThat(returnedLecture.getCourse().getId()).isEqualTo(lecture.getCourse().getId());
-        assertThat(returnedLecture.getDescription()).isEqualTo(lecture.getDescription());
-        assertThat(returnedLecture.getVisibleDate()).isEqualTo(lecture.getVisibleDate());
-        assertThat(returnedLecture.getStartDate()).isEqualTo(lecture.getStartDate());
-        assertThat(returnedLecture.getEndDate()).isEqualTo(lecture.getEndDate());
+        assertThat(returnedLecture.getTitle()).isEqualTo(lecture.title());
+        assertThat(returnedLecture.getCourse().getId()).isEqualTo(lecture.course().id());
+        assertThat(returnedLecture.getDescription()).isEqualTo(lecture.description());
+        assertThat(returnedLecture.getStartDate()).isEqualTo(lecture.startDate());
+        assertThat(returnedLecture.getEndDate()).isEqualTo(lecture.endDate());
         assertThat(channel).isNotNull();
         assertThat(channel.getName()).isEqualTo("lecture-loremipsum"); // note "i" is lower case as a channel name should not contain upper case letters
     }
@@ -244,27 +234,25 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateLecture_correctRequestBody_shouldUpdateLecture() throws Exception {
         Lecture originalLecture = lectureRepository.findById(lecture1.getId()).orElseThrow();
-        originalLecture.setTitle("Updated");
-        originalLecture.setDescription("Updated");
-        ZonedDateTime updatedDate = ZonedDateTime.now().plusMonths(3);
-        originalLecture.setVisibleDate(updatedDate);
-        originalLecture.setStartDate(updatedDate);
-        originalLecture.setEndDate(updatedDate);
         String editedChannelName = "edited-lecture-channel";
-        // create channel with same name
+        var updatedDate = ZonedDateTime.now().plusMonths(3);
         conversationUtilService.createCourseWideChannel(originalLecture.getCourse(), editedChannelName);
-        // lecture channel should be updated despite another channel with the same name
-        Lecture updatedLecture = request.putWithResponseBody("/api/lecture/lectures", originalLecture, Lecture.class, HttpStatus.OK);
+        LectureResource.LectureDTO lectureDto = new LectureResource.LectureDTO(originalLecture.getId(), "Updated", "Updated", updatedDate, updatedDate, editedChannelName,
+                LectureResource.LectureDTO.CourseDTO.from(originalLecture.getCourse()));
 
-        Channel channel = channelRepository.findChannelByLectureId(updatedLecture.getId());
+        // create channel with same name
+
+        // lecture channel should be updated despite another channel with the same name
+        LectureResource.LectureDTO updatedLecture = request.putWithResponseBody("/api/lecture/lectures", lectureDto, LectureResource.LectureDTO.class, HttpStatus.OK);
+
+        Channel channel = channelRepository.findChannelByLectureId(updatedLecture.id());
 
         assertThat(channel).isNotNull();
         assertThat(channel.getName()).isEqualTo(editedChannelName);
-        assertThat(updatedLecture.getTitle()).isEqualTo("Updated");
-        assertThat(updatedLecture.getDescription()).isEqualTo("Updated");
-        assertThat(updatedLecture.getVisibleDate()).isEqualTo(updatedDate);
-        assertThat(updatedLecture.getStartDate()).isEqualTo(updatedDate);
-        assertThat(updatedLecture.getEndDate()).isEqualTo(updatedDate);
+        assertThat(updatedLecture.title()).isEqualTo("Updated");
+        assertThat(updatedLecture.description()).isEqualTo("Updated");
+        assertThat(updatedLecture.startDate()).isEqualTo(updatedDate);
+        assertThat(updatedLecture.endDate()).isEqualTo(updatedDate);
     }
 
     @Test

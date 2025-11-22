@@ -421,9 +421,10 @@ public class ParticipationUtilService {
     public Result addResultToSubmission(AssessmentType assessmentType, ZonedDateTime completionDate, Submission submission) {
         Result result = new Result().submission(submission).successful(true).rated(true).score(100D).assessmentType(assessmentType).completionDate(completionDate);
         result.setExerciseId(submission.getParticipation().getExercise().getId());
-        submission.addResult(result);
+        var dbSubmission = submissionRepository.findByIdWithResultsElseThrow(submission.getId());
+        dbSubmission.addResult(result);
         result = resultRepo.save(result);
-        submissionRepository.save(submission);
+        submissionRepository.save(dbSubmission);
         return result;
     }
 
