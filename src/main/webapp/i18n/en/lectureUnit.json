@@ -84,6 +84,7 @@
             "created": "New attachment unit created",
             "updated": "Attachment unit updated",
             "notReleasedTooltip": "Attachment only visible to teaching assistants and instructors. Release date:",
+            "transcriptAvailable": "Transcription Possible",
             "transcriptionInvalidJson": "The transcription JSON is invalid and was ignored.",
             "createAttachmentVideoUnits": {
                 "informativeText": {
@@ -174,7 +175,13 @@
             },
             "transcription": {
                 "started": "Transcript generation started.",
-                "error": "Failed to start transcript generation."
+                "error": "Failed to start transcript generation.",
+                "pendingWarning": "A transcription is currently being processed for this video. Please wait for it to complete before generating a new one",
+                "overwriteWarning": "Generating a new transcript will overwrite the existing transcription for this video.",
+                "statusProcessing": "Please check the status of the transcription later",
+                "statusFailed": "Transcription generation failed for this video. You can try generating it again.",
+                "editStatusProcessing": "A transcription is currently being generated for this video.",
+                "editStatusFailed": "The previous transcription generation failed for this video."
             },
             "videoPlayer": {
                 "transcript": "Transcript",

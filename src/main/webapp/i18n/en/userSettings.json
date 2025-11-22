@@ -110,6 +110,8 @@
                 "created": "Created on",
                 "lastUsed": "Last used on",
                 "label": "label",
+                "approved": "Approved",
+                "notApproved": "Not Approved",
                 "validation": {
                     "labelLength": "The label must not exceed {{maxLabelLength}} characters."
                 },

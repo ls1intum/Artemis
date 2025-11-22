@@ -21,6 +21,7 @@ export class LectureService {
     private entityTitleService = inject(EntityTitleService);
 
     public resourceUrl = 'api/lecture/lectures';
+    currentTutorialLectureId: number | undefined = undefined;
 
     create(lecture: Lecture): Observable<EntityResponseType> {
         const copy = this.convertLectureDatesFromClient(lecture);
@@ -77,6 +78,18 @@ export class LectureService {
         return this.http
             .get<Lecture[]>(`api/lecture/courses/${courseId}/lectures`, {
                 params,
+                observe: 'response',
+            })
+            .pipe(
+                map((res: EntityArrayResponseType) => this.convertLectureArrayResponseDatesFromServer(res)),
+                map((res: EntityArrayResponseType) => this.setAccessRightsLectureEntityArrayResponseType(res)),
+                tap((res: EntityArrayResponseType) => res?.body?.forEach(this.sendTitlesToEntityTitleService.bind(this))),
+            );
+    }
+
+    findAllTutorialLecturesByCourseId(courseId: number): Observable<EntityArrayResponseType> {
+        return this.http
+            .get<Lecture[]>(`api/lecture/courses/${courseId}/tutorial-lectures`, {
                 observe: 'response',
             })
             .pipe(

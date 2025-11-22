@@ -344,6 +344,7 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentTest {
         resultWithLock = submissionService.saveNewEmptyResult(submission1);
         resultWithLock.setAssessor(tutor1);
         resultWithLock.setAssessmentType(AssessmentType.MANUAL);
+        resultWithLock.setExerciseId(examTextExercise.getId());
         resultRepository.save(resultWithLock);
 
         // checks
@@ -407,6 +408,7 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentTest {
         resultForSecondCorrectionWithLock = submissionService.saveNewEmptyResult(submission1);
         resultForSecondCorrectionWithLock.setAssessor(tutor2);
         resultForSecondCorrectionWithLock.setAssessmentType(AssessmentType.MANUAL);
+        resultForSecondCorrectionWithLock.setExerciseId(examTextExercise.getId());
         resultRepository.save(resultForSecondCorrectionWithLock);
 
         // checks
@@ -498,6 +500,7 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentTest {
         resultWithLock = submissionService.saveNewEmptyResult(submission1);
         resultWithLock.setAssessor(tutor1);
         resultWithLock.setAssessmentType(AssessmentType.MANUAL);
+        resultWithLock.setExerciseId(examModelingExercise.getId());
         resultRepository.save(resultWithLock);
 
         // checks
@@ -559,6 +562,7 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentTest {
         Result resultForSecondCorrectionWithLock = submissionService.saveNewEmptyResult(submission1);
         resultForSecondCorrectionWithLock.setAssessor(tutor2);
         resultForSecondCorrectionWithLock.setAssessmentType(AssessmentType.MANUAL);
+        resultForSecondCorrectionWithLock.setExerciseId(examModelingExercise.getId());
         resultRepository.save(resultForSecondCorrectionWithLock);
 
         // checks
@@ -685,9 +689,11 @@ class SubmissionServiceTest extends AbstractSpringIntegrationIndependentTest {
                 new Feedback().credits(-2.5) // should get positive = false
         );
         Result oldResult = new Result();
+        oldResult.setExerciseId(examTextExercise.getId());
         oldResult.setFeedbacks(oldFeedbacks);
 
         Result newResult = new Result();
+        newResult.setExerciseId(examTextExercise.getId());
 
         List<Feedback> newFeedbacks = submissionService.copyFeedbackToNewResult(newResult, oldResult);
 

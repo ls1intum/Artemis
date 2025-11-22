@@ -1,15 +1,17 @@
-import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { LectureUnitDirective } from 'app/lecture/overview/course-lectures/lecture-unit/lecture-unit.directive';
-import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
+import { AttachmentVideoUnit, TranscriptionStatus } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { LectureUnitComponent } from 'app/lecture/overview/course-lectures/lecture-unit/lecture-unit.component';
 import urlParser from 'js-video-url-parser';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
+import { firstValueFrom } from 'rxjs';
 import { VideoPlayerComponent } from 'app/lecture/shared/video-player/video-player.component';
 import { LectureTranscriptionService } from 'app/lecture/manage/services/lecture-transcription.service';
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
 import {
     faDownload,
+    faExclamationTriangle,
     faFile,
     faFileArchive,
     faFileCode,
@@ -22,6 +24,7 @@ import {
     faFilePowerpoint,
     faFileVideo,
     faFileWord,
+    faSpinner,
 } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -30,31 +33,90 @@ import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
 import { FileService } from 'app/shared/service/file.service';
 import { ScienceService } from 'app/shared/science/science.service';
 import { ScienceEventType } from 'app/shared/science/science.model';
+import { AccountService } from 'app/core/auth/account.service';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranscriptSegment } from 'app/lecture/shared/models/transcript-segment.model';
 import { map } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-attachment-video-unit',
-    imports: [LectureUnitComponent, ArtemisDatePipe, TranslateDirective, SafeResourceUrlPipe, VideoPlayerComponent],
+    imports: [LectureUnitComponent, ArtemisDatePipe, TranslateDirective, SafeResourceUrlPipe, FaIconComponent, VideoPlayerComponent],
     templateUrl: './attachment-video-unit.component.html',
     styleUrl: './attachment-video-unit.component.scss',
 })
-export class AttachmentVideoUnitComponent extends LectureUnitDirective<AttachmentVideoUnit> {
+export class AttachmentVideoUnitComponent extends LectureUnitDirective<AttachmentVideoUnit> implements OnInit {
     protected readonly faDownload = faDownload;
+    protected readonly faFileLines = faFileLines;
+    protected readonly faSpinner = faSpinner;
+    protected readonly faExclamationTriangle = faExclamationTriangle;
+    protected readonly TranscriptionStatus = TranscriptionStatus;
 
     private readonly destroyRef = inject(DestroyRef);
     private readonly fileService = inject(FileService);
     private readonly scienceService = inject(ScienceService);
     private readonly attachmentVideoUnitService = inject(AttachmentVideoUnitService);
     private readonly lectureTranscriptionService = inject(LectureTranscriptionService);
+    private readonly accountService = inject(AccountService);
 
     readonly transcriptSegments = signal<TranscriptSegment[]>([]);
     readonly playlistUrl = signal<string | undefined>(undefined);
     readonly isLoading = signal<boolean>(false);
+
     readonly hasTranscript = computed(() => this.transcriptSegments().length > 0);
+    transcriptionStatus = signal<TranscriptionStatus | undefined>(undefined);
+    isLoadingTranscriptionStatus = signal(false);
+
+    /**
+     * Determines whether the "transcription possible" badge should be displayed.
+     *
+     * The badge is only shown when:
+     * - A playlist URL is available (transcription can be generated)
+     * - No transcription job exists (no transcriptionProperties, meaning no jobId)
+     * - No transcription status exists (no transcriptionProperties)
+     * - No completed transcript is available yet
+     *
+     * @returns {boolean} True if the badge should be shown (no active transcription job and no transcript), false otherwise
+     */
+    readonly canShowTranscriptionPossibleBadge = computed(() => {
+        // Don't show badge if transcription was created (which would have a jobId)
+        if (this.lectureUnit().transcriptionProperties) {
+            return false;
+        }
+        // Don't show badge if transcript is already available
+        return !this.hasTranscript();
+    });
 
     // TODO: This must use a server configuration to make it compatible with deployments other than TUM
-    private readonly videoUrlAllowList = [RegExp('^https://(?:live\\.rbg\\.tum\\.de|tum\\.live)/w/\\w+/\\d+(/(CAM|COMB|PRES))?\\?video_only=1$')];
+    private readonly videoUrlAllowList = [RegExp('^https://(?:live\\.rbg\\.tum\\.de|tum\\.live)/w/\\w+/\\d+(/(CAM|COMB|PRES))?\\?video_only=1')];
+
+    ngOnInit() {
+        // Load transcription status if user is instructor or admin and video source exists
+        if ((this.accountService.isAtLeastInstructorInCourse(this.lectureUnit().lecture?.course) || this.accountService.isAdmin()) && this.hasVideo() && this.lectureUnit().id) {
+            this.loadTranscriptionStatus();
+        }
+    }
+
+    async loadTranscriptionStatus() {
+        const id = this.lectureUnit().id;
+        if (!id) {
+            return;
+        }
+
+        this.isLoadingTranscriptionStatus.set(true);
+        try {
+            this.transcriptionStatus.set(await firstValueFrom(this.lectureTranscriptionService.getTranscriptionStatus(id)));
+        } catch {
+            // Error handling - status remains undefined
+        } finally {
+            this.isLoadingTranscriptionStatus.set(false);
+        }
+    }
+
+    readonly shouldShowTranscriptionStatus = computed(() => {
+        const isLoading = this.isLoadingTranscriptionStatus();
+        const status = this.transcriptionStatus();
+        return !isLoading && !!status && (status === TranscriptionStatus.PENDING || status === TranscriptionStatus.PROCESSING || status === TranscriptionStatus.FAILED);
+    });
 
     /**
      * Return the URL of the video source
