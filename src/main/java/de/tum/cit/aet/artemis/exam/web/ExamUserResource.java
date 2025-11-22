@@ -111,8 +111,12 @@ public class ExamUserResource {
         examUser.setActualRoom(examUserDTO.room());
         examUser = examUserRepository.save(examUser);
 
+        ExamUserDTO.ExamUserDetailsDTO examUserDetails = ExamUserDTO.ExamUserDetailsDTO.fromUser(examUser.getUser());
+
         ExamUserDTO examUserResponseDTO = new ExamUserDTO(examUser.getUser().getLogin(), null, null, null, null, null, examUser.getActualRoom(), examUser.getActualSeat(),
-                examUser.getDidCheckImage(), examUser.getDidCheckName(), examUser.getDidCheckRegistrationNumber(), examUser.getDidCheckLogin(), examUser.getSigningImagePath());
+                examUser.getDidCheckImage(), examUser.getDidCheckName(), examUser.getDidCheckRegistrationNumber(), examUser.getDidCheckLogin(), examUser.getSigningImagePath(),
+                examUser.getId(), examUser.getActualRoom(), examUser.getActualSeat(), examUser.getPlannedRoom(), examUser.getPlannedSeat(), examUser.getStudentImagePath(),
+                examUserDetails);
         return ResponseEntity.ok().body(examUserResponseDTO);
     }
 
