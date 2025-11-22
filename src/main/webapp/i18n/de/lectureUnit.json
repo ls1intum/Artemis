@@ -84,6 +84,7 @@
             "created": "Eine neue Dateieinheit wurde erstellt",
             "updated": "Dateieinheit aktualisiert",
             "notReleasedTooltip": "Nur sichtbar für Tutor:innen und Lehrende. Veröffentlichungsdatum:",
+            "transcriptAvailable": "Transkription möglich",
             "transcriptionInvalidJson": "Die Transkriptions-JSON ist ungültig und wurde ignoriert.",
             "createAttachmentVideoUnits": {
                 "informativeText": {
