@@ -108,7 +108,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
                 return;
             }
 
-            // Try to resolve a .m3u8 playlist URL through the backend API
+            // Try to resolve a .m3u8 playlist URL from the server
             this.attachmentVideoUnitService
                 .getPlaylistUrl(src)
                 .pipe(takeUntilDestroyed(this.destroyRef))
