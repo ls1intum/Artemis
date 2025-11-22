@@ -64,17 +64,9 @@ public class GroupNotificationScheduleService {
 
         groupNotificationService.notifyAboutExerciseUpdate(exerciseAfterUpdate, notificationText);
 
-        checkAndCreateExerciseReleasedNotificationsWhenUpdatingExerciseWithDate(originalReleaseDate, exerciseAfterUpdate);
+        checkAndCreateExerciseReleasedNotificationsWhenUpdatingExercise(originalReleaseDate, exerciseAfterUpdate);
 
-        checkAndCreateAssessedExerciseSubmissionNotificationsWhenUpdatingExerciseWithDate(originalAssessmentDueDate, exerciseAfterUpdate);
-    public void checkAndCreateAppropriateNotificationsWhenUpdatingExerciseWithDate(ZonedDateTime originalReleaseDate, ZonedDateTime originalAssessmentDueDate,
-            Exercise exerciseAfterUpdate, String notificationText) {
-
-        groupNotificationService.notifyAboutExerciseUpdate(exerciseAfterUpdate, notificationText);
-
-        checkAndCreateExerciseReleasedNotificationsWhenUpdatingExerciseWithDate(originalReleaseDate, exerciseAfterUpdate);
-
-        checkAndCreateAssessedExerciseSubmissionNotificationsWhenUpdatingExerciseWithDate(originalAssessmentDueDate, exerciseAfterUpdate);
+        checkAndCreateAssessedExerciseSubmissionNotificationsWhenUpdatingExercise(originalAssessmentDueDate, exerciseAfterUpdate);
     }
 
     /**
@@ -85,7 +77,7 @@ public class GroupNotificationScheduleService {
      */
     private void checkAndCreateExerciseReleasedNotificationsWhenUpdatingExercise(Exercise exerciseBeforeUpdate, Exercise exerciseAfterUpdate) {
         final ZonedDateTime initialReleaseDate = exerciseBeforeUpdate.getReleaseDate();
-        checkAndCreateExerciseReleasedNotificationsWhenUpdatingExerciseWithDate(initialReleaseDate, exerciseAfterUpdate);
+        checkAndCreateExerciseReleasedNotificationsWhenUpdatingExercise(initialReleaseDate, exerciseAfterUpdate);
     }
 
     /**
@@ -94,7 +86,7 @@ public class GroupNotificationScheduleService {
      * @param originalReleaseDate is the initial release date before it gets updated
      * @param exerciseAfterUpdate is the updated exercise (needed to check potential difference in release date)
      */
-    private void checkAndCreateExerciseReleasedNotificationsWhenUpdatingExerciseWithDate(ZonedDateTime originalReleaseDate, Exercise exerciseAfterUpdate) {
+    private void checkAndCreateExerciseReleasedNotificationsWhenUpdatingExercise(ZonedDateTime originalReleaseDate, Exercise exerciseAfterUpdate) {
         final ZonedDateTime updatedReleaseDate = exerciseAfterUpdate.getReleaseDate();
         ZonedDateTime timeNow = ZonedDateTime.now();
 
@@ -157,7 +149,7 @@ public class GroupNotificationScheduleService {
      */
     private void checkAndCreateAssessedExerciseSubmissionNotificationsWhenUpdatingExercise(Exercise exerciseBeforeUpdate, Exercise exerciseAfterUpdate) {
         final ZonedDateTime initialAssessmentDueDate = exerciseBeforeUpdate.getAssessmentDueDate();
-        checkAndCreateAssessedExerciseSubmissionNotificationsWhenUpdatingExerciseWithDate(initialAssessmentDueDate, exerciseAfterUpdate);
+        checkAndCreateAssessedExerciseSubmissionNotificationsWhenUpdatingExercise(initialAssessmentDueDate, exerciseAfterUpdate);
     }
 
     /**
@@ -166,7 +158,7 @@ public class GroupNotificationScheduleService {
      * @param originalAssessmentDueDate is the initial assessment due date before it gets updated
      * @param exerciseAfterUpdate       is the updated exercise (needed to check potential difference in release date)
      */
-    private void checkAndCreateAssessedExerciseSubmissionNotificationsWhenUpdatingExerciseWithDate(ZonedDateTime originalAssessmentDueDate, Exercise exerciseAfterUpdate) {
+    private void checkAndCreateAssessedExerciseSubmissionNotificationsWhenUpdatingExercise(ZonedDateTime originalAssessmentDueDate, Exercise exerciseAfterUpdate) {
         final ZonedDateTime updatedAssessmentDueDate = exerciseAfterUpdate.getAssessmentDueDate();
         ZonedDateTime timeNow = ZonedDateTime.now();
 
