@@ -26,7 +26,12 @@
                 "externalAccepted": "You have accepted the usage of external LLMs on {{acceptedDate}}.",
                 "externalDeclined": "You have not accepted the usage of external LLMs.",
                 "internalAccepted": "You have accepted the usage of internal LLMs on {{acceptedDate}}.",
-                "internalDeclined": "You have not accepted the usage of internal LLMs."
+                "internalDeclined": "You have not accepted the usage of internal LLMs.",
+                "AIDeclined": "You have explicitly declined AI usage on {{acceptedDate}}.",
+                "noAISelected": "You haven't made a decision on the usage of LLMs.",
+                "cloudAI": "Cloud AI",
+                "localAI": "Local AI",
+                "noAI": "No AI"
             },
             "sshSettingsPage": {
                 "sshSettingsInfoText": "Here you can set a public SSH key to clone git repositories via SSH. For more details see the documentation.",

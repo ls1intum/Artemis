@@ -70,16 +70,8 @@
             "startExerciseBeforeStartDate": "You cannot participate before the start date of the exercise.",
             "deleteMultipleExercisesQuestion": "Are you sure you want to delete the selected exercises?",
             "externalLLMUsage": {
-                "popUpLabel": "Confirm External LLM Usage",
-                "popUpMessage": "By accepting, you confirm that you are at least 18 years old and that you agree to the processing of your interactions with Artemis, as well as the necessary contextual data, such as your code, outside the university's data center. The processing takes place in the Microsoft Azure Cloud in accordance with EU data protection standards. All data is processed within the EU and is not stored.",
-                "accept": "Accept",
-                "decline": "Decline"
-            },
-            "internalLLMUsage": {
-                "popUpLabel": "Confirm Internal LLM Usage",
-                "popUpMessage": "By accepting, you confirm that you are at least 18 years old and that you agree to the processing of your interactions with Artemis, as well as the necessary contextual data, such as your code, inside the university's data center. No data is stored.",
-                "accept": "Accept",
-                "decline": "Decline"
+                "popUpLabel": "Confirm LLM Usage",
+                "popUpMessage": "By accepting, you confirm that you are at least 18 years old and that you agree to the processing of your interactions with Artemis, as well as the necessary contextual data, such as your code. No data is stored."
             }
         }
     }
