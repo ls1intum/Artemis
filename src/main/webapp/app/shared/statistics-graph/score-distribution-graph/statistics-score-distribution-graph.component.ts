@@ -5,7 +5,7 @@ import { axisTickFormattingWithPercentageSign } from 'app/shared/statistics-grap
 import { BarChartModule, Color, ScaleType } from '@swimlane/ngx-charts';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
-import { TranslateDirective } from '../../language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-statistics-score-distribution-graph',
