@@ -498,6 +498,11 @@ public class CourseUtilService {
             Result result3 = generateResult(false, 0D);
             Result result4 = generateResult(true, 12D);
             Result result5 = generateResult(false, 42D);
+            result1.setExerciseId(modelingExercise.getId());
+            result2.setExerciseId(modelingExercise.getId());
+            result3.setExerciseId(textExercise.getId());
+            result4.setExerciseId(programmingExercise.getId());
+            result5.setExerciseId(programmingExercise.getId());
 
             participation1 = studentParticipationRepo.save(participation1);
             participation2 = studentParticipationRepo.save(participation2);
@@ -603,21 +608,26 @@ public class CourseUtilService {
         // Setup results
         Result resultModeling = generateResult(true, 100D);
         resultModeling.setAssessmentType(AssessmentType.MANUAL);
+        resultModeling.setExerciseId(modelingExercise.getId());
         resultModeling.setCompletionDate(ZonedDateTime.now());
 
         Result resultText = generateResult(true, 12D);
+        resultText.setExerciseId(textExercise.getId());
         resultText.setAssessmentType(AssessmentType.MANUAL);
         resultText.setCompletionDate(ZonedDateTime.now());
 
         Result resultFileUpload = generateResult(true, 0D);
+        resultFileUpload.setExerciseId(fileUploadExercise.getId());
         resultFileUpload.setAssessmentType(AssessmentType.MANUAL);
         resultFileUpload.setCompletionDate(ZonedDateTime.now());
 
         Result resultQuiz = generateResult(true, 0D);
+        resultQuiz.setExerciseId(quizExercise.getId());
         resultQuiz.setAssessmentType(AssessmentType.AUTOMATIC);
         resultQuiz.setCompletionDate(ZonedDateTime.now());
 
         Result resultProgramming = generateResult(true, 20D);
+        resultProgramming.setExerciseId(programmingExercise.getId());
         resultProgramming.setAssessmentType(AssessmentType.AUTOMATIC);
         resultProgramming.setCompletionDate(ZonedDateTime.now());
 
@@ -771,22 +781,27 @@ public class CourseUtilService {
 
         // Setup results
         Result resultModeling = generateResult(true, 10D);
+        resultModeling.setExerciseId(modelingExercise.getId());
         resultModeling.setAssessmentType(AssessmentType.MANUAL);
         resultModeling.setCompletionDate(ZonedDateTime.now());
 
         Result resultText = generateResult(true, 12D);
+        resultText.setExerciseId(textExercise.getId());
         resultText.setAssessmentType(AssessmentType.MANUAL);
         resultText.setCompletionDate(ZonedDateTime.now());
 
         Result resultFileUpload = generateResult(true, 0D);
+        resultFileUpload.setExerciseId(fileUploadExercise.getId());
         resultFileUpload.setAssessmentType(AssessmentType.MANUAL);
         resultFileUpload.setCompletionDate(ZonedDateTime.now());
 
         Result resultQuiz = generateResult(true, 0D);
+        resultQuiz.setExerciseId(quizExercise.getId());
         resultQuiz.setAssessmentType(AssessmentType.AUTOMATIC);
         resultQuiz.setCompletionDate(ZonedDateTime.now());
 
         Result resultProgramming = generateResult(true, 20D);
+        resultProgramming.setExerciseId(programmingExercise.getId());
         resultProgramming.setAssessmentType(AssessmentType.AUTOMATIC);
         resultProgramming.setCompletionDate(ZonedDateTime.now());
 
@@ -1102,6 +1117,7 @@ public class CourseUtilService {
 
             if ((i % 3) == 0) {
                 ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExercise(releaseDate, dueDate, assessmentDueDate, DiagramType.ClassDiagram, course);
+                modelingExercise.setAssessmentType(AssessmentType.MANUAL);
                 modelingExercise.setTitle("Modeling" + i);
                 modelingExercise.setCourse(course);
                 modelingExercise = exerciseRepository.save(modelingExercise);
@@ -1125,6 +1141,7 @@ public class CourseUtilService {
             else if ((i % 3) == 1) {
                 TextExercise textExercise = TextExerciseFactory.generateTextExercise(releaseDate, dueDate, assessmentDueDate, course);
                 textExercise.setTitle("Text" + i);
+                textExercise.setAssessmentType(AssessmentType.MANUAL);
                 textExercise.setCourse(course);
                 textExercise = exerciseRepository.save(textExercise);
                 course.addExercises(textExercise);
@@ -1143,6 +1160,7 @@ public class CourseUtilService {
             else { // i.e. (i % 3) == 2
                 FileUploadExercise fileUploadExercise = FileUploadExerciseFactory.generateFileUploadExercise(releaseDate, dueDate, assessmentDueDate, "png,pdf", course);
                 fileUploadExercise.setTitle("FileUpload" + i);
+                fileUploadExercise.setAssessmentType(AssessmentType.MANUAL);
                 fileUploadExercise.setCourse(course);
                 fileUploadExercise = exerciseRepository.save(fileUploadExercise);
                 course.addExercises(fileUploadExercise);

@@ -235,6 +235,24 @@ public class LectureResource {
     }
 
     /**
+     * GET /courses/:courseId/tutorial-lectures : get all the tutorial-lectures of a course
+     *
+     * @param courseId the courseId of the course for which the lectures should be returned
+     * @return the ResponseEntity with status 200 (OK) and the list of lectures in body
+     */
+    @GetMapping("courses/{courseId}/tutorial-lectures")
+    @EnforceAtLeastEditor
+    public ResponseEntity<Set<Lecture>> getTutorialLecturesForCourse(@PathVariable Long courseId) {
+        log.debug("REST request to get all Lectures for the course with id : {}", courseId);
+
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
+
+        Set<Lecture> lectures = lectureRepository.findAllTutorialLecturesByCourseId(courseId);
+        return ResponseEntity.ok().body(lectures);
+    }
+
+    /**
      * GET /courses/:courseId/lectures : get all the lectures of a course with their lecture units and slides
      *
      * @param courseId the courseId of the course for which all lectures should be returned
@@ -383,7 +401,7 @@ public class LectureResource {
     @PostMapping("courses/{courseId}/ingest")
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<Void> ingestLectures(@PathVariable Long courseId, @RequestParam(required = false) Optional<Long> lectureId) {
-        Course course = courseRepository.findByIdWithLecturesAndLectureUnitsElseThrow(courseId);
+        Course course = courseRepository.findWithLecturesAndLectureUnitsAndAttachmentsByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         if (lectureId.isPresent()) {
             Optional<Lecture> lectureToIngest = course.getLectures().stream().filter(lecture -> lecture.getId().equals(lectureId.get())).findFirst();

@@ -158,12 +158,18 @@
             "submissionIsNull": "This example submission has no solution attached.",
             "submissionIdMissing": "The submission must be saved before it can be converted."
         },
+        "exerciseVersionIdMismatch": "The requested exercise version does not belong to the provided exercise ID.",
         "submissionExerciseMismatch": "The submission does not belong to the specified exercise.",
         "maxAthenaResultsReached": "Maximum number of AI feedback requests reached.",
         "submissionAlreadyHasAthenaResult": "Submission already has an Athena result.",
         "missingFeedbackSuggestionModule": "Exercise does not have a feedback suggestion module configured.",
         "examExerciseNoAccessToAthena": "Exam exercises do not have access to Athena.",
         "noAccessToAthenaModule": "The exercise has no access to the selected Athena module.",
-        "athenaModuleChangeAfterDueDate": "Athena module cannot be changed after the due date has passed."
+        "athenaModuleChangeAfterDueDate": "Athena module cannot be changed after the due date has passed.",
+        "passkeyAuth": {
+            "notAuthenticatedWithPasskey": "You are not authenticated with a passkey. Please authenticate using a passkey to access this resource.",
+            "notSuperAdminApproved": "Your passkey is not approved by a super admin. Double check in the user settings whether your passkey was super admin approved and re-login in with the respective passkey.",
+            "loginRequiredButFeatureNotEnabled": "Passkey login is required but the feature is not enabled on this Artemis instance. Please enable the passkey feature on this Artemis instance."
+        }
     }
 }

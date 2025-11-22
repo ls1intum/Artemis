@@ -1407,6 +1407,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         participationUtilService.addResultToSubmission(null, null, participation.findLatestSubmission().orElseThrow());
         var result = ParticipationFactory.generateResult(true, 70D);
         result.submission(submission).setCompletionDate(ZonedDateTime.now().minusHours(2));
+        result.setExerciseId(textExercise.getId());
         resultRepository.save(result);
         var actualParticipation = request.get("/api/exercise/participations/" + participation.getId() + "/with-latest-result", HttpStatus.OK, StudentParticipation.class);
 
@@ -1713,6 +1714,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
         var result = ParticipationFactory.generateResult(true, 100).submission(submission);
         result.setCompletionDate(ZonedDateTime.now());
+        result.setExerciseId(programmingExercise.getId());
         resultRepository.save(result);
 
         request.putAndExpectError("/api/exercise/exercises/" + programmingExercise.getId() + "/request-feedback", null, HttpStatus.BAD_REQUEST, "preconditions not met");
@@ -1742,6 +1744,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
         var result = ParticipationFactory.generateResult(true, 100).submission(submission);
         result.setCompletionDate(ZonedDateTime.now());
+        result.setExerciseId(programmingExercise.getId());
         resultRepository.save(result);
 
         request.putAndExpectError("/api/exercise/exercises/" + programmingExercise.getId() + "/request-feedback", null, HttpStatus.BAD_REQUEST, "feedbackRequestAfterDueDate");
@@ -1771,13 +1774,15 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
         var result = ParticipationFactory.generateResult(true, 100).submission(submission);
         result.setCompletionDate(ZonedDateTime.now());
+        result.setExerciseId(programmingExercise.getId());
         resultRepository.save(result);
 
-        // generate 5 athena results
+        // generate 20 athena results
         for (int i = 0; i < 20; i++) {
             var athenaResult = ParticipationFactory.generateResult(false, 100).submission(submission);
             athenaResult.setCompletionDate(ZonedDateTime.now());
             athenaResult.setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);
+            athenaResult.setExerciseId(programmingExercise.getId());
             submission.addResult(athenaResult);
             resultRepository.save(athenaResult);
         }

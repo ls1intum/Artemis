@@ -6,7 +6,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { LectureUpdatePeriodComponent } from 'app/lecture/manage/lecture-period/lecture-period.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import dayjs from 'dayjs/esm';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
 describe('LectureWizardPeriodComponent', () => {
@@ -32,18 +31,27 @@ describe('LectureWizardPeriodComponent', () => {
         expect(component).not.toBeNull();
     });
 
-    it('should display warning', () => {
-        const now = dayjs();
-        const lecture = new Lecture();
-        lecture.startDate = now;
-        lecture.endDate = now.add(9, 'hour');
-
-        component.validateDatesFunction = () => {};
-        fixture.componentRef.setInput('lecture', lecture);
-
-        component.onDateChange();
+    it('should call validateDatesFunction on date change', () => {
+        const validateSpy = jest.fn();
+        component.validateDatesFunction = validateSpy;
         fixture.detectChanges();
+        component.onDateChange();
+        expect(validateSpy).toHaveBeenCalledOnce();
+    });
 
-        expect(fixture.nativeElement.querySelector('.long-lecture-warning')).toBeTruthy();
+    it('should compute isPeriodSectionValid correctly when all children valid', () => {
+        const pickers = component.periodSectionDatepickers();
+        pickers[0].isValid = jest.fn(() => true) as any;
+        pickers[1].isValid = jest.fn(() => true) as any;
+        const result = component.isPeriodSectionValid();
+        expect(result).toBeTrue();
+    });
+
+    it('should compute isPeriodSectionValid correctly when any child invalid', () => {
+        const pickers = component.periodSectionDatepickers();
+        pickers[0].isValid = jest.fn(() => true) as any;
+        pickers[1].isValid = jest.fn(() => false) as any;
+        const result = component.isPeriodSectionValid();
+        expect(result).toBeFalse();
     });
 });
