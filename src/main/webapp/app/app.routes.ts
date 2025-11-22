@@ -3,6 +3,7 @@ import { UserRouteAccessService } from 'app/core/auth/user-route-access-service'
 import { IS_AT_LEAST_ADMIN, IS_AT_LEAST_EDITOR, IS_AT_LEAST_STUDENT } from 'app/shared/constants/authority.constants';
 import { navbarRoute } from 'app/core/navbar/navbar.route';
 import { errorRoute } from 'app/core/layouts/error/error.route';
+import { PasskeyAuthenticationGuard } from 'app/core/auth/passkey-authentication-guard/passkey-authentication.guard';
 
 const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
 
@@ -13,6 +14,14 @@ const routes: Routes = [
         loadComponent: () => import('./core/home/home.component').then((m) => m.HomeComponent),
         data: {
             pageTitle: 'home.title',
+        },
+    },
+    {
+        path: 'passkey-required',
+        loadComponent: () => import('app/core/auth/passkey-authentication-page/passkey-authentication-page.component').then((m) => m.PasskeyAuthenticationPageComponent),
+        data: {
+            pageTitle: 'global.menu.admin.passkey-required',
+            usesModuleBackground: false,
         },
     },
     {
@@ -28,7 +37,7 @@ const routes: Routes = [
             authorities: IS_AT_LEAST_ADMIN,
             usesModuleBackground: true,
         },
-        canActivate: [UserRouteAccessService],
+        canActivate: [UserRouteAccessService, PasskeyAuthenticationGuard],
         loadChildren: () => import('app/core/admin/admin.routes'),
     },
     {

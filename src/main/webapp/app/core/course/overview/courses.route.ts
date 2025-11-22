@@ -274,6 +274,17 @@ export const courseRoutes: Routes = [
                 canActivate: [UserRouteAccessService, CourseOverviewGuard],
                 children: [
                     {
+                        path: 'tutorial-lectures/:lectureId',
+                        data: {
+                            authorities: IS_AT_LEAST_STUDENT,
+                            pageTitle: 'overview.lectures',
+                            hasSidebar: true,
+                            showRefreshButton: true,
+                        },
+                        canActivate: [UserRouteAccessService],
+                        loadComponent: () => import('app/lecture/overview/course-lectures/details/course-lecture-details.component').then((m) => m.CourseLectureDetailsComponent),
+                    },
+                    {
                         path: ':tutorialGroupId',
                         loadComponent: () =>
                             import('app/tutorialgroup/overview/course-tutorial-group-detail-container/course-tutorial-group-detail-container.component').then(

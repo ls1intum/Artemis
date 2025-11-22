@@ -120,7 +120,11 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         List<Course> courses = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, true, numberOfTutors);
         this.course1 = this.courseRepository.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(courses.getFirst().getId());
 
-        createChannelsForLectures();
+        var lectures = this.course1.getLectures().stream().toList();
+        createChannelsForLectures(lectures);
+
+        lecture2.setIsTutorialLecture(true);
+        lectureRepository.save(lecture2);
 
         textExercise = textExerciseRepository.findByCourseIdWithCategories(course1.getId()).stream().findFirst().orElseThrow();
 
@@ -155,12 +159,11 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         request.putWithResponseBody("/api/lecture/lectures", new Lecture(), Lecture.class, HttpStatus.FORBIDDEN);
         request.getList("/api/lecture/courses/" + course1.getId() + "/lectures", HttpStatus.FORBIDDEN, Lecture.class);
         request.delete("/api/lecture/lectures/" + lecture1.getId(), HttpStatus.FORBIDDEN);
+        request.getList("/api/lecture/courses/" + course1.getId() + "/tutorial-lectures", HttpStatus.FORBIDDEN, Lecture.class);
         request.postWithResponseBody("/api/lecture/lectures/import/" + lecture1.getId() + "?courseId=" + course1.getId(), null, Lecture.class, HttpStatus.FORBIDDEN);
     }
 
-    private void createChannelsForLectures() {
-        List<Lecture> lectures = this.course1.getLectures().stream().toList();
-
+    private void createChannelsForLectures(List<Lecture> lectures) {
         Lecture firstLecture = lectures.getFirst();
         firstLecture.setTitle(lectureTitle);
         Channel firstChannel = new Channel();
@@ -589,5 +592,14 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(secondLectureChannel.getName()).isEqualTo("lecture-lecture-2");
         assertThat(thirdLectureChannel.getName()).isEqualTo("lecture-modeling");
         assertThat(fourthLectureChannel.getName()).isEqualTo("lecture-lecture-4");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getTutorialLecturesForCourse_shouldGetTutorialLectures() throws Exception {
+        List<Lecture> returnedLectures = request.getList("/api/lecture/courses/" + course1.getId() + "/tutorial-lectures", HttpStatus.OK, Lecture.class);
+        assertThat(returnedLectures).hasSize(1);
+        Lecture lecture = returnedLectures.getFirst();
+        assertThat(lecture.getId()).isEqualTo(lecture2.getId());
     }
 }
