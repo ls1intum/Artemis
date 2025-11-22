@@ -11,7 +11,7 @@ import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record GradingCriterionDTO(long id, String title, Set<GradingInstructionDTO> structuredGradingInstructions) {
+public record GradingCriterionDTO(@NotNull Long id, String title, Set<GradingInstructionDTO> structuredGradingInstructions) {
 
     /**
      * Convert GradingCriterion to GradingCriterionDTO. Used in the exercise DTOs for Athena.
