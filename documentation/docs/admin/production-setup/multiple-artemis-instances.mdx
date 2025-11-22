@@ -662,7 +662,7 @@ different ports and a unique instance ID for each instance.
 
 5. Start the remaining instances.
 
-You should now be able to see all instances in the registry interface at `http://localhost:8761`.
+You should now be able to see all instances in the registry interface at http://localhost:8761.
 
 
 ### Running multiple instances locally with Docker
@@ -679,8 +679,8 @@ instances will also use a ActiveMQ Artemis broker to synchronize WebSocket messa
     * artemis-app-node-2: using following profile: ``prod,localvc,localci,buildagent,core,docker``
     * artemis-app-node-3: using following profile: ``prod,buildagent``
 * A MySQL database addressable on port 3306 of the host system
-* A Load balancer (nginx) addressable on ports 80/443 of the host system: ``http(s)://localhost``
-* A Registry service addressable on port 8761 of the host system: ``http://localhost:8761``
+* A Load balancer (nginx) addressable on ports 80/443 of the host system: `http(s)://localhost`.
+* A Registry service addressable on port 8761 of the host system: http://localhost:8761
 * An ActiveMQ broker
 
 <Image
@@ -737,7 +737,7 @@ instances will also use a ActiveMQ Artemis broker to synchronize WebSocket messa
     docker compose -f docker/test-server-multi-node-mysql-localci.yml up
     ```
 
-4. You can now access artemis on `http(s)://localhost` and the registry on `http://localhost:8761`.
+4. You can now access artemis on `http(s)://localhost` and the registry on http://localhost:8761.
 
 
 #### Windows setup
@@ -757,7 +757,7 @@ instances will also use a ActiveMQ Artemis broker to synchronize WebSocket messa
     docker compose -f docker/test-server-multi-node-mysql-localci.yml up
     ```
 
-3. You can now access artemis on `http(s)://localhost` and the registry on `http://localhost:8761`.
+3. You can now access artemis on `http(s)://localhost` and the registry on http://localhost:8761.
 
 
 #### MacOS setup
@@ -773,4 +773,4 @@ instances will also use a ActiveMQ Artemis broker to synchronize WebSocket messa
     docker compose -f docker/test-server-multi-node-mysql-localci.yml up
     ```
 
-4. You can now access artemis on `http(s)://localhost` and the registry on `http://localhost:8761`.
+4. You can now access artemis on `http(s)://localhost` and the registry on http://localhost:8761.
