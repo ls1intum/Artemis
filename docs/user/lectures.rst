@@ -136,9 +136,6 @@ If your Artemis instance is connected to Nebula (see the :doc:`Nebula setup guid
 3. Enable the checkbox and save the lecture unit. Artemis sends the job to Nebula and shows a toast confirming that processing started.
 4. Nebula processes the lecture asynchronously. Once finished, the transcription is attached to the unit and becomes visible the next time you open the editor.
 
-If the recording cannot be processed automatically (for example due to missing credentials), you can still paste an existing transcription JSON into the **Video Transcription**
-field before saving.
-
 |create-attachment-video-unit|
 
 Either all Attachment Video Units of a lecture or specific Attachment Video Units can be sent to Iris, over the ingestion button in the lecture unit overview.
