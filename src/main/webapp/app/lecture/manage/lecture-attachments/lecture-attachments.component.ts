@@ -3,7 +3,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import dayjs from 'dayjs/esm';
-import { Subject, Subscription } from 'rxjs';
+import { Subject } from 'rxjs';
 import { Attachment } from 'app/lecture/shared/entities/attachment.model';
 import { AttachmentService } from 'app/lecture/manage/services/attachment.service';
 import { faPaperclip, faPencilAlt, faQuestionCircle, faSpinner, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
@@ -79,8 +79,6 @@ export class LectureAttachmentsComponent implements OnDestroy {
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
-    private routeDataSubscription?: Subscription;
-
     form: FormGroup = this.formBuilder.group({
         attachmentName: [undefined as string | undefined, [Validators.required]],
         attachmentFileName: [undefined as string | undefined],
@@ -114,7 +112,6 @@ export class LectureAttachmentsComponent implements OnDestroy {
 
     ngOnDestroy(): void {
         this.dialogErrorSource.unsubscribe();
-        this.routeDataSubscription?.unsubscribe();
     }
 
     /**
