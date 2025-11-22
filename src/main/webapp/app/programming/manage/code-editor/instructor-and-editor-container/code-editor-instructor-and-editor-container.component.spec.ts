@@ -34,6 +34,8 @@ import { ConsistencyCheckError, ErrorType } from 'app/programming/shared/entitie
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { HyperionCodeGenerationApiService } from 'app/openapi/api/hyperionCodeGenerationApi.service';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('CodeEditorInstructorAndEditorContainerComponent - Code Generation', () => {
     let fixture: ComponentFixture<CodeEditorInstructorAndEditorContainerComponent>;
@@ -374,7 +376,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Consistency Checks',
                 MockProvider(ParticipationService),
                 MockProvider(ProgrammingExerciseService),
                 MockProvider(CourseExerciseService),
-                provideHttpClient(),
+                provideHttpClient(withInterceptorsFromDi()),
                 provideHttpClientTesting(),
                 provideRouter([]),
                 { provide: TranslateService, useClass: MockTranslateService },
