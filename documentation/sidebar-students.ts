@@ -4,6 +4,8 @@ const sidebars: SidebarsConfig = {
     default: [
         'intro',
         'general',
+        'assessment',
+        'quiz-training',
         'calendar',
     ],
 };
