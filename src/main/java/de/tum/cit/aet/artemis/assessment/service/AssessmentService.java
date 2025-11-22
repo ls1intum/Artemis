@@ -264,16 +264,17 @@ public class AssessmentService {
      * @param feedbackList       the assessment as a feedback list that should be added to the result of the corresponding submission
      * @param resultId           id of the result we want to save the feedbackList to, null if no result exists
      * @param assessmentNoteText the text of the assessment note of the result
+     * @param exerciseId         the id of the exercise the assessment belongs to
      * @return the saved result
      */
-    public Result saveManualAssessment(final Submission submission, final List<Feedback> feedbackList, Long resultId, String assessmentNoteText) {
+    public Result saveManualAssessment(final Submission submission, final List<Feedback> feedbackList, Long resultId, String assessmentNoteText, long exerciseId) {
         Result result = null;
         if (resultId != null) {
             result = resultRepository.findWithEagerSubmissionAndFeedbackAndTestCasesAndAssessmentNoteById(resultId).orElse(null);
         }
 
         if (result == null) {
-            result = submissionService.saveNewEmptyResult(submission);
+            result = submissionService.saveNewEmptyResult(submission, exerciseId);
         }
 
         // important to not lose complaint information when overriding an assessment
@@ -325,7 +326,7 @@ public class AssessmentService {
      */
     public Result saveAndSubmitManualAssessment(final Exercise exercise, final Submission submission, final List<Feedback> feedbackList, Long resultId, String assessmentNoteText,
             boolean submit) {
-        Result result = saveManualAssessment(submission, feedbackList, resultId, assessmentNoteText);
+        Result result = saveManualAssessment(submission, feedbackList, resultId, assessmentNoteText, exercise.getId());
         if (!submit) {
             return result;
         }

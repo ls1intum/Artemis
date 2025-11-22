@@ -456,6 +456,19 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             """)
     long countAssessmentsByExerciseIdSubmittedIgnoreTestRunSubmissions(@Param("exerciseId") long exerciseId);
 
+    @Query("""
+            SELECT COUNT (DISTINCT p)
+            FROM ProgrammingExerciseStudentParticipation p
+                LEFT JOIN p.submissions s
+                LEFT JOIN s.results r
+            WHERE p.exercise.id IN :exerciseIds
+                AND p.testRun = FALSE
+                AND r.submission.submitted = TRUE
+                AND r.assessor IS NOT NULL
+                AND r.completionDate IS NOT NULL
+            """)
+    long countAssessmentsByExerciseIdsSubmittedIgnoreTestRunSubmissions(@Param("exerciseIds") Set<Long> exerciseIds);
+
     /**
      * In distinction to other exercise types, students can have multiple submissions in a programming exercise.
      * We therefore have to check here if any submission of the student was submitted before the due date.

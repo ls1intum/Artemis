@@ -121,11 +121,11 @@ export class SidebarComponent implements OnDestroy, OnChanges {
         } else {
             pipe = listener.pipe(distinctUntilChanged());
         }
-        this.sidebarEventSubscription = pipe.subscribe((itemId) => {
-            if (itemId) {
-                this.storeLastSelectedItem(itemId);
+        this.sidebarEventSubscription = pipe.subscribe((targetComponentRoute) => {
+            if (targetComponentRoute) {
+                this.storeLastSelectedItemTargetComponentRoute(targetComponentRoute);
                 if (this.sidebarData.sidebarType == 'conversation') {
-                    this.onSelectConversation.emit(itemId);
+                    this.onSelectConversation.emit(targetComponentRoute);
                 }
             }
         });
@@ -142,8 +142,8 @@ export class SidebarComponent implements OnDestroy, OnChanges {
         this.searchValue = searchValue;
     }
 
-    storeLastSelectedItem(itemId: number | string) {
-        this.sessionStorageService.store('sidebar.lastSelectedItem.' + this.sidebarData.storageId + '.byCourse.' + this.courseId, itemId);
+    storeLastSelectedItemTargetComponentRoute(targetComponentRoute: number | string) {
+        this.sessionStorageService.store('sidebar.lastSelectedItem.' + this.sidebarData.storageId + '.byCourse.' + this.courseId, targetComponentRoute);
     }
 
     ngOnDestroy() {
