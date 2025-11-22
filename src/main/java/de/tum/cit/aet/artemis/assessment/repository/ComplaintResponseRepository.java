@@ -38,8 +38,8 @@ public interface ComplaintResponseRepository extends ArtemisJpaRepository<Compla
     @Query("""
             SELECT COUNT(DISTINCT cr)
             FROM ComplaintResponse cr
-            JOIN cr.complaint c
-            JOIN c.result r
+                JOIN cr.complaint c
+                JOIN c.result r
             WHERE r.exerciseId IN :exerciseIds
                 AND cr.submittedTime IS NOT NULL
                 AND c.complaintType = :complaintType
