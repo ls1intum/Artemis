@@ -280,16 +280,14 @@ public class LectureResource {
      * @return the ResponseEntity with status 200 (OK) and the list of lectures in body
      */
     @GetMapping("courses/{courseId}/tutorial-lectures")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastEditorInCourse
     public ResponseEntity<Set<SimpleLectureDTO>> getTutorialLecturesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all Lectures for the course with id : {}", courseId);
 
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
-
         Set<Lecture> lectures = lectureRepository.findAllTutorialLecturesByCourseId(courseId);
-        // TODO: test that it's fine to set the course to null to avoid repeating it multiple times in each lecture
-        var lectureDtos = lectures.stream().map(lecture -> SimpleLectureDTO.from(lecture, null, null)).collect(Collectors.toSet());
+        // Note: the course (which is set by lecture.getCourse()) is currently required in the client for access control checks
+        // While it would be enough to send it once separately, we keep it like this for now to avoid overengineering. Ideally, the course data is only sent once
+        var lectureDtos = lectures.stream().map(lecture -> SimpleLectureDTO.from(lecture, null)).collect(Collectors.toSet());
         return ResponseEntity.ok().body(lectureDtos);
     }
 
