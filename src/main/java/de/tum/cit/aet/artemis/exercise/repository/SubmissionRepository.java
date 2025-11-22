@@ -260,7 +260,7 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
     /**
      * Count the number of in-time submissions for an exam. Only submissions for Text, Modeling and File Upload exercises are included.
      *
-     * @param examId - the exam id we are interested in
+     * @param exerciseIds - the exercise ids for which the submissions should be counted
      * @return the number of submissions belonging to the exam id, which have the submitted flag set to true and the submission date before the exercise due date, or no exercise
      *         due date at all
      */

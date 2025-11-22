@@ -474,7 +474,7 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
      * In distinction to other exercise types, students can have multiple submissions in a programming exercise.
      * We therefore have to check here if any submission of the student was submitted before the due date.
      *
-     * @param examId the exam id we are interested in
+     * @param exerciseIds the exercise ids to count the submissions for
      * @return the number of the latest submissions belonging to a participation belonging to the exam id, which have the submitted flag set to true and the submission date before
      *         the exercise due date, or no exercise due date at all (only exercises with manual or semi-automatic correction are considered)
      */

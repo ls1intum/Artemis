@@ -305,7 +305,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
     /**
      * Get the number of Complaints for all tutors of an exam
      *
-     * @param examId - id of the exercise
+     * @param exerciseIds - ids of the exercises to consider
      * @return list of TutorLeaderboardComplaints
      */
     @Query("""
@@ -383,7 +383,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
     /**
      * Get the number of complaintResponses for all tutors assessments of an exam
      *
-     * @param examId - id of the exam
+     * @param exerciseIds - ids of the exercises to consider
      * @return list of TutorLeaderboardComplaintResponses
      */
     @Query("""

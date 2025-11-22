@@ -179,6 +179,7 @@ public class Lecture extends DomainObject {
 
     /**
      * @deprecated Use attachments in attachment units instead (as part of lecture units)
+     * @return the attachments
      */
     @Deprecated
     public Set<Attachment> getAttachments() {
@@ -187,6 +188,7 @@ public class Lecture extends DomainObject {
 
     /**
      * @deprecated Use attachments in attachment units instead (as part of lecture units)
+     * @param attachment the attachment to add
      */
     @Deprecated
     public void addAttachments(Attachment attachment) {
@@ -196,6 +198,7 @@ public class Lecture extends DomainObject {
 
     /**
      * @deprecated Use attachments in attachment units instead (as part of lecture units)
+     * @param attachments the attachments to set
      */
     @Deprecated
     public void setAttachments(Set<Attachment> attachments) {
