@@ -103,7 +103,7 @@ An alternative approach for caching is with Docker volumes, see [this section](#
 
 ### Sonatype Nexus Setup
 
-1. Set up Sonatype Nexus to run on `artemis.example.com:8443`, e.g. in a [Docker container](https://hub.docker.com/r/sonatype/nexus3/>) behind a [proxy](https://help.sonatype.com/en/run-behind-a-reverse-proxy.html).
+1. Set up Sonatype Nexus to run on `artemis.example.com:8443`, e.g. in a [Docker container](https://hub.docker.com/r/sonatype/nexus3/) behind a [proxy](https://help.sonatype.com/en/run-behind-a-reverse-proxy.html).
 2. In the initial setup steps: Allow anonymous access.
 3. Set up the Maven proxy repository:
     a. Create a new repository (*Repository - Repositories - Create repository*) of type `maven2 (proxy)` with name `maven-proxy`.
@@ -320,7 +320,7 @@ The max value is the upper limit for the timeout, if the value is set higher tha
 
 If you want to change these values, you need to change them in `localci` and `buildagent` nodes.
 The corresponding configuration files are `application-localci.yml` and `application-buildagent.yml`.
-Ensure that the values are consistent across these files. In a [multi-node setup](https://docs.artemis.cit.tum.de/admin/setup/distributed.html), also verify that both core nodes and build agent nodes use the same values.
+Ensure that the values are consistent across these files. In a [multi-node setup](./multiple-artemis-instances.mdx), also verify that both core nodes and build agent nodes use the same values.
 
 Default values have already been set, and modifying these values is not required unless a specific adjustment is needed.
 
@@ -362,7 +362,7 @@ This setting is relevant only when using [Integrated Code Lifecycle Setup](https
 Instructors can edit the resources allocated to containers resulting from a programming exercise.
 These restrictions ensure that assigned values do not exceed predefined limits.
 To enforce these constraints, update the buildagent configuration files, `application-buildagent.yml`.
-Ensure that these values remain consistent across all nodes in a [multi-node setup](https://docs.artemis.cit.tum.de/admin/setup/distributed.html) to maintain uniform resource allocation.
+Ensure that these values remain consistent across all nodes in a [multi-node setup](./multiple-artemis-instances.mdx) to maintain uniform resource allocation.
 
 Default values have already been set, and modifying these values is not required unless a specific adjustment is needed.
 
