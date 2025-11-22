@@ -67,6 +67,14 @@ public class GroupNotificationScheduleService {
         checkAndCreateExerciseReleasedNotificationsWhenUpdatingExerciseWithDate(originalReleaseDate, exerciseAfterUpdate);
 
         checkAndCreateAssessedExerciseSubmissionNotificationsWhenUpdatingExerciseWithDate(originalAssessmentDueDate, exerciseAfterUpdate);
+    public void checkAndCreateAppropriateNotificationsWhenUpdatingExerciseWithDate(ZonedDateTime originalReleaseDate, ZonedDateTime originalAssessmentDueDate,
+            Exercise exerciseAfterUpdate, String notificationText) {
+
+        groupNotificationService.notifyAboutExerciseUpdate(exerciseAfterUpdate, notificationText);
+
+        checkAndCreateExerciseReleasedNotificationsWhenUpdatingExerciseWithDate(originalReleaseDate, exerciseAfterUpdate);
+
+        checkAndCreateAssessedExerciseSubmissionNotificationsWhenUpdatingExerciseWithDate(originalAssessmentDueDate, exerciseAfterUpdate);
     }
 
     /**
