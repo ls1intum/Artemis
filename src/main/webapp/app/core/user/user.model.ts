@@ -1,6 +1,7 @@
 import { Account } from 'app/core/user/account.model';
 import dayjs from 'dayjs/esm';
 import { Organization } from 'app/core/shared/entities/organization.model';
+import { LLMSelectionDecision } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
 
 export class User extends Account {
     public id?: number;
@@ -14,8 +15,8 @@ export class User extends Account {
     public password?: string;
     public vcsAccessToken?: string;
     public vcsAccessTokenExpiryDate?: string;
-    public externalLLMUsageAccepted?: dayjs.Dayjs;
-    public internalLLMUsageAccepted?: dayjs.Dayjs;
+    public selectedLLMUsage?: LLMSelectionDecision;
+    public selectedLLMUsageTimestamp?: dayjs.Dayjs;
     public memirisEnabled?: boolean;
     /**
      * True if
@@ -45,8 +46,8 @@ export class User extends Account {
         imageUrl?: string,
         vcsAccessToken?: string,
         vcsAccessTokenExpiryDate?: string,
-        externalLLMUsageAccepted?: dayjs.Dayjs,
-        internalLLMUsageAccepted?: dayjs.Dayjs,
+        selectedLLMUsage?: LLMSelectionDecision,
+        LLMSelectionDecisionDate?: dayjs.Dayjs,
         memirisEnabled?: boolean,
         askToSetupPasskey?: boolean,
     ) {
@@ -60,8 +61,8 @@ export class User extends Account {
         this.password = password;
         this.vcsAccessToken = vcsAccessToken;
         this.vcsAccessTokenExpiryDate = vcsAccessTokenExpiryDate;
-        this.externalLLMUsageAccepted = externalLLMUsageAccepted;
-        this.internalLLMUsageAccepted = internalLLMUsageAccepted;
+        this.selectedLLMUsage = selectedLLMUsage;
+        this.selectedLLMUsageTimestamp = LLMSelectionDecisionDate;
         this.memirisEnabled = memirisEnabled;
         this.askToSetupPasskey = askToSetupPasskey;
     }

@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, TemplateRef, inject, input, output } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, input, output } from '@angular/core';
 import { Subscription, filter, skip } from 'rxjs';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -16,7 +16,6 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { UserService } from 'app/core/user/shared/user.service';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
@@ -24,6 +23,8 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
+import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
+import { LLMSelectionDecision } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
 
 @Component({
     selector: 'jhi-request-feedback-button',
@@ -39,8 +40,8 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
     private readonly participationService = inject(ParticipationService);
     private readonly accountService = inject(AccountService);
     private readonly userService = inject(UserService);
-    private readonly modalService = inject(NgbModal);
     private readonly participationWebsocketService = inject(ParticipationWebsocketService);
+    private readonly llmModalService = inject(LLMSelectionModalService);
 
     protected readonly faPenSquare = faPenSquare;
 
@@ -50,7 +51,7 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
     requestFeedbackEnabled = false;
     isExamExercise: boolean;
     participation?: StudentParticipation;
-    hasUserAcceptedExternalLLMUsage: boolean;
+    hasUserAcceptedLLMUsage: boolean;
     currentFeedbackRequestCount = 0;
     feedbackRequestLimit = 10; // remark: this will be defined by the instructor and fetched
 
@@ -73,7 +74,7 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
         }
         this.requestFeedbackEnabled = this.exercise().allowFeedbackRequests ?? false;
         this.updateParticipation();
-        this.setUserAcceptedExternalLLMUsage();
+        this.setUserAcceptedLLMUsage();
     }
     ngOnDestroy(): void {
         this.athenaResultUpdateListener?.unsubscribe();
@@ -100,27 +101,47 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
         }
     }
 
-    setUserAcceptedExternalLLMUsage(): void {
-        this.hasUserAcceptedExternalLLMUsage = !!this.accountService.userIdentity()?.externalLLMUsageAccepted;
+    setUserAcceptedLLMUsage(): void {
+        this.hasUserAcceptedLLMUsage =
+            this.accountService.userIdentity()?.selectedLLMUsage === LLMSelectionDecision.CLOUD_AI ||
+            this.accountService.userIdentity()?.selectedLLMUsage === LLMSelectionDecision.LOCAL_AI;
     }
 
-    acceptExternalLLMUsage(modal: any) {
-        this.acceptSubscription?.unsubscribe();
-        this.acceptSubscription = this.userService.updateExternalLLMUsageConsent(true).subscribe(() => {
-            this.hasUserAcceptedExternalLLMUsage = true;
-            this.accountService.setUserAcceptedExternalLLMUsage();
-            modal.close();
-        });
+    async showLLMSelectionModal(): Promise<void> {
+        const choice = await this.llmModalService.open();
 
-        // Proceed with feedback request after accepting
-        if (this.assureConditionsSatisfied()) {
-            this.processFeedbackRequest();
+        switch (choice) {
+            case 'cloud':
+                this.acceptLLMUsage(LLMSelectionDecision.CLOUD_AI);
+                break;
+            case 'local':
+                this.acceptLLMUsage(LLMSelectionDecision.LOCAL_AI);
+                break;
+            case 'no_ai':
+                this.acceptLLMUsage(LLMSelectionDecision.NO_AI);
+                break;
+            case 'none':
+                break;
         }
     }
 
-    requestAIFeedback(content: TemplateRef<any>) {
-        if (!this.hasUserAcceptedExternalLLMUsage) {
-            this.modalService.open(content, { ariaLabelledBy: 'modal-title' });
+    acceptLLMUsage(decision: LLMSelectionDecision) {
+        this.acceptSubscription?.unsubscribe();
+
+        this.acceptSubscription = this.userService.updateLLMSelectionDecision(decision).subscribe(() => {
+            this.hasUserAcceptedLLMUsage = true;
+            this.accountService.setUserLLMSelectionDecision(decision);
+
+            // Proceed with feedback request after accepting
+            if (this.assureConditionsSatisfied()) {
+                this.processFeedbackRequest();
+            }
+        });
+    }
+
+    async requestAIFeedback(): Promise<void> {
+        if (!this.hasUserAcceptedLLMUsage) {
+            await this.showLLMSelectionModal();
             return;
         }
         this.requestFeedback();

@@ -360,7 +360,7 @@ describe('IrisChatService', () => {
 
         it('should switch if LLM usage is not required for the mode', fakeAsync(() => {
             accountService.userIdentity.set({ externalLLMUsageAccepted: undefined } as User);
-            service['hasJustAcceptedExternalLLMUsage'] = false;
+            service['hasJustAcceptedLLMUsage'] = false;
             service['sessionCreationIdentifier'] = 'tutor-suggestion/1';
 
             const newSession = { id: 12, chatMode: ChatServiceMode.TUTOR_SUGGESTION, creationDate: new Date(), entityId: 1 } as IrisSessionDTO;
@@ -381,7 +381,7 @@ describe('IrisChatService', () => {
 
         it('should switch if user has just accepted LLM usage', fakeAsync(() => {
             accountService.userIdentity.set({ externalLLMUsageAccepted: undefined } as User);
-            service['hasJustAcceptedExternalLLMUsage'] = true;
+            service['hasJustAcceptedLLMUsage'] = true;
             service['sessionCreationIdentifier'] = 'course/1';
 
             const newSession = { id: 12, chatMode: ChatServiceMode.COURSE, creationDate: new Date(), entityId: 1 } as IrisSessionDTO;

@@ -60,7 +60,7 @@ describe('IrisBaseChatbotComponent', () => {
         getActiveStatus: jest.fn().mockReturnValue(of({})),
     } as any;
     const mockUserService = {
-        updateExternalLLMUsageConsent: jest.fn(),
+        updateLLMSelectionDecision: jest.fn(),
     } as any;
 
     beforeEach(async () => {
@@ -133,7 +133,7 @@ describe('IrisBaseChatbotComponent', () => {
     });
 
     it('should call API when user accept the policy', () => {
-        const stub = jest.spyOn(mockUserService, 'updateExternalLLMUsageConsent');
+        const stub = jest.spyOn(mockUserService, 'updateLLMSelectionDecision');
         stub.mockReturnValue(of(new HttpResponse<void>()));
 
         component.acceptPermission();

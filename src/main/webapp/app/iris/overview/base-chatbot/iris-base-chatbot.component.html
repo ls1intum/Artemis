@@ -163,7 +163,7 @@
             <div class="messages" #messagesElement (scroll)="checkChatScroll()">
                 @if (
                     suggestions?.length &&
-                    userAccepted &&
+                    (userAccepted === LLMSelectionDecision.CLOUD_AI || userAccepted === LLMSelectionDecision.LOCAL_AI) &&
                     !this.isLoading &&
                     this.active &&
                     (!this.rateLimitInfo?.rateLimit || this.rateLimitInfo?.currentMessageCount !== this.rateLimitInfo?.rateLimit) &&
@@ -246,7 +246,7 @@
         @if (!active) {
             <div class="client-chat-error" [jhiTranslate]="IrisErrorMessageKey.IRIS_NOT_AVAILABLE"></div>
         }
-        @if (userAccepted) {
+        @if (userAccepted === LLMSelectionDecision.CLOUD_AI || userAccepted === LLMSelectionDecision.NO_AI) {
             <div class="chat-input">
                 <textarea
                     [(ngModel)]="newMessageTextContent"

@@ -15,6 +15,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { EntityResponseType } from 'app/assessment/shared/services/complaint.service';
 import dayjs from 'dayjs/esm';
 import { addPublicFilePrefix } from 'app/app.constants';
+import { LLMSelectionDecision } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
 
 export interface IAccountService {
     save: (account: any) => Observable<HttpResponse<any>>;
@@ -390,31 +391,17 @@ export class AccountService implements IAccountService {
     }
 
     /**
-     * Sets externalLLMUsageAccepted to current timestamp locally if the users accepted the conditions,
-     * to omit accepting external LLM usage popup appearing multiple time before user refreshes the page.
+     * Sets LLMSelectionDecisionDate to current timestamp locally if the users accepted the conditions or actively declined,
+     * to omit accepting LLM usage popup appearing multiple time before user refreshes the page.
      */
-    setUserAcceptedExternalLLMUsage(accepted: boolean = true): void {
+    setUserLLMSelectionDecision(accepted: LLMSelectionDecision): void {
         this.userIdentity.update((currentUserIdentity) => {
             if (!currentUserIdentity) {
                 return currentUserIdentity;
             }
 
-            currentUserIdentity.externalLLMUsageAccepted = accepted ? dayjs() : undefined;
-            return currentUserIdentity;
-        });
-    }
-
-    /**
-     * Sets internalLLMUsageAccepted to current timestamp locally if the users accepted the conditions,
-     * to omit accepting internal LLM usage popup appearing multiple time before user refreshes the page.
-     */
-    setUserAcceptedInternalLLMUsage(accepted: boolean = true): void {
-        this.userIdentity.update((currentUserIdentity) => {
-            if (!currentUserIdentity) {
-                return currentUserIdentity;
-            }
-
-            currentUserIdentity.internalLLMUsageAccepted = accepted ? dayjs() : undefined;
+            currentUserIdentity.selectedLLMUsageTimestamp = dayjs();
+            currentUserIdentity.selectedLLMUsage = accepted;
             return currentUserIdentity;
         });
     }

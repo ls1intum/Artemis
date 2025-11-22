@@ -19,15 +19,19 @@ body {
 
 /* --- BACKDROP (not fixed so it scrolls with page) --- */
 .modal-backdrop {
-    position: relative;
+    position: fixed;
+    top: 0;
+    left: 0;
     width: 100%;
-    min-height: 100vh;
+    height: 100%;
     background-color: rgba(0, 0, 0, 0.6);
     display: flex;
     justify-content: center;
-    align-items: flex-start; /* slight offset from top for nicer visual */
-    padding: 60px 20px;
+    align-items: flex-start;
+    z-index: 9999;
+    padding: 60px 20px 20px 20px; // Mehr Padding unten
     box-sizing: border-box;
+    overflow-y: auto;
     animation: fadeIn 0.2s ease-out;
 }
 

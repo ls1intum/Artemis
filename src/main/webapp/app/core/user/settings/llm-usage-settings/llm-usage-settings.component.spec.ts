@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { ExternalLlmUsageSettingsComponent } from './external-llm-usage-settings.component';
+import { LlmUsageSettingsComponent } from './llm-usage-settings.component';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
@@ -11,12 +11,12 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 
 describe('ExternalLlmUsageSettingsComponent', () => {
-    let component: ExternalLlmUsageSettingsComponent;
-    let fixture: ComponentFixture<ExternalLlmUsageSettingsComponent>;
+    let component: LlmUsageSettingsComponent;
+    let fixture: ComponentFixture<LlmUsageSettingsComponent>;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ExternalLlmUsageSettingsComponent],
+            imports: [LlmUsageSettingsComponent],
             declarations: [MockDirective(TranslateDirective)],
             providers: [
                 MockProvider(IrisChatService),
@@ -27,7 +27,7 @@ describe('ExternalLlmUsageSettingsComponent', () => {
             ],
         }).compileComponents();
 
-        fixture = TestBed.createComponent(ExternalLlmUsageSettingsComponent);
+        fixture = TestBed.createComponent(LlmUsageSettingsComponent);
         component = fixture.componentInstance;
         fixture.detectChanges();
     });

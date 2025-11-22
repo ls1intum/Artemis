@@ -1,0 +1,58 @@
+<div class="d-flex justify-content-between">
+    <h2 jhiTranslate="artemisApp.userSettings.categories.LLMUsage"></h2>
+</div>
+<hr />
+
+<div class="row align-items-center">
+    <span jhiTranslate="artemisApp.exerciseActions.externalLLMUsage.popUpMessage"></span>
+</div>
+
+<div class="mt-3">
+    @if (currentLLMSelectionDecision() === 'CLOUD_AI') {
+        <span
+            jhiTranslate="artemisApp.userSettings.LLMUsageSettingsPage.externalAccepted"
+            [translateValues]="{ acceptedDate: (currentLLMSelectionDecisionDate() | artemisDate: 'long-date') }"
+        ></span>
+        <button
+            type="button"
+            class="btn btn-secondary ms-3"
+            (click)="updateLLMSelectionDecision(LLMSelectionDecision.NO_AI)"
+            jhiTranslate="artemisApp.exerciseChatbot.decline"
+        ></button>
+    } @else {
+        <span jhiTranslate="artemisApp.userSettings.LLMUsageSettingsPage.externalDeclined"></span>
+        <button
+            type="button"
+            class="btn btn-primary ms-3"
+            (click)="updateLLMSelectionDecision(LLMSelectionDecision.CLOUD_AI)"
+            jhiTranslate="artemisApp.exerciseChatbot.accept"
+        ></button>
+    }
+</div>
+
+<div class="row align-items-center">
+    <span jhiTranslate="artemisApp.exerciseActions.internalLLMUsage.popUpMessage"></span>
+</div>
+
+<div class="mt-3">
+    @if (currentLLMSelectionDecision() === 'LOCAL_AI') {
+        <span
+            jhiTranslate="artemisApp.userSettings.LLMUsageSettingsPage.internalAccepted"
+            [translateValues]="{ acceptedDate: (currentLLMSelectionDecisionDate() | artemisDate: 'long-date') }"
+        ></span>
+        <button
+            type="button"
+            class="btn btn-secondary ms-3"
+            (click)="updateLLMSelectionDecision(LLMSelectionDecision.NO_AI)"
+            jhiTranslate="artemisApp.exerciseChatbot.decline"
+        ></button>
+    } @else {
+        <span jhiTranslate="artemisApp.userSettings.LLMUsageSettingsPage.internalDeclined"></span>
+        <button
+            type="button"
+            class="btn btn-primary ms-3"
+            (click)="updateLLMSelectionDecision(LLMSelectionDecision.LOCAL_AI)"
+            jhiTranslate="artemisApp.exerciseChatbot.accept"
+        ></button>
+    }
+</div>

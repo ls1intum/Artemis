@@ -45,6 +45,7 @@ import { User } from 'app/core/user/user.model';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
+import { LLMSelectionDecision } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
 
 @Component({
     selector: 'jhi-iris-base-chatbot',
@@ -190,7 +191,7 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
 
     // User preferences
     user: User | undefined;
-    userAccepted: boolean;
+    userAccepted: LLMSelectionDecision | undefined;
     isScrolledToBottom = true;
     rows = 1;
     resendAnimationActive: boolean;
@@ -273,8 +274,8 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
             this.suggestions = suggestions;
         });
 
-        this.checkIfUserAcceptedExternalLLMUsage();
-        if (!this.userAccepted) {
+        this.checkIfUserAcceptedLLMUsage();
+        if (!this.userAccepted || this.userAccepted === LLMSelectionDecision.NO_AI) {
             this.showAISelectionModal().then(() => {});
         }
 
@@ -311,8 +312,8 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
         this.chatSessionsSubscription.unsubscribe();
     }
 
-    checkIfUserAcceptedExternalLLMUsage(): void {
-        this.userAccepted = !!this.accountService.userIdentity()?.externalLLMUsageAccepted;
+    checkIfUserAcceptedLLMUsage(): void {
+        this.userAccepted = this.accountService.userIdentity()?.selectedLLMUsage;
         setTimeout(() => this.adjustTextareaRows(), 0);
     }
 
@@ -321,12 +322,16 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
 
         switch (choice) {
             case 'cloud':
-                this.acceptPermission();
-                this.chatService.updateExternalLLMUsageConsent(true);
+                this.acceptPermission(LLMSelectionDecision.CLOUD_AI);
+                this.chatService.updateLLMUsageConsent(LLMSelectionDecision.CLOUD_AI);
                 break;
             case 'local':
-                this.acceptPermission();
-                this.chatService.updateInternalLLMUsageConsent(true);
+                this.acceptPermission(LLMSelectionDecision.LOCAL_AI);
+                this.chatService.updateLLMUsageConsent(LLMSelectionDecision.LOCAL_AI);
+                break;
+            case 'no_ai':
+                this.chatService.updateLLMUsageConsent(LLMSelectionDecision.NO_AI);
+                this.closeChat();
                 break;
             case 'none':
                 this.closeChat();
@@ -414,9 +419,9 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
     /**
      * Accepts the permission to use the chat widget.
      */
-    acceptPermission() {
-        this.chatService.updateExternalLLMUsageConsent(true);
-        this.userAccepted = true;
+    acceptPermission(decision: LLMSelectionDecision) {
+        this.chatService.updateLLMUsageConsent(decision);
+        this.userAccepted = decision;
     }
 
     /**
@@ -625,4 +630,6 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
                 return undefined;
         }
     }
+
+    protected readonly LLMSelectionDecision = LLMSelectionDecision;
 }

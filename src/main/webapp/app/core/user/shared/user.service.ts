@@ -2,8 +2,8 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { User } from 'app/core/user/user.model';
-import { UpdateExternalLLMUsageDto } from 'app/core/user/shared/dto/updateExternalLLMUsage.dto';
-import { UpdateInternalLLMUsageDto } from 'app/core/user/shared/dto/updateInternalLLMUsage.dto';
+import { UpdateLLMSelectionDecisionDto } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
+import { LLMSelectionDecision } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
 
 @Injectable({ providedIn: 'root' })
 export class UserService {
@@ -30,16 +30,8 @@ export class UserService {
     /**
      * Updates consent to external LLM usage policy.
      */
-    updateExternalLLMUsageConsent(accepted: boolean): Observable<HttpResponse<void>> {
-        const updateExternalLLMUsageDto: UpdateExternalLLMUsageDto = { accepted };
-        return this.http.put<void>(`${this.resourceUrl}/accept-external-llm-usage`, updateExternalLLMUsageDto, { observe: 'response' });
-    }
-
-    /**
-     * Updates consent to external LLM usage policy.
-     */
-    updateInternalLLMUsageConsent(accepted: boolean): Observable<HttpResponse<void>> {
-        const updateInternalLLMUsageDto: UpdateInternalLLMUsageDto = { accepted };
-        return this.http.put<void>(`${this.resourceUrl}/accept-internal-llm-usage`, updateInternalLLMUsageDto, { observe: 'response' });
+    updateLLMSelectionDecision(selection: LLMSelectionDecision): Observable<HttpResponse<void>> {
+        const updateLLMSelectionDecisionDto: UpdateLLMSelectionDecisionDto = { selection };
+        return this.http.put<void>(`${this.resourceUrl}/select-llm-usage`, updateLLMSelectionDecisionDto, { observe: 'response' });
     }
 }

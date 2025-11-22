@@ -22,10 +22,10 @@
         <router-outlet />
     }
     <jhi-course-notification-popup-overlay />
+    <jhi-llm-selection-modal />
     @if (showSkeleton && !isShownViaLti) {
         @if (isTestRunExam || !isExamStarted) {
             <jhi-footer />
         }
     }
 </div>
-<jhi-llm-selection-modal />

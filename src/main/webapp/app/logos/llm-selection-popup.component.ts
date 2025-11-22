@@ -1,7 +1,7 @@
 import { ChangeDetectorRef, Component, EventEmitter, OnInit, Output, inject } from '@angular/core';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
 
-export type LLMSelectionChoice = 'cloud' | 'local' | 'none';
+export type LLMSelectionChoice = 'cloud' | 'local' | 'no_ai' | 'none';
 
 @Component({
     selector: 'jhi-llm-selection-modal',
@@ -44,8 +44,8 @@ export class LLMSelectionModalComponent implements OnInit {
     }
 
     selectNone(): void {
-        this.choice.emit('none');
-        this.modalService.emitChoice('none');
+        this.choice.emit('no_ai');
+        this.modalService.emitChoice('no_ai');
         this.close();
     }
 

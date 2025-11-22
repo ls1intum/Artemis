@@ -18,6 +18,7 @@ import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model'
 import { Router } from '@angular/router';
 import { captureException } from '@sentry/angular';
 import dayjs from 'dayjs/esm';
+import { LLMSelectionDecision } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
 
 export enum ChatServiceMode {
     TEXT_EXERCISE = 'TEXT_EXERCISE_CHAT',
@@ -96,7 +97,7 @@ export class IrisChatService implements OnDestroy {
 
     private sessionCreationIdentifier?: string;
 
-    hasJustAcceptedExternalLLMUsage = false;
+    hasJustAcceptedLLMUsage = false;
 
     /**
      * This property should only be used internally in {@link getCourseId()} and {@link setCourseId()}.
@@ -166,7 +167,12 @@ export class IrisChatService implements OnDestroy {
         const requiresAcceptance = this.sessionCreationIdentifier
             ? this.modeRequiresLLMAcceptance.get(Object.values(ChatServiceMode).find((mode) => this.sessionCreationIdentifier?.includes(mode)) as ChatServiceMode)
             : true;
-        if (requiresAcceptance === false || this.accountService.userIdentity()?.externalLLMUsageAccepted || this.hasJustAcceptedExternalLLMUsage) {
+        if (
+            requiresAcceptance === false ||
+            this.accountService.userIdentity()?.selectedLLMUsage === LLMSelectionDecision.LOCAL_AI ||
+            this.accountService.userIdentity()?.selectedLLMUsage === LLMSelectionDecision.CLOUD_AI ||
+            this.hasJustAcceptedLLMUsage
+        ) {
             this.getCurrentSessionOrCreate().subscribe({
                 ...this.handleNewSession(),
                 complete: () => this.loadChatSessions(),
@@ -280,20 +286,11 @@ export class IrisChatService implements OnDestroy {
         this.newIrisMessage.next(undefined);
     }
 
-    public updateExternalLLMUsageConsent(accepted: boolean): void {
+    public updateLLMUsageConsent(accepted: LLMSelectionDecision): void {
         this.acceptSubscription?.unsubscribe();
-        this.acceptSubscription = this.userService.updateExternalLLMUsageConsent(accepted).subscribe(() => {
-            this.hasJustAcceptedExternalLLMUsage = accepted;
-            this.accountService.setUserAcceptedExternalLLMUsage(accepted);
-            this.closeAndStart();
-        });
-    }
-
-    public updateInternalLLMUsageConsent(accepted: boolean): void {
-        this.acceptSubscription?.unsubscribe();
-        this.acceptSubscription = this.userService.updateInternalLLMUsageConsent(accepted).subscribe(() => {
-            this.hasJustAcceptedExternalLLMUsage = accepted;
-            this.accountService.setUserAcceptedInternalLLMUsage(accepted);
+        this.acceptSubscription = this.userService.updateLLMSelectionDecision(accepted).subscribe(() => {
+            this.hasJustAcceptedLLMUsage = true;
+            this.accountService.setUserLLMSelectionDecision(accepted);
             this.closeAndStart();
         });
     }

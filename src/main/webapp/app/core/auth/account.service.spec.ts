@@ -635,7 +635,7 @@ describe('AccountService', () => {
             accountService.userIdentity.set({ id: 1, groups: ['USER'] } as User);
 
             // Call the function
-            accountService.setUserAcceptedExternalLLMUsage();
+            accountService.setUserLLMSelectionDecision();
 
             // Check if the date was set correctly
             const acceptedDate = accountService.userIdentity()?.externalLLMUsageAccepted;
@@ -648,7 +648,7 @@ describe('AccountService', () => {
             accountService.userIdentity.set(undefined);
 
             // Verify that calling the function doesn't throw an error
-            expect(() => accountService.setUserAcceptedExternalLLMUsage()).not.toThrow();
+            expect(() => accountService.setUserLLMSelectionDecision()).not.toThrow();
         });
     });
 });

@@ -41,7 +41,7 @@ describe('TutorSuggestionComponent', () => {
         getActiveStatus: jest.fn().mockReturnValue(of({})),
     } as any;
     const mockUserService = {
-        updateExternalLLMUsageConsent: jest.fn(),
+        updateLLMSelectionDecision: jest.fn(),
     } as any;
 
     beforeEach(async () => {
