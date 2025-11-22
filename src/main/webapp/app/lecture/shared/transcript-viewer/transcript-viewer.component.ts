@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faChevronDown, faChevronUp, faSearch, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { escapeString } from 'app/shared/util/text.utils';
 
 import { TranscriptSegment } from 'app/lecture/shared/models/transcript-segment.model';
@@ -11,7 +11,7 @@ import { TranscriptSegment } from 'app/lecture/shared/models/transcript-segment.
 @Component({
     selector: 'jhi-transcript-viewer',
     standalone: true,
-    imports: [CommonModule, FormsModule, FaIconComponent, TranslateDirective, TranslatePipe],
+    imports: [CommonModule, FormsModule, FaIconComponent, TranslatePipe],
     templateUrl: './transcript-viewer.component.html',
     styleUrls: ['./transcript-viewer.component.scss'],
 })

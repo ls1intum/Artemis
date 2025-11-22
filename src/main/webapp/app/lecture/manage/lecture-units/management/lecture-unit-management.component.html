@@ -33,10 +33,7 @@
                         </svg>
                     </div>
                     <div class="lecture-unit-type-container">
-                        <div
-                            class="unit-badges d-flex flex-column gap-1"
-                            [style.top]="lectureUnit.type === LectureUnitType.ATTACHMENT_VIDEO && hasAttachment(lectureUnit) ? '-40px' : null"
-                        >
+                        <div class="unit-badges d-flex flex-column gap-1" [style.top]="getBadgeTopOffset(lectureUnit)">
                             <div class="badge bg-info">
                                 {{
                                     getLectureUnitReleaseDate(lectureUnit)
@@ -48,6 +45,30 @@
                                 <div class="badge bg-info attachment-badge">
                                     {{ ('artemisApp.lectureUnit.details.attachmentVersion' | artemisTranslate) + getAttachmentVersion(lectureUnit) }}
                                 </div>
+                            }
+
+                            @if (lectureUnit.type === LectureUnitType.ATTACHMENT_VIDEO) {
+                                @if (isTranscriptionPending(lectureUnit)) {
+                                    <div class="badge bg-info">
+                                        <fa-icon [icon]="faSpinner" animation="spin" class="me-1" />
+                                        <span jhiTranslate="artemisApp.attachmentVideoUnit.transcriptionProcessing"></span>
+                                    </div>
+                                } @else if (isTranscriptionFailed(lectureUnit)) {
+                                    <div class="badge bg-danger">
+                                        <fa-icon [icon]="faExclamationTriangle" class="me-1" />
+                                        <span jhiTranslate="artemisApp.attachmentVideoUnit.transcriptionFailed"></span>
+                                    </div>
+                                } @else if (hasTranscription(lectureUnit)) {
+                                    <div class="badge bg-success">
+                                        <fa-icon [icon]="faFileLines" class="me-1" />
+                                        <span jhiTranslate="artemisApp.attachmentVideoUnit.hasTranscription"></span>
+                                    </div>
+                                } @else if (canGenerateTranscription(lectureUnit)) {
+                                    <div class="badge bg-info">
+                                        <fa-icon [icon]="faFileLines" class="me-1" />
+                                        <span jhiTranslate="artemisApp.attachmentVideoUnit.transcriptAvailable"></span>
+                                    </div>
+                                }
                             }
                         </div>
                         <div class="mt-2">
@@ -67,6 +88,7 @@
                             }
                         </div>
                     </div>
+
                     <div class="d-flex gap-1 flex-column justify-content-center col-3 col-sm-2 col-lg-1" role="group">
                         @if (!lecture.isTutorialLecture && lectureIngestionEnabled && lectureUnit.type === LectureUnitType.ATTACHMENT_VIDEO) {
                             <div class="d-flex gap-1 w-100">
@@ -102,6 +124,21 @@
                                     />
                                 }
                             </div>
+                            @if (lectureUnit.type === LectureUnitType.ATTACHMENT_VIDEO) {
+                                <button
+                                    type="button"
+                                    class="btn btn-primary btn-sm flex-grow-1"
+                                    [disabled]="!canGenerateTranscription(lectureUnit) && !isTranscriptionFailed(lectureUnit)"
+                                    (click)="generateTranscription(lectureUnit)"
+                                    [ngbTooltip]="'artemisApp.attachmentVideoUnit.generateTranscription' | artemisTranslate"
+                                >
+                                    @if (isTranscriptionLoading[lectureUnit.id!]) {
+                                        <fa-icon [icon]="faSpinner" animation="spin" />
+                                    } @else {
+                                        <fa-icon [icon]="faFileAudio" />
+                                    }
+                                </button>
+                            }
                         }
                         @if (viewButtonAvailable[lectureUnit.id!]) {
                             <a
