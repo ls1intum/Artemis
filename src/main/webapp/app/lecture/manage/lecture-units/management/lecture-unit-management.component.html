@@ -128,7 +128,7 @@
                                 <button
                                     type="button"
                                     class="btn btn-primary btn-sm flex-grow-1"
-                                    [disabled]="!canGenerateTranscription(lectureUnit) && !isTranscriptionFailed(lectureUnit)"
+                                    [disabled]="!canGenerateTranscription(lectureUnit)"
                                     (click)="generateTranscription(lectureUnit)"
                                     [ngbTooltip]="'artemisApp.attachmentVideoUnit.generateTranscription' | artemisTranslate"
                                 >
