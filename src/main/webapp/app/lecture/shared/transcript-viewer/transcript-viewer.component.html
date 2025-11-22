@@ -9,12 +9,12 @@
                 <input
                     type="text"
                     class="search-input"
-                    [placeholder]="'artemisApp.attachmentVideoUnit.videoPlayer.searchPlaceholder' | translate"
+                    [placeholder]="'artemisApp.attachmentVideoUnit.videoPlayer.searchPlaceholder' | artemisTranslate"
                     [ngModel]="searchQuery()"
                     (ngModelChange)="onSearchQueryChange($event)"
                 />
                 @if (searchQuery()) {
-                    <button class="clear-button" (click)="clearSearch()" [title]="'artemisApp.attachmentVideoUnit.videoPlayer.clearSearch' | translate">
+                    <button class="clear-button" (click)="clearSearch()" [title]="'artemisApp.attachmentVideoUnit.videoPlayer.clearSearch' | artemisTranslate">
                         <fa-icon [icon]="faTimes" />
                     </button>
                 }
@@ -27,14 +27,14 @@
                         @if (searchResultsCount() > 0) {
                             {{ currentSearchIndex() + 1 }} / {{ searchResultsCount() }}
                         } @else {
-                            {{ 'artemisApp.attachmentVideoUnit.videoPlayer.noResults' | translate }}
+                            {{ 'artemisApp.attachmentVideoUnit.videoPlayer.noResults' | artemisTranslate }}
                         }
                     </span>
                     <button
                         class="nav-button"
                         (click)="previousSearchResult()"
                         [disabled]="searchResultsCount() === 0"
-                        [title]="'artemisApp.attachmentVideoUnit.videoPlayer.previousResult' | translate"
+                        [title]="'artemisApp.attachmentVideoUnit.videoPlayer.previousResult' | artemisTranslate"
                     >
                         <fa-icon [icon]="faChevronUp" />
                     </button>
@@ -42,7 +42,7 @@
                         class="nav-button"
                         (click)="nextSearchResult()"
                         [disabled]="searchResultsCount() === 0"
-                        [title]="'artemisApp.attachmentVideoUnit.videoPlayer.nextResult' | translate"
+                        [title]="'artemisApp.attachmentVideoUnit.videoPlayer.nextResult' | artemisTranslate"
                     >
                         <fa-icon [icon]="faChevronDown" />
                     </button>

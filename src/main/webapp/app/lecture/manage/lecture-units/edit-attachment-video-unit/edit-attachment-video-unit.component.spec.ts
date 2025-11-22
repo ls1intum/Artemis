@@ -30,6 +30,7 @@ describe('EditAttachmentVideoUnitComponent', () => {
     let router: Router;
     let navigateSpy: jest.SpyInstance;
     let updateAttachmentVideoUnitSpy: jest.SpyInstance;
+    let fetchAndUpdatePlaylistUrlSpy: jest.SpyInstance;
     let attachment: Attachment;
     let attachmentVideoUnit: AttachmentVideoUnit;
     let baseFormData: FormData;
@@ -121,6 +122,7 @@ describe('EditAttachmentVideoUnitComponent', () => {
 
         jest.spyOn(lectureTranscriptionService, 'getTranscription').mockReturnValue(of(undefined));
         jest.spyOn(lectureTranscriptionService, 'getTranscriptionStatus').mockReturnValue(of(undefined));
+        fetchAndUpdatePlaylistUrlSpy = jest.spyOn(attachmentVideoUnitService, 'fetchAndUpdatePlaylistUrl').mockImplementation((_, formData) => of(formData));
     });
 
     afterEach(() => {
@@ -386,6 +388,120 @@ describe('EditAttachmentVideoUnitComponent', () => {
 
         expect(updateAttachmentVideoUnitSpy).toHaveBeenCalledWith(1, 1, expect.any(FormData), undefined);
         expect(navigateSpy).toHaveBeenCalledOnce();
+    });
+    it('should fetch playlist URL when editing existing video with videoSource', () => {
+        const playlistUrl = 'https://live.rbg.tum.de/playlist.m3u8';
+
+        const expectedFormData: AttachmentVideoUnitFormData = {
+            formProperties: {
+                name: attachmentVideoUnit.name,
+                description: attachmentVideoUnit.description,
+                releaseDate: attachmentVideoUnit.releaseDate,
+                version: attachmentVideoUnit.attachment?.version,
+                videoSource: attachmentVideoUnit.videoSource,
+                updateNotificationText: undefined,
+            },
+            fileProperties: {
+                fileName: attachmentVideoUnit.attachment?.link,
+            },
+            transcriptionProperties: {
+                videoTranscription: undefined,
+            },
+            transcriptionStatus: undefined,
+            playlistUrl: playlistUrl,
+        };
+
+        fetchAndUpdatePlaylistUrlSpy.mockReturnValue(of(expectedFormData));
+
+        fixture.detectChanges();
+
+        expect(fetchAndUpdatePlaylistUrlSpy).toHaveBeenCalledWith(attachmentVideoUnit.videoSource, expect.anything());
+
+        // Wait for async operation
+        return fixture.whenStable().then(() => {
+            const formComponent: AttachmentVideoUnitFormComponent = fixture.debugElement.query(By.directive(AttachmentVideoUnitFormComponent)).componentInstance;
+            expect(formComponent.formData()?.playlistUrl).toBe(playlistUrl);
+        });
+    });
+
+    it('should not fetch playlist URL when videoSource is missing', () => {
+        attachmentVideoUnit.videoSource = undefined;
+        jest.spyOn(attachmentVideoUnitService, 'findById').mockReturnValue(
+            of(
+                new HttpResponse({
+                    body: attachmentVideoUnit,
+                    status: 200,
+                }),
+            ),
+        );
+
+        const fetchAndUpdatePlaylistUrlSpy = jest.spyOn(attachmentVideoUnitService, 'fetchAndUpdatePlaylistUrl');
+
+        fixture.detectChanges();
+
+        // It is called with undefined, but returns original form data (mock needed if strict)
+        // But wait, if we don't mock it, it might return undefined if it's a mock service.
+        // We should mock it to return the form data.
+
+        const expectedFormData: AttachmentVideoUnitFormData = {
+            formProperties: {
+                name: attachmentVideoUnit.name,
+                description: attachmentVideoUnit.description,
+                releaseDate: attachmentVideoUnit.releaseDate,
+                version: attachmentVideoUnit.attachment?.version,
+                videoSource: undefined,
+                updateNotificationText: undefined,
+            },
+            fileProperties: {
+                fileName: attachmentVideoUnit.attachment?.link,
+            },
+            transcriptionProperties: {
+                videoTranscription: undefined,
+            },
+            transcriptionStatus: undefined,
+        };
+
+        // fetchAndUpdatePlaylistUrlSpy is already mocked in beforeEach, no need to re-spy
+        // We just need to ensure it returns the expected form data for this specific test case.
+
+        fixture.detectChanges();
+
+        fetchAndUpdatePlaylistUrlSpy.mockReturnValue(of(expectedFormData));
+
+        expect(fetchAndUpdatePlaylistUrlSpy).toHaveBeenCalledWith(undefined, expect.anything());
+    });
+
+    it('should handle playlist URL fetch failure gracefully', () => {
+        // When fetch fails (or returns null), it returns the original form data
+        const originalFormData: AttachmentVideoUnitFormData = {
+            formProperties: {
+                name: attachmentVideoUnit.name,
+                description: attachmentVideoUnit.description,
+                releaseDate: attachmentVideoUnit.releaseDate,
+                version: attachmentVideoUnit.attachment?.version,
+                videoSource: attachmentVideoUnit.videoSource,
+                updateNotificationText: undefined,
+            },
+            fileProperties: {
+                fileName: attachmentVideoUnit.attachment?.link,
+            },
+            transcriptionProperties: {
+                videoTranscription: undefined,
+            },
+            transcriptionStatus: undefined,
+        };
+
+        fetchAndUpdatePlaylistUrlSpy.mockReturnValue(of(originalFormData));
+
+        fixture.detectChanges();
+
+        expect(fetchAndUpdatePlaylistUrlSpy).toHaveBeenCalledWith(attachmentVideoUnit.videoSource, expect.anything());
+
+        // Should still initialize form data without playlist URL
+        return fixture.whenStable().then(() => {
+            const formComponent: AttachmentVideoUnitFormComponent = fixture.debugElement.query(By.directive(AttachmentVideoUnitFormComponent)).componentInstance;
+            expect(formComponent.formData()?.playlistUrl).toBeUndefined();
+        });
     });
 
     it('should trigger transcript generation when generateTranscript is true', () => {

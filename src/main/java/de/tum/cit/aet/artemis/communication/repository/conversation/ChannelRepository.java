@@ -36,6 +36,13 @@ public interface ChannelRepository extends ArtemisJpaRepository<Channel, Long> {
     Set<Channel> findLectureChannelsByCourseId(@Param("courseId") Long courseId);
 
     @Query("""
+            SELECT channel.name
+            FROM Channel channel
+            WHERE channel.lecture.id = :lectureId
+            """)
+    String findChannelNameByLectureId(@Param("lectureId") Long lectureId);
+
+    @Query("""
             SELECT channel
             FROM Channel channel
             WHERE channel.lecture.id = :lectureId
@@ -66,11 +73,11 @@ public interface ChannelRepository extends ArtemisJpaRepository<Channel, Long> {
     @Query("""
             SELECT DISTINCT channel
             FROM Channel channel
-                LEFT JOIN channel.conversationParticipants cp
+                LEFT JOIN channel.conversationParticipants conversationParticipant
+                LEFT JOIN channel.lecture lecture
             WHERE channel.course.id = :courseId
-                AND (
-                   channel.isCourseWide = TRUE
-                   OR (channel.id = cp.conversation.id AND cp.user.id = :userId))
+                AND (channel.isCourseWide OR (channel.id = conversationParticipant.conversation.id AND conversationParticipant.user.id = :userId))
+                AND (lecture IS NULL OR NOT lecture.isTutorialLecture)
             ORDER BY channel.name
             """)
     List<Channel> findChannelsOfUser(@Param("courseId") Long courseId, @Param("userId") Long userId);

@@ -46,6 +46,7 @@ import { map } from 'rxjs/operators';
 })
 export class AttachmentVideoUnitComponent extends LectureUnitDirective<AttachmentVideoUnit> implements OnInit {
     protected readonly faDownload = faDownload;
+    protected readonly faFileLines = faFileLines;
     protected readonly faSpinner = faSpinner;
     protected readonly faExclamationTriangle = faExclamationTriangle;
     protected readonly TranscriptionStatus = TranscriptionStatus;
@@ -60,9 +61,30 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     readonly transcriptSegments = signal<TranscriptSegment[]>([]);
     readonly playlistUrl = signal<string | undefined>(undefined);
     readonly isLoading = signal<boolean>(false);
+
     readonly hasTranscript = computed(() => this.transcriptSegments().length > 0);
     transcriptionStatus = signal<TranscriptionStatus | undefined>(undefined);
     isLoadingTranscriptionStatus = signal(false);
+
+    /**
+     * Determines whether the "transcription possible" badge should be displayed.
+     *
+     * The badge is only shown when:
+     * - A playlist URL is available (transcription can be generated)
+     * - No transcription job exists (no transcriptionProperties, meaning no jobId)
+     * - No transcription status exists (no transcriptionProperties)
+     * - No completed transcript is available yet
+     *
+     * @returns {boolean} True if the badge should be shown (no active transcription job and no transcript), false otherwise
+     */
+    readonly canShowTranscriptionPossibleBadge = computed(() => {
+        // Don't show badge if transcription was created (which would have a jobId)
+        if (this.lectureUnit().transcriptionProperties) {
+            return false;
+        }
+        // Don't show badge if transcript is already available
+        return !this.hasTranscript();
+    });
 
     // TODO: This must use a server configuration to make it compatible with deployments other than TUM
     private readonly videoUrlAllowList = [RegExp('^https://(?:live\\.rbg\\.tum\\.de|tum\\.live)/w/\\w+/\\d+(/(CAM|COMB|PRES))?\\?video_only=1')];
@@ -142,7 +164,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
                 return;
             }
 
-            // Try to resolve a .m3u8 playlist URL through the backend API
+            // Try to resolve a .m3u8 playlist URL from the server
             this.attachmentVideoUnitService
                 .getPlaylistUrl(src)
                 .pipe(takeUntilDestroyed(this.destroyRef))
