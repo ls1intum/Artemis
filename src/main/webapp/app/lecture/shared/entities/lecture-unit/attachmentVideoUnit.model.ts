@@ -23,6 +23,13 @@ export enum IngestionState {
     PARTIALLY_INGESTED = 'PARTIALLY_INGESTED',
 }
 
+export enum TranscriptionStatus {
+    PENDING = 'PENDING',
+    PROCESSING = 'PROCESSING',
+    COMPLETED = 'COMPLETED',
+    FAILED = 'FAILED',
+}
+
 export interface LectureTranscriptionDTO {
     lectureUnitId: number;
     language: string;

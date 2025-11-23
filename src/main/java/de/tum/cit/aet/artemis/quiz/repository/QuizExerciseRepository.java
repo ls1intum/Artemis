@@ -8,8 +8,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -30,9 +29,6 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 @Lazy
 @Repository
 public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercise, Long>, JpaSpecificationExecutor<QuizExercise> {
-
-    @EntityGraph(type = LOAD, attributePaths = { "quizBatches" })
-    Set<QuizExercise> findWithBatchesByCourseId(long courseId);
 
     @Query("""
             SELECT DISTINCT e
@@ -134,7 +130,7 @@ public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercis
         return allExercises.stream().findFirst();
     }
 
-    @NotNull
+    @NonNull
     default QuizExercise findWithEagerBatchesByIdOrElseThrow(Long quizExerciseId) {
         return getValueElseThrow(findWithEagerBatchesById(quizExerciseId), quizExerciseId);
     }
@@ -145,7 +141,7 @@ public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercis
      * @param quizExerciseId the id of the entity
      * @return the entity
      */
-    @NotNull
+    @NonNull
     default QuizExercise findByIdWithQuestionsElseThrow(Long quizExerciseId) {
         return getValueElseThrow(findWithEagerQuestionsById(quizExerciseId), quizExerciseId);
     }
@@ -156,7 +152,7 @@ public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercis
      * @param quizExerciseId the id of the entity
      * @return the entity
      */
-    @NotNull
+    @NonNull
     default QuizExercise findByIdWithQuestionsAndCompetenciesElseThrow(Long quizExerciseId) {
         return getValueElseThrow(findWithEagerQuestionsAndCompetenciesById(quizExerciseId), quizExerciseId);
     }
@@ -167,17 +163,17 @@ public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercis
      * @param quizExerciseId the id of the entity
      * @return the entity
      */
-    @NotNull
+    @NonNull
     default QuizExercise findByIdWithBatchesElseThrow(Long quizExerciseId) {
         return getValueElseThrow(findWithEagerBatchesById(quizExerciseId), quizExerciseId);
     }
 
-    @NotNull
+    @NonNull
     default QuizExercise findByIdWithQuestionsAndStatisticsElseThrow(Long quizExerciseId) {
         return getValueElseThrow(findWithEagerQuestionsAndStatisticsById(quizExerciseId), quizExerciseId);
     }
 
-    @NotNull
+    @NonNull
     default QuizExercise findByIdWithQuestionsAndStatisticsAndCompetenciesAndBatchesAndGradingCriteriaElseThrow(Long quizExerciseId) {
         return getValueElseThrow(findWithEagerQuestionsAndStatisticsAndCompetenciesAndBatchesAndGradingCriteriaById(quizExerciseId), quizExerciseId);
     }

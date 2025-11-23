@@ -19,10 +19,9 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Stream;
 
-import jakarta.validation.constraints.NotNull;
-
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.NoHeadException;
+import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -160,7 +159,8 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         programmingExercise.setAssessmentDueDate(assessmentDueDate);
         programmingExerciseRepository.save(programmingExercise);
         // Add a parameterized second result
-        StudentParticipation participation = (StudentParticipation) firstResult.getSubmission().getParticipation();
+        StudentParticipation participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(firstResult.getSubmission().getParticipation().getId())
+                .orElseThrow();
         Result secondResult = participationUtilService.addResultToSubmission(participation, participation.getSubmissions().iterator().next());
         secondResult.successful(true).rated(true).score(100D).assessmentType(assessmentType).completionDate(completionDate);
         secondResult = participationUtilService.addVariousVisibilityFeedbackToResult(secondResult);
@@ -533,7 +533,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         assertThat(resultResponse.getFeedbacks()).noneMatch(Feedback::isAfterDueDate);
         assertThat(resultResponse.getFeedbacks()).containsExactlyInAnyOrderElementsOf(result.getFeedbacks());
 
-        assertThat(result).usingRecursiveComparison().ignoringFields("submission", "feedbacks", "participation", "lastModifiedDate").isEqualTo(resultResponse);
+        assertThat(result).usingRecursiveComparison().ignoringFields("submission", "feedbacks", "participation", "lastModifiedDate", "exerciseId").isEqualTo(resultResponse);
         if (withSubmission) {
             assertThat(submission).isEqualTo(resultResponse.getSubmission());
         }
@@ -576,7 +576,9 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     void testGetLatestPendingSubmissionIfNotExists_student() throws Exception {
         // Submission has a result, therefore not considered pending.
 
-        Result result = resultRepository.save(new Result());
+        Result result = new Result();
+        result.setExerciseId(programmingExercise.getId());
+        result = resultRepository.save(result);
         ProgrammingSubmission submission = (ProgrammingSubmission) new ProgrammingSubmission().submissionDate(ZonedDateTime.now().minusSeconds(61L));
         submission = programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, submission, TEST_PREFIX + "student1");
         submission.addResult(result);
@@ -589,7 +591,9 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetLatestPendingSubmissionIfNotExists_ta() throws Exception {
         // Submission has a result, therefore not considered pending.
-        Result result = resultRepository.save(new Result());
+        Result result = new Result();
+        result.setExerciseId(programmingExercise.getId());
+        result = resultRepository.save(result);
         ProgrammingSubmission submission = (ProgrammingSubmission) new ProgrammingSubmission().submissionDate(ZonedDateTime.now().minusSeconds(61L));
         submission = programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, submission, TEST_PREFIX + "student1");
         submission.addResult(result);
@@ -602,7 +606,9 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetLatestPendingSubmissionIfNotExists_instructor() throws Exception {
         // Submission has a result, therefore not considered pending.
-        Result result = resultRepository.save(new Result());
+        Result result = new Result();
+        result.setExerciseId(programmingExercise.getId());
+        result = resultRepository.save(result);
         ProgrammingSubmission submission = (ProgrammingSubmission) new ProgrammingSubmission().submissionDate(ZonedDateTime.now().minusSeconds(61L));
         submission = programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, submission, TEST_PREFIX + "student1");
         submission.addResult(result);
@@ -719,7 +725,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         request.get("/api/programming/programming-exercise-participations?repoName=" + repoName, HttpStatus.BAD_REQUEST, String.class);
     }
 
-    private @NotNull String generateRandomRepoUrl(ProgrammingExerciseStudentParticipation participation, boolean valid) {
+    private @NonNull String generateRandomRepoUrl(ProgrammingExerciseStudentParticipation participation, boolean valid) {
         String baseRepoPath = participation.getRepositoryUri();
         String repoUrl;
         Optional<ProgrammingExerciseStudentParticipation> foundParticipation;

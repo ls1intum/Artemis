@@ -15,8 +15,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -587,7 +586,7 @@ public class ChannelResource extends ConversationManagementResource {
         return channelDTOs.filter(channelDTO -> channelDTO.getIsPublic() || channelDTO.getIsMember());
     }
 
-    private void checkChannelMembership(Channel channel, @NotNull User user) {
+    private void checkChannelMembership(Channel channel, @NonNull User user) {
         if (channel == null || channel.getIsCourseWide() || conversationService.isMember(channel.getId(), user.getId())) {
             return;
         }

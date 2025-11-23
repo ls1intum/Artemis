@@ -17,10 +17,12 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.room.ExamRoom;
+import de.tum.cit.aet.artemis.exam.dto.room.AttendanceCheckerAppExamInformationDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamDistributionCapacityDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomForDistributionDTO;
 import de.tum.cit.aet.artemis.exam.service.ExamAccessService;
@@ -132,5 +134,24 @@ public class ExamRoomDistributionResource {
 
         ExamDistributionCapacityDTO capacityInformation = examRoomDistributionService.getDistributionCapacitiesByIds(examRoomIds, reserveFactor);
         return ResponseEntity.ok(capacityInformation);
+    }
+
+    /**
+     * GET /courses/{courseId}/exams/{examId}/attendance-checker-information : Gets information necessary for operating
+     * the attendance checker app
+     *
+     * @param courseId the id of the course
+     * @param examId   the id of the exam
+     * @return 200 (OK) if the retrieval was successful
+     */
+    @GetMapping("courses/{courseId}/exams/{examId}/attendance-checker-information")
+    @EnforceAtLeastTutorInCourse
+    public ResponseEntity<AttendanceCheckerAppExamInformationDTO> getAttendanceCheckerAppInformation(@PathVariable long courseId, @PathVariable long examId) {
+        log.debug("REST request to get attendance checker information for exam : {}", examId);
+        examAccessService.checkCourseAndExamAccessForTeachingAssistantElseThrow(courseId, examId);
+
+        var information = examRoomDistributionService.getAttendanceCheckerAppInformation(examId);
+
+        return ResponseEntity.ok(information);
     }
 }

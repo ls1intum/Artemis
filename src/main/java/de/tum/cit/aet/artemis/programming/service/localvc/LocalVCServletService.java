@@ -14,6 +14,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -479,6 +481,52 @@ public class LocalVCServletService {
         return repositoryAccessService.checkHasAccessToForcePush(exercise, user, repositoryTypeOrUserName);
     }
 
+    /**
+     * Checks if branching is allowed for the exercise to which the given repository belongs.
+     *
+     * @param repository The repository for which we check if branching is allowed.
+     * @return True if branching is allowed, false otherwise.
+     */
+    public boolean isBranchingAllowedForRepository(Repository repository) {
+        LocalVCRepositoryUri localVCRepositoryUri = parseRepositoryUri(repository.getDirectory().toPath());
+        String projectKey = localVCRepositoryUri.getProjectKey();
+
+        ProgrammingExercise exercise = getProgrammingExerciseOrThrow(projectKey, true);
+        return exercise.getBuildConfig().isAllowBranching();
+    }
+
+    public static enum BranchingStatus {
+        BRANCHING_DISABLED, NAME_DOES_NOT_MATCH_REGEX, BRANCH_ALLOWED
+    }
+
+    /**
+     * Checks if branching is allowed for the exercise to which the given repository belongs.
+     *
+     * @param repository The repository for which we check if branching is allowed.
+     * @param branchName The branch name for which to check if it matches the regex.
+     * @return Whether branching is allowed or why it is not.
+     */
+    public BranchingStatus isBranchNameAllowedForRepository(Repository repository, String branchName) {
+        LocalVCRepositoryUri localVCRepositoryUri = parseRepositoryUri(repository.getDirectory().toPath());
+        String projectKey = localVCRepositoryUri.getProjectKey();
+
+        ProgrammingExercise exercise = getProgrammingExerciseOrThrow(projectKey, true);
+
+        if (!exercise.getBuildConfig().isAllowBranching() || exercise.getBuildConfig().getBranchRegex() == null) {
+            return BranchingStatus.BRANCHING_DISABLED;
+        }
+
+        Pattern pattern;
+        try {
+            pattern = Pattern.compile(exercise.getBuildConfig().getBranchRegex());
+        }
+        catch (PatternSyntaxException e) {
+            return BranchingStatus.NAME_DOES_NOT_MATCH_REGEX;
+        }
+
+        return pattern.matcher(branchName).matches() ? BranchingStatus.BRANCH_ALLOWED : BranchingStatus.NAME_DOES_NOT_MATCH_REGEX;
+    }
+
     public LocalVCRepositoryUri parseRepositoryUri(HttpServletRequest request) {
         String path = request.getRequestURI();
         String normalizedPath = path.replaceFirst("/(info/refs|git-(upload|receive)-pack)$", "");
@@ -489,13 +537,17 @@ public class LocalVCServletService {
         return new LocalVCRepositoryUri(localVCBaseUri, repositoryPath);
     }
 
-    private ProgrammingExercise getProgrammingExerciseOrThrow(String projectKey) {
+    private ProgrammingExercise getProgrammingExerciseOrThrow(String projectKey, boolean withBuildConfig) {
         try {
-            return programmingExerciseRepository.findOneByProjectKeyOrThrow(projectKey, true);
+            return programmingExerciseRepository.findOneByProjectKeyOrThrow(projectKey, true, withBuildConfig);
         }
         catch (EntityNotFoundException e) {
             throw new LocalVCInternalException("Could not find single programming exercise with project key " + projectKey, e);
         }
+    }
+
+    private ProgrammingExercise getProgrammingExerciseOrThrow(String projectKey) {
+        return getProgrammingExerciseOrThrow(projectKey, false);
     }
 
     /**
@@ -710,7 +762,7 @@ public class LocalVCServletService {
             return HttpStatus.FORBIDDEN.value();
         }
         else {
-            log.error("Internal server error while trying to access repository {}: {}", repositoryUri, exception.getMessage());
+            log.error("Internal server error while trying to access repository {}: {}", repositoryUri, exception.getMessage(), exception);
             return HttpStatus.INTERNAL_SERVER_ERROR.value();
         }
     }

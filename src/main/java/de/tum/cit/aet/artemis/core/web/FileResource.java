@@ -20,11 +20,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import jakarta.validation.constraints.NotNull;
-
 import javax.activation.MimetypesFileTypeMap;
 
 import org.apache.commons.lang3.StringUtils;
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -57,7 +56,6 @@ import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
@@ -408,13 +406,13 @@ public class FileResource {
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
     @GetMapping("files/exam-user/signatures/{examUserId}/*")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastTutor
     public ResponseEntity<byte[]> getUserSignature(@PathVariable Long examUserId) {
         log.debug("REST request to get signature for exam user : {}", examUserId);
         ExamUserApi api = examUserApi.orElseThrow(() -> new ExamApiNotPresentException(ExamUserApi.class));
 
         ExamUser examUser = api.findWithExamById(examUserId).orElseThrow();
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, examUser.getExam().getCourse(), null);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, examUser.getExam().getCourse(), null);
 
         return buildFileResponse(getActualPathFromPublicPathString(examUser.getSigningImagePath(), FilePathType.EXAM_USER_SIGNATURE), false);
     }
@@ -426,13 +424,13 @@ public class FileResource {
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
     @GetMapping("files/exam-user/{examUserId}/*")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastTutor
     public ResponseEntity<byte[]> getExamUserImage(@PathVariable long examUserId) {
         log.debug("REST request to get image for exam user : {}", examUserId);
         ExamUserApi api = examUserApi.orElseThrow(() -> new ExamApiNotPresentException(ExamUserApi.class));
 
         ExamUser examUser = api.findWithExamById(examUserId).orElseThrow();
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, examUser.getExam().getCourse(), null);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, examUser.getExam().getCourse(), null);
 
         return buildFileResponse(getActualPathFromPublicPathString(examUser.getStudentImagePath(), FilePathType.EXAM_USER_IMAGE), true);
     }
@@ -752,7 +750,7 @@ public class FileResource {
         }
     }
 
-    private String getResponsePathFromPublicPathString(@NotNull String publicPath) {
+    private String getResponsePathFromPublicPathString(@NonNull String publicPath) {
         // fail-safe to raise awareness if the public path is not correct (should not happen)
         if (publicPath.startsWith(ARTEMIS_FILE_PATH_PREFIX)) {
             throw new IllegalArgumentException("The public path should not contain the Artemis file path prefix");
@@ -760,7 +758,7 @@ public class FileResource {
         return ARTEMIS_FILE_PATH_PREFIX + publicPath;
     }
 
-    private Path getActualPathFromPublicPathString(@NotNull String publicPath, FilePathType filePathType) {
+    private Path getActualPathFromPublicPathString(@NonNull String publicPath, FilePathType filePathType) {
         return FilePathConverter.fileSystemPathForExternalUri(URI.create(publicPath), filePathType);
     }
 

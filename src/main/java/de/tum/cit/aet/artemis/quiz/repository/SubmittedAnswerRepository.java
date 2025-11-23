@@ -11,6 +11,7 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.quiz.domain.AbstractQuizSubmission;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
@@ -23,7 +24,7 @@ import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
 @Repository
 public interface SubmittedAnswerRepository extends ArtemisJpaRepository<SubmittedAnswer, Long> {
 
-    Set<SubmittedAnswer> findBySubmission(QuizSubmission quizSubmission);
+    Set<SubmittedAnswer> findBySubmission(AbstractQuizSubmission submission);
 
     /**
      * Loads submitted answers from the database in case there is a QuizSubmission in one of the passed student participation

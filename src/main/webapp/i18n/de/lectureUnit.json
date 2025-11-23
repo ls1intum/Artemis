@@ -84,7 +84,13 @@
             "created": "Eine neue Dateieinheit wurde erstellt",
             "updated": "Dateieinheit aktualisiert",
             "notReleasedTooltip": "Nur sichtbar für Tutor:innen und Lehrende. Veröffentlichungsdatum:",
+            "transcriptAvailable": "Transkription möglich",
             "transcriptionInvalidJson": "Die Transkriptions-JSON ist ungültig und wurde ignoriert.",
+            "generateTranscription": "Transkription generieren",
+            "transcriptionPossible": "Transkription möglich",
+            "transcriptionProcessing": "Transkription wird verarbeitet",
+            "transcriptionFailed": "Transkription fehlgeschlagen",
+            "hasTranscription": "Transkription vollständig",
             "createAttachmentVideoUnits": {
                 "informativeText": {
                     "firstLine": "Artemis sucht nach der Gliederung (Folie mit Titel 'Outline' und Stichpunkten mit Kapitelüberschriften) und unterteilt das PDF in Einheiten.",
@@ -179,7 +185,23 @@
             },
             "transcription": {
                 "started": "Transkriptgenerierung gestartet.",
-                "error": "Transkriptgenerierung konnte nicht gestartet werden."
+                "error": "Transkriptgenerierung konnte nicht gestartet werden.",
+                "pendingWarning": "Für dieses Video wird derzeit eine Transkription verarbeitet. Bitte warte, bis diese abgeschlossen ist, bevor eine neue generiert wird.",
+                "overwriteWarning": "Das Generieren eines neuen Transkripts überschreibt die vorhandene Transkription für dieses Video.",
+                "statusProcessing": "Bitte überprüfe den Status der Transkription etwas später",
+                "statusFailed": "Die Transkriptionsgenerierung für dieses Video ist fehlgeschlagen. Du kannst es erneut versuchen.",
+                "editStatusProcessing": "Für dieses Video wird derzeit eine Transkription generiert.",
+                "editStatusFailed": "Die vorherige Transkriptionsgenerierung für dieses Video ist fehlgeschlagen."
+            },
+            "videoPlayer": {
+                "transcript": "Transkript",
+                "searchPlaceholder": "Transkript durchsuchen...",
+                "clearSearch": "Suche löschen",
+                "previousResult": "Vorheriges Ergebnis",
+                "nextResult": "Nächstes Ergebnis",
+                "noResults": "Keine Ergebnisse",
+                "noMatchingTranscript": "Kein passendes Transkript gefunden",
+                "loading": "Lädt..."
             }
         },
         "exerciseUnit": {

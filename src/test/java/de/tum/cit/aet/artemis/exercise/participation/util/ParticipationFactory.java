@@ -7,7 +7,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import jakarta.validation.constraints.NotNull;
+import org.jspecify.annotations.NonNull;
 
 import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
@@ -247,7 +247,7 @@ public class ParticipationFactory {
      * @param type The FeedbackType of the Feedback
      * @return The generated Feedback
      */
-    @NotNull
+    @NonNull
     public static Feedback createPositiveFeedback(FeedbackType type) {
         Feedback positiveFeedback = new Feedback();
         positiveFeedback.setCredits(2D);
@@ -262,7 +262,7 @@ public class ParticipationFactory {
      * @param type The FeedbackType of the Feedback
      * @return The generated Feedback
      */
-    @NotNull
+    @NonNull
     public static Feedback createNegativeFeedback(FeedbackType type) {
         Feedback negativeFeedback = new Feedback();
         negativeFeedback.setCredits(-1D);
@@ -278,7 +278,7 @@ public class ParticipationFactory {
      * @param textBlockReference The textBlockReference of the Feedback
      * @return The generated Feedback
      */
-    @NotNull
+    @NonNull
     public static Feedback createManualTextFeedback(Double credits, String textBlockReference) {
         Feedback feedback = new Feedback();
         feedback.setCredits(credits);
@@ -437,6 +437,7 @@ public class ParticipationFactory {
 
     /**
      * Generates a Result with the given arguments.
+     * NOTE: The caller MUST set exerciseId on the returned Result before saving it to the database.
      *
      * @param rated True, if the Result is rated
      * @param score The score of the Result
@@ -446,6 +447,22 @@ public class ParticipationFactory {
         Result result = new Result();
         result.setRated(rated);
         result.setScore(score);
+        return result;
+    }
+
+    /**
+     * Generates a Result with the given arguments including exercise ID.
+     *
+     * @param rated      True, if the Result is rated
+     * @param score      The score of the Result
+     * @param exerciseId The ID of the exercise this result belongs to
+     * @return The generated Result
+     */
+    public static Result generateResult(boolean rated, double score, Long exerciseId) {
+        Result result = new Result();
+        result.setRated(rated);
+        result.setScore(score);
+        result.setExerciseId(exerciseId);
         return result;
     }
 

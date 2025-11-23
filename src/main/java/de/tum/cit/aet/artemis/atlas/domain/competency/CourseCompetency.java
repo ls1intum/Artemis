@@ -51,9 +51,6 @@ public abstract class CourseCompetency extends BaseCompetency {
     @JsonIgnore
     public static final int DEFAULT_MASTERY_THRESHOLD = 100;
 
-    @JsonIgnore
-    public static final int MAX_TITLE_LENGTH = 255;
-
     @Column(name = "soft_due_date")
     private ZonedDateTime softDueDate;
 

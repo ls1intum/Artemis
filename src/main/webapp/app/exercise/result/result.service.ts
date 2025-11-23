@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import dayjs from 'dayjs/esm';
-import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { Result, isPracticeResult } from 'app/exercise/shared/entities/result/result.model';
 import { ResultWithPointsPerGradingCriterion } from 'app/exercise/shared/entities/result/result-with-points-per-grading-criterion.model';
 import { createRequestOption } from 'app/shared/util/request.util';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
@@ -40,7 +40,6 @@ export interface Badge {
 }
 
 export interface IResultService {
-    find: (resultId: number) => Observable<EntityResponseType>;
     getResultsForExerciseWithPointsPerGradingCriterion: (exerciseId: number, req?: any) => Observable<ResultsWithPointsArrayResponseType>;
     getFeedbackDetailsForResult: (participationId: number, result: Result) => Observable<HttpResponse<Feedback[]>>;
     getResultsWithPointsPerGradingCriterion: (exercise: Exercise) => Observable<ResultsWithPointsArrayResponseType>;
@@ -54,17 +53,10 @@ export class ResultService implements IResultService {
     private csvDownloadService = inject(CsvDownloadService);
 
     private exerciseResourceUrl = 'api/assessment/exercises';
-    private resultResourceUrl = 'api/assessment/results';
     private participationResourceUrl = 'api/assessment/participations';
 
     private readonly MAX_VALUE_PROGRAMMING_RESULT_INTS = 255;
     // Size of tinyInt in SQL, that is used to store these values
-
-    find(resultId: number): Observable<EntityResponseType> {
-        return this.http
-            .get<Result>(`${this.resultResourceUrl}/${resultId}`, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertResultResponseDatesFromServer(res)));
-    }
 
     /**
      * Generates the result string for the given exercise and result.
@@ -338,7 +330,7 @@ export class ResultService implements IResultService {
 
     public static evaluateBadge(participation: Participation, result: Result): Badge {
         if (participation.type === ParticipationType.STUDENT || participation.type === ParticipationType.PROGRAMMING) {
-            if (isPracticeMode(participation)) {
+            if (isPracticeMode(participation) || isPracticeResult(result)) {
                 return { class: 'bg-secondary', text: 'artemisApp.result.practice', tooltip: 'artemisApp.result.practiceTooltip' };
             }
         }
