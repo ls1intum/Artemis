@@ -32,12 +32,19 @@ public record UpdateModelingExerciseDTO(long id, @Nullable String title, @Nullab
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record CompetencyExerciseLinkDTO(@NotNull CourseCompetencyDTO courseCompetencyDTO, double weight, Long courseId) {
 
-        public static CompetencyExerciseLinkDTO of(@NotNull CompetencyExerciseLink link) {
-            if (link.getCompetency().getCourse() == null) {
-                throw new IllegalStateException(
-                        "CompetencyExerciseLink references a competency without an associated course. Link ID: " + (link.getId() != null ? link.getId() : "unknown"));
+        /**
+         * Creates a DTO from a CompetencyExerciseLink entity.
+         *
+         * @param competencyExerciseLink CompetencyExerciseLink entity to convert
+         * @return a new CompetencyExerciseLinkDTO with data from the entity
+         */
+        public static CompetencyExerciseLinkDTO of(@NotNull CompetencyExerciseLink competencyExerciseLink) {
+            if (competencyExerciseLink.getCompetency().getCourse() == null) {
+                throw new IllegalStateException("CompetencyExerciseLink references a competency without an associated course. Link ID: "
+                        + (competencyExerciseLink.getId() != null ? competencyExerciseLink.getId() : "unknown"));
             }
-            return new CompetencyExerciseLinkDTO(CourseCompetencyDTO.of(link.getCompetency()), link.getWeight(), link.getCompetency().getCourse().getId());
+            return new CompetencyExerciseLinkDTO(CourseCompetencyDTO.of(competencyExerciseLink.getCompetency()), competencyExerciseLink.getWeight(),
+                    competencyExerciseLink.getCompetency().getCourse().getId());
         }
     }
 
