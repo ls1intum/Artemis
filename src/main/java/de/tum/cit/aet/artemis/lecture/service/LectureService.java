@@ -17,7 +17,6 @@ import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import org.hibernate.Hibernate;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
@@ -26,6 +25,8 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyApi;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyRelationApi;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
@@ -49,6 +50,9 @@ import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitCompletion;
+import de.tum.cit.aet.artemis.lecture.domain.OnlineUnit;
+import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
+import de.tum.cit.aet.artemis.lecture.dto.LectureDetailsDTO;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 import de.tum.cit.aet.artemis.lecture.web.LectureResource;
@@ -224,11 +228,10 @@ public class LectureService {
      *
      * @param lectureId the ID of the lecture
      * @param user      the user requesting lecture details
-     * @return the filtered {@link Lecture} object
+     * @return the filtered {@link LectureDetailsDTO} object
      * @throws BadRequestAlertException if the lecture is not linked to a course
      */
-    // TODO: use a DTO instead of the Lecture entity to avoid sending unnecessary data to the client
-    public Lecture getForDetails(long lectureId, User user) {
+    public LectureDetailsDTO getForDetails(long lectureId, User user) {
         Lecture lecture = lectureRepository.findByIdWithLectureUnitsWithCompetencyLinksAndAttachmentsElseThrow(lectureId);
         Course course = lecture.getCourse();
         if (course == null) {
@@ -240,14 +243,10 @@ public class LectureService {
         lecture.getLectureUnits().forEach(lectureUnit -> {
             LectureUnitCompletion completion = byUnit.get(lectureUnit.getId());
             lectureUnit.setCompletedUsers(completion != null ? Set.of(completion) : Set.of());
-            lectureUnit.getCompetencyLinks().forEach(competencyLink -> {
-                if (competencyLink.getCompetency() != null && Hibernate.isInitialized(competencyLink.getCompetency())) {
-                    competencyLink.getCompetency().setCourse(null); // Avoid sending the course to the client multiple times in the response to save data
-                }
-            });
         });
         competencyApi.ifPresent(api -> api.addCompetencyLinksToExerciseUnits(lecture));
-        return filterLectureContentForUser(lecture, user);
+        Lecture filteredLecture = filterLectureContentForUser(lecture, user);
+        return convertToLectureDetailsDTO(filteredLecture);
     }
 
     /**
@@ -306,6 +305,74 @@ public class LectureService {
         return lecture;
     }
 
+    private LectureDetailsDTO convertToLectureDetailsDTO(Lecture lecture) {
+        LectureDetailsDTO.CourseDTO courseDTO = Optional.ofNullable(lecture.getCourse()).map(this::mapCourse).orElse(null);
+        List<LectureDetailsDTO.AttachmentDTO> attachments = lecture.getAttachments().stream().filter(Objects::nonNull).map(this::mapAttachment).toList();
+        List<LectureDetailsDTO.LectureUnitDetailsDTO> lectureUnits = lecture.getLectureUnits().stream().filter(Objects::nonNull).map(this::mapLectureUnit).toList();
+        return new LectureDetailsDTO(lecture.getId(), lecture.getTitle(), lecture.getDescription(), lecture.getStartDate(), lecture.getEndDate(), lecture.getVisibleDate(),
+                lecture.isTutorialLecture(), courseDTO, lectureUnits, attachments);
+    }
+
+    private LectureDetailsDTO.CourseDTO mapCourse(Course course) {
+        return new LectureDetailsDTO.CourseDTO(course.getId(), course.getTitle(), course.getShortName(), course.getStudentGroupName(), course.getTeachingAssistantGroupName(),
+                course.getEditorGroupName(), course.getInstructorGroupName());
+    }
+
+    private LectureDetailsDTO.AttachmentDTO mapAttachment(Attachment attachment) {
+        return new LectureDetailsDTO.AttachmentDTO(attachment.getId(), attachment.getName(), attachment.getLink(), attachment.getReleaseDate(), attachment.getUploadDate(),
+                attachment.getVersion(), attachment.getAttachmentType(), attachment.getStudentVersion());
+    }
+
+    private LectureDetailsDTO.LectureUnitDetailsDTO mapLectureUnit(LectureUnit lectureUnit) {
+        List<LectureDetailsDTO.CompetencyLinkDTO> competencyLinks = lectureUnit.getCompetencyLinks() == null ? List.of()
+                : lectureUnit.getCompetencyLinks().stream().filter(Objects::nonNull).map(this::mapCompetencyLink).toList();
+        boolean completed = lectureUnit.isCompleted();
+        boolean visibleToStudents = lectureUnit.isVisibleToStudents();
+        LectureDetailsDTO.LectureReferenceDTO lectureReference = new LectureDetailsDTO.LectureReferenceDTO(
+                lectureUnit.getLecture() != null ? lectureUnit.getLecture().getId() : null);
+
+        switch (lectureUnit) {
+            case AttachmentVideoUnit attachmentVideoUnit -> {
+                LectureDetailsDTO.AttachmentDTO attachmentDTO = Optional.ofNullable(attachmentVideoUnit.getAttachment()).map(this::mapAttachment).orElse(null);
+                return new LectureDetailsDTO.AttachmentUnitDTO(attachmentVideoUnit.getId(), lectureReference, attachmentVideoUnit.getName(),
+                        resolveReleaseDate(attachmentVideoUnit), completed, visibleToStudents, competencyLinks, attachmentDTO, attachmentVideoUnit.getDescription(),
+                        attachmentVideoUnit.getVideoSource(), null);
+            }
+            case ExerciseUnit exerciseUnit -> {
+                return new LectureDetailsDTO.ExerciseUnitDTO(exerciseUnit.getId(), lectureReference, exerciseUnit.getName(), exerciseUnit.getReleaseDate(), completed,
+                        visibleToStudents, competencyLinks, exerciseUnit.getExercise(), null);
+            }
+            case TextUnit textUnit -> {
+                return new LectureDetailsDTO.TextUnitDTO(textUnit.getId(), lectureReference, textUnit.getName(), textUnit.getReleaseDate(), completed, visibleToStudents,
+                        competencyLinks, textUnit.getContent(), null);
+            }
+            case OnlineUnit onlineUnit -> {
+                return new LectureDetailsDTO.OnlineUnitDTO(onlineUnit.getId(), lectureReference, onlineUnit.getName(), onlineUnit.getReleaseDate(), completed, visibleToStudents,
+                        competencyLinks, onlineUnit.getDescription(), onlineUnit.getSource(), null);
+            }
+            default -> {
+            }
+        }
+        throw new IllegalArgumentException("Unsupported lecture unit type: " + lectureUnit.getClass().getSimpleName());
+    }
+
+    private ZonedDateTime resolveReleaseDate(AttachmentVideoUnit attachmentVideoUnit) {
+        ZonedDateTime releaseDate = attachmentVideoUnit.getReleaseDate();
+        if (releaseDate != null) {
+            return releaseDate;
+        }
+        Attachment attachment = attachmentVideoUnit.getAttachment();
+        return attachment != null ? attachment.getReleaseDate() : null;
+    }
+
+    private LectureDetailsDTO.CompetencyLinkDTO mapCompetencyLink(CompetencyLectureUnitLink competencyLink) {
+        CourseCompetency competency = competencyLink.getCompetency();
+        LectureDetailsDTO.CompetencyDTO competencyDTO = competency != null
+                ? new LectureDetailsDTO.CompetencyDTO(competency.getId(), competency.getTitle(), competency.getTaxonomy())
+                : null;
+        return new LectureDetailsDTO.CompetencyLinkDTO(competencyDTO, competencyLink.getWeight());
+    }
+
     /**
      * Retrieves a {@link LectureCalendarEventDTO} for each {@link Lecture} associated to the given courseId.
      * Each DTO encapsulates the visibleDate, startDate and endDate of the respective lecture.
@@ -313,26 +380,24 @@ public class LectureService {
      * The method then derives a set of {@link CalendarEventDTO}s from the DTOs. Whether events are included in the result
      * depends on the visibleDate and whether the logged-in user is a student of the {@link Course})
      *
-     * @param courseId      the ID of the course
-     * @param userIsStudent indicates whether the logged-in user is a student of the course
-     * @param language      the language that will be used add context information to titles (e.g. the title of a lecture end event will be prefixed with "End: ")
+     * @param courseId the ID of the course
+     * @param language the language that will be used add context information to titles (e.g. the title of a lecture end event will be prefixed with "End: ")
      * @return the set of results
      */
-    public Set<CalendarEventDTO> getCalendarEventDTOsFromLectures(long courseId, boolean userIsStudent, Language language) {
+    public Set<CalendarEventDTO> getCalendarEventDTOsFromLectures(long courseId, Language language) {
         Set<LectureCalendarEventDTO> dtos = lectureRepository.getLectureCalendarEventDTOsForCourseId(courseId);
-        return dtos.stream().flatMap(dto -> deriveCalendarEventDTOs(dto, userIsStudent, language).stream()).collect(Collectors.toSet());
+        return dtos.stream().flatMap(dto -> deriveCalendarEventDTOs(dto, language).stream()).collect(Collectors.toSet());
     }
 
     /**
      * Derives calendar events from the given {@link LectureCalendarEventDTO}. Expects at least one of startDate and endDate of the LectureCalendarEventDTO to be non-null-
      *
-     * @param dto           the dto from which to derive the event
-     * @param userIsStudent indicates whether the logged-in user is a student of the course (hence no tutor, editor, instructor)
-     * @param language      the language that will be used add context information to titles (e.g. the title of a lecture end event will be prefixed with "End: ")
+     * @param dto      the dto from which to derive the event
+     * @param language the language that will be used add context information to titles (e.g. the title of a lecture end event will be prefixed with "End: ")
      * @throws IllegalArgumentException if both startDate and endDate of the LectureCalendarEventDTO are null
      * @return the derived event
      */
-    private Set<CalendarEventDTO> deriveCalendarEventDTOs(LectureCalendarEventDTO dto, boolean userIsStudent, Language language) {
+    private Set<CalendarEventDTO> deriveCalendarEventDTOs(LectureCalendarEventDTO dto, Language language) {
         ZonedDateTime startDate = dto.startDate();
         ZonedDateTime endDate = dto.endDate();
 

@@ -1,7 +1,8 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, flushMicrotasks } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 import { AttachmentVideoUnitFormComponent, AttachmentVideoUnitFormData } from 'app/lecture/manage/lecture-units/attachment-video-unit-form/attachment-video-unit-form.component';
+import { TranscriptionStatus } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import dayjs from 'dayjs/esm';
@@ -128,7 +129,7 @@ describe('AttachmentVideoUnitFormComponent', () => {
         attachmentVideoUnitFormComponentFixture.detectChanges();
 
         attachmentVideoUnitFormComponentFixture.componentRef.setInput('formData', formData);
-        attachmentVideoUnitFormComponent.ngOnChanges();
+        attachmentVideoUnitFormComponentFixture.detectChanges();
 
         expect(attachmentVideoUnitFormComponent.nameControl?.value).toEqual(formData.formProperties.name);
         expect(attachmentVideoUnitFormComponent.releaseDateControl?.value).toEqual(formData.formProperties.releaseDate);
@@ -137,6 +138,51 @@ describe('AttachmentVideoUnitFormComponent', () => {
         expect(attachmentVideoUnitFormComponent.updateNotificationTextControl?.value).toEqual(formData.formProperties.updateNotificationText);
         expect(attachmentVideoUnitFormComponent.fileName()).toEqual(formData.fileProperties.fileName);
         expect(attachmentVideoUnitFormComponent.file).toEqual(formData.fileProperties.file);
+    });
+
+    it('should clear transcription status when switching to a unit without transcription data', () => {
+        attachmentVideoUnitFormComponentFixture.componentRef.setInput('isEditMode', true);
+        attachmentVideoUnitFormComponentFixture.detectChanges();
+
+        const formDataWithStatus: AttachmentVideoUnitFormData = {
+            formProperties: {},
+            fileProperties: {},
+            transcriptionStatus: TranscriptionStatus.PENDING,
+        };
+        attachmentVideoUnitFormComponentFixture.componentRef.setInput('formData', formDataWithStatus);
+        attachmentVideoUnitFormComponentFixture.detectChanges();
+        expect(attachmentVideoUnitFormComponent.transcriptionStatus()).toBe(TranscriptionStatus.PENDING);
+
+        const formDataWithoutStatus: AttachmentVideoUnitFormData = {
+            formProperties: {},
+            fileProperties: {},
+        };
+        attachmentVideoUnitFormComponentFixture.componentRef.setInput('formData', formDataWithoutStatus);
+        attachmentVideoUnitFormComponentFixture.detectChanges();
+        expect(attachmentVideoUnitFormComponent.transcriptionStatus()).toBeUndefined();
+        expect(attachmentVideoUnitFormComponent.showTranscriptionPendingWarning()).toBeFalse();
+    });
+
+    it('should clear transcription status when leaving edit mode', () => {
+        attachmentVideoUnitFormComponentFixture.componentRef.setInput('isEditMode', true);
+        attachmentVideoUnitFormComponentFixture.detectChanges();
+
+        const formDataWithStatus: AttachmentVideoUnitFormData = {
+            formProperties: {},
+            fileProperties: {},
+            transcriptionStatus: TranscriptionStatus.PENDING,
+        };
+        attachmentVideoUnitFormComponentFixture.componentRef.setInput('formData', formDataWithStatus);
+        attachmentVideoUnitFormComponentFixture.detectChanges();
+
+        expect(attachmentVideoUnitFormComponent.transcriptionStatus()).toBe(TranscriptionStatus.PENDING);
+        expect(attachmentVideoUnitFormComponent.showTranscriptionPendingWarning()).toBeTrue();
+
+        attachmentVideoUnitFormComponentFixture.componentRef.setInput('isEditMode', false);
+        attachmentVideoUnitFormComponentFixture.detectChanges();
+
+        expect(attachmentVideoUnitFormComponent.transcriptionStatus()).toBeUndefined();
+        expect(attachmentVideoUnitFormComponent.showTranscriptionPendingWarning()).toBeFalse();
     });
     it('should submit valid form', () => {
         attachmentVideoUnitFormComponentFixture.detectChanges();
@@ -443,7 +489,7 @@ describe('AttachmentVideoUnitFormComponent', () => {
         const httpMock = TestBed.inject(HttpClient);
         const spy = jest.spyOn(httpMock, 'get').mockReturnValue(of('https://live.rbg.tum.de/playlist.m3u8'));
 
-        attachmentVideoUnitFormComponent.checkTumLivePlaylist(originalUrl);
+        attachmentVideoUnitFormComponent.checkPlaylistAvailability(originalUrl);
 
         expect(spy).toHaveBeenCalled();
         expect(attachmentVideoUnitFormComponent.canGenerateTranscript()).toBeTrue();
@@ -458,7 +504,7 @@ describe('AttachmentVideoUnitFormComponent', () => {
         const httpMock = TestBed.inject(HttpClient);
         const spy = jest.spyOn(httpMock, 'get').mockReturnValue(throwError(() => new Error('Not found')));
 
-        attachmentVideoUnitFormComponent.checkTumLivePlaylist(originalUrl);
+        attachmentVideoUnitFormComponent.checkPlaylistAvailability(originalUrl);
 
         expect(spy).toHaveBeenCalled();
         expect(attachmentVideoUnitFormComponent.canGenerateTranscript()).toBeFalse();
@@ -483,7 +529,7 @@ describe('AttachmentVideoUnitFormComponent', () => {
         const http = TestBed.inject(HttpClient);
         jest.spyOn(http, 'get').mockReturnValue(of('https://live.rbg.tum.de/playlist.m3u8'));
 
-        attachmentVideoUnitFormComponent.checkTumLivePlaylist(originalUrl);
+        attachmentVideoUnitFormComponent.checkPlaylistAvailability(originalUrl);
 
         expect(attachmentVideoUnitFormComponent.playlistUrl()).toContain('playlist.m3u8');
         expect(attachmentVideoUnitFormComponent.shouldShowTranscriptCheckbox()).toBeTrue();
@@ -496,7 +542,7 @@ describe('AttachmentVideoUnitFormComponent', () => {
         const http = TestBed.inject(HttpClient);
         jest.spyOn(http, 'get').mockReturnValue(throwError(() => new Error('Not found')));
 
-        attachmentVideoUnitFormComponent.checkTumLivePlaylist(originalUrl);
+        attachmentVideoUnitFormComponent.checkPlaylistAvailability(originalUrl);
 
         expect(attachmentVideoUnitFormComponent.playlistUrl()).toBeUndefined();
         expect(attachmentVideoUnitFormComponent.shouldShowTranscriptCheckbox()).toBeFalse();
@@ -550,7 +596,7 @@ describe('AttachmentVideoUnitFormComponent', () => {
 
         // spy extract + playlist check
         const extractSpy = jest.spyOn(attachmentVideoUnitFormComponent, 'extractEmbeddedUrl').mockReturnValue(embedded);
-        const checkSpy = jest.spyOn(attachmentVideoUnitFormComponent, 'checkTumLivePlaylist');
+        const checkSpy = jest.spyOn(attachmentVideoUnitFormComponent, 'checkPlaylistAvailability');
 
         attachmentVideoUnitFormComponentFixture.detectChanges();
         attachmentVideoUnitFormComponent.urlHelperControl!.setValue(original);
@@ -568,7 +614,7 @@ describe('AttachmentVideoUnitFormComponent', () => {
         checkSpy.mockRestore();
     });
 
-    it('checkTumLivePlaylist: non-TUM hosts disable transcript, clear playlist, and reset checkbox', () => {
+    it('checkTumLivePlaylist: non-TUM hosts disable transcript, clear playlist, and reset checkbox', fakeAsync(() => {
         attachmentVideoUnitFormComponentFixture.detectChanges();
         // Pre-set to ensure reset occurs
         attachmentVideoUnitFormComponent.canGenerateTranscript.set(true);
@@ -577,12 +623,20 @@ describe('AttachmentVideoUnitFormComponent', () => {
 
         // Non TUM-Live URL
         const nonTumUrl = 'https://example.com/video/123';
-        attachmentVideoUnitFormComponent.checkTumLivePlaylist(nonTumUrl);
+
+        // Mock the service to return null (no playlist found for non-TUM URLs)
+        const http = TestBed.inject(HttpClient);
+        jest.spyOn(http, 'get').mockReturnValue(of(null));
+
+        attachmentVideoUnitFormComponent.checkPlaylistAvailability(nonTumUrl);
+
+        // Wait for async operations to complete
+        flushMicrotasks();
 
         expect(attachmentVideoUnitFormComponent.canGenerateTranscript()).toBeFalse();
         expect(attachmentVideoUnitFormComponent.playlistUrl()).toBeUndefined();
         expect(attachmentVideoUnitFormComponent.form.get('generateTranscript')!.value).toBeFalse();
-    });
+    }));
 
     it('onFileChange: auto-fills name when empty and marks large files', () => {
         attachmentVideoUnitFormComponentFixture.detectChanges();
@@ -639,5 +693,56 @@ describe('AttachmentVideoUnitFormComponent', () => {
         expect(payload.playlistUrl).toBe(playlist);
 
         emitSpy.mockRestore();
+    });
+
+    it('should set playlist URL from formData in edit mode via effect', () => {
+        attachmentVideoUnitFormComponentFixture.componentRef.setInput('isEditMode', true);
+        attachmentVideoUnitFormComponentFixture.detectChanges();
+
+        const playlistUrl = 'https://live.rbg.tum.de/playlist.m3u8';
+        const formDataWithPlaylist: AttachmentVideoUnitFormData = {
+            formProperties: {
+                name: 'test',
+            },
+            fileProperties: {},
+            playlistUrl: playlistUrl,
+        };
+
+        attachmentVideoUnitFormComponentFixture.componentRef.setInput('formData', formDataWithPlaylist);
+        attachmentVideoUnitFormComponentFixture.detectChanges();
+
+        // Effect should have triggered and set the playlist URL
+        expect(attachmentVideoUnitFormComponent.playlistUrl()).toBe(playlistUrl);
+        expect(attachmentVideoUnitFormComponent.canGenerateTranscript()).toBeTrue();
+    });
+
+    it('should update playlist URL when formData changes in edit mode', () => {
+        attachmentVideoUnitFormComponentFixture.componentRef.setInput('isEditMode', true);
+        attachmentVideoUnitFormComponentFixture.detectChanges();
+
+        // Initial formData without playlist
+        const formDataWithoutPlaylist: AttachmentVideoUnitFormData = {
+            formProperties: {
+                name: 'test',
+            },
+            fileProperties: {},
+        };
+        attachmentVideoUnitFormComponentFixture.componentRef.setInput('formData', formDataWithoutPlaylist);
+        attachmentVideoUnitFormComponentFixture.detectChanges();
+
+        expect(attachmentVideoUnitFormComponent.playlistUrl()).toBeUndefined();
+
+        // Update formData with playlist URL
+        const playlistUrl = 'https://live.rbg.tum.de/playlist.m3u8';
+        const formDataWithPlaylist: AttachmentVideoUnitFormData = {
+            ...formDataWithoutPlaylist,
+            playlistUrl: playlistUrl,
+        };
+        attachmentVideoUnitFormComponentFixture.componentRef.setInput('formData', formDataWithPlaylist);
+        attachmentVideoUnitFormComponentFixture.detectChanges();
+
+        // Effect should have updated the playlist URL
+        expect(attachmentVideoUnitFormComponent.playlistUrl()).toBe(playlistUrl);
+        expect(attachmentVideoUnitFormComponent.canGenerateTranscript()).toBeTrue();
     });
 });

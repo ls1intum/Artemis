@@ -262,7 +262,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
     void createExampleTextAssessment() throws Exception {
         ExampleSubmission storedExampleSubmission = participationUtilService
                 .addExampleSubmission(participationUtilService.generateExampleSubmission("Text. Submission.", textExercise, true));
-        participationUtilService.addResultToSubmission(storedExampleSubmission.getSubmission(), AssessmentType.MANUAL);
+        participationUtilService.addResultToSubmission(storedExampleSubmission.getSubmission(), AssessmentType.MANUAL, textExercise.getId());
         final Result exampleResult = request.get(
                 "/api/text/exercises/" + textExercise.getId() + "/submissions/" + storedExampleSubmission.getSubmission().getId() + "/example-result", HttpStatus.OK, Result.class);
         final Set<TextBlock> blocks = ((TextSubmission) exampleResult.getSubmission()).getBlocks();
@@ -285,7 +285,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
     void createExampleTextAssessmentNotExistentId() throws Exception {
         ExampleSubmission storedExampleSubmission = participationUtilService
                 .addExampleSubmission(participationUtilService.generateExampleSubmission("Text. Submission.", textExercise, true));
-        participationUtilService.addResultToSubmission(storedExampleSubmission.getSubmission(), AssessmentType.MANUAL);
+        participationUtilService.addResultToSubmission(storedExampleSubmission.getSubmission(), AssessmentType.MANUAL, textExercise.getId());
         final Result exampleResult = request.get(
                 "/api/text/exercises/" + textExercise.getId() + "/submissions/" + storedExampleSubmission.getSubmission().getId() + "/example-result", HttpStatus.OK, Result.class);
         final Set<TextBlock> blocks = ((TextSubmission) exampleResult.getSubmission()).getBlocks();
@@ -304,7 +304,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
     void createExampleTextAssessment_wrongExerciseId() throws Exception {
         ExampleSubmission storedExampleSubmission = participationUtilService
                 .addExampleSubmission(participationUtilService.generateExampleSubmission("Text. Submission.", textExercise, true));
-        participationUtilService.addResultToSubmission(storedExampleSubmission.getSubmission(), AssessmentType.MANUAL);
+        participationUtilService.addResultToSubmission(storedExampleSubmission.getSubmission(), AssessmentType.MANUAL, textExercise.getId());
         final Result exampleResult = request.get(
                 "/api/text/exercises/" + textExercise.getId() + "/submissions/" + storedExampleSubmission.getSubmission().getId() + "/example-result", HttpStatus.OK, Result.class);
         final Set<TextBlock> blocks = ((TextSubmission) exampleResult.getSubmission()).getBlocks();
@@ -334,7 +334,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
         textBlock.setEndIndex(14);
         textExerciseUtilService.addAndSaveTextBlocksToTextSubmission(Set.of(textBlock), submission);
 
-        participationUtilService.addResultToSubmission(submission, AssessmentType.MANUAL);
+        participationUtilService.addResultToSubmission(submission, AssessmentType.MANUAL, textExercise.getId());
 
         // add one feedback for the created text block
         List<TextBlock> textBlocks = new ArrayList<>(submission.getBlocks());
@@ -362,7 +362,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
     void importExampleSubmissionWithModelingSubmission() throws Exception {
         ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(validModel, true);
         submission = modelingExerciseUtilService.addModelingSubmission(modelingExercise, submission, TEST_PREFIX + "student1");
-        participationUtilService.addResultToSubmission(submission, AssessmentType.MANUAL);
+        participationUtilService.addResultToSubmission(submission, AssessmentType.MANUAL, modelingExercise.getId());
 
         ExampleSubmission exampleSubmission = importExampleSubmission(modelingExercise.getId(), submission.getId(), HttpStatus.OK);
         assertThat(exampleSubmission.getId()).isNotNull();

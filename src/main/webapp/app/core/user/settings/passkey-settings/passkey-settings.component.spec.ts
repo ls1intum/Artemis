@@ -14,6 +14,8 @@ import { PasskeyDTO } from 'app/core/user/settings/passkey-settings/dto/passkey.
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
 import { TranslateService } from '@ngx-translate/core';
 import { firstValueFrom } from 'rxjs';
+import { Authority } from 'app/shared/constants/authority.constants';
+import { User } from 'app/core/user/user.model';
 
 describe('PasskeySettingsComponent', () => {
     let component: PasskeySettingsComponent;
@@ -29,6 +31,7 @@ describe('PasskeySettingsComponent', () => {
             label: 'Test Passkey',
             created: new Date().toISOString(),
             lastUsed: new Date().toISOString(),
+            isSuperAdminApproved: true,
         },
     ];
 
@@ -70,6 +73,36 @@ describe('PasskeySettingsComponent', () => {
         jest.spyOn(passkeySettingsApiService, 'getRegisteredPasskeys').mockResolvedValue(mockPasskeys);
         await component.updateRegisteredPasskeys();
         expect(component.registeredPasskeys()).toEqual(mockPasskeys);
+    });
+
+    it('should update userIdentity when no passkeys are registered', async () => {
+        // Set initial user identity
+        const initialUser: User = {
+            id: 1,
+            login: 'testuser',
+            authorities: [Authority.USER],
+            askToSetupPasskey: false,
+            internal: true,
+        };
+        accountService.userIdentity.set(initialUser);
+
+        // Mock getRegisteredPasskeys to return empty array
+        jest.spyOn(passkeySettingsApiService, 'getRegisteredPasskeys').mockResolvedValue([]);
+
+        await component.updateRegisteredPasskeys();
+
+        // Verify that registeredPasskeys is empty
+        expect(component.registeredPasskeys()).toEqual([]);
+
+        // Verify that userIdentity has been updated with askToSetupPasskey: true
+        const updatedUser = accountService.userIdentity();
+        expect(updatedUser).toEqual({
+            id: 1,
+            login: 'testuser',
+            authorities: [Authority.USER],
+            askToSetupPasskey: true,
+            internal: true,
+        });
     });
 
     it('should handle errors when adding a new passkey', async () => {
@@ -134,6 +167,7 @@ describe('PasskeySettingsComponent', () => {
             label: 'Test Passkey',
             created: '2023-10-01T12:00:00Z',
             lastUsed: '2023-10-02T12:00:00Z',
+            isSuperAdminApproved: true,
         };
 
         const result = component.getDeleteSummary(passkey);
@@ -156,11 +190,115 @@ describe('PasskeySettingsComponent', () => {
             isEditingLabel: true,
             created: new Date().toISOString(),
             lastUsed: new Date().toISOString(),
+            isSuperAdminApproved: true,
         };
 
         component.cancelEditPasskeyLabel(passkey);
 
         expect(passkey.isEditingLabel).toBeFalse();
         expect(passkey.label).toBe('Original Label');
+    });
+
+    it('should display editing label input field when isEditingLabel is true', async () => {
+        const passkey: DisplayedPasskey = {
+            credentialId: '123',
+            label: 'Test Passkey',
+            isEditingLabel: false,
+            created: new Date().toISOString(),
+            lastUsed: new Date().toISOString(),
+            isSuperAdminApproved: true,
+        };
+
+        component.registeredPasskeys.set([passkey]);
+
+        // Test with user (editing disabled)
+        const user: User = { id: 1, login: 'user', authorities: [Authority.USER], internal: true };
+        component.currentUser.set(user);
+        fixture.detectChanges();
+
+        let editingInput = fixture.nativeElement.querySelector('input[type="text"]');
+        expect(editingInput).toBeNull();
+
+        // Enable editing mode
+        passkey.isEditingLabel = true;
+        component.registeredPasskeys.set([passkey]);
+        fixture.detectChanges();
+
+        editingInput = fixture.nativeElement.querySelector('input[type="text"]');
+        expect(editingInput).not.toBeNull();
+    });
+
+    it('should display approved badge for admin when passkey is super admin approved', () => {
+        const approvedPasskey: DisplayedPasskey = {
+            credentialId: '123',
+            label: 'Approved Passkey',
+            isEditingLabel: false,
+            created: new Date().toISOString(),
+            lastUsed: new Date().toISOString(),
+            isSuperAdminApproved: true,
+        };
+
+        component.registeredPasskeys.set([approvedPasskey]);
+
+        // Set user as admin
+        const adminUser: User = { id: 1, login: 'admin', authorities: [Authority.ADMIN], internal: true };
+        component.currentUser.set(adminUser);
+        fixture.detectChanges();
+
+        // Check that badge exists
+        const badge = fixture.nativeElement.querySelector('p-badge');
+        expect(badge).not.toBeNull();
+
+        // Check badge has success class (PrimeNG badges use classes for severity)
+        const badgeElement = fixture.nativeElement.querySelector('.p-badge-success');
+        expect(badgeElement).not.toBeNull();
+    });
+
+    it('should display not approved badge for admin when passkey is not super admin approved', () => {
+        const notApprovedPasskey: DisplayedPasskey = {
+            credentialId: '456',
+            label: 'Not Approved Passkey',
+            isEditingLabel: false,
+            created: new Date().toISOString(),
+            lastUsed: new Date().toISOString(),
+            isSuperAdminApproved: false,
+        };
+
+        component.registeredPasskeys.set([notApprovedPasskey]);
+
+        // Set user as admin
+        const adminUser: User = { id: 1, login: 'admin', authorities: [Authority.ADMIN], internal: true };
+        component.currentUser.set(adminUser);
+        fixture.detectChanges();
+
+        // Check that badge exists
+        const badge = fixture.nativeElement.querySelector('p-badge');
+        expect(badge).not.toBeNull();
+
+        // Check badge has danger class (PrimeNG badges use classes for severity)
+        const badgeElement = fixture.nativeElement.querySelector('.p-badge-danger');
+        expect(badgeElement).not.toBeNull();
+    });
+
+    it('should not display badge for non-admin users', () => {
+        const passkey: DisplayedPasskey = {
+            credentialId: '789',
+            label: 'Regular User Passkey',
+            isEditingLabel: false,
+            created: new Date().toISOString(),
+            lastUsed: new Date().toISOString(),
+            isSuperAdminApproved: true,
+        };
+
+        component.registeredPasskeys.set([passkey]);
+
+        // Set user as regular user (not admin)
+        const regularUser: User = { id: 1, login: 'user', authorities: [Authority.USER], internal: true };
+        component.currentUser.set(regularUser);
+        fixture.detectChanges();
+
+        // Check that badge does not exist
+        const badge = fixture.nativeElement.querySelector('p-badge');
+        expect(badge).toBeNull();
     });
 });
