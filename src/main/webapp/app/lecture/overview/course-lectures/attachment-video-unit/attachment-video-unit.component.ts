@@ -1,11 +1,10 @@
-import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { LectureUnitDirective } from 'app/lecture/overview/course-lectures/lecture-unit/lecture-unit.directive';
-import { AttachmentVideoUnit, TranscriptionStatus } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
+import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { LectureUnitComponent } from 'app/lecture/overview/course-lectures/lecture-unit/lecture-unit.component';
 import urlParser from 'js-video-url-parser';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
-import { firstValueFrom } from 'rxjs';
 import { VideoPlayerComponent } from 'app/lecture/shared/video-player/video-player.component';
 import { LectureTranscriptionService } from 'app/lecture/manage/services/lecture-transcription.service';
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
@@ -34,8 +33,6 @@ import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
 import { FileService } from 'app/shared/service/file.service';
 import { ScienceService } from 'app/shared/science/science.service';
 import { ScienceEventType } from 'app/shared/science/science.model';
-import { AccountService } from 'app/core/auth/account.service';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranscriptSegment } from 'app/lecture/shared/models/transcript-segment.model';
 import { map } from 'rxjs/operators';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -44,11 +41,11 @@ import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-au
 
 @Component({
     selector: 'jhi-attachment-video-unit',
-    imports: [LectureUnitComponent, ArtemisDatePipe, TranslateDirective, SafeResourceUrlPipe, FaIconComponent, VideoPlayerComponent],
+    imports: [LectureUnitComponent, ArtemisDatePipe, TranslateDirective, SafeResourceUrlPipe, VideoPlayerComponent],
     templateUrl: './attachment-video-unit.component.html',
     styleUrl: './attachment-video-unit.component.scss',
 })
-export class AttachmentVideoUnitComponent extends LectureUnitDirective<AttachmentVideoUnit> implements OnInit {
+export class AttachmentVideoUnitComponent extends LectureUnitDirective<AttachmentVideoUnit> {
     protected readonly faDownload = faDownload;
     protected readonly faFileLines = faFileLines;
     protected readonly faSpinner = faSpinner;
@@ -179,7 +176,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
                 return;
             }
 
-            // Try to resolve a .m3u8 playlist URL through the backend API
+            // Try to resolve a .m3u8 playlist URL from the server
             this.attachmentVideoUnitService
                 .getPlaylistUrl(src)
                 .pipe(takeUntilDestroyed(this.destroyRef))

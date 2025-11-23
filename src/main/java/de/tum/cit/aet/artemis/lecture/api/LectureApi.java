@@ -46,6 +46,6 @@ public class LectureApi extends AbstractLectureApi {
     }
 
     public Set<CalendarEventDTO> getCalendarEventDTOsFromLectures(long courseId, boolean userIsStudent, Language language) {
-        return lectureService.getCalendarEventDTOsFromLectures(courseId, userIsStudent, language);
+        return lectureService.getCalendarEventDTOsFromLectures(courseId, language);
     }
 }

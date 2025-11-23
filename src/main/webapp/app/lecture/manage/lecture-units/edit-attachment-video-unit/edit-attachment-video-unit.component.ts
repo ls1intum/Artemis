@@ -87,6 +87,12 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
                         },
                         transcriptionStatus: transcriptionStatus,
                     };
+                    // Check if playlist URL is available for existing video to enable transcription generation
+                    this.attachmentVideoUnitService.fetchAndUpdatePlaylistUrl(this.attachmentVideoUnit.videoSource, this.formData).subscribe({
+                        next: (updatedFormData) => {
+                            this.formData = updatedFormData;
+                        },
+                    });
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });
@@ -96,7 +102,7 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
         const { description, name, releaseDate, updateNotificationText, videoSource, competencyLinks, generateTranscript } = attachmentVideoUnitFormData.formProperties;
         const { file, fileName } = attachmentVideoUnitFormData.fileProperties;
         const { videoTranscription } = attachmentVideoUnitFormData.transcriptionProperties || {};
-        const playlistUrl = attachmentVideoUnitFormData.playlistUrl;
+        const { playlistUrl } = attachmentVideoUnitFormData || {};
 
         // optional update notification text for students
         if (updateNotificationText) {

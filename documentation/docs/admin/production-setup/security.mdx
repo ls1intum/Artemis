@@ -1,0 +1,92 @@
+---
+id: security
+title: Security Configuration
+sidebar_label: Security
+---
+
+import Callout from "../../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
+
+# Security
+
+## Passwords
+
+Artemis uses configuration files that contain default passwords and secrets.
+These *must* be overridden in your own configuration or via environment variables.
+The [Spring Relaxed Binding documentation](https://github.com/spring-projects/spring-boot/wiki/Relaxed-Binding-2.0) shows how to translate YAML keys into the corresponding environment variable names.
+
+```yaml
+artemis:
+    user-management:
+        internal-admin:
+            username: "artemis-admin"
+            password: "artemis-admin"
+    version-control:
+        build-agent-git-username: "buildagent_user"
+        build-agent-git-password: "buildagent_password"
+jhipster:
+    security:
+        authentication:
+            jwt:
+                base64-secret: ""
+    registry:
+        password: "change-me"
+   ```
+
+<Callout variant={CalloutVariant.warning}>
+    Always replace default credentials before deploying. Failing to do so exposes your system to serious security risks.
+</Callout>
+
+<Callout variant={CalloutVariant.info}>
+    Always restrict read access to configuration files for the minimum required set of users (usually only the system user that runs the Artemis service) only.
+</Callout>
+
+
+## SSH Access
+
+To allow users to clone their programming exercises via SSH in the integrated code lifecycle setup, SSH must be configured correctly on the server.
+
+Follow the next steps to create and manage SSH key pairs, distribute them across multiple nodes via Ansible, configure the system to use these keys, and adapt Nginx to enable SSH routing.
+
+
+### Generate Key Pairs
+
+``` bash
+ssh-keygen -t rsa -b 4096 -f ~/artemis_ssh/id_rsa
+ssh-keygen -t ed25519 -f ~/artemis_ssh/id_ed25519
+```
+
+Make sure the keys have the standard name for the according key type. E.g. id_rsa for RSA.
+
+
+### Distribute Keys via Ansible
+
+You can use the example Ansible playbook below to distribute the keys to the Artemis host.
+In a multinode setup, ensure all nodes use the same SSH keys to ensure clients can communicate with all nodes.
+
+``` yaml
+- name: Distribute SSH keys
+  hosts: all
+  vars:
+    key_dir: "/path/to/keys"
+  tasks:
+    - name: Copy RSA key
+      copy:
+        src: "{{ key_dir }}/id_rsa"
+        dest: "~/.ssh/id_rsa"
+        mode: '0600'
+```
+
+
+### Enable SSH Routing via Nginx
+
+In a multi-node setup you might want to configure the Nginx proxy to also distribute SSH connections to different Artemis instances.
+
+``` nginx
+stream {
+  server {
+    listen 7921;
+    proxy_pass 127.0.0.1:7921;
+  }
+}
+```
