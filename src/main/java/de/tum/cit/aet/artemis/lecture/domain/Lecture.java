@@ -16,7 +16,6 @@ import jakarta.persistence.OrderBy;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
 import jakarta.validation.constraints.NotNull;
 
 import org.hibernate.Hibernate;
@@ -32,7 +31,11 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 
 /**
- * A Lecture.
+ * A Lecture can consist of multiple LectureUnits (e.g. Attachment, Text, Video, ExerciseUnit, etc.) that can be linked to competencies.
+ * Artemis supports automatic lecture transcription using Nebula for video lecture units and adds lecture content to Pyris for better AI assistance by Iris.
+ * Some features depend on the configuration, consult the documentation for details.
+ * See {@link de.tum.cit.aet.artemis.atlas.config.AtlasEnabled} and {@link de.tum.cit.aet.artemis.core.config.Constants} for more information.
+ * Tutorial lectures are a special type of lectures that are not shown in the main lecture list, but in the tutorial section.
  */
 @Entity
 @Table(name = "lecture")
@@ -65,6 +68,11 @@ public class Lecture extends DomainObject {
     @Column(name = "is_tutorial_lecture")
     private boolean isTutorialLecture;
 
+    /**
+     * @deprecated Use attachments in attachment units instead (as part of lecture units)
+     *             Attachment units have various advantages over direct attachments to lectures, e.g. Pyris ingestion, competencies, better slide support, etc.
+     */
+    @Deprecated
     @OneToMany(mappedBy = "lecture", cascade = CascadeType.REMOVE, orphanRemoval = true)
     @JsonIgnoreProperties(value = "lecture", allowSetters = true)
     private Set<Attachment> attachments = new HashSet<>();
@@ -93,12 +101,6 @@ public class Lecture extends DomainObject {
     @ManyToOne
     @JsonIgnoreProperties(value = { "lectures", "exercises", "posts" }, allowSetters = true)
     private Course course;
-
-    /**
-     * Used for receiving the value from client.
-     */
-    @Transient
-    private String channelNameTransient;
 
     public String getTitle() {
         return title;
@@ -148,15 +150,57 @@ public class Lecture extends DomainObject {
         this.visibleDate = visibleDate;
     }
 
+    /**
+     * check if students are allowed to see this lecture.
+     *
+     * @deprecated The visibleDate property of lectures is deprecated as it serves no practical purpose.
+     *             Lecture contents (such as units and attachments) now have their own release dates,
+     *             which control their visibility. There is no reason to hide when or if
+     *             a lecture itself will occur.
+     *
+     * @return true, if students are allowed to see this lecture, otherwise false
+     */
+    @Deprecated
+    public boolean isVisibleToStudents() {
+        if (visibleDate == null) {  // no visible date means the lecture is visible to students
+            return true;
+        }
+        return visibleDate.isBefore(ZonedDateTime.now());
+    }
+
+    @JsonProperty("isTutorialLecture")
+    public boolean isTutorialLecture() {
+        return isTutorialLecture;
+    }
+
+    public void setIsTutorialLecture(boolean isTutorialLecture) {
+        this.isTutorialLecture = isTutorialLecture;
+    }
+
+    /**
+     * @deprecated Use attachments in attachment units instead (as part of lecture units)
+     * @return the attachments
+     */
+    @Deprecated
     public Set<Attachment> getAttachments() {
         return attachments;
     }
 
+    /**
+     * @deprecated Use attachments in attachment units instead (as part of lecture units)
+     * @param attachment the attachment to add
+     */
+    @Deprecated
     public void addAttachments(Attachment attachment) {
         this.attachments.add(attachment);
         attachment.setLecture(this);
     }
 
+    /**
+     * @deprecated Use attachments in attachment units instead (as part of lecture units)
+     * @param attachments the attachments to set
+     */
+    @Deprecated
     public void setAttachments(Set<Attachment> attachments) {
         this.attachments = attachments;
     }
@@ -290,40 +334,5 @@ public class Lecture extends DomainObject {
         /* TODO: #11479 - remove visibleDate from the string representation OR leave as is */
         return "Lecture{" + "id=" + getId() + ", title='" + getTitle() + "'" + ", description='" + getDescription() + "'" + ", visibleDate='" + getVisibleDate() + "'"
                 + ", startDate='" + getStartDate() + "'" + ", endDate='" + getEndDate() + "'" + "}";
-    }
-
-    public String getChannelName() {
-        return channelNameTransient;
-    }
-
-    public void setChannelName(String channelNameTransient) {
-        this.channelNameTransient = channelNameTransient;
-    }
-
-    /**
-     * check if students are allowed to see this lecture.
-     *
-     * @deprecated The visibleDate property of lectures is deprecated as it serves no practical purpose.
-     *             Lecture contents (such as units and attachments) now have their own release dates,
-     *             which control their visibility. There is no reason to hide when or if
-     *             a lecture itself will occur.
-     *
-     * @return true, if students are allowed to see this lecture, otherwise false
-     */
-    @Deprecated
-    public boolean isVisibleToStudents() {
-        if (visibleDate == null) {  // no visible date means the lecture is visible to students
-            return true;
-        }
-        return visibleDate.isBefore(ZonedDateTime.now());
-    }
-
-    @JsonProperty("isTutorialLecture")
-    public boolean isTutorialLecture() {
-        return isTutorialLecture;
-    }
-
-    public void setIsTutorialLecture(boolean isTutorialLecture) {
-        this.isTutorialLecture = isTutorialLecture;
     }
 }
