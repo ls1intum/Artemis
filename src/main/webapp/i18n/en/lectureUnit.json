@@ -86,6 +86,11 @@
             "notReleasedTooltip": "Attachment only visible to teaching assistants and instructors. Release date:",
             "transcriptAvailable": "Transcription Possible",
             "transcriptionInvalidJson": "The transcription JSON is invalid and was ignored.",
+            "generateTranscription": "Generate transcription",
+            "transcriptionPossible": "Transcription Possible",
+            "transcriptionProcessing": "Transcription Processing",
+            "transcriptionFailed": "Transcription Failed",
+            "hasTranscription": "Transcription complete",
             "createAttachmentVideoUnits": {
                 "informativeText": {
                     "firstLine": "Artemis searches for the Outline (slide with title 'Outline' and bullet points with unit headings) to split the PDF into units.",
