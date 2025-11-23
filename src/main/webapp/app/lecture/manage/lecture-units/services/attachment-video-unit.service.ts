@@ -125,11 +125,11 @@ export class AttachmentVideoUnitService {
      * This is used for video platforms that require an API call to get the actual playable URL.
      *
      * @param pageUrl - The public page URL of the video
-     * @returns Observable<string | null> - The playlist URL if found, null otherwise
+     * @returns Observable<string | undefined> - The playlist URL if found, undefined otherwise
      */
-    getPlaylistUrl(pageUrl: string): Observable<string | null> {
+    getPlaylistUrl(pageUrl: string): Observable<string | undefined> {
         const params = new HttpParams().set('url', pageUrl);
-        return this.httpClient.get('/api/nebula/video-utils/tum-live-playlist', { params, responseType: 'text' }).pipe(catchError(() => of(null)));
+        return this.httpClient.get('/api/nebula/video-utils/tum-live-playlist', { params, responseType: 'text' }).pipe(catchError(() => of(undefined)));
     }
 
     /**

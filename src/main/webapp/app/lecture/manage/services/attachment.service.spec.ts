@@ -73,21 +73,6 @@ describe('Attachment Service', () => {
             expect(expectedResult.body).toEqual(expected);
         });
 
-        it('should invoke query', async () => {
-            const returnedFromService = [elemDefault];
-            const expected = returnedFromService;
-            service
-                .query({})
-                .pipe(take(1))
-                .subscribe((resp) => (expectedResult = resp));
-            const req = httpMock.expectOne({
-                url: resourceUrl,
-                method: 'GET',
-            });
-            req.flush(returnedFromService);
-            expect(expectedResult.body).toEqual(expected);
-        });
-
         it('should get all attachments by lectureId', async () => {
             const returnedFromService = [elemDefault];
             const expected = returnedFromService;

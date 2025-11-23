@@ -16,7 +16,7 @@ import { ExerciseFilterModalComponent } from 'app/shared/exercise-filter/exercis
 import { NgClass } from '@angular/common';
 import { SearchFilterComponent } from '../search-filter/search-filter.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from '../language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { SidebarAccordionComponent } from './sidebar-accordion/sidebar-accordion.component';
 import { SidebarCardDirective } from './directive/sidebar-card.directive';
 import { SearchFilterPipe } from 'app/shared/pipes/search-filter.pipe';
