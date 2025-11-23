@@ -236,7 +236,8 @@ public class ModelingExerciseResource {
             @RequestParam(value = "notificationText", required = false) String notificationText) {
         log.debug("REST request to update ModelingExercise : {}", updateModelingExerciseDTO);
 
-        final ModelingExercise originalExercise = modelingExerciseRepository.findWithEagerExampleSubmissionsAndCompetenciesByIdElseThrow(updateModelingExerciseDTO.id());
+        final ModelingExercise originalExercise = modelingExerciseRepository
+                .findByIdWithExampleSubmissionsResultsCompetenciesAndGradingCriteriaElseThrow(updateModelingExerciseDTO.id());
 
         // Check that the user is authorized to update the exercise
         var user = userRepository.getUserWithGroupsAndAuthorities();
@@ -458,7 +459,7 @@ public class ModelingExerciseResource {
             @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterGradingInstructionUpdate) {
         log.debug("REST request to re-evaluate ModelingExercise : {}", updateModelingExerciseDTO);
 
-        final ModelingExercise existingExercise = modelingExerciseRepository.findByIdWithExampleSubmissionsAndResultsElseThrow(exerciseId);
+        final ModelingExercise existingExercise = modelingExerciseRepository.findByIdWithExampleSubmissionsResultsCompetenciesAndGradingCriteriaElseThrow(exerciseId);
         authCheckService.checkGivenExerciseIdSameForExerciseRequestBodyIdElseThrow(exerciseId, updateModelingExerciseDTO.id());
 
         var user = userRepository.getUserWithGroupsAndAuthorities();
