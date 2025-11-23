@@ -15,7 +15,7 @@ import { parse } from 'papaparse';
 import { faArrowRight, faBan, faCheck, faCircleNotch, faSpinner, faUpload } from '@fortawesome/free-solid-svg-icons';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { AdminUserService } from 'app/core/user/shared/admin-user.service';
-import { TranslateDirective } from '../../language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { HelpIconComponent } from '../../components/help-icon/help-icon.component';
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';

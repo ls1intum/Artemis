@@ -1,6 +1,5 @@
 import { Component, OnInit, computed, inject, input, output, signal } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { Course } from 'app/core/course/shared/entities/course.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import dayjs from 'dayjs/esm';
@@ -28,7 +27,7 @@ const FOREVER = dayjs('9999-12-31');
 })
 export class PdfPreviewDateBoxComponent implements OnInit {
     // Inputs
-    course = input<Course>();
+    courseId = input<number>();
     selectedPages = input<OrderedPage[]>([]);
 
     // Signals
@@ -38,7 +37,7 @@ export class PdfPreviewDateBoxComponent implements OnInit {
     exercises = signal<Exercise[]>([]);
     categorizedExercises = signal<CategorizedExercise[]>([]);
     hideForever = signal<boolean>(false);
-    selectedExercise = signal<Exercise | null>(null);
+    selectedExercise = signal<Exercise | undefined>(undefined);
 
     // Outputs
     hiddenPagesOutput = output<HiddenPage[]>();
@@ -78,7 +77,7 @@ export class PdfPreviewDateBoxComponent implements OnInit {
         if (isChecked) {
             this.calendarSelected.set(false);
             this.exerciseSelected.set(false);
-            this.selectedExercise.set(null);
+            this.selectedExercise.set(undefined);
         }
     }
 
@@ -102,7 +101,7 @@ export class PdfPreviewDateBoxComponent implements OnInit {
      * Loads all exercises for the current course
      */
     private loadExercises(): void {
-        this.courseExerciseService.findAllExercisesWithDueDatesForCourse(this.course()!.id!).subscribe({
+        this.courseExerciseService.findAllExercisesWithDueDatesForCourse(this.courseId()!).subscribe({
             next: (response) => {
                 if (response.body) {
                     this.exercises.set(response.body);
@@ -161,11 +160,11 @@ export class PdfPreviewDateBoxComponent implements OnInit {
      * - If the "hide forever" option is enabled, returns a date representing the distant future.
      * - If the calendar is selected, returns the default date from the calendar.
      * - If an exercise is selected and it has a due date, returns the due date of the selected exercise.
-     * - Otherwise, returns null.
+     * - Otherwise, returns undefined.
      *
-     * @returns The selected date as a Dayjs object, or null if no valid selection is made.
+     * @returns The selected date as a Dayjs object, or undefined if no valid selection is made.
      */
-    getSelectedDate(): dayjs.Dayjs | null {
+    getSelectedDate(): dayjs.Dayjs | undefined {
         if (this.hideForever()) {
             return FOREVER;
         } else if (this.calendarSelected()) {
@@ -173,7 +172,7 @@ export class PdfPreviewDateBoxComponent implements OnInit {
         } else if (this.exerciseSelected() && this.selectedExercise()) {
             return this.selectedExercise()!.dueDate!;
         }
-        return null;
+        return undefined;
     }
 
     /**
@@ -193,7 +192,7 @@ export class PdfPreviewDateBoxComponent implements OnInit {
         const hiddenPages: HiddenPage[] = this.selectedPages().map((page) => ({
             slideId: page.slideId,
             date: selectedDate,
-            exerciseId: this.selectedExercise()?.id ?? null,
+            exerciseId: this.selectedExercise()?.id ?? undefined,
         }));
 
         this.hiddenPagesOutput.emit(hiddenPages);

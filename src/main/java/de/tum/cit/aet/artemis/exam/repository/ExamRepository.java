@@ -528,4 +528,20 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
             WHERE exam.course.id = :courseId
             """)
     Set<Long> findExamIdsByCourseId(@Param("courseId") long courseId);
+
+    @Query("""
+            SELECT DISTINCT ex.id
+            FROM Exam exam
+                JOIN exam.exerciseGroups eg
+                JOIN eg.exercises ex
+            WHERE exam.id = :examId
+            """)
+    Set<Long> findExerciseIdsByExamId(@Param("examId") Long examId);
+
+    @Query("""
+            SELECT ex.numberOfCorrectionRoundsInExam
+            FROM Exam ex
+            WHERE ex.id = :examId
+            """)
+    int findNumberOfCorrectionRoundsByExamId(@Param("examId") Long examId);
 }

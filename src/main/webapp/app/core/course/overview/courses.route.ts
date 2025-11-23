@@ -26,7 +26,7 @@ export enum CourseOverviewRoutePath {
     CALENDAR = 'calendar',
 }
 
-export const routes: Routes = [
+export const courseRoutes: Routes = [
     {
         path: '',
         loadComponent: () => import('app/core/course/overview/courses/courses.component').then((m) => m.CoursesComponent),
@@ -128,7 +128,7 @@ export const routes: Routes = [
                 data: {
                     authorities: [Authority.USER],
                 },
-                loadChildren: () => import('app/programming/overview/programming-repository.route').then((m) => m.routes),
+                loadChildren: () => import('app/programming/overview/programming-repository.route').then((m) => m.programmingRepositoryRoutes),
             },
             {
                 path: 'exercises/modeling-exercises/:exerciseId',
@@ -273,6 +273,17 @@ export const routes: Routes = [
                 },
                 canActivate: [UserRouteAccessService, CourseOverviewGuard],
                 children: [
+                    {
+                        path: 'tutorial-lectures/:lectureId',
+                        data: {
+                            authorities: [Authority.USER],
+                            pageTitle: 'overview.lectures',
+                            hasSidebar: true,
+                            showRefreshButton: true,
+                        },
+                        canActivate: [UserRouteAccessService],
+                        loadComponent: () => import('app/lecture/overview/course-lectures/details/course-lecture-details.component').then((m) => m.CourseLectureDetailsComponent),
+                    },
                     {
                         path: ':tutorialGroupId',
                         loadComponent: () =>
