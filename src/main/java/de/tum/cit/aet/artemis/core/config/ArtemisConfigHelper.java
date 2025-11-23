@@ -106,6 +106,16 @@ public class ArtemisConfigHelper {
         return getPropertyOrExitArtemis(NEBULA_ENABLED_PROPERTY_NAME, environment);
     }
 
+    /**
+     * Check if the video upload feature for lecture units is enabled.
+     *
+     * @param environment the Spring environment
+     * @return true if video upload is enabled, false otherwise
+     */
+    public boolean isVideoUploadEnabled(Environment environment) {
+        return getPropertyOrExitArtemis(Constants.VIDEO_UPLOAD_ENABLED_PROPERTY_NAME, environment);
+    }
+
     private boolean getPropertyOrExitArtemis(String key, Environment environment) {
         Boolean value = environment.getProperty(key, Boolean.class);
         if (value == null) {

@@ -72,6 +72,9 @@ public class ModuleFeatureInfoContributor implements InfoContributor {
         if (artemisConfigHelper.isNebulaEnabled(environment)) {
             enabledArtemisFeatures.add(Constants.MODULE_FEATURE_NEBULA);
         }
+        if (artemisConfigHelper.isVideoUploadEnabled(environment)) {
+            enabledArtemisFeatures.add(Constants.MODULE_FEATURE_VIDEO_UPLOAD);
+        }
         builder.withDetail(ACTIVE_MODULE_FEATURES, enabledArtemisFeatures);
     }
 }

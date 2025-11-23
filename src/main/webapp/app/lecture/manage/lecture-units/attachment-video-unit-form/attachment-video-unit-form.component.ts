@@ -16,6 +16,8 @@ import { CompetencySelectionComponent } from 'app/atlas/shared/competency-select
 import { AccountService } from 'app/core/auth/account.service';
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
 import { TranscriptionStatus } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MODULE_FEATURE_VIDEO_UPLOAD } from 'app/app.constants';
 
 export interface AttachmentVideoUnitFormData {
     formProperties: FormProperties;
@@ -158,8 +160,10 @@ export class AttachmentVideoUnitFormComponent {
 
     private readonly formBuilder = inject(FormBuilder);
     private readonly accountService = inject(AccountService);
+    private readonly profileService = inject(ProfileService);
 
     readonly shouldShowTranscriptionCreation = computed(() => this.accountService.isAdmin());
+    readonly isVideoUploadEnabled = computed(() => this.profileService.isModuleFeatureActive(MODULE_FEATURE_VIDEO_UPLOAD));
 
     constructor() {
         effect(() => {
@@ -235,8 +239,28 @@ export class AttachmentVideoUnitFormComponent {
     });
 
     isFormValid = computed(() => {
-        return this.statusChanges() === 'VALID' && !this.isFileTooBig() && this.datePickerComponent()?.isValid() && (!!this.fileName() || !!this.videoSourceSignal());
+        const hasValidFile = !!this.fileName();
+        const hasVideoSource = !!this.videoSourceSignal();
+
+        // If video upload is disabled and user tries to upload a video file, form is invalid
+        if (hasValidFile && this.isVideoFile(this.file) && !this.isVideoUploadEnabled()) {
+            return false;
+        }
+
+        return this.statusChanges() === 'VALID' && !this.isFileTooBig() && this.datePickerComponent()?.isValid() && (hasValidFile || hasVideoSource);
     });
+
+    /**
+     * Checks if a file is a video file based on its extension
+     */
+    private isVideoFile(file: File | undefined): boolean {
+        if (!file || !file.name) {
+            return false;
+        }
+        const extension = file.name.split('.').pop()?.toLowerCase();
+        const videoExtensions = ['mp4', 'webm', 'ogg', 'mov', 'avi', 'mkv', 'flv', 'wmv', 'm4v'];
+        return videoExtensions.includes(extension || '');
+    }
 
     onFileChange(event: Event): void {
         const input = event.target as HTMLInputElement;

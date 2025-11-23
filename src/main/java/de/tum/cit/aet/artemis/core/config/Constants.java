@@ -433,6 +433,11 @@ public final class Constants {
     public static final String MODULE_FEATURE_NEBULA = "nebula";
 
     /**
+     * The name of the module feature used for video upload functionality.
+     */
+    public static final String MODULE_FEATURE_VIDEO_UPLOAD = "videoUpload";
+
+    /**
      * The name of the property used to enable or disable Atlas functionality.
      */
     public static final String ATLAS_ENABLED_PROPERTY_NAME = "artemis.atlas.enabled";
@@ -481,6 +486,11 @@ public final class Constants {
      * The name of the property used to enable or disable nebula functionalities.
      */
     public static final String NEBULA_ENABLED_PROPERTY_NAME = "artemis.nebula.enabled";
+
+    /**
+     * The name of the property used to enable or disable video upload functionality for lecture units.
+     */
+    public static final String VIDEO_UPLOAD_ENABLED_PROPERTY_NAME = "artemis.lecture.video-upload.enabled";
 
     /**
      * The name of the property used to define the directories for file uploads.

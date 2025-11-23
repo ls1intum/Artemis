@@ -745,4 +745,91 @@ describe('AttachmentVideoUnitFormComponent', () => {
         expect(attachmentVideoUnitFormComponent.playlistUrl()).toBe(playlistUrl);
         expect(attachmentVideoUnitFormComponent.canGenerateTranscript()).toBeTrue();
     });
+
+    describe('Video Upload Feature Flag', () => {
+        it('should detect video file correctly', () => {
+            const videoFile = new File(['test'], 'test-video.mp4', { type: 'video/mp4' });
+            attachmentVideoUnitFormComponent.file = videoFile;
+
+            const isVideo = attachmentVideoUnitFormComponent['isVideoFile'](videoFile);
+            expect(isVideo).toBeTrue();
+        });
+
+        it('should not detect non-video file as video', () => {
+            const pdfFile = new File(['test'], 'test.pdf', { type: 'application/pdf' });
+            attachmentVideoUnitFormComponent.file = pdfFile;
+
+            const isVideo = attachmentVideoUnitFormComponent['isVideoFile'](pdfFile);
+            expect(isVideo).toBeFalse();
+        });
+
+        it('should invalidate form when video upload is disabled and video file is selected', () => {
+            // Mock ProfileService to return false for video upload
+            const profileService = TestBed.inject(ProfileService);
+            jest.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(false);
+
+            // Create a new component instance to pick up the mock
+            attachmentVideoUnitFormComponentFixture = TestBed.createComponent(AttachmentVideoUnitFormComponent);
+            attachmentVideoUnitFormComponent = attachmentVideoUnitFormComponentFixture.componentInstance;
+            attachmentVideoUnitFormComponentFixture.detectChanges();
+
+            // Set a video file
+            const videoFile = new File(['test'], 'test-video.mp4', { type: 'video/mp4' });
+            attachmentVideoUnitFormComponent.file = videoFile;
+            attachmentVideoUnitFormComponent.fileName.set('test-video.mp4');
+
+            // Form should be invalid
+            expect(attachmentVideoUnitFormComponent.isFormValid()).toBeFalse();
+        });
+
+        it('should allow PDF upload when video upload is disabled', () => {
+            // Mock ProfileService to return false for video upload
+            const profileService = TestBed.inject(ProfileService);
+            jest.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(false);
+
+            // Create a new component instance
+            attachmentVideoUnitFormComponentFixture = TestBed.createComponent(AttachmentVideoUnitFormComponent);
+            attachmentVideoUnitFormComponent = attachmentVideoUnitFormComponentFixture.componentInstance;
+            attachmentVideoUnitFormComponentFixture.detectChanges();
+
+            // Set a PDF file
+            const pdfFile = new File(['test'], 'test.pdf', { type: 'application/pdf' });
+            attachmentVideoUnitFormComponent.file = pdfFile;
+            attachmentVideoUnitFormComponent.fileName.set('test.pdf');
+            attachmentVideoUnitFormComponent.form.patchValue({ name: 'Test Unit' });
+
+            // Form should be valid (assuming other validations pass)
+            expect(attachmentVideoUnitFormComponent.isFormValid()).toBeTrue();
+        });
+
+        it('should allow video upload when feature is enabled', () => {
+            // Mock ProfileService to return true for video upload
+            const profileService = TestBed.inject(ProfileService);
+            jest.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
+
+            // Create a new component instance
+            attachmentVideoUnitFormComponentFixture = TestBed.createComponent(AttachmentVideoUnitFormComponent);
+            attachmentVideoUnitFormComponent = attachmentVideoUnitFormComponentFixture.componentInstance;
+            attachmentVideoUnitFormComponentFixture.detectChanges();
+
+            // Set a video file
+            const videoFile = new File(['test'], 'test-video.mp4', { type: 'video/mp4' });
+            attachmentVideoUnitFormComponent.file = videoFile;
+            attachmentVideoUnitFormComponent.fileName.set('test-video.mp4');
+            attachmentVideoUnitFormComponent.form.patchValue({ name: 'Test Video Unit' });
+
+            // Form should be valid
+            expect(attachmentVideoUnitFormComponent.isFormValid()).toBeTrue();
+        });
+
+        it('should detect various video file formats', () => {
+            const videoFormats = ['mp4', 'webm', 'ogg', 'mov', 'avi', 'mkv', 'flv', 'wmv', 'm4v'];
+
+            videoFormats.forEach((format) => {
+                const videoFile = new File(['test'], `test-video.${format}`, { type: `video/${format}` });
+                const isVideo = attachmentVideoUnitFormComponent['isVideoFile'](videoFile);
+                expect(isVideo).toBeTrue();
+            });
+        });
+    });
 });

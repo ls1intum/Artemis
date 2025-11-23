@@ -39,10 +39,17 @@
                 }
             </div>
             <div class="form-group">
-                <label>{{ 'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.file' | artemisTranslate }}</label>
+                <label>{{
+                    (isVideoUploadEnabled()
+                        ? 'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.fileWithVideo'
+                        : 'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.file'
+                    ) | artemisTranslate
+                }}</label>
                 <small id="fileHelp" class="form-text text-body-secondary">
                     <span jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.fileLimitation"></span>
-                    <span class="text-primary ms-1" jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.videoSupported"></span>
+                    @if (isVideoUploadEnabled()) {
+                        <span class="text-primary ms-1" jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.videoSupported"></span>
+                    }
                 </small>
                 <fa-icon
                     [icon]="faQuestionCircle"

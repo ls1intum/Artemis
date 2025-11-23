@@ -68,10 +68,22 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     readonly videoUrl = computed(() => this.computeVideoUrl());
 
     /**
-     * Computes the video URL based on the video source.
-     * Returns undefined if the source is invalid or doesn't match the allow list.
+     * Computes the video URL based on the video source or uploaded video file.
+     * Returns undefined if neither a valid source nor an uploaded video file exists.
      */
     private computeVideoUrl(): string | undefined {
+        // First, check if there's an uploaded video file
+        const attachment = this.lectureUnit().attachment;
+        if (attachment?.link) {
+            const fileExtension = attachment.link.split('.').pop()?.toLowerCase();
+            const videoExtensions = ['mp4', 'webm', 'ogg', 'mov', 'avi', 'mkv', 'flv', 'wmv', 'm4v'];
+            if (videoExtensions.includes(fileExtension || '')) {
+                // Return the attachment link as a playable URL
+                return addPublicFilePrefix(attachment.link);
+            }
+        }
+
+        // If no uploaded video file, check for embedded video source
         const source = this.lectureUnit().videoSource;
         if (!source) {
             return undefined;
@@ -203,10 +215,24 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     }
 
     /**
+     * Checks if the current video is an uploaded video file (not an embedded URL)
+     */
+    isUploadedVideoFile(): boolean {
+        const attachment = this.lectureUnit().attachment;
+        if (!attachment?.link) {
+            return false;
+        }
+        const fileExtension = attachment.link.split('.').pop()?.toLowerCase();
+        const videoExtensions = ['mp4', 'webm', 'ogg', 'mov', 'avi', 'mkv', 'flv', 'wmv', 'm4v'];
+        return videoExtensions.includes(fileExtension || '');
+    }
+
+    /**
      * Returns the matching icon for the file extension of the attachment
      */
     getAttachmentIcon(): IconDefinition {
-        if (this.hasVideo()) {
+        // Show video icon if there's an embedded video source OR an uploaded video file
+        if (this.hasVideo() || this.isUploadedVideoFile()) {
             return faFileVideo;
         }
 
