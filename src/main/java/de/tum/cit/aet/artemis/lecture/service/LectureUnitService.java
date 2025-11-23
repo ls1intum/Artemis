@@ -328,7 +328,7 @@ public class LectureUnitService {
                 }
                 else {
                     // no existing link → create a new one
-                    var competency = competencyRepositoryApi.get().findByIdElseThrow(competencyId);
+                    var competency = competencyRepositoryApi.get().findCompetencyOrPrerequisiteByIdElseThrow(competencyId);
                     var newLink = new CompetencyLectureUnitLink(competency, existingLectureUnit, weight);
 
                     updatedLinks.add(newLink);

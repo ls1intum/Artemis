@@ -7,6 +7,7 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -49,9 +50,9 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
 
     @Query("""
             SELECT r
-                FROM Result r
-                    LEFT JOIN FETCH r.assessor
-                WHERE r.id = :resultId
+            FROM Result r
+                LEFT JOIN FETCH r.assessor
+            WHERE r.id = :resultId
             """)
     Optional<Result> findByIdWithEagerAssessor(@Param("resultId") long resultId);
 
@@ -341,17 +342,17 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     List<Long> countNumberOfLockedAssessmentsByOtherTutorsForExamExerciseForCorrectionRoundsIgnoreTestRuns(@Param("exerciseId") long exerciseId, @Param("tutorId") long tutorId);
 
     /**
-     * count the number of finished assessments of an exam with given examId
+     * count the number of finished assessments of an exam with given exerciseIds
      *
-     * @param examId id of the exam
-     * @return a list that contains the count of manual assessments for each studentParticipation of the exam
+     * @param exerciseIds ids of the exercises
+     * @return a list that contains the count of manual assessments for each studentParticipation of the exercise ids
      */
     @Query("""
             SELECT COUNT(r.id)
             FROM StudentParticipation p
                 JOIN p.submissions s
                 JOIN s.results r
-            WHERE p.exercise.exerciseGroup.exam.id = :examId
+            WHERE p.exercise.id IN :exerciseIds
                 AND p.testRun = FALSE
                 AND s.submitted = TRUE
                 AND r.completionDate IS NOT NULL
@@ -359,7 +360,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                 AND r.assessor IS NOT NULL
             GROUP BY p.id
             """)
-    List<Long> countNumberOfFinishedAssessmentsByExamIdIgnoreTestRuns(@Param("examId") long examId);
+    List<Long> countNumberOfFinishedAssessmentsByExerciseIdsIgnoreTestRuns(@Param("exerciseIds") Collection<Long> exerciseIds);
 
     @Query("""
             SELECT COUNT(DISTINCT p)
@@ -518,15 +519,15 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
      * Use this method only for exams!
      * Given an exerciseId and the number of correctionRounds, return the number of assessments that have been finished, for that exerciseId and each correctionRound
      *
-     * @param examId                   - the id of the exam we are interested in
+     * @param exerciseIds              - the exercise ids of the exam we are interested in
      * @param numberOfCorrectionRounds - the correction round we want finished assessments for
      * @return an array of the number of assessments for the exercise for a given correction round
      */
-    default DueDateStat[] countNumberOfFinishedAssessmentsForExamForCorrectionRounds(long examId, int numberOfCorrectionRounds) {
+    default DueDateStat[] countNumberOfFinishedAssessmentsForExamForCorrectionRounds(Collection<Long> exerciseIds, int numberOfCorrectionRounds) {
 
         // here we receive a list which contains an entry for each student participation of the exam.
         // the entry simply is the number of already created and submitted manual results, so the number is either 1 or 2
-        List<Long> countList = countNumberOfFinishedAssessmentsByExamIdIgnoreTestRuns(examId);
+        List<Long> countList = countNumberOfFinishedAssessmentsByExerciseIdsIgnoreTestRuns(exerciseIds);
         return convertDatabaseResponseToDueDateStats(countList, numberOfCorrectionRounds);
     }
 
@@ -646,15 +647,13 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                 JOIN r.submission s
                 JOIN s.participation p
                 JOIN p.exercise e
-                JOIN e.exerciseGroup eg
-                JOIN eg.exam ex
                 JOIN r.assessor a
                 LEFT JOIN FETCH Rating rating ON rating.result = r
             WHERE r.completionDate IS NOT NULL
-                AND ex.id = :examId
+                AND e.id IN :exerciseIds
             GROUP BY r.assessor.id
             """)
-    List<TutorLeaderboardAssessmentsDTO> findTutorLeaderboardAssessmentByExamId(@Param("examId") long examId);
+    List<TutorLeaderboardAssessmentsDTO> findTutorLeaderboardAssessmentByExerciseIds(@Param("exerciseIds") Collection<Long> exerciseIds);
 
     /**
      * This function is used for submitting a manual assessment/result.
