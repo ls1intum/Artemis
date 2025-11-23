@@ -170,8 +170,7 @@
             "loginRequiredButFeatureNotEnabled": "Für diese Funktion ist ein Passkey-Login erforderlich. Allerdings ist die Passkey-Authentifizierung auf dieser Artemis-Instanz nicht aktiviert. Bitte aktiviere die Passkey-Authentifizierung auf dieser Artemis Instanz."
         },
         "CourseCompetency": {
-            "wrongCourse": "Die Kompetenz gehört nicht zum Kurs der Übung.",
-            "courseNotFound": "Die Kompetenz gehört zu keinem Kurs."
+            "wrongCourse": "Die Kompetenz gehört nicht zum Kurs der Übung."
         }
     }
 }

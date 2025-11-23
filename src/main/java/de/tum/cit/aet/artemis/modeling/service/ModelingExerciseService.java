@@ -70,8 +70,10 @@ public class ModelingExerciseService {
     /**
      * Applies new updateModelingExerciseDTO's data to the given exercise, mutating it in place.
      *
-     * @param exercise the exercise to update (will be mutated)
-     * @return the same exercise instance after applying updates
+     * @param updateModelingExerciseDTO the DTO containing the updated state for the exercise
+     * @param exercise                  the exercise to update (will be mutated)
+     * @return the same {@link ModelingExercise} instance after applying the updates
+     * @throws BadRequestAlertException if a competency from the DTO does not belong to the exercise's course or otherwise violates the domain constraints
      */
     public ModelingExercise updateModelingExercise(UpdateModelingExerciseDTO updateModelingExerciseDTO, ModelingExercise exercise) {
         if (updateModelingExerciseDTO.title() != null) {
