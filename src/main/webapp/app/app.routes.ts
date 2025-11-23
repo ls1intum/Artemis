@@ -1,8 +1,9 @@
 import { Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
-import { Authority } from 'app/shared/constants/authority.constants';
+import { Authority, IS_AT_LEAST_ADMIN, IS_AT_LEAST_EDITOR } from 'app/shared/constants/authority.constants';
 import { navbarRoute } from 'app/core/navbar/navbar.route';
 import { errorRoute } from 'app/core/layouts/error/error.route';
+import { PasskeyAuthenticationGuard } from 'app/core/auth/passkey-authentication-guard/passkey-authentication.guard';
 
 const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
 
@@ -16,6 +17,14 @@ const routes: Routes = [
         },
     },
     {
+        path: 'passkey-required',
+        loadComponent: () => import('app/core/auth/passkey-authentication-page/passkey-authentication-page.component').then((m) => m.PasskeyAuthenticationPageComponent),
+        data: {
+            pageTitle: 'global.menu.admin.passkey-required',
+            usesModuleBackground: false,
+        },
+    },
+    {
         path: '',
         loadChildren: () => import('app/core/user/settings/user-settings.route').then((m) => m.routes),
         data: {
@@ -25,10 +34,10 @@ const routes: Routes = [
     {
         path: 'admin',
         data: {
-            authorities: [Authority.ADMIN],
+            authorities: IS_AT_LEAST_ADMIN,
             usesModuleBackground: true,
         },
-        canActivate: [UserRouteAccessService],
+        canActivate: [UserRouteAccessService, PasskeyAuthenticationGuard],
         loadChildren: () => import('app/core/admin/admin.routes'),
     },
     {
@@ -228,7 +237,7 @@ const routes: Routes = [
     {
         path: 'sharing/import/:basketToken',
         data: {
-            authorities: [Authority.EDITOR, Authority.ADMIN, Authority.INSTRUCTOR],
+            authorities: IS_AT_LEAST_EDITOR,
             pageTitle: 'artemisApp.sharing.title',
         },
         loadComponent: () => import('./sharing/sharing.component').then((m) => m.SharingComponent),

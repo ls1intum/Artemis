@@ -119,10 +119,21 @@
             },
             "admin": {
                 "main": "Server Administration",
+                "loginWithPasskeyToUseAdminFeatures": "Sign in with a passkey to use admin features",
+                "setupPasskey": "Setup passkey",
+                "passkeyRestrictionExplanation": "To protect student data and ensure platform reliability, administrator actions require strong authentication with a passkey.",
+                "passkeyNotYetApproved": "Your passkey was not yet super administrator approved on your last passkey login attempt.",
+                "usedPasskeyIsNotSuperAdminApproved": "The passkey that you have used for login is not yet super administrator approved. Please login with an approved passkey.",
+                "passkeyApprovalInstructions": {
+                    "start": "Please verify in your ",
+                    "link": "user settings",
+                    "end": " whether the passkey has been approved. If the passkey is approved, please log in again with your passkey."
+                },
                 "upcomingExamsAndExercises": "Upcoming exams & exercises",
                 "userManagement": "User management",
                 "organizationManagement": "Organization management",
                 "systemNotifications": "System notifications",
+                "passkey-required": "Passkey required",
                 "featureToggles": "Feature Toggles",
                 "statistics": "User statistics",
                 "metrics": "Metrics",
