@@ -7,7 +7,7 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { faBan, faCheck, faSpinner, faTimes, faTrash, faUndo } from '@fortawesome/free-solid-svg-icons';
 import { ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { FormsModule, NgForm } from '@angular/forms';
-import { TranslateDirective } from '../../language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ConfirmEntityNameComponent } from '../../confirm-entity-name/confirm-entity-name.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgClass } from '@angular/common';

@@ -44,10 +44,11 @@ class SlideServiceTest extends AbstractSpringIntegrationIndependentTest {
     @BeforeEach
     void initTestCase() {
         // Create a test exercise
-        testCourse = courseUtilService.addEmptyCourse();
+        var lecture = lectureUtilService.createCourseWithLecture(true);
+        testCourse = lecture.getCourse();
         testExercise = TextExerciseFactory.generateTextExercise(ZonedDateTime.now(), ZonedDateTime.now().plusDays(7), ZonedDateTime.now().plusDays(8), testCourse);
 
-        AttachmentVideoUnit testAttachmentVideoUnit = lectureUtilService.createAttachmentVideoUnitWithSlidesAndFile(5, true);
+        AttachmentVideoUnit testAttachmentVideoUnit = lectureUtilService.createAttachmentVideoUnitWithSlidesAndFile(lecture, 5, true);
         List<Slide> testSlides = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
         testSlides.getFirst().setHidden(testExercise.getDueDate());
         slideRepository.save(testSlides.getFirst());

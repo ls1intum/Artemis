@@ -90,6 +90,9 @@ public class PasskeyCredential extends AbstractAuditingEntity {
     @Column(name = "last_used")
     private Instant lastUsed;
 
+    @Column(name = "is_approved")
+    private boolean isSuperAdminApproved;
+
     public User getUser() {
         return user;
     }
@@ -186,6 +189,14 @@ public class PasskeyCredential extends AbstractAuditingEntity {
         this.lastUsed = lastUsed;
     }
 
+    public boolean isSuperAdminApproved() {
+        return isSuperAdminApproved;
+    }
+
+    public void setSuperAdminApproved(boolean isSuperAdminApproved) {
+        this.isSuperAdminApproved = isSuperAdminApproved;
+    }
+
     /**
      * Converts the current {@link PasskeyCredential} entity into a {@link CredentialRecord} object.
      * <p>
@@ -225,6 +236,6 @@ public class PasskeyCredential extends AbstractAuditingEntity {
      * @return A {@link PasskeyDTO} object.
      */
     public PasskeyDTO toDto() {
-        return new PasskeyDTO(credentialId, label, getCreatedDate(), lastUsed);
+        return new PasskeyDTO(credentialId, label, getCreatedDate(), lastUsed, isSuperAdminApproved);
     }
 }

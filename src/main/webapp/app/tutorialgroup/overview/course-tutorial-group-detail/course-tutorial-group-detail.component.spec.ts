@@ -8,19 +8,19 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { MockDirective, MockService } from 'ng-mocks';
 import { OneToOneChatService } from 'app/communication/conversations/service/one-to-one-chat.service';
 import { AlertService } from 'app/shared/service/alert.service';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { RawTutorialGroupDetailGroupDTO, TutorialGroupDetailGroupDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { RawTutorialGroupDetailSessionDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import * as CourseModel from 'app/core/course/shared/entities/course.model';
-
 import { By } from '@angular/platform-browser';
 import dayjs from 'dayjs/esm';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { ScaleType } from '@swimlane/ngx-charts';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { User } from 'app/core/user/user.model';
+import { LectureService } from 'app/lecture/manage/services/lecture.service';
 
-describe('NewTutorialGroupDetail', () => {
+describe('CourseTutorialGroupDetailComponent', () => {
     let component: CourseTutorialGroupDetailComponent;
     let fixture: ComponentFixture<CourseTutorialGroupDetailComponent>;
 
@@ -37,10 +37,15 @@ describe('NewTutorialGroupDetail', () => {
                 { provide: AccountService, useValue: mockAccountService },
                 { provide: OneToOneChatService, useValue: MockService(OneToOneChatService) },
                 { provide: AlertService, useValue: MockService(AlertService) },
+                { provide: LectureService, useValue: MockService(LectureService) },
                 { provide: Router, useValue: MockService(Router) },
+                { provide: ActivatedRoute, useValue: MockService(ActivatedRoute) },
             ],
             declarations: [MockDirective(TranslateDirective), MockDirective(RouterLink)],
         }).compileComponents();
+
+        const lectureService = TestBed.inject(LectureService);
+        lectureService.currentTutorialLectureId = 3;
 
         fixture = TestBed.createComponent(CourseTutorialGroupDetailComponent);
         component = fixture.componentInstance;
@@ -50,7 +55,6 @@ describe('NewTutorialGroupDetail', () => {
         fixture.componentRef.setInput('course', { id: 1 } as Course);
     });
 
-    // at top of the test file
     beforeAll(() => {
         process.env.TZ = 'Europe/Berlin'; // pin TZ
         jest.useFakeTimers();
@@ -159,6 +163,28 @@ describe('NewTutorialGroupDetail', () => {
         const tutorChatButton = fixture.debugElement.query(By.css('[data-testid="tutor-chat-button"]'));
         expect(tutorChatLink).toBeNull();
         expect(tutorChatButton).not.toBeNull();
+    });
+
+    it('should display current lesson button if currentTutorialLectureId available', () => {
+        const raw: RawTutorialGroupDetailGroupDTO = {
+            id: 1,
+            title: 'TG 1 MN 13',
+            language: 'English',
+            isOnline: false,
+            sessions: [],
+            teachingAssistantName: 'Marlon Nienaber',
+            teachingAssistantLogin: 'gx89tum',
+            teachingAssistantImageUrl: undefined,
+            capacity: 10,
+            campus: 'Garching',
+            groupChannelId: undefined,
+            tutorChatId: undefined,
+        };
+        const testTutorialGroup = new TutorialGroupDetailGroupDTO(raw);
+        fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
+        fixture.detectChanges();
+        const currentTutorialLectureLink = fixture.debugElement.query(By.css('[data-testid="tutorial-lecture-link"]'));
+        expect(currentTutorialLectureLink).not.toBeNull();
     });
 
     it('should expose correct language', () => {
