@@ -26,6 +26,10 @@ export class User extends Account {
      */
     public askToSetupPasskey?: boolean;
 
+    public loggedInWithPasskey?: boolean;
+
+    public passkeySuperAdminApproved?: boolean;
+
     constructor(
         id?: number,
         login?: string,
@@ -47,6 +51,8 @@ export class User extends Account {
         externalLLMUsageAccepted?: dayjs.Dayjs,
         memirisEnabled?: boolean,
         askToSetupPasskey?: boolean,
+        loggedInWithPasskey?: boolean,
+        passkeySuperAdminApproved?: boolean,
     ) {
         super(activated, authorities, email, firstName, langKey, lastName, login, imageUrl);
         this.id = id;
@@ -61,6 +67,8 @@ export class User extends Account {
         this.externalLLMUsageAccepted = externalLLMUsageAccepted;
         this.memirisEnabled = memirisEnabled;
         this.askToSetupPasskey = askToSetupPasskey;
+        this.loggedInWithPasskey = loggedInWithPasskey;
+        this.passkeySuperAdminApproved = passkeySuperAdminApproved;
     }
 }
 /**

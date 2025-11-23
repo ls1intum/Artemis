@@ -4,7 +4,7 @@ import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, ValidatorFn, 
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
-import { Observable, OperatorFunction, Subject, debounceTime, distinctUntilChanged, filter, map, merge } from 'rxjs';
+import { Observable, OperatorFunction, Subject, debounceTime, distinctUntilChanged, filter, firstValueFrom, map, merge } from 'rxjs';
 import { regexValidator } from 'app/shared/form/shortname-validator.directive';
 import { Course, CourseInformationSharingConfiguration, isCommunicationEnabled, isMessagingEnabled, unsetCourseIcon } from 'app/core/course/shared/entities/course.model';
 import { CourseManagementService } from '../services/course-management.service';
@@ -677,6 +677,27 @@ export class CourseUpdateComponent implements OnInit {
                 this.croppedImage = result;
             }
         });
+    }
+
+    /**
+     * Enable or disable communication
+     */
+    async changeCommunicationEnabled() {
+        if (this.communicationEnabled && !this.course.courseInformationSharingMessagingCodeOfConduct) {
+            try {
+                const res = await firstValueFrom(this.fileService.getTemplateCodeOfConduct());
+                if (res.body) {
+                    this.course.courseInformationSharingMessagingCodeOfConduct = res.body;
+                    this.courseForm.controls['courseInformationSharingMessagingCodeOfConduct'].setValue(res.body);
+                }
+            } catch (err) {
+                onError(this.alertService, err as HttpErrorResponse);
+            }
+        }
+
+        if (this.communicationEnabled) {
+            this.disableMessaging();
+        }
     }
 
     disableMessaging() {
