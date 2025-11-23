@@ -84,6 +84,7 @@
             "created": "Eine neue Dateieinheit wurde erstellt",
             "updated": "Dateieinheit aktualisiert",
             "notReleasedTooltip": "Nur sichtbar für Tutor:innen und Lehrende. Veröffentlichungsdatum:",
+            "transcriptAvailable": "Transkription möglich",
             "transcriptionInvalidJson": "Die Transkriptions-JSON ist ungültig und wurde ignoriert.",
             "createAttachmentVideoUnits": {
                 "informativeText": {
@@ -180,7 +181,12 @@
                 "statusProcessing": "Bitte überprüfe den Status der Transkription etwas später",
                 "statusFailed": "Die Transkriptionsgenerierung für dieses Video ist fehlgeschlagen. Du kannst es erneut versuchen.",
                 "editStatusProcessing": "Für dieses Video wird derzeit eine Transkription generiert.",
-                "editStatusFailed": "Die vorherige Transkriptionsgenerierung für dieses Video ist fehlgeschlagen."
+                "editStatusFailed": "Die vorherige Transkriptionsgenerierung für dieses Video ist fehlgeschlagen.",
+                "cancelButton": "Transkription abbrechen",
+                "cancelSuccess": "Transkription erfolgreich abgebrochen.",
+                "cancelError": "Transkription konnte nicht abgebrochen werden.",
+                "cancelConfirm": "Möchtest du die laufende Transkription wirklich abbrechen?",
+                "cancelDescription": "Dies wird den Transkriptionsprozess dauerhaft stoppen und den Transkriptionsdatensatz löschen. Diese Aktion kann nicht rückgängig gemacht werden."
             },
             "videoPlayer": {
                 "transcript": "Transkript",

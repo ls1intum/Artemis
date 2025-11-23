@@ -16,6 +16,11 @@ import { CompetencySelectionComponent } from 'app/atlas/shared/competency-select
 import { AccountService } from 'app/core/auth/account.service';
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
 import { TranscriptionStatus } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
+import { LectureTranscriptionService } from 'app/lecture/manage/services/lecture-transcription.service';
+import { AlertService } from 'app/shared/service/alert.service';
+import { firstValueFrom } from 'rxjs';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal/confirm-autofocus-modal.component';
 
 export interface AttachmentVideoUnitFormData {
     formProperties: FormProperties;
@@ -122,12 +127,18 @@ export class AttachmentVideoUnitFormComponent implements OnChanges {
     protected readonly acceptedFileExtensionsFileBrowser = ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER;
 
     private readonly attachmentVideoUnitService = inject(AttachmentVideoUnitService);
+    private readonly lectureTranscriptionService = inject(LectureTranscriptionService);
+    private readonly alertService = inject(AlertService);
+    private readonly modalService = inject(NgbModal);
+
     canGenerateTranscript = signal(false);
     playlistUrl = signal<string | undefined>(undefined);
     transcriptionStatus = signal<TranscriptionStatus | undefined>(undefined);
+    isCancelling = signal(false);
 
     formData = input<AttachmentVideoUnitFormData>();
     isEditMode = input<boolean>(false);
+    lectureUnitId = input<number | undefined>(undefined);
 
     formSubmitted = output<AttachmentVideoUnitFormData>();
 
@@ -363,5 +374,38 @@ export class AttachmentVideoUnitFormComponent implements OnChanges {
 
     cancelForm() {
         this.onCancel.emit();
+    }
+
+    async cancelTranscription() {
+        const id = this.lectureUnitId();
+        if (!id) {
+            return;
+        }
+
+        const modalRef = this.modalService.open(ConfirmAutofocusModalComponent, { size: 'lg', backdrop: 'static' });
+        modalRef.componentInstance.title = 'artemisApp.attachmentVideoUnit.transcription.cancelButton';
+        modalRef.componentInstance.text = 'artemisApp.attachmentVideoUnit.transcription.cancelConfirm';
+        modalRef.componentInstance.translateText = true;
+
+        try {
+            await modalRef.result;
+            // User confirmed
+            this.isCancelling.set(true);
+            try {
+                const success = await firstValueFrom(this.lectureTranscriptionService.cancelTranscription(id));
+                if (success) {
+                    this.alertService.success('artemisApp.attachmentVideoUnit.transcription.cancelSuccess');
+                    this.transcriptionStatus.set(undefined);
+                } else {
+                    this.alertService.error('artemisApp.attachmentVideoUnit.transcription.cancelError');
+                }
+            } catch (error) {
+                this.alertService.error('artemisApp.attachmentVideoUnit.transcription.cancelError');
+            } finally {
+                this.isCancelling.set(false);
+            }
+        } catch {
+            // User cancelled the modal - do nothing
+        }
     }
 }

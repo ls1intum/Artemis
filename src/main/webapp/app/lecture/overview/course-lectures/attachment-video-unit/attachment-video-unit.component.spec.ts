@@ -10,8 +10,10 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ScienceService } from 'app/shared/science/science.service';
 import { LectureTranscriptionService } from 'app/lecture/manage/services/lecture-transcription.service';
-import { LectureTranscriptionDTO } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
+import { LectureTranscriptionDTO, TranscriptionStatus } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { of } from 'rxjs';
+import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { AlertService } from 'app/shared/service/alert.service';
 import {
     IconDefinition,
     faFile,
@@ -35,6 +37,8 @@ describe('AttachmentVideoUnitComponent', () => {
     let fileService: FileService;
     let httpMock: HttpTestingController;
     let lectureTranscriptionService: LectureTranscriptionService;
+    let modalService: NgbModal;
+    let alertService: AlertService;
 
     let component: AttachmentVideoUnitComponent;
     let fixture: ComponentFixture<AttachmentVideoUnitComponent>;
@@ -61,6 +65,8 @@ describe('AttachmentVideoUnitComponent', () => {
                 { provide: FileService, useClass: MockFileService },
                 MockProvider(ScienceService),
                 MockProvider(LectureTranscriptionService),
+                MockProvider(NgbModal),
+                MockProvider(AlertService),
             ],
         }).compileComponents();
 
@@ -68,6 +74,8 @@ describe('AttachmentVideoUnitComponent', () => {
         fileService = TestBed.inject(FileService);
         httpMock = TestBed.inject(HttpTestingController);
         lectureTranscriptionService = TestBed.inject(LectureTranscriptionService);
+        modalService = TestBed.inject(NgbModal);
+        alertService = TestBed.inject(AlertService);
 
         fixture = TestBed.createComponent(AttachmentVideoUnitComponent);
         component = fixture.componentInstance;
@@ -386,4 +394,68 @@ describe('AttachmentVideoUnitComponent', () => {
         expect(component.hasAttachment()).toBeFalse();
         expect(component.getFileName()).toBe('');
     });
+
+    it('should cancel transcription when user confirms modal', fakeAsync(() => {
+        const lectureUnit = component.lectureUnit();
+        lectureUnit.id = 1;
+        component.transcriptionStatus.set(TranscriptionStatus.PENDING);
+
+        const modalRef = {
+            result: Promise.resolve(),
+            componentInstance: {},
+        } as NgbModalRef;
+
+        jest.spyOn(modalService, 'open').mockReturnValue(modalRef);
+        jest.spyOn(lectureTranscriptionService, 'cancelTranscription').mockReturnValue(of(true));
+        const alertSuccessSpy = jest.spyOn(alertService, 'success');
+
+        component.cancelTranscription();
+        flushMicrotasks();
+
+        expect(modalService.open).toHaveBeenCalled();
+        expect(lectureTranscriptionService.cancelTranscription).toHaveBeenCalledWith(1);
+        expect(alertSuccessSpy).toHaveBeenCalledWith('artemisApp.attachmentVideoUnit.transcription.cancelSuccess');
+        expect(component.transcriptionStatus()).toBeUndefined();
+    }));
+
+    it('should not cancel transcription when user dismisses modal', fakeAsync(() => {
+        const lectureUnit = component.lectureUnit();
+        lectureUnit.id = 1;
+        component.transcriptionStatus.set(TranscriptionStatus.PENDING);
+
+        const modalRef = {
+            result: Promise.reject(),
+            componentInstance: {},
+        } as NgbModalRef;
+
+        jest.spyOn(modalService, 'open').mockReturnValue(modalRef);
+        const cancelSpy = jest.spyOn(lectureTranscriptionService, 'cancelTranscription');
+
+        component.cancelTranscription();
+        flushMicrotasks();
+
+        expect(modalService.open).toHaveBeenCalled();
+        expect(cancelSpy).not.toHaveBeenCalled();
+    }));
+
+    it('should show error when cancellation fails', fakeAsync(() => {
+        const lectureUnit = component.lectureUnit();
+        lectureUnit.id = 1;
+        component.transcriptionStatus.set(TranscriptionStatus.PENDING);
+
+        const modalRef = {
+            result: Promise.resolve(),
+            componentInstance: {},
+        } as NgbModalRef;
+
+        jest.spyOn(modalService, 'open').mockReturnValue(modalRef);
+        jest.spyOn(lectureTranscriptionService, 'cancelTranscription').mockReturnValue(of(false));
+        const alertErrorSpy = jest.spyOn(alertService, 'error');
+
+        component.cancelTranscription();
+        flushMicrotasks();
+
+        expect(alertErrorSpy).toHaveBeenCalledWith('artemisApp.attachmentVideoUnit.transcription.cancelError');
+        expect(component.transcriptionStatus()).toBe(TranscriptionStatus.PENDING);
+    }));
 });

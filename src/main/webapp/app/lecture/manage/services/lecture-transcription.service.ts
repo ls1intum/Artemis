@@ -62,4 +62,15 @@ export class LectureTranscriptionService {
                 catchError(() => of(undefined)),
             );
     }
+
+    cancelTranscription(lectureUnitId: number): Observable<boolean> {
+        return this.httpClient
+            .delete(`api/nebula/lecture-unit/${lectureUnitId}/transcriber/cancel`, {
+                observe: 'response',
+            })
+            .pipe(
+                map((response) => response.status === 200),
+                catchError(() => of(false)),
+            );
+    }
 }

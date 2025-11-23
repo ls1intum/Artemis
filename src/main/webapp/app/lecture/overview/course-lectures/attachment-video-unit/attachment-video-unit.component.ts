@@ -25,6 +25,7 @@ import {
     faFileVideo,
     faFileWord,
     faSpinner,
+    faTimes,
 } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -37,6 +38,9 @@ import { AccountService } from 'app/core/auth/account.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranscriptSegment } from 'app/lecture/shared/models/transcript-segment.model';
 import { map } from 'rxjs/operators';
+import { AlertService } from 'app/shared/service/alert.service';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal/confirm-autofocus-modal.component';
 
 @Component({
     selector: 'jhi-attachment-video-unit',
@@ -46,8 +50,10 @@ import { map } from 'rxjs/operators';
 })
 export class AttachmentVideoUnitComponent extends LectureUnitDirective<AttachmentVideoUnit> implements OnInit {
     protected readonly faDownload = faDownload;
+    protected readonly faFileLines = faFileLines;
     protected readonly faSpinner = faSpinner;
     protected readonly faExclamationTriangle = faExclamationTriangle;
+    protected readonly faTimes = faTimes;
     protected readonly TranscriptionStatus = TranscriptionStatus;
 
     private readonly destroyRef = inject(DestroyRef);
@@ -56,13 +62,37 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     private readonly attachmentVideoUnitService = inject(AttachmentVideoUnitService);
     private readonly lectureTranscriptionService = inject(LectureTranscriptionService);
     private readonly accountService = inject(AccountService);
+    private readonly alertService = inject(AlertService);
+    private readonly modalService = inject(NgbModal);
 
     readonly transcriptSegments = signal<TranscriptSegment[]>([]);
     readonly playlistUrl = signal<string | undefined>(undefined);
     readonly isLoading = signal<boolean>(false);
+
     readonly hasTranscript = computed(() => this.transcriptSegments().length > 0);
     transcriptionStatus = signal<TranscriptionStatus | undefined>(undefined);
     isLoadingTranscriptionStatus = signal(false);
+    isCancelling = signal(false);
+
+    /**
+     * Determines whether the "transcription possible" badge should be displayed.
+     *
+     * The badge is only shown when:
+     * - A playlist URL is available (transcription can be generated)
+     * - No transcription job exists (no transcriptionProperties, meaning no jobId)
+     * - No transcription status exists (no transcriptionProperties)
+     * - No completed transcript is available yet
+     *
+     * @returns {boolean} True if the badge should be shown (no active transcription job and no transcript), false otherwise
+     */
+    readonly canShowTranscriptionPossibleBadge = computed(() => {
+        // Don't show badge if transcription was created (which would have a jobId)
+        if (this.lectureUnit().transcriptionProperties) {
+            return false;
+        }
+        // Don't show badge if transcript is already available
+        return !this.hasTranscript();
+    });
 
     // TODO: This must use a server configuration to make it compatible with deployments other than TUM
     private readonly videoUrlAllowList = [RegExp('^https://(?:live\\.rbg\\.tum\\.de|tum\\.live)/w/\\w+/\\d+(/(CAM|COMB|PRES))?\\?video_only=1')];
@@ -94,6 +124,13 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         const isLoading = this.isLoadingTranscriptionStatus();
         const status = this.transcriptionStatus();
         return !isLoading && !!status && (status === TranscriptionStatus.PENDING || status === TranscriptionStatus.PROCESSING || status === TranscriptionStatus.FAILED);
+    });
+
+    readonly canCancelTranscription = computed(() => {
+        const status = this.transcriptionStatus();
+        const isEditor = this.accountService.isAtLeastEditorInCourse(this.lectureUnit().lecture?.course);
+        const isAdmin = this.accountService.isAdmin();
+        return (isEditor || isAdmin) && (status === TranscriptionStatus.PENDING || status === TranscriptionStatus.PROCESSING);
     });
 
     /**
@@ -234,6 +271,39 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
 
     hasVideo(): boolean {
         return !!this.lectureUnit().videoSource;
+    }
+
+    async cancelTranscription() {
+        const id = this.lectureUnit().id;
+        if (!id) {
+            return;
+        }
+
+        const modalRef = this.modalService.open(ConfirmAutofocusModalComponent, { size: 'lg', backdrop: 'static' });
+        modalRef.componentInstance.title = 'artemisApp.attachmentVideoUnit.transcription.cancelButton';
+        modalRef.componentInstance.text = 'artemisApp.attachmentVideoUnit.transcription.cancelConfirm';
+        modalRef.componentInstance.translateText = true;
+
+        try {
+            await modalRef.result;
+            // User confirmed
+            this.isCancelling.set(true);
+            try {
+                const success = await firstValueFrom(this.lectureTranscriptionService.cancelTranscription(id));
+                if (success) {
+                    this.alertService.success('artemisApp.attachmentVideoUnit.transcription.cancelSuccess');
+                    this.transcriptionStatus.set(undefined);
+                } else {
+                    this.alertService.error('artemisApp.attachmentVideoUnit.transcription.cancelError');
+                }
+            } catch (error) {
+                this.alertService.error('artemisApp.attachmentVideoUnit.transcription.cancelError');
+            } finally {
+                this.isCancelling.set(false);
+            }
+        } catch {
+            // User cancelled the modal - do nothing
+        }
     }
 
     /**

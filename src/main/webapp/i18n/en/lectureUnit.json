@@ -84,6 +84,7 @@
             "created": "New attachment unit created",
             "updated": "Attachment unit updated",
             "notReleasedTooltip": "Attachment only visible to teaching assistants and instructors. Release date:",
+            "transcriptAvailable": "Transcription Possible",
             "transcriptionInvalidJson": "The transcription JSON is invalid and was ignored.",
             "createAttachmentVideoUnits": {
                 "informativeText": {
@@ -180,7 +181,12 @@
                 "statusProcessing": "Please check the status of the transcription later",
                 "statusFailed": "Transcription generation failed for this video. You can try generating it again.",
                 "editStatusProcessing": "A transcription is currently being generated for this video.",
-                "editStatusFailed": "The previous transcription generation failed for this video."
+                "editStatusFailed": "The previous transcription generation failed for this video.",
+                "cancelButton": "Cancel Transcription",
+                "cancelSuccess": "Transcription cancelled successfully.",
+                "cancelError": "Failed to cancel transcription.",
+                "cancelConfirm": "Are you sure you want to cancel the ongoing transcription?",
+                "cancelDescription": "This will permanently stop the transcription process and delete the transcription record. This action cannot be undone."
             },
             "videoPlayer": {
                 "transcript": "Transcript",

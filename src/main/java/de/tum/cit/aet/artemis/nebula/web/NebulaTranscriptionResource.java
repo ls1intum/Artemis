@@ -14,6 +14,7 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -65,6 +66,21 @@ public class NebulaTranscriptionResource {
             @RequestBody @Valid NebulaTranscriptionRequestDTO request) {
 
         lectureTranscriptionService.startNebulaTranscription(lectureId, lectureUnitId, request);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * DELETE /lecture-unit/{lectureUnitId}/transcriber/cancel :
+     * Cancel an ongoing transcription job and delete the transcription record.
+     *
+     * @param lectureUnitId the ID of the lecture unit
+     * @return the ResponseEntity with status 200 (OK) if transcription cancelled successfully
+     */
+    @DeleteMapping("lecture-unit/{lectureUnitId}/transcriber/cancel")
+    @EnforceAtLeastEditorInLectureUnit
+    public ResponseEntity<Void> cancelNebulaTranscription(@PathVariable Long lectureUnitId) {
+        log.info("Received request to cancel transcription for lectureUnitId={}", lectureUnitId);
+        lectureTranscriptionService.cancelNebulaTranscription(lectureUnitId);
         return ResponseEntity.ok().build();
     }
 

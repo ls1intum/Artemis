@@ -165,9 +165,15 @@
                     <div class="row mt-3">
                         <div class="col-12">
                             @if (transcriptionStatus() === TranscriptionStatus.PENDING || transcriptionStatus() === TranscriptionStatus.PROCESSING) {
-                                <div class="alert alert-info d-flex align-items-center" role="alert">
-                                    <fa-icon [icon]="faQuestionCircle" class="me-2" />
-                                    <span jhiTranslate="artemisApp.attachmentVideoUnit.transcription.editStatusProcessing"></span>
+                                <div class="alert alert-info d-flex align-items-center justify-content-between" role="alert">
+                                    <div class="d-flex align-items-center">
+                                        <fa-icon [icon]="faQuestionCircle" class="me-2" />
+                                        <span jhiTranslate="artemisApp.attachmentVideoUnit.transcription.editStatusProcessing"></span>
+                                    </div>
+                                    <button class="btn btn-sm btn-danger" (click)="cancelTranscription()" [disabled]="isCancelling()">
+                                        <fa-icon [icon]="faTimes" class="me-1" />
+                                        <span jhiTranslate="artemisApp.attachmentVideoUnit.transcription.cancelButton"></span>
+                                    </button>
                                 </div>
                             }
                             @if (transcriptionStatus() === TranscriptionStatus.FAILED) {
