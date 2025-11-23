@@ -1485,7 +1485,7 @@ public class ExamService {
      */
     public Page<Exam> getAllActiveExams(final Pageable pageable, final User user) {
         // active exam means that exam has visible date in the past 7 days or next 7 days.
-        return examRepository.findAllActiveExamsInCoursesWhereInstructor(user.getGroups(), pageable, ZonedDateTime.now().minusDays(EXAM_ACTIVE_DAYS),
+        return examRepository.findAllActiveExamsInCoursesWhereAtLeastTutor(user.getGroups(), pageable, ZonedDateTime.now().minusDays(EXAM_ACTIVE_DAYS),
                 ZonedDateTime.now().plusDays(EXAM_ACTIVE_DAYS));
     }
 
