@@ -24,6 +24,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.communication.domain.Faq;
 import de.tum.cit.aet.artemis.core.FilePathType;
+import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
@@ -221,7 +222,8 @@ public class PyrisWebhookService {
      */
     private String executeLectureDeletionWebhook(List<PyrisLectureUnitWebhookDTO> toUpdateAttachmentVideoUnits) {
         String jobToken = pyrisJobService.addLectureIngestionWebhookJob(0, 0, 0);
-        PyrisPipelineExecutionSettingsDTO settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, artemisBaseUrl, "default");
+        // Set AI usage to local independent of user selection
+        PyrisPipelineExecutionSettingsDTO settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, AiSelectionDecision.LOCAL_AI, artemisBaseUrl, "default");
         PyrisWebhookLectureDeletionExecutionDTO executionDTO = new PyrisWebhookLectureDeletionExecutionDTO(toUpdateAttachmentVideoUnits, settingsDTO, List.of());
         pyrisConnectorService.executeLectureDeletionWebhook(executionDTO);
         return jobToken;
@@ -238,7 +240,8 @@ public class PyrisWebhookService {
         String jobToken = pyrisJobService.addLectureIngestionWebhookJob(toUpdateAttachmentVideoUnit.courseId(), toUpdateAttachmentVideoUnit.lectureId(),
                 toUpdateAttachmentVideoUnit.lectureUnitId());
         var settings = irisSettingsService.getCombinedIrisSettingsFor(course, false).irisLectureIngestionSettings();
-        PyrisPipelineExecutionSettingsDTO settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, artemisBaseUrl, settings.selectedVariant());
+        // Set AI usage to local independent of user selection
+        PyrisPipelineExecutionSettingsDTO settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, AiSelectionDecision.LOCAL_AI, artemisBaseUrl, settings.selectedVariant());
         PyrisWebhookLectureIngestionExecutionDTO executionDTO = new PyrisWebhookLectureIngestionExecutionDTO(toUpdateAttachmentVideoUnit,
                 toUpdateAttachmentVideoUnit.lectureUnitId(), settingsDTO, List.of());
         pyrisConnectorService.executeLectureAdditionWebhook(executionDTO);
@@ -347,7 +350,8 @@ public class PyrisWebhookService {
     private String executeFaqAdditionWebhook(PyrisFaqWebhookDTO toUpdateFaq, Course course) {
         String jobToken = pyrisJobService.addFaqIngestionWebhookJob(toUpdateFaq.courseId(), toUpdateFaq.faqId());
         var settings = irisSettingsService.getCombinedIrisSettingsFor(course, false).irisFaqIngestionSettings();
-        PyrisPipelineExecutionSettingsDTO settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, artemisBaseUrl, settings.selectedVariant());
+        // Set AI usage to local independent of user selection
+        PyrisPipelineExecutionSettingsDTO settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, AiSelectionDecision.LOCAL_AI, artemisBaseUrl, settings.selectedVariant());
         PyrisWebhookFaqIngestionExecutionDTO executionDTO = new PyrisWebhookFaqIngestionExecutionDTO(toUpdateFaq, settingsDTO, List.of());
         pyrisConnectorService.executeFaqAdditionWebhook(toUpdateFaq, executionDTO);
         return jobToken;
@@ -374,7 +378,8 @@ public class PyrisWebhookService {
      */
     private String executeFaqDeletionWebhook(PyrisFaqWebhookDTO toUpdateFaqs) {
         String jobToken = pyrisJobService.addFaqIngestionWebhookJob(0, 0);
-        PyrisPipelineExecutionSettingsDTO settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, artemisBaseUrl, "default");
+        // Set AI usage to local independent of user selection
+        PyrisPipelineExecutionSettingsDTO settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, AiSelectionDecision.LOCAL_AI, artemisBaseUrl, "default");
         PyrisWebhookFaqDeletionExecutionDTO executionDTO = new PyrisWebhookFaqDeletionExecutionDTO(toUpdateFaqs, settingsDTO, List.of());
         pyrisConnectorService.executeFaqDeletionWebhook(executionDTO);
         return jobToken;
