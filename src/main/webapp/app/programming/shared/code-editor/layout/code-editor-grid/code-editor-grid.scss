@@ -262,6 +262,13 @@
     align-self: center;
     color: var(--code-editor-grid-grip-lines-color);
     justify-self: center;
+    font-size: 0.7rem;
+    opacity: 1;
+    transition: opacity 0.2s;
+
+    &:hover {
+        opacity: 0.8;
+    }
 }
 
 .rg-main-bottom {
@@ -271,11 +278,11 @@
 .rg-sidebar-left,
 .rg-sidebar-right {
     cursor: col-resize;
-    margin-left: 1px;
-    margin-right: 1px;
+    margin-left: 0;
+    margin-right: 0;
 
     /* easier to grab + avoid selecting editor text while dragging */
-    padding: 1px 1px;
+    padding: 0 0;
     -webkit-user-select: none;
     user-select: none;
     touch-action: none;
@@ -283,7 +290,7 @@
 }
 
 .separator {
-    margin: 5px;
+    margin: 0;
 }
 
 /* ==========================================================================
