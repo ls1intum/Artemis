@@ -14,6 +14,7 @@ import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
@@ -22,6 +23,7 @@ import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.room.ExamRoom;
 import de.tum.cit.aet.artemis.exam.domain.room.ExamRoomExamAssignment;
 import de.tum.cit.aet.artemis.exam.domain.room.LayoutStrategy;
+import de.tum.cit.aet.artemis.exam.dto.room.AttendanceCheckerAppExamInformationDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamDistributionCapacityDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomForDistributionDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamSeatDTO;
@@ -50,13 +52,16 @@ public class ExamRoomDistributionService {
 
     private final ExamUserRepository examUserRepository;
 
+    private final ExamUserService examUserService;
+
     public ExamRoomDistributionService(ExamRepository examRepository, ExamRoomRepository examRoomRepository, ExamRoomService examRoomService,
-            ExamRoomExamAssignmentRepository examRoomExamAssignmentRepository, ExamUserRepository examUserRepository) {
+            ExamRoomExamAssignmentRepository examRoomExamAssignmentRepository, ExamUserRepository examUserRepository, ExamUserService examUserService) {
         this.examRepository = examRepository;
         this.examRoomRepository = examRoomRepository;
         this.examRoomService = examRoomService;
         this.examRoomExamAssignmentRepository = examRoomExamAssignmentRepository;
         this.examUserRepository = examUserRepository;
+        this.examUserService = examUserService;
     }
 
     /**
@@ -272,5 +277,27 @@ public class ExamRoomDistributionService {
 
     public Set<ExamRoomForDistributionDTO> getRoomDataForDistribution() {
         return examRoomRepository.findAllCurrentExamRoomsForDistribution();
+    }
+
+    /**
+     * Generates information relevant for displaying rooms and students in the attendance checker app
+     *
+     * @param examId The exam id
+     * @return the generated information
+     */
+    public AttendanceCheckerAppExamInformationDTO getAttendanceCheckerAppInformation(long examId) {
+        Exam exam = examRepository.findByIdWithExamUsersElseThrow(examId);
+        Set<ExamUser> examUsers = exam.getExamUsers();
+
+        if (examUsers.stream().noneMatch(examUser -> StringUtils.hasText(examUser.getPlannedRoom()) && StringUtils.hasText(examUser.getPlannedSeat()))) {
+            throw new BadRequestAlertException("No distribution has happened, yet", ENTITY_NAME, "noStudentDistributed");
+        }
+
+        examUserService.setPlannedRoomAndSeatTransientForExamUsers(examUsers);
+        examUserService.setActualRoomAndSeatTransientForExamUsers(examUsers);
+
+        Set<ExamRoom> examRooms = examRoomRepository.findAllByExamId(examId);
+
+        return AttendanceCheckerAppExamInformationDTO.from(exam, examRooms);
     }
 }

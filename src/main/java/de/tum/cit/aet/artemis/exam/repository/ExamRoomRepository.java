@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
@@ -136,4 +137,13 @@ public interface ExamRoomRepository extends ArtemisJpaRepository<ExamRoom, Long>
             WHERE roomPartition.rowNumber = 1
             """)
     Set<ExamRoomForDistributionDTO> findAllCurrentExamRoomsForDistribution();
+
+    @Query("""
+            SELECT er
+            FROM ExamRoom er
+            JOIN ExamRoomExamAssignment erea
+                ON er.id = erea.examRoom.id
+            WHERE erea.exam.id = :examId
+            """)
+    Set<ExamRoom> findAllByExamId(@Param("examId") long examId);
 }

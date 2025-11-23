@@ -96,7 +96,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void testUploadExamUserSignature() throws Exception {
         var course = courseUtilService.addEmptyCourse();
         var exam = examUtilService.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course, 1);
-        var user = new ExamUserDTO(TEST_PREFIX + "student1", null, null, null, null, null, "", "", true, true, true, true, null);
+        var user = new ExamUserDTO(TEST_PREFIX + "student1", null, null, null, null, null, "", "", true, true, true, true, null, null, null, null, null, null, null, null);
         var file = new MockMultipartFile("file", "file.png", "application/json", "some data".getBytes());
 
         ExamUser updateExamUserResponse = request.postWithMultipartFile("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/exam-users", user, "examUserDTO", file,
