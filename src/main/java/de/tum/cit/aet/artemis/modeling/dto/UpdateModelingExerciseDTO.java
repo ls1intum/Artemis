@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
 
 import org.hibernate.Hibernate;
 import org.jspecify.annotations.Nullable;
@@ -22,7 +23,7 @@ import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record UpdateModelingExerciseDTO(long id, @Nullable String title, @Nullable String channelName, @Nullable String shortName, @Nullable String problemStatement,
-        @Nullable Set<String> categories, @Nullable DifficultyLevel difficulty, @Nullable @Positive Double maxPoints, @Nullable @Positive Double bonusPoints,
+        @Nullable Set<String> categories, @Nullable DifficultyLevel difficulty, @Nullable @Positive Double maxPoints, @Nullable @PositiveOrZero Double bonusPoints,
         @Nullable IncludedInOverallScore includedInOverallScore, @Nullable Boolean allowFeedbackRequests, @Nullable String gradingInstructions, @Nullable ZonedDateTime releaseDate,
         @Nullable ZonedDateTime startDate, @Nullable ZonedDateTime dueDate, @Nullable ZonedDateTime assessmentDueDate, @Nullable ZonedDateTime exampleSolutionPublicationDate,
         @Nullable String exampleSolutionModel, @Nullable String exampleSolutionExplanation, @Nullable Long courseId, @Nullable Long exerciseGroupId,
@@ -33,7 +34,8 @@ public record UpdateModelingExerciseDTO(long id, @Nullable String title, @Nullab
 
         public static CompetencyExerciseLinkDTO of(@NotNull CompetencyExerciseLink link) {
             if (link.getCompetency().getCourse() == null) {
-                throw new IllegalStateException("CompetencyExerciseLink references a competency without an associated course. Link ID: " + link.getId());
+                throw new IllegalStateException(
+                        "CompetencyExerciseLink references a competency without an associated course. Link ID: " + (link.getId() != null ? link.getId() : "unknown"));
             }
             return new CompetencyExerciseLinkDTO(CourseCompetencyDTO.of(link.getCompetency()), link.getWeight(), link.getCompetency().getCourse().getId());
         }
