@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 
+import org.hibernate.Hibernate;
 import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -49,11 +50,18 @@ public record UpdateModelingExerciseDTO(long id, @Nullable String title, @Nullab
         Long courseId = exercise.getCourseViaExerciseGroupOrCourseMember() != null ? exercise.getCourseViaExerciseGroupOrCourseMember().getId() : null;
         Long exerciseGroupId = exercise.getExerciseGroup() != null ? exercise.getExerciseGroup().getId() : null;
 
+        Set<GradingCriterionDTO> gradingCriterionDTOs = null;
+        Set<CompetencyExerciseLinkDTO> competencyLinkDTOs = null;
+
         Set<GradingCriterion> criteria = exercise.getGradingCriteria();
         Set<CompetencyExerciseLink> competencyLinks = exercise.getCompetencyLinks();
 
-        Set<GradingCriterionDTO> gradingCriterionDTOs = criteria.stream().map(GradingCriterionDTO::of).collect(Collectors.toSet());
-        Set<CompetencyExerciseLinkDTO> competencyLinkDTOs = competencyLinks.stream().map(CompetencyExerciseLinkDTO::of).collect(Collectors.toSet());
+        if (criteria != null && Hibernate.isInitialized(criteria)) {
+            gradingCriterionDTOs = criteria.stream().map(GradingCriterionDTO::of).collect(Collectors.toSet());
+        }
+        if (competencyLinks != null && Hibernate.isInitialized(competencyLinks)) {
+            competencyLinkDTOs = competencyLinks.stream().map(CompetencyExerciseLinkDTO::of).collect(Collectors.toSet());
+        }
 
         return new UpdateModelingExerciseDTO(exercise.getId(), exercise.getTitle(), exercise.getChannelName(), exercise.getShortName(), exercise.getProblemStatement(),
                 exercise.getCategories(), exercise.getDifficulty(), exercise.getMaxPoints(), exercise.getBonusPoints(), exercise.getIncludedInOverallScore(),
