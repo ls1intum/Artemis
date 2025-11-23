@@ -18,6 +18,11 @@ import * as DownloadUtil from '../../shared/util/download.util';
 import { FinishedBuildJobFilter } from 'app/buildagent/build-queue/finished-builds-filter-modal/finished-builds-filter-modal.component';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
+import { Component, Input } from '@angular/core';
+import { By } from '@angular/platform-browser';
+import { BuildJobStatisticsComponent } from 'app/buildagent/build-job-statistics/build-job-statistics.component';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 
 class ActivatedRouteStub {
     private params$ = new BehaviorSubject<{ [key: string]: any }>({});
@@ -28,6 +33,16 @@ class ActivatedRouteStub {
         this.params$.next(params);
         this.snapshot = { paramMap: convertToParamMap(params) };
     }
+}
+
+@Component({
+    selector: 'jhi-build-job-statistics',
+    template: '<div></div>',
+    standalone: true,
+})
+class StubBuildJobStatisticsComponent {
+    @Input() courseId?: number;
+    @Input() buildJobStatisticsInput?: any;
 }
 
 describe('BuildQueueComponent', () => {
@@ -67,6 +82,7 @@ describe('BuildQueueComponent', () => {
             exerciseId: 100,
             retryCount: 0,
             priority: 4,
+            buildAgent: { name: 'agent1' },
             repositoryInfo: {
                 repositoryName: 'repo1',
                 repositoryType: 'USER',
@@ -102,6 +118,7 @@ describe('BuildQueueComponent', () => {
             exerciseId: 100,
             retryCount: 0,
             priority: 5,
+            buildAgent: { name: 'agent3' },
             repositoryInfo: {
                 repositoryName: 'repo3',
                 repositoryType: 'USER',
@@ -139,6 +156,7 @@ describe('BuildQueueComponent', () => {
             exerciseId: 100,
             retryCount: 0,
             priority: 3,
+            buildAgent: { name: 'agent2' },
             repositoryInfo: {
                 repositoryName: 'repo2',
                 repositoryType: 'USER',
@@ -174,6 +192,7 @@ describe('BuildQueueComponent', () => {
             exerciseId: 100,
             retryCount: 0,
             priority: 2,
+            buildAgent: { name: 'agent4' },
             repositoryInfo: {
                 repositoryName: 'repo4',
                 repositoryType: 'USER',
@@ -562,66 +581,145 @@ describe('BuildQueueComponent', () => {
         expect(modalRef.componentInstance.buildAgentFilterable).toBeTrue();
     });
 
-    it('should download build logs', () => {
-        const buildJobId = '1';
+    describe('Course ID column visibility', () => {
+        beforeEach(waitForAsync(() => {
+            TestBed.resetTestingModule();
+            TestBed.configureTestingModule({
+                imports: [BuildOverviewComponent],
+                providers: [
+                    { provide: BuildOverviewService, useValue: mockBuildQueueService },
+                    { provide: ActivatedRoute, useValue: routeStub },
+                    { provide: TranslateService, useClass: MockTranslateService },
+                    { provide: NgbModal, useClass: MockNgbModalService },
+                    { provide: FeatureToggleService, useValue: { isEnabled: () => false } },
+                    provideHttpClientTesting(),
+                ],
+            })
+                .overrideComponent(BuildOverviewComponent, {
+                    remove: {
+                        imports: [BuildJobStatisticsComponent],
+                    },
+                    add: {
+                        imports: [StubBuildJobStatisticsComponent],
+                    },
+                })
+                .compileComponents();
 
-        const buildLogsMultiLines = 'log1\nlog2\nlog3';
-        mockBuildQueueService.getBuildJobLogs = jest.fn().mockReturnValue(of(buildLogsMultiLines));
+            fixture = TestBed.createComponent(BuildOverviewComponent);
+            component = fixture.componentInstance;
+        }));
 
-        component.viewBuildLogs(undefined, buildJobId);
+        it('should show Course ID column in administration view', () => {
+            const getFinishedCourseIdLinks = () =>
+                fixture.debugElement.queryAll(By.css('td.finish-jobs-column a[href^="/course-management/"]:not([href*="programming-exercises"])'));
+            const getAnyCourseIdHeader = () => fixture.debugElement.queryAll(By.css('[jhitranslate="artemisApp.buildQueue.buildJob.courseId"]'));
 
-        expect(mockBuildQueueService.getBuildJobLogs).toHaveBeenCalledWith(buildJobId);
-        expect(component.rawBuildLogsString).toEqual(buildLogsMultiLines);
+            routeStub.setParamMap({});
 
-        const mockBlob = new Blob([buildLogsMultiLines], { type: 'text/plain' });
+            mockBuildQueueService.getQueuedBuildJobs.mockReturnValue(of(mockQueuedJobs));
+            mockBuildQueueService.getRunningBuildJobs.mockReturnValue(of(mockRunningJobs));
+            mockBuildQueueService.getFinishedBuildJobs.mockReturnValue(of(mockFinishedJobsResponse));
 
-        const downloadSpy = jest.spyOn(DownloadUtil, 'downloadFile');
+            mockBuildQueueService.getBuildJobStatistics.mockReturnValue(of({}));
+            mockBuildQueueService.getBuildJobStatisticsForCourse.mockReturnValue(of({}));
 
-        component.downloadBuildLogs();
+            component.ngOnInit();
+            fixture.detectChanges();
 
-        expect(downloadSpy).toHaveBeenCalledOnce();
-        expect(downloadSpy).toHaveBeenCalledWith(mockBlob, `${buildJobId}.log`);
-        expect(alertServiceErrorStub).toHaveBeenCalled();
+            expect(component.isAdministrationView()).toBeTrue();
 
-        global.URL.createObjectURL = jest.fn(() => 'mockedURL');
-        global.URL.revokeObjectURL = jest.fn();
+            const finishedLinks = getFinishedCourseIdLinks();
+            expect(finishedLinks).toHaveLength(mockFinishedJobs.length);
 
-        component.downloadBuildLogs();
+            const textValues = finishedLinks.map((de) => (de.nativeElement as HTMLAnchorElement).textContent?.trim());
+            expect(textValues).toEqual(mockFinishedJobs.map((job) => `${job.courseId}`));
 
-        expect(downloadSpy).toHaveBeenCalledTimes(2);
-        expect(downloadSpy).toHaveBeenCalledWith(mockBlob, `${buildJobId}.log`);
-    });
-});
-
-// Minimal unit test for the computed() signal only, avoids template rendering and DOM/navigation side effects.
-describe('BuildQueueComponent – isAdministrationView() [signal test]', () => {
-    let component: BuildOverviewComponent;
-
-    beforeAll(() => {
-        jest.spyOn(console, 'error').mockImplementation(() => {});
-    });
-
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            providers: [
-                { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({}) } } },
-                { provide: BuildOverviewService, useValue: {} },
-                { provide: AlertService, useValue: {} },
-                { provide: NgbModal, useValue: {} },
-                { provide: AccountService, useValue: {} },
-            ],
+            const datatableCourseIdHeaders = getAnyCourseIdHeader();
+            expect(datatableCourseIdHeaders).toHaveLength(3);
         });
 
-        component = TestBed.runInInjectionContext(() => new BuildOverviewComponent());
+        it('should hide Course ID column in course view', () => {
+            const getFinishedCourseIdLinks = () =>
+                fixture.debugElement.queryAll(By.css('td.finish-jobs-column a[href^="/course-management/"]:not([href*="programming-exercises"])'));
+            const getAnyCourseIdHeader = () => fixture.debugElement.queryAll(By.css('[jhitranslate="artemisApp.buildQueue.buildJob.courseId"]'));
+            routeStub.setParamMap({ courseId: '123' });
+
+            mockBuildQueueService.getQueuedBuildJobsByCourseId.mockReturnValue(of(mockQueuedJobs));
+            mockBuildQueueService.getRunningBuildJobsByCourseId.mockReturnValue(of(mockRunningJobs));
+            mockBuildQueueService.getFinishedBuildJobsByCourseId.mockReturnValue(of(mockFinishedJobsResponse));
+
+            component.ngOnInit();
+            fixture.detectChanges();
+
+            expect(component.isAdministrationView()).toBeFalse();
+
+            const finishedLinks = getFinishedCourseIdLinks();
+            expect(finishedLinks).toHaveLength(0);
+
+            const datatableCourseIdHeaders = getAnyCourseIdHeader();
+            expect(datatableCourseIdHeaders).toHaveLength(0);
+        });
     });
 
-    it('should compute true when courseId is 0', () => {
-        component.courseId = 0;
-        expect(component.isAdministrationView()).toBeTrue();
-    });
+    describe('BuildOverviewComponent Download Logs', () => {
+        let originalClick: typeof HTMLAnchorElement.prototype.click;
 
-    it('should compute false when courseId > 0', () => {
-        component.courseId = 123;
-        expect(component.isAdministrationView()).toBeFalse();
+        beforeEach(() => {
+            originalClick = HTMLAnchorElement.prototype.click;
+            HTMLAnchorElement.prototype.click = jest.fn();
+        });
+
+        afterEach(() => {
+            HTMLAnchorElement.prototype.click = originalClick;
+            jest.restoreAllMocks();
+        });
+
+        it('should show error alert when browser API is missing', () => {
+            const buildJobId = '1';
+            const logs = 'log1\nlog2\nlog3';
+            const mockBlob = new Blob([logs], { type: 'text/plain' });
+            mockBuildQueueService.getBuildJobLogs.mockReturnValue(of(logs));
+            const downloadSpy = jest.spyOn(DownloadUtil, 'downloadFile');
+
+            Object.defineProperty(window, 'URL', {
+                value: {},
+                writable: true,
+            });
+
+            component.viewBuildLogs(undefined, buildJobId);
+            component.downloadBuildLogs();
+
+            expect(downloadSpy).toHaveBeenCalledWith(mockBlob, `${buildJobId}.log`);
+
+            expect(HTMLAnchorElement.prototype.click).not.toHaveBeenCalled();
+
+            expect(alertServiceErrorStub).toHaveBeenCalled();
+        });
+
+        it('should download file when browser API is available', () => {
+            const buildJobId = '1';
+            const logs = 'log1\nlog2\nlog3';
+            const mockBlob = new Blob([logs], { type: 'text/plain' });
+            mockBuildQueueService.getBuildJobLogs.mockReturnValue(of(logs));
+            const downloadSpy = jest.spyOn(DownloadUtil, 'downloadFile');
+
+            Object.defineProperty(window, 'URL', {
+                value: {
+                    createObjectURL: jest.fn(() => 'mock-url'),
+                    revokeObjectURL: jest.fn(),
+                },
+                writable: true,
+                configurable: true,
+            });
+
+            component.viewBuildLogs(undefined, buildJobId);
+            component.downloadBuildLogs();
+
+            expect(downloadSpy).toHaveBeenCalledWith(mockBlob, `${buildJobId}.log`);
+
+            expect(HTMLAnchorElement.prototype.click).toHaveBeenCalled();
+
+            expect(alertServiceErrorStub).not.toHaveBeenCalled();
+        });
     });
 });
