@@ -211,7 +211,8 @@ class NebulaTranscriptionResourceIntegrationTest extends AbstractSpringIntegrati
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
     void cancelNebulaTranscription_notFound() throws Exception {
-        restNebulaTranscriptionMockMvc.perform(delete("/api/nebula/lecture-unit/999/transcriber/cancel")).andExpect(status().isNotFound());
+        // When lecture unit doesn't exist, authorization check returns 403 (security best practice)
+        restNebulaTranscriptionMockMvc.perform(delete("/api/nebula/lecture-unit/999/transcriber/cancel")).andExpect(status().isForbidden());
     }
 
     @Test
@@ -263,9 +264,8 @@ class NebulaTranscriptionResourceIntegrationTest extends AbstractSpringIntegrati
         transcription.setLectureUnit(lectureUnit);
         lectureTranscriptionRepository.save(transcription);
 
-        // Mock Nebula error
-        when(nebulaRestTemplate.exchange(eq("http://localhost:8080/transcribe/cancel/job-error"), eq(HttpMethod.POST), any(HttpEntity.class), eq(Void.class)))
-                .thenThrow(new RestClientException("Nebula service error"));
+        // Mock Nebula error - when Nebula service fails, the cancel should fail with 500
+        when(nebulaRestTemplate.exchange(anyString(), eq(HttpMethod.POST), any(HttpEntity.class), eq(Void.class))).thenThrow(new RestClientException("Nebula service error"));
 
         restNebulaTranscriptionMockMvc.perform(delete("/api/nebula/lecture-unit/" + lectureUnit.getId() + "/transcriber/cancel")).andExpect(status().isInternalServerError());
     }
