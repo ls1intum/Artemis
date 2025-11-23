@@ -2,7 +2,6 @@ import { Component, InputSignal, inject, input, output } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { of } from 'rxjs';
 import { catchError, delay, map, switchMap } from 'rxjs/operators';
-import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { CompetencyTaxonomy, DEFAULT_MASTERY_THRESHOLD } from 'app/atlas/shared/entities/competency.model';
 import { faQuestionCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
@@ -60,7 +59,6 @@ export abstract class CourseCompetencyFormComponent {
     isInConnectMode = input<boolean>(false);
     isInSingleLectureMode = input<boolean>(false);
     courseId = input<number>(0);
-    lecturesOfCourseWithLectureUnits = input<Lecture[]>([]);
     averageStudentScore = input<number>();
     hasCancelButton = input<boolean>(false);
 

@@ -240,6 +240,7 @@ public class FileUploadExerciseUtilService {
         }
         result.setFeedbacks(feedbacks);
         result.setSubmission(fileUploadSubmission);
+        result.setExerciseId(exercise.getId());
         result = resultRepo.save(result);
         for (Feedback feedback : feedbacks) {
             feedback.setResult(result);

@@ -298,13 +298,15 @@ public class ChannelService {
      * accordingly.
      *
      * @param lecture     the lecture to create the channel for
-     * @param channelName the name of the channel
+     * @param channelName the name of the channel (optional), will be generated from the lecture title if not provided
+     *
+     * @return the created channel name
      */
-    public void createLectureChannel(Lecture lecture, Optional<String> channelName) {
+    public String createLectureChannel(Lecture lecture, Optional<String> channelName) {
         Channel channelToCreate = createDefaultChannel(channelName, "lecture-", lecture.getTitle());
         channelToCreate.setLecture(lecture);
-        Channel createdChannel = createChannel(lecture.getCourse(), channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
-        lecture.setChannelName(createdChannel.getName());
+        Channel createdChannel = createChannel(lecture.getCourse(), channelToCreate, Optional.of(userRepository.getUser()));
+        return createdChannel.getName();
     }
 
     /**
@@ -321,7 +323,7 @@ public class ChannelService {
         }
         Channel channelToCreate = createDefaultChannel(channelName, "exercise-", exercise.getTitle());
         channelToCreate.setExercise(exercise);
-        return createChannel(exercise.getCourseViaExerciseGroupOrCourseMember(), channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
+        return createChannel(exercise.getCourseViaExerciseGroupOrCourseMember(), channelToCreate, Optional.of(userRepository.getUser()));
     }
 
     /**
@@ -334,7 +336,7 @@ public class ChannelService {
     public void createExamChannel(Exam exam, Optional<String> channelName) {
         Channel channelToCreate = createDefaultChannel(channelName, "exam-", exam.getTitle());
         channelToCreate.setExam(exam);
-        Channel createdChannel = createChannel(exam.getCourse(), channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
+        Channel createdChannel = createChannel(exam.getCourse(), channelToCreate, Optional.of(userRepository.getUser()));
         exam.setChannelName(createdChannel.getName());
     }
 

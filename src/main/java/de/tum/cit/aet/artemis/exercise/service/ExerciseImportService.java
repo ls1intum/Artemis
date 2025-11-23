@@ -96,6 +96,7 @@ public abstract class ExerciseImportService {
         newResult.setAssessor(originalResult.getAssessor());
         newResult.setCompletionDate(originalResult.getCompletionDate());
         newResult.setExampleResult(true);
+        newResult.setExerciseId(originalResult.getExerciseId());
         newResult.setRated(true);
         newResult.setScore(originalResult.getScore());
         newResult.copyProgrammingExerciseCounters(originalResult);
