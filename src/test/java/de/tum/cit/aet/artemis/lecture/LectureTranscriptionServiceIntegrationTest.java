@@ -215,4 +215,136 @@ class LectureTranscriptionServiceIntegrationTest extends AbstractSpringIntegrati
         var transcriptions = transcriptionRepository.findByLectureUnit_Id(unitId);
         assertThat(transcriptions).isEmpty();
     }
+
+    @Test
+    void cancelNebulaTranscription_success() {
+        var lecture = new Lecture();
+        lecture.setTitle("L1");
+        lecture = lectureRepository.saveAndFlush(lecture);
+
+        var unit = new AttachmentVideoUnit();
+        unit.setName("U1");
+        unit.setLecture(lecture);
+        lecture.addLectureUnit(unit);
+        lecture = lectureRepository.saveAndFlush(lecture);
+        unit = (AttachmentVideoUnit) lecture.getLectureUnits().get(0);
+
+        var jobId = "job-cancel-123";
+        var t = createTranscription(jobId, TranscriptionStatus.PENDING);
+        t.setLectureUnit(unit);
+        t = transcriptionRepository.saveAndFlush(t);
+
+        // Mock Nebula cancel response
+        when(nebulaRestTemplate.exchange(eq("http://localhost:8080/transcribe/cancel/" + jobId), eq(HttpMethod.POST), any(HttpEntity.class), eq(Void.class)))
+                .thenReturn(new ResponseEntity<>(HttpStatus.OK));
+
+        lectureTranscriptionService.cancelNebulaTranscription(unit.getId());
+
+        // Verify transcription was deleted
+        var transcriptions = transcriptionRepository.findByLectureUnit_Id(unit.getId());
+        assertThat(transcriptions).isEmpty();
+    }
+
+    @Test
+    void cancelNebulaTranscription_notFound() {
+        assertThatThrownBy(() -> lectureTranscriptionService.cancelNebulaTranscription(999L)).isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("No transcription found");
+    }
+
+    @Test
+    void cancelNebulaTranscription_completedTranscription_throwsBadRequest() {
+        var lecture = new Lecture();
+        lecture.setTitle("L1");
+        lecture = lectureRepository.saveAndFlush(lecture);
+
+        var unit = new AttachmentVideoUnit();
+        unit.setName("U1");
+        unit.setLecture(lecture);
+        lecture.addLectureUnit(unit);
+        lecture = lectureRepository.saveAndFlush(lecture);
+        unit = (AttachmentVideoUnit) lecture.getLectureUnits().get(0);
+        final Long unitId = unit.getId();
+
+        var jobId = "job-completed";
+        var t = createTranscription(jobId, TranscriptionStatus.COMPLETED);
+        t.setLectureUnit(unit);
+        t = transcriptionRepository.saveAndFlush(t);
+
+        assertThatThrownBy(() -> lectureTranscriptionService.cancelNebulaTranscription(unitId)).isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("Cannot cancel a completed transcription");
+    }
+
+    @Test
+    void cancelNebulaTranscription_failedTranscription_throwsBadRequest() {
+        var lecture = new Lecture();
+        lecture.setTitle("L1");
+        lecture = lectureRepository.saveAndFlush(lecture);
+
+        var unit = new AttachmentVideoUnit();
+        unit.setName("U1");
+        unit.setLecture(lecture);
+        lecture.addLectureUnit(unit);
+        lecture = lectureRepository.saveAndFlush(lecture);
+        unit = (AttachmentVideoUnit) lecture.getLectureUnits().get(0);
+        final Long unitId = unit.getId();
+
+        var jobId = "job-failed";
+        var t = createTranscription(jobId, TranscriptionStatus.FAILED);
+        t.setLectureUnit(unit);
+        t = transcriptionRepository.saveAndFlush(t);
+
+        assertThatThrownBy(() -> lectureTranscriptionService.cancelNebulaTranscription(unitId)).isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("Cannot cancel a failed transcription");
+    }
+
+    @Test
+    void cancelNebulaTranscription_noJobId_throwsBadRequest() {
+        var lecture = new Lecture();
+        lecture.setTitle("L1");
+        lecture = lectureRepository.saveAndFlush(lecture);
+
+        var unit = new AttachmentVideoUnit();
+        unit.setName("U1");
+        unit.setLecture(lecture);
+        lecture.addLectureUnit(unit);
+        lecture = lectureRepository.saveAndFlush(lecture);
+        unit = (AttachmentVideoUnit) lecture.getLectureUnits().get(0);
+        final Long unitId = unit.getId();
+
+        var t = new LectureTranscription();
+        t.setJobId(null);
+        t.setTranscriptionStatus(TranscriptionStatus.PENDING);
+        t.setLectureUnit(unit);
+        t = transcriptionRepository.saveAndFlush(t);
+
+        assertThatThrownBy(() -> lectureTranscriptionService.cancelNebulaTranscription(unitId)).isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("Transcription has no job ID");
+    }
+
+    @Test
+    void cancelNebulaTranscription_nebulaError_throwsInternalServerError() {
+        var lecture = new Lecture();
+        lecture.setTitle("L1");
+        lecture = lectureRepository.saveAndFlush(lecture);
+
+        var unit = new AttachmentVideoUnit();
+        unit.setName("U1");
+        unit.setLecture(lecture);
+        lecture.addLectureUnit(unit);
+        lecture = lectureRepository.saveAndFlush(lecture);
+        unit = (AttachmentVideoUnit) lecture.getLectureUnits().get(0);
+        final Long unitId = unit.getId();
+
+        var jobId = "job-error";
+        var t = createTranscription(jobId, TranscriptionStatus.PENDING);
+        t.setLectureUnit(unit);
+        t = transcriptionRepository.saveAndFlush(t);
+
+        // Mock Nebula cancel error
+        when(nebulaRestTemplate.exchange(eq("http://localhost:8080/transcribe/cancel/" + jobId), eq(HttpMethod.POST), any(HttpEntity.class), eq(Void.class)))
+                .thenThrow(new RuntimeException("Nebula service error"));
+
+        assertThatThrownBy(() -> lectureTranscriptionService.cancelNebulaTranscription(unitId)).isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("Failed to cancel transcription");
+    }
 }

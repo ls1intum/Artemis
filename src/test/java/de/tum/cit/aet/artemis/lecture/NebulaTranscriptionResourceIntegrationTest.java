@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -30,6 +31,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 import de.tum.cit.aet.artemis.lecture.domain.TranscriptionStatus;
 import de.tum.cit.aet.artemis.lecture.dto.NebulaTranscriptionInitResponseDTO;
 import de.tum.cit.aet.artemis.lecture.dto.NebulaTranscriptionRequestDTO;
@@ -183,5 +185,88 @@ class NebulaTranscriptionResourceIntegrationTest extends AbstractSpringIntegrati
 
         // Invalid TUM Live URL format should return 404
         restNebulaTranscriptionMockMvc.perform(get("/api/nebula/video-utils/tum-live-playlist").param("url", "https://tum.live/invalid-format")).andExpect(status().isNotFound());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    void cancelNebulaTranscription_success() throws Exception {
+        // Create a pending transcription
+        var transcription = new LectureTranscription();
+        transcription.setJobId("job-123");
+        transcription.setTranscriptionStatus(TranscriptionStatus.PENDING);
+        transcription.setLectureUnit(lectureUnit);
+        lectureTranscriptionRepository.save(transcription);
+
+        // Mock Nebula cancel response
+        when(nebulaRestTemplate.exchange(eq("http://localhost:8080/transcribe/cancel/job-123"), eq(HttpMethod.POST), any(HttpEntity.class), eq(Void.class)))
+                .thenReturn(new ResponseEntity<>(HttpStatus.OK));
+
+        restNebulaTranscriptionMockMvc.perform(delete("/api/nebula/lecture-unit/" + lectureUnit.getId() + "/transcriber/cancel")).andExpect(status().isOk());
+
+        // Verify transcription was deleted
+        var transcriptions = lectureTranscriptionRepository.findByLectureUnit_Id(lectureUnit.getId());
+        assertThat(transcriptions).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    void cancelNebulaTranscription_notFound() throws Exception {
+        restNebulaTranscriptionMockMvc.perform(delete("/api/nebula/lecture-unit/999/transcriber/cancel")).andExpect(status().isNotFound());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    void cancelNebulaTranscription_completedTranscription_badRequest() throws Exception {
+        // Create a completed transcription
+        var transcription = new LectureTranscription();
+        transcription.setJobId("job-completed");
+        transcription.setTranscriptionStatus(TranscriptionStatus.COMPLETED);
+        transcription.setLectureUnit(lectureUnit);
+        lectureTranscriptionRepository.save(transcription);
+
+        restNebulaTranscriptionMockMvc.perform(delete("/api/nebula/lecture-unit/" + lectureUnit.getId() + "/transcriber/cancel")).andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    void cancelNebulaTranscription_failedTranscription_badRequest() throws Exception {
+        // Create a failed transcription
+        var transcription = new LectureTranscription();
+        transcription.setJobId("job-failed");
+        transcription.setTranscriptionStatus(TranscriptionStatus.FAILED);
+        transcription.setLectureUnit(lectureUnit);
+        lectureTranscriptionRepository.save(transcription);
+
+        restNebulaTranscriptionMockMvc.perform(delete("/api/nebula/lecture-unit/" + lectureUnit.getId() + "/transcriber/cancel")).andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student", roles = "USER")
+    void cancelNebulaTranscription_asStudent_forbidden() throws Exception {
+        // Create a pending transcription
+        var transcription = new LectureTranscription();
+        transcription.setJobId("job-123");
+        transcription.setTranscriptionStatus(TranscriptionStatus.PENDING);
+        transcription.setLectureUnit(lectureUnit);
+        lectureTranscriptionRepository.save(transcription);
+
+        restNebulaTranscriptionMockMvc.perform(delete("/api/nebula/lecture-unit/" + lectureUnit.getId() + "/transcriber/cancel")).andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    void cancelNebulaTranscription_nebulaError_internalServerError() throws Exception {
+        // Create a pending transcription
+        var transcription = new LectureTranscription();
+        transcription.setJobId("job-error");
+        transcription.setTranscriptionStatus(TranscriptionStatus.PENDING);
+        transcription.setLectureUnit(lectureUnit);
+        lectureTranscriptionRepository.save(transcription);
+
+        // Mock Nebula error
+        when(nebulaRestTemplate.exchange(eq("http://localhost:8080/transcribe/cancel/job-error"), eq(HttpMethod.POST), any(HttpEntity.class), eq(Void.class)))
+                .thenThrow(new RestClientException("Nebula service error"));
+
+        restNebulaTranscriptionMockMvc.perform(delete("/api/nebula/lecture-unit/" + lectureUnit.getId() + "/transcriber/cancel")).andExpect(status().isInternalServerError());
     }
 }
