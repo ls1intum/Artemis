@@ -139,16 +139,14 @@
         },
         "examUser": {
             "service": {
-                "multipleExams": "Alle Klausurteilnehmer müssen zur selben Klausur gehören, aber aktuell gehören sie zu {{ foundExams }} verschiedenen Klausuren",
-                "missingPlannedRoomOrSeat": "Nutzer {{ userName }} hat keinen geplanten Raum oder Sitz",
-                "plannedRoomNotFound": "Der geplante Raum {{ plannedRoom }} von Nutzer {{ userName }} konnte nicht gefunden werden",
-                "plannedSeatNotFound": "Der geplante Sitz {{ plannedSeat }} von Nutzer {{ userName }} konnte nicht gefunden werden"
+                "multipleExams": "Alle Klausurteilnehmer müssen zur selben Klausur gehören, aber aktuell gehören sie zu {{ foundExams }} verschiedenen Klausuren"
             }
         },
         "notEnoughExamSeats": "Die ausgewählten Räume haben nur Kapazität für {{ numberOfUsableSeats }} der {{ numberOfExamUsers }} Klausurteilnehmer",
         "reserveFactorOutOfRange": "Der Reservierungsfaktor muss zwischen 0 und 1 sein",
         "noRoomIDs": "Du hast keine Räume ausgewählt",
         "invalidRoomIDs": "Mindestens einer der Räume, die du ausgewählt hast, existiert nicht oder ist veraltet",
+        "noStudentDistributed": "Keinem der Klausurteilnehmer wurde ein Raum und Sitz zugewiesen",
         "wrongCourse": "Die Reaktion gehört nicht zum ausgewählten Kurs.",
         "reactionNotFound": "Die Reaktion konnte nicht gefunden werden.",
         "missingAssociation": "Die Reaktion muss einem Beitrag oder einer Antwort zugeordnet sein.",
