@@ -31,6 +31,9 @@ import {
 import { MockFileService } from 'test/helpers/mocks/service/mock-file.service';
 import { FileService } from 'app/shared/service/file.service';
 import urlParser from 'js-video-url-parser';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
 
 describe('AttachmentVideoUnitComponent', () => {
     let scienceService: ScienceService;
@@ -55,7 +58,15 @@ describe('AttachmentVideoUnitComponent', () => {
         },
     };
 
+    let mockLectureTranscriptionService: any;
+
     beforeEach(async () => {
+        mockLectureTranscriptionService = {
+            getTranscription: jest.fn(),
+            getTranscriptionStatus: jest.fn(() => of(undefined)),
+            cancelTranscription: jest.fn(() => of(true)),
+        };
+
         await TestBed.configureTestingModule({
             imports: [AttachmentVideoUnitComponent],
             providers: [
@@ -63,8 +74,10 @@ describe('AttachmentVideoUnitComponent', () => {
                 provideHttpClientTesting(),
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: FileService, useClass: MockFileService },
+                { provide: AccountService, useClass: MockAccountService },
                 MockProvider(ScienceService),
-                MockProvider(LectureTranscriptionService),
+                { provide: LectureTranscriptionService, useValue: mockLectureTranscriptionService },
+                AttachmentVideoUnitService,
                 MockProvider(NgbModal),
                 MockProvider(AlertService),
             ],
