@@ -255,7 +255,7 @@ public class ModelingExerciseResource {
         String oldProblemStatement = originalExercise.getProblemStatement();
 
         // whether is exam exercise or course exercise are not changeable
-        ModelingExercise updatedExercise = updateModelingExerciseDTO.update(originalExercise);
+        ModelingExercise updatedExercise = modelingExerciseService.updateModelingExercise(updateModelingExerciseDTO, originalExercise);
 
         // validates general settings: points, dates
         updatedExercise.validateGeneralSettings();
@@ -463,7 +463,7 @@ public class ModelingExerciseResource {
 
         var user = userRepository.getUserWithGroupsAndAuthorities();
         // make sure the course actually exists
-        ModelingExercise exerciseForReevaluation = updateModelingExerciseDTO.update(existingExercise);
+        ModelingExercise exerciseForReevaluation = modelingExerciseService.updateModelingExercise(updateModelingExerciseDTO, existingExercise);
         var course = courseRepository.findByIdElseThrow(exerciseForReevaluation.getCourseViaExerciseGroupOrCourseMember().getId());
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
 

@@ -3,19 +3,29 @@ package de.tum.cit.aet.artemis.modeling.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.Collections;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
+import org.hibernate.Hibernate;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
+import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseSpecificationService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
+import de.tum.cit.aet.artemis.modeling.dto.UpdateModelingExerciseDTO;
 import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
 
 @Profile(PROFILE_CORE)
@@ -25,10 +35,16 @@ public class ModelingExerciseService {
 
     private final ModelingExerciseRepository modelingExerciseRepository;
 
+    private final CourseCompetencyRepository courseCompetencyRepository;
+
     private final ExerciseSpecificationService exerciseSpecificationService;
 
-    public ModelingExerciseService(ModelingExerciseRepository modelingExerciseRepository, ExerciseSpecificationService exerciseSpecificationService) {
+    private static final String ENTITY_NAME = "CourseCompetency";
+
+    public ModelingExerciseService(ModelingExerciseRepository modelingExerciseRepository, CourseCompetencyRepository courseCompetencyRepository,
+            ExerciseSpecificationService exerciseSpecificationService) {
         this.modelingExerciseRepository = modelingExerciseRepository;
+        this.courseCompetencyRepository = courseCompetencyRepository;
         this.exerciseSpecificationService = exerciseSpecificationService;
     }
 
@@ -53,5 +69,107 @@ public class ModelingExerciseService {
         Specification<ModelingExercise> specification = exerciseSpecificationService.getExerciseSearchSpecification(searchTerm, isCourseFilter, isExamFilter, user, pageable);
         Page<ModelingExercise> exercisePage = modelingExerciseRepository.findAll(specification, pageable);
         return new SearchResultPageDTO<>(exercisePage.getContent(), exercisePage.getTotalPages());
+    }
+
+    /**
+     * Applies new updateModelingExerciseDTO's data to the given exercise, mutating it in place.
+     *
+     * @param exercise the exercise to update (will be mutated)
+     * @return the same exercise instance after applying updates
+     */
+    public ModelingExercise updateModelingExercise(UpdateModelingExerciseDTO updateModelingExerciseDTO, ModelingExercise exercise) {
+        if (updateModelingExerciseDTO.title() != null) {
+            exercise.setTitle(updateModelingExerciseDTO.title());
+        }
+        if (updateModelingExerciseDTO.channelName() != null) {
+            exercise.setChannelName(updateModelingExerciseDTO.channelName());
+        }
+        if (updateModelingExerciseDTO.shortName() != null) {
+            exercise.setShortName(updateModelingExerciseDTO.shortName());
+        }
+        if (updateModelingExerciseDTO.problemStatement() != null) {
+            exercise.setProblemStatement(updateModelingExerciseDTO.problemStatement());
+        }
+        if (updateModelingExerciseDTO.categories() != null) {
+            exercise.setCategories(updateModelingExerciseDTO.categories());
+        }
+        if (updateModelingExerciseDTO.difficulty() != null) {
+            exercise.setDifficulty(updateModelingExerciseDTO.difficulty());
+        }
+        if (updateModelingExerciseDTO.maxPoints() != null) {
+            exercise.setMaxPoints(updateModelingExerciseDTO.maxPoints());
+        }
+        if (updateModelingExerciseDTO.bonusPoints() != null) {
+            exercise.setBonusPoints(updateModelingExerciseDTO.bonusPoints());
+        }
+        if (updateModelingExerciseDTO.includedInOverallScore() != null) {
+            exercise.setIncludedInOverallScore(updateModelingExerciseDTO.includedInOverallScore());
+        }
+        if (updateModelingExerciseDTO.allowFeedbackRequests() != null) {
+            exercise.setAllowFeedbackRequests(updateModelingExerciseDTO.allowFeedbackRequests());
+        }
+        if (updateModelingExerciseDTO.gradingInstructions() != null) {
+            exercise.setGradingInstructions(updateModelingExerciseDTO.gradingInstructions());
+        }
+        exercise.setReleaseDate(updateModelingExerciseDTO.releaseDate());
+        exercise.setStartDate(updateModelingExerciseDTO.startDate());
+        exercise.setDueDate(updateModelingExerciseDTO.dueDate());
+        exercise.setAssessmentDueDate(updateModelingExerciseDTO.assessmentDueDate());
+        exercise.setExampleSolutionPublicationDate(updateModelingExerciseDTO.exampleSolutionPublicationDate());
+        if (updateModelingExerciseDTO.exampleSolutionModel() != null) {
+            exercise.setExampleSolutionModel(updateModelingExerciseDTO.exampleSolutionModel());
+        }
+        if (updateModelingExerciseDTO.exampleSolutionExplanation() != null) {
+            exercise.setExampleSolutionExplanation(updateModelingExerciseDTO.exampleSolutionExplanation());
+        }
+        if (updateModelingExerciseDTO.gradingCriteria() != null) {
+            Set<GradingCriterion> existingCriteria = exercise.getGradingCriteria();
+            var existingById = (existingCriteria != null && Hibernate.isInitialized(existingCriteria))
+                    ? existingCriteria.stream().filter(gc -> gc.getId() != null).collect(Collectors.toMap(GradingCriterion::getId, gc -> gc))
+                    : Map.<Long, GradingCriterion>of();
+
+            Set<GradingCriterion> updatedCriteria = updateModelingExerciseDTO.gradingCriteria().stream().map(dto -> {
+                GradingCriterion criterion = dto.id() != null ? existingById.get(dto.id()) : null;
+                if (criterion == null) {
+                    criterion = dto.toEntity();
+                    criterion.setExercise(exercise);
+                }
+                else {
+                    dto.applyTo(criterion);
+                }
+                return criterion;
+            }).collect(Collectors.toSet());
+
+            exercise.setGradingCriteria(updatedCriteria);
+        }
+        if (updateModelingExerciseDTO.competencyLinks() != null) {
+            Set<CompetencyExerciseLink> existingLinks = exercise.getCompetencyLinks();
+
+            var existingByCompetencyId = existingLinks.stream().collect(Collectors.toMap(link -> link.getCompetency().getId(), link -> link));
+
+            Set<CompetencyExerciseLink> updatedLinks = updateModelingExerciseDTO.competencyLinks().stream().map(dto -> {
+                long competencyId = dto.competencyId();
+                double weight = dto.weight();
+
+                var competency = courseCompetencyRepository.findById(competencyId)
+                        .orElseThrow(() -> new BadRequestAlertException("The selected competency does not exist.", ENTITY_NAME, "competencyNotFound"));
+
+                if (!Objects.equals(competency.getCourse().getId(), exercise.getCourseViaExerciseGroupOrCourseMember().getId())) {
+                    throw new BadRequestAlertException("The competency does not belong to the exercise's course.", ENTITY_NAME, "wrongCourse");
+                }
+
+                CompetencyExerciseLink link = existingByCompetencyId.get(competencyId);
+
+                if (link == null) {
+                    link = new CompetencyExerciseLink(competency, exercise, weight);
+                }
+                else {
+                    link.setWeight(weight);
+                }
+                return link;
+            }).collect(Collectors.toSet());
+            exercise.setCompetencyLinks(updatedLinks);
+        }
+        return exercise;
     }
 }

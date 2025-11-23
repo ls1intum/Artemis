@@ -3,6 +3,7 @@ import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grad
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { convertDateFromClient } from 'app/shared/util/date.utils';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
+import { CompetencyExerciseLink } from 'app/atlas/shared/entities/competency.model';
 
 export interface UpdateModelingExerciseDTO {
     id: number;
@@ -17,6 +18,7 @@ export interface UpdateModelingExerciseDTO {
     maxPoints?: number;
     bonusPoints?: number;
     includedInOverallScore?: IncludedInOverallScore;
+    allowFeedbackRequests?: boolean;
 
     releaseDate?: string;
     startDate?: string;
@@ -32,6 +34,7 @@ export interface UpdateModelingExerciseDTO {
 
     gradingCriteria?: GradingCriterion[];
     gradingInstructions?: string;
+    competencyLinks?: CompetencyExerciseLink[];
 }
 
 /**
@@ -51,6 +54,7 @@ export function toUpdateModelingExerciseDTO(modelingExercise: ModelingExercise):
         maxPoints: modelingExercise.maxPoints,
         bonusPoints: modelingExercise.bonusPoints,
         includedInOverallScore: modelingExercise.includedInOverallScore,
+        allowFeedbackRequests: modelingExercise.allowFeedbackRequests,
         releaseDate: convertDateFromClient(modelingExercise.releaseDate),
         startDate: convertDateFromClient(modelingExercise.startDate),
         dueDate: convertDateFromClient(modelingExercise.dueDate),
@@ -62,5 +66,6 @@ export function toUpdateModelingExerciseDTO(modelingExercise: ModelingExercise):
         exerciseGroupId: modelingExercise.exerciseGroup?.id,
         gradingCriteria: modelingExercise.gradingCriteria ?? [],
         gradingInstructions: modelingExercise.gradingInstructions,
+        competencyLinks: modelingExercise.competencyLinks,
     };
 }

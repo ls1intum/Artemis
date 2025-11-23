@@ -43,6 +43,7 @@ import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.atlas.connector.AtlasMLRequestMockProvider;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
+import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
@@ -105,6 +106,9 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
     @Autowired
     private TutorParticipationTestRepository tutorParticipationRepository;
+
+    @Autowired
+    private CourseCompetencyRepository courseCompetencyRepository;
 
     @Autowired
     private ChannelRepository channelRepository;
@@ -940,7 +944,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         modelingExerciseToBeConflicted.setId(123456789L);
 
         UpdateModelingExerciseDTO dto = new UpdateModelingExerciseDTO(modelingExerciseToBeConflicted.getId(), null, null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null);
+                null, null, null, null, null, null, null, null, null, null, null);
         request.put("/api/modeling/modeling-exercises/" + classExercise.getId() + "/re-evaluate", dto, HttpStatus.CONFLICT);
     }
 
@@ -1017,7 +1021,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         var created = modelingExerciseTestRepository.findByCourseIdWithCategories(classExercise.getCourseViaExerciseGroupOrCourseMember().getId()).getFirst();
         created.setTitle("AtlasML Update");
         UpdateModelingExerciseDTO dto = new UpdateModelingExerciseDTO(created.getId(), created.getTitle(), null, null, null, null, null, null, null, null, null, null, null, null,
-                null, null, null, classExercise.getCourseViaExerciseGroupOrCourseMember().getId(), null, null, null);
+                null, null, null, null, null, classExercise.getCourseViaExerciseGroupOrCourseMember().getId(), null, null, null);
         request.putWithResponseBody("/api/modeling/modeling-exercises", dto, ModelingExercise.class, HttpStatus.OK);
 
         // Delete
