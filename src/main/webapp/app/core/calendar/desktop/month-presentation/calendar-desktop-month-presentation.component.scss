@@ -23,7 +23,7 @@
 
 .week-row {
     display: flex;
-    height: 6.25rem;
+    height: 7.375rem;
 
     .day-cell {
         flex: 1;
@@ -43,8 +43,8 @@
             gap: 0.25rem;
             background-color: var(--body-bg);
             border-radius: 0.25rem;
-            padding: 0.125rem 0.25rem;
-            font-size: 0.5rem;
+            padding: 0.125rem 0.35rem;
+            font-size: 0.75rem;
             color: var(--black);
 
             &:hover {
@@ -59,23 +59,7 @@
             }
         }
 
-        .exam-event-cell {
-            background-color: var(--pastel-teal);
-        }
-
-        .lecture-event-cell {
-            background-color: var(--pastel-blue);
-        }
-
-        .tutorial-event-cell {
-            background-color: var(--pastel-purple);
-        }
-
-        .exercise-event-cell {
-            background-color: var(--pastel-cyan);
-        }
-
-        .more-events-info {
+        .more-events-label {
             width: 100%;
             font-size: 0.5rem;
             text-align: center;
