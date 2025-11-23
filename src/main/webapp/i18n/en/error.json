@@ -173,7 +173,7 @@
         },
         "CourseCompetency": {
             "wrongCourse": "The competency does not belong to the exercise's course.",
-            "competencyNotFound": "The selected competency does not exist."
+            "courseNotFound": "The competency does not belong to any course."
         }
     }
 }

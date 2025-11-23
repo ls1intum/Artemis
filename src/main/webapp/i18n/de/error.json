@@ -173,7 +173,7 @@
         },
         "CourseCompetency": {
             "wrongCourse": "Die Kompetenz gehört nicht zum Kurs der Übung.",
-            "competencyNotFound": "Die ausgewählte Kompetenz existiert nicht."
+            "courseNotFound": "Die Kompetenz gehört zu keinem Kurs."
         }
     }
 }

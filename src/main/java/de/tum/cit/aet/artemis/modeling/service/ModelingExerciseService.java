@@ -16,8 +16,8 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
+import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
-import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
@@ -35,16 +35,12 @@ public class ModelingExerciseService {
 
     private final ModelingExerciseRepository modelingExerciseRepository;
 
-    private final CourseCompetencyRepository courseCompetencyRepository;
-
     private final ExerciseSpecificationService exerciseSpecificationService;
 
     private static final String ENTITY_NAME = "CourseCompetency";
 
-    public ModelingExerciseService(ModelingExerciseRepository modelingExerciseRepository, CourseCompetencyRepository courseCompetencyRepository,
-            ExerciseSpecificationService exerciseSpecificationService) {
+    public ModelingExerciseService(ModelingExerciseRepository modelingExerciseRepository, ExerciseSpecificationService exerciseSpecificationService) {
         this.modelingExerciseRepository = modelingExerciseRepository;
-        this.courseCompetencyRepository = courseCompetencyRepository;
         this.exerciseSpecificationService = exerciseSpecificationService;
     }
 
@@ -144,27 +140,32 @@ public class ModelingExerciseService {
         }
         if (updateModelingExerciseDTO.competencyLinks() != null) {
             Set<CompetencyExerciseLink> existingLinks = exercise.getCompetencyLinks();
+            if (existingLinks == null || !Hibernate.isInitialized(existingLinks)) {
+                existingLinks = Set.of();
+            }
 
-            var existingByCompetencyId = existingLinks.stream().collect(Collectors.toMap(link -> link.getCompetency().getId(), link -> link));
+            var existingByCompetencyId = existingLinks.stream().filter(link -> link.getCompetency() != null && link.getCompetency().getId() != null)
+                    .collect(Collectors.toMap(link -> link.getCompetency().getId(), link -> link));
 
             Set<CompetencyExerciseLink> updatedLinks = updateModelingExerciseDTO.competencyLinks().stream().map(dto -> {
-                long competencyId = dto.competencyId();
-                double weight = dto.weight();
-
-                var competency = courseCompetencyRepository.findById(competencyId)
-                        .orElseThrow(() -> new BadRequestAlertException("The selected competency does not exist.", ENTITY_NAME, "competencyNotFound"));
-
-                if (!Objects.equals(competency.getCourse().getId(), exercise.getCourseViaExerciseGroupOrCourseMember().getId())) {
+                Long exerciseCourseId = exercise.getCourseViaExerciseGroupOrCourseMember() != null ? exercise.getCourseViaExerciseGroupOrCourseMember().getId() : null;
+                if (exerciseCourseId != null && dto.courseId() != null && !Objects.equals(exerciseCourseId, dto.courseId())) {
                     throw new BadRequestAlertException("The competency does not belong to the exercise's course.", ENTITY_NAME, "wrongCourse");
                 }
 
-                CompetencyExerciseLink link = existingByCompetencyId.get(competencyId);
-
+                var competencyDto = dto.courseCompetencyDTO();
+                CompetencyExerciseLink link = existingByCompetencyId.get(competencyDto.id());
                 if (link == null) {
-                    link = new CompetencyExerciseLink(competency, exercise, weight);
+                    Competency competency = new Competency();
+                    competency.setId(competencyDto.id());
+                    competency.setCourse(exercise.getCourseViaExerciseGroupOrCourseMember());
+                    competency.setDescription(competencyDto.description());
+                    competency.setTitle(competencyDto.title());
+                    competency.setTaxonomy(competencyDto.taxonomy());
+                    link = new CompetencyExerciseLink(competency, exercise, dto.weight());
                 }
                 else {
-                    link.setWeight(weight);
+                    link.setWeight(dto.weight());
                 }
                 return link;
             }).collect(Collectors.toSet());

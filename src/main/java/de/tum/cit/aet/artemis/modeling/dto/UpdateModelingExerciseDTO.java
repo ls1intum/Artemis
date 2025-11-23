@@ -15,6 +15,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.dto.GradingCriterionDTO;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
+import de.tum.cit.aet.artemis.atlas.dto.CourseCompetencyDTO;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
@@ -28,10 +30,13 @@ public record UpdateModelingExerciseDTO(long id, @Nullable String title, @Nullab
         @Nullable Set<GradingCriterionDTO> gradingCriteria, @Nullable Set<CompetencyExerciseLinkDTO> competencyLinks) {
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record CompetencyExerciseLinkDTO(long competencyId, double weight) {
+    public record CompetencyExerciseLinkDTO(@NotNull CourseCompetencyDTO courseCompetencyDTO, double weight, Long courseId) {
 
         public static CompetencyExerciseLinkDTO of(@NotNull CompetencyExerciseLink link) {
-            return new CompetencyExerciseLinkDTO(link.getCompetency().getId(), link.getWeight());
+            if (link.getCompetency().getCourse() == null) {
+                throw new BadRequestAlertException("The competency does not belong to any course.", "CourseCompetency", "courseNotFound");
+            }
+            return new CompetencyExerciseLinkDTO(CourseCompetencyDTO.of(link.getCompetency()), link.getWeight(), link.getCompetency().getCourse().getId());
         }
     }
 
