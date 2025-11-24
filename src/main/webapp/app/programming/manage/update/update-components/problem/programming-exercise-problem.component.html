@@ -4,54 +4,55 @@
     @if (isEditFieldDisplayedRecord().problemStatement) {
         <div class="form-group" id="field_problemStatement" name="problemStatement">
             <label class="form-control-label" for="field_problemStatement" jhiTranslate="artemisApp.programmingExercise.problemStatement.title"></label>
-            @if (programmingExerciseCreationConfig.isImportFromExistingExercise || programmingExerciseCreationConfig.isImportFromFile) {
+            @if (programmingExerciseCreationConfig().isImportFromExistingExercise || programmingExerciseCreationConfig().isImportFromFile) {
                 <ngb-alert [dismissible]="false">
                     <span class="font-weight-bold">
                         {{ 'artemisApp.exercise.import.attention' | artemisTranslate }}
                     </span>
                     <span
                         jhiTranslate="{{
-                            programmingExerciseCreationConfig.isImportFromExistingExercise
+                            programmingExerciseCreationConfig().isImportFromExistingExercise
                                 ? 'artemisApp.exercise.import.markdownWarning'
                                 : 'artemisApp.exercise.import.embeddedFilesWarning'
                         }}"
                     ></span>
                 </ngb-alert>
             }
-            @if (programmingExerciseCreationConfig.isImportFromExistingExercise) {
+            @if (programmingExerciseCreationConfig().isImportFromExistingExercise) {
                 <jhi-programming-exercise-instructions
-                    [exercise]="programmingExercise"
-                    [participation]="programmingExercise.templateParticipation!"
+                    [exercise]="programmingExercise()"
+                    [participation]="programmingExercise().templateParticipation!"
                     [personalParticipation]="false"
                 />
             }
             @if (
-                programmingExerciseCreationConfig.problemStatementLoaded &&
-                programmingExerciseCreationConfig.templateParticipationResultLoaded &&
-                !programmingExerciseCreationConfig.isImportFromExistingExercise
+                programmingExerciseCreationConfig().problemStatementLoaded &&
+                programmingExerciseCreationConfig().templateParticipationResultLoaded &&
+                !programmingExerciseCreationConfig().isImportFromExistingExercise
             ) {
                 <jhi-programming-exercise-editable-instructions
-                    [participation]="programmingExercise.templateParticipation!"
-                    [(exercise)]="exercise"
+                    [(participationValue)]="programmingExercise().templateParticipation!"
+                    [programmingExercise]="programmingExercise()"
+                    (programmingExerciseChange)="programmingExerciseChange.emit($event)"
                     [initialEditorHeight]="MarkdownEditorHeight.MEDIUM"
-                    [showStatus]="!!programmingExercise?.id"
-                    [editMode]="!!programmingExercise?.id"
-                    (hasUnsavedChanges)="programmingExerciseCreationConfig.hasUnsavedChanges = $event"
+                    [showStatus]="!!programmingExercise()?.id"
+                    [editMode]="!!programmingExercise()?.id"
+                    (hasUnsavedChanges)="programmingExerciseCreationConfig().hasUnsavedChanges = $event"
                     (instructionChange)="problemStatementChange.emit($event)"
-                    [forceRender]="programmingExerciseCreationConfig.rerenderSubject"
+                    [forceRender]="programmingExerciseCreationConfig().rerenderSubject"
                     class="form__editable-instructions"
                 />
             }
         </div>
     }
-    @if (isEditFieldDisplayedRecord().linkedCompetencies && !programmingExerciseCreationConfig.isExamMode) {
+    @if (isEditFieldDisplayedRecord().linkedCompetencies && !programmingExerciseCreationConfig().isExamMode) {
         <div class="form-group">
             <jhi-competency-selection
                 id="competencies"
                 [labelName]="'artemisApp.competency.link.title' | artemisTranslate"
                 [labelTooltip]="'artemisApp.competency.link.exercise' | artemisTranslate"
-                [exerciseDescription]="programmingExercise.problemStatement || programmingExercise.title"
-                [(ngModel)]="programmingExercise.competencyLinks"
+                [exerciseDescription]="programmingExercise().problemStatement || programmingExercise().title"
+                [(ngModel)]="programmingExercise().competencyLinks"
                 name="competencyLinks"
             />
         </div>
