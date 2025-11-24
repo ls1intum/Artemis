@@ -579,8 +579,8 @@ export class ExerciseAPIRequests {
         // Updated to use the new endpoint provided in the Java controller
         const response = await this.page.request.get(`api/exercise/programming-exercises/${exerciseId}/with-participations`);
         const programmingExercise = await response.json();
-        const participations = programmingExercise.studentParticipations as StudentParticipation[];
-        return participations[0] ?? undefined;
+        const participations = programmingExercise.studentParticipations;
+        return participations?.[0];
     }
 
     /**
