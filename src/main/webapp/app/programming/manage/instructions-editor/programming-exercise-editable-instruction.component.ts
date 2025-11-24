@@ -190,7 +190,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         this.savingInstructions = true;
         const problemStatementToSave = this.exercise.problemStatement?.trim() || undefined;
         return this.programmingExerciseService
-            .updateProblemStatement(this.exercise.id!, problemStatementToSave!)
+            .updateProblemStatement(this.exercise.id!, problemStatementToSave)
             .pipe(
                 tap(() => {
                     this.unsavedChanges = false;

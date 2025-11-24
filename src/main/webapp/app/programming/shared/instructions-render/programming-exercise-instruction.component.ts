@@ -76,7 +76,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
 
     @ViewChild(ExamExerciseUpdateHighlighterComponent) examExerciseUpdateHighlighterComponent: ExamExerciseUpdateHighlighterComponent;
 
-    private problemStatement: string;
+    private problemStatement: string | undefined;
     private participationSubscription?: Subscription;
     private testCasesSubscription?: Subscription;
 
@@ -163,9 +163,9 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                         this.isLoading = true;
                         return of(this.exercise.problemStatement).pipe(
                             tap((problemStatement) => {
-                                // Always update the problem statement, even if empty
-                                // The component will display an empty state message instead of hiding
-                                this.problemStatement = problemStatement ?? '';
+                                // Set to undefined for null/empty values to preserve empty-state sentinel
+                                // Otherwise set the actual string value
+                                this.problemStatement = problemStatement?.trim() || undefined;
                             }),
                             switchMap(() => this.loadInitialResult()),
                             tap((latestResult) => {
@@ -177,16 +177,16 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                                 this.isLoading = false;
                             }),
                         );
-                    } else if (problemStatementHasChanged(changes) && this.problemStatement === undefined) {
+                    } else if (problemStatementHasChanged(changes) && !this.problemStatement) {
                         // Refreshes the state in the singleton task and uml extension service
                         this.latestResult = this.latestResultValue;
-                        this.problemStatement = this.exercise.problemStatement!;
+                        this.problemStatement = this.exercise.problemStatement?.trim() || undefined;
                         this.updateMarkdown();
                         return of(undefined);
                     } else if (this.exercise && problemStatementHasChanged(changes)) {
                         // Refreshes the state in the singleton task and uml extension service
                         this.latestResult = this.latestResultValue;
-                        this.problemStatement = this.exercise.problemStatement!;
+                        this.problemStatement = this.exercise.problemStatement?.trim() || undefined;
                         return of(undefined);
                     } else {
                         return of(undefined);
