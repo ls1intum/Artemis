@@ -93,23 +93,49 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
     List<Exam> findAllByEndDateGreaterThanEqual(@Param("date") ZonedDateTime date);
 
     /**
-     * Query which fetches all the active exams for which the user is instructor.
+     * Returns all exams visible to a user who is at least a teaching assistant in the corresponding course.
      *
-     * @param groups   user groups
-     * @param pageable Pageable
-     * @param fromDate date to start from
-     * @param toDate   date to end at
-     * @return Page with exams
+     * <p>
+     * The visibility window depends on the user's role <b>per course</b>:
+     * <ul>
+     * <li><b>Instructors</b> may see exams whose {@code visibleDate} is between
+     * {@code fromDate} (typically now - 7 days) and {@code toDate} (typically now + 7 days).</li>
+     * <li><b>Editors</b> and <b>teaching assistants</b> may only see exams whose {@code visibleDate}
+     * lies between {@code now} (0 days offset) and {@code toDate} (typically now + 7 days).</li>
+     * </ul>
+     *
+     * <p>
+     * The lower bound is computed dynamically in the database via a JPQL {@code CASE} expression,
+     * ensuring that paging is performed directly in the database and remains efficient.
+     * </p>
+     *
+     * <p>
+     * This method is database-agnostic and works on both MySQL and PostgreSQL, because all
+     * temporal arithmetic is performed in Java, and the query uses only portable JPQL.
+     * </p>
+     *
+     * @param groups   all authorization groups the user belongs to
+     * @param pageable paging specification
+     * @param fromDate lower bound for instructors (usually {@code now.minusDays(7)})
+     * @param nowDate  lower bound for editors and tutors (usually the current timestamp)
+     * @param toDate   upper bound for all roles (usually {@code now.plusDays(7)})
+     * @return a paginated list of exams visible to the user according to their role
      */
     @Query("""
             SELECT e
             FROM Exam e
-            WHERE e.course.instructorGroupName IN :groups
-                AND e.visibleDate >= :fromDate
-                AND e.visibleDate <= :toDate
+            WHERE
+                e.visibleDate <= :toDate
+                AND (
+                        (e.course.instructorGroupName IN :groups
+                         AND e.visibleDate >= :fromDate)
+                    OR
+                        ((e.course.editorGroupName IN :groups OR e.course.teachingAssistantGroupName IN :groups)
+                         AND e.visibleDate >= :nowDate)
+                )
             """)
-    Page<Exam> findAllActiveExamsInCoursesWhereInstructor(@Param("groups") Set<String> groups, Pageable pageable, @Param("fromDate") ZonedDateTime fromDate,
-            @Param("toDate") ZonedDateTime toDate);
+    Page<Exam> findAllActiveExamsInCoursesWhereAtLeastTutor(@Param("groups") Set<String> groups, Pageable pageable, @Param("fromDate") ZonedDateTime fromDate,
+            @Param("nowDate") ZonedDateTime nowDate, @Param("toDate") ZonedDateTime toDate);
 
     /**
      * Count all active exams
@@ -526,4 +552,20 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
             WHERE exam.course.id = :courseId
             """)
     Set<Long> findExamIdsByCourseId(@Param("courseId") long courseId);
+
+    @Query("""
+            SELECT DISTINCT ex.id
+            FROM Exam exam
+                JOIN exam.exerciseGroups eg
+                JOIN eg.exercises ex
+            WHERE exam.id = :examId
+            """)
+    Set<Long> findExerciseIdsByExamId(@Param("examId") Long examId);
+
+    @Query("""
+            SELECT ex.numberOfCorrectionRoundsInExam
+            FROM Exam ex
+            WHERE ex.id = :examId
+            """)
+    int findNumberOfCorrectionRoundsByExamId(@Param("examId") Long examId);
 }

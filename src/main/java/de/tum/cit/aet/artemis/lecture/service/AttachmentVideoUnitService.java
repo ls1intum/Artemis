@@ -72,6 +72,7 @@ public class AttachmentVideoUnitService {
      * @return The created attachment video unit
      */
     public AttachmentVideoUnit saveAttachmentVideoUnit(AttachmentVideoUnit attachmentVideoUnit, Attachment attachment, MultipartFile file, boolean keepFilename) {
+        // TODO: switch to the new mechanism of lectureUnitService.updateCompetencyLinks
         AttachmentVideoUnit savedAttachmentVideoUnit = lectureUnitService.saveWithCompetencyLinks(attachmentVideoUnit, attachmentVideoUnitRepository::saveAndFlush);
 
         if (attachment != null && file != null) {
@@ -110,6 +111,7 @@ public class AttachmentVideoUnitService {
             createAttachment(updateAttachment, existingAttachmentVideoUnit, updateFile, keepFilename);
         }
 
+        // TODO: switch to the new mechanism of lectureUnitService.updateCompetencyLinks
         AttachmentVideoUnit savedAttachmentVideoUnit = lectureUnitService.saveWithCompetencyLinks(existingAttachmentVideoUnit, attachmentVideoUnitRepository::saveAndFlush);
 
         // Set the original competencies back to the attachment video unit so that the competencyProgressService can determine which competencies changed
