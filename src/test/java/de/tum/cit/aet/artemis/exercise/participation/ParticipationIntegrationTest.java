@@ -1611,6 +1611,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         participationUtilService.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, quizExercise.getScoreForSubmission(quizSubmission), true);
 
         var actualParticipation = participationService.findOneByExerciseAndStudentLoginAnyStateWithEagerResultsElseThrow(quizExercise, TEST_PREFIX + "student1");
+        actualParticipation = participationService.findExerciseParticipationWithLatestSubmissionAndResultElseThrow(actualParticipation.getId());
         var actualResults = participationUtilService.getResultsForParticipation(actualParticipation);
 
         assertThat(actualResults).hasSize(1);
@@ -1831,7 +1832,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
                     HttpStatus.OK);
             assertThat(participation.getExercise()).as("Participation contains exercise").isEqualTo(quizEx);
             var participationFromServer = participationService.findOneByExerciseAndStudentLoginAnyStateWithEagerResultsElseThrow(quizEx, TEST_PREFIX + "student1");
-            assertThat(participationUtilService.getResultsForParticipation(participationFromServer)).as("New result was added to the participation").hasSize(1);
+            assertThat(participationUtilService.getResultsForParticipation(participation)).as("No result was added to the participation").hasSize(0);
             assertThat(participationFromServer.getInitializationState()).as("Participation was initialized").isEqualTo(InitializationState.INITIALIZED);
         }
     }
