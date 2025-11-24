@@ -516,12 +516,12 @@ public class User extends AbstractAuditingEntity implements Participant {
     }
 
     /**
-     * Checks if the user has accepted the external LLM privacy policy.
+     * Checks if the user has selected an AI usage preference.
      * If not, an {@link AccessForbiddenException} is thrown.
      */
     public void hasSelectedLLMUsageElseThrow() {
         if (aiSelectionDecision == null) {
-            throw new AccessForbiddenException("The user has not accepted the external LLM privacy policy yet.");
+            throw new AccessForbiddenException("The user has not selected an AI usage preference yet.");
         }
     }
 

@@ -734,22 +734,14 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             @Param("vcsAccessTokenExpiryDate") ZonedDateTime vcsAccessTokenExpiryDate);
 
     @Modifying
-    @Transactional // ok because of modifying query
-    @Query("""
-            UPDATE User user
-            SET user.aiSelectionDecisionDate = :acceptDatetime
-            WHERE user.id = :userId
-            """)
-    void updateSelectedLLMUsageToDate(@Param("userId") long userId, @Param("acceptDatetime") ZonedDateTime acceptDatetime);
-
-    @Modifying
     @Transactional
     @Query("""
             UPDATE User user
-            SET user.aiSelectionDecision = :selection
+            SET user.aiSelectionDecision = :decision,
+                user.aiSelectionDecisionDate = :timestamp
             WHERE user.id = :userId
             """)
-    void updateSelectedLLMUsageToEnum(@Param("userId") long userId, @Param("selection") AiSelectionDecision selection);
+    void updateSelectedLLMUsage(@Param("userId") long userId, @Param("decision") AiSelectionDecision decision, @Param("timestamp") ZonedDateTime timestamp);
 
     @Modifying
     @Transactional // ok because of modifying query

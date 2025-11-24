@@ -6,6 +6,8 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import jakarta.validation.constraints.NotNull;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.audit.AuditEvent;
@@ -134,23 +136,23 @@ public class UserResource {
     }
 
     /**
-     * PUT users/select-llm-usage : sets the SelectedLLMUsage and SelectedLLMUsageDate flags for the user to
-     * CLOUD_AI, LOCAL_AI or NO_AI, and ZonedDateTime.now() or null,
-     * depending on whether the user accepted or declined the usage of internal/external LLMs.
+     * PUT users/select-llm-usage : sets the user's AI selection decision and timestamp.
+     * Updates both the AI selection (CLOUD_AI, LOCAL_AI, or NO_AI) and the decision timestamp
+     * to the current time. Users can change their decision at any time.
+     * Each change is recorded in the audit log.
      *
      * @param selectedLLMUsageDTO the DTO containing the user's choice regarding LLM usage
-     * @return the ResponseEntity with status 200 (OK), with status 404 (Not Found),
-     *         or with status 400 (Bad Request) if LLM usage was already accepted
+     * @return the ResponseEntity with status 200 (OK) on success,
+     *         or with status 400 (Bad Request) if the selection is invalid
      */
     @PutMapping("users/select-llm-usage")
     @EnforceAtLeastStudent
-    public ResponseEntity<Void> setSelectedLLMUsageToTimestampAndEnum(@RequestBody SelectedLLMUsageDTO selectedLLMUsageDTO) {
+    public ResponseEntity<Void> setSelectedLLMUsageToTimestampAndEnum(@RequestBody @NotNull SelectedLLMUsageDTO selectedLLMUsageDTO) {
         User user = userRepository.getUser();
         ZonedDateTime hasSelectedTimestamp = ZonedDateTime.now();
         AiSelectionDecision selectedLLMUsage = selectedLLMUsageDTO.selection();
         AiSelectionDecision before = user.getAiSelectionDecision();
-        userRepository.updateSelectedLLMUsageToDate(user.getId(), hasSelectedTimestamp);
-        userRepository.updateSelectedLLMUsageToEnum(user.getId(), selectedLLMUsage);
+        userRepository.updateSelectedLLMUsage(user.getId(), selectedLLMUsage, hasSelectedTimestamp);
         var auditEvent = new AuditEvent(user.getLogin(), Constants.AI_SELECTION_DECISION, "before=" + before + ";after=" + selectedLLMUsage + ";at=" + hasSelectedTimestamp);
         auditEventRepository.add(auditEvent);
         return ResponseEntity.ok().build();
