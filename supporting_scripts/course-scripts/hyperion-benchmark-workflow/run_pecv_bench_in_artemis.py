@@ -169,12 +169,8 @@ def main():
 
     # TODO POST Request to iterate over all passed programming exercise IDs and check consistency in each of them, correlate to which exercise and its variant it belongs 
     # and store the inconsistency there in json file, in a specific folder to let pecv bench analysis scripts for later use
-    check_consistency(session=session, programming_exercise_ids=PROGRAMMIN_EXERCISES_IDS, server_url=SERVER_URL)
+    #check_consistency(session=session, programming_exercise_ids=PROGRAMMING_EXERCISES_IDS, server_url=SERVER_URL)
 
-    # TODO after that somehow call already existing code from pecv bench, which iterates over results json file for each specific variand, compares it to gold standart
-    # NOTE which is variantID.json in the same folder as variandID.patch file
-    # TODO after that it automatically create a variants_report.json, and generates a statistics and plots
-    # NOTE identify how to see the results
 if __name__ == "__main__":
     logging.info("Starting PECV-Bench Hyperion Benchmark Workflow...")
     main()

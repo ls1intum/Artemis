@@ -211,3 +211,7 @@ def check_consistency(session: Session, programming_exercise_ids: [int], server_
     """Check the consistency of the programming exercise."""
 
     ##api/hyperion/programming-exercises/{programmingExerciseId}/consistency-check
+    # TODO after that somehow call already existing code from pecv bench, which iterates over results json file for each specific variand, compares it to gold standart
+    # NOTE which is variantID.json in the same folder as variandID.patch file
+    # TODO after that it automatically create a variants_report.json, and generates a statistics and plots
+    # NOTE identify how to see the results
