@@ -144,18 +144,25 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
             @Param("participationIds") Collection<Long> participationIds);
 
     @Query("""
-            SELECT participation.repositoryUri
-            FROM ProgrammingExerciseStudentParticipation participation
-                JOIN TREAT (participation.exercise AS ProgrammingExercise) pe
+            SELECT pa.repositoryUri
+            FROM ProgrammingExercise pe
+                LEFT JOIN TREAT (pe.studentParticipations as ProgrammingExerciseStudentParticipation) pa
+            WHERE pa.repositoryUri IS NOT NULL
+                AND pe.dueDate BETWEEN :earliestDate AND :latestDate
+            """)
+    Page<String> findRepositoryUrisByCourseExerciseDueDateBetween(@Param("earliestDate") ZonedDateTime earliestDate, @Param("latestDate") ZonedDateTime latestDate,
+            Pageable pageable);
+
+    @Query("""
+            SELECT pa.repositoryUri
+            FROM ProgrammingExercise pe
                 LEFT JOIN pe.exerciseGroup eg
                 LEFT JOIN eg.exam exam
-            WHERE participation.repositoryUri IS NOT NULL
-                AND (
-                    (pe.dueDate IS NOT NULL AND pe.dueDate BETWEEN :earliestDate AND :latestDate)
-                    OR (eg IS NOT NULL AND exam IS NOT NULL AND exam.endDate BETWEEN :earliestDate AND :latestDate)
-                )
+                LEFT JOIN TREAT (pe.studentParticipations as ProgrammingExerciseStudentParticipation) pa
+            WHERE pa.repositoryUri IS NOT NULL
+                AND exam.endDate BETWEEN :earliestDate AND :latestDate
             """)
-    Page<String> findRepositoryUrisByRecentDueDateOrRecentExamEndDate(@Param("earliestDate") ZonedDateTime earliestDate, @Param("latestDate") ZonedDateTime latestDate,
+    Page<String> findRepositoryUrisByExamExercisesEndDateBetween(@Param("earliestDate") ZonedDateTime earliestDate, @Param("latestDate") ZonedDateTime latestDate,
             Pageable pageable);
 
     @Query("""

@@ -690,7 +690,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         participation.setRepositoryUri(localVcsRepositoryUri);
         participationRepo.save(participation);
 
-        gitService.getDefaultLocalPathOfRepo(participation.getVcsRepositoryUri());
+        gitService.getDefaultLocalCheckOutPathOfRepo(participation.getVcsRepositoryUri());
 
         Result result1 = participationUtilService.createSubmissionAndResult(participation, 100, false);
         Result result2 = participationUtilService.addResultToSubmission(participation, result1.getSubmission());
@@ -737,7 +737,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         participation.setRepositoryUri(localVcsRepositoryUri);
         participationRepo.save(participation);
 
-        gitService.getDefaultLocalPathOfRepo(participation.getVcsRepositoryUri());
+        gitService.getDefaultLocalCheckOutPathOfRepo(participation.getVcsRepositoryUri());
 
         Result result1 = participationUtilService.createSubmissionAndResult(participation, 100, false);
         Result result2 = participationUtilService.addResultToSubmission(participation, result1.getSubmission());
@@ -860,7 +860,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         participation.setRepositoryUri(localVcsRepositoryUri);
         participationRepo.save(participation);
 
-        gitService.getDefaultLocalPathOfRepo(participation.getVcsRepositoryUri());
+        gitService.getDefaultLocalCheckOutPathOfRepo(participation.getVcsRepositoryUri());
 
         Result result1 = participationUtilService.createSubmissionAndResult(participation, 100, false);
         Result result2 = participationUtilService.addResultToSubmission(participation, result1.getSubmission());
@@ -968,7 +968,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         var localVcsRepositoryUri = new LocalVCRepositoryUri(LocalRepositoryUriUtil.convertToLocalVcUriString(localRepo.remoteBareGitRepoFile, localVCBasePath));
         participation.setRepositoryUri(localVcsRepositoryUri);
         participationRepo.save(participation);
-        gitService.getDefaultLocalPathOfRepo(participation.getVcsRepositoryUri());
+        gitService.getDefaultLocalCheckOutPathOfRepo(participation.getVcsRepositoryUri());
         var updatedParticipation = request.putWithResponseBody(
                 "/api/exercise/exercises/" + programmingExercise.getId() + "/resume-programming-participation/" + participation.getId(), null,
                 ProgrammingExerciseStudentParticipation.class, HttpStatus.OK);
@@ -1710,7 +1710,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
         var submission = participationUtilService.addSubmission(participation, new ProgrammingSubmission());
 
-        gitService.getDefaultLocalPathOfRepo(participation.getVcsRepositoryUri());
+        gitService.getDefaultLocalCheckOutPathOfRepo(participation.getVcsRepositoryUri());
 
         var result = ParticipationFactory.generateResult(true, 100).submission(submission);
         result.setCompletionDate(ZonedDateTime.now());
@@ -1740,7 +1740,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         participationRepo.save(participation);
         var submission = participationUtilService.addSubmission(participation, new ProgrammingSubmission());
 
-        gitService.getDefaultLocalPathOfRepo(participation.getVcsRepositoryUri());
+        gitService.getDefaultLocalCheckOutPathOfRepo(participation.getVcsRepositoryUri());
 
         var result = ParticipationFactory.generateResult(true, 100).submission(submission);
         result.setCompletionDate(ZonedDateTime.now());
@@ -1770,7 +1770,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         participationRepo.save(participation);
         var submission = participationUtilService.addSubmission(participation, new ProgrammingSubmission());
 
-        gitService.getDefaultLocalPathOfRepo(participation.getVcsRepositoryUri());
+        gitService.getDefaultLocalCheckOutPathOfRepo(participation.getVcsRepositoryUri());
 
         var result = ParticipationFactory.generateResult(true, 100).submission(submission);
         result.setCompletionDate(ZonedDateTime.now());

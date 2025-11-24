@@ -109,7 +109,9 @@ public class AutomaticProgrammingExerciseCleanupService {
         var earliestDate = latestDate.minusYears(1).truncatedTo(ChronoUnit.DAYS);
 
         // Cleanup all student repos in the REPOS folder (based on the student participations) 8 weeks after the exercise due date or exam end date
-        cleanStudentParticipationsRepositories(earliestDate, latestDate);
+        // we split the cleanup in course exercises and exam exercises to improve database query performance
+        cleanStudentParticipationsRepositoriesInCourseExercises(earliestDate, latestDate);
+        cleanStudentParticipationsRepositoriesInExamExercises(earliestDate, latestDate);
 
         // Cleanup template, tests and solution repos in the REPOS folder 8 weeks after the course or exam is over
         log.info("Search for exercises with course or exam date from {} until {}", earliestDate, latestDate);
@@ -128,20 +130,35 @@ public class AutomaticProgrammingExerciseCleanupService {
         }
     }
 
-    private void cleanStudentParticipationsRepositories(ZonedDateTime earliestDate, ZonedDateTime latestDate) {
-        log.info("Search for exercises with due date from {} until {}", earliestDate, latestDate);
+    private void cleanStudentParticipationsRepositoriesInCourseExercises(ZonedDateTime earliestDate, ZonedDateTime latestDate) {
+        log.info("Search for courses exercises with due date from {} until {}", earliestDate, latestDate);
         // Get all relevant participation ids
         Pageable pageable = Pageable.ofSize(STUDENT_PARTICIPATION_CLEANUP_BATCH_SIZE);
-        Page<String> uriBatch = programmingExerciseStudentParticipationRepository.findRepositoryUrisByRecentDueDateOrRecentExamEndDate(earliestDate, latestDate, pageable);
-        log.info("Found {} student participations to clean local student repositories in {} batches.", uriBatch.getTotalElements(), uriBatch.getTotalPages());
+        Page<String> uriBatch = programmingExerciseStudentParticipationRepository.findRepositoryUrisByCourseExerciseDueDateBetween(earliestDate, latestDate, pageable);
+        log.info("Found {} student participations in courses exercises to clean local student repositories in {} batches.", uriBatch.getTotalElements(), uriBatch.getTotalPages());
         if (uriBatch.getTotalElements() > 0) {
             uriBatch.forEach(this::deleteLocalRepositoryByUriString);
             while (!uriBatch.isLast()) {
-                uriBatch = programmingExerciseStudentParticipationRepository.findRepositoryUrisByRecentDueDateOrRecentExamEndDate(earliestDate, latestDate,
-                        uriBatch.nextPageable());
+                uriBatch = programmingExerciseStudentParticipationRepository.findRepositoryUrisByCourseExerciseDueDateBetween(earliestDate, latestDate, uriBatch.nextPageable());
                 uriBatch.forEach(this::deleteLocalRepositoryByUriString);
             }
-            log.info("Finished cleaning local student repositories");
+            log.info("Finished cleaning local student repositories in course exercises");
+        }
+    }
+
+    private void cleanStudentParticipationsRepositoriesInExamExercises(ZonedDateTime earliestDate, ZonedDateTime latestDate) {
+        log.info("Search for exam exercises with due date from {} until {}", earliestDate, latestDate);
+        // Get all relevant participation ids
+        Pageable pageable = Pageable.ofSize(STUDENT_PARTICIPATION_CLEANUP_BATCH_SIZE);
+        Page<String> uriBatch = programmingExerciseStudentParticipationRepository.findRepositoryUrisByExamExercisesEndDateBetween(earliestDate, latestDate, pageable);
+        log.info("Found {} student participations in exam exercises to clean local student repositories in {} batches.", uriBatch.getTotalElements(), uriBatch.getTotalPages());
+        if (uriBatch.getTotalElements() > 0) {
+            uriBatch.forEach(this::deleteLocalRepositoryByUriString);
+            while (!uriBatch.isLast()) {
+                uriBatch = programmingExerciseStudentParticipationRepository.findRepositoryUrisByExamExercisesEndDateBetween(earliestDate, latestDate, uriBatch.nextPageable());
+                uriBatch.forEach(this::deleteLocalRepositoryByUriString);
+            }
+            log.info("Finished cleaning local student repositories in exam exercises");
         }
     }
 
