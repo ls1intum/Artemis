@@ -18,6 +18,16 @@ import de.tum.cit.aet.artemis.quiz.dto.submittedanswer.SubmittedAnswerAfterEvalu
 public record QuizSubmissionAfterEvaluationDTO(Long id, String submissionExerciseType, Boolean submitted, SubmissionType type, ZonedDateTime submissionDate, Double scoreInPoints,
         Set<SubmittedAnswerAfterEvaluationDTO> submittedAnswers, List<ResultAfterEvaluationDTO> results) {
 
+    /**
+     * Creates a {@link QuizSubmissionAfterEvaluationDTO} from the given {@link QuizSubmission} entity.
+     * <p>
+     * If the submission's results or submitted answers are not initialized or are null,
+     * the corresponding DTO fields will be empty. Otherwise, they are mapped to their
+     * respective DTO representations.
+     *
+     * @param submission the quiz submission entity to convert, must not be null
+     * @return a DTO containing the evaluated submission data
+     */
     public static QuizSubmissionAfterEvaluationDTO of(QuizSubmission submission) {
         List<ResultAfterEvaluationDTO> results = null;
         Set<SubmittedAnswerAfterEvaluationDTO> submittedAnswers = Set.of();
