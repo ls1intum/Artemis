@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.atlas.service;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -165,22 +166,17 @@ public class AtlasAgentService {
             if (activeAgent == null) {
                 activeAgent = AgentType.MAIN_AGENT;
             }
-            // Route to the appropriate agent
             String response = delegateTheRightAgent(message, courseId, sessionId, activeAgent);
 
-            // Check for delegation markers and update session state
             if (response.contains(DELEGATE_TO_COMPETENCY_EXPERT)) {
-                // Extract brief from marker: %%ARTEMIS_DELEGATE_TO_COMPETENCY_EXPERT%%:brief_content]
                 String brief = extractBriefFromDelegationMarker(response);
 
-                // Delegate to Competency Expert
                 String delegationResponse = delegateTheRightAgent(brief, courseId, sessionId, AgentType.COMPETENCY_EXPERT);
 
-                // Retrieve preview data from ThreadLocal (set by Competency Expert's previewCompetencies tool)
+                // Retrieve what was set by previewCompetencies tool during execution
                 SingleCompetencyPreviewResponseDTO singlePreview = CompetencyExpertToolsService.getSinglePreview();
                 BatchCompetencyPreviewResponseDTO batchPreview = CompetencyExpertToolsService.getBatchPreview();
 
-                // Embed preview data in the response text so it persists in chat memory
                 String responseWithEmbeddedData = embedPreviewDataInResponse(delegationResponse, singlePreview, batchPreview);
 
                 // Replace the last assistant message with the version containing embedded preview data
@@ -189,32 +185,26 @@ public class AtlasAgentService {
                     // Remove the last assistant message added by the advisor
                     List<Message> messages = chatMemory.get(sessionId);
                     if (!messages.isEmpty() && messages.getLast().getMessageType() == MessageType.ASSISTANT) {
-                        // Create a new list without the last message
-                        List<Message> updatedMessages = new java.util.ArrayList<>(messages.subList(0, messages.size() - 1));
-                        // Add the message with embedded preview data
+                        List<Message> updatedMessages = new ArrayList<>(messages.subList(0, messages.size() - 1));
                         updatedMessages.add(new AssistantMessage(responseWithEmbeddedData));
-                        // Clear and re-add all messages
+
                         chatMemory.clear(sessionId);
                         updatedMessages.forEach(msg -> chatMemory.add(sessionId, msg));
                     }
                 }
 
-                // Return immediately with Competency Expert's response and preview data
                 // Stay on MAIN_AGENT - Atlas Core continues managing the workflow
                 return CompletableFuture.completedFuture(new AgentChatResultDTO(delegationResponse, competencyModifiedInCurrentRequest.get(), singlePreview, batchPreview));
             }
             else if (response.contains(CREATE_APPROVED_COMPETENCY)) {
-                // Agent is requesting to execute the changes
-                // Retrieve the cached competency data
                 List<CompetencyExpertToolsService.CompetencyOperation> cachedData = getCachedCompetencyData(sessionId);
 
                 String creationResponse = delegateTheRightAgent(CREATE_APPROVED_COMPETENCY, courseId, sessionId, AgentType.COMPETENCY_EXPERT);
                 if (cachedData != null && !cachedData.isEmpty()) {
 
-                    // Clear the cache after successful save
                     clearCachedCompetencyData(sessionId);
 
-                    // Retrieve preview data from ThreadLocal (set by saveCompetencies tool)
+                    // Retrieve what was set by previewCompetencies tool during execution
                     SingleCompetencyPreviewResponseDTO singlePreview = CompetencyExpertToolsService.getSinglePreview();
                     BatchCompetencyPreviewResponseDTO batchPreview = CompetencyExpertToolsService.getBatchPreview();
 
@@ -230,18 +220,15 @@ public class AtlasAgentService {
             }
             else if (response.contains(RETURN_TO_MAIN_AGENT)) {
                 sessionAgentMap.put(sessionId, AgentType.MAIN_AGENT);
-                // Remove the marker from the response before returning to user
                 response = response.replace(RETURN_TO_MAIN_AGENT, "").trim();
             }
 
-            // Check if competency was created during this request
             boolean competenciesModified = competencyModifiedInCurrentRequest.get();
 
-            // Retrieve preview data from ThreadLocal (set by previewCompetencies tool during execution)
+            // Retrieve what was set by previewCompetencies tool during execution
             SingleCompetencyPreviewResponseDTO singlePreview = CompetencyExpertToolsService.getSinglePreview();
             BatchCompetencyPreviewResponseDTO batchPreview = CompetencyExpertToolsService.getBatchPreview();
 
-            // Use the LLM's natural language response
             String finalResponse = (!response.trim().isEmpty()) ? response : "I apologize, but I couldn't generate a response.";
 
             return CompletableFuture.completedFuture(new AgentChatResultDTO(finalResponse, competenciesModified, singlePreview, batchPreview));
@@ -252,7 +239,6 @@ public class AtlasAgentService {
                     .completedFuture(new AgentChatResultDTO("I apologize, but I'm having trouble processing your request right now. Please try again later.", false));
         }
         finally {
-            // Clean up ThreadLocal to prevent memory leaks
             competencyModifiedInCurrentRequest.remove();
             CompetencyExpertToolsService.clearCurrentSessionId();
             CompetencyExpertToolsService.clearAllPreviews();
