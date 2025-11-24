@@ -146,7 +146,7 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
     @Query("""
             SELECT pa.repositoryUri
             FROM ProgrammingExercise pe
-                LEFT JOIN TREAT (pe.studentParticipations as ProgrammingExerciseStudentParticipation) pa
+                LEFT JOIN TREAT (pe.studentParticipations AS ProgrammingExerciseStudentParticipation) pa
             WHERE pa.repositoryUri IS NOT NULL
                 AND pe.dueDate BETWEEN :earliestDate AND :latestDate
             """)
@@ -158,7 +158,7 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
             FROM ProgrammingExercise pe
                 LEFT JOIN pe.exerciseGroup eg
                 LEFT JOIN eg.exam exam
-                LEFT JOIN TREAT (pe.studentParticipations as ProgrammingExerciseStudentParticipation) pa
+                LEFT JOIN TREAT (pe.studentParticipations AS ProgrammingExerciseStudentParticipation) pa
             WHERE pa.repositoryUri IS NOT NULL
                 AND exam.endDate BETWEEN :earliestDate AND :latestDate
             """)
