@@ -255,6 +255,7 @@
    Resizable drag elements
    ========================================================================== */
 
+/* stylelint-disable-next-line no-descending-specificity -- These selectors are used in different contexts */
 .rg-main-bottom,
 .rg-bottom-bottom,
 .rg-sidebar-left,
