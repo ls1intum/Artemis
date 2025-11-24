@@ -15,7 +15,6 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
-import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 
 /**
@@ -85,21 +84,4 @@ public interface QuizSubmissionRepository extends ArtemisJpaRepository<QuizSubmi
                 AND participation.student.login = :studentLogin
             """)
     Optional<QuizSubmission> findByExerciseIdAndStudentLogin(@Param("exerciseId") Long exerciseId, @Param("studentLogin") String studentLogin);
-
-    /**
-     * Get all submissions of a participation and eagerly load submitted answers and results
-     * ordered by submission date in ascending order.
-     *
-     * @param participationId the id of the participation
-     * @return a list of the participation's submissions
-     */
-    @Query("""
-            SELECT DISTINCT qs
-            FROM QuizSubmission qs
-                LEFT JOIN FETCH qs.results r
-                LEFT JOIN FETCH qs.submittedAnswers sa
-            WHERE qs.participation.id = :participationId
-            ORDER BY qs.submissionDate ASC, qs.id ASC
-            """)
-    List<Submission> findAllWithSubmittedAnswersAndResultsByParticipationIdOrderBySubmissionDateAsc(@Param("participationId") Long participationId);
 }
