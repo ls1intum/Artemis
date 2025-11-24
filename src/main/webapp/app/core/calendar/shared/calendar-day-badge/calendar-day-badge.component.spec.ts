@@ -21,7 +21,7 @@ describe('CalendarDayBadgeComponent', () => {
     });
 
     it('should render the correct day number', () => {
-        fixture.componentRef.setInput('day', dayjs('2025-07-04'));
+        fixture.componentRef.setInput('date', dayjs('2025-07-04'));
         fixture.detectChanges();
 
         const badge = fixture.debugElement.query(By.css('.day-badge')).nativeElement;
@@ -29,7 +29,7 @@ describe('CalendarDayBadgeComponent', () => {
     });
 
     it('should apply the "selected-day" class when the day is selected', () => {
-        fixture.componentRef.setInput('day', dayjs());
+        fixture.componentRef.setInput('date', dayjs());
         fixture.componentRef.setInput('isSelectedDay', true);
         fixture.detectChanges();
 
@@ -38,7 +38,7 @@ describe('CalendarDayBadgeComponent', () => {
     });
 
     it('should apply the "today-normal" class when day is today', () => {
-        fixture.componentRef.setInput('day', dayjs());
+        fixture.componentRef.setInput('date', dayjs());
         fixture.detectChanges();
 
         const badge = fixture.debugElement.query(By.css('.day-badge')).nativeElement;
@@ -46,7 +46,7 @@ describe('CalendarDayBadgeComponent', () => {
     });
 
     it('should apply the "today-minimal" class when day is today', () => {
-        fixture.componentRef.setInput('day', dayjs());
+        fixture.componentRef.setInput('date', dayjs());
         fixture.componentRef.setInput('minimalTodayIndication', true);
         fixture.detectChanges();
 
@@ -55,7 +55,7 @@ describe('CalendarDayBadgeComponent', () => {
     });
 
     it('should apply the "not-today" class when day is not today', () => {
-        fixture.componentRef.setInput('day', dayjs().add(1, 'day'));
+        fixture.componentRef.setInput('date', dayjs().add(1, 'day'));
         fixture.detectChanges();
 
         const badge = fixture.debugElement.query(By.css('.day-badge')).nativeElement;

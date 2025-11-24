@@ -27,26 +27,24 @@ describe('CalendarEventDetailPopoverComponent', () => {
         } as unknown as MouseEvent;
     });
 
-    it('should render start-and-end-row if endDate is provided', async () => {
+    it('should render time-row if endDate is provided', async () => {
         const event = new CalendarEvent(CalendarEventType.Lecture, 'Lecture 1', dayjs('2025-07-05T10:00:00'), dayjs('2025-07-05T12:00:00'), 'Room 42', 'Dr. Smith');
 
         component.open(fakeMouseEvent, event);
         fixture.detectChanges();
         await fixture.whenStable();
 
-        expect(fixture.debugElement.query(By.css('#start-and-end-row'))).toBeTruthy();
-        expect(fixture.debugElement.query(By.css('#start-row'))).toBeFalsy();
+        expect(fixture.debugElement.query(By.css('#time-row'))).toBeTruthy();
     });
 
-    it('should render only start-row if endDate is missing', async () => {
+    it('should render only time-row if endDate is missing', async () => {
         const event = new CalendarEvent(CalendarEventType.Lecture, 'Start: Lecture 1', dayjs('2025-07-05T10:00:00'), undefined, 'Room 42', 'Dr. Smith');
 
         component.open(fakeMouseEvent, event);
         fixture.detectChanges();
         await fixture.whenStable();
 
-        expect(fixture.debugElement.query(By.css('#start-row'))).toBeTruthy();
-        expect(fixture.debugElement.query(By.css('#start-and-end-row'))).toBeFalsy();
+        expect(fixture.debugElement.query(By.css('#time-row'))).toBeTruthy();
     });
 
     it('should render location-row if location is present', async () => {

@@ -138,15 +138,17 @@ public class CalendarResource {
         boolean includeLectureEvents = filterOptions.contains(CalendarSubscriptionFilterOption.LECTURES);
         boolean includeExerciseEvents = filterOptions.contains(CalendarSubscriptionFilterOption.EXERCISES);
 
-        Set<CalendarEventDTO> tutorialEventDTOs = getIfShouldBeIncludedAndApiAvailable(includeTutorialEvents, tutorialGroupApi,
-                api -> api.getCalendarEventDTOsFromTutorialsGroups(user.getId(), courseId));
-        Set<CalendarEventDTO> examEventDTOs = getIfShouldBeIncludedAndApiAvailable(includeExamEvents, examApi,
-                api -> api.getCalendarEventDTOsFromExams(courseId, userIsStudent, language));
-        Set<CalendarEventDTO> lectureEventDTOs = getIfShouldBeIncluded(includeLectureEvents, () -> lectureApi.getCalendarEventDTOsFromLectures(courseId, userIsStudent, language));
-        Set<CalendarEventDTO> quizExerciseEventDTOs = getIfShouldBeIncluded(includeExerciseEvents,
-                () -> quizExerciseService.getCalendarEventDTOsFromQuizExercises(courseId, userIsStudent, language));
-        Set<CalendarEventDTO> otherExerciseEventDTOs = getIfShouldBeIncluded(includeExerciseEvents,
-                () -> exerciseService.getCalendarEventDTOsFromNonQuizExercises(courseId, userIsStudent, language));
+        Function<TutorialGroupApi, Set<CalendarEventDTO>> tutorialEventSupplier = api -> api.getCalendarEventDTOsFromTutorialsGroups(user.getId(), courseId);
+        Function<ExamApi, Set<CalendarEventDTO>> examEventSupplier = api -> api.getCalendarEventDTOsFromExams(courseId, userIsStudent, language);
+        Supplier<Set<CalendarEventDTO>> lectureEventSupplier = () -> lectureApi.getCalendarEventDTOsFromLectures(courseId, userIsStudent, language);
+        Supplier<Set<CalendarEventDTO>> quizExerciseEventSupplier = () -> quizExerciseService.getCalendarEventDTOsFromQuizExercises(courseId, userIsStudent, language);
+        Supplier<Set<CalendarEventDTO>> otherExerciseEventSupplier = () -> exerciseService.getCalendarEventDTOsFromNonQuizExercises(courseId, userIsStudent, language);
+
+        Set<CalendarEventDTO> tutorialEventDTOs = getEventsIfShouldBeIncludedAndApiAvailable(includeTutorialEvents, tutorialGroupApi, tutorialEventSupplier);
+        Set<CalendarEventDTO> examEventDTOs = getEventsIfShouldBeIncludedAndApiAvailable(includeExamEvents, examApi, examEventSupplier);
+        Set<CalendarEventDTO> lectureEventDTOs = getEventsIfShouldBeIncluded(includeLectureEvents, lectureEventSupplier);
+        Set<CalendarEventDTO> quizExerciseEventDTOs = getEventsIfShouldBeIncluded(includeExerciseEvents, quizExerciseEventSupplier);
+        Set<CalendarEventDTO> otherExerciseEventDTOs = getEventsIfShouldBeIncluded(includeExerciseEvents, otherExerciseEventSupplier);
 
         Set<CalendarEventDTO> calendarEventDTOs = Stream.of(tutorialEventDTOs, lectureEventDTOs, examEventDTOs, quizExerciseEventDTOs, otherExerciseEventDTOs).flatMap(Set::stream)
                 .collect(Collectors.toSet());
@@ -157,25 +159,25 @@ public class CalendarResource {
     }
 
     /**
-     * Uses the supplier to retrieve a set of the generic type if include is true.
+     * Uses the supplier to retrieve a set of {@link CalendarEventDTO}s if include is true.
      *
      * @param include  a flag indicating whether the supplier should be used
-     * @param supplier a function that returns a set of the generic type
+     * @param supplier a function that returns a set of DTOs
      * @return the set retrieved by the supplier if include is true, otherwise and empty set
      */
-    private <T> Set<T> getIfShouldBeIncluded(boolean include, Supplier<Set<T>> supplier) {
+    private Set<CalendarEventDTO> getEventsIfShouldBeIncluded(boolean include, Supplier<Set<CalendarEventDTO>> supplier) {
         return include ? supplier.get() : Collections.emptySet();
     }
 
     /**
-     * Uses the supplier to retrieve a set of the generic type if include is true and the api on which the supplier is called is available.
+     * Uses the supplier to retrieve a set of {@link CalendarEventDTO}s if include is true and the api is available.
      *
      * @param include     a flag indicating whether the supplier should be used
      * @param apiOptional an optional that encapsulates the api on which the supplier should be called
-     * @param supplier    a function that returns a set of the generic type
+     * @param supplier    a function that returns a set of DTOs
      * @return the set retrieved by the supplier if include is true and the api is available, otherwise and empty set
      */
-    private <A, T> Set<T> getIfShouldBeIncludedAndApiAvailable(boolean include, Optional<A> apiOptional, Function<A, Set<T>> supplier) {
+    private <A> Set<CalendarEventDTO> getEventsIfShouldBeIncludedAndApiAvailable(boolean include, Optional<A> apiOptional, Function<A, Set<CalendarEventDTO>> supplier) {
         if (!include) {
             return Collections.emptySet();
         }

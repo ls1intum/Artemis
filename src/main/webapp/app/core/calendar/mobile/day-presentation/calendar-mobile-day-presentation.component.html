@@ -1,10 +1,10 @@
 <div class="frame">
     <div class="week-header">
-        @for (day of weekDays(); track day.id) {
-            <jhi-calendar-day-badge [day]="day.date" [minimalTodayIndication]="true" [isSelectedDay]="day.isSelected" />
+        @for (day of weekdays(); track day.id) {
+            <jhi-calendar-day-badge [date]="day.date" [minimalTodayIndication]="true" [isSelectedDay]="day.isSelected" />
         }
     </div>
     <div class="scroll-container" #scrollContainer>
-        <jhi-calendar-events-per-day-section [dates]="[selectedDate()]" />
+        <jhi-calendar-events-per-day-section [dates]="[date()]" />
     </div>
 </div>

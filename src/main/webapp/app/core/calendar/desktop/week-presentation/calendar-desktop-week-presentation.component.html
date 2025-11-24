@@ -1,16 +1,16 @@
 <div class="frame">
     <div class="header">
         <div class="header-spacer"></div>
-        @for (day of weekDays(); track utils.identify(day)) {
+        @for (day of weekdays(); track day.id) {
             <div class="day-info">
                 <div class="day-name">
-                    {{ utils.getWeekDayNameKey(day) | artemisTranslate }}
+                    {{ day.weekdayNameKey | artemisTranslate }}
                 </div>
-                <jhi-calendar-day-badge [day]="day" />
+                <jhi-calendar-day-badge [date]="day.date" />
             </div>
         }
     </div>
     <div class="scroll-container" #scrollContainer>
-        <jhi-calendar-events-per-day-section [dates]="weekDays()" />
+        <jhi-calendar-events-per-day-section [dates]="dates()" />
     </div>
 </div>

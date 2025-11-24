@@ -69,7 +69,7 @@ describe('CalendarDesktopMonthPresentationComponent', () => {
         fixture = TestBed.createComponent(CalendarDesktopMonthPresentationComponent);
         component = fixture.componentInstance;
 
-        fixture.componentRef.setInput('firstDayOfCurrentMonth', dayjs('2025-05-01'));
+        fixture.componentRef.setInput('firstDateOfCurrentMonth', dayjs('2025-05-01'));
         fixture.detectChanges();
     });
 
@@ -80,7 +80,7 @@ describe('CalendarDesktopMonthPresentationComponent', () => {
     it('should compute correct number of weeks and days', () => {
         const weeks = component.weeks();
         expect(weeks).toHaveLength(5);
-        expect(weeks.every((week) => week.length === 7)).toBeTrue();
+        expect(weeks.every((week) => week.days.length === 7)).toBeTrue();
     });
 
     it('should display correct events', async () => {

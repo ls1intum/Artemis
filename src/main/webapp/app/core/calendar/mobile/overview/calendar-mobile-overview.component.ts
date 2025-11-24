@@ -1,16 +1,13 @@
-import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
-import { Subscription } from 'rxjs';
-import { finalize } from 'rxjs/operators';
-import { ActivatedRoute } from '@angular/router';
+import { Component, computed, signal } from '@angular/core';
 import dayjs, { Dayjs } from 'dayjs/esm';
 import * as utils from 'app/core/calendar/shared/util/calendar-util';
 import { CalendarMobileMonthPresentationComponent } from 'app/core/calendar/mobile/month-presentation/calendar-mobile-month-presentation.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CalendarMobileDayPresentationComponent } from 'app/core/calendar/mobile/day-presentation/calendar-mobile-day-presentation.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faArrowUpFromBracket, faChevronLeft, faChevronRight, faFilter, faXmark } from '@fortawesome/free-solid-svg-icons';
-import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
+import { faArrowUpFromBracket, faFilter } from '@fortawesome/free-solid-svg-icons';
 import { CalendarSubscriptionPopoverComponent } from 'app/core/calendar/shared/calendar-subscription-popover/calendar-subscription-popover.component';
+import { CalendarOverviewComponent } from 'app/core/calendar/shared/calendar-overview/calendar-overview-component.directive';
 import { PopoverModule } from 'primeng/popover';
 import { CheckboxModule } from 'primeng/checkbox';
 import { CalendarEventFilterOption } from 'app/core/calendar/shared/util/calendar-util';
@@ -33,40 +30,19 @@ import { ButtonModule } from 'primeng/button';
     templateUrl: './calendar-mobile-overview.component.html',
     styleUrl: './calendar-mobile-overview.component.scss',
 })
-export class CalendarMobileOverviewComponent implements OnInit, OnDestroy {
-    private calendarService = inject(CalendarService);
-    private activatedRoute = inject(ActivatedRoute);
-    private activatedRouteSubscription?: Subscription;
-
-    readonly CalendarEventFilterOption = CalendarEventFilterOption;
-    readonly faXmark = faXmark;
-    readonly faChevronRight = faChevronRight;
-    readonly faChevronLeft = faChevronLeft;
-    readonly faFilter = faFilter;
+export class CalendarMobileOverviewComponent extends CalendarOverviewComponent {
     readonly faArrowUpFromBracket = faArrowUpFromBracket;
+    readonly faFilter = faFilter;
+    readonly CalendarEventFilterOption = CalendarEventFilterOption;
 
     firstDateOfCurrentMonth = signal<Dayjs>(dayjs().startOf('month'));
     selectedDate = signal<Dayjs | undefined>(undefined);
-    weekdayNameKeys = utils.getWeekDayNameKeys();
-    isLoading = signal<boolean>(false);
-    calendarSubscriptionToken = this.calendarService.subscriptionToken;
-    currentCourseId = signal<number | undefined>(undefined);
+    weekdayNameKeys = utils.getWeekdayNameKeys();
+    monthDescription = computed<string>(() => this.firstDateOfCurrentMonth().locale(this.locale()).format('MMMM YYYY'));
     lectureFilterOptionSelected = computed(() => this.calendarService.includedEventFilterOptions().includes(CalendarEventFilterOption.LectureEvents));
     exerciseFilterOptionSelected = computed(() => this.calendarService.includedEventFilterOptions().includes(CalendarEventFilterOption.ExerciseEvents));
     tutorialFilterOptionSelected = computed(() => this.calendarService.includedEventFilterOptions().includes(CalendarEventFilterOption.TutorialEvents));
     examFilterOptionSelected = computed(() => this.calendarService.includedEventFilterOptions().includes(CalendarEventFilterOption.ExamEvents));
-
-    ngOnInit(): void {
-        this.activatedRouteSubscription = this.activatedRoute.parent?.paramMap.subscribe((parameterMap) => {
-            const courseIdParameter = parameterMap.get('courseId');
-            if (courseIdParameter) {
-                this.currentCourseId.set(+courseIdParameter);
-                this.loadEventsForCurrentMonth();
-            }
-        });
-
-        this.calendarService.loadSubscriptionToken().subscribe();
-    }
 
     toggleFilterOption(option: CalendarEventFilterOption) {
         if (this.calendarService.includedEventFilterOptions().includes(option)) {
@@ -76,11 +52,7 @@ export class CalendarMobileOverviewComponent implements OnInit, OnDestroy {
         }
     }
 
-    ngOnDestroy() {
-        this.activatedRouteSubscription?.unsubscribe();
-    }
-
-    selectDate(date: Dayjs): void {
+    onDateSelected(date: Dayjs): void {
         this.selectedDate.set(date);
     }
 
@@ -121,15 +93,5 @@ export class CalendarMobileOverviewComponent implements OnInit, OnDestroy {
             this.firstDateOfCurrentMonth.set(today.startOf('month'));
         }
         this.loadEventsForCurrentMonth();
-    }
-
-    private loadEventsForCurrentMonth(): void {
-        const courseId = this.currentCourseId();
-        if (!courseId) return;
-        this.isLoading.set(true);
-        this.calendarService
-            .loadEventsForCurrentMonth(courseId, this.firstDateOfCurrentMonth())
-            .pipe(finalize(() => this.isLoading.set(false)))
-            .subscribe();
     }
 }

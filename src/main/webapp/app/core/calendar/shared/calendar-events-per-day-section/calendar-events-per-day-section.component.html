@@ -1,8 +1,8 @@
 <div class="frame">
     <div class="info-column">
         <div class="info-column-spacer"></div>
-        @for (hour of hoursOfDay; track hour) {
-            <div class="time-label">{{ hour }}</div>
+        @for (timeLabel of timeLabels; track timeLabel) {
+            <div class="time-label">{{ timeLabel }}</div>
         }
     </div>
     @for (day of days(); track day.id) {
@@ -10,18 +10,14 @@
             @for (index of zeroToTwentyFour; track index) {
                 <div class="hour-segment"></div>
             }
-            @for (eventAndPosition of day.eventsAndPositions; track eventAndPosition.event.id) {
-                @let event = eventAndPosition.event;
-                @let position = eventAndPosition.position;
+            @for (eventAndMetadata of day.eventsAndMetadata; track eventAndMetadata.event.id) {
+                @let event = eventAndMetadata.event;
+                @let position = eventAndMetadata.position;
+                @let color = eventAndMetadata.color;
                 <div
                     class="event"
-                    [ngClass]="{
-                        'exam-event-cell': event.isOfType(CalendarEventType.Exam),
-                        'lecture-event-cell': event.isOfType(CalendarEventType.Lecture),
-                        'tutorial-event-cell': event.isOfType(CalendarEventType.Tutorial),
-                        'exercise-event-cell': event.isOfExerciseType(),
-                    }"
                     [ngStyle]="{
+                        'background-color': color,
                         top: position.top + 'px',
                         height: position.height + 'px',
                         left: position.left + '%',

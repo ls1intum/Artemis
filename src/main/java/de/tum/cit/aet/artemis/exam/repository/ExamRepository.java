@@ -124,14 +124,15 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
     @Query("""
             SELECT e
             FROM Exam e
-            WHERE (e.course.instructorGroupName IN :groups
-                OR e.course.editorGroupName IN :groups
-                OR e.course.teachingAssistantGroupName IN :groups)
-                AND e.visibleDate >= CASE
-                    WHEN e.course.instructorGroupName IN :groups THEN :fromDate
-                        ELSE :nowDate
-                    END
-                AND e.visibleDate <= :toDate
+            WHERE
+                e.visibleDate <= :toDate
+                AND (
+                        (e.course.instructorGroupName IN :groups
+                         AND e.visibleDate >= :fromDate)
+                    OR
+                        ((e.course.editorGroupName IN :groups OR e.course.teachingAssistantGroupName IN :groups)
+                         AND e.visibleDate >= :nowDate)
+                )
             """)
     Page<Exam> findAllActiveExamsInCoursesWhereAtLeastTutor(@Param("groups") Set<String> groups, Pageable pageable, @Param("fromDate") ZonedDateTime fromDate,
             @Param("nowDate") ZonedDateTime nowDate, @Param("toDate") ZonedDateTime toDate);
