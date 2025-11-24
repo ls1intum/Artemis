@@ -96,17 +96,18 @@ public class QuizParticipationResource {
         StudentParticipation participation = participationService.startExercise(exercise, user, true);
 
         // NOTE: starting exercise prevents that two participation will exist, but ensures that a submission is created
-        var result = resultRepository.findFirstBySubmissionParticipationIdAndRatedOrderByCompletionDateDesc(participation.getId(), true).orElse(new Result());
+        var resultOptional = resultRepository.findFirstBySubmissionParticipationIdAndRatedOrderByCompletionDateDesc(participation.getId(), true);
         QuizSubmission submission;
-        if (result.getId() == null) {
+        if (resultOptional.isEmpty() || resultOptional.get().getId() == null) {
             // Load the live submission of the participation
             submission = quizSubmissionRepository.findWithEagerSubmittedAnswersByParticipationId(participation.getId()).stream().findFirst().orElseThrow();
         }
         else {
             // Load the actual submission of the result
+            Result result = resultOptional.get();
             submission = quizSubmissionRepository.findWithEagerSubmittedAnswersByResultId(result.getId()).orElseThrow();
+            submission.setResults(List.of(result));
         }
-        submission.setResults(List.of(result));
         participation.setSubmissions(Set.of(submission));
 
         participation.setExercise(exercise);
