@@ -27,6 +27,7 @@ import de.tum.cit.aet.artemis.quiz.dto.participation.StudentQuizParticipationWit
 import de.tum.cit.aet.artemis.quiz.dto.participation.StudentQuizParticipationWithSolutionsDTO;
 import de.tum.cit.aet.artemis.quiz.dto.participation.StudentQuizParticipationWithoutQuestionsDTO;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
+import de.tum.cit.aet.artemis.quiz.repository.QuizSubmissionRepository;
 import de.tum.cit.aet.artemis.quiz.repository.SubmittedAnswerRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizBatchService;
 import de.tum.cit.aet.artemis.quiz.service.QuizSubmissionService;
@@ -53,17 +54,20 @@ public class QuizParticipationService {
 
     private final SubmissionRepository submissionRepository;
 
+    private final QuizSubmissionRepository quizSubmissionRepository;
+
     private final QuizExerciseRepository quizExerciseRepository;
 
     public QuizParticipationService(QuizBatchService quizBatchService, ParticipationService participationService, QuizSubmissionService quizSubmissionService,
             ResultRepository resultRepository, SubmittedAnswerRepository submittedAnswerRepository, SubmissionRepository submissionRepository,
-            QuizExerciseRepository quizExerciseRepository) {
+            QuizSubmissionRepository quizSubmissionRepository, QuizExerciseRepository quizExerciseRepository) {
         this.quizBatchService = quizBatchService;
         this.participationService = participationService;
         this.quizSubmissionService = quizSubmissionService;
         this.resultRepository = resultRepository;
         this.submittedAnswerRepository = submittedAnswerRepository;
         this.submissionRepository = submissionRepository;
+        this.quizSubmissionRepository = quizSubmissionRepository;
         this.quizExerciseRepository = quizExerciseRepository;
     }
 
@@ -116,7 +120,7 @@ public class QuizParticipationService {
         // TODO: Duplicate
         Object responseDTO = null;
         if (participation != null) {
-            var submissions = submissionRepository.findAllWithResultsByParticipationIdOrderBySubmissionDateAsc(participation.getId());
+            var submissions = quizSubmissionRepository.findAllWithSubmittedAnswersAndResultsByParticipationIdOrderBySubmissionDateAsc(participation.getId());
             participation.setSubmissions(new HashSet<>(submissions));
             if (quizExercise.isQuizEnded()) {
                 responseDTO = StudentQuizParticipationWithSolutionsDTO.of(participation);
