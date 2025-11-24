@@ -11,35 +11,25 @@ interface AgentChatRequest {
     sessionId?: string;
 }
 
+export interface CompetencyPreviewResponse {
+    competency: CompetencyPreview;
+    competencyId?: number;
+    viewOnly?: boolean;
+}
+
 export interface AgentChatResponse {
     message: string;
     sessionId?: string;
     timestamp: string;
     success: boolean;
     competenciesModified: boolean;
-    competencyPreview?: SingleCompetencyPreviewResponse;
-    batchCompetencyPreview?: BatchCompetencyPreviewResponse;
-}
-
-interface SingleCompetencyPreviewResponse {
-    preview: boolean;
-    competency: CompetencyPreview;
-    competencyId?: number;
-    viewOnly?: boolean;
-}
-
-interface BatchCompetencyPreviewResponse {
-    batchPreview: boolean;
-    count: number;
-    competencies: CompetencyPreview[];
-    viewOnly?: boolean;
+    competencyPreviews?: CompetencyPreviewResponse[];
 }
 
 export interface AgentHistoryMessage {
     content: string;
     isUser: boolean;
-    competencyPreview?: SingleCompetencyPreviewResponse;
-    batchCompetencyPreview?: BatchCompetencyPreviewResponse;
+    competencyPreviews?: CompetencyPreviewResponse[];
 }
 
 @Injectable({

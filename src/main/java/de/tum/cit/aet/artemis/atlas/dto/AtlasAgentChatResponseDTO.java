@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.atlas.dto;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -16,5 +17,5 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record AtlasAgentChatResponseDTO(@NotBlank @Size(max = 10000) String message, @Nullable String sessionId, @NotNull ZonedDateTime timestamp, boolean success,
-        boolean competenciesModified, @Nullable SingleCompetencyPreviewResponseDTO competencyPreview, @Nullable BatchCompetencyPreviewResponseDTO batchCompetencyPreview) {
+        boolean competenciesModified, @Nullable List<CompetencyPreviewResponseDTO> competencyPreviews) {
 }

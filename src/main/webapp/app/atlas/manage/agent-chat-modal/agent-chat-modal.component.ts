@@ -75,8 +75,8 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
                     this.addMessage(this.translateService.instant('artemisApp.agent.chat.welcome'), false);
                 }
                 history.forEach((msg) => {
-                    if (msg.competencyPreview || msg.batchCompetencyPreview) {
-                        this.addMessageWithPreview(msg.content, msg.isUser, msg.competencyPreview, msg.batchCompetencyPreview);
+                    if (msg.competencyPreviews && msg.competencyPreviews.length > 0) {
+                        this.addMessageWithPreview(msg.content, msg.isUser, msg.competencyPreviews);
                     } else {
                         this.addMessage(msg.content, msg.isUser);
                     }
@@ -122,12 +122,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
             next: (response) => {
                 this.isAgentTyping.set(false);
 
-                this.addMessageWithPreview(
-                    response.message || this.translateService.instant('artemisApp.agent.chat.error'),
-                    false,
-                    response.competencyPreview,
-                    response.batchCompetencyPreview,
-                );
+                this.addMessageWithPreview(response.message || this.translateService.instant('artemisApp.agent.chat.error'), false, response.competencyPreviews);
 
                 if (response.competenciesModified) {
                     this.competencyChanged.emit();
@@ -262,14 +257,9 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
 
     /**
      * Add a message with structured preview data from the server.
-     * This method receives clean preview data as DTOs instead of parsing JSON.
+     * This method receives clean preview data as a list of CompetencyPreviewResponse DTOs.
      */
-    private addMessageWithPreview(
-        content: string,
-        isUser: boolean,
-        singlePreview?: { preview: boolean; competency: CompetencyPreview; competencyId?: number; viewOnly?: boolean },
-        batchPreview?: { batchPreview: boolean; count: number; competencies: CompetencyPreview[]; viewOnly?: boolean },
-    ): void {
+    private addMessageWithPreview(content: string, isUser: boolean, competencyPreviews?: { competency: CompetencyPreview; competencyId?: number; viewOnly?: boolean }[]): void {
         const message: ChatMessage = {
             id: this.generateMessageId(),
             content,
@@ -277,19 +267,23 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
             timestamp: new Date(),
         };
 
-        if (singlePreview?.preview) {
-            message.competencyPreview = {
-                ...singlePreview.competency,
-                competencyId: singlePreview.competencyId,
-                viewOnly: singlePreview.viewOnly,
-            };
-        }
-
-        if (batchPreview?.batchPreview) {
-            message.batchCompetencyPreview = batchPreview.competencies.map((comp) => ({
-                ...comp,
-                viewOnly: batchPreview.viewOnly,
-            }));
+        if (competencyPreviews && competencyPreviews.length > 0) {
+            if (competencyPreviews.length === 1) {
+                // Single preview
+                const preview = competencyPreviews[0];
+                message.competencyPreview = {
+                    ...preview.competency,
+                    competencyId: preview.competencyId,
+                    viewOnly: preview.viewOnly,
+                };
+            } else {
+                // Batch preview (multiple competencies)
+                message.batchCompetencyPreview = competencyPreviews.map((preview) => ({
+                    ...preview.competency,
+                    competencyId: preview.competencyId,
+                    viewOnly: preview.viewOnly,
+                }));
+            }
         }
 
         this.finalizeMessage(message, isUser);
@@ -321,9 +315,9 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
      * Detects [PLAN_PENDING] marker in agent responses.
      * This marker indicates that the agent has proposed a plan and is awaiting approval.
      */
-    private extractPlanPending(content: string): { cleanedMessage: string } | null {
+    private extractPlanPending(content: string): { cleanedMessage: string } | undefined {
         if (!content) {
-            return null;
+            return undefined;
         }
         const planPendingMarker = '[PLAN_PENDING]';
         const escapedPlanPendingMarker = '\\[PLAN_PENDING\\]';
@@ -341,7 +335,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
             return { cleanedMessage };
         }
 
-        return null;
+        return undefined;
     }
 
     /**

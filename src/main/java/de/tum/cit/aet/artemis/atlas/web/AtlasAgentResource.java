@@ -21,7 +21,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
-import de.tum.cit.aet.artemis.atlas.dto.AgentChatResultDTO;
 import de.tum.cit.aet.artemis.atlas.dto.AtlasAgentChatRequestDTO;
 import de.tum.cit.aet.artemis.atlas.dto.AtlasAgentChatResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.AtlasAgentHistoryMessageDTO;
@@ -65,24 +64,23 @@ public class AtlasAgentResource {
         String sessionId = atlasAgentService.generateSessionId(courseId, user.getId());
 
         try {
-            final CompletableFuture<AgentChatResultDTO> future = atlasAgentService.processChatMessage(request.message(), courseId, sessionId);
-            final AgentChatResultDTO result = future.get(CHAT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+            final CompletableFuture<AtlasAgentChatResponseDTO> future = atlasAgentService.processChatMessage(request.message(), courseId, sessionId);
+            final AtlasAgentChatResponseDTO result = future.get(CHAT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
 
-            return ResponseEntity.ok(new AtlasAgentChatResponseDTO(result.message(), sessionId, ZonedDateTime.now(), true, result.competenciesModified(),
-                    result.competencyPreview(), result.batchCompetencyPreview()));
+            return ResponseEntity.ok(result);
         }
         catch (TimeoutException te) {
             return ResponseEntity.status(HttpStatus.GATEWAY_TIMEOUT)
-                    .body(new AtlasAgentChatResponseDTO("The agent timed out. Please try again.", sessionId, ZonedDateTime.now(), false, false, null, null));
+                    .body(new AtlasAgentChatResponseDTO("The agent timed out. Please try again.", sessionId, ZonedDateTime.now(), false, false, null));
         }
         catch (InterruptedException ie) {
             Thread.currentThread().interrupt();
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                    .body(new AtlasAgentChatResponseDTO("The request was interrupted. Please try again.", sessionId, ZonedDateTime.now(), false, false, null, null));
+                    .body(new AtlasAgentChatResponseDTO("The request was interrupted. Please try again.", sessionId, ZonedDateTime.now(), false, false, null));
         }
         catch (ExecutionException ee) {
             return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
-                    .body(new AtlasAgentChatResponseDTO("Upstream error while processing your request.", sessionId, ZonedDateTime.now(), false, false, null, null));
+                    .body(new AtlasAgentChatResponseDTO("Upstream error while processing your request.", sessionId, ZonedDateTime.now(), false, false, null));
         }
     }
 

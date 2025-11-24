@@ -22,10 +22,9 @@ import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
 import de.tum.cit.aet.artemis.atlas.dto.AtlasAgentCompetencyDTO;
-import de.tum.cit.aet.artemis.atlas.dto.BatchCompetencyPreviewResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyPreviewDTO;
+import de.tum.cit.aet.artemis.atlas.dto.CompetencyPreviewResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencySaveResponseDTO;
-import de.tum.cit.aet.artemis.atlas.dto.SingleCompetencyPreviewResponseDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
@@ -125,9 +124,7 @@ public class CompetencyExpertToolsService {
     private final AtlasAgentService atlasAgentService;
 
     // ThreadLocal storage for preview data - enables deterministic extraction without parsing LLM output
-    private static final ThreadLocal<SingleCompetencyPreviewResponseDTO> currentSinglePreview = ThreadLocal.withInitial(() -> null);
-
-    private static final ThreadLocal<BatchCompetencyPreviewResponseDTO> currentBatchPreview = ThreadLocal.withInitial(() -> null);
+    private static final ThreadLocal<List<CompetencyPreviewResponseDTO>> currentPreviews = ThreadLocal.withInitial(() -> null);
 
     // ThreadLocal to store the current sessionId for tool calls
     private static final ThreadLocal<String> currentSessionId = ThreadLocal.withInitial(() -> null);
@@ -213,7 +210,7 @@ public class CompetencyExpertToolsService {
             return toJson(new ErrorResponse("No active session"));
         }
 
-        List<CompetencyOperation> cachedData = atlasAgentService.getCachedCompetencyData(sessionId);
+        List<CompetencyOperation> cachedData = atlasAgentService.getCachedPendingCompetencyOperations(sessionId);
         if (cachedData == null || cachedData.isEmpty()) {
             record ErrorResponse(String error) {
             }
@@ -277,25 +274,20 @@ public class CompetencyExpertToolsService {
         }).toList();
 
         // Store preview data in ThreadLocal for deterministic extraction by AtlasAgentService
-        if (competencies.size() == 1) {
-            // Single preview
-            CompetencyOperation firstComp = competencies.getFirst();
-            CompetencyPreviewDTO firstPreview = previews.getFirst();
-            SingleCompetencyPreviewResponseDTO singlePreview = new SingleCompetencyPreviewResponseDTO(true, firstPreview, firstComp.getCompetencyId(), viewOnly);
-            currentSinglePreview.set(singlePreview);
-        }
-        else {
-            // Batch preview
-            BatchCompetencyPreviewResponseDTO batchPreview = new BatchCompetencyPreviewResponseDTO(true, previews.size(), previews, viewOnly);
-            currentBatchPreview.set(batchPreview);
-        }
+        List<CompetencyPreviewResponseDTO> previewResponses = competencies.stream().map(comp -> {
+            CompetencyPreviewDTO previewDTO = new CompetencyPreviewDTO(comp.getTitle(), comp.getDescription(), comp.getTaxonomy().toString(), getTaxonomyIcon(comp.getTaxonomy()),
+                    comp.getCompetencyId());
+            return new CompetencyPreviewResponseDTO(previewDTO, comp.getCompetencyId(), viewOnly);
+        }).toList();
+
+        currentPreviews.set(previewResponses);
 
         // Cache the competency operation data for refinement operations
         // This enables deterministic modifications (e.g., changing taxonomy while preserving title/description)
         String sessionId = currentSessionId.get();
         if (sessionId != null && !Boolean.TRUE.equals(viewOnly)) {
             // Only cache if not in view-only mode (view-only is for browsing, not editing)
-            atlasAgentService.cacheCompetencyData(sessionId, new ArrayList<>(competencies));
+            atlasAgentService.cachePendingCompetencyOperations(sessionId, new ArrayList<>(competencies));
         }
 
         // Return simple confirmation message that the LLM can use naturally in its response
@@ -422,23 +414,13 @@ public class CompetencyExpertToolsService {
         // This ensures the cards appear in the response showing what was created/updated
         // Only generate previews for successfully processed competencies to prevent NPE
         if (!successfulOperations.isEmpty()) {
-            List<CompetencyPreviewDTO> previews = successfulOperations.stream().map(comp -> {
-                String iconName = getTaxonomyIcon(comp.getTaxonomy());
-                return new CompetencyPreviewDTO(comp.getTitle(), comp.getDescription(), comp.getTaxonomy().toString(), iconName, comp.getCompetencyId());
+            List<CompetencyPreviewResponseDTO> previewResponses = successfulOperations.stream().map(comp -> {
+                CompetencyPreviewDTO previewDTO = new CompetencyPreviewDTO(comp.getTitle(), comp.getDescription(), comp.getTaxonomy().toString(),
+                        getTaxonomyIcon(comp.getTaxonomy()), comp.getCompetencyId());
+                return new CompetencyPreviewResponseDTO(previewDTO, comp.getCompetencyId(), false);
             }).toList();
 
-            if (successfulOperations.size() == 1) {
-                // Single save - store as single preview with viewOnly=false (action completed)
-                CompetencyOperation firstComp = successfulOperations.getFirst();
-                CompetencyPreviewDTO firstPreview = previews.getFirst();
-                SingleCompetencyPreviewResponseDTO singlePreview = new SingleCompetencyPreviewResponseDTO(true, firstPreview, firstComp.getCompetencyId(), false);
-                currentSinglePreview.set(singlePreview);
-            }
-            else {
-                // Batch save - store as batch preview with viewOnly=false (action completed)
-                BatchCompetencyPreviewResponseDTO batchPreview = new BatchCompetencyPreviewResponseDTO(true, previews.size(), previews, false);
-                currentBatchPreview.set(batchPreview);
-            }
+            currentPreviews.set(previewResponses);
         }
 
         // Construct success message
@@ -479,24 +461,13 @@ public class CompetencyExpertToolsService {
     }
 
     /**
-     * Retrieves the current single competency preview from ThreadLocal
+     * Retrieves the current competency previews from ThreadLocal.
      * Used by AtlasAgentService to extract preview data after tool execution.
      *
-     * @return The stored preview, or null if none exists
+     * @return The stored list of previews, or null if none exists
      */
-    public static SingleCompetencyPreviewResponseDTO getSinglePreview() {
-
-        return currentSinglePreview.get();
-    }
-
-    /**
-     * Retrieves the current batch competency preview from ThreadLocal.
-     * Used by AtlasAgentService to extract preview data after tool execution.
-     *
-     * @return The stored batch preview, or null if none exists
-     */
-    public static BatchCompetencyPreviewResponseDTO getBatchPreview() {
-        return currentBatchPreview.get();
+    public static List<CompetencyPreviewResponseDTO> getPreviews() {
+        return currentPreviews.get();
     }
 
     /**
@@ -504,7 +475,6 @@ public class CompetencyExpertToolsService {
      * Should be called at the start of each request to ensure clean state.
      */
     public static void clearAllPreviews() {
-        currentSinglePreview.remove();
-        currentBatchPreview.remove();
+        currentPreviews.remove();
     }
 }

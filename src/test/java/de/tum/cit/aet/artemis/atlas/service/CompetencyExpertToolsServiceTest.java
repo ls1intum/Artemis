@@ -454,8 +454,7 @@ class CompetencyExpertToolsServiceTest {
             CompetencyExpertToolsService.clearAllPreviews();
 
             // Verify they are cleared by retrieving them
-            assertThat(CompetencyExpertToolsService.getSinglePreview()).isNull();
-            assertThat(CompetencyExpertToolsService.getBatchPreview()).isNull();
+            assertThat(CompetencyExpertToolsService.getPreviews()).isNull();
         }
 
         @Test
@@ -499,7 +498,7 @@ class CompetencyExpertToolsServiceTest {
             String sessionId = "test_session";
             CompetencyExpertToolsService.setCurrentSessionId(sessionId);
 
-            when(mockAtlasAgentService.getCachedCompetencyData(sessionId)).thenReturn(null);
+            when(mockAtlasAgentService.getCachedPendingCompetencyOperations(sessionId)).thenReturn(null);
 
             String result = service.getLastPreviewedCompetency();
 
@@ -520,7 +519,7 @@ class CompetencyExpertToolsServiceTest {
 
             List<CompetencyOperation> cachedData = List.of(new CompetencyOperation(null, "Cached Competency", "Description", CompetencyTaxonomy.APPLY));
 
-            when(mockAtlasAgentService.getCachedCompetencyData(sessionId)).thenReturn(cachedData);
+            when(mockAtlasAgentService.getCachedPendingCompetencyOperations(sessionId)).thenReturn(cachedData);
 
             String result = service.getLastPreviewedCompetency();
 
