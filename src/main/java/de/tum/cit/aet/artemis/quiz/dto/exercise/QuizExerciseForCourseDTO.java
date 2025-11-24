@@ -5,7 +5,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 
@@ -100,7 +99,7 @@ public record QuizExerciseForCourseDTO(long id, @NotEmpty String title, boolean 
 }
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-record QuizBatchForCourseDTO(long id, @Nullable String password, boolean started, boolean ended) {
+record QuizBatchForCourseDTO(long id, String password, boolean started, boolean ended) {
 
     public static QuizBatchForCourseDTO of(QuizBatch quizBatch) {
         return new QuizBatchForCourseDTO(quizBatch.getId(), quizBatch.getPassword(), quizBatch.isStarted(), quizBatch.isEnded());
