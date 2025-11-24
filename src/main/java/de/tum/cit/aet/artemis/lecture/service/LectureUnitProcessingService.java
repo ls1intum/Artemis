@@ -69,7 +69,8 @@ public class LectureUnitProcessingService {
     }
 
     /**
-     * Split units from given file according to given split information and saves them.
+     * Split units from given file according to given split information and saves as AttachmentVideo unit with the split attachment to the database.
+     * Also stores the individual slides for each unit.
      *
      * @param lectureUnitSplitInformationDTO The split information
      * @param fileBytes                      The byte content of the file (lecture slides) to be split
@@ -78,47 +79,64 @@ public class LectureUnitProcessingService {
      */
     public List<AttachmentVideoUnit> splitAndSaveUnits(LectureUnitSplitInformationDTO lectureUnitSplitInformationDTO, byte[] fileBytes, Lecture lecture) throws IOException {
 
-        try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream(); PDDocument document = Loader.loadPDF(fileBytes)) {
+        // NOTE: there might be existing unis in the lecture already
+        int startIndex = lecture.getLectureUnits().size();
+
+        try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream(); PDDocument completePdfDocument = Loader.loadPDF(fileBytes)) {
             List<AttachmentVideoUnit> units = new ArrayList<>();
 
-            for (LectureUnitSplitDTO lectureUnit : lectureUnitSplitInformationDTO.units()) {
+            // first create all attachment video units and add them to the lecture
+            for (LectureUnitSplitDTO lectureUnitSplitDto : lectureUnitSplitInformationDTO.units()) {
+                AttachmentVideoUnit attachmentVideoUnit = new AttachmentVideoUnit();
+                attachmentVideoUnit.setDescription("");
+                attachmentVideoUnit.setName(lectureUnitSplitDto.unitName());
+                attachmentVideoUnit.setReleaseDate(lectureUnitSplitDto.releaseDate());
+                lecture.addLectureUnit(attachmentVideoUnit);
+            }
+            // only save the lecture once with all units attached
+            // NOTE: when saving the lecture, attachment video units and attachments are typically saved as well, which could lead to issues when the Java objects are not
+            // fully in sync with the DB state. This is why the method splits the creation of attachment video units and attachments into two separate loops.
+            // (otherwise, it could happen that attachments get lost as orphans in the middle of th process)
+            lecture = lectureRepository.saveAndFlush(lecture);
+
+            // next split the document and save each unit with its attachment
+            for (int i = 0; i < lectureUnitSplitInformationDTO.units().size(); i++) {
+                var attachmentVideoUnit = (AttachmentVideoUnit) lecture.getLectureUnits().get(startIndex + i);
+                LectureUnitSplitDTO lectureUnitSplitDto = lectureUnitSplitInformationDTO.units().get(i);
+
                 // make sure output stream doesn't contain old data
                 outputStream.reset();
 
-                AttachmentVideoUnit attachmentVideoUnit = new AttachmentVideoUnit();
-                Attachment attachment = new Attachment();
                 PDDocumentInformation pdDocumentInformation = new PDDocumentInformation();
                 Splitter pdfSplitter = new Splitter();
-                pdfSplitter.setStartPage(lectureUnit.startPage());
-                pdfSplitter.setEndPage(lectureUnit.endPage());
+                pdfSplitter.setStartPage(lectureUnitSplitDto.startPage());
+                pdfSplitter.setEndPage(lectureUnitSplitDto.endPage());
                 // split only based on start and end page
-                pdfSplitter.setSplitAtPage(document.getNumberOfPages());
+                pdfSplitter.setSplitAtPage(completePdfDocument.getNumberOfPages());
 
-                List<PDDocument> documentUnits = pdfSplitter.split(document);
-                pdDocumentInformation.setTitle(lectureUnit.unitName());
+                // the split should only return one valid PDF document
+                var splitPdfDocument = pdfSplitter.split(completePdfDocument).getFirst();
+                pdDocumentInformation.setTitle(lectureUnitSplitDto.unitName());
                 if (!StringUtils.isEmpty(lectureUnitSplitInformationDTO.removeSlidesCommaSeparatedKeyPhrases())) {
-                    removeSlidesContainingAnyKeyPhrases(documentUnits.getFirst(), lectureUnitSplitInformationDTO.removeSlidesCommaSeparatedKeyPhrases());
+                    removeSlidesContainingAnyKeyPhrases(splitPdfDocument, lectureUnitSplitInformationDTO.removeSlidesCommaSeparatedKeyPhrases());
                 }
-                documentUnits.getFirst().setDocumentInformation(pdDocumentInformation);
-                documentUnits.getFirst().save(outputStream);
+                splitPdfDocument.setDocumentInformation(pdDocumentInformation);
+                splitPdfDocument.save(outputStream);
 
-                // setup attachmentVideoUnit and attachment
-                attachmentVideoUnit.setDescription("");
-                attachmentVideoUnit.setName(lectureUnit.unitName());
-                attachmentVideoUnit.setReleaseDate(lectureUnit.releaseDate());
-                attachment.setName(lectureUnit.unitName());
+                Attachment attachment = new Attachment();
+                attachment.setName(lectureUnitSplitDto.unitName());
                 attachment.setAttachmentType(AttachmentType.FILE);
-                attachment.setReleaseDate(lectureUnit.releaseDate());
+                attachment.setReleaseDate(lectureUnitSplitDto.releaseDate());
                 attachment.setUploadDate(ZonedDateTime.now());
 
-                MultipartFile multipartFile = FileUtil.convertByteArrayToMultipart(lectureUnit.unitName(), ".pdf", outputStream.toByteArray());
-                AttachmentVideoUnit savedAttachmentVideoUnit = attachmentVideoUnitService.createAttachmentVideoUnit(attachmentVideoUnit, attachment, lecture, multipartFile, true);
-                slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(documentUnits.getFirst(), savedAttachmentVideoUnit, multipartFile.getOriginalFilename());
-                documentUnits.getFirst().close(); // make sure to close the document
-                units.add(savedAttachmentVideoUnit);
+                MultipartFile multipartFile = FileUtil.convertByteArrayToMultipart(lectureUnitSplitDto.unitName(), ".pdf", outputStream.toByteArray());
+                attachmentVideoUnit = attachmentVideoUnitService.saveAttachmentVideoUnit(attachmentVideoUnit, attachment, multipartFile, true);
+                slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(splitPdfDocument, attachmentVideoUnit, multipartFile.getOriginalFilename());
+                splitPdfDocument.close(); // make sure to close the document
+                // store the saved object
+                units.add(attachmentVideoUnit);
             }
-            lectureRepository.save(lecture);
-            document.close();
+            completePdfDocument.close();
             return units;
         }
     }
