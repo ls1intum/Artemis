@@ -21,16 +21,17 @@ import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { firstValueFrom } from 'rxjs';
 import { AgentChatService } from './agent-chat.service';
-import { ChatMessage, CompetencyPreview } from 'app/atlas/shared/entities/chat-message.model';
+import { ChatMessage, CompetencyPreview, CompetencyRelationPreview, RelationGraphPreview } from 'app/atlas/shared/entities/chat-message.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CompetencyCardComponent } from 'app/atlas/overview/competency-card/competency-card.component';
 import { CompetencyService } from 'app/atlas/manage/services/competency.service';
 import { Competency } from 'app/atlas/shared/entities/competency.model';
+import { NgxGraphModule } from '@swimlane/ngx-graph';
 
 @Component({
     selector: 'jhi-agent-chat-modal',
     standalone: true,
-    imports: [CommonModule, TranslateDirective, FontAwesomeModule, FormsModule, ArtemisTranslatePipe, CompetencyCardComponent],
+    imports: [CommonModule, TranslateDirective, FontAwesomeModule, FormsModule, ArtemisTranslatePipe, CompetencyCardComponent, NgxGraphModule],
     templateUrl: './agent-chat-modal.component.html',
     styleUrl: './agent-chat-modal.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
@@ -75,8 +76,16 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
                     this.addMessage(this.translateService.instant('artemisApp.agent.chat.welcome'), false);
                 }
                 history.forEach((msg) => {
-                    if (msg.competencyPreview || msg.batchCompetencyPreview) {
-                        this.addMessageWithPreview(msg.content, msg.isUser, msg.competencyPreview, msg.batchCompetencyPreview);
+                    if (msg.competencyPreview || msg.batchCompetencyPreview || msg.relationPreview || msg.batchRelationPreview || msg.relationGraphPreview) {
+                        this.addMessageWithPreview(
+                            msg.content,
+                            msg.isUser,
+                            msg.competencyPreview,
+                            msg.batchCompetencyPreview,
+                            msg.relationPreview,
+                            msg.batchRelationPreview,
+                            msg.relationGraphPreview,
+                        );
                     } else {
                         this.addMessage(msg.content, msg.isUser);
                     }
@@ -127,6 +136,9 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
                     false,
                     response.competencyPreview,
                     response.batchCompetencyPreview,
+                    response.relationPreview,
+                    response.batchRelationPreview,
+                    response.relationGraphPreview,
                 );
 
                 if (response.competenciesModified) {
@@ -213,6 +225,41 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
         });
     }
 
+    protected onCreateRelation(message: ChatMessage): void {
+        // Prevent duplicate creation
+        if (message.relationCreated || !message.relationPreview) {
+            return;
+        }
+
+        this.isAgentTyping.set(true);
+
+        // Trigger relation creation via agent
+        this.agentChatService.sendMessage('Create the relation', this.courseId).subscribe({
+            next: () => {
+                this.isAgentTyping.set(false);
+
+                // Mark this message's relation as created
+                this.messages = this.messages.map((msg) => (msg.id === message.id ? { ...msg, relationCreated: true } : msg));
+                this.cdr.markForCheck();
+
+                this.addMessage(this.translateService.instant('artemisApp.agent.chat.success.relationCreated'), false);
+
+                // Emit event to refresh competencies (relations affect the graph)
+                this.competencyChanged.emit();
+
+                // Restore focus to input
+                setTimeout(() => this.messageInput()?.nativeElement?.focus(), 10);
+            },
+            error: () => {
+                this.isAgentTyping.set(false);
+                this.addMessage(this.translateService.instant('artemisApp.agent.chat.error.relationCreateFailed'), false);
+
+                // Restore focus to input
+                setTimeout(() => this.messageInput()?.nativeElement?.focus(), 10);
+            },
+        });
+    }
+
     protected onApprovePlan(message: ChatMessage): void {
         // Prevent duplicate approval
         if (message.planApproved) {
@@ -269,6 +316,9 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
         isUser: boolean,
         singlePreview?: { preview: boolean; competency: CompetencyPreview; competencyId?: number; viewOnly?: boolean },
         batchPreview?: { batchPreview: boolean; count: number; competencies: CompetencyPreview[]; viewOnly?: boolean },
+        singleRelationPreview?: { preview: boolean; relation: CompetencyRelationPreview; viewOnly?: boolean },
+        batchRelationPreview?: { batchPreview: boolean; count: number; relations: CompetencyRelationPreview[]; viewOnly?: boolean },
+        relationGraphPreview?: RelationGraphPreview,
     ): void {
         const message: ChatMessage = {
             id: this.generateMessageId(),
@@ -290,6 +340,24 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
                 ...comp,
                 viewOnly: batchPreview.viewOnly,
             }));
+        }
+
+        if (singleRelationPreview?.preview) {
+            message.relationPreview = {
+                ...singleRelationPreview.relation,
+                viewOnly: singleRelationPreview.viewOnly,
+            };
+        }
+
+        if (batchRelationPreview?.batchPreview) {
+            message.batchRelationPreview = batchRelationPreview.relations.map((rel) => ({
+                ...rel,
+                viewOnly: batchRelationPreview.viewOnly,
+            }));
+        }
+
+        if (relationGraphPreview) {
+            message.relationGraphPreview = relationGraphPreview;
         }
 
         this.finalizeMessage(message, isUser);

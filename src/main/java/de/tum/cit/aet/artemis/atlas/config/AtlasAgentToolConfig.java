@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Lazy;
 
 import de.tum.cit.aet.artemis.atlas.service.AtlasAgentToolsService;
 import de.tum.cit.aet.artemis.atlas.service.CompetencyExpertToolsService;
+import de.tum.cit.aet.artemis.atlas.service.CompetencyMappingToolsService;
 
 @Lazy
 @Configuration
@@ -41,5 +42,19 @@ public class AtlasAgentToolConfig {
     @Qualifier("competencyExpertToolCallbackProvider")
     public ToolCallbackProvider competencyExpertToolCallbackProvider(CompetencyExpertToolsService expertToolsService) {
         return MethodToolCallbackProvider.builder().toolObjects(expertToolsService).build();
+    }
+
+    /**
+     * Registers the tools for the Competency Mapper sub-agent.
+     * This agent has access to relation mapping and preview tools.
+     *
+     * @param mapperToolsService the service containing @Tool-annotated methods for competency mapper
+     * @return ToolCallbackProvider that exposes the competency mapper tools to Spring AI
+     */
+    @Bean
+    @Lazy
+    @Qualifier("competencyMapperToolCallbackProvider")
+    public ToolCallbackProvider competencyMapperToolCallbackProvider(CompetencyMappingToolsService mapperToolsService) {
+        return MethodToolCallbackProvider.builder().toolObjects(mapperToolsService).build();
     }
 }

@@ -21,6 +21,9 @@ logging:
         liquibase: ERROR
 
 spring:
+    cloud:
+        config:
+            enabled: false
     devtools:
         restart:
             enabled: true
