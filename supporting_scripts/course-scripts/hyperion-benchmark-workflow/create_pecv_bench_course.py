@@ -98,10 +98,13 @@ def create_pecv_bench_course(session: Session) -> requests.Response:
             response: requests.Response = session.post(url, data=body, headers=headers)
             
             if response.status_code == 201:
-                logging.info(f"Created course {COURSE_NAME} with shortName {course_short_name}. \n {response.json()}")
+                logging.info(f"Created course {COURSE_NAME} with shortName {course_short_name}")
             else:
                 logging.error(f"Failed to create course {COURSE_NAME} after deletion. Status code: {response.status_code}\n Response content: {response.text}")
-        sys.exit(0)
+                sys.exit(1)
+        else:
+            logging.error(f"Failed to delete existing course {COURSE_NAME}. Cannot proceed with creation.")
+            sys.exit(1)
     else:
         logging.error("Problem with the group 'students' and interacting with a test server? "
                         "Is 'is_local_course' in 'config.ini' set to 'False'?")
@@ -114,7 +117,7 @@ def create_pecv_bench_course(session: Session) -> requests.Response:
 
 def delete_pecv_bench_course(session: Session, course_short_name: str) -> bool:
     """Delete a course using the given session and course ID."""
-
+    logging.info(f"Deleting course with shortName {course_short_name}...")
     coursesResponse: requests.Response = session.get(f"{SERVER_URL}/core/courses")
 
     courses = coursesResponse.json()
@@ -132,7 +135,3 @@ def delete_pecv_bench_course(session: Session, course_short_name: str) -> bool:
         logging.error(f"Could not delete course with shortName {course_short_name}")
         return False
     
-    #nextResponse: requests.Response = session.get(f"{SERVER_URL}/programming/courses/{course_id}/programming-exercises")
-    #exercises = nextResponse.json()
-    #for exercise in exercises:
-    #    logging.info(f"Existing exercise in the course: {exercise['title']} (ID: {exercise['id']})")

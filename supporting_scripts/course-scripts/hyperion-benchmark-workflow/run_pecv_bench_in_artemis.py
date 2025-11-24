@@ -2,12 +2,12 @@ from logging import config
 import subprocess
 import os
 import sys
-import uuid
+from typing import Dict
 import requests
 from logging_config import logging
 from utils import login_as_admin, SERVER_URL, CLIENT_URL
 from create_pecv_bench_course import create_pecv_bench_course
-from manage_programming_exercise import create_programming_exercise, convert_variant_to_zip, import_programming_exercise
+from manage_programming_exercise import check_consistency, create_programming_exercise, convert_variant_to_zip, import_programming_exercise
 from pathlib import Path
 
 PECV_BENCH_DIR: str = "pecv-bench"
@@ -17,8 +17,16 @@ def clone_pecv_bench(pecv_bench_url: str, pecv_bench_dir: str) -> None:
     """Clones a repository if it doesn't exist, or pulls updates if it does."""
 
     if os.path.exists(pecv_bench_dir):
-        logging.info(f"Directory {pecv_bench_dir} already exists. Pulling latest changes.")
+        logging.info(f"Directory {PECV_BENCH_DIR} already exists. Pulling latest changes.")
         try:
+            subprocess.run(
+                ["git","reset", "--hard", "HEAD"],
+                cwd=pecv_bench_dir,
+                check=True)    
+            subprocess.run(
+                ["git", "clean", "-fd"],
+                cwd=pecv_bench_dir,
+                check=True)
             subprocess.run(
                 ["git", "pull"],
                 cwd=pecv_bench_dir,
@@ -128,27 +136,45 @@ def main():
         sys.exit(1)
     
     VARIANTS_FOLDER_PATH: str = f"{pecv_bench_dir}/data/{COURSE}/{EXERCISE}/variants"
-    list_of_variants = os.listdir(VARIANTS_FOLDER_PATH)
-
-
+    list_of_variants = sorted(os.listdir(VARIANTS_FOLDER_PATH))
     
     session = requests.Session()
     login_as_admin(session)
+
     response_data = create_pecv_bench_course(session)
     course_id = response_data["id"]
-    #course_id = 9
-
+    logging.info(f"Created PECV Bench Course with ID: {course_id}")
+    
+    PROGRAMMING_EXERCISES: Dict[str, int] = {} # {'001': 92, <VARIANT_ID>: <exercise_id>, ...}
+    """
+    {'001': 92, '002': 93, '003': 94, '004': 95, '005': 96, '006': 97, '007': 98, '008': 99, '009': 100, '010': 101, '011': 102, '012': 103, '013': 104, '014': 105, '015': 106, '016': 107, '017': 108, '018': 109, '019': 110, '020': 111, '021': 112, '022': 113, '023': 114, '024': 115, '025': 116, '026': 117, '027': 118, '028': 119, '029': 120, '030': 121}
+    """
     for VARIANT_ID in list_of_variants:
         if not os.path.isdir(os.path.join(VARIANTS_FOLDER_PATH, VARIANT_ID)):
             continue
         VARIANT_ID_PATH = os.path.join(VARIANTS_FOLDER_PATH, VARIANT_ID)
+        PROGRAMMING_EXERCISES[VARIANT_ID] = None
         convert_variant_to_zip(VARIANT_ID_PATH, course_id)
-        import_programming_exercise(session = session, 
+    
+        response_data = import_programming_exercise(session = session, 
                                 course_id = course_id,
                                 server_url = SERVER_URL,
                                 variant_folder_path = VARIANT_ID_PATH)
-    
-    
+        if response_data is not None and response_data["id"] is not None:
+            PROGRAMMING_EXERCISES[VARIANT_ID] = response_data["id"]
+        else:
+            logging.error(f"Failed to import programming exercise for variant {VARIANT_ID}. Moving to next variant.")
+            continue    
+
+
+    # TODO POST Request to iterate over all passed programming exercise IDs and check consistency in each of them, correlate to which exercise and its variant it belongs 
+    # and store the inconsistency there in json file, in a specific folder to let pecv bench analysis scripts for later use
+    check_consistency(session=session, programming_exercise_ids=PROGRAMMIN_EXERCISES_IDS, server_url=SERVER_URL)
+
+    # TODO after that somehow call already existing code from pecv bench, which iterates over results json file for each specific variand, compares it to gold standart
+    # NOTE which is variantID.json in the same folder as variandID.patch file
+    # TODO after that it automatically create a variants_report.json, and generates a statistics and plots
+    # NOTE identify how to see the results
 if __name__ == "__main__":
     logging.info("Starting PECV-Bench Hyperion Benchmark Workflow...")
     main()
