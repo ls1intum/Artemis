@@ -97,7 +97,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         this.programmingExercisePlantUmlWrapper.setTestCases(this.testCases);
     }
 
-    public renderedMarkdown: SafeHtml;
+    public renderedMarkdown: SafeHtml | undefined;
     private injectableContentForMarkdownCallbacks: Array<() => void> = [];
 
     markdownExtensions: PluginSimple[];
@@ -162,17 +162,11 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                     if (!this.isLoading && this.exercise && this.participation && (this.isInitial || participationHasChanged)) {
                         this.isLoading = true;
                         return of(this.exercise.problemStatement).pipe(
-                            // If no instructions can be loaded, abort pipe and hide the instruction panel
                             tap((problemStatement) => {
-                                if (!problemStatement) {
-                                    this.onNoInstructionsAvailable.emit();
-                                    this.isLoading = false;
-                                    this.isInitial = false;
-                                    return of(undefined);
-                                }
+                                // Always update the problem statement, even if empty
+                                // The component will display an empty state message instead of hiding
+                                this.problemStatement = problemStatement ?? '';
                             }),
-                            filter((problemStatement) => !!problemStatement),
-                            tap((problemStatement) => (this.problemStatement = problemStatement!)),
                             switchMap(() => this.loadInitialResult()),
                             tap((latestResult) => {
                                 this.latestResult = latestResult;
@@ -318,7 +312,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                 }
                 this.injectTasksIntoDocument();
             }, 0);
-        } else if (this.exercise?.problemStatement) {
+        } else if (this.exercise?.problemStatement?.trim()) {
             this.injectableContentForMarkdownCallbacks = [];
             const renderedProblemStatement = htmlForMarkdown(this.exercise.problemStatement, this.markdownExtensions);
             const markdownWithoutTasks = this.prepareTasks(renderedProblemStatement);
@@ -330,6 +324,10 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                 });
                 this.injectTasksIntoDocument();
             }, 0);
+        } else {
+            // Clear the rendered markdown when problem statement is empty or whitespace-only
+            this.renderedMarkdown = undefined;
+            this.injectableContentForMarkdownCallbacks = [];
         }
     }
 
