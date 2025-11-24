@@ -93,7 +93,7 @@ stream {
 
 ## Rate Limiting
 
-Artemis provides **cluster-wide rate limiting** powered by Bucket4j (token buckets) and Hazelcast (distributed state).
+Artemis provides **cluster-wide rate limiting** powered by [Bucket4j](https://bucket4j.com) (token buckets) and [Hazelcast](https://hazelcast.com) (distributed state).
 It helps protect authentication and account management endpoints from brute-force attempts and other types of abusive traffic.
 
 ### What It Does
@@ -119,7 +119,9 @@ artemis:
 ### Where It Is Enforced
 
 - Registration
-- Password reset (init + finish)
+- Password reset (request reset link + actual password change)
 - Username/password login
 - WebAuthn authentication
 - Git over SSH and HTTP operations
+
+We plan to add the rate-limit to more endpoints (like Oauth2) in the future.
