@@ -217,6 +217,13 @@ class NebulaTranscriptionResourceIntegrationTest extends AbstractSpringIntegrati
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    void cancelNebulaTranscription_noTranscriptionForValidUnit_notFound() throws Exception {
+        // lectureUnit exists but has no transcription record
+        restNebulaTranscriptionMockMvc.perform(delete("/api/nebula/lecture-unit/" + lectureUnit.getId() + "/transcriber/cancel")).andExpect(status().isNotFound());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
     void cancelNebulaTranscription_completedTranscription_badRequest() throws Exception {
         // Create a completed transcription
         var transcription = new LectureTranscription();
