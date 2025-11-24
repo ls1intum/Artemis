@@ -82,8 +82,8 @@ export class ShortAnswerQuestionComponent {
     watchCollection() {
         this.renderedQuestion = new RenderedQuizQuestionMarkDownElement();
 
-        const textParts = this.shortAnswerQuestionUtil.divideQuestionTextIntoTextParts(this.shortAnswerQuestion().text!);
-        this.textParts = this.shortAnswerQuestionUtil.transformTextPartsIntoHTML(textParts);
+        const textPartsData = this.shortAnswerQuestionUtil.divideQuestionTextIntoTextParts(this.shortAnswerQuestion().text!);
+        this.textParts = this.shortAnswerQuestionUtil.transformTextPartsIntoHTML(textPartsData);
 
         this.renderedQuestion.text = this.artemisMarkdown.safeHtmlForMarkdown(this.shortAnswerQuestion().text);
         this.renderedQuestion.hint = this.artemisMarkdown.safeHtmlForMarkdown(this.shortAnswerQuestion().hint);
