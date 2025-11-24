@@ -1370,17 +1370,17 @@ public class ExamService {
      * @return data about an exam including all exercises, plus some data for the tutor as tutor status for assessment
      */
     public StatsForDashboardDTO getStatsForExamAssessmentDashboard(Course course, Long examId) {
-        Exam exam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId);
-        Set<Long> exerciseIds = exam.getExerciseGroups().stream().flatMap(exerciseGroup -> exerciseGroup.getExercises().stream()).map(DomainObject::getId)
-                .collect(Collectors.toSet());
         StatsForDashboardDTO stats = new StatsForDashboardDTO();
+        Set<Long> exerciseIds = examRepository.findExerciseIdsByExamId(examId);
 
-        final long numberOfSubmissions = submissionRepository.countByExamIdSubmittedSubmissionsIgnoreTestRuns(examId)
-                + programmingExerciseRepository.countSubmissionsByExamIdSubmitted(examId);
+        final long numberOfSubmissions = submissionRepository.countByExerciseIdsSubmittedSubmissionsIgnoreTestRuns(exerciseIds)
+                + programmingExerciseRepository.countSubmissionsByExerciseIdsSubmitted(exerciseIds);
         stats.setNumberOfSubmissions(new DueDateStat(numberOfSubmissions, 0));
 
-        DueDateStat[] numberOfAssessmentsOfCorrectionRounds = resultRepository.countNumberOfFinishedAssessmentsForExamForCorrectionRounds(examId,
-                exam.getNumberOfCorrectionRoundsInExam());
+        int numberOfCorrectionRoundsInExam = examRepository.findNumberOfCorrectionRoundsByExamId(examId);
+
+        DueDateStat[] numberOfAssessmentsOfCorrectionRounds = resultRepository.countNumberOfFinishedAssessmentsForExamForCorrectionRounds(exerciseIds,
+                numberOfCorrectionRoundsInExam);
         stats.setNumberOfAssessmentsOfCorrectionRounds(numberOfAssessmentsOfCorrectionRounds);
 
         final long numberOfComplaints = complaintRepository.countByExerciseIdsAndComplaintType(exerciseIds, ComplaintType.COMPLAINT);
@@ -1389,13 +1389,14 @@ public class ExamService {
         final long numberOfComplaintResponses = complaintResponseRepository.countComplaintResponsesForExerciseIdsAndComplaintType(exerciseIds, ComplaintType.COMPLAINT);
         stats.setNumberOfOpenComplaints(numberOfComplaints - numberOfComplaintResponses);
 
-        final long numberOfAssessmentLocks = submissionRepository.countLockedSubmissionsByUserIdAndExamId(userRepository.getUserWithGroupsAndAuthorities().getId(), examId);
+        final long numberOfAssessmentLocks = submissionRepository.countLockedSubmissionsByUserIdAndExerciseIds(userRepository.getUserWithGroupsAndAuthorities().getId(),
+                exerciseIds);
         stats.setNumberOfAssessmentLocks(numberOfAssessmentLocks);
 
-        final long totalNumberOfAssessmentLocks = submissionRepository.countLockedSubmissionsByExamId(examId);
+        final long totalNumberOfAssessmentLocks = submissionRepository.countLockedSubmissionsByExerciseIds(exerciseIds);
         stats.setTotalNumberOfAssessmentLocks(totalNumberOfAssessmentLocks);
 
-        List<TutorLeaderboardDTO> leaderboardEntries = tutorLeaderboardService.getExamLeaderboard(course, exam);
+        List<TutorLeaderboardDTO> leaderboardEntries = tutorLeaderboardService.getExamLeaderboard(course, exerciseIds);
         stats.setTutorLeaderboardEntries(leaderboardEntries);
         return stats;
     }
@@ -1476,15 +1477,30 @@ public class ExamService {
     }
 
     /**
-     * Get all exams of the user. The result is paged
+     * Fetches all active exams that should be visible to the given user based on role-dependent
+     * visibility windows.
      *
-     * @param pageable The search query defining the search term and the size of the returned page
-     * @param user     The user for whom to fetch all available exercises
-     * @return exam page
+     * <p>
+     * Visibility policy:
+     * <ul>
+     * <li><b>Instructors</b>: exams visible from now − {@code EXAM_ACTIVE_DAYS} days to now + {@code EXAM_ACTIVE_DAYS} days.</li>
+     * <li><b>Editors and tutors</b>: exams visible only from now to now + {@code EXAM_ACTIVE_DAYS} days.</li>
+     * </ul>
+     *
+     * <p>
+     * The method precomputes all required timestamps in Java and delegates to a JPQL
+     * query that applies the correct lower bound via a {@code CASE} expression. This preserves
+     * efficient database-side paging and ensures consistency across different database systems
+     * (MySQL, PostgreSQL).
+     * </p>
+     *
+     * @param user     the authenticated user whose visibility window should be applied
+     * @param pageable paging specification
+     * @return a page of exams visible to the user
      */
     public Page<Exam> getAllActiveExams(final Pageable pageable, final User user) {
         // active exam means that exam has visible date in the past 7 days or next 7 days.
-        return examRepository.findAllActiveExamsInCoursesWhereInstructor(user.getGroups(), pageable, ZonedDateTime.now().minusDays(EXAM_ACTIVE_DAYS),
+        return examRepository.findAllActiveExamsInCoursesWhereAtLeastTutor(user.getGroups(), pageable, ZonedDateTime.now().minusDays(EXAM_ACTIVE_DAYS), ZonedDateTime.now(),
                 ZonedDateTime.now().plusDays(EXAM_ACTIVE_DAYS));
     }
 

@@ -10,14 +10,28 @@ import { onError } from 'app/shared/util/global.utils';
 import { Subject } from 'rxjs';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
-import { AttachmentVideoUnit, IngestionState } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
+import { AttachmentVideoUnit, IngestionState, TranscriptionStatus } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { ExerciseUnit } from 'app/lecture/shared/entities/lecture-unit/exerciseUnit.model';
-import { IconDefinition, faCheckCircle, faEye, faFileExport, faPencilAlt, faRepeat, faSpinner, faTrash } from '@fortawesome/free-solid-svg-icons';
+import {
+    IconDefinition,
+    faCheckCircle,
+    faExclamationTriangle,
+    faEye,
+    faFileAudio,
+    faFileExport,
+    faFileLines,
+    faPencilAlt,
+    faRepeat,
+    faSpinner,
+    faTrash,
+} from '@fortawesome/free-solid-svg-icons';
 import { CdkDrag, CdkDragDrop, CdkDropList, moveItemInArray } from '@angular/cdk/drag-drop';
 import { PROFILE_IRIS } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { LectureTranscriptionService } from 'app/lecture/manage/services/lecture-transcription.service';
+import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
 import { UnitCreationCardComponent } from '../unit-creation-card/unit-creation-card.component';
 import { AttachmentVideoUnitComponent } from 'app/lecture/overview/course-lectures/attachment-video-unit/attachment-video-unit.component';
 import { ExerciseUnitComponent } from 'app/lecture/overview/course-lectures/exercise-unit/exercise-unit.component';
@@ -62,9 +76,13 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     protected readonly faRepeat = faRepeat;
     protected readonly faCheckCircle = faCheckCircle;
     protected readonly faSpinner = faSpinner;
+    protected readonly faFileAudio = faFileAudio;
+    protected readonly faFileLines = faFileLines;
+    protected readonly faExclamationTriangle = faExclamationTriangle;
 
     protected readonly LectureUnitType = LectureUnitType;
     protected readonly ActionType = ActionType;
+    protected readonly TranscriptionStatus = TranscriptionStatus;
 
     private readonly activatedRoute = inject(ActivatedRoute);
     private readonly lectureService = inject(LectureService);
@@ -72,6 +90,8 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     private readonly profileService = inject(ProfileService);
     private readonly irisSettingsService = inject(IrisSettingsService);
     protected readonly lectureUnitService = inject(LectureUnitService);
+    private readonly lectureTranscriptionService = inject(LectureTranscriptionService);
+    private readonly attachmentVideoUnitService = inject(AttachmentVideoUnitService);
 
     @Input() showCreationCard = true;
     @Input() showCompetencies = true;
@@ -84,6 +104,9 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     lecture: Lecture;
     isLoading = false;
     viewButtonAvailable: Record<number, boolean> = {};
+    transcriptionStatus: Record<number, TranscriptionStatus> = {};
+    playlistUrls: Record<number, string> = {};
+    isTranscriptionLoading: Record<number, boolean> = {};
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -127,6 +150,10 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
                         this.lectureUnits = lecture?.lectureUnits;
                         this.lectureUnits.forEach((lectureUnit) => {
                             this.viewButtonAvailable[lectureUnit.id!] = this.isViewButtonAvailable(lectureUnit);
+                            if (lectureUnit.type === LectureUnitType.ATTACHMENT_VIDEO) {
+                                this.loadTranscriptionStatus(lectureUnit.id!);
+                                this.loadPlaylistUrl(<AttachmentVideoUnit>lectureUnit);
+                            }
                         });
                         this.initializeProfileInfo();
                     } else {
@@ -329,4 +356,87 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     }
 
     protected readonly AttachmentVideoUnit = AttachmentVideoUnit;
+
+    private loadTranscriptionStatus(lectureUnitId: number) {
+        this.lectureTranscriptionService.getTranscriptionStatus(lectureUnitId).subscribe({
+            next: (status) => {
+                if (status) {
+                    this.transcriptionStatus[lectureUnitId] = status;
+                }
+            },
+        });
+    }
+
+    private loadPlaylistUrl(attachmentVideoUnit: AttachmentVideoUnit) {
+        if (attachmentVideoUnit.videoSource) {
+            this.attachmentVideoUnitService.getPlaylistUrl(attachmentVideoUnit.videoSource).subscribe({
+                next: (url) => {
+                    if (url) {
+                        this.playlistUrls[attachmentVideoUnit.id!] = url;
+                    }
+                },
+            });
+        }
+    }
+
+    generateTranscription(lectureUnit: AttachmentVideoUnit) {
+        const lectureUnitId = lectureUnit.id;
+        if (!lectureUnitId || this.isTranscriptionLoading[lectureUnitId]) {
+            return;
+        }
+
+        const transcriptionUrl = this.playlistUrls[lectureUnitId] ?? lectureUnit.videoSource;
+        if (!transcriptionUrl) {
+            return;
+        }
+
+        this.isTranscriptionLoading[lectureUnitId] = true;
+        this.attachmentVideoUnitService
+            .startTranscription(this.lecture.id!, lectureUnitId, transcriptionUrl)
+            .pipe(finalize(() => (this.isTranscriptionLoading[lectureUnitId] = false)))
+            .subscribe({
+                next: () => {
+                    this.transcriptionStatus[lectureUnitId] = TranscriptionStatus.PENDING;
+                },
+                error: (res: HttpErrorResponse) => onError(this.alertService, res),
+            });
+    }
+
+    hasTranscription(lectureUnit: AttachmentVideoUnit): boolean {
+        return this.transcriptionStatus[lectureUnit.id!] === TranscriptionStatus.COMPLETED;
+    }
+
+    isTranscriptionPending(lectureUnit: AttachmentVideoUnit): boolean {
+        const status = this.transcriptionStatus[lectureUnit.id!];
+        return status === TranscriptionStatus.PENDING || status === TranscriptionStatus.PROCESSING;
+    }
+
+    isTranscriptionFailed(lectureUnit: AttachmentVideoUnit): boolean {
+        return this.transcriptionStatus[lectureUnit.id!] === TranscriptionStatus.FAILED;
+    }
+
+    canGenerateTranscription(lectureUnit: AttachmentVideoUnit): boolean {
+        const hasPlaylist = !!this.playlistUrls[lectureUnit.id!];
+        return hasPlaylist && !this.isTranscriptionPending(lectureUnit);
+    }
+
+    hasTranscriptionBadge(lectureUnit: AttachmentVideoUnit): boolean {
+        return (
+            this.isTranscriptionPending(lectureUnit) || this.isTranscriptionFailed(lectureUnit) || this.hasTranscription(lectureUnit) || this.canGenerateTranscription(lectureUnit)
+        );
+    }
+
+    getBadgeTopOffset(lectureUnit: LectureUnit) {
+        let offset = 0;
+        if (lectureUnit.type === LectureUnitType.ATTACHMENT_VIDEO) {
+            const hasAttachment = this.hasAttachment(<AttachmentVideoUnit>lectureUnit);
+            const hasTranscriptionBadge = this.hasTranscriptionBadge(<AttachmentVideoUnit>lectureUnit);
+            if (hasAttachment && hasTranscriptionBadge) {
+                offset = -60;
+            } else if (hasTranscriptionBadge || hasAttachment) {
+                offset = -40;
+            }
+        }
+        return offset === 0 ? null : `${offset}px`;
+    }
 }

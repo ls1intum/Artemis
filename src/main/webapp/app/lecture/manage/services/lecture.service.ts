@@ -2,7 +2,6 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
-import { createRequestOption } from 'app/shared/util/request.util';
 import { Lecture, LectureSeriesCreateLectureDTO } from 'app/lecture/shared/entities/lecture.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
@@ -41,7 +40,7 @@ export class LectureService {
         return this.http.get<Lecture>(`${this.resourceUrl}/${lectureId}`, { observe: 'response' }).pipe(
             map((res: EntityResponseType) => {
                 this.convertLectureResponseDatesFromServer(res);
-                this.setAccessRightsLecture(res.body);
+                this.setAccessRightsLecture(res.body || undefined);
                 this.sendTitlesToEntityTitleService(res?.body);
                 return res;
             }),
@@ -58,33 +57,19 @@ export class LectureService {
                     }
                 }
                 this.convertLectureResponseDatesFromServer(res);
-                this.setAccessRightsLecture(res.body);
+                this.setAccessRightsLecture(res.body || undefined);
                 this.sendTitlesToEntityTitleService(res?.body);
                 return res;
             }),
         );
     }
 
-    query(req?: any): Observable<EntityArrayResponseType> {
-        const options = createRequestOption(req);
-        return this.http.get<Lecture[]>(this.resourceUrl, { params: options, observe: 'response' }).pipe(
+    findAllByCourseId(courseId: number): Observable<EntityArrayResponseType> {
+        return this.http.get<Lecture[]>(`api/lecture/courses/${courseId}/lectures`, { observe: 'response' }).pipe(
             map((res: EntityArrayResponseType) => this.convertLectureArrayResponseDatesFromServer(res)),
+            map((res: EntityArrayResponseType) => this.setAccessRightsLectureEntityArrayResponseType(res)),
             tap((res: EntityArrayResponseType) => res?.body?.forEach(this.sendTitlesToEntityTitleService.bind(this))),
         );
-    }
-
-    findAllByCourseId(courseId: number, withLectureUnits = false): Observable<EntityArrayResponseType> {
-        const params = new HttpParams().set('withLectureUnits', withLectureUnits ? '1' : '0');
-        return this.http
-            .get<Lecture[]>(`api/lecture/courses/${courseId}/lectures`, {
-                params,
-                observe: 'response',
-            })
-            .pipe(
-                map((res: EntityArrayResponseType) => this.convertLectureArrayResponseDatesFromServer(res)),
-                map((res: EntityArrayResponseType) => this.setAccessRightsLectureEntityArrayResponseType(res)),
-                tap((res: EntityArrayResponseType) => res?.body?.forEach(this.sendTitlesToEntityTitleService.bind(this))),
-            );
     }
 
     findAllTutorialLecturesByCourseId(courseId: number): Observable<EntityArrayResponseType> {
@@ -99,6 +84,7 @@ export class LectureService {
             );
     }
 
+    // only loads attachment units, no other units
     findAllByCourseIdWithSlides(courseId: number): Observable<EntityArrayResponseType> {
         return this.http
             .get<Lecture[]>(`api/lecture/courses/${courseId}/lectures-with-slides`, {
@@ -151,7 +137,7 @@ export class LectureService {
             .pipe(
                 map((res: EntityResponseType) => {
                     this.convertLectureResponseDatesFromServer(res);
-                    this.setAccessRightsLecture(res.body);
+                    this.setAccessRightsLecture(res.body || undefined);
                     this.sendTitlesToEntityTitleService(res?.body);
                     return res;
                 }),
@@ -215,7 +201,7 @@ export class LectureService {
      * @param lecture for which the access rights shall be set
      * @return lecture that with set access rights if the course was set
      */
-    private setAccessRightsLecture(lecture: Lecture | null) {
+    private setAccessRightsLecture(lecture: Lecture | undefined) {
         if (lecture) {
             if (lecture.course) {
                 this.accountService.setAccessRightsForCourse(lecture.course);

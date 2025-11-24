@@ -5,6 +5,7 @@ const sidebars: SidebarsConfig = {
         'intro',
         'programming',
         'lecture-series',
+        'assessment',
     ],
 };
 
