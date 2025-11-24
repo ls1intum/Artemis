@@ -570,14 +570,17 @@ export class ExerciseAPIRequests {
     }
 
     /**
-     * Gets the participation data for an exercise with the specified exercise ID.
+     * Gets the participation data for an programming exercise with the specified exercise ID.
      *
      * @param exerciseId - The ID of the exercise for which to retrieve the participation data.
      * @returns A Promise<StudentParticipation> representing the student participation.
      */
-    async getExerciseParticipation(exerciseId: number): Promise<StudentParticipation> {
-        const response = await this.page.request.get(`api/exercise/exercises/${exerciseId}/participation`);
-        return response.json();
+    async getProgrammingExerciseParticipation(exerciseId: number): Promise<StudentParticipation> {
+        // Updated to use the new endpoint provided in the Java controller
+        const response = await this.page.request.get(`api/exercise/programming-exercises/${exerciseId}/with-participations`);
+        const programmingExercise = await response.json();
+        const participations = programmingExercise.studentParticipations as StudentParticipation[];
+        return participations[0] ?? undefined;
     }
 
     /**
