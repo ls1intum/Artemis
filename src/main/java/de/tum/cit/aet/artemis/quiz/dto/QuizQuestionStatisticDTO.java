@@ -3,8 +3,6 @@ package de.tum.cit.aet.artemis.quiz.dto;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import jakarta.annotation.Nullable;
-
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
 
@@ -18,9 +16,8 @@ import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSpotCounter;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record QuizQuestionStatisticDTO(Long id, Integer participantsRated, Integer participantsUnrated, Integer ratedCorrectCounter, Integer unRatedCorrectCounter,
-        @Nullable @JsonUnwrapped MultipleChoiceQuestionStatisticDTO multipleChoiceQuestionStatisticDTO,
-        @Nullable @JsonUnwrapped DragAndDropQuestionStatisticDTO dragAndDropQuestionStatisticDTO,
-        @Nullable @JsonUnwrapped ShortAnswerQuestionStatisticDTO shortAnswerQuestionStatisticDTO, String type) {
+        @JsonUnwrapped MultipleChoiceQuestionStatisticDTO multipleChoiceQuestionStatisticDTO, @JsonUnwrapped DragAndDropQuestionStatisticDTO dragAndDropQuestionStatisticDTO,
+        @JsonUnwrapped ShortAnswerQuestionStatisticDTO shortAnswerQuestionStatisticDTO, String type) {
 
     /**
      * Converts a QuizQuestionStatistic entity to a QuizQuestionStatisticDTO.
