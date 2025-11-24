@@ -274,6 +274,17 @@ export const courseRoutes: Routes = [
                 canActivate: [UserRouteAccessService, CourseOverviewGuard],
                 children: [
                     {
+                        path: 'tutorial-lectures/:lectureId',
+                        data: {
+                            authorities: [Authority.USER],
+                            pageTitle: 'overview.lectures',
+                            hasSidebar: true,
+                            showRefreshButton: true,
+                        },
+                        canActivate: [UserRouteAccessService],
+                        loadComponent: () => import('app/lecture/overview/course-lectures/details/course-lecture-details.component').then((m) => m.CourseLectureDetailsComponent),
+                    },
+                    {
                         path: ':tutorialGroupId',
                         loadComponent: () =>
                             import('app/tutorialgroup/overview/course-tutorial-group-detail-container/course-tutorial-group-detail-container.component').then(
@@ -363,7 +374,7 @@ export const courseRoutes: Routes = [
             },
             {
                 path: CourseOverviewRoutePath.CALENDAR,
-                loadComponent: () => import('app/core/calendar/calendar-overview/calendar-overview.component').then((m) => m.CalendarOverviewComponent),
+                loadComponent: () => import('app/core/calendar/calendar-container/calendar-container.component').then((m) => m.CalendarContainerComponent),
                 data: {
                     authorities: [Authority.USER],
                     pageTitle: 'overview.calendar',

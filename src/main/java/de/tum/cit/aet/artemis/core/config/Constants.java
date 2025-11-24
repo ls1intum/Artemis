@@ -393,6 +393,11 @@ public final class Constants {
     public static final String FEATURE_PASSKEY = "passkey";
 
     /**
+     * The name of the module feature indicating passkey is required for administrator features.
+     */
+    public static final String FEATURE_PASSKEY_REQUIRE_ADMIN = "passkeyRequiredForAdministratorFeatures";
+
+    /**
      * The name of the module feature used for Atlas functionality.
      */
     public static final String MODULE_FEATURE_ATLAS = "atlas";

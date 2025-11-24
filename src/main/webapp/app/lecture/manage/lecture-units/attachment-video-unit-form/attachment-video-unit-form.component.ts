@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnChanges, ViewChild, computed, inject, input, output, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, ViewChild, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { AbstractControl, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import urlParser from 'js-video-url-parser';
@@ -15,12 +15,14 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
+import { TranscriptionStatus } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 
 export interface AttachmentVideoUnitFormData {
     formProperties: FormProperties;
     fileProperties: FileProperties;
     playlistUrl?: string;
     transcriptionProperties?: TranscriptionProperties;
+    transcriptionStatus?: string;
 }
 
 // matches structure of the reactive form
@@ -110,10 +112,11 @@ function validJsonOrEmpty(control: AbstractControl): ValidationErrors | null {
     templateUrl: './attachment-video-unit-form.component.html',
     imports: [FormsModule, ReactiveFormsModule, TranslateDirective, FaIconComponent, NgbTooltip, FormDateTimePickerComponent, CompetencySelectionComponent, ArtemisTranslatePipe],
 })
-export class AttachmentVideoUnitFormComponent implements OnChanges {
+export class AttachmentVideoUnitFormComponent {
     protected readonly faQuestionCircle = faQuestionCircle;
     protected readonly faTimes = faTimes;
     protected readonly faArrowLeft = faArrowLeft;
+    protected readonly TranscriptionStatus = TranscriptionStatus;
 
     protected readonly allowedFileExtensions = ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE;
     protected readonly acceptedFileExtensionsFileBrowser = ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER;
@@ -121,6 +124,7 @@ export class AttachmentVideoUnitFormComponent implements OnChanges {
     private readonly attachmentVideoUnitService = inject(AttachmentVideoUnitService);
     canGenerateTranscript = signal(false);
     playlistUrl = signal<string | undefined>(undefined);
+    transcriptionStatus = signal<TranscriptionStatus | undefined>(undefined);
 
     formData = input<AttachmentVideoUnitFormData>();
     isEditMode = input<boolean>(false);
@@ -149,6 +153,25 @@ export class AttachmentVideoUnitFormComponent implements OnChanges {
 
     readonly shouldShowTranscriptionCreation = computed(() => this.accountService.isAdmin());
 
+    constructor() {
+        effect(() => {
+            const formData = this.formData();
+            if (this.isEditMode() && formData) {
+                this.setFormValues(formData);
+                const newStatus = formData.transcriptionStatus ? (formData.transcriptionStatus as TranscriptionStatus) : undefined;
+                this.transcriptionStatus.set(newStatus);
+
+                // Set playlist URL if available from formData (for existing videos)
+                if (formData.playlistUrl) {
+                    this.playlistUrl.set(formData.playlistUrl);
+                    this.canGenerateTranscript.set(true);
+                }
+            } else {
+                this.transcriptionStatus.set(undefined);
+            }
+        });
+    }
+
     form: FormGroup = this.formBuilder.group({
         name: [undefined as string | undefined, [Validators.required, Validators.maxLength(255)]],
         description: [undefined as string | undefined, [Validators.maxLength(1000)]],
@@ -165,17 +188,47 @@ export class AttachmentVideoUnitFormComponent implements OnChanges {
 
     readonly videoSourceSignal = toSignal(this.videoSourceControl!.valueChanges, { initialValue: this.videoSourceControl!.value });
 
-    readonly shouldShowTranscriptCheckbox = computed(() => !!this.playlistUrl());
+    readonly shouldShowTranscriptCheckbox = computed(() => {
+        const status = this.transcriptionStatus();
+        const hasPlaylist = !!this.playlistUrl();
+
+        // Don't show checkbox if no playlist URL
+        if (!hasPlaylist) {
+            return false;
+        }
+
+        // Don't show checkbox if transcription is pending/processing
+        if (status === TranscriptionStatus.PENDING || status === TranscriptionStatus.PROCESSING) {
+            return false;
+        }
+
+        // Show checkbox if:
+        // 1. No transcription exists yet (status is undefined) OR
+        // 2. Transcription is COMPLETED or FAILED (allow regeneration/overwrite)
+        return true;
+    });
+
+    readonly showTranscriptionPendingWarning = computed(() => {
+        const status = this.transcriptionStatus();
+        return status === TranscriptionStatus.PENDING || status === TranscriptionStatus.PROCESSING;
+    });
+
+    readonly showTranscriptionOverwriteWarning = computed(() => {
+        const status = this.transcriptionStatus();
+        const hasPlaylist = !!this.playlistUrl();
+
+        // Show overwrite warning when user can generate but a transcription already exists
+        return hasPlaylist && (status === TranscriptionStatus.COMPLETED || status === TranscriptionStatus.FAILED);
+    });
+
+    readonly showTranscriptionStatusBadge = computed(() => {
+        const status = this.transcriptionStatus();
+        return this.isEditMode() && status && (status === TranscriptionStatus.PENDING || status === TranscriptionStatus.PROCESSING || status === TranscriptionStatus.FAILED);
+    });
 
     isFormValid = computed(() => {
         return this.statusChanges() === 'VALID' && !this.isFileTooBig() && this.datePickerComponent()?.isValid() && (!!this.fileName() || !!this.videoSourceSignal());
     });
-
-    ngOnChanges() {
-        if (this.isEditMode() && this.formData()) {
-            this.setFormValues(this.formData()!);
-        }
-    }
 
     onFileChange(event: Event): void {
         const input = event.target as HTMLInputElement;
@@ -306,8 +359,12 @@ export class AttachmentVideoUnitFormComponent implements OnChanges {
             url.searchParams.set('video_only', '1');
             return url.toString();
         }
+        const videoInfo = urlParser.parse(videoUrl);
+        if (!videoInfo) {
+            return videoUrl;
+        }
         return urlParser.create({
-            videoInfo: urlParser.parse(videoUrl)!,
+            videoInfo,
             format: 'embed',
         });
     }

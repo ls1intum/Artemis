@@ -234,6 +234,8 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         UserDTO account = request.get("/api/core/public/account", HttpStatus.OK, UserDTO.class);
         assertThat(account).isNotNull();
         assertThat(account.getAskToSetupPasskey()).isTrue();
+        assertThat(account.isLoggedInWithPasskey()).isFalse();
+        assertThat(account.isPasskeySuperAdminApproved()).isFalse();
     }
 
     @Test
@@ -323,7 +325,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
     @WithMockUser(username = AUTHENTICATEDUSER)
     void changePassword() throws Exception {
         String updatedPassword = "12345678";
-        User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER, passwordService.hashPassword(UserFactory.USER_PASSWORD));
+        userUtilService.createAndSaveUser(AUTHENTICATEDUSER, passwordService.hashPassword(UserFactory.USER_PASSWORD));
 
         PasswordChangeDTO pwChange = new PasswordChangeDTO(UserFactory.USER_PASSWORD, updatedPassword);
         request.postWithoutLocation("/api/core/account/change-password", pwChange, HttpStatus.OK, null);
