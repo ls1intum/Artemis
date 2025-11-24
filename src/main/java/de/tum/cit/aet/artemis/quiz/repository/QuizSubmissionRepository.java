@@ -101,5 +101,5 @@ public interface QuizSubmissionRepository extends ArtemisJpaRepository<QuizSubmi
             WHERE qs.participation.id = :participationId
             ORDER BY qs.submissionDate ASC, qs.id ASC
             """)
-    List<Submission> findAllWithSubmittedAnswersAndResultsByParticipationIdOrderBySubmissionDateAsc(Long participationId);
+    List<Submission> findAllWithSubmittedAnswersAndResultsByParticipationIdOrderBySubmissionDateAsc(@Param("participationId") Long participationId);
 }
