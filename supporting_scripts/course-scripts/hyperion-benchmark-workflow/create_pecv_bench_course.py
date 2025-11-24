@@ -88,7 +88,19 @@ def create_pecv_bench_course(session: Session) -> requests.Response:
     if response.status_code == 201:
         logging.info(f"Created course {COURSE_NAME} with shortName {course_short_name} \n {response.json()}")
     elif response.status_code == 400:
-        logging.info(f"Course with shortName {course_short_name} already exists. Please provide the course ID in the config file and set create_course to FALSE if you intend to add programming exercises to this course.")
+        logging.info(f"Course with shortName {course_short_name} already exists.")
+        
+        course_is_deleted = delete_pecv_bench_course(session, course_short_name)
+        
+        if course_is_deleted:
+            logging.info(f"Retrying course creation for {COURSE_NAME} after deletion.")
+            
+            response: requests.Response = session.post(url, data=body, headers=headers)
+            
+            if response.status_code == 201:
+                logging.info(f"Created course {COURSE_NAME} with shortName {course_short_name}. \n {response.json()}")
+            else:
+                logging.error(f"Failed to create course {COURSE_NAME} after deletion. Status code: {response.status_code}\n Response content: {response.text}")
         sys.exit(0)
     else:
         logging.error("Problem with the group 'students' and interacting with a test server? "
@@ -97,5 +109,30 @@ def create_pecv_bench_course(session: Session) -> requests.Response:
             f"Could not create course {COURSE_NAME}; Status code: {response.status_code}\n"
             f"Double check whether the courseShortName {course_short_name} is valid (e.g. no special characters such as '-')!\n"
             f"Response content: {response.text}")
-
+    
     return response.json()
+
+def delete_pecv_bench_course(session: Session, course_short_name: str) -> bool:
+    """Delete a course using the given session and course ID."""
+
+    coursesResponse: requests.Response = session.get(f"{SERVER_URL}/core/courses")
+
+    courses = coursesResponse.json()
+    course_id = None
+    for course in courses:
+        if course["shortName"] == course_short_name:
+            course_id = course["id"]
+            break
+    
+    deleteCourseResponse: requests.Response = session.delete(f"{SERVER_URL}/core/admin/courses/{course_id}")
+    if deleteCourseResponse.status_code == 200:
+        logging.info(f"Deleted course with shortName {course_short_name}")
+        return True
+    else:
+        logging.error(f"Could not delete course with shortName {course_short_name}")
+        return False
+    
+    #nextResponse: requests.Response = session.get(f"{SERVER_URL}/programming/courses/{course_id}/programming-exercises")
+    #exercises = nextResponse.json()
+    #for exercise in exercises:
+    #    logging.info(f"Existing exercise in the course: {exercise['title']} (ID: {exercise['id']})")
