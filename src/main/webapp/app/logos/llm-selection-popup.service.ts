@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Observable, Subject } from 'rxjs';
+import { Observable, Subject, firstValueFrom } from 'rxjs';
 import { LLMSelectionChoice } from './llm-selection-popup.component';
 
 @Injectable({
@@ -14,12 +14,7 @@ export class LLMSelectionModalService {
 
     open(): Promise<LLMSelectionChoice> {
         this.openModalSubject.next();
-        return new Promise((resolve) => {
-            const subscription = this.choice$.subscribe((choice) => {
-                resolve(choice);
-                subscription.unsubscribe();
-            });
-        });
+        return firstValueFrom(this.choice$);
     }
 
     emitChoice(choice: LLMSelectionChoice): void {

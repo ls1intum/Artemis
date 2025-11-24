@@ -2,6 +2,7 @@ import { ChangeDetectorRef, Component, EventEmitter, OnInit, Output, inject } fr
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { Router } from '@angular/router';
 
 export type LLMSelectionChoice = 'cloud' | 'local' | 'no_ai' | 'none';
 
@@ -15,6 +16,7 @@ export class LLMSelectionModalComponent implements OnInit {
     private modalService = inject(LLMSelectionModalService);
     private cdr = inject(ChangeDetectorRef);
     protected themeService = inject(ThemeService);
+    private router = inject(Router);
 
     @Output() choice = new EventEmitter<LLMSelectionChoice>();
 
@@ -62,9 +64,9 @@ export class LLMSelectionModalComponent implements OnInit {
     }
 
     onLearnMoreClick(event: MouseEvent): void {
-        this.choice.emit('none');
-        this.modalService.emitChoice('none');
         event.preventDefault();
+        this.router.navigate(['/llm-selection']);
+        this.close();
     }
 
     protected readonly Theme = Theme;

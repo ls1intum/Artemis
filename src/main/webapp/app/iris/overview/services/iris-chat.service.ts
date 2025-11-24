@@ -287,6 +287,15 @@ export class IrisChatService implements OnDestroy {
     }
 
     public updateLLMUsageConsent(accepted: LLMSelectionDecision): void {
+        if (accepted === LLMSelectionDecision.NO_AI) {
+            this.hasJustAcceptedLLMUsage = false;
+            this.acceptSubscription?.unsubscribe();
+            this.userService.updateLLMSelectionDecision(accepted).subscribe(() => {
+                this.accountService.setUserLLMSelectionDecision(accepted);
+            });
+            this.close();
+            return;
+        }
         this.acceptSubscription?.unsubscribe();
         this.acceptSubscription = this.userService.updateLLMSelectionDecision(accepted).subscribe(() => {
             this.hasJustAcceptedLLMUsage = true;

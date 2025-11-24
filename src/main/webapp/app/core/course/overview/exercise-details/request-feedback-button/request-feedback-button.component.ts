@@ -118,6 +118,7 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
                 this.acceptLLMUsage(LLMSelectionDecision.LOCAL_AI);
                 break;
             case 'no_ai':
+                // Store that the user actively declined AI usage
                 this.acceptLLMUsage(LLMSelectionDecision.NO_AI);
                 break;
             case 'none':
@@ -129,11 +130,13 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
         this.acceptSubscription?.unsubscribe();
 
         this.acceptSubscription = this.userService.updateLLMSelectionDecision(decision).subscribe(() => {
-            this.hasUserAcceptedLLMUsage = true;
+            const hasAccepted = decision === LLMSelectionDecision.CLOUD_AI || decision === LLMSelectionDecision.LOCAL_AI;
+
+            this.hasUserAcceptedLLMUsage = hasAccepted;
             this.accountService.setUserLLMSelectionDecision(decision);
 
-            // Proceed with feedback request after accepting
-            if (this.assureConditionsSatisfied()) {
+            // Proceed with feedback request only when an AI option was accepted
+            if (hasAccepted && this.assureConditionsSatisfied()) {
                 this.processFeedbackRequest();
             }
         });

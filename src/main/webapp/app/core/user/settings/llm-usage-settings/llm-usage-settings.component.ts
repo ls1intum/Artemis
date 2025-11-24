@@ -28,7 +28,7 @@ export class LlmUsageSettingsComponent implements OnInit {
         const choice = await this.llmModalService.open();
 
         if (choice) {
-            // Map die Choice zum Enum
+            // Map the Choice to the Enum
             let decision: LLMSelectionDecision;
             switch (choice) {
                 case 'cloud':

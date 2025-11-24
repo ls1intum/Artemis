@@ -10,7 +10,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 
-describe('ExternalLlmUsageSettingsComponent', () => {
+describe('LlmUsageSettingsComponent', () => {
     let component: LlmUsageSettingsComponent;
     let fixture: ComponentFixture<LlmUsageSettingsComponent>;
 

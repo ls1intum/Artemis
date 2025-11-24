@@ -4,6 +4,7 @@ import { Authority, IS_AT_LEAST_ADMIN, IS_AT_LEAST_EDITOR } from 'app/shared/con
 import { navbarRoute } from 'app/core/navbar/navbar.route';
 import { errorRoute } from 'app/core/layouts/error/error.route';
 import { PasskeyAuthenticationGuard } from 'app/core/auth/passkey-authentication-guard/passkey-authentication.guard';
+import { LlmSelectionInfoComponent } from './logos/llm-selection-info.component';
 
 const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
 
@@ -46,6 +47,13 @@ const routes: Routes = [
         data: {
             pageTitle: 'artemisApp.legal.privacyStatement.title',
             usesModuleBackground: true,
+        },
+    },
+    {
+        path: 'llm-selection',
+        component: LlmSelectionInfoComponent,
+        data: {
+            pageTitle: 'artemisApp.llmSelectionInfo.pageTitle',
         },
     },
     {
