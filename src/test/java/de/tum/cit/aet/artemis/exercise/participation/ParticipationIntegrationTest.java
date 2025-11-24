@@ -99,6 +99,7 @@ import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSubmittedText;
 import de.tum.cit.aet.artemis.quiz.dto.QuizBatchJoinDTO;
 import de.tum.cit.aet.artemis.quiz.service.QuizBatchService;
+import de.tum.cit.aet.artemis.quiz.test_repository.QuizSubmissionTestRepository;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseFactory;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseUtilService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
@@ -172,6 +173,9 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
     @Autowired
     private ExamTestRepository examRepository;
+
+    @Autowired
+    private QuizSubmissionTestRepository quizSubmissionRepository;
 
     @Autowired
     private LearnerProfileUtilService learnerProfileUtilService;
@@ -1450,7 +1454,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getParticipation() throws Exception {
         var participation = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
-        var actualParticipation = request.get("/api/exercise/exercises/" + textExercise.getId() + "/participation", HttpStatus.OK, StudentParticipation.class);
+        var actualParticipation = request.get("/api/text/text-editor/" + participation.getId(), HttpStatus.OK, StudentParticipation.class);
         assertThat(actualParticipation).isEqualTo(participation);
     }
 
@@ -1472,7 +1476,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         exercise = exerciseRepository.save(exercise);
 
         var participation = participationUtilService.addTeamParticipationForExercise(exercise, team.getId());
-        var actualParticipation = request.get("/api/exercise/exercises/" + exercise.getId() + "/participation", HttpStatus.OK, StudentParticipation.class);
+        var actualParticipation = request.get("/api/text/text-editor/" + participation.getId(), HttpStatus.OK, StudentParticipation.class);
         assertThat(actualParticipation).isEqualTo(participation);
     }
 
@@ -1485,7 +1489,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         exercise = addTeamToExercise(team, exercise);
 
         var participation = participationUtilService.addTeamParticipationForExercise(exercise, team.getId());
-        var actualParticipation = request.get("/api/exercise/exercises/" + exercise.getId() + "/participation", HttpStatus.OK, StudentParticipation.class);
+        var actualParticipation = request.get("/api/text/text-editor/" + participation.getId(), HttpStatus.OK, StudentParticipation.class);
         assertThat(actualParticipation).isEqualTo(participation);
 
         var participations = participationService.findByExerciseAndStudentIdWithEagerSubmissions(exercise, student.getId());
@@ -1502,7 +1506,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         exercise = addTeamToExercise(team, exercise);
 
         var participation = participationUtilService.addTeamParticipationForExercise(exercise, team.getId());
-        var actualParticipation = request.get("/api/exercise/exercises/" + exercise.getId() + "/participation", HttpStatus.OK, StudentParticipation.class);
+        var actualParticipation = request.get("/api/text/text-editor/" + participation.getId(), HttpStatus.OK, StudentParticipation.class);
         assertThat(actualParticipation).isEqualTo(participation);
 
         var participations = participationService.findByExerciseAndStudentIdWithSubmissionsAndResults(exercise, student.getId());
@@ -1519,7 +1523,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         exercise = addTeamToExercise(team, exercise);
 
         var participation = participationUtilService.addTeamParticipationForExercise(exercise, team.getId());
-        var actualParticipation = request.get("/api/exercise/exercises/" + exercise.getId() + "/participation", HttpStatus.OK, StudentParticipation.class);
+        var actualParticipation = request.get("/api/text/text-editor/" + participation.getId(), HttpStatus.OK, StudentParticipation.class);
         assertThat(actualParticipation).isEqualTo(participation);
 
         var dbParticipation = participationService.findOneByExerciseAndStudentLoginAnyStateWithEagerResultsElseThrow(exercise, student.getLogin());
@@ -1536,7 +1540,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         exercise = addTeamToExercise(team, exercise);
 
         var participation = participationUtilService.addTeamParticipationForExercise(exercise, team.getId());
-        var actualParticipation = request.get("/api/exercise/exercises/" + exercise.getId() + "/participation", HttpStatus.OK, StudentParticipation.class);
+        var actualParticipation = request.get("/api/text/text-editor/" + participation.getId(), HttpStatus.OK, StudentParticipation.class);
         assertThat(actualParticipation).isEqualTo(participation);
 
         var participations = participationService.findOneByExerciseAndStudentLoginAnyState(exercise, student.getLogin());
@@ -1553,7 +1557,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         exercise = addTeamToExercise(team, exercise);
 
         var participation = participationUtilService.addTeamParticipationForExercise(exercise, team.getId());
-        var actualParticipation = request.get("/api/exercise/exercises/" + exercise.getId() + "/participation", HttpStatus.OK, StudentParticipation.class);
+        var actualParticipation = request.get("/api/text/text-editor/" + participation.getId(), HttpStatus.OK, StudentParticipation.class);
         assertThat(actualParticipation).isEqualTo(participation);
 
         participationDeletionService.deleteAllByTeamId(team.getId());
@@ -1584,65 +1588,10 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         return exerciseRepository.save(exercise);
     }
 
-    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    @EnumSource(QuizMode.class)
-    void getParticipation_quizExerciseNotStarted(QuizMode quizMode) throws Exception {
-        var quizEx = QuizExerciseFactory.generateQuizExercise(ZonedDateTime.now().plusHours(2), ZonedDateTime.now().plusDays(1), quizMode, course);
-        quizEx = exerciseRepository.save(quizEx);
-        request.get("/api/exercise/exercises/" + quizEx.getId() + "/participation", HttpStatus.FORBIDDEN, StudentParticipation.class);
-    }
-
-    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    @EnumSource(QuizMode.class)
-    void getParticipation_quizExerciseStartedAndNoParticipation(QuizMode quizMode) throws Exception {
-        var quizEx = QuizExerciseFactory.generateQuizExercise(ZonedDateTime.now().minusMinutes(2), ZonedDateTime.now().minusMinutes(1), quizMode, course);
-        quizEx = exerciseRepository.save(quizEx);
-        request.getNullable("/api/exercise/exercises/" + quizEx.getId() + "/participation", HttpStatus.NO_CONTENT, StudentParticipation.class);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void getParticipation_quizBatchNotPresent() throws Exception {
-        var quizEx = QuizExerciseFactory.generateQuizExercise(ZonedDateTime.now().minusMinutes(1), ZonedDateTime.now().plusMinutes(5), QuizMode.INDIVIDUAL, course).duration(360);
-        quizEx = exerciseRepository.save(quizEx);
-        var participation = request.get("/api/exercise/exercises/" + quizEx.getId() + "/participation", HttpStatus.OK, StudentParticipation.class);
-        quizEx.setRemainingNumberOfAttempts(1);
-        assertThat(participation.getExercise()).as("Participation contains exercise").isEqualTo(quizEx);
-        assertThat(((QuizExercise) participation.getExercise()).getRemainingNumberOfAttempts()).as("remainingNumberOfAttempts are returned correctly")
-                .isEqualTo(quizEx.getRemainingNumberOfAttempts());
-    }
-
-    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    @EnumSource(QuizMode.class)
-    void getParticipation_quizExerciseFinished(QuizMode quizMode) throws Exception {
-        var quizEx = QuizExerciseFactory.generateQuizExercise(ZonedDateTime.now().minusMinutes(20), ZonedDateTime.now().minusMinutes(20), quizMode, course);
-        quizEx = exerciseRepository.save(quizEx);
-        var participation = participationUtilService.createAndSaveParticipationForExercise(quizEx, TEST_PREFIX + "student1");
-        var submission = participationUtilService.addSubmission(participation, new QuizSubmission().scoreInPoints(11D).submitted(true));
-        participationUtilService.addResultToSubmission(participation, submission);
-        var actualParticipation = request.get("/api/exercise/exercises/" + quizEx.getId() + "/participation", HttpStatus.OK, StudentParticipation.class);
-        assertThat(actualParticipation).isEqualTo(participation);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void getParticipation_noParticipation() throws Exception {
-        request.get("/api/exercise/exercises/" + textExercise.getId() + "/participation", HttpStatus.FAILED_DEPENDENCY, StudentParticipation.class);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student3", roles = "USER")
-    void getParticipation_notStudentInCourse() throws Exception {
-        request.get("/api/exercise/exercises/" + textExercise.getId() + "/participation", HttpStatus.FORBIDDEN, StudentParticipation.class);
-    }
-
     @ParameterizedTest
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     @EnumSource(QuizMode.class)
-    void testCheckQuizParticipation(QuizMode quizMode) throws Exception {
+    void testCheckQuizParticipation(QuizMode quizMode) {
         QuizExercise quizExercise = QuizExerciseFactory.generateQuizExercise(ZonedDateTime.now().minusMinutes(10), ZonedDateTime.now().minusMinutes(8), quizMode, course);
         quizExercise.addQuestions(QuizExerciseFactory.createShortAnswerQuestion());
         quizExercise.setDuration(600);
@@ -1665,22 +1614,25 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         participationUtilService.addSubmission(quizExercise, quizSubmission, TEST_PREFIX + "student1");
         participationUtilService.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, quizExercise.getScoreForSubmission(quizSubmission), true);
 
-        var actualParticipation = request.get("/api/exercise/exercises/" + quizExercise.getId() + "/participation", HttpStatus.OK, StudentParticipation.class);
+        var actualParticipation = participationService.findOneByExerciseAndStudentLoginAnyStateWithEagerResultsElseThrow(quizExercise, TEST_PREFIX + "student1");
+        actualParticipation = participationService.findExerciseParticipationWithLatestSubmissionAndResultElseThrow(actualParticipation.getId());
         var actualResults = participationUtilService.getResultsForParticipation(actualParticipation);
 
         assertThat(actualResults).hasSize(1);
 
-        var actualSubmission = (QuizSubmission) actualParticipation.getSubmissions().stream().findFirst().get();
+        var actualSubmission = (QuizSubmission) actualParticipation.getSubmissions().iterator().next();
         assertThat(actualSubmission.isSubmitted()).isTrue();
 
+        // reload submission to avoid lazy loading issues
+        actualSubmission = quizSubmissionRepository.findWithEagerSubmittedAnswersById(actualSubmission.getId());
         var actualSubmittedAnswers = actualSubmission.getSubmittedAnswers();
         assertThat(actualSubmittedAnswers).hasSize(1);
 
-        var actualSubmittedAnswer = (ShortAnswerSubmittedAnswer) actualSubmittedAnswers.stream().findFirst().get();
+        var actualSubmittedAnswer = (ShortAnswerSubmittedAnswer) actualSubmittedAnswers.iterator().next();
         assertThat(actualSubmittedAnswer.getQuizQuestion()).isEqualTo(saQuestion);
         assertThat(actualSubmittedAnswer.getSubmittedTexts().stream().findFirst().isPresent()).isTrue();
 
-        var actualSubmittedAnswerText = actualSubmittedAnswer.getSubmittedTexts().stream().findFirst().get();
+        var actualSubmittedAnswerText = actualSubmittedAnswer.getSubmittedTexts().iterator().next();
         assertThat(actualSubmittedAnswerText.getText()).isEqualTo("test");
         assertThat(actualSubmittedAnswerText.isIsCorrect()).isFalse();
     }
@@ -1885,8 +1837,9 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
             var participation = request.postWithResponseBody("/api/quiz/quiz-exercises/" + quizEx.getId() + "/start-participation", null, StudentParticipation.class,
                     HttpStatus.OK);
             assertThat(participation.getExercise()).as("Participation contains exercise").isEqualTo(quizEx);
-            assertThat(participationUtilService.getResultsForParticipation(participation)).as("New result was added to the participation").hasSize(1);
-            assertThat(participation.getInitializationState()).as("Participation was initialized").isEqualTo(InitializationState.INITIALIZED);
+            var participationFromServer = participationService.findOneByExerciseAndStudentLoginAnyStateWithEagerResultsElseThrow(quizEx, TEST_PREFIX + "student1");
+            assertThat(participationUtilService.getResultsForParticipation(participation)).as("No result was added to the participation").hasSize(0);
+            assertThat(participationFromServer.getInitializationState()).as("Participation was initialized").isEqualTo(InitializationState.INITIALIZED);
         }
     }
 }
