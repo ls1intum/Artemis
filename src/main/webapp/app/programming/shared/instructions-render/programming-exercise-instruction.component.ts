@@ -187,6 +187,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                         // Refreshes the state in the singleton task and uml extension service
                         this.latestResult = this.latestResultValue;
                         this.problemStatement = this.exercise.problemStatement?.trim() || undefined;
+                        this.updateMarkdown();
                         return of(undefined);
                     } else {
                         return of(undefined);
