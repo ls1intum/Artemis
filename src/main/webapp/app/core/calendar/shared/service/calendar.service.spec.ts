@@ -80,6 +80,9 @@ describe('CalendarService', () => {
     });
 
     it('should load events and create unfiltered event map', fakeAsync(() => {
+        const tokenRequest = httpMock.expectOne((request) => request.url === expectedTokenUrl);
+        tokenRequest.flush(testToken);
+
         service.includedEventFilterOptions.set([
             CalendarEventFilterOption.LectureEvents,
             CalendarEventFilterOption.ExamEvents,
@@ -129,13 +132,16 @@ describe('CalendarService', () => {
             });
         });
 
-        const testRequest = httpMock.expectOne((request) => request.url === expectedEventUrl);
-        expect(testRequest.request.method).toBe('GET');
-        testRequest.flush(testRequestResponse);
+        const eventRequest = httpMock.expectOne((request) => request.url === expectedEventUrl);
+        expect(eventRequest.request.method).toBe('GET');
+        eventRequest.flush(testRequestResponse);
         tick();
     }));
 
     it('should load events and create filtered event map', fakeAsync(() => {
+        const tokenRequest = httpMock.expectOne((request) => request.url === expectedTokenUrl);
+        tokenRequest.flush(testToken);
+
         service.includedEventFilterOptions.set([CalendarEventFilterOption.LectureEvents, CalendarEventFilterOption.ExamEvents]);
 
         service.loadEventsForCurrentMonth(courseId, date).subscribe(() => {
@@ -162,26 +168,18 @@ describe('CalendarService', () => {
             });
         });
 
-        const testRequest = httpMock.expectOne((request) => request.url === expectedEventUrl);
-        expect(testRequest.request.method).toBe('GET');
-        expect(testRequest.request.params.get('monthKeys')).toBe('2025-09,2025-10,2025-11');
-        expect(testRequest.request.params.get('timeZone')).toBeTruthy();
+        const eventRequest = httpMock.expectOne((request) => request.url === expectedEventUrl);
+        expect(eventRequest.request.method).toBe('GET');
+        expect(eventRequest.request.params.get('monthKeys')).toBe('2025-09,2025-10,2025-11');
+        expect(eventRequest.request.params.get('timeZone')).toBeTruthy();
 
-        testRequest.flush(testRequestResponse);
+        eventRequest.flush(testRequestResponse);
         tick();
     }));
 
     it('should return filtered map when toggling options', fakeAsync(() => {
-        const smallHttpResponse = {
-            '2025-10-01': [
-                {
-                    type: 'LECTURE',
-                    title: 'Object Design',
-                    startDate: '2025-10-01T08:00:00Z',
-                    endDate: '2025-10-01T10:00:00Z',
-                },
-            ],
-        };
+        const tokenRequest = httpMock.expectOne((request) => request.url === expectedTokenUrl);
+        tokenRequest.flush(testToken);
 
         service.includedEventFilterOptions.set([CalendarEventFilterOption.ExamEvents]);
 
@@ -202,33 +200,40 @@ describe('CalendarService', () => {
             });
         });
 
-        const testRequest = httpMock.expectOne((request) => request.url === expectedEventUrl);
-        expect(testRequest.request.method).toBe('GET');
-        testRequest.flush(smallHttpResponse);
+        const eventRequest = httpMock.expectOne((request) => request.url === expectedEventUrl);
+        expect(eventRequest.request.method).toBe('GET');
+        const smallHttpResponse = {
+            '2025-10-01': [
+                {
+                    type: 'LECTURE',
+                    title: 'Object Design',
+                    startDate: '2025-10-01T08:00:00Z',
+                    endDate: '2025-10-01T10:00:00Z',
+                },
+            ],
+        };
+        eventRequest.flush(smallHttpResponse);
         tick();
     }));
 
     it('should load subscription token and set token property', fakeAsync(() => {
-        service.loadSubscriptionToken().subscribe(() => {
-            const result = service.subscriptionToken();
-            expect(result).toBe(testToken);
-        });
-
         const tokenRequest = httpMock.expectOne((request) => request.url === expectedTokenUrl);
         tokenRequest.flush(testToken);
         tick();
+        expect(service.subscriptionToken()).toBe(testToken);
     }));
 
     it('should refresh', fakeAsync(() => {
+        const initialTokenRequest = httpMock.expectOne((request) => request.url === expectedTokenUrl);
+        initialTokenRequest.flush(testToken);
+        tick();
+
         service.includedEventFilterOptions.set([CalendarEventFilterOption.LectureEvents, CalendarEventFilterOption.ExamEvents]);
         service.loadEventsForCurrentMonth(courseId, date).subscribe();
-        service.loadSubscriptionToken().subscribe();
 
         const initialEventRequest = httpMock.expectOne((request) => request.url === expectedEventUrl);
         expect(initialEventRequest.request.method).toBe('GET');
         initialEventRequest.flush({});
-        const initialTokenRequest = httpMock.expectOne((request) => request.url === expectedTokenUrl);
-        initialTokenRequest.flush(testToken);
         tick();
 
         service.reloadEvents();
