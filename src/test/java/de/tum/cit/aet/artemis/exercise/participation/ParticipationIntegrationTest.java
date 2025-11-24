@@ -690,7 +690,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         participation.setRepositoryUri(localVcsRepositoryUri);
         participationRepo.save(participation);
 
-        gitService.getDefaultLocalPathOfRepo(participation.getVcsRepositoryUri());
+        gitService.getDefaultLocalCheckOutPathOfRepo(participation.getVcsRepositoryUri());
 
         Result result1 = participationUtilService.createSubmissionAndResult(participation, 100, false);
         Result result2 = participationUtilService.addResultToSubmission(participation, result1.getSubmission());
@@ -737,7 +737,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         participation.setRepositoryUri(localVcsRepositoryUri);
         participationRepo.save(participation);
 
-        gitService.getDefaultLocalPathOfRepo(participation.getVcsRepositoryUri());
+        gitService.getDefaultLocalCheckOutPathOfRepo(participation.getVcsRepositoryUri());
 
         Result result1 = participationUtilService.createSubmissionAndResult(participation, 100, false);
         Result result2 = participationUtilService.addResultToSubmission(participation, result1.getSubmission());
@@ -860,7 +860,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         participation.setRepositoryUri(localVcsRepositoryUri);
         participationRepo.save(participation);
 
-        gitService.getDefaultLocalPathOfRepo(participation.getVcsRepositoryUri());
+        gitService.getDefaultLocalCheckOutPathOfRepo(participation.getVcsRepositoryUri());
 
         Result result1 = participationUtilService.createSubmissionAndResult(participation, 100, false);
         Result result2 = participationUtilService.addResultToSubmission(participation, result1.getSubmission());
@@ -968,7 +968,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         var localVcsRepositoryUri = new LocalVCRepositoryUri(LocalRepositoryUriUtil.convertToLocalVcUriString(localRepo.remoteBareGitRepoFile, localVCBasePath));
         participation.setRepositoryUri(localVcsRepositoryUri);
         participationRepo.save(participation);
-        gitService.getDefaultLocalPathOfRepo(participation.getVcsRepositoryUri());
+        gitService.getDefaultLocalCheckOutPathOfRepo(participation.getVcsRepositoryUri());
         var updatedParticipation = request.putWithResponseBody(
                 "/api/exercise/exercises/" + programmingExercise.getId() + "/resume-programming-participation/" + participation.getId(), null,
                 ProgrammingExerciseStudentParticipation.class, HttpStatus.OK);
@@ -1407,6 +1407,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         participationUtilService.addResultToSubmission(null, null, participation.findLatestSubmission().orElseThrow());
         var result = ParticipationFactory.generateResult(true, 70D);
         result.submission(submission).setCompletionDate(ZonedDateTime.now().minusHours(2));
+        result.setExerciseId(textExercise.getId());
         resultRepository.save(result);
         var actualParticipation = request.get("/api/exercise/participations/" + participation.getId() + "/with-latest-result", HttpStatus.OK, StudentParticipation.class);
 
@@ -1709,10 +1710,11 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
         var submission = participationUtilService.addSubmission(participation, new ProgrammingSubmission());
 
-        gitService.getDefaultLocalPathOfRepo(participation.getVcsRepositoryUri());
+        gitService.getDefaultLocalCheckOutPathOfRepo(participation.getVcsRepositoryUri());
 
         var result = ParticipationFactory.generateResult(true, 100).submission(submission);
         result.setCompletionDate(ZonedDateTime.now());
+        result.setExerciseId(programmingExercise.getId());
         resultRepository.save(result);
 
         request.putAndExpectError("/api/exercise/exercises/" + programmingExercise.getId() + "/request-feedback", null, HttpStatus.BAD_REQUEST, "preconditions not met");
@@ -1738,10 +1740,11 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         participationRepo.save(participation);
         var submission = participationUtilService.addSubmission(participation, new ProgrammingSubmission());
 
-        gitService.getDefaultLocalPathOfRepo(participation.getVcsRepositoryUri());
+        gitService.getDefaultLocalCheckOutPathOfRepo(participation.getVcsRepositoryUri());
 
         var result = ParticipationFactory.generateResult(true, 100).submission(submission);
         result.setCompletionDate(ZonedDateTime.now());
+        result.setExerciseId(programmingExercise.getId());
         resultRepository.save(result);
 
         request.putAndExpectError("/api/exercise/exercises/" + programmingExercise.getId() + "/request-feedback", null, HttpStatus.BAD_REQUEST, "feedbackRequestAfterDueDate");
@@ -1767,17 +1770,19 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         participationRepo.save(participation);
         var submission = participationUtilService.addSubmission(participation, new ProgrammingSubmission());
 
-        gitService.getDefaultLocalPathOfRepo(participation.getVcsRepositoryUri());
+        gitService.getDefaultLocalCheckOutPathOfRepo(participation.getVcsRepositoryUri());
 
         var result = ParticipationFactory.generateResult(true, 100).submission(submission);
         result.setCompletionDate(ZonedDateTime.now());
+        result.setExerciseId(programmingExercise.getId());
         resultRepository.save(result);
 
-        // generate 5 athena results
+        // generate 20 athena results
         for (int i = 0; i < 20; i++) {
             var athenaResult = ParticipationFactory.generateResult(false, 100).submission(submission);
             athenaResult.setCompletionDate(ZonedDateTime.now());
             athenaResult.setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);
+            athenaResult.setExerciseId(programmingExercise.getId());
             submission.addResult(athenaResult);
             resultRepository.save(athenaResult);
         }

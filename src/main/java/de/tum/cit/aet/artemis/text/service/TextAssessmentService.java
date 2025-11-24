@@ -71,6 +71,7 @@ public class TextAssessmentService extends AssessmentService {
             // We are the first ones to open assess this submission, we want to lock it.
             result = new Result();
             result.setSubmission(textSubmission);
+            result.setExerciseId(participation.getExercise().getId());
             resultService.createNewRatedManualResult(result);
             result.setCompletionDate(null);
             result = resultRepository.save(result);

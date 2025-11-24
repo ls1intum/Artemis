@@ -86,6 +86,7 @@ public class ExamQuizService {
                     // calculate scores and update result and submission accordingly
                     quizSubmission.calculateAndUpdateScores(quizExercise.getQuizQuestions());
                     result.evaluateQuizSubmission(quizExercise);
+                    result.setExerciseId(quizExercise.getId());
                     // remove submission to follow save order for ordered collections
                     result.setSubmission(null);
                     if (studentExam.isTestExam()) {

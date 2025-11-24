@@ -57,7 +57,7 @@ class StandardizedCompetencyIntegrationTest extends AbstractAtlasIntegrationTest
     @Nested
     class PreAuthorize {
 
-        private void testAllPreAuthorizeInstructor() throws Exception {
+        private void testAllPreAuthorizeEditor() throws Exception {
             request.get("/api/atlas/standardized-competencies/1", HttpStatus.FORBIDDEN, StandardizedCompetency.class);
             request.get("/api/atlas/standardized-competencies/for-tree-view", HttpStatus.FORBIDDEN, KnowledgeAreaResultDTO.class);
         }
@@ -65,19 +65,13 @@ class StandardizedCompetencyIntegrationTest extends AbstractAtlasIntegrationTest
         @Test
         @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
         void shouldFailAsTutor() throws Exception {
-            this.testAllPreAuthorizeInstructor();
+            this.testAllPreAuthorizeEditor();
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void shouldFailAsStudent() throws Exception {
-            this.testAllPreAuthorizeInstructor();
-        }
-
-        @Test
-        @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
-        void shouldFailAsEditor() throws Exception {
-            this.testAllPreAuthorizeInstructor();
+            this.testAllPreAuthorizeEditor();
         }
     }
 
@@ -442,7 +436,7 @@ class StandardizedCompetencyIntegrationTest extends AbstractAtlasIntegrationTest
         class GetStandardizedCompetency {
 
             @Test
-            @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+            @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
             void shouldReturnStandardizedCompetency() throws Exception {
                 var expectedCompetency = standardizedCompetencyUtilService.saveStandardizedCompetency("Competency", "description", CompetencyTaxonomy.ANALYZE, "1.0.0",
                         knowledgeArea, source);
@@ -462,7 +456,7 @@ class StandardizedCompetencyIntegrationTest extends AbstractAtlasIntegrationTest
         class GetAllForTreeView {
 
             @Test
-            @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+            @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
             void shouldGetAllKnowledgeAreasAndCompetencies() throws Exception {
                 var knowledgeAreaA = standardizedCompetencyUtilService.saveKnowledgeArea("!!!A_Title", "A", "Description", null);
                 var knowledgeAreaB = standardizedCompetencyUtilService.saveKnowledgeArea("B_Title", "B", "Description", knowledgeAreaA);
@@ -487,7 +481,7 @@ class StandardizedCompetencyIntegrationTest extends AbstractAtlasIntegrationTest
         class GetSources {
 
             @Test
-            @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+            @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
             void shouldReturnSources() throws Exception {
                 var source1 = new Source("title", "author", "http://localhost:1");
                 source1.setId(1L);

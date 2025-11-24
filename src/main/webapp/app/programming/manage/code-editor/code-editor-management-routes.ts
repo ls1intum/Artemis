@@ -3,7 +3,7 @@ import { Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { Authority } from 'app/shared/constants/authority.constants';
 
-export const routes: Routes = [
+export const codeEditorManagementRoutes: Routes = [
     {
         path: 'ide/test',
         loadComponent: () =>

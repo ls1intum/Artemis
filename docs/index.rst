@@ -24,6 +24,7 @@ All these exercises are supposed to be run either live in the lecture with insta
 
    user/assessment
    user/exercises
+   user/quiz-training
    user/lectures
    user/exam_mode
    user/communication
@@ -42,6 +43,7 @@ All these exercises are supposed to be run either live in the lecture with insta
    user/sharing
    user/mobile-applications
    user/lti
+   user/calendar
 
 
 .. toctree::
