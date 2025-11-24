@@ -163,7 +163,8 @@ def import_programming_exercise(session: Session, course_id: int, server_url: st
         exercise_details_str = json.dumps(exercise_details)
         logging.info(f"Loaded programming exercise details from {CONFIG_FILE_PATH}")
     except OSError as e:
-        raise Exception(f"Failed to read programming exercise JSON file at {CONFIG_FILE_PATH}: {e}")
+        logging.error(f"Failed to read programming exercise JSON file at {CONFIG_FILE_PATH}: {e}")
+        return None
     
     logging.info(f"Preparing to import exercise: {exercise_details.get('title', 'Untitled')}")
     try:
@@ -171,7 +172,8 @@ def import_programming_exercise(session: Session, course_id: int, server_url: st
             exercise_zip_file = file.read()
             logging.info(f"Loaded programming exercise ZIP file from {EXERCISE_ZIP_PATH}")
     except OSError as e:
-        raise Exception(f"Failed to read programming exercise ZIP file at {EXERCISE_ZIP_PATH}: {e}")
+        logging.error(f"Failed to read programming exercise ZIP file at {EXERCISE_ZIP_PATH}: {e}")
+        return None
     
     files_payload = {
         'programmingExercise': (
@@ -202,4 +204,10 @@ def import_programming_exercise(session: Session, course_id: int, server_url: st
         return response.json()
     else:
         logging.error(f"Failed to import programming exercise; Status code: {response.status_code}\nResponse content: {response.text}")
-        raise Exception(f"Could not import programming exercise; Status code: {response.status_code}\nResponse content: {response.text}")
+        return None
+    
+
+def check_consistency(session: Session, programming_exercise_ids: [int], server_url: str) -> Any: #Dict[str, Any]:
+    """Check the consistency of the programming exercise."""
+
+    ##api/hyperion/programming-exercises/{programmingExerciseId}/consistency-check
