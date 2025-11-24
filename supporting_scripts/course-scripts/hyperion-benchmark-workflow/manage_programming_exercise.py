@@ -10,7 +10,7 @@ import shutil
 
 import urllib3
 from logging_config import logging
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Tuple
 from requests import Session
 
 exercise_Ids: list[int] = []
@@ -207,11 +207,17 @@ def import_programming_exercise(session: Session, course_id: int, server_url: st
         return None
     
 
-def check_consistency(session: Session, programming_exercise_ids: [int], server_url: str) -> Any: #Dict[str, Any]:
-    """Check the consistency of the programming exercise."""
+def check_consistency(session: Session, programming_exercise_id: int, server_url: str) -> [Any, int]:
+    """Check the consistency of the programming exercise with Hyperion System."""
+    logging.info(f"Starting Consistency Check for programming exercise ID: {programming_exercise_id}")
 
-    ##api/hyperion/programming-exercises/{programmingExerciseId}/consistency-check
-    # TODO after that somehow call already existing code from pecv bench, which iterates over results json file for each specific variand, compares it to gold standart
-    # NOTE which is variantID.json in the same folder as variandID.patch file
-    # TODO after that it automatically create a variants_report.json, and generates a statistics and plots
-    # NOTE identify how to see the results
+    url: str = f"{server_url}/hyperion/programming-exercises/{programming_exercise_id}/consistency-check"
+    
+    response: requests.Response = session.post(url)
+
+    if response.ok:
+        logging.info(f"Consistency check is finished for programming exercise ID: {programming_exercise_id}")
+        return response.json(), programming_exercise_id
+    else:
+        logging.error(f"Failed to check consistency for programming exercise ID {programming_exercise_id}; Status code: {response.status_code}\nResponse content: {response.text}")
+        return None, programming_exercise_id

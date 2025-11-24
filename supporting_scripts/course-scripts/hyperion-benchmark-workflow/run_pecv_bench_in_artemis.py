@@ -1,8 +1,9 @@
+import json
 from logging import config
 import subprocess
 import os
 import sys
-from typing import Dict
+from typing import Dict, Tuple
 import requests
 from logging_config import logging
 from utils import login_as_admin, SERVER_URL, CLIENT_URL
@@ -146,9 +147,9 @@ def main():
     logging.info(f"Created PECV Bench Course with ID: {course_id}")
     
     PROGRAMMING_EXERCISES: Dict[str, int] = {} # {'001': 92, <VARIANT_ID>: <exercise_id>, ...}
-    """
-    {'001': 92, '002': 93, '003': 94, '004': 95, '005': 96, '006': 97, '007': 98, '008': 99, '009': 100, '010': 101, '011': 102, '012': 103, '013': 104, '014': 105, '015': 106, '016': 107, '017': 108, '018': 109, '019': 110, '020': 111, '021': 112, '022': 113, '023': 114, '024': 115, '025': 116, '026': 117, '027': 118, '028': 119, '029': 120, '030': 121}
-    """
+    # """
+    #PROGRAMMING_EXERCISES = {'001': 92, '002': 93, '003': 94, '004': 95, '005': 96, '006': 97, '007': 98, '008': 99, '009': 100, '010': 101, '011': 102, '012': 103, '013': 104, '014': 105, '015': 106, '016': 107, '017': 108, '018': 109, '019': 110, '020': 111, '021': 112, '022': 113, '023': 114, '024': 115, '025': 116, '026': 117, '027': 118, '028': 119, '029': 120, '030': 121}
+    # """
     for VARIANT_ID in list_of_variants:
         if not os.path.isdir(os.path.join(VARIANTS_FOLDER_PATH, VARIANT_ID)):
             continue
@@ -166,10 +167,22 @@ def main():
             logging.error(f"Failed to import programming exercise for variant {VARIANT_ID}. Moving to next variant.")
             continue    
 
+    consistency_check_results = os.path.join(pecv_bench_dir, "results", "artemis-bench", COURSE, EXERCISE)
+    os.makedirs(consistency_check_results, exist_ok=True)
+    
+    for variant_id, exercise_id in PROGRAMMING_EXERCISES.items():
+        if exercise_id is None:
+            logging.error(f"Skipping consistency check for variant {variant_id} due to missing exercise ID.")
+            continue
+        logging.info(f"Running consistency check for variant {variant_id} with exercise ID {exercise_id}...")
+        consistency_issue, exercise_id = check_consistency(session=session, programming_exercise_id=exercise_id, server_url=SERVER_URL)
+        with open(os.path.join(consistency_check_results, f"{variant_id}.json"), "w") as file:
+            json.dump(consistency_issue, file, indent=4)
 
-    # TODO POST Request to iterate over all passed programming exercise IDs and check consistency in each of them, correlate to which exercise and its variant it belongs 
-    # and store the inconsistency there in json file, in a specific folder to let pecv bench analysis scripts for later use
-    #check_consistency(session=session, programming_exercise_ids=PROGRAMMING_EXERCISES_IDS, server_url=SERVER_URL)
+    # TODO after that somehow call already existing code from pecv bench, which iterates over results json file for each specific variand, compares it to gold standart
+    # NOTE which is variantID.json in the same folder as variandID.patch file
+    # TODO after that it automatically create a variants_report.json, and generates a statistics and plots
+    
 
 if __name__ == "__main__":
     logging.info("Starting PECV-Bench Hyperion Benchmark Workflow...")
