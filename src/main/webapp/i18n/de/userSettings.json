@@ -101,6 +101,8 @@
                 "created": "Erstellt am",
                 "lastUsed": "Zuletzt verwendet am",
                 "label": "Bezeichnung",
+                "approved": "Freigegeben",
+                "notApproved": "Nicht freigegeben",
                 "validation": {
                     "labelLength": "Die Passkey-Bezeichnung darf maximal {{maxLabelLength}} Zeichen lang sein."
                 },
