@@ -9,7 +9,7 @@ import { CalendarService } from 'app/core/calendar/shared/service/calendar.servi
 import { CalendarEvent, CalendarEventType } from 'app/core/calendar/shared/entities/calendar-event.model';
 import { MockCalendarService } from 'test/helpers/mocks/service/mock-calendar.service';
 
-describe('CalendarMobileMonthPresentation', () => {
+describe('CalendarMobileMonthPresentationComponent', () => {
     let fixture: ComponentFixture<CalendarMobileMonthPresentationComponent>;
     let component: CalendarMobileMonthPresentationComponent;
     let mockMap: Map<string, CalendarEvent[]>;
@@ -51,7 +51,7 @@ describe('CalendarMobileMonthPresentation', () => {
         fixture = TestBed.createComponent(CalendarMobileMonthPresentationComponent);
         component = fixture.componentInstance;
 
-        fixture.componentRef.setInput('firstDateOfMonth', dayjs('2025-05-01'));
+        fixture.componentRef.setInput('firstDateOfCurrentMonth', dayjs('2025-05-01'));
         fixture.detectChanges();
     });
 
@@ -79,7 +79,7 @@ describe('CalendarMobileMonthPresentation', () => {
     });
 
     it('should emit selected day on click', () => {
-        const emitSpy = jest.spyOn(component.selectDate, 'emit');
+        const emitSpy = jest.spyOn(component.onDateSelected, 'emit');
 
         const dayCell = fixture.debugElement.query(By.css('.day'));
         expect(dayCell).toBeTruthy();

@@ -1,6 +1,5 @@
-import { Component, OnDestroy, OnInit, computed, effect, inject, input, signal, viewChild } from '@angular/core';
+import { Component, computed, effect, inject, input, signal, viewChild } from '@angular/core';
 import { NgClass } from '@angular/common';
-import { Subscription } from 'rxjs';
 import { Popover } from 'primeng/popover';
 import { Checkbox } from 'primeng/checkbox';
 import { SelectButton } from 'primeng/selectbutton';
@@ -10,6 +9,7 @@ import { faCheck, faCopy } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
+import { getCurrentLocaleSignal } from 'app/shared/util/global.utils';
 
 @Component({
     selector: 'jhi-calendar-subscription-popover',
@@ -17,22 +17,10 @@ import { TranslateService } from '@ngx-translate/core';
     templateUrl: './calendar-subscription-popover.component.html',
     styleUrl: './calendar-subscription-popover.component.scss',
 })
-export class CalendarSubscriptionPopoverComponent implements OnDestroy, OnInit {
+export class CalendarSubscriptionPopoverComponent {
     private translateService = inject(TranslateService);
-    private languageChangeSubscription?: Subscription;
-    private buildLanguageOptions = () => [
-        {
-            label: this.translateService.instant('artemisApp.calendar.subscriptionPopover.languageOption.english'),
-            value: 'ENGLISH' as const,
-        },
-        {
-            label: this.translateService.instant('artemisApp.calendar.subscriptionPopover.languageOption.german'),
-            value: 'GERMAN' as const,
-        },
-    ];
-    private onlyOneEventTypeSelected = computed<boolean>(() => {
-        return [this.includeLectureEvents(), this.includeExerciseEvents(), this.includeTutorialEvents(), this.includeExamEvents()].filter(Boolean).length === 1;
-    });
+    private isOnlyOneEventTypeSelected = computed<boolean>(() => this.computeIsOnlyOneEventTypeSelected());
+    private currentLocale = getCurrentLocaleSignal(this.translateService);
 
     readonly faCopy = faCopy;
     readonly faCheck = faCheck;
@@ -46,23 +34,13 @@ export class CalendarSubscriptionPopoverComponent implements OnDestroy, OnInit {
     includeExerciseEvents = signal(true);
     includeTutorialEvents = signal(true);
     includeExamEvents = signal(true);
-    lecturesIsLastSelectedEventType = computed<boolean>(() => this.onlyOneEventTypeSelected() && this.includeLectureEvents());
-    exercisesIsLastSelectedEventType = computed<boolean>(() => this.onlyOneEventTypeSelected() && this.includeExerciseEvents());
-    tutorialsIsLastSelectedEventType = computed<boolean>(() => this.onlyOneEventTypeSelected() && this.includeTutorialEvents());
-    examsIsLastSelectedEventType = computed<boolean>(() => this.onlyOneEventTypeSelected() && this.includeExamEvents());
+    lecturesIsLastSelectedEventType = computed<boolean>(() => this.isOnlyOneEventTypeSelected() && this.includeLectureEvents());
+    exercisesIsLastSelectedEventType = computed<boolean>(() => this.isOnlyOneEventTypeSelected() && this.includeExerciseEvents());
+    tutorialsIsLastSelectedEventType = computed<boolean>(() => this.isOnlyOneEventTypeSelected() && this.includeTutorialEvents());
+    examsIsLastSelectedEventType = computed<boolean>(() => this.isOnlyOneEventTypeSelected() && this.includeExamEvents());
     selectedLanguage = signal<'ENGLISH' | 'GERMAN'>('ENGLISH');
-    languageOptions = signal<{ label: string; value: 'ENGLISH' | 'GERMAN' }[]>(this.buildLanguageOptions());
-    subscriptionUrl = computed<string>(() =>
-        this.buildCalendarSubscriptionURL(
-            this.courseId(),
-            this.subscriptionToken(),
-            this.includeLectureEvents(),
-            this.includeExerciseEvents(),
-            this.includeTutorialEvents(),
-            this.includeExamEvents(),
-            this.selectedLanguage(),
-        ),
-    );
+    languageOptions = computed(() => this.computeLanguageOptions());
+    subscriptionUrl = computed<string>(() => this.buildCalendarSubscriptionURL());
 
     constructor() {
         effect(() => {
@@ -70,16 +48,6 @@ export class CalendarSubscriptionPopoverComponent implements OnDestroy, OnInit {
                 return this.setTimerToToggleBackCopiedUrl();
             }
         });
-    }
-
-    ngOnInit() {
-        this.languageChangeSubscription = this.translateService.onLangChange.subscribe(() => {
-            this.languageOptions.set(this.buildLanguageOptions());
-        });
-    }
-
-    ngOnDestroy(): void {
-        this.languageChangeSubscription?.unsubscribe();
     }
 
     copySubscriptionUrlToClipboard() {
@@ -94,15 +62,14 @@ export class CalendarSubscriptionPopoverComponent implements OnDestroy, OnInit {
         this.calendarSubscriptionPopover()?.show(event);
     }
 
-    private buildCalendarSubscriptionURL(
-        courseId: number,
-        subscriptionToken: string,
-        includeLectureEvents: boolean,
-        includeExerciseEvents: boolean,
-        includeTutorialEvents: boolean,
-        includeExamEvents: boolean,
-        language: 'ENGLISH' | 'GERMAN',
-    ): string {
+    private buildCalendarSubscriptionURL(): string {
+        const courseId = this.courseId();
+        const subscriptionToken = this.subscriptionToken();
+        const includeLectureEvents = this.includeLectureEvents();
+        const includeExerciseEvents = this.includeExerciseEvents();
+        const includeTutorialEvents = this.includeTutorialEvents();
+        const includeExamEvents = this.includeExamEvents();
+        const selectedLanguage = this.selectedLanguage();
         const origin = window.location.origin;
         const route = `/api/core/calendar/courses/${courseId}/calendar-events-ics`;
 
@@ -116,7 +83,7 @@ export class CalendarSubscriptionPopoverComponent implements OnDestroy, OnInit {
         if (filterOptions.length > 0) {
             queryParameters.set('filterOptions', filterOptions.join(','));
         }
-        queryParameters.set('language', language);
+        queryParameters.set('language', selectedLanguage);
 
         return origin + route + '?' + queryParameters.toString();
     }
@@ -126,5 +93,23 @@ export class CalendarSubscriptionPopoverComponent implements OnDestroy, OnInit {
             this.copiedUrl.set(false);
         }, 1500);
         return () => clearTimeout(id);
+    }
+
+    private computeLanguageOptions() {
+        this.currentLocale();
+        return [
+            {
+                label: this.translateService.instant('artemisApp.calendar.subscriptionPopover.languageOption.english'),
+                value: 'ENGLISH' as const,
+            },
+            {
+                label: this.translateService.instant('artemisApp.calendar.subscriptionPopover.languageOption.german'),
+                value: 'GERMAN' as const,
+            },
+        ];
+    }
+
+    private computeIsOnlyOneEventTypeSelected(): boolean {
+        return [this.includeLectureEvents(), this.includeExerciseEvents(), this.includeTutorialEvents(), this.includeExamEvents()].filter(Boolean).length === 1;
     }
 }
