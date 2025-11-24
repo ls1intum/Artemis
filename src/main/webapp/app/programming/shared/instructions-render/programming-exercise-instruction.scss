@@ -67,6 +67,7 @@ Instructions wrapper styles
         opacity: 0;
         transform: translateY(20px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -78,6 +79,7 @@ Instructions wrapper styles
     100% {
         opacity: 0.5;
     }
+
     50% {
         opacity: 0.3;
     }
