@@ -119,6 +119,7 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
 
         // create result
         Result result = new Result();
+        result.setExerciseId(quizExercise.getId());
         result.setRated(false);
         result.setAssessmentType(AssessmentType.AUTOMATIC);
         result.setCompletionDate(ZonedDateTime.now());
@@ -180,6 +181,7 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
             participation.setInitializationState(InitializationState.FINISHED);
 
             Result result = new Result();
+            result.setExerciseId(quizExercise.getId());
             result.setRated(true);
             result.setAssessmentType(AssessmentType.AUTOMATIC);
             result.setCompletionDate(quizSubmission.getSubmissionDate());

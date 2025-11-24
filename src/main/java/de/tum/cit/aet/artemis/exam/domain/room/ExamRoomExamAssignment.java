@@ -5,10 +5,10 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import jakarta.validation.constraints.NotNull;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Conditional;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
@@ -27,13 +27,13 @@ public class ExamRoomExamAssignment extends DomainObject {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "exam_room_id", nullable = false)
-    @NotNull
+    @NonNull
     @JsonBackReference("examRoomExamAssignments_room")
     private ExamRoom examRoom;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "exam_id", nullable = false)
-    @NotNull
+    @NonNull
     @JsonBackReference("examRoomExamAssignments_exam")
     private Exam exam;
 

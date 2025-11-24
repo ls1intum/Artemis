@@ -1,0 +1,400 @@
+import Callout from "../../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
+
+# Privacy Statement and Imprint
+
+The privacy statement and the imprint are stored in the `./legal`  directory by default. You can override this value by setting the `artemis.legal-path` value in the `application-artemis.yml`.
+The privacy statement and the imprint are stored as markdown files. Currently, English and German as languages are supported.
+The documents have to follow the naming convention `<privacy_statement|imprint>_<de|en>.md`.
+In case you add only a file for one language, this file will always be shown regardless of the user's language setting.
+If you add a file for each language, the file will be shown depending on the user's language setting.
+
+In the following, the documentation provides a template in English and German for the privacy statement and the imprint with placeholders that have to be replaced with the actual content.
+
+<Callout variant={CalloutVariant.warning}>
+  These are only templates that are used similarly at TUM and need to be adapted to your needs.
+  Make sure to consult your data protection officer and/or legal department before making the privacy statement/imprint publicly available.
+  We do not take any responsibility for the content of the privacy statement or the imprint.
+</Callout>
+
+
+## Privacy Statement
+
+
+### Privacy Statement German Template
+
+```markdown
+# Datenschutz
+
+Die <Universität> nimmt den Schutz von personenbezogenen Daten sehr ernst und nutzt eine sichere und verschlüsselte Kommunikation nach
+bewährten Verfahren und modernsten Technologien (z.B. HTTPS mit sicherem Zertifikat der TUM, TLS 1.3, Strict Transport Security, Forward Secrecy, Same Site Cookie Schutz) um die
+Privatsphäre der Nutzer von Artemis bestmöglich zu schützen. Artemis verarbeitet personenbezogene Daten im Rahmen der Lehre und im Rahmen von Prüfungen unter Beachtung der
+geltenden datenschutzrechtlichen Bestimmungen. Die Rechtsgrundlage für die Verarbeitung der Daten stellt Art. 6 Abs. 1 Lit. c (Rechtliche Verpflichtung)
+der [Datenschutz Grundverordnung (DSGVO)](http://data.europa.eu/eli/reg/2016/679/oj) dar. Darüber hinaus gelten <weitere anwendbare landesspezifische Regelungen>.
+
+Nachfolgend informieren wir über Art, Umfang und Zweck der Erhebung und Verwendung personenbezogener Daten. Diese Informationen können jederzeit von unserer Webseite abgerufen
+werden.
+
+## Allgemeine Informationen
+
+#### Name und Kontaktdaten des Verantwortlichen
+
+<Universität>
+Postanschrift: <Adresse>
+Telefon: <Telefonnummer>
+E-Mail: <Email>
+
+#### Kontaktdaten des/der Datenschutzbeauftragten
+
+Der/Die Datenschutzbeauftragte der <Universität>
+Postanschrift: <Adresse>
+Telefon: <Telefonnummer>
+E-Mail: <Email>
+
+#### Zwecke und Rechtsgrundlagen für die Verarbeitung personenbezogener Daten
+
+Zweck der Verarbeitung ist die Erfüllung der uns vom Gesetzgeber zugewiesenen öffentlichen Aufgaben, insbesondere der Lehre und der Prüfung im universitären Umfeld. Die Rechtsgrundlage für die Verarbeitung Ihrer Daten ergibt sich, soweit nichts anderes angegeben ist, aus Art. 6 Abs. 1 Lit. c (Rechtliche Verpflichtung) der [Datenschutz Grundverordnung (DSGVO)](http://data.europa.eu/eli/reg/2016/679/oj). Darüber hinaus gelten <weitere anwendbare landesspezifische Regelungen>. Demnach ist es uns erlaubt, die zur Erfüllung einer uns obliegenden Aufgabe erforderlichen Daten zu verarbeiten.
+
+#### Empfänger von personenbezogenen Daten
+
+Der technische Betrieb unserer Datenverarbeitungssysteme erfolgt durch:
+<zuständige Stelle für den Betrieb>
+
+<Adresse>
+Telefon: <Telefonnummer>
+E-Mail: <Email>
+<Webseite>
+
+Gegebenenfalls werden Ihre Daten an die zuständigen Aufsichts- und Rechnungsprüfungsbehörden zur Wahrnehmung der jeweiligen Kontrollrechte übermittelt.
+
+<Falls anwendbar, geben Sie hier an, an wen die Daten potentiell weitergeleitet werden um die Informationssicherheit sicherzustellen>
+
+#### Dauer der Speicherung der personenbezogenen Daten
+
+Ihre Daten werden nur so lange gespeichert, wie dies unter Beachtung gesetzlicher Aufbewahrungsfristen zur Aufgabenerfüllung erforderlich ist.
+
+#### Ihre Rechte
+
+Soweit wir von Ihnen personenbezogene Daten verarbeiten, stehen Ihnen als Betroffener nachfolgende Rechte zu:
+
+* Sie haben das Recht auf Auskunft über die zu Ihrer Person gespeicherten Daten (Art. 15 DSGVO).
+* Sollten unrichtige personenbezogene Daten verarbeitet werden, steht Ihnen ein Recht auf Berichtigung zu (Art. 16 DSGVO).
+* Liegen die gesetzlichen Voraussetzungen vor, so können Sie die Löschung oder Einschränkung der Verarbeitung verlangen (Art. 17 und 18 DSGVO).
+* Wenn Sie in die Verarbeitung eingewilligt haben oder ein Vertrag zur Datenverarbeitung besteht und die Datenverarbeitung mithilfe automatisierter Verfahren durchgeführt wird, steht Ihnen gegebenenfalls ein Recht auf Datenübertragbarkeit zu (Art. 20 DSGVO).
+* Falls Sie in die Verarbeitung eingewilligt haben und die Verarbeitung auf dieser Einwilligung beruht, können Sie die Einwilligung jederzeit für die Zukunft widerrufen. Die Rechtmäßigkeit der aufgrund der Einwilligung bis zum Widerruf erfolgten Datenverarbeitung wird durch diesen nicht berührt.
+
+Sie haben das Recht, aus Gründen, die sich aus Ihrer besonderen Situation ergeben, jederzeit gegen die Verarbeitung Ihrer Daten Widerspruch einzulegen, wenn die Verarbeitung ausschließlich auf Grundlage des Art. 6 Abs. 1 Buchst. e oder f DSGVO erfolgt (Art. 21 Abs. 1 Satz 1 DSGVO).
+
+#### Beschwerderecht bei der Aufsichtsbehörde
+
+Weiterhin besteht ein Beschwerderecht beim <Verantwortliche Person>. Diesen können Sie unter folgenden Kontaktdaten erreichen:
+Postanschrift: <Postanschrift>
+Adresse: <Adresse>
+Telefon: <Telefonnummer>
+E-Mail: <Email>
+<Webseite>
+
+#### Weitere Informationen
+
+Für nähere Informationen zur Verarbeitung Ihrer Daten und zu Ihren Rechten können Sie uns unter den oben (zu Beginn von A.) genannten Kontaktdaten erreichen.
+
+## Informationen zum Internetauftritt
+
+#### Technische Umsetzung
+
+Die Webserver von Artemis werden durch <Betreiber> betrieben. Die von Ihnen im Rahmen des Besuchs
+unseres Webauftritts übermittelten personenbezogenen Daten werden daher in unserem Auftrag durch <Betreiber> verarbeitet:
+
+<Betreiber>
+<Straße und Hausnummer>
+<Postleitzahl> <Ort>
+<Telefonnummer>
+E-Mail: <Email>
+<Webseite>
+
+#### Protokollierung
+
+Wenn Sie diese oder andere Internetseiten von Artemis aufrufen, übermitteln Sie über Ihren Internetbrowser Daten an unsere Webserver. Die folgenden Daten werden während einer laufenden Verbindung zur Kommunikation zwischen Ihrem Internetbrowser und unseren Webservern temporär in einer Logdatei aufgezeichnet:
+
+* IP-Adresse des anfragenden Rechners
+* Datum und Uhrzeit des Zugriffs
+* Name, URL und übertragene Datenmenge der abgerufenen Datei
+* Zugriffsstatus (angeforderte Datei übertragen, nicht gefunden etc.)
+* Erkennungsdaten des verwendeten Browser- und Betriebssystems (sofern vom anfragenden Webbrowser übermittelt)
+* Webseite, von der aus der Zugriff erfolgte (sofern vom anfragenden Webbrowser übermittelt)
+
+Die Verarbeitung der Daten in dieser Logdatei kann wie folgt geschehen:
+
+* Die Logeinträge können kontinuierlich und automatisch ausgewertet werden, um Angriffe auf die Webserver erkennen und entsprechend reagieren zu können.
+* In Einzelfällen, d.h. bei gemeldeten Störungen, Fehlern und Sicherheitsvorfällen, kann eine manuelle Analyse erfolgen.
+
+#### Cookies
+
+Um den Funktionsumfang unseres Internetangebotes zu erweitern und die Nutzung für Sie komfortabler zu gestalten, verwenden wir zum Teil so genannte "Cookies". Mit Hilfe dieser Cookies können bei dem Aufruf unserer Webseite Daten auf Ihrem Rechner gespeichert werden. Sie können das Speichern von Cookies jedoch deaktivieren oder Ihren Browser so einstellen, dass Cookies nur für die Dauer der jeweiligen Verbindung zum Internet gespeichert werden. Hierdurch könnte allerdings der Funktionsumfang unseres Angebotes eingeschränkt werden.
+
+## Informationen zu einzelnen Verarbeitungen
+
+#### Anmeldung
+
+Bei Ihrer Anmeldung am System werden Ihre personenbezogenen Daten gegenüber dem Verzeichnisdienst der <Universität> verifiziert.
+
+#### Auskunft und Berichtigung
+
+Sie haben das Recht, auf schriftlichen Antrag und unentgeltlich Auskunft über die personenbezogenen Daten zu erhalten, die über Sie gespeichert sind. Zusätzlich haben Sie das Recht auf Berichtigung unrichtiger Daten. Den behördlichen Datenschutzbeauftragten der <Universität> erreichen Sie per E-Mail unter <Email Datenschutzbeauftragter> oder über <Link zum Datenschutzbeauftragten>.
+```
+
+
+### Privacy Statement English Template
+
+```markdown
+# Privacy
+
+The <University> takes the protection of your personal data very seriously and uses secure and encrypted communication according to best practices and state-of-the-art technologies (e.g. HTTPS with secure certificate of TUM, TLS 1.3, Strict Transport Security, Forward Secrecy, Same Site Cookie protection) to protect the privacy of Artemis users in the best possible way. Artemis processes personal data in the context of teaching and in the context of examinations in compliance with the applicable data protection regulations.
+The legal basis for the processing of data is Art. 6(1) lit. c (Legal Obligation) of the General Data Protection Regulation (GDPR).
+In addition, <additional federal or country-specific rules> apply.
+
+In the following, we provide information on the type, scope and purpose of the collection and use of personal data. This information can be accessed at any time from our website.
+
+## General Information
+
+### Name and contact details of the person responsible
+
+<University>
+Postal address: <Postal address>
+Telephone: <Telephone number>
+Email: <Email>
+
+### Name and contact details of the data protection officer
+
+The data protection officer of the <University>
+Postal address: <Postal address>
+Telephone: <Telephone number>
+E-mail: <Email>
+
+### Purpose and legal basis for the processing of personal data
+
+The purpose of the processing is to fulfill the public duties assigned to us by the legislator, in particular teaching and examination in the university environment. Unless otherwise stated, the legal basis for processing your data results from Art. 6(1) lit. c (Legal Obligation) of the General Data Protection Regulation (GDPR).
+In addition,<additional federal or country-specific rules> apply. Accordingly, we are permitted to process the data required to fulfill a duty incumbent upon us.
+
+### Recipients of personal data
+
+The technical operation of our data processing systems is carried out by:
+
+<Operator>
+<Street and house number>
+<Zip code> <City>
+Telephone: <Telephone number>
+E-mail: <Email>
+<Website>
+
+If necessary, your data will be transmitted to the responsible supervisory and auditing authorities for the exercise of the respective control rights.
+
+<If applicable add a paragraph to which authority data may be forwarded to ensure information security and the legal basis for this>
+
+### Duration of the storage of personal data
+
+Your data will only be stored for as long as is necessary for the fulfillment of duties, taking into account statutory retention periods.
+
+### Your rights
+
+Insofar as we process personal data from you, you are entitled to the following rights as a data subject:
+
+* You have the right of access (Art. 15 GDPR).
+* If incorrect personal data is processed, you have the right to rectification (Art. 16 GDPR).
+* If the legal requirements are met, you may request the deletion or restriction of processing (Art. 17 and 18 GDPR).
+* If you have consented to the processing or if there is a contract for data processing and the data processing is carried out with the help of automated procedures, you may have a right to data portability (Art. 20 GDPR).
+* If you have consented to the processing and the processing is based on this consent, you can revoke the consent at any time for the future. The lawfulness of the data processing carried out on the basis of the consent until the revocation is not affected by it.
+
+You have the right to object to the processing of your data at any time on grounds relating to your particular situation, if the processing is carried out exclusively on the basis of Art. 6(1) lit. e or f GDPR (Art. 21(1)(1) GDPR).
+
+### Right to appeal at the supervisory authority
+
+Furthermore, you have the right to appeal at the <supervisory authority>
+You can reach them under the following contact details:
+
+Postal address: <Postal address>
+Address: <Address>
+Telephone: <Telephone number>
+Email: <Email>
+<Website>
+
+#### Further Information
+
+For more detailed information on the processing of your data and your rights, you can contact us using the contact details provided above (at the beginning of A.).
+
+## Information about the web presence
+
+### Technical implementation
+
+The web servers of Artemis are operated by the <Operator>. The personal data you provide when
+visiting our website is therefore processed on our behalf by <Operator>:
+
+<Operator> <Street and house number>
+<Zip code> <City>
+Telephone: <Telephone number>
+Email: <Email>
+<Website>
+
+#### Logging
+
+When you access this or other Artemis web pages, you transmit data to our web servers via your Internet browser. The following data is temporarily recorded in a log file during an ongoing connection for communication between your Internet browser and our web servers:
+
+* IP address of the requesting computer
+* Date and time of access
+* Name, URL and transferred data volume of the retrieved file
+* Access status (requested file transferred, not found, etc.)
+* Identification data of the browser and operating system used (if transmitted by the requesting web browser)
+* Web page from which access was made (if transmitted by the requesting web browser)
+
+The processing of the data in this log file can be done as follows:
+The log entries can be continuously and automatically evaluated in order to detect attacks on the web servers and react accordingly.
+In individual cases, i.e. in the event of reported malfunctions, errors and security incidents, a manual analysis may be carried out.
+
+#### Cookies
+
+In order to extend the range of functions of our Internet offering and to make its use more comfortable for you, we partly use so-called "cookies". With the help of these cookies, data can be stored on your computer when you call up our website. However, you can deactivate the storage of cookies or set your browser so that cookies are only stored for the duration of the respective connection to the Internet. This could, however, limit the functional scope of our offering.
+
+## Information on individual processing operations
+
+#### Login
+
+When you log in to the system, your personal data will be verified with the directory service of the <University>.
+
+#### Disclosure and rectification
+
+You have the right, upon written request and free of charge, to obtain information about the personal data stored about you. In addition, you have the right to have incorrect data corrected. You can reach the data protection officer of <University by e-mail at <Email> or via <Website>.
+```
+
+
+## Imprint
+
+
+### Imprint German Template
+
+```markdown
+# Impressum
+
+#### Herausgeber
+
+<Universität>
+Postanschrift: <Postanschrift>
+Telefon: <Telefonnummer>
+Telefax: <Faxnummer>
+E-Mail: <E-Mail-Adresse>
+
+#### Vertretungsberechtigt
+
+Die <Universität> wird gesetzlich vertreten durch den Präsidenten <Präsident>
+
+#### Umsatzsteueridentifikationsnummer
+
+<Umsatzsteueridentifikationsnummer> (gemäß § 27a Umsatzsteuergesetz)
+
+#### Verantwortlich für den Inhalt
+
+<Vor- und Nachname>
+<Straße und Hausnummer>
+<PLZ> <Ort>
+
+#### Nutzungsbedingungen
+
+Texte, Bilder, Grafiken sowie die Gestaltung dieser Internetseiten können dem Urheberrecht unterliegen. Nicht urheberrechtlich geschützt sind nach § 5 des Urheberrechtsgesetz (UrhG)
+
+* Gesetze, Verordnungen, amtliche Erlasse und Bekanntmachungen sowie Entscheidungen und amtlich verfasste Leitsätze zu Entscheidungen und
+* andere amtliche Werke, die im amtlichen Interesse zur allgemeinen Kenntnisnahme veröffentlicht worden sind, mit der Einschränkung, dass die Bestimmungen über Änderungsverbot und Quellenangabe in § 62 Abs. 1 bis 3 und § 63 Abs. 1 und 2 UrhG entsprechend anzuwenden sind.
+
+Als Privatperson dürfen Sie urheberrechtlich geschütztes Material zum privaten und sonstigen eigenen Gebrauch im Rahmen des § 53 UrhG verwenden. Eine Vervielfältigung oder
+Verwendung urheberrechtlich geschützten Materials dieser Seiten oder Teilen davon in anderen elektronischen oder gedruckten Publikationen und deren Veröffentlichung ist nur mit
+unserer Einwilligung gestattet. Diese Einwilligung erteilen auf Anfrage die für den Inhalt Verantwortlichen. Der Nachdruck und die Auswertung von Pressemitteilungen und Reden sind
+mit Quellenangabe allgemein gestattet. Weiterhin können Texte, Bilder, Grafiken und sonstige Dateien ganz oder teilweise dem Urheberrecht Dritter unterliegen. Auch über das
+Bestehen möglicher Rechte Dritter geben Ihnen die für den Inhalt Verantwortlichen nähere Auskünfte.
+
+#### Haftungsausschluss
+
+Alle auf dieser Internetseite bereitgestellten Informationen haben wir nach bestem Wissen und Gewissen erarbeitet und geprüft. Eine Gewähr für die jederzeitige Aktualität,
+Richtigkeit, Vollständigkeit und Verfügbarkeit der bereit gestellten Informationen können wir allerdings nicht übernehmen. Ein Vertragsverhältnis mit den Nutzern des
+Internetangebots kommt nicht zustande.
+
+Wir haften nicht für Schäden, die durch die Nutzung dieses Internetangebots entstehen. Dieser Haftungsausschluss gilt nicht, soweit die Vorschriften des § 839 BGB (Haftung bei
+Amtspflichtverletzung) einschlägig sind. Für etwaige Schäden, die beim Aufrufen oder Herunterladen von Daten durch Schadsoftware oder der Installation oder Nutzung von Software
+verursacht werden, übernehmen wir keine Haftung.
+
+Falls im Einzelfall erforderlich: Der Haftungsausschluss gilt nicht für Informationen, die in den Anwendungsbereich der Europäischen Dienstleistungsrichtlinie (Richtlinie
+2006/123/EG – DLRL) fallen. Für diese Informationen wird die Richtigkeit und Aktualität gewährleistet.
+
+#### Links
+
+Von unseren eigenen Inhalten sind Querverweise („Links“) auf die Webseiten anderer Anbieter zu unterscheiden. Durch diese Links ermöglichen wir lediglich den Zugang zur Nutzung
+fremder Inhalte nach § 8 Telemediengesetz. Bei der erstmaligen Verknüpfung mit diesen Internetangeboten haben wir diese fremden Inhalte daraufhin überprüft, ob durch sie eine
+mögliche zivilrechtliche oder strafrechtliche Verantwortlichkeit ausgelöst wird. Wir können diese fremden Inhalte aber nicht ständig auf Veränderungen überprüfen und daher auch
+keine Verantwortung dafür übernehmen. Für illegale, fehlerhafte oder unvollständige Inhalte und insbesondere für Schäden, die aus der Nutzung oder Nichtnutzung von Informationen
+Dritter entstehen, haftet allein der jeweilige Anbieter der Seite.
+```
+
+
+### Imprint English Template
+
+```markdown
+# Imprint
+
+#### Publisher
+
+<University>
+Postal address: <Postal address>
+Telephone: <Telephone number>
+Fax: <Fax number>
+Email: <Email address>
+
+#### Authorized to represent
+
+The <University> is legally represented by the President <President>.
+
+#### VAT identification number
+
+<VAT identification number> (in accordance with § 27a of the German VAT tax act - UStG)
+
+#### Responsible for content
+
+<First name> <Last name>
+<Street and house number>
+<Zip code> <City>
+
+#### Terms of use
+
+Texts, images, graphics as well as the design of these Internet pages may be subject to copyright.
+The following are not protected by copyright according to §5 of copyright law (Urheberrechtsgesetz (UrhG)).
+
+Laws, ordinances, official decrees and announcements as well as decisions and officially written guidelines for
+decisions and other official works that have been published in the official interest for general knowledge,
+with the restriction that the provisions on prohibition of modification and indication of source in Section 62 (1) to (3) and
+Section 63 (1) and (2) UrhG apply accordingly.
+
+As a private individual, you may use copyrighted material for private and other personal use within the scope of Section 53 UrhG.
+Any duplication or use of objects such as images, diagrams, sounds or texts in other electronic or printed publications is not permitted without our agreement.
+This consent will be granted upon request by the person responsible for the content.
+The reprinting and evaluation of press releases and speeches are generally permitted with reference to the source.
+Furthermore, texts, images, graphics and other files may be subject in whole or in part to the copyright of third parties.
+The persons responsible for the content will also provide more detailed information on the existence of possible third-party rights.
+
+#### Liability disclaimer
+
+The information provided on this website has been collected and verified to the best of our knowledge and belief.
+However, there will be no warranty that the information provided is up-to-date, correct, complete, and available.
+There is no contractual relationship with users of this website.
+
+We accept no liability for any loss or damage caused by using this website. The exclusion of liability does not apply where the provisions of the German Civil Code (BGB) on
+liability in case of breach of official duty are applicable (§ 839 of the BGB). We accept no liability for any loss or damage caused by malware when accessing or downloading data
+or the installation or use of software from this website.
+
+Where necessary in individual cases: the exclusion of liability does not apply to information governed by the Directive 2006/123/EC of the European Parliament and of the Council.
+This information is guaranteed to be accurate and up to date.
+
+#### Links
+
+Our own content is to be distinguished from cross-references (“links”) to websites of other providers.
+These links only provide access for using third-party content in accordance with § 8 of the German telemedia act (TMG).
+Prior to providing links to other websites, we review third-party content for potential civil or criminal liability.
+However, a continuous review of third-party content for changes is not possible, and therefore we cannot accept any responsibility.
+For illegal, incorrect, or incomplete content, including any damage arising from the use or non-use of third-party information,
+liability rests solely with the provider of the website.
+```

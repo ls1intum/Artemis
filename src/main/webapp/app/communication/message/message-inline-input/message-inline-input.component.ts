@@ -2,7 +2,6 @@ import { Component, OnChanges, OnDestroy, OnInit, ViewEncapsulation, inject, inp
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Post } from 'app/communication/shared/entities/post.model';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { PostContentValidationPattern } from 'app/communication/metis.util';
 import { PostingButtonComponent } from 'app/communication/posting-button/posting-button.component';
 import { PostingCreateEditDirective } from 'app/communication/directive/posting-create-edit.directive';
@@ -12,7 +11,6 @@ import { Course } from 'app/core/course/shared/entities/course.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { DraftService } from 'app/communication/message/service/draft-message.service';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { Subscription } from 'rxjs';
 
 @Component({
@@ -20,24 +18,21 @@ import { Subscription } from 'rxjs';
     templateUrl: './message-inline-input.component.html',
     styleUrls: ['./message-inline-input.component.scss'],
     encapsulation: ViewEncapsulation.None,
-    imports: [FormsModule, ReactiveFormsModule, PostingMarkdownEditorComponent, TranslateDirective, PostingButtonComponent, ArtemisTranslatePipe],
+    imports: [FormsModule, ReactiveFormsModule, PostingMarkdownEditorComponent, PostingButtonComponent, ArtemisTranslatePipe],
 })
 export class MessageInlineInputComponent extends PostingCreateEditDirective<Post | AnswerPost> implements OnInit, OnChanges, OnDestroy {
-    private localStorageService = inject(LocalStorageService);
     private accountService = inject(AccountService);
     private draftService = inject(DraftService);
 
     course = input<Course>();
     activeConversation = input<ConversationDTO>();
 
-    warningDismissed = false;
     private readonly DRAFT_KEY_PREFIX = 'message_draft_';
     private currentUserId: number | undefined;
     private draftMessageSubscription?: Subscription;
 
     ngOnInit(): void {
         super.ngOnInit();
-        this.warningDismissed = !!this.localStorageService.retrieve('chatWarningDismissed');
         this.loadCurrentUser();
     }
 
@@ -109,11 +104,6 @@ export class MessageInlineInputComponent extends PostingCreateEditDirective<Post
                 this.isLoading = false;
             },
         });
-    }
-
-    closeAlert() {
-        this.warningDismissed = true;
-        this.localStorageService.store('chatWarningDismissed', true);
     }
 
     private getDraftKey(): string {
