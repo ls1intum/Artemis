@@ -1032,19 +1032,19 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         programmingExerciseParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
 
         var submission = ParticipationFactory.generateProgrammingSubmission(true);
-        Result r = programmingExerciseUtilService.addProgrammingSubmissionWithResult(programmingExercise, submission, TEST_PREFIX + "student1");
-        r.successful(true).rated(true).score(100D).assessmentType(assessmentType).completionDate(completionDate);
+        Result result = programmingExerciseUtilService.addProgrammingSubmissionWithResult(programmingExercise, submission, TEST_PREFIX + "student1");
+        result.successful(true).rated(true).score(100D).assessmentType(assessmentType).completionDate(completionDate);
 
-        return participationUtilService.addVariousVisibilityFeedbackToResult(r);
+        return participationUtilService.addVariousVisibilityFeedbackToResult(result);
     }
 
     private TemplateProgrammingExerciseParticipation addTemplateParticipationWithResult() {
         programmingExerciseParticipation = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise)
                 .getTemplateParticipation();
-        Result r = programmingExerciseUtilService.addTemplateSubmissionWithResult(programmingExercise);
-        r.successful(true).rated(true).score(100D).assessmentType(AssessmentType.AUTOMATIC).completionDate(null);
+        Result result = programmingExerciseUtilService.addTemplateSubmissionWithResult(programmingExercise);
+        result.successful(true).rated(true).score(100D).assessmentType(AssessmentType.AUTOMATIC).completionDate(null);
 
-        participationUtilService.addVariousVisibilityFeedbackToResult(r);
+        participationUtilService.addVariousVisibilityFeedbackToResult(result);
         return (TemplateProgrammingExerciseParticipation) programmingExerciseParticipation;
     }
 
