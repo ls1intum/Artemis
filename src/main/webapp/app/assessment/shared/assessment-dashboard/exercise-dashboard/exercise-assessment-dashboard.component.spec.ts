@@ -142,7 +142,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         secondCorrectionEnabled: true,
         allowFeedbackRequests: true,
         exerciseGroup: exerciseGroup,
-        exampleSolutionModel: undefined, // ADD THIS - remove the invalid diagram
+        exampleSolutionModel: undefined,
     } as ModelingExercise;
     const textExercise = {
         id: 18,
@@ -319,7 +319,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
         accountService.userIdentity.set(user);
         fixture.detectChanges();
-        tick(); // Process all async operations
+        tick();
 
         expect(comp.courseId).toBe(1);
         expect(comp.examId).toBe(2);
@@ -426,7 +426,6 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     }));
 
     it('should handle generic error', fakeAsync(() => {
-        // <-- ADDED fakeAsync
         const error = { errorKey: 'mock', detail: 'Mock error' };
         const errorResponse = new HttpErrorResponse({ error });
 
@@ -448,8 +447,6 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     }));
 
     it('should have correct percentages calculated', fakeAsync(() => {
-        // <-- ADDED fakeAsync
-
         exerciseServiceGetForTutorsStub.mockReturnValue(of(new HttpResponse({ body: exerciseForTest, headers: new HttpHeaders() })));
         modelingSubmissionStubWithAssessment.mockReturnValue(of(new HttpResponse({ body: [], headers: new HttpHeaders() })));
 
@@ -457,7 +454,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
         comp.loadAll();
 
-        tick(); // <-- ADDED tick()
+        tick();
 
         expect(modelingSubmissionStubWithoutAssessment).toHaveBeenNthCalledWith(1, modelingExercise.id, undefined, 0);
         expect(modelingSubmissionStubWithoutAssessment).toHaveBeenNthCalledWith(2, modelingExercise.id, undefined, 1);
@@ -488,8 +485,6 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     }));
 
     it('should set exam and stats properties', fakeAsync(() => {
-        // <--- ADDED fakeAsync
-
         exerciseServiceGetForTutorsStub.mockReturnValue(of(new HttpResponse({ body: exerciseForTest, headers: new HttpHeaders() })));
 
         comp.loadAll();
@@ -804,7 +799,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     it('should get submissions with more feedback requests for tutor', () => {
         comp.exercise = modelingExercise;
         comp.tutorParticipation = modelingExercise.tutorParticipations![0];
-        comp.tutorParticipationStatus = modelingExercise.tutorParticipations![0].status!; // ADD THIS LINE
+        comp.tutorParticipationStatus = modelingExercise.tutorParticipations![0].status!;
 
         const submissionServiceSpy = jest.spyOn(submissionService, 'getSubmissionsWithMoreFeedbackRequestsForTutor');
         submissionServiceSpy.mockReturnValue(of(new HttpResponse({ body: [] })));

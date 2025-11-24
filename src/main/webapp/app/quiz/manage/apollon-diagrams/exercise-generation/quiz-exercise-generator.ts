@@ -27,7 +27,6 @@ export async function generateDragAndDropQuizExercise(course: Course, title: str
             .filter(([, include]) => include)
             .map(([id]) => id),
     ];
-    //const elements = [...Object.values(model.nodes), ...Object.values(model.edges)];
     const elements = [...Object.values(model.nodes)];
     // Render the diagram's background image and store it
     const renderedDiagram = await ApollonEditor.exportModelAsSvg(model, {
@@ -105,16 +104,6 @@ function createDragAndDropQuestion(
  * @return {Promise<DragAndDropMapping>} A Promise resolving to a Drag and Drop mapping
  */
 async function generateDragAndDropItem(element: ApollonNode, model: UMLModel, svgSize: { width: number; height: number }, files: Map<string, Blob>): Promise<DragAndDropMapping> {
-    //const textualElementTypes: DiagramNodeType[] = ['class', 'package'];
-    /*if (element ) {
-        return generateDragAndDropItemForRelationship(element, model, svgSize, files);
-    } else if (textualElementTypes.includes(element.type as UMLElementType)) {
-        return generateDragAndDropItemForText(element, model, svgSize);
-    } else {
-        return generateDragAndDropItemForElement(element, model, svgSize, files);
-    }
-
-     */
     return generateDragAndDropItemForNode(element, model, svgSize, files);
 }
 
@@ -144,67 +133,6 @@ export async function generateDragAndDropItemForNode(
 
     return new DragAndDropMapping(dragItem, dropLocation);
 }
-
-/**
- * Create a mapping of a `DragItem` and a `DropLocation` for a textual based `UMLElement`.
- *
- * @param {UMLModelElement} element A textual based element of the UML model.
- * @param {UMLModel} model The complete UML model.
- * @param svgSize actual size of the generated svg
- *
- * @return {Promise<DragAndDropMapping>} A Promise resolving to a Drag and Drop mapping
- */
-/*async function generateDragAndDropItemForText(element: UMLModelElement, model: UMLModel, svgSize: { width: number; height: number }): Promise<DragAndDropMapping> {
-    const dragItem = new DragItem();
-    dragItem.text = element.name;
-    const dropLocation = computeDropLocation(element.bounds, svgSize);
-
-    return new DragAndDropMapping(dragItem, dropLocation);
-}
-
-
- */
-/**
- * Create a mapping of a `DragItem` and a `DropLocation` for a `UMLRelationship`.
- *
- * @param {UMLModelElement} element A relationship of the UML model.
- * @param {UMLModel} model The complete UML model.
- * @param svgSize actual size of the generated svg
- * @param files a map of files that should be uploaded
- *
- * @return {Promise<DragAndDropMapping>} A Promise resolving to a Drag and Drop mapping
- */
-/*async function generateDragAndDropItemForRelationship(
-    element: UMLModelElement,
-    model: UMLModel,
-    svgSize: { width: number; height: number },
-    files: Map<string, Blob>,
-): Promise<DragAndDropMapping> {
-    const MIN_SIZE = 30;
-
-    let margin = {};
-    if (element.bounds.width < MIN_SIZE) {
-        const delta = MIN_SIZE - element.bounds.width;
-        margin = { ...margin, right: delta / 2, left: delta / 2 };
-    }
-    if (element.bounds.height < MIN_SIZE) {
-        const delta = MIN_SIZE - element.bounds.height;
-        margin = { ...margin, top: delta / 2, bottom: delta / 2 };
-    }
-
-    const renderedElement: SVG = await ApollonEditor.exportModelAsSvg(model, { margin, include: [element.id] });
-    const image = await convertRenderedSVGToPNG(renderedElement);
-    const imageName = `relationship-${element.id}.png`;
-    files.set(imageName, image);
-
-    const dragItem = new DragItem();
-    dragItem.pictureFilePath = imageName;
-    const dropLocation = computeDropLocation(renderedElement.clip, svgSize);
-
-    return new DragAndDropMapping(dragItem, dropLocation);
-}
-
- */
 
 /**
  * Create a Drag and Drop Quiz Exercise `DropLocation` for an `Element`.
