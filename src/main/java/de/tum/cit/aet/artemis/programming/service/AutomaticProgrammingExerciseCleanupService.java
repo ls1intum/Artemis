@@ -74,7 +74,6 @@ public class AutomaticProgrammingExerciseCleanupService {
      */
     @Scheduled(cron = "${artemis.scheduling.programming-exercises-cleanup-time:0 0 3 * * *}") // execute this every night at 3:00:00 am
     public void cleanup() {
-
         if (!profileService.isProductionActive()) {
             // only execute this on production server, i.e. when the prod profile is active
             // NOTE: if you want to test this locally, please comment it out, but do not commit the changes
@@ -134,13 +133,19 @@ public class AutomaticProgrammingExerciseCleanupService {
         log.info("Search for courses exercises with due date from {} until {}", earliestDate, latestDate);
         // Get all relevant participation ids
         Pageable pageable = Pageable.ofSize(STUDENT_PARTICIPATION_CLEANUP_BATCH_SIZE);
-        Page<String> uriBatch = programmingExerciseStudentParticipationRepository.findRepositoryUrisByCourseExerciseDueDateBetween(earliestDate, latestDate, pageable);
-        log.info("Found {} student participations in courses exercises to clean local student repositories in {} batches.", uriBatch.getTotalElements(), uriBatch.getTotalPages());
-        if (uriBatch.getTotalElements() > 0) {
-            uriBatch.forEach(this::deleteLocalRepositoryByUriString);
-            while (!uriBatch.isLast()) {
-                uriBatch = programmingExerciseStudentParticipationRepository.findRepositoryUrisByCourseExerciseDueDateBetween(earliestDate, latestDate, uriBatch.nextPageable());
-                uriBatch.forEach(this::deleteLocalRepositoryByUriString);
+        var start = System.currentTimeMillis();
+        Page<String> repositoryUriPage = programmingExerciseStudentParticipationRepository.findRepositoryUrisByCourseExerciseDueDateBetween(earliestDate, latestDate, pageable);
+        log.debug("Query to find {} student participations in course exercises took {} ms", repositoryUriPage.getSize(), System.currentTimeMillis() - start);
+        log.info("Found {} student participations in courses exercises to clean local student repositories in {} batches.", repositoryUriPage.getTotalElements(),
+                repositoryUriPage.getTotalPages());
+        if (repositoryUriPage.getTotalElements() > 0) {
+            repositoryUriPage.forEach(this::deleteLocalRepositoryByUriString);
+            while (!repositoryUriPage.isLast()) {
+                start = System.currentTimeMillis();
+                repositoryUriPage = programmingExerciseStudentParticipationRepository.findRepositoryUrisByCourseExerciseDueDateBetween(earliestDate, latestDate,
+                        repositoryUriPage.nextPageable());
+                log.debug("Query to {} find student participations in course exercises took {} ms", repositoryUriPage.getSize(), System.currentTimeMillis() - start);
+                repositoryUriPage.forEach(this::deleteLocalRepositoryByUriString);
             }
             log.info("Finished cleaning local student repositories in course exercises");
         }
@@ -150,13 +155,19 @@ public class AutomaticProgrammingExerciseCleanupService {
         log.info("Search for exam exercises with due date from {} until {}", earliestDate, latestDate);
         // Get all relevant participation ids
         Pageable pageable = Pageable.ofSize(STUDENT_PARTICIPATION_CLEANUP_BATCH_SIZE);
-        Page<String> uriBatch = programmingExerciseStudentParticipationRepository.findRepositoryUrisByExamExercisesEndDateBetween(earliestDate, latestDate, pageable);
-        log.info("Found {} student participations in exam exercises to clean local student repositories in {} batches.", uriBatch.getTotalElements(), uriBatch.getTotalPages());
-        if (uriBatch.getTotalElements() > 0) {
-            uriBatch.forEach(this::deleteLocalRepositoryByUriString);
-            while (!uriBatch.isLast()) {
-                uriBatch = programmingExerciseStudentParticipationRepository.findRepositoryUrisByExamExercisesEndDateBetween(earliestDate, latestDate, uriBatch.nextPageable());
-                uriBatch.forEach(this::deleteLocalRepositoryByUriString);
+        var start = System.currentTimeMillis();
+        Page<String> repositoryUriPage = programmingExerciseStudentParticipationRepository.findRepositoryUrisByExamExercisesEndDateBetween(earliestDate, latestDate, pageable);
+        log.debug("Query to find {} student participations in exam exercises took {} ms", repositoryUriPage.getSize(), System.currentTimeMillis() - start);
+        log.info("Found {} student participations in exam exercises to clean local student repositories in {} batches.", repositoryUriPage.getTotalElements(),
+                repositoryUriPage.getTotalPages());
+        if (repositoryUriPage.getTotalElements() > 0) {
+            repositoryUriPage.forEach(this::deleteLocalRepositoryByUriString);
+            while (!repositoryUriPage.isLast()) {
+                start = System.currentTimeMillis();
+                repositoryUriPage = programmingExerciseStudentParticipationRepository.findRepositoryUrisByExamExercisesEndDateBetween(earliestDate, latestDate,
+                        repositoryUriPage.nextPageable());
+                log.debug("Query to find {} student participations in exam exercises took {} ms", repositoryUriPage.getSize(), System.currentTimeMillis() - start);
+                repositoryUriPage.forEach(this::deleteLocalRepositoryByUriString);
             }
             log.info("Finished cleaning local student repositories in exam exercises");
         }
