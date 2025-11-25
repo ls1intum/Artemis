@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, effect
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { AlertService } from 'app/shared/service/alert.service';
 import { CompetencyWithTailRelationDTO, CourseCompetency, CourseCompetencyType, getIcon } from 'app/atlas/shared/entities/competency.model';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { Subscription, firstValueFrom, map } from 'rxjs';
 import { faCircleQuestion, faEdit, faFileImport, faPencilAlt, faPlus, faRobot, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -26,7 +27,6 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { CourseTitleBarTitleComponent } from 'app/core/course/shared/course-title-bar-title/course-title-bar-title.component';
 import { CourseTitleBarTitleDirective } from 'app/core/course/shared/directives/course-title-bar-title.directive';
 import { CourseTitleBarActionsDirective } from 'app/core/course/shared/directives/course-title-bar-actions.directive';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { IS_AT_LEAST_INSTRUCTOR } from 'app/shared/constants/authority.constants';
 import { AccountService } from 'app/core/auth/account.service';
 
@@ -65,7 +65,7 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
     private readonly profileService = inject(ProfileService);
     private readonly irisSettingsService = inject(IrisSettingsService);
     private readonly featureToggleService = inject(FeatureToggleService);
-    private readonly sessionStorageService = inject(SessionStorageService);
+    private readonly localStorageService = inject(LocalStorageService);
     private readonly accountService = inject(AccountService);
 
     readonly courseId = toSignal(this.activatedRoute.parent!.params.pipe(map((params) => Number(params.courseId))), { requireSync: true });
@@ -97,11 +97,11 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit(): void {
-        const lastVisit = this.sessionStorageService.retrieve('alreadyVisitedCompetencyManagement');
+        const lastVisit = this.localStorageService.retrieve('alreadyVisitedCompetencyManagement');
         if (!lastVisit) {
             this.openCourseCompetencyExplanation();
         }
-        this.sessionStorageService.store('alreadyVisitedCompetencyManagement', true);
+        this.localStorageService.store('alreadyVisitedCompetencyManagement', true);
 
         this.agentChatSubscription = this.featureToggleService.getFeatureToggleActive(FeatureToggle.AtlasAgent).subscribe((isFeatureEnabled) => {
             const hasAuthority = this.accountService.hasAnyAuthorityDirect(IS_AT_LEAST_INSTRUCTOR);
