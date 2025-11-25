@@ -301,7 +301,41 @@ export class ShortAnswerQuestionUtil {
                 : [x, ...interleave(ys, xs)]; // inductive: some x
         }
 
-        return questionText.split(/\n/g).map((line) => {
+        // Detect and preserve code blocks before splitting by lines
+        const lines: string[] = [];
+        const allLines = questionText.split(/\n/g);
+        let inCodeBlock = false;
+        let codeBlockLines: string[] = [];
+
+        for (const line of allLines) {
+            // Check if line contains code block delimiter
+            if (line.trim().startsWith('```')) {
+                if (inCodeBlock) {
+                    // End of code block - add the closing delimiter and merge all lines
+                    codeBlockLines.push(line);
+                    lines.push(codeBlockLines.join('\n'));
+                    codeBlockLines = [];
+                    inCodeBlock = false;
+                } else {
+                    // Start of code block
+                    codeBlockLines.push(line);
+                    inCodeBlock = true;
+                }
+            } else if (inCodeBlock) {
+                // Inside code block - accumulate lines
+                codeBlockLines.push(line);
+            } else {
+                // Regular line - add as is
+                lines.push(line);
+            }
+        }
+
+        // Handle unclosed code block (add remaining lines)
+        if (codeBlockLines.length > 0) {
+            lines.push(codeBlockLines.join('\n'));
+        }
+
+        return lines.map((line) => {
             const spots = line.match(spotRegExpo) || [];
             const texts = line.split(spotRegExpo).map((text) => text.trim());
             return interleave(texts, spots).filter((x) => x.length > 0);
