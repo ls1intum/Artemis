@@ -9,14 +9,14 @@
             <fa-icon [icon]="faFilter" />
         </button>
         <button data-testid="today-button" pButton size="small" severity="secondary" (click)="goToToday()" jhiTranslate="artemisApp.calendar.todayButtonLabel"></button>
-        @let courseId = currentCourseId();
+        @let currentCourseId = courseId();
         @let subscriptionToken = calendarSubscriptionToken();
-        @if (courseId && subscriptionToken) {
+        @if (currentCourseId && subscriptionToken) {
             <div>
                 <button data-testid="subscribe-button" pButton size="small" severity="secondary" (click)="subscriptionPopover.open($event)">
                     <fa-icon [icon]="faArrowUpFromBracket" />
                 </button>
-                <jhi-calendar-subscription-popover [subscriptionToken]="subscriptionToken" [courseId]="courseId" [isMobile]="true" #subscriptionPopover />
+                <jhi-calendar-subscription-popover [subscriptionToken]="subscriptionToken" [courseId]="currentCourseId" [isMobile]="true" #subscriptionPopover />
             </div>
         }
         <button pButton size="small" (click)="goToNext()" data-testid="next-button">
@@ -35,7 +35,7 @@
                         </button>
                     }
                 </div>
-                <div class="month-title">{{ firstDateOfCurrentMonth().format('MMMM YYYY') }}</div>
+                <div class="month-title">{{ monthDescription() }}</div>
                 <div class="spacer"></div>
             </div>
             <div class="presentation-header-bottom-section">
@@ -46,9 +46,9 @@
         </div>
         @let day = selectedDate();
         @if (day) {
-            <jhi-calendar-mobile-day-presentation [selectedDate]="day" />
+            <jhi-calendar-mobile-day-presentation [date]="day" />
         } @else {
-            <jhi-calendar-mobile-month-presentation [firstDateOfMonth]="firstDateOfCurrentMonth()" (selectDate)="selectDate($event)" />
+            <jhi-calendar-mobile-month-presentation [firstDateOfCurrentMonth]="firstDateOfCurrentMonth()" (onDateSelected)="onDateSelected($event)" />
         }
         @if (isLoading()) {
             <div class="loading-overlay">
