@@ -207,18 +207,54 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
         examUtilService.addExamChannel(exam2, "exam2 channel");
     }
 
+    private static final int LARGE_PAGE_SIZE_FOR_TESTS = 200;
+
+    private MultiValueMap<String, String> getPageParams() {
+        return getPageParams(0, LARGE_PAGE_SIZE_FOR_TESTS);
+    }
+
+    private MultiValueMap<String, String> getPageParams(int page) {
+        return getPageParams(page, LARGE_PAGE_SIZE_FOR_TESTS);
+    }
+
+    private MultiValueMap<String, String> getPageParams(int page, int size) {
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("page", "0");
+        params.add("size", String.valueOf(LARGE_PAGE_SIZE_FOR_TESTS));
+        return params;
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor10", roles = "INSTRUCTOR")
-    void testGetAllActiveExams() throws Exception {
+    void testGetAllActiveExams_Instructor() throws Exception {
+        var now = ZonedDateTime.now();
         // add additional active exam
-        var exam3 = examUtilService.addExam(course10, ZonedDateTime.now().plusDays(1), ZonedDateTime.now().plusDays(2), ZonedDateTime.now().plusDays(3));
+        var exam3 = examUtilService.addExam(course10, now.plusDays(1), now.plusDays(2), now.plusDays(3));
+        // add additional exam not active
+        var exam4 = examUtilService.addExam(course10, now.minusDays(10), now.plusDays(2), now.plusDays(3));
+
+        List<Exam> activeExams = request.getList("/api/exam/exams/active", HttpStatus.OK, Exam.class, getPageParams());
+        // only exam3 should be returned
+        assertThat(activeExams).contains(exam3);
+        assertThat(activeExams).doesNotContain(exam4);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testGetAllActiveExams_Tutor() throws Exception {
+        var now = ZonedDateTime.now();
+        // add two additional exams, one already visible, the other one visible tomorrow
+        var exam3 = examUtilService.addExam(course10, now.minusDays(1), now, now.plusHours(2));
+        var exam4 = examUtilService.addExam(course10, now.plusDays(1), now.plusDays(2), now.plusDays(3));
 
         // add additional exam not active
-        examUtilService.addExam(course10, ZonedDateTime.now().minusDays(10), ZonedDateTime.now().plusDays(2), ZonedDateTime.now().plusDays(3));
+        var exam5 = examUtilService.addExam(course10, now.minusDays(10), now.plusDays(2), now.plusDays(3));
 
-        List<Exam> activeExams = request.getList("/api/exam/exams/active", HttpStatus.OK, Exam.class);
-        // only exam3 should be returned
-        assertThat(activeExams).containsExactly(exam3);
+        List<Exam> activeExams = request.getList("/api/exam/exams/active", HttpStatus.OK, Exam.class, getPageParams());
+        // only exam4 should be returned
+        assertThat(activeExams).doesNotContain(exam3);
+        assertThat(activeExams).contains(exam4);
+        assertThat(activeExams).doesNotContain(exam5);
     }
 
     @Test

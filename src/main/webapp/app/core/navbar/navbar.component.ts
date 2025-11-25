@@ -302,6 +302,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         test: 'artemisApp.editor.home.title',
         ide: 'artemisApp.editor.home.title',
         lectures: 'artemisApp.lecture.home.title',
+        tutorial_lectures: 'artemisApp.lecture.tutorialLecture.title',
         attachments: 'artemisApp.lecture.attachments.title',
         unit_management: 'artemisApp.lectureUnit.home.title',
         exams: 'artemisApp.examManagement.title',
@@ -448,6 +449,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
                     return;
                 case 'exercises':
                     this.addResolvedTitleAsCrumb(EntityType.EXERCISE, [Number(segment)], currentPath, segment);
+                    return;
+                case 'tutorial-lectures':
+                    this.addResolvedTitleAsCrumb(EntityType.LECTURE, [Number(segment)], currentPath, segment);
                     return;
                 default:
                     const exercisesMatcher = this.lastRouteUrlSegment?.match(/.+-exercises/);
@@ -603,6 +607,10 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 // only a scores list exists, no special one for submissions
                 const updatedLink = currentPath.replace('/submissions/', '/scores/');
                 this.addTranslationAsCrumb(updatedLink, 'submissions');
+                break;
+            case 'tutorial-lectures':
+                const tutorialGroupsLink = currentPath.replace('/tutorial-lectures/', '');
+                this.addTranslationAsCrumb(tutorialGroupsLink, segment);
                 break;
             default:
                 // Special cases:

@@ -856,6 +856,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
         firstResult.setAssessor(tutor1);
         firstResult.setHasComplaint(true);
         firstResult.setSubmission(submission);
+        firstResult.setExerciseId(modelingExercise.getId());
         firstResult = resultRepository.saveAndFlush(firstResult);
 
         submission.addResult(firstResult);
