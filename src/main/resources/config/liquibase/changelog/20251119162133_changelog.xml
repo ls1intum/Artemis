@@ -3,14 +3,35 @@
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
 
-    <changeSet id="20251119162133" author="flbrgit">
+    <!-- Add new columns - MySQL/H2 -->
+    <changeSet id="20251119162133-1-mysqlh2" author="flbrgit">
+        <preConditions onFail="MARK_RAN"><dbms type="mysql,h2"/></preConditions>
         <addColumn tableName="jhi_user">
-            <column name="ai_selection_decision" type="varchar(20)"/>
+            <column name="ai_selection_decision"
+                    type="ENUM('NO_AI','LOCAL_AI','CLOUD_AI')">
+                <constraints nullable="true"/>
+            </column>
         </addColumn>
-        <addColumn tableName="jhi_user">
-            <column name="ai_selection_decision_date" type="datetime(3)"/>
-        </addColumn>
+    </changeSet>
 
+    <changeSet id="20251119162133-1-postgres" author="flbrgit">
+        <preConditions onFail="MARK_RAN"><dbms type="postgresql"/></preConditions>
+        <addColumn tableName="jhi_user">
+            <column name="ai_selection_decision" type="TEXT">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="20251119162133-2" author="flbrgit">
+        <addColumn tableName="jhi_user">
+            <column name="ai_selection_decision_date" type="datetime(3)">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="20251119162133-3" author="flbrgit">
         <!-- Migrate User with external_llm_usage_accepted -->
         <sql>
             UPDATE jhi_user
