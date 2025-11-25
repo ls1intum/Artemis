@@ -112,14 +112,14 @@ public class IrisTextExerciseChatSessionService implements IrisChatBasedFeatureI
         else {
             latestSubmissionText = null;
         }
-        var conversation = session.getMessages().stream().map(PyrisMessageDTO::of).toList();
+        var chatHistory = session.getMessages().stream().map(PyrisMessageDTO::of).toList();
         // @formatter:off
         pyrisPipelineService.executePipeline(
                 "text-exercise-chat",
                 settings.selectedVariant(),
                 Optional.empty(),
                 pyrisJobService.createTokenForJob(token -> new TextExerciseChatJob(token, course.getId(), exercise.getId(), session.getId())),
-                dto -> new PyrisTextExerciseChatPipelineExecutionDTO(PyrisTextExerciseDTO.of(exercise), session.getTitle(), conversation, new PyrisUserDTO(user), latestSubmissionText, dto.settings(), dto.initialStages(), settings.customInstructions()),
+                dto -> new PyrisTextExerciseChatPipelineExecutionDTO(PyrisTextExerciseDTO.of(exercise), session.getTitle(), chatHistory, new PyrisUserDTO(user), latestSubmissionText, dto.settings(), dto.initialStages(), settings.customInstructions()),
                 stages -> irisChatWebsocketService.sendMessage(session, null, stages)
         );
     }
