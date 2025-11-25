@@ -39,7 +39,7 @@ import com.github.dockerjava.api.model.Image;
 import com.github.dockerjava.api.model.PullResponseItem;
 
 import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
-import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentStatus;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.core.exception.LocalCIException;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
@@ -139,7 +139,8 @@ public class BuildAgentDockerService {
             // Cleanup all dangling build containers after the application has started
             try {
                 danglingBuildContainers = dockerClient.listContainersCmd().withShowAll(true).exec().stream()
-                        .filter(container -> container.getNames()[0].startsWith("/" + buildContainerPrefix)).toList();
+                        .filter(container -> container.getNames() != null && container.getNames().length > 0 && container.getNames()[0].startsWith("/" + buildContainerPrefix))
+                        .toList();
             }
             catch (Exception ex) {
                 if (DockerUtil.isDockerNotAvailable(ex)) {
@@ -452,8 +453,8 @@ public class BuildAgentDockerService {
     private boolean dockerClientNotAvailable(String additionalLogInfo) {
         DockerClient dockerClient = buildAgentConfiguration.getDockerClient();
         if (dockerClient == null) {
-            BuildAgentInformation.BuildAgentStatus status = distributedDataAccessService.getLocalBuildAgentStatus();
-            if ((status == BuildAgentInformation.BuildAgentStatus.PAUSED || status == BuildAgentInformation.BuildAgentStatus.SELF_PAUSED)) {
+            BuildAgentStatus status = distributedDataAccessService.getLocalBuildAgentStatus();
+            if ((status == BuildAgentStatus.PAUSED || status == BuildAgentStatus.SELF_PAUSED)) {
                 log.info("Docker client is not available because the build agent is paused. {} This is expected behavior.", additionalLogInfo);
                 return true;
             }

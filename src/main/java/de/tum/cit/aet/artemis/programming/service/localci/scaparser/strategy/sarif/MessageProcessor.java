@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.programming.service.localci.scaparser.strategy.sarif;
 
-import jakarta.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import de.tum.cit.aet.artemis.programming.service.localci.scaparser.format.sarif.ReportingDescriptor;
 

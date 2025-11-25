@@ -9,8 +9,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -187,6 +186,7 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
         orphanTeamScore = teamScoreRepository.save(orphanTeamScore);
 
         var orphanResult = new Result();
+        orphanResult.setExerciseId(oldExercise.getId());
         orphanResult = resultRepository.save(orphanResult);
 
         orphanFeedback.setResult(orphanResult);
@@ -200,6 +200,7 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
 
         Result nonOrphanResult = new Result();
         nonOrphanResult.setSubmission(submission);
+        nonOrphanResult.setExerciseId(submission.getParticipation().getExercise().getId());
         nonOrphanFeedback.setResult(nonOrphanResult);
         nonOrphanResult = resultRepository.save(nonOrphanResult);
 
@@ -317,7 +318,7 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
 
     }
 
-    @NotNull
+    @NonNull
     private static PlagiarismComparison getSubmissionElementPlagiarismComparison(PlagiarismResult textPlagiarismResult1, Submission submission2, Submission submission3) {
         PlagiarismComparison plagiarismComparison2 = new PlagiarismComparison();
         plagiarismComparison2.setPlagiarismResult(textPlagiarismResult1);
@@ -334,7 +335,7 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
         return plagiarismComparison2;
     }
 
-    @NotNull
+    @NonNull
     private static PlagiarismComparison getPlagiarismSubmissionElementPlagiarismComparison(PlagiarismResult textPlagiarismResult1, Submission submission1, Submission submission2) {
         PlagiarismComparison plagiarismComparison1 = new PlagiarismComparison();
         plagiarismComparison1.setPlagiarismResult(textPlagiarismResult1);

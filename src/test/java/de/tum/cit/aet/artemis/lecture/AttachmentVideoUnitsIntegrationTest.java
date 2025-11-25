@@ -106,7 +106,7 @@ class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndep
         request.get("/api/lecture/lectures/" + invalidLecture.getId() + "/attachment-video-units/slides-to-remove/any-file", HttpStatus.BAD_REQUEST,
                 LectureUnitSplitInformationDTO.class, params);
         request.postListWithResponseBody("/api/lecture/lectures/" + invalidLecture.getId() + "/attachment-video-units/split/any-file", lectureUnitSplits, AttachmentVideoUnit.class,
-                HttpStatus.BAD_REQUEST);
+                HttpStatus.FORBIDDEN);
     }
 
     @Test

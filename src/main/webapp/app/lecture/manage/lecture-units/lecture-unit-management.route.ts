@@ -1,7 +1,6 @@
 import { Routes } from '@angular/router';
 import { IS_AT_LEAST_EDITOR } from 'app/shared/constants/authority.constants';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
-import { CourseManagementResolve } from 'app/core/course/manage/services/course-management-resolve.service';
 import { AttachmentVideoUnitResolve } from 'app/lecture/manage/lecture-units/services/lecture-unit-management-resolve.service';
 
 export const lectureUnitRoute: Routes = [
@@ -78,7 +77,6 @@ export const lectureUnitRoute: Routes = [
                 path: 'attachment-video-units/:attachmentVideoUnitId/view',
                 loadComponent: () => import('app/lecture/manage/pdf-preview/pdf-preview.component').then((m) => m.PdfPreviewComponent),
                 resolve: {
-                    course: CourseManagementResolve,
                     attachmentVideoUnit: AttachmentVideoUnitResolve,
                 },
             },

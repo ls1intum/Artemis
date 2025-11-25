@@ -9,10 +9,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentStatus;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.communication.service.notifications.MailService;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -64,16 +64,6 @@ import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.queue.
  * </ul>
  *
  * <p>
- * <strong>Concurrency & Lifecycle</strong>
- * </p>
- * <ul>
- * <li>All Hazelcast listeners run asynchronously and must remain lightweight.</li>
- * <li>The scheduled fallback mechanism runs every 10 seconds to minimize perceived delays.</li>
- * <li>Listeners are registered during {@link PostConstruct} initialization — {@code @EventListener} cannot be used
- * since the bean is {@code @Lazy} and operates under the "localci & scheduling" profile.</li>
- * </ul>
- *
- * <p>
  * <strong>Extension Guidelines</strong>
  * </p>
  * <ul>
@@ -97,20 +87,16 @@ public class LocalCIEventListenerService {
 
     private final ProgrammingMessagingService programmingMessagingService;
 
-    private final LocalCIResultProcessingService localCIResultProcessingService;
-
     private final UserService userService;
 
     private final MailService mailService;
 
     public LocalCIEventListenerService(DistributedDataAccessService distributedDataAccessService, LocalCIQueueWebsocketService localCIQueueWebsocketService,
-            BuildJobRepository buildJobRepository, ProgrammingMessagingService programmingMessagingService, LocalCIResultProcessingService localCIResultProcessingService,
-            UserService userService, MailService mailService) {
+            BuildJobRepository buildJobRepository, ProgrammingMessagingService programmingMessagingService, UserService userService, MailService mailService) {
         this.distributedDataAccessService = distributedDataAccessService;
         this.localCIQueueWebsocketService = localCIQueueWebsocketService;
         this.buildJobRepository = buildJobRepository;
         this.programmingMessagingService = programmingMessagingService;
-        this.localCIResultProcessingService = localCIResultProcessingService;
         this.userService = userService;
         this.mailService = mailService;
     }
@@ -127,29 +113,6 @@ public class LocalCIEventListenerService {
         distributedDataAccessService.getDistributedProcessingJobs().addEntryListener(new ProcessingBuildJobItemListener());
         distributedDataAccessService.getDistributedBuildAgentInformation().addEntryListener(new BuildAgentListener());
         distributedDataAccessService.getDistributedDockerImageCleanupInfo().addListener(new DockerImageCleanupInfoListener());
-    }
-
-    /**
-     * Processes the queued results from the distributed build result queue every minute.
-     * This is a fallback mechanism to ensure that no results are left unprocessed in the queue e.g. if listener events are lost under high system load or network hiccups.
-     * Runs every 10s so results are not stuck int the queue so long that they appear to be lost.
-     */
-    // TODO: we should add this on all core nodes, not only on the primary scheduling one
-    @Scheduled(fixedRate = 10 * 1000) // every 10 seconds
-    public void processQueuedResults() {
-        final int initialSize = distributedDataAccessService.getResultQueueSize();
-        log.info("Scheduled task found {} queued results in the Hazelcast distributed build result queue. Will process these results now.", initialSize);
-        for (int i = 0; i < initialSize; i++) {
-            if (distributedDataAccessService.getDistributedBuildResultQueue().peek() == null) {
-                break;
-            }
-            try {
-                localCIResultProcessingService.processResultAsync();
-            }
-            catch (Exception ex) {
-                log.warn("Processing a queued result failed. Continuing with remaining items", ex);
-            }
-        }
     }
 
     /**
@@ -278,8 +241,7 @@ public class LocalCIEventListenerService {
             log.debug("Build agent updated: {}", newValue);
             localCIQueueWebsocketService.sendBuildAgentInformationOverWebsocket(newValue.buildAgent().name());
 
-            if (oldValue != null && oldValue.status() != BuildAgentInformation.BuildAgentStatus.SELF_PAUSED
-                    && newValue.status() == BuildAgentInformation.BuildAgentStatus.SELF_PAUSED) {
+            if (oldValue != null && oldValue.status() != BuildAgentStatus.SELF_PAUSED && newValue.status() == BuildAgentStatus.SELF_PAUSED) {
                 notifyAdminAboutAgentPausing(newValue);
             }
         }
