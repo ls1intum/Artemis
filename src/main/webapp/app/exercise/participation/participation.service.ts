@@ -50,15 +50,6 @@ export class ParticipationService {
             .pipe(map((res: EntityResponseType) => this.processParticipationEntityResponseType(res)));
     }
 
-    /*
-     * Finds one participation for the currently logged-in user for the given exercise in the given course
-     */
-    findParticipationForCurrentUser(exerciseId: number): Observable<EntityResponseType> {
-        return this.http
-            .get<StudentParticipation>(`api/exercise/exercises/${exerciseId}/participation`, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.processParticipationEntityResponseType(res)));
-    }
-
     /**
      * starts the student participation for the quiz exercise with the identifier quizExerciseId
      * @param quizExerciseId The unique identifier of the quiz exercise
