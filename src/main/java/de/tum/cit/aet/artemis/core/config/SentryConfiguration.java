@@ -129,7 +129,7 @@ public class SentryConfiguration {
     private double getTracesSampleRate() {
         String env = getEnvironment();
         // All test/staging environments get 1.0 sample rate
-        if (env.startsWith("test") || env.startsWith("staging")) {
+        if (env.contains("test") || env.contains("staging")) {
             return 1.0;
         }
 
