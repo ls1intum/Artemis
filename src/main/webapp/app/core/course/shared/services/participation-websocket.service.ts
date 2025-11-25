@@ -10,7 +10,6 @@ import { WebsocketService } from 'app/shared/service/websocket.service';
 import dayjs from 'dayjs/esm';
 import { cloneDeep } from 'lodash-es';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 
 const PERSONAL_PARTICIPATION_TOPIC = `/user/topic/newResults`;
 const EXERCISE_PARTICIPATION_TOPIC = (exerciseId: number) => `/topic/exercise/${exerciseId}/newResults`;
@@ -91,11 +90,6 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
     private addResultToParticipation = (result: Result) => {
         const cachedParticipation = this.cachedParticipations.get(result.submission!.participation!.id!);
         if (cachedParticipation) {
-            // update the results with the new received one by filtering the old result
-            const updatedResults = [...getAllResultsOfAllSubmissions(cachedParticipation.submissions)].filter((r) => r.id !== result.id);
-            updatedResults.push(result);
-            // create a clone
-            this.cachedParticipations.set(result.submission!.participation!.id!, { ...cachedParticipation, results: updatedResults } as StudentParticipation);
             return of(this.cachedParticipations.get(result.submission!.participation!.id!));
         }
         return of();
