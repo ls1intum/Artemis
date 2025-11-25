@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { DifficultyLevel } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { SidebarEventService } from '../service/sidebar-event.service';
 import { ActivatedRoute, Router, RouterLink, RouterLinkActive } from '@angular/router';
-import { Location, NgClass } from '@angular/common';
+import { NgClass } from '@angular/common';
 import { SidebarCardItemComponent } from '../sidebar-card-item/sidebar-card-item.component';
 import { SidebarCardElement, SidebarTypes } from 'app/shared/types/sidebar';
 
@@ -16,9 +16,9 @@ export class SidebarCardMediumComponent {
     private sidebarEventService = inject(SidebarEventService);
     private router = inject(Router);
     private route = inject(ActivatedRoute);
-    private location = inject(Location);
 
-    DifficultyLevel = DifficultyLevel;
+    protected readonly DifficultyLevel = DifficultyLevel;
+
     @Input({ required: true }) sidebarItem: SidebarCardElement;
     @Input() sidebarType?: SidebarTypes;
     @Input() itemSelected?: boolean;
@@ -26,22 +26,30 @@ export class SidebarCardMediumComponent {
     /** Key used for grouping or categorizing sidebar items */
     @Input() groupKey?: string;
 
-    emitStoreAndRefresh(itemId: number | string) {
-        this.sidebarEventService.emitSidebarCardEvent(itemId);
-        this.refreshChildComponent();
+    onNonExamCardClicked() {
+        this.storeTargetComponentSubRoute();
+        if (this.itemSelected) {
+            this.refreshChildComponent();
+        }
     }
 
-    emitPageChangeForExam() {
-        this.pageChange.emit();
+    storeTargetComponentSubRoute() {
+        const targetComponentSubRoute = this.sidebarItem.targetComponentSubRoute;
+        const sidebarItemId = this.sidebarItem.id;
+        const targetComponentRoute = targetComponentSubRoute ? targetComponentSubRoute + '/' + sidebarItemId : sidebarItemId;
+        this.sidebarEventService.emitSidebarCardEvent(targetComponentRoute);
     }
 
     refreshChildComponent(): void {
+        const targetComponentSubRoute = this.sidebarItem?.targetComponentSubRoute;
+        const itemId = this.sidebarItem?.id;
+        const pathSegments = targetComponentSubRoute ? ['./', targetComponentSubRoute, itemId] : ['./', itemId];
         this.router.navigate(['../'], { skipLocationChange: true, relativeTo: this.route.firstChild }).then(() => {
-            if (this.itemSelected) {
-                this.router.navigate(['./' + this.sidebarItem?.id], { relativeTo: this.route });
-            } else {
-                this.router.navigate([this.location.path(), this.sidebarItem?.id], { replaceUrl: true });
-            }
+            this.router.navigate(pathSegments, { relativeTo: this.route });
         });
+    }
+
+    onExamCardClicked() {
+        this.pageChange.emit();
     }
 }
