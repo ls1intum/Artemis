@@ -60,9 +60,13 @@ public class SentryConfiguration {
             SentryOptions.TracesSamplerCallback tracesSampler = samplingContext -> {
                 Object customSamplingRequest = samplingContext.getCustomSamplingContext().get("request");
                 double defaultSampleRate = getTracesSampleRate();
+                Boolean parentSampled = samplingContext.getTransactionContext().getParentSampled();
 
                 // Guard against other types of request; we want these to use defaultSampleRate
                 if (!(customSamplingRequest instanceof HttpServletRequest)) {
+                    if (parentSampled != null) {
+                        return parentSampled ? 1.0 : 0.0;
+                    }
                     return defaultSampleRate;
                 }
                 HttpServletRequest request = (HttpServletRequest) customSamplingRequest;
@@ -87,7 +91,6 @@ public class SentryConfiguration {
                 }
 
                 // If the transactions isn't filtered above and has a parent transaction, we inherit the parent sampling decision.
-                Boolean parentSampled = samplingContext.getTransactionContext().getParentSampled();
                 if (parentSampled != null) {
                     return parentSampled ? 1.0 : 0.0;
                 }
