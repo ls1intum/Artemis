@@ -132,10 +132,6 @@ export class HomeComponent implements OnInit, AfterViewChecked {
     async loginWithPasskey() {
         await this.webauthnService.loginWithPasskey();
         this.handleLoginSuccess();
-
-        this.accountService.identity(true).then((user) => {
-            this.currentUserCallback(user!);
-        });
     }
 
     /**
