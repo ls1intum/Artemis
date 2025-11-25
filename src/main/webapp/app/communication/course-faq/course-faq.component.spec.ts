@@ -170,9 +170,9 @@ describe('CourseFaqs', () => {
 
         // Verify component displays FAQs in the exact order received from backend
         expect(courseFaqComponent.faqs).toHaveLength(3);
-        expect(courseFaqComponent.faqs[0].id).toBe(3); // Newest first
+        expect(courseFaqComponent.faqs[0].id).toBe(3); // Newest
         expect(courseFaqComponent.faqs[1].id).toBe(2);
-        expect(courseFaqComponent.faqs[2].id).toBe(1); // Oldest last
+        expect(courseFaqComponent.faqs[2].id).toBe(1); // Oldest
     });
 
     it('should scroll and focus on the faq element with given id', () => {
