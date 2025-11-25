@@ -15,7 +15,7 @@ import { ImageComponent } from 'app/shared/image/image.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { TranslateDirective } from '../../../../shared/language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { ActivatedRoute } from '@angular/router';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';

@@ -33,6 +33,7 @@ describe('Lecture Service', () => {
         elemDefault.description = 'new service test Lecture';
         elemDefault.endDate = dayjs();
         elemDefault.id = 1;
+        elemDefault.title = 'Test Lecture';
         elemDefault.isAtLeastEditor = false;
         elemDefault.isAtLeastInstructor = false;
         elemDefault.channelName = 'lecture-default';
@@ -105,22 +106,8 @@ describe('Lecture Service', () => {
             expect(expectedResult.body).toEqual(expected);
         });
 
-        it('should invoke query', async () => {
-            const returnedFromService = [elemDefault];
-            const expected = returnedFromService;
-            service
-                .query({})
-                .pipe(take(1))
-                .subscribe((resp) => (expectedResult = resp));
-            const req = httpMock.expectOne({
-                url: resourceUrl,
-                method: 'GET',
-            });
-            req.flush(returnedFromService);
-            expect(expectedResult.body).toEqual(expected);
-        });
-
         it('should get all lectures by courseId', async () => {
+            elemDefault.isTutorialLecture = false;
             const returnedFromService = [elemDefault];
             const expected = returnedFromService;
             const courseId = 1;
@@ -129,7 +116,24 @@ describe('Lecture Service', () => {
                 .pipe(take(1))
                 .subscribe((resp) => (expectedResult = resp));
             const req = httpMock.expectOne({
-                url: `api/lecture/courses/${courseId}/lectures?withLectureUnits=0`,
+                url: `api/lecture/courses/${courseId}/lectures`,
+                method: 'GET',
+            });
+            req.flush(returnedFromService);
+            expect(expectedResult.body).toEqual(expected);
+        });
+
+        it('should get all tutorial lectures by courseId', async () => {
+            elemDefault.isTutorialLecture = true;
+            const returnedFromService = [elemDefault];
+            const expected = returnedFromService;
+            const courseId = 1;
+            service
+                .findAllTutorialLecturesByCourseId(courseId)
+                .pipe(take(1))
+                .subscribe((resp) => (expectedResult = resp));
+            const req = httpMock.expectOne({
+                url: `api/lecture/courses/${courseId}/tutorial-lectures`,
                 method: 'GET',
             });
             req.flush(returnedFromService);

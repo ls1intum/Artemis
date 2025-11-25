@@ -30,12 +30,8 @@ export class QuizParticipationService {
 
     saveOrSubmitForLiveMode(quizSubmission: QuizSubmission, exerciseId: number, submit: boolean): Observable<EntityResponseType> {
         const copy = this.submissionService.convert(quizSubmission);
-        if (copy.results) {
-            copy.results.forEach((result) => {
-                // Remove the submission data from each result, to avoid circular references
-                result.submission = undefined;
-            });
-        }
+        // there should be no results yet
+        copy.results = undefined;
         return this.http
             .post<QuizSubmission>(`api/quiz/exercises/${exerciseId}/submissions/live`, copy, { observe: 'response', params: { submit } })
             .pipe(map((res: EntityResponseType) => this.submissionService.convertResponse(res)));

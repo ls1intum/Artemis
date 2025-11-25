@@ -50,9 +50,13 @@ class SubmissionIntegrationTest extends AbstractSpringIntegrationIndependentTest
     @Autowired
     private SubmissionVersionRepository submissionVersionRepository;
 
+    private TextExercise textExercise;
+
     @BeforeEach
     void initTestCase() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
+        Course course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
+        textExercise = ExerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
     }
 
     @Test
@@ -62,11 +66,11 @@ class SubmissionIntegrationTest extends AbstractSpringIntegrationIndependentTest
         Submission submission = new TextSubmission();
         submission = submissionRepository.save(submission);
 
-        Result result1 = new Result().assessmentType(assessmentType).score(100D).rated(true);
+        Result result1 = new Result().assessmentType(assessmentType).score(100D).rated(true).exerciseId(textExercise.getId());
         result1 = resultRepository.save(result1);
         result1.setSubmission(submission);
 
-        Result result2 = new Result().assessmentType(assessmentType).score(200D).rated(true);
+        Result result2 = new Result().assessmentType(assessmentType).score(200D).rated(true).exerciseId(textExercise.getId());
         result2 = resultRepository.save(result2);
         result2.setSubmission(submission);
 
@@ -90,14 +94,14 @@ class SubmissionIntegrationTest extends AbstractSpringIntegrationIndependentTest
         Submission submission = new TextSubmission();
         submission = submissionRepository.save(submission);
 
-        Result result1 = new Result().assessmentType(assessmentType).score(100D).rated(true);
+        Result result1 = new Result().assessmentType(assessmentType).score(100D).rated(true).exerciseId(textExercise.getId());
         result1 = resultRepository.save(result1);
         result1.setSubmission(submission);
 
         submission.addResult(result1);
         submission = submissionRepository.save(submission);
 
-        Result result2 = new Result().assessmentType(assessmentType).score(200D).rated(true);
+        Result result2 = new Result().assessmentType(assessmentType).score(200D).rated(true).exerciseId(textExercise.getId());
         result2 = resultRepository.save(result2);
         result2.setSubmission(submission);
 
@@ -120,14 +124,14 @@ class SubmissionIntegrationTest extends AbstractSpringIntegrationIndependentTest
         Submission submission = new TextSubmission();
         submission = submissionRepository.save(submission);
 
-        Result result1 = new Result().assessmentType(assessmentType).score(100D).rated(true);
+        Result result1 = new Result().assessmentType(assessmentType).score(100D).rated(true).exerciseId(textExercise.getId());
         result1 = resultRepository.save(result1);
         result1.setSubmission(submission);
 
         submission.addResult(result1);
         submission = submissionRepository.save(submission);
 
-        Result result2 = new Result().assessmentType(assessmentType).score(200D).rated(true);
+        Result result2 = new Result().assessmentType(assessmentType).score(200D).rated(true).exerciseId(textExercise.getId());
         result2 = resultRepository.save(result2);
         result2.setSubmission(submission);
 
