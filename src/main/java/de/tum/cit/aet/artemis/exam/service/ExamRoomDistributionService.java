@@ -168,7 +168,7 @@ public class ExamRoomDistributionService {
             roomNumberToUsableSeatsDefaultLayout.put(examRoom.getRoomNumber(), examRoomService.getDefaultUsableSeats(examRoom, reserveFactor));
         }
 
-        setPlannedRoomAndPlannedSeatForExamUsersRandomly(exam, roomNumberToUsableSeatsDefaultLayout);
+        setPlannedRoomAndPlannedSeatForExamUsersInExamRoomOrder(exam, roomNumberToUsableSeatsDefaultLayout);
     }
 
     /**
@@ -194,7 +194,7 @@ public class ExamRoomDistributionService {
             roomNumberToUsableSeats.put(examRoom.getRoomNumber(), seatsForThisStrategy);
         }
 
-        setPlannedRoomAndPlannedSeatForExamUsersRandomly(exam, roomNumberToUsableSeats);
+        setPlannedRoomAndPlannedSeatForExamUsersInExamRoomOrder(exam, roomNumberToUsableSeats);
     }
 
     private Map<Long, LayoutStrategy> getBestLayoutPerRoomCombination(Set<ExamRoom> examRoomsForExam, int numberOfExamUsers, double reserveFactor) {
@@ -260,7 +260,7 @@ public class ExamRoomDistributionService {
         return best;
     }
 
-    private void setPlannedRoomAndPlannedSeatForExamUsersRandomly(Exam exam, SequencedMap<String, List<ExamSeatDTO>> roomNumberToUsableSeats) {
+    private void setPlannedRoomAndPlannedSeatForExamUsersInExamRoomOrder(Exam exam, SequencedMap<String, List<ExamSeatDTO>> roomNumberToUsableSeats) {
         Iterator<ExamUser> examUsersIterator = exam.getExamUsers().iterator();
 
         do_while_students: for (var roomNumberToUsableSeatsEntry : roomNumberToUsableSeats.entrySet()) {
