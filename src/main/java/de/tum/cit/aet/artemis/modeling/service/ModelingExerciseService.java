@@ -103,6 +103,9 @@ public class ModelingExerciseService {
         if (updateModelingExerciseDTO.includedInOverallScore() != null) {
             exercise.setIncludedInOverallScore(updateModelingExerciseDTO.includedInOverallScore());
         }
+        if (updateModelingExerciseDTO.allowComplaintsForAutomaticAssessments() != null) {
+            exercise.setAllowComplaintsForAutomaticAssessments(updateModelingExerciseDTO.allowComplaintsForAutomaticAssessments());
+        }
         if (updateModelingExerciseDTO.allowFeedbackRequests() != null) {
             exercise.setAllowFeedbackRequests(updateModelingExerciseDTO.allowFeedbackRequests());
         }

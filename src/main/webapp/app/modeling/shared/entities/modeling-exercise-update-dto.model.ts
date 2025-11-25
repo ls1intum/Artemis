@@ -18,6 +18,7 @@ export interface UpdateModelingExerciseDTO {
     maxPoints?: number;
     bonusPoints?: number;
     includedInOverallScore?: IncludedInOverallScore;
+    allowComplaintsForAutomaticAssessments?: boolean;
     allowFeedbackRequests?: boolean;
 
     releaseDate?: string;
@@ -54,6 +55,7 @@ export function toUpdateModelingExerciseDTO(modelingExercise: ModelingExercise):
         maxPoints: modelingExercise.maxPoints,
         bonusPoints: modelingExercise.bonusPoints,
         includedInOverallScore: modelingExercise.includedInOverallScore,
+        allowComplaintsForAutomaticAssessments: modelingExercise.allowComplaintsForAutomaticAssessments,
         allowFeedbackRequests: modelingExercise.allowFeedbackRequests,
         releaseDate: convertDateFromClient(modelingExercise.releaseDate),
         startDate: convertDateFromClient(modelingExercise.startDate),

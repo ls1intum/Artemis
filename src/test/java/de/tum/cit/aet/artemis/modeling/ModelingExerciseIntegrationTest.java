@@ -940,7 +940,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         modelingExerciseToBeConflicted.setId(123456789L);
 
         UpdateModelingExerciseDTO dto = new UpdateModelingExerciseDTO(modelingExerciseToBeConflicted.getId(), null, null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null, null);
+                null, null, null, null, null, null, null, null, null, null, null, null);
         request.put("/api/modeling/modeling-exercises/" + classExercise.getId() + "/re-evaluate", dto, HttpStatus.CONFLICT);
     }
 
@@ -1017,7 +1017,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         var created = modelingExerciseTestRepository.findByCourseIdWithCategories(classExercise.getCourseViaExerciseGroupOrCourseMember().getId()).getFirst();
         created.setTitle("AtlasML Update");
         UpdateModelingExerciseDTO dto = new UpdateModelingExerciseDTO(created.getId(), created.getTitle(), null, null, null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, classExercise.getCourseViaExerciseGroupOrCourseMember().getId(), null, null, null);
+                null, null, null, null, null, null, classExercise.getCourseViaExerciseGroupOrCourseMember().getId(), null, null, null);
         request.putWithResponseBody("/api/modeling/modeling-exercises", dto, ModelingExercise.class, HttpStatus.OK);
 
         // Delete

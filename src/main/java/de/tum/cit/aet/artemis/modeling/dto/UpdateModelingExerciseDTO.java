@@ -24,10 +24,11 @@ import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record UpdateModelingExerciseDTO(long id, @Nullable String title, @Nullable String channelName, @Nullable String shortName, @Nullable String problemStatement,
         @Nullable Set<String> categories, @Nullable DifficultyLevel difficulty, @Nullable @Positive Double maxPoints, @Nullable @PositiveOrZero Double bonusPoints,
-        @Nullable IncludedInOverallScore includedInOverallScore, @Nullable Boolean allowFeedbackRequests, @Nullable String gradingInstructions, @Nullable ZonedDateTime releaseDate,
-        @Nullable ZonedDateTime startDate, @Nullable ZonedDateTime dueDate, @Nullable ZonedDateTime assessmentDueDate, @Nullable ZonedDateTime exampleSolutionPublicationDate,
-        @Nullable String exampleSolutionModel, @Nullable String exampleSolutionExplanation, @Nullable Long courseId, @Nullable Long exerciseGroupId,
-        @Nullable Set<GradingCriterionDTO> gradingCriteria, @Nullable Set<CompetencyExerciseLinkDTO> competencyLinks) {
+        @Nullable IncludedInOverallScore includedInOverallScore, @Nullable Boolean allowComplaintsForAutomaticAssessments, @Nullable Boolean allowFeedbackRequests,
+        @Nullable String gradingInstructions, @Nullable ZonedDateTime releaseDate, @Nullable ZonedDateTime startDate, @Nullable ZonedDateTime dueDate,
+        @Nullable ZonedDateTime assessmentDueDate, @Nullable ZonedDateTime exampleSolutionPublicationDate, @Nullable String exampleSolutionModel,
+        @Nullable String exampleSolutionExplanation, @Nullable Long courseId, @Nullable Long exerciseGroupId, @Nullable Set<GradingCriterionDTO> gradingCriteria,
+        @Nullable Set<CompetencyExerciseLinkDTO> competencyLinks) {
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record CompetencyExerciseLinkDTO(@NotNull CourseCompetencyDTO courseCompetencyDTO, double weight, Long courseId) {
@@ -74,8 +75,8 @@ public record UpdateModelingExerciseDTO(long id, @Nullable String title, @Nullab
 
         return new UpdateModelingExerciseDTO(exercise.getId(), exercise.getTitle(), exercise.getChannelName(), exercise.getShortName(), exercise.getProblemStatement(),
                 exercise.getCategories(), exercise.getDifficulty(), exercise.getMaxPoints(), exercise.getBonusPoints(), exercise.getIncludedInOverallScore(),
-                exercise.getAllowFeedbackRequests(), exercise.getGradingInstructions(), exercise.getReleaseDate(), exercise.getStartDate(), exercise.getDueDate(),
-                exercise.getAssessmentDueDate(), exercise.getExampleSolutionPublicationDate(), exercise.getExampleSolutionModel(), exercise.getExampleSolutionExplanation(),
-                courseId, exerciseGroupId, gradingCriterionDTOs, competencyLinkDTOs);
+                exercise.getAllowComplaintsForAutomaticAssessments(), exercise.getAllowFeedbackRequests(), exercise.getGradingInstructions(), exercise.getReleaseDate(),
+                exercise.getStartDate(), exercise.getDueDate(), exercise.getAssessmentDueDate(), exercise.getExampleSolutionPublicationDate(), exercise.getExampleSolutionModel(),
+                exercise.getExampleSolutionExplanation(), courseId, exerciseGroupId, gradingCriterionDTOs, competencyLinkDTOs);
     }
 }
