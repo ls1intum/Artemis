@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.quiz.web;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import jakarta.validation.Valid;
@@ -104,6 +105,7 @@ public class QuizSubmissionResource {
      */
     @PostMapping("exercises/{exerciseId}/submissions/live")
     @EnforceAtLeastStudentInExercise
+    // TODO: Important, we must use a DTO here and we MUST NOT save an entity object retrieved from the client directly!
     public ResponseEntity<QuizSubmission> saveOrSubmitForLiveMode(@PathVariable Long exerciseId, @Valid @RequestBody QuizSubmission quizSubmission,
             @RequestParam(name = "submit", defaultValue = "false") boolean submit) {
         log.debug("REST request to save or submit QuizSubmission for live mode : {}", quizSubmission);
@@ -111,6 +113,10 @@ public class QuizSubmissionResource {
         try {
             // we set the submitted flag on the server side
             quizSubmission.setSubmitted(submit);
+            // make sure no results are sent from client to server
+            if (quizSubmission.getResults() != null && !quizSubmission.getResults().isEmpty()) {
+                quizSubmission.setResults(List.of());
+            }
             QuizSubmission updatedQuizSubmission = quizSubmissionService.saveSubmissionForLiveMode(exerciseId, quizSubmission, userLogin, submit);
             return ResponseEntity.ok(updatedQuizSubmission);
         }
