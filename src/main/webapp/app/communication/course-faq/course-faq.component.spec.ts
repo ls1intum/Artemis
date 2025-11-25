@@ -160,7 +160,7 @@ describe('CourseFaqs', () => {
         jest.spyOn(faqService, 'findAllByCourseIdAndState').mockReturnValue(
             of(
                 new HttpResponse({
-                    body: [newestFaq, middleFaq, oldestFaq], // Backend returns sorted
+                    body: [newestFaq, middleFaq, oldestFaq], // Server returns sorted
                     status: 200,
                 }),
             ),
@@ -168,7 +168,7 @@ describe('CourseFaqs', () => {
 
         courseFaqComponentFixture.detectChanges();
 
-        // Verify component displays FAQs in the exact order received from backend
+        // Verify component displays FAQs in the exact order received from server
         expect(courseFaqComponent.faqs).toHaveLength(3);
         expect(courseFaqComponent.faqs[0].id).toBe(3); // Newest
         expect(courseFaqComponent.faqs[1].id).toBe(2);
