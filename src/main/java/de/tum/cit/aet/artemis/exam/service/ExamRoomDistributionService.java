@@ -98,7 +98,7 @@ public class ExamRoomDistributionService {
      * Existing planned seats and room assignments are replaced.
      *
      * @param examId                The exam
-     * @param examRoomIds           The ids of the rooms to distribute to
+     * @param examRoomIds           The ids of the rooms to distribute to, ordered
      * @param useOnlyDefaultLayouts if we want to only use 'default' layouts
      * @param reserveFactor         Percentage of seats that should not be included
      * @throws BadRequestAlertException if the capacity doesn't suffice to seat the students
@@ -124,16 +124,19 @@ public class ExamRoomDistributionService {
 
         assignExamRoomsToExam(exam, examRoomsForExam);
 
-        Map<Long, ExamRoom> roomById = examRoomsForExam.stream().collect(Collectors.toMap(ExamRoom::getId, Function.identity()));
-
-        List<ExamRoom> orderedExamRooms = examRoomIds.stream().map(roomById::get).toList();
-
+        List<ExamRoom> orderedExamRooms = getOrderedExamRooms(examRoomsForExam, examRoomIds);
         if (defaultLayoutsSuffice) {
             distributeExamUsersToDefaultUsableSeatsInRooms(exam, orderedExamRooms, reserveFactor);
         }
         else {
             distributeExamUsersToAnyUsableSeatsInRooms(exam, orderedExamRooms, reserveFactor);
         }
+    }
+
+    private List<ExamRoom> getOrderedExamRooms(Set<ExamRoom> examRooms, List<Long> examRoomIds) {
+        Map<Long, ExamRoom> roomById = examRooms.stream().collect(Collectors.toMap(ExamRoom::getId, Function.identity()));
+
+        return examRoomIds.stream().map(roomById::get).toList();
     }
 
     /**

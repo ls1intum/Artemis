@@ -70,7 +70,7 @@ public class ExamRoomDistributionResource {
      * @param examId                the id of the exam
      * @param useOnlyDefaultLayouts if we want to only use 'default' layouts
      * @param reserveFactor         how much percent of seats should remain unassigned. Defaults to 0%
-     * @param examRoomIds           the ids of all the exam rooms we want to distribute the students to
+     * @param examRoomIds           the ids of all the exam rooms we want to distribute the students to, ordered
      * @return 200 (OK) if the distribution was successful
      */
     @PostMapping("courses/{courseId}/exams/{examId}/distribute-registered-students")
