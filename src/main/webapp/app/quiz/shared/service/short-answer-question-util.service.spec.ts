@@ -191,35 +191,41 @@ describe('ShortAnswerQuestionUtil', () => {
         const textPart3 = '[-spot 1] test test2';
         const textPart4 = '[-spot 2] test3';
         shortAnswerQuestion.text = textPart1 + '\n' + textPart2 + '\n' + textPart3 + '\n' + textPart4;
-        const textPartsData = service.divideQuestionTextIntoTextParts(shortAnswerQuestion.text!);
-        // divideQuestionTextIntoTextParts returns object with plain and html properties
-        expect(textPartsData.html[0][0]).toContain(textPart1);
-        // Markdown is converted to HTML, so ** becomes <strong>
-        expect(textPartsData.html[1][0]).toContain('<strong>with highlighted markdown</strong>');
-        expect(textPartsData.html[2][0]).toBe('[-spot 1]');
-        expect(textPartsData.html[2][1]).toBe('test test2');
-        expect(textPartsData.html[3][0]).toBe('[-spot 2]');
-        // Markdown-it wraps the entire multi-line text in one <p> tag, so opening <p> at the very beginning, closing </p> at the very end
-        expect(textPartsData.html[3][1]).toBe('test3</p>');
+        const textParts = service.divideQuestionTextIntoTextParts(shortAnswerQuestion.text!);
+        expect(textParts[0][0]).toContain(textPart1);
+        expect(textParts[1][0]).toContain(textPart2);
+        expect(textParts[2][0]).toBe('[-spot 1]');
+        expect(textParts[2][1]).toBe('test test2');
+        expect(textParts[3][0]).toBe('[-spot 2]');
+        expect(textParts[3][1]).toBe('test3');
 
-        // transformTextPartsIntoHTML receives the data object and returns formatted HTML
-        const textPartsInHTML = service.transformTextPartsIntoHTML(textPartsData);
-        expect(textPartsInHTML).toEqual(textPartsData.html);
+        const textPartsInHTML = service.transformTextPartsIntoHTML(textParts);
+        expect(textPartsInHTML[0][0]).toContain(`<p>${textPart1}</p>`);
+        expect(textPartsInHTML[1][0]).toContain(`<p><strong>${textPart2.split('**').join('')}</strong></p>`);
+        expect(textPartsInHTML[2][0]).toContain(`<p>[-spot 1]</p>`);
+        expect(textPartsInHTML[2][1]).toContain(`<p>test test2</p>`);
+        expect(textPartsInHTML[3][0]).toContain(`<p>[-spot 2]</p>`);
+        expect(textPartsInHTML[3][1]).toContain(`<p>test3</p>`);
     });
 
     it('should transform text parts to html correctly', fakeAsync(() => {
-        // transformTextPartsIntoHTML now receives an object with plain and html properties
-        const plainParts1 = [['random text'], ['    some more text', '[-spot 1]'], ['last paragraph']];
-        const htmlParts1 = [['random text'], ['some more text', '[-spot 1]'], ['last paragraph']];
-        expect(service.transformTextPartsIntoHTML({ plain: plainParts1, html: htmlParts1 })).toEqual(htmlParts1);
-
-        const plainParts2 = [['`random code`'], ['`    some more code`', '[-spot 1]'], ['`last code paragraph`']];
-        const htmlParts2 = [['`random code`'], ['`some more code`', '[-spot 1]'], ['`last code paragraph`']];
-        expect(service.transformTextPartsIntoHTML({ plain: plainParts2, html: htmlParts2 })).toEqual(htmlParts2);
-
-        const plainParts3 = [['`random code`'], ['    [-spot 1]', '`some more code`', '[-spot 1]'], ['`last code paragraph`']];
-        const htmlParts3 = [['`random code`'], ['[-spot 1]', '`some more code`', '[-spot 1]'], ['`last code paragraph`']];
-        expect(service.transformTextPartsIntoHTML({ plain: plainParts3, html: htmlParts3 })).toEqual(htmlParts3);
+        const originalTextParts1 = [['random text'], ['    some more text', '[-spot 1]'], ['last paragraph']];
+        const formattedTextParts1 = [['<p>random text</p>'], ['<p>&nbsp;&nbsp;&nbsp;&nbsp;some more text</p>', '<p>[-spot 1]</p>'], ['<p>last paragraph</p>']];
+        expect(service.transformTextPartsIntoHTML(originalTextParts1)).toEqual(formattedTextParts1);
+        const originalTextParts2 = [['`random code`'], ['`    some more code`', '[-spot 1]'], ['`last code paragraph`']];
+        const formattedTextParts2 = [
+            ['<p><code>random code</code></p>'],
+            ['<p><code>    &nbsp;&nbsp;&nbsp;&nbsp;some more code</code></p>', '<p>[-spot 1]</p>'],
+            ['<p><code>last code paragraph</code></p>'],
+        ];
+        expect(service.transformTextPartsIntoHTML(originalTextParts2)).toEqual(formattedTextParts2);
+        const originalTextParts3 = [['`random code`'], ['    [-spot 1]', '`some more code`', '[-spot 1]'], ['`last code paragraph`']];
+        const formattedTextParts3 = [
+            ['<p><code>random code</code></p>'],
+            ['<p>&nbsp;&nbsp;&nbsp;&nbsp;[-spot 1]</p>', '<p><code>some more code</code></p>', '<p>[-spot 1]</p>'],
+            ['<p><code>last code paragraph</code></p>'],
+        ];
+        expect(service.transformTextPartsIntoHTML(originalTextParts3)).toEqual(formattedTextParts3);
     }));
 
     it('should return the correct indentation', fakeAsync(() => {

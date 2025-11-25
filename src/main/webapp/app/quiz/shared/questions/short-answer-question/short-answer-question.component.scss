@@ -11,24 +11,10 @@
     .short-answer-question-display {
         display: flex;
         flex-wrap: wrap;
-        align-items: baseline;
         max-width: 100%;
 
         &__element {
-            display: inline-block;
-
-            > div {
-                display: inline;
-            }
-
-            &:has(pre) {
-                flex-basis: 100%;
-                width: 100%;
-
-                > div {
-                    display: block;
-                }
-            }
+            display: inline-flex;
         }
 
         .short-answer-question-container {
@@ -40,7 +26,7 @@
                 background-color: var(--sa-question-container-input-background);
                 color: var(--bs-body-color);
                 line-height: 35px;
-                vertical-align: middle;
+                margin-bottom: 10px;
             }
 
             &__input.invalid {

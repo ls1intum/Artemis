@@ -92,7 +92,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
     afterEach(() => {
         jest.restoreAllMocks();
     });
-    // TODO: Might have to adapt this test later to match the current implementation.
+
     it('should initialize with different question texts', () => {
         // test spots concatenated to other words
         const newQuestion1 = new ShortAnswerQuestion();
@@ -100,12 +100,12 @@ describe('ShortAnswerQuestionEditComponent', () => {
         fixture.componentRef.setInput('question', newQuestion1);
         fixture.detectChanges();
 
-        // text parts now include HTML from markdown conversion
-        const expectedTextParts = [
-            ['<p>This', 'is', 'a', '[-spot 12]', 'regarding', 'this', 'question.</p>'],
-            ['<p>Another', '[-spot 8]', 'is', 'in', 'the', 'line', 'above</p>'],
+        let expectedTextParts = [
+            ['This', 'is', 'a', '[-spot 12]', 'regarding', 'this', 'question.'],
+            ['Another', '[-spot 8]', 'is', 'in', 'the', 'line', 'above'],
         ];
         expect(component.textParts).toEqual(expectedTextParts);
+
         // test a long method with multiple indentations and concatenated words
         const newQuestion2 = cloneDeep(component.question() as ShortAnswerQuestion);
         newQuestion2.text =
@@ -128,27 +128,46 @@ describe('ShortAnswerQuestionEditComponent', () => {
         fixture.componentRef.setInput('question', newQuestion2);
         fixture.detectChanges();
 
-        // After markdown conversion with code blocks, verify structure and spot tags are preserved
-        // The exact HTML formatting varies (especially for indented code blocks), so we check functionality
-        expect(component.textParts.length).toBeGreaterThan(0);
-
-        // Verify all 8 spot tags are present and correctly formatted
-        const allSpots = component.textParts.flat().filter((part) => part && part.includes('[-spot'));
-        expect(allSpots).toContain('[-spot 1]');
-        expect(allSpots).toContain('[-spot 2]');
-        expect(allSpots).toContain('[-spot 3]');
-        expect(allSpots).toContain('[-spot 4]');
-        expect(allSpots).toContain('[-spot 5]');
-        expect(allSpots).toContain('[-spot 6]');
-        expect(allSpots).toContain('[-spot 9]');
-        expect(allSpots).toContain('[-spot 16]');
-
-        // Verify key text content is preserved
-        const allText = component.textParts.flat().join(' ');
-        expect(allText).toContain('Enter your long question');
-        expect(allText).toContain('Code snippets should be correctly indented');
-        expect(allText).toContain('testIndentation');
-        expect(allText).toContain('To define the solution');
+        expectedTextParts = [
+            ['Enter', 'your', 'long', 'question', 'if', 'needed'],
+            [
+                'Select',
+                'a',
+                'part',
+                'of',
+                'the',
+                '[-spot 6]',
+                'and',
+                'click',
+                'on',
+                'Add',
+                'Spot',
+                'to',
+                'automatically',
+                '[-spot 9]',
+                'an',
+                'input',
+                'field',
+                'and',
+                'the',
+                'corresponding',
+                '[-spot 16]',
+            ],
+            ['You', 'can', 'define', 'a', 'input', 'field', 'like', 'this:', 'This', '[-spot 1]', 'an', '[-spot 2]', 'field.'],
+            ['Code', 'snippets', 'should', 'be', 'correctly', 'indented:'],
+            ['[-spot 5]', 'method', 'testIndentation()', '{'],
+            ['    System.out.', '[-spot 3]', "('Print", "this');"],
+            ['    const', '[-spot 4]', 'Array', '=', '['],
+            ['    first', 'element', '=', '({'],
+            ['        firstAttribute', ':', '('],
+            ['            we', 'need', 'more', 'attributes'],
+            ['            )'],
+            ['    });'],
+            ['    ]'],
+            ['}'],
+            ['To', 'define', 'the', 'solution', 'for', 'the', 'input', 'fields', 'you', 'need', 'to', 'create', 'a', 'mapping', '(multiple', 'mapping', 'also', 'possible):'],
+        ];
+        expect(component.textParts).toEqual(expectedTextParts);
 
         // tests simple indentation
         const newQuestion3 = cloneDeep(component.question() as ShortAnswerQuestion);
@@ -157,15 +176,8 @@ describe('ShortAnswerQuestionEditComponent', () => {
         fixture.componentRef.setInput('question', newQuestion3);
         fixture.detectChanges();
 
-        // Indented lines are treated as code blocks by markdown-it, so verify spot tags are preserved
-        expect(component.textParts).toHaveLength(6);
-        const spots = component.textParts.flat().filter((part) => part && part.includes('[-spot'));
-        expect(spots).toContain('[-spot 5]');
-        expect(spots).toContain('[-spot 6]');
-        expect(spots).toContain('[-spot 7]');
-        expect(spots).toContain('[-spot 8]');
-        expect(spots).toContain('[-spot 9]');
-        expect(spots).toContain('[-spot 10]');
+        expectedTextParts = [['[-spot 5]'], ['    [-spot 6]'], ['        [-spot 7]'], ['            [-spot 8]'], ['                [-spot 9]'], ['                    [-spot 10]']];
+        expect(component.textParts).toEqual(expectedTextParts);
 
         // classic java main method test
         const newQuestion4 = cloneDeep(component.question() as ShortAnswerQuestion);
@@ -178,17 +190,14 @@ describe('ShortAnswerQuestionEditComponent', () => {
         fixture.componentRef.setInput('question', newQuestion4);
         fixture.detectChanges();
 
-        // Verify spot tags and key content are preserved (indented lines become code blocks)
-        expect(component.textParts).toHaveLength(5);
-        const javaSpots = component.textParts.flat().filter((part) => part && part.includes('[-spot'));
-        expect(javaSpots).toContain('[-spot 1]');
-        expect(javaSpots).toContain('[-spot 2]');
-        expect(javaSpots).toContain('[-spot 3]');
-        expect(javaSpots).toContain('[-spot 4]');
-        const javaText = component.textParts.flat().join(' ');
-        expect(javaText).toContain('class');
-        expect(javaText).toContain('public static void main');
-        expect(javaText).toContain('System.out.println');
+        expectedTextParts = [
+            ['[-spot 1]', 'class', '[-spot 2]', '{'],
+            ['    public', 'static', 'void', 'main(', '[-spot 3]', '[]', 'args){'],
+            ['        System.out.println("This', 'is', 'the', '[-spot 4]', 'method");'],
+            ['    }'],
+            ['}'],
+        ];
+        expect(component.textParts).toEqual(expectedTextParts);
 
         // test multiple line parameter for method header
         const newQuestion5 = cloneDeep(component.question() as ShortAnswerQuestion);
@@ -203,17 +212,16 @@ describe('ShortAnswerQuestionEditComponent', () => {
         fixture.componentRef.setInput('question', newQuestion5);
         fixture.detectChanges();
 
-        // Verify spot tags in multi-line method parameters
-        expect(component.textParts).toHaveLength(7);
-        const methodSpots = component.textParts.flat().filter((part) => part && part.includes('[-spot'));
-        expect(methodSpots).toContain('[-spot 1]');
-        expect(methodSpots).toContain('[-spot 2]');
-        expect(methodSpots).toContain('[-spot 3]');
-        expect(methodSpots).toContain('[-spot 4]');
-        expect(methodSpots).toContain('[-spot 5]');
-        const methodText = component.textParts.flat().join(' ');
-        expect(methodText).toContain('methodCallWithMultipleLineParameter');
-        expect(methodText).toContain('System.out');
+        expectedTextParts = [
+            ['private', '[-spot 1]', 'methodCallWithMultipleLineParameter', '('],
+            ['    int', 'number,'],
+            ['    [-spot 2]', 'secondNumber,'],
+            ['    [-spot 3]', 'thirdString,'],
+            ['    boolean', 'doesWork)', '{'],
+            ['        System.out.', '[-spot 4]', '("', '[-spot 5]', '");'],
+            ['}'],
+        ];
+        expect(component.textParts).toEqual(expectedTextParts);
 
         // test nested arrays
         const newQuestion6 = cloneDeep(component.question() as ShortAnswerQuestion);
@@ -222,15 +230,16 @@ describe('ShortAnswerQuestionEditComponent', () => {
         fixture.componentRef.setInput('question', newQuestion6);
         fixture.detectChanges();
 
-        // Verify spot tags in nested arrays
-        expect(component.textParts).toHaveLength(7);
-        const arraySpots = component.textParts.flat().filter((part) => part && part.includes('[-spot'));
-        expect(arraySpots).toContain('[-spot 1]');
-        expect(arraySpots).toContain('[-spot 2]');
-        const arrayText = component.textParts.flat().join(' ');
-        expect(arrayText).toContain('manyArrayFields');
-        expect(arrayText).toContain('test1');
-        expect(arrayText).toContain('middleField');
+        expectedTextParts = [
+            ['const', 'manyArrayFields', '=', '['],
+            ["    ['test1'],"],
+            ["    ['test2'],"],
+            ["    ['", '[-spot 1]', "'],"],
+            ["    ['middleField'],"],
+            ["    ['", '[-spot 2]', "'],"],
+            ['];'],
+        ];
+        expect(component.textParts).toEqual(expectedTextParts);
 
         // test textual enumeration
         const newQuestion7 = cloneDeep(component.question() as ShortAnswerQuestion);
@@ -245,13 +254,16 @@ describe('ShortAnswerQuestionEditComponent', () => {
         fixture.componentRef.setInput('question', newQuestion7);
         fixture.detectChanges();
 
-        // Verify spot tag is preserved (markdown converts lists to <ul>/<li> which changes structure)
-        expect(component.textParts.length).toBeGreaterThan(0);
-        const enumSpots = component.textParts.flat().filter((part) => part && part.includes('[-spot'));
-        expect(enumSpots).toContain('[-spot 1]');
-        const enumText = component.textParts.flat().join(' ');
-        expect(enumText).toContain('enumeration');
-        expect(enumText).toContain('this');
+        expectedTextParts = [
+            ['If', 'we', 'want', 'a', 'enumeration,', 'we', 'can', 'also', '[-spot 1]', 'this:'],
+            ['-', 'first', 'major', 'point'],
+            ['    -', 'first', 'not', 'so', 'major', 'point'],
+            ['    -', 'second', 'not', 'so', 'major', 'point'],
+            ['-', 'second', 'major', 'point'],
+            ['-', 'third', 'major', 'point'],
+            ['        -', 'first', 'very', 'not', 'major', 'point,', 'super', 'indented'],
+        ];
+        expect(component.textParts).toEqual(expectedTextParts);
     });
 
     it('should update shortAnswerQuestion and emit questionUpdated on question input change', () => {
@@ -379,7 +391,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
     it('should add spot at cursor visual mode', () => {
         const textParts = [['0'], ['0']];
         const shortAnswerQuestionUtil = TestBed.inject(ShortAnswerQuestionUtil);
-        jest.spyOn(shortAnswerQuestionUtil, 'divideQuestionTextIntoTextParts').mockReturnValue({ plain: textParts, html: textParts });
+        jest.spyOn(shortAnswerQuestionUtil, 'divideQuestionTextIntoTextParts').mockReturnValue(textParts);
 
         const node = {} as Node;
 
@@ -540,8 +552,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
         component.setQuestionText('0-0-0-0');
 
         expect(getNavigationSpy).toHaveBeenCalledOnce();
-        // text parts include HTML from markdown conversion
-        const splitString = ['<p>This', 'is', 'a', 'text', 'for', 'a', 'test</p>'];
+        const splitString = ['This', 'is', 'a', 'text', 'for', 'a', 'test'];
         expect(component.textParts.pop()).toEqual(splitString);
     });
 

@@ -284,9 +284,9 @@ export class ShortAnswerQuestionUtil {
      * (e.g 'Enter [-spot 1] long [-spot 2] if needed' will be transformed to [["Enter", "[-spot 1]", "long", "[-spot 2]", "if needed"]])
      *
      * @param questionText
-     * @returns {{ plain: string[][], html: string[][] }} Object containing both plain text and HTML versions
+     * @returns {string[][]}
      */
-    divideQuestionTextIntoTextParts(questionText: string): { plain: string[][]; html: string[][] } {
+    divideQuestionTextIntoTextParts(questionText: string): string[][] {
         const spotRegExpo = /\[-spot\s*[0-9]+\]/g;
 
         /**
@@ -301,22 +301,11 @@ export class ShortAnswerQuestionUtil {
                 : [x, ...interleave(ys, xs)]; // inductive: some x
         }
 
-        // Split plain text first (for indentation detection)
-        const plainTextParts = questionText.split(/\n/g).map((line) => {
+        return questionText.split(/\n/g).map((line) => {
             const spots = line.match(spotRegExpo) || [];
             const texts = line.split(spotRegExpo).map((text) => text.trim());
             return interleave(texts, spots).filter((x) => x.length > 0);
         });
-
-        // Convert to HTML to preserve markdown features like code blocks
-        const htmlText = htmlForMarkdown(questionText, [], undefined, undefined);
-        const htmlTextParts = htmlText.split(/\n/g).map((line) => {
-            const spots = line.match(spotRegExpo) || [];
-            const texts = line.split(spotRegExpo).map((text) => text.trim());
-            return interleave(texts, spots).filter((x) => x.length > 0);
-        });
-
-        return { plain: plainTextParts, html: htmlTextParts };
     }
 
     /**
@@ -350,14 +339,14 @@ export class ShortAnswerQuestionUtil {
 
     /**
      * We transform now the different text parts of the question text to HTML.
-     * Note: The text parts are already converted to HTML in divideQuestionTextIntoTextParts,
-     * so we just need to add indentation formatting using the original plain text for detection.
-     * @param textPartsData Object containing both plain and html text parts
+     * 1. We iterate through every line of the question text.
+     * 2. We iterate through every element of each line of the question text and set each element with the new HTML.
+     * @param textParts
      * @returns {string[][]}
      */
-    transformTextPartsIntoHTML(textPartsData: { plain: string[][]; html: string[][] }): string[][] {
-        // Use plain text for indentation detection, HTML for output
-        return this.addIndentationToTextParts(textPartsData.plain, textPartsData.html);
+    transformTextPartsIntoHTML(textParts: string[][]): string[][] {
+        const formattedTextParts = textParts.map((textPart) => textPart.map((element) => htmlForMarkdown(element.trim())));
+        return this.addIndentationToTextParts(textParts, formattedTextParts);
     }
 
     /**

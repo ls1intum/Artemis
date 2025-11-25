@@ -58,8 +58,8 @@ export class ShortAnswerQuestionStatisticComponent extends QuestionStatisticComp
     }
 
     generateShortAnswerStructure() {
-        const textPartsData = this.shortAnswerQuestionUtil.divideQuestionTextIntoTextParts(this.question.text!);
-        this.textParts = this.shortAnswerQuestionUtil.transformTextPartsIntoHTML(textPartsData);
+        const textParts = this.shortAnswerQuestionUtil.divideQuestionTextIntoTextParts(this.question.text!);
+        this.textParts = this.shortAnswerQuestionUtil.transformTextPartsIntoHTML(textParts);
     }
 
     generateLettersForSolutions() {

@@ -171,7 +171,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, 
         const returnValue: string[][] = [];
         const lineText = text.split(/\n+/g);
         lineText.forEach((line) => {
-            const textParts = this.shortAnswerQuestionUtil.divideQuestionTextIntoTextParts(line).html[0];
+            const textParts = this.shortAnswerQuestionUtil.divideQuestionTextIntoTextParts(line)[0];
             let parsedLine: string[] = [];
             textParts.forEach((block) => {
                 if (block.includes('[-spot ', 0)) {
@@ -428,14 +428,14 @@ export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, 
             .monacoEditor.getText()
             .split(/\[-option /g)[0]
             .trim();
-        this.textParts = this.shortAnswerQuestionUtil.divideQuestionTextIntoTextParts(questionText).plain;
+        this.textParts = this.shortAnswerQuestionUtil.divideQuestionTextIntoTextParts(questionText);
         const textOfSelectedRow = this.textParts[row][column];
         this.textParts[row][column] = textOfSelectedRow?.substring(0, startOfRange) + '[-spot ' + currentSpotNumber + ']' + textOfSelectedRow?.substring(endOfRange);
 
         // recreation of question text from array and update textParts and parse textParts to html
         this.shortAnswerQuestion.text = this.textParts.map((textPart) => textPart.join(' ')).join('\n');
-        const textPartsData = this.shortAnswerQuestionUtil.divideQuestionTextIntoTextParts(this.shortAnswerQuestion.text);
-        this.textParts = this.shortAnswerQuestionUtil.transformTextPartsIntoHTML(textPartsData);
+        const textParts = this.shortAnswerQuestionUtil.divideQuestionTextIntoTextParts(this.shortAnswerQuestion.text);
+        this.textParts = this.shortAnswerQuestionUtil.transformTextPartsIntoHTML(textParts);
         this.setQuestionEditorValue(this.generateMarkdown());
         this.addOptionToSpot(currentSpotNumber, markedText);
         this.parseMarkdown(this.questionEditor().monacoEditor.getText());
@@ -602,8 +602,8 @@ export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, 
      */
     togglePreview(): void {
         this.showVisualMode = !this.showVisualMode;
-        const textPartsData = this.shortAnswerQuestionUtil.divideQuestionTextIntoTextParts(this.shortAnswerQuestion.text!);
-        this.textParts = this.shortAnswerQuestionUtil.transformTextPartsIntoHTML(textPartsData);
+        const textParts = this.shortAnswerQuestionUtil.divideQuestionTextIntoTextParts(this.shortAnswerQuestion.text!);
+        this.textParts = this.shortAnswerQuestionUtil.transformTextPartsIntoHTML(textParts);
 
         this.setQuestionEditorValue(this.generateMarkdown());
     }
