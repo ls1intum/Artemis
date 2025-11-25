@@ -16,7 +16,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -28,7 +27,6 @@ import de.tum.cit.aet.artemis.hyperion.dto.quiz.McOptionDTO;
 import de.tum.cit.aet.artemis.hyperion.service.AiQuizGenerationService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 
-@ActiveProfiles({ "localci", "hyperion" })
 class QuizGenerationResourceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     @Autowired
