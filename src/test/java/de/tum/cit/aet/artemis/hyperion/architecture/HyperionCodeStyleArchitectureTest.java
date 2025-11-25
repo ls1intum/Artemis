@@ -14,8 +14,9 @@ class HyperionCodeStyleArchitectureTest extends AbstractModuleCodeStyleTest {
         return 0;
     }
 
+    // return 1 as HyperionCodeGenerationEventDTO uses ENUMs inside as part of the data transfer
     @Override
     protected int dtoNameEndingThreshold() {
-        return 0;
+        return 1;
     }
 }

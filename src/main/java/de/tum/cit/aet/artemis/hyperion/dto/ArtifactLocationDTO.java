@@ -4,6 +4,7 @@ import jakarta.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.core.domain.ArtifactType;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
@@ -13,7 +14,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @Schema(description = "Location information for artifacts")
 public record ArtifactLocationDTO(
 
-        @NotNull @Schema(description = "Type of artifact", example = "PROBLEM_STATEMENT") ArtifactTypeDTO type,
+        @NotNull @Schema(description = "Type of artifact", example = "PROBLEM_STATEMENT") ArtifactType type,
 
         @NotNull @Schema(description = "Path to file, empty or problem_statement.md for problem statement", example = "src/main/java/Main.java") String filePath,
 

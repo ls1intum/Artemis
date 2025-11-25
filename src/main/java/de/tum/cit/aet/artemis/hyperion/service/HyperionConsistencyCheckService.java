@@ -12,13 +12,13 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.domain.ArtifactType;
+import de.tum.cit.aet.artemis.core.domain.ConsistencyIssueCategory;
+import de.tum.cit.aet.artemis.core.domain.Severity;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.ArtifactLocationDTO;
-import de.tum.cit.aet.artemis.hyperion.dto.ArtifactTypeDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyCheckResponseDTO;
-import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyIssueCategoryDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyIssueDTO;
-import de.tum.cit.aet.artemis.hyperion.dto.SeverityDTO;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import reactor.core.publisher.Flux;
@@ -186,16 +186,16 @@ public class HyperionConsistencyCheckService {
      * @return DTO for API responses
      */
     private ConsistencyIssueDTO mapConsistencyIssueToDto(ConsistencyIssue issue) {
-        SeverityDTO severity = switch (issue.severity() == null ? "MEDIUM" : issue.severity().toUpperCase()) {
-            case "LOW" -> SeverityDTO.LOW;
-            case "HIGH" -> SeverityDTO.HIGH;
-            default -> SeverityDTO.MEDIUM;
+        Severity severity = switch (issue.severity() == null ? "MEDIUM" : issue.severity().toUpperCase()) {
+            case "LOW" -> Severity.LOW;
+            case "HIGH" -> Severity.HIGH;
+            default -> Severity.MEDIUM;
         };
         List<ArtifactLocationDTO> locations = issue.relatedLocations() == null ? List.of()
                 : issue.relatedLocations().stream()
-                        .map(loc -> new ArtifactLocationDTO(loc.type() == null ? ArtifactTypeDTO.PROBLEM_STATEMENT : loc.type(), loc.filePath(), loc.startLine(), loc.endLine()))
+                        .map(loc -> new ArtifactLocationDTO(loc.type() == null ? ArtifactType.PROBLEM_STATEMENT : loc.type(), loc.filePath(), loc.startLine(), loc.endLine()))
                         .toList();
-        ConsistencyIssueCategoryDTO category = issue.category() != null ? issue.category() : ConsistencyIssueCategoryDTO.METHOD_PARAMETER_MISMATCH;
+        ConsistencyIssueCategory category = issue.category() != null ? issue.category() : ConsistencyIssueCategory.METHOD_PARAMETER_MISMATCH;
         return new ConsistencyIssueDTO(severity, category, issue.description(), issue.suggestedFix(), locations);
     }
 
@@ -209,9 +209,8 @@ public class HyperionConsistencyCheckService {
         if (structuralIssues == null || structuralIssues.issues == null) {
             return List.of();
         }
-        return structuralIssues.issues.stream()
-                .map(issue -> new ConsistencyIssue(issue.severity(), issue.category() != null ? ConsistencyIssueCategoryDTO.valueOf(issue.category().name()) : null,
-                        issue.description(), issue.suggestedFix(), issue.relatedLocations()))
+        return structuralIssues.issues.stream().map(issue -> new ConsistencyIssue(issue.severity(),
+                issue.category() != null ? ConsistencyIssueCategory.valueOf(issue.category().name()) : null, issue.description(), issue.suggestedFix(), issue.relatedLocations()))
                 .toList();
     }
 
@@ -225,14 +224,13 @@ public class HyperionConsistencyCheckService {
         if (semanticIssues == null || semanticIssues.issues == null) {
             return List.of();
         }
-        return semanticIssues.issues.stream()
-                .map(issue -> new ConsistencyIssue(issue.severity(), issue.category() != null ? ConsistencyIssueCategoryDTO.valueOf(issue.category().name()) : null,
-                        issue.description(), issue.suggestedFix(), issue.relatedLocations()))
+        return semanticIssues.issues.stream().map(issue -> new ConsistencyIssue(issue.severity(),
+                issue.category() != null ? ConsistencyIssueCategory.valueOf(issue.category().name()) : null, issue.description(), issue.suggestedFix(), issue.relatedLocations()))
                 .toList();
     }
 
     // Unified consistency issue used internally after parsing
-    private record ConsistencyIssue(String severity, ConsistencyIssueCategoryDTO category, String description, String suggestedFix,
+    private record ConsistencyIssue(String severity, ConsistencyIssueCategory category, String description, String suggestedFix,
             List<StructuredOutputSchema.ArtifactLocation> relatedLocations) {
     }
 
@@ -266,7 +264,7 @@ public class HyperionConsistencyCheckService {
                 List<ArtifactLocation> relatedLocations) {
         }
 
-        private record ArtifactLocation(ArtifactTypeDTO type, String filePath, Integer startLine, Integer endLine) {
+        private record ArtifactLocation(ArtifactType type, String filePath, Integer startLine, Integer endLine) {
         }
     }
 }

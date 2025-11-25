@@ -25,7 +25,7 @@ import de.tum.cit.aet.artemis.programming.service.GitService;
  * Generates scaffolding code that provides students with a structured starting point while
  * removing implementation details, based on complete solution code analysis.
  */
-@Service("templateRepositoryStrategy")
+@Service
 @Lazy
 @Conditional(HyperionEnabled.class)
 public class HyperionTemplateRepositoryService extends HyperionCodeGenerationService {

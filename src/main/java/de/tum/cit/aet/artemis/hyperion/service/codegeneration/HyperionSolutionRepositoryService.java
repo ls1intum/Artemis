@@ -21,7 +21,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
  * Generates complete, working implementations that solve the given programming problem
  * using AI-powered analysis of problem statements and requirements.
  */
-@Service("solutionRepositoryStrategy")
+@Service
 @Lazy
 @Conditional(HyperionEnabled.class)
 public class HyperionSolutionRepositoryService extends HyperionCodeGenerationService {
