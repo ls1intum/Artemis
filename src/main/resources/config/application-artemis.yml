@@ -181,3 +181,7 @@ spring:
     # so disabling the default exporter will NOT stop LLM trace export.
 #    export:
 #      enabled: false
+    # Set true to display contextual name in @Observed on Langfuse
+#    observations:
+#      annotations:
+#        enabled: true
