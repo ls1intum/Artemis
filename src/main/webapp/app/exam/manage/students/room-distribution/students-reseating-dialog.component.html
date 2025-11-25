@@ -1,0 +1,71 @@
+<p-dialog [(visible)]="dialogVisible" [modal]="true" [closable]="true" [dismissableMask]="true" (onHide)="closeDialog()" [style]="{ width: '45dvw' }">
+    <ng-template pTemplate="header">
+        <h4>
+            <span jhiTranslate="artemisApp.exam.examUsers.rooms.reseating.dialogTitle"></span>
+        </h4>
+    </ng-template>
+    <form id="roomDistributionDialogForm" name="distributionForm" role="form" novalidate (keydown.enter)="$event.preventDefault()">
+        <p jhiTranslate="artemisApp.exam.examUsers.rooms.reseating.introText" class="intro-text"></p>
+        <div class="form-check form-switch ms-auto">
+            <label for="allowUnassignedRoomsToggle" jhiTranslate="artemisApp.exam.examUsers.rooms.reseating.allowUnassignedRooms" class="form-check-label"></label>
+            <input id="allowUnassignedRoomsToggle" type="checkbox" class="form-check-input" [checked]="allowUnassignedRooms()" (change)="toggleUnassignedRooms()" />
+            <jhi-help-icon class="ps-1" text="artemisApp.exam.examUsers.rooms.allowUnassignedRoomsTooltip" />
+        </div>
+        <p
+            jhiTranslate="artemisApp.exam.examUsers.rooms.reseating.selectedStudent"
+            [translateValues]="{
+                studentLogin: examUser().user?.login ?? '',
+                studentName: getSelectedStudentName(),
+                plannedRoom: examUser().plannedExamRoom?.name ?? '',
+                plannedSeat: examUser().plannedExamSeat ?? '',
+            }"
+        ></p>
+        <p jhiTranslate="artemisApp.exam.examUsers.rooms.reseating.selectRoom"></p>
+        @if (allowUnassignedRooms()) {
+            <input
+                type="text"
+                placeholder="{{ 'artemisApp.exam.examUsers.rooms.reseating.unassignedExamRoomSearchPlaceholder' | artemisTranslate }}"
+                [defaultValue]="selectedRoomNumber()"
+                (change)="selectedRoomNumber.set($event.target.value)"
+            />
+        } @else {
+            <input
+                type="text"
+                class="form-control"
+                placeholder="{{ 'artemisApp.exam.examUsers.rooms.searchPlaceholder' | artemisTranslate }}"
+                [ngbTypeahead]="roomSearch"
+                container="body"
+                [defaultValue]="getDefaultValueForRoomSelection()"
+                [resultFormatter]="roomFormatter"
+                [inputFormatter]="roomFormatter"
+                (selectItem)="pickSelectedRoom($event)"
+                (focusin)="selectAllTextAndOpenDropdown($event)"
+            />
+        }
+        <p jhiTranslate="artemisApp.exam.examUsers.rooms.reseating.selectSeat"></p>
+        @if (allowUnassignedRooms()) {
+            <input type="text" placeholder="{{ 'artemisApp.exam.examUsers.rooms.reseating.unassignedExamSeatSearchPlaceholder' | artemisTranslate }}" [value]="selectedSeat()" />
+        } @else {
+            <input
+                type="text"
+                class="form-control"
+                placeholder="{{ 'artemisApp.exam.examUsers.rooms.reseating.examSeatSearchPlaceholder' | artemisTranslate }}"
+                [ngbTypeahead]="examSeatSearch"
+                container="body"
+                [defaultValue]="examSeatFormatter(selectedSeat())"
+                [resultFormatter]="examSeatFormatter"
+                [inputFormatter]="examSeatFormatter"
+                (selectItem)="pickSelectedSeat($event)"
+                (focusin)="selectAllTextAndOpenDropdown($event)"
+            />
+        }
+    </form>
+    <ng-template pTemplate="footer">
+        <button id="cancel-button" type="button" class="btn btn-secondary cancel" (click)="closeDialog()">
+            <fa-icon [icon]="faBan" /><span jhiTranslate="entity.action.cancel" class="m-1"></span>
+        </button>
+        <button class="btn btn-success" id="finish-button" (click)="attemptReseatAndCloseDialogOnSuccess()">
+            <fa-icon [icon]="faThLarge" /><span jhiTranslate="artemisApp.exam.examUsers.rooms.reseating.reseat" class="m-1"></span>
+        </button>
+    </ng-template>
+</p-dialog>
