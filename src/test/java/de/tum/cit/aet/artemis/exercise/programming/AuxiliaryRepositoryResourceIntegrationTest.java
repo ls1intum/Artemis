@@ -9,7 +9,9 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
 import java.net.URI;
@@ -32,6 +34,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -46,6 +49,7 @@ import de.tum.cit.aet.artemis.programming.domain.FileType;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.dto.FileMove;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseSynchronizationDTO;
 import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTO;
 import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTOType;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
@@ -201,6 +205,129 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
 
         doReturn(Optional.of(true)).when(gitService).getFileByName(any(), any());
         request.postWithoutResponseBody(testRepoBaseUrl + auxiliaryRepository.getId() + "/file", HttpStatus.BAD_REQUEST, params);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateFolderBroadcastsSynchronizationUpdate() throws Exception {
+        programmingExerciseRepository.save(programmingExercise);
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("folder", "newFolder");
+
+        request.postWithoutResponseBody(testRepoBaseUrl + auxiliaryRepository.getId() + "/folder", HttpStatus.OK, params);
+
+        var captor = ArgumentCaptor.forClass(ProgrammingExerciseSynchronizationDTO.class);
+        verify(websocketMessagingService).sendMessage(eq("/topic/programming-exercises/" + programmingExercise.getId() + "/synchronization"), captor.capture());
+        assertThat(captor.getValue().target()).isEqualTo(ProgrammingExerciseSynchronizationDTO.SynchronizationTarget.AUXILIARY_REPOSITORY);
+        assertThat(captor.getValue().auxiliaryRepositoryId()).isEqualTo(auxiliaryRepository.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testRenameFileBroadcastsSynchronizationUpdate() throws Exception {
+        programmingExerciseRepository.save(programmingExercise);
+        FileMove fileMove = new FileMove(currentLocalFileName, "renamedFile");
+
+        request.postWithoutLocation(testRepoBaseUrl + auxiliaryRepository.getId() + "/rename-file", fileMove, HttpStatus.OK, null);
+
+        var captor = ArgumentCaptor.forClass(ProgrammingExerciseSynchronizationDTO.class);
+        verify(websocketMessagingService).sendMessage(eq("/topic/programming-exercises/" + programmingExercise.getId() + "/synchronization"), captor.capture());
+        assertThat(captor.getValue().target()).isEqualTo(ProgrammingExerciseSynchronizationDTO.SynchronizationTarget.AUXILIARY_REPOSITORY);
+        assertThat(captor.getValue().auxiliaryRepositoryId()).isEqualTo(auxiliaryRepository.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testRenameFolderBroadcastsSynchronizationUpdate() throws Exception {
+        programmingExerciseRepository.save(programmingExercise);
+        FileMove fileMove = new FileMove(currentLocalFolderName, "renamedFolder");
+
+        request.postWithoutLocation(testRepoBaseUrl + auxiliaryRepository.getId() + "/rename-file", fileMove, HttpStatus.OK, null);
+
+        var captor = ArgumentCaptor.forClass(ProgrammingExerciseSynchronizationDTO.class);
+        verify(websocketMessagingService).sendMessage(eq("/topic/programming-exercises/" + programmingExercise.getId() + "/synchronization"), captor.capture());
+        assertThat(captor.getValue().target()).isEqualTo(ProgrammingExerciseSynchronizationDTO.SynchronizationTarget.AUXILIARY_REPOSITORY);
+        assertThat(captor.getValue().auxiliaryRepositoryId()).isEqualTo(auxiliaryRepository.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testDeleteFileBroadcastsSynchronizationUpdate() throws Exception {
+        programmingExerciseRepository.save(programmingExercise);
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("file", currentLocalFileName);
+
+        request.delete(testRepoBaseUrl + auxiliaryRepository.getId() + "/file", HttpStatus.OK, params);
+
+        var captor = ArgumentCaptor.forClass(ProgrammingExerciseSynchronizationDTO.class);
+        verify(websocketMessagingService).sendMessage(eq("/topic/programming-exercises/" + programmingExercise.getId() + "/synchronization"), captor.capture());
+        assertThat(captor.getValue().target()).isEqualTo(ProgrammingExerciseSynchronizationDTO.SynchronizationTarget.AUXILIARY_REPOSITORY);
+        assertThat(captor.getValue().auxiliaryRepositoryId()).isEqualTo(auxiliaryRepository.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testResetBroadcastsSynchronizationUpdate() throws Exception {
+        programmingExerciseRepository.save(programmingExercise);
+
+        request.postWithoutLocation(testRepoBaseUrl + auxiliaryRepository.getId() + "/reset", null, HttpStatus.OK, null);
+
+        var captor = ArgumentCaptor.forClass(ProgrammingExerciseSynchronizationDTO.class);
+        verify(websocketMessagingService).sendMessage(eq("/topic/programming-exercises/" + programmingExercise.getId() + "/synchronization"), captor.capture());
+        assertThat(captor.getValue().target()).isEqualTo(ProgrammingExerciseSynchronizationDTO.SynchronizationTarget.AUXILIARY_REPOSITORY);
+        assertThat(captor.getValue().auxiliaryRepositoryId()).isEqualTo(auxiliaryRepository.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateFilesBroadcastsWhenNotCommitted() throws Exception {
+        programmingExerciseRepository.save(programmingExercise);
+
+        request.put(testRepoBaseUrl + auxiliaryRepository.getId() + "/files?commit=false", getFileSubmissions(), HttpStatus.OK);
+
+        var captor = ArgumentCaptor.forClass(ProgrammingExerciseSynchronizationDTO.class);
+        verify(websocketMessagingService).sendMessage(eq("/topic/programming-exercises/" + programmingExercise.getId() + "/synchronization"), captor.capture());
+        assertThat(captor.getValue().target()).isEqualTo(ProgrammingExerciseSynchronizationDTO.SynchronizationTarget.AUXILIARY_REPOSITORY);
+        assertThat(captor.getValue().auxiliaryRepositoryId()).isEqualTo(auxiliaryRepository.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateFilesWithCommitDoesNotBroadcast() throws Exception {
+        programmingExerciseRepository.save(programmingExercise);
+        reset(websocketMessagingService);
+
+        request.put(testRepoBaseUrl + auxiliaryRepository.getId() + "/files?commit=false", List.of(), HttpStatus.OK);
+
+        verify(websocketMessagingService, never()).sendMessage(eq("/topic/programming-exercises/" + programmingExercise.getId() + "/synchronization"), any());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateFilesCommitTrueWithSubmissionsDoesNotBroadcast() throws Exception {
+        programmingExerciseRepository.save(programmingExercise);
+        reset(websocketMessagingService);
+
+        request.put(testRepoBaseUrl + auxiliaryRepository.getId() + "/files?commit=false", List.of(), HttpStatus.OK);
+
+        verify(websocketMessagingService, never()).sendMessage(eq("/topic/programming-exercises/" + programmingExercise.getId() + "/synchronization"), any());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateFileBroadcastsSynchronizationUpdate() throws Exception {
+        programmingExerciseRepository.save(programmingExercise);
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("file", "newFile");
+
+        request.postWithoutResponseBody(testRepoBaseUrl + auxiliaryRepository.getId() + "/file", HttpStatus.OK, params);
+
+        var captor = ArgumentCaptor.forClass(ProgrammingExerciseSynchronizationDTO.class);
+        verify(websocketMessagingService).sendMessage(eq("/topic/programming-exercises/" + programmingExercise.getId() + "/synchronization"), captor.capture());
+
+        var synchronizationMessage = captor.getValue();
+        assertThat(synchronizationMessage.target()).isEqualTo(ProgrammingExerciseSynchronizationDTO.SynchronizationTarget.AUXILIARY_REPOSITORY);
+        assertThat(synchronizationMessage.auxiliaryRepositoryId()).isEqualTo(auxiliaryRepository.getId());
     }
 
     @Test

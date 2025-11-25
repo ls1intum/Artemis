@@ -24,6 +24,7 @@ import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.GitService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseSynchronizationService;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
 
@@ -53,9 +54,12 @@ public class ExerciseVersionService {
 
     private final UserRepository userRepository;
 
+    private final ProgrammingExerciseSynchronizationService programmingExerciseSynchronizationService;
+
     public ExerciseVersionService(ExerciseVersionRepository exerciseVersionRepository, GitService gitService, ProgrammingExerciseRepository programmingExerciseRepository,
             QuizExerciseRepository quizExerciseRepository, TextExerciseRepository textExerciseRepository, ModelingExerciseRepository modelingExerciseRepository,
-            FileUploadExerciseRepository fileUploadExerciseRepository, UserRepository userRepository) {
+            FileUploadExerciseRepository fileUploadExerciseRepository, UserRepository userRepository,
+            ProgrammingExerciseSynchronizationService programmingExerciseSynchronizationService) {
         this.exerciseVersionRepository = exerciseVersionRepository;
         this.gitService = gitService;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -64,6 +68,7 @@ public class ExerciseVersionService {
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
         this.userRepository = userRepository;
+        this.programmingExerciseSynchronizationService = programmingExerciseSynchronizationService;
     }
 
     public boolean isRepositoryTypeVersionable(RepositoryType repositoryType) {
@@ -123,6 +128,9 @@ public class ExerciseVersionService {
             exerciseVersion.setExerciseSnapshot(exerciseSnapshot);
             ExerciseVersion savedExerciseVersion = exerciseVersionRepository.save(exerciseVersion);
             log.info("Exercise version {} has been created for exercise {}", savedExerciseVersion.getId(), exercise.getId());
+
+            var change = programmingExerciseSynchronizationService.determineChange(exerciseSnapshot, previousVersion.map(ExerciseVersion::getExerciseSnapshot).orElse(null));
+            programmingExerciseSynchronizationService.broadcastChange(exercise.getId(), change);
         }
         catch (Exception e) {
             log.error("Error creating exercise version for exercise with id {}: {}", targetExercise.getId(), e.getMessage(), e);

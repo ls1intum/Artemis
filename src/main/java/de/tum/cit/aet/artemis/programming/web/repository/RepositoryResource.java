@@ -38,10 +38,12 @@ import de.tum.cit.aet.artemis.programming.domain.File;
 import de.tum.cit.aet.artemis.programming.domain.FileType;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.dto.FileMove;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseSynchronizationDTO;
 import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTO;
 import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTOType;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.GitService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseSynchronizationService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryAccessService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
@@ -68,16 +70,20 @@ public abstract class RepositoryResource {
 
     protected final RepositoryAccessService repositoryAccessService;
 
+    protected final ProgrammingExerciseSynchronizationService programmingExerciseSynchronizationService;
+
     private final Optional<LocalVCServletService> localVCServletService;
 
     public RepositoryResource(UserRepository userRepository, AuthorizationCheckService authCheckService, GitService gitService, RepositoryService repositoryService,
-            ProgrammingExerciseRepository programmingExerciseRepository, RepositoryAccessService repositoryAccessService, Optional<LocalVCServletService> localVCServletService) {
+            ProgrammingExerciseRepository programmingExerciseRepository, RepositoryAccessService repositoryAccessService,
+            ProgrammingExerciseSynchronizationService programmingExerciseSynchronizationService, Optional<LocalVCServletService> localVCServletService) {
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
         this.gitService = gitService;
         this.repositoryService = repositoryService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.repositoryAccessService = repositoryAccessService;
+        this.programmingExerciseSynchronizationService = programmingExerciseSynchronizationService;
         this.localVCServletService = localVCServletService;
     }
 
@@ -398,6 +404,15 @@ public abstract class RepositoryResource {
 
         try (var inputStream = new ByteArrayInputStream(submission.getFileContent().getBytes(StandardCharsets.UTF_8))) {
             FileUtils.copyToFile(inputStream, file.get());
+        }
+    }
+
+    protected void broadcastRepositoryUpdates(Long exerciseId, ProgrammingExerciseSynchronizationDTO.SynchronizationTarget target, Long auxiliaryRepositoryId) {
+        try {
+            programmingExerciseSynchronizationService.broadcastChange(exerciseId, target, auxiliaryRepositoryId);
+        }
+        catch (Exception e) {
+            log.error("Could not broadcast repository change for exercise for synchronization{}: {}", exerciseId, e.getMessage());
         }
     }
 }

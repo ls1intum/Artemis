@@ -60,6 +60,10 @@
                 "refreshExplanationShort": "Aktualisiert alle Dateien aus Deinem Repository.",
                 "refreshExplanationLong": "Du hast noch nicht gespeicherte oder hochgeladene Änderungen im Online Editor. Wenn Du 'Aktualisieren' drückst werden alle Änderungen verworfen und mit dem letzten Commit vom Server überschrieben. Dies kann nicht rückgängig gemacht werden!"
             },
+            "synchronization": {
+                "repositoryChanged": "Dieses Repository wurde in einer anderen Sitzung geändert. Aktualisiere die Dateien, um die Änderungen zu übernehmen.",
+                "problemStatementChanged": "Die Aufgabenstellung wurde in einer anderen Sitzung geändert. Aktualisiere, um den neuesten Inhalt zu laden."
+            },
             "fileBrowser": {
                 "fileBrowser": "Dateibrowser",
                 "deleteFileTitle": "Datei löschen",

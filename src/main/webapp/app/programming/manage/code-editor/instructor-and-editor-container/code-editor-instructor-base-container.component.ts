@@ -3,7 +3,6 @@ import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor
 import { Observable, Subscription, of, throwError } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Location } from '@angular/common';
-import { AlertService } from 'app/shared/service/alert.service';
 import { catchError, filter, map, tap } from 'rxjs/operators';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
@@ -22,6 +21,13 @@ import { isExamExercise } from 'app/shared/util/utils';
 import { Subject } from 'rxjs';
 import { debounceTime, shareReplay } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
+import { AlertService, AlertType } from 'app/shared/service/alert.service';
+import { BrowserFingerprintService } from 'app/core/account/fingerprint/browser-fingerprint.service';
+import {
+    ProgrammingExerciseSynchronizationMessage,
+    ProgrammingExerciseSynchronizationService,
+    ProgrammingExerciseSynchronizationTarget,
+} from 'app/programming/manage/services/programming-exercise-synchronization.service';
 /**
  * Enumeration specifying the loading state
  */
@@ -46,6 +52,8 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
     private location = inject(Location);
     private participationService = inject(ParticipationService);
     private route = inject(ActivatedRoute);
+    private synchronizationService = inject(ProgrammingExerciseSynchronizationService);
+    private browserFingerprintService = inject(BrowserFingerprintService);
     /** Raw markdown changes from the center editor for debounce logic */
     private problemStatementChanges$ = new Subject<string>();
     protected alertService = inject(AlertService);
@@ -60,6 +68,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
     // :exerciseId/:participationId -> Load exercise and select repository according to participationId
     // :exerciseId/test -> Load exercise and select test repository
     paramSub: Subscription;
+    syncSubscription?: Subscription;
 
     // Contains all participations (template, solution, assignment)
     exercise: ProgrammingExercise;
@@ -146,6 +155,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
                             this.domainChangeSubscription = this.subscribeToDomainChange();
                         }
                     }),
+                    tap(() => this.setupSynchronizationSubscription(exerciseId)),
                 )
                 .subscribe({
                     next: () => {
@@ -173,6 +183,68 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
         }
         if (this.paramSub) {
             this.paramSub.unsubscribe();
+        }
+        if (this.syncSubscription) {
+            this.syncSubscription.unsubscribe();
+        }
+    }
+
+    private setupSynchronizationSubscription(exerciseId: number) {
+        if (!exerciseId) {
+            return;
+        }
+        if (this.syncSubscription) {
+            this.syncSubscription.unsubscribe();
+        }
+        this.syncSubscription = this.synchronizationService.getSynchronizationUpdates(exerciseId).subscribe((message) => this.handleSynchronizationUpdate(message));
+    }
+
+    private handleSynchronizationUpdate(message: ProgrammingExerciseSynchronizationMessage) {
+        const instanceId = this.browserFingerprintService.instanceIdentifier.value;
+        if (message.clientInstanceId && instanceId && message.clientInstanceId === instanceId) {
+            return;
+        }
+        if (!message.target || !this.isChangeRelevant(message)) {
+            return;
+        }
+
+        const problemStatementChanged = message.target === ProgrammingExerciseSynchronizationTarget.PROBLEM_STATEMENT;
+        const repositoryChanged = message.target !== ProgrammingExerciseSynchronizationTarget.PROBLEM_STATEMENT;
+
+        if (problemStatementChanged) {
+            this.alertService.addAlert({
+                type: AlertType.WARNING,
+                message: 'artemisApp.editor.synchronization.problemStatementChanged',
+                timeout: 0,
+            });
+        }
+        if (repositoryChanged) {
+            this.alertService.addAlert({
+                type: AlertType.WARNING,
+                message: 'artemisApp.editor.synchronization.repositoryChanged',
+                timeout: 0,
+            });
+        }
+    }
+
+    private isChangeRelevant(change: ProgrammingExerciseSynchronizationMessage) {
+        if (change.target === ProgrammingExerciseSynchronizationTarget.PROBLEM_STATEMENT) {
+            return true;
+        }
+        if (!this.selectedRepository) {
+            return true;
+        }
+        switch (change.target) {
+            case ProgrammingExerciseSynchronizationTarget.TEMPLATE_REPOSITORY:
+                return this.selectedRepository === RepositoryType.TEMPLATE;
+            case ProgrammingExerciseSynchronizationTarget.SOLUTION_REPOSITORY:
+                return this.selectedRepository === RepositoryType.SOLUTION;
+            case ProgrammingExerciseSynchronizationTarget.TESTS_REPOSITORY:
+                return this.selectedRepository === RepositoryType.TESTS;
+            case ProgrammingExerciseSynchronizationTarget.AUXILIARY_REPOSITORY:
+                return this.selectedRepository === RepositoryType.AUXILIARY && (!change.auxiliaryRepositoryId || change.auxiliaryRepositoryId === this.selectedRepositoryId);
+            default:
+                return false;
         }
     }
 

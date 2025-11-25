@@ -40,10 +40,12 @@ import de.tum.cit.aet.artemis.programming.domain.FileType;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.dto.FileMove;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseSynchronizationDTO;
 import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTO;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.GitService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseSynchronizationService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryAccessService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
@@ -62,8 +64,9 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
 
     public AuxiliaryRepositoryResource(UserRepository userRepository, AuthorizationCheckService authCheckService, GitService gitService, RepositoryService repositoryService,
             ProgrammingExerciseRepository programmingExerciseRepository, RepositoryAccessService repositoryAccessService, Optional<LocalVCServletService> localVCServletService,
-            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository) {
-        super(userRepository, authCheckService, gitService, repositoryService, programmingExerciseRepository, repositoryAccessService, localVCServletService);
+            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, ProgrammingExerciseSynchronizationService programmingExerciseSynchronizationService) {
+        super(userRepository, authCheckService, gitService, repositoryService, programmingExerciseRepository, repositoryAccessService, programmingExerciseSynchronizationService,
+                localVCServletService);
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
     }
 
@@ -118,7 +121,9 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
     @EnforceAtLeastTutor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> createFile(@PathVariable Long auxiliaryRepositoryId, @RequestParam("file") String filePath, HttpServletRequest request) {
-        return super.createFile(auxiliaryRepositoryId, filePath, request);
+        var response = super.createFile(auxiliaryRepositoryId, filePath, request);
+        broadcastAuxiliaryRepositoryChange(auxiliaryRepositoryId);
+        return response;
     }
 
     @Override
@@ -126,7 +131,9 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
     @EnforceAtLeastTutor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> createFolder(@PathVariable Long auxiliaryRepositoryId, @RequestParam("folder") String folderPath, HttpServletRequest request) {
-        return super.createFolder(auxiliaryRepositoryId, folderPath, request);
+        var response = super.createFolder(auxiliaryRepositoryId, folderPath, request);
+        broadcastAuxiliaryRepositoryChange(auxiliaryRepositoryId);
+        return response;
     }
 
     @Override
@@ -134,7 +141,9 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
     @EnforceAtLeastTutor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> renameFile(@PathVariable Long auxiliaryRepositoryId, @RequestBody FileMove fileMove) {
-        return super.renameFile(auxiliaryRepositoryId, fileMove);
+        var response = super.renameFile(auxiliaryRepositoryId, fileMove);
+        broadcastAuxiliaryRepositoryChange(auxiliaryRepositoryId);
+        return response;
     }
 
     @Override
@@ -142,7 +151,9 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
     @EnforceAtLeastTutor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> deleteFile(@PathVariable Long auxiliaryRepositoryId, @RequestParam("file") String filename) {
-        return super.deleteFile(auxiliaryRepositoryId, filename);
+        var response = super.deleteFile(auxiliaryRepositoryId, filename);
+        broadcastAuxiliaryRepositoryChange(auxiliaryRepositoryId);
+        return response;
     }
 
     @Override
@@ -165,7 +176,9 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
     @EnforceAtLeastTutor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> resetToLastCommit(@PathVariable Long auxiliaryRepositoryId) {
-        return super.resetToLastCommit(auxiliaryRepositoryId);
+        var response = super.resetToLastCommit(auxiliaryRepositoryId);
+        broadcastAuxiliaryRepositoryChange(auxiliaryRepositoryId);
+        return response;
     }
 
     @Override
@@ -209,6 +222,21 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
             FileSubmissionError error = new FileSubmissionError(auxiliaryRepositoryId, "checkoutFailed");
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, error.getMessage(), error);
         }
-        return saveFilesAndCommitChanges(auxiliaryRepositoryId, submissions, commit, repository);
+        var response = saveFilesAndCommitChanges(auxiliaryRepositoryId, submissions, commit, repository);
+        if (!commit && !submissions.isEmpty()) {
+            this.broadcastAuxiliaryRepositoryChange(auxiliaryRepositoryId);
+        }
+        return response;
+    }
+
+    private void broadcastAuxiliaryRepositoryChange(Long auxiliaryRepositoryId) {
+        try {
+            AuxiliaryRepository auxiliaryRepository = auxiliaryRepositoryRepository.findByIdElseThrow(auxiliaryRepositoryId);
+            ProgrammingExercise exercise = auxiliaryRepository.getExercise();
+            this.broadcastRepositoryUpdates(exercise.getId(), ProgrammingExerciseSynchronizationDTO.SynchronizationTarget.AUXILIARY_REPOSITORY, auxiliaryRepositoryId);
+        }
+        catch (Exception e) {
+            log.debug("Could not broadcast auxiliary repository change for {}: {}", auxiliaryRepositoryId, e.getMessage());
+        }
     }
 }
