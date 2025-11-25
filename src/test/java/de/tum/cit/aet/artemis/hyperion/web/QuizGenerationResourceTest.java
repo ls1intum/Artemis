@@ -8,14 +8,11 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.ai.chat.messages.AssistantMessage;
-import org.springframework.ai.chat.model.ChatResponse;
-import org.springframework.ai.chat.model.Generation;
-import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -24,6 +21,10 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
+import de.tum.cit.aet.artemis.hyperion.dto.quiz.AiQuestionSubtype;
+import de.tum.cit.aet.artemis.hyperion.dto.quiz.AiQuizGenerationResponseDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.quiz.GeneratedMcQuestionDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.quiz.McOptionDTO;
 import de.tum.cit.aet.artemis.hyperion.service.AiQuizGenerationService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 
@@ -74,26 +75,16 @@ class QuizGenerationResourceTest extends AbstractSpringIntegrationLocalCILocalVC
     }
 
     private void mockSuccessfulQuizGeneration() {
-        String validQuizResponse = """
-                [
-                  {
-                    "title": "Test Question",
-                    "text": "What is Java?",
-                    "explanation": "Java is a programming language",
-                    "hint": "Think about OOP",
-                    "difficulty": 3,
-                    "tags": [],
-                    "subtype": "SINGLE_CORRECT",
-                    "competencyIds": [],
-                    "options": [
-                      {"text": "A programming language", "correct": true, "feedback": "Correct!"},
-                      {"text": "A coffee brand", "correct": false, "feedback": "Incorrect"},
-                      {"text": "An island", "correct": false, "feedback": "Incorrect"}
-                    ]
-                  }
-                ]
-                """;
-        doReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(validQuizResponse))))).when(chatModel).call(any(Prompt.class));
+        var option1 = new McOptionDTO("A programming language", true, "Correct!");
+        var option2 = new McOptionDTO("A coffee brand", false, "Incorrect");
+        var option3 = new McOptionDTO("An island", false, "Incorrect");
+
+        var question = new GeneratedMcQuestionDTO("Test Question", "What is Java?", "Java is a programming language", "Think about OOP", 3, Set.of("java", "oop"),
+                AiQuestionSubtype.SINGLE_CORRECT, Set.of(), List.of(option1, option2, option3));
+
+        var response = new AiQuizGenerationResponseDTO(List.of(question), List.of());
+
+        doReturn(response).when(aiQuizGenerationService).generate(anyLong(), any());
     }
 
     @Test
