@@ -3,8 +3,10 @@ package de.tum.cit.aet.artemis.programming;
 import static de.tum.cit.aet.artemis.core.util.RequestUtilService.parameters;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.eq;
@@ -947,7 +949,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testTemplateSaveFilesWithCommitDoesNotBroadcast() throws Exception {
+    void testTemplateSaveFilesWithEmptySubmissionsDoesNotBroadcast() throws Exception {
         reset(websocketMessagingService);
 
         request.put(studentRepoBaseUrl + programmingExercise.getTemplateParticipation().getId() + "/files?commit=false", List.of(), HttpStatus.OK);
@@ -967,7 +969,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testSolutionSaveFilesWithCommitDoesNotBroadcast() throws Exception {
+    void testSolutionSaveFilesWithEmptySubmissionsDoesNotBroadcast() throws Exception {
         reset(websocketMessagingService);
 
         request.put(studentRepoBaseUrl + programmingExercise.getSolutionParticipation().getId() + "/files?commit=false", List.of(), HttpStatus.OK);

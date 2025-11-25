@@ -187,6 +187,10 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
         if (this.syncSubscription) {
             this.syncSubscription.unsubscribe();
         }
+        // Clean up service resources for this exercise
+        if (this.exercise?.id) {
+            this.synchronizationService.unsubscribeFromExercise(this.exercise.id);
+        }
     }
 
     private setupSynchronizationSubscription(exerciseId: number) {

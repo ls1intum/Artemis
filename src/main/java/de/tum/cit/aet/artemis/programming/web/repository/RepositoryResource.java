@@ -412,7 +412,7 @@ public abstract class RepositoryResource {
             programmingExerciseSynchronizationService.broadcastChange(exerciseId, target, auxiliaryRepositoryId);
         }
         catch (Exception e) {
-            log.error("Could not broadcast repository change for exercise for synchronization{}: {}", exerciseId, e.getMessage());
+            log.error("Could not broadcast repository change for synchronization of exercise {}: {}", exerciseId, e.getMessage());
         }
     }
 }
