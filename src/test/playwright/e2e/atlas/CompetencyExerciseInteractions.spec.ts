@@ -43,7 +43,7 @@ test.describe('Competency Exercise Linking', { tag: '@fast' }, () => {
         // Link competency
         await page.getByRole('checkbox', { name: competencyData[0].title }).check();
         await page.getByRole('button', { name: 'Save' }).click();
-        await expect(page.getByText( competencyData[0].title )).toBeVisible();
+        await expect(page.getByText(competencyData[0].title)).toBeVisible();
 
         // Verify exercise is linked
         await navigateToCompetencyManagement(page, course.id);
@@ -57,7 +57,7 @@ test.describe('Competency Exercise Linking', { tag: '@fast' }, () => {
         await courseManagementExercises.getExercise(exercise.id!).getByRole('link', { name: 'Edit' }).click();
         await page.getByRole('checkbox', { name: competencyData[0].title }).check();
         await page.getByRole('button', { name: 'Save' }).click();
-        await expect(page.getByText( competencyData[0].title )).toBeVisible();
+        await expect(page.getByText(competencyData[0].title)).toBeVisible();
 
         // Link to second competency
         await page.goto(`/course-management/${course.id}/exercises`);
@@ -70,8 +70,8 @@ test.describe('Competency Exercise Linking', { tag: '@fast' }, () => {
         await page.getByRole('button', { name: 'Save' }).click();
 
         // Verify first competency is unlinked and second is linked
-        await expect(page.getByText( competencyData[0].title )).not.toBeVisible();
-        await expect(page.getByText( competencyData[1].title )).toBeVisible();
+        await expect(page.getByText(competencyData[0].title)).not.toBeVisible();
+        await expect(page.getByText(competencyData[1].title)).toBeVisible();
 
         await navigateToCompetencyManagement(page, course.id);
 
@@ -93,7 +93,7 @@ test.describe('Competency Exercise Linking', { tag: '@fast' }, () => {
         await courseManagementExercises.getExercise(exercise.id!).getByRole('link', { name: 'Edit' }).click();
         await page.getByRole('checkbox', { name: competencyData[0].title }).check();
         await page.getByRole('button', { name: 'Save' }).click();
-        await expect(page.getByText( competencyData[0].title )).toBeVisible();
+        await expect(page.getByText(competencyData[0].title)).toBeVisible();
 
         // Unlink exercise
         await page.goto(`/course-management/${course.id}/exercises`);
@@ -101,7 +101,7 @@ test.describe('Competency Exercise Linking', { tag: '@fast' }, () => {
         await page.getByRole('checkbox', { name: competencyData[0].title }).uncheck();
         await page.getByRole('button', { name: 'Save' }).click();
 
-        await expect(page.getByText( competencyData[0].title )).not.toBeVisible();
+        await expect(page.getByText(competencyData[0].title)).not.toBeVisible();
     });
 
     test.afterEach('Cleanup', async ({ courseManagementAPIRequests }) => {
