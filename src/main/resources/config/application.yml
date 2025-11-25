@@ -194,28 +194,6 @@ management:
             server:
                 requests:
                     name: http.server.requests
-#        annotations:
-#          enabled: true
-# Configuration for exporting LLM traces to Langfuse (only set to true when in 'dev')
-#   langfuse:
-#       enabled: true
-#    tracing:
-#      sampling:
-#        probability: 1.0
-#    otlp:
-#      tracing:
-        # LangFuse accepts OTLP over HTTP at the traces path only
-#        endpoint: (example: https://langfuse.hephaestus.aet.cit.tum.de/api/public/otel/v1/traces)
-#        transport: http
-#        headers:
-          # Provide "Basic <base64(public_key:secret_key)>" via env var to avoid committing secrets
-#         Authorization: ""
-# Set export to false to filter out http requests
-#        export:
-#          enabled: false
-
-
-
 
 spring: #disabled by default, you must enable it
     ai:
