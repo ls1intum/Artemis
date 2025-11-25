@@ -55,13 +55,20 @@ public class SentryConfiguration {
             log.info("Sentry DSN: {}", dsn);
 
             // For more fine-grained control over what we want to sample, we define a custom traces sampler.
-            // By default, it returns null to instead use the tracesSampleRate (as specified per the Sentry documentation).
+            // By default, it uses getTracesSampleRate() as the sampling rate; tracesSampler overrides tracesSampleRate.
             // This filters out noise to enable us to focus on the transactions that actually impact Artemis functionality.
             SentryOptions.TracesSamplerCallback tracesSampler = samplingContext -> {
-                HttpServletRequest request = (HttpServletRequest) samplingContext.getCustomSamplingContext().get("request");
+                Object customSamplingRequest = samplingContext.getCustomSamplingContext().get("request");
+                double defaultSampleRate = getTracesSampleRate();
+
+                // Guard against other types of request; we want these to use defaultSampleRate
+                if (!(customSamplingRequest instanceof HttpServletRequest)) {
+                    return defaultSampleRate;
+                }
+                HttpServletRequest request = (HttpServletRequest) customSamplingRequest;
                 String url = request.getRequestURI();
                 String method = request.getMethod();
-                if (method.equals("HEAD")) {
+                if ("HEAD".equals(method)) {
                     // We're not interested in HEAD requests, so we just drop them (113 transactions per minute)
                     return 0.0;
                 }
@@ -86,7 +93,7 @@ public class SentryConfiguration {
                 }
 
                 // If the transaction did not have a parent, default to tracesSampleRate
-                return getTracesSampleRate();
+                return defaultSampleRate;
             };
 
             Sentry.init(options -> {
