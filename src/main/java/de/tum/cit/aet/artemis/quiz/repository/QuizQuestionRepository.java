@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.quiz.repository;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.Set;
 
@@ -41,40 +42,34 @@ public interface QuizQuestionRepository extends ArtemisJpaRepository<QuizQuestio
             """)
     Optional<DragAndDropQuestion> findDnDQuestionById(@Param("questionId") long questionId);
 
-    /**
-     * Finds all quiz question from a course that are open for practice.
-     *
-     * @param courseId of the course
-     * @param pageable pagination information
-     * @return a set of quiz questions
-     */
     @Query("""
             SELECT q
             FROM QuizQuestion q
-            WHERE q.exercise.course.id = :courseId AND q.exercise.isOpenForPractice = TRUE
+            WHERE q.exercise.course.id = :courseId AND q.exercise.dueDate IS NOT NULL AND q.exercise.dueDate < :now
             """)
-    Slice<QuizQuestion> findAllPracticeQuizQuestionsByCourseId(@Param("courseId") long courseId, Pageable pageable);
+    Slice<QuizQuestion> findAllQuizQuestionsByCourseIdWithDueDateBefore(@Param("courseId") long courseId, @Param("now") ZonedDateTime now, Pageable pageable);
 
     @Query("""
             SELECT q
             FROM QuizQuestion q
-            WHERE q.exercise.course.id = :courseId AND q.exercise.isOpenForPractice = TRUE AND q.id NOT IN (:ids)
+            WHERE q.exercise.course.id = :courseId AND q.exercise.dueDate IS NOT NULL AND q.exercise.dueDate < :now AND q.id NOT IN (:ids)
             """)
-    Slice<QuizQuestion> findAllDueQuestions(@Param("ids") Set<Long> ids, @Param("courseId") long courseId, Pageable pageable);
+    Slice<QuizQuestion> findAllQuizQuestionsByCourseIdWithDueDateBeforeNotIn(@Param("ids") Set<Long> ids, @Param("courseId") long courseId, @Param("now") ZonedDateTime now,
+            Pageable pageable);
 
     @Query("""
             SELECT COUNT(q) > 0
             FROM QuizQuestion q
-            WHERE q.exercise.course.id = :courseId AND q.exercise.isOpenForPractice = TRUE
+            WHERE q.exercise.course.id = :courseId and q.exercise.dueDate IS NOT NULL AND q.exercise.dueDate < :now
             """)
-    boolean areQuizQuestionsAvailableForPractice(@Param("courseId") long courseId);
+    boolean areQuizExercisesWithDueDateBefore(@Param("courseId") long courseId, @Param("now") ZonedDateTime now);
 
     @Query("""
             SELECT COUNT(q)
             FROM QuizQuestion q
-            WHERE q.exercise.course.id = :courseId AND q.exercise.isOpenForPractice = TRUE
+            WHERE q.exercise.course.id = :courseId and q.exercise.dueDate IS NOT NULL AND q.exercise.dueDate < :now
             """)
-    long countAllPracticeQuizQuestionsByCourseId(@Param("courseId") long courseId);
+    boolean countAllQuizQuestionsByCourseIdBefore(@Param("courseId") long courseId, @Param("now") ZonedDateTime now);
 
     default DragAndDropQuestion findDnDQuestionByIdOrElseThrow(Long questionId) {
         return getValueElseThrow(findDnDQuestionById(questionId), questionId);
