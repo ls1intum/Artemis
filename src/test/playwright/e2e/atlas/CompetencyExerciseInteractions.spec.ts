@@ -1,5 +1,5 @@
 import { test } from '../../support/fixtures';
-import { admin, studentOne, tutor } from '../../support/users';
+import { admin } from '../../support/users';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { expect } from '@playwright/test';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
