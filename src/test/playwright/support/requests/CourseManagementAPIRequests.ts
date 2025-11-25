@@ -277,4 +277,74 @@ export class CourseManagementAPIRequests {
         }
         return response.json();
     }
+
+    /**
+     * Creates a knowledge area via API.
+     *
+     * @param title - The title of the knowledge area.
+     * @param shortTitle - The short title of the knowledge area.
+     * @param description - The description of the knowledge area (optional).
+     * @returns Promise with the created knowledge area.
+     */
+    async createKnowledgeArea(title: string, shortTitle: string, description?: string) {
+        const data = {
+            title,
+            shortTitle,
+            description: description || `Description for ${title}`,
+        };
+        const response = await this.page.request.post('api/atlas/admin/standardized-competencies/knowledge-areas', { data });
+        if (!response.ok()) {
+            const errorBody = await response.text();
+            throw new Error(`Failed to create knowledge area: ${response.status()} ${response.statusText()} - ${errorBody}`);
+        }
+        return response.json();
+    }
+
+    /**
+     * Deletes a knowledge area via API.
+     *
+     * @param knowledgeAreaId - The ID of the knowledge area to be deleted.
+     */
+    async deleteKnowledgeArea(knowledgeAreaId: number) {
+        const response = await this.page.request.delete(`api/atlas/admin/standardized-competencies/knowledge-areas/${knowledgeAreaId}`);
+        if (!response.ok()) {
+            const errorBody = await response.text();
+            throw new Error(`Failed to delete knowledge area: ${response.status()} ${response.statusText()} - ${errorBody}`);
+        }
+    }
+
+    /**
+     * Creates a standardized competency via API.
+     *
+     * @param title - The title of the standardized competency.
+     * @param knowledgeAreaId - The ID of the knowledge area to which the competency belongs.
+     * @param description - The description of the standardized competency (optional).
+     * @returns Promise with the created standardized competency.
+     */
+    async createStandardizedCompetency(title: string, knowledgeAreaId: number, description?: string) {
+        const data = {
+            title,
+            description: description || `Description for ${title}`,
+            knowledgeAreaId,
+        };
+        const response = await this.page.request.post('api/atlas/admin/standardized-competencies', { data });
+        if (!response.ok()) {
+            const errorBody = await response.text();
+            throw new Error(`Failed to create standardized competency: ${response.status()} ${response.statusText()} - ${errorBody}`);
+        }
+        return response.json();
+    }
+
+    /**
+     * Deletes a standardized competency via API.
+     *
+     * @param competencyId - The ID of the standardized competency to be deleted.
+     */
+    async deleteStandardizedCompetency(competencyId: number) {
+        const response = await this.page.request.delete(`api/atlas/admin/standardized-competencies/${competencyId}`);
+        if (!response.ok()) {
+            const errorBody = await response.text();
+            throw new Error(`Failed to delete standardized competency: ${response.status()} ${response.statusText()} - ${errorBody}`);
+        }
+    }
 }
