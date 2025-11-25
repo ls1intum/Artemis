@@ -69,7 +69,7 @@ public interface QuizQuestionRepository extends ArtemisJpaRepository<QuizQuestio
             FROM QuizQuestion q
             WHERE q.exercise.course.id = :courseId and q.exercise.dueDate IS NOT NULL AND q.exercise.dueDate < :now
             """)
-    boolean countAllQuizQuestionsByCourseIdBefore(@Param("courseId") long courseId, @Param("now") ZonedDateTime now);
+    long countAllQuizQuestionsByCourseIdBefore(@Param("courseId") long courseId, @Param("now") ZonedDateTime now);
 
     default DragAndDropQuestion findDnDQuestionByIdOrElseThrow(Long questionId) {
         return getValueElseThrow(findDnDQuestionById(questionId), questionId);
