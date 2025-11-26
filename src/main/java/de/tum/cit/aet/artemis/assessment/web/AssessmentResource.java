@@ -138,10 +138,10 @@ public abstract class AssessmentResource {
         // as parameter resultId is not set, we use the latest Result, if no latest Result exists, we use null
         Result result;
         if (submission.getLatestResult() == null) {
-            result = assessmentService.saveManualAssessment(submission, feedbacks, null, null);
+            result = assessmentService.saveManualAssessment(submission, feedbacks, null, null, exercise.getId());
         }
         else {
-            result = assessmentService.saveManualAssessment(submission, feedbacks, submission.getLatestResult().getId(), null);
+            result = assessmentService.saveManualAssessment(submission, feedbacks, submission.getLatestResult().getId(), null, exercise.getId());
         }
         return resultRepository.submitResult(result, exercise);
     }

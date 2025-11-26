@@ -100,6 +100,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         manualResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         manualResult.rated(true);
         manualResult.setSubmission(programmingSubmission);
+        manualResult.setExerciseId(programmingExercise.getId());
 
     }
 
@@ -559,6 +560,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         manualLongFeedback.setDetailText(longText);
         var result = new Result().feedbacks(List.of(manualLongFeedback)).score(0.0);
         result.setRated(true);
+        result.setExerciseId(programmingExercise.getId());
         result = resultRepository.save(result);
 
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
@@ -579,6 +581,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         var longText = "abc".repeat(5000);
         manualLongFeedback.setDetailText(longText);
         var result = new Result().feedbacks(List.of(manualLongFeedback)).score(0.0).rated(true);
+        result.setExerciseId(programmingExercise.getId());
         result = resultRepository.save(result);
 
         var newLongText = "def".repeat(5000);
@@ -943,6 +946,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         initialResult.setAssessor(tutor1);
         initialResult.setHasComplaint(true);
         initialResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        initialResult.setExerciseId(programmingExercise.getId());
         initialResult = resultRepository.save(initialResult);
 
         programmingSubmission.addResult(initialResult);

@@ -12,8 +12,7 @@ import java.time.ZonedDateTime;
 import java.util.Map;
 import java.util.Optional;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -148,7 +147,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTe
         assertThat(programmingSubmission.getResults()).hasSize(1);
     }
 
-    @NotNull
+    @NonNull
     private StudentParticipation setupParticipation(ProgrammingExercise programmingExercise, User student, SubmissionType external) throws URISyntaxException {
         participationUtilService.mockCreationOfExerciseParticipation(false, null, programmingExercise, uriService, versionControlService, continuousIntegrationService);
         StudentParticipation participation = participationService.createParticipationWithEmptySubmissionIfNotExisting(programmingExercise, student, external);

@@ -16,9 +16,6 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
-import jakarta.annotation.Nullable;
-import jakarta.validation.constraints.NotNull;
-
 import org.eclipse.jgit.api.FetchCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.PushCommand;
@@ -26,6 +23,8 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.TransportException;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.transport.RefSpec;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -244,7 +243,7 @@ public class LocalVCLocalCITestService {
      * @param repositorySlug the repository slug of the repository.
      * @return the URL as string to the repository.
      */
-    public String buildLocalVCUri(@Nullable String username, @Nullable String password, @NotNull String projectKey, @NotNull String repositorySlug) {
+    public String buildLocalVCUri(@Nullable String username, @Nullable String password, @NonNull String projectKey, @NonNull String repositorySlug) {
         String userInfo = null;
 
         if (StringUtils.hasText(username)) {

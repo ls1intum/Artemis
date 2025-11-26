@@ -33,12 +33,11 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import jakarta.validation.constraints.NotNull;
-
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.json.JSONException;
+import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -1262,7 +1261,9 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
             var participation = exercise.getStudentParticipations().iterator().next();
             final var submission = createSubmission(exercise);
             if (submission != null) {
-                submission.addResult(new Result());
+                Result result = new Result();
+                result.setExerciseId(exercise.getId());
+                submission.addResult(result);
                 Set<Submission> submissions = new HashSet<>();
                 submissions.add(submission);
                 participation.setSubmissions(submissions);
@@ -1818,7 +1819,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         deleteExamWithInstructor(exam1);
     }
 
-    @NotNull
+    @NonNull
     private StudentExam createStudentExamWithResultsAndAssessments(boolean setFields, int numberOfStudents) throws Exception {
         StudentExam studentExam = prepareStudentExamsForConduction(false, setFields, numberOfStudents).getFirst();
         var exam = examRepository.findById(studentExam.getExam().getId()).orElseThrow();
@@ -2140,7 +2141,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         assertThat(studentExamGradeInfoFromServer.studentResult().gradeWithBonus().mostSeverePlagiarismVerdict()).isNull();
     }
 
-    @NotNull
+    @NonNull
     private Exam configureFinalExamWithBonusExam(StudentExam finalStudentExam, StudentExam bonusStudentExam, BonusStrategy bonusStrategy) {
         var finalExam = examRepository.findById(finalStudentExam.getExam().getId()).orElseThrow();
         var bonusExam = examRepository.findById(bonusStudentExam.getExam().getId()).orElseThrow();

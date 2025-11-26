@@ -1,4 +1,4 @@
-import { Component, input, output } from '@angular/core';
+import { Component, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -26,6 +26,9 @@ import {
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
 import { RouterLink, RouterLinkActive } from '@angular/router';
+import { LoginWithPasskeyModalComponent } from 'app/core/navbar/server-administration/login-with-passkey-modal/login-with-passkey-modal.component';
+import { AccountService } from 'app/core/auth/account.service';
+import { PasskeyAuthenticationGuard } from 'app/core/auth/passkey-authentication-guard/passkey-authentication.guard';
 
 @Component({
     selector: 'jhi-server-administration',
@@ -39,6 +42,7 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
         NgbDropdownToggle,
         RouterLinkActive,
         RouterLink,
+        LoginWithPasskeyModalComponent,
     ],
     templateUrl: './server-administration.component.html',
     styleUrl: '../navbar.scss',
@@ -64,6 +68,12 @@ export class ServerAdministrationComponent {
     protected readonly faUser = faUser;
     protected readonly faUserPlus = faUserPlus;
 
+    private readonly accountService = inject(AccountService);
+    private readonly isLoggedInWithPasskeyGuard = inject(PasskeyAuthenticationGuard);
+
+    adminMenuDropdown = viewChild.required<NgbDropdown>('adminMenuDropdown');
+    loginWithPasskeyModal = viewChild.required<LoginWithPasskeyModalComponent>(LoginWithPasskeyModalComponent);
+
     isExamActive = input<boolean>(false);
     isExamStarted = input<boolean>(false);
     localCIActive = input<boolean>(false);
@@ -75,7 +85,44 @@ export class ServerAdministrationComponent {
 
     collapseNavbarListener = output<void>();
 
+    private justLoggedInWithPasskey = signal(false);
+
+    constructor() {
+        effect(() => {
+            this.openDropdownIfUserLoggedInWithPasskey();
+        });
+    }
+
+    private openDropdownIfUserLoggedInWithPasskey() {
+        if (this.accountService.isLoggedInWithPasskey() && this.justLoggedInWithPasskey()) {
+            this.justLoggedInWithPasskey.set(false);
+
+            // Use setTimeout to wait for the next JavaScript tick (macrotask).
+            // This allows Angular to finish re-rendering the dropdown's
+            // new content *before* we try to open and position it.
+            setTimeout(() => {
+                this.adminMenuDropdown().open();
+            }, 0);
+        }
+    }
+
     collapseNavbar() {
         this.collapseNavbarListener.emit();
+    }
+
+    protected showModalForPasskeyLogin() {
+        if (!this.isLoggedInWithPasskeyGuard.shouldEnforcePasskeyForAdminFeatures()) {
+            return;
+        }
+        if (this.accountService.isUserLoggedInWithApprovedPasskey()) {
+            return;
+        }
+
+        this.adminMenuDropdown().close();
+        this.loginWithPasskeyModal().showModal = true;
+    }
+
+    onJustLoggedInWithPasskey(value: boolean) {
+        this.justLoggedInWithPasskey.set(value);
     }
 }
