@@ -199,51 +199,35 @@
                 JOIN numbered_course nc ON ns.rn = nc.rn;
             </sql>
 
-            <!-- MySQL: Restore course settings row by row using cursor-like approach -->
-            <sql dbms="mysql" splitStatements="false">
-                DROP PROCEDURE IF EXISTS restore_iris_settings;
-                CREATE PROCEDURE restore_iris_settings()
-                BEGIN
-                    DECLARE done INT DEFAULT FALSE;
-                    DECLARE v_course_id BIGINT;
-                    DECLARE v_enabled BOOLEAN;
-                    DECLARE v_rate_limit INT;
-                    DECLARE v_rate_limit_hours INT;
-                    DECLARE v_variant VARCHAR(100);
-                    DECLARE v_custom_instructions VARCHAR(2048);
-                    DECLARE v_sub_id BIGINT;
+            <!-- MySQL: Restore course settings - Step 1: Insert sub_settings with course_id as temp reference -->
+            <sql dbms="mysql">
+                INSERT INTO iris_sub_settings (enabled, rate_limit, rate_limit_timeframe_hours, selected_variant, custom_instructions, discriminator, auto_ingest_on_lecture_attachment_upload, auto_ingest_on_faq_creation)
+                SELECT
+                    JSON_EXTRACT(settings, '$.enabled') = true,
+                    JSON_EXTRACT(settings, '$.rateLimit.requests'),
+                    JSON_EXTRACT(settings, '$.rateLimit.timeframeHours'),
+                    JSON_UNQUOTE(JSON_EXTRACT(settings, '$.variant')),
+                    JSON_UNQUOTE(JSON_EXTRACT(settings, '$.customInstructions')),
+                    'CHAT',
+                    false,
+                    false
+                FROM course_iris_settings
+                ORDER BY course_id;
+            </sql>
 
-                    DECLARE cur CURSOR FOR
-                        SELECT
-                            course_id,
-                            JSON_EXTRACT(settings, '$.enabled') = true,
-                            JSON_EXTRACT(settings, '$.rateLimit.requests'),
-                            JSON_EXTRACT(settings, '$.rateLimit.timeframeHours'),
-                            JSON_UNQUOTE(JSON_EXTRACT(settings, '$.variant')),
-                            JSON_UNQUOTE(JSON_EXTRACT(settings, '$.customInstructions'))
-                        FROM course_iris_settings
-                        ORDER BY course_id;
-                    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
-
-                    OPEN cur;
-                    read_loop: LOOP
-                        FETCH cur INTO v_course_id, v_enabled, v_rate_limit, v_rate_limit_hours, v_variant, v_custom_instructions;
-                        IF done THEN
-                            LEAVE read_loop;
-                        END IF;
-
-                        INSERT INTO iris_sub_settings (enabled, rate_limit, rate_limit_timeframe_hours, selected_variant, custom_instructions, discriminator, auto_ingest_on_lecture_attachment_upload, auto_ingest_on_faq_creation)
-                        VALUES (v_enabled, v_rate_limit, v_rate_limit_hours, v_variant, v_custom_instructions, 'CHAT', false, false);
-
-                        SET v_sub_id = LAST_INSERT_ID();
-
-                        INSERT INTO iris_settings (iris_chat_settings_id, discriminator, course_id)
-                        VALUES (v_sub_id, 'COURSE', v_course_id);
-                    END LOOP;
-                    CLOSE cur;
-                END;
-                CALL restore_iris_settings();
-                DROP PROCEDURE restore_iris_settings;
+            <!-- MySQL: Restore course settings - Step 2: Insert iris_settings by matching row numbers -->
+            <sql dbms="mysql">
+                INSERT INTO iris_settings (iris_chat_settings_id, discriminator, course_id)
+                SELECT sub.id, 'COURSE', cis.course_id
+                FROM (
+                    SELECT id, ROW_NUMBER() OVER (ORDER BY id) as rn
+                    FROM iris_sub_settings
+                    WHERE discriminator = 'CHAT'
+                ) sub
+                JOIN (
+                    SELECT course_id, ROW_NUMBER() OVER (ORDER BY course_id) as rn
+                    FROM course_iris_settings
+                ) cis ON sub.rn = cis.rn;
             </sql>
 
             <dropTable tableName="course_iris_settings"/>
