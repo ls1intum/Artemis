@@ -44,7 +44,6 @@ import de.tum.cit.aet.artemis.quiz.domain.DragItem;
 import de.tum.cit.aet.artemis.quiz.domain.DropLocation;
 import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceSubmittedAnswer;
-import de.tum.cit.aet.artemis.quiz.domain.QuizBatch;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
@@ -368,19 +367,6 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
         // TODO: add additional checks that may be beneficial
         // for example it is possible for students that are not members of the course to submit the quiz
         // but for performance reasons the checks may have to be done in the quiz submission service where no feedback for the students can be generated
-    }
-
-    /**
-     * Returns true if student has submitted at least once for the given quiz batch
-     *
-     * @param quizBatch the quiz batch of interest to check if submission exists
-     * @param login     the student of interest to check if submission exists
-     * @return boolean the submission status of student for the given quiz batch
-     */
-    public boolean hasUserSubmitted(QuizBatch quizBatch, String login) {
-        Set<QuizSubmission> submissions = quizSubmissionRepository.findAllByQuizBatchAndStudentLogin(quizBatch.getId(), login);
-        Optional<QuizSubmission> submission = submissions.stream().findFirst();
-        return submission.map(QuizSubmission::isSubmitted).orElse(false);
     }
 
     /**

@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
-import { Authority } from 'app/shared/constants/authority.constants';
+import { IS_AT_LEAST_EDITOR, IS_AT_LEAST_TUTOR } from 'app/shared/constants/authority.constants';
 import { TextExerciseResolver } from 'app/text/manage/text-exercise/service/text-exercise-resolver.service';
 
 export const textExerciseRoute: Routes = [
@@ -11,7 +11,7 @@ export const textExerciseRoute: Routes = [
             textExercise: TextExerciseResolver,
         },
         data: {
-            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_EDITOR,
             pageTitle: 'artemisApp.textExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -27,7 +27,7 @@ export const textExerciseRoute: Routes = [
             textExercise: TextExerciseResolver,
         },
         data: {
-            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_EDITOR,
             pageTitle: 'artemisApp.textExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -39,7 +39,7 @@ export const textExerciseRoute: Routes = [
             textExercise: TextExerciseResolver,
         },
         data: {
-            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_EDITOR,
             pageTitle: 'artemisApp.textExercise.home.importLabel',
         },
         canActivate: [UserRouteAccessService],
@@ -51,7 +51,7 @@ export const textExerciseRoute: Routes = [
             exercise: TextExerciseResolver,
         },
         data: {
-            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_EDITOR,
             pageTitle: 'artemisApp.plagiarism.plagiarismDetection',
         },
         canActivate: [UserRouteAccessService],
@@ -63,7 +63,7 @@ export const textExerciseRoute: Routes = [
             exercise: TextExerciseResolver,
         },
         data: {
-            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_EDITOR,
             pageTitle: 'artemisApp.exampleSubmission.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -79,7 +79,7 @@ export const textExerciseRoute: Routes = [
             exercise: TextExerciseResolver,
         },
         data: {
-            authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_TUTOR,
             pageTitle: 'exercise-statistics.title',
         },
         canActivate: [UserRouteAccessService],
