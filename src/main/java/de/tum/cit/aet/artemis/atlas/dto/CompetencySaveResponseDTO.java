@@ -12,5 +12,5 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * Supports partial success scenarios where some competencies succeed and others fail.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record CompetencySaveResponseDTO(int created, int updated, int failed, @Nullable List<CompetencyError> errors) {
+public record CompetencySaveResponseDTO(int created, int updated, int failed, @Nullable List<CompetencyErrorDTO> errors) {
 }

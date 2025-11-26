@@ -62,7 +62,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
                 }
                 history.forEach((msg) => {
                     if (msg.competencyPreviews && msg.competencyPreviews.length > 0) {
-                        this.addMessageWithPreview(msg.content, msg.isUser, msg.competencyPreviews);
+                        this.addMessage(msg.content, msg.isUser, msg.competencyPreviews);
                     } else {
                         this.addMessage(msg.content, msg.isUser);
                     }
@@ -108,7 +108,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
             next: (response) => {
                 this.isAgentTyping.set(false);
 
-                this.addMessageWithPreview(response.message || this.translateService.instant('artemisApp.agent.chat.error'), false, response.competencyPreviews);
+                this.addMessage(response.message || this.translateService.instant('artemisApp.agent.chat.error'), false, response.competencyPreviews);
 
                 if (response.competenciesModified) {
                     this.competencyChanged.emit();
@@ -250,22 +250,11 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
         });
     }
 
-    private addMessage(content: string, isUser: boolean): void {
-        const message: ChatMessage = {
-            id: this.generateMessageId(),
-            content,
-            isUser,
-            timestamp: new Date(),
-        };
-
-        this.finalizeMessage(message, isUser);
-    }
-
     /**
-     * Add a message with structured preview data from the server.
-     * This method receives clean preview data as a list of CompetencyPreviewResponse DTOs.
+     * Adds a message to the chat with optional competency preview data.
+     * Handles plan pending markers, preview data mapping, and automatic scrolling.
      */
-    private addMessageWithPreview(content: string, isUser: boolean, competencyPreviews?: { competency: CompetencyPreview; competencyId?: number; viewOnly?: boolean }[]): void {
+    private addMessage(content: string, isUser: boolean, competencyPreviews?: { competency: CompetencyPreview; competencyId?: number; viewOnly?: boolean }[]): void {
         const message: ChatMessage = {
             id: this.generateMessageId(),
             content,
@@ -273,8 +262,8 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
             timestamp: new Date(),
         };
 
+        // Map preview data if provided
         if (competencyPreviews && competencyPreviews.length > 0) {
-            // Unified handling - map to competencyPreviews array
             message.competencyPreviews = competencyPreviews.map((preview) => ({
                 ...preview.competency,
                 competencyId: preview.competencyId,
@@ -282,16 +271,6 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
             }));
         }
 
-        this.finalizeMessage(message, isUser);
-    }
-
-    /**
-     * Finalizes a message before displaying it:
-     * - Detects plan approval markers
-     * - Appends it to the message list
-     * - Marks for scroll
-     */
-    private finalizeMessage(message: ChatMessage, isUser: boolean): void {
         // Detect [PLAN_PENDING] markers and clean message text
         if (!isUser) {
             const cleanedContent = this.removePlanPendingMarkerFromMessageContent(message.content);

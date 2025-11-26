@@ -22,7 +22,7 @@ import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
 import de.tum.cit.aet.artemis.atlas.dto.AtlasAgentCompetencyDTO;
-import de.tum.cit.aet.artemis.atlas.dto.CompetencyError;
+import de.tum.cit.aet.artemis.atlas.dto.CompetencyErrorDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyPreviewDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyPreviewResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencySaveResponseDTO;
@@ -341,7 +341,7 @@ public class CompetencyExpertToolsService {
         }
 
         Course course = courseOptional.get();
-        List<CompetencyError> errors = new ArrayList<>();
+        List<CompetencyErrorDTO> errors = new ArrayList<>();
         List<CompetencyOperation> successfulOperations = new ArrayList<>();
         int createCount = 0;
         int updateCount = 0;
@@ -351,19 +351,19 @@ public class CompetencyExpertToolsService {
                 // Validate and normalize title once before using it
                 String rawTitle = comp.getTitle();
                 if (rawTitle == null) {
-                    errors.add(new CompetencyError(null, "MISSING_TITLE", null));
+                    errors.add(new CompetencyErrorDTO(null, "MISSING_TITLE", null));
                     continue;
                 }
 
                 String sanitizedTitle = rawTitle.trim();
                 if (sanitizedTitle.isBlank()) {
-                    errors.add(new CompetencyError(null, "EMPTY_TITLE", null));
+                    errors.add(new CompetencyErrorDTO(null, "EMPTY_TITLE", null));
                     continue;
                 }
 
                 // Validate taxonomy to prevent NPE during preview generation
                 if (comp.getTaxonomy() == null) {
-                    errors.add(new CompetencyError(sanitizedTitle, "MISSING_TAXONOMY", null));
+                    errors.add(new CompetencyErrorDTO(sanitizedTitle, "MISSING_TAXONOMY", null));
                     continue;
                 }
 
@@ -383,7 +383,7 @@ public class CompetencyExpertToolsService {
                     // Update existing competency
                     Optional<Competency> existing = competencyRepository.findById(comp.getCompetencyId());
                     if (existing.isEmpty()) {
-                        errors.add(new CompetencyError(sanitizedTitle, "NOT_FOUND", "ID: " + comp.getCompetencyId()));
+                        errors.add(new CompetencyErrorDTO(sanitizedTitle, "NOT_FOUND", "ID: " + comp.getCompetencyId()));
                         continue;
                     }
 
@@ -401,7 +401,7 @@ public class CompetencyExpertToolsService {
             catch (Exception e) {
                 // Use sanitized title if available, otherwise use a placeholder for error message
                 String titleForError = comp.getTitle() != null ? comp.getTitle().trim() : null;
-                errors.add(new CompetencyError(titleForError, "SAVE_FAILED", e.getMessage()));
+                errors.add(new CompetencyErrorDTO(titleForError, "SAVE_FAILED", e.getMessage()));
             }
         }
 

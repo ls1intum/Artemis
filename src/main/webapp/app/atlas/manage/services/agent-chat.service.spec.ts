@@ -51,20 +51,16 @@ describe('AgentChatService', () => {
 
     describe('sendMessage', () => {
         const courseId = 123;
-        const userId = 42;
         const message = 'Test message';
         const expectedUrl = `api/atlas/agent/courses/${courseId}/chat`;
         const expectedRequestBody = {
             message,
-            sessionId: `course_${courseId}_user_${userId}`,
         };
 
         it('should return AgentChatResponse from successful HTTP response', () => {
             const mockResponse = {
                 message: 'Agent response message',
-                sessionId: `course_${courseId}_user_${userId}`,
                 timestamp: '2024-01-01T00:00:00Z',
-                success: true,
                 competenciesModified: false,
             };
             let result: any;
@@ -96,7 +92,6 @@ describe('AgentChatService', () => {
 
             expect(translateService.instant).toHaveBeenCalledWith('artemisApp.agent.chat.error');
             expect(result.message).toBe(fallbackMessage);
-            expect(result.success).toBeFalse();
         });
 
         it('should use catchError operator properly on network failure', () => {
@@ -120,7 +115,6 @@ describe('AgentChatService', () => {
             // Verify catchError worked - no error thrown, fallback response returned
             expect(errorOccurred).toBeFalse();
             expect(result.message).toBe(fallbackMessage);
-            expect(result.success).toBeFalse();
             expect(translateService.instant).toHaveBeenCalledWith('artemisApp.agent.chat.error');
         });
 
@@ -145,55 +139,9 @@ describe('AgentChatService', () => {
 
                 // Assert - timeout should trigger catchError which returns fallback response
                 expect(result).toBeDefined();
-                expect(result.success).toBeFalse();
                 expect(result.competenciesModified).toBeFalse();
                 expect(translateService.instant).toHaveBeenCalledWith('artemisApp.agent.chat.error');
             }));
-        });
-
-        describe('sessionId generation', () => {
-            const courseId = 456;
-            const message = 'Test';
-
-            it('should generate sessionId with valid userId', () => {
-                accountService.userIdentity.set({ id: 42, login: 'testuser' } as User);
-                const expectedSessionId = 'course_456_user_42';
-
-                service.sendMessage(message, courseId).subscribe();
-
-                const req = httpMock.expectOne(`api/atlas/agent/courses/${courseId}/chat`);
-
-                expect(req.request.body.sessionId).toBe(expectedSessionId);
-                req.flush({
-                    message: 'response',
-                    sessionId: expectedSessionId,
-                    timestamp: '2024-01-01T00:00:00Z',
-                    success: true,
-                    competenciesModified: false,
-                });
-            });
-
-            it('should return error response when userIdentity is undefined', () => {
-                accountService.userIdentity.set(undefined);
-
-                let result: any;
-                service.sendMessage(message, courseId).subscribe((response) => {
-                    result = response;
-                });
-                expect(result.message).toBe(mockTranslateService.instant('artemisApp.agent.chat.authentication'));
-                expect(result.success).toBeFalse();
-            });
-
-            it('should return error response when userIdentity.id is undefined', () => {
-                accountService.userIdentity.set({ id: undefined, login: 'testuser' } as User);
-
-                let result: any;
-                service.sendMessage(message, courseId).subscribe((response) => {
-                    result = response;
-                });
-                expect(result.message).toBe(mockTranslateService.instant('artemisApp.agent.chat.authentication'));
-                expect(result.success).toBeFalse();
-            });
         });
 
         describe('HTTP request details', () => {
@@ -210,9 +158,7 @@ describe('AgentChatService', () => {
                 expect(req.request.method).toBe('POST');
                 req.flush({
                     message: 'response',
-                    sessionId: 'test',
                     timestamp: '2024-01-01T00:00:00Z',
-                    success: true,
                     competenciesModified: false,
                 });
             });
@@ -226,14 +172,11 @@ describe('AgentChatService', () => {
 
                 expect(req.request.body).toEqual({
                     message: 'Test message',
-                    sessionId: 'course_789_user_99',
                 });
 
                 req.flush({
                     message: 'response',
-                    sessionId: 'course_789_user_99',
                     timestamp: '2024-01-01T00:00:00Z',
-                    success: true,
                     competenciesModified: false,
                 });
             });
@@ -259,9 +202,7 @@ describe('AgentChatService', () => {
 
                 expect(result).toBeDefined();
                 expect(result.message).toBe('Translated error message');
-                expect(result.success).toBeFalse();
                 expect(result.competenciesModified).toBeFalse();
-                expect(result.sessionId).toBe('course_111_user_55');
                 expect(mockTranslateService.instant).toHaveBeenCalledWith('artemisApp.agent.chat.error');
             });
 
@@ -298,7 +239,6 @@ describe('AgentChatService', () => {
                 const req = httpMock.expectOne(`api/atlas/agent/courses/${courseId}/chat`);
                 req.flush({ error: 'Invalid request' }, { status: 400, statusText: 'Bad Request' });
 
-                expect(result.success).toBeFalse();
                 expect(result.message).toBe('Bad request error');
             });
 
@@ -315,7 +255,6 @@ describe('AgentChatService', () => {
                 const req = httpMock.expectOne(`api/atlas/agent/courses/${courseId}/chat`);
                 req.flush({ error: 'Forbidden' }, { status: 403, statusText: 'Forbidden' });
 
-                expect(result.success).toBeFalse();
                 expect(result.message).toBe('Access denied');
             });
 
@@ -332,7 +271,6 @@ describe('AgentChatService', () => {
                 const req = httpMock.expectOne(`api/atlas/agent/courses/${courseId}/chat`);
                 req.flush({ error: 'Not found' }, { status: 404, statusText: 'Not Found' });
 
-                expect(result.success).toBeFalse();
                 expect(result.message).toBe('Resource not found');
             });
 
@@ -349,7 +287,6 @@ describe('AgentChatService', () => {
                 const req = httpMock.expectOne(`api/atlas/agent/courses/${courseId}/chat`);
                 req.flush({ error: 'Service unavailable' }, { status: 503, statusText: 'Service Unavailable' });
 
-                expect(result.success).toBeFalse();
                 expect(result.message).toBe('Service unavailable');
             });
         });
@@ -361,9 +298,7 @@ describe('AgentChatService', () => {
             it('should handle response with competenciesModified as true', () => {
                 const mockResponse = {
                     message: 'Competencies updated',
-                    sessionId: 'course_222_user_42',
                     timestamp: '2024-01-01T12:00:00Z',
-                    success: true,
                     competenciesModified: true,
                 };
                 let result: any;
@@ -377,7 +312,6 @@ describe('AgentChatService', () => {
 
                 expect(result).toEqual(mockResponse);
                 expect(result.competenciesModified).toBeTrue();
-                expect(result.success).toBeTrue();
             });
         });
 
@@ -591,7 +525,14 @@ describe('AgentChatService', () => {
                     batchCompetencyPreview: {
                         batchPreview: true,
                         count: 1,
-                        competencies: [{ title: 'Batch Comp', description: 'Batch desc', taxonomy: 'ANALYZE', icon: 'magnifying-glass' }],
+                        competencies: [
+                            {
+                                title: 'Batch Comp',
+                                description: 'Batch desc',
+                                taxonomy: 'ANALYZE',
+                                icon: 'magnifying-glass',
+                            },
+                        ],
                     },
                 },
             ];
@@ -727,52 +668,6 @@ describe('AgentChatService', () => {
 
             expect(result[1].batchCompetencyPreview.count).toBe(0);
             expect(result[1].batchCompetencyPreview.competencies).toHaveLength(0);
-        });
-    });
-
-    describe('getSessionId', () => {
-        it('should generate sessionId correctly with valid user', () => {
-            accountService.userIdentity.set({ id: 42, login: 'testuser' } as User);
-            const courseId = 123;
-
-            const sessionId = service.getSessionId(courseId);
-
-            expect(sessionId).toBe('course_123_user_42');
-        });
-
-        it('should generate different sessionId for different courseId', () => {
-            accountService.userIdentity.set({ id: 42, login: 'testuser' } as User);
-
-            const sessionId1 = service.getSessionId(100);
-            const sessionId2 = service.getSessionId(200);
-
-            expect(sessionId1).toBe('course_100_user_42');
-            expect(sessionId2).toBe('course_200_user_42');
-        });
-
-        it('should generate different sessionId for different userId', () => {
-            const courseId = 123;
-
-            accountService.userIdentity.set({ id: 10, login: 'user1' } as User);
-            const sessionId1 = service.getSessionId(courseId);
-
-            accountService.userIdentity.set({ id: 20, login: 'user2' } as User);
-            const sessionId2 = service.getSessionId(courseId);
-
-            expect(sessionId1).toBe('course_123_user_10');
-            expect(sessionId2).toBe('course_123_user_20');
-        });
-
-        it('should throw error when userIdentity is undefined', () => {
-            accountService.userIdentity.set(undefined);
-
-            expect(() => service.getSessionId(123)).toThrow(mockTranslateService.instant('artemisApp.agent.chat.authentication'));
-        });
-
-        it('should throw error when userIdentity.id is undefined', () => {
-            accountService.userIdentity.set({ id: undefined, login: 'testuser' } as User);
-
-            expect(() => service.getSessionId(123)).toThrow(mockTranslateService.instant('artemisApp.agent.chat.authentication'));
         });
     });
 });
