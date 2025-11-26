@@ -170,6 +170,7 @@ public class IrisSettingsService {
      * Shortcut to fetch a course by id and return the settings.
      *
      * @param courseId the course id
+     * @return the Iris settings for the course
      */
     public IrisCourseSettingsDTO getSettingsForCourseOrThrow(long courseId) {
         courseRepository.findByIdElseThrow(courseId);
@@ -177,9 +178,9 @@ public class IrisSettingsService {
     }
 
     /**
-     * Returns the settings associated with an exercise.
+     * Returns the application-level default rate limit configuration.
      *
-     * @param exercise the exercise
+     * @return the default rate limit configuration from application properties
      */
     @Transactional(readOnly = true)
     public IrisRateLimitConfiguration getApplicationRateLimitDefaults() {
@@ -196,7 +197,7 @@ public class IrisSettingsService {
 
     private IrisRateLimitConfiguration sanitizeRateLimit(IrisRateLimitConfiguration rateLimit) {
         if (rateLimit == null) {
-            return IrisRateLimitConfiguration.empty();
+            return null; // null = use defaults, non-null = explicit override
         }
         var sanitizedRequests = sanitizeRateLimitValue(rateLimit.requests(), "irisRateLimitRequestsInvalid");
         var sanitizedTimeframe = sanitizeRateLimitValue(rateLimit.timeframeHours(), "irisRateLimitTimeframeInvalid");
@@ -215,27 +216,18 @@ public class IrisSettingsService {
 
     private IrisRateLimitConfiguration resolveEffectiveRateLimit(IrisCourseSettingsDTO settings, IrisRateLimitConfiguration defaults) {
         Objects.requireNonNull(settings, "settings must not be null");
-        var overrides = Objects.requireNonNullElse(settings.rateLimit(), IrisRateLimitConfiguration.empty());
         defaults = Objects.requireNonNullElse(defaults, IrisRateLimitConfiguration.empty());
 
-        Integer overrideRequests = nullIfNonPositive(overrides.requests());
-        Integer overrideTimeframe = nullIfNonPositive(overrides.timeframeHours());
-        Integer defaultRequests = nullIfNonPositive(defaults.requests());
-        Integer defaultTimeframe = nullIfNonPositive(defaults.timeframeHours());
+        // null rateLimit = no override, use defaults
+        if (settings.rateLimit() == null) {
+            return defaults;
+        }
 
-        Integer requests = overrideRequests != null ? overrideRequests : defaultRequests;
-        Integer timeframe = overrideTimeframe != null ? overrideTimeframe : defaultTimeframe;
-        return new IrisRateLimitConfiguration(requests, timeframe);
+        // Non-null rateLimit = explicit override (null values inside = unlimited)
+        return settings.rateLimit();
     }
 
     private Integer nullIfNonPositive(int value) {
-        return value <= 0 ? null : value;
-    }
-
-    private Integer nullIfNonPositive(Integer value) {
-        if (value == null) {
-            return null;
-        }
         return value <= 0 ? null : value;
     }
 }

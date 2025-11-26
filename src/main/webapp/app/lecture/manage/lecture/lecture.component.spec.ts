@@ -327,7 +327,7 @@ describe('Lecture', () => {
             settings: {
                 enabled: true,
                 customInstructions: '',
-                variant: 'DEFAULT',
+                variant: 'default',
                 rateLimit: { requests: 100, timeframeHours: 24 },
             },
             effectiveRateLimit: { requests: 100, timeframeHours: 24 },

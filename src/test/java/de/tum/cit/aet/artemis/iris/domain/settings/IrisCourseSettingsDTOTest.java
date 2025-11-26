@@ -17,7 +17,8 @@ class IrisCourseSettingsDTOTest {
 
         assertThat(dto.customInstructions()).isEqualTo("trimmed text");
         assertThat(dto.variant()).isEqualTo(IrisPipelineVariant.DEFAULT);
-        assertThat(dto.rateLimit()).isEqualTo(IrisRateLimitConfiguration.empty());
+        // null rateLimit is preserved (means "use defaults"), not converted to empty()
+        assertThat(dto.rateLimit()).isNull();
     }
 
     @Test

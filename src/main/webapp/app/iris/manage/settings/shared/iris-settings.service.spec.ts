@@ -14,7 +14,7 @@ describe('Iris Settings Service', () => {
         settings: {
             enabled: true,
             customInstructions: 'Test instructions',
-            variant: 'DEFAULT',
+            variant: 'default',
             rateLimit: { requests: 100, timeframeHours: 24 },
         },
         effectiveRateLimit: { requests: 100, timeframeHours: 24 },
@@ -24,7 +24,7 @@ describe('Iris Settings Service', () => {
     const mockUpdateSettings: IrisCourseSettingsDTO = {
         enabled: false,
         customInstructions: 'Updated instructions',
-        variant: 'ADVANCED',
+        variant: 'advanced',
         rateLimit: { requests: 200, timeframeHours: 48 },
     };
 
@@ -177,8 +177,8 @@ describe('Iris Settings Service', () => {
                 .pipe(take(1))
                 .subscribe((variants) => {
                     expect(variants).toHaveLength(2);
-                    expect(variants[0]).toEqual({ id: 'DEFAULT' });
-                    expect(variants[1]).toEqual({ id: 'ADVANCED' });
+                    expect(variants[0]).toBe('default');
+                    expect(variants[1]).toBe('advanced');
                 });
             tick();
             // No HTTP request should be made

@@ -4,6 +4,7 @@ import { CourseIrisSettingsDTO, IrisCourseSettingsDTO } from 'app/iris/shared/en
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { of, throwError } from 'rxjs';
 import { MockJhiTranslateDirective } from 'test/helpers/mocks/directive/mock-jhi-translate-directive.directive';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
@@ -25,7 +26,7 @@ describe('IrisSettingsUpdateComponent', () => {
     const mockSettings: IrisCourseSettingsDTO = {
         enabled: true,
         customInstructions: 'Test instructions',
-        variant: 'DEFAULT',
+        variant: 'default',
         rateLimit: { requests: 100, timeframeHours: 24 },
     };
 
@@ -36,11 +37,11 @@ describe('IrisSettingsUpdateComponent', () => {
         applicationRateLimitDefaults: { requests: 50, timeframeHours: 12 },
     };
 
-    const mockVariants = ['DEFAULT', 'ADVANCED'];
+    const mockVariants = ['default', 'advanced'];
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [MockJhiTranslateDirective, IrisSettingsUpdateComponent],
+            imports: [MockJhiTranslateDirective, IrisSettingsUpdateComponent, FaIconComponent],
             declarations: [MockPipe(ArtemisTranslatePipe), MockComponent(ButtonComponent)],
             providers: [
                 MockProvider(IrisSettingsService),
@@ -85,10 +86,29 @@ describe('IrisSettingsUpdateComponent', () => {
             expect(getCourseSettingsSpy).toHaveBeenCalledWith(1);
             expect(getVariantsSpy).toHaveBeenCalledOnce();
             expect(component.settings).toEqual(mockSettings);
+            expect(component.rateLimitRequests).toBe(100);
+            expect(component.rateLimitTimeframeHours).toBe(24);
             expect(component.effectiveRateLimit).toEqual({ requests: 100, timeframeHours: 24 });
             expect(component.applicationDefaults).toEqual({ requests: 50, timeframeHours: 12 });
             expect(component.availableVariants).toEqual(mockVariants);
             expect(component.isDirty).toBeFalse();
+        }));
+
+        it('should handle null rateLimit from server', fakeAsync(() => {
+            const nullRateLimitResponse: CourseIrisSettingsDTO = {
+                courseId: 1,
+                settings: { enabled: true, variant: 'default', rateLimit: undefined as any },
+                effectiveRateLimit: { requests: 50, timeframeHours: 12 },
+                applicationRateLimitDefaults: { requests: 50, timeframeHours: 12 },
+            };
+            jest.spyOn(irisSettingsService, 'getCourseSettings').mockReturnValue(of(nullRateLimitResponse));
+            component.courseId = 1;
+
+            component.ngOnInit();
+            tick();
+
+            expect(component.rateLimitRequests).toBeUndefined();
+            expect(component.rateLimitTimeframeHours).toBeUndefined();
         }));
 
         it('should set isAdmin based on account service', () => {
@@ -166,24 +186,65 @@ describe('IrisSettingsUpdateComponent', () => {
             fixture.detectChanges();
         });
 
-        it('should save settings as admin', fakeAsync(() => {
+        it('should save settings as admin with rate limit from form fields', fakeAsync(() => {
             jest.spyOn(accountService, 'isAdmin').mockReturnValue(true);
             component.isAdmin = true;
             const updateSpy = jest.spyOn(irisSettingsService, 'updateCourseSettings').mockReturnValue(of(new HttpResponse({ body: mockResponse })));
             const alertSpy = jest.spyOn(alertService, 'success');
             tick();
 
-            const updatedSettings = { ...mockSettings, enabled: false };
-            component.settings = updatedSettings;
+            // Modify form fields (use spread to avoid mutating shared mock)
+            component.settings = { ...component.settings!, enabled: false };
+            component.rateLimitRequests = 200;
+            component.rateLimitTimeframeHours = 48;
 
             component.saveSettings();
             tick();
 
             expect(updateSpy).toHaveBeenCalledOnce();
-            expect(updateSpy).toHaveBeenCalledWith(1, updatedSettings);
+            const savedSettings = updateSpy.mock.calls[0][1];
+            expect(savedSettings.enabled).toBeFalse();
+            expect(savedSettings.rateLimit).toEqual({ requests: 200, timeframeHours: 48 });
             expect(alertSpy).toHaveBeenCalledWith('artemisApp.iris.settings.success');
             expect(component.isDirty).toBeFalse();
             expect(component.isSaving).toBeFalse();
+        }));
+
+        it('should send undefined rateLimit when both fields are cleared (revert to defaults)', fakeAsync(() => {
+            // Course already has explicit rate limits from mockSettings
+            jest.spyOn(accountService, 'isAdmin').mockReturnValue(true);
+            component.isAdmin = true;
+            const updateSpy = jest.spyOn(irisSettingsService, 'updateCourseSettings').mockReturnValue(of(new HttpResponse({ body: mockResponse })));
+            tick();
+
+            // Admin clears both fields to revert to application defaults
+            component.rateLimitRequests = undefined;
+            component.rateLimitTimeframeHours = undefined;
+
+            component.saveSettings();
+            tick();
+
+            // Should send undefined rateLimit to use application defaults
+            const savedSettings = updateSpy.mock.calls[0][1];
+            expect(savedSettings.rateLimit).toBeUndefined();
+        }));
+
+        it('should send rateLimit object when admin enters values', fakeAsync(() => {
+            jest.spyOn(accountService, 'isAdmin').mockReturnValue(true);
+            component.isAdmin = true;
+            const updateSpy = jest.spyOn(irisSettingsService, 'updateCourseSettings').mockReturnValue(of(new HttpResponse({ body: mockResponse })));
+            tick();
+
+            // Admin enters explicit values
+            component.rateLimitRequests = 200;
+            component.rateLimitTimeframeHours = 48;
+
+            component.saveSettings();
+            tick();
+
+            // Should send explicit rateLimit object
+            const savedSettings = updateSpy.mock.calls[0][1];
+            expect(savedSettings.rateLimit).toEqual({ requests: 200, timeframeHours: 48 });
         }));
 
         it('should not allow non-admins to change variant', fakeAsync(() => {
@@ -193,14 +254,14 @@ describe('IrisSettingsUpdateComponent', () => {
             tick();
 
             // Try to change variant as non-admin
-            component.settings = { ...mockSettings, variant: 'ADVANCED' };
+            component.settings = { ...mockSettings, variant: 'advanced' };
 
             component.saveSettings();
             tick();
 
             // Variant should be restored to original
             const callArgs = updateSpy.mock.calls[0];
-            expect(callArgs[1].variant).toBe('DEFAULT');
+            expect(callArgs[1].variant).toBe('default');
         }));
 
         it('should not allow non-admins to change rate limits', fakeAsync(() => {
@@ -209,13 +270,14 @@ describe('IrisSettingsUpdateComponent', () => {
             const updateSpy = jest.spyOn(irisSettingsService, 'updateCourseSettings').mockReturnValue(of(new HttpResponse({ body: mockResponse })));
             tick();
 
-            // Try to change rate limits as non-admin
-            component.settings = { ...mockSettings, rateLimit: { requests: 200, timeframeHours: 48 } };
+            // Try to change rate limits as non-admin (even though UI shouldn't show these fields)
+            component.rateLimitRequests = 200;
+            component.rateLimitTimeframeHours = 48;
 
             component.saveSettings();
             tick();
 
-            // Rate limits should be restored to original
+            // Rate limits should be restored to original from originalSettings
             const callArgs = updateSpy.mock.calls[0];
             expect(callArgs[1].rateLimit).toEqual({ requests: 100, timeframeHours: 24 });
         }));
@@ -268,18 +330,52 @@ describe('IrisSettingsUpdateComponent', () => {
     });
 
     describe('setEnabled', () => {
-        it('should toggle enabled state', () => {
-            component.settings = { ...mockSettings, enabled: true };
+        beforeEach(fakeAsync(() => {
+            component.courseId = 1;
+            component.ngOnInit();
+            tick();
+        }));
+
+        it('should toggle enabled state and auto-save', fakeAsync(() => {
+            const updateSpy = jest
+                .spyOn(irisSettingsService, 'updateCourseSettings')
+                .mockReturnValue(of(new HttpResponse({ body: { ...mockResponse, settings: { ...mockSettings, enabled: false } } })));
 
             component.setEnabled(false);
-            expect(component.settings.enabled).toBeFalse();
+            tick();
 
+            expect(component.settings!.enabled).toBeFalse();
+            expect(updateSpy).toHaveBeenCalledOnce();
+        }));
+
+        it('should not call save if enabled state is unchanged', fakeAsync(() => {
+            const updateSpy = jest.spyOn(irisSettingsService, 'updateCourseSettings');
+
+            // Settings start as enabled: true
             component.setEnabled(true);
-            expect(component.settings.enabled).toBeTrue();
-        });
+            tick();
+
+            expect(updateSpy).not.toHaveBeenCalled();
+        }));
+
+        it('should revert on error', fakeAsync(() => {
+            // Need to re-mock after beforeEach already loaded settings
+            jest.spyOn(irisSettingsService, 'updateCourseSettings').mockReturnValue(throwError(() => new Error('Save failed')));
+
+            // Verify initial state is enabled: true
+            expect(component.settings!.enabled).toBeTrue();
+
+            component.setEnabled(false);
+            tick();
+
+            // Should revert back to true on error
+            expect(component.settings!.enabled).toBeTrue();
+        }));
 
         it('should do nothing if settings are undefined', () => {
+            // Reset component state to test undefined case
             component.settings = undefined;
+            component['originalSettings'] = undefined;
             expect(() => component.setEnabled(true)).not.toThrow();
         });
     });
@@ -312,8 +408,8 @@ describe('IrisSettingsUpdateComponent', () => {
 
             expect(component.isDirty).toBeFalse();
 
-            // Make a change
-            component.settings!.enabled = false;
+            // Make a change to customInstructions
+            component.settings!.customInstructions = 'Changed instructions';
             component.ngDoCheck();
 
             expect(component.isDirty).toBeTrue();
@@ -328,6 +424,38 @@ describe('IrisSettingsUpdateComponent', () => {
 
             component.ngDoCheck();
 
+            expect(component.isDirty).toBeFalse();
+        }));
+
+        it('should detect rate limit changes and set isDirty', fakeAsync(() => {
+            component.courseId = 1;
+            component.ngOnInit();
+            tick();
+
+            expect(component.isDirty).toBeFalse();
+
+            // Change only rate limit fields
+            component.rateLimitRequests = 999;
+            component.ngDoCheck();
+
+            expect(component.isDirty).toBeTrue();
+        }));
+
+        it('should reset isDirty to false when changes are reverted', fakeAsync(() => {
+            component.courseId = 1;
+            component.ngOnInit();
+            tick();
+
+            expect(component.isDirty).toBeFalse();
+
+            // Make a change to customInstructions
+            component.settings = { ...component.settings!, customInstructions: 'Changed instructions' };
+            component.ngDoCheck();
+            expect(component.isDirty).toBeTrue();
+
+            // Revert the change
+            component.settings = { ...component.settings!, customInstructions: 'Test instructions' };
+            component.ngDoCheck();
             expect(component.isDirty).toBeFalse();
         }));
     });

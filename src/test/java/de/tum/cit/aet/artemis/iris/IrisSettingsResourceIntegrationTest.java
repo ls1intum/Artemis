@@ -247,8 +247,28 @@ class IrisSettingsResourceIntegrationTest extends AbstractIrisIntegrationTest {
         var response = request.putWithResponseBody("/api/iris/courses/" + course1.getId() + "/iris-settings", update, CourseIrisSettingsDTO.class, HttpStatus.OK);
 
         assertThat(response).isNotNull();
-        // Zero should be normalized to null (unlimited)
+        // Zero should be normalized to null (unlimited), not fall back to defaults
         assertThat(response.settings().rateLimit()).isNotNull();
+        assertThat(response.settings().rateLimit().requests()).isNull();
+        assertThat(response.settings().rateLimit().timeframeHours()).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testUpdateCourseSettings_nullRateLimit_usesDefaults() throws Exception {
+        enableIrisFor(course1);
+
+        var current = irisSettingsService.getSettingsForCourse(course1);
+        // null rateLimit means "no override, use defaults"
+        var update = IrisCourseSettingsDTO.of(current.enabled(), current.customInstructions(), current.variant(), null);
+
+        var response = request.putWithResponseBody("/api/iris/courses/" + course1.getId() + "/iris-settings", update, CourseIrisSettingsDTO.class, HttpStatus.OK);
+
+        assertThat(response).isNotNull();
+        // The stored rateLimit should be null (no override)
+        assertThat(response.settings().rateLimit()).isNull();
+        // But the effectiveRateLimit should come from application defaults
+        assertThat(response.effectiveRateLimit()).isEqualTo(response.applicationRateLimitDefaults());
     }
 
     // ==================== 404 Tests for Removed Endpoints ====================

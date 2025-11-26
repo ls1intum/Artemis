@@ -18,9 +18,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record IrisCourseSettingsDTO(boolean enabled, @Size(max = IRIS_CUSTOM_INSTRUCTIONS_MAX_LENGTH) @Nullable String customInstructions, IrisPipelineVariant variant,
-        @Valid IrisRateLimitConfiguration rateLimit) implements Serializable {
+        @Valid @Nullable IrisRateLimitConfiguration rateLimit) implements Serializable {
 
-    private static final IrisCourseSettingsDTO DEFAULT = new IrisCourseSettingsDTO(true, null, IrisPipelineVariant.DEFAULT, IrisRateLimitConfiguration.empty());
+    private static final IrisCourseSettingsDTO DEFAULT = new IrisCourseSettingsDTO(true, null, IrisPipelineVariant.DEFAULT, null);
 
     @JsonCreator
     public IrisCourseSettingsDTO(@JsonProperty("enabled") boolean enabled, @JsonProperty("customInstructions") @Nullable String customInstructions,
@@ -28,7 +28,7 @@ public record IrisCourseSettingsDTO(boolean enabled, @Size(max = IRIS_CUSTOM_INS
         this.enabled = enabled;
         this.customInstructions = sanitizeCustomInstructions(customInstructions);
         this.variant = Objects.requireNonNullElse(variant, IrisPipelineVariant.DEFAULT);
-        this.rateLimit = Objects.requireNonNullElse(rateLimit, IrisRateLimitConfiguration.empty());
+        this.rateLimit = rateLimit; // null = use defaults, non-null = explicit override (even if values are null = unlimited)
     }
 
     public static IrisCourseSettingsDTO defaultSettings() {

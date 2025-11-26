@@ -21,6 +21,12 @@ public enum IrisPipelineVariant {
         return jsonValue;
     }
 
+    /**
+     * Creates an IrisPipelineVariant from its JSON string representation.
+     *
+     * @param raw the raw JSON string value
+     * @return the corresponding variant, defaulting to DEFAULT if not recognized
+     */
     @JsonCreator
     public static IrisPipelineVariant fromJson(String raw) {
         if (raw == null) {

@@ -76,10 +76,10 @@ export class IrisSettingsService {
 
     /**
      * Get the available pipeline variants.
-     * Returns static list: DEFAULT and ADVANCED.
+     * Returns static list matching backend enum serialization (lowercase).
      */
     getVariants(): Observable<IrisPipelineVariant[]> {
-        return of(['DEFAULT', 'ADVANCED']);
+        return of(['default', 'advanced']);
     }
 
     /**

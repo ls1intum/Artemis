@@ -2,8 +2,9 @@
     "artemisApp": {
         "iris": {
             "settings": {
-                "title": "Iris Settings",
                 "success": "Successfully saved Iris settings",
+                "saved": "All saved",
+                "unsaved": "Unsaved changes",
                 "enabled": "Enabled",
                 "disabled": "Disabled",
                 "configure": "Configure",
@@ -14,7 +15,7 @@
                 "customInstructionsPlaceholder": "Enter custom instructions for Iris (shared across all features)",
                 "customInstructionsHelp": "These instructions apply to all Iris chat contexts in this course.",
                 "adminSettings": "Administrator Settings",
-                "adminOnly": "Only administrators can modify these settings.",
+                "adminOnly": "Only administrators can see and modify these settings.",
                 "variant": "Pipeline Variant",
                 "variantHelp": "Select the AI pipeline variant to use for this course.",
                 "rateLimit": "Rate Limit Override",
@@ -120,12 +121,7 @@
                         "placeholder": "Enter custom instructions for the AI (max 2048 characters)"
                     }
                 },
-                "title": {
-                    "breadcrumb": "Iris Settings",
-                    "global": "Global Iris Settings",
-                    "course": "Course Iris Settings",
-                    "exercise": "Exercise Iris Settings"
-                }
+                "title": "Iris Settings"
             },
             "error": {
                 "forbidden": "Artemis is not configured to use Iris. (Invalid token)",

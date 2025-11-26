@@ -56,6 +56,13 @@ public class IrisSettingsResource {
         return ResponseEntity.ok(irisSettingsService.getCourseSettingsDTO(courseId));
     }
 
+    /**
+     * Updates the Iris settings for a course.
+     *
+     * @param courseId the course id
+     * @param update   the new settings to apply
+     * @return the updated settings
+     */
     @PutMapping("courses/{courseId}/iris-settings")
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<CourseIrisSettingsDTO> updateCourseSettings(@PathVariable Long courseId, @Valid @RequestBody IrisCourseSettingsDTO update) {

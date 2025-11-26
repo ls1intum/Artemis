@@ -15,6 +15,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { CourseIrisSettingsDTO, IrisCourseSettingsDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('IrisCourseSettingsUpdateComponent Component', () => {
     let comp: IrisCourseSettingsUpdateComponent;
@@ -30,7 +31,7 @@ describe('IrisCourseSettingsUpdateComponent Component', () => {
     const mockSettings: IrisCourseSettingsDTO = {
         enabled: true,
         customInstructions: 'Test instructions',
-        variant: 'DEFAULT',
+        variant: 'default',
         rateLimit: { requests: 100, timeframeHours: 24 },
     };
 
@@ -44,7 +45,7 @@ describe('IrisCourseSettingsUpdateComponent Component', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [MockJhiTranslateDirective],
-            declarations: [IrisCourseSettingsUpdateComponent, IrisSettingsUpdateComponent, MockComponent(ButtonComponent)],
+            declarations: [IrisCourseSettingsUpdateComponent, IrisSettingsUpdateComponent, MockComponent(ButtonComponent), FaIconComponent],
             providers: [
                 provideRouter([]),
                 MockProvider(IrisSettingsService),

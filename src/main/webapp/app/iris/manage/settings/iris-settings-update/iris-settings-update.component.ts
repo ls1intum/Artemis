@@ -2,7 +2,7 @@ import { Component, DoCheck, Input, OnInit, inject } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ButtonComponent, ButtonType } from 'app/shared/components/buttons/button/button.component';
-import { faRotate, faSave } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faExclamationTriangle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { cloneDeep, isEqual } from 'lodash-es';
 import { AccountService } from 'app/core/auth/account.service';
@@ -12,6 +12,7 @@ import { FormsModule } from '@angular/forms';
 import { captureException } from '@sentry/angular';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { CourseIrisSettingsDTO, IrisCourseSettingsDTO, IrisPipelineVariant, IrisRateLimitConfiguration } from 'app/iris/shared/entities/settings/iris-course-settings.model';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 /**
  * Component for editing Iris course-level settings.
  * Replaces the legacy three-tier (Global → Course → Exercise) settings system
@@ -20,7 +21,7 @@ import { CourseIrisSettingsDTO, IrisCourseSettingsDTO, IrisPipelineVariant, Iris
 @Component({
     selector: 'jhi-iris-settings-update',
     templateUrl: './iris-settings-update.component.html',
-    imports: [ButtonComponent, TranslateDirective, ArtemisTranslatePipe, FormsModule],
+    imports: [ButtonComponent, TranslateDirective, ArtemisTranslatePipe, FormsModule, FaIconComponent],
 })
 export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCanDeactivate {
     private irisSettingsService = inject(IrisSettingsService);
@@ -41,11 +42,21 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
     // Available variants
     public availableVariants: IrisPipelineVariant[] = [];
 
+    // Local form fields for rate limit (separate from settings to preserve null semantics)
+    // These are always safe to bind in the template, and we reconstruct rateLimit on save
+    public rateLimitRequests?: number;
+    public rateLimitTimeframeHours?: number;
+
+    // Original rate limit values for dirty checking
+    private originalRateLimitRequests?: number;
+    private originalRateLimitTimeframeHours?: number;
+
     // Status flags
     isLoading = false;
     isSaving = false;
     isDirty = false;
     isAdmin: boolean;
+    private isAutoSaving = false; // Prevents dirty flash during enable/disable auto-save
 
     // Button types
     PRIMARY = ButtonType.PRIMARY;
@@ -54,7 +65,8 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
 
     // Icons
     faSave = faSave;
-    faRotate = faRotate;
+    faCheck = faCheck;
+    faExclamationTriangle = faExclamationTriangle;
 
     // Character limit for custom instructions
     readonly CUSTOM_INSTRUCTIONS_MAX_LENGTH = 2048;
@@ -69,9 +81,41 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
     }
 
     ngDoCheck(): void {
-        if (!isEqual(this.settings, this.originalSettings)) {
-            this.isDirty = true;
+        // Skip dirty check during auto-save to prevent badge/button flash
+        if (this.isAutoSaving) {
+            return;
         }
+        // Normalize settings for comparison (treat empty string same as undefined/null)
+        const normalizedSettings = this.normalizeSettingsForComparison(this.settings);
+        const normalizedOriginal = this.normalizeSettingsForComparison(this.originalSettings);
+        const settingsChanged = !isEqual(normalizedSettings, normalizedOriginal);
+        const rateLimitChanged =
+            this.normalizeEmpty(this.rateLimitRequests) !== this.normalizeEmpty(this.originalRateLimitRequests) ||
+            this.normalizeEmpty(this.rateLimitTimeframeHours) !== this.normalizeEmpty(this.originalRateLimitTimeframeHours);
+        this.isDirty = settingsChanged || rateLimitChanged;
+    }
+
+    /**
+     * Normalize empty values (empty string, null, 0) to undefined for comparison
+     */
+    private normalizeEmpty<T>(value: T | null | undefined): T | undefined {
+        if (value === null || value === undefined || value === '' || value === 0) {
+            return undefined;
+        }
+        return value;
+    }
+
+    /**
+     * Create a normalized copy of settings for dirty comparison
+     */
+    private normalizeSettingsForComparison(settings?: IrisCourseSettingsDTO): IrisCourseSettingsDTO | undefined {
+        if (!settings) {
+            return undefined;
+        }
+        return {
+            ...settings,
+            customInstructions: this.normalizeEmpty(settings.customInstructions) as string | undefined,
+        };
     }
 
     canDeactivateWarning?: string;
@@ -98,9 +142,15 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
                     return;
                 }
                 this.settings = response.settings;
+                // Extract rate limit fields for form binding
+                this.rateLimitRequests = this.settings.rateLimit?.requests;
+                this.rateLimitTimeframeHours = this.settings.rateLimit?.timeframeHours;
+                // Store original values for dirty checking
+                this.originalRateLimitRequests = this.rateLimitRequests;
+                this.originalRateLimitTimeframeHours = this.rateLimitTimeframeHours;
                 this.effectiveRateLimit = response.effectiveRateLimit;
                 this.applicationDefaults = response.applicationRateLimitDefaults;
-                this.originalSettings = cloneDeep(response.settings);
+                this.originalSettings = cloneDeep(this.settings);
                 this.isDirty = false;
             },
             error: (error) => {
@@ -133,23 +183,37 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
             return;
         }
 
-        // Validate admin-only fields
+        // Normalize empty strings to undefined before saving
+        const settingsToSave: IrisCourseSettingsDTO = {
+            ...this.settings,
+            customInstructions: this.normalizeEmpty(this.settings.customInstructions) as string | undefined,
+        };
+
         if (!this.isAdmin) {
             // Non-admins can only change enabled and customInstructions
             // Restore original variant and rate limits to prevent unauthorized changes
             if (this.originalSettings) {
-                this.settings.variant = this.originalSettings.variant;
-                this.settings.rateLimit = this.originalSettings.rateLimit;
+                settingsToSave.variant = this.originalSettings.variant;
+                settingsToSave.rateLimit = this.originalSettings.rateLimit;
             }
+        } else {
+            // Admin: reconstruct rateLimit from form fields
+            settingsToSave.rateLimit = this.buildRateLimitForSave();
         }
 
         this.isSaving = true;
-        this.irisSettingsService.updateCourseSettings(this.courseId, this.settings).subscribe({
+        this.irisSettingsService.updateCourseSettings(this.courseId, settingsToSave).subscribe({
             next: (response: HttpResponse<CourseIrisSettingsDTO>) => {
                 this.isSaving = false;
                 this.isDirty = false;
                 if (response.body) {
                     this.settings = response.body.settings;
+                    // Update local form fields from saved response
+                    this.rateLimitRequests = this.settings.rateLimit?.requests;
+                    this.rateLimitTimeframeHours = this.settings.rateLimit?.timeframeHours;
+                    // Reset original values for dirty checking
+                    this.originalRateLimitRequests = this.rateLimitRequests;
+                    this.originalRateLimitTimeframeHours = this.rateLimitTimeframeHours;
                     this.effectiveRateLimit = response.body.effectiveRateLimit;
                     this.applicationDefaults = response.body.applicationRateLimitDefaults;
                     this.originalSettings = cloneDeep(this.settings);
@@ -169,12 +233,58 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
     }
 
     /**
-     * Toggle the enabled state
+     * Toggle the enabled state and auto-save
      */
     setEnabled(enabled: boolean): void {
-        if (this.settings) {
+        if (this.settings && this.settings.enabled !== enabled) {
             this.settings.enabled = enabled;
+            // Auto-save enabled/disabled changes immediately
+            this.saveEnabledOnly(enabled);
         }
+    }
+
+    /**
+     * Save only the enabled state without requiring manual save
+     */
+    private saveEnabledOnly(enabled: boolean): void {
+        if (!this.courseId || !this.originalSettings) {
+            return;
+        }
+
+        // Prevent dirty flash during auto-save
+        this.isAutoSaving = true;
+
+        // Create settings object with only enabled changed from original
+        const settingsToSave: IrisCourseSettingsDTO = {
+            ...this.originalSettings,
+            enabled,
+        };
+
+        this.irisSettingsService.updateCourseSettings(this.courseId, settingsToSave).subscribe({
+            next: (response: HttpResponse<CourseIrisSettingsDTO>) => {
+                if (response.body) {
+                    // Update original settings to reflect the new enabled state
+                    this.originalSettings = cloneDeep(response.body.settings);
+                    this.settings = cloneDeep(response.body.settings);
+                    // Reset rate limit tracking
+                    this.rateLimitRequests = this.settings.rateLimit?.requests;
+                    this.rateLimitTimeframeHours = this.settings.rateLimit?.timeframeHours;
+                    this.originalRateLimitRequests = this.rateLimitRequests;
+                    this.originalRateLimitTimeframeHours = this.rateLimitTimeframeHours;
+                    this.effectiveRateLimit = response.body.effectiveRateLimit;
+                    this.applicationDefaults = response.body.applicationRateLimitDefaults;
+                }
+                this.isAutoSaving = false;
+            },
+            error: (error) => {
+                this.isAutoSaving = false;
+                captureException('Error saving Iris enabled state', error);
+                // Revert on error
+                if (this.settings) {
+                    this.settings.enabled = !enabled;
+                }
+            },
+        });
     }
 
     /**
@@ -182,5 +292,27 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
      */
     getCustomInstructionsLength(): number {
         return this.settings?.customInstructions?.length || 0;
+    }
+
+    /**
+     * Builds the rateLimit object for saving, preserving null semantics:
+     * - undefined means "use application defaults" (sent when both fields are empty)
+     * - {requests: X, timeframeHours: Y} means "explicit override with values"
+     */
+    private buildRateLimitForSave(): IrisRateLimitConfiguration | undefined {
+        const hasRequests = this.rateLimitRequests != null;
+        const hasTimeframe = this.rateLimitTimeframeHours != null;
+
+        // If both fields are empty, use application defaults (return undefined)
+        // This allows admins to revert a course back to defaults by clearing both fields
+        if (!hasRequests && !hasTimeframe) {
+            return undefined;
+        }
+
+        // If any field has a value, return explicit override
+        return {
+            requests: this.rateLimitRequests,
+            timeframeHours: this.rateLimitTimeframeHours,
+        };
     }
 }

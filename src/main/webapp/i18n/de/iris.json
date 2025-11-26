@@ -3,8 +3,37 @@
         "iris": {
             "settings": {
                 "success": "Iris Einträge erfolgreich gespeichert",
+                "saved": "Alles gespeichert",
+                "unsaved": "Ungespeicherte Änderungen",
+                "enabled": "Aktiviert",
+                "disabled": "Deaktiviert",
+                "configure": "Konfigurieren",
+                "loading": "Einstellungen werden geladen...",
+                "enableLabel": "Iris aktivieren",
+                "enableHelp": "Wenn aktiviert, sind Iris-Funktionen für alle Studierenden in diesem Kurs verfügbar.",
+                "customInstructions": "Benutzerdefinierte Anweisungen",
+                "customInstructionsPlaceholder": "Gib benutzerdefinierte Anweisungen für Iris ein (werden für alle Funktionen verwendet)",
+                "customInstructionsHelp": "Diese Anweisungen gelten für alle Iris-Chat-Kontexte in diesem Kurs.",
+                "adminSettings": "Administrator-Einstellungen",
+                "adminOnly": "Nur Administratoren können diese Einstellungen sehen und ändern.",
+                "variant": "Pipeline-Variante",
+                "variantHelp": "Wähle die KI-Pipeline-Variante für diesen Kurs.",
+                "rateLimit": "Rate-Limit-Überschreibung",
+                "rateLimitHelp": "Leer oder 0 lassen, um Anwendungsstandards zu verwenden. Setze benutzerdefinierte Werte, um nur für diesen Kurs zu überschreiben.",
+                "rateLimitRequests": "Maximale Anfragen",
+                "rateLimitRequestsPlaceholder": "Standard: {{ default }}",
+                "rateLimitTimeframe": "Zeitrahmen (Stunden)",
+                "rateLimitTimeframePlaceholder": "Standard: {{ default }}",
+                "effectiveRateLimit": "Effektives Rate-Limit",
+                "requests": "Anfragen",
+                "per": "pro",
+                "hours": "Stunden",
+                "unlimited": "unbegrenzt",
+                "unlimitedTime": "∞",
                 "error": {
                     "save": "Fehler beim Speichern der Iris Einstellungen",
+                    "load": "Fehler beim Laden der Iris Einstellungen",
+                    "noCourseId": "Keine Kurs-ID angegeben",
                     "noSettings": "Iris Einstellungen konnten nicht geladen werden. Bitte kontaktiere einen Administrator, wenn das Problem weiterhin besteht."
                 },
                 "button": {
@@ -92,12 +121,7 @@
                         "placeholder": "Gib benutzerdefinierte Anweisungen für die KI ein (maximal 2048 Zeichen)"
                     }
                 },
-                "title": {
-                    "breadcrumb": "Iris Einstellungen",
-                    "global": "Globale Iris Einstellungen",
-                    "course": "Kurs Iris Einstellungen",
-                    "exercise": "Programmieraufgabe Iris Einstellungen"
-                }
+                "title": "Iris Einstellungen"
             },
             "error": {
                 "forbidden": "Artemis ist nicht konfiguriert, um Iris zu verwenden. (Ungültiges Token)",

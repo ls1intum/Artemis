@@ -22,7 +22,7 @@ describe('IrisEnabledComponent', () => {
     const mockSettings: IrisCourseSettingsDTO = {
         enabled: true,
         customInstructions: 'Test instructions',
-        variant: 'DEFAULT',
+        variant: 'default',
         rateLimit: { requests: 100, timeframeHours: 24 },
     };
 

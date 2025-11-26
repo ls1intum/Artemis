@@ -108,14 +108,6 @@
                 </a>
             </li>
         }
-        @if (irisEnabled()) {
-            <li>
-                <a class="dropdown-item" routerLink="/admin/iris" routerLinkActive="active" (click)="collapseNavbar()">
-                    <fa-icon [icon]="faRobot" [fixedWidth]="true" />
-                    <span jhiTranslate="global.menu.admin.iris"></span>
-                </a>
-            </li>
-        }
         @if (ltiEnabled()) {
             <li>
                 <a class="dropdown-item" routerLink="/admin/lti-configuration" routerLinkActive="active" (click)="collapseNavbar()">

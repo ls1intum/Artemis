@@ -1,20 +1,20 @@
 <div class="course-iris-settings">
-    <!-- Action Buttons -->
-    <div class="mb-3">
-        <jhi-button
-            id="reload"
-            [btnType]="isDirty ? WARNING : PRIMARY"
-            [isLoading]="isLoading"
-            [icon]="faRotate"
-            [title]="'artemisApp.iris.settings.button.reload'"
-            (onClick)="loadSettings()"
-        />
-        <jhi-button id="save" [btnType]="SUCCESS" [isLoading]="isSaving" [icon]="faSave" [title]="'artemisApp.iris.settings.button.save'" (onClick)="saveSettings()" />
-    </div>
-
     @if (settings) {
         <div>
             <h2 jhiTranslate="artemisApp.iris.settings.title"></h2>
+            <div class="mb-3">
+                @if (isDirty) {
+                    <span class="badge bg-warning">
+                        <fa-icon [icon]="faExclamationTriangle" class="me-1" />
+                        <span jhiTranslate="artemisApp.iris.settings.unsaved"></span>
+                    </span>
+                } @else {
+                    <span class="badge bg-success">
+                        <fa-icon [icon]="faCheck" class="me-1" />
+                        <span jhiTranslate="artemisApp.iris.settings.saved"></span>
+                    </span>
+                }
+            </div>
 
             <!-- Enable/Disable Toggle -->
             <div class="mb-4">
@@ -82,7 +82,7 @@
                                     id="rateLimitRequests"
                                     type="number"
                                     class="form-control"
-                                    [(ngModel)]="settings.rateLimit.requests"
+                                    [(ngModel)]="rateLimitRequests"
                                     min="0"
                                     placeholder="{{ 'artemisApp.iris.settings.rateLimitRequestsPlaceholder' | artemisTranslate: { default: applicationDefaults?.requests || 0 } }}"
                                 />
@@ -93,7 +93,7 @@
                                     id="rateLimitTimeframe"
                                     type="number"
                                     class="form-control"
-                                    [(ngModel)]="settings.rateLimit.timeframeHours"
+                                    [(ngModel)]="rateLimitTimeframeHours"
                                     min="0"
                                     placeholder="{{
                                         'artemisApp.iris.settings.rateLimitTimeframePlaceholder' | artemisTranslate: { default: applicationDefaults?.timeframeHours || 0 }
@@ -127,6 +127,20 @@
                     }
                 </div>
             }
+
+            <!-- Save Button -->
+            <div class="mt-4">
+                <jhi-button
+                    id="save"
+                    [btnType]="PRIMARY"
+                    [isLoading]="isSaving"
+                    [disabled]="!isDirty"
+                    [icon]="faSave"
+                    [title]="'artemisApp.iris.settings.button.save'"
+                    [fullWidth]="true"
+                    (onClick)="saveSettings()"
+                />
+            </div>
         </div>
     }
 

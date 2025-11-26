@@ -24,7 +24,6 @@ public interface IrisChatSessionRepository extends ArtemisJpaRepository<IrisChat
      *
      * @param courseId The ID of the course.
      * @param userId   The ID of the user.
-     * @param types    A collection of chat session types to filter by.
      * @return A list of chat sessions sorted by creation date in descending order.
      */
     @Query("""

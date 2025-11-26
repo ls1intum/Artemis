@@ -1,7 +1,7 @@
 import { CourseIrisSettingsDTO, IrisPipelineVariant } from 'app/iris/shared/entities/settings/iris-course-settings.model';
 
 export function mockVariants(): IrisPipelineVariant[] {
-    return ['DEFAULT', 'ADVANCED'];
+    return ['default', 'advanced'];
 }
 
 /**
@@ -13,7 +13,7 @@ export function mockCourseSettings(courseId: number = 1, enabled: boolean = true
         settings: {
             enabled,
             customInstructions: 'Test instructions',
-            variant: 'DEFAULT',
+            variant: 'default',
             rateLimit: { requests: 100, timeframeHours: 24 },
         },
         effectiveRateLimit: { requests: 100, timeframeHours: 24 },
