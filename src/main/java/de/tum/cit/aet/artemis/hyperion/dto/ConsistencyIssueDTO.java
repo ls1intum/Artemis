@@ -6,8 +6,8 @@ import jakarta.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.core.domain.ConsistencyIssueCategory;
-import de.tum.cit.aet.artemis.core.domain.Severity;
+import de.tum.cit.aet.artemis.hyperion.domain.ConsistencyIssueCategory;
+import de.tum.cit.aet.artemis.hyperion.domain.Severity;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 /**

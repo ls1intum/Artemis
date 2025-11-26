@@ -4,7 +4,7 @@ import jakarta.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.core.domain.ArtifactType;
+import de.tum.cit.aet.artemis.hyperion.domain.ArtifactType;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 /**

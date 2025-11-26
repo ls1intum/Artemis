@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.domain;
+package de.tum.cit.aet.artemis.hyperion.domain;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
