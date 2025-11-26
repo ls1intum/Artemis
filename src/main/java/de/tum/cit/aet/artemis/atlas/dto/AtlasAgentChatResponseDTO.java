@@ -16,6 +16,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * Contains the agent's message, preview data for competencies, and metadata.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record AtlasAgentChatResponseDTO(@NotBlank @Size(max = 10000) String message, @Nullable String sessionId, @NotNull ZonedDateTime timestamp, boolean success,
-        boolean competenciesModified, @Nullable List<CompetencyPreviewResponseDTO> competencyPreviews) {
+public record AtlasAgentChatResponseDTO(@NotBlank @Size(max = 10000) String message, @NotNull ZonedDateTime timestamp, boolean competenciesModified,
+        @Nullable List<CompetencyPreviewResponseDTO> competencyPreviews) {
 }

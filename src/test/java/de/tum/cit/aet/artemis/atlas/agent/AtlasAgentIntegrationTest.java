@@ -78,24 +78,22 @@ class AtlasAgentIntegrationTest extends AbstractAtlasIntegrationTest {
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testBasicEndToEndFlow() throws Exception {
         String competencyMessage = "Help me create competencies for a software engineering course covering OOP, design patterns, and testing";
-        AtlasAgentChatRequestDTO requestDTO = new AtlasAgentChatRequestDTO(competencyMessage, null);
+        AtlasAgentChatRequestDTO requestDTO = new AtlasAgentChatRequestDTO(competencyMessage);
 
         request.performMvcRequest(
                 post("/api/atlas/agent/courses/{courseId}/chat", course.getId()).contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(requestDTO)))
-                .andExpect(status().isOk()).andExpect(jsonPath("$.sessionId").exists()).andExpect(jsonPath("$.success").exists()).andExpect(jsonPath("$.timestamp").exists())
-                .andExpect(jsonPath("$.message").exists());
+                .andExpect(status().isOk()).andExpect(jsonPath("$.timestamp").exists()).andExpect(jsonPath("$.message").exists());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testServerGeneratedSessionId() throws Exception {
         var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
-        String expectedSessionId = String.format("course_%d_user_%d", course.getId(), instructor.getId());
-        AtlasAgentChatRequestDTO requestDTO = new AtlasAgentChatRequestDTO("Test session consistency", null);
+        AtlasAgentChatRequestDTO requestDTO = new AtlasAgentChatRequestDTO("Test session consistency");
 
         request.performMvcRequest(
                 post("/api/atlas/agent/courses/{courseId}/chat", course.getId()).contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(requestDTO)))
-                .andExpect(status().isOk()).andExpect(jsonPath("$.sessionId").value(expectedSessionId));
+                .andExpect(status().isOk());
     }
 
     @Test
@@ -103,7 +101,7 @@ class AtlasAgentIntegrationTest extends AbstractAtlasIntegrationTest {
     void testDifferentCourseContexts() throws Exception {
         Course secondCourse = courseUtilService.createCourse();
         String message = "Help with competencies for Computer Science basics";
-        AtlasAgentChatRequestDTO requestDTO = new AtlasAgentChatRequestDTO(message, null);
+        AtlasAgentChatRequestDTO requestDTO = new AtlasAgentChatRequestDTO(message);
 
         request.performMvcRequest(
                 post("/api/atlas/agent/courses/{courseId}/chat", course.getId()).contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(requestDTO)))
@@ -118,88 +116,88 @@ class AtlasAgentIntegrationTest extends AbstractAtlasIntegrationTest {
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDatabaseRelatedMessage() throws Exception {
         String message = "What competencies should I create for a database course?";
-        AtlasAgentChatRequestDTO requestDTO = new AtlasAgentChatRequestDTO(message, null);
+        AtlasAgentChatRequestDTO requestDTO = new AtlasAgentChatRequestDTO(message);
 
         request.performMvcRequest(
                 post("/api/atlas/agent/courses/{courseId}/chat", course.getId()).contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(requestDTO)))
-                .andExpect(status().isOk()).andExpect(jsonPath("$.sessionId").exists()).andExpect(jsonPath("$.message").exists());
+                .andExpect(status().isOk()).andExpect(jsonPath("$.message").exists());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testExerciseMappingMessage() throws Exception {
         String message = "Help me map exercises to competencies";
-        AtlasAgentChatRequestDTO requestDTO = new AtlasAgentChatRequestDTO(message, null);
+        AtlasAgentChatRequestDTO requestDTO = new AtlasAgentChatRequestDTO(message);
 
         request.performMvcRequest(
                 post("/api/atlas/agent/courses/{courseId}/chat", course.getId()).contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(requestDTO)))
-                .andExpect(status().isOk()).andExpect(jsonPath("$.sessionId").exists()).andExpect(jsonPath("$.message").exists());
+                .andExpect(status().isOk()).andExpect(jsonPath("$.message").exists());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testSpecificCompetencyListMessage() throws Exception {
         String message = "I want to create competencies for: SQL, NoSQL, Database Design, Query Optimization";
-        AtlasAgentChatRequestDTO requestDTO = new AtlasAgentChatRequestDTO(message, null);
+        AtlasAgentChatRequestDTO requestDTO = new AtlasAgentChatRequestDTO(message);
 
         request.performMvcRequest(
                 post("/api/atlas/agent/courses/{courseId}/chat", course.getId()).contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(requestDTO)))
-                .andExpect(status().isOk()).andExpect(jsonPath("$.sessionId").exists()).andExpect(jsonPath("$.message").exists());
+                .andExpect(status().isOk()).andExpect(jsonPath("$.message").exists());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testBloomsTaxonomyMessage() throws Exception {
         String message = "Generate competencies based on Bloom's taxonomy for my machine learning course";
-        AtlasAgentChatRequestDTO requestDTO = new AtlasAgentChatRequestDTO(message, null);
+        AtlasAgentChatRequestDTO requestDTO = new AtlasAgentChatRequestDTO(message);
 
         request.performMvcRequest(
                 post("/api/atlas/agent/courses/{courseId}/chat", course.getId()).contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(requestDTO)))
-                .andExpect(status().isOk()).andExpect(jsonPath("$.sessionId").exists()).andExpect(jsonPath("$.message").exists());
+                .andExpect(status().isOk()).andExpect(jsonPath("$.message").exists());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testPrerequisiteRelationshipsMessage() throws Exception {
         String message = "Can you suggest prerequisite relationships between competencies?";
-        AtlasAgentChatRequestDTO requestDTO = new AtlasAgentChatRequestDTO(message, null);
+        AtlasAgentChatRequestDTO requestDTO = new AtlasAgentChatRequestDTO(message);
 
         request.performMvcRequest(
                 post("/api/atlas/agent/courses/{courseId}/chat", course.getId()).contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(requestDTO)))
-                .andExpect(status().isOk()).andExpect(jsonPath("$.sessionId").exists()).andExpect(jsonPath("$.message").exists());
+                .andExpect(status().isOk()).andExpect(jsonPath("$.message").exists());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testAssessmentFocusedMessage() throws Exception {
         String message = "Help me create assessment-focused competencies for programming exercises";
-        AtlasAgentChatRequestDTO requestDTO = new AtlasAgentChatRequestDTO(message, null);
+        AtlasAgentChatRequestDTO requestDTO = new AtlasAgentChatRequestDTO(message);
 
         request.performMvcRequest(
                 post("/api/atlas/agent/courses/{courseId}/chat", course.getId()).contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(requestDTO)))
-                .andExpect(status().isOk()).andExpect(jsonPath("$.sessionId").exists()).andExpect(jsonPath("$.message").exists());
+                .andExpect(status().isOk()).andExpect(jsonPath("$.message").exists());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testWebDevelopmentMessage() throws Exception {
         String message = "I'm designing a new course on web development. Can you help me create competencies?";
-        AtlasAgentChatRequestDTO requestDTO = new AtlasAgentChatRequestDTO(message, null);
+        AtlasAgentChatRequestDTO requestDTO = new AtlasAgentChatRequestDTO(message);
 
         request.performMvcRequest(
                 post("/api/atlas/agent/courses/{courseId}/chat", course.getId()).contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(requestDTO)))
-                .andExpect(status().isOk()).andExpect(jsonPath("$.sessionId").exists()).andExpect(jsonPath("$.message").exists());
+                .andExpect(status().isOk()).andExpect(jsonPath("$.message").exists());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCourseContentMessage() throws Exception {
         String message = "The course covers HTML, CSS, JavaScript, React, Node.js, and databases.";
-        AtlasAgentChatRequestDTO requestDTO = new AtlasAgentChatRequestDTO(message, null);
+        AtlasAgentChatRequestDTO requestDTO = new AtlasAgentChatRequestDTO(message);
 
         request.performMvcRequest(
                 post("/api/atlas/agent/courses/{courseId}/chat", course.getId()).contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(requestDTO)))
-                .andExpect(status().isOk()).andExpect(jsonPath("$.sessionId").exists()).andExpect(jsonPath("$.message").exists());
+                .andExpect(status().isOk()).andExpect(jsonPath("$.message").exists());
     }
 
     @Nested
@@ -211,7 +209,7 @@ class AtlasAgentIntegrationTest extends AbstractAtlasIntegrationTest {
             String competencyCreationMessage = "Create a competency called 'Object-Oriented Programming' with description 'Understanding OOP principles'";
 
             request.performMvcRequest(post("/api/atlas/agent/courses/{courseId}/chat", course.getId()).contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(new AtlasAgentChatRequestDTO(competencyCreationMessage, null)))).andExpect(status().isOk())
+                    .content(objectMapper.writeValueAsString(new AtlasAgentChatRequestDTO(competencyCreationMessage)))).andExpect(status().isOk())
                     .andExpect(jsonPath("$.competenciesModified").exists());
 
         }
@@ -286,7 +284,7 @@ class AtlasAgentIntegrationTest extends AbstractAtlasIntegrationTest {
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void shouldReturnForbiddenForStudentAccessingChatEndpoint() throws Exception {
-            AtlasAgentChatRequestDTO requestDTO = new AtlasAgentChatRequestDTO("Test message", null);
+            AtlasAgentChatRequestDTO requestDTO = new AtlasAgentChatRequestDTO("Test message");
 
             request.performMvcRequest(
                     post("/api/atlas/agent/courses/{courseId}/chat", course.getId()).contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(requestDTO)))
@@ -296,7 +294,7 @@ class AtlasAgentIntegrationTest extends AbstractAtlasIntegrationTest {
         @Test
         @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
         void shouldReturnForbiddenForTutorAccessingChatEndpoint() throws Exception {
-            AtlasAgentChatRequestDTO requestDTO = new AtlasAgentChatRequestDTO("Test message", null);
+            AtlasAgentChatRequestDTO requestDTO = new AtlasAgentChatRequestDTO("Test message");
 
             request.performMvcRequest(
                     post("/api/atlas/agent/courses/{courseId}/chat", course.getId()).contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(requestDTO)))
@@ -306,7 +304,7 @@ class AtlasAgentIntegrationTest extends AbstractAtlasIntegrationTest {
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void shouldAllowInstructorAccessToChatEndpoint() throws Exception {
-            AtlasAgentChatRequestDTO requestDTO = new AtlasAgentChatRequestDTO("Test message", null);
+            AtlasAgentChatRequestDTO requestDTO = new AtlasAgentChatRequestDTO("Test message");
 
             request.performMvcRequest(
                     post("/api/atlas/agent/courses/{courseId}/chat", course.getId()).contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(requestDTO)))

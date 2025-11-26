@@ -12,6 +12,10 @@
                 "aiAssistant": "KI-Assistent",
                 "planApproval": "Ich billige den Plan",
                 "competencyProcessFailure": "fehlgeschlagen, einige Kompetenzen zu verarbeiten. Bitte versuche es erneut",
+                "updated": "Aktualisiert",
+                "created": "Erstellt",
+                "Update All": "Alle aktualisieren",
+                "Create All": "Alle erstellen",
                 "success": {
                     "processed": "{{count}} Kompetenz(en) erfolgreich bearbeitet!",
                     "updated": "{{count}} Kompetenz(en) erfolgreich aktualisiert!",
@@ -19,7 +23,8 @@
                     "updatedSingle": "Kompetenz erfolgreich aktualisiert!",
                     "createdSingle": "Kompetenz erfolgreich erstellt!"
                 },
-                "authentication": "Du musst authentifiziert sein, um den Agenten-Chat zu nutzen."
+                "authentication": "Du musst authentifiziert sein, um den Agenten-Chat zu nutzen.",
+                "userPlanConfirmation": "ich stimme dem Plan zu"
             }
         }
     }

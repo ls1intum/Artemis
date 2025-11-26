@@ -71,16 +71,16 @@ public class AtlasAgentResource {
         }
         catch (TimeoutException te) {
             return ResponseEntity.status(HttpStatus.GATEWAY_TIMEOUT)
-                    .body(new AtlasAgentChatResponseDTO("The agent timed out. Please try again.", sessionId, ZonedDateTime.now(), false, false, null));
+                    .body(new AtlasAgentChatResponseDTO("The agent timed out. Please try again.", ZonedDateTime.now(), false, null));
         }
         catch (InterruptedException ie) {
             Thread.currentThread().interrupt();
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                    .body(new AtlasAgentChatResponseDTO("The request was interrupted. Please try again.", sessionId, ZonedDateTime.now(), false, false, null));
+                    .body(new AtlasAgentChatResponseDTO("The request was interrupted. Please try again.", ZonedDateTime.now(), false, null));
         }
         catch (ExecutionException ee) {
             return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
-                    .body(new AtlasAgentChatResponseDTO("Upstream error while processing your request.", sessionId, ZonedDateTime.now(), false, false, null));
+                    .body(new AtlasAgentChatResponseDTO("Upstream error while processing your request.", ZonedDateTime.now(), false, null));
         }
     }
 

@@ -22,6 +22,7 @@ import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
 import de.tum.cit.aet.artemis.atlas.dto.AtlasAgentCompetencyDTO;
+import de.tum.cit.aet.artemis.atlas.dto.CompetencyError;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyPreviewDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyPreviewResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencySaveResponseDTO;
@@ -346,7 +347,7 @@ public class CompetencyExpertToolsService {
         }
 
         Course course = courseOptional.get();
-        List<String> errors = new ArrayList<>();
+        List<CompetencyError> errors = new ArrayList<>();
         List<CompetencyOperation> successfulOperations = new ArrayList<>();
         int createCount = 0;
         int updateCount = 0;
@@ -356,19 +357,19 @@ public class CompetencyExpertToolsService {
                 // Validate and normalize title once before using it
                 String rawTitle = comp.getTitle();
                 if (rawTitle == null) {
-                    errors.add("Missing or null title for competency");
+                    errors.add(new CompetencyError(null, "MISSING_TITLE", null));
                     continue;
                 }
 
                 String sanitizedTitle = rawTitle.trim();
                 if (sanitizedTitle.isBlank()) {
-                    errors.add("Missing or empty title for competency");
+                    errors.add(new CompetencyError(null, "EMPTY_TITLE", null));
                     continue;
                 }
 
                 // Validate taxonomy to prevent NPE during preview generation
                 if (comp.getTaxonomy() == null) {
-                    errors.add("Missing taxonomy for competency: " + sanitizedTitle);
+                    errors.add(new CompetencyError(sanitizedTitle, "MISSING_TAXONOMY", null));
                     continue;
                 }
 
@@ -388,7 +389,7 @@ public class CompetencyExpertToolsService {
                     // Update existing competency
                     Optional<Competency> existing = competencyRepository.findById(comp.getCompetencyId());
                     if (existing.isEmpty()) {
-                        errors.add("Competency not found with ID: " + comp.getCompetencyId());
+                        errors.add(new CompetencyError(sanitizedTitle, "NOT_FOUND", "ID: " + comp.getCompetencyId()));
                         continue;
                     }
 
@@ -405,8 +406,8 @@ public class CompetencyExpertToolsService {
             }
             catch (Exception e) {
                 // Use sanitized title if available, otherwise use a placeholder for error message
-                String titleForError = comp.getTitle() != null ? comp.getTitle().trim() : "[no title]";
-                errors.add("Failed to save '" + titleForError + "': " + e.getMessage());
+                String titleForError = comp.getTitle() != null ? comp.getTitle().trim() : null;
+                errors.add(new CompetencyError(titleForError, "SAVE_FAILED", e.getMessage()));
             }
         }
 
@@ -423,20 +424,7 @@ public class CompetencyExpertToolsService {
             currentPreviews.set(previewResponses);
         }
 
-        // Construct success message
-        List<String> messages = new ArrayList<>();
-        if (createCount > 0) {
-            messages.add(createCount + " competenc" + (createCount == 1 ? "y" : "ies") + " created");
-        }
-        if (updateCount > 0) {
-            messages.add(updateCount + " competenc" + (updateCount == 1 ? "y" : "ies") + " updated");
-        }
-        if (!errors.isEmpty()) {
-            messages.add(errors.size() + " failed");
-        }
-
-        String message = messages.isEmpty() ? null : String.join(", ", messages);
-        CompetencySaveResponseDTO response = new CompetencySaveResponseDTO(errors.isEmpty(), createCount, updateCount, errors.size(), errors.isEmpty() ? null : errors, message);
+        CompetencySaveResponseDTO response = new CompetencySaveResponseDTO(createCount, updateCount, errors.size(), errors.isEmpty() ? null : errors);
 
         if (createCount > 0 || updateCount > 0) {
             AtlasAgentService.markCompetencyModified();

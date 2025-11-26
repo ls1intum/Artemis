@@ -218,7 +218,6 @@ class CompetencyExpertToolsServiceIntegrationTest extends AbstractAtlasIntegrati
 
             assertThat(actualResult).isNotNull();
             JsonNode actualJsonNode = objectMapper.readTree(actualResult);
-            assertThat(actualJsonNode.get("success").asBoolean()).isTrue();
             assertThat(actualJsonNode.get("created").asInt()).isEqualTo(1);
 
             // Verify persistence
@@ -246,7 +245,6 @@ class CompetencyExpertToolsServiceIntegrationTest extends AbstractAtlasIntegrati
 
             assertThat(actualResult).isNotNull();
             JsonNode actualJsonNode = objectMapper.readTree(actualResult);
-            assertThat(actualJsonNode.get("success").asBoolean()).isTrue();
             assertThat(actualJsonNode.get("updated").asInt()).isEqualTo(1);
 
             // Verify persistence
@@ -269,7 +267,6 @@ class CompetencyExpertToolsServiceIntegrationTest extends AbstractAtlasIntegrati
 
             assertThat(actualResult).isNotNull();
             JsonNode actualJsonNode = objectMapper.readTree(actualResult);
-            assertThat(actualJsonNode.get("success").asBoolean()).isTrue();
             assertThat(actualJsonNode.get("created").asInt()).isEqualTo(3);
 
             // Verify persistence
@@ -289,7 +286,6 @@ class CompetencyExpertToolsServiceIntegrationTest extends AbstractAtlasIntegrati
 
             assertThat(actualResult).isNotNull();
             JsonNode actualJsonNode = objectMapper.readTree(actualResult);
-            assertThat(actualJsonNode.get("success").asBoolean()).isTrue();
             assertThat(actualJsonNode.get("created").asInt()).isEqualTo(1);
             assertThat(actualJsonNode.get("updated").asInt()).isEqualTo(1);
 
@@ -308,12 +304,11 @@ class CompetencyExpertToolsServiceIntegrationTest extends AbstractAtlasIntegrati
 
             assertThat(actualResult).isNotNull();
             JsonNode actualJsonNode = objectMapper.readTree(actualResult);
-            assertThat(actualJsonNode.get("success").asBoolean()).isFalse();
             assertThat(actualJsonNode.get("created").asInt()).isEqualTo(1);
             assertThat(actualJsonNode.get("updated").asInt()).isZero();
             assertThat(actualJsonNode.get("failed").asInt()).isEqualTo(1);
             assertThat(actualJsonNode.get("errors").isArray()).isTrue();
-            assertThat(actualJsonNode.get("errors").get(0).asText()).contains("Competency not found");
+            assertThat(actualJsonNode.get("errors").get(0).get("errorType").asText()).contains("NOT_FOUND");
         }
 
         @Test

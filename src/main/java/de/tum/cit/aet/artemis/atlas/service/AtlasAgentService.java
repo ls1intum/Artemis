@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.atlas.service;
 
 import java.time.Duration;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -171,17 +172,14 @@ public class AtlasAgentService {
      */
     public CompletableFuture<AtlasAgentChatResponseDTO> processChatMessage(String message, Long courseId, String sessionId) {
         if (chatClient == null) {
-            return CompletableFuture.completedFuture(new AtlasAgentChatResponseDTO("Atlas Agent is not available. Please contact your administrator.", sessionId,
-                    java.time.ZonedDateTime.now(), false, false, null));
+            return CompletableFuture
+                    .completedFuture(new AtlasAgentChatResponseDTO("Atlas Agent is not available. Please contact your administrator.", ZonedDateTime.now(), false, null));
         }
 
         try {
-            // Set sessionId in ThreadLocal so tools can access it
             CompetencyExpertToolsService.setCurrentSessionId(sessionId);
             resetCompetencyModifiedFlag();
             CompetencyExpertToolsService.clearAllPreviews();
-
-            // Determine which agent should handle this message (Guava Cache returns null if not present)
 
             String response = delegateTheRightAgent(message, courseId, sessionId);
 
@@ -191,7 +189,6 @@ public class AtlasAgentService {
                 sessionAgentMap.put(sessionId, AgentType.COMPETENCY_EXPERT);
                 String delegationResponse = delegateTheRightAgent(brief, courseId, sessionId);
 
-                // Retrieve what was set by previewCompetencies tool during execution
                 List<CompetencyPreviewResponseDTO> previews = CompetencyExpertToolsService.getPreviews();
 
                 String responseWithEmbeddedData = embedPreviewDataInResponse(delegationResponse, previews);
@@ -199,7 +196,6 @@ public class AtlasAgentService {
                 // Replace the last assistant message with the version containing embedded preview data
                 // The MessageChatMemoryAdvisor already added the response, but without preview data
                 if (chatMemory != null && !responseWithEmbeddedData.equals(delegationResponse)) {
-                    // Remove the last assistant message added by the advisor
                     List<Message> messages = chatMemory.get(sessionId);
                     if (!messages.isEmpty() && messages.getLast().getMessageType() == MessageType.ASSISTANT) {
                         List<Message> updatedMessages = new ArrayList<>(messages.subList(0, messages.size() - 1));
@@ -211,8 +207,8 @@ public class AtlasAgentService {
                 }
 
                 // Stay on MAIN_AGENT - Atlas Core continues managing the workflow
-                return CompletableFuture.completedFuture(
-                        new AtlasAgentChatResponseDTO(delegationResponse, sessionId, java.time.ZonedDateTime.now(), true, competencyModifiedInCurrentRequest.get(), previews));
+                return CompletableFuture
+                        .completedFuture(new AtlasAgentChatResponseDTO(delegationResponse, ZonedDateTime.now(), competencyModifiedInCurrentRequest.get(), previews));
             }
             else if (response.contains(CREATE_APPROVED_COMPETENCY)) {
                 sessionAgentMap.put(sessionId, AgentType.COMPETENCY_EXPERT);
@@ -220,10 +216,8 @@ public class AtlasAgentService {
 
                 String creationResponse = delegateTheRightAgent(CREATE_APPROVED_COMPETENCY, courseId, sessionId);
 
-                // Retrieve what was set by previewCompetencies tool during execution
                 List<CompetencyPreviewResponseDTO> previews = CompetencyExpertToolsService.getPreviews();
 
-                // Embed preview data in response for chat memory persistence
                 String responseWithEmbeddedData = embedPreviewDataInResponse(creationResponse, previews);
 
                 if (cachedData != null && !cachedData.isEmpty()) {
@@ -242,8 +236,7 @@ public class AtlasAgentService {
                     }
                 }
 
-                return CompletableFuture.completedFuture(
-                        new AtlasAgentChatResponseDTO(creationResponse, sessionId, java.time.ZonedDateTime.now(), true, competencyModifiedInCurrentRequest.get(), previews));
+                return CompletableFuture.completedFuture(new AtlasAgentChatResponseDTO(creationResponse, ZonedDateTime.now(), competencyModifiedInCurrentRequest.get(), previews));
             }
             else if (response.contains(RETURN_TO_MAIN_AGENT)) {
                 sessionAgentMap.put(sessionId, AgentType.MAIN_AGENT);
@@ -252,7 +245,6 @@ public class AtlasAgentService {
 
             boolean competenciesModified = competencyModifiedInCurrentRequest.get();
 
-            // Retrieve what was set by previewCompetencies tool during execution
             List<CompetencyPreviewResponseDTO> previews = CompetencyExpertToolsService.getPreviews();
 
             String finalResponse = (!response.trim().isEmpty()) ? response : "I apologize, but I couldn't generate a response.";
@@ -272,12 +264,12 @@ public class AtlasAgentService {
                 }
             }
 
-            return CompletableFuture.completedFuture(new AtlasAgentChatResponseDTO(finalResponse, sessionId, java.time.ZonedDateTime.now(), true, competenciesModified, previews));
+            return CompletableFuture.completedFuture(new AtlasAgentChatResponseDTO(finalResponse, ZonedDateTime.now(), competenciesModified, previews));
 
         }
         catch (Exception e) {
             return CompletableFuture.completedFuture(new AtlasAgentChatResponseDTO("I apologize, but I'm having trouble processing your request right now. Please try again later.",
-                    sessionId, java.time.ZonedDateTime.now(), false, false, null));
+                    ZonedDateTime.now(), false, null));
         }
         finally {
             competencyModifiedInCurrentRequest.remove();
@@ -308,23 +300,20 @@ public class AtlasAgentService {
         else {
             resourcePath = "/prompts/atlas/competency_expert_system_prompt.st";
         }
-        // Load agent system prompt
         Map<String, String> variables = Map.of();
         String systemPrompt = templateService.render(resourcePath, variables);
 
-        // Append courseId to system prompt (invisible to conversation history)
+        // Append courseId to system prompt in order for the sub-companions to have course context (invisible to conversation history)
         String systemPromptWithContext = systemPrompt + "\n\nCONTEXT FOR THIS REQUEST:\nCourse ID: " + courseId;
 
         ToolCallingChatOptions options = AzureOpenAiChatOptions.builder().deploymentName(deploymentName).temperature(temperature).build();
 
         ChatClientRequestSpec promptSpec = chatClient.prompt().system(systemPromptWithContext).user(message).options(options);
 
-        // Add chat memory advisor
         if (chatMemory != null) {
             promptSpec = promptSpec.advisors(MessageChatMemoryAdvisor.builder(chatMemory).conversationId(sessionId).build());
         }
 
-        // Add appropriate agent tools based on agent type
         if (agentType.equals(AgentType.MAIN_AGENT)) {
             if (mainAgentToolCallbackProvider != null) {
                 promptSpec = promptSpec.toolCallbacks(mainAgentToolCallbackProvider);
@@ -423,9 +412,7 @@ public class AtlasAgentService {
                     continue;
                 }
 
-                // Extract preview data from message text if present
                 PreviewDataResult extracted = extractPreviewDataFromMessage(text);
-
                 result.add(new AtlasAgentHistoryMessageDTO(extracted.cleanedText(), isUser, extracted.previews()));
             }
 
@@ -466,7 +453,6 @@ public class AtlasAgentService {
             return response + " " + PREVIEW_DATA_START_MARKER + jsonData + PREVIEW_DATA_END_MARKER;
         }
         catch (JsonProcessingException e) {
-            // If JSON serialization fails, return response without preview data
             return response;
         }
     }
@@ -488,7 +474,6 @@ public class AtlasAgentService {
             return new PreviewDataResult(messageText, null);
         }
 
-        // Extract the JSON data between markers
         int jsonStart = startIndex + PREVIEW_DATA_START_MARKER.length();
         String jsonData = messageText.substring(jsonStart, endIndex);
 
@@ -500,7 +485,6 @@ public class AtlasAgentService {
             return new PreviewDataResult(cleanedText, container.previews());
         }
         catch (JsonProcessingException e) {
-            // If parsing fails, return cleaned text without preview data
             return new PreviewDataResult(cleanedText, null);
         }
     }

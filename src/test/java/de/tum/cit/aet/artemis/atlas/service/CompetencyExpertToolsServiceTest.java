@@ -242,11 +242,9 @@ class CompetencyExpertToolsServiceTest {
 
             assertThat(actualResult).isNotNull();
             JsonNode actualJsonNode = objectMapper.readTree(actualResult);
-            assertThat(actualJsonNode.get("success").asBoolean()).isTrue();
             assertThat(actualJsonNode.get("created").asInt()).isEqualTo(1);
             assertThat(actualJsonNode.get("updated").asInt()).isZero();
             assertThat(actualJsonNode.get("failed").asInt()).isZero();
-            assertThat(actualJsonNode.get("message").asText()).contains("1 competency created");
 
             verify(competencyRepository, times(1)).save(any(Competency.class));
             assertThat(AtlasAgentService.wasCompetencyModified()).isTrue();
@@ -264,10 +262,8 @@ class CompetencyExpertToolsServiceTest {
 
             assertThat(actualResult).isNotNull();
             JsonNode actualJsonNode = objectMapper.readTree(actualResult);
-            assertThat(actualJsonNode.get("success").asBoolean()).isTrue();
             assertThat(actualJsonNode.get("created").asInt()).isZero();
             assertThat(actualJsonNode.get("updated").asInt()).isEqualTo(1);
-            assertThat(actualJsonNode.get("message").asText()).contains("1 competency updated");
 
             ArgumentCaptor<Competency> competencyCaptor = ArgumentCaptor.forClass(Competency.class);
             verify(competencyRepository, times(1)).save(competencyCaptor.capture());
@@ -292,11 +288,9 @@ class CompetencyExpertToolsServiceTest {
 
             assertThat(actualResult).isNotNull();
             JsonNode actualJsonNode = objectMapper.readTree(actualResult);
-            assertThat(actualJsonNode.get("success").asBoolean()).isTrue();
             assertThat(actualJsonNode.get("created").asInt()).isEqualTo(1);
             assertThat(actualJsonNode.get("updated").asInt()).isEqualTo(1);
             assertThat(actualJsonNode.get("failed").asInt()).isZero();
-            assertThat(actualJsonNode.get("message").asText()).contains("1 competency created").contains("1 competency updated");
 
             verify(competencyRepository, times(2)).save(any(Competency.class));
         }
@@ -314,12 +308,17 @@ class CompetencyExpertToolsServiceTest {
 
             assertThat(actualResult).isNotNull();
             JsonNode actualJsonNode = objectMapper.readTree(actualResult);
-            assertThat(actualJsonNode.get("success").asBoolean()).isFalse();
+            JsonNode errorsNode = actualJsonNode.get("errors");
+            JsonNode error = errorsNode.get(0);
+
             assertThat(actualJsonNode.get("created").asInt()).isEqualTo(1);
             assertThat(actualJsonNode.get("updated").asInt()).isZero();
             assertThat(actualJsonNode.get("failed").asInt()).isEqualTo(1);
-            assertThat(actualJsonNode.get("errors")).isNotNull();
-            assertThat(actualJsonNode.get("errors").get(0).asText()).contains("Competency not found with ID: 999");
+
+            assertThat(errorsNode.size()).isEqualTo(1);
+            assertThat(error.get("competencyTitle").asText()).isEqualTo("Invalid");
+            assertThat(error.get("errorType").asText()).isEqualTo("NOT_FOUND");
+            assertThat(error.get("details").asText()).contains("ID: 999");
         }
 
         @Test
@@ -377,9 +376,8 @@ class CompetencyExpertToolsServiceTest {
 
             assertThat(actualResult).isNotNull();
             JsonNode actualJsonNode = objectMapper.readTree(actualResult);
-            assertThat(actualJsonNode.get("success").asBoolean()).isFalse();
             assertThat(actualJsonNode.get("failed").asInt()).isEqualTo(1);
-            assertThat(actualJsonNode.get("errors").get(0).asText()).contains("Database error");
+            assertThat(actualJsonNode.get("errors").get(0).get("details").asText()).contains("Database error");
         }
     }
 
