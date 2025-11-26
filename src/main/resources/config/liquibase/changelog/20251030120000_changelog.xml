@@ -47,7 +47,7 @@
             SELECT
                 cs.course_id,
                 JSON_OBJECT(
-                    'enabled', COALESCE(pes.enabled, TRUE),
+                    'enabled', CAST(IF(COALESCE(pes.enabled, 1), 'true', 'false') AS JSON),
                     'customInstructions', NULLIF(TRIM(pes.custom_instructions), ''),
                     'variant', LOWER(COALESCE(NULLIF(pes.selected_variant, ''), 'default')),
                     'rateLimit', CASE
@@ -270,7 +270,7 @@
             <!-- MySQL: Restore course settings - Insert all 8 sub_settings types -->
             <sql dbms="mysql">
                 INSERT INTO iris_sub_settings (enabled, rate_limit, rate_limit_timeframe_hours, selected_variant, custom_instructions, discriminator, auto_ingest_on_lecture_attachment_upload, auto_ingest_on_faq_creation)
-                SELECT JSON_EXTRACT(settings, '$.enabled') = 1, JSON_EXTRACT(settings, '$.rateLimit.requests'),
+                SELECT JSON_EXTRACT(settings, '$.enabled') = true, JSON_EXTRACT(settings, '$.rateLimit.requests'),
                        JSON_EXTRACT(settings, '$.rateLimit.timeframeHours'), JSON_UNQUOTE(JSON_EXTRACT(settings, '$.variant')),
                        JSON_UNQUOTE(JSON_EXTRACT(settings, '$.customInstructions')), 'PROGRAMMING_EXERCISE_CHAT', false, false
                 FROM course_iris_settings ORDER BY course_id;
