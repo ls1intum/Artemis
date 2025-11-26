@@ -5,9 +5,10 @@ import static de.tum.cit.aet.artemis.core.config.Constants.IRIS_CUSTOM_INSTRUCTI
 import java.io.Serializable;
 import java.util.Objects;
 
-import jakarta.annotation.Nullable;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Size;
+
+import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;

@@ -2,8 +2,9 @@ package de.tum.cit.aet.artemis.iris.domain.settings;
 
 import java.io.Serializable;
 
-import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.Min;
+
+import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;

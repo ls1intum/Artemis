@@ -24,6 +24,7 @@ describe('IrisSettingsUpdateComponent', () => {
     let alertService: AlertService;
     let accountService: AccountService;
     const routeParamsSubject = new BehaviorSubject<Params>({ courseId: '1' });
+    let getCourseSettingsSpy: jest.SpyInstance;
 
     const mockSettings: IrisCourseSettingsDTO = {
         enabled: true,
@@ -46,7 +47,14 @@ describe('IrisSettingsUpdateComponent', () => {
             imports: [MockJhiTranslateDirective, IrisSettingsUpdateComponent, FaIconComponent],
             declarations: [MockPipe(ArtemisTranslatePipe), MockComponent(ButtonComponent)],
             providers: [
-                MockProvider(IrisSettingsService),
+                {
+                    provide: IrisSettingsService,
+                    useValue: {
+                        getCourseSettings: jest.fn().mockReturnValue(of(mockResponse)),
+                        getVariants: jest.fn().mockReturnValue(of(mockVariants)),
+                        updateCourseSettings: jest.fn().mockReturnValue(of(new HttpResponse({ body: mockResponse }))),
+                    },
+                },
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 MockProvider(AlertService),
@@ -62,14 +70,16 @@ describe('IrisSettingsUpdateComponent', () => {
         alertService = TestBed.inject(AlertService);
         accountService = TestBed.inject(AccountService);
 
-        // Setup default mocks
-        jest.spyOn(irisSettingsService, 'getCourseSettings').mockReturnValue(of(mockResponse));
-        jest.spyOn(irisSettingsService, 'getVariants').mockReturnValue(of(mockVariants as any));
+        // Store spy reference so tests can override return values
+        getCourseSettingsSpy = irisSettingsService.getCourseSettings as jest.Mock;
         jest.spyOn(accountService, 'isAdmin').mockReturnValue(true);
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        // Clear call counts but not implementations
+        (irisSettingsService.getCourseSettings as jest.Mock).mockClear();
+        (irisSettingsService.getVariants as jest.Mock).mockClear();
+        (irisSettingsService.updateCourseSettings as jest.Mock).mockClear();
     });
 
     it('should create', () => {
@@ -105,7 +115,7 @@ describe('IrisSettingsUpdateComponent', () => {
                 effectiveRateLimit: { requests: 50, timeframeHours: 12 },
                 applicationRateLimitDefaults: { requests: 50, timeframeHours: 12 },
             };
-            jest.spyOn(irisSettingsService, 'getCourseSettings').mockReturnValue(of(nullRateLimitResponse));
+            getCourseSettingsSpy.mockReturnValue(of(nullRateLimitResponse));
             routeParamsSubject.next({ courseId: '1' });
 
             component.ngOnInit();
@@ -132,20 +142,17 @@ describe('IrisSettingsUpdateComponent', () => {
         }));
 
         it('should show error if response is undefined', fakeAsync(() => {
-            jest.spyOn(irisSettingsService, 'getCourseSettings').mockReturnValue(of(undefined));
+            getCourseSettingsSpy.mockReturnValue(of(undefined));
             const alertSpy = jest.spyOn(alertService, 'error');
             routeParamsSubject.next({ courseId: '1' });
             component.ngOnInit();
-            tick();
-
-            component.loadSettings();
             tick();
 
             expect(alertSpy).toHaveBeenCalledWith('artemisApp.iris.settings.error.noSettings');
         }));
 
         it('should handle load error', fakeAsync(() => {
-            jest.spyOn(irisSettingsService, 'getCourseSettings').mockReturnValue(throwError(() => new Error('Load failed')));
+            getCourseSettingsSpy.mockReturnValue(throwError(() => new Error('Load failed')));
             const alertSpy = jest.spyOn(alertService, 'error');
             routeParamsSubject.next({ courseId: '1' });
             component.ngOnInit();
@@ -334,46 +341,58 @@ describe('IrisSettingsUpdateComponent', () => {
     });
 
     describe('setEnabled', () => {
-        beforeEach(fakeAsync(() => {
+        const initComponent = () => {
+            (irisSettingsService.getCourseSettings as jest.Mock).mockReturnValue(of(mockResponse));
+            (irisSettingsService.updateCourseSettings as jest.Mock).mockReturnValue(of(new HttpResponse({ body: mockResponse })));
             routeParamsSubject.next({ courseId: '1' });
             component.ngOnInit();
             tick();
-        }));
+        };
 
         it('should toggle enabled state and auto-save', fakeAsync(() => {
-            const updateSpy = jest
-                .spyOn(irisSettingsService, 'updateCourseSettings')
-                .mockReturnValue(of(new HttpResponse({ body: { ...mockResponse, settings: { ...mockSettings, enabled: false } } })));
+            initComponent();
+
+            // Override mock for this specific test
+            (irisSettingsService.updateCourseSettings as jest.Mock).mockReturnValue(
+                of(new HttpResponse({ body: { ...mockResponse, settings: { ...mockSettings, enabled: false } } })),
+            );
 
             component.setEnabled(false);
             tick();
 
             expect(component.settings!.enabled).toBeFalse();
-            expect(updateSpy).toHaveBeenCalledOnce();
+            expect(irisSettingsService.updateCourseSettings).toHaveBeenCalledOnce();
         }));
 
         it('should not call save if enabled state is unchanged', fakeAsync(() => {
-            const updateSpy = jest.spyOn(irisSettingsService, 'updateCourseSettings');
+            initComponent();
 
-            // Settings start as enabled: true
-            component.setEnabled(true);
+            // Clear any previous calls
+            (irisSettingsService.updateCourseSettings as jest.Mock).mockClear();
+
+            // Get current enabled state and try to set it to the same value
+            const currentEnabled = component.settings!.enabled;
+            component.setEnabled(currentEnabled);
             tick();
 
-            expect(updateSpy).not.toHaveBeenCalled();
+            // Should not trigger save when setting to same value
+            expect(irisSettingsService.updateCourseSettings).not.toHaveBeenCalled();
         }));
 
         it('should revert on error', fakeAsync(() => {
-            // Need to re-mock after beforeEach already loaded settings
-            jest.spyOn(irisSettingsService, 'updateCourseSettings').mockReturnValue(throwError(() => new Error('Save failed')));
+            initComponent();
 
-            // Verify initial state is enabled: true
-            expect(component.settings!.enabled).toBeTrue();
+            // Store initial enabled state
+            const initialEnabled = component.settings!.enabled;
 
-            component.setEnabled(false);
+            (irisSettingsService.updateCourseSettings as jest.Mock).mockReturnValue(throwError(() => new Error('Save failed')));
+
+            // Try to toggle - should revert on error
+            component.setEnabled(!initialEnabled);
             tick();
 
-            // Should revert back to true on error
-            expect(component.settings!.enabled).toBeTrue();
+            // Should revert back to initial state on error
+            expect(component.settings!.enabled).toBe(initialEnabled);
         }));
 
         it('should do nothing if settings are undefined', () => {
@@ -405,10 +424,15 @@ describe('IrisSettingsUpdateComponent', () => {
     });
 
     describe('dirty checking', () => {
-        it('should detect changes and set isDirty', fakeAsync(() => {
+        const initComponent = () => {
+            (irisSettingsService.getCourseSettings as jest.Mock).mockReturnValue(of(mockResponse));
             routeParamsSubject.next({ courseId: '1' });
             component.ngOnInit();
             tick();
+        };
+
+        it('should detect changes and set isDirty', fakeAsync(() => {
+            initComponent();
 
             expect(component.isDirty).toBeFalse();
 
@@ -420,9 +444,7 @@ describe('IrisSettingsUpdateComponent', () => {
         }));
 
         it('should not mark as dirty if no changes', fakeAsync(() => {
-            routeParamsSubject.next({ courseId: '1' });
-            component.ngOnInit();
-            tick();
+            initComponent();
 
             expect(component.isDirty).toBeFalse();
 
@@ -432,9 +454,7 @@ describe('IrisSettingsUpdateComponent', () => {
         }));
 
         it('should detect rate limit changes and set isDirty', fakeAsync(() => {
-            routeParamsSubject.next({ courseId: '1' });
-            component.ngOnInit();
-            tick();
+            initComponent();
 
             expect(component.isDirty).toBeFalse();
 
@@ -446,19 +466,20 @@ describe('IrisSettingsUpdateComponent', () => {
         }));
 
         it('should reset isDirty to false when changes are reverted', fakeAsync(() => {
-            routeParamsSubject.next({ courseId: '1' });
-            component.ngOnInit();
-            tick();
+            initComponent();
 
             expect(component.isDirty).toBeFalse();
 
+            // Store the original value
+            const originalInstructions = component.settings!.customInstructions;
+
             // Make a change to customInstructions
-            component.settings = { ...component.settings!, customInstructions: 'Changed instructions' };
+            component.settings = { ...component.settings!, customInstructions: 'Some completely different instructions' };
             component.ngDoCheck();
             expect(component.isDirty).toBeTrue();
 
-            // Revert the change
-            component.settings = { ...component.settings!, customInstructions: 'Test instructions' };
+            // Revert the change to original
+            component.settings = { ...component.settings!, customInstructions: originalInstructions };
             component.ngDoCheck();
             expect(component.isDirty).toBeFalse();
         }));
