@@ -252,6 +252,7 @@ public class ModelingExerciseUtilService {
         submission = modelSubmissionService.handleModelingSubmission(submission, exercise, user);
         Result result = new Result();
         result.setSubmission(submission);
+        result.setExerciseId(exercise.getId());
         result = resultRepo.save(result);
         submission.addResult(result);
         studentParticipationRepo.save(participation);
@@ -316,6 +317,7 @@ public class ModelingExerciseUtilService {
         result.setAssessmentType(AssessmentType.MANUAL);
         submission = modelingSubmissionRepo.save(submission);
         result.setSubmission(submission);
+        result.setExerciseId(exercise.getId());
         result = resultRepo.save(result);
         studentParticipationRepo.save(participation);
         result = resultRepo.save(result);

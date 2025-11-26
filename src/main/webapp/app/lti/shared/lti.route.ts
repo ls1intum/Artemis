@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 
-import { Authority } from 'app/shared/constants/authority.constants';
+import { IS_AT_LEAST_ADMIN, IS_AT_LEAST_INSTRUCTOR } from 'app/shared/constants/authority.constants';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 
 export const ltiLaunchRoutes: Routes = [
@@ -15,7 +15,7 @@ export const ltiLaunchRoutes: Routes = [
         path: 'dynamic-registration',
         loadComponent: () => import('app/lti/overview/lti13-dynamic-registration/lti13-dynamic-registration.component').then((m) => m.Lti13DynamicRegistrationComponent),
         data: {
-            authorities: [Authority.ADMIN],
+            authorities: IS_AT_LEAST_ADMIN,
             pageTitle: 'artemisApp.lti13.dynamicRegistration.title',
         },
         canActivate: [UserRouteAccessService],
@@ -31,7 +31,7 @@ export const ltiLaunchRoutes: Routes = [
         path: 'select-course',
         loadComponent: () => import('app/lti/manage/lti13-select-course/lti13-select-course.component').then((m) => m.LtiCoursesComponent),
         data: {
-            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_INSTRUCTOR,
             pageTitle: 'artemisApp.lti13.selectCourse',
         },
         canActivate: [UserRouteAccessService],
@@ -40,7 +40,7 @@ export const ltiLaunchRoutes: Routes = [
         path: 'exercises/:courseId',
         loadComponent: () => import('app/lti/manage/lti13-deep-linking/lti13-deep-linking.component').then((m) => m.Lti13DeepLinkingComponent),
         data: {
-            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_INSTRUCTOR,
             pageTitle: 'artemisApp.lti13.deepLinking.title',
         },
         canActivate: [UserRouteAccessService],

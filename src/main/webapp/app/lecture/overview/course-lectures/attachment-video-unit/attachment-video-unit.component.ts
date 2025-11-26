@@ -10,6 +10,7 @@ import { LectureTranscriptionService } from 'app/lecture/manage/services/lecture
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
 import {
     faDownload,
+    faExclamationTriangle,
     faFile,
     faFileArchive,
     faFileCode,
@@ -22,6 +23,7 @@ import {
     faFilePowerpoint,
     faFileVideo,
     faFileWord,
+    faSpinner,
 } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -41,6 +43,9 @@ import { map } from 'rxjs/operators';
 })
 export class AttachmentVideoUnitComponent extends LectureUnitDirective<AttachmentVideoUnit> {
     protected readonly faDownload = faDownload;
+    protected readonly faFileLines = faFileLines;
+    protected readonly faSpinner = faSpinner;
+    protected readonly faExclamationTriangle = faExclamationTriangle;
 
     private readonly destroyRef = inject(DestroyRef);
     private readonly fileService = inject(FileService);
@@ -51,10 +56,11 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     readonly transcriptSegments = signal<TranscriptSegment[]>([]);
     readonly playlistUrl = signal<string | undefined>(undefined);
     readonly isLoading = signal<boolean>(false);
+
     readonly hasTranscript = computed(() => this.transcriptSegments().length > 0);
 
     // TODO: This must use a server configuration to make it compatible with deployments other than TUM
-    private readonly videoUrlAllowList = [RegExp('^https://(?:live\\.rbg\\.tum\\.de|tum\\.live)/w/\\w+/\\d+(/(CAM|COMB|PRES))?\\?video_only=1$')];
+    private readonly videoUrlAllowList = [RegExp('^https://(?:live\\.rbg\\.tum\\.de|tum\\.live)/w/\\w+/\\d+(/(CAM|COMB|PRES))?\\?video_only=1')];
 
     /**
      * Return the URL of the video source
@@ -102,7 +108,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
                 return;
             }
 
-            // Try to resolve a .m3u8 playlist URL through the backend API
+            // Try to resolve a .m3u8 playlist URL from the server
             this.attachmentVideoUnitService
                 .getPlaylistUrl(src)
                 .pipe(takeUntilDestroyed(this.destroyRef))

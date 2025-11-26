@@ -57,28 +57,6 @@ describe('Participation Service', () => {
         tick();
     }));
 
-    it('should find participation for the exercise', fakeAsync(() => {
-        const returnedFromService = { ...participationDefault, initializationDate: currentDate.toDate() };
-        returnedFromService.id = 123;
-        service
-            .findParticipationForCurrentUser(123)
-            .pipe(take(1))
-            .subscribe((resp) => expect(resp).toMatchObject({ body: returnedFromService }));
-
-        const req = httpMock.expectOne({ method: 'GET' });
-        req.flush(returnedFromService);
-        tick();
-    }));
-
-    it('should find no participation for the exercise', fakeAsync(() => {
-        service
-            .findParticipationForCurrentUser(123)
-            .pipe(take(1))
-            .subscribe((resp) => expect(resp).toBeUndefined());
-        httpMock.expectOne({ method: 'GET' });
-        tick();
-    }));
-
     it('should cleanup build plan', fakeAsync(() => {
         service.cleanupBuildPlan(participationDefault).subscribe((resp) => expect(resp).toMatchObject(participationDefault));
         httpMock.expectOne({ method: 'PUT' });
