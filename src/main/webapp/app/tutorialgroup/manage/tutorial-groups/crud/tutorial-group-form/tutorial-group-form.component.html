@@ -155,9 +155,6 @@
                 <!-- Additional Information -->
                 <div class="form-group">
                     <label class="d-block" for="additionalInfo" jhiTranslate="artemisApp.forms.tutorialGroupForm.additionalInformationInput.label"></label>
-                    <small id="additionalInfoHelp" class="form-text mb-1 text-body-secondary">
-                        <a href="https://guides.github.com/features/mastering-markdown/"> GitHub Markdown Guide</a>
-                    </small>
                     <!-- not included in reactive form -->
                     <jhi-markdown-editor-monaco aria-describedby="additionalInfoHelp" id="additionalInfo" class="markdown-editor" [(markdown)]="additionalInformation" />
                 </div>
