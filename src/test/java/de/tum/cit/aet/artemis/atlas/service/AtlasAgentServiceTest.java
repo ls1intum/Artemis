@@ -505,7 +505,7 @@ class AtlasAgentServiceTest {
         @Test
         void shouldExtractSingleCompetencyPreviewFromHistory() {
             String sessionId = "course_123_user_456";
-            String responseText = "Here's your competency preview %%PREVIEW_DATA_START%%{\"previews\":[{\"competency\":{\"title\":\"OOP Basics\",\"description\":\"Object-Oriented Programming fundamentals\",\"taxonomy\":\"UNDERSTAND\",\"icon\":\"comments\"},\"competencyId\":null,\"viewOnly\":null}]}%%PREVIEW_DATA_END%%";
+            String responseText = "Here's your competency preview %%PREVIEW_DATA_START%%{\"previews\":[{\"title\":\"OOP Basics\",\"description\":\"Object-Oriented Programming fundamentals\",\"taxonomy\":\"UNDERSTAND\",\"icon\":\"comments\",\"competencyId\":null,\"viewOnly\":null}]}%%PREVIEW_DATA_END%%";
             List<Message> messages = List.of(new UserMessage("Create a competency"), new AssistantMessage(responseText));
 
             when(chatMemory.get(sessionId)).thenReturn(messages);
@@ -521,13 +521,13 @@ class AtlasAgentServiceTest {
             assertThat(result.get(1).isUser()).isFalse();
             assertThat(result.get(1).competencyPreviews()).isNotNull();
             assertThat(result.get(1).competencyPreviews()).hasSize(1);
-            assertThat(result.get(1).competencyPreviews().getFirst().competency().title()).isEqualTo("OOP Basics");
+            assertThat(result.get(1).competencyPreviews().getFirst().title()).isEqualTo("OOP Basics");
         }
 
         @Test
         void shouldExtractBatchCompetencyPreviewFromHistory() {
             String sessionId = "course_123_user_789";
-            String responseText = "Here are multiple competencies %%PREVIEW_DATA_START%%{\"previews\":[{\"competency\":{\"title\":\"Comp 1\",\"description\":\"Description 1\",\"taxonomy\":\"REMEMBER\",\"icon\":\"brain\"},\"competencyId\":null,\"viewOnly\":null},{\"competency\":{\"title\":\"Comp 2\",\"description\":\"Description 2\",\"taxonomy\":\"APPLY\",\"icon\":\"pen-fancy\"},\"competencyId\":null,\"viewOnly\":null}]}%%PREVIEW_DATA_END%%";
+            String responseText = "Here are multiple competencies %%PREVIEW_DATA_START%%{\"previews\":[{\"title\":\"Comp 1\",\"description\":\"Description 1\",\"taxonomy\":\"REMEMBER\",\"icon\":\"brain\",\"competencyId\":null,\"viewOnly\":null},{\"title\":\"Comp 2\",\"description\":\"Description 2\",\"taxonomy\":\"APPLY\",\"icon\":\"pen-fancy\",\"competencyId\":null,\"viewOnly\":null}]}%%PREVIEW_DATA_END%%";
             List<Message> messages = List.of(new UserMessage("Create multiple competencies"), new AssistantMessage(responseText));
 
             when(chatMemory.get(sessionId)).thenReturn(messages);
@@ -538,8 +538,8 @@ class AtlasAgentServiceTest {
             assertThat(result.get(1).content()).isEqualTo("Here are multiple competencies");
             assertThat(result.get(1).competencyPreviews()).isNotNull();
             assertThat(result.get(1).competencyPreviews()).hasSize(2);
-            assertThat(result.get(1).competencyPreviews().getFirst().competency().title()).isEqualTo("Comp 1");
-            assertThat(result.get(1).competencyPreviews().get(1).competency().title()).isEqualTo("Comp 2");
+            assertThat(result.get(1).competencyPreviews().getFirst().title()).isEqualTo("Comp 1");
+            assertThat(result.get(1).competencyPreviews().get(1).title()).isEqualTo("Comp 2");
         }
 
         @Test
@@ -627,9 +627,9 @@ class AtlasAgentServiceTest {
         @Test
         void shouldHandleMultipleMessagesWithMixedPreviewData() {
             String sessionId = "course_123_user_606";
-            String message1 = "First response %%PREVIEW_DATA_START%%{\"previews\":[{\"competency\":{\"title\":\"Test 1\",\"description\":\"Desc 1\",\"taxonomy\":\"APPLY\",\"icon\":\"pen-fancy\"},\"competencyId\":null,\"viewOnly\":null}]}%%PREVIEW_DATA_END%%";
+            String message1 = "First response %%PREVIEW_DATA_START%%{\"previews\":[{\"title\":\"Test 1\",\"description\":\"Desc 1\",\"taxonomy\":\"APPLY\",\"icon\":\"pen-fancy\",\"competencyId\":null,\"viewOnly\":null}]}%%PREVIEW_DATA_END%%";
             String message2 = "Second response without preview";
-            String message3 = "Third response %%PREVIEW_DATA_START%%{\"previews\":[{\"competency\":{\"title\":\"Test 2\",\"description\":\"Desc 2\",\"taxonomy\":\"ANALYZE\",\"icon\":\"magnifying-glass\"},\"competencyId\":null,\"viewOnly\":null}]}%%PREVIEW_DATA_END%%";
+            String message3 = "Third response %%PREVIEW_DATA_START%%{\"previews\":[{\"title\":\"Test 2\",\"description\":\"Desc 2\",\"taxonomy\":\"ANALYZE\",\"icon\":\"magnifying-glass\",\"competencyId\":null,\"viewOnly\":null}]}%%PREVIEW_DATA_END%%";
 
             List<Message> messages = List.of(new UserMessage("User message 1"), new AssistantMessage(message1), new UserMessage("User message 2"), new AssistantMessage(message2),
                     new UserMessage("User message 3"), new AssistantMessage(message3));
@@ -644,7 +644,7 @@ class AtlasAgentServiceTest {
             assertThat(result.get(1).content()).isEqualTo("First response");
             assertThat(result.get(1).competencyPreviews()).isNotNull();
             assertThat(result.get(1).competencyPreviews()).hasSize(1);
-            assertThat(result.get(1).competencyPreviews().getFirst().competency().title()).isEqualTo("Test 1");
+            assertThat(result.get(1).competencyPreviews().getFirst().title()).isEqualTo("Test 1");
 
             // Second assistant message without preview
             assertThat(result.get(3).content()).isEqualTo("Second response without preview");
@@ -654,7 +654,7 @@ class AtlasAgentServiceTest {
             assertThat(result.get(5).content()).isEqualTo("Third response");
             assertThat(result.get(5).competencyPreviews()).isNotNull();
             assertThat(result.get(5).competencyPreviews()).hasSize(1);
-            assertThat(result.get(5).competencyPreviews().getFirst().competency().title()).isEqualTo("Test 2");
+            assertThat(result.get(5).competencyPreviews().getFirst().title()).isEqualTo("Test 2");
         }
 
         @Test
@@ -663,7 +663,7 @@ class AtlasAgentServiceTest {
             List<Message> messages = List.of(new UserMessage("Create OOP competency"), new AssistantMessage("%%ARTEMIS_DELEGATE_TO_COMPETENCY_EXPERT%%:Brief"),
                     new AssistantMessage("TOPIC: OOP\nREQUIREMENTS: Create\nCONSTRAINTS: None\nCONTEXT: Course"),
                     new AssistantMessage(
-                            "Competency created %%PREVIEW_DATA_START%%{\"singlePreview\":{\"preview\":true,\"competency\":{\"title\":\"OOP\",\"description\":\"Test\",\"taxonomy\":\"APPLY\",\"icon\":\"pen-fancy\"}}}%%PREVIEW_DATA_END%%"),
+                            "Competency created %%PREVIEW_DATA_START%%{\"singlePreview\":{\"preview\":true,\"title\":\"OOP\",\"description\":\"Test\",\"taxonomy\":\"APPLY\",\"icon\":\"pen-fancy\"}}}%%PREVIEW_DATA_END%%"),
                     new AssistantMessage("%%ARTEMIS_RETURN_TO_MAIN_AGENT%%"), new AssistantMessage("Task completed successfully"));
 
             when(chatMemory.get(sessionId)).thenReturn(messages);

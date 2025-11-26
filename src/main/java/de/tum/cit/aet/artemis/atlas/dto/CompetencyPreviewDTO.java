@@ -7,7 +7,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 /**
  * DTO for competency preview response sent to the client.
  * Used when previewing competencies in the agent chat UI.
- * Contains only the minimal data required to display competency preview cards.
+ * Contains the data required to display competency preview cards.
  *
  * @param title        The competency title
  * @param description  The competency description

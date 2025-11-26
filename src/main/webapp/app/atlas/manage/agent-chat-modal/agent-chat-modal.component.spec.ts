@@ -745,12 +745,10 @@ describe('AgentChatModalComponent', () => {
                     competenciesModified: false,
                     competencyPreviews: [
                         {
-                            competency: {
-                                title: 'Object-Oriented Programming',
-                                description: 'Understanding OOP principles',
-                                taxonomy: CompetencyTaxonomy.UNDERSTAND,
-                                icon: 'comments',
-                            },
+                            title: 'Object-Oriented Programming',
+                            description: 'Understanding OOP principles',
+                            taxonomy: CompetencyTaxonomy.UNDERSTAND,
+                            icon: 'comments',
                         },
                     ],
                 };
@@ -778,12 +776,10 @@ describe('AgentChatModalComponent', () => {
                     competenciesModified: false,
                     competencyPreviews: [
                         {
-                            competency: {
-                                title: 'Data Structures',
-                                description: 'Arrays, lists, trees, and graphs',
-                                taxonomy: CompetencyTaxonomy.APPLY,
-                                icon: 'pen-fancy',
-                            },
+                            title: 'Data Structures',
+                            description: 'Arrays, lists, trees, and graphs',
+                            taxonomy: CompetencyTaxonomy.APPLY,
+                            icon: 'pen-fancy',
                         },
                     ],
                 };
@@ -919,28 +915,22 @@ describe('AgentChatModalComponent', () => {
                     competenciesModified: false,
                     competencyPreviews: [
                         {
-                            competency: {
-                                title: 'Comp 1',
-                                description: 'Desc 1',
-                                taxonomy: CompetencyTaxonomy.REMEMBER,
-                                icon: 'brain',
-                            },
+                            title: 'Comp 1',
+                            description: 'Desc 1',
+                            taxonomy: CompetencyTaxonomy.REMEMBER,
+                            icon: 'brain',
                         },
                         {
-                            competency: {
-                                title: 'Comp 2',
-                                description: 'Desc 2',
-                                taxonomy: CompetencyTaxonomy.UNDERSTAND,
-                                icon: 'comments',
-                            },
+                            title: 'Comp 2',
+                            description: 'Desc 2',
+                            taxonomy: CompetencyTaxonomy.UNDERSTAND,
+                            icon: 'comments',
                         },
                         {
-                            competency: {
-                                title: 'Comp 3',
-                                description: 'Desc 3',
-                                taxonomy: CompetencyTaxonomy.APPLY,
-                                icon: 'pen-fancy',
-                            },
+                            title: 'Comp 3',
+                            description: 'Desc 3',
+                            taxonomy: CompetencyTaxonomy.APPLY,
+                            icon: 'pen-fancy',
                         },
                     ],
                 };

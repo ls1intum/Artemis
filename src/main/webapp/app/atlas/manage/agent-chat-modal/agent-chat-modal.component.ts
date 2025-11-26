@@ -94,15 +94,11 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
         if (!this.canSendMessage()) {
             return;
         }
-
-        // Invalidate any pending plan approvals when user sends a new message
-        // This means they're refining the plan or moving to a different topic
         this.invalidatePendingPlanApprovals();
 
         this.addMessage(message, true);
         this.currentMessage.set('');
 
-        // Reset textarea height after clearing the message
         this.resetTextareaHeight();
 
         this.isAgentTyping.set(true);
@@ -180,7 +176,6 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
             .then(() => {
                 this.isAgentTyping.set(false);
 
-                // Mark as created
                 this.messages.update((msgs) => msgs.map((msg) => (msg.id === message.id ? { ...msg, competencyCreated: true } : msg)));
 
                 const count = competencies.length;
@@ -193,7 +188,6 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
                     const translationKey = hasUpdates ? 'artemisApp.agent.chat.success.updatedSingle' : 'artemisApp.agent.chat.success.createdSingle';
                     successMessage = this.translateService.instant(translationKey);
                 } else {
-                    // Multiple competencies
                     if (hasUpdates && hasCreates) {
                         successMessage = this.translateService.instant('artemisApp.agent.chat.success.processed', { count });
                     } else if (hasUpdates) {
@@ -205,10 +199,8 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
 
                 this.addMessage(successMessage, false);
 
-                // Emit event to refresh competencies
                 this.competencyChanged.emit();
 
-                // Restore focus
                 setTimeout(() => this.messageInput()?.nativeElement?.focus(), 10);
             })
             .catch(() => {
@@ -302,13 +294,11 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
         const planPendingMarker = '[PLAN_PENDING]';
         const escapedPlanPendingMarker = '\\[PLAN_PENDING\\]';
 
-        // Check for both escaped and unescaped markers
         if (content.includes(planPendingMarker)) {
             return content.replace(planPendingMarker, '').trim();
         }
 
         if (content.includes(escapedPlanPendingMarker)) {
-            // Remove the escaped marker from the message
             return content.replace(escapedPlanPendingMarker, '').trim();
         }
 
