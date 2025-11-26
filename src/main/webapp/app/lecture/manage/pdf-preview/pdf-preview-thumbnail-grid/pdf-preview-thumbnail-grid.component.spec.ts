@@ -26,9 +26,9 @@ describe('PdfPreviewThumbnailGridComponent', () => {
     let alertServiceMock: any;
 
     const mockOrderedPages: OrderedPage[] = [
-        { slideId: 'slide1', initialIndex: 1, order: 1, sourcePdfId: 'source1', sourceIndex: 0, pageProxy: null as any },
-        { slideId: 'slide2', initialIndex: 2, order: 2, sourcePdfId: 'source1', sourceIndex: 1, pageProxy: null as any },
-        { slideId: 'slide3', initialIndex: 3, order: 3, sourcePdfId: 'source1', sourceIndex: 2, pageProxy: null as any },
+        { slideId: 'slide1', initialIndex: 1, order: 1, sourcePdfId: 'source1', sourceIndex: 0, pageProxy: undefined as any },
+        { slideId: 'slide2', initialIndex: 2, order: 2, sourcePdfId: 'source1', sourceIndex: 1, pageProxy: undefined as any },
+        { slideId: 'slide3', initialIndex: 3, order: 3, sourcePdfId: 'source1', sourceIndex: 2, pageProxy: undefined as any },
     ];
 
     beforeEach(async () => {
@@ -65,9 +65,9 @@ describe('PdfPreviewThumbnailGridComponent', () => {
 
     it('should update hiddenPages when they change', () => {
         const updatedHiddenPages: HiddenPageMap = {
-            slide4: { date: dayjs(), exerciseId: null },
-            slide5: { date: dayjs(), exerciseId: null },
-            slide6: { date: dayjs(), exerciseId: null },
+            slide4: { date: dayjs(), exerciseId: undefined },
+            slide5: { date: dayjs(), exerciseId: undefined },
+            slide6: { date: dayjs(), exerciseId: undefined },
         };
 
         fixture.componentRef.setInput('hiddenPages', updatedHiddenPages);
@@ -205,10 +205,10 @@ describe('PdfPreviewThumbnailGridComponent', () => {
         const hiddenPage: HiddenPage = {
             slideId: 'slide1',
             date: dayjs('2024-01-01'),
-            exerciseId: null,
+            exerciseId: undefined,
         };
 
-        let emittedValue = null;
+        let emittedValue = undefined;
         emitSpy.mockImplementation((value) => {
             emittedValue = value;
         });
@@ -218,13 +218,13 @@ describe('PdfPreviewThumbnailGridComponent', () => {
         expect(emittedValue).toBeDefined();
         expect(emittedValue![hiddenPage.slideId]).toBeDefined();
         expect(emittedValue![hiddenPage.slideId].date.isSame(dayjs(hiddenPage.date))).toBeTruthy();
-        expect(emittedValue![hiddenPage.slideId].exerciseId).toBeNull();
+        expect(emittedValue![hiddenPage.slideId].exerciseId).toBeUndefined();
         expect(emitSpy).toHaveBeenCalled();
     });
 
     it('should remove the page from hiddenPages and hide the action button', () => {
         const initialPages: HiddenPageMap = {
-            slide1: { date: dayjs(), exerciseId: null },
+            slide1: { date: dayjs(), exerciseId: undefined },
         };
 
         fixture.componentRef.setInput('hiddenPages', initialPages);
@@ -233,7 +233,7 @@ describe('PdfPreviewThumbnailGridComponent', () => {
         const hideButtonSpy = jest.spyOn(component, 'hideActionButton');
         const emitSpy = jest.spyOn(component.hiddenPagesOutput, 'emit');
 
-        let emittedValue = null;
+        let emittedValue = undefined;
         emitSpy.mockImplementation((value) => {
             emittedValue = value;
         });
@@ -321,7 +321,7 @@ describe('PdfPreviewThumbnailGridComponent', () => {
             const mockDiv = document.createElement('div');
 
             Object.defineProperty(mockDiv, 'closest', {
-                value: jest.fn().mockReturnValue(null),
+                value: jest.fn().mockReturnValue(undefined),
             });
 
             const mockEvent = {
@@ -385,7 +385,7 @@ describe('PdfPreviewThumbnailGridComponent', () => {
             const hiddenPage: HiddenPage = {
                 slideId: 'slide1',
                 date: dayjs('2024-01-01'),
-                exerciseId: null,
+                exerciseId: undefined,
             };
 
             component.onHiddenPagesReceived(hiddenPage);
@@ -397,7 +397,7 @@ describe('PdfPreviewThumbnailGridComponent', () => {
             expect(emittedValue).toBeDefined();
             expect(emittedValue[hiddenPage.slideId]).toBeDefined();
             expect(emittedValue[hiddenPage.slideId].date.isSame(dayjs(hiddenPage.date))).toBeTruthy();
-            expect(emittedValue[hiddenPage.slideId].exerciseId).toBeNull();
+            expect(emittedValue[hiddenPage.slideId].exerciseId).toBeUndefined();
         });
 
         it('should update hiddenPages with multiple pages and emit the change', () => {
@@ -414,7 +414,7 @@ describe('PdfPreviewThumbnailGridComponent', () => {
                 {
                     slideId: 'slide1',
                     date: dayjs('2024-01-01'),
-                    exerciseId: null,
+                    exerciseId: undefined,
                 },
                 {
                     slideId: 'slide2',
@@ -715,7 +715,7 @@ describe('PdfPreviewThumbnailGridComponent', () => {
                         const context = canvas.getContext('2d');
                         await page.pageProxy.render({ canvasContext: context, viewport }).promise;
 
-                        this.loadedPages.update((loadedPages: Iterable<unknown> | null | undefined) => {
+                        this.loadedPages.update((loadedPages: Iterable<unknown> | undefined) => {
                             const newLoadedPages = new Set(loadedPages);
                             newLoadedPages.add(page.order);
                             return newLoadedPages;
@@ -948,7 +948,7 @@ describe('PdfPreviewThumbnailGridComponent', () => {
             const originalRenderPages = component.renderPages;
 
             component.renderPages = async function () {
-                this.loadedPages.update((loadedPages: Iterable<unknown> | null | undefined) => {
+                this.loadedPages.update((loadedPages: Iterable<unknown> | undefined) => {
                     const newLoadedPages = new Set(loadedPages);
                     newLoadedPages.add(3);
                     newLoadedPages.add(7);

@@ -206,7 +206,9 @@ public class RepositoryService {
      * @throws IOException if an error occurs while accessing the repository.
      */
     public Map<String, String> getFilesContentFromBareRepositoryForLastCommit(LocalVCRepositoryUri repositoryUri) throws IOException {
-        try (var bareRepository = gitService.getBareRepository(repositoryUri, false)) {
+
+        try {
+            var bareRepository = gitService.getBareRepository(repositoryUri, false);
             return getFilesContentFromBareRepositoryForLastCommit(bareRepository);
         }
         catch (GitException exception) {

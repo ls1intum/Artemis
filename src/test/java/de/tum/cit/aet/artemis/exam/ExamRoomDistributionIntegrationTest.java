@@ -1,7 +1,9 @@
 package de.tum.cit.aet.artemis.exam;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.byLessThan;
 
+import java.time.temporal.ChronoUnit;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -14,8 +16,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
+import de.tum.cit.aet.artemis.exam.dto.room.AttendanceCheckerAppExamInformationDTO;
+import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
+import de.tum.cit.aet.artemis.exam.service.ExamRoomDistributionService;
 import de.tum.cit.aet.artemis.exam.service.ExamRoomService;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamRoomTestRepository;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
@@ -38,6 +44,12 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
 
     @Autowired
     private ExamRoomService examRoomService;
+
+    @Autowired
+    private ExamRoomDistributionService examRoomDistributionService;
+
+    @Autowired
+    private ExamUserRepository examUserRepository;
 
     private static final String STUDENT_LOGIN = TEST_PREFIX + "student1";
 
@@ -195,4 +207,135 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
         verifyAllUsersAreNotDistributed(exam);
     }
 
+    /* Tests for the GET /api/exam/courses/{courseId}/exams/{examId}/attendance-checker-information endpoint */
+
+    @Test
+    @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
+    void testGetAttendanceCheckerInformationAsStudent() throws Exception {
+        examUtilService.registerUsersForExamAndSaveExam(exam1, TEST_PREFIX, 1);
+
+        request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/attendance-checker-information", HttpStatus.FORBIDDEN,
+                AttendanceCheckerAppExamInformationDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TUTOR_LOGIN, roles = "TA")
+    void testGetAttendanceCheckerInformationAsTutor() throws Exception {
+        request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/attendance-checker-information", HttpStatus.BAD_REQUEST,
+                AttendanceCheckerAppExamInformationDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = EDITOR_LOGIN, roles = "EDITOR")
+    void testGetAttendanceCheckerInformationAsEditor() throws Exception {
+        request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/attendance-checker-information", HttpStatus.BAD_REQUEST,
+                AttendanceCheckerAppExamInformationDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+    void testGetAttendanceCheckerInformationAsInstructor() throws Exception {
+        request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/attendance-checker-information", HttpStatus.BAD_REQUEST,
+                AttendanceCheckerAppExamInformationDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testGetAttendanceCheckerInformationAsAdmin() throws Exception {
+        request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/attendance-checker-information", HttpStatus.BAD_REQUEST,
+                AttendanceCheckerAppExamInformationDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TUTOR_LOGIN, roles = "TA")
+    void testGetAttendanceCheckerInformationRegisteredStudentsButNotDistributed() throws Exception {
+        examUtilService.registerUsersForExamAndSaveExam(exam1, TEST_PREFIX, 1);
+
+        request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/attendance-checker-information", HttpStatus.BAD_REQUEST,
+                AttendanceCheckerAppExamInformationDTO.class);
+    }
+
+    void verifyBasicAttendanceCheckerInformation(AttendanceCheckerAppExamInformationDTO attendanceCheckerInformation) {
+        assertThat(attendanceCheckerInformation.examId()).isEqualTo(exam1.getId());
+        assertThat(attendanceCheckerInformation.examTitle()).isEqualTo(exam1.getTitle());
+        assertThat(attendanceCheckerInformation.startDate()).isCloseTo(exam1.getStartDate(), byLessThan(1, ChronoUnit.SECONDS));
+        assertThat(attendanceCheckerInformation.endDate()).isCloseTo(exam1.getEndDate(), byLessThan(1, ChronoUnit.SECONDS));
+        assertThat(attendanceCheckerInformation.isTestExam()).isFalse();
+        assertThat(attendanceCheckerInformation.courseId()).isEqualTo(course1.getId());
+        assertThat(attendanceCheckerInformation.courseTitle()).isEqualTo(course1.getTitle());
+    }
+
+    @Test
+    @WithMockUser(username = TUTOR_LOGIN, roles = "TA")
+    void testGetAttendanceCheckerInformationRegisteredStudentsWithModernDistribution() throws Exception {
+        examUtilService.registerUsersForExamAndSaveExam(exam1, TEST_PREFIX, 10);
+        examRoomService.parseAndStoreExamRoomDataFromZipFile(ExamRoomZipFiles.zipFileSingleExamRoom);
+        Set<Long> ids = examRoomRepository.findAllIdsOfNewestExamRoomVersionsByRoomNumbers(Set.of("5602.EG.001"));
+        examRoomDistributionService.distributeRegisteredStudents(exam1.getId(), ids, true, 0.0);
+
+        var attendanceCheckerInformation = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/attendance-checker-information", HttpStatus.OK,
+                AttendanceCheckerAppExamInformationDTO.class);
+
+        verifyBasicAttendanceCheckerInformation(attendanceCheckerInformation);
+        assertThat(attendanceCheckerInformation.examRoomsUsedInExam()).hasSize(1);
+        assertThat(attendanceCheckerInformation.examUsersWithExamRoomAndSeat()).hasSize(10);
+    }
+
+    void distributeStudentsLegacyWay(int numberOfStudents) {
+        for (int i = 1; i <= numberOfStudents; i++) {
+            String login = TEST_PREFIX + "student" + i;
+            User user = userTestRepository.findOneWithExamUsersByLogin(login).orElseThrow();
+            ExamUser examUser = user.getExamUsers().stream().filter(examUser1 -> examUser1.getExam().getId().equals(exam1.getId())).findAny().orElseThrow();
+
+            examUser.setPlannedRoom("Room" + i);
+            examUser.setPlannedSeat("2, " + i * 2 + 1);
+            examUserRepository.save(examUser);
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TUTOR_LOGIN, roles = "TA")
+    void testGetAttendanceCheckerInformationRegisteredStudentsWithLegacyDistribution() throws Exception {
+        examUtilService.registerUsersForExamAndSaveExam(exam1, TEST_PREFIX, 10);
+
+        distributeStudentsLegacyWay(10);
+
+        var attendanceCheckerInformation = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/attendance-checker-information", HttpStatus.OK,
+                AttendanceCheckerAppExamInformationDTO.class);
+
+        verifyBasicAttendanceCheckerInformation(attendanceCheckerInformation);
+        assertThat(attendanceCheckerInformation.examRoomsUsedInExam()).isNullOrEmpty();
+        assertThat(attendanceCheckerInformation.examUsersWithExamRoomAndSeat()).hasSize(10);
+    }
+
+    @Test
+    @WithMockUser(username = TUTOR_LOGIN, roles = "TA")
+    void testGetAttendanceCheckerInformationRegisteredStudentsWithLegacyDistributionNotAllDistributed() throws Exception {
+        examUtilService.registerUsersForExamAndSaveExam(exam1, TEST_PREFIX, 10);
+
+        distributeStudentsLegacyWay(5);
+
+        var attendanceCheckerInformation = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/attendance-checker-information", HttpStatus.OK,
+                AttendanceCheckerAppExamInformationDTO.class);
+
+        verifyBasicAttendanceCheckerInformation(attendanceCheckerInformation);
+        assertThat(attendanceCheckerInformation.examRoomsUsedInExam()).isNullOrEmpty();
+        assertThat(attendanceCheckerInformation.examUsersWithExamRoomAndSeat()).hasSize(5);
+    }
+
+    @Test
+    @WithMockUser(username = TUTOR_LOGIN, roles = "TA")
+    void testGetAttendanceCheckerInformationWithStudentsAssignedReturnAllRegisteredRooms() throws Exception {
+        examUtilService.registerUsersForExamAndSaveExam(exam1, TEST_PREFIX, 10);
+        examRoomService.parseAndStoreExamRoomDataFromZipFile(ExamRoomZipFiles.zipFileFourExamRooms);
+        Set<Long> ids = examRoomRepository.findAllIdsOfNewestExamRoomVersionsByRoomNumbers(Set.of("0101.01.135", "0101.02.179", "0101.Z1.090", "5602.EG.001"));
+        examRoomDistributionService.distributeRegisteredStudents(exam1.getId(), ids, true, 0.0);
+
+        var attendanceCheckerInformation = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/attendance-checker-information", HttpStatus.OK,
+                AttendanceCheckerAppExamInformationDTO.class);
+
+        verifyBasicAttendanceCheckerInformation(attendanceCheckerInformation);
+        assertThat(attendanceCheckerInformation.examRoomsUsedInExam()).hasSize(4);
+        assertThat(attendanceCheckerInformation.examUsersWithExamRoomAndSeat()).hasSize(10);
+    }
 }

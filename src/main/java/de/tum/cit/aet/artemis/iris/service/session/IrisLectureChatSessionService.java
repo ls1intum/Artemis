@@ -93,10 +93,10 @@ public class IrisLectureChatSessionService implements IrisChatBasedFeatureInterf
             throw new ConflictException("Iris is not enabled for this lecture", "Iris", "irisDisabled");
         }
 
-        var conversation = session.getMessages().stream().map(PyrisMessageDTO::of).toList();
+        var chatHistory = session.getMessages().stream().map(PyrisMessageDTO::of).toList();
         pyrisPipelineService.executePipeline("lecture-chat", settings.variant().jsonValue(), Optional.empty(),
                 pyrisJobService.createTokenForJob(token -> new LectureChatJob(token, course.getId(), lecture.getId(), session.getId())),
-                dto -> new PyrisLectureChatPipelineExecutionDTO(course.getId(), lecture.getId(), session.getTitle(), conversation, new PyrisUserDTO(user), dto.settings(),
+                dto -> new PyrisLectureChatPipelineExecutionDTO(course.getId(), lecture.getId(), session.getTitle(), chatHistory, new PyrisUserDTO(user), dto.settings(),
                         dto.initialStages(), settings.customInstructions()),
                 stages -> irisChatWebsocketService.sendMessage(session, null, stages));
     }

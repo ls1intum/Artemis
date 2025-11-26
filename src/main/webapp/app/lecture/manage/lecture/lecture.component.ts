@@ -12,7 +12,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/shared/service/alert.service';
 import { faFile, faFileExport, faFileImport, faFilter, faPencilAlt, faPlus, faPuzzlePiece, faSort, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { LectureImportComponent } from 'app/lecture/manage/lecture-import/lecture-import.component';
-import { Subject, Subscription } from 'rxjs';
+import { Subject } from 'rxjs';
 import { DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
 import { SortService } from 'app/shared/service/sort.service';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
@@ -60,7 +60,7 @@ export enum LectureDateFilter {
     ],
 })
 export class LectureComponent implements OnInit, OnDestroy {
-    protected lectureService = inject(LectureService);
+    private lectureService = inject(LectureService);
     private route = inject(ActivatedRoute);
     private router = inject(Router);
     private alertService = inject(AlertService);
@@ -77,8 +77,8 @@ export class LectureComponent implements OnInit, OnDestroy {
     dialogError$ = this.dialogErrorSource.asObservable();
 
     activeFilters = new Set<LectureDateFilter>();
-    predicate: string;
-    ascending: boolean;
+    predicate = 'id';
+    ascending = true;
 
     irisEnabled = false;
 
@@ -100,13 +100,6 @@ export class LectureComponent implements OnInit, OnDestroy {
 
     protected readonly IngestionState = IngestionState;
 
-    private profileInfoSubscription: Subscription;
-
-    constructor() {
-        this.predicate = 'id';
-        this.ascending = true;
-    }
-
     ngOnInit() {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.irisEnabled = this.profileService.isProfileActive(PROFILE_IRIS);
@@ -124,7 +117,6 @@ export class LectureComponent implements OnInit, OnDestroy {
 
     ngOnDestroy(): void {
         this.dialogErrorSource.unsubscribe();
-        this.profileInfoSubscription?.unsubscribe();
     }
 
     trackId(_index: number, item: Lecture) {

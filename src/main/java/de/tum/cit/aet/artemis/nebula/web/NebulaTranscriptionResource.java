@@ -22,8 +22,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastEditorInLectureUnit;
 import de.tum.cit.aet.artemis.lecture.dto.NebulaTranscriptionRequestDTO;
 import de.tum.cit.aet.artemis.nebula.config.NebulaEnabled;
 import de.tum.cit.aet.artemis.nebula.service.LectureTranscriptionService;
@@ -60,7 +60,7 @@ public class NebulaTranscriptionResource {
      * @return the ResponseEntity with status 200 (OK) if transcription started successfully
      */
     @PostMapping("{lectureId}/lecture-unit/{lectureUnitId}/transcriber")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastEditorInLectureUnit
     public ResponseEntity<Void> startNebulaTranscription(@PathVariable Long lectureId, @PathVariable Long lectureUnitId,
             @RequestBody @Valid NebulaTranscriptionRequestDTO request) {
 

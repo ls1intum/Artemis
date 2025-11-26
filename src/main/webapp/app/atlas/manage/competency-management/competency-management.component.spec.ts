@@ -35,7 +35,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
 
 describe('CompetencyManagementComponent', () => {
     let fixture: ComponentFixture<CompetencyManagementComponent>;
@@ -45,7 +45,7 @@ describe('CompetencyManagementComponent', () => {
     let irisSettingsService: IrisSettingsService;
     let modalService: NgbModal;
     let alertService: AlertService;
-    let sessionStorageService: SessionStorageService;
+    let localStorageService: LocalStorageService;
 
     let getProfileInfoSpy: jest.SpyInstance;
     let getAllForCourseSpy: jest.SpyInstance;
@@ -98,7 +98,7 @@ describe('CompetencyManagementComponent', () => {
         irisSettingsService = TestBed.inject(IrisSettingsService);
         profileService = TestBed.inject(ProfileService);
         alertService = TestBed.inject(AlertService);
-        sessionStorageService = TestBed.inject(SessionStorageService);
+        localStorageService = TestBed.inject(LocalStorageService);
 
         const competency: Competency = new Competency();
         competency.id = 1;
@@ -195,7 +195,7 @@ describe('CompetencyManagementComponent', () => {
     });
 
     it('should open course competency explanation', () => {
-        sessionStorageService.store<boolean>('alreadyVisitedCompetencyManagement', true);
+        localStorageService.store<boolean>('alreadyVisitedCompetencyManagement', true);
         const openModalSpy = jest.spyOn(modalService, 'open');
         fixture.detectChanges();
 
@@ -242,7 +242,7 @@ describe('CompetencyManagementComponent', () => {
     });
 
     it('should open agent chat modal and set courseId', () => {
-        sessionStorageService.store<boolean>('alreadyVisitedCompetencyManagement', true);
+        localStorageService.store<boolean>('alreadyVisitedCompetencyManagement', true);
         const modalRef = {
             componentInstance: {
                 courseId: undefined,

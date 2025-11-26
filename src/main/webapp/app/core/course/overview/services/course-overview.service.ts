@@ -18,7 +18,7 @@ import { StudentParticipation } from 'app/exercise/shared/entities/participation
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { AccordionGroups, ChannelGroupCategory, SidebarCardElement, TimeGroupCategory } from 'app/shared/types/sidebar';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
-import dayjs from 'dayjs/esm';
+import dayjs, { Dayjs } from 'dayjs/esm';
 import { cloneDeep } from 'lodash-es';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 
@@ -82,10 +82,24 @@ export class CourseOverviewService {
     readonly faLock = faLock;
 
     getUpcomingTutorialGroup(tutorialGroups: TutorialGroup[] | undefined): TutorialGroup | undefined {
-        if (tutorialGroups && tutorialGroups.length) {
-            return tutorialGroups?.reduce((a, b) => ((a?.nextSession?.start?.valueOf() ?? 0) > (b?.nextSession?.start?.valueOf() ?? 0) ? a : b));
+        if (!tutorialGroups?.length) {
+            return undefined;
         }
+        const now = dayjs();
+        const futureGroups = tutorialGroups.filter((group) => {
+            const start = group.nextSession?.start;
+            return start?.isAfter(now);
+        });
+        if (!futureGroups.length) {
+            return undefined;
+        }
+        return futureGroups.reduce((earliest, current) => {
+            const earliestStart = earliest.nextSession?.start;
+            const currentStart = current.nextSession?.start;
+            return currentStart?.isBefore(earliestStart) ? current : earliest;
+        });
     }
+
     getUpcomingLecture(lectures: Lecture[] | undefined): Lecture | undefined {
         if (lectures && lectures.length) {
             return lectures?.reduce((a, b) => ((a?.startDate?.valueOf() ?? 0) > (b?.startDate?.valueOf() ?? 0) ? a : b));
@@ -114,7 +128,7 @@ export class CourseOverviewService {
         return GROUP_DECISION_MATRIX[startGroup][endGroup];
     }
 
-    private getStartDateGroup(exercise: Exercise, now: dayjs.Dayjs): StartDateGroup {
+    private getStartDateGroup(exercise: Exercise, now: Dayjs): StartDateGroup {
         const start = exercise.startDate ?? exercise.releaseDate;
 
         if (start === undefined) {
@@ -128,7 +142,7 @@ export class CourseOverviewService {
         return 'future';
     }
 
-    private getEndDateGroup(exercise: Exercise, now: dayjs.Dayjs): EndDateGroup {
+    private getEndDateGroup(exercise: Exercise, now: Dayjs): EndDateGroup {
         const dueDate = exercise.dueDate ? dayjs(exercise.dueDate) : undefined;
 
         if (dueDate === undefined) {
@@ -147,7 +161,7 @@ export class CourseOverviewService {
         return 'future';
     }
 
-    getCorrespondingLectureGroupByDate(startDate: dayjs.Dayjs | undefined, endDate?: dayjs.Dayjs | undefined): TimeGroupCategory {
+    getCorrespondingLectureGroupByDate(startDate: Dayjs | undefined, endDate?: Dayjs | undefined): TimeGroupCategory {
         if (!startDate) {
             return 'noDate';
         }
@@ -281,6 +295,7 @@ export class CourseOverviewService {
     mapLecturesToSidebarCardElements(lectures: Lecture[]) {
         return lectures.map((lecture) => this.mapLectureToSidebarCardElement(lecture));
     }
+
     mapTutorialGroupsToSidebarCardElements(tutorialGroups: TutorialGroup[]) {
         return tutorialGroups.map((tutorialGroup) => this.mapTutorialGroupToSidebarCardElement(tutorialGroup));
     }
@@ -288,6 +303,7 @@ export class CourseOverviewService {
     mapExercisesToSidebarCardElements(exercises: Exercise[]) {
         return exercises.map((exercise) => this.mapExerciseToSidebarCardElement(exercise));
     }
+
     mapExamsToSidebarCardElements(exams: Exam[], studentExams?: StudentExam[]) {
         return exams.map((exam, index) => this.mapExamToSidebarCardElement(exam, studentExams?.[index]));
     }
@@ -314,6 +330,7 @@ export class CourseOverviewService {
         return {
             title: lecture.title ?? '',
             id: lecture.id ?? '',
+            targetComponentSubRoute: lecture.isTutorialLecture ? 'tutorial-lectures' : undefined,
             subtitleLeft: lecture.startDate?.format('MMM DD, YYYY') ?? this.translate.instant('artemisApp.courseOverview.sidebar.noDate'),
             size: 'M',
             startDate: lecture.startDate,
@@ -374,7 +391,7 @@ export class CourseOverviewService {
         }
     }
 
-    private computeTutorialSidebarCardSubtitles(start?: dayjs.Dayjs, end?: dayjs.Dayjs): [string?, string?] {
+    private computeTutorialSidebarCardSubtitles(start?: Dayjs, end?: Dayjs): [string?, string?] {
         const subtitleLeft = start?.format('MMM DD, YYYY');
         if (!subtitleLeft) {
             return [this.translate.instant('artemisApp.courseOverview.sidebar.noUpcomingSession'), undefined];

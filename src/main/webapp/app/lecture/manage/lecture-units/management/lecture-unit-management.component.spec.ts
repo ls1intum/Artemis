@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LectureUnitManagementComponent } from 'app/lecture/manage/lecture-units/management/lecture-unit-management.component';
-import { AttachmentVideoUnit, IngestionState } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
+import { AttachmentVideoUnit, IngestionState, TranscriptionStatus } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ExerciseUnit } from 'app/lecture/shared/entities/lecture-unit/exerciseUnit.model';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
@@ -10,7 +10,7 @@ import { AttachmentVideoUnitComponent } from 'app/lecture/overview/course-lectur
 import { TextUnitComponent } from 'app/lecture/overview/course-lectures/text-unit/text-unit.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { ActivatedRoute, Params, Router } from '@angular/router';
+import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -37,10 +37,12 @@ import { Course } from 'app/core/course/shared/entities/course.model';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { mockCourseSettings } from 'test/helpers/mocks/iris/mock-settings';
+import { LectureTranscriptionService } from 'app/lecture/manage/services/lecture-transcription.service';
+import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
 
 @Component({ selector: 'jhi-competencies-popover', template: '' })
 class CompetenciesPopoverStubComponent {
-    @Input() courseId: number;
+    @Input() courseId!: number;
     @Input() competencyLinks: CompetencyLectureUnitLink[] = [];
     @Input() navigateTo: 'competencyManagement' | 'courseStatistics' = 'courseStatistics';
 }
@@ -48,11 +50,12 @@ class CompetenciesPopoverStubComponent {
 describe('LectureUnitManagementComponent', () => {
     let lectureUnitManagementComponent: LectureUnitManagementComponent;
     let lectureUnitManagementComponentFixture: ComponentFixture<LectureUnitManagementComponent>;
-
     let lectureService: LectureService;
     let lectureUnitService: LectureUnitService;
     let profileService: ProfileService;
     let irisSettingsService: IrisSettingsService;
+    let lectureTranscriptionService: LectureTranscriptionService;
+    let attachmentVideoUnitService: AttachmentVideoUnitService;
     let findLectureSpy: jest.SpyInstance;
     let findLectureWithDetailsSpy: jest.SpyInstance;
     let deleteLectureUnitSpy: jest.SpyInstance;
@@ -65,6 +68,9 @@ describe('LectureUnitManagementComponent', () => {
     let textUnit: TextUnit;
     let lecture: Lecture;
     let course: Course;
+
+    const lectureId = 1;
+    const route = { parent: { snapshot: { paramMap: convertToParamMap({ lectureId }) } } } as any as ActivatedRoute;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -88,22 +94,11 @@ describe('LectureUnitManagementComponent', () => {
                 MockProvider(AlertService),
                 MockProvider(ProfileService),
                 MockProvider(IrisSettingsService),
+                MockProvider(LectureTranscriptionService),
+                MockProvider(AttachmentVideoUnitService),
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: Router, useClass: MockRouter },
-                {
-                    provide: ActivatedRoute,
-                    useValue: {
-                        parent: {
-                            params: {
-                                subscribe: (fn_1: (value: Params) => void) =>
-                                    fn_1({
-                                        lectureId: 1,
-                                    }),
-                            },
-                        },
-                        children: [],
-                    },
-                },
+                { provide: ActivatedRoute, useValue: route },
             ],
         }).compileComponents();
         lectureUnitManagementComponentFixture = TestBed.createComponent(LectureUnitManagementComponent);
@@ -112,6 +107,8 @@ describe('LectureUnitManagementComponent', () => {
         lectureUnitService = TestBed.inject(LectureUnitService);
         profileService = TestBed.inject(ProfileService);
         irisSettingsService = TestBed.inject(IrisSettingsService);
+        lectureTranscriptionService = TestBed.inject(LectureTranscriptionService);
+        attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
         findLectureSpy = jest.spyOn(lectureService, 'find');
         findLectureWithDetailsSpy = jest.spyOn(lectureService, 'findWithDetails');
         deleteLectureUnitSpy = jest.spyOn(lectureUnitService, 'delete');
@@ -280,6 +277,68 @@ describe('LectureUnitManagementComponent', () => {
                 type: LectureUnitType.TEXT,
             };
             expect(lectureUnitManagementComponent.isViewButtonAvailable(lectureUnit)).toBeFalse();
+        });
+    });
+
+    describe('Transcription', () => {
+        it('should load transcription status and playlist url for attachment video units', () => {
+            const statusSpy = jest.spyOn(lectureTranscriptionService, 'getTranscriptionStatus').mockReturnValue(of(TranscriptionStatus.COMPLETED));
+            const playlistSpy = jest.spyOn(attachmentVideoUnitService, 'getPlaylistUrl').mockReturnValue(of('playlist.m3u8'));
+            attachmentVideoUnit.videoSource = 'source.mp4';
+
+            lectureUnitManagementComponent.loadData();
+
+            expect(statusSpy).toHaveBeenCalledWith(attachmentVideoUnit.id);
+            expect(playlistSpy).toHaveBeenCalledWith('source.mp4');
+            expect(lectureUnitManagementComponent.transcriptionStatus[attachmentVideoUnit.id!]).toBe(TranscriptionStatus.COMPLETED);
+            expect(lectureUnitManagementComponent.playlistUrls[attachmentVideoUnit.id!]).toBe('playlist.m3u8');
+        });
+
+        it('should generate transcription', () => {
+            const startTranscriptionSpy = jest.spyOn(attachmentVideoUnitService, 'startTranscription').mockReturnValue(of(undefined));
+            lectureUnitManagementComponent.playlistUrls[attachmentVideoUnit.id!] = 'playlist.m3u8';
+            lectureUnitManagementComponent.lecture = lecture;
+
+            lectureUnitManagementComponent.generateTranscription(attachmentVideoUnit);
+
+            expect(startTranscriptionSpy).toHaveBeenCalledWith(lecture.id, attachmentVideoUnit.id, 'playlist.m3u8');
+            expect(lectureUnitManagementComponent.transcriptionStatus[attachmentVideoUnit.id!]).toBe(TranscriptionStatus.PENDING);
+        });
+
+        it('should not generate transcription if already loading', () => {
+            const startTranscriptionSpy = jest.spyOn(attachmentVideoUnitService, 'startTranscription');
+            lectureUnitManagementComponent.isTranscriptionLoading[attachmentVideoUnit.id!] = true;
+
+            lectureUnitManagementComponent.generateTranscription(attachmentVideoUnit);
+
+            expect(startTranscriptionSpy).not.toHaveBeenCalled();
+        });
+
+        it('should correctly identify transcription states', () => {
+            lectureUnitManagementComponent.transcriptionStatus[attachmentVideoUnit.id!] = TranscriptionStatus.COMPLETED;
+            expect(lectureUnitManagementComponent.hasTranscription(attachmentVideoUnit)).toBeTrue();
+
+            lectureUnitManagementComponent.transcriptionStatus[attachmentVideoUnit.id!] = TranscriptionStatus.PENDING;
+            expect(lectureUnitManagementComponent.isTranscriptionPending(attachmentVideoUnit)).toBeTrue();
+
+            lectureUnitManagementComponent.transcriptionStatus[attachmentVideoUnit.id!] = TranscriptionStatus.FAILED;
+            expect(lectureUnitManagementComponent.isTranscriptionFailed(attachmentVideoUnit)).toBeTrue();
+        });
+
+        it('should determine if transcription can be generated', () => {
+            lectureUnitManagementComponent.playlistUrls[attachmentVideoUnit.id!] = 'playlist.m3u8';
+            lectureUnitManagementComponent.transcriptionStatus[attachmentVideoUnit.id!] = undefined as any;
+            expect(lectureUnitManagementComponent.canGenerateTranscription(attachmentVideoUnit)).toBeTrue();
+
+            lectureUnitManagementComponent.transcriptionStatus[attachmentVideoUnit.id!] = TranscriptionStatus.PENDING;
+            expect(lectureUnitManagementComponent.canGenerateTranscription(attachmentVideoUnit)).toBeFalse();
+
+            lectureUnitManagementComponent.transcriptionStatus[attachmentVideoUnit.id!] = TranscriptionStatus.COMPLETED;
+            expect(lectureUnitManagementComponent.canGenerateTranscription(attachmentVideoUnit)).toBeTrue();
+
+            lectureUnitManagementComponent.transcriptionStatus[attachmentVideoUnit.id!] = undefined as any;
+            lectureUnitManagementComponent.playlistUrls[attachmentVideoUnit.id!] = undefined as any;
+            expect(lectureUnitManagementComponent.canGenerateTranscription(attachmentVideoUnit)).toBeFalse();
         });
     });
 });

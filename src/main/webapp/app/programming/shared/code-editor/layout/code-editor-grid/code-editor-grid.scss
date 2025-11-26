@@ -6,6 +6,8 @@
     display: grid;
     grid-template-rows: min-content auto auto;
     row-gap: 10px;
+    max-height: 100vh;
+    overflow: hidden;
 
     .collapsed--horizontal {
         width: 50px !important;
@@ -76,6 +78,8 @@
         display: flex;
         flex-flow: column nowrap;
         height: 200px;
+        max-height: calc(100vh - 550px);
+        overflow: auto;
 
         /* Hide grip when bottom area is empty */
         .rg-bottom-bottom {
@@ -255,6 +259,7 @@
    Resizable drag elements
    ========================================================================== */
 
+/* stylelint-disable no-descending-specificity -- These selectors are used in different contexts */
 .rg-main-bottom,
 .rg-bottom-bottom,
 .rg-sidebar-left,
@@ -262,7 +267,15 @@
     align-self: center;
     color: var(--code-editor-grid-grip-lines-color);
     justify-self: center;
+    font-size: 0.7rem;
+    opacity: 1;
+    transition: opacity 0.2s;
+
+    &:hover {
+        opacity: 0.8;
+    }
 }
+/* stylelint-enable no-descending-specificity */
 
 .rg-main-bottom {
     cursor: row-resize;
@@ -271,11 +284,11 @@
 .rg-sidebar-left,
 .rg-sidebar-right {
     cursor: col-resize;
-    margin-left: 1px;
-    margin-right: 1px;
+    margin-left: 0;
+    margin-right: 0;
 
     /* easier to grab + avoid selecting editor text while dragging */
-    padding: 1px 1px;
+    padding: 0 0;
     -webkit-user-select: none;
     user-select: none;
     touch-action: none;
@@ -283,7 +296,7 @@
 }
 
 .separator {
-    margin: 5px;
+    margin: 0;
 }
 
 /* ==========================================================================

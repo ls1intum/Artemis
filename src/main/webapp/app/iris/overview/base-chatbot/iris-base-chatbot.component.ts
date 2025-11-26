@@ -517,6 +517,9 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
 
     setChatHistoryVisibility(isOpen: boolean) {
         this.isChatHistoryOpen = isOpen;
+        if (!isOpen) {
+            this.setSearchValue('');
+        }
     }
 
     /**

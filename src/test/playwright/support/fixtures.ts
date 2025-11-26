@@ -70,13 +70,19 @@ import { ExamParticipationActions } from './pageobjects/exam/ExamParticipationAc
 import { AccountManagementAPIRequests } from './requests/AccountManagementAPIRequests';
 import { ProgrammingExerciseSubmissionsPage } from './pageobjects/exercises/programming/ProgrammingExercisesSubmissionsPage';
 
-/*
- * Define custom types for fixtures
- */
+// Define custom types for fixtures
 export type ArtemisCommands = {
     login: (credentials: UserCredentials, url?: string) => Promise<void>;
     waitForExerciseBuildToFinish: (exerciseId: number, interval?: number, timeout?: number) => Promise<void>;
     toggleSidebar: () => Promise<void>;
+    createCompetency: (
+        courseId: number,
+        options: { title: string; description: string; taxonomy?: string; softDueDate?: Date | string; returnToPrevious?: boolean } & Record<string, unknown>,
+    ) => Promise<void>;
+    createPrerequisite: (
+        courseId: number,
+        options: { title: string; description: string; taxonomy?: string; softDueDate?: Date | string; returnToPrevious?: boolean } & Record<string, unknown>,
+    ) => Promise<void>;
 };
 
 export type ArtemisPageObjects = {
