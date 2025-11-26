@@ -60,6 +60,10 @@
             "problemStatement": "Problem Statement",
             "problemStatementEditor": "Problem Statement (Editor)",
             "emptyProblemStatement": "(No problem statement)",
+            "emptyProblemStatementPreview": {
+                "title": "No Problem Statement Yet",
+                "description": "The problem statement for this exercise hasn't been created yet."
+            },
             "instructions": "Instructions",
             "exampleSolution": "Example Solution",
             "emptyExampleSolution": "(No example solution)",
