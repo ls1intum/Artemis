@@ -31,7 +31,7 @@ import com.google.common.cache.CacheBuilder;
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.dto.AtlasAgentChatResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.AtlasAgentHistoryMessageDTO;
-import de.tum.cit.aet.artemis.atlas.dto.CompetencyPreviewResponseDTO;
+import de.tum.cit.aet.artemis.atlas.dto.CompetencyPreviewDTO;
 
 /**
  * Service for Atlas Agent functionality with Azure OpenAI integration.
@@ -189,7 +189,7 @@ public class AtlasAgentService {
                 sessionAgentMap.put(sessionId, AgentType.COMPETENCY_EXPERT);
                 String delegationResponse = delegateTheRightAgent(brief, courseId, sessionId);
 
-                List<CompetencyPreviewResponseDTO> previews = CompetencyExpertToolsService.getPreviews();
+                List<CompetencyPreviewDTO> previews = CompetencyExpertToolsService.getPreviews();
 
                 String responseWithEmbeddedData = embedPreviewDataInResponse(delegationResponse, previews);
 
@@ -216,7 +216,7 @@ public class AtlasAgentService {
 
                 String creationResponse = delegateTheRightAgent(CREATE_APPROVED_COMPETENCY, courseId, sessionId);
 
-                List<CompetencyPreviewResponseDTO> previews = CompetencyExpertToolsService.getPreviews();
+                List<CompetencyPreviewDTO> previews = CompetencyExpertToolsService.getPreviews();
 
                 String responseWithEmbeddedData = embedPreviewDataInResponse(creationResponse, previews);
 
@@ -245,7 +245,7 @@ public class AtlasAgentService {
 
             boolean competenciesModified = competencyModifiedInCurrentRequest.get();
 
-            List<CompetencyPreviewResponseDTO> previews = CompetencyExpertToolsService.getPreviews();
+            List<CompetencyPreviewDTO> previews = CompetencyExpertToolsService.getPreviews();
 
             String finalResponse = (!response.trim().isEmpty()) ? response : "I apologize, but I couldn't generate a response.";
 
@@ -440,7 +440,7 @@ public class AtlasAgentService {
      * @param previews Optional list of competency previews
      * @return The response text with embedded preview data marker
      */
-    private String embedPreviewDataInResponse(String response, @Nullable List<CompetencyPreviewResponseDTO> previews) {
+    private String embedPreviewDataInResponse(String response, @Nullable List<CompetencyPreviewDTO> previews) {
         if (previews == null || previews.isEmpty()) {
             return response;
         }
@@ -505,12 +505,12 @@ public class AtlasAgentService {
     /**
      * Container for embedding preview data in message text.
      */
-    record PreviewDataContainer(@Nullable List<CompetencyPreviewResponseDTO> previews) {
+    record PreviewDataContainer(@Nullable List<CompetencyPreviewDTO> previews) {
     }
 
     /**
      * Result of extracting preview data from a message.
      */
-    record PreviewDataResult(String cleanedText, @Nullable List<CompetencyPreviewResponseDTO> previews) {
+    record PreviewDataResult(String cleanedText, @Nullable List<CompetencyPreviewDTO> previews) {
     }
 }

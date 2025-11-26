@@ -1046,7 +1046,7 @@ describe('AgentChatModalComponent', () => {
 
                 it('should send approval message when onApprovePlan is called', fakeAsync(() => {
                     const planApprovalText = 'I approve the plan';
-                    jest.spyOn(mockTranslateService, 'instant').mockReturnValue(planApprovalText);
+                    const translateSpy = jest.spyOn(mockTranslateService, 'instant').mockReturnValue(planApprovalText);
                     const approvalResponse = {
                         message: 'Plan approved, executing...',
                         sessionId: 'course_123',
@@ -1069,7 +1069,7 @@ describe('AgentChatModalComponent', () => {
                     tick();
 
                     expect(mockAgentChatService.sendMessage).toHaveBeenCalledWith(planApprovalText, 123);
-                    expect(jest.spyOn(mockTranslateService, 'instant')).toHaveBeenCalledWith('artemisApp.agent.chat.planApproval');
+                    expect(translateSpy).toHaveBeenCalledWith('artemisApp.agent.chat.planApproval');
 
                     // Find the updated message in the messages array
                     const updatedMessage = component.messages().find((msg) => msg.id === '1');

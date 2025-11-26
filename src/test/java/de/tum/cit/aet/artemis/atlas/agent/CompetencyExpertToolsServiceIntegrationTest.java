@@ -339,7 +339,6 @@ class CompetencyExpertToolsServiceIntegrationTest extends AbstractAtlasIntegrati
 
             // State should be tracked
             assertThat(atlasAgentService.getCompetencyModifiedInCurrentRequest()).as("Creation flag should be set after creating competency").isTrue();
-            assertThat(atlasAgentService.getCompetencyModifiedInCurrentRequest()).as("Modified flag should be set after creating competency").isTrue();
         }
 
         @Test

@@ -7,8 +7,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { firstValueFrom } from 'rxjs';
-import { AgentChatService } from '../services/agent-chat.service';
-import { ChatMessage, CompetencyPreview } from 'app/atlas/shared/entities/chat-message.model';
+import { AgentChatService, CompetencyPreviewResponse } from '../services/agent-chat.service';
+import { ChatMessage } from 'app/atlas/shared/entities/chat-message.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CompetencyCardComponent } from 'app/atlas/overview/competency-card/competency-card.component';
 import { CompetencyService } from 'app/atlas/manage/services/competency.service';
@@ -101,6 +101,9 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
 
         this.addMessage(message, true);
         this.currentMessage.set('');
+
+        // Reset textarea height after clearing the message
+        this.resetTextareaHeight();
 
         this.isAgentTyping.set(true);
 
@@ -254,7 +257,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
      * Adds a message to the chat with optional competency preview data.
      * Handles plan pending markers, preview data mapping, and automatic scrolling.
      */
-    private addMessage(content: string, isUser: boolean, competencyPreviews?: { competency: CompetencyPreview; competencyId?: number; viewOnly?: boolean }[]): void {
+    private addMessage(content: string, isUser: boolean, competencyPreviews?: CompetencyPreviewResponse[]): void {
         const message: ChatMessage = {
             id: this.generateMessageId(),
             content,
@@ -265,7 +268,10 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
         // Map preview data if provided
         if (competencyPreviews && competencyPreviews.length > 0) {
             message.competencyPreviews = competencyPreviews.map((preview) => ({
-                ...preview.competency,
+                title: preview.title,
+                description: preview.description,
+                taxonomy: preview.taxonomy,
+                icon: preview.icon,
                 competencyId: preview.competencyId,
                 viewOnly: preview.viewOnly,
             }));
@@ -334,6 +340,13 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
         if (this.messagesContainer()) {
             const element = this.messagesContainer().nativeElement;
             element.scrollTop = element.scrollHeight;
+        }
+    }
+
+    private resetTextareaHeight(): void {
+        if (this.messageInput()?.nativeElement) {
+            const textarea = this.messageInput().nativeElement;
+            textarea.style.height = 'auto';
         }
     }
 }

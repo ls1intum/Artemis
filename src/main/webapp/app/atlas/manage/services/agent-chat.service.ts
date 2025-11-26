@@ -3,14 +3,17 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { catchError, timeout } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
-import { CompetencyPreview } from 'app/atlas/shared/entities/chat-message.model';
+import { CompetencyTaxonomy } from 'app/atlas/shared/entities/competency.model';
 
 interface AgentChatRequest {
     message: string;
 }
 
 export interface CompetencyPreviewResponse {
-    competency: CompetencyPreview;
+    title: string;
+    description: string;
+    taxonomy: CompetencyTaxonomy;
+    icon: string;
     competencyId?: number;
     viewOnly?: boolean;
 }

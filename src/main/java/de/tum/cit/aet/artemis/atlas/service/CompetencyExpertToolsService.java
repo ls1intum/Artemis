@@ -24,7 +24,6 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
 import de.tum.cit.aet.artemis.atlas.dto.AtlasAgentCompetencyDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyErrorDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyPreviewDTO;
-import de.tum.cit.aet.artemis.atlas.dto.CompetencyPreviewResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencySaveResponseDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -125,7 +124,7 @@ public class CompetencyExpertToolsService {
     private final AtlasAgentService atlasAgentService;
 
     // ThreadLocal storage for preview data - enables deterministic extraction without parsing LLM output
-    private static final ThreadLocal<List<CompetencyPreviewResponseDTO>> currentPreviews = ThreadLocal.withInitial(() -> null);
+    private static final ThreadLocal<List<CompetencyPreviewDTO>> currentPreviews = ThreadLocal.withInitial(() -> null);
 
     // ThreadLocal to store the current sessionId for tool calls
     private static final ThreadLocal<String> currentSessionId = ThreadLocal.withInitial(() -> null);
@@ -269,11 +268,8 @@ public class CompetencyExpertToolsService {
         }
 
         // Store preview data in ThreadLocal for deterministic extraction by AtlasAgentService
-        List<CompetencyPreviewResponseDTO> previewResponses = competencies.stream().map(comp -> {
-            CompetencyPreviewDTO previewDTO = new CompetencyPreviewDTO(comp.getTitle(), comp.getDescription(), comp.getTaxonomy().toString(), getTaxonomyIcon(comp.getTaxonomy()),
-                    comp.getCompetencyId());
-            return new CompetencyPreviewResponseDTO(previewDTO, comp.getCompetencyId(), viewOnly);
-        }).toList();
+        List<CompetencyPreviewDTO> previewResponses = competencies.stream().map(comp -> new CompetencyPreviewDTO(comp.getTitle(), comp.getDescription(),
+                comp.getTaxonomy().toString(), getTaxonomyIcon(comp.getTaxonomy()), comp.getCompetencyId(), viewOnly)).toList();
 
         currentPreviews.set(previewResponses);
 
@@ -388,6 +384,11 @@ public class CompetencyExpertToolsService {
                     }
 
                     Competency competency = existing.get();
+                    if (!competency.getCourse().getId().equals(course.getId())) {
+                        errors.add(new CompetencyErrorDTO(sanitizedTitle, "NOT_FOUND", "ID: " + comp.getCompetencyId()));
+                        continue;
+                    }
+
                     competency.setTitle(sanitizedTitle);
                     competency.setDescription(comp.getDescription());
                     competency.setTaxonomy(comp.getTaxonomy());
@@ -407,13 +408,9 @@ public class CompetencyExpertToolsService {
 
         // Store preview data in ThreadLocal so client can display cards for what was just saved
         // This ensures the cards appear in the response showing what was created/updated
-        // Only generate previews for successfully processed competencies to prevent NPE
         if (!successfulOperations.isEmpty()) {
-            List<CompetencyPreviewResponseDTO> previewResponses = successfulOperations.stream().map(comp -> {
-                CompetencyPreviewDTO previewDTO = new CompetencyPreviewDTO(comp.getTitle(), comp.getDescription(), comp.getTaxonomy().toString(),
-                        getTaxonomyIcon(comp.getTaxonomy()), comp.getCompetencyId());
-                return new CompetencyPreviewResponseDTO(previewDTO, comp.getCompetencyId(), false);
-            }).toList();
+            List<CompetencyPreviewDTO> previewResponses = successfulOperations.stream().map(comp -> new CompetencyPreviewDTO(comp.getTitle(), comp.getDescription(),
+                    comp.getTaxonomy().toString(), getTaxonomyIcon(comp.getTaxonomy()), comp.getCompetencyId(), false)).toList();
 
             currentPreviews.set(previewResponses);
         }
@@ -448,7 +445,7 @@ public class CompetencyExpertToolsService {
      *
      * @return The stored list of previews, or null if none exists
      */
-    public static List<CompetencyPreviewResponseDTO> getPreviews() {
+    public static List<CompetencyPreviewDTO> getPreviews() {
         return currentPreviews.get();
     }
 

@@ -435,15 +435,16 @@ describe('AgentChatService', () => {
                 {
                     content: "Here's your competency preview",
                     isUser: false,
-                    competencyPreview: {
-                        preview: true,
-                        competency: {
-                            title: 'Object-Oriented Programming',
-                            description: 'OOP fundamentals',
-                            taxonomy: 'UNDERSTAND',
-                            icon: 'comments',
+                    competencyPreviews: [
+                        {
+                            competency: {
+                                title: 'Object-Oriented Programming',
+                                description: 'OOP fundamentals',
+                                taxonomy: 'UNDERSTAND',
+                                icon: 'comments',
+                            },
                         },
-                    },
+                    ],
                 },
             ];
             let result: any;
@@ -458,29 +459,39 @@ describe('AgentChatService', () => {
             expect(result).toHaveLength(2);
             expect(result[0].content).toBe('Create a competency for OOP');
             expect(result[0].isUser).toBeTrue();
-            expect(result[0].competencyPreview).toBeUndefined();
+            expect(result[0].competencyPreviews).toBeUndefined();
 
             expect(result[1].content).toBe("Here's your competency preview");
             expect(result[1].isUser).toBeFalse();
-            expect(result[1].competencyPreview).toBeDefined();
-            expect(result[1].competencyPreview.preview).toBeTrue();
-            expect(result[1].competencyPreview.competency.title).toBe('Object-Oriented Programming');
+            expect(result[1].competencyPreviews).toBeDefined();
+            expect(result[1].competencyPreviews).toHaveLength(1);
+            expect(result[1].competencyPreviews[0].competency.title).toBe('Object-Oriented Programming');
         });
 
-        it('should fetch conversation history with batch competency preview', () => {
+        it('should fetch conversation history with multiple competency previews', () => {
             const mockHistoryWithBatchPreview = [
                 { content: 'Create multiple competencies', isUser: true },
                 {
                     content: 'Here are multiple competencies',
                     isUser: false,
-                    batchCompetencyPreview: {
-                        batchPreview: true,
-                        count: 2,
-                        competencies: [
-                            { title: 'Comp 1', description: 'Desc 1', taxonomy: 'REMEMBER', icon: 'brain' },
-                            { title: 'Comp 2', description: 'Desc 2', taxonomy: 'APPLY', icon: 'pen-fancy' },
-                        ],
-                    },
+                    competencyPreviews: [
+                        {
+                            competency: {
+                                title: 'Comp 1',
+                                description: 'Desc 1',
+                                taxonomy: 'REMEMBER',
+                                icon: 'brain',
+                            },
+                        },
+                        {
+                            competency: {
+                                title: 'Comp 2',
+                                description: 'Desc 2',
+                                taxonomy: 'APPLY',
+                                icon: 'pen-fancy',
+                            },
+                        },
+                    ],
                 },
             ];
             let result: any;
@@ -493,11 +504,10 @@ describe('AgentChatService', () => {
             req.flush(mockHistoryWithBatchPreview);
 
             expect(result).toHaveLength(2);
-            expect(result[1].batchCompetencyPreview).toBeDefined();
-            expect(result[1].batchCompetencyPreview.batchPreview).toBeTrue();
-            expect(result[1].batchCompetencyPreview.count).toBe(2);
-            expect(result[1].batchCompetencyPreview.competencies).toHaveLength(2);
-            expect(result[1].batchCompetencyPreview.competencies[0].title).toBe('Comp 1');
+            expect(result[1].competencyPreviews).toBeDefined();
+            expect(result[1].competencyPreviews).toHaveLength(2);
+            expect(result[1].competencyPreviews[0].competency.title).toBe('Comp 1');
+            expect(result[1].competencyPreviews[1].competency.title).toBe('Comp 2');
         });
 
         it('should fetch conversation history with mixed messages', () => {
@@ -506,34 +516,33 @@ describe('AgentChatService', () => {
                 {
                     content: 'Preview response',
                     isUser: false,
-                    competencyPreview: {
-                        preview: true,
-                        competency: {
-                            title: 'Test',
-                            description: 'Test desc',
-                            taxonomy: 'APPLY',
-                            icon: 'pen-fancy',
+                    competencyPreviews: [
+                        {
+                            competency: {
+                                title: 'Test',
+                                description: 'Test desc',
+                                taxonomy: 'APPLY',
+                                icon: 'pen-fancy',
+                            },
                         },
-                    },
+                    ],
                 },
                 { content: 'User message 2', isUser: true },
                 { content: 'Normal response without preview', isUser: false },
                 { content: 'User message 3', isUser: true },
                 {
-                    content: 'Batch response',
+                    content: 'Multiple competencies response',
                     isUser: false,
-                    batchCompetencyPreview: {
-                        batchPreview: true,
-                        count: 1,
-                        competencies: [
-                            {
+                    competencyPreviews: [
+                        {
+                            competency: {
                                 title: 'Batch Comp',
                                 description: 'Batch desc',
                                 taxonomy: 'ANALYZE',
                                 icon: 'magnifying-glass',
                             },
-                        ],
-                    },
+                        },
+                    ],
                 },
             ];
             let result: any;
@@ -547,10 +556,9 @@ describe('AgentChatService', () => {
 
             expect(result).toHaveLength(6);
             expect(result[0].isUser).toBeTrue();
-            expect(result[1].competencyPreview).toBeDefined();
-            expect(result[3].competencyPreview).toBeUndefined();
-            expect(result[3].batchCompetencyPreview).toBeUndefined();
-            expect(result[5].batchCompetencyPreview).toBeDefined();
+            expect(result[1].competencyPreviews).toBeDefined();
+            expect(result[3].competencyPreviews).toBeUndefined();
+            expect(result[5].competencyPreviews).toBeDefined();
         });
 
         it('should handle history with competencyId for update operations', () => {
@@ -559,16 +567,17 @@ describe('AgentChatService', () => {
                 {
                     content: 'Updated competency preview',
                     isUser: false,
-                    competencyPreview: {
-                        preview: true,
-                        competencyId: 42,
-                        competency: {
-                            title: 'Updated Title',
-                            description: 'Updated description',
-                            taxonomy: 'ANALYZE',
-                            icon: 'magnifying-glass',
+                    competencyPreviews: [
+                        {
+                            competencyId: 42,
+                            competency: {
+                                title: 'Updated Title',
+                                description: 'Updated description',
+                                taxonomy: 'ANALYZE',
+                                icon: 'magnifying-glass',
+                            },
                         },
-                    },
+                    ],
                 },
             ];
             let result: any;
@@ -580,8 +589,8 @@ describe('AgentChatService', () => {
             const req = httpMock.expectOne(expectedUrl);
             req.flush(mockHistoryWithUpdate);
 
-            expect(result[1].competencyPreview.competencyId).toBe(42);
-            expect(result[1].competencyPreview.competency.title).toBe('Updated Title');
+            expect(result[1].competencyPreviews[0].competencyId).toBe(42);
+            expect(result[1].competencyPreviews[0].competency.title).toBe('Updated Title');
         });
 
         it('should handle history with viewOnly flag', () => {
@@ -590,16 +599,17 @@ describe('AgentChatService', () => {
                 {
                     content: 'Preview (view only)',
                     isUser: false,
-                    competencyPreview: {
-                        preview: true,
-                        viewOnly: true,
-                        competency: {
-                            title: 'Read-only Competency',
-                            description: 'For viewing only',
-                            taxonomy: 'UNDERSTAND',
-                            icon: 'brain',
+                    competencyPreviews: [
+                        {
+                            viewOnly: true,
+                            competency: {
+                                title: 'Read-only Competency',
+                                description: 'For viewing only',
+                                taxonomy: 'UNDERSTAND',
+                                icon: 'brain',
+                            },
                         },
-                    },
+                    ],
                 },
             ];
             let result: any;
@@ -611,24 +621,35 @@ describe('AgentChatService', () => {
             const req = httpMock.expectOne(expectedUrl);
             req.flush(mockHistoryWithViewOnly);
 
-            expect(result[1].competencyPreview.viewOnly).toBeTrue();
+            expect(result[1].competencyPreviews[0].viewOnly).toBeTrue();
         });
 
-        it('should handle history with both preview types in batch', () => {
+        it('should handle history with multiple competencies with viewOnly flag', () => {
             const mockHistoryWithBatchViewOnly = [
                 { content: 'Show competencies', isUser: true },
                 {
-                    content: 'Batch preview',
+                    content: 'Multiple preview with viewOnly',
                     isUser: false,
-                    batchCompetencyPreview: {
-                        batchPreview: true,
-                        count: 2,
-                        viewOnly: true,
-                        competencies: [
-                            { title: 'Preview 1', description: 'Desc 1', taxonomy: 'REMEMBER', icon: 'brain' },
-                            { title: 'Preview 2', description: 'Desc 2', taxonomy: 'UNDERSTAND', icon: 'comments' },
-                        ],
-                    },
+                    competencyPreviews: [
+                        {
+                            viewOnly: true,
+                            competency: {
+                                title: 'Preview 1',
+                                description: 'Desc 1',
+                                taxonomy: 'REMEMBER',
+                                icon: 'brain',
+                            },
+                        },
+                        {
+                            viewOnly: true,
+                            competency: {
+                                title: 'Preview 2',
+                                description: 'Desc 2',
+                                taxonomy: 'UNDERSTAND',
+                                icon: 'comments',
+                            },
+                        },
+                    ],
                 },
             ];
             let result: any;
@@ -640,21 +661,17 @@ describe('AgentChatService', () => {
             const req = httpMock.expectOne(expectedUrl);
             req.flush(mockHistoryWithBatchViewOnly);
 
-            expect(result[1].batchCompetencyPreview.viewOnly).toBeTrue();
-            expect(result[1].batchCompetencyPreview.competencies).toHaveLength(2);
+            expect(result[1].competencyPreviews[0].viewOnly).toBeTrue();
+            expect(result[1].competencyPreviews).toHaveLength(2);
         });
 
-        it('should handle history with empty competencies array in batch', () => {
+        it('should handle history with empty competencies array', () => {
             const mockHistoryWithEmptyBatch = [
                 { content: 'Create nothing', isUser: true },
                 {
-                    content: 'Empty batch',
+                    content: 'Empty preview',
                     isUser: false,
-                    batchCompetencyPreview: {
-                        batchPreview: true,
-                        count: 0,
-                        competencies: [],
-                    },
+                    competencyPreviews: [],
                 },
             ];
             let result: any;
@@ -666,8 +683,7 @@ describe('AgentChatService', () => {
             const req = httpMock.expectOne(expectedUrl);
             req.flush(mockHistoryWithEmptyBatch);
 
-            expect(result[1].batchCompetencyPreview.count).toBe(0);
-            expect(result[1].batchCompetencyPreview.competencies).toHaveLength(0);
+            expect(result[1].competencyPreviews).toHaveLength(0);
         });
     });
 });

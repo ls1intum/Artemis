@@ -14,6 +14,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param competencyPreviews Optional list of competency preview data
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record AtlasAgentHistoryMessageDTO(String content, boolean isUser, @Nullable List<CompetencyPreviewResponseDTO> competencyPreviews) {
+public record AtlasAgentHistoryMessageDTO(String content, boolean isUser, @Nullable List<CompetencyPreviewDTO> competencyPreviews) {
 
 }

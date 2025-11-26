@@ -17,5 +17,5 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record AtlasAgentChatResponseDTO(@NotBlank @Size(max = 10000) String message, @NotNull ZonedDateTime timestamp, boolean competenciesModified,
-        @Nullable List<CompetencyPreviewResponseDTO> competencyPreviews) {
+        @Nullable List<CompetencyPreviewDTO> competencyPreviews) {
 }

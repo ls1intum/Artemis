@@ -1,28 +1,23 @@
 import { CompetencyTaxonomy } from 'app/atlas/shared/entities/competency.model';
-import dayjs from 'dayjs/esm';
 
+/**
+ * Represents a message in the agent chat conversation.
+ */
 export interface ChatMessage {
     id: string;
     content: string;
     isUser: boolean;
     timestamp: Date;
-    canCreateCompetencies?: boolean;
-    suggestedCompetencies?: CompetencyDraft[];
     competencyPreviews?: CompetencyPreview[];
     competencyCreated?: boolean;
     planPending?: boolean;
     planApproved?: boolean;
 }
 
-export interface CompetencyDraft {
-    title: string;
-    description: string;
-    taxonomy: CompetencyTaxonomy;
-    masteryThreshold: number;
-    optional: boolean;
-    softDueDate?: dayjs.Dayjs;
-}
-
+/**
+ * Preview data for a competency displayed in the chat.
+ * Matches the server-side CompetencyPreviewDTO structure.
+ */
 export interface CompetencyPreview {
     title: string;
     description: string;
