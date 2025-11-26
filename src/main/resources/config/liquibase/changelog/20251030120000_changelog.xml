@@ -170,64 +170,160 @@
                 <column name="iris_course_chat_settings_id"/>
             </createIndex>
 
-            <!-- PostgreSQL: Restore course settings using CTE with RETURNING -->
+            <!-- PostgreSQL: Restore course settings - insert all 8 sub_settings types and link them -->
             <sql dbms="postgresql">
-                WITH inserted_sub AS (
+                WITH course_data AS (
+                    SELECT course_id, settings, ROW_NUMBER() OVER (ORDER BY course_id) as rn
+                    FROM course_iris_settings
+                ),
+                -- 1. PROGRAMMING_EXERCISE_CHAT (with migrated data)
+                inserted_prog_chat AS (
                     INSERT INTO iris_sub_settings (enabled, rate_limit, rate_limit_timeframe_hours, selected_variant, custom_instructions, discriminator, auto_ingest_on_lecture_attachment_upload, auto_ingest_on_faq_creation)
                     SELECT
-                        (cis.settings->>'enabled')::boolean,
-                        (cis.settings->'rateLimit'->>'requests')::int,
-                        (cis.settings->'rateLimit'->>'timeframeHours')::int,
-                        cis.settings->>'variant',
-                        cis.settings->>'customInstructions',
-                        'CHAT',
-                        false,
-                        false
-                    FROM course_iris_settings cis
-                    ORDER BY cis.course_id
+                        (cd.settings->>'enabled')::boolean,
+                        (cd.settings->'rateLimit'->>'requests')::int,
+                        (cd.settings->'rateLimit'->>'timeframeHours')::int,
+                        cd.settings->>'variant',
+                        cd.settings->>'customInstructions',
+                        'PROGRAMMING_EXERCISE_CHAT', false, false
+                    FROM course_data cd ORDER BY cd.course_id
                     RETURNING id
                 ),
-                numbered_sub AS (
-                    SELECT id, ROW_NUMBER() OVER (ORDER BY id) as rn FROM inserted_sub
+                -- 2. TEXT_EXERCISE_CHAT
+                inserted_text_chat AS (
+                    INSERT INTO iris_sub_settings (enabled, selected_variant, discriminator, auto_ingest_on_lecture_attachment_upload, auto_ingest_on_faq_creation)
+                    SELECT false, 'default', 'TEXT_EXERCISE_CHAT', false, false
+                    FROM course_iris_settings ORDER BY course_id
+                    RETURNING id
                 ),
-                numbered_course AS (
-                    SELECT course_id, ROW_NUMBER() OVER (ORDER BY course_id) as rn FROM course_iris_settings
+                -- 3. COURSE_CHAT
+                inserted_course_chat AS (
+                    INSERT INTO iris_sub_settings (enabled, selected_variant, discriminator, auto_ingest_on_lecture_attachment_upload, auto_ingest_on_faq_creation)
+                    SELECT false, 'default', 'COURSE_CHAT', false, false
+                    FROM course_iris_settings ORDER BY course_id
+                    RETURNING id
+                ),
+                -- 4. LECTURE_INGESTION
+                inserted_lecture_ingestion AS (
+                    INSERT INTO iris_sub_settings (enabled, selected_variant, discriminator, auto_ingest_on_lecture_attachment_upload, auto_ingest_on_faq_creation)
+                    SELECT false, 'default', 'LECTURE_INGESTION', true, false
+                    FROM course_iris_settings ORDER BY course_id
+                    RETURNING id
+                ),
+                -- 5. LECTURE_CHAT
+                inserted_lecture_chat AS (
+                    INSERT INTO iris_sub_settings (enabled, selected_variant, discriminator, auto_ingest_on_lecture_attachment_upload, auto_ingest_on_faq_creation)
+                    SELECT false, 'default', 'LECTURE_CHAT', false, false
+                    FROM course_iris_settings ORDER BY course_id
+                    RETURNING id
+                ),
+                -- 6. FAQ_INGESTION
+                inserted_faq_ingestion AS (
+                    INSERT INTO iris_sub_settings (enabled, selected_variant, discriminator, auto_ingest_on_lecture_attachment_upload, auto_ingest_on_faq_creation)
+                    SELECT false, 'default', 'FAQ_INGESTION', false, true
+                    FROM course_iris_settings ORDER BY course_id
+                    RETURNING id
+                ),
+                -- 7. COMPETENCY_GENERATION
+                inserted_competency AS (
+                    INSERT INTO iris_sub_settings (enabled, selected_variant, discriminator, auto_ingest_on_lecture_attachment_upload, auto_ingest_on_faq_creation)
+                    SELECT false, 'default', 'COMPETENCY_GENERATION', false, false
+                    FROM course_iris_settings ORDER BY course_id
+                    RETURNING id
+                ),
+                -- 8. TUTOR_SUGGESTION
+                inserted_tutor AS (
+                    INSERT INTO iris_sub_settings (enabled, selected_variant, discriminator, auto_ingest_on_lecture_attachment_upload, auto_ingest_on_faq_creation)
+                    SELECT false, 'default', 'TUTOR_SUGGESTION', false, false
+                    FROM course_iris_settings ORDER BY course_id
+                    RETURNING id
+                ),
+                -- Number all inserted rows
+                n_prog AS (SELECT id, ROW_NUMBER() OVER (ORDER BY id) as rn FROM inserted_prog_chat),
+                n_text AS (SELECT id, ROW_NUMBER() OVER (ORDER BY id) as rn FROM inserted_text_chat),
+                n_course AS (SELECT id, ROW_NUMBER() OVER (ORDER BY id) as rn FROM inserted_course_chat),
+                n_lec_ing AS (SELECT id, ROW_NUMBER() OVER (ORDER BY id) as rn FROM inserted_lecture_ingestion),
+                n_lec_chat AS (SELECT id, ROW_NUMBER() OVER (ORDER BY id) as rn FROM inserted_lecture_chat),
+                n_faq AS (SELECT id, ROW_NUMBER() OVER (ORDER BY id) as rn FROM inserted_faq_ingestion),
+                n_comp AS (SELECT id, ROW_NUMBER() OVER (ORDER BY id) as rn FROM inserted_competency),
+                n_tutor AS (SELECT id, ROW_NUMBER() OVER (ORDER BY id) as rn FROM inserted_tutor)
+                INSERT INTO iris_settings (
+                    iris_chat_settings_id, iris_text_exercise_chat_settings_id, iris_course_chat_settings_id,
+                    iris_lecture_ingestion_settings_id, iris_lecture_chat_settings_id, iris_faq_ingestion_settings_id,
+                    iris_competency_generation_settings_id, iris_tutor_suggestion_settings_id,
+                    discriminator, course_id
                 )
-                INSERT INTO iris_settings (iris_chat_settings_id, discriminator, course_id)
-                SELECT ns.id, 'COURSE', nc.course_id
-                FROM numbered_sub ns
-                JOIN numbered_course nc ON ns.rn = nc.rn;
+                SELECT
+                    n_prog.id, n_text.id, n_course.id, n_lec_ing.id, n_lec_chat.id, n_faq.id, n_comp.id, n_tutor.id,
+                    'COURSE', cd.course_id
+                FROM course_data cd
+                JOIN n_prog ON n_prog.rn = cd.rn
+                JOIN n_text ON n_text.rn = cd.rn
+                JOIN n_course ON n_course.rn = cd.rn
+                JOIN n_lec_ing ON n_lec_ing.rn = cd.rn
+                JOIN n_lec_chat ON n_lec_chat.rn = cd.rn
+                JOIN n_faq ON n_faq.rn = cd.rn
+                JOIN n_comp ON n_comp.rn = cd.rn
+                JOIN n_tutor ON n_tutor.rn = cd.rn;
             </sql>
 
-            <!-- MySQL: Restore course settings - Step 1: Insert sub_settings with course_id as temp reference -->
+            <!-- MySQL: Restore course settings - Insert all 8 sub_settings types -->
             <sql dbms="mysql">
                 INSERT INTO iris_sub_settings (enabled, rate_limit, rate_limit_timeframe_hours, selected_variant, custom_instructions, discriminator, auto_ingest_on_lecture_attachment_upload, auto_ingest_on_faq_creation)
-                SELECT
-                    JSON_EXTRACT(settings, '$.enabled') = true,
-                    JSON_EXTRACT(settings, '$.rateLimit.requests'),
-                    JSON_EXTRACT(settings, '$.rateLimit.timeframeHours'),
-                    JSON_UNQUOTE(JSON_EXTRACT(settings, '$.variant')),
-                    JSON_UNQUOTE(JSON_EXTRACT(settings, '$.customInstructions')),
-                    'CHAT',
-                    false,
-                    false
-                FROM course_iris_settings
-                ORDER BY course_id;
+                SELECT JSON_EXTRACT(settings, '$.enabled') = true, JSON_EXTRACT(settings, '$.rateLimit.requests'),
+                       JSON_EXTRACT(settings, '$.rateLimit.timeframeHours'), JSON_UNQUOTE(JSON_EXTRACT(settings, '$.variant')),
+                       JSON_UNQUOTE(JSON_EXTRACT(settings, '$.customInstructions')), 'PROGRAMMING_EXERCISE_CHAT', false, false
+                FROM course_iris_settings ORDER BY course_id;
+            </sql>
+            <sql dbms="mysql">
+                INSERT INTO iris_sub_settings (enabled, selected_variant, discriminator, auto_ingest_on_lecture_attachment_upload, auto_ingest_on_faq_creation)
+                SELECT false, 'default', 'TEXT_EXERCISE_CHAT', false, false FROM course_iris_settings ORDER BY course_id;
+            </sql>
+            <sql dbms="mysql">
+                INSERT INTO iris_sub_settings (enabled, selected_variant, discriminator, auto_ingest_on_lecture_attachment_upload, auto_ingest_on_faq_creation)
+                SELECT false, 'default', 'COURSE_CHAT', false, false FROM course_iris_settings ORDER BY course_id;
+            </sql>
+            <sql dbms="mysql">
+                INSERT INTO iris_sub_settings (enabled, selected_variant, discriminator, auto_ingest_on_lecture_attachment_upload, auto_ingest_on_faq_creation)
+                SELECT false, 'default', 'LECTURE_INGESTION', true, false FROM course_iris_settings ORDER BY course_id;
+            </sql>
+            <sql dbms="mysql">
+                INSERT INTO iris_sub_settings (enabled, selected_variant, discriminator, auto_ingest_on_lecture_attachment_upload, auto_ingest_on_faq_creation)
+                SELECT false, 'default', 'LECTURE_CHAT', false, false FROM course_iris_settings ORDER BY course_id;
+            </sql>
+            <sql dbms="mysql">
+                INSERT INTO iris_sub_settings (enabled, selected_variant, discriminator, auto_ingest_on_lecture_attachment_upload, auto_ingest_on_faq_creation)
+                SELECT false, 'default', 'FAQ_INGESTION', false, true FROM course_iris_settings ORDER BY course_id;
+            </sql>
+            <sql dbms="mysql">
+                INSERT INTO iris_sub_settings (enabled, selected_variant, discriminator, auto_ingest_on_lecture_attachment_upload, auto_ingest_on_faq_creation)
+                SELECT false, 'default', 'COMPETENCY_GENERATION', false, false FROM course_iris_settings ORDER BY course_id;
+            </sql>
+            <sql dbms="mysql">
+                INSERT INTO iris_sub_settings (enabled, selected_variant, discriminator, auto_ingest_on_lecture_attachment_upload, auto_ingest_on_faq_creation)
+                SELECT false, 'default', 'TUTOR_SUGGESTION', false, false FROM course_iris_settings ORDER BY course_id;
             </sql>
 
-            <!-- MySQL: Restore course settings - Step 2: Insert iris_settings by matching row numbers -->
+            <!-- MySQL: Insert iris_settings linking all 8 sub_settings -->
             <sql dbms="mysql">
-                INSERT INTO iris_settings (iris_chat_settings_id, discriminator, course_id)
-                SELECT sub.id, 'COURSE', cis.course_id
-                FROM (
-                    SELECT id, ROW_NUMBER() OVER (ORDER BY id) as rn
-                    FROM iris_sub_settings
-                    WHERE discriminator = 'CHAT'
-                ) sub
-                JOIN (
-                    SELECT course_id, ROW_NUMBER() OVER (ORDER BY course_id) as rn
-                    FROM course_iris_settings
-                ) cis ON sub.rn = cis.rn;
+                INSERT INTO iris_settings (
+                    iris_chat_settings_id, iris_text_exercise_chat_settings_id, iris_course_chat_settings_id,
+                    iris_lecture_ingestion_settings_id, iris_lecture_chat_settings_id, iris_faq_ingestion_settings_id,
+                    iris_competency_generation_settings_id, iris_tutor_suggestion_settings_id,
+                    discriminator, course_id
+                )
+                SELECT
+                    prog.id, text_ex.id, course.id, lec_ing.id, lec_chat.id, faq.id, comp.id, tutor.id,
+                    'COURSE', cis.course_id
+                FROM (SELECT id, ROW_NUMBER() OVER (ORDER BY id) as rn FROM iris_sub_settings WHERE discriminator = 'PROGRAMMING_EXERCISE_CHAT') prog
+                JOIN (SELECT id, ROW_NUMBER() OVER (ORDER BY id) as rn FROM iris_sub_settings WHERE discriminator = 'TEXT_EXERCISE_CHAT') text_ex ON text_ex.rn = prog.rn
+                JOIN (SELECT id, ROW_NUMBER() OVER (ORDER BY id) as rn FROM iris_sub_settings WHERE discriminator = 'COURSE_CHAT') course ON course.rn = prog.rn
+                JOIN (SELECT id, ROW_NUMBER() OVER (ORDER BY id) as rn FROM iris_sub_settings WHERE discriminator = 'LECTURE_INGESTION') lec_ing ON lec_ing.rn = prog.rn
+                JOIN (SELECT id, ROW_NUMBER() OVER (ORDER BY id) as rn FROM iris_sub_settings WHERE discriminator = 'LECTURE_CHAT') lec_chat ON lec_chat.rn = prog.rn
+                JOIN (SELECT id, ROW_NUMBER() OVER (ORDER BY id) as rn FROM iris_sub_settings WHERE discriminator = 'FAQ_INGESTION') faq ON faq.rn = prog.rn
+                JOIN (SELECT id, ROW_NUMBER() OVER (ORDER BY id) as rn FROM iris_sub_settings WHERE discriminator = 'COMPETENCY_GENERATION') comp ON comp.rn = prog.rn
+                JOIN (SELECT id, ROW_NUMBER() OVER (ORDER BY id) as rn FROM iris_sub_settings WHERE discriminator = 'TUTOR_SUGGESTION') tutor ON tutor.rn = prog.rn
+                JOIN (SELECT course_id, ROW_NUMBER() OVER (ORDER BY course_id) as rn FROM course_iris_settings) cis ON cis.rn = prog.rn;
             </sql>
 
             <dropTable tableName="course_iris_settings"/>
