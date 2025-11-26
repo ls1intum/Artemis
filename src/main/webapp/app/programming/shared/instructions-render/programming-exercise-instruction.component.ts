@@ -30,7 +30,7 @@ import { problemStatementHasChanged } from 'app/exercise/util/exercise.utils';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { findLatestResult } from 'app/shared/util/utils';
-import { faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faFileAlt, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { hasParticipationChanged } from 'app/exercise/participation/participation.utils';
 import { ExamExerciseUpdateHighlighterComponent } from 'app/exam/overview/exercises/exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
 import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
@@ -44,12 +44,13 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseTestCase } from 'app/programming/shared/entities/programming-exercise-test-case.model';
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-programming-exercise-instructions',
     templateUrl: './programming-exercise-instruction.component.html',
     styleUrls: ['./programming-exercise-instruction.scss'],
-    imports: [ProgrammingExerciseInstructionStepWizardComponent, ExamExerciseUpdateHighlighterComponent, FaIconComponent],
+    imports: [ProgrammingExerciseInstructionStepWizardComponent, ExamExerciseUpdateHighlighterComponent, FaIconComponent, TranslateDirective],
 })
 export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDestroy {
     private viewContainerRef = inject(ViewContainerRef);
@@ -75,7 +76,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
 
     @ViewChild(ExamExerciseUpdateHighlighterComponent) examExerciseUpdateHighlighterComponent: ExamExerciseUpdateHighlighterComponent;
 
-    private problemStatement: string;
+    private problemStatement: string | undefined;
     private participationSubscription?: Subscription;
     private testCasesSubscription?: Subscription;
 
@@ -96,7 +97,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         this.programmingExercisePlantUmlWrapper.setTestCases(this.testCases);
     }
 
-    public renderedMarkdown: SafeHtml;
+    public renderedMarkdown: SafeHtml | undefined;
     private injectableContentForMarkdownCallbacks: Array<() => void> = [];
 
     markdownExtensions: PluginSimple[];
@@ -111,6 +112,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
 
     // Icons
     faSpinner = faSpinner;
+    faFileAlt = faFileAlt;
 
     constructor() {
         this.programmingExerciseTaskWrapper.viewContainerRef = this.viewContainerRef;
@@ -160,17 +162,11 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                     if (!this.isLoading && this.exercise && this.participation && (this.isInitial || participationHasChanged)) {
                         this.isLoading = true;
                         return of(this.exercise.problemStatement).pipe(
-                            // If no instructions can be loaded, abort pipe and hide the instruction panel
                             tap((problemStatement) => {
-                                if (!problemStatement) {
-                                    this.onNoInstructionsAvailable.emit();
-                                    this.isLoading = false;
-                                    this.isInitial = false;
-                                    return of(undefined);
-                                }
+                                // Set to undefined for null/empty values to preserve empty-state sentinel
+                                // Otherwise set the actual string value
+                                this.problemStatement = problemStatement?.trim() || undefined;
                             }),
-                            filter((problemStatement) => !!problemStatement),
-                            tap((problemStatement) => (this.problemStatement = problemStatement!)),
                             switchMap(() => this.loadInitialResult()),
                             tap((latestResult) => {
                                 this.latestResult = latestResult;
@@ -181,16 +177,17 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                                 this.isLoading = false;
                             }),
                         );
-                    } else if (problemStatementHasChanged(changes) && this.problemStatement === undefined) {
+                    } else if (problemStatementHasChanged(changes) && !this.problemStatement) {
                         // Refreshes the state in the singleton task and uml extension service
                         this.latestResult = this.latestResultValue;
-                        this.problemStatement = this.exercise.problemStatement!;
+                        this.problemStatement = this.exercise.problemStatement?.trim() || undefined;
                         this.updateMarkdown();
                         return of(undefined);
                     } else if (this.exercise && problemStatementHasChanged(changes)) {
                         // Refreshes the state in the singleton task and uml extension service
                         this.latestResult = this.latestResultValue;
-                        this.problemStatement = this.exercise.problemStatement!;
+                        this.problemStatement = this.exercise.problemStatement?.trim() || undefined;
+                        this.updateMarkdown();
                         return of(undefined);
                     } else {
                         return of(undefined);
@@ -316,7 +313,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                 }
                 this.injectTasksIntoDocument();
             }, 0);
-        } else if (this.exercise?.problemStatement) {
+        } else if (this.exercise?.problemStatement?.trim()) {
             this.injectableContentForMarkdownCallbacks = [];
             const renderedProblemStatement = htmlForMarkdown(this.exercise.problemStatement, this.markdownExtensions);
             const markdownWithoutTasks = this.prepareTasks(renderedProblemStatement);
@@ -328,6 +325,10 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                 });
                 this.injectTasksIntoDocument();
             }, 0);
+        } else {
+            // Clear the rendered markdown when problem statement is empty or whitespace-only
+            this.renderedMarkdown = undefined;
+            this.injectableContentForMarkdownCallbacks = [];
         }
     }
 
