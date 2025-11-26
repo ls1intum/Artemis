@@ -12,8 +12,8 @@
                 "enableLabel": "Enable Iris",
                 "enableHelp": "When enabled, Iris features will be available for all students in this course.",
                 "customInstructions": "Custom Instructions",
-                "customInstructionsPlaceholder": "Enter custom instructions for Iris (shared across all features)",
-                "customInstructionsHelp": "These instructions apply to all Iris chat contexts in this course.",
+                "customInstructionsPlaceholder": "e.g., 'This course uses Python 3.12 and the pytest framework'",
+                "customInstructionsHelp": "Provide Iris with important context about your course content. This can include programming languages, frameworks, libraries, or other course-specific knowledge that helps Iris assist your students better.",
                 "adminSettings": "Administrator Settings",
                 "adminOnly": "Only administrators can see and modify these settings.",
                 "variant": "Pipeline Variant",
@@ -164,7 +164,7 @@
                 "transcriptionIngestionError": "Error while sending transcription"
             },
             "controlCenter": {
-                "tooltip": "By toggling you enable or disable ALL Iris features for this course. For a more precise control, please use the Iris settings by clicking on Custom."
+                "tooltip": "Enable or disable Iris for your course. To configure custom instructions, click the configure button."
             },
             "chatHistory": {
                 "title": "Chats",

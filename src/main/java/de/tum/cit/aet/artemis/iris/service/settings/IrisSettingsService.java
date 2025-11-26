@@ -97,6 +97,16 @@ public class IrisSettingsService {
     }
 
     /**
+     * Sanitizes a payload before it is used for permission checks or persistence.
+     *
+     * @param payload incoming payload
+     * @return sanitized payload
+     */
+    public IrisCourseSettingsDTO sanitizePayloadForUpdate(IrisCourseSettingsDTO payload) {
+        return sanitizePayload(payload);
+    }
+
+    /**
      * Updates (or creates) the Iris settings for a course.
      *
      * @param courseId the course id

@@ -12,8 +12,8 @@
                 "enableLabel": "Iris aktivieren",
                 "enableHelp": "Wenn aktiviert, sind Iris-Funktionen für alle Studierenden in diesem Kurs verfügbar.",
                 "customInstructions": "Benutzerdefinierte Anweisungen",
-                "customInstructionsPlaceholder": "Gib benutzerdefinierte Anweisungen für Iris ein (werden für alle Funktionen verwendet)",
-                "customInstructionsHelp": "Diese Anweisungen gelten für alle Iris-Chat-Kontexte in diesem Kurs.",
+                "customInstructionsPlaceholder": "z.B. 'Dieser Kurs verwendet Python 3.12 und das pytest Framework'",
+                "customInstructionsHelp": "Gib Iris wichtigen Kontext über die Kursinhalte. Dies kann Programmiersprachen, Frameworks, Bibliotheken oder anderes kursspezifisches Wissen umfassen, das Iris hilft, deine Studierenden besser zu unterstützen.",
                 "adminSettings": "Administrator-Einstellungen",
                 "adminOnly": "Nur Administratoren können diese Einstellungen sehen und ändern.",
                 "variant": "Pipeline-Variante",
@@ -164,7 +164,7 @@
                 "transcriptionIngestionError": "Fehler beim Senden einer Vorlesungstranskription"
             },
             "controlCenter": {
-                "tooltip": "Durch das Umschalten aktivierst oder deaktivierst du ALLE Iris Features für diesen Kurs. Für eine gezieltere Kontrolle nutze bitte die Iris Einstellungen, indem du auf Benutzerdefinierst klickst."
+                "tooltip": "Aktiviere oder deaktiviere Iris für deinen Kurs. Um benutzerdefinierte Anweisungen zu konfigurieren, klicke auf die Schaltfläche 'Konfigurieren'."
             },
             "chatHistory": {
                 "title": "Chats",

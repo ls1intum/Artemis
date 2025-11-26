@@ -3,7 +3,7 @@ import { ControlCenterComponent } from './control-center.component';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { IrisLogoComponent } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { IrisEnabledComponent } from 'app/iris/manage/settings/shared/iris-enabled/iris-enabled.component';
 import { MockComponent, MockDirective } from 'ng-mocks';
 import { By } from '@angular/platform-browser';
@@ -20,7 +20,7 @@ describe('ControlCenterComponent', () => {
         course = { id: 1, isAtLeastInstructor: true } as Course;
 
         await TestBed.configureTestingModule({
-            imports: [MockDirective(TranslateDirective), FaIconComponent],
+            imports: [MockDirective(TranslateDirective), MockComponent(IrisLogoComponent)],
             declarations: [ControlCenterComponent, MockComponent(HelpIconComponent), MockComponent(IrisEnabledComponent)],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
@@ -50,8 +50,8 @@ describe('ControlCenterComponent', () => {
         expect(irisEnabledComponent.componentInstance.course).toEqual(course);
     });
 
-    it('should display the robot icon', () => {
-        const faIconComponent = fixture.debugElement.query(By.directive(FaIconComponent));
-        expect(faIconComponent).toBeTruthy();
+    it('should display the iris logo', () => {
+        const irisLogoComponent = fixture.debugElement.query(By.directive(IrisLogoComponent));
+        expect(irisLogoComponent).toBeTruthy();
     });
 });

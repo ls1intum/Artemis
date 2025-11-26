@@ -1,154 +1,152 @@
-<div class="course-iris-settings">
+<div *titleBarTitle class="d-flex align-items-center">
+    <jhi-course-title-bar-title title="artemisApp.iris.settings.title" />
     @if (settings) {
-        <div>
-            <h2 jhiTranslate="artemisApp.iris.settings.title"></h2>
-            <div class="mb-3">
-                @if (isDirty) {
-                    <span class="badge bg-warning">
-                        <fa-icon [icon]="faExclamationTriangle" class="me-1" />
-                        <span jhiTranslate="artemisApp.iris.settings.unsaved"></span>
-                    </span>
-                } @else {
-                    <span class="badge bg-success">
-                        <fa-icon [icon]="faCheck" class="me-1" />
-                        <span jhiTranslate="artemisApp.iris.settings.saved"></span>
-                    </span>
-                }
-            </div>
-
-            <!-- Enable/Disable Toggle -->
-            <div class="mb-4">
-                <h4 jhiTranslate="artemisApp.iris.settings.enableLabel"></h4>
-                <div class="btn-group" role="group">
-                    <button type="button" class="btn" [class.btn-success]="settings.enabled" [class.btn-outline-success]="!settings.enabled" (click)="setEnabled(true)">
-                        <span jhiTranslate="artemisApp.iris.settings.enabled"></span>
-                    </button>
-                    <button type="button" class="btn" [class.btn-danger]="!settings.enabled" [class.btn-outline-danger]="settings.enabled" (click)="setEnabled(false)">
-                        <span jhiTranslate="artemisApp.iris.settings.disabled"></span>
-                    </button>
-                </div>
-                <p class="form-text" jhiTranslate="artemisApp.iris.settings.enableHelp"></p>
-            </div>
-
-            <!-- Custom Instructions (Instructors + Admins) -->
-            <div class="mb-4">
-                <label for="customInstructions" class="form-label">
-                    <h4 jhiTranslate="artemisApp.iris.settings.customInstructions"></h4>
-                </label>
-                <textarea
-                    id="customInstructions"
-                    class="form-control"
-                    rows="6"
-                    [(ngModel)]="settings.customInstructions"
-                    [maxlength]="CUSTOM_INSTRUCTIONS_MAX_LENGTH"
-                    placeholder="{{ 'artemisApp.iris.settings.customInstructionsPlaceholder' | artemisTranslate }}"
-                ></textarea>
-                <small class="form-text text-muted">
-                    <span jhiTranslate="artemisApp.iris.settings.customInstructionsHelp"></span>
-                    <span class="float-end">{{ getCustomInstructionsLength() }} / {{ CUSTOM_INSTRUCTIONS_MAX_LENGTH }}</span>
-                </small>
-            </div>
-
-            <!-- Admin-Only Section -->
-            @if (isAdmin) {
-                <hr class="my-4" />
-
-                <div class="admin-section">
-                    <h3 jhiTranslate="artemisApp.iris.settings.adminSettings"></h3>
-                    <p class="text-muted" jhiTranslate="artemisApp.iris.settings.adminOnly"></p>
-
-                    <!-- Pipeline Variant -->
-                    <div class="mb-3">
-                        <label for="variant" class="form-label">
-                            <strong jhiTranslate="artemisApp.iris.settings.variant"></strong>
-                        </label>
-                        <select id="variant" class="form-select" [(ngModel)]="settings.variant">
-                            @for (variant of availableVariants; track variant) {
-                                <option [value]="variant">{{ variant }}</option>
-                            }
-                        </select>
-                        <p class="form-text" jhiTranslate="artemisApp.iris.settings.variantHelp"></p>
-                    </div>
-
-                    <!-- Rate Limit Overrides -->
-                    <div class="mb-3">
-                        <label class="form-label">
-                            <strong jhiTranslate="artemisApp.iris.settings.rateLimit"></strong>
-                        </label>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <label for="rateLimitRequests" class="form-label" jhiTranslate="artemisApp.iris.settings.rateLimitRequests"></label>
-                                <input
-                                    id="rateLimitRequests"
-                                    type="number"
-                                    class="form-control"
-                                    [(ngModel)]="rateLimitRequests"
-                                    min="0"
-                                    placeholder="{{ 'artemisApp.iris.settings.rateLimitRequestsPlaceholder' | artemisTranslate: { default: applicationDefaults?.requests || 0 } }}"
-                                />
-                            </div>
-                            <div class="col-md-6">
-                                <label for="rateLimitTimeframe" class="form-label" jhiTranslate="artemisApp.iris.settings.rateLimitTimeframe"></label>
-                                <input
-                                    id="rateLimitTimeframe"
-                                    type="number"
-                                    class="form-control"
-                                    [(ngModel)]="rateLimitTimeframeHours"
-                                    min="0"
-                                    placeholder="{{
-                                        'artemisApp.iris.settings.rateLimitTimeframePlaceholder' | artemisTranslate: { default: applicationDefaults?.timeframeHours || 0 }
-                                    }}"
-                                />
-                            </div>
-                        </div>
-                        <p class="form-text" jhiTranslate="artemisApp.iris.settings.rateLimitHelp"></p>
-                    </div>
-
-                    <!-- Effective Rate Limit Display -->
-                    @if (effectiveRateLimit) {
-                        <div class="alert alert-info">
-                            <strong jhiTranslate="artemisApp.iris.settings.effectiveRateLimit"></strong>:
-                            <span>
-                                @if (effectiveRateLimit.requests) {
-                                    {{ effectiveRateLimit.requests }}
-                                    <span jhiTranslate="artemisApp.iris.settings.requests"></span>
-                                } @else {
-                                    <span jhiTranslate="artemisApp.iris.settings.unlimited"></span>
-                                }
-                                <span jhiTranslate="artemisApp.iris.settings.per"></span>
-                                @if (effectiveRateLimit.timeframeHours) {
-                                    {{ effectiveRateLimit.timeframeHours }}
-                                    <span jhiTranslate="artemisApp.iris.settings.hours"></span>
-                                } @else {
-                                    <span jhiTranslate="artemisApp.iris.settings.unlimitedTime"></span>
-                                }
-                            </span>
-                        </div>
-                    }
-                </div>
+        <span class="ms-3">
+            @if (isDirty) {
+                <span class="badge bg-warning">
+                    <fa-icon [icon]="faExclamationTriangle" class="me-1" />
+                    <span jhiTranslate="artemisApp.iris.settings.unsaved"></span>
+                </span>
+            } @else {
+                <span class="badge bg-success">
+                    <fa-icon [icon]="faCheck" class="me-1" />
+                    <span jhiTranslate="artemisApp.iris.settings.saved"></span>
+                </span>
             }
-
-            <!-- Save Button -->
-            <div class="mt-4">
-                <jhi-button
-                    id="save"
-                    [btnType]="PRIMARY"
-                    [isLoading]="isSaving"
-                    [disabled]="!isDirty"
-                    [icon]="faSave"
-                    [title]="'artemisApp.iris.settings.button.save'"
-                    [fullWidth]="true"
-                    (onClick)="saveSettings()"
-                />
-            </div>
-        </div>
-    }
-
-    @if (isLoading) {
-        <div class="d-flex justify-content-center my-5">
-            <div class="spinner-border" role="status">
-                <span class="visually-hidden" jhiTranslate="artemisApp.iris.settings.loading"></span>
-            </div>
-        </div>
+        </span>
     }
 </div>
+
+@if (settings) {
+    <div>
+        <!-- Enable/Disable Toggle -->
+        <div class="mb-4">
+            <h4 jhiTranslate="artemisApp.iris.settings.enableLabel"></h4>
+            <p jhiTranslate="artemisApp.iris.settings.enableHelp"></p>
+            <div class="btn-group" role="group">
+                <button type="button" class="btn" [class.btn-success]="settings.enabled" [class.btn-outline-success]="!settings.enabled" (click)="setEnabled(true)">
+                    <span jhiTranslate="artemisApp.iris.settings.enabled"></span>
+                </button>
+                <button type="button" class="btn" [class.btn-danger]="!settings.enabled" [class.btn-outline-danger]="settings.enabled" (click)="setEnabled(false)">
+                    <span jhiTranslate="artemisApp.iris.settings.disabled"></span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Custom Instructions (Instructors + Admins) -->
+        <div class="mb-4">
+            <h4 jhiTranslate="artemisApp.iris.settings.customInstructions"></h4>
+            <p jhiTranslate="artemisApp.iris.settings.customInstructionsHelp"></p>
+            <textarea
+                id="customInstructions"
+                class="form-control"
+                rows="6"
+                [(ngModel)]="settings.customInstructions"
+                [maxlength]="CUSTOM_INSTRUCTIONS_MAX_LENGTH"
+                placeholder="{{ 'artemisApp.iris.settings.customInstructionsPlaceholder' | artemisTranslate }}"
+            ></textarea>
+            <small class="form-text text-muted float-end">{{ getCustomInstructionsLength() }} / {{ CUSTOM_INSTRUCTIONS_MAX_LENGTH }}</small>
+        </div>
+
+        <!-- Admin-Only Section -->
+        @if (isAdmin) {
+            <hr class="my-4" />
+
+            <div class="admin-section">
+                <h3 jhiTranslate="artemisApp.iris.settings.adminSettings"></h3>
+                <p class="text-muted" jhiTranslate="artemisApp.iris.settings.adminOnly"></p>
+
+                <!-- Pipeline Variant -->
+                <div class="mb-3">
+                    <label for="variant" class="form-label">
+                        <strong jhiTranslate="artemisApp.iris.settings.variant"></strong>
+                    </label>
+                    <select id="variant" class="form-select" [(ngModel)]="settings.variant">
+                        @for (variant of availableVariants; track variant) {
+                            <option [value]="variant">{{ variant }}</option>
+                        }
+                    </select>
+                    <p class="form-text" jhiTranslate="artemisApp.iris.settings.variantHelp"></p>
+                </div>
+
+                <!-- Rate Limit Overrides -->
+                <div class="mb-3">
+                    <label class="form-label">
+                        <strong jhiTranslate="artemisApp.iris.settings.rateLimit"></strong>
+                    </label>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label for="rateLimitRequests" class="form-label" jhiTranslate="artemisApp.iris.settings.rateLimitRequests"></label>
+                            <input
+                                id="rateLimitRequests"
+                                type="number"
+                                class="form-control"
+                                [(ngModel)]="rateLimitRequests"
+                                min="0"
+                                placeholder="{{ 'artemisApp.iris.settings.rateLimitRequestsPlaceholder' | artemisTranslate: { default: applicationDefaults?.requests || 0 } }}"
+                            />
+                        </div>
+                        <div class="col-md-6">
+                            <label for="rateLimitTimeframe" class="form-label" jhiTranslate="artemisApp.iris.settings.rateLimitTimeframe"></label>
+                            <input
+                                id="rateLimitTimeframe"
+                                type="number"
+                                class="form-control"
+                                [(ngModel)]="rateLimitTimeframeHours"
+                                min="0"
+                                placeholder="{{
+                                    'artemisApp.iris.settings.rateLimitTimeframePlaceholder' | artemisTranslate: { default: applicationDefaults?.timeframeHours || 0 }
+                                }}"
+                            />
+                        </div>
+                    </div>
+                    <p class="form-text" jhiTranslate="artemisApp.iris.settings.rateLimitHelp"></p>
+                </div>
+
+                <!-- Effective Rate Limit Display -->
+                @if (effectiveRateLimit) {
+                    <div class="alert alert-info">
+                        <strong jhiTranslate="artemisApp.iris.settings.effectiveRateLimit"></strong>:
+                        <span>
+                            @if (effectiveRateLimit.requests) {
+                                {{ effectiveRateLimit.requests }}
+                                <span jhiTranslate="artemisApp.iris.settings.requests"></span>
+                            } @else {
+                                <span jhiTranslate="artemisApp.iris.settings.unlimited"></span>
+                            }
+                            <span jhiTranslate="artemisApp.iris.settings.per"></span>
+                            @if (effectiveRateLimit.timeframeHours) {
+                                {{ effectiveRateLimit.timeframeHours }}
+                                <span jhiTranslate="artemisApp.iris.settings.hours"></span>
+                            } @else {
+                                <span jhiTranslate="artemisApp.iris.settings.unlimitedTime"></span>
+                            }
+                        </span>
+                    </div>
+                }
+            </div>
+        }
+
+        <!-- Save Button -->
+        <div class="mt-4">
+            <jhi-button
+                id="save"
+                [btnType]="PRIMARY"
+                [isLoading]="isSaving"
+                [disabled]="!isDirty"
+                [icon]="faSave"
+                [title]="'artemisApp.iris.settings.button.save'"
+                [fullWidth]="true"
+                (onClick)="saveSettings()"
+            />
+        </div>
+    </div>
+}
+
+@if (isLoading) {
+    <div class="d-flex justify-content-center my-5">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden" jhiTranslate="artemisApp.iris.settings.loading"></span>
+        </div>
+    </div>
+}

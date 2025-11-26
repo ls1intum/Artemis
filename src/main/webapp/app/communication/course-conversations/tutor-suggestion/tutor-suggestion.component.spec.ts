@@ -39,6 +39,7 @@ describe('TutorSuggestionComponent', () => {
         currentRatelimitInfo: jest.fn().mockReturnValue(of({})),
         handleRateLimitInfo: jest.fn(),
         getActiveStatus: jest.fn().mockReturnValue(of({})),
+        setCurrentCourse: jest.fn(),
     } as any;
     const mockUserService = {
         updateExternalLLMUsageConsent: jest.fn(),

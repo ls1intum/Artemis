@@ -5,7 +5,7 @@ import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { of, throwError } from 'rxjs';
+import { BehaviorSubject, of, throwError } from 'rxjs';
 import { MockJhiTranslateDirective } from 'test/helpers/mocks/directive/mock-jhi-translate-directive.directive';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -15,6 +15,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ActivatedRoute, Params } from '@angular/router';
 
 describe('IrisSettingsUpdateComponent', () => {
     let component: IrisSettingsUpdateComponent;
@@ -22,6 +23,7 @@ describe('IrisSettingsUpdateComponent', () => {
     let irisSettingsService: IrisSettingsService;
     let alertService: AlertService;
     let accountService: AccountService;
+    const routeParamsSubject = new BehaviorSubject<Params>({ courseId: '1' });
 
     const mockSettings: IrisCourseSettingsDTO = {
         enabled: true,
@@ -50,6 +52,7 @@ describe('IrisSettingsUpdateComponent', () => {
                 MockProvider(AlertService),
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
+                { provide: ActivatedRoute, useValue: { params: routeParamsSubject.asObservable() } },
             ],
         }).compileComponents();
 
@@ -74,14 +77,15 @@ describe('IrisSettingsUpdateComponent', () => {
     });
 
     describe('ngOnInit', () => {
-        it('should load settings and variants', fakeAsync(() => {
-            component.courseId = 1;
+        it('should load settings and variants from route params', fakeAsync(() => {
+            routeParamsSubject.next({ courseId: '1' });
             const getCourseSettingsSpy = jest.spyOn(irisSettingsService, 'getCourseSettings');
             const getVariantsSpy = jest.spyOn(irisSettingsService, 'getVariants');
 
             component.ngOnInit();
             tick();
 
+            expect(component.courseId).toBe(1);
             expect(getCourseSettingsSpy).toHaveBeenCalledOnce();
             expect(getCourseSettingsSpy).toHaveBeenCalledWith(1);
             expect(getVariantsSpy).toHaveBeenCalledOnce();
@@ -102,7 +106,7 @@ describe('IrisSettingsUpdateComponent', () => {
                 applicationRateLimitDefaults: { requests: 50, timeframeHours: 12 },
             };
             jest.spyOn(irisSettingsService, 'getCourseSettings').mockReturnValue(of(nullRateLimitResponse));
-            component.courseId = 1;
+            routeParamsSubject.next({ courseId: '1' });
 
             component.ngOnInit();
             tick();
@@ -119,7 +123,7 @@ describe('IrisSettingsUpdateComponent', () => {
     describe('loadSettings', () => {
         it('should show error if no courseId', fakeAsync(() => {
             const alertSpy = jest.spyOn(alertService, 'error');
-            component.courseId = undefined as any;
+            component.courseId = undefined;
 
             component.loadSettings();
             tick();
@@ -130,7 +134,9 @@ describe('IrisSettingsUpdateComponent', () => {
         it('should show error if response is undefined', fakeAsync(() => {
             jest.spyOn(irisSettingsService, 'getCourseSettings').mockReturnValue(of(undefined));
             const alertSpy = jest.spyOn(alertService, 'error');
-            component.courseId = 1;
+            routeParamsSubject.next({ courseId: '1' });
+            component.ngOnInit();
+            tick();
 
             component.loadSettings();
             tick();
@@ -141,9 +147,8 @@ describe('IrisSettingsUpdateComponent', () => {
         it('should handle load error', fakeAsync(() => {
             jest.spyOn(irisSettingsService, 'getCourseSettings').mockReturnValue(throwError(() => new Error('Load failed')));
             const alertSpy = jest.spyOn(alertService, 'error');
-            component.courseId = 1;
-
-            component.loadSettings();
+            routeParamsSubject.next({ courseId: '1' });
+            component.ngOnInit();
             tick();
 
             expect(alertSpy).toHaveBeenCalledWith('artemisApp.iris.settings.error.load');
@@ -151,11 +156,9 @@ describe('IrisSettingsUpdateComponent', () => {
         }));
 
         it('should set loading states correctly', fakeAsync(() => {
-            component.courseId = 1;
-
-            component.loadSettings();
-            // isLoading is set synchronously before the async call
-            tick(); // Wait for async operations
+            routeParamsSubject.next({ courseId: '1' });
+            component.ngOnInit();
+            tick();
             expect(component.isLoading).toBeFalse();
         }));
     });
@@ -180,11 +183,12 @@ describe('IrisSettingsUpdateComponent', () => {
     });
 
     describe('saveSettings', () => {
-        beforeEach(() => {
-            component.courseId = 1;
+        beforeEach(fakeAsync(() => {
+            routeParamsSubject.next({ courseId: '1' });
             component.ngOnInit();
+            tick();
             fixture.detectChanges();
-        });
+        }));
 
         it('should save settings as admin with rate limit from form fields', fakeAsync(() => {
             jest.spyOn(accountService, 'isAdmin').mockReturnValue(true);
@@ -312,7 +316,7 @@ describe('IrisSettingsUpdateComponent', () => {
 
         it('should do nothing if no courseId', () => {
             const updateSpy = jest.spyOn(irisSettingsService, 'updateCourseSettings');
-            component.courseId = undefined as any;
+            component.courseId = undefined;
 
             component.saveSettings();
 
@@ -331,7 +335,7 @@ describe('IrisSettingsUpdateComponent', () => {
 
     describe('setEnabled', () => {
         beforeEach(fakeAsync(() => {
-            component.courseId = 1;
+            routeParamsSubject.next({ courseId: '1' });
             component.ngOnInit();
             tick();
         }));
@@ -402,7 +406,7 @@ describe('IrisSettingsUpdateComponent', () => {
 
     describe('dirty checking', () => {
         it('should detect changes and set isDirty', fakeAsync(() => {
-            component.courseId = 1;
+            routeParamsSubject.next({ courseId: '1' });
             component.ngOnInit();
             tick();
 
@@ -416,7 +420,7 @@ describe('IrisSettingsUpdateComponent', () => {
         }));
 
         it('should not mark as dirty if no changes', fakeAsync(() => {
-            component.courseId = 1;
+            routeParamsSubject.next({ courseId: '1' });
             component.ngOnInit();
             tick();
 
@@ -428,7 +432,7 @@ describe('IrisSettingsUpdateComponent', () => {
         }));
 
         it('should detect rate limit changes and set isDirty', fakeAsync(() => {
-            component.courseId = 1;
+            routeParamsSubject.next({ courseId: '1' });
             component.ngOnInit();
             tick();
 
@@ -442,7 +446,7 @@ describe('IrisSettingsUpdateComponent', () => {
         }));
 
         it('should reset isDirty to false when changes are reverted', fakeAsync(() => {
-            component.courseId = 1;
+            routeParamsSubject.next({ courseId: '1' });
             component.ngOnInit();
             tick();
 

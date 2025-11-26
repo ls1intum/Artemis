@@ -4,7 +4,7 @@
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
 
-    <changeSet id="20251030120000-course-iris-settings" author="assistant">
+    <changeSet id="20251030120000-course-iris-settings" author="bassner">
         <createTable tableName="course_iris_settings">
             <column name="course_id" type="BIGINT">
                 <constraints primaryKey="true" nullable="false" primaryKeyName="pk_course_iris_settings"/>
@@ -29,10 +29,13 @@
                     'enabled', COALESCE(pes.enabled, TRUE),
                     'customInstructions', NULLIF(btrim(pes.custom_instructions), ''),
                     'variant', LOWER(COALESCE(NULLIF(pes.selected_variant, ''), 'default')),
-                    'rateLimit', jsonb_build_object(
-                        'requests', pes.rate_limit,
-                        'timeframeHours', pes.rate_limit_timeframe_hours
-                    )
+                    'rateLimit', CASE
+                        WHEN pes.rate_limit IS NULL AND pes.rate_limit_timeframe_hours IS NULL THEN NULL
+                        ELSE jsonb_build_object(
+                            'requests', pes.rate_limit,
+                            'timeframeHours', pes.rate_limit_timeframe_hours
+                        )
+                    END
                 )::json
             FROM iris_settings cs
                 LEFT JOIN iris_sub_settings pes ON cs.iris_chat_settings_id = pes.id
@@ -45,12 +48,15 @@
                 cs.course_id,
                 JSON_OBJECT(
                     'enabled', COALESCE(pes.enabled, TRUE),
-                    'customInstructions', NULLIF(NULLIF(TRIM(pes.custom_instructions), ''), ''),
+                    'customInstructions', NULLIF(TRIM(pes.custom_instructions), ''),
                     'variant', LOWER(COALESCE(NULLIF(pes.selected_variant, ''), 'default')),
-                    'rateLimit', JSON_OBJECT(
-                        'requests', pes.rate_limit,
-                        'timeframeHours', pes.rate_limit_timeframe_hours
-                    )
+                    'rateLimit', CASE
+                        WHEN pes.rate_limit IS NULL AND pes.rate_limit_timeframe_hours IS NULL THEN NULL
+                        ELSE JSON_OBJECT(
+                            'requests', pes.rate_limit,
+                            'timeframeHours', pes.rate_limit_timeframe_hours
+                        )
+                    END
                 )
             FROM iris_settings cs
                 LEFT JOIN iris_sub_settings pes ON cs.iris_chat_settings_id = pes.id
@@ -61,7 +67,7 @@
             INSERT INTO course_iris_settings (course_id, settings)
             SELECT
                 c.id,
-                '{"enabled":true,"customInstructions":null,"variant":"default","rateLimit":{"requests":null,"timeframeHours":null}}'
+                '{"enabled":true,"customInstructions":null,"variant":"default","rateLimit":null}'
             FROM course c
             WHERE NOT EXISTS (SELECT 1 FROM course_iris_settings cis WHERE cis.course_id = c.id);
         </sql>
@@ -138,6 +144,107 @@
             <addForeignKeyConstraint baseTableName="iris_settings" baseColumnNames="iris_tutor_suggestion_settings_id"
                                      referencedTableName="iris_sub_settings" referencedColumnNames="id"
                                      constraintName="FK_IRIS_SETTINGS_ON_IRIS_TUTOR_SUGGESTION_SETTINGS"/>
+
+            <createIndex indexName="course_id" tableName="iris_settings" unique="true">
+                <column name="course_id"/>
+            </createIndex>
+            <createIndex indexName="exercise_id" tableName="iris_settings" unique="true">
+                <column name="exercise_id"/>
+            </createIndex>
+            <createIndex indexName="FK_IRIS_SETTINGS_ON_IRIS_CHAT_SETTINGS" tableName="iris_settings">
+                <column name="iris_chat_settings_id"/>
+            </createIndex>
+            <createIndex indexName="FK_IRIS_SETTINGS_ON_IRIS_COMPETENCY_GENERATION_SETTINGS" tableName="iris_settings">
+                <column name="iris_competency_generation_settings_id"/>
+            </createIndex>
+            <createIndex indexName="FK_IRIS_SETTINGS_ON_IRIS_FAQ_INGESTION_SETTINGS" tableName="iris_settings">
+                <column name="iris_faq_ingestion_settings_id"/>
+            </createIndex>
+            <createIndex indexName="FK_IRIS_SETTINGS_ON_IRIS_LECTURE_INGESTION_SETTINGS" tableName="iris_settings">
+                <column name="iris_lecture_ingestion_settings_id"/>
+            </createIndex>
+            <createIndex indexName="FK_IRIS_SETTINGS_ON_LECTURE_CHAT_SETTINGS" tableName="iris_settings">
+                <column name="iris_lecture_chat_settings_id"/>
+            </createIndex>
+            <createIndex indexName="fk_iris_settings_iris_course_chat_settings_id" tableName="iris_settings">
+                <column name="iris_course_chat_settings_id"/>
+            </createIndex>
+
+            <!-- PostgreSQL: Restore course settings using CTE with RETURNING -->
+            <sql dbms="postgresql">
+                WITH inserted_sub AS (
+                    INSERT INTO iris_sub_settings (enabled, rate_limit, rate_limit_timeframe_hours, selected_variant, custom_instructions, discriminator, auto_ingest_on_lecture_attachment_upload, auto_ingest_on_faq_creation)
+                    SELECT
+                        (cis.settings->>'enabled')::boolean,
+                        (cis.settings->'rateLimit'->>'requests')::int,
+                        (cis.settings->'rateLimit'->>'timeframeHours')::int,
+                        cis.settings->>'variant',
+                        cis.settings->>'customInstructions',
+                        'CHAT',
+                        false,
+                        false
+                    FROM course_iris_settings cis
+                    ORDER BY cis.course_id
+                    RETURNING id
+                ),
+                numbered_sub AS (
+                    SELECT id, ROW_NUMBER() OVER (ORDER BY id) as rn FROM inserted_sub
+                ),
+                numbered_course AS (
+                    SELECT course_id, ROW_NUMBER() OVER (ORDER BY course_id) as rn FROM course_iris_settings
+                )
+                INSERT INTO iris_settings (iris_chat_settings_id, discriminator, course_id)
+                SELECT ns.id, 'COURSE', nc.course_id
+                FROM numbered_sub ns
+                JOIN numbered_course nc ON ns.rn = nc.rn;
+            </sql>
+
+            <!-- MySQL: Restore course settings row by row using cursor-like approach -->
+            <sql dbms="mysql" splitStatements="false">
+                DROP PROCEDURE IF EXISTS restore_iris_settings;
+                CREATE PROCEDURE restore_iris_settings()
+                BEGIN
+                    DECLARE done INT DEFAULT FALSE;
+                    DECLARE v_course_id BIGINT;
+                    DECLARE v_enabled BOOLEAN;
+                    DECLARE v_rate_limit INT;
+                    DECLARE v_rate_limit_hours INT;
+                    DECLARE v_variant VARCHAR(100);
+                    DECLARE v_custom_instructions VARCHAR(2048);
+                    DECLARE v_sub_id BIGINT;
+
+                    DECLARE cur CURSOR FOR
+                        SELECT
+                            course_id,
+                            JSON_EXTRACT(settings, '$.enabled') = true,
+                            JSON_EXTRACT(settings, '$.rateLimit.requests'),
+                            JSON_EXTRACT(settings, '$.rateLimit.timeframeHours'),
+                            JSON_UNQUOTE(JSON_EXTRACT(settings, '$.variant')),
+                            JSON_UNQUOTE(JSON_EXTRACT(settings, '$.customInstructions'))
+                        FROM course_iris_settings
+                        ORDER BY course_id;
+                    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
+
+                    OPEN cur;
+                    read_loop: LOOP
+                        FETCH cur INTO v_course_id, v_enabled, v_rate_limit, v_rate_limit_hours, v_variant, v_custom_instructions;
+                        IF done THEN
+                            LEAVE read_loop;
+                        END IF;
+
+                        INSERT INTO iris_sub_settings (enabled, rate_limit, rate_limit_timeframe_hours, selected_variant, custom_instructions, discriminator, auto_ingest_on_lecture_attachment_upload, auto_ingest_on_faq_creation)
+                        VALUES (v_enabled, v_rate_limit, v_rate_limit_hours, v_variant, v_custom_instructions, 'CHAT', false, false);
+
+                        SET v_sub_id = LAST_INSERT_ID();
+
+                        INSERT INTO iris_settings (iris_chat_settings_id, discriminator, course_id)
+                        VALUES (v_sub_id, 'COURSE', v_course_id);
+                    END LOOP;
+                    CLOSE cur;
+                END;
+                CALL restore_iris_settings();
+                DROP PROCEDURE restore_iris_settings;
+            </sql>
 
             <dropTable tableName="course_iris_settings"/>
         </rollback>

@@ -69,11 +69,13 @@ public class IrisSettingsResource {
         courseRepository.findByIdElseThrow(courseId);
         var current = irisSettingsService.getSettingsForCourse(courseId);
         var request = Objects.requireNonNullElse(update, current);
+        var sanitizedRequest = irisSettingsService.sanitizePayloadForUpdate(request);
+        var sanitizedCurrent = irisSettingsService.sanitizePayloadForUpdate(current);
         var isAdmin = authorizationCheckService.isAdmin(userRepository.getUserWithGroupsAndAuthorities());
         if (!isAdmin) {
-            enforceInstructorRestrictions(request, current);
+            enforceInstructorRestrictions(sanitizedRequest, sanitizedCurrent);
         }
-        var saved = irisSettingsService.updateCourseSettings(courseId, request);
+        var saved = irisSettingsService.updateCourseSettings(courseId, sanitizedRequest);
         return ResponseEntity.ok(saved);
     }
 
@@ -88,10 +90,17 @@ public class IrisSettingsResource {
     }
 
     private boolean sameRateLimit(IrisRateLimitConfiguration left, IrisRateLimitConfiguration right) {
-        Integer leftRequests = normalizeRateLimitValue(left == null ? null : left.requests());
-        Integer rightRequests = normalizeRateLimitValue(right == null ? null : right.requests());
-        Integer leftTimeframe = normalizeRateLimitValue(left == null ? null : left.timeframeHours());
-        Integer rightTimeframe = normalizeRateLimitValue(right == null ? null : right.timeframeHours());
+        if (left == null && right == null) {
+            return true;
+        }
+        if (left == null || right == null) {
+            return false; // null vs {} must be treated as a change
+        }
+
+        Integer leftRequests = normalizeRateLimitValue(left.requests());
+        Integer rightRequests = normalizeRateLimitValue(right.requests());
+        Integer leftTimeframe = normalizeRateLimitValue(left.timeframeHours());
+        Integer rightTimeframe = normalizeRateLimitValue(right.timeframeHours());
 
         return Objects.equals(leftRequests, rightRequests) && Objects.equals(leftTimeframe, rightTimeframe);
     }

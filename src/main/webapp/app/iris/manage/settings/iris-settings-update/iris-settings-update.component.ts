@@ -1,5 +1,6 @@
-import { Component, DoCheck, Input, OnInit, inject } from '@angular/core';
+import { Component, DoCheck, OnInit, inject } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
+import { ActivatedRoute } from '@angular/router';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ButtonComponent, ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { faCheck, faExclamationTriangle, faSave } from '@fortawesome/free-solid-svg-icons';
@@ -13,23 +14,25 @@ import { captureException } from '@sentry/angular';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { CourseIrisSettingsDTO, IrisCourseSettingsDTO, IrisPipelineVariant, IrisRateLimitConfiguration } from 'app/iris/shared/entities/settings/iris-course-settings.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { CourseTitleBarTitleComponent } from 'app/core/course/shared/course-title-bar-title/course-title-bar-title.component';
+import { CourseTitleBarTitleDirective } from 'app/core/course/shared/directives/course-title-bar-title.directive';
+
 /**
  * Component for editing Iris course-level settings.
- * Replaces the legacy three-tier (Global → Course → Exercise) settings system
- * with a unified course-level configuration.
+ * Extracts the courseId from the route and provides the settings form.
  */
 @Component({
     selector: 'jhi-iris-settings-update',
     templateUrl: './iris-settings-update.component.html',
-    imports: [ButtonComponent, TranslateDirective, ArtemisTranslatePipe, FormsModule, FaIconComponent],
+    imports: [ButtonComponent, TranslateDirective, ArtemisTranslatePipe, FormsModule, FaIconComponent, CourseTitleBarTitleComponent, CourseTitleBarTitleDirective],
 })
 export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCanDeactivate {
+    private route = inject(ActivatedRoute);
     private irisSettingsService = inject(IrisSettingsService);
     private alertService = inject(AlertService);
     private accountService = inject(AccountService);
 
-    @Input()
-    public courseId!: number;
+    public courseId?: number;
 
     // Current settings being edited
     public settings?: IrisCourseSettingsDTO;
@@ -76,7 +79,10 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
     }
 
     ngOnInit(): void {
-        this.loadSettings();
+        this.route.params.subscribe((params) => {
+            this.courseId = Number(params['courseId']);
+            this.loadSettings();
+        });
         this.loadVariants();
     }
 
