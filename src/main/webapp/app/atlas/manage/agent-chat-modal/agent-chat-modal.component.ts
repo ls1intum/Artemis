@@ -146,14 +146,12 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
      * Uses the unified competencyPreviews array.
      */
     onCreateCompetencies(message: ChatMessage): void {
-        // Prevent duplicate creation/update
         if (message.competencyCreated || !message.competencyPreviews || message.competencyPreviews.length === 0) {
             return;
         }
 
         this.isAgentTyping.set(true);
 
-        // Build competencies array
         const competencies = message.competencyPreviews.map((preview) => {
             const competency = new Competency();
             competency.title = preview.title;
@@ -165,7 +163,6 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
             return competency;
         });
 
-        // Execute all competencies
         const promises = competencies.map((competency) => {
             const isUpdate = competency.id !== undefined;
             const operation = isUpdate ? this.competencyService.update(competency, this.courseId) : this.competencyService.create(competency, this.courseId);
@@ -211,30 +208,24 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
     }
 
     protected onApprovePlan(message: ChatMessage): void {
-        // Prevent duplicate approval
         if (message.planApproved) {
             return;
         }
 
-        // Mark this message's plan as approved
         this.messages.update((msgs) => msgs.map((msg) => (msg.id === message.id ? { ...msg, planApproved: true, planPending: false } : msg)));
 
-        // Send approval message to agent
         this.addMessage(this.translateService.instant('artemisApp.agent.chat.userPlanConfirmation'), false);
         this.isAgentTyping.set(true);
 
-        // Send approval - backend will process it
         this.agentChatService.sendMessage(this.translateService.instant('artemisApp.agent.chat.planApproval'), this.courseId).subscribe({
             next: (response) => {
                 this.isAgentTyping.set(false);
                 this.addMessage(response.message || this.translateService.instant('artemisApp.agent.chat.error'), false);
 
-                // Emit event if competencies were modified
                 if (response.competenciesModified) {
                     this.competencyChanged.emit();
                 }
 
-                // Restore focus to input
                 setTimeout(() => this.messageInput()?.nativeElement?.focus(), 10);
             },
             error: () => {
@@ -257,7 +248,6 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
             timestamp: new Date(),
         };
 
-        // Map preview data if provided
         if (competencyPreviews && competencyPreviews.length > 0) {
             message.competencyPreviews = competencyPreviews.map((preview) => ({
                 title: preview.title,
@@ -269,7 +259,6 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
             }));
         }
 
-        // Detect [PLAN_PENDING] markers and clean message text
         if (!isUser) {
             const cleanedContent = this.removePlanPendingMarkerFromMessageContent(message.content);
             if (cleanedContent !== undefined) {
@@ -278,7 +267,6 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
             }
         }
 
-        // Append message and trigger scroll
         this.messages.update((msgs) => [...msgs, message]);
         this.shouldScrollToBottom.set(true);
     }
@@ -313,7 +301,6 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
     private invalidatePendingPlanApprovals(): void {
         this.messages.update((msgs) =>
             msgs.map((msg) => {
-                // If a message has a pending plan that hasn't been approved yet, mark it as no longer pending
                 if (msg.planPending && !msg.planApproved) {
                     return { ...msg, planPending: false };
                 }

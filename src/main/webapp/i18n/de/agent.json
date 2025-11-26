@@ -18,8 +18,8 @@
                 "create": "Erstellen",
                 "updated": "Aktualisiert",
                 "created": "Erstellt",
-                "UpdateAll": "Alle aktualisieren",
-                "CreateAll": "Alle erstellen",
+                "updateAll": "Alle aktualisieren",
+                "createAll": "Alle erstellen",
                 "completed": "Abgeschlossen ({{count}})",
                 "success": {
                     "processed": "{{count}} Kompetenz(en) erfolgreich bearbeitet!",
