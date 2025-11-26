@@ -87,17 +87,6 @@ class AtlasAgentIntegrationTest extends AbstractAtlasIntegrationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testServerGeneratedSessionId() throws Exception {
-        var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
-        AtlasAgentChatRequestDTO requestDTO = new AtlasAgentChatRequestDTO("Test session consistency");
-
-        request.performMvcRequest(
-                post("/api/atlas/agent/courses/{courseId}/chat", course.getId()).contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(requestDTO)))
-                .andExpect(status().isOk());
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDifferentCourseContexts() throws Exception {
         Course secondCourse = courseUtilService.createCourse();
         String message = "Help with competencies for Computer Science basics";

@@ -268,12 +268,6 @@ public class CompetencyExpertToolsService {
             }
         }
 
-        // Convert operations to preview DTOs with consistent taxonomy-to-icon mapping
-        List<CompetencyPreviewDTO> previews = competencies.stream().map(comp -> {
-            String iconName = getTaxonomyIcon(comp.getTaxonomy());
-            return new CompetencyPreviewDTO(comp.getTitle(), comp.getDescription(), comp.getTaxonomy().toString(), iconName, comp.getCompetencyId());
-        }).toList();
-
         // Store preview data in ThreadLocal for deterministic extraction by AtlasAgentService
         List<CompetencyPreviewResponseDTO> previewResponses = competencies.stream().map(comp -> {
             CompetencyPreviewDTO previewDTO = new CompetencyPreviewDTO(comp.getTitle(), comp.getDescription(), comp.getTaxonomy().toString(), getTaxonomyIcon(comp.getTaxonomy()),
