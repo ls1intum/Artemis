@@ -1,6 +1,7 @@
 import tsPlugin from '@typescript-eslint/eslint-plugin';
 import angularPlugin from '@angular-eslint/eslint-plugin';
 import prettierPlugin from 'eslint-plugin-prettier';
+import unicornPlugin from 'eslint-plugin-unicorn';
 import jestPlugin from 'eslint-plugin-jest';
 import jestExtendedPlugin from 'eslint-plugin-jest-extended';
 import typescriptParser from '@typescript-eslint/parser';
@@ -89,13 +90,58 @@ export default tseslint.config(
             '@typescript-eslint': tsPlugin,
             '@angular-eslint': angularPlugin,
             prettier: prettierPlugin,
-            localRules: localRulesPlugin
+            localRules: localRulesPlugin,
+            unicorn: unicornPlugin,
         },
         // TODO: adapt the rules of the newest jhipster version, e.g. no-inferrable-types, restrict-plus-operands, etc.
         rules: {
             ...prettierPlugin.configs.recommended.rules,
             ...tsPlugin.configs.recommended.rules,
             ...angularPlugin.configs.recommended.rules,
+
+            // Prefer undefined over null (runtime)
+            'unicorn/no-null': 'error',
+            // Prefer undefined over null (types)
+            '@typescript-eslint/no-restricted-types': [
+                'error',
+                {
+                    types: {
+                        null: {
+                            message: 'Use `undefined` instead of `null`.',
+                        },
+                    },
+                },
+            ],
+
+            // "no-restricted-syntax": [
+            //     "error",
+            //     {
+            //         selector: "ObjectExpression > SpreadElement",
+            //         message: "Do not use object spread. Use Object.assign instead."
+            //     }
+            // ],
+            // vs.
+            // Prefer object spread over Object.assign
+            // 'prefer-object-spread': 'error',
+
+            // Disallow ALL assertions (`as`, angle-brackets, `const` assertions)
+            '@typescript-eslint/consistent-type-assertions': [
+                'error',
+                {
+                    assertionStyle: 'never',
+                },
+            ],
+
+            // Enforce explicit function return types, with some exceptions
+            "@typescript-eslint/explicit-function-return-type": [
+                "error",
+                {
+                    "allowExpressions": false,
+                    "allowTypedFunctionExpressions": true,
+                    "allowHigherOrderFunctions": true,
+                    "allowConciseArrowFunctionExpressionsStartingWithVoid": true
+                }
+            ],
             '@typescript-eslint/no-non-null-assertion': 'off',
             '@typescript-eslint/no-unsafe-return': 'off',
             '@typescript-eslint/no-unsafe-member-access': 'off',
