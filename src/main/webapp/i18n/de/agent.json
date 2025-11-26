@@ -13,7 +13,7 @@
                 "planApproval": "Ich billige den Plan",
                 "competencyProcessFailure": "fehlgeschlagen, einige Kompetenzen zu verarbeiten. Bitte versuche es erneut",
                 "approvePlan": "Plan genehmigen",
-                "preview": "vorschau: {{count}} Kompetenzen",
+                "preview": "Vorschau: {{count}} Kompetenzen",
                 "update": "Aktualisieren",
                 "create": "Erstellen",
                 "updated": "Aktualisiert",

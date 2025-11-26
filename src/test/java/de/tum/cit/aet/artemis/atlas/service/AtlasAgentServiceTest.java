@@ -555,7 +555,6 @@ class AtlasAgentServiceTest {
             assertThat(result).hasSize(2);
             assertThat(result.getFirst().content()).isEqualTo("Create a competency");
             assertThat(result.get(1).content()).isEqualTo("Competency created successfully");
-            // Delegation marker message should be filtered out
         }
 
         @Test
@@ -589,7 +588,6 @@ class AtlasAgentServiceTest {
             assertThat(result.getFirst().content()).isEqualTo("What are competencies?");
             assertThat(result.get(1).content()).isEqualTo("Competencies are learning objectives that define what students should know and be able to do.");
             assertThat(result.get(1).competencyPreviews()).isNull();
-            assertThat(result.get(1).competencyPreviews()).isNull();
         }
 
         @Test
@@ -604,7 +602,6 @@ class AtlasAgentServiceTest {
 
             assertThat(result).hasSize(2);
             assertThat(result.get(1).content()).isEqualTo("Message");
-            assertThat(result.get(1).competencyPreviews()).isNull();
             assertThat(result.get(1).competencyPreviews()).isNull();
         }
 
