@@ -30,7 +30,6 @@
             "isolated": "Isoliert öffnen",
             "originalVersion": "Originalversion",
             "notReleasedTooltip": "Text nur sichtbar für Tutor:innen und Lehrende. Veröffentlichungsdatum:",
-            "markdownHelp": "Hier kann Markdown eingegeben werden. Mehr Informationen:",
             "cachedMarkdown": "Artemis hat ungespeichertes Markdown im local storage gefunden. Möchtest du es laden? Speicherdatum:",
             "createTextUnit": {
                 "title": "Erstelle Texteinheit",
