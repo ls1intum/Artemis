@@ -304,7 +304,7 @@
                 SELECT false, 'default', 'TUTOR_SUGGESTION', false, false FROM course_iris_settings ORDER BY course_id;
             </sql>
 
-            <!-- MySQL: Insert iris_settings linking all 8 sub_settings -->
+            <!-- MySQL: Insert iris_settings linking all 8 sub_settings for COURSE -->
             <sql dbms="mysql">
                 INSERT INTO iris_settings (
                     iris_chat_settings_id, iris_text_exercise_chat_settings_id, iris_course_chat_settings_id,
@@ -324,6 +324,99 @@
                 JOIN (SELECT id, ROW_NUMBER() OVER (ORDER BY id) as rn FROM iris_sub_settings WHERE discriminator = 'COMPETENCY_GENERATION') comp ON comp.rn = prog.rn
                 JOIN (SELECT id, ROW_NUMBER() OVER (ORDER BY id) as rn FROM iris_sub_settings WHERE discriminator = 'TUTOR_SUGGESTION') tutor ON tutor.rn = prog.rn
                 JOIN (SELECT course_id, ROW_NUMBER() OVER (ORDER BY course_id) as rn FROM course_iris_settings) cis ON cis.rn = prog.rn;
+            </sql>
+
+            <!-- MySQL: Create default GLOBAL settings with everything enabled -->
+            <sql dbms="mysql">
+                INSERT INTO iris_sub_settings (enabled, selected_variant, allowed_variants, discriminator, auto_ingest_on_lecture_attachment_upload, auto_ingest_on_faq_creation)
+                VALUES
+                    (true, 'default', 'default', 'PROGRAMMING_EXERCISE_CHAT', false, false),
+                    (true, 'default', 'default', 'TEXT_EXERCISE_CHAT', false, false),
+                    (true, 'default', 'default', 'COURSE_CHAT', false, false),
+                    (true, 'default', 'default', 'LECTURE_INGESTION', true, false),
+                    (true, 'default', 'default', 'LECTURE_CHAT', false, false),
+                    (true, 'default', 'default', 'FAQ_INGESTION', false, true),
+                    (true, 'default', 'default', 'COMPETENCY_GENERATION', false, false),
+                    (true, 'default', 'default', 'TUTOR_SUGGESTION', false, false);
+            </sql>
+            <sql dbms="mysql">
+                INSERT INTO iris_settings (
+                    iris_chat_settings_id, iris_text_exercise_chat_settings_id, iris_course_chat_settings_id,
+                    iris_lecture_ingestion_settings_id, iris_lecture_chat_settings_id, iris_faq_ingestion_settings_id,
+                    iris_competency_generation_settings_id, iris_tutor_suggestion_settings_id,
+                    discriminator
+                )
+                SELECT
+                    (SELECT MAX(id) - 7 FROM iris_sub_settings),
+                    (SELECT MAX(id) - 6 FROM iris_sub_settings),
+                    (SELECT MAX(id) - 5 FROM iris_sub_settings),
+                    (SELECT MAX(id) - 4 FROM iris_sub_settings),
+                    (SELECT MAX(id) - 3 FROM iris_sub_settings),
+                    (SELECT MAX(id) - 2 FROM iris_sub_settings),
+                    (SELECT MAX(id) - 1 FROM iris_sub_settings),
+                    (SELECT MAX(id) FROM iris_sub_settings),
+                    'GLOBAL';
+            </sql>
+
+            <!-- PostgreSQL: Create default GLOBAL settings with everything enabled -->
+            <sql dbms="postgresql">
+                WITH
+                inserted_global_prog AS (
+                    INSERT INTO iris_sub_settings (enabled, selected_variant, allowed_variants, discriminator, auto_ingest_on_lecture_attachment_upload, auto_ingest_on_faq_creation)
+                    VALUES (true, 'default', 'default', 'PROGRAMMING_EXERCISE_CHAT', false, false)
+                    RETURNING id
+                ),
+                inserted_global_text AS (
+                    INSERT INTO iris_sub_settings (enabled, selected_variant, allowed_variants, discriminator, auto_ingest_on_lecture_attachment_upload, auto_ingest_on_faq_creation)
+                    VALUES (true, 'default', 'default', 'TEXT_EXERCISE_CHAT', false, false)
+                    RETURNING id
+                ),
+                inserted_global_course AS (
+                    INSERT INTO iris_sub_settings (enabled, selected_variant, allowed_variants, discriminator, auto_ingest_on_lecture_attachment_upload, auto_ingest_on_faq_creation)
+                    VALUES (true, 'default', 'default', 'COURSE_CHAT', false, false)
+                    RETURNING id
+                ),
+                inserted_global_lec_ing AS (
+                    INSERT INTO iris_sub_settings (enabled, selected_variant, allowed_variants, discriminator, auto_ingest_on_lecture_attachment_upload, auto_ingest_on_faq_creation)
+                    VALUES (true, 'default', 'default', 'LECTURE_INGESTION', true, false)
+                    RETURNING id
+                ),
+                inserted_global_lec_chat AS (
+                    INSERT INTO iris_sub_settings (enabled, selected_variant, allowed_variants, discriminator, auto_ingest_on_lecture_attachment_upload, auto_ingest_on_faq_creation)
+                    VALUES (true, 'default', 'default', 'LECTURE_CHAT', false, false)
+                    RETURNING id
+                ),
+                inserted_global_faq AS (
+                    INSERT INTO iris_sub_settings (enabled, selected_variant, allowed_variants, discriminator, auto_ingest_on_lecture_attachment_upload, auto_ingest_on_faq_creation)
+                    VALUES (true, 'default', 'default', 'FAQ_INGESTION', false, true)
+                    RETURNING id
+                ),
+                inserted_global_comp AS (
+                    INSERT INTO iris_sub_settings (enabled, selected_variant, allowed_variants, discriminator, auto_ingest_on_lecture_attachment_upload, auto_ingest_on_faq_creation)
+                    VALUES (true, 'default', 'default', 'COMPETENCY_GENERATION', false, false)
+                    RETURNING id
+                ),
+                inserted_global_tutor AS (
+                    INSERT INTO iris_sub_settings (enabled, selected_variant, allowed_variants, discriminator, auto_ingest_on_lecture_attachment_upload, auto_ingest_on_faq_creation)
+                    VALUES (true, 'default', 'default', 'TUTOR_SUGGESTION', false, false)
+                    RETURNING id
+                )
+                INSERT INTO iris_settings (
+                    iris_chat_settings_id, iris_text_exercise_chat_settings_id, iris_course_chat_settings_id,
+                    iris_lecture_ingestion_settings_id, iris_lecture_chat_settings_id, iris_faq_ingestion_settings_id,
+                    iris_competency_generation_settings_id, iris_tutor_suggestion_settings_id,
+                    discriminator
+                )
+                SELECT
+                    (SELECT id FROM inserted_global_prog),
+                    (SELECT id FROM inserted_global_text),
+                    (SELECT id FROM inserted_global_course),
+                    (SELECT id FROM inserted_global_lec_ing),
+                    (SELECT id FROM inserted_global_lec_chat),
+                    (SELECT id FROM inserted_global_faq),
+                    (SELECT id FROM inserted_global_comp),
+                    (SELECT id FROM inserted_global_tutor),
+                    'GLOBAL';
             </sql>
 
             <dropTable tableName="course_iris_settings"/>
