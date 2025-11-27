@@ -9,7 +9,7 @@ import { ButtonModule } from 'primeng/button';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { StudentsRoomDistributionService } from 'app/exam/manage/services/students-room-distribution.service';
 import { ExamUser } from 'app/exam/shared/entities/exam-user.model';
-import { faBan, faThLarge } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faChair } from '@fortawesome/free-solid-svg-icons';
 import { RoomForDistributionDTO, SeatsOfExamRoomDTO } from './students-room-distribution.model';
 import { Observable, debounceTime, distinctUntilChanged, map } from 'rxjs';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
@@ -24,52 +24,54 @@ import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.com
 export class StudentsReseatingDialogComponent {
     // Icons
     protected readonly faBan = faBan;
-    protected readonly faThLarge = faThLarge;
+    protected readonly faChair = faChair;
 
     private readonly studentsRoomDistributionService = inject(StudentsRoomDistributionService);
     courseId: InputSignal<number> = input.required();
     exam: InputSignal<Exam> = input.required();
-    examUser: InputSignal<ExamUser> = input.required();
+    examUser: WritableSignal<ExamUser | undefined> = signal(undefined);
 
     dialogVisible: ModelSignal<boolean> = model(false);
     onSave: OutputEmitterRef<void> = output();
 
     private roomsUsedInExam: WritableSignal<RoomForDistributionDTO[]> = signal([]);
     private availableRooms: Signal<RoomForDistributionDTO[]> = this.studentsRoomDistributionService.availableRooms;
-    allowUnassignedRooms: WritableSignal<boolean> = signal(false);
+    useCustomLocation: WritableSignal<boolean> = signal(false);
     selectedRoomNumber: WritableSignal<string> = signal('');
     private seatsOfSelectedRoom: WritableSignal<SeatsOfExamRoomDTO> = signal({ seats: [] });
-    selectedSeat: WritableSignal<string> = signal(this.examUser().plannedSeat ?? '');
+    selectedSeat: WritableSignal<string> = signal('');
 
     constructor() {
         effect(() => {
-            const roomNumber = this.selectedRoomNumber();
-            if (!roomNumber) {
+            const plannedRoomNumber: string = this.selectedRoomNumber();
+            if (plannedRoomNumber === '' || this.useCustomLocation()) {
                 this.seatsOfSelectedRoom.set({ seats: [] });
+                this.useCustomLocation.set(true);
                 return;
             }
 
-            this.studentsRoomDistributionService.loadSeatsOfExamRoom(roomNumber).subscribe({
+            this.studentsRoomDistributionService.loadSeatsOfExamRoom(plannedRoomNumber).subscribe({
                 next: (data) => this.seatsOfSelectedRoom.set(data),
+                // An error is expected whenever the room is not persisted
                 error: () => this.seatsOfSelectedRoom.set({ seats: [] }),
             });
         });
     }
 
-    openDialog(): void {
+    openDialog(examUser: ExamUser): void {
+        this.examUser.set(examUser);
+        this.selectedRoomNumber.set(this.examUser()!.plannedRoom ?? '');
+        this.selectedSeat.set(this.examUser()!.plannedSeat ?? '');
         this.dialogVisible.set(true);
 
         this.studentsRoomDistributionService.loadRoomsUsedInExam(this.courseId(), this.exam().id!).subscribe({
             next: (rooms: RoomForDistributionDTO[]) => {
                 this.roomsUsedInExam.set(rooms);
-                const assignedRoom = rooms.find((room) => room.roomNumber === this.examUser().plannedRoom);
-                this.selectedRoomNumber.set(assignedRoom?.roomNumber ?? '');
             },
             error: (_err) => {
                 this.roomsUsedInExam.set([]);
             },
         });
-
         this.studentsRoomDistributionService.loadRoomData();
     }
 
@@ -79,7 +81,7 @@ export class StudentsReseatingDialogComponent {
 
     attemptReseatAndCloseDialogOnSuccess(): void {
         this.studentsRoomDistributionService
-            .reseatStudent(this.courseId(), this.exam().id!, this.examUser().id!, this.selectedRoomNumber(), this.selectedSeat(), !this.allowUnassignedRooms())
+            .reseatStudent(this.courseId(), this.exam().id!, this.examUser()!.id!, this.selectedRoomNumber(), this.selectedSeat(), !this.useCustomLocation())
             .subscribe();
     }
 
@@ -87,12 +89,6 @@ export class StudentsReseatingDialogComponent {
         const selectedRoom: RoomForDistributionDTO = event.item as RoomForDistributionDTO;
 
         this.selectedRoomNumber.set(selectedRoom.roomNumber);
-    }
-
-    pickSelectedUnassignedRoom(event: { item: string }): void {
-        const selectedRoomNumber: string = event.item as string;
-
-        this.selectedRoomNumber.set(selectedRoomNumber);
     }
 
     pickSelectedSeat(event: { item: string }): void {
@@ -122,7 +118,7 @@ export class StudentsReseatingDialogComponent {
     };
 
     private findAllMatchingRoomsForTerm = (term: string): RoomForDistributionDTO[] => {
-        const potentialRooms: RoomForDistributionDTO[] = this.allowUnassignedRooms() ? this.availableRooms() : this.roomsUsedInExam();
+        const potentialRooms: RoomForDistributionDTO[] = this.useCustomLocation() ? this.availableRooms() : this.roomsUsedInExam();
 
         const trimmed = term.trim();
         if (!trimmed) {
@@ -217,16 +213,26 @@ export class StudentsReseatingDialogComponent {
     }
 
     getSelectedStudentName(): string {
-        const name: string = (this.examUser().user?.firstName ?? '') + ' ' + (this.examUser().user?.lastName ?? '');
+        const name: string = (this.examUser()?.user?.firstName ?? '') + ' ' + (this.examUser()?.user?.lastName ?? '');
         return name.trim();
     }
 
-    toggleUnassignedRooms(): void {
-        this.allowUnassignedRooms.update((value) => !value);
+    toggleCustomLocation(): void {
+        this.useCustomLocation.update((value) => !value);
     }
 
     getDefaultValueForRoomSelection(): string {
         const selectedRoomDTO = this.roomsUsedInExam().find((room) => room.roomNumber === this.selectedRoomNumber());
         return selectedRoomDTO ? this.roomFormatter(selectedRoomDTO) : '';
+    }
+
+    protected setUnassignedRoomNumber($event: Event) {
+        const input: HTMLInputElement = $event.target as HTMLInputElement;
+        this.selectedRoomNumber.set(input.value);
+    }
+
+    protected setUnassignedSeat($event: Event) {
+        const input: HTMLInputElement = $event.target as HTMLInputElement;
+        this.selectedSeat.set(input.value);
     }
 }

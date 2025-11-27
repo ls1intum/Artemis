@@ -1,4 +1,4 @@
-<p-dialog [(visible)]="dialogVisible" [modal]="true" [closable]="true" [dismissableMask]="true" (onHide)="closeDialog()" [style]="{ width: '45dvw' }">
+<p-dialog [(visible)]="dialogVisible" [modal]="false" [closable]="true" [dismissableMask]="true" (onHide)="closeDialog()" [style]="{ width: '45dvw' }">
     <ng-template pTemplate="header">
         <h4>
             <span jhiTranslate="artemisApp.exam.examUsers.rooms.reseating.dialogTitle"></span>
@@ -6,27 +6,27 @@
     </ng-template>
     <form id="roomDistributionDialogForm" name="distributionForm" role="form" novalidate (keydown.enter)="$event.preventDefault()">
         <p jhiTranslate="artemisApp.exam.examUsers.rooms.reseating.introText" class="intro-text"></p>
-        <div class="form-check form-switch ms-auto">
-            <label for="allowUnassignedRoomsToggle" jhiTranslate="artemisApp.exam.examUsers.rooms.reseating.allowUnassignedRooms" class="form-check-label"></label>
-            <input id="allowUnassignedRoomsToggle" type="checkbox" class="form-check-input" [checked]="allowUnassignedRooms()" (change)="toggleUnassignedRooms()" />
-            <jhi-help-icon class="ps-1" text="artemisApp.exam.examUsers.rooms.allowUnassignedRoomsTooltip" />
-        </div>
         <p
             jhiTranslate="artemisApp.exam.examUsers.rooms.reseating.selectedStudent"
             [translateValues]="{
-                studentLogin: examUser().user?.login ?? '',
+                studentLogin: examUser()?.user?.login ?? '',
                 studentName: getSelectedStudentName(),
-                plannedRoom: examUser().plannedExamRoom?.name ?? '',
-                plannedSeat: examUser().plannedExamSeat ?? '',
+                plannedRoom: examUser()?.plannedRoom ?? '',
+                plannedSeat: examUser()?.plannedSeat ?? '',
             }"
         ></p>
+        <div class="form-check form-switch ms-auto">
+            <label for="useCustomLocationToggle" jhiTranslate="artemisApp.exam.examUsers.rooms.reseating.useCustomLocation" class="form-check-label"></label>
+            <input id="useCustomLocationToggle" type="checkbox" class="form-check-input" [checked]="useCustomLocation()" (change)="toggleCustomLocation()" />
+            <jhi-help-icon class="ps-1" text="artemisApp.exam.examUsers.rooms.reseating.useCustomLocationTooltip" />
+        </div>
         <p jhiTranslate="artemisApp.exam.examUsers.rooms.reseating.selectRoom"></p>
-        @if (allowUnassignedRooms()) {
+        @if (useCustomLocation()) {
             <input
                 type="text"
                 placeholder="{{ 'artemisApp.exam.examUsers.rooms.reseating.unassignedExamRoomSearchPlaceholder' | artemisTranslate }}"
                 [defaultValue]="selectedRoomNumber()"
-                (change)="selectedRoomNumber.set($event.target.value)"
+                (change)="setUnassignedRoomNumber($event)"
             />
         } @else {
             <input
@@ -43,8 +43,13 @@
             />
         }
         <p jhiTranslate="artemisApp.exam.examUsers.rooms.reseating.selectSeat"></p>
-        @if (allowUnassignedRooms()) {
-            <input type="text" placeholder="{{ 'artemisApp.exam.examUsers.rooms.reseating.unassignedExamSeatSearchPlaceholder' | artemisTranslate }}" [value]="selectedSeat()" />
+        @if (useCustomLocation()) {
+            <input
+                type="text"
+                placeholder="{{ 'artemisApp.exam.examUsers.rooms.reseating.unassignedExamSeatSearchPlaceholder' | artemisTranslate }}"
+                [defaultValue]="selectedSeat()"
+                (change)="setUnassignedSeat($event)"
+            />
         } @else {
             <input
                 type="text"
@@ -65,7 +70,7 @@
             <fa-icon [icon]="faBan" /><span jhiTranslate="entity.action.cancel" class="m-1"></span>
         </button>
         <button class="btn btn-success" id="finish-button" (click)="attemptReseatAndCloseDialogOnSuccess()">
-            <fa-icon [icon]="faThLarge" /><span jhiTranslate="artemisApp.exam.examUsers.rooms.reseating.reseat" class="m-1"></span>
+            <fa-icon [icon]="faChair" /><span jhiTranslate="artemisApp.exam.examUsers.rooms.reseating.reseat" class="m-1"></span>
         </button>
     </ng-template>
 </p-dialog>

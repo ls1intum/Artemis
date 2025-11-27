@@ -1,5 +1,25 @@
 {
     "artemisApp": {
+        "exam": {
+            "examUsers": {
+                "changeLocationButton": "Change location",
+                "rooms": {
+                    "reseating": {
+                        "dialogTitle": "Reseat Student",
+                        "introText": "This dialog can be used to reseat a student.",
+                        "useCustomLocation": "Use custom location",
+                        "useCustomLocationTooltip": "If enabled, allows you to specify seats in rooms that are not recognized by this exam",
+                        "selectedStudent": "Selected student: {{ studentLogin }} ({{ studentName }}); Room '{{ plannedRoom }}', Seat: '{{ plannedSeat }}'",
+                        "selectRoom": "New room:",
+                        "selectSeat": "New seat:",
+                        "examSeatSearchPlaceholder": "Search by row name and/or seat number",
+                        "unassignedExamRoomSearchPlaceholder": "Please set the room",
+                        "unassignedExamSeatSearchPlaceholder": "Please set the seat",
+                        "reseat": "Reseat"
+                    }
+                }
+            }
+        },
         "examRooms": {
             "adminOverview": {
                 "pageTitle": "Admin Exam Room Management",
