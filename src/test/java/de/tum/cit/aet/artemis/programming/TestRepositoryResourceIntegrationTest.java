@@ -39,10 +39,10 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.programming.domain.File;
 import de.tum.cit.aet.artemis.programming.domain.FileType;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseEditorSyncTarget;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
-import de.tum.cit.aet.artemis.programming.domain.SynchronizationTarget;
 import de.tum.cit.aet.artemis.programming.dto.FileMove;
-import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseSynchronizationDTO;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseEditorSyncEventDTO;
 import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTO;
 import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTOType;
 import de.tum.cit.aet.artemis.programming.service.GitService;
@@ -197,9 +197,9 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
 
         request.postWithoutResponseBody(testRepoBaseUrl + programmingExercise.getId() + "/folder", HttpStatus.OK, params);
 
-        var captor = ArgumentCaptor.forClass(ProgrammingExerciseSynchronizationDTO.class);
+        var captor = ArgumentCaptor.forClass(ProgrammingExerciseEditorSyncEventDTO.class);
         verify(websocketMessagingService).sendMessage(eq("/topic/programming-exercises/" + programmingExercise.getId() + "/synchronization"), captor.capture());
-        assertThat(captor.getValue().target()).isEqualTo(SynchronizationTarget.TESTS_REPOSITORY);
+        assertThat(captor.getValue().target()).isEqualTo(ProgrammingExerciseEditorSyncTarget.TESTS_REPOSITORY);
     }
 
     @Test
@@ -223,9 +223,9 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
 
         request.postWithoutLocation(testRepoBaseUrl + programmingExercise.getId() + "/rename-file", fileMove, HttpStatus.OK, null);
 
-        var captor = ArgumentCaptor.forClass(ProgrammingExerciseSynchronizationDTO.class);
+        var captor = ArgumentCaptor.forClass(ProgrammingExerciseEditorSyncEventDTO.class);
         verify(websocketMessagingService).sendMessage(eq("/topic/programming-exercises/" + programmingExercise.getId() + "/synchronization"), captor.capture());
-        assertThat(captor.getValue().target()).isEqualTo(SynchronizationTarget.TESTS_REPOSITORY);
+        assertThat(captor.getValue().target()).isEqualTo(ProgrammingExerciseEditorSyncTarget.TESTS_REPOSITORY);
     }
 
     @Test
@@ -283,9 +283,9 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
 
         request.postWithoutLocation(testRepoBaseUrl + programmingExercise.getId() + "/rename-file", fileMove, HttpStatus.OK, null);
 
-        var captor = ArgumentCaptor.forClass(ProgrammingExerciseSynchronizationDTO.class);
+        var captor = ArgumentCaptor.forClass(ProgrammingExerciseEditorSyncEventDTO.class);
         verify(websocketMessagingService).sendMessage(eq("/topic/programming-exercises/" + programmingExercise.getId() + "/synchronization"), captor.capture());
-        assertThat(captor.getValue().target()).isEqualTo(SynchronizationTarget.TESTS_REPOSITORY);
+        assertThat(captor.getValue().target()).isEqualTo(ProgrammingExerciseEditorSyncTarget.TESTS_REPOSITORY);
     }
 
     @Test
@@ -308,9 +308,9 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
 
         request.delete(testRepoBaseUrl + programmingExercise.getId() + "/file", HttpStatus.OK, params);
 
-        var captor = ArgumentCaptor.forClass(ProgrammingExerciseSynchronizationDTO.class);
+        var captor = ArgumentCaptor.forClass(ProgrammingExerciseEditorSyncEventDTO.class);
         verify(websocketMessagingService).sendMessage(eq("/topic/programming-exercises/" + programmingExercise.getId() + "/synchronization"), captor.capture());
-        assertThat(captor.getValue().target()).isEqualTo(SynchronizationTarget.TESTS_REPOSITORY);
+        assertThat(captor.getValue().target()).isEqualTo(ProgrammingExerciseEditorSyncTarget.TESTS_REPOSITORY);
     }
 
     @Test
@@ -429,9 +429,9 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
 
         request.postWithoutLocation(testRepoBaseUrl + programmingExercise.getId() + "/reset", null, HttpStatus.OK, null);
 
-        var captor = ArgumentCaptor.forClass(ProgrammingExerciseSynchronizationDTO.class);
+        var captor = ArgumentCaptor.forClass(ProgrammingExerciseEditorSyncEventDTO.class);
         verify(websocketMessagingService).sendMessage(eq("/topic/programming-exercises/" + programmingExercise.getId() + "/synchronization"), captor.capture());
-        assertThat(captor.getValue().target()).isEqualTo(SynchronizationTarget.TESTS_REPOSITORY);
+        assertThat(captor.getValue().target()).isEqualTo(ProgrammingExerciseEditorSyncTarget.TESTS_REPOSITORY);
     }
 
     @Test
@@ -441,11 +441,11 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
 
         request.put(testRepoBaseUrl + programmingExercise.getId() + "/files?commit=false", getFileSubmissions(), HttpStatus.OK);
 
-        var captor = ArgumentCaptor.forClass(ProgrammingExerciseSynchronizationDTO.class);
+        var captor = ArgumentCaptor.forClass(ProgrammingExerciseEditorSyncEventDTO.class);
         verify(websocketMessagingService).sendMessage(eq("/topic/programming-exercises/" + programmingExercise.getId() + "/synchronization"), captor.capture());
 
         var synchronizationMessage = captor.getValue();
-        assertThat(synchronizationMessage.target()).isEqualTo(SynchronizationTarget.TESTS_REPOSITORY);
+        assertThat(synchronizationMessage.target()).isEqualTo(ProgrammingExerciseEditorSyncTarget.TESTS_REPOSITORY);
         assertThat(synchronizationMessage.auxiliaryRepositoryId()).isNull();
     }
 

@@ -25,11 +25,11 @@ import de.tum.cit.aet.artemis.exercise.dto.versioning.ProgrammingExerciseSnapsho
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseVersionRepository;
 import de.tum.cit.aet.artemis.fileupload.repository.FileUploadExerciseRepository;
 import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseEditorSyncTarget;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
-import de.tum.cit.aet.artemis.programming.domain.SynchronizationTarget;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.GitService;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseSynchronizationService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseEditorSyncService;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
 
@@ -59,12 +59,11 @@ public class ExerciseVersionService {
 
     private final UserRepository userRepository;
 
-    private final ProgrammingExerciseSynchronizationService programmingExerciseSynchronizationService;
+    private final ProgrammingExerciseEditorSyncService programmingExerciseEditorSyncService;
 
     public ExerciseVersionService(ExerciseVersionRepository exerciseVersionRepository, GitService gitService, ProgrammingExerciseRepository programmingExerciseRepository,
             QuizExerciseRepository quizExerciseRepository, TextExerciseRepository textExerciseRepository, ModelingExerciseRepository modelingExerciseRepository,
-            FileUploadExerciseRepository fileUploadExerciseRepository, UserRepository userRepository,
-            ProgrammingExerciseSynchronizationService programmingExerciseSynchronizationService) {
+            FileUploadExerciseRepository fileUploadExerciseRepository, UserRepository userRepository, ProgrammingExerciseEditorSyncService programmingExerciseEditorSyncService) {
         this.exerciseVersionRepository = exerciseVersionRepository;
         this.gitService = gitService;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -73,7 +72,7 @@ public class ExerciseVersionService {
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
         this.userRepository = userRepository;
-        this.programmingExerciseSynchronizationService = programmingExerciseSynchronizationService;
+        this.programmingExerciseEditorSyncService = programmingExerciseEditorSyncService;
     }
 
     public boolean isRepositoryTypeVersionable(RepositoryType repositoryType) {
@@ -178,17 +177,17 @@ public class ExerciseVersionService {
 
         var newProgrammingData = newSnapshot.programmingData();
         var previousProgrammingData = previousSnapshot.programmingData();
-        SynchronizationTarget target = null;
+        ProgrammingExerciseEditorSyncTarget target = null;
         Long auxiliaryRepositoryId = null;
 
         if (commitIdChanged(previousProgrammingData.templateParticipation(), newProgrammingData.templateParticipation())) {
-            target = SynchronizationTarget.TEMPLATE_REPOSITORY;
+            target = ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY;
         }
         else if (commitIdChanged(previousProgrammingData.solutionParticipation(), newProgrammingData.solutionParticipation())) {
-            target = SynchronizationTarget.SOLUTION_REPOSITORY;
+            target = ProgrammingExerciseEditorSyncTarget.SOLUTION_REPOSITORY;
         }
         else if (!Objects.equals(previousProgrammingData.testsCommitId(), newProgrammingData.testsCommitId())) {
-            target = SynchronizationTarget.TESTS_REPOSITORY;
+            target = ProgrammingExerciseEditorSyncTarget.TESTS_REPOSITORY;
         }
         else {
             var previousAuxiliaries = Optional.ofNullable(previousProgrammingData.auxiliaryRepositories()).orElseGet(List::of).stream().collect(
@@ -196,7 +195,7 @@ public class ExerciseVersionService {
             for (var auxiliary : Optional.ofNullable(newProgrammingData.auxiliaryRepositories()).orElseGet(List::of)) {
                 var previousCommitId = previousAuxiliaries.get(auxiliary.id());
                 if (!Objects.equals(previousCommitId, auxiliary.commitId())) {
-                    target = SynchronizationTarget.AUXILIARY_REPOSITORY;
+                    target = ProgrammingExerciseEditorSyncTarget.AUXILIARY_REPOSITORY;
                     auxiliaryRepositoryId = auxiliary.id();
                     break;
                 }
@@ -204,11 +203,11 @@ public class ExerciseVersionService {
         }
 
         if (target == null && !Objects.equals(previousSnapshot.problemStatement(), newSnapshot.problemStatement())) {
-            target = SynchronizationTarget.PROBLEM_STATEMENT;
+            target = ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT;
         }
 
         if (target != null) {
-            programmingExerciseSynchronizationService.broadcastChange(exerciseId, target, auxiliaryRepositoryId);
+            programmingExerciseEditorSyncService.broadcastChange(exerciseId, target, auxiliaryRepositoryId);
         }
     }
 

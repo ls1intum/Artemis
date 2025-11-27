@@ -76,13 +76,13 @@ import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismComparisonRepository;
 import de.tum.cit.aet.artemis.programming.domain.FileType;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseEditorSyncTarget;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
-import de.tum.cit.aet.artemis.programming.domain.SynchronizationTarget;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
 import de.tum.cit.aet.artemis.programming.dto.FileMove;
-import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseSynchronizationDTO;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseEditorSyncEventDTO;
 import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTO;
 import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
 import de.tum.cit.aet.artemis.programming.service.GitService;
@@ -775,9 +775,9 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
 
         request.postWithoutResponseBody(studentRepoBaseUrl + programmingExercise.getTemplateParticipation().getId() + "/folder", HttpStatus.OK, params);
 
-        var captor = ArgumentCaptor.forClass(ProgrammingExerciseSynchronizationDTO.class);
+        var captor = ArgumentCaptor.forClass(ProgrammingExerciseEditorSyncEventDTO.class);
         verify(websocketMessagingService).sendMessage(eq("/topic/programming-exercises/" + programmingExercise.getId() + "/synchronization"), captor.capture());
-        assertThat(captor.getValue().target()).isEqualTo(SynchronizationTarget.TEMPLATE_REPOSITORY);
+        assertThat(captor.getValue().target()).isEqualTo(ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY);
     }
 
     @Test
@@ -788,9 +788,9 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
 
         request.postWithoutResponseBody(studentRepoBaseUrl + programmingExercise.getSolutionParticipation().getId() + "/file", HttpStatus.OK, params);
 
-        var captor = ArgumentCaptor.forClass(ProgrammingExerciseSynchronizationDTO.class);
+        var captor = ArgumentCaptor.forClass(ProgrammingExerciseEditorSyncEventDTO.class);
         verify(websocketMessagingService).sendMessage(eq("/topic/programming-exercises/" + programmingExercise.getId() + "/synchronization"), captor.capture());
-        assertThat(captor.getValue().target()).isEqualTo(SynchronizationTarget.SOLUTION_REPOSITORY);
+        assertThat(captor.getValue().target()).isEqualTo(ProgrammingExerciseEditorSyncTarget.SOLUTION_REPOSITORY);
     }
 
     @Test
@@ -801,9 +801,9 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
 
         request.postWithoutResponseBody(studentRepoBaseUrl + programmingExercise.getSolutionParticipation().getId() + "/folder", HttpStatus.OK, params);
 
-        var captor = ArgumentCaptor.forClass(ProgrammingExerciseSynchronizationDTO.class);
+        var captor = ArgumentCaptor.forClass(ProgrammingExerciseEditorSyncEventDTO.class);
         verify(websocketMessagingService).sendMessage(eq("/topic/programming-exercises/" + programmingExercise.getId() + "/synchronization"), captor.capture());
-        assertThat(captor.getValue().target()).isEqualTo(SynchronizationTarget.SOLUTION_REPOSITORY);
+        assertThat(captor.getValue().target()).isEqualTo(ProgrammingExerciseEditorSyncTarget.SOLUTION_REPOSITORY);
     }
 
     @Test
@@ -814,11 +814,11 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
 
         request.postWithoutResponseBody(studentRepoBaseUrl + programmingExercise.getTemplateParticipation().getId() + "/file", HttpStatus.OK, params);
 
-        var captor = ArgumentCaptor.forClass(ProgrammingExerciseSynchronizationDTO.class);
+        var captor = ArgumentCaptor.forClass(ProgrammingExerciseEditorSyncEventDTO.class);
         verify(websocketMessagingService).sendMessage(eq("/topic/programming-exercises/" + programmingExercise.getId() + "/synchronization"), captor.capture());
 
         var synchronizationMessage = captor.getValue();
-        assertThat(synchronizationMessage.target()).isEqualTo(SynchronizationTarget.TEMPLATE_REPOSITORY);
+        assertThat(synchronizationMessage.target()).isEqualTo(ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY);
         assertThat(synchronizationMessage.auxiliaryRepositoryId()).isNull();
     }
 
@@ -851,9 +851,9 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
 
         request.postWithoutLocation(studentRepoBaseUrl + programmingExercise.getTemplateParticipation().getId() + "/rename-file", fileMove, HttpStatus.OK, null);
 
-        var captor = ArgumentCaptor.forClass(ProgrammingExerciseSynchronizationDTO.class);
+        var captor = ArgumentCaptor.forClass(ProgrammingExerciseEditorSyncEventDTO.class);
         verify(websocketMessagingService).sendMessage(eq("/topic/programming-exercises/" + programmingExercise.getId() + "/synchronization"), captor.capture());
-        assertThat(captor.getValue().target()).isEqualTo(SynchronizationTarget.TEMPLATE_REPOSITORY);
+        assertThat(captor.getValue().target()).isEqualTo(ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY);
     }
 
     @Test
@@ -863,9 +863,9 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
 
         request.postWithoutLocation(studentRepoBaseUrl + programmingExercise.getSolutionParticipation().getId() + "/rename-file", fileMove, HttpStatus.OK, null);
 
-        var captor = ArgumentCaptor.forClass(ProgrammingExerciseSynchronizationDTO.class);
+        var captor = ArgumentCaptor.forClass(ProgrammingExerciseEditorSyncEventDTO.class);
         verify(websocketMessagingService).sendMessage(eq("/topic/programming-exercises/" + programmingExercise.getId() + "/synchronization"), captor.capture());
-        assertThat(captor.getValue().target()).isEqualTo(SynchronizationTarget.SOLUTION_REPOSITORY);
+        assertThat(captor.getValue().target()).isEqualTo(ProgrammingExerciseEditorSyncTarget.SOLUTION_REPOSITORY);
     }
 
     @Test
@@ -898,9 +898,9 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
 
         request.delete(studentRepoBaseUrl + programmingExercise.getTemplateParticipation().getId() + "/file", HttpStatus.OK, params);
 
-        var captor = ArgumentCaptor.forClass(ProgrammingExerciseSynchronizationDTO.class);
+        var captor = ArgumentCaptor.forClass(ProgrammingExerciseEditorSyncEventDTO.class);
         verify(websocketMessagingService).sendMessage(eq("/topic/programming-exercises/" + programmingExercise.getId() + "/synchronization"), captor.capture());
-        assertThat(captor.getValue().target()).isEqualTo(SynchronizationTarget.TEMPLATE_REPOSITORY);
+        assertThat(captor.getValue().target()).isEqualTo(ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY);
     }
 
     @Test
@@ -911,9 +911,9 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
 
         request.delete(studentRepoBaseUrl + programmingExercise.getSolutionParticipation().getId() + "/file", HttpStatus.OK, params);
 
-        var captor = ArgumentCaptor.forClass(ProgrammingExerciseSynchronizationDTO.class);
+        var captor = ArgumentCaptor.forClass(ProgrammingExerciseEditorSyncEventDTO.class);
         verify(websocketMessagingService).sendMessage(eq("/topic/programming-exercises/" + programmingExercise.getId() + "/synchronization"), captor.capture());
-        assertThat(captor.getValue().target()).isEqualTo(SynchronizationTarget.SOLUTION_REPOSITORY);
+        assertThat(captor.getValue().target()).isEqualTo(ProgrammingExerciseEditorSyncTarget.SOLUTION_REPOSITORY);
     }
 
     @Disabled
@@ -943,9 +943,9 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     void testTemplateSaveFilesBroadcastsSynchronizationUpdate() throws Exception {
         request.put(studentRepoBaseUrl + programmingExercise.getTemplateParticipation().getId() + "/files?commit=false", getFileSubmissions("updatedFileContent"), HttpStatus.OK);
 
-        var captor = ArgumentCaptor.forClass(ProgrammingExerciseSynchronizationDTO.class);
+        var captor = ArgumentCaptor.forClass(ProgrammingExerciseEditorSyncEventDTO.class);
         verify(websocketMessagingService).sendMessage(eq("/topic/programming-exercises/" + programmingExercise.getId() + "/synchronization"), captor.capture());
-        assertThat(captor.getValue().target()).isEqualTo(SynchronizationTarget.TEMPLATE_REPOSITORY);
+        assertThat(captor.getValue().target()).isEqualTo(ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY);
     }
 
     @Test
@@ -963,9 +963,9 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     void testSolutionSaveFilesBroadcastsSynchronizationUpdate() throws Exception {
         request.put(studentRepoBaseUrl + programmingExercise.getSolutionParticipation().getId() + "/files?commit=false", getFileSubmissions("updatedFileContent"), HttpStatus.OK);
 
-        var captor = ArgumentCaptor.forClass(ProgrammingExerciseSynchronizationDTO.class);
+        var captor = ArgumentCaptor.forClass(ProgrammingExerciseEditorSyncEventDTO.class);
         verify(websocketMessagingService).sendMessage(eq("/topic/programming-exercises/" + programmingExercise.getId() + "/synchronization"), captor.capture());
-        assertThat(captor.getValue().target()).isEqualTo(SynchronizationTarget.SOLUTION_REPOSITORY);
+        assertThat(captor.getValue().target()).isEqualTo(ProgrammingExerciseEditorSyncTarget.SOLUTION_REPOSITORY);
     }
 
     @Test
@@ -1327,9 +1327,9 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     void testSolutionResetBroadcastsSynchronizationUpdate() throws Exception {
         request.postWithoutLocation(studentRepoBaseUrl + programmingExercise.getSolutionParticipation().getId() + "/reset", null, HttpStatus.OK, null);
 
-        var captor = ArgumentCaptor.forClass(ProgrammingExerciseSynchronizationDTO.class);
+        var captor = ArgumentCaptor.forClass(ProgrammingExerciseEditorSyncEventDTO.class);
         verify(websocketMessagingService).sendMessage(eq("/topic/programming-exercises/" + programmingExercise.getId() + "/synchronization"), captor.capture());
-        assertThat(captor.getValue().target()).isEqualTo(SynchronizationTarget.SOLUTION_REPOSITORY);
+        assertThat(captor.getValue().target()).isEqualTo(ProgrammingExerciseEditorSyncTarget.SOLUTION_REPOSITORY);
     }
 
     private ProgrammingExercise createProgrammingExerciseForExam() {

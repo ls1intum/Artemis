@@ -38,14 +38,14 @@ import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.FileType;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseEditorSyncTarget;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
-import de.tum.cit.aet.artemis.programming.domain.SynchronizationTarget;
 import de.tum.cit.aet.artemis.programming.dto.FileMove;
 import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTO;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.GitService;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseSynchronizationService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseEditorSyncService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryAccessService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
@@ -64,8 +64,8 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
 
     public AuxiliaryRepositoryResource(UserRepository userRepository, AuthorizationCheckService authCheckService, GitService gitService, RepositoryService repositoryService,
             ProgrammingExerciseRepository programmingExerciseRepository, RepositoryAccessService repositoryAccessService, Optional<LocalVCServletService> localVCServletService,
-            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, ProgrammingExerciseSynchronizationService programmingExerciseSynchronizationService) {
-        super(userRepository, authCheckService, gitService, repositoryService, programmingExerciseRepository, repositoryAccessService, programmingExerciseSynchronizationService,
+            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, ProgrammingExerciseEditorSyncService programmingExerciseEditorSyncService) {
+        super(userRepository, authCheckService, gitService, repositoryService, programmingExerciseRepository, repositoryAccessService, programmingExerciseEditorSyncService,
                 localVCServletService);
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
     }
@@ -233,7 +233,7 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
         try {
             AuxiliaryRepository auxiliaryRepository = auxiliaryRepositoryRepository.findByIdElseThrow(auxiliaryRepositoryId);
             ProgrammingExercise exercise = auxiliaryRepository.getExercise();
-            this.broadcastRepositoryUpdates(exercise.getId(), SynchronizationTarget.AUXILIARY_REPOSITORY, auxiliaryRepositoryId);
+            this.broadcastRepositoryUpdates(exercise.getId(), ProgrammingExerciseEditorSyncTarget.AUXILIARY_REPOSITORY, auxiliaryRepositoryId);
         }
         catch (Exception e) {
             log.debug("Could not broadcast auxiliary repository change for {}: {}", auxiliaryRepositoryId, e.getMessage());

@@ -24,10 +24,10 @@ import { TranslateService } from '@ngx-translate/core';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { BrowserFingerprintService } from 'app/core/account/fingerprint/browser-fingerprint.service';
 import {
-    ProgrammingExerciseSynchronizationMessage,
-    ProgrammingExerciseSynchronizationService,
-    ProgrammingExerciseSynchronizationTarget,
-} from 'app/programming/manage/services/programming-exercise-synchronization.service';
+    ProgrammingExerciseEditorSyncMessage,
+    ProgrammingExerciseEditorSyncService,
+    ProgrammingExerciseEditorSyncTarget,
+} from 'app/programming/manage/services/programming-exercise-editor-sync.service';
 /**
  * Enumeration specifying the loading state
  */
@@ -52,7 +52,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
     private location = inject(Location);
     private participationService = inject(ParticipationService);
     private route = inject(ActivatedRoute);
-    private synchronizationService = inject(ProgrammingExerciseSynchronizationService);
+    private synchronizationService = inject(ProgrammingExerciseEditorSyncService);
     private browserFingerprintService = inject(BrowserFingerprintService);
     /** Raw markdown changes from the center editor for debounce logic */
     private problemStatementChanges$ = new Subject<string>();
@@ -203,7 +203,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
         this.syncSubscription = this.synchronizationService.getSynchronizationUpdates(exerciseId).subscribe((message) => this.handleSynchronizationUpdate(message));
     }
 
-    private handleSynchronizationUpdate(message: ProgrammingExerciseSynchronizationMessage) {
+    private handleSynchronizationUpdate(message: ProgrammingExerciseEditorSyncMessage) {
         const instanceId = this.browserFingerprintService.instanceIdentifier.value;
         if (message.clientInstanceId && instanceId && message.clientInstanceId === instanceId) {
             return;
@@ -212,8 +212,8 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
             return;
         }
 
-        const problemStatementChanged = message.target === ProgrammingExerciseSynchronizationTarget.PROBLEM_STATEMENT;
-        const repositoryChanged = message.target !== ProgrammingExerciseSynchronizationTarget.PROBLEM_STATEMENT;
+        const problemStatementChanged = message.target === ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT;
+        const repositoryChanged = message.target !== ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT;
 
         if (problemStatementChanged) {
             this.alertService.addAlert({
@@ -231,21 +231,21 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
         }
     }
 
-    private isChangeRelevant(change: ProgrammingExerciseSynchronizationMessage) {
-        if (change.target === ProgrammingExerciseSynchronizationTarget.PROBLEM_STATEMENT) {
+    private isChangeRelevant(change: ProgrammingExerciseEditorSyncMessage) {
+        if (change.target === ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT) {
             return true;
         }
         if (!this.selectedRepository) {
             return true;
         }
         switch (change.target) {
-            case ProgrammingExerciseSynchronizationTarget.TEMPLATE_REPOSITORY:
+            case ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY:
                 return this.selectedRepository === RepositoryType.TEMPLATE;
-            case ProgrammingExerciseSynchronizationTarget.SOLUTION_REPOSITORY:
+            case ProgrammingExerciseEditorSyncTarget.SOLUTION_REPOSITORY:
                 return this.selectedRepository === RepositoryType.SOLUTION;
-            case ProgrammingExerciseSynchronizationTarget.TESTS_REPOSITORY:
+            case ProgrammingExerciseEditorSyncTarget.TESTS_REPOSITORY:
                 return this.selectedRepository === RepositoryType.TESTS;
-            case ProgrammingExerciseSynchronizationTarget.AUXILIARY_REPOSITORY:
+            case ProgrammingExerciseEditorSyncTarget.AUXILIARY_REPOSITORY:
                 return this.selectedRepository === RepositoryType.AUXILIARY && (!change.auxiliaryRepositoryId || change.auxiliaryRepositoryId === this.selectedRepositoryId);
             default:
                 return false;

@@ -41,13 +41,13 @@ import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationAuthorizationCheckService;
 import de.tum.cit.aet.artemis.programming.domain.FileType;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseEditorSyncTarget;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
-import de.tum.cit.aet.artemis.programming.domain.SynchronizationTarget;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
 import de.tum.cit.aet.artemis.programming.dto.FileMove;
@@ -57,8 +57,8 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionReposi
 import de.tum.cit.aet.artemis.programming.repository.SubmissionPolicyRepository;
 import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
 import de.tum.cit.aet.artemis.programming.service.GitService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseEditorSyncService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseSynchronizationService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryAccessService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryParticipationService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
@@ -93,8 +93,8 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             ProgrammingExerciseParticipationService participationService, ProgrammingExerciseRepository programmingExerciseRepository,
             ParticipationRepository participationRepository, BuildLogEntryService buildLogService, ProgrammingSubmissionRepository programmingSubmissionRepository,
             SubmissionPolicyRepository submissionPolicyRepository, RepositoryAccessService repositoryAccessService, Optional<LocalVCServletService> localVCServletService,
-            RepositoryParticipationService repositoryParticipationService, ProgrammingExerciseSynchronizationService programmingExerciseSynchronizationService) {
-        super(userRepository, authCheckService, gitService, repositoryService, programmingExerciseRepository, repositoryAccessService, programmingExerciseSynchronizationService,
+            RepositoryParticipationService repositoryParticipationService, ProgrammingExerciseEditorSyncService programmingExerciseEditorSyncService) {
+        super(userRepository, authCheckService, gitService, repositoryService, programmingExerciseRepository, repositoryAccessService, programmingExerciseEditorSyncService,
                 localVCServletService);
         this.participationAuthCheckService = participationAuthCheckService;
         this.participationService = participationService;
@@ -167,10 +167,10 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
                 return;
             }
             if (participation instanceof TemplateProgrammingExerciseParticipation) {
-                this.broadcastRepositoryUpdates(programmingExercise.getId(), SynchronizationTarget.TEMPLATE_REPOSITORY, null);
+                this.broadcastRepositoryUpdates(programmingExercise.getId(), ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY, null);
             }
             else if (participation instanceof SolutionProgrammingExerciseParticipation) {
-                this.broadcastRepositoryUpdates(programmingExercise.getId(), SynchronizationTarget.SOLUTION_REPOSITORY, null);
+                this.broadcastRepositoryUpdates(programmingExercise.getId(), ProgrammingExerciseEditorSyncTarget.SOLUTION_REPOSITORY, null);
             }
         }
         catch (Exception e) {

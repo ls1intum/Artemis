@@ -13,21 +13,21 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
-import de.tum.cit.aet.artemis.programming.domain.SynchronizationTarget;
-import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseSynchronizationDTO;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseEditorSyncTarget;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseEditorSyncEventDTO;
 
 @Profile(PROFILE_CORE)
 @Lazy
 @Service
-public class ProgrammingExerciseSynchronizationService {
+public class ProgrammingExerciseEditorSyncService {
 
-    private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseSynchronizationService.class);
+    private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseEditorSyncService.class);
 
     public static final String CLIENT_INSTANCE_HEADER = "X-Artemis-Client-Instance-ID";
 
     private final WebsocketMessagingService websocketMessagingService;
 
-    public ProgrammingExerciseSynchronizationService(WebsocketMessagingService websocketMessagingService) {
+    public ProgrammingExerciseEditorSyncService(WebsocketMessagingService websocketMessagingService) {
         this.websocketMessagingService = websocketMessagingService;
     }
 
@@ -55,8 +55,8 @@ public class ProgrammingExerciseSynchronizationService {
      * @param target                the target data type associated with this change (e.g. template repository, solution repository, auxiliary repository, problem statement)
      * @param auxiliaryRepositoryId (optional) the id of the auxiliary repository associated with this change
      */
-    public void broadcastChange(long exerciseId, SynchronizationTarget target, @Nullable Long auxiliaryRepositoryId) {
-        var payload = new ProgrammingExerciseSynchronizationDTO(target, auxiliaryRepositoryId, getClientInstanceId());
+    public void broadcastChange(long exerciseId, ProgrammingExerciseEditorSyncTarget target, @Nullable Long auxiliaryRepositoryId) {
+        var payload = new ProgrammingExerciseEditorSyncEventDTO(target, auxiliaryRepositoryId, getClientInstanceId());
         websocketMessagingService.sendMessage(getSynchronizationTopic(exerciseId), payload).exceptionally(exception -> {
             log.warn("Cannot send synchronization message for exercise {}", exerciseId, exception);
             return null;

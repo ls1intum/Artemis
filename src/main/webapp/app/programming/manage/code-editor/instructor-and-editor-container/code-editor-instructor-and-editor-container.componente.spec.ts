@@ -21,10 +21,10 @@ import { ParticipationService } from 'app/exercise/participation/participation.s
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { BrowserFingerprintService } from 'app/core/account/fingerprint/browser-fingerprint.service';
 import {
-    ProgrammingExerciseSynchronizationMessage,
-    ProgrammingExerciseSynchronizationService,
-    ProgrammingExerciseSynchronizationTarget,
-} from 'app/programming/manage/services/programming-exercise-synchronization.service';
+    ProgrammingExerciseEditorSyncMessage,
+    ProgrammingExerciseEditorSyncService,
+    ProgrammingExerciseEditorSyncTarget,
+} from 'app/programming/manage/services/programming-exercise-editor-sync.service';
 
 describe('CodeEditorInstructorAndEditorContainerComponent', () => {
     let fixture: ComponentFixture<CodeEditorInstructorAndEditorContainerComponent>;
@@ -33,7 +33,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
     let consistencyCheckService: ConsistencyCheckService;
     let alertService: AlertService;
     let browserFingerprintService: BrowserFingerprintService;
-    let synchronizationService: ProgrammingExerciseSynchronizationService;
+    let synchronizationService: ProgrammingExerciseEditorSyncService;
 
     const course = { id: 123, exercises: [] } as Course;
     const programmingExercise = new ProgrammingExercise(course, undefined);
@@ -52,7 +52,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
                 MockProvider(ParticipationService),
                 MockProvider(ProgrammingExerciseService),
                 MockProvider(CourseExerciseService),
-                MockProvider(ProgrammingExerciseSynchronizationService),
+                MockProvider(ProgrammingExerciseEditorSyncService),
                 {
                     provide: BrowserFingerprintService,
                     useValue: { instanceIdentifier: new BehaviorSubject<string | undefined>(undefined) },
@@ -72,7 +72,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
         consistencyCheckService = TestBed.inject(ConsistencyCheckService);
         alertService = TestBed.inject(AlertService);
         browserFingerprintService = TestBed.inject(BrowserFingerprintService);
-        synchronizationService = TestBed.inject(ProgrammingExerciseSynchronizationService);
+        synchronizationService = TestBed.inject(ProgrammingExerciseEditorSyncService);
         jest.spyOn(synchronizationService, 'getSynchronizationUpdates').mockReturnValue(of());
     }));
 
@@ -132,9 +132,9 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
         browserFingerprintService.instanceIdentifier.next('client-1');
 
         (comp as any).handleSynchronizationUpdate({
-            target: ProgrammingExerciseSynchronizationTarget.PROBLEM_STATEMENT,
+            target: ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT,
             clientInstanceId: 'client-1',
-        } as ProgrammingExerciseSynchronizationMessage);
+        } as ProgrammingExerciseEditorSyncMessage);
 
         expect(alertSpy).not.toHaveBeenCalled();
     });
@@ -144,9 +144,9 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
         comp.selectedRepository = RepositoryType.TEMPLATE;
 
         (comp as any).handleSynchronizationUpdate({
-            target: ProgrammingExerciseSynchronizationTarget.TEMPLATE_REPOSITORY,
+            target: ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY,
             clientInstanceId: 'other-client',
-        } as ProgrammingExerciseSynchronizationMessage);
+        } as ProgrammingExerciseEditorSyncMessage);
 
         expect(alertSpy).toHaveBeenCalledWith(
             expect.objectContaining({
@@ -160,9 +160,9 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
         comp.selectedRepository = RepositoryType.TEMPLATE;
 
         (comp as any).handleSynchronizationUpdate({
-            target: ProgrammingExerciseSynchronizationTarget.PROBLEM_STATEMENT,
+            target: ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT,
             clientInstanceId: 'another-client',
-        } as ProgrammingExerciseSynchronizationMessage);
+        } as ProgrammingExerciseEditorSyncMessage);
 
         expect(alertSpy).toHaveBeenCalledWith(
             expect.objectContaining({

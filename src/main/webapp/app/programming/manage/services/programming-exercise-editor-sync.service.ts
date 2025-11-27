@@ -1,7 +1,7 @@
 import { Injectable, OnDestroy, inject } from '@angular/core';
 import { Observable, Subject, Subscription } from 'rxjs';
 import { WebsocketService } from 'app/shared/service/websocket.service';
-export enum ProgrammingExerciseSynchronizationTarget {
+export enum ProgrammingExerciseEditorSyncTarget {
     PROBLEM_STATEMENT = 'PROBLEM_STATEMENT',
     TEMPLATE_REPOSITORY = 'TEMPLATE_REPOSITORY',
     SOLUTION_REPOSITORY = 'SOLUTION_REPOSITORY',
@@ -9,13 +9,13 @@ export enum ProgrammingExerciseSynchronizationTarget {
     AUXILIARY_REPOSITORY = 'AUXILIARY_REPOSITORY',
 }
 
-export interface ProgrammingExerciseSynchronizationChange {
-    target: ProgrammingExerciseSynchronizationTarget;
+export interface ProgrammingExerciseEditorSyncChange {
+    target: ProgrammingExerciseEditorSyncTarget;
     auxiliaryRepositoryId?: number;
 }
 
-export interface ProgrammingExerciseSynchronizationMessage {
-    target?: ProgrammingExerciseSynchronizationTarget;
+export interface ProgrammingExerciseEditorSyncMessage {
+    target?: ProgrammingExerciseEditorSyncTarget;
     auxiliaryRepositoryId?: number;
     clientInstanceId?: string;
 }
@@ -23,18 +23,18 @@ export interface ProgrammingExerciseSynchronizationMessage {
 export const EDITOR_SESSION_HEADER = 'X-Artemis-Client-Instance-ID';
 
 @Injectable({ providedIn: 'root' })
-export class ProgrammingExerciseSynchronizationService implements OnDestroy {
+export class ProgrammingExerciseEditorSyncService implements OnDestroy {
     private websocketService = inject(WebsocketService);
 
     private connections: Record<number, string> = {};
-    private subjects: Record<number, Subject<ProgrammingExerciseSynchronizationMessage>> = {};
+    private subjects: Record<number, Subject<ProgrammingExerciseEditorSyncMessage>> = {};
     private subscriptions: Record<number, Subscription> = {};
 
     ngOnDestroy(): void {
         Object.values(this.connections).forEach((connection) => this.websocketService.unsubscribe(connection));
     }
 
-    getSynchronizationUpdates(exerciseId: number): Observable<ProgrammingExerciseSynchronizationMessage> {
+    getSynchronizationUpdates(exerciseId: number): Observable<ProgrammingExerciseEditorSyncMessage> {
         return (this.subjects[exerciseId] ?? this.initializeSynchronizationSubscription(exerciseId)).asObservable();
     }
 
@@ -69,10 +69,10 @@ export class ProgrammingExerciseSynchronizationService implements OnDestroy {
         this.websocketService.subscribe(topic);
         this.connections[exerciseId] = topic;
 
-        const subject = new Subject<ProgrammingExerciseSynchronizationMessage>();
+        const subject = new Subject<ProgrammingExerciseEditorSyncMessage>();
         this.subjects[exerciseId] = subject;
 
-        const subscription = this.websocketService.receive(topic).subscribe((message: ProgrammingExerciseSynchronizationMessage) => subject.next(message));
+        const subscription = this.websocketService.receive(topic).subscribe((message: ProgrammingExerciseEditorSyncMessage) => subject.next(message));
         this.subscriptions[exerciseId] = subscription;
 
         return subject;
