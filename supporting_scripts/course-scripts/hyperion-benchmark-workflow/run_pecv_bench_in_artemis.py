@@ -7,7 +7,7 @@ import requests
 from logging import config
 from typing import Dict, Tuple
 from logging_config import logging
-from utils import login_as_admin, SERVER_URL, CLIENT_URL
+from utils import login_as_admin, SERVER_URL
 from create_pecv_bench_course import create_pecv_bench_course
 from manage_programming_exercise import check_consistency, convert_variant_to_zip, import_programming_exercise
 from pathlib import Path

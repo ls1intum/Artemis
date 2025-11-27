@@ -8,8 +8,6 @@ import uuid
 from logging_config import logging
 from requests import Session
 
-
-
 # Load configuration
 config = configparser.ConfigParser()
 config.read(['config.ini'])
@@ -117,6 +115,7 @@ def create_pecv_bench_course(session: Session) -> requests.Response:
 
 def delete_pecv_bench_course(session: Session, course_short_name: str) -> bool:
     """Delete a course using the given session and course ID."""
+    
     logging.info(f"Deleting course with shortName {course_short_name}...")
     coursesResponse: requests.Response = session.get(f"{SERVER_URL}/core/courses")
 
