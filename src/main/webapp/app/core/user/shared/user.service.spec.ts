@@ -28,11 +28,11 @@ describe('User Service', () => {
     describe('Service methods', () => {
         it('should return Authorities', () => {
             adminService.authorities().subscribe((_authorities) => {
-                expect(_authorities).toEqual([Authority.USER, Authority.ADMIN]);
+                expect(_authorities).toEqual([Authority.STUDENT, Authority.ADMIN]);
             });
             const req = httpMock.expectOne({ method: 'GET' });
 
-            req.flush([Authority.USER, Authority.ADMIN]);
+            req.flush([Authority.STUDENT, Authority.ADMIN]);
         });
 
         it('should call correct URL to initialize LTI user', () => {
