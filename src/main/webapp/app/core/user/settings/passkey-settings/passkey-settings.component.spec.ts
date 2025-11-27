@@ -80,7 +80,7 @@ describe('PasskeySettingsComponent', () => {
         const initialUser: User = {
             id: 1,
             login: 'testuser',
-            authorities: [Authority.USER],
+            authorities: [Authority.STUDENT],
             askToSetupPasskey: false,
             internal: true,
         };
@@ -99,7 +99,7 @@ describe('PasskeySettingsComponent', () => {
         expect(updatedUser).toEqual({
             id: 1,
             login: 'testuser',
-            authorities: [Authority.USER],
+            authorities: [Authority.STUDENT],
             askToSetupPasskey: true,
             internal: true,
         });
@@ -212,7 +212,7 @@ describe('PasskeySettingsComponent', () => {
         component.registeredPasskeys.set([passkey]);
 
         // Test with user (editing disabled)
-        const user: User = { id: 1, login: 'user', authorities: [Authority.USER], internal: true };
+        const user: User = { id: 1, login: 'user', authorities: [Authority.STUDENT], internal: true };
         component.currentUser.set(user);
         fixture.detectChanges();
 
@@ -293,7 +293,7 @@ describe('PasskeySettingsComponent', () => {
         component.registeredPasskeys.set([passkey]);
 
         // Set user as regular user (not admin)
-        const regularUser: User = { id: 1, login: 'user', authorities: [Authority.USER], internal: true };
+        const regularUser: User = { id: 1, login: 'user', authorities: [Authority.STUDENT], internal: true };
         component.currentUser.set(regularUser);
         fixture.detectChanges();
 
