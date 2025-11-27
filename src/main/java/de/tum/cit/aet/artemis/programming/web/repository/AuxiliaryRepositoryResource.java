@@ -72,16 +72,16 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
 
     @Override
     Repository getRepository(Long auxiliaryRepositoryId, RepositoryActionType repositoryActionType, boolean pullOnGet, boolean writeAccess) throws GitAPIException {
-        final var auxiliaryRepository = auxiliaryRepositoryRepository.findByIdElseThrow(auxiliaryRepositoryId);
+        final AuxiliaryRepository auxiliaryRepository = auxiliaryRepositoryRepository.findByIdElseThrow(auxiliaryRepositoryId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         repositoryAccessService.checkAccessTestOrAuxRepositoryElseThrow(false, auxiliaryRepository.getExercise(), user, "auxiliary");
-        final var repoUri = auxiliaryRepository.getVcsRepositoryUri();
+        final LocalVCRepositoryUri repoUri = auxiliaryRepository.getVcsRepositoryUri();
         return gitService.getOrCheckoutRepository(repoUri, pullOnGet, writeAccess);
     }
 
     @Override
     LocalVCRepositoryUri getRepositoryUri(Long auxiliaryRepositoryId) {
-        var auxRepo = auxiliaryRepositoryRepository.findByIdElseThrow(auxiliaryRepositoryId);
+        AuxiliaryRepository auxRepo = auxiliaryRepositoryRepository.findByIdElseThrow(auxiliaryRepositoryId);
         return auxRepo.getVcsRepositoryUri();
     }
 
@@ -121,7 +121,7 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
     @EnforceAtLeastTutor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> createFile(@PathVariable Long auxiliaryRepositoryId, @RequestParam("file") String filePath, HttpServletRequest request) {
-        var response = super.createFile(auxiliaryRepositoryId, filePath, request);
+        ResponseEntity<Void> response = super.createFile(auxiliaryRepositoryId, filePath, request);
         broadcastAuxiliaryRepositoryChange(auxiliaryRepositoryId);
         return response;
     }
@@ -131,7 +131,7 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
     @EnforceAtLeastTutor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> createFolder(@PathVariable Long auxiliaryRepositoryId, @RequestParam("folder") String folderPath, HttpServletRequest request) {
-        var response = super.createFolder(auxiliaryRepositoryId, folderPath, request);
+        ResponseEntity<Void> response = super.createFolder(auxiliaryRepositoryId, folderPath, request);
         broadcastAuxiliaryRepositoryChange(auxiliaryRepositoryId);
         return response;
     }
@@ -141,7 +141,7 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
     @EnforceAtLeastTutor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> renameFile(@PathVariable Long auxiliaryRepositoryId, @RequestBody FileMove fileMove) {
-        var response = super.renameFile(auxiliaryRepositoryId, fileMove);
+        ResponseEntity<Void> response = super.renameFile(auxiliaryRepositoryId, fileMove);
         broadcastAuxiliaryRepositoryChange(auxiliaryRepositoryId);
         return response;
     }
@@ -151,7 +151,7 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
     @EnforceAtLeastTutor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> deleteFile(@PathVariable Long auxiliaryRepositoryId, @RequestParam("file") String filename) {
-        var response = super.deleteFile(auxiliaryRepositoryId, filename);
+        ResponseEntity<Void> response = super.deleteFile(auxiliaryRepositoryId, filename);
         broadcastAuxiliaryRepositoryChange(auxiliaryRepositoryId);
         return response;
     }
@@ -176,7 +176,7 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
     @EnforceAtLeastTutor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> resetToLastCommit(@PathVariable Long auxiliaryRepositoryId) {
-        var response = super.resetToLastCommit(auxiliaryRepositoryId);
+        ResponseEntity<Void> response = super.resetToLastCommit(auxiliaryRepositoryId);
         broadcastAuxiliaryRepositoryChange(auxiliaryRepositoryId);
         return response;
     }
@@ -222,7 +222,7 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
             FileSubmissionError error = new FileSubmissionError(auxiliaryRepositoryId, "checkoutFailed");
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, error.getMessage(), error);
         }
-        var response = saveFilesAndCommitChanges(auxiliaryRepositoryId, submissions, commit, repository);
+        ResponseEntity<Map<String, String>> response = saveFilesAndCommitChanges(auxiliaryRepositoryId, submissions, commit, repository);
         if (!commit && !submissions.isEmpty()) {
             this.broadcastAuxiliaryRepositoryChange(auxiliaryRepositoryId);
         }

@@ -67,10 +67,10 @@ public class TestRepositoryResource extends RepositoryResource {
 
     @Override
     Repository getRepository(Long exerciseId, RepositoryActionType repositoryActionType, boolean pullOnGet, boolean writeAccess) throws GitAPIException {
-        final var exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
+        final ProgrammingExercise exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         repositoryAccessService.checkAccessTestOrAuxRepositoryElseThrow(false, exercise, user, "test");
-        final var repoUri = exercise.getVcsTestRepositoryUri();
+        final LocalVCRepositoryUri repoUri = exercise.getVcsTestRepositoryUri();
         return gitService.getOrCheckoutRepository(repoUri, pullOnGet, writeAccess);
     }
 
@@ -116,7 +116,7 @@ public class TestRepositoryResource extends RepositoryResource {
     @EnforceAtLeastTutor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> createFile(@PathVariable Long exerciseId, @RequestParam("file") String filePath, HttpServletRequest request) {
-        var response = super.createFile(exerciseId, filePath, request);
+        ResponseEntity<Void> response = super.createFile(exerciseId, filePath, request);
         broadcastTestRepositoryChange(exerciseId);
         return response;
     }
@@ -126,7 +126,7 @@ public class TestRepositoryResource extends RepositoryResource {
     @EnforceAtLeastTutor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> createFolder(@PathVariable Long exerciseId, @RequestParam("folder") String folderPath, HttpServletRequest request) {
-        var response = super.createFolder(exerciseId, folderPath, request);
+        ResponseEntity<Void> response = super.createFolder(exerciseId, folderPath, request);
         broadcastTestRepositoryChange(exerciseId);
         return response;
     }
@@ -136,7 +136,7 @@ public class TestRepositoryResource extends RepositoryResource {
     @EnforceAtLeastTutor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> renameFile(@PathVariable Long exerciseId, @RequestBody FileMove fileMove) {
-        var response = super.renameFile(exerciseId, fileMove);
+        ResponseEntity<Void> response = super.renameFile(exerciseId, fileMove);
         broadcastTestRepositoryChange(exerciseId);
         return response;
     }
@@ -146,7 +146,7 @@ public class TestRepositoryResource extends RepositoryResource {
     @EnforceAtLeastTutor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> deleteFile(@PathVariable Long exerciseId, @RequestParam("file") String filename) {
-        var response = super.deleteFile(exerciseId, filename);
+        ResponseEntity<Void> response = super.deleteFile(exerciseId, filename);
         broadcastTestRepositoryChange(exerciseId);
         return response;
     }
@@ -166,11 +166,12 @@ public class TestRepositoryResource extends RepositoryResource {
         return super.commitChanges(exerciseId);
     }
 
+    @Override
     @PostMapping(value = "test-repository/{exerciseId}/reset", produces = MediaType.APPLICATION_JSON_VALUE)
     @EnforceAtLeastTutor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> resetToLastCommit(@PathVariable Long exerciseId) {
-        var response = super.resetToLastCommit(exerciseId);
+        ResponseEntity<Void> response = super.resetToLastCommit(exerciseId);
         broadcastTestRepositoryChange(exerciseId);
         return response;
     }
@@ -215,7 +216,7 @@ public class TestRepositoryResource extends RepositoryResource {
             FileSubmissionError error = new FileSubmissionError(exerciseId, "checkoutFailed");
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, error.getMessage(), error);
         }
-        var response = saveFilesAndCommitChanges(exerciseId, submissions, commit, repository);
+        ResponseEntity<Map<String, String>> response = saveFilesAndCommitChanges(exerciseId, submissions, commit, repository);
         if (!commit && !submissions.isEmpty()) {
             broadcastTestRepositoryChange(exerciseId);
         }

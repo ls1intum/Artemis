@@ -242,8 +242,8 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     public ResponseEntity<Map<String, String>> getFilesAtCommit(@PathVariable String commitId, @RequestParam(required = false) Long participationId,
             @RequestParam(required = false) RepositoryType repositoryType) {
         log.debug("REST request to files for domainId {} at commitId {}", participationId, commitId);
-        var participation = getProgrammingExerciseParticipation(participationId);
-        var programmingExercise = programmingExerciseRepository.getProgrammingExerciseFromParticipationElseThrow(participation);
+        ProgrammingExerciseParticipation participation = getProgrammingExerciseParticipation(participationId);
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.getProgrammingExerciseFromParticipationElseThrow(participation);
         repositoryAccessService.checkAccessRepositoryElseThrow(participation, userRepository.getUserWithGroupsAndAuthorities(), programmingExercise, RepositoryActionType.READ);
 
         return executeAndCheckForExceptions(() -> ResponseEntity.ok(repositoryService.getFilesContentAtCommit(programmingExercise, commitId, repositoryType, participation)));
@@ -262,11 +262,11 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     public ResponseEntity<Map<String, Boolean>> getFilesWithInformationAboutChange(@PathVariable Long participationId) {
         return super.executeAndCheckForExceptions(() -> {
             Repository repository = getRepository(participationId, RepositoryActionType.READ, true, false);
-            var participation = participationRepository.findByIdElseThrow(participationId);
-            var exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(participation.getExercise().getId());
+            Participation participation = participationRepository.findByIdElseThrow(participationId);
+            ProgrammingExercise exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(participation.getExercise().getId());
 
             Repository templateRepository = getRepository(exercise.getTemplateParticipation().getId(), RepositoryActionType.READ, true, false);
-            var filesWithInformationAboutChange = super.repositoryService.getFilesWithInformationAboutChange(repository, templateRepository);
+            Map<String, Boolean> filesWithInformationAboutChange = super.repositoryService.getFilesWithInformationAboutChange(repository, templateRepository);
             return new ResponseEntity<>(filesWithInformationAboutChange, HttpStatus.OK);
         });
     }
@@ -311,7 +311,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             @RequestParam(value = "omitBinaries", required = false, defaultValue = "false") boolean omitBinaries) {
         return super.executeAndCheckForExceptions(() -> {
             Repository repository = getRepository(participationId, RepositoryActionType.READ, true, false);
-            var filesWithContent = super.repositoryService.getFilesContentFromWorkingCopy(repository, omitBinaries);
+            Map<String, String> filesWithContent = super.repositoryService.getFilesContentFromWorkingCopy(repository, omitBinaries);
             return new ResponseEntity<>(filesWithContent, HttpStatus.OK);
         });
     }
@@ -321,7 +321,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     @FeatureToggle(Feature.ProgrammingExercises)
     @EnforceAtLeastStudent
     public ResponseEntity<Void> createFile(@PathVariable Long participationId, @RequestParam("file") String filePath, HttpServletRequest request) {
-        var response = super.createFile(participationId, filePath, request);
+        ResponseEntity<Void> response = super.createFile(participationId, filePath, request);
         broadcastChangesForNonStudentRepository(participationId);
         return response;
     }
@@ -331,7 +331,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     @FeatureToggle(Feature.ProgrammingExercises)
     @EnforceAtLeastStudent
     public ResponseEntity<Void> createFolder(@PathVariable Long participationId, @RequestParam("folder") String folderPath, HttpServletRequest request) {
-        var response = super.createFolder(participationId, folderPath, request);
+        ResponseEntity<Void> response = super.createFolder(participationId, folderPath, request);
         broadcastChangesForNonStudentRepository(participationId);
         return response;
     }
@@ -341,7 +341,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     @FeatureToggle(Feature.ProgrammingExercises)
     @EnforceAtLeastStudent
     public ResponseEntity<Void> renameFile(@PathVariable Long participationId, @RequestBody FileMove fileMove) {
-        var response = super.renameFile(participationId, fileMove);
+        ResponseEntity<Void> response = super.renameFile(participationId, fileMove);
         broadcastChangesForNonStudentRepository(participationId);
         return response;
     }
@@ -350,7 +350,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     @DeleteMapping(value = "repository/{participationId}/file", produces = MediaType.APPLICATION_JSON_VALUE)
     @EnforceAtLeastStudent
     public ResponseEntity<Void> deleteFile(@PathVariable Long participationId, @RequestParam("file") String filename) {
-        var response = super.deleteFile(participationId, filename);
+        ResponseEntity<Void> response = super.deleteFile(participationId, filename);
         broadcastChangesForNonStudentRepository(participationId);
         return response;
     }
@@ -404,7 +404,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, error.getMessage(), error);
         }
 
-        var response = saveFilesAndCommitChanges(participationId, submissions, commit, repository);
+        ResponseEntity<Map<String, String>> response = saveFilesAndCommitChanges(participationId, submissions, commit, repository);
 
         if (!commit && !submissions.isEmpty()) {
             broadcastChangesForNonStudentRepository(participationId);
@@ -434,7 +434,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     @FeatureToggle(Feature.ProgrammingExercises)
     @EnforceAtLeastStudent
     public ResponseEntity<Void> resetToLastCommit(@PathVariable Long participationId) {
-        var response = super.resetToLastCommit(participationId);
+        ResponseEntity<Void> response = super.resetToLastCommit(participationId);
         broadcastChangesForNonStudentRepository(participationId);
         return response;
     }
