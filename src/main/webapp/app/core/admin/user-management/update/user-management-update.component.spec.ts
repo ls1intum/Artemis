@@ -41,7 +41,7 @@ describe('UserManagementUpdateComponent', () => {
     let titleService: Title;
 
     const parentRoute = {
-        data: of({ user: new User(1, 'user', 'first', 'last', 'first@last.com', true, 'en', [Authority.USER], ['admin'], undefined, undefined, undefined) }),
+        data: of({ user: new User(1, 'user', 'first', 'last', 'first@last.com', true, 'en', [Authority.STUDENT], ['admin'], undefined, undefined, undefined) }),
     } as any as ActivatedRoute;
     const route = { parent: parentRoute } as any as ActivatedRoute;
 
