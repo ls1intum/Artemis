@@ -278,13 +278,25 @@ export class ShortAnswerQuestionUtil {
     }
 
     /**
-     * We create now the structure on how to display the text of the question
-     * 1. The question text is split at every new line. The first element of the array would be then the first line of the question text.
-     * 2. Now each line of the question text will be divided into text before spot tag, spot tag and text after spot tag.
-     * (e.g 'Enter [-spot 1] long [-spot 2] if needed' will be transformed to [["Enter", "[-spot 1]", "long", "[-spot 2]", "if needed"]])
+     * Builds the data structure used to render the question text.
      *
-     * @param questionText
-     * @returns {string[][]}
+     * Processing steps:
+     * 1. The question text is split into “lines”, but fenced code blocks
+     *    (``` … ```) are detected and kept together as a single entry so they
+     *    are not broken apart.
+     * 2. Each non-code-block line is then split into:
+     *      - plain text fragments, and
+     *      - spot tags of the form `[-spot <number>]`.
+     *    The fragments and tags are re-combined in their original order.
+     *
+     * Example:
+     *   "Enter [-spot 1] long [-spot 2] if needed"
+     *   → [["Enter", "[-spot 1]", "long", "[-spot 2]", "if needed"]]
+     *
+     * @param questionText Full question text, possibly containing spot tags
+     *                     and fenced code blocks.
+     * @returns {string[][]} An array of “lines”, where each line is an array
+     *                       of alternating text fragments and spot tags.
      */
     divideQuestionTextIntoTextParts(questionText: string): string[][] {
         const spotRegExpo = /\[-spot\s*[0-9]+\]/g;
