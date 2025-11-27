@@ -24,8 +24,9 @@ if not pr_number:
 try:
     gh = Github(auth=Auth.Token(token))
     orga = gh.get_organization("ls1intum")
-except BadCredentialsException:
+except BadCredentialsException as e:
     print("Authentication with GitHub failed. Check GITHUB_TOKEN.")
+    print(e)
     sys.exit(1)
 
 repo = orga.get_repo("Artemis")
@@ -36,7 +37,7 @@ except ValueError:
     print(f"Invalid PR number: {pr_number}")
     sys.exit(1)
 
-branch = pr.head.ref
+branch = pr.head.ref 
 
 db_team = orga.get_team_by_slug(DATABASE_MAINTAINER_TEAM_SLUG)
 db_team_members = [user for user in db_team.get_members()]
