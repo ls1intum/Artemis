@@ -1,8 +1,9 @@
 import os
 import sys
 
-from github import Github
+from github import Auth, Github
 from github.Commit import Commit
+from github.GithubException import BadCredentialsException
 from github.GithubObject import _ValuedAttribute
 from github.NamedUser import NamedUser
 
@@ -12,10 +13,29 @@ DATABASE_MAINTAINER_TEAM_SLUG = "database-maintainers"
 token = os.environ.get("GITHUB_TOKEN")
 pr_number = os.environ.get("GITHUB_PR")
 
-gh = Github(token)
-orga = gh.get_organization("ls1intum")
+if not token:
+    print("Environment variable GITHUB_TOKEN is missing.")
+    sys.exit(1)
+
+if not pr_number:
+    print("Environment variable GITHUB_PR is missing.")
+    sys.exit(1)
+
+try:
+    gh = Github(auth=Auth.Token(token))
+    orga = gh.get_organization("ls1intum")
+except BadCredentialsException:
+    print("Authentication with GitHub failed. Check GITHUB_TOKEN.")
+    sys.exit(1)
+
 repo = orga.get_repo("Artemis")
-pr = repo.get_pull(int(pr_number))
+
+try:
+    pr = repo.get_pull(int(pr_number))
+except ValueError:
+    print(f"Invalid PR number: {pr_number}")
+    sys.exit(1)
+
 branch = pr.head.ref
 
 db_team = orga.get_team_by_slug(DATABASE_MAINTAINER_TEAM_SLUG)
@@ -90,5 +110,3 @@ print(
     f"PR #{pr_number} has not been approved by a database maintainer after the last commit with database changes."
 )
 sys.exit(1)
-
-
