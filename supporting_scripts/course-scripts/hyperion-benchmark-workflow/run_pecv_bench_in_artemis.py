@@ -76,7 +76,11 @@ def install_pecv_bench_dependencies(project_path: str):
         sys.exit(1)
 
 def create_variant(course, exercise, variant_id):
-    """Imports VariantManager and ExerciseIdentifier from pecv-bench and creates a specific variant with materialize_variant func"""
+    """
+    Imports VariantManager and ExerciseIdentifier from pecv-bench and creates a specific variant with materialize_variant func.
+
+    This function applies the git patch file to create the variant.
+    """
     logging.info(f"Creating variant: {variant_id}...")
 
     from cli.commands.variants import VariantManager
@@ -94,7 +98,11 @@ def create_variant(course, exercise, variant_id):
         raise e
 
 def create_all_variants(course, exercise):
-    """Imports VariantManager and ExerciseIdentifier from pecv-bench and creates all variants with materialize_variant func"""
+    """
+    Imports VariantManager and ExerciseIdentifier from pecv-bench and creates all variants with materialize_variant func.
+    
+    This function applies the git patch file to create the variant.
+    """
     logging.info(f"Creating ALL variants for {course}/{exercise}...")
     
     from cli.commands.variants import VariantManager
@@ -171,7 +179,7 @@ def main():
         variant_id_path = os.path.join(variants_folder_path, variant_id)
         programming_exercises[variant_id] = None
         convert_variant_to_zip(variant_id_path, course_id)
-    
+        
         response_data = import_programming_exercise(session = session, 
                                 course_id = course_id,
                                 server_url = SERVER_URL,
@@ -181,7 +189,7 @@ def main():
         else:
             logging.error(f"Failed to import programming exercise for variant {variant_id}. Moving to next variant.")
             continue    
-
+    
     # Step 7: Run consistency checks for all programming exercises and store results
     consistency_check_results = os.path.join(pecv_bench_dir, "results", "artemis-bench", COURSE, EXERCISE)
     os.makedirs(consistency_check_results, exist_ok=True)
