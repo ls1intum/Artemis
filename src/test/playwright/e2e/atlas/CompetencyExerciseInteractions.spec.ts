@@ -3,19 +3,6 @@ import { admin } from '../../support/users';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { expect } from '@playwright/test';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
-import type { Page } from '@playwright/test';
-
-async function navigateToCompetencyManagement(page: Page, courseId?: number) {
-    if (courseId === undefined) {
-        throw new Error('navigateToCompetencyManagement called without courseId');
-    }
-    await page.goto(`/course-management/${courseId}/competency-management`);
-    const closeButton = page.locator('#close-button');
-    await page.waitForLoadState('networkidle');
-    if (await closeButton.isVisible()) {
-        await closeButton.click();
-    }
-}
 
 test.describe('Competency Exercise Linking', { tag: '@fast' }, () => {
     let course: Course;
@@ -36,7 +23,7 @@ test.describe('Competency Exercise Linking', { tag: '@fast' }, () => {
         exercise = await exerciseAPIRequests.createTextExercise({ course }, exerciseTitle);
     });
 
-    test('Links exercise to single competency', async ({ page, courseManagementExercises }) => {
+    test('Links exercise to single competency', async ({ page, courseManagementExercises, competencyManagement }) => {
         await page.goto(`/course-management/${course.id}/exercises`);
         await courseManagementExercises.getExercise(exercise.id!).getByRole('link', { name: 'Edit' }).click();
 
@@ -46,12 +33,12 @@ test.describe('Competency Exercise Linking', { tag: '@fast' }, () => {
         await expect(page.getByText(competencyData[0].title)).toBeVisible();
 
         // Verify exercise is linked
-        await navigateToCompetencyManagement(page, course.id);
+        await competencyManagement.goto(course.id!);
         await page.getByRole('link', { name: competencyData[0].title }).click();
         await expect(page.getByRole('button', { name: 'Start exercise' })).toBeVisible();
     });
 
-    test('Updates competency-exercise linking', async ({ page, courseManagementExercises }) => {
+    test('Updates competency-exercise linking', async ({ page, courseManagementExercises, competencyManagement }) => {
         // Link to first competency
         await page.goto(`/course-management/${course.id}/exercises`);
         await courseManagementExercises.getExercise(exercise.id!).getByRole('link', { name: 'Edit' }).click();
@@ -73,14 +60,14 @@ test.describe('Competency Exercise Linking', { tag: '@fast' }, () => {
         await expect(page.getByText(competencyData[0].title)).not.toBeVisible();
         await expect(page.getByText(competencyData[1].title)).toBeVisible();
 
-        await navigateToCompetencyManagement(page, course.id);
+        await competencyManagement.goto(course.id!);
 
         // Verify first competency no longer shows exercise
         await page.getByRole('link', { name: competencyData[0].title }).click();
         await page.waitForLoadState('networkidle');
         await expect(page.getByRole('button', { name: 'Start exercise' })).not.toBeVisible();
 
-        await navigateToCompetencyManagement(page, course.id);
+        await competencyManagement.goto(course.id!);
 
         // Verify second competency shows the exercise
         await page.getByRole('link', { name: competencyData[1].title }).click();
