@@ -21,6 +21,10 @@ test.describe('Competency Management', { tag: '@fast' }, () => {
         course = await courseManagementAPIRequests.createCourse();
     });
 
+    test.afterEach('Delete course', async ({ courseManagementAPIRequests }) => {
+        await courseManagementAPIRequests.deleteCourse(course, admin);
+    });
+
     test('Creates a competency', async ({ page, competencyManagement }) => {
         const competencyData = {
             title: 'Multiplication',
@@ -130,10 +134,6 @@ test.describe('Competency Management', { tag: '@fast' }, () => {
             await expect(page.locator('tr', { has: page.getByRole('cell', { name: competencyData.title }) })).toHaveCount(0);
         });
     });
-
-    test.afterEach('Delete course', async ({ courseManagementAPIRequests }) => {
-        await courseManagementAPIRequests.deleteCourse(course, admin);
-    });
 });
 
 test.describe('Prerequisite Management', { tag: '@fast' }, () => {
@@ -148,6 +148,10 @@ test.describe('Prerequisite Management', { tag: '@fast' }, () => {
     test.beforeEach('Create course', async ({ login, courseManagementAPIRequests }) => {
         await login(admin);
         course = await courseManagementAPIRequests.createCourse();
+    });
+
+    test.afterEach('Delete course', async ({ courseManagementAPIRequests }) => {
+        await courseManagementAPIRequests.deleteCourse(course, admin);
     });
 
     test('Creates a prerequisite', async ({ page, competencyManagement }) => {
@@ -245,9 +249,5 @@ test.describe('Prerequisite Management', { tag: '@fast' }, () => {
             // Verify removal
             await expect(page.locator('tr', { has: page.getByRole('link', { name: prerequisiteData.title }) })).toHaveCount(0);
         });
-    });
-
-    test.afterEach('Delete course', async ({ courseManagementAPIRequests }) => {
-        await courseManagementAPIRequests.deleteCourse(course, admin);
     });
 });

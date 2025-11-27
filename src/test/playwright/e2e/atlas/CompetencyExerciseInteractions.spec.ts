@@ -17,10 +17,14 @@ test.describe('Competency Exercise Linking', { tag: '@fast' }, () => {
         await login(admin);
         course = await courseManagementAPIRequests.createCourse();
 
-        for (const comp of competencyData) {
-            await courseManagementAPIRequests.createCompetency(course, comp.title, comp.description);
+        for (const competency of competencyData) {
+            await courseManagementAPIRequests.createCompetency(course, competency.title, competency.description);
         }
         exercise = await exerciseAPIRequests.createTextExercise({ course }, exerciseTitle);
+    });
+
+    test.afterEach('Cleanup', async ({ courseManagementAPIRequests }) => {
+        await courseManagementAPIRequests.deleteCourse(course, admin);
     });
 
     test('Links exercise to single competency', async ({ page, courseManagementExercises, competencyManagement }) => {
@@ -89,9 +93,5 @@ test.describe('Competency Exercise Linking', { tag: '@fast' }, () => {
         await page.getByRole('button', { name: 'Save' }).click();
 
         await expect(page.getByText(competencyData[0].title)).not.toBeVisible();
-    });
-
-    test.afterEach('Cleanup', async ({ courseManagementAPIRequests }) => {
-        await courseManagementAPIRequests.deleteCourse(course, admin);
     });
 });
