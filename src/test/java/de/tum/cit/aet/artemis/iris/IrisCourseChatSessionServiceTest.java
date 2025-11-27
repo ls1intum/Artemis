@@ -2,82 +2,38 @@ package de.tum.cit.aet.artemis.iris;
 
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 import java.time.ZonedDateTime;
+import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.context.MessageSource;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
-import de.tum.cit.aet.artemis.core.repository.CourseRepository;
-import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
+import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
+import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
+import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisCourseChatSession;
-import de.tum.cit.aet.artemis.iris.repository.IrisCourseChatSessionRepository;
-import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
-import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
-import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
-import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
-import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisCourseChatSessionService;
-import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
-import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
 
-@ExtendWith(MockitoExtension.class)
-class IrisCourseChatSessionServiceTest {
+class IrisCourseChatSessionServiceTest extends AbstractIrisIntegrationTest {
 
-    @Mock
-    private IrisMessageService irisMessageService;
+    private static final String TEST_PREFIX = "iriscoursechatsessionservice";
 
-    @Mock
-    private IrisMessageRepository irisMessageRepository;
-
-    @Mock
-    private LLMTokenUsageService llmTokenUsageService;
-
-    @Mock
-    private IrisSettingsService irisSettingsService;
-
-    @Mock
-    private IrisChatWebsocketService irisChatWebsocketService;
-
-    @Mock
-    private AuthorizationCheckService authCheckService;
-
-    @Mock
-    private IrisSessionRepository irisSessionRepository;
-
-    @Mock
-    private IrisRateLimitService irisRateLimitService;
-
-    @Mock
-    private IrisCourseChatSessionRepository irisCourseChatSessionRepository;
-
-    @Mock
-    private PyrisPipelineService pyrisPipelineService;
-
-    private final ObjectMapper objectMapper = new ObjectMapper();
-
-    @Mock
-    private CourseRepository courseRepository;
-
-    @Mock
-    private MessageSource messageSource;
-
-    @InjectMocks
+    @Autowired
     private IrisCourseChatSessionService irisCourseChatSessionService;
+
+    @Autowired
+    private CourseUtilService courseUtilService;
+
+    @Autowired
+    private UserUtilService userUtilService;
+
+    @Autowired
+    private UserTestRepository userTestRepository;
 
     private Course course;
 
@@ -87,36 +43,29 @@ class IrisCourseChatSessionServiceTest {
 
     @BeforeEach
     void setUp() {
-        course = new Course();
-        course.setId(42L);
+        userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
+        course = courseUtilService.createCourse();
 
-        user = new User();
-        user.setId(99L);
+        user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         user.setExternalLLMUsageAcceptedTimestamp(ZonedDateTime.now());
+        // Ensure course membership for auth check
+        user.setGroups(Set.of(course.getStudentGroupName()));
+        userTestRepository.save(user);
 
-        session = new IrisCourseChatSession();
-        session.setId(7L);
-        session.setCourseId(course.getId());
-        session.setUserId(user.getId());
+        session = new IrisCourseChatSession(course, user);
+        session.setId(7L); // needed for exception message path
     }
 
     @Test
     void checkHasAccessTo_allowsSessionOwner() {
-        when(courseRepository.findByIdElseThrow(course.getId())).thenReturn(course);
-
         assertThatNoException().isThrownBy(() -> irisCourseChatSessionService.checkHasAccessTo(user, session));
-
-        verify(courseRepository).findByIdElseThrow(course.getId());
-        verify(authCheckService).checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
     }
 
     @Test
     void checkHasAccessTo_throwsForDifferentUser() {
-        when(courseRepository.findByIdElseThrow(course.getId())).thenReturn(course);
         session.setUserId(123L);
 
-        assertThatThrownBy(() -> irisCourseChatSessionService.checkHasAccessTo(user, session)).isInstanceOf(AccessForbiddenException.class);
-
-        verify(authCheckService).checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
+        assertThatThrownBy(() -> irisCourseChatSessionService.checkHasAccessTo(user, session)).isInstanceOf(AccessForbiddenException.class).extracting(Throwable::getMessage)
+                .asString().contains("Iris Session");
     }
 }
