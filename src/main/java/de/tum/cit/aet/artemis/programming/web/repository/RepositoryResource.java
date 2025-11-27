@@ -37,8 +37,8 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.programming.domain.File;
 import de.tum.cit.aet.artemis.programming.domain.FileType;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
+import de.tum.cit.aet.artemis.programming.domain.SynchronizationTarget;
 import de.tum.cit.aet.artemis.programming.dto.FileMove;
-import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseSynchronizationDTO;
 import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTO;
 import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTOType;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
@@ -407,7 +407,7 @@ public abstract class RepositoryResource {
         }
     }
 
-    protected void broadcastRepositoryUpdates(Long exerciseId, ProgrammingExerciseSynchronizationDTO.SynchronizationTarget target, Long auxiliaryRepositoryId) {
+    protected void broadcastRepositoryUpdates(Long exerciseId, SynchronizationTarget target, Long auxiliaryRepositoryId) {
         try {
             programmingExerciseSynchronizationService.broadcastChange(exerciseId, target, auxiliaryRepositoryId);
         }

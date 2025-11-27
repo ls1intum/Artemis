@@ -47,10 +47,10 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.SynchronizationTarget;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
 import de.tum.cit.aet.artemis.programming.dto.FileMove;
-import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseSynchronizationDTO;
 import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
@@ -167,10 +167,10 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
                 return;
             }
             if (participation instanceof TemplateProgrammingExerciseParticipation) {
-                this.broadcastRepositoryUpdates(programmingExercise.getId(), ProgrammingExerciseSynchronizationDTO.SynchronizationTarget.TEMPLATE_REPOSITORY, null);
+                this.broadcastRepositoryUpdates(programmingExercise.getId(), SynchronizationTarget.TEMPLATE_REPOSITORY, null);
             }
             else if (participation instanceof SolutionProgrammingExerciseParticipation) {
-                this.broadcastRepositoryUpdates(programmingExercise.getId(), ProgrammingExerciseSynchronizationDTO.SynchronizationTarget.SOLUTION_REPOSITORY, null);
+                this.broadcastRepositoryUpdates(programmingExercise.getId(), SynchronizationTarget.SOLUTION_REPOSITORY, null);
             }
         }
         catch (Exception e) {

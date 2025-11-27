@@ -2,12 +2,7 @@ package de.tum.cit.aet.artemis.programming.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.stream.Collectors;
-
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -18,10 +13,8 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
-import de.tum.cit.aet.artemis.exercise.dto.versioning.ExerciseSnapshotDTO;
-import de.tum.cit.aet.artemis.exercise.dto.versioning.ProgrammingExerciseSnapshotDTO;
+import de.tum.cit.aet.artemis.programming.domain.SynchronizationTarget;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseSynchronizationDTO;
-import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseSynchronizationDTO.SynchronizationTarget;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -56,80 +49,18 @@ public class ProgrammingExerciseSynchronizationService {
     }
 
     /**
-     * Compare two exercise snapshots and return the change that should be broadcast to clients.
-     *
-     * @param newSnapshot      the new snapshot
-     * @param previousSnapshot the previous snapshot (optional)
-     * @return detected change or null if none
-     */
-    public ProgrammingExerciseSynchronizationDTO determineChange(ExerciseSnapshotDTO newSnapshot, ExerciseSnapshotDTO previousSnapshot) {
-        if (previousSnapshot == null || newSnapshot.programmingData() == null || previousSnapshot.programmingData() == null) {
-            return null;
-        }
-
-        var newProgrammingData = newSnapshot.programmingData();
-        var previousProgrammingData = previousSnapshot.programmingData();
-        SynchronizationTarget target = null;
-        Long auxiliaryRepositoryId = null;
-
-        if (commitIdChanged(previousProgrammingData.templateParticipation(), newProgrammingData.templateParticipation())) {
-            target = SynchronizationTarget.TEMPLATE_REPOSITORY;
-        }
-        else if (commitIdChanged(previousProgrammingData.solutionParticipation(), newProgrammingData.solutionParticipation())) {
-            target = SynchronizationTarget.SOLUTION_REPOSITORY;
-        }
-        else if (!Objects.equals(previousProgrammingData.testsCommitId(), newProgrammingData.testsCommitId())) {
-            target = SynchronizationTarget.TESTS_REPOSITORY;
-        }
-        else {
-            Map<Long, String> previousAuxiliaries = Optional.ofNullable(previousProgrammingData.auxiliaryRepositories()).orElseGet(List::of).stream().collect(
-                    Collectors.toMap(ProgrammingExerciseSnapshotDTO.AuxiliaryRepositorySnapshotDTO::id, ProgrammingExerciseSnapshotDTO.AuxiliaryRepositorySnapshotDTO::commitId));
-            for (var auxiliary : Optional.ofNullable(newProgrammingData.auxiliaryRepositories()).orElseGet(List::of)) {
-                var previousCommitId = previousAuxiliaries.get(auxiliary.id());
-                if (!Objects.equals(previousCommitId, auxiliary.commitId())) {
-                    target = SynchronizationTarget.AUXILIARY_REPOSITORY;
-                    auxiliaryRepositoryId = auxiliary.id();
-                    break;
-                }
-            }
-        }
-
-        if (target == null && !Objects.equals(previousSnapshot.problemStatement(), newSnapshot.problemStatement())) {
-            target = SynchronizationTarget.PROBLEM_STATEMENT;
-        }
-
-        return target == null ? null : new ProgrammingExerciseSynchronizationDTO(target, auxiliaryRepositoryId, null);
-    }
-
-    /**
      * Broadcast a single change to all active editors.
      *
-     * @param exerciseId the exercise id
-     * @param change     change to broadcast
+     * @param exerciseId            the exercise id
+     * @param target                the target data type associated with this change (e.g. template repository, solution repository, auxiliary repository, problem statement)
+     * @param auxiliaryRepositoryId (optional) the id of the auxiliary repository associated with this change
      */
-    public void broadcastChange(long exerciseId, ProgrammingExerciseSynchronizationDTO change) {
-        if (change == null) {
-            return;
-        }
-        var payload = new ProgrammingExerciseSynchronizationDTO(change.target(), change.auxiliaryRepositoryId(),
-                change.clientInstanceId() != null ? change.clientInstanceId() : getClientInstanceId());
+    public void broadcastChange(long exerciseId, SynchronizationTarget target, @Nullable Long auxiliaryRepositoryId) {
+        var payload = new ProgrammingExerciseSynchronizationDTO(target, auxiliaryRepositoryId, getClientInstanceId());
         websocketMessagingService.sendMessage(getSynchronizationTopic(exerciseId), payload).exceptionally(exception -> {
             log.warn("Cannot send synchronization message for exercise {}", exerciseId, exception);
             return null;
         });
     }
 
-    public void broadcastChange(long exerciseId, SynchronizationTarget target, Long auxiliaryRepositoryId) {
-        broadcastChange(exerciseId, new ProgrammingExerciseSynchronizationDTO(target, auxiliaryRepositoryId, null));
-    }
-
-    private boolean commitIdChanged(ProgrammingExerciseSnapshotDTO.ParticipationSnapshotDTO previousParticipation,
-            ProgrammingExerciseSnapshotDTO.ParticipationSnapshotDTO newParticipation) {
-        if (previousParticipation == null && newParticipation == null) {
-            return false;
-        }
-        var previousCommitId = previousParticipation == null ? null : previousParticipation.commitId();
-        var newCommitId = newParticipation == null ? null : newParticipation.commitId();
-        return !Objects.equals(previousCommitId, newCommitId);
-    }
 }

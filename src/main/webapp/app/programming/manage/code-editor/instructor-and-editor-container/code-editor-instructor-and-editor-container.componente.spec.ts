@@ -33,6 +33,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
     let consistencyCheckService: ConsistencyCheckService;
     let alertService: AlertService;
     let browserFingerprintService: BrowserFingerprintService;
+    let synchronizationService: ProgrammingExerciseSynchronizationService;
 
     const course = { id: 123, exercises: [] } as Course;
     const programmingExercise = new ProgrammingExercise(course, undefined);
@@ -40,9 +41,6 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
     const error1 = new ConsistencyCheckError();
     error1.programmingExercise = programmingExercise;
     error1.type = ErrorType.TEMPLATE_BUILD_PLAN_MISSING;
-    const synchronizationServiceMock = {
-        getSynchronizationUpdates: jest.fn().mockReturnValue(of()),
-    } as unknown as ProgrammingExerciseSynchronizationService;
 
     beforeEach(waitForAsync(async () => {
         await TestBed.configureTestingModule({
@@ -54,7 +52,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
                 MockProvider(ParticipationService),
                 MockProvider(ProgrammingExerciseService),
                 MockProvider(CourseExerciseService),
-                { provide: ProgrammingExerciseSynchronizationService, useValue: synchronizationServiceMock },
+                MockProvider(ProgrammingExerciseSynchronizationService),
                 {
                     provide: BrowserFingerprintService,
                     useValue: { instanceIdentifier: new BehaviorSubject<string | undefined>(undefined) },
@@ -74,11 +72,12 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
         consistencyCheckService = TestBed.inject(ConsistencyCheckService);
         alertService = TestBed.inject(AlertService);
         browserFingerprintService = TestBed.inject(BrowserFingerprintService);
+        synchronizationService = TestBed.inject(ProgrammingExerciseSynchronizationService);
+        jest.spyOn(synchronizationService, 'getSynchronizationUpdates').mockReturnValue(of());
     }));
 
     afterEach(() => {
         jest.restoreAllMocks();
-        synchronizationServiceMock.getSynchronizationUpdates.mockClear();
     });
 
     it('runs full consistency check and shows success when no issues', () => {

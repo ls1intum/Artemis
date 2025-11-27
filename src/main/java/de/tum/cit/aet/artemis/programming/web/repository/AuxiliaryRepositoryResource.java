@@ -39,8 +39,8 @@ import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.FileType;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
+import de.tum.cit.aet.artemis.programming.domain.SynchronizationTarget;
 import de.tum.cit.aet.artemis.programming.dto.FileMove;
-import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseSynchronizationDTO;
 import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTO;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
@@ -233,7 +233,7 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
         try {
             AuxiliaryRepository auxiliaryRepository = auxiliaryRepositoryRepository.findByIdElseThrow(auxiliaryRepositoryId);
             ProgrammingExercise exercise = auxiliaryRepository.getExercise();
-            this.broadcastRepositoryUpdates(exercise.getId(), ProgrammingExerciseSynchronizationDTO.SynchronizationTarget.AUXILIARY_REPOSITORY, auxiliaryRepositoryId);
+            this.broadcastRepositoryUpdates(exercise.getId(), SynchronizationTarget.AUXILIARY_REPOSITORY, auxiliaryRepositoryId);
         }
         catch (Exception e) {
             log.debug("Could not broadcast auxiliary repository change for {}: {}", auxiliaryRepositoryId, e.getMessage());

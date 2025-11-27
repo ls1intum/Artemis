@@ -1,14 +1,11 @@
 package de.tum.cit.aet.artemis.programming.dto;
 
-import jakarta.annotation.Nullable;
-import jakarta.validation.constraints.NotNull;
+import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ProgrammingExerciseSynchronizationDTO(@NotNull SynchronizationTarget target, @Nullable Long auxiliaryRepositoryId, @NotNull String clientInstanceId) {
+import de.tum.cit.aet.artemis.programming.domain.SynchronizationTarget;
 
-    public enum SynchronizationTarget {
-        PROBLEM_STATEMENT, TEMPLATE_REPOSITORY, SOLUTION_REPOSITORY, TESTS_REPOSITORY, AUXILIARY_REPOSITORY
-    }
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+public record ProgrammingExerciseSynchronizationDTO(SynchronizationTarget target, @Nullable Long auxiliaryRepositoryId, @Nullable String clientInstanceId) {
 }

@@ -38,8 +38,8 @@ import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.programming.domain.FileType;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
+import de.tum.cit.aet.artemis.programming.domain.SynchronizationTarget;
 import de.tum.cit.aet.artemis.programming.dto.FileMove;
-import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseSynchronizationDTO;
 import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.GitService;
@@ -223,6 +223,6 @@ public class TestRepositoryResource extends RepositoryResource {
     }
 
     private void broadcastTestRepositoryChange(Long exerciseId) {
-        this.broadcastRepositoryUpdates(exerciseId, ProgrammingExerciseSynchronizationDTO.SynchronizationTarget.TESTS_REPOSITORY, null);
+        this.broadcastRepositoryUpdates(exerciseId, SynchronizationTarget.TESTS_REPOSITORY, null);
     }
 }

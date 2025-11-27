@@ -40,6 +40,7 @@ import de.tum.cit.aet.artemis.programming.domain.File;
 import de.tum.cit.aet.artemis.programming.domain.FileType;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
+import de.tum.cit.aet.artemis.programming.domain.SynchronizationTarget;
 import de.tum.cit.aet.artemis.programming.dto.FileMove;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseSynchronizationDTO;
 import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTO;
@@ -198,7 +199,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
 
         var captor = ArgumentCaptor.forClass(ProgrammingExerciseSynchronizationDTO.class);
         verify(websocketMessagingService).sendMessage(eq("/topic/programming-exercises/" + programmingExercise.getId() + "/synchronization"), captor.capture());
-        assertThat(captor.getValue().target()).isEqualTo(ProgrammingExerciseSynchronizationDTO.SynchronizationTarget.TESTS_REPOSITORY);
+        assertThat(captor.getValue().target()).isEqualTo(SynchronizationTarget.TESTS_REPOSITORY);
     }
 
     @Test
@@ -224,7 +225,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
 
         var captor = ArgumentCaptor.forClass(ProgrammingExerciseSynchronizationDTO.class);
         verify(websocketMessagingService).sendMessage(eq("/topic/programming-exercises/" + programmingExercise.getId() + "/synchronization"), captor.capture());
-        assertThat(captor.getValue().target()).isEqualTo(ProgrammingExerciseSynchronizationDTO.SynchronizationTarget.TESTS_REPOSITORY);
+        assertThat(captor.getValue().target()).isEqualTo(SynchronizationTarget.TESTS_REPOSITORY);
     }
 
     @Test
@@ -284,7 +285,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
 
         var captor = ArgumentCaptor.forClass(ProgrammingExerciseSynchronizationDTO.class);
         verify(websocketMessagingService).sendMessage(eq("/topic/programming-exercises/" + programmingExercise.getId() + "/synchronization"), captor.capture());
-        assertThat(captor.getValue().target()).isEqualTo(ProgrammingExerciseSynchronizationDTO.SynchronizationTarget.TESTS_REPOSITORY);
+        assertThat(captor.getValue().target()).isEqualTo(SynchronizationTarget.TESTS_REPOSITORY);
     }
 
     @Test
@@ -309,7 +310,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
 
         var captor = ArgumentCaptor.forClass(ProgrammingExerciseSynchronizationDTO.class);
         verify(websocketMessagingService).sendMessage(eq("/topic/programming-exercises/" + programmingExercise.getId() + "/synchronization"), captor.capture());
-        assertThat(captor.getValue().target()).isEqualTo(ProgrammingExerciseSynchronizationDTO.SynchronizationTarget.TESTS_REPOSITORY);
+        assertThat(captor.getValue().target()).isEqualTo(SynchronizationTarget.TESTS_REPOSITORY);
     }
 
     @Test
@@ -430,7 +431,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
 
         var captor = ArgumentCaptor.forClass(ProgrammingExerciseSynchronizationDTO.class);
         verify(websocketMessagingService).sendMessage(eq("/topic/programming-exercises/" + programmingExercise.getId() + "/synchronization"), captor.capture());
-        assertThat(captor.getValue().target()).isEqualTo(ProgrammingExerciseSynchronizationDTO.SynchronizationTarget.TESTS_REPOSITORY);
+        assertThat(captor.getValue().target()).isEqualTo(SynchronizationTarget.TESTS_REPOSITORY);
     }
 
     @Test
@@ -444,7 +445,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
         verify(websocketMessagingService).sendMessage(eq("/topic/programming-exercises/" + programmingExercise.getId() + "/synchronization"), captor.capture());
 
         var synchronizationMessage = captor.getValue();
-        assertThat(synchronizationMessage.target()).isEqualTo(ProgrammingExerciseSynchronizationDTO.SynchronizationTarget.TESTS_REPOSITORY);
+        assertThat(synchronizationMessage.target()).isEqualTo(SynchronizationTarget.TESTS_REPOSITORY);
         assertThat(synchronizationMessage.auxiliaryRepositoryId()).isNull();
     }
 
