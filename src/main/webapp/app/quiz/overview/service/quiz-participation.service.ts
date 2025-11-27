@@ -5,6 +5,7 @@ import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { map } from 'rxjs/operators';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
+import { createQuizSubmissionFromStudentDTO } from 'app/quiz/shared/entities/quiz-submission-from-student-dto.model';
 
 export type EntityResponseType = HttpResponse<QuizSubmission>;
 export type ResultResponseType = HttpResponse<Result>;
@@ -15,16 +16,16 @@ export class QuizParticipationService {
     private submissionService = inject(SubmissionService);
 
     submitForPractice(quizSubmission: QuizSubmission, exerciseId: number): Observable<ResultResponseType> {
-        const copy = this.submissionService.convert(quizSubmission);
+        const dto = createQuizSubmissionFromStudentDTO(quizSubmission);
         return this.http
-            .post<Result>(`api/quiz/exercises/${exerciseId}/submissions/practice`, copy, { observe: 'response' })
+            .post<Result>(`api/quiz/exercises/${exerciseId}/submissions/practice`, dto, { observe: 'response' })
             .pipe(map((res: ResultResponseType) => this.submissionService.convertResponse(res)));
     }
 
     submitForPreview(quizSubmission: QuizSubmission, exerciseId: number): Observable<ResultResponseType> {
-        const copy = this.submissionService.convert(quizSubmission);
+        const dto = createQuizSubmissionFromStudentDTO(quizSubmission);
         return this.http
-            .post<Result>(`api/quiz/exercises/${exerciseId}/submissions/preview`, copy, { observe: 'response' })
+            .post<Result>(`api/quiz/exercises/${exerciseId}/submissions/preview`, dto, { observe: 'response' })
             .pipe(map((res: ResultResponseType) => this.submissionService.convertResponse(res)));
     }
 
