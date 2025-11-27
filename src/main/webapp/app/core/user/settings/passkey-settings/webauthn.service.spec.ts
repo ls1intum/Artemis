@@ -46,6 +46,7 @@ describe('WebauthnService', () => {
                 askToSetupPasskey: true,
                 internal: true,
             } as User),
+            identity: jest.fn(),
         };
 
         TestBed.configureTestingModule({
@@ -112,6 +113,7 @@ describe('WebauthnService', () => {
             jest.spyOn(navigator.credentials, 'get').mockResolvedValue(mockPublicKeyCredential);
             jest.spyOn(credentialUtil, 'getLoginCredentialWithGracefullyHandlingAuthenticatorIssues').mockReturnValue(mockPublicKeyCredential as any);
             webauthnApiService.loginWithPasskey.mockResolvedValue({ success: true } as any);
+            accountService.identity.mockResolvedValue({} as any);
 
             await service.loginWithPasskey();
 
@@ -126,6 +128,7 @@ describe('WebauthnService', () => {
             });
             expect(credentialUtil.getLoginCredentialWithGracefullyHandlingAuthenticatorIssues).toHaveBeenCalledWith(mockPublicKeyCredential);
             expect(webauthnApiService.loginWithPasskey).toHaveBeenCalledWith(mockPublicKeyCredential);
+            expect(accountService.identity).toHaveBeenCalledWith(true);
             expect(alertService.addErrorAlert).not.toHaveBeenCalled();
         });
 
@@ -197,24 +200,16 @@ describe('WebauthnService', () => {
             expect(console.error).toHaveBeenCalledWith(apiError);
         });
 
-        it('should update userIdentity signal with loggedInWithPasskey set to true', async () => {
+        it('should call accountService.identity after successful login', async () => {
             jest.spyOn(navigator.credentials, 'get').mockResolvedValue(mockPublicKeyCredential);
             jest.spyOn(credentialUtil, 'getLoginCredentialWithGracefullyHandlingAuthenticatorIssues').mockReturnValue(mockPublicKeyCredential as any);
             webauthnApiService.loginWithPasskey.mockResolvedValue({ success: true } as any);
-
-            // Verify initial state (should not have loggedInWithPasskey set)
-            expect(accountService.userIdentity()?.loggedInWithPasskey).toBeUndefined();
+            accountService.identity.mockResolvedValue({} as any);
 
             await service.loginWithPasskey();
 
-            // Verify userIdentity signal was updated
-            const updatedIdentity = accountService.userIdentity();
-            expect(updatedIdentity).toBeDefined();
-            expect(updatedIdentity!.loggedInWithPasskey).toBeTrue();
-            expect(updatedIdentity!.internal).toBeTrue();
-            expect(updatedIdentity!.id).toBe(1);
-            expect(updatedIdentity!.email).toBe('test@example.com');
-            expect(updatedIdentity!.login).toBe('testuser');
+            expect(webauthnApiService.loginWithPasskey).toHaveBeenCalledWith(mockPublicKeyCredential);
+            expect(accountService.identity).toHaveBeenCalledWith(true);
         });
     });
 
