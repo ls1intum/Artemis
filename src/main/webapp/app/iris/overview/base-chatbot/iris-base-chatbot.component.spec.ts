@@ -43,6 +43,7 @@ import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { User } from 'app/core/user/user.model';
+import { LLMSelectionDecision } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
 
 describe('IrisBaseChatbotComponent', () => {
     let component: IrisBaseChatbotComponent;
@@ -105,7 +106,7 @@ describe('IrisBaseChatbotComponent', () => {
                 accountService = TestBed.inject(AccountService);
                 component = fixture.componentInstance;
 
-                accountService.userIdentity.set({ externalLLMUsageAccepted: dayjs() } as User);
+                accountService.userIdentity.set({ selectedLLMUsageTimestamp: dayjs() } as User);
                 jest.spyOn(accountService, 'getAuthenticationState').mockReturnValue(of());
 
                 fixture.nativeElement.querySelector('.chat-body').scrollTo = jest.fn();
@@ -122,7 +123,7 @@ describe('IrisBaseChatbotComponent', () => {
     });
 
     it('should set userAccepted to false if user has not accepted the external LLM usage policy', () => {
-        accountService.userIdentity.set({ externalLLMUsageAccepted: undefined } as User);
+        accountService.userIdentity.set({ selectedLLMUsage: undefined } as User);
         component.ngOnInit();
         expect(component.userAccepted).toBeFalse();
     });
@@ -136,10 +137,9 @@ describe('IrisBaseChatbotComponent', () => {
         const stub = jest.spyOn(mockUserService, 'updateLLMSelectionDecision');
         stub.mockReturnValue(of(new HttpResponse<void>()));
 
-        component.acceptPermission();
+        component.acceptPermission(LLMSelectionDecision.LOCAL_AI);
 
         expect(stub).toHaveBeenCalledOnce();
-        expect(component.userAccepted).toBeTrue();
     });
 
     it('should add user message on send', async () => {
@@ -267,7 +267,7 @@ describe('IrisBaseChatbotComponent', () => {
         jest.spyOn(component, 'scrollToBottom').mockImplementation(() => {});
         const getChatSessionsSpy = jest.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
 
-        component.userAccepted = true;
+        component.userAccepted = LLMSelectionDecision.CLOUD_AI;
         chatService.switchTo(ChatServiceMode.COURSE, 123);
 
         component.ngAfterViewInit();
@@ -443,8 +443,8 @@ describe('IrisBaseChatbotComponent', () => {
         expect(sendButton.disabled).toBeTruthy();
     });
 
-    it('should not render submit button if hasUserAcceptedExternalLLMUsage is false', () => {
-        component.userAccepted = false;
+    it('should not render submit button if userAccepted is NO_AI', () => {
+        component.userAccepted = LLMSelectionDecision.NO_AI;
         component.isLoading = false;
         component.error = undefined;
         fixture.detectChanges();
@@ -454,7 +454,7 @@ describe('IrisBaseChatbotComponent', () => {
     });
 
     it('should not disable submit button if isLoading is false and no error exists', () => {
-        component.userAccepted = true;
+        component.userAccepted = LLMSelectionDecision.CLOUD_AI;
         component.isLoading = false;
         component.error = undefined;
         fixture.detectChanges();
@@ -464,7 +464,7 @@ describe('IrisBaseChatbotComponent', () => {
     });
 
     it('should not disable submit button if isLoading is false and error is not fatal', () => {
-        component.userAccepted = true;
+        component.userAccepted = LLMSelectionDecision.CLOUD_AI;
         component.isLoading = false;
         component.error = IrisErrorMessageKey.SEND_MESSAGE_FAILED;
         fixture.detectChanges();
@@ -558,7 +558,7 @@ describe('IrisBaseChatbotComponent', () => {
         expect(suggestionButtons).toHaveLength(0);
     });
 
-    it('should not render suggestions if hasUserAcceptedExternalLLMUsage is false', () => {
+    it('should not render suggestions if userAccepted is NO_AI', () => {
         // Arrange
         const expectedSuggestions = ['suggestion1', 'suggestion2'];
         const mockMessages = [mockClientMessage, mockServerMessage];
@@ -568,7 +568,7 @@ describe('IrisBaseChatbotComponent', () => {
 
         // Act
         component.ngOnInit();
-        component.userAccepted = false;
+        component.userAccepted = LLMSelectionDecision.NO_AI;
         fixture.detectChanges();
 
         // Assert

@@ -48,7 +48,7 @@ describe('IrisChatService', () => {
         handleRateLimitInfo: jest.fn(),
     };
     const userMock = {
-        acceptExternalLLMUsage: jest.fn(),
+        acceptLLMUsage: jest.fn(),
     };
 
     beforeEach(() => {
@@ -71,7 +71,7 @@ describe('IrisChatService', () => {
         wsMock = TestBed.inject(IrisWebsocketService) as jest.Mocked<IrisWebsocketService>;
         accountService = TestBed.inject(AccountService);
 
-        accountService.userIdentity.set({ externalLLMUsageAccepted: dayjs() } as User);
+        accountService.userIdentity.set({ selectedLLMUsageTimestamp: dayjs() } as User);
 
         service.setCourseId(courseId);
     });
@@ -359,7 +359,7 @@ describe('IrisChatService', () => {
         }));
 
         it('should switch if LLM usage is not required for the mode', fakeAsync(() => {
-            accountService.userIdentity.set({ externalLLMUsageAccepted: undefined } as User);
+            accountService.userIdentity.set({ selectedLLMUsageTimestamp: undefined } as User);
             service['hasJustAcceptedLLMUsage'] = false;
             service['sessionCreationIdentifier'] = 'tutor-suggestion/1';
 
@@ -380,7 +380,7 @@ describe('IrisChatService', () => {
         }));
 
         it('should switch if user has just accepted LLM usage', fakeAsync(() => {
-            accountService.userIdentity.set({ externalLLMUsageAccepted: undefined } as User);
+            accountService.userIdentity.set({ selectedLLMUsageTimestamp: undefined } as User);
             service['hasJustAcceptedLLMUsage'] = true;
             service['sessionCreationIdentifier'] = 'course/1';
 

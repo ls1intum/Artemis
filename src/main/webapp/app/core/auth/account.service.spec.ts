@@ -17,6 +17,7 @@ import { Participation } from 'app/exercise/shared/entities/participation/partic
 import { Team } from 'app/exercise/shared/entities/team/team.model';
 import { provideHttpClient } from '@angular/common/http';
 import { UserSshPublicKey } from 'app/programming/shared/entities/user-ssh-public-key.model';
+import { LLMSelectionDecision } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
 
 describe('AccountService', () => {
     let accountService: AccountService;
@@ -630,17 +631,17 @@ describe('AccountService', () => {
             jest.useRealTimers();
         });
 
-        it('should set externalLLMUsageAccepted when user identity exists', () => {
+        it('should set selectedLLMUsageTimestamp when user identity exists', () => {
             // Setup user identity
             accountService.userIdentity.set({ id: 1, groups: ['USER'] } as User);
 
             // Call the function
-            accountService.setUserLLMSelectionDecision();
+            accountService.setUserLLMSelectionDecision(LLMSelectionDecision.LOCAL_AI);
 
             // Check if the date was set correctly
-            const acceptedDate = accountService.userIdentity()?.externalLLMUsageAccepted;
+            const acceptedDate = accountService.userIdentity()?.selectedLLMUsageTimestamp;
             expect(acceptedDate).toBeDefined();
-            expect(acceptedDate?.format('YYYY-MM-DD')).toBe('2024-02-06');
+            expect(acceptedDate?.format('YYYY-MM-DD')).toBe('2025-11-27');
         });
 
         it('should not throw error when user identity is undefined', () => {
@@ -648,7 +649,7 @@ describe('AccountService', () => {
             accountService.userIdentity.set(undefined);
 
             // Verify that calling the function doesn't throw an error
-            expect(() => accountService.setUserLLMSelectionDecision()).not.toThrow();
+            expect(() => accountService.setUserLLMSelectionDecision(LLMSelectionDecision.CLOUD_AI)).not.toThrow();
         });
     });
 });

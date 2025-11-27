@@ -4,7 +4,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { PROFILE_ATHENA, PROFILE_IRIS } from 'app/app.constants';
 
 /**
- * Guard to check if the route "/user-settings/external-data" can be activated.
+ * Guard to check if the route "/user-settings/llm-usage" can be activated.
  */
 @Injectable({ providedIn: 'root' })
 export class InternalDataGuard implements CanActivate {

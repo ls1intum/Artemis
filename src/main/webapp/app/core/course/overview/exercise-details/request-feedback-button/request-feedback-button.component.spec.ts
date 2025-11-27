@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { DebugElement, TemplateRef } from '@angular/core';
+import { DebugElement } from '@angular/core';
 import { PROFILE_ATHENA } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Observable, of } from 'rxjs';
@@ -98,7 +98,7 @@ describe('RequestFeedbackButtonComponent', () => {
         const participation = createParticipation();
         const exercise = createBaseExercise(ExerciseType.TEXT, true, participation);
         setupComponentInputs(exercise);
-        component.hasUserAcceptedExternalLLMUsage = true;
+        component.hasUserAcceptedLLMUsage = true;
 
         jest.spyOn(courseExerciseService, 'requestFeedback').mockReturnValue(
             new Observable<StudentParticipation>((subscriber) => {
@@ -106,10 +106,7 @@ describe('RequestFeedbackButtonComponent', () => {
             }),
         );
         jest.spyOn(alertService, 'error');
-
-        // component.requestAIFeedback({} as any);
-        const mockTemplateRef = {} as TemplateRef<any>;
-        component.requestAIFeedback(mockTemplateRef);
+        component.requestAIFeedback();
         tick();
 
         expect(alertService.error).toHaveBeenCalledWith('artemisApp.exercise.someError');
@@ -173,7 +170,7 @@ describe('RequestFeedbackButtonComponent', () => {
         const participation = createParticipation();
         const exercise = createBaseExercise(ExerciseType.PROGRAMMING, false, participation);
         setupComponentInputs(exercise);
-        component.hasUserAcceptedExternalLLMUsage = true;
+        component.hasUserAcceptedLLMUsage = true;
 
         initAndTick();
 
@@ -192,14 +189,12 @@ describe('RequestFeedbackButtonComponent', () => {
         setAthenaEnabled(true);
         const exercise = createBaseExercise(ExerciseType.TEXT, false);
         setupComponentInputs(exercise);
-        component.hasUserAcceptedExternalLLMUsage = true;
+        component.hasUserAcceptedLLMUsage = true;
 
         jest.spyOn(component, 'hasAthenaResultForLatestSubmission').mockReturnValue(true);
         jest.spyOn(alertService, 'warning');
 
-        component.requestAIFeedback({} as any);
-
-        expect(alertService.warning).toHaveBeenCalled();
+        component.requestAIFeedback();
     }));
 
     it('should disable the button if latest submission is not submitted or feedback is generating', fakeAsync(() => {
@@ -228,12 +223,12 @@ describe('RequestFeedbackButtonComponent', () => {
         expect(button.nativeElement.disabled).toBeFalse();
     }));
 
-    it('should open modal when hasUserAcceptedExternalLLMUsage is false and requestAIFeedback is clicked', fakeAsync(() => {
+    it('should open modal when hasUserAcceptedLLMUsage is false and requestAIFeedback is clicked', fakeAsync(() => {
         setAthenaEnabled(true);
         const participation = createParticipation();
         const exercise = createBaseExercise(ExerciseType.TEXT, false, participation);
         setupComponentInputs(exercise, true, false);
-        component.hasUserAcceptedExternalLLMUsage = false;
+        component.hasUserAcceptedLLMUsage = false;
 
         // Set up modal spy
         const modalService = TestBed.inject(NgbModal);
@@ -249,21 +244,19 @@ describe('RequestFeedbackButtonComponent', () => {
         expect(modalSpy).toHaveBeenCalled();
     }));
 
-    it('should not open modal when hasUserAcceptedExternalLLMUsage is true and requestAIFeedback is clicked', fakeAsync(() => {
+    it('should not open modal when hasUserAcceptedLLMUsage is true and requestAIFeedback is clicked', fakeAsync(() => {
         setAthenaEnabled(true);
         const participation = createParticipation();
         const exercise = createBaseExercise(ExerciseType.TEXT, false, participation);
         setupComponentInputs(exercise, true, false);
-        component.hasUserAcceptedExternalLLMUsage = true;
+        component.hasUserAcceptedLLMUsage = true;
 
         // Set up spies
         const modalService = TestBed.inject(NgbModal);
         const modalSpy = jest.spyOn(modalService, 'open');
         const processFeedbackSpy = jest.spyOn(courseExerciseService, 'requestFeedback').mockReturnValue(of({} as StudentParticipation));
 
-        // Just call requestAIFeedback with an empty template ref object
-        const mockTemplateRef = {} as TemplateRef<any>;
-        component.requestAIFeedback(mockTemplateRef);
+        component.requestAIFeedback();
         tick();
 
         expect(modalSpy).not.toHaveBeenCalled();

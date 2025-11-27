@@ -4,7 +4,6 @@ import { IS_AT_LEAST_ADMIN, IS_AT_LEAST_EDITOR, IS_AT_LEAST_STUDENT } from 'app/
 import { navbarRoute } from 'app/core/navbar/navbar.route';
 import { errorRoute } from 'app/core/layouts/error/error.route';
 import { PasskeyAuthenticationGuard } from 'app/core/auth/passkey-authentication-guard/passkey-authentication.guard';
-import { LlmSelectionInfoComponent } from './logos/llm-selection-info.component';
 
 const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
 
@@ -51,9 +50,10 @@ const routes: Routes = [
     },
     {
         path: 'llm-selection',
-        component: LlmSelectionInfoComponent,
+        loadComponent: () => import('./logos/llm-selection-info.component').then((m) => m.LlmSelectionInfoComponent),
         data: {
             pageTitle: 'artemisApp.llmSelectionInfo.pageTitle',
+            usesModuleBackground: true,
         },
     },
     {
