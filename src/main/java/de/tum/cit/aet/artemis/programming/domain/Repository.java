@@ -83,22 +83,8 @@ public class Repository extends org.eclipse.jgit.internal.storage.file.FileRepos
      * file lock issues during deletion operations.
      */
     public void closeBeforeDelete() {
-        try {
-            super.close();
-        }
-        catch (IllegalStateException e) {
-            log.debug("Repository at {} was already closed: {}", getLocalPath(), e.getMessage());
-        }
-        catch (Exception e) {
-            log.warn("Unexpected error while closing repository at {}: {}", getLocalPath(), e.getMessage());
-        }
-
-        try {
-            super.doClose();
-        }
-        catch (Exception e) {
-            log.debug("Repository doClose() at {} already completed: {}", getLocalPath(), e.getMessage());
-        }
+        super.close();
+        super.doClose();
     }
 
     public LocalVCRepositoryUri getRemoteRepositoryUri() {

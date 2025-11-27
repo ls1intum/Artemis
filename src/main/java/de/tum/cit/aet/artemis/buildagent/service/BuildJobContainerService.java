@@ -450,37 +450,14 @@ public class BuildJobContainerService {
     }
 
     private void copyToContainer(Path sourcePath, String containerId) {
-        final int maxRetries = 3;
-        final long retryDelayMs = 1000;
 
-        /*
-         * Retry mechanism is essential for Docker container operations due to potential transient failures:
-         * - Docker daemon may be temporarily overloaded or unresponsive
-         * - Network connectivity issues between client and Docker daemon
-         * - Container filesystem may be temporarily locked or busy
-         * - Resource contention during concurrent build operations
-         * This improves reliability in CI/CD environments where multiple builds run simultaneously.
-         */
-        for (int attempt = 1; attempt <= maxRetries; attempt++) {
-            try (final var uploadStream = new ByteArrayInputStream(createTarArchive(sourcePath).toByteArray());
-                    final var copyToContainerCommand = buildAgentConfiguration.getDockerClient().copyArchiveToContainerCmd(containerId)
-                            .withRemotePath(LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY).withTarInputStream(uploadStream)) {
-                copyToContainerCommand.exec();
-                return;
-            }
-            catch (Exception e) {
-                if (attempt == maxRetries) {
-                    throw new LocalCIException("Could not copy to container " + containerId + " after " + maxRetries + " attempts", e);
-                }
-                log.warn("Attempt {} failed to copy to container {}: {}. Retrying in {} ms...", attempt, containerId, e.getMessage(), retryDelayMs);
-                try {
-                    Thread.sleep(retryDelayMs);
-                }
-                catch (InterruptedException ie) {
-                    Thread.currentThread().interrupt();
-                    throw new LocalCIException("Interrupted while retrying copy to container " + containerId, ie);
-                }
-            }
+        try (final var uploadStream = new ByteArrayInputStream(createTarArchive(sourcePath).toByteArray());
+                final var copyToContainerCommand = buildAgentConfiguration.getDockerClient().copyArchiveToContainerCmd(containerId)
+                        .withRemotePath(LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY).withTarInputStream(uploadStream)) {
+            copyToContainerCommand.exec();
+        }
+        catch (IOException e) {
+            throw new LocalCIException("Could not copy to container " + containerId, e);
         }
     }
 

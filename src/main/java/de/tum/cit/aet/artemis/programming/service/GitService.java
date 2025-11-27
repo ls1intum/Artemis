@@ -113,10 +113,6 @@ public class GitService extends AbstractGitService {
 
     private static final String ANONYMIZED_STUDENT_EMAIL = "";
 
-    public GitService() {
-        super();
-    }
-
     /**
      * Returns the configured default branch name.
      *
