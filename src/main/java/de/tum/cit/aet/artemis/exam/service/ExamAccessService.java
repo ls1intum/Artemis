@@ -401,10 +401,16 @@ public class ExamAccessService {
      */
     public void checkCourseAndExamAndStudentExamAccessElseThrow(Long courseId, Long examId, Long studentExamId) {
         checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
-        checkStudentExamBelongsToExamElseThrow(studentExamId, examId);
+        checkStudentExamExistsAndBelongsToExamElseThrow(studentExamId, examId);
     }
 
-    public void checkStudentExamBelongsToExamElseThrow(Long studentExamId, Long examId) {
+    /**
+     * Checks if the given student exam exists and belongs to the given exam.
+     *
+     * @param studentExamId The id of the student exam
+     * @param examId        The id of the exam
+     */
+    public void checkStudentExamExistsAndBelongsToExamElseThrow(Long studentExamId, Long examId) {
         Optional<StudentExam> studentExam = studentExamRepository.findById(studentExamId);
         if (studentExam.isEmpty()) {
             throw new EntityNotFoundException(ENTITY_NAME, examId);

@@ -241,7 +241,7 @@ public class StudentExamResource {
         var student = userRepository.getUserByLoginElseThrow(studentLogin);
         StudentExam studentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(student.getId(), examId, false).orElseThrow();
 
-        examAccessService.checkStudentExamBelongsToExamElseThrow(studentExam.getId(), examId);
+        examAccessService.checkStudentExamExistsAndBelongsToExamElseThrow(studentExam.getId(), examId);
 
         var exam = studentExam.getExam();
         if (!exam.isVisibleToStudents()) {
