@@ -397,11 +397,14 @@ public class ExamAccessService {
      *
      * @param courseId      The id of the course
      * @param examId        The id of the exam
-     * @param studentExamId The if of the student exam
+     * @param studentExamId The id of the student exam
      */
     public void checkCourseAndExamAndStudentExamAccessElseThrow(Long courseId, Long examId, Long studentExamId) {
         checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
+        checkStudentExamBelongsToExamElseThrow(studentExamId, examId);
+    }
 
+    public void checkStudentExamBelongsToExamElseThrow(Long studentExamId, Long examId) {
         Optional<StudentExam> studentExam = studentExamRepository.findById(studentExamId);
         if (studentExam.isEmpty()) {
             throw new EntityNotFoundException(ENTITY_NAME, examId);
