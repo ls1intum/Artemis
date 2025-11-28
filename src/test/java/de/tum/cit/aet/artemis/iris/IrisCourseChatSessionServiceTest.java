@@ -68,4 +68,12 @@ class IrisCourseChatSessionServiceTest extends AbstractIrisIntegrationTest {
         assertThatThrownBy(() -> irisCourseChatSessionService.checkHasAccessTo(user, session)).isInstanceOf(AccessForbiddenException.class).extracting(Throwable::getMessage)
                 .asString().contains("Iris Session");
     }
+
+    @Test
+    void checkHasAccessTo_throwsWhenLlMAcceptanceMissing() {
+        user.setExternalLLMUsageAcceptedTimestamp(null);
+
+        assertThatThrownBy(() -> irisCourseChatSessionService.checkHasAccessTo(user, session)).isInstanceOf(AccessForbiddenException.class).extracting(Throwable::getMessage)
+                .asString().contains("external LLM privacy policy");
+    }
 }
