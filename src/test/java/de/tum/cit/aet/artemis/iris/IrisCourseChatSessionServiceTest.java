@@ -13,7 +13,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
-import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisCourseChatSession;
@@ -32,9 +31,6 @@ class IrisCourseChatSessionServiceTest extends AbstractIrisIntegrationTest {
     @Autowired
     private UserUtilService userUtilService;
 
-    @Autowired
-    private UserTestRepository userTestRepository;
-
     private Course course;
 
     private User user;
@@ -50,7 +46,6 @@ class IrisCourseChatSessionServiceTest extends AbstractIrisIntegrationTest {
         user.setExternalLLMUsageAcceptedTimestamp(ZonedDateTime.now());
         // Ensure course membership for auth check
         user.setGroups(Set.of(course.getStudentGroupName()));
-        userTestRepository.save(user);
 
         session = new IrisCourseChatSession(course, user);
         session.setId(7L); // needed for exception message path
