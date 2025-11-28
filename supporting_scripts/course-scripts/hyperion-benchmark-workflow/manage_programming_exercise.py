@@ -22,7 +22,7 @@ def sanitize_exercise_name(exercise_name: str, short_name_index: int) -> str:
         valid_short_name = f"A{valid_short_name}"
     return f"{valid_short_name}{short_name_index}"
 
-def convert_variant_to_zip(variant_path: str, course_id: int) -> None:
+def convert_variant_to_zip(variant_path: str, course_id: int) -> bool:
     """
     Convert the programming exercise located at variant_path into a ZIP file.
 
@@ -68,6 +68,7 @@ def convert_variant_to_zip(variant_path: str, course_id: int) -> None:
             logging.info(f"Created intermediate zip archive at {zip_folder_path}")
     except Exception as e:
         logging.exception(f"Error while creating intermediate zip files: {e}")
+        return False
     
     # Overwrite exercise ID, course ID, title and shortName in the config file
     config_file_path = os.path.join(variant_path, config_file)
@@ -85,7 +86,8 @@ def convert_variant_to_zip(variant_path: str, course_id: int) -> None:
             json.dump(exercise_details, config_file, indent=4)
             logging.info(f"Updated programming exercise details in {config_file_path}")
     except OSError as e:
-        raise Exception(f"Failed to read programming exercise JSON file at {config_file_path}: {e}")
+        logging.error(f"Failed to read programming exercise JSON file at {config_file_path}: {e}")
+        return False
     zip_files.append(config_file_path)
 
     # Create the final zip file containing all parts
@@ -111,6 +113,7 @@ def convert_variant_to_zip(variant_path: str, course_id: int) -> None:
         if temp_zip.endswith('.zip') and os.path.exists(temp_zip):
             os.remove(temp_zip)
             logging.info(f"Removed temporary zip file: {os.path.basename(temp_zip)}")
+    return True
 
 def import_programming_exercise(session: Session, course_id: int, server_url: str, variant_folder_path: str) -> requests.Response:
     """
@@ -183,19 +186,18 @@ def import_programming_exercise(session: Session, course_id: int, server_url: st
         return None
     
 
-def check_consistency(session: Session, programming_exercise_id: int, server_url: str) -> List[Dict[str, Any], int]:
+def check_consistency(session: Session, programming_exercise_id: int, server_url: str):
     """Check the consistency of the programming exercise with Hyperion System.
     
     returns the consistency issues as a list of dictionaries along with the programming exercise ID.
     """
-    logging.info(f"Starting Consistency Check for programming exercise ID: {programming_exercise_id}")
-
+    
     url: str = f"{server_url}/hyperion/programming-exercises/{programming_exercise_id}/consistency-check"
     
     response: requests.Response = session.post(url)
 
     if response.status_code == 200:
-        logging.info(f"Consistency check is finished for programming exercise ID: {programming_exercise_id}")
+        logging.info(f"Finished consistency check for programming exercise ID: {programming_exercise_id}")
         return response.json(), programming_exercise_id
     else:
         logging.error(f"Failed to check consistency for programming exercise ID {programming_exercise_id}; Status code: {response.status_code}\nResponse content: {response.text}")

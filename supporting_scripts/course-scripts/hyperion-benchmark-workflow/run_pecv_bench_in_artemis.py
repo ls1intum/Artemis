@@ -167,9 +167,6 @@ def main():
     course_id = response_data["id"]
     
     # Step 6: Store variant_id to exercise_id mapping, create zip files and import programming exercises
-    # """
-    #PROGRAMMING_EXERCISES = {'001': 92, '002': 93, '003': 94, '004': 95, '005': 96, '006': 97, '007': 98, '008': 99, '009': 100, '010': 101, '011': 102, '012': 103, '013': 104, '014': 105, '015': 106, '016': 107, '017': 108, '018': 109, '019': 110, '020': 111, '021': 112, '022': 113, '023': 114, '024': 115, '025': 116, '026': 117, '027': 118, '028': 119, '029': 120, '030': 121}
-    # """
     programming_exercises: Dict[str, int] = {} # {'001': 92, <VARIANT_ID>: <exercise_id>, ...}
     variants_folder_path: str = f"{pecv_bench_dir}/data/{COURSE}/{EXERCISE}/variants"
     list_of_variants = sorted(os.listdir(variants_folder_path))
@@ -178,7 +175,11 @@ def main():
             continue
         variant_id_path = os.path.join(variants_folder_path, variant_id)
         programming_exercises[variant_id] = None
-        convert_variant_to_zip(variant_id_path, course_id)
+        
+        zip_created = convert_variant_to_zip(variant_id_path, course_id)
+        if not zip_created:
+            logging.error(f"Failed to create zip for variant {variant_id}. Skipping import.")
+            continue
         
         response_data = import_programming_exercise(session = session, 
                                 course_id = course_id,
