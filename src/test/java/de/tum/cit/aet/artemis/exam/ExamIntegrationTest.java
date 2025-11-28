@@ -243,18 +243,18 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetAllActiveExams_Tutor() throws Exception {
         var now = ZonedDateTime.now();
-        // add two additional exams, one already visible, the other one visible tomorrow
-        var exam3 = examUtilService.addExam(course10, now.minusDays(1), now, now.plusHours(2));
-        var exam4 = examUtilService.addExam(course10, now.plusDays(1), now.plusDays(2), now.plusDays(3));
 
-        // add additional exam not active
-        var exam5 = examUtilService.addExam(course10, now.minusDays(10), now.plusDays(2), now.plusDays(3));
+        var justStartedExam = examUtilService.addExam(course10, now.minusDays(1), now, now.plusHours(2));
+        var becomesVisibleTomorrowExam = examUtilService.addExam(course10, now.plusDays(1), now.plusDays(2), now.plusDays(3));
+        var visibleButNotStartedExam = examUtilService.addExam(course10, now.minusDays(10), now.plusDays(2), now.plusDays(3));
+        var finishedExam = examUtilService.addExam(course10, now.minusDays(5), now.minusDays(4), now.minusDays(3));
 
         List<Exam> activeExams = request.getList("/api/exam/exams/active", HttpStatus.OK, Exam.class, getPageParams());
-        // only exam4 should be returned
-        assertThat(activeExams).doesNotContain(exam3);
-        assertThat(activeExams).contains(exam4);
-        assertThat(activeExams).doesNotContain(exam5);
+
+        assertThat(activeExams).contains(justStartedExam);
+        assertThat(activeExams).doesNotContain(becomesVisibleTomorrowExam);
+        assertThat(activeExams).contains(visibleButNotStartedExam);
+        assertThat(activeExams).doesNotContain(finishedExam);
     }
 
     @Test
