@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { BehaviorSubject, of, pipe } from 'rxjs';
+import { BehaviorSubject, Observable, of, pipe } from 'rxjs';
 import { switchMap, tap } from 'rxjs/operators';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
@@ -158,7 +158,7 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      *
      * @param participation Updated participation object
      */
-    private notifyParticipationSubscribers = (participation: Participation) => {
+    private notifyParticipationSubscribers = (participation: Participation): void => {
         if (!this.participationObservable) {
             this.participationObservable = new BehaviorSubject(participation);
         } else {
@@ -171,7 +171,7 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      *
      * @param result Newly received result
      */
-    private notifyResultSubscribers = (result: Result) => {
+    private notifyResultSubscribers = (result: Result): void => {
         const resultObservable = this.resultObservables.get(result.submission!.participation!.id!);
         // TODO: We never convert the date strings of the result (e.g. completionDate) to a Dayjs object
         //  this could be an issue in some parts of app when a formatted date is needed.
@@ -189,7 +189,7 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      * @param result Result whose participation should be retrieved from cache
      * @returns Observable emitting the cached participation or an empty observable if none is found
      */
-    private getParticipationForResult = (result: Result) => {
+    private getParticipationForResult = (result: Result): Observable<StudentParticipation | undefined> => {
         const cachedParticipation = this.cachedParticipations.get(result.submission!.participation!.id!);
         if (cachedParticipation) {
             return of(this.cachedParticipations.get(result.submission!.participation!.id!));
