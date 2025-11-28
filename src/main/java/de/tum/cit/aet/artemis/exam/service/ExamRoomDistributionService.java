@@ -98,12 +98,14 @@ public class ExamRoomDistributionService {
      * Existing planned seats and room assignments are replaced.
      *
      * @param examId                The exam
-     * @param examRoomIds           The ids of the rooms to distribute to, ordered
+     * @param examRoomIds           The ids of the rooms to distribute to, ordered, no duplicates
      * @param useOnlyDefaultLayouts if we want to only use 'default' layouts
      * @param reserveFactor         Percentage of seats that should not be included
      * @throws BadRequestAlertException if the capacity doesn't suffice to seat the students
      */
     public void distributeRegisteredStudents(long examId, @NotEmpty List<Long> examRoomIds, boolean useOnlyDefaultLayouts, double reserveFactor) {
+        examRoomIds = examRoomIds.stream().distinct().toList();
+
         final Exam exam = examRepository.findByIdWithExamUsersElseThrow(examId);
         final Set<ExamRoom> examRoomsForExam = examRoomRepository.findAllWithEagerLayoutStrategiesByIdIn(Set.copyOf(examRoomIds));
 
