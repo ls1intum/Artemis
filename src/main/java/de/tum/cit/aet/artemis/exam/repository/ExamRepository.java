@@ -124,8 +124,8 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
             FROM Exam e
             WHERE
                 (e.course.instructorGroupName IN :groups
-                 AND e.visibleDate >= :fromDate
-                 AND e.visibleDate <= :toDate)
+                 AND e.visibleDate >= :instructorLowerTimebound
+                 AND e.visibleDate <= :instructorUpperTimebound)
             OR
                 ((e.course.editorGroupName IN :groups OR e.course.teachingAssistantGroupName IN :groups)
                  AND e.visibleDate <= :nowDate
