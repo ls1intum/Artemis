@@ -133,7 +133,7 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      * @returns A pipeable operator for handling incoming results
      */
     private getNotifyAllSubscribersPipe = () => {
-        return pipe(tap(this.notifyResultSubscribers), switchMap(this.addResultToParticipation), tap(this.notifyParticipationSubscribers));
+        return pipe(tap(this.notifyResultSubscribers), switchMap(this.getParticipationForResult), tap(this.notifyParticipationSubscribers));
     };
 
     /**
@@ -189,7 +189,7 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      * @param result Result whose participation should be retrieved from cache
      * @returns Observable emitting the cached participation or an empty observable if none is found
      */
-    private addResultToParticipation = (result: Result) => {
+    private getParticipationForResult = (result: Result) => {
         const cachedParticipation = this.cachedParticipations.get(result.submission!.participation!.id!);
         if (cachedParticipation) {
             return of(this.cachedParticipations.get(result.submission!.participation!.id!));
