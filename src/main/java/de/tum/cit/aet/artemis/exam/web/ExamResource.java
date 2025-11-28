@@ -520,15 +520,9 @@ public class ExamResource {
      * </p>
      *
      * <p>
-     * <b>Visibility rules:</b> An exam is considered <i>active</i> if its {@code visibleDate}
-     * lies within a specific time window relative to the current time. The window depends
-     * on the user’s role <b>in the corresponding course</b>:
-     * <ul>
-     * <li><b>Instructors</b> see exams visible from <i>now − 7 days</i> to <i>now + 7 days</i>.</li>
-     * <li><b>Editors and tutors</b> see exams visible from <i>now</i> to <i>now + 7 days</i>.</li>
-     * </ul>
-     * These role-dependent windows ensure that instructors retain broader operational visibility,
-     * while tutors and editors see only upcoming exams.
+     * <b>Access/Visibility Policy:</b>Access for editors and tutors is limited to briefly before and after an exam conduction,
+     * whereas an instructor has a broader time window to access the exam.
+     * Further details on the visibility policy are described in {@link ExamRepository#findAllActiveExamsInCoursesWhereAtLeastTutor}
      * </p>
      *
      * @param pageable pagination parameters supplied by the client (page number, size, sort)

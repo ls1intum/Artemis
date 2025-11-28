@@ -1477,31 +1477,19 @@ public class ExamService {
     }
 
     /**
-     * Fetches all active exams that should be visible to the given user based on role-dependent
-     * visibility windows.
-     *
+     * Fetches all active exams that should be visible to the given user based on a role-dependent
+     * visibility policy.
      * <p>
-     * Visibility policy:
-     * <ul>
-     * <li><b>Instructors</b>: exams visible from now − {@code EXAM_ACTIVE_DAYS} days to now + {@code EXAM_ACTIVE_DAYS} days.</li>
-     * <li><b>Editors and tutors</b>: exams visible only from now to now + {@code EXAM_ACTIVE_DAYS} days.</li>
-     * </ul>
-     *
-     * <p>
-     * The method precomputes all required timestamps in Java and delegates to a JPQL
-     * query that applies the correct lower bound via a {@code CASE} expression. This preserves
-     * efficient database-side paging and ensures consistency across different database systems
-     * (MySQL, PostgreSQL).
+     * The visibility policy is described in {@link ExamRepository#findAllActiveExamsInCoursesWhereAtLeastTutor}
      * </p>
      *
-     * @param user     the authenticated user whose visibility window should be applied
+     * @param user     the authenticated user whose visibility policy should be applied
      * @param pageable paging specification
      * @return a page of exams visible to the user
      */
     public Page<Exam> getAllActiveExams(final Pageable pageable, final User user) {
-        // active exam means that exam has visible date in the past 7 days or next 7 days.
-        return examRepository.findAllActiveExamsInCoursesWhereAtLeastTutor(user.getGroups(), pageable, ZonedDateTime.now().minusDays(EXAM_ACTIVE_DAYS), ZonedDateTime.now(),
-                ZonedDateTime.now().plusDays(EXAM_ACTIVE_DAYS));
+        return examRepository.findAllActiveExamsInCoursesWhereAtLeastTutor(user.getGroups(), pageable, ZonedDateTime.now().minusDays(EXAM_ACTIVE_DAYS),
+                ZonedDateTime.now().plusDays(EXAM_ACTIVE_DAYS), ZonedDateTime.now());
     }
 
     /**
