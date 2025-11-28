@@ -105,11 +105,6 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
      * </ul>
      *
      * <p>
-     * The lower bound is computed dynamically in the database via a JPQL {@code CASE} expression,
-     * ensuring that paging is performed directly in the database and remains efficient.
-     * </p>
-     *
-     * <p>
      * This method is database-agnostic and works on both MySQL and PostgreSQL, because all
      * temporal arithmetic is performed in Java, and the query uses only portable JPQL.
      * </p>
@@ -124,15 +119,13 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
     @Query("""
             SELECT e
             FROM Exam e
-            WHERE
-                e.visibleDate <= :toDate
-                AND (
-                        (e.course.instructorGroupName IN :groups
-                         AND e.visibleDate >= :fromDate)
-                    OR
-                        ((e.course.editorGroupName IN :groups OR e.course.teachingAssistantGroupName IN :groups)
-                         AND e.visibleDate >= :nowDate)
-                )
+            WHERE :fromDate <= e.visibleDate
+                AND
+                    ((e.course.instructorGroupName IN :groups
+                     AND e.visibleDate <= :toDate)
+                OR
+                    ((e.course.editorGroupName IN :groups OR e.course.teachingAssistantGroupName IN :groups)
+                     AND e.visibleDate <= :nowDate))
             """)
     Page<Exam> findAllActiveExamsInCoursesWhereAtLeastTutor(@Param("groups") Set<String> groups, Pageable pageable, @Param("fromDate") ZonedDateTime fromDate,
             @Param("nowDate") ZonedDateTime nowDate, @Param("toDate") ZonedDateTime toDate);
