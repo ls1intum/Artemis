@@ -12,8 +12,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -333,7 +332,7 @@ public class ConversationService {
         recipients.forEach(user -> sendToConversationMembershipChannel(metisCrudAction, conversation, user, conversationParticipantTopicName));
     }
 
-    @NotNull
+    @NonNull
     public static String getConversationParticipantTopicName(Long courseId) {
         return METIS_WEBSOCKET_CHANNEL_PREFIX + "courses/" + courseId + "/conversations/user/";
     }
@@ -539,7 +538,7 @@ public class ConversationService {
      * @param channel the channel under consideration
      * @return true if the channel is visible to students
      */
-    public boolean isChannelVisibleToStudents(@NotNull Channel channel) {
+    public boolean isChannelVisibleToStudents(@NonNull Channel channel) {
         /* The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal */
         /* TODO: #11479 - remove the commented out code OR comment back in */
         // if (channel.getLecture() != null) {

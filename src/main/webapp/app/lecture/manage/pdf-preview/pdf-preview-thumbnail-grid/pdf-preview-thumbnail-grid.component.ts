@@ -8,7 +8,6 @@ import { PdfPreviewEnlargedCanvasComponent } from 'app/lecture/manage/pdf-previe
 import { faEye, faEyeSlash, faGripLines } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { PdfPreviewDateBoxComponent } from 'app/lecture/manage/pdf-preview/pdf-preview-date-box/pdf-preview-date-box.component';
-import { Course } from 'app/core/course/shared/entities/course.model';
 import dayjs from 'dayjs/esm';
 import { HiddenPage, HiddenPageMap, OrderedPage } from 'app/lecture/manage/pdf-preview/pdf-preview.component';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
@@ -27,7 +26,7 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
     FOREVER = dayjs('9999-12-31');
 
     // Inputs
-    course = input<Course>();
+    courseId = input<number>();
     currentPdfUrl = input<string>();
     isAppendingFile = input<boolean>();
     hiddenPages = input<HiddenPageMap>({});
@@ -41,9 +40,9 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
     selectedPages = signal<Set<OrderedPage>>(new Set());
     originalCanvas = signal<HTMLCanvasElement | undefined>(undefined);
     initialPageNumber = signal<number>(0);
-    activeButtonPage = signal<OrderedPage | null>(null);
+    activeButtonPage = signal<OrderedPage | undefined>(undefined);
     isPopoverOpen = signal<boolean>(false);
-    dragSlideId = signal<string | null>(null);
+    dragSlideId = signal<string | undefined>(undefined);
     isDragging = signal<boolean>(false);
     reordering = signal<boolean>(false);
 
@@ -217,7 +216,7 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
         pages.forEach((page) => {
             updatedHiddenPages[page.slideId] = {
                 date: dayjs(page.date),
-                exerciseId: page.exerciseId ?? null,
+                exerciseId: page.exerciseId ?? undefined,
             };
         });
 

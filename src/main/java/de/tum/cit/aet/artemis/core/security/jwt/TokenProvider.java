@@ -6,14 +6,15 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
-import jakarta.annotation.Nullable;
 import jakarta.annotation.PostConstruct;
-import jakarta.validation.constraints.NotNull;
 
 import javax.crypto.SecretKey;
 
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -49,6 +50,8 @@ public class TokenProvider {
     private static final String AUTHORITIES_KEY = "auth";
 
     private static final String AUTHENTICATION_METHOD = "auth-method";
+
+    public static final String IS_PASSKEY_SUPER_ADMIN_APPROVED = "is-passkey-super-admin-approved";
 
     private static final String TOOLS_KEY = "tools";
 
@@ -104,7 +107,7 @@ public class TokenProvider {
      * @param rememberMe     Determines Token lifetime
      * @return JWT Token
      */
-    @NotNull
+    @NonNull
     public String createToken(Authentication authentication, boolean rememberMe) {
         return createToken(authentication, getTokenValidity(rememberMe), null);
     }
@@ -117,7 +120,7 @@ public class TokenProvider {
      * @param tool           tool this token is used for. If null, it's a general access token
      * @return JWT Token
      */
-    @NotNull
+    @NonNull
     public String createToken(Authentication authentication, long duration, @Nullable ToolTokenType tool) {
         long validity = System.currentTimeMillis() + duration;
         return createToken(authentication, null, new Date(validity), tool, null);
@@ -133,7 +136,7 @@ public class TokenProvider {
      * @param authenticatedWithPasskey can be manually set to true if the token was created with a passkey but for performance reasons, no actual WebAuthnAuthentication was created
      * @return JWT Token
      */
-    @NotNull
+    @NonNull
     public String createToken(Authentication authentication, @Nullable Date issuedAt, Date expiration, @Nullable ToolTokenType tool, @Nullable Boolean authenticatedWithPasskey) {
         String authorities = authentication.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.joining(","));
 
@@ -142,11 +145,17 @@ public class TokenProvider {
             authenticationMethod = AuthenticationMethod.PASSKEY;
         }
 
+        boolean isPasskeyApproved = false;
+        if (authenticationMethod == AuthenticationMethod.PASSKEY && authentication.getDetails() instanceof Map<?, ?> details) {
+            isPasskeyApproved = Boolean.TRUE.equals(details.get(IS_PASSKEY_SUPER_ADMIN_APPROVED));
+        }
+
         // @formatter:off
         JwtBuilder jwtBuilder = Jwts.builder()
             .subject(authentication.getName())
             .claim(AUTHORITIES_KEY, authorities)
             .claim(AUTHENTICATION_METHOD, authenticationMethod)
+            .claim(IS_PASSKEY_SUPER_ADMIN_APPROVED, isPasskeyApproved)
             .issuedAt(issuedAt != null ? issuedAt : new Date());
         // @formatter:on
 
@@ -223,23 +232,23 @@ public class TokenProvider {
         return false;
     }
 
-    @NotNull
+    @NonNull
     private Claims parseClaims(String authToken) {
         return Jwts.parser().verifyWith(key).build().parseSignedClaims(authToken).getPayload();
     }
 
-    @NotNull
+    @NonNull
     public <T> T getClaim(String token, String claimName, Class<T> claimType) {
         Claims claims = parseClaims(token);
         return claims.get(claimName, claimType);
     }
 
-    @NotNull
+    @NonNull
     public Date getExpirationDate(String authToken) {
         return parseClaims(authToken).getExpiration();
     }
 
-    @NotNull
+    @NonNull
     public Date getIssuedAtDate(String authToken) {
         return parseClaims(authToken).getIssuedAt();
     }
@@ -273,6 +282,21 @@ public class TokenProvider {
         catch (UnsupportedJwtException | IllegalArgumentException e) {
             log.warn("Failed to parse authentication method from token: {}", e.getMessage());
             return null;
+        }
+    }
+
+    /**
+     * @param authToken of which the passkey super admin approval status should be extracted
+     * @return true if the passkey was super admin approved, false otherwise
+     */
+    public boolean isPasskeySuperAdminApproved(String authToken) {
+        try {
+            Boolean isApproved = parseClaims(authToken).get(IS_PASSKEY_SUPER_ADMIN_APPROVED, Boolean.class);
+            return Boolean.TRUE.equals(isApproved);
+        }
+        catch (UnsupportedJwtException | MalformedJwtException | IllegalArgumentException e) {
+            log.warn("Failed to parse passkey super admin approval status from token: {}", e.getMessage());
+            return false;
         }
     }
 }

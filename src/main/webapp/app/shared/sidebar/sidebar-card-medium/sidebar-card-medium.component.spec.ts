@@ -65,39 +65,35 @@ describe('SidebarCardMediumComponent', () => {
         expect(classes).toContain('border-danger');
     });
 
-    it('should store route on click', () => {
-        jest.spyOn(component, 'emitStoreAndRefresh');
+    it('should store target subroute and refresh on click when previously an item was selected', async () => {
+        jest.spyOn(component, 'storeTargetComponentSubRoute');
         jest.spyOn(component, 'refreshChildComponent');
-        const element: HTMLElement = fixture.nativeElement.querySelector('#test-sidebar-card-medium');
-        element.click();
+        component.itemSelected = true;
         fixture.detectChanges();
-        expect(component.emitStoreAndRefresh).toHaveBeenCalledWith(component.sidebarItem.id);
+        await fixture.whenStable();
+
+        const itemElement = fixture.nativeElement.querySelector('#test-sidebar-card-medium');
+        itemElement.click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(component.storeTargetComponentSubRoute).toHaveBeenCalled();
         expect(component.refreshChildComponent).toHaveBeenCalled();
     });
 
-    it('should navigate to the item URL on click', async () => {
-        jest.spyOn(component, 'emitStoreAndRefresh');
-        component.itemSelected = true;
-        fixture.detectChanges();
-        const itemElement = fixture.nativeElement.querySelector('#test-sidebar-card-medium');
-        itemElement.click();
-        await fixture.whenStable();
-        expect(component.emitStoreAndRefresh).toHaveBeenCalledWith('testId');
-        expect(router.navigate).toHaveBeenCalled();
-        const navigationArray = router.navigate.mock.calls[1][0];
-        expect(navigationArray).toStrictEqual(['./testId']);
-    });
-
-    it('should navigate to the when no item was selected before', async () => {
-        jest.spyOn(component, 'emitStoreAndRefresh');
+    it('should store target subroute on click when previously no item was selected', async () => {
+        jest.spyOn(component, 'storeTargetComponentSubRoute');
+        jest.spyOn(component, 'refreshChildComponent');
         component.itemSelected = false;
         fixture.detectChanges();
+        await fixture.whenStable();
+
         const itemElement = fixture.nativeElement.querySelector('#test-sidebar-card-medium');
         itemElement.click();
+        fixture.detectChanges();
         await fixture.whenStable();
-        expect(component.emitStoreAndRefresh).toHaveBeenCalledWith('testId');
-        expect(router.navigate).toHaveBeenCalled();
-        const navigationArray = router.navigate.mock.calls[1][0];
-        expect(navigationArray).toStrictEqual(['', 'testId']);
+
+        expect(component.storeTargetComponentSubRoute).toHaveBeenCalled();
+        expect(component.refreshChildComponent).not.toHaveBeenCalled();
     });
 });
