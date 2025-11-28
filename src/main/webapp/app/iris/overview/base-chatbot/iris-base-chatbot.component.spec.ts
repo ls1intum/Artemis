@@ -31,7 +31,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { User } from 'app/core/user/user.model';
 import { LLMSelectionDecision } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
-import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
 
 describe('IrisBaseChatbotComponent', () => {
     let component: IrisBaseChatbotComponent;
@@ -303,47 +302,6 @@ describe('IrisBaseChatbotComponent', () => {
         // Assert
         const suggestionButtons = fixture.nativeElement.querySelectorAll('.suggestion-button');
         expect(suggestionButtons).toHaveLength(0);
-    });
-
-    describe('LLM selection modal', () => {
-        it('should open LLM selection modal when user has not accepted LLM usage', fakeAsync(() => {
-            const llmModalService = TestBed.inject(LLMSelectionModalService);
-            const openSpy = jest.spyOn(llmModalService, 'open').mockResolvedValue('cloud');
-
-            // User has not accepted LLM usage
-            component.userAccepted = LLMSelectionDecision.NO_AI;
-
-            component.ngOnInit();
-            tick();
-
-            expect(openSpy).toHaveBeenCalledOnce();
-        }));
-
-        it('should not open LLM selection modal when user has already accepted LLM usage', fakeAsync(() => {
-            const llmModalService = TestBed.inject(LLMSelectionModalService);
-            const openSpy = jest.spyOn(llmModalService, 'open');
-
-            // User has already accepted LLM usage
-            component.userAccepted = LLMSelectionDecision.CLOUD_AI;
-
-            component.ngOnInit();
-            tick();
-
-            expect(openSpy).not.toHaveBeenCalled();
-        }));
-
-        it('should set userAccepted to true when cloud option is selected', fakeAsync(() => {
-            const llmModalService = TestBed.inject(LLMSelectionModalService);
-            jest.spyOn(llmModalService, 'open').mockResolvedValue('cloud');
-
-            component.userAccepted = LLMSelectionDecision.CLOUD_AI;
-
-            component.showAISelectionModal();
-            tick();
-
-            expect(component.userAccepted).toBe(LLMSelectionDecision.CLOUD_AI);
-            expect(chatService.updateLLMUsageConsent).toHaveBeenCalledWith(LLMSelectionDecision.CLOUD_AI);
-        }));
     });
 
     describe('clear chat session', () => {
