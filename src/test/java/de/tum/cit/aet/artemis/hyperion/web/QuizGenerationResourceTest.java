@@ -10,12 +10,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.util.List;
 import java.util.Set;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.ActiveProfiles;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
@@ -28,6 +30,7 @@ import de.tum.cit.aet.artemis.hyperion.dto.quiz.McOptionDTO;
 import de.tum.cit.aet.artemis.hyperion.service.AiQuizGenerationService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
+@ActiveProfiles("hyperion")
 class QuizGenerationResourceTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "quizgeneration";
@@ -74,6 +77,11 @@ class QuizGenerationResourceTest extends AbstractSpringIntegrationIndependentTes
         userTestRepository.save(tutor);
         userTestRepository.save(editor);
         userTestRepository.save(instructor);
+    }
+
+    @AfterEach
+    void cleanUpTestData() {
+        courseRepository.deleteAll();
     }
 
     private void mockSuccessfulGeneration() {
