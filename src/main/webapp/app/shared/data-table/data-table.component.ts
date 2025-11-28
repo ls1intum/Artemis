@@ -271,7 +271,7 @@ export class DataTableComponent implements OnInit, OnChanges {
         const cachedValue = this.localStorageService.retrieve<string>(this.perPageCacheKey);
         if (cachedValue) {
             const parsedValue = parseInt(cachedValue, 10) || cachedValue;
-            if (this.PAGING_VALUES.includes(parsedValue as any)) {
+            if (this.PAGING_VALUES.includes(parsedValue as PagingValue)) {
                 return parsedValue as PagingValue;
             }
         }

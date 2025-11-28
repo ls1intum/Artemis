@@ -16,6 +16,7 @@ import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { isStudentParticipation } from 'app/exercise/result/result.utils';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { getLatestSubmissionResult, getSubmissionResultById } from 'app/exercise/shared/entities/submission/submission.model';
 import { FileUploadAssessmentService } from 'app/fileupload/manage/assess/file-upload-assessment.service';
@@ -212,7 +213,11 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
     private initializePropertiesFromSubmission(submission: FileUploadSubmission): void {
         this.loadingInitialSubmission = false;
         this.submission = submission;
-        this.participation = this.submission.participation as StudentParticipation;
+        const participation = this.submission.participation;
+        if (!isStudentParticipation(participation)) {
+            throw new Error('Expected student participation for file upload assessment');
+        }
+        this.participation = participation;
         this.exercise = this.participation.exercise as FileUploadExercise;
         /**
          * CARE: Setting access rights for exercises should not happen this way and is a workaround.

@@ -66,7 +66,7 @@ export class ProgrammingExerciseEditSelectedComponent implements OnInit {
 
         this.selectedProgrammingExercises.forEach((programmingExercise) => {
             programmingExercise = this.setNewValues(programmingExercise);
-            const requestOptions = {} as any;
+            const requestOptions: Record<string, unknown> = {};
             if (this.notificationText) {
                 requestOptions.notificationText = this.notificationText;
             }

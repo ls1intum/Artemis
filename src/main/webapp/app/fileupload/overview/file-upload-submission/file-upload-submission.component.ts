@@ -38,6 +38,8 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { FileService } from 'app/shared/service/file.service';
+import { isStudentParticipation } from 'app/exercise/result/result.utils';
+import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 
 @Component({
     selector: 'jhi-file-upload-submission',
@@ -203,9 +205,9 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
         this.fileUploadSubmissionService.update(this.submission!, this.fileUploadExercise.id!, file).subscribe({
             next: (res) => {
                 this.submission = res.body!;
-                this.participation = this.submission.participation as StudentParticipation;
+                this.participation = this.requireStudentParticipation(this.submission.participation);
                 // reconnect so that the submission status is displayed correctly in the result.component
-                this.submission.participation!.submissions = [this.submission];
+                this.participation.submissions = [this.submission];
                 this.participationWebsocketService.addParticipation(this.participation, this.fileUploadExercise);
                 this.fileUploadExercise.studentParticipations = [this.participation];
                 this.result = getLatestSubmissionResult(this.submission)!;
@@ -249,6 +251,13 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
                 this.submissionFile = submissionFile;
             }
         }
+    }
+
+    private requireStudentParticipation(participation?: Participation): StudentParticipation {
+        if (isStudentParticipation(participation)) {
+            return participation;
+        }
+        throw new Error('Expected student participation for file upload submission');
     }
 
     /**

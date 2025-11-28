@@ -336,7 +336,7 @@ export class IrisChatService implements OnDestroy {
         const currentSessions = this.chatSessions.getValue();
 
         /** When a chat from a programming exercise is started {@link newIrisSession} does not have the property `chatMode` but `mode` instead */
-        const chatMode = newIrisSession.chatMode ?? (newIrisSession as any).mode ?? ChatServiceMode.COURSE;
+        const chatMode = newIrisSession.chatMode ?? (newIrisSession as { mode?: ChatServiceMode }).mode ?? ChatServiceMode.COURSE;
         const newIrisSessionDTO: IrisSessionDTO = {
             id: newIrisSession.id,
             creationDate: newIrisSession.creationDate,

@@ -9,7 +9,6 @@ import { WebsocketService } from 'app/shared/service/websocket.service';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { SubmissionType, getAllResultsOfAllSubmissions, getLatestSubmissionResult, setLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
-import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { findLatestResult } from 'app/shared/util/utils';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
@@ -17,6 +16,7 @@ import { SubmissionProcessingDTO } from 'app/programming/shared/entities/submiss
 import dayjs from 'dayjs/esm';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { PROFILE_LOCALCI } from 'app/app.constants';
+import { isProgrammingExerciseStudentParticipation } from '../utils/programming-exercise.utils';
 
 export enum ProgrammingSubmissionState {
     // The last submission of participation has a result.
@@ -489,11 +489,28 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
      * @return the expected rest time to wait for the build.
      */
     private getExpectedRemainingTimeForBuild(submission: ProgrammingSubmission): number {
-        return this.currentExpectedResultETA - (Date.now() - Date.parse(submission.submissionDate as any));
+        return this.currentExpectedResultETA - (Date.now() - this.parseSubmissionDate(submission.submissionDate));
     }
 
     private getExpectedRemainingTimeForQueue(submission: ProgrammingSubmission): number {
-        return this.currentExpectedQueueEstimate - (Date.now() - Date.parse(submission.submissionDate as any));
+        return this.currentExpectedQueueEstimate - (Date.now() - this.parseSubmissionDate(submission.submissionDate));
+    }
+
+    private parseSubmissionDate(submissionDate: unknown): number {
+        if (!submissionDate) {
+            return 0;
+        }
+        if (dayjs.isDayjs(submissionDate)) {
+            return submissionDate.valueOf();
+        }
+        if (submissionDate instanceof Date) {
+            return submissionDate.getTime();
+        }
+        if (typeof submissionDate === 'string') {
+            const parsed = Date.parse(submissionDate);
+            return Number.isNaN(parsed) ? 0 : parsed;
+        }
+        return 0;
     }
 
     /**
@@ -529,8 +546,11 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                 return !!exercise.studentParticipations[0].submissions && !!exercise.studentParticipations[0].submissions.length;
             })
             .forEach((exercise) => {
-                const participation = exercise.studentParticipations![0] as ProgrammingExerciseStudentParticipation;
-                const latestSubmission = participation.submissions!.reduce((current, next) => (current.id! > next.id! ? current : next)) as ProgrammingSubmission;
+                const participation = exercise.studentParticipations![0];
+                if (!isProgrammingExerciseStudentParticipation(participation) || !participation.submissions?.length) {
+                    return;
+                }
+                const latestSubmission = participation.submissions.reduce((current, next) => (current.id! > next.id! ? current : next)) as ProgrammingSubmission;
                 const latestResult = findLatestResult(getAllResultsOfAllSubmissions(participation.submissions));
                 const isPendingSubmission = !!latestSubmission && (!latestResult || (latestResult.submission && latestResult.submission.id !== latestSubmission.id));
                 // This needs to be done to clear the cache if exists and to prepare the subject for the later notification of the subscribers.

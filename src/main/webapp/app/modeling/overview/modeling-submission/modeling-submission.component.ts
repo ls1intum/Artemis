@@ -53,6 +53,8 @@ import { captureException } from '@sentry/angular';
 import { RatingComponent } from 'app/exercise/rating/rating.component';
 import { TranslateService } from '@ngx-translate/core';
 import { FullscreenComponent } from 'app/modeling/shared/fullscreen/fullscreen.component';
+import { isStudentParticipation } from 'app/exercise/result/result.utils';
+import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 
 @Component({
     selector: 'jhi-modeling-submission',
@@ -307,13 +309,18 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     private updateModelingSubmission(modelingSubmission: ModelingSubmission): void {
         if (!modelingSubmission) {
             this.alertService.error('artemisApp.apollonDiagram.submission.noSubmission');
+            return;
         }
 
+        const participation = this.requireStudentParticipation(modelingSubmission.participation);
+
         // In the header we always want to display the latest submission, even when we are viewing a specific submission
-        this.modelingParticipationHeader = modelingSubmission.participation as StudentParticipation;
-        this.modelingParticipationHeader.submissions = [<ModelingSubmission>omit(modelingSubmission, 'participation')];
+        this.modelingParticipationHeader = {
+            ...participation,
+            submissions: [omit(modelingSubmission, 'participation') satisfies ModelingSubmission],
+        };
         this.modelingExerciseHeader = this.modelingParticipationHeader.exercise as ModelingExercise;
-        this.modelingExerciseHeader.studentParticipations = [this.participation];
+        this.modelingExerciseHeader.studentParticipations = [participation];
 
         // If isFeedbackView is true and submissionId is present, we want to find the corresponding submission and not get the latest one
         if (this.isFeedbackView && this.submissionId && this.sortedSubmissionHistory) {
@@ -332,11 +339,11 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         if (getLatestSubmissionResult(modelingSubmission)) {
             modelingSubmission.results = [getLatestSubmissionResult(modelingSubmission)!];
         }
-        this.participation = modelingSubmission.participation as StudentParticipation;
+        this.participation = participation;
         this.isOwnerOfParticipation = this.accountService.isOwnerOfParticipation(this.participation);
 
         // reconnect participation <--> submission
-        this.participation.submissions = [<ModelingSubmission>omit(modelingSubmission, 'participation')];
+        this.participation.submissions = [omit(modelingSubmission, 'participation') satisfies ModelingSubmission];
 
         this.modelingExercise = this.participation.exercise as ModelingExercise;
         this.course = getCourseFromExercise(this.modelingExercise);
@@ -566,8 +573,9 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                 next: (response) => {
                     this.submission = response.body!;
                     // reconnect so that the submission status is displayed correctly in the result.component
-                    this.submission.participation!.submissions = [this.submission];
-                    this.participationWebsocketService.addParticipation(this.submission.participation as StudentParticipation, this.modelingExercise);
+                    const updatedParticipation = this.requireStudentParticipation(this.submission.participation);
+                    updatedParticipation.submissions = [this.submission];
+                    this.participationWebsocketService.addParticipation(updatedParticipation, this.modelingExercise);
                     this.result = getLatestSubmissionResult(this.submission);
                     this.onSaveSuccess();
                 },
@@ -607,11 +615,11 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                         this.hasElements = this.umlModel.elements && Object.values(this.umlModel.elements).length !== 0;
                     }
                     this.submissionChange.next(this.submission);
-                    this.participation = this.submission.participation as StudentParticipation;
+                    this.participation = this.requireStudentParticipation(this.submission.participation);
                     this.participation.exercise = this.modelingExercise;
-                    this.modelingParticipationHeader = this.submission.participation as StudentParticipation;
+                    this.modelingParticipationHeader = this.participation;
                     // reconnect so that the submission status is displayed correctly in the result.component
-                    this.submission.participation!.submissions = [this.submission];
+                    this.participation.submissions = [this.submission];
                     this.participationWebsocketService.addParticipation(this.participation, this.modelingExercise);
                     this.modelingExercise.studentParticipations = [this.participation];
                     this.modelingExerciseHeader.studentParticipations = [this.participation];
@@ -637,7 +645,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                 next: (response) => {
                     this.submission = response.body!;
                     this.submissionChange.next(this.submission);
-                    this.participation = this.submission.participation as StudentParticipation;
+                    this.participation = this.requireStudentParticipation(this.submission.participation);
                     this.participation.exercise = this.modelingExercise;
                     this.modelingExercise.studentParticipations = [this.participation];
                     this.result = getLatestSubmissionResult(this.submission);
@@ -662,6 +670,13 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     private onSaveError() {
         this.alertService.error('artemisApp.modelingEditor.error');
         this.isSaving = false;
+    }
+
+    private requireStudentParticipation(participation: Participation | undefined): StudentParticipation {
+        if (isStudentParticipation(participation)) {
+            return participation;
+        }
+        throw new Error('Expected student participation for modeling submission');
     }
 
     onReceiveSubmissionFromTeam(submission: ModelingSubmission) {

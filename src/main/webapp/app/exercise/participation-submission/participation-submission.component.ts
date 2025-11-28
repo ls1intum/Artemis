@@ -6,7 +6,6 @@ import { catchError, map } from 'rxjs/operators';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
-import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
@@ -34,6 +33,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
+import { isStudentParticipation } from 'app/exercise/result/result.utils';
 
 @Component({
     selector: 'jhi-participation-submission',
@@ -151,18 +151,18 @@ export class ParticipationSubmissionComponent implements OnInit {
     fetchParticipationAndSubmissionsForStudent() {
         combineLatest([this.participationService.find(this.participationId), this.submissionService.findAllSubmissionsOfParticipation(this.participationId)])
             .pipe(
-                map((res) => [res[0].body, res[1].body]),
+                map((res) => [res[0].body, res[1].body] as [Participation | undefined, Submission[] | undefined]),
                 catchError(() => of(null)),
             )
-            .subscribe((response) => {
+            .subscribe((response: [Participation | undefined, Submission[] | undefined] | null) => {
                 this.isLoading = false;
                 if (!response) {
                     return;
                 }
 
-                const participation = response[0] as StudentParticipation;
-                const submissions = response[1] as Submission[];
-                if (participation) {
+                const participation = response[0];
+                const submissions = response[1];
+                if (isStudentParticipation(participation)) {
                     this.participation = participation;
                     this.updateStatusBadgeColor();
                 }
@@ -187,8 +187,8 @@ export class ParticipationSubmissionComponent implements OnInit {
     }
 
     getName() {
-        if (this.participation?.type === ParticipationType.STUDENT || this.participation?.type === ParticipationType.PROGRAMMING) {
-            return (this.participation as StudentParticipation).student?.name || (this.participation as StudentParticipation).team?.name;
+        if (isStudentParticipation(this.participation)) {
+            return this.participation.student?.name || this.participation.team?.name;
         } else if (this.participation?.type === ParticipationType.SOLUTION) {
             return this.translateService.instant('artemisApp.participation.solutionParticipation');
         } else if (this.participation?.type === ParticipationType.TEMPLATE) {

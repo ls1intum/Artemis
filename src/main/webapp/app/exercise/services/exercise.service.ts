@@ -361,7 +361,7 @@ export class ExerciseService {
      * @param exercise the exercise
      */
     static stringifyExerciseCategories(exercise: Exercise) {
-        return exercise.categories?.map((category) => JSON.stringify(category) as unknown as ExerciseCategory);
+        return exercise.categories?.map((category) => JSON.stringify(category)) as ExerciseCategory[] | undefined;
     }
 
     /**
@@ -382,9 +382,9 @@ export class ExerciseService {
     static parseExerciseCategories(exercise?: Exercise) {
         if (exercise?.categories) {
             exercise.categories = exercise.categories.map((category) => {
-                const categoryObj = JSON.parse(category as unknown as string);
+                const categoryObj = typeof category === 'string' ? JSON.parse(category) : category;
                 return new ExerciseCategory(categoryObj.category, categoryObj.color);
-            });
+            }) satisfies ExerciseCategory[];
         }
     }
 
@@ -393,7 +393,10 @@ export class ExerciseService {
      * @param categories that are converted to categories
      */
     convertExerciseCategoriesAsStringFromServer(categories: string[]): ExerciseCategory[] {
-        return categories.map((category) => JSON.parse(category));
+        return categories.map((category) => {
+            const parsed = JSON.parse(category) as { category: string; color: string };
+            return new ExerciseCategory(parsed.category, parsed.color);
+        });
     }
 
     /**

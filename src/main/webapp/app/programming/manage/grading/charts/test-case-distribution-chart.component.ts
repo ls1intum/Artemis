@@ -48,11 +48,11 @@ export class TestCaseDistributionChartComponent extends ProgrammingGradingCharts
     // ngx
     // array containing the ngx-dedicated objects in order to display the weight and bonus chart
     ngxWeightData: NgxChartsMultiSeriesDataEntry[] = [
-        { name: '', series: [] as any[] },
-        { name: '', series: [] as any[] },
+        { name: '', series: [] },
+        { name: '', series: [] },
     ];
     // array containing the ngx-dedicated objects in order to display the points chart
-    ngxPointsData: NgxChartsMultiSeriesDataEntry[] = [{ name: '', series: [] as any[] }];
+    ngxPointsData: NgxChartsMultiSeriesDataEntry[] = [{ name: '', series: [] }];
 
     constructor() {
         super();
@@ -107,13 +107,20 @@ export class TestCaseDistributionChartComponent extends ProgrammingGradingCharts
             this.ngxWeightData = [];
             this.ngxPointsData = [];
 
-            const weight = { name: this.translateService.instant('artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.weight'), series: [] as any[] };
-            const weightAndBonus = {
+            type SeriesEntry = { name: string; value: number; bonus?: number; weight?: number; id?: number };
+            const weight: { name: string; series: SeriesEntry[] } = {
+                name: this.translateService.instant('artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.weight'),
+                series: [],
+            };
+            const weightAndBonus: { name: string; series: SeriesEntry[] } = {
                 name: this.translateService.instant('artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.weightAndBonus'),
-                series: [] as any[],
+                series: [],
             };
 
-            const points = { name: this.translateService.instant('artemisApp.programmingExercise.configureGrading.charts.testCasePoints.points'), series: [] as any[] };
+            const points: { name: string; series: SeriesEntry[] } = {
+                name: this.translateService.instant('artemisApp.programmingExercise.configureGrading.charts.testCasePoints.points'),
+                series: [],
+            };
 
             for (let i = 0; i < testCaseScores.length; i++) {
                 const element = testCaseScores[i];

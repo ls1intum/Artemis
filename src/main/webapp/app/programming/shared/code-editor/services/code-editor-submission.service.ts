@@ -3,8 +3,6 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { Subject, Subscription } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/programming/shared/services/programming-submission.service';
-import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { SolutionProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/solution-programming-exercise-participation.model';
 import { DomainDependentService } from 'app/programming/shared/code-editor/services/code-editor-domain-dependent.service';
 import { DomainChange, DomainType } from 'app/programming/shared/code-editor/model/code-editor.model';
 
@@ -48,10 +46,9 @@ export class CodeEditorSubmissionService extends DomainDependentService implemen
             this.participationId = domainValue.id;
             // There is no differentiation between the participation types atm.
             // This could be implemented in the domain service, but this would make the implementation more complicated, too.
-            this.exerciseId = (domainValue as StudentParticipation).exercise
-                ? (domainValue as StudentParticipation).exercise?.id
-                : (domainValue as SolutionProgrammingExerciseParticipation).programmingExercise?.id;
-            const personalParticipation = !!(domainValue as StudentParticipation).exercise;
+            const programmingExercise = 'programmingExercise' in domainValue ? domainValue.programmingExercise : undefined;
+            this.exerciseId = domainValue.exercise?.id ?? programmingExercise?.id;
+            const personalParticipation = !!domainValue.exercise;
             if (this.participationId && this.exerciseId) {
                 this.submissionSubscription = this.submissionService
                     .getLatestPendingSubmissionByParticipationId(this.participationId, this.exerciseId, personalParticipation)

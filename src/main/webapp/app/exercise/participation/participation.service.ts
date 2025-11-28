@@ -146,30 +146,33 @@ export class ParticipationService {
     public mergeStudentParticipations(participations: StudentParticipation[]): StudentParticipation[] {
         const mergedParticipations: StudentParticipation[] = [];
 
-        if (participations?.length) {
-            const nonTestRunParticipations = participations.filter((participation: StudentParticipation) => !participation.testRun);
-            const testRunParticipations = participations.filter((participation: StudentParticipation) => participation.testRun);
+        if (!participations?.length) {
+            return mergedParticipations;
+        }
 
-            if (participations[0].type === ParticipationType.STUDENT) {
-                if (nonTestRunParticipations.length) {
-                    const combinedParticipation = new StudentParticipation();
-                    this.mergeResultsAndSubmissions(combinedParticipation, nonTestRunParticipations);
-                    mergedParticipations.push(combinedParticipation);
-                }
-                if (testRunParticipations.length) {
-                    const combinedParticipationTestRun = new StudentParticipation();
-                    this.mergeResultsAndSubmissions(combinedParticipationTestRun, testRunParticipations);
-                    mergedParticipations.push(combinedParticipationTestRun);
-                }
-            } else if (participations[0].type === ParticipationType.PROGRAMMING) {
-                if (nonTestRunParticipations.length) {
-                    const combinedParticipation = this.mergeProgrammingParticipations(nonTestRunParticipations as ProgrammingExerciseStudentParticipation[]);
-                    mergedParticipations.push(combinedParticipation);
-                }
-                if (testRunParticipations.length) {
-                    const combinedParticipationTestRun = this.mergeProgrammingParticipations(testRunParticipations as ProgrammingExerciseStudentParticipation[]);
-                    mergedParticipations.push(combinedParticipationTestRun);
-                }
+        const [first] = participations;
+        const nonTestRunParticipations = participations.filter((participation: StudentParticipation) => !participation.testRun);
+        const testRunParticipations = participations.filter((participation: StudentParticipation) => participation.testRun);
+
+        if (first.type === ParticipationType.STUDENT) {
+            if (nonTestRunParticipations.length) {
+                const combinedParticipation = new StudentParticipation();
+                this.mergeResultsAndSubmissions(combinedParticipation, nonTestRunParticipations);
+                mergedParticipations.push(combinedParticipation);
+            }
+            if (testRunParticipations.length) {
+                const combinedParticipationTestRun = new StudentParticipation();
+                this.mergeResultsAndSubmissions(combinedParticipationTestRun, testRunParticipations);
+                mergedParticipations.push(combinedParticipationTestRun);
+            }
+        } else if (first.type === ParticipationType.PROGRAMMING) {
+            if (nonTestRunParticipations.length) {
+                const combinedParticipation = this.mergeProgrammingParticipations(nonTestRunParticipations);
+                mergedParticipations.push(combinedParticipation);
+            }
+            if (testRunParticipations.length) {
+                const combinedParticipationTestRun = this.mergeProgrammingParticipations(testRunParticipations);
+                mergedParticipations.push(combinedParticipationTestRun);
             }
         }
         return mergedParticipations;

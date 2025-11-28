@@ -4,6 +4,7 @@ import { Subject, Subscription } from 'rxjs';
 import { ParticipationService } from './participation.service';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { StudentParticipation, isPracticeMode } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { ExerciseSubmissionState, ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/programming/shared/services/programming-submission.service';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -14,7 +15,6 @@ import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { formatTeamAsSearchResult } from 'app/exercise/team/team.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import dayjs from 'dayjs/esm';
-import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { AlertService } from 'app/shared/service/alert.service';
 import { EventManager } from 'app/shared/service/event-manager.service';
 import { faCircleNotch, faEraser, faFilePowerpoint, faTable, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
@@ -36,6 +36,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { isProgrammingExerciseStudentParticipation } from 'app/programming/shared/utils/programming-exercise.utils';
 
 enum FilterProp {
     ALL = 'all',
@@ -422,9 +423,9 @@ export class ParticipationComponent implements OnInit, OnDestroy {
      * @param participation Student participation
      * @param repoUri original repository uri
      */
-    getRepositoryLink = (participation: StudentParticipation, repoUri: string) => {
-        if ((participation as ProgrammingExerciseStudentParticipation).repositoryUri === repoUri) {
-            return (participation as ProgrammingExerciseStudentParticipation).userIndependentRepositoryUri;
+    getRepositoryLink = (participation: Participation, repoUri: string) => {
+        if (isProgrammingExerciseStudentParticipation(participation) && participation.repositoryUri === repoUri) {
+            return participation.userIndependentRepositoryUri;
         }
         return repoUri;
     };

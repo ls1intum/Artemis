@@ -7,7 +7,6 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { Observable, combineLatestWith } from 'rxjs';
-import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { SortService } from 'app/shared/service/sort.service';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
@@ -23,6 +22,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
+import { isStudentParticipation } from 'app/exercise/result/result.utils';
 
 @Component({
     selector: 'jhi-complaint-list',
@@ -143,7 +143,11 @@ export class ListOfComplaintsComponent implements OnInit {
             return;
         }
 
-        const studentParticipation = complaint.result.submission.participation as StudentParticipation;
+        const participation = complaint.result.submission.participation;
+        if (!isStudentParticipation(participation)) {
+            return;
+        }
+        const studentParticipation = participation;
         const exercise = studentParticipation.exercise;
         const submissionId = complaint.result.submission.id;
         if (!exercise || !exercise.type || !submissionId) {

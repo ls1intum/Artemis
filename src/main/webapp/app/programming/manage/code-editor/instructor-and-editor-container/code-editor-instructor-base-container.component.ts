@@ -22,6 +22,11 @@ import { isExamExercise } from 'app/shared/util/utils';
 import { Subject } from 'rxjs';
 import { debounceTime, shareReplay } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
+import {
+    isProgrammingExerciseStudentParticipation,
+    isSolutionProgrammingExerciseParticipation,
+    isTemplateProgrammingExerciseParticipation,
+} from 'app/programming/shared/utils/programming-exercise.utils';
 /**
  * Enumeration specifying the loading state
  */
@@ -238,23 +243,32 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
         const exercise = this.exercise;
         if (participationId === this.exercise.templateParticipation!.id) {
             this.selectedRepository = RepositoryType.TEMPLATE;
-            this.selectedParticipation = this.exercise.templateParticipation;
-            (this.selectedParticipation as TemplateProgrammingExerciseParticipation).programmingExercise = exercise;
+            const templateParticipation = this.exercise.templateParticipation;
+            if (isTemplateProgrammingExerciseParticipation(templateParticipation)) {
+                templateParticipation.programmingExercise = exercise;
+                this.selectedParticipation = templateParticipation;
+            }
         } else if (participationId === this.exercise.solutionParticipation!.id) {
             this.selectedRepository = RepositoryType.SOLUTION;
-            this.selectedParticipation = this.exercise.solutionParticipation;
-            (this.selectedParticipation as SolutionProgrammingExerciseParticipation).programmingExercise = exercise;
+            const solutionParticipation = this.exercise.solutionParticipation;
+            if (isSolutionProgrammingExerciseParticipation(solutionParticipation)) {
+                solutionParticipation.programmingExercise = exercise;
+                this.selectedParticipation = solutionParticipation;
+            }
         } else if (this.exercise.studentParticipations?.length && participationId === this.exercise.studentParticipations[0].id) {
             this.selectedRepository = RepositoryType.ASSIGNMENT;
-            this.selectedParticipation = this.exercise.studentParticipations[0] as ProgrammingExerciseStudentParticipation;
-            this.selectedParticipation.exercise = exercise;
+            const studentParticipation = this.exercise.studentParticipations[0];
+            if (isProgrammingExerciseStudentParticipation(studentParticipation)) {
+                studentParticipation.exercise = exercise;
+                this.selectedParticipation = studentParticipation;
+            }
         } else {
             this.onError('participationNotFound');
         }
     }
 
     repositoryUri(participation?: Participation) {
-        return (participation as ProgrammingExerciseStudentParticipation)?.repositoryUri;
+        return isProgrammingExerciseStudentParticipation(participation) ? participation.repositoryUri : undefined;
     }
 
     /**

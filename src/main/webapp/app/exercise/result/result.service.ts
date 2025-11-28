@@ -6,7 +6,7 @@ import { Result, isPracticeResult } from 'app/exercise/shared/entities/result/re
 import { ResultWithPointsPerGradingCriterion } from 'app/exercise/shared/entities/result/result-with-points-per-grading-criterion.model';
 import { createRequestOption } from 'app/shared/util/request.util';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
-import { StudentParticipation, isPracticeMode } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { isPracticeMode } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { map, tap } from 'rxjs/operators';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
@@ -275,7 +275,7 @@ export class ResultService implements IResultService {
 
     private convertResultDatesFromServer(result: Result) {
         result.completionDate = convertDateFromServer(result.completionDate);
-        ParticipationService.convertParticipationDatesFromServer(result.submission?.participation as StudentParticipation);
+        ParticipationService.convertParticipationDatesFromServer(result.submission?.participation);
         SubmissionService.convertSubmissionDateFromServer(result.submission);
     }
 
@@ -306,7 +306,7 @@ export class ResultService implements IResultService {
 
     public static processReceivedResult(exercise: Exercise, result: Result): Result {
         if (result.submission?.participation) {
-            (result.submission.participation as StudentParticipation).exercise = exercise;
+            result.submission.participation.exercise = exercise;
             // Nest submission into participation so that it is available for the result component
         }
         result.durationInMinutes = ResultService.durationInMinutes(result.completionDate!, result.submission?.participation?.initializationDate ?? exercise.releaseDate!);

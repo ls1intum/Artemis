@@ -1,8 +1,8 @@
 import { Location } from '@angular/common';
 import { Router } from '@angular/router';
-import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Exercise, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
+import { isStudentParticipation } from 'app/exercise/result/result.utils';
 
 /**
  * Navigate from Assessment Editor to Dashboard:
@@ -28,7 +28,8 @@ export function assessmentNavigateBack(location: Location, router: Router, exerc
                 const exam = exercise.exerciseGroup!.exam!;
                 router.navigateByUrl(`/course-management/${course?.id}/exams/${exam.id}/assessment-dashboard/${exercise.id}`);
             } else if (exercise.teamMode && submission) {
-                const teamId = (submission.participation as StudentParticipation).team?.id;
+                const participation = submission.participation;
+                const teamId = isStudentParticipation(participation) ? participation.team?.id : undefined;
                 router.navigateByUrl(`/courses/${course?.id}/exercises/${exercise.id}/teams/${teamId}`);
             } else {
                 router.navigateByUrl(`/course-management/${course?.id}/assessment-dashboard/${exercise.id}`);
