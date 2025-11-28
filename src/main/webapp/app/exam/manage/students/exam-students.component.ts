@@ -324,6 +324,4 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
             });
         }
     }
-
-    protected readonly ExamUser = ExamUser;
 }

@@ -47,7 +47,6 @@
             <input
                 type="text"
                 placeholder="{{ 'artemisApp.exam.examUsers.rooms.reseating.unassignedExamSeatSearchPlaceholder' | artemisTranslate }}"
-                [defaultValue]="selectedSeat()"
                 (change)="setUnassignedSeat($event)"
             />
         } @else {

@@ -1,6 +1,6 @@
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { Component, InputSignal, ModelSignal, OutputEmitterRef, Signal, ViewEncapsulation, WritableSignal, effect, inject, input, model, output, signal } from '@angular/core';
+import { Component, InputSignal, ModelSignal, OutputEmitterRef, ViewEncapsulation, WritableSignal, effect, inject, input, model, output, signal } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
 import { NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
@@ -35,7 +35,6 @@ export class StudentsReseatingDialogComponent {
     onSave: OutputEmitterRef<void> = output();
 
     private roomsUsedInExam: WritableSignal<RoomForDistributionDTO[]> = signal([]);
-    private availableRooms: Signal<RoomForDistributionDTO[]> = this.studentsRoomDistributionService.availableRooms;
     useCustomLocation: WritableSignal<boolean> = signal(false);
     selectedRoomNumber: WritableSignal<string> = signal('');
     private seatsOfSelectedRoom: WritableSignal<SeatsOfExamRoomDTO> = signal({ seats: [] });
@@ -82,7 +81,12 @@ export class StudentsReseatingDialogComponent {
     attemptReseatAndCloseDialogOnSuccess(): void {
         this.studentsRoomDistributionService
             .reseatStudent(this.courseId(), this.exam().id!, this.examUser()!.id!, this.selectedRoomNumber(), this.selectedSeat(), !this.useCustomLocation())
-            .subscribe();
+            .subscribe({
+                next: () => {
+                    this.closeDialog();
+                    this.onSave.emit();
+                },
+            });
     }
 
     pickSelectedRoom(event: { item: RoomForDistributionDTO }): void {
@@ -118,7 +122,7 @@ export class StudentsReseatingDialogComponent {
     };
 
     private findAllMatchingRoomsForTerm = (term: string): RoomForDistributionDTO[] => {
-        const potentialRooms: RoomForDistributionDTO[] = this.useCustomLocation() ? this.availableRooms() : this.roomsUsedInExam();
+        const potentialRooms: RoomForDistributionDTO[] = this.roomsUsedInExam();
 
         const trimmed = term.trim();
         if (!trimmed) {
