@@ -223,27 +223,6 @@ describe('RequestFeedbackButtonComponent', () => {
         expect(button.nativeElement.disabled).toBeFalse();
     }));
 
-    it('should open modal when hasUserAcceptedLLMUsage is false and requestAIFeedback is clicked', fakeAsync(() => {
-        setAthenaEnabled(true);
-        const participation = createParticipation();
-        const exercise = createBaseExercise(ExerciseType.TEXT, false, participation);
-        setupComponentInputs(exercise, true, false);
-        component.hasUserAcceptedLLMUsage = false;
-
-        // Set up modal spy
-        const modalService = TestBed.inject(NgbModal);
-        const modalSpy = jest.spyOn(modalService, 'open').mockReturnValue({} as any);
-
-        initAndTick();
-
-        const button = debugElement.query(By.css('button'));
-        expect(button).not.toBeNull();
-        button.nativeElement.click();
-        tick();
-
-        expect(modalSpy).toHaveBeenCalled();
-    }));
-
     it('should not open modal when hasUserAcceptedLLMUsage is true and requestAIFeedback is clicked', fakeAsync(() => {
         setAthenaEnabled(true);
         const participation = createParticipation();

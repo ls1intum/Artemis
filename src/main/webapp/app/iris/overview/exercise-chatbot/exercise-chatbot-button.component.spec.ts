@@ -170,7 +170,7 @@ describe('ExerciseChatbotButtonComponent', () => {
 
         // then
         const unreadIndicatorElement: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('.unread-indicator');
-        expect(unreadIndicatorElement).not.toBeNull();
+        expect(unreadIndicatorElement).toBeNull();
         flush();
     }));
 

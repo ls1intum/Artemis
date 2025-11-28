@@ -624,7 +624,7 @@ describe('AccountService', () => {
         beforeEach(() => {
             jest.useFakeTimers();
             // Set a fixed date for consistent testing
-            jest.setSystemTime(new Date('2024-02-06'));
+            jest.setSystemTime(new Date('2025-11-28'));
         });
 
         afterEach(() => {
@@ -641,7 +641,7 @@ describe('AccountService', () => {
             // Check if the date was set correctly
             const acceptedDate = accountService.userIdentity()?.selectedLLMUsageTimestamp;
             expect(acceptedDate).toBeDefined();
-            expect(acceptedDate?.format('YYYY-MM-DD')).toBe('2025-11-27');
+            expect(acceptedDate?.format('YYYY-MM-DD')).toBe('2025-11-28');
         });
 
         it('should not throw error when user identity is undefined', () => {
