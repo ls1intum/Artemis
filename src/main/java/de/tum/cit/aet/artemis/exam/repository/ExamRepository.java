@@ -108,7 +108,7 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
      * <p>
      * This method is database-agnostic and works on both MySQL and PostgreSQL,
      * <a href="https://docs.hibernate.org/orm/current/userguide/html_single/#hql-Datetime-arithmetic">because the
-     * temporal arithmetic is valid in Hibernate</a>
+     * temporal arithmetic uses only portable JPQL.</a>
      * </p>
      *
      * @param groups                   all authorization groups the user belongs to
