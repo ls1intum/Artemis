@@ -19,7 +19,7 @@ import { of } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
-import { mockClientMessage, mockServerMessage, mockServerSessionHttpResponse } from 'test/helpers/sample/iris-sample-data';
+import { mockClientMessage, mockServerMessage } from 'test/helpers/sample/iris-sample-data';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { By } from '@angular/platform-browser';
 import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';
@@ -37,8 +37,6 @@ describe('IrisBaseChatbotComponent', () => {
     let fixture: ComponentFixture<IrisBaseChatbotComponent>;
 
     let chatService: IrisChatService;
-    let httpService: jest.Mocked<IrisChatHttpService>;
-    let wsMock: jest.Mocked<IrisWebsocketService>;
     let accountService: AccountService;
 
     const statusMock = {
@@ -86,8 +84,6 @@ describe('IrisBaseChatbotComponent', () => {
                 fixture = TestBed.createComponent(IrisBaseChatbotComponent);
                 chatService = TestBed.inject(IrisChatService);
                 chatService.setCourseId(456);
-                httpService = TestBed.inject(IrisChatHttpService) as jest.Mocked<IrisChatHttpService>;
-                wsMock = TestBed.inject(IrisWebsocketService) as jest.Mocked<IrisWebsocketService>;
                 accountService = TestBed.inject(AccountService);
                 component = fixture.componentInstance;
 
