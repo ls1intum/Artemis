@@ -323,7 +323,7 @@ public class QuizExerciseUtilService {
         submittedAnswerMC.setQuizQuestion(multipleChoiceQuestion);
         var submittedAnswerSC = new MultipleChoiceSubmittedAnswer();
         MultipleChoiceQuestion singleChoiceQuestion = (MultipleChoiceQuestion) (quizExercise.getQuizQuestions().get(3));
-        submittedAnswerSC.setSelectedOptions(Set.of(multipleChoiceQuestion.getAnswerOptions().getFirst()));
+        submittedAnswerSC.setSelectedOptions(Set.of(singleChoiceQuestion.getAnswerOptions().getFirst()));
         submittedAnswerSC.setQuizQuestion(singleChoiceQuestion);
         var submittedShortAnswer = new ShortAnswerSubmittedAnswer();
         ShortAnswerQuestion shortAnswerQuestion = (ShortAnswerQuestion) (quizExercise.getQuizQuestions().get(2));
@@ -386,6 +386,8 @@ public class QuizExerciseUtilService {
         dragAndDropMapping.setQuestion(dragAndDropQuestion);
         incorrectDragAndDropMapping.setQuestion(dragAndDropQuestion);
         mappingWithImage.setQuestion(dragAndDropQuestion);
+        quizQuestionRepository.saveAndFlush(multipleChoiceQuestion);
+        quizQuestionRepository.saveAndFlush(singleChoiceQuestion);
         quizQuestionRepository.save(dragAndDropQuestion);
         submittedAnswerRepository.save(submittedAnswerMC);
         submittedAnswerRepository.save(submittedAnswerSC);

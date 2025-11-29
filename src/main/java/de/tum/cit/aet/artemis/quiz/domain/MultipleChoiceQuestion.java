@@ -246,4 +246,9 @@ public class MultipleChoiceQuestion extends QuizQuestion {
         return question;
     }
 
+    // helper methods
+    public void addAnswerOption(AnswerOption answerOption) {
+        answerOptions.add(answerOption);
+        answerOption.setQuestion(this);
+    }
 }
