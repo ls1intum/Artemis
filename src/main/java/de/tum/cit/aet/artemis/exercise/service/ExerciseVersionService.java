@@ -3,8 +3,11 @@ package de.tum.cit.aet.artemis.exercise.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.EnumSet;
+import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,12 +21,15 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseVersion;
 import de.tum.cit.aet.artemis.exercise.dto.versioning.ExerciseSnapshotDTO;
+import de.tum.cit.aet.artemis.exercise.dto.versioning.ProgrammingExerciseSnapshotDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseVersionRepository;
 import de.tum.cit.aet.artemis.fileupload.repository.FileUploadExerciseRepository;
 import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseEditorSyncTarget;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.GitService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseEditorSyncService;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
 
@@ -53,9 +59,11 @@ public class ExerciseVersionService {
 
     private final UserRepository userRepository;
 
+    private final ProgrammingExerciseEditorSyncService programmingExerciseEditorSyncService;
+
     public ExerciseVersionService(ExerciseVersionRepository exerciseVersionRepository, GitService gitService, ProgrammingExerciseRepository programmingExerciseRepository,
             QuizExerciseRepository quizExerciseRepository, TextExerciseRepository textExerciseRepository, ModelingExerciseRepository modelingExerciseRepository,
-            FileUploadExerciseRepository fileUploadExerciseRepository, UserRepository userRepository) {
+            FileUploadExerciseRepository fileUploadExerciseRepository, UserRepository userRepository, ProgrammingExerciseEditorSyncService programmingExerciseEditorSyncService) {
         this.exerciseVersionRepository = exerciseVersionRepository;
         this.gitService = gitService;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -64,6 +72,7 @@ public class ExerciseVersionService {
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
         this.userRepository = userRepository;
+        this.programmingExerciseEditorSyncService = programmingExerciseEditorSyncService;
     }
 
     public boolean isRepositoryTypeVersionable(RepositoryType repositoryType) {
@@ -122,6 +131,7 @@ public class ExerciseVersionService {
             }
             exerciseVersion.setExerciseSnapshot(exerciseSnapshot);
             ExerciseVersion savedExerciseVersion = exerciseVersionRepository.save(exerciseVersion);
+            this.determineSynchronizationForActiveEditors(exercise.getId(), exerciseSnapshot, previousVersion.map(ExerciseVersion::getExerciseSnapshot).orElse(null));
             log.info("Exercise version {} has been created for exercise {}", savedExerciseVersion.getId(), exercise.getId());
         }
         catch (Exception e) {
@@ -151,5 +161,63 @@ public class ExerciseVersionService {
             case MODELING -> modelingExerciseRepository.findForVersioningById(exercise.getId()).orElse(null);
             case FILE_UPLOAD -> fileUploadExerciseRepository.findForVersioningById(exercise.getId()).orElse(null);
         };
+    }
+
+    /**
+     * Compare two exercise snapshots and return the change that should be broadcast to clients.
+     *
+     * @param exerciseId       the exercise id
+     * @param newSnapshot      the new snapshot
+     * @param previousSnapshot the previous snapshot (optional)
+     */
+    private void determineSynchronizationForActiveEditors(Long exerciseId, ExerciseSnapshotDTO newSnapshot, ExerciseSnapshotDTO previousSnapshot) {
+        if (previousSnapshot == null || newSnapshot.programmingData() == null || previousSnapshot.programmingData() == null) {
+            return;
+        }
+
+        var newProgrammingData = newSnapshot.programmingData();
+        var previousProgrammingData = previousSnapshot.programmingData();
+        ProgrammingExerciseEditorSyncTarget target = null;
+        Long auxiliaryRepositoryId = null;
+
+        if (commitIdChanged(previousProgrammingData.templateParticipation(), newProgrammingData.templateParticipation())) {
+            target = ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY;
+        }
+        else if (commitIdChanged(previousProgrammingData.solutionParticipation(), newProgrammingData.solutionParticipation())) {
+            target = ProgrammingExerciseEditorSyncTarget.SOLUTION_REPOSITORY;
+        }
+        else if (!Objects.equals(previousProgrammingData.testsCommitId(), newProgrammingData.testsCommitId())) {
+            target = ProgrammingExerciseEditorSyncTarget.TESTS_REPOSITORY;
+        }
+        else {
+            var previousAuxiliaries = Optional.ofNullable(previousProgrammingData.auxiliaryRepositories()).orElseGet(List::of).stream().collect(
+                    Collectors.toMap(ProgrammingExerciseSnapshotDTO.AuxiliaryRepositorySnapshotDTO::id, ProgrammingExerciseSnapshotDTO.AuxiliaryRepositorySnapshotDTO::commitId));
+            for (var auxiliary : Optional.ofNullable(newProgrammingData.auxiliaryRepositories()).orElseGet(List::of)) {
+                var previousCommitId = previousAuxiliaries.get(auxiliary.id());
+                if (!Objects.equals(previousCommitId, auxiliary.commitId())) {
+                    target = ProgrammingExerciseEditorSyncTarget.AUXILIARY_REPOSITORY;
+                    auxiliaryRepositoryId = auxiliary.id();
+                    break;
+                }
+            }
+        }
+
+        if (target == null && !Objects.equals(previousSnapshot.problemStatement(), newSnapshot.problemStatement())) {
+            target = ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT;
+        }
+
+        if (target != null) {
+            programmingExerciseEditorSyncService.broadcastChange(exerciseId, target, auxiliaryRepositoryId);
+        }
+    }
+
+    private boolean commitIdChanged(ProgrammingExerciseSnapshotDTO.ParticipationSnapshotDTO previousParticipation,
+            ProgrammingExerciseSnapshotDTO.ParticipationSnapshotDTO newParticipation) {
+        if (previousParticipation == null && newParticipation == null) {
+            return false;
+        }
+        var previousCommitId = previousParticipation == null ? null : previousParticipation.commitId();
+        var newCommitId = newParticipation == null ? null : newParticipation.commitId();
+        return !Objects.equals(previousCommitId, newCommitId);
     }
 }

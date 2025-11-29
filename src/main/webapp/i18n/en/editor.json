@@ -60,6 +60,10 @@
                 "refreshExplanationShort": "Refresh and load all files from your repository.",
                 "refreshExplanationLong": "You have unsaved or uncommitted changes in the online editor. When you click the button below, these changes will be reset and overwritten with the last commit on the repository server. This can not be undone!"
             },
+            "synchronization": {
+                "repositoryChanged": "This repository was updated in another session. Refresh the files to sync the changes.",
+                "problemStatementChanged": "The problem statement was updated in another session. Refresh to load the latest content."
+            },
             "fileBrowser": {
                 "fileBrowser": "File browser",
                 "deleteFileTitle": "Delete file",
