@@ -38,7 +38,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -481,11 +480,6 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
         fileSubmission.setFileContent("updatedFileContent");
         fileSubmissions.add(fileSubmission);
         return fileSubmissions;
-    }
-
-    private void alignProgrammingExerciseProjectKeyWithRepository() {
-        String repositoryProjectKey = localAuxiliaryRepo.workingCopyGitRepoFile.toPath().getParent().getFileName().toString();
-        ReflectionTestUtils.setField(programmingExercise, "projectKey", repositoryProjectKey);
     }
 
     @Test
