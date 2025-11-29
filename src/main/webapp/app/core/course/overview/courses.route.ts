@@ -1,7 +1,7 @@
 import { Routes } from '@angular/router';
 
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
-import { Authority } from 'app/shared/constants/authority.constants';
+import { IS_AT_LEAST_STUDENT } from 'app/shared/constants/authority.constants';
 
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 
@@ -31,7 +31,7 @@ export const courseRoutes: Routes = [
         path: '',
         loadComponent: () => import('app/core/course/overview/courses/courses.component').then((m) => m.CoursesComponent),
         data: {
-            authorities: [Authority.USER],
+            authorities: IS_AT_LEAST_STUDENT,
             pageTitle: 'overview.title',
             usesModuleBackground: true,
         },
@@ -41,7 +41,7 @@ export const courseRoutes: Routes = [
         path: CourseOverviewRoutePath.ENROLL,
         loadComponent: () => import('app/core/course/overview/course-registration/course-registration.component').then((m) => m.CourseRegistrationComponent),
         data: {
-            authorities: [Authority.USER],
+            authorities: IS_AT_LEAST_STUDENT,
             pageTitle: 'artemisApp.studentDashboard.enroll.title',
             usesModuleBackground: true,
         },
@@ -51,7 +51,7 @@ export const courseRoutes: Routes = [
         path: CourseOverviewRoutePath.ARCHIVE,
         loadComponent: () => import('app/core/course/overview/course-archive/course-archive.component').then((m) => m.CourseArchiveComponent),
         data: {
-            authorities: [Authority.USER],
+            authorities: IS_AT_LEAST_STUDENT,
             pageTitle: 'overview.archive',
             usesModuleBackground: true,
         },
@@ -65,7 +65,7 @@ export const courseRoutes: Routes = [
         loadComponent: () =>
             import('app/core/course/overview/course-registration/course-registration-detail/course-registration-detail.component').then((m) => m.CourseRegistrationDetailComponent),
         data: {
-            authorities: [Authority.USER],
+            authorities: IS_AT_LEAST_STUDENT,
             pageTitle: 'artemisApp.studentDashboard.enroll.title',
             usesModuleBackground: true,
         },
@@ -75,7 +75,7 @@ export const courseRoutes: Routes = [
         path: ':courseId',
         loadComponent: () => import('./course-overview/course-overview.component').then((m) => m.CourseOverviewComponent),
         data: {
-            authorities: [Authority.USER],
+            authorities: IS_AT_LEAST_STUDENT,
             pageTitle: 'overview.course',
         },
         canActivate: [UserRouteAccessService],
@@ -84,7 +84,7 @@ export const courseRoutes: Routes = [
                 path: CourseOverviewRoutePath.EXERCISES,
                 loadComponent: () => import('app/core/course/overview/course-exercises/course-exercises.component').then((m) => m.CourseExercisesComponent),
                 data: {
-                    authorities: [Authority.USER],
+                    authorities: IS_AT_LEAST_STUDENT,
                     pageTitle: 'overview.exercises',
                     hasSidebar: true,
                     showRefreshButton: true,
@@ -95,7 +95,7 @@ export const courseRoutes: Routes = [
                     {
                         path: ':exerciseId',
                         data: {
-                            authorities: [Authority.USER],
+                            authorities: IS_AT_LEAST_STUDENT,
                             pageTitle: 'overview.exercises',
                             hasSidebar: true,
                             showRefreshButton: true,
@@ -109,7 +109,7 @@ export const courseRoutes: Routes = [
             {
                 path: 'exercises/text-exercises/:exerciseId',
                 data: {
-                    authorities: [Authority.USER],
+                    authorities: IS_AT_LEAST_STUDENT,
                 },
                 loadChildren: () => import('app/text/overview/text-editor.route').then((m) => m.textEditorRoute),
             },
@@ -118,7 +118,7 @@ export const courseRoutes: Routes = [
                 loadComponent: () =>
                     import('app/programming/overview/code-editor-student-container/code-editor-student-container.component').then((m) => m.CodeEditorStudentContainerComponent),
                 data: {
-                    authorities: [Authority.USER],
+                    authorities: IS_AT_LEAST_STUDENT,
                     pageTitle: 'artemisApp.programmingExercise.home.title',
                 },
                 canActivate: [UserRouteAccessService],
@@ -126,21 +126,21 @@ export const courseRoutes: Routes = [
             {
                 path: 'exercises/:exerciseId/repository',
                 data: {
-                    authorities: [Authority.USER],
+                    authorities: IS_AT_LEAST_STUDENT,
                 },
                 loadChildren: () => import('app/programming/overview/programming-repository.route').then((m) => m.programmingRepositoryRoutes),
             },
             {
                 path: 'exercises/modeling-exercises/:exerciseId',
                 data: {
-                    authorities: [Authority.USER],
+                    authorities: IS_AT_LEAST_STUDENT,
                 },
                 loadChildren: () => import('app/modeling/overview/modeling-participation.route').then((m) => m.routes),
             },
             {
                 path: 'exercises/quiz-exercises/:exerciseId',
                 data: {
-                    authorities: [Authority.USER],
+                    authorities: IS_AT_LEAST_STUDENT,
                 },
                 loadChildren: () => import('app/quiz/overview/quiz-participation.route').then((m) => m.routes),
             },
@@ -148,7 +148,7 @@ export const courseRoutes: Routes = [
                 path: 'exercises/file-upload-exercises/:exerciseId/participate/:participationId',
                 loadComponent: () => import('app/fileupload/overview/file-upload-submission/file-upload-submission.component').then((m) => m.FileUploadSubmissionComponent),
                 data: {
-                    authorities: [Authority.USER],
+                    authorities: IS_AT_LEAST_STUDENT,
                     pageTitle: 'artemisApp.fileUploadExercise.home.title',
                 },
                 canActivate: [UserRouteAccessService],
@@ -159,7 +159,7 @@ export const courseRoutes: Routes = [
                 path: CourseOverviewRoutePath.LECTURES,
                 loadComponent: () => import('app/lecture/shared/course-lectures/course-lectures.component').then((m) => m.CourseLecturesComponent),
                 data: {
-                    authorities: [Authority.USER],
+                    authorities: IS_AT_LEAST_STUDENT,
                     pageTitle: 'overview.lectures',
                     hasSidebar: true,
                     showRefreshButton: true,
@@ -169,7 +169,7 @@ export const courseRoutes: Routes = [
                     {
                         path: ':lectureId',
                         data: {
-                            authorities: [Authority.USER],
+                            authorities: IS_AT_LEAST_STUDENT,
                             pageTitle: 'overview.lectures',
                             hasSidebar: true,
                             showRefreshButton: true,
@@ -183,7 +183,7 @@ export const courseRoutes: Routes = [
                 path: CourseOverviewRoutePath.STATISTICS,
                 loadChildren: () => import('app/core/course/overview/course-statistics/course-statistics.route').then((m) => m.routes),
                 data: {
-                    authorities: [Authority.USER],
+                    authorities: IS_AT_LEAST_STUDENT,
                     pageTitle: 'overview.statistics',
                     showRefreshButton: true,
                 },
@@ -192,7 +192,7 @@ export const courseRoutes: Routes = [
             {
                 path: CourseOverviewRoutePath.COMPETENCIES,
                 data: {
-                    authorities: [Authority.USER],
+                    authorities: IS_AT_LEAST_STUDENT,
                     pageTitle: 'overview.competencies',
                     showRefreshButton: true,
                 },
@@ -202,7 +202,7 @@ export const courseRoutes: Routes = [
                         path: '',
                         pathMatch: 'full',
                         data: {
-                            authorities: [Authority.USER],
+                            authorities: IS_AT_LEAST_STUDENT,
                             pageTitle: 'overview.competencies',
                         },
                         loadComponent: () => import('app/atlas/overview/course-competencies/course-competencies.component').then((m) => m.CourseCompetenciesComponent),
@@ -213,7 +213,7 @@ export const courseRoutes: Routes = [
                         loadComponent: () =>
                             import('app/atlas/overview/course-competencies/course-competencies-details.component').then((m) => m.CourseCompetenciesDetailsComponent),
                         data: {
-                            authorities: [Authority.USER],
+                            authorities: IS_AT_LEAST_STUDENT,
                             pageTitle: 'overview.competencies',
                         },
                         canActivate: [UserRouteAccessService],
@@ -225,7 +225,7 @@ export const courseRoutes: Routes = [
                 pathMatch: 'full',
                 loadComponent: () => import('app/core/course/overview/course-dashboard/course-dashboard.component').then((m) => m.CourseDashboardComponent),
                 data: {
-                    authorities: [Authority.USER],
+                    authorities: IS_AT_LEAST_STUDENT,
                     pageTitle: 'overview.dashboard',
                 },
                 canActivate: [UserRouteAccessService, CourseOverviewGuard],
@@ -234,7 +234,7 @@ export const courseRoutes: Routes = [
                 path: CourseOverviewRoutePath.LEARNING_PATH,
                 loadComponent: () => import('app/atlas/overview/learning-path-student-page/learning-path-student-page.component').then((c) => c.LearningPathStudentPageComponent),
                 data: {
-                    authorities: [Authority.USER],
+                    authorities: IS_AT_LEAST_STUDENT,
                     pageTitle: 'overview.learningPath',
                     showRefreshButton: true,
                 },
@@ -245,7 +245,7 @@ export const courseRoutes: Routes = [
                 pathMatch: 'full',
                 loadComponent: () => import('app/communication/shared/course-conversations/course-conversations.component').then((m) => m.CourseConversationsComponent),
                 data: {
-                    authorities: [Authority.USER],
+                    authorities: IS_AT_LEAST_STUDENT,
                     pageTitle: 'overview.communication',
                     hasSidebar: true,
                     showRefreshButton: true,
@@ -256,7 +256,7 @@ export const courseRoutes: Routes = [
                 pathMatch: 'full',
                 loadComponent: () => import('app/core/course/overview/course-settings/course-settings.component').then((m) => m.CourseSettingsComponent),
                 data: {
-                    authorities: [Authority.USER],
+                    authorities: IS_AT_LEAST_STUDENT,
                     pageTitle: 'overview.settings',
                     hasSidebar: false,
                     showRefreshButton: true,
@@ -266,7 +266,7 @@ export const courseRoutes: Routes = [
                 path: CourseOverviewRoutePath.TUTORIAL_GROUPS,
                 loadComponent: () => import('app/tutorialgroup/shared/course-tutorial-groups/course-tutorial-groups.component').then((m) => m.CourseTutorialGroupsComponent),
                 data: {
-                    authorities: [Authority.USER],
+                    authorities: IS_AT_LEAST_STUDENT,
                     pageTitle: 'overview.tutorialGroups',
                     hasSidebar: true,
                     showRefreshButton: true,
@@ -276,7 +276,7 @@ export const courseRoutes: Routes = [
                     {
                         path: 'tutorial-lectures/:lectureId',
                         data: {
-                            authorities: [Authority.USER],
+                            authorities: IS_AT_LEAST_STUDENT,
                             pageTitle: 'overview.lectures',
                             hasSidebar: true,
                             showRefreshButton: true,
@@ -291,7 +291,7 @@ export const courseRoutes: Routes = [
                                 (m) => m.CourseTutorialGroupDetailContainerComponent,
                             ),
                         data: {
-                            authorities: [Authority.USER],
+                            authorities: IS_AT_LEAST_STUDENT,
                             pageTitle: 'overview.tutorialGroups',
                             hasSidebar: true,
                             showRefreshButton: true,
@@ -304,7 +304,7 @@ export const courseRoutes: Routes = [
                 path: CourseOverviewRoutePath.EXAMS,
                 loadComponent: () => import('app/exam/shared/course-exams/course-exams.component').then((m) => m.CourseExamsComponent),
                 data: {
-                    authorities: [Authority.USER],
+                    authorities: IS_AT_LEAST_STUDENT,
                     pageTitle: 'overview.exams',
                     hasSidebar: true,
                     showRefreshButton: true,
@@ -315,7 +315,7 @@ export const courseRoutes: Routes = [
                         path: ':examId',
                         loadComponent: () => import('app/exam/overview/exam-participation/exam-participation.component').then((m) => m.ExamParticipationComponent),
                         data: {
-                            authorities: [Authority.USER],
+                            authorities: IS_AT_LEAST_STUDENT,
                             pageTitle: 'overview.exams',
                             hasSidebar: true,
                             showRefreshButton: true,
@@ -331,7 +331,7 @@ export const courseRoutes: Routes = [
                 loadComponent: () =>
                     import('app/plagiarism/overview/detail-view/plagiarism-case-student-detail-view.component').then((m) => m.PlagiarismCaseStudentDetailViewComponent),
                 data: {
-                    authorities: [Authority.USER],
+                    authorities: IS_AT_LEAST_STUDENT,
                     pageTitle: 'overview.plagiarismCases',
                 },
                 canActivate: [UserRouteAccessService],
@@ -340,7 +340,7 @@ export const courseRoutes: Routes = [
                 path: CourseOverviewRoutePath.FAQ,
                 loadComponent: () => import('app/communication/course-faq/course-faq.component').then((m) => m.CourseFaqComponent),
                 data: {
-                    authorities: [Authority.USER],
+                    authorities: IS_AT_LEAST_STUDENT,
                     pageTitle: 'overview.faq',
                     hasSidebar: false,
                     showRefreshButton: true,
@@ -351,7 +351,7 @@ export const courseRoutes: Routes = [
                 path: CourseOverviewRoutePath.TRAINING,
                 loadComponent: () => import('app/quiz/overview/course-training/course-training.component').then((m) => m.CourseTrainingComponent),
                 data: {
-                    authorities: [Authority.USER],
+                    authorities: IS_AT_LEAST_STUDENT,
                     pageTitle: 'overview.training',
                     hasSidebar: false,
                     showRefreshButton: true,
@@ -362,7 +362,7 @@ export const courseRoutes: Routes = [
                 path: CourseOverviewRoutePath.TRAINING_QUIZ,
                 loadComponent: () => import('app/quiz/overview/course-training/course-training-quiz/course-training-quiz.component').then((m) => m.CourseTrainingQuizComponent),
                 data: {
-                    authorities: [Authority.USER],
+                    authorities: IS_AT_LEAST_STUDENT,
                     pageTitle: 'overview.training',
                 },
                 canActivate: [CourseOverviewGuard],
@@ -374,9 +374,9 @@ export const courseRoutes: Routes = [
             },
             {
                 path: CourseOverviewRoutePath.CALENDAR,
-                loadComponent: () => import('app/core/calendar/calendar-overview/calendar-overview.component').then((m) => m.CalendarOverviewComponent),
+                loadComponent: () => import('app/core/calendar/calendar-container/calendar-container.component').then((m) => m.CalendarContainerComponent),
                 data: {
-                    authorities: [Authority.USER],
+                    authorities: IS_AT_LEAST_STUDENT,
                     pageTitle: 'overview.calendar',
                     hasSidebar: false,
                     showRefreshButton: true,
