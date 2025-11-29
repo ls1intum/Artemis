@@ -402,18 +402,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testSaveFilesCommitTrueDoesNotBroadcastSynchronizationUpdate() throws Exception {
-        programmingExerciseRepository.save(programmingExercise);
-        reset(websocketMessagingService);
-
-        request.put(testRepoBaseUrl + programmingExercise.getId() + "/files?commit=false", List.of(), HttpStatus.OK);
-
-        verify(websocketMessagingService, never()).sendMessage(eq("/topic/programming-exercises/" + programmingExercise.getId() + "/synchronization"), any());
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testSaveFilesCommitTrueWithSubmissionsDoesNotBroadcastSynchronizationUpdate() throws Exception {
+    void testSaveFilesCommitFalseDoesNotBroadcastSynchronizationUpdate() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         reset(websocketMessagingService);
 

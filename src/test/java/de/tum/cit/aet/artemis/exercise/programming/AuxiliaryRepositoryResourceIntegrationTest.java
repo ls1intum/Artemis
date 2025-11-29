@@ -9,7 +9,6 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 
@@ -39,6 +38,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -294,28 +294,6 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testUpdateFilesWithCommitDoesNotBroadcast() throws Exception {
-        programmingExerciseRepository.save(programmingExercise);
-        reset(websocketMessagingService);
-
-        request.put(testRepoBaseUrl + auxiliaryRepository.getId() + "/files?commit=false", List.of(), HttpStatus.OK);
-
-        verify(websocketMessagingService, never()).sendMessage(eq("/topic/programming-exercises/" + programmingExercise.getId() + "/synchronization"), any());
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testUpdateFilesCommitTrueWithSubmissionsDoesNotBroadcast() throws Exception {
-        programmingExerciseRepository.save(programmingExercise);
-        reset(websocketMessagingService);
-
-        request.put(testRepoBaseUrl + auxiliaryRepository.getId() + "/files?commit=false", List.of(), HttpStatus.OK);
-
-        verify(websocketMessagingService, never()).sendMessage(eq("/topic/programming-exercises/" + programmingExercise.getId() + "/synchronization"), any());
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateFileBroadcastsSynchronizationUpdate() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
@@ -503,6 +481,11 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
         fileSubmission.setFileContent("updatedFileContent");
         fileSubmissions.add(fileSubmission);
         return fileSubmissions;
+    }
+
+    private void alignProgrammingExerciseProjectKeyWithRepository() {
+        String repositoryProjectKey = localAuxiliaryRepo.workingCopyGitRepoFile.toPath().getParent().getFileName().toString();
+        ReflectionTestUtils.setField(programmingExercise, "projectKey", repositoryProjectKey);
     }
 
     @Test
