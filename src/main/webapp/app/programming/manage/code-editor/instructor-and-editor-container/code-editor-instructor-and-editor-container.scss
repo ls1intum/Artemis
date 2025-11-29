@@ -1,3 +1,11 @@
 .btn-outline-primary:not(.list-group-item).dropdown-toggle.show {
     color: var(--default-btn-font);
 }
+
+.dropdown-item-nohover {
+    &:hover,
+    &:focus {
+        background-color: transparent !important;
+        color: inherit !important;
+    }
+}

@@ -1,4 +1,4 @@
-import { Component, ViewChild, inject, signal } from '@angular/core';
+import { Component, ViewChild, computed, inject, signal } from '@angular/core';
 import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/programming/shared/actions/trigger-build-button/student/programming-exercise-student-trigger-build-button.component';
 import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor/container/code-editor-container.component';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
@@ -7,7 +7,17 @@ import { CodeEditorInstructorBaseContainerComponent } from 'app/programming/mana
 import { ProgrammingExerciseEditableInstructionComponent } from 'app/programming/manage/instructions-editor/programming-exercise-editable-instruction.component';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { faCircleNotch, faPlus, faTimes, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
+import {
+    faArrowLeft,
+    faArrowRight,
+    faCircleExclamation,
+    faCircleInfo,
+    faCircleNotch,
+    faPlus,
+    faTimes,
+    faTimesCircle,
+    faTriangleExclamation,
+} from '@fortawesome/free-solid-svg-icons';
 import { IrisSettings } from 'app/iris/shared/entities/settings/iris-settings.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -25,6 +35,13 @@ import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ConsistencyCheckError } from 'app/programming/shared/entities/consistency-check-result.model';
 import { ConsistencyCheckResponse } from 'app/openapi/model/consistencyCheckResponse';
+import { getRepoPath, humanizeCategory } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check';
+
+const SEVERITY_ORDER = {
+    HIGH: 0,
+    MEDIUM: 1,
+    LOW: 2,
+} as const;
 
 @Component({
     selector: 'jhi-code-editor-instructor',
@@ -55,16 +72,27 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
 
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly consistencyIssues = signal<ConsistencyIssue[]>([]);
+    readonly sortedIssues = computed(() => [...this.consistencyIssues()].sort((a, b) => SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity]));
 
     private consistencyCheckService = inject(ConsistencyCheckService);
     private artemisIntelligenceService = inject(ArtemisIntelligenceService);
     private profileService = inject(ProfileService);
+
+    private lineJumpOnFileLoad: number | undefined = undefined;
+    private fileToJumpOn: string | undefined = undefined;
+    selectedIssue: ConsistencyIssue | undefined = undefined;
+    locationIndex: number = 0;
 
     // Icons
     faPlus = faPlus;
     faTimes = faTimes;
     faCircleNotch = faCircleNotch;
     faTimesCircle = faTimesCircle;
+    faArrowLeft = faArrowLeft;
+    faArrowRight = faArrowRight;
+    faCircleExclamation = faCircleExclamation;
+    faTriangleExclamation = faTriangleExclamation;
+    faCircleInfo = faCircleInfo;
     irisSettings?: IrisSettings;
     hyperionEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
 
@@ -130,5 +158,130 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                 this.alertService.error(this.translateService.instant('artemisApp.consistencyCheck.checkFailedAlert'));
             },
         });
+    }
+
+    /**
+     * Produces a human-readable label for the issue based on its category.
+     *
+     * @param {ConsistencyIssue} issue
+     *        The issue whose category is converted to a readable label.
+     *
+     * @returns {string}
+     *          The humanized category name.
+     */
+    getIssueLabel(issue: ConsistencyIssue): string {
+        return humanizeCategory(issue.category);
+    }
+
+    /**
+     * Returns the appropriate FontAwesome icon for the given issue severity.
+     *
+     * @param {ConsistencyIssue} issue
+     *        The issue whose severity determines the returned icon.
+     *
+     * @returns
+     *          A FontAwesome icon representing high, medium, or low severity.
+     */
+    getSeverityIcon(issue: ConsistencyIssue) {
+        switch (issue.severity) {
+            case 'HIGH':
+                return this.faCircleExclamation;
+            case 'MEDIUM':
+                return this.faTriangleExclamation;
+            case 'LOW':
+                return this.faCircleInfo;
+            default:
+                return this.faCircleInfo;
+        }
+    }
+
+    /**
+     * Returns a Bootstrap text color class based on the issue's severity.
+     *
+     * @param {ConsistencyIssue} issue
+     *        The issue whose severity determines the color.
+     *
+     * @returns
+     *          A text color class (`text-danger`, `text-warning`, `text-info`, or `text-secondary`).
+     */
+    getSeverityColor(issue: ConsistencyIssue) {
+        switch (issue.severity) {
+            case 'HIGH':
+                return 'text-danger';
+            case 'MEDIUM':
+                return 'text-warning';
+            case 'LOW':
+                return 'text-info';
+            default:
+                return 'text-secondary';
+        }
+    }
+
+    /**
+     * Navigates between issue locations in the dropdown and updates the editor accordingly.
+     *
+     * If navigating within the same issue, the location index is advanced (with wrap-around).
+     * If switching to a new issue, the first or last location is selected based on `deltaIndex`.
+     *
+     * The method prepares the jump target (file + line), switches repositories if needed,
+     * and triggers file loading. If the file is already open, the jump executes immediately;
+     * otherwise it runs after the editor’s file-load event.
+     *
+     * @param {ConsistencyIssue} issue   The issue being navigated.
+     * @param {1 | -1} deltaIndex        Direction of navigation (forward or backward).
+     * @param {Event} event              The originating UI event.
+     */
+    async onIssueNavigate(issue: ConsistencyIssue, deltaIndex: 1 | -1, event: Event) {
+        if (issue === this.selectedIssue) {
+            // Stay in bounds of the array
+            this.locationIndex = (this.locationIndex + this.selectedIssue.relatedLocations.length + deltaIndex) % this.selectedIssue.relatedLocations.length;
+        } else {
+            this.selectedIssue = issue;
+            this.locationIndex = deltaIndex === 1 ? 0 : issue.relatedLocations.length - 1;
+        }
+
+        // Set parameters for when fileLoad is called
+        this.lineJumpOnFileLoad = issue.relatedLocations[this.locationIndex].endLine;
+        this.fileToJumpOn = getRepoPath(issue.relatedLocations[this.locationIndex]);
+
+        if (issue.relatedLocations[this.locationIndex].type === 'PROBLEM_STATEMENT') {
+            this.codeEditorContainer.selectedFile = this.codeEditorContainer.problemStatementIdentifier;
+            this.editableInstructions.jumpToLine(issue.relatedLocations[this.locationIndex].endLine);
+            return;
+        }
+
+        if (issue.relatedLocations[this.locationIndex].type === 'TEMPLATE_REPOSITORY' && this.codeEditorContainer.selectedRepository() !== 'TEMPLATE') {
+            await this.selectTemplateParticipation();
+        } else if (issue.relatedLocations[this.locationIndex].type === 'SOLUTION_REPOSITORY' && this.codeEditorContainer.selectedRepository() !== 'SOLUTION') {
+            await this.selectSolutionParticipation();
+        } else if (issue.relatedLocations[this.locationIndex].type === 'TESTS_REPOSITORY' && this.codeEditorContainer.selectedRepository() !== 'TESTS') {
+            await this.selectTestRepository();
+        }
+
+        // We need to wait for the editor to be fully loaded,
+        // else the file content does not show
+        setTimeout(() => {
+            // File already loaded, file load event will not fire
+            if (this.codeEditorContainer.selectedFile === this.fileToJumpOn) {
+                this.fileLoad(this.fileToJumpOn!);
+                return;
+            }
+
+            // Will load file and signal to fileLoad when finished loading
+            this.codeEditorContainer.selectedFile = this.fileToJumpOn;
+        }, 0);
+    }
+
+    /**
+     * Performs a deferred jump to a specific line after a file has finished loading.
+     *
+     * @param {string} fileName
+     *        The name of the file that was just loaded.
+     */
+    fileLoad(fileName: string) {
+        if (this.lineJumpOnFileLoad && this.fileToJumpOn === fileName) {
+            this.codeEditorContainer.jumpToLine(this.lineJumpOnFileLoad);
+            this.lineJumpOnFileLoad = undefined;
+        }
     }
 }
