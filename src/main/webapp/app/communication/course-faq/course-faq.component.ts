@@ -1,6 +1,6 @@
 import { Component, ElementRef, OnDestroy, OnInit, Renderer2, ViewEncapsulation, effect, inject, viewChildren } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { debounceTime, map, takeUntil } from 'rxjs/operators';
+import { debounceTime, map } from 'rxjs/operators';
 import { BehaviorSubject, Subject, Subscription } from 'rxjs';
 import { faFilter } from '@fortawesome/free-solid-svg-icons';
 import { ButtonType } from 'app/shared/components/buttons/button/button.component';
@@ -52,7 +52,6 @@ export class CourseFaqComponent implements OnInit, OnDestroy {
     readonly faFilter = faFilter;
 
     private route = inject(ActivatedRoute);
-
     private faqService = inject(FaqService);
     private alertService = inject(AlertService);
     private renderer = inject(Renderer2);
@@ -66,15 +65,11 @@ export class CourseFaqComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit(): void {
-        this.parentParamSubscription = this.route.parent!.params.subscribe((params) => {
-            this.courseId = Number(params.courseId);
-            this.loadFaqs();
-            this.loadCourseExerciseCategories(this.courseId);
-        });
+        this.courseId = Number(this.route.parent!.snapshot.paramMap.get('courseId'));
+        this.referencedFaqId = Number(this.route.parent!.snapshot.paramMap.get('faqId'));
 
-        this.route.queryParams.pipe(takeUntil(this.ngUnsubscribe)).subscribe((params) => {
-            this.referencedFaqId = params['faqId'];
-        });
+        this.loadFaqs();
+        this.loadCourseExerciseCategories(this.courseId);
 
         this.searchInput.pipe(debounceTime(300)).subscribe((searchTerm: string) => {
             this.refreshFaqList(searchTerm);

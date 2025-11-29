@@ -27,7 +27,7 @@ export class FaqReferenceAction extends TextEditorDomainActionWithOptions {
      */
     register(editor: TextEditor, translateService: TranslateService): void {
         super.register(editor, translateService);
-        const faqs = this.metisService.getCourse().faqs ?? [];
+        const faqs = this.metisService.getFaqs() ?? [];
         this.setValues(
             faqs.map((faq) => ({
                 id: faq.id!.toString(),

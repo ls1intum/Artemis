@@ -10,6 +10,7 @@ import { Params } from '@angular/router';
 import { metisCourse, metisCoursePosts, metisTags, metisUser1 } from '../../sample/metis-sample-data';
 import { ChannelDTO, ChannelSubType, getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
+import { Faq } from 'app/communication/shared/entities/faq.model';
 
 let pageType: PageType;
 
@@ -30,6 +31,10 @@ export class MockMetisService {
 
     getCourse(): Course {
         return metisCourse;
+    }
+
+    getFaqs(): Faq[] {
+        return this.getCourse().faqs ?? [];
     }
 
     getPageType(): PageType {

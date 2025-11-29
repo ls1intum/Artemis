@@ -102,6 +102,7 @@ describe('PostingDirective', () => {
         const course = new Course();
         course.id = 1;
         mockMetisService.course = course;
+        mockMetisService.getCourse = jest.fn().mockReturnValue(course);
         mockOneToOneChatService = TestBed.inject(OneToOneChatService);
         mockMetisConversationService = TestBed.inject(MetisConversationService);
         mockRouter = TestBed.inject(Router);

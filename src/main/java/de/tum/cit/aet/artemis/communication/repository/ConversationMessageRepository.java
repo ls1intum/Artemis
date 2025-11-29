@@ -89,7 +89,7 @@ public interface ConversationMessageRepository extends ArtemisJpaRepository<Post
         // Make sure to sort the posts in the same order as the postIds
         Map<Long, Post> postMap = posts.stream().collect(Collectors.toMap(Post::getId, post -> post));
         posts = postIds.stream().map(postMap::get).toList();
-        log.debug("findByPostIdsWithEagerRelationships took {}", TimeLogUtil.formatDurationFrom(start2));
+        log.info("findByPostIdsWithEagerRelationships took {}", TimeLogUtil.formatDurationFrom(start2));
         // Recreate the page with the fetched posts
         return new PageImpl<>(posts, postIds.getPageable(), postIds.getTotalElements());
     }
@@ -99,10 +99,11 @@ public interface ConversationMessageRepository extends ArtemisJpaRepository<Post
             FROM Post p
                 LEFT JOIN FETCH p.author
                 LEFT JOIN FETCH p.conversation
-                LEFT JOIN FETCH p.reactions
-                LEFT JOIN FETCH p.tags
+                LEFT JOIN FETCH p.reactions r1
+                    LEFT JOIN FETCH r1.user
                 LEFT JOIN FETCH p.answers a
-                    LEFT JOIN FETCH a.reactions
+                    LEFT JOIN FETCH a.reactions r2
+                        LEFT JOIN FETCH r2.user
                     LEFT JOIN FETCH a.post
                     LEFT JOIN FETCH a.author
             WHERE p.id IN :postIds
