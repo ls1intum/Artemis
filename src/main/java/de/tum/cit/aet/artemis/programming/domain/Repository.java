@@ -4,8 +4,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 import org.eclipse.jgit.lib.BaseRepositoryBuilder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 
@@ -17,8 +15,6 @@ import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
  * Its repositories are saved as bare repositories in the folder defined in the application properties at artemis.version-control.local-vcs-repo-path.
  */
 public class Repository extends org.eclipse.jgit.internal.storage.file.FileRepository {
-
-    private static final Logger log = LoggerFactory.getLogger(Repository.class);
 
     private ProgrammingExerciseParticipation participation;
 
@@ -77,11 +73,6 @@ public class Repository extends org.eclipse.jgit.internal.storage.file.FileRepos
         return localPath;
     }
 
-    /**
-     * Closes the Git repository before deletion to release file handles.
-     * This method ensures that the repository is properly closed to avoid
-     * file lock issues during deletion operations.
-     */
     public void closeBeforeDelete() {
         super.close();
         super.doClose();
