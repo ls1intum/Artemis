@@ -1,5 +1,5 @@
-import { NgClass } from '@angular/common';
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { DatePipe, NgClass } from '@angular/common';
+import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { WebsocketAdminService } from 'app/core/admin/websocket/websocket-admin.service';
 import { WebsocketNode } from 'app/core/admin/websocket/websocket-node.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -7,16 +7,16 @@ import { FormsModule } from '@angular/forms';
 import { AlertService } from 'app/shared/service/alert.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faPlug, faPowerOff, faSync } from '@fortawesome/free-solid-svg-icons';
-import { forkJoin } from 'rxjs';
+import { Subscription, forkJoin, interval } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-websocket-admin',
     templateUrl: './websocket-admin.component.html',
     standalone: true,
-    imports: [TranslateDirective, FormsModule, FaIconComponent, NgClass],
+    imports: [TranslateDirective, FormsModule, FaIconComponent, NgClass, DatePipe],
 })
-export class WebsocketAdminComponent implements OnInit {
+export class WebsocketAdminComponent implements OnInit, OnDestroy {
     protected readonly faPlug = faPlug;
     protected readonly faSync = faSync;
     protected readonly faPowerOff = faPowerOff;
@@ -25,12 +25,20 @@ export class WebsocketAdminComponent implements OnInit {
     loading = signal(false);
     reconnecting = signal(false);
     coreNodes = computed(() => this.nodes().filter((node) => !node.liteMember));
+    lastUpdated = signal<Date | undefined>(undefined);
+    lastUpdateFailed = signal(false);
 
     private websocketAdminService = inject(WebsocketAdminService);
     private alertService = inject(AlertService);
+    private refreshSubscription?: Subscription;
 
     ngOnInit(): void {
         this.loadNodes();
+        this.startAutoRefresh();
+    }
+
+    ngOnDestroy(): void {
+        this.refreshSubscription?.unsubscribe();
     }
 
     loadNodes() {
@@ -39,11 +47,21 @@ export class WebsocketAdminComponent implements OnInit {
             next: (nodes) => {
                 this.nodes.set(nodes);
                 this.loading.set(false);
+                this.lastUpdated.set(new Date());
+                this.lastUpdateFailed.set(false);
             },
             error: () => {
                 this.loading.set(false);
-                this.alertService.error('artemisApp.websocketAdmin.loadError');
+                this.lastUpdateFailed.set(true);
             },
+        });
+    }
+
+    private startAutoRefresh() {
+        this.refreshSubscription = interval(5000).subscribe(() => {
+            if (!this.loading()) {
+                this.loadNodes();
+            }
         });
     }
 

@@ -32,7 +32,7 @@ public class WebsocketBrokerReconnectionService implements ApplicationListener<B
 
     public static final String WEBSOCKET_BROKER_STATUS_MAP = "websocketBrokerStatus";
 
-    static final Duration RECONNECT_INTERVAL = Duration.ofSeconds(10);
+    static final Duration RECONNECT_INTERVAL = Duration.ofSeconds(60);
 
     private final TaskScheduler messageBrokerTaskScheduler;
 
@@ -47,6 +47,8 @@ public class WebsocketBrokerReconnectionService implements ApplicationListener<B
     private final AtomicBoolean reconnectTaskRunning = new AtomicBoolean(false);
 
     private final AtomicBoolean restartInProgress = new AtomicBoolean(false);
+
+    private final AtomicBoolean manualDisconnectRequested = new AtomicBoolean(false);
 
     private volatile ScheduledFuture<?> reconnectTask;
 
@@ -70,9 +72,14 @@ public class WebsocketBrokerReconnectionService implements ApplicationListener<B
 
         updateBrokerStatus(event.isBrokerAvailable());
         if (event.isBrokerAvailable()) {
+            manualDisconnectRequested.set(false);
             stopReconnectAttempts("broker became available again");
         }
         else {
+            if (manualDisconnectRequested.get()) {
+                log.info("Broker became unavailable but manual disconnect is active; skipping auto-reconnect");
+                return;
+            }
             startReconnectAttempts("broker became unavailable");
         }
     }
@@ -89,6 +96,7 @@ public class WebsocketBrokerReconnectionService implements ApplicationListener<B
         }
 
         stopReconnectAttempts("manual reconnect requested");
+        manualDisconnectRequested.set(false);
         startReconnectAttempts("manual reconnect requested");
         return true;
     }
@@ -100,6 +108,7 @@ public class WebsocketBrokerReconnectionService implements ApplicationListener<B
         }
 
         stopReconnectAttempts("manual disconnect requested");
+        manualDisconnectRequested.set(true);
         stompBrokerRelayMessageHandler.ifPresent(handler -> {
             if (handler.isRunning()) {
                 handler.stop();
@@ -116,6 +125,7 @@ public class WebsocketBrokerReconnectionService implements ApplicationListener<B
         }
 
         stopReconnectAttempts("manual connect requested");
+        manualDisconnectRequested.set(false);
         return restartBrokerRelayInternal(true);
     }
 

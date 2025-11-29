@@ -2,6 +2,20 @@
     <h2 jhiTranslate="artemisApp.websocketAdmin.title"></h2>
     <p class="text-body-secondary" jhiTranslate="artemisApp.websocketAdmin.description"></p>
     <p class="text-body-secondary" jhiTranslate="artemisApp.websocketAdmin.buildAgentInfo"></p>
+    <p class="text-body-secondary">
+        <span jhiTranslate="artemisApp.websocketAdmin.autoRefreshInfo"></span>
+        <span class="ms-2">
+            <span jhiTranslate="artemisApp.websocketAdmin.lastUpdate"></span>
+            @if (lastUpdated()) {
+                <span>{{ lastUpdated() | date: 'mediumTime' }}</span>
+            } @else {
+                <span jhiTranslate="artemisApp.websocketAdmin.never"></span>
+            }
+            @if (lastUpdateFailed()) {
+                <span class="text-danger ms-1" jhiTranslate="artemisApp.websocketAdmin.lastUpdateFailed"></span>
+            }
+        </span>
+    </p>
 
     <div class="d-flex align-items-center gap-2 mb-3">
         <button class="btn btn-outline-primary btn-sm" (click)="loadNodes()" [disabled]="loading()">

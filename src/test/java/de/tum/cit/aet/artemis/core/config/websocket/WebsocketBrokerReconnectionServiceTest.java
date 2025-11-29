@@ -124,4 +124,27 @@ class WebsocketBrokerReconnectionServiceTest {
         verifyNoInteractions(taskScheduler);
         verifyNoInteractions(tcpClientSupplier);
     }
+
+    @Test
+    void shouldNotAutoReconnectAfterManualDisconnect() {
+        websocketBrokerReconnectionService.triggerManualDisconnect();
+
+        websocketBrokerReconnectionService.onApplicationEvent(new BrokerAvailabilityEvent(false, new Object()));
+
+        verifyNoInteractions(taskScheduler);
+    }
+
+    @Test
+    void shouldAutoReconnectAfterManualDisconnectClearedByConnect() {
+        websocketBrokerReconnectionService.triggerManualDisconnect();
+
+        websocketBrokerReconnectionService.triggerManualConnect();
+        when(tcpClientSupplier.get()).thenReturn(tcpClient);
+        doReturn(scheduledFuture).when(taskScheduler).scheduleWithFixedDelay(any(Runnable.class), any(Instant.class), any(Duration.class));
+        when(stompBrokerRelayMessageHandler.isRunning()).thenReturn(true);
+
+        websocketBrokerReconnectionService.onApplicationEvent(new BrokerAvailabilityEvent(false, new Object()));
+
+        verify(taskScheduler).scheduleWithFixedDelay(any(Runnable.class), any(Instant.class), eq(WebsocketBrokerReconnectionService.RECONNECT_INTERVAL));
+    }
 }
