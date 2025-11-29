@@ -14,7 +14,6 @@ import { FaqCategory } from 'app/communication/shared/entities/faq-category.mode
 import { loadCourseFaqCategories } from 'app/communication/faq/faq.utils';
 import { onError } from 'app/shared/util/global.utils';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
-import { SortService } from 'app/shared/service/sort.service';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -56,7 +55,6 @@ export class CourseFaqComponent implements OnInit, OnDestroy {
 
     private faqService = inject(FaqService);
     private alertService = inject(AlertService);
-    private sortService = inject(SortService);
     private renderer = inject(Renderer2);
 
     constructor() {
@@ -98,7 +96,6 @@ export class CourseFaqComponent implements OnInit, OnDestroy {
                 next: (res: Faq[]) => {
                     this.faqs = res;
                     this.applyFilters();
-                    this.sortFaqs();
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });
@@ -133,10 +130,6 @@ export class CourseFaqComponent implements OnInit, OnDestroy {
     refreshFaqList(searchTerm: string) {
         this.applyFilters();
         this.applySearch(searchTerm);
-    }
-
-    sortFaqs() {
-        this.sortService.sortByProperty(this.filteredFaqs, 'id', true);
     }
 
     scrollToFaq(faqId: number): void {
