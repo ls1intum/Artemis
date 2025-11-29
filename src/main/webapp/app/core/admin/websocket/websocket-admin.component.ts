@@ -10,6 +10,14 @@ import { faPlug, faPowerOff, faSync } from '@fortawesome/free-solid-svg-icons';
 import { Subscription, forkJoin, interval } from 'rxjs';
 import { map } from 'rxjs/operators';
 
+/**
+ * Admin view to monitor and control websocket broker connectivity across Hazelcast nodes.
+ * <p>
+ * Features:
+ * - Auto-refresh every 5 seconds with last-success/failed indicator.
+ * - Distinguishes core nodes from build agents (lite members).
+ * - Per-node connect/disconnect controls and bulk actions for all core nodes.
+ */
 @Component({
     selector: 'jhi-websocket-admin',
     templateUrl: './websocket-admin.component.html',
@@ -41,6 +49,10 @@ export class WebsocketAdminComponent implements OnInit, OnDestroy {
         this.refreshSubscription?.unsubscribe();
     }
 
+    /**
+     * Fetch current node metadata from the server and update the UI status.
+     * Records the timestamp on success and marks the last fetch as failed otherwise.
+     */
     loadNodes() {
         this.loading.set(true);
         this.websocketAdminService.getNodes().subscribe({
@@ -57,6 +69,9 @@ export class WebsocketAdminComponent implements OnInit, OnDestroy {
         });
     }
 
+    /**
+     * Periodically reload the node list (every 5 seconds) while avoiding overlap with an ongoing request.
+     */
     private startAutoRefresh() {
         this.refreshSubscription = interval(5000).subscribe(() => {
             if (!this.loading()) {
@@ -65,6 +80,9 @@ export class WebsocketAdminComponent implements OnInit, OnDestroy {
         });
     }
 
+    /**
+     * Trigger a reconnect on the target node(s). If no target is passed, all core nodes are addressed.
+     */
     reconnect(target?: string) {
         const availableTargets = target
             ? this.coreNodes()
@@ -95,6 +113,9 @@ export class WebsocketAdminComponent implements OnInit, OnDestroy {
         });
     }
 
+    /**
+     * Trigger a disconnect on the target node(s). If no target is passed, all core nodes are addressed.
+     */
     disconnect(target?: string) {
         const availableTargets = target
             ? this.coreNodes()
@@ -125,6 +146,9 @@ export class WebsocketAdminComponent implements OnInit, OnDestroy {
         });
     }
 
+    /**
+     * Trigger a connect on the target node(s). If no target is passed, all core nodes are addressed.
+     */
     connect(target?: string) {
         const availableTargets = target
             ? this.coreNodes()

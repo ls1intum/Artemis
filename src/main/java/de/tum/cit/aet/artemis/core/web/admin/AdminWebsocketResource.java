@@ -46,6 +46,8 @@ public class AdminWebsocketResource {
 
     /**
      * GET core/admin/websocket/nodes: returns the hazelcast members (id and address).
+     *
+     * @return list of websocket nodes with metadata used by the admin UI
      */
     @GetMapping("nodes")
     public ResponseEntity<Iterable<WebsocketNodeDTO>> getWebsocketNodes() {
@@ -67,6 +69,7 @@ public class AdminWebsocketResource {
      * POST core/admin/websocket/reconnect: manually trigger reconnect attempts to the external websocket broker.
      *
      * @param targetNodeId optional hazelcast member id. If omitted, all nodes will reconnect.
+     * @param action       desired control action (RECONNECT, DISCONNECT, CONNECT)
      * @return 202 (Accepted) if reconnect attempts were scheduled, 503 (Service Unavailable) otherwise
      */
     @PostMapping("reconnect")

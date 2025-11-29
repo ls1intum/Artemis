@@ -209,6 +209,7 @@ public class CacheConfiguration {
         else {
             String buildAgentDisplayName = env.getProperty("artemis.continuous-integration.build-agent.display-name", "");
             String instanceId = env.getProperty("eureka.instance.instanceId", registration.map(Registration::getInstanceId).orElse(null));
+            // Prefer a human-friendly build agent display name if configured; otherwise fall back to the discovery instance id
             String displayName = !buildAgentDisplayName.isBlank() ? buildAgentDisplayName : instanceId;
             if (instanceId != null && !instanceId.isBlank()) {
                 MemberAttributeConfig memberAttributeConfig = config.getMemberAttributeConfig();
@@ -258,7 +259,8 @@ public class CacheConfiguration {
         config.setSplitBrainProtectionConfigs(new ConcurrentHashMap<>());
         config.addSplitBrainProtectionConfig(splitBrainProtectionConfig);
         // Specify when the first run of the split brain protection should be executed (in seconds)
-        ClusterProperty.MERGE_FIRST_RUN_DELAY_SECONDS.setSystemProperty("120");
+        ClusterProperty.MERGE_FIRST_RUN_DELAY_SECONDS.setSystemProperty("30");
+        ClusterProperty.MERGE_NEXT_RUN_DELAY_SECONDS.setSystemProperty("30");
 
         // only add the queue config if the profile "localci" is active
         Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());

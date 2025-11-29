@@ -24,6 +24,13 @@ import org.springframework.stereotype.Component;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 
+/**
+ * Manages the lifecycle of the STOMP broker relay connection and coordinates reconnect attempts.
+ * <p>
+ * Tracks broker availability events, exposes manual connect/disconnect/reconnect hooks (used by admin actions),
+ * and publishes the current broker status into Hazelcast for UI consumption. Admin-triggered disconnects suppress
+ * automatic reconnect attempts until an explicit connect/reconnect request clears the suppression.
+ */
 @Profile(PROFILE_CORE)
 @Component
 public class WebsocketBrokerReconnectionService implements ApplicationListener<BrokerAvailabilityEvent>, DisposableBean {
@@ -48,6 +55,9 @@ public class WebsocketBrokerReconnectionService implements ApplicationListener<B
 
     private final AtomicBoolean restartInProgress = new AtomicBoolean(false);
 
+    /**
+     * Flag to suppress automatic reconnect attempts after an admin explicitly disconnected the broker relay.
+     */
     private final AtomicBoolean manualDisconnectRequested = new AtomicBoolean(false);
 
     private volatile ScheduledFuture<?> reconnectTask;
@@ -101,10 +111,13 @@ public class WebsocketBrokerReconnectionService implements ApplicationListener<B
         return true;
     }
 
-    public boolean triggerManualDisconnect() {
+    /**
+     * Manually stop the broker relay and suppress automatic reconnect attempts.
+     */
+    public void triggerManualDisconnect() {
         if (stompBrokerRelayMessageHandler.isEmpty()) {
             log.warn("Manual websocket broker disconnect requested, but no external broker relay is configured");
-            return false;
+            return;
         }
 
         stopReconnectAttempts("manual disconnect requested");
@@ -115,9 +128,13 @@ public class WebsocketBrokerReconnectionService implements ApplicationListener<B
             }
         });
         updateBrokerStatus(false);
-        return true;
     }
 
+    /**
+     * Manually start the broker relay without scheduling repeated reconnect attempts.
+     *
+     * @return true if the broker relay exists, false otherwise
+     */
     public boolean triggerManualConnect() {
         if (stompBrokerRelayMessageHandler.isEmpty()) {
             log.warn("Manual websocket broker connect requested, but no external broker relay is configured");
@@ -177,6 +194,11 @@ public class WebsocketBrokerReconnectionService implements ApplicationListener<B
         return stompBrokerRelayMessageHandler.isPresent();
     }
 
+    /**
+     * Cancel running reconnect attempts and clear scheduled tasks.
+     *
+     * @param reason diagnostic reason for logging
+     */
     private void stopReconnectAttempts(String reason) {
         if (reconnectTaskRunning.getAndSet(false)) {
             log.info("Stopping websocket broker reconnect attempts because {}", reason);
@@ -193,6 +215,11 @@ public class WebsocketBrokerReconnectionService implements ApplicationListener<B
         brokerStatusMap.remove(localMemberId);
     }
 
+    /**
+     * Store the current broker availability in a distributed map that is read by the admin UI.
+     *
+     * @param brokerAvailable whether the broker is currently available for this node
+     */
     private void updateBrokerStatus(boolean brokerAvailable) {
         brokerStatusMap.put(localMemberId, brokerAvailable);
     }

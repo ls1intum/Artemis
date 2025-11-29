@@ -55,14 +55,33 @@ public class WebsocketBrokerReconnectionMessagingService {
         requestControl(targetNodeId, requestedBy, WebsocketBrokerReconnectionService.ControlAction.RECONNECT);
     }
 
+    /**
+     * Request a broker connect on a specific node.
+     *
+     * @param targetNodeId hazelcast member id or {@link WebsocketBrokerReconnectMessage#TARGET_ALL_NODES}
+     * @param requestedBy  login of the admin
+     */
     public void requestConnect(String targetNodeId, String requestedBy) {
         requestControl(targetNodeId, requestedBy, WebsocketBrokerReconnectionService.ControlAction.CONNECT);
     }
 
+    /**
+     * Request a broker disconnect on a specific node.
+     *
+     * @param targetNodeId hazelcast member id or {@link WebsocketBrokerReconnectMessage#TARGET_ALL_NODES}
+     * @param requestedBy  login of the admin
+     */
     public void requestDisconnect(String targetNodeId, String requestedBy) {
         requestControl(targetNodeId, requestedBy, WebsocketBrokerReconnectionService.ControlAction.DISCONNECT);
     }
 
+    /**
+     * Publish a broker control request (connect/disconnect/reconnect) to the Hazelcast topic.
+     *
+     * @param targetNodeId hazelcast member id; use {@link WebsocketBrokerReconnectMessage#TARGET_ALL_NODES} to target all nodes
+     * @param requestedBy  login of the admin that initiated the request
+     * @param action       the action to perform on the target node(s)
+     */
     public void requestControl(String targetNodeId, String requestedBy, WebsocketBrokerReconnectionService.ControlAction action) {
         String originNodeId = localNodeId();
         WebsocketBrokerReconnectMessage message = new WebsocketBrokerReconnectMessage(targetNodeId, action, requestedBy, originNodeId, Instant.now());
