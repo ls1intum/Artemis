@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.communication.repository;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.List;
 import java.util.Set;
 
 import org.springframework.context.annotation.Lazy;
@@ -24,7 +25,7 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 @Repository
 public interface FaqRepository extends ArtemisJpaRepository<Faq, Long> {
 
-    Set<Faq> findAllByCourseId(Long courseId);
+    List<Faq> findAllByCourseIdOrderByCreatedDateDesc(Long courseId);
 
     @Query("""
             SELECT DISTINCT faq.categories
@@ -40,7 +41,7 @@ public interface FaqRepository extends ArtemisJpaRepository<Faq, Long> {
             """)
     Set<String> findAllCategoriesByCourseIdAndState(@Param("courseId") Long courseId, @Param("faqState") FaqState faqState);
 
-    Set<Faq> findAllByCourseIdAndFaqState(Long courseId, FaqState faqState);
+    List<Faq> findAllByCourseIdAndFaqStateOrderByCreatedDateDesc(Long courseId, FaqState faqState);
 
     @Transactional // ok because of delete
     @Modifying

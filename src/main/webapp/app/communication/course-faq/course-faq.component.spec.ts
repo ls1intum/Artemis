@@ -16,7 +16,6 @@ import { CourseFaqAccordionComponent } from 'app/communication/course-faq/course
 import { Faq, FaqState } from 'app/communication/shared/entities/faq.model';
 import { FaqCategory } from 'app/communication/shared/entities/faq-category.model';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
-import { SortService } from 'app/shared/service/sort.service';
 import { ElementRef, signal } from '@angular/core';
 import { CustomExerciseCategoryBadgeComponent } from 'app/exercise/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
 
@@ -36,7 +35,6 @@ describe('CourseFaqs', () => {
     let faqService: FaqService;
     let alertServiceStub: jest.SpyInstance;
     let alertService: AlertService;
-    let sortService: SortService;
 
     let faq1: Faq;
     let faq2: Faq;
@@ -100,7 +98,6 @@ describe('CourseFaqs', () => {
 
                 faqService = TestBed.inject(FaqService);
                 alertService = TestBed.inject(AlertService);
-                sortService = TestBed.inject(SortService);
             });
     });
 
@@ -154,10 +151,28 @@ describe('CourseFaqs', () => {
         expect(alertServiceStub).toHaveBeenCalledOnce();
     });
 
-    it('should call sortService when sortRows is called', () => {
-        jest.spyOn(sortService, 'sortByProperty').mockReturnValue([]);
-        courseFaqComponent.sortFaqs();
-        expect(sortService.sortByProperty).toHaveBeenCalledOnce();
+    it('should display FAQs in the order received from backend (server-side sorting)', () => {
+        // Mock service to return FAQs in descending order by creation date (newest first)
+        const newestFaq = createFaq(3, 'category3', '#0ab84f');
+        const middleFaq = createFaq(2, 'category2', '#0ab84f');
+        const oldestFaq = createFaq(1, 'category1', '#94a11c');
+
+        jest.spyOn(faqService, 'findAllByCourseIdAndState').mockReturnValue(
+            of(
+                new HttpResponse({
+                    body: [newestFaq, middleFaq, oldestFaq], // Server returns sorted
+                    status: 200,
+                }),
+            ),
+        );
+
+        courseFaqComponentFixture.detectChanges();
+
+        // Verify component displays FAQs in the exact order received from server
+        expect(courseFaqComponent.faqs).toHaveLength(3);
+        expect(courseFaqComponent.faqs[0].id).toBe(3); // Newest
+        expect(courseFaqComponent.faqs[1].id).toBe(2);
+        expect(courseFaqComponent.faqs[2].id).toBe(1); // Oldest
     });
 
     it('should scroll and focus on the faq element with given id', () => {

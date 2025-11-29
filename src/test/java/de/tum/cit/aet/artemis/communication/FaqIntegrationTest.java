@@ -195,16 +195,16 @@ class FaqIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getFaq_InstructorsShouldGetAllFaqByCourseId() throws Exception {
-        Set<Faq> faqs = faqRepository.findAllByCourseId(this.course1.getId());
-        Set<FaqDTO> returnedFaqs = request.get("/api/communication/courses/" + course1.getId() + "/faqs", HttpStatus.OK, Set.class);
+        List<Faq> faqs = faqRepository.findAllByCourseIdOrderByCreatedDateDesc(this.course1.getId());
+        List<FaqDTO> returnedFaqs = request.getList("/api/communication/courses/" + course1.getId() + "/faqs", HttpStatus.OK, FaqDTO.class);
         assertThat(returnedFaqs).hasSize(faqs.size());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getFaq_StudentsShouldOnlyGetAcceptedFaqByCourseId() throws Exception {
-        Set<Faq> faqs = faqRepository.findAllByCourseIdAndFaqState(this.course1.getId(), FaqState.ACCEPTED);
-        Set<FaqDTO> returnedFaqs = request.get("/api/communication/courses/" + course1.getId() + "/faqs", HttpStatus.OK, Set.class);
+        List<Faq> faqs = faqRepository.findAllByCourseIdAndFaqStateOrderByCreatedDateDesc(this.course1.getId(), FaqState.ACCEPTED);
+        List<FaqDTO> returnedFaqs = request.getList("/api/communication/courses/" + course1.getId() + "/faqs", HttpStatus.OK, FaqDTO.class);
         assertThat(returnedFaqs).hasSize(faqs.size());
         assertThat(returnedFaqs).noneMatch(faq -> faq.faqState() == FaqState.PROPOSED);
         assertThat(returnedFaqs).noneMatch(faq -> faq.faqState() == FaqState.REJECTED);
@@ -213,24 +213,24 @@ class FaqIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getFaq_ShouldGetFaqByCourseId() throws Exception {
-        Set<Faq> faqs = faqRepository.findAllByCourseId(this.course1.getId());
-        Set<FaqDTO> returnedFaqs = request.get("/api/communication/courses/" + course1.getId() + "/faqs", HttpStatus.OK, Set.class);
+        List<Faq> faqs = faqRepository.findAllByCourseIdOrderByCreatedDateDesc(this.course1.getId());
+        List<FaqDTO> returnedFaqs = request.getList("/api/communication/courses/" + course1.getId() + "/faqs", HttpStatus.OK, FaqDTO.class);
         assertThat(returnedFaqs).hasSize(faqs.size());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getFaq_shouldGetFaqByCourseIdAndState() throws Exception {
-        Set<Faq> faqs = faqRepository.findAllByCourseIdAndFaqState(this.course1.getId(), FaqState.PROPOSED);
-        Set<FaqDTO> returnedFaqs = request.get("/api/communication/courses/" + course1.getId() + "/faq-state/" + "PROPOSED", HttpStatus.OK, Set.class);
+        List<Faq> faqs = faqRepository.findAllByCourseIdAndFaqStateOrderByCreatedDateDesc(this.course1.getId(), FaqState.PROPOSED);
+        List<FaqDTO> returnedFaqs = request.getList("/api/communication/courses/" + course1.getId() + "/faq-state/" + "PROPOSED", HttpStatus.OK, FaqDTO.class);
         assertThat(returnedFaqs).hasSize(faqs.size());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getFaqs_StudentShouldOnlyGetAcceptedFaqByCourse() throws Exception {
-        Set<Faq> faqs = faqRepository.findAllByCourseIdAndFaqState(course1.getId(), FaqState.ACCEPTED);
-        Set<FaqDTO> returnedFaqs = request.get("/api/communication/courses/" + course1.getId() + "/faqs", HttpStatus.OK, Set.class);
+        List<Faq> faqs = faqRepository.findAllByCourseIdAndFaqStateOrderByCreatedDateDesc(course1.getId(), FaqState.ACCEPTED);
+        List<FaqDTO> returnedFaqs = request.getList("/api/communication/courses/" + course1.getId() + "/faqs", HttpStatus.OK, FaqDTO.class);
         assertThat(returnedFaqs).hasSize(faqs.size());
         assertThat(returnedFaqs.size()).isEqualTo(faqs.size());
     }
@@ -242,6 +242,31 @@ class FaqIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         enableFaqRESTCall(course1);
         Course updatedCourse = courseRepository.findByIdElseThrow(course1.getId());
         assertThat(updatedCourse.isFaqEnabled()).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getFaqs_shouldReturnFaqsSortedByCreationDateDescending() throws Exception {
+        Faq faq1 = FaqFactory.generateFaq(course1, FaqState.ACCEPTED, "SortTest1", "answer1");
+        faqRepository.save(faq1);
+        Thread.sleep(10);
+
+        Faq faq2 = FaqFactory.generateFaq(course1, FaqState.ACCEPTED, "SortTest2", "answer2");
+        faqRepository.save(faq2);
+        Thread.sleep(10);
+
+        Faq faq3 = FaqFactory.generateFaq(course1, FaqState.ACCEPTED, "SortTest3", "answer3");
+        faqRepository.save(faq3);
+
+        List<FaqDTO> returnedFaqs = request.getList("/api/communication/courses/" + course1.getId() + "/faqs", HttpStatus.OK, FaqDTO.class);
+
+        List<FaqDTO> createdFaqs = returnedFaqs.stream().filter(faq -> faq.questionTitle().startsWith("SortTest")).toList();
+
+        // Verify they are sorted by creation date descending (newest first)
+        assertThat(createdFaqs).hasSize(3);
+        assertThat(createdFaqs.get(0).questionTitle()).isEqualTo("SortTest3"); // Newest
+        assertThat(createdFaqs.get(1).questionTitle()).isEqualTo("SortTest2");
+        assertThat(createdFaqs.get(2).questionTitle()).isEqualTo("SortTest1"); // Oldest
     }
 
     private void disableFaq(Course course) {
