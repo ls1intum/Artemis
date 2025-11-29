@@ -450,7 +450,6 @@ public class BuildJobContainerService {
     }
 
     private void copyToContainer(Path sourcePath, String containerId) {
-
         try (final var uploadStream = new ByteArrayInputStream(createTarArchive(sourcePath).toByteArray());
                 final var copyToContainerCommand = buildAgentConfiguration.getDockerClient().copyArchiveToContainerCmd(containerId)
                         .withRemotePath(LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY).withTarInputStream(uploadStream)) {
