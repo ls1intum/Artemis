@@ -247,8 +247,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         this.supportsAuxiliaryRepositories =
                             this.programmingLanguageFeatureService.getProgrammingLanguageFeature(programmingExercise.programmingLanguage)?.auxiliaryRepositoriesSupported ?? false;
                         if (this.irisEnabled && !this.isExamExercise) {
-                            this.irisSettingsSubscription = this.irisSettingsService.getCombinedCourseSettings(this.courseId).subscribe((settings) => {
-                                this.irisChatEnabled = settings?.irisProgrammingExerciseChatSettings?.enabled ?? false;
+                            this.irisSettingsSubscription = this.irisSettingsService.getCourseSettings(this.courseId).subscribe((response) => {
+                                this.irisChatEnabled = response?.settings?.enabled ?? false;
                             });
                         }
                         this.plagiarismEnabled = profileInfo.activeModuleFeatures.includes(MODULE_FEATURE_PLAGIARISM);

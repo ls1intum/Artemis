@@ -18,7 +18,6 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.communication.repository.PostRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisTutorSuggestionSession;
-import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettingsType;
 import de.tum.cit.aet.artemis.iris.repository.IrisTutorSuggestionSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 
@@ -62,7 +61,7 @@ public class IrisTutorSuggestionSessionResource {
         if (!userRepository.isAtLeastTeachingAssistantInCourse(user.getLogin(), course.getId())) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.TUTOR_SUGGESTION, course);
+        irisSettingsService.ensureEnabledForCourseOrElseThrow(course);
 
         var sessionOptional = irisTutorSuggestionSessionRepository.findLatestSessionsByPostIdAndUserIdWithMessages(postId, user.getId(), Pageable.ofSize(1)).stream().findFirst();
         if (sessionOptional.isPresent()) {
@@ -88,7 +87,7 @@ public class IrisTutorSuggestionSessionResource {
         if (!userRepository.isAtLeastTeachingAssistantInCourse(user.getLogin(), course.getId())) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.TUTOR_SUGGESTION, course);
+        irisSettingsService.ensureEnabledForCourseOrElseThrow(course);
 
         var session = irisTutorSuggestionSessionRepository.save(new IrisTutorSuggestionSession(post.getId(), user));
         var uriString = "/api/iris/sessions/" + session.getId();

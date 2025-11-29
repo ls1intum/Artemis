@@ -20,8 +20,8 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.iris.dto.IngestionState;
 import de.tum.cit.aet.artemis.iris.dto.IrisStatusDTO;
@@ -61,16 +61,17 @@ public class IrisResource {
     }
 
     /**
-     * GET iris/sessions/{sessionId}/active: Retrieve if Iris is active and additional information about the rate limit
+     * GET iris/courses/{courseId}/status: Retrieve if Iris is active and rate limit information for a specific course.
      *
-     * @return the ResponseEntity with status 200 (OK) and the health status of Iris
+     * @param courseId the ID of the course
+     * @return the ResponseEntity with status 200 (OK) and the health status of Iris with course-specific rate limits
      */
-    @GetMapping("status")
-    @EnforceAtLeastStudent
-    public ResponseEntity<IrisStatusDTO> getStatus() {
+    @GetMapping("courses/{courseId}/status")
+    @EnforceAtLeastStudentInCourse
+    public ResponseEntity<IrisStatusDTO> getCourseStatus(@PathVariable long courseId) {
         var user = userRepository.getUser();
         var health = pyrisHealthIndicator.health(true);
-        var rateLimitInfo = irisRateLimitService.getRateLimitInformation(user);
+        var rateLimitInfo = irisRateLimitService.getRateLimitInformation(courseId, user);
 
         return ResponseEntity.ok(new IrisStatusDTO(health.getStatus() == Status.UP, rateLimitInfo));
     }

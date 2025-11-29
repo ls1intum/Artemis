@@ -62,7 +62,7 @@ public class IrisChatWebsocketService {
      */
     public void sendMessage(IrisChatSession session, IrisMessage irisMessage, List<PyrisStageDTO> stages, String sessionTitle) {
         var user = userRepository.findByIdElseThrow(session.getUserId());
-        var rateLimitInfo = rateLimitService.getRateLimitInformation(user);
+        var rateLimitInfo = rateLimitService.getRateLimitInformation(session, user);
         var topic = "" + session.getId(); // Todo: add more specific topic
         var payload = new IrisChatWebsocketDTO(irisMessage, rateLimitInfo, stages, sessionTitle, null, null);
         websocketService.send(user.getLogin(), topic, payload);
@@ -89,7 +89,7 @@ public class IrisChatWebsocketService {
      */
     public void sendStatusUpdate(IrisChatSession session, List<PyrisStageDTO> stages, String sessionTitle, List<String> suggestions, List<LLMRequest> tokens) {
         var user = userRepository.findByIdElseThrow(session.getUserId());
-        var rateLimitInfo = rateLimitService.getRateLimitInformation(user);
+        var rateLimitInfo = rateLimitService.getRateLimitInformation(session, user);
         var topic = "" + session.getId(); // Todo: add more specific topic
         var payload = new IrisChatWebsocketDTO(null, rateLimitInfo, stages, sessionTitle, suggestions, tokens);
         websocketService.send(user.getLogin(), topic, payload);

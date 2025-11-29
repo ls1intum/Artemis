@@ -1,23 +1,24 @@
-<div class="btn-group" role="group" aria-label="Enable/Disable setting">
-    <div
-        class="btn"
-        [ngClass]="{ 'btn-success selected': enabledHighlighted(), 'btn-default': !enabledHighlighted() }"
-        (click)="setEnabled(true)"
-        jhiTranslate="artemisApp.iris.settings.subSettings.enabled.on"
-    ></div>
-    @if (showCustomButton()) {
-        <div routerLink="iris-settings" class="btn" [ngClass]="{ 'btn-warning selected': someButNotAllSettingsEnabled(), 'btn-default': !someButNotAllSettingsEnabled() }">
-            <span jhiTranslate="artemisApp.iris.settings.subSettings.enabled.custom"></span>
+<div>
+    <div class="btn-group w-100" role="group" aria-label="Enable/Disable Iris">
+        <button
+            type="button"
+            class="btn"
+            [ngClass]="{ 'btn-success selected': isEnabled(), 'btn-outline-success': !isEnabled() }"
+            (click)="setEnabled(true)"
+            jhiTranslate="artemisApp.iris.settings.enabled"
+        ></button>
+        <button
+            type="button"
+            class="btn"
+            [ngClass]="{ 'btn-danger selected': isDisabled(), 'btn-outline-danger': !isDisabled() }"
+            (click)="setEnabled(false)"
+            jhiTranslate="artemisApp.iris.settings.disabled"
+        ></button>
+    </div>
+    <div class="mt-2">
+        <button type="button" class="btn btn-outline-primary w-100" [routerLink]="getSettingsRoute()">
+            <span jhiTranslate="artemisApp.iris.settings.configure"></span>
             <fa-icon [icon]="faArrowRight" class="ms-1" />
-        </div>
-    }
-    <div
-        class="btn btn-default"
-        [ngClass]="{
-            'btn-danger selected': disabledHighlighted(),
-            'btn-default': !disabledHighlighted(),
-        }"
-        (click)="setEnabled(false)"
-        jhiTranslate="artemisApp.iris.settings.subSettings.enabled.off"
-    ></div>
+        </button>
+    </div>
 </div>
