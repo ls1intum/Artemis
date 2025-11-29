@@ -6,13 +6,12 @@ import { FormsModule } from '@angular/forms';
 import { AlertService } from 'app/shared/service/alert.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faPlug, faRedo, faSync } from '@fortawesome/free-solid-svg-icons';
-import { NgIf } from '@angular/common';
 
 @Component({
     selector: 'jhi-websocket-admin',
     templateUrl: './websocket-admin.component.html',
     standalone: true,
-    imports: [TranslateDirective, FormsModule, FaIconComponent, NgIf],
+    imports: [TranslateDirective, FormsModule, FaIconComponent],
 })
 export class WebsocketAdminComponent implements OnInit {
     protected readonly faPlug = faPlug;
