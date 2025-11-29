@@ -121,7 +121,6 @@ class WebsocketBrokerReconnectionServiceTest {
     void manualReconnectSkippedWithoutRelay() {
         var serviceWithoutRelay = new WebsocketBrokerReconnectionService(taskScheduler, Optional.empty(), tcpClientSupplier, hazelcastInstance);
         assertThat(serviceWithoutRelay.triggerManualReconnect()).isFalse();
-        verifyNoInteractions(taskScheduler);
         verifyNoInteractions(tcpClientSupplier);
     }
 
@@ -131,7 +130,7 @@ class WebsocketBrokerReconnectionServiceTest {
 
         websocketBrokerReconnectionService.onApplicationEvent(new BrokerAvailabilityEvent(false, new Object()));
 
-        verifyNoInteractions(taskScheduler);
+        verifyNoInteractions(tcpClientSupplier);
     }
 
     @Test

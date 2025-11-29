@@ -41,6 +41,8 @@ public class WebsocketBrokerReconnectionService implements ApplicationListener<B
 
     static final Duration RECONNECT_INTERVAL = Duration.ofSeconds(60);
 
+    private static final Duration STATUS_PUBLISH_INTERVAL = Duration.ofSeconds(10);
+
     private final TaskScheduler messageBrokerTaskScheduler;
 
     private final Optional<StompBrokerRelayMessageHandler> stompBrokerRelayMessageHandler;
@@ -62,6 +64,10 @@ public class WebsocketBrokerReconnectionService implements ApplicationListener<B
 
     private volatile ScheduledFuture<?> reconnectTask;
 
+    private volatile ScheduledFuture<?> statusPublishTask;
+
+    private volatile boolean lastKnownBrokerAvailable = false;
+
     public WebsocketBrokerReconnectionService(@Qualifier("messageBrokerTaskScheduler") TaskScheduler messageBrokerTaskScheduler,
             Optional<StompBrokerRelayMessageHandler> stompBrokerRelayMessageHandler,
             @Qualifier("websocketBrokerTcpClientSupplier") Supplier<TcpOperations<byte[]>> stompTcpClientSupplier,
@@ -72,6 +78,7 @@ public class WebsocketBrokerReconnectionService implements ApplicationListener<B
         this.brokerStatusMap = hazelcastInstance.getMap(WEBSOCKET_BROKER_STATUS_MAP);
         this.localMemberId = hazelcastInstance.getCluster().getLocalMember().getUuid().toString();
         updateBrokerStatus(false);
+        scheduleStatusPublisher();
     }
 
     @Override
@@ -213,6 +220,9 @@ public class WebsocketBrokerReconnectionService implements ApplicationListener<B
     public void destroy() {
         stopReconnectAttempts("application shutdown");
         brokerStatusMap.remove(localMemberId);
+        if (statusPublishTask != null) {
+            statusPublishTask.cancel(false);
+        }
     }
 
     /**
@@ -221,7 +231,23 @@ public class WebsocketBrokerReconnectionService implements ApplicationListener<B
      * @param brokerAvailable whether the broker is currently available for this node
      */
     private void updateBrokerStatus(boolean brokerAvailable) {
+        lastKnownBrokerAvailable = brokerAvailable;
         brokerStatusMap.put(localMemberId, brokerAvailable);
+    }
+
+    /**
+     * Periodically re-publish the last known broker status so nodes that join late (e.g. when Hazelcast is not yet ready)
+     * eventually see an up-to-date value.
+     */
+    private void scheduleStatusPublisher() {
+        statusPublishTask = messageBrokerTaskScheduler.scheduleWithFixedDelay(() -> {
+            try {
+                brokerStatusMap.put(localMemberId, lastKnownBrokerAvailable);
+            }
+            catch (Exception ex) {
+                log.debug("Failed to publish websocket broker status: {}", ex.getMessage());
+            }
+        }, Instant.now().plusSeconds(5), STATUS_PUBLISH_INTERVAL);
     }
 
     public enum ControlAction {

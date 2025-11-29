@@ -195,6 +195,15 @@ public class CacheConfiguration {
         // If registration == null -> this will never connect to any instance as no other ip addresses are added
         config.getNetworkConfig().getJoin().getTcpIpConfig().setEnabled(true);
 
+        String buildAgentDisplayName = env.getProperty("artemis.continuous-integration.build-agent.display-name", "");
+        String instanceId = env.getProperty("eureka.instance.instanceId", "");
+        // Prefer a human-friendly build agent display name if configured; otherwise fall back to the discovery instance id
+        String displayName = !buildAgentDisplayName.isBlank() ? buildAgentDisplayName : instanceId;
+        if (!displayName.isBlank()) {
+            MemberAttributeConfig memberAttributeConfig = config.getMemberAttributeConfig();
+            memberAttributeConfig.setAttribute("instanceId", displayName);
+        }
+
         // Allows using @SpringAware and therefore Spring Services in distributed tasks
         config.setManagedContext(new SpringManagedContext(applicationContext));
         config.setClassLoader(applicationContext.getClassLoader());
@@ -207,14 +216,6 @@ public class CacheConfiguration {
             hazelcastBindOnlyOnInterface("127.0.0.1", config);
         }
         else {
-            String buildAgentDisplayName = env.getProperty("artemis.continuous-integration.build-agent.display-name", "");
-            String instanceId = env.getProperty("eureka.instance.instanceId", registration.map(Registration::getInstanceId).orElse(null));
-            // Prefer a human-friendly build agent display name if configured; otherwise fall back to the discovery instance id
-            String displayName = !buildAgentDisplayName.isBlank() ? buildAgentDisplayName : instanceId;
-            if (instanceId != null && !instanceId.isBlank()) {
-                MemberAttributeConfig memberAttributeConfig = config.getMemberAttributeConfig();
-                memberAttributeConfig.setAttribute("instanceId", displayName);
-            }
             // The serviceId is by default the application's name,
             // see the "spring.application.name" standard Spring property
             String serviceId = registration.get().getServiceId();

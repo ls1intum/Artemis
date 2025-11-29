@@ -47,7 +47,7 @@
                 </tr>
             </thead>
             <tbody>
-                @for (node of nodes(); track node.memberId) {
+                @for (node of sortedNodes(); track node.memberId) {
                     <tr>
                         <td>{{ node.instanceId || node.host }}</td>
                         <td class="font-monospace">{{ node.memberId }}</td>
@@ -64,14 +64,18 @@
                             ></span>
                         </td>
                         <td>
-                            <span
-                                class="badge"
-                                [ngClass]="{
-                                    'bg-success': node.brokerConnected,
-                                    'bg-warning': !node.brokerConnected,
-                                }"
-                                [jhiTranslate]="node.brokerConnected ? 'artemisApp.websocketAdmin.connected' : 'artemisApp.websocketAdmin.disconnected'"
-                            ></span>
+                            @if (!node.liteMember) {
+                                <span
+                                    class="badge"
+                                    [ngClass]="{
+                                        'bg-success': node.brokerConnected,
+                                        'bg-warning': !node.brokerConnected,
+                                    }"
+                                    [jhiTranslate]="node.brokerConnected ? 'artemisApp.websocketAdmin.connected' : 'artemisApp.websocketAdmin.disconnected'"
+                                ></span>
+                            } @else {
+                                <span class="text-body-secondary">—</span>
+                            }
                         </td>
                         <td>
                             @if (node.local) {
@@ -79,16 +83,20 @@
                             }
                         </td>
                         <td>
-                            <div class="btn-group btn-group-sm" role="group">
-                                <button class="btn btn-outline-danger" (click)="disconnect(node.memberId)" [disabled]="node.liteMember || reconnecting() || loading()">
-                                    <fa-icon [icon]="faPowerOff" />
-                                    <span class="ms-1" jhiTranslate="artemisApp.websocketAdmin.disconnect"></span>
-                                </button>
-                                <button class="btn btn-outline-primary" (click)="connect(node.memberId)" [disabled]="node.liteMember || reconnecting() || loading()">
-                                    <fa-icon [icon]="faPlug" />
-                                    <span class="ms-1" jhiTranslate="artemisApp.websocketAdmin.connect"></span>
-                                </button>
-                            </div>
+                            @if (!node.liteMember) {
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <button class="btn btn-outline-danger" (click)="disconnect(node.memberId)" [disabled]="reconnecting() || loading()">
+                                        <fa-icon [icon]="faPowerOff" />
+                                        <span class="ms-1" jhiTranslate="artemisApp.websocketAdmin.disconnect"></span>
+                                    </button>
+                                    <button class="btn btn-outline-primary" (click)="connect(node.memberId)" [disabled]="reconnecting() || loading()">
+                                        <fa-icon [icon]="faPlug" />
+                                        <span class="ms-1" jhiTranslate="artemisApp.websocketAdmin.connect"></span>
+                                    </button>
+                                </div>
+                            } @else {
+                                <span class="text-body-secondary">—</span>
+                            }
                         </td>
                     </tr>
                 }

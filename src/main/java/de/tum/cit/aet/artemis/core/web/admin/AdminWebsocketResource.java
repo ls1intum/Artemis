@@ -56,7 +56,7 @@ public class AdminWebsocketResource {
         var brokerStatus = hazelcastInstance.<String, Boolean>getMap(WebsocketBrokerReconnectionService.WEBSOCKET_BROKER_STATUS_MAP);
         var nodes = cluster.getMembers().stream().map(member -> {
             String memberId = member.getUuid().toString();
-            String instanceId = member.getAttributes().get("instanceId");
+            String instanceId = member.getAttribute("instanceId");
             boolean isLocal = memberId.equals(localId);
             boolean brokerConnected = Boolean.TRUE.equals(brokerStatus.get(memberId));
             return new WebsocketNodeDTO(memberId, member.getAddress().toString(), member.getAddress().getHost(), member.getAddress().getPort(), isLocal, member.isLiteMember(),
