@@ -1,0 +1,23 @@
+{
+    "artemisApp": {
+        "websocketAdmin": {
+            "title": "Websocket broker reconnect",
+            "description": "List the Hazelcast nodes and trigger a reconnect of the websocket broker relay on a specific node or on all nodes.",
+            "refreshNodes": "Refresh nodes",
+            "reconnectAll": "Reconnect all nodes",
+            "reconnectSelected": "Reconnect selected",
+            "memberId": "Member ID",
+            "address": "Address",
+            "host": "Host",
+            "port": "Port",
+            "localNode": "Local",
+            "actions": "Actions",
+            "thisNode": "This node",
+            "select": "Select",
+            "noNodes": "No nodes found.",
+            "loadError": "Could not load Hazelcast nodes.",
+            "reconnectRequested": "Reconnect request sent.",
+            "reconnectFailed": "Reconnect request failed."
+        }
+    }
+}

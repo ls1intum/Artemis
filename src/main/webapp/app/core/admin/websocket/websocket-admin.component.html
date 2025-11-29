@@ -1,0 +1,56 @@
+<div class="websocket-admin">
+    <h2 jhiTranslate="artemisApp.websocketAdmin.title"></h2>
+    <p class="text-body-secondary" jhiTranslate="artemisApp.websocketAdmin.description"></p>
+
+    <div class="d-flex align-items-center gap-2 mb-3">
+        <button class="btn btn-outline-primary btn-sm" (click)="loadNodes()" [disabled]="loading()">
+            <fa-icon [icon]="faSync" />
+            <span class="ms-2" jhiTranslate="artemisApp.websocketAdmin.refreshNodes"></span>
+        </button>
+        <button class="btn btn-primary btn-sm" (click)="reconnect()" [disabled]="reconnecting() || loading()">
+            <fa-icon [icon]="faPlug" />
+            <span class="ms-2" jhiTranslate="artemisApp.websocketAdmin.reconnectAll"></span>
+        </button>
+        <button class="btn btn-secondary btn-sm" (click)="reconnect(selectedNodeId())" [disabled]="!selectedNodeId() || reconnecting() || loading()">
+            <fa-icon [icon]="faRedo" />
+            <span class="ms-2" jhiTranslate="artemisApp.websocketAdmin.reconnectSelected"></span>
+        </button>
+    </div>
+
+    @if (nodes().length > 0) {
+        <table class="table table-sm align-middle">
+            <thead>
+                <tr>
+                    <th jhiTranslate="artemisApp.websocketAdmin.memberId"></th>
+                    <th jhiTranslate="artemisApp.websocketAdmin.address"></th>
+                    <th jhiTranslate="artemisApp.websocketAdmin.host"></th>
+                    <th jhiTranslate="artemisApp.websocketAdmin.port"></th>
+                    <th jhiTranslate="artemisApp.websocketAdmin.localNode"></th>
+                    <th jhiTranslate="artemisApp.websocketAdmin.actions"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (node of nodes(); track node.memberId) {
+                    <tr>
+                        <td class="font-monospace">{{ node.memberId }}</td>
+                        <td>{{ node.address }}</td>
+                        <td>{{ node.host }}</td>
+                        <td>{{ node.port }}</td>
+                        <td>
+                            @if (node.local) {
+                                <span class="badge bg-success" jhiTranslate="artemisApp.websocketAdmin.thisNode"></span>
+                            }
+                        </td>
+                        <td>
+                            <button class="btn btn-outline-secondary btn-sm" (click)="selectedNodeId.set(node.memberId)" [disabled]="loading()">
+                                <span jhiTranslate="artemisApp.websocketAdmin.select"></span>
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    } @else {
+        <div class="alert alert-info" jhiTranslate="artemisApp.websocketAdmin.noNodes"></div>
+    }
+</div>

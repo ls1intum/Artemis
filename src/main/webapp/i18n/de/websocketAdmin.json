@@ -1,0 +1,23 @@
+{
+    "artemisApp": {
+        "websocketAdmin": {
+            "title": "Websocket-Broker neu verbinden",
+            "description": "Zeige die Hazelcast-Knoten an und starte eine erneute Verbindung des Websocket-Broker-Relays auf einem ausgewählten Knoten oder auf allen.",
+            "refreshNodes": "Knoten aktualisieren",
+            "reconnectAll": "Alle Knoten neu verbinden",
+            "reconnectSelected": "Ausgewählten neu verbinden",
+            "memberId": "Member-ID",
+            "address": "Adresse",
+            "host": "Host",
+            "port": "Port",
+            "localNode": "Lokal",
+            "actions": "Aktionen",
+            "thisNode": "Dieser Knoten",
+            "select": "Auswählen",
+            "noNodes": "Keine Knoten gefunden.",
+            "loadError": "Hazelcast-Knoten konnten nicht geladen werden.",
+            "reconnectRequested": "Neu-Verbindungsanfrage gesendet.",
+            "reconnectFailed": "Neu-Verbindungsanfrage fehlgeschlagen."
+        }
+    }
+}
