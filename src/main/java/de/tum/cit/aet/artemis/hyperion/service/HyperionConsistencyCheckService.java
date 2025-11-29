@@ -46,6 +46,12 @@ public class HyperionConsistencyCheckService {
 
     private static final Logger log = LoggerFactory.getLogger(HyperionConsistencyCheckService.class);
 
+    private static final String AI_SPAN_KEY = "ai.span";
+
+    private static final String AI_SPAN_VALUE = "true";
+
+    private static final String LF_SPAN_NAME_KEY = "lf.span.name";
+
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final ChatClient chatClient;
@@ -72,7 +78,7 @@ public class HyperionConsistencyCheckService {
      * @param exercise programming exercise reference to check consistency for
      * @return aggregated consistency issues
      */
-    @Observed(name = "hyperion.consistency", contextualName = "consistency check", lowCardinalityKeyValues = { "ai.span", "true" })
+    @Observed(name = "hyperion.consistency", contextualName = "consistency check", lowCardinalityKeyValues = { AI_SPAN_KEY, AI_SPAN_VALUE })
     public ConsistencyCheckResponseDTO checkConsistency(ProgrammingExercise exercise) {
         log.info("Performing consistency check for exercise {}", exercise.getId());
         var exerciseWithParticipations = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
@@ -113,8 +119,8 @@ public class HyperionConsistencyCheckService {
      */
     private List<ConsistencyIssue> runStructuralCheck(Map<String, String> input, Observation parentObs) {
         var child = Observation.createNotStarted("hyperion.consistency.structural", observationRegistry).contextualName("structural check")
-                .lowCardinalityKeyValue(io.micrometer.common.KeyValue.of("ai.span", "true"))
-                .highCardinalityKeyValue(io.micrometer.common.KeyValue.of("lf.span.name", "structural check")).parentObservation(parentObs).start();
+                .lowCardinalityKeyValue(io.micrometer.common.KeyValue.of(AI_SPAN_KEY, AI_SPAN_VALUE))
+                .highCardinalityKeyValue(io.micrometer.common.KeyValue.of(LF_SPAN_NAME_KEY, "structural check")).parentObservation(parentObs).start();
         var resourcePath = "/prompts/hyperion/consistency_structural.st";
         String renderedPrompt = templates.render(resourcePath, input);
         try (Observation.Scope scope = child.openScope()) {
@@ -158,8 +164,8 @@ public class HyperionConsistencyCheckService {
      */
     private List<ConsistencyIssue> runSemanticCheck(Map<String, String> input, Observation parentObs) {
         var child = Observation.createNotStarted("hyperion.consistency.semantic", observationRegistry).contextualName("semantic check")
-                .lowCardinalityKeyValue(io.micrometer.common.KeyValue.of("ai.span", "true"))
-                .highCardinalityKeyValue(io.micrometer.common.KeyValue.of("lf.span.name", "semantic check")).parentObservation(parentObs).start();
+                .lowCardinalityKeyValue(io.micrometer.common.KeyValue.of(AI_SPAN_KEY, AI_SPAN_VALUE))
+                .highCardinalityKeyValue(io.micrometer.common.KeyValue.of(LF_SPAN_NAME_KEY, "semantic check")).parentObservation(parentObs).start();
         var resourcePath = "/prompts/hyperion/consistency_semantic.st";
         String renderedPrompt = templates.render(resourcePath, input);
         try (Observation.Scope scope = child.openScope()) {

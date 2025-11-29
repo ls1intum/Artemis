@@ -41,8 +41,8 @@ public class ChatModelCompletionContentObservationFilter implements ObservationF
             return context;
         }
 
-        var prompts = processPrompts(chatModelObservationContext);
-        var completions = processCompletion(chatModelObservationContext);
+        List<String> prompts = processPrompts(chatModelObservationContext);
+        List<String> completions = processCompletion(chatModelObservationContext);
         chatModelObservationContext.addLowCardinalityKeyValue(kv("ai.span", "true"));
         chatModelObservationContext.addHighCardinalityKeyValue(new KeyValue() {
 
