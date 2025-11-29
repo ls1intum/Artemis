@@ -7,6 +7,7 @@ import java.time.Instant;
 import java.util.Optional;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Supplier;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,6 +17,7 @@ import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Profile;
 import org.springframework.messaging.simp.broker.BrokerAvailabilityEvent;
 import org.springframework.messaging.simp.stomp.StompBrokerRelayMessageHandler;
+import org.springframework.messaging.tcp.TcpOperations;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Component;
 
@@ -31,6 +33,8 @@ public class WebsocketBrokerReconnectionService implements ApplicationListener<B
 
     private final Optional<StompBrokerRelayMessageHandler> stompBrokerRelayMessageHandler;
 
+    private final Supplier<TcpOperations<byte[]>> stompTcpClientSupplier;
+
     private final AtomicBoolean reconnectTaskRunning = new AtomicBoolean(false);
 
     private final AtomicBoolean restartInProgress = new AtomicBoolean(false);
@@ -38,9 +42,11 @@ public class WebsocketBrokerReconnectionService implements ApplicationListener<B
     private volatile ScheduledFuture<?> reconnectTask;
 
     public WebsocketBrokerReconnectionService(@Qualifier("messageBrokerTaskScheduler") TaskScheduler messageBrokerTaskScheduler,
-            Optional<StompBrokerRelayMessageHandler> stompBrokerRelayMessageHandler) {
+            Optional<StompBrokerRelayMessageHandler> stompBrokerRelayMessageHandler,
+            @Qualifier("websocketBrokerTcpClientSupplier") Supplier<TcpOperations<byte[]>> stompTcpClientSupplier) {
         this.messageBrokerTaskScheduler = messageBrokerTaskScheduler;
         this.stompBrokerRelayMessageHandler = stompBrokerRelayMessageHandler;
+        this.stompTcpClientSupplier = stompTcpClientSupplier;
     }
 
     @Override
@@ -95,6 +101,12 @@ public class WebsocketBrokerReconnectionService implements ApplicationListener<B
                 if (handler.isRunning()) {
                     handler.stop();
                 }
+                TcpOperations<byte[]> tcpClient = stompTcpClientSupplier.get();
+                if (tcpClient == null) {
+                    log.warn("Skipping websocket broker restart because no TCP client could be created");
+                    return;
+                }
+                handler.setTcpClient(tcpClient);
                 handler.start();
             }
             catch (Exception ex) {

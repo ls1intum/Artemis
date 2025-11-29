@@ -13,6 +13,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.concurrent.ScheduledFuture;
+import java.util.function.Supplier;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,6 +24,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.messaging.simp.broker.BrokerAvailabilityEvent;
 import org.springframework.messaging.simp.stomp.StompBrokerRelayMessageHandler;
+import org.springframework.messaging.tcp.TcpOperations;
 import org.springframework.scheduling.TaskScheduler;
 
 @ExtendWith(MockitoExtension.class)
@@ -35,6 +37,12 @@ class WebsocketBrokerReconnectionServiceTest {
     private StompBrokerRelayMessageHandler stompBrokerRelayMessageHandler;
 
     @Mock
+    private Supplier<TcpOperations<byte[]>> tcpClientSupplier;
+
+    @Mock
+    private TcpOperations<byte[]> tcpClient;
+
+    @Mock
     private ScheduledFuture<?> scheduledFuture;
 
     @Captor
@@ -44,27 +52,33 @@ class WebsocketBrokerReconnectionServiceTest {
 
     @BeforeEach
     void setUp() {
-        websocketBrokerReconnectionService = new WebsocketBrokerReconnectionService(taskScheduler, Optional.of(stompBrokerRelayMessageHandler));
+        websocketBrokerReconnectionService = new WebsocketBrokerReconnectionService(taskScheduler, Optional.of(stompBrokerRelayMessageHandler), tcpClientSupplier);
     }
 
     @Test
     void shouldStartReconnectAttemptsOnBrokerLoss() {
+        when(tcpClientSupplier.get()).thenReturn(tcpClient);
         doReturn(scheduledFuture).when(taskScheduler).scheduleWithFixedDelay(any(Runnable.class), any(Instant.class), any(Duration.class));
         when(stompBrokerRelayMessageHandler.isRunning()).thenReturn(true);
         websocketBrokerReconnectionService.onApplicationEvent(new BrokerAvailabilityEvent(false, new Object()));
 
         verify(taskScheduler).scheduleWithFixedDelay(runnableCaptor.capture(), any(Instant.class), eq(WebsocketBrokerReconnectionService.RECONNECT_INTERVAL));
         verify(stompBrokerRelayMessageHandler).stop();
+        verify(tcpClientSupplier).get();
+        verify(stompBrokerRelayMessageHandler).setTcpClient(tcpClient);
         verify(stompBrokerRelayMessageHandler).start();
 
         runnableCaptor.getValue().run();
 
         verify(stompBrokerRelayMessageHandler, times(2)).stop();
+        verify(tcpClientSupplier, times(2)).get();
+        verify(stompBrokerRelayMessageHandler, times(2)).setTcpClient(tcpClient);
         verify(stompBrokerRelayMessageHandler, times(2)).start();
     }
 
     @Test
     void shouldStopReconnectAttemptsWhenBrokerAvailable() {
+        when(tcpClientSupplier.get()).thenReturn(tcpClient);
         doReturn(scheduledFuture).when(taskScheduler).scheduleWithFixedDelay(any(Runnable.class), any(Instant.class), any(Duration.class));
         when(stompBrokerRelayMessageHandler.isRunning()).thenReturn(true);
         websocketBrokerReconnectionService.onApplicationEvent(new BrokerAvailabilityEvent(false, new Object()));
@@ -74,13 +88,16 @@ class WebsocketBrokerReconnectionServiceTest {
         verify(scheduledFuture).cancel(false);
 
         runnableCaptor.getValue().run();
+        verify(tcpClientSupplier, times(1)).get();
+        verify(stompBrokerRelayMessageHandler, times(1)).setTcpClient(tcpClient);
         verify(stompBrokerRelayMessageHandler, times(1)).start();
     }
 
     @Test
     void manualReconnectSkippedWithoutRelay() {
-        var serviceWithoutRelay = new WebsocketBrokerReconnectionService(taskScheduler, Optional.empty());
+        var serviceWithoutRelay = new WebsocketBrokerReconnectionService(taskScheduler, Optional.empty(), tcpClientSupplier);
         assertThat(serviceWithoutRelay.triggerManualReconnect()).isFalse();
         verifyNoInteractions(taskScheduler);
+        verifyNoInteractions(tcpClientSupplier);
     }
 }
