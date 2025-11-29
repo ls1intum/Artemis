@@ -103,7 +103,7 @@ describe('IrisBaseChatbotComponent', () => {
         expect(component).toBeTruthy();
     });
 
-    it('should set userAccepted to false if user has not accepted the external LLM usage policy', () => {
+    it('should set userAccepted to NO_AI when user explicitly chose to reject AI usage', () => {
         accountService.userIdentity.set({ selectedLLMUsage: LLMSelectionDecision.NO_AI } as User);
         component.ngOnInit();
         expect(component.userAccepted).toBe(LLMSelectionDecision.NO_AI);
