@@ -183,12 +183,8 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
 
         // === Single broker: always connect to this one ===
         if (brokerAddressList.size() == 1) {
-            InetSocketAddress addr = brokerAddressList.getFirst();
-
-            return new ReactorNettyTcpClient<>(client -> client.remoteAddress(() -> {
-                log.info("STOMP relay connecting to single broker {}:{}", addr.getHostString(), addr.getPort());
-                return addr;
-            }), new StompReactorNettyCodec());
+            final InetSocketAddress addr = brokerAddressList.getFirst();
+            return new ReactorNettyTcpClient<>(addr.getHostString(), addr.getPort(), new StompReactorNettyCodec());
         }
 
         // === Multiple brokers: thread-safe round robin ===
