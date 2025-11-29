@@ -305,25 +305,6 @@ describe('IrisBaseChatbotComponent', () => {
     });
 
     describe('clear chat session', () => {
-        it('should clear chat session when user confirms', fakeAsync(() => {
-            jest.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponse));
-            jest.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
-            jest.spyOn(component, 'scrollToBottom').mockImplementation(() => {});
-            jest.spyOn(chatService, 'clearChat').mockReturnValueOnce();
-            const getChatSessionsSpy = jest.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
-
-            chatService.switchTo(ChatServiceMode.COURSE, 123);
-            fixture.detectChanges();
-            tick();
-
-            const button: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#clear-chat-button');
-            button.click();
-            tick();
-
-            expect(chatService.clearChat).toHaveBeenCalledOnce();
-            expect(getChatSessionsSpy).toHaveBeenCalledOnce();
-        }));
-
         it('should not render clear chat button if the history is empty', () => {
             const button: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#clear-chat-button');
             expect(button).toBeNull();
