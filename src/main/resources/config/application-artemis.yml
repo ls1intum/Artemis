@@ -165,8 +165,8 @@ management:
     annotations:
       enabled: true
 
-  # Configuration for exporting LLM traces to Langfuse (only set to true when in 'dev')
-#  langfuse:
+    # Configuration for exporting LLM traces to Langfuse (set to true to enable Artemis' custom exporter)
+  #  langfuse:
 #    enabled: true
   tracing:
     sampling:
