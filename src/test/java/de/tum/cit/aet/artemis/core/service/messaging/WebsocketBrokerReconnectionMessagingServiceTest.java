@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.core.service.messaging;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -69,13 +70,14 @@ class WebsocketBrokerReconnectionMessagingServiceTest {
 
     @Test
     void shouldPublishReconnectRequestWithOrigin() {
-        messagingService.requestReconnect("target-node", "admin");
+        messagingService.requestControl("target-node", "admin", WebsocketBrokerReconnectionService.ControlAction.RECONNECT);
 
         ArgumentCaptor<WebsocketBrokerReconnectMessage> messageCaptor = ArgumentCaptor.forClass(WebsocketBrokerReconnectMessage.class);
         verify(topic).publish(messageCaptor.capture());
 
         WebsocketBrokerReconnectMessage message = messageCaptor.getValue();
         assertThat(message.targetNodeId()).isEqualTo("target-node");
+        assertThat(message.action()).isEqualTo(WebsocketBrokerReconnectionService.ControlAction.RECONNECT);
         assertThat(message.originatingNodeId()).isEqualTo("01234567-89ab-cdef-0123-456789abcdef");
         assertThat(message.requestedBy()).isEqualTo("admin");
         assertThat(message.timestamp()).isBeforeOrEqualTo(Instant.now());
@@ -83,7 +85,8 @@ class WebsocketBrokerReconnectionMessagingServiceTest {
 
     @Test
     void shouldHandleReconnectForMatchingNode() {
-        when(hazelcastMessage.getMessageObject()).thenReturn(new WebsocketBrokerReconnectMessage("01234567-89ab-cdef-0123-456789abcdef", "admin", "origin", Instant.now()));
+        when(hazelcastMessage.getMessageObject()).thenReturn(new WebsocketBrokerReconnectMessage("01234567-89ab-cdef-0123-456789abcdef",
+                WebsocketBrokerReconnectionService.ControlAction.RECONNECT, "admin", "origin", Instant.now()));
 
         listenerCaptor.getValue().onMessage(hazelcastMessage);
 
@@ -92,8 +95,8 @@ class WebsocketBrokerReconnectionMessagingServiceTest {
 
     @Test
     void shouldHandleReconnectForAllNodes() {
-        when(hazelcastMessage.getMessageObject())
-                .thenReturn(new WebsocketBrokerReconnectMessage(WebsocketBrokerReconnectMessage.TARGET_ALL_NODES, "admin", "origin", Instant.now()));
+        when(hazelcastMessage.getMessageObject()).thenReturn(new WebsocketBrokerReconnectMessage(WebsocketBrokerReconnectMessage.TARGET_ALL_NODES,
+                WebsocketBrokerReconnectionService.ControlAction.RECONNECT, "admin", "origin", Instant.now()));
 
         listenerCaptor.getValue().onMessage(hazelcastMessage);
 
@@ -102,10 +105,27 @@ class WebsocketBrokerReconnectionMessagingServiceTest {
 
     @Test
     void shouldIgnoreReconnectForDifferentNode() {
-        when(hazelcastMessage.getMessageObject()).thenReturn(new WebsocketBrokerReconnectMessage("some-other-node", "admin", "origin", Instant.now()));
+        when(hazelcastMessage.getMessageObject())
+                .thenReturn(new WebsocketBrokerReconnectMessage("some-other-node", WebsocketBrokerReconnectionService.ControlAction.RECONNECT, "admin", "origin", Instant.now()));
 
         listenerCaptor.getValue().onMessage(hazelcastMessage);
 
         verify(websocketBrokerReconnectionService, never()).triggerManualReconnect();
+    }
+
+    @Test
+    void shouldHandleConnectAndDisconnectActions() {
+        when(hazelcastMessage.getMessageObject()).thenReturn(new WebsocketBrokerReconnectMessage(WebsocketBrokerReconnectMessage.TARGET_ALL_NODES,
+                WebsocketBrokerReconnectionService.ControlAction.DISCONNECT, "admin", "origin", Instant.now()));
+
+        listenerCaptor.getValue().onMessage(hazelcastMessage);
+        verify(websocketBrokerReconnectionService, times(1)).triggerManualDisconnect();
+
+        reset(websocketBrokerReconnectionService);
+        when(hazelcastMessage.getMessageObject()).thenReturn(new WebsocketBrokerReconnectMessage(WebsocketBrokerReconnectMessage.TARGET_ALL_NODES,
+                WebsocketBrokerReconnectionService.ControlAction.CONNECT, "admin", "origin", Instant.now()));
+
+        listenerCaptor.getValue().onMessage(hazelcastMessage);
+        verify(websocketBrokerReconnectionService, times(1)).triggerManualConnect();
     }
 }

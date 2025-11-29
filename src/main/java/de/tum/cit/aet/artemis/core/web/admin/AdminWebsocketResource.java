@@ -51,8 +51,15 @@ public class AdminWebsocketResource {
     public ResponseEntity<Iterable<WebsocketNodeDTO>> getWebsocketNodes() {
         var cluster = hazelcastInstance.getCluster();
         var localId = cluster.getLocalMember().getUuid().toString();
-        var nodes = cluster.getMembers().stream().map(member -> new WebsocketNodeDTO(member.getUuid().toString(), member.getAddress().toString(), member.getAddress().getHost(),
-                member.getAddress().getPort(), member.getUuid().toString().equals(localId))).toList();
+        var brokerStatus = hazelcastInstance.<String, Boolean>getMap(WebsocketBrokerReconnectionService.WEBSOCKET_BROKER_STATUS_MAP);
+        var nodes = cluster.getMembers().stream().map(member -> {
+            String memberId = member.getUuid().toString();
+            String instanceId = member.getAttributes().get("instanceId");
+            boolean isLocal = memberId.equals(localId);
+            boolean brokerConnected = Boolean.TRUE.equals(brokerStatus.get(memberId));
+            return new WebsocketNodeDTO(memberId, member.getAddress().toString(), member.getAddress().getHost(), member.getAddress().getPort(), isLocal, member.isLiteMember(),
+                    instanceId, brokerConnected);
+        }).toList();
         return ResponseEntity.ok(nodes);
     }
 
@@ -63,15 +70,39 @@ public class AdminWebsocketResource {
      * @return 202 (Accepted) if reconnect attempts were scheduled, 503 (Service Unavailable) otherwise
      */
     @PostMapping("reconnect")
-    public ResponseEntity<Void> triggerReconnect(@RequestParam(value = "targetNodeId", required = false) String targetNodeId) {
+    public ResponseEntity<Void> triggerReconnect(@RequestParam(value = "targetNodeId", required = false) String targetNodeId,
+            @RequestParam(value = "action", required = false, defaultValue = "RECONNECT") String action) {
         String requester = SecurityUtils.getCurrentUserLogin().orElse("unknown");
-        String target = targetNodeId == null || targetNodeId.isBlank() ? "all" : targetNodeId;
-        log.info("REST request to trigger websocket broker reconnect for target {} by {}", target, requester);
+        log.info("REST request to trigger websocket broker action {} for target {} by {}", action, targetNodeId, requester);
 
-        websocketBrokerReconnectionMessagingService.requestReconnect(target, requester);
+        var cluster = hazelcastInstance.getCluster();
+        var localMemberId = cluster.getLocalMember().getUuid().toString();
+        var targetMembers = cluster.getMembers().stream().filter(member -> !member.isLiteMember())
+                .filter(member -> targetNodeId == null || targetNodeId.isBlank() || member.getUuid().toString().equals(targetNodeId)).toList();
 
-        // As a safeguard, also trigger locally if the external broker relay is configured here.
-        websocketBrokerReconnectionService.triggerManualReconnect();
+        if (targetMembers.isEmpty()) {
+            log.info("No core websocket nodes matched reconnect request for target {}", targetNodeId);
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
+        }
+
+        WebsocketBrokerReconnectionService.ControlAction controlAction;
+        try {
+            controlAction = WebsocketBrokerReconnectionService.ControlAction.valueOf(action.toUpperCase());
+        }
+        catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        targetMembers.forEach(member -> websocketBrokerReconnectionMessagingService.requestControl(member.getUuid().toString(), requester, controlAction));
+
+        // As a safeguard, also trigger locally if the external broker relay is configured on this core node.
+        if (targetMembers.stream().anyMatch(member -> member.getUuid().toString().equals(localMemberId))) {
+            switch (controlAction) {
+                case DISCONNECT -> websocketBrokerReconnectionService.triggerManualDisconnect();
+                case CONNECT -> websocketBrokerReconnectionService.triggerManualConnect();
+                default -> websocketBrokerReconnectionService.triggerManualReconnect();
+            }
+        }
         return ResponseEntity.status(HttpStatus.ACCEPTED).build();
     }
 }

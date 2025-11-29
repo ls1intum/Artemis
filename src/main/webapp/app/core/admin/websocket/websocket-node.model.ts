@@ -4,4 +4,7 @@ export interface WebsocketNode {
     host: string;
     port: number;
     local: boolean;
+    liteMember: boolean;
+    instanceId?: string;
+    brokerConnected: boolean;
 }

@@ -52,8 +52,20 @@ public class WebsocketBrokerReconnectionMessagingService {
      * @param requestedBy  login of the admin that initiated the request
      */
     public void requestReconnect(String targetNodeId, String requestedBy) {
+        requestControl(targetNodeId, requestedBy, WebsocketBrokerReconnectionService.ControlAction.RECONNECT);
+    }
+
+    public void requestConnect(String targetNodeId, String requestedBy) {
+        requestControl(targetNodeId, requestedBy, WebsocketBrokerReconnectionService.ControlAction.CONNECT);
+    }
+
+    public void requestDisconnect(String targetNodeId, String requestedBy) {
+        requestControl(targetNodeId, requestedBy, WebsocketBrokerReconnectionService.ControlAction.DISCONNECT);
+    }
+
+    public void requestControl(String targetNodeId, String requestedBy, WebsocketBrokerReconnectionService.ControlAction action) {
         String originNodeId = localNodeId();
-        WebsocketBrokerReconnectMessage message = new WebsocketBrokerReconnectMessage(targetNodeId, requestedBy, originNodeId, Instant.now());
+        WebsocketBrokerReconnectMessage message = new WebsocketBrokerReconnectMessage(targetNodeId, action, requestedBy, originNodeId, Instant.now());
 
         try {
             hazelcastInstance.<WebsocketBrokerReconnectMessage>getTopic(MessageTopic.WEBSOCKET_BROKER_RECONNECT.toString()).publish(message);
@@ -61,7 +73,11 @@ public class WebsocketBrokerReconnectionMessagingService {
         catch (Exception ex) {
             log.warn("Failed to publish websocket broker reconnect request to Hazelcast: {}", ex.getMessage(), ex);
             if (shouldHandleLocally(targetNodeId)) {
-                websocketBrokerReconnectionService.triggerManualReconnect();
+                switch (action) {
+                    case CONNECT -> websocketBrokerReconnectionService.triggerManualConnect();
+                    case DISCONNECT -> websocketBrokerReconnectionService.triggerManualDisconnect();
+                    default -> websocketBrokerReconnectionService.triggerManualReconnect();
+                }
             }
         }
     }
@@ -84,9 +100,13 @@ public class WebsocketBrokerReconnectionMessagingService {
 
         void handleReconnectMessage(WebsocketBrokerReconnectMessage reconnectMessage) {
             if (shouldHandleLocally(reconnectMessage.targetNodeId())) {
-                log.info("Received websocket broker reconnect request from node {} (requested by {}), triggering reconnect on this node", reconnectMessage.originatingNodeId(),
-                        reconnectMessage.requestedBy());
-                websocketBrokerReconnectionService.triggerManualReconnect();
+                log.info("Received websocket broker {} request from node {} (requested by {}), triggering on this node", reconnectMessage.action(),
+                        reconnectMessage.originatingNodeId(), reconnectMessage.requestedBy());
+                switch (reconnectMessage.action()) {
+                    case CONNECT -> websocketBrokerReconnectionService.triggerManualConnect();
+                    case DISCONNECT -> websocketBrokerReconnectionService.triggerManualDisconnect();
+                    default -> websocketBrokerReconnectionService.triggerManualReconnect();
+                }
             }
             else {
                 log.debug("Ignoring websocket broker reconnect request for node {} (this node is {})", reconnectMessage.targetNodeId(), localNodeId());

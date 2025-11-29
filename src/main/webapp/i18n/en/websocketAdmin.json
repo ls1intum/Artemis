@@ -10,14 +10,30 @@
             "address": "Address",
             "host": "Host",
             "port": "Port",
+            "type": "Type",
             "localNode": "Local",
             "actions": "Actions",
             "thisNode": "This node",
+            "coreNode": "Core node",
+            "buildAgent": "Build agent (lite)",
             "select": "Select",
             "noNodes": "No nodes found.",
+            "noCoreNodes": "No core nodes available for a websocket broker reconnect.",
+            "buildAgentInfo": "Build agents are Hazelcast lite members and are not connected to the websocket broker; reconnect actions target core nodes only.",
             "loadError": "Could not load Hazelcast nodes.",
             "reconnectRequested": "Reconnect request sent.",
-            "reconnectFailed": "Reconnect request failed."
+            "reconnectFailed": "Reconnect request failed.",
+            "name": "Name",
+            "brokerStatus": "Broker",
+            "connected": "Connected",
+            "disconnected": "Disconnected",
+            "disconnect": "Disconnect",
+            "connect": "Connect",
+            "disconnectAll": "Disconnect all nodes",
+            "disconnectRequested": "Disconnect request sent.",
+            "disconnectFailed": "Disconnect request failed.",
+            "connectRequested": "Connect request sent.",
+            "connectFailed": "Connect request failed."
         }
     }
 }

@@ -1,19 +1,20 @@
 <div class="websocket-admin">
     <h2 jhiTranslate="artemisApp.websocketAdmin.title"></h2>
     <p class="text-body-secondary" jhiTranslate="artemisApp.websocketAdmin.description"></p>
+    <p class="text-body-secondary" jhiTranslate="artemisApp.websocketAdmin.buildAgentInfo"></p>
 
     <div class="d-flex align-items-center gap-2 mb-3">
         <button class="btn btn-outline-primary btn-sm" (click)="loadNodes()" [disabled]="loading()">
             <fa-icon [icon]="faSync" />
             <span class="ms-2" jhiTranslate="artemisApp.websocketAdmin.refreshNodes"></span>
         </button>
-        <button class="btn btn-primary btn-sm" (click)="reconnect()" [disabled]="reconnecting() || loading()">
+        <button class="btn btn-primary btn-sm" (click)="reconnect()" [disabled]="reconnecting() || loading() || coreNodes().length === 0">
             <fa-icon [icon]="faPlug" />
             <span class="ms-2" jhiTranslate="artemisApp.websocketAdmin.reconnectAll"></span>
         </button>
-        <button class="btn btn-secondary btn-sm" (click)="reconnect(selectedNodeId())" [disabled]="!selectedNodeId() || reconnecting() || loading()">
-            <fa-icon [icon]="faRedo" />
-            <span class="ms-2" jhiTranslate="artemisApp.websocketAdmin.reconnectSelected"></span>
+        <button class="btn btn-outline-danger btn-sm" (click)="disconnect()" [disabled]="reconnecting() || loading() || coreNodes().length === 0">
+            <fa-icon [icon]="faPowerOff" />
+            <span class="ms-2" jhiTranslate="artemisApp.websocketAdmin.disconnectAll"></span>
         </button>
     </div>
 
@@ -21,10 +22,12 @@
         <table class="table table-sm align-middle">
             <thead>
                 <tr>
+                    <th jhiTranslate="artemisApp.websocketAdmin.name"></th>
                     <th jhiTranslate="artemisApp.websocketAdmin.memberId"></th>
-                    <th jhiTranslate="artemisApp.websocketAdmin.address"></th>
                     <th jhiTranslate="artemisApp.websocketAdmin.host"></th>
                     <th jhiTranslate="artemisApp.websocketAdmin.port"></th>
+                    <th jhiTranslate="artemisApp.websocketAdmin.type"></th>
+                    <th jhiTranslate="artemisApp.websocketAdmin.brokerStatus"></th>
                     <th jhiTranslate="artemisApp.websocketAdmin.localNode"></th>
                     <th jhiTranslate="artemisApp.websocketAdmin.actions"></th>
                 </tr>
@@ -32,19 +35,46 @@
             <tbody>
                 @for (node of nodes(); track node.memberId) {
                     <tr>
+                        <td>{{ node.instanceId || node.host }}</td>
                         <td class="font-monospace">{{ node.memberId }}</td>
-                        <td>{{ node.address }}</td>
                         <td>{{ node.host }}</td>
                         <td>{{ node.port }}</td>
+                        <td>
+                            <span
+                                class="badge"
+                                [ngClass]="{
+                                    'bg-primary': !node.liteMember,
+                                    'bg-secondary': node.liteMember,
+                                }"
+                                [jhiTranslate]="node.liteMember ? 'artemisApp.websocketAdmin.buildAgent' : 'artemisApp.websocketAdmin.coreNode'"
+                            ></span>
+                        </td>
+                        <td>
+                            <span
+                                class="badge"
+                                [ngClass]="{
+                                    'bg-success': node.brokerConnected,
+                                    'bg-warning': !node.brokerConnected,
+                                }"
+                                [jhiTranslate]="node.brokerConnected ? 'artemisApp.websocketAdmin.connected' : 'artemisApp.websocketAdmin.disconnected'"
+                            ></span>
+                        </td>
                         <td>
                             @if (node.local) {
                                 <span class="badge bg-success" jhiTranslate="artemisApp.websocketAdmin.thisNode"></span>
                             }
                         </td>
                         <td>
-                            <button class="btn btn-outline-secondary btn-sm" (click)="selectedNodeId.set(node.memberId)" [disabled]="loading()">
-                                <span jhiTranslate="artemisApp.websocketAdmin.select"></span>
-                            </button>
+                            <div class="btn-group btn-group-sm" role="group">
+                                <button class="btn btn-outline-danger" (click)="disconnect(node.memberId)" [disabled]="node.liteMember || reconnecting() || loading()">
+                                    <fa-icon [icon]="faPowerOff" />
+                                    <span class="ms-1" jhiTranslate="artemisApp.websocketAdmin.disconnect"></span>
+                                </button>
+                                <button class="btn btn-outline-primary" (click)="connect(node.memberId)" [disabled]="node.liteMember || reconnecting() || loading()">
+                                    <fa-icon [icon]="faPlug" />
+                                    <span class="ms-1" jhiTranslate="artemisApp.websocketAdmin.connect"></span>
+                                </button>
+                            </div>
                         </td>
                     </tr>
                 }

@@ -12,8 +12,11 @@ export class WebsocketAdminService {
         return this.http.get<WebsocketNode[]>(`${this.resourceUrl}/nodes`);
     }
 
-    triggerReconnect(targetNodeId?: string): Observable<void> {
-        const params = targetNodeId ? new HttpParams().set('targetNodeId', targetNodeId) : undefined;
+    triggerAction(action: 'RECONNECT' | 'DISCONNECT' | 'CONNECT', targetNodeId?: string): Observable<void> {
+        let params = new HttpParams().set('action', action);
+        if (targetNodeId) {
+            params = params.set('targetNodeId', targetNodeId);
+        }
         return this.http.post<void>(`${this.resourceUrl}/reconnect`, null, { params });
     }
 }

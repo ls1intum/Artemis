@@ -42,6 +42,7 @@ import com.hazelcast.config.EvictionConfig;
 import com.hazelcast.config.EvictionPolicy;
 import com.hazelcast.config.MapConfig;
 import com.hazelcast.config.MaxSizePolicy;
+import com.hazelcast.config.MemberAttributeConfig;
 import com.hazelcast.config.NetworkConfig;
 import com.hazelcast.config.QueueConfig;
 import com.hazelcast.config.SerializerConfig;
@@ -206,6 +207,13 @@ public class CacheConfiguration {
             hazelcastBindOnlyOnInterface("127.0.0.1", config);
         }
         else {
+            String buildAgentDisplayName = env.getProperty("artemis.continuous-integration.build-agent.display-name", "");
+            String instanceId = env.getProperty("eureka.instance.instanceId", registration.map(Registration::getInstanceId).orElse(null));
+            String displayName = !buildAgentDisplayName.isBlank() ? buildAgentDisplayName : instanceId;
+            if (instanceId != null && !instanceId.isBlank()) {
+                MemberAttributeConfig memberAttributeConfig = config.getMemberAttributeConfig();
+                memberAttributeConfig.setAttribute("instanceId", displayName);
+            }
             // The serviceId is by default the application's name,
             // see the "spring.application.name" standard Spring property
             String serviceId = registration.get().getServiceId();

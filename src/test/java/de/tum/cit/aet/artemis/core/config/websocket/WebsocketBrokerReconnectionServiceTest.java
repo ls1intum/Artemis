@@ -12,6 +12,7 @@ import static org.mockito.Mockito.when;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.ScheduledFuture;
 import java.util.function.Supplier;
 
@@ -26,6 +27,11 @@ import org.springframework.messaging.simp.broker.BrokerAvailabilityEvent;
 import org.springframework.messaging.simp.stomp.StompBrokerRelayMessageHandler;
 import org.springframework.messaging.tcp.TcpOperations;
 import org.springframework.scheduling.TaskScheduler;
+
+import com.hazelcast.cluster.Cluster;
+import com.hazelcast.cluster.Member;
+import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.map.IMap;
 
 @ExtendWith(MockitoExtension.class)
 class WebsocketBrokerReconnectionServiceTest {
@@ -45,6 +51,18 @@ class WebsocketBrokerReconnectionServiceTest {
     @Mock
     private ScheduledFuture<?> scheduledFuture;
 
+    @Mock
+    private HazelcastInstance hazelcastInstance;
+
+    @Mock
+    private IMap<String, Boolean> brokerStatusMap;
+
+    @Mock
+    private Cluster cluster;
+
+    @Mock
+    private Member member;
+
     @Captor
     private ArgumentCaptor<Runnable> runnableCaptor;
 
@@ -52,7 +70,13 @@ class WebsocketBrokerReconnectionServiceTest {
 
     @BeforeEach
     void setUp() {
-        websocketBrokerReconnectionService = new WebsocketBrokerReconnectionService(taskScheduler, Optional.of(stompBrokerRelayMessageHandler), tcpClientSupplier);
+        when(hazelcastInstance.<String, Boolean>getMap(WebsocketBrokerReconnectionService.WEBSOCKET_BROKER_STATUS_MAP)).thenReturn(brokerStatusMap);
+        when(hazelcastInstance.getCluster()).thenReturn(cluster);
+        when(cluster.getLocalMember()).thenReturn(member);
+        when(member.getUuid()).thenReturn(UUID.fromString("01234567-89ab-cdef-0123-456789abcdef"));
+
+        websocketBrokerReconnectionService = new WebsocketBrokerReconnectionService(taskScheduler, Optional.of(stompBrokerRelayMessageHandler), tcpClientSupplier,
+                hazelcastInstance);
     }
 
     @Test
@@ -95,7 +119,7 @@ class WebsocketBrokerReconnectionServiceTest {
 
     @Test
     void manualReconnectSkippedWithoutRelay() {
-        var serviceWithoutRelay = new WebsocketBrokerReconnectionService(taskScheduler, Optional.empty(), tcpClientSupplier);
+        var serviceWithoutRelay = new WebsocketBrokerReconnectionService(taskScheduler, Optional.empty(), tcpClientSupplier, hazelcastInstance);
         assertThat(serviceWithoutRelay.triggerManualReconnect()).isFalse();
         verifyNoInteractions(taskScheduler);
         verifyNoInteractions(tcpClientSupplier);

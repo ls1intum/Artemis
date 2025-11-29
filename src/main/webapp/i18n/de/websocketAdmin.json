@@ -10,14 +10,30 @@
             "address": "Adresse",
             "host": "Host",
             "port": "Port",
+            "type": "Typ",
             "localNode": "Lokal",
             "actions": "Aktionen",
             "thisNode": "Dieser Knoten",
+            "coreNode": "Core-Knoten",
+            "buildAgent": "Build Agent (Lite)",
             "select": "Auswählen",
             "noNodes": "Keine Knoten gefunden.",
+            "noCoreNodes": "Keine Core-Knoten für eine Websocket-Broker-Verbindung verfügbar.",
+            "buildAgentInfo": "Build Agents sind Hazelcast-Lite-Member und nicht mit dem Websocket-Broker verbunden; Neuverbindungen werden nur auf Core-Knoten ausgeführt.",
             "loadError": "Hazelcast-Knoten konnten nicht geladen werden.",
             "reconnectRequested": "Neu-Verbindungsanfrage gesendet.",
-            "reconnectFailed": "Neu-Verbindungsanfrage fehlgeschlagen."
+            "reconnectFailed": "Neu-Verbindungsanfrage fehlgeschlagen.",
+            "name": "Name",
+            "brokerStatus": "Broker",
+            "connected": "Verbunden",
+            "disconnected": "Getrennt",
+            "disconnect": "Trennen",
+            "connect": "Verbinden",
+            "disconnectAll": "Alle Knoten trennen",
+            "disconnectRequested": "Trennungsanfrage gesendet.",
+            "disconnectFailed": "Trennungsanfrage fehlgeschlagen.",
+            "connectRequested": "Verbindungsanfrage gesendet.",
+            "connectFailed": "Verbindungsanfrage fehlgeschlagen."
         }
     }
 }
