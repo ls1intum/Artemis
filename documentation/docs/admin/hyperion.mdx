@@ -95,9 +95,9 @@ Langfuse is a platform for observability and tracing of LLM applications and age
 These keys authenticate your application when sending observability data to Langfuse.
 
 5. Identify your Langfuse host URL.
-It appears in the Langfuse UI as: **https://<host>**
+It appears in the Langfuse UI as: **https://\<host\>**.
 Your **OTLP HTTP ingestion endpoint** follows the standard OTLP HTTP spec and is constructed as:
-**https://<host>/api/public/otel/v1/traces**
+**https://\<host\>/api/public/otel/v1/traces**
 - `/api/public/otel` → Langfuse OTLP receiver root
 - `/v1/traces` → Standard OTLP HTTP route
 > For more info: See how Langfuse can receive traces on the OLTP endpoint [here](https://langfuse.com/integrations/native/opentelemetry)
