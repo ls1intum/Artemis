@@ -641,8 +641,7 @@ public class MetricsBean {
      * The update (and recalculation) is performed every 60 minutes.
      * Only executed if the "scheduling"-profile is present.
      */
-    // TODO: set an initial delay to prevent calling this at startup time
-    @Scheduled(fixedRate = 60 * 60 * 1000, initialDelay = 0) // Every 60 minutes
+    @Scheduled(fixedRate = 60 * 60 * 1000, initialDelay = 5 * 60 * 1000) // Every 60 minutes, starting 5 minutes after application start
     public void updatePublicArtemisMetrics() {
         if (!scheduledMetricsEnabled) {
             return;
