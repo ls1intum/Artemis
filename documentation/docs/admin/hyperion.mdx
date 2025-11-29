@@ -141,17 +141,16 @@ management:
       probability: 1.0
   otlp:
      tracing:
-  # LangFuse accepts OTLP over HTTP at the traces path only
-  # (example: https://langfuse.hephaestus.aet.cit.tum.de/api/public/otel/v1/traces)
+       # LangFuse accepts OTLP over HTTP at the traces path only
+       # (example: https://langfuse.hephaestus.aet.cit.tum.de/api/public/otel/v1/traces)
        endpoint: https://example.com
        transport: http
        headers:
-  # Provide "Basic <base64(public_key:secret_key)>" via env var to avoid committing secrets
+         # Provide "Basic <base64(public_key:secret_key)>" via env var to avoid committing secrets
          Authorization: "Basic <base64(public_key:secret_key)>"
-  # Important:
-  # Set export.enabled: false to disable the *default* OTLP exporter.
-  # Artemis uses its own custom exporter to send Spring AI LLM traces to Langfuse.
-  # so disabling the default exporter will NOT stop LLM trace export.
+     # Important: Set export.enabled: false to disable the *default* OTLP exporter.
+     # Artemis uses its own custom exporter to send Spring AI LLM traces to Langfuse.
+     # so disabling the default exporter will NOT stop LLM trace export.
      export:
        enabled: false
 ```
