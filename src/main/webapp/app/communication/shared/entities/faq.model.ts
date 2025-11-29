@@ -15,6 +15,7 @@ export class Faq implements BaseEntity {
     public faqState?: FaqState;
     public course?: Course;
     public categories?: FaqCategory[];
+    public createdDate?: Date;
 }
 
 export class CreateFaqDTO {
