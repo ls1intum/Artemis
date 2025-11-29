@@ -360,6 +360,15 @@ examples.forEach((activeConversation) => {
             expect(component.isCollapsed).toBeTrue();
         });
 
+        it('should reload sidebar when reloadSidebar$ event is emitted', () => {
+            const prepareSidebarDataSpy = jest.spyOn(component, 'prepareSidebarData');
+            fixture.detectChanges(); // ngOnInit is called here
+
+            courseSidebarService.reloadSidebar();
+
+            expect(prepareSidebarDataSpy).toHaveBeenCalled();
+        });
+
         it('should switch to mobile if breakpoint returns true and open sidebar', () => {
             const openSidebarSpy = jest.spyOn(courseSidebarService, 'openSidebar');
             expect(component.isMobile()).toBeFalse();
