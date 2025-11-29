@@ -165,19 +165,19 @@ management:
     annotations:
       enabled: true
 
-    # Configuration for exporting LLM traces to Langfuse (set to true to enable Artemis' custom exporter)
-  #  langfuse:
+  # Configuration for exporting LLM traces to Langfuse (set to true to enable Artemis' custom exporter)
+#  langfuse:
 #    enabled: true
   tracing:
     sampling:
-     probability: 1.0
+      probability: 1.0
   otlp:
     tracing:
       # LangFuse accepts OTLP over HTTP at the traces path only
       # (example: https://langfuse.hephaestus.aet.cit.tum.de/api/public/otel/v1/traces)
-#      endpoint: https://example.com
-#      transport: http
-#      headers:
+#     endpoint: https://example.com
+#     transport: http
+#     headers:
         # Provide "Basic <base64(public_key:secret_key)>" via env var to avoid committing secrets
 #        Authorization: "Basic <base64(public_key:secret_key)>"
 
