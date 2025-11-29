@@ -114,15 +114,6 @@ public class GitService extends AbstractGitService {
     private static final String ANONYMIZED_STUDENT_EMAIL = "";
 
     /**
-     * Returns the configured default branch name.
-     *
-     * @return the default branch name (e.g., "main")
-     */
-    public String getDefaultBranch() {
-        return defaultBranch;
-    }
-
-    /**
      * Get the URI for a {@link LocalVCRepositoryUri}. This either retrieves the SSH URI, if SSH is used, the HTTP(S) URI, or the path to the repository's folder if the local VCS
      * is
      * used.

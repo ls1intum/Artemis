@@ -12,6 +12,7 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.hibernate.LazyInitializationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -69,6 +70,8 @@ public class HyperionCodeGenerationExecutionService {
     private record IterationResult(Result result, String buildLogs, boolean successful) {
     }
 
+    private final String defaultBranch;
+
     private final GitService gitService;
 
     private final RepositoryService repositoryService;
@@ -95,13 +98,14 @@ public class HyperionCodeGenerationExecutionService {
 
     private final ProgrammingSubmissionService programmingSubmissionService;
 
-    public HyperionCodeGenerationExecutionService(GitService gitService, RepositoryService repositoryService,
-            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
+    public HyperionCodeGenerationExecutionService(@Value("${artemis.version-control.default-branch:main}") String defaultBranch, GitService gitService,
+            RepositoryService repositoryService, SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
             ResultRepository resultRepository, ContinuousIntegrationTriggerService continuousIntegrationTriggerService,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, HyperionProgrammingExerciseContextRendererService repositoryStructureService,
             HyperionSolutionRepositoryService solutionStrategy, HyperionTemplateRepositoryService templateStrategy, HyperionTestRepositoryService testStrategy,
             ProgrammingSubmissionService programmingSubmissionService) {
+        this.defaultBranch = defaultBranch;
         this.gitService = gitService;
         this.repositoryService = repositoryService;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
@@ -115,17 +119,6 @@ public class HyperionCodeGenerationExecutionService {
         this.templateStrategy = templateStrategy;
         this.testStrategy = testStrategy;
         this.programmingSubmissionService = programmingSubmissionService;
-    }
-
-    /**
-     * Gets the default branch name for the given repository.
-     * Uses the configured default branch from GitService.
-     *
-     * @param repositoryUri the URI of the repository to check
-     * @return the default branch name
-     */
-    private String getDefaultBranch(LocalVCRepositoryUri repositoryUri) {
-        return gitService.getDefaultBranch();
     }
 
     /**
@@ -159,7 +152,6 @@ public class HyperionCodeGenerationExecutionService {
         }
 
         try {
-            String defaultBranch = getDefaultBranch(repositoryUri);
             Repository repository = gitService.getOrCheckoutRepository(repositoryUri, true, defaultBranch, false);
 
             if (repository == null) {
@@ -208,20 +200,6 @@ public class HyperionCodeGenerationExecutionService {
         catch (IOException e) {
             log.error("Failed to create file {} for exercise {}: {}", file.path(), exercise.getId(), e.getMessage(), e);
             throw e;
-        }
-    }
-
-    /**
-     * Processes all generated files by updating them in the repository.
-     *
-     * @param repository     the repository
-     * @param generatedFiles list of generated files to process
-     * @param exercise       the programming exercise (for logging)
-     * @throws IOException if file operations fail
-     */
-    private void processGeneratedFiles(Repository repository, List<GeneratedFileDTO> generatedFiles, ProgrammingExercise exercise) throws IOException {
-        for (GeneratedFileDTO file : generatedFiles) {
-            updateSingleFile(repository, file, exercise);
         }
     }
 
