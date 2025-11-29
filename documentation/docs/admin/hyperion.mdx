@@ -96,6 +96,7 @@ These keys authenticate your application when sending observability data to Lang
 
 5. Identify your Langfuse host URL.
 It appears in the Langfuse UI as: **https://\<host\>**.
+
 Your **OTLP HTTP ingestion endpoint** follows the standard OTLP HTTP spec and is constructed as:
 **https://\<host\>/api/public/otel/v1/traces**
 - `/api/public/otel` → Langfuse OTLP receiver root
@@ -104,6 +105,7 @@ Your **OTLP HTTP ingestion endpoint** follows the standard OTLP HTTP spec and is
 
 6. Generate the Basic Authentication token for Langfuse.
 Use Base64 encoding with the format: base64(public_key:secret_key)
+
 Example generation command:
 ```bash
 echo -n "<public_key>:<secret_key>" | base64
