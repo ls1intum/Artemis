@@ -101,7 +101,7 @@ class HyperionCodeGenerationExecutionServiceTest {
     @BeforeEach
     void setup() {
         MockitoAnnotations.openMocks(this);
-        this.service = new HyperionCodeGenerationExecutionService(gitService, repositoryService, solutionProgrammingExerciseParticipationRepository,
+        this.service = new HyperionCodeGenerationExecutionService("main", gitService, repositoryService, solutionProgrammingExerciseParticipationRepository,
                 templateProgrammingExerciseParticipationRepository, programmingSubmissionRepository, resultRepository, continuousIntegrationTriggerService,
                 programmingExerciseParticipationService, repositoryStructureService, solutionStrategy, templateStrategy, testStrategy, programmingSubmissionService);
 
@@ -139,15 +139,6 @@ class HyperionCodeGenerationExecutionServiceTest {
     void resolveStrategy_withUnsupportedRepositoryType_throwsIllegalArgumentException() {
         assertThatThrownBy(() -> ReflectionTestUtils.invokeMethod(service, "resolveStrategy", RepositoryType.AUXILIARY)).isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Unsupported repository type for code generation: auxiliary");
-    }
-
-    @Test
-    void getDefaultBranch_returnsGitServiceDefaultBranch() throws Exception {
-        when(gitService.getDefaultBranch()).thenReturn("develop");
-
-        String result = (String) ReflectionTestUtils.invokeMethod(service, "getDefaultBranch", (Object) null);
-
-        assertThat(result).isEqualTo("develop");
     }
 
     @Test
@@ -235,20 +226,6 @@ class HyperionCodeGenerationExecutionServiceTest {
         // When using reflection, IOException gets wrapped in UndeclaredThrowableException
         assertThatThrownBy(() -> ReflectionTestUtils.invokeMethod(service, "updateSingleFile", mockRepository, generatedFile, exercise)).isInstanceOf(Exception.class)
                 .hasRootCauseInstanceOf(IOException.class);
-    }
-
-    @Test
-    void processGeneratedFiles_withMultipleFiles_processesAll() throws Exception {
-        Repository mockRepository = mock(Repository.class);
-        List<GeneratedFileDTO> generatedFiles = List.of(new GeneratedFileDTO("Test1.java", "public class Test1 {}"), new GeneratedFileDTO("Test2.java", "public class Test2 {}"));
-
-        when(gitService.getFileByName(mockRepository, "Test1.java")).thenReturn(Optional.empty());
-        when(gitService.getFileByName(mockRepository, "Test2.java")).thenReturn(Optional.empty());
-        doNothing().when(repositoryService).createFile(eq(mockRepository), anyString(), any());
-
-        ReflectionTestUtils.invokeMethod(service, "processGeneratedFiles", mockRepository, generatedFiles, exercise);
-
-        verify(repositoryService, times(2)).createFile(eq(mockRepository), anyString(), any());
     }
 
     @Test
