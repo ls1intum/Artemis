@@ -256,9 +256,10 @@ public class WebsocketBrokerReconnectionService implements ApplicationListener<B
         statusPublishTask = messageBrokerTaskScheduler.scheduleWithFixedDelay(() -> {
             try {
                 brokerStatusMap.put(localMemberId, lastKnownBrokerAvailable);
+                log.info("Published websocket broker status {} for member {}", lastKnownBrokerAvailable, localMemberId);
             }
             catch (Exception ex) {
-                log.debug("Failed to publish websocket broker status: {}", ex.getMessage());
+                log.warn("Failed to publish websocket broker status: {}", ex.getMessage());
             }
         }, Instant.now().plusSeconds(5), STATUS_PUBLISH_INTERVAL);
     }
