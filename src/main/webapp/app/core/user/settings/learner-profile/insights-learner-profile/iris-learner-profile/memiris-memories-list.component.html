@@ -1,5 +1,16 @@
 <h5 jhiTranslate="artemisApp.iris.memories.title"></h5>
 
+@if (hasConflicts) {
+    <div class="alert alert-warning d-flex align-items-center justify-content-between" role="alert">
+        <div>
+            <span jhiTranslate="artemisApp.iris.memories.conflict.warning"></span>
+        </div>
+        <button class="btn btn-sm btn-warning" (click)="openResolveConflictsModal()">
+            <span jhiTranslate="artemisApp.iris.memories.conflict.resolve"></span>
+        </button>
+    </div>
+}
+
 @if (loading) {
     <div class="small text-muted" jhiTranslate="artemisApp.iris.memories.loadingList"></div>
 } @else {
