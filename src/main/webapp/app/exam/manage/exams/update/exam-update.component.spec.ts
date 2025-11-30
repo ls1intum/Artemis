@@ -36,6 +36,8 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MODULE_FEATURE_TEXT } from 'app/app.constants';
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
+import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
+import { By } from '@angular/platform-browser';
 
 @Component({
     template: '',
@@ -567,6 +569,45 @@ describe('ExamUpdateComponent', () => {
             expect(component.exam.numberOfExercisesInExam).toBe(40);
             expect(component.isValidNumberOfExercises).toBeTrue();
         });
+
+        it('should bind correct title into jhi-button and compute correct save title text', () => {
+            fixture.detectChanges();
+            expect(component.saveTitle()).toBe('entity.action.save');
+            const button = fixture.debugElement.query(By.directive(ButtonComponent)).componentInstance;
+            expect(button.title).toBe('entity.action.save');
+        });
+
+        it('should bind isSaving into jhi-button isLoading', () => {
+            component.isSaving = true;
+            fixture.detectChanges();
+
+            let button = fixture.debugElement.query(By.directive(ButtonComponent)).componentInstance;
+            expect(button.isLoading).toBeTrue();
+
+            component.isSaving = false;
+            fixture.detectChanges();
+            button = fixture.debugElement.query(By.directive(ButtonComponent)).componentInstance;
+            expect(button.isLoading).toBeFalse();
+        });
+
+        it('should disable the save button when configuration is invalid', () => {
+            const exam = new Exam();
+            component.exam = exam;
+
+            const now = dayjs();
+
+            exam.visibleDate = now.add(1, 'hour');
+            exam.startDate = now.add(5, 'hour');
+            exam.endDate = now.add(1, 'hour');
+            exam.workingTime = 3600;
+
+            fixture.detectChanges();
+
+            expect(component.isValidConfiguration).toBeFalse();
+
+            const button = fixture.debugElement.query(By.directive(ButtonComponent)).componentInstance;
+            expect(button.disabled).toBeTrue();
+        });
     });
 
     describe('import exams', () => {
@@ -841,6 +882,13 @@ describe('ExamUpdateComponent', () => {
             expect(importSpy).toHaveBeenCalledOnce();
             expect(importSpy).toHaveBeenCalledWith(1, expectedExam);
             expect(alertSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should bind correct title into jhi-button and compute correct save title text', () => {
+            fixture.detectChanges();
+            expect(component.saveTitle()).toBe('entity.action.import');
+            const button = fixture.debugElement.query(By.directive(ButtonComponent)).componentInstance;
+            expect(button.title).toBe('entity.action.import');
         });
     });
 });
