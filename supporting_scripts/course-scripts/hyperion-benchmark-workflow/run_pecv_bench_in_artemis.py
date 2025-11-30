@@ -1,3 +1,4 @@
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import configparser
 import json
 import subprocess
@@ -5,11 +6,11 @@ import os
 import sys
 import requests
 from logging import config
-from typing import Dict, Tuple
+from typing import Dict, List, Tuple
 from logging_config import logging
 from utils import login_as_admin, SERVER_URL
 from create_pecv_bench_course import create_pecv_bench_course
-from manage_programming_exercise import check_consistency, convert_variant_to_zip, import_programming_exercise
+from manage_programming_exercise import check_exercise_consistency, convert_variant_to_zip, import_programming_exercise, process_variant_consistency_check
 from pathlib import Path
 
 # Load configuration
@@ -19,7 +20,8 @@ config.read(['config.ini'])
 PECV_BENCH_PATH: str = config.get('PECVBenchSettings', 'pecv_bench_path', fallback="pecv-bench")
 PECV_BENCH_URL: str = config.get('PECVBenchSettings', 'pecv_bench_repo', fallback="https://github.com/ls1intum/PECV-bench.git")
 COURSE: str = config.get('PECVBenchSettings', 'course', fallback="ITP2425")
-EXERCISE: str = config.get('PECVBenchSettings', 'exercise', fallback="H01E01-Lectures")
+EXERCISES: List[str] = [exercise.strip() for exercise in config.get('PECVBenchSettings', 'exercises', fallback="H01E01-Lectures").split(',')]
+MAX_THREADS: int = int(config.get('Settings', 'max_threads', fallback="5"))
 
 def clone_pecv_bench(pecv_bench_url: str, pecv_bench_dir: str) -> None:
     """Clones a repository if it doesn't exist, or pulls updates if it does."""
@@ -151,8 +153,9 @@ def main():
     try:
         from cli.commands.variants import VariantManager
         from cli.utils import ExerciseIdentifier
-    
-        create_all_variants(COURSE, EXERCISE)
+        
+        for EXERCISE in EXERCISES:
+            create_all_variants(COURSE, EXERCISE)
 
     except ImportError as e:
         logging.error(f"Failed to import dependencies from pecv-bench. Error: {e}")
@@ -167,46 +170,73 @@ def main():
     course_id = response_data["id"]
     
     # Step 6: Store variant_id to exercise_id mapping, create zip files and import programming exercises
-    programming_exercises: Dict[str, int] = {} # {'001': 92, <VARIANT_ID>: <exercise_id>, ...}
-    variants_folder_path: str = f"{pecv_bench_dir}/data/{COURSE}/{EXERCISE}/variants"
-    list_of_variants = sorted(os.listdir(variants_folder_path))
-    for variant_id in list_of_variants:
-        if not os.path.isdir(os.path.join(variants_folder_path, variant_id)):
-            continue
-        variant_id_path = os.path.join(variants_folder_path, variant_id)
-        programming_exercises[variant_id] = None
-        
-        zip_created = convert_variant_to_zip(variant_id_path, course_id)
-        if not zip_created:
-            logging.error(f"Failed to create zip for variant {variant_id}. Skipping import.")
-            continue
-        
-        response_data = import_programming_exercise(session = session, 
-                                course_id = course_id,
-                                server_url = SERVER_URL,
-                                variant_folder_path = variant_id_path)
-        if response_data is not None and response_data["id"] is not None:
-            programming_exercises[variant_id] = response_data["id"]
-        else:
-            logging.error(f"Failed to import programming exercise for variant {variant_id}. Moving to next variant.")
-            continue    
+    programming_exercises: Dict[str, int] = {} # {'<NAME>-001': 92, <VARIANT_ID>: <exercise_id>, ...}
+    for EXERCISE in EXERCISES:
+        variants_folder_path: str = f"{pecv_bench_dir}/data/{COURSE}/{EXERCISE}/variants"
+        list_of_variants = sorted(os.listdir(variants_folder_path))
+
+        for variant_id in list_of_variants:
+            if not os.path.isdir(os.path.join(variants_folder_path, variant_id)):
+                continue
+            
+            variant_id_path = os.path.join(variants_folder_path, variant_id)
+            programming_exercises[f"{EXERCISE}:{variant_id}"] = None
+            
+            zip_created = convert_variant_to_zip(variant_id_path, course_id)
+            if not zip_created:
+                logging.error(f"Failed to create zip for variant {variant_id}. Skipping import.")
+                continue
+            
+            response_data = import_programming_exercise(session = session, 
+                                    course_id = course_id,
+                                    server_url = SERVER_URL,
+                                    variant_folder_path = variant_id_path)
+            if response_data is not None and response_data["id"] is not None:
+                programming_exercises[f"{EXERCISE}:{variant_id}"] = response_data["id"]
+            else:
+                logging.error(f"Failed to import programming exercise for variant {variant_id}. Moving to next variant.")
+                continue    
+    logging.info(f"Imported {len(programming_exercises)} programming exercises into course ID {course_id}.")
     
     # Step 7: Run consistency checks for all programming exercises and store results
-    consistency_check_results = os.path.join(pecv_bench_dir, "results", "artemis-bench", COURSE, EXERCISE)
-    os.makedirs(consistency_check_results, exist_ok=True)
+    model_name = "azure-openai-gpt-5-mini"  # NOTE implement PyYAML parser to extract from src/main/resources//config/application-local.yml
+                                            # NOTE sprint.ai.mode.chat + spring.ai.azure.openai.chat.options.deployment-name
     
-    for variant_id, exercise_id in programming_exercises.items():
-        if exercise_id is None:
-            logging.error(f"Skipping consistency check for variant {variant_id} due to missing exercise ID.")
-            continue
-        logging.info(f"Running consistency check for variant {variant_id} with exercise ID {exercise_id}...")
-        consistency_issue, exercise_id = check_consistency(session=session, programming_exercise_id=exercise_id, server_url=SERVER_URL)
-        with open(os.path.join(consistency_check_results, f"{variant_id}.json"), "w") as file:
-            json.dump(consistency_issue, file, indent=4)
+    logging.info(f"Starting consistency checks for {len(programming_exercises)} variants using up to {MAX_THREADS} threads")
+    course_dir = os.path.join(pecv_bench_dir, "results", "artemis-bench", model_name, "cases", COURSE)
+    for EXERCISE in EXERCISES:
+        os.makedirs(os.path.join(course_dir, EXERCISE), exist_ok=True)
+    
+    run_id = f"{model_name}-default"
+
+    with ThreadPoolExecutor(max_workers=MAX_THREADS) as executor:
+        futures = []
+        
+        # variant_id: EXERCISE:variant_id
+        for exercise_variant_local_id, exercise_server_id in programming_exercises.items():
+            futures.append(executor.submit(
+                process_variant_consistency_check,
+                session,
+                SERVER_URL,
+                exercise_variant_local_id,
+                exercise_server_id,
+                course_dir,
+                COURSE,
+                run_id
+            ))
+        
+        for future in as_completed(futures):
+            try:
+                result = future.result()
+                logging.info(result)
+            except Exception as e:
+                logging.exception(f"Thread failed with error: {e}")
+
+    logging.info("All consistency checks completed.")
 
     # Step 8: Generate report and statistics
-    
+
     logging.info("PECV-Bench Hyperion Benchmark Workflow completed.")
 
-if __name__ == "__main__":
+if __name__ == "__main__":  
     main()

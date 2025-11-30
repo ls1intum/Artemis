@@ -75,13 +75,18 @@ def convert_variant_to_zip(variant_path: str, course_id: int) -> bool:
     try:
         with open(config_file_path, 'r') as config_file:
             exercise_details: Dict[str, Any] = json.load(config_file)
+            
             exercise_details['id'] = None
             exercise_details['course']['id'] = course_id
+            
             exercise_name = exercise_details.get('title', 'Untitled')
             exercise_details['title'] = f"{variant_id} - {exercise_details.get('title', 'Untitled')}"
+            
             exercise_details['shortName'] = sanitize_exercise_name(exercise_name, int(variant_id))
-            exercise_details["projectKey"] = f"{variant_id}ITP2425H01E01"
+            exercise_details["projectKey"] = f"{variant_id}ITP2425{exercise_details['shortName']}"
+            
             logging.info("Overwriting exercise ID, course ID, title and shortName in the config file.")
+
         with open(config_file_path, 'w') as config_file:
             json.dump(exercise_details, config_file, indent=4)
             logging.info(f"Updated programming exercise details in {config_file_path}")
@@ -130,11 +135,6 @@ def import_programming_exercise(session: Session, course_id: int, server_url: st
     variant_id = os.path.basename(variant_folder_path)
     config_file_path = os.path.join(variant_folder_path, "Exercise-Details.json") 
     exercise_zip_path = os.path.join(variant_folder_path, f"{variant_id}-FullExercise.zip")
-
-    # logging.info("Verifying contents of the final zip file...")
-    # with zipfile.ZipFile(exercise_zip_path, 'r') as zipf:
-    #     zip_contents = zipf.namelist()
-    #     logging.info(f"Contents of {exercise_zip_path}: {zip_contents}")
 
     try:
         with open(config_file_path, 'r') as config_file:
@@ -186,19 +186,50 @@ def import_programming_exercise(session: Session, course_id: int, server_url: st
         return None
     
 
-def check_consistency(session: Session, programming_exercise_id: int, server_url: str):
+def check_exercise_consistency(session: Session, exercise_server_id: int, server_url: str, exercise_variant_local_id: str):
     """Check the consistency of the programming exercise with Hyperion System.
     
     returns the consistency issues as a list of dictionaries along with the programming exercise ID.
     """
+    logging.info(f"[{exercise_variant_local_id}] \t\tStarting consistency check for programming exercise ID: {exercise_server_id}")
     
-    url: str = f"{server_url}/hyperion/programming-exercises/{programming_exercise_id}/consistency-check"
+    url: str = f"{server_url}/hyperion/programming-exercises/{exercise_server_id}/consistency-check"
     
     response: requests.Response = session.post(url)
 
     if response.status_code == 200:
-        logging.info(f"Finished consistency check for programming exercise ID: {programming_exercise_id}")
-        return response.json(), programming_exercise_id
+        logging.info(f"[{exercise_variant_local_id}] Finished consistency check for programming exercise ID: {exercise_server_id}")
+        return response.json()
     else:
-        logging.error(f"Failed to check consistency for programming exercise ID {programming_exercise_id}; Status code: {response.status_code}\nResponse content: {response.text}")
-        return None, programming_exercise_id
+        logging.error(f"Failed to check consistency for programming exercise ID {exercise_server_id}; Status code: {response.status_code}\nResponse content: {response.text}")
+        return None
+
+
+def process_variant_consistency_check(session: Session, server_url: str, exercise_variant_local_id: str, exercise_server_id: int, results_dir: str, course: str, run_id: str) -> str:
+    """
+    Worker function to check consistency and save result for a single variant.
+    exercise_variant_id: 'H01E01-Lectures:001'
+    """
+    if exercise_server_id is None:
+        logging.error(f"Skipping consistency check for variant {exercise_variant_local_id} due to missing exercise ID.")
+        return f"Skipped {exercise_variant_local_id} due to missing exercise ID"
+
+    # 1. Network Request
+    consistency_issue = check_exercise_consistency(session=session, exercise_server_id=exercise_server_id, server_url=server_url, exercise_variant_local_id=exercise_variant_local_id)
+    
+    exercise = exercise_variant_local_id.split(":")[0]
+    variant = exercise_variant_local_id.split(":")[1]
+    # 2. Data Enrichment
+    if consistency_issue is not None:
+        consistency_issue["case_id"] = f"{course}/{exercise}/{variant}"
+        consistency_issue["run_id"] = run_id
+
+    # 3. File Write (I/O), different threads writing to different files is thread-safe
+    file_path = os.path.join(results_dir, exercise, f"{variant}.json")
+    try:
+        with open(file_path, "w") as file:
+            json.dump(consistency_issue, file, indent=4)
+        return f"[{exercise_variant_local_id}] success"
+    except Exception as e:
+        logging.exception(f"Failed to write file for {exercise_variant_local_id}: {e}")
+        return f"[{exercise_variant_local_id}] error"
