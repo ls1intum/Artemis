@@ -6,7 +6,9 @@ import static de.tum.cit.aet.artemis.core.config.Constants.COMPLAINT_TEXT_LIMIT;
 import static de.tum.cit.aet.artemis.core.config.Constants.SHORT_NAME_PATTERN;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
 
@@ -232,8 +234,9 @@ public class Course extends DomainObject {
     private TutorialGroupsConfiguration tutorialGroupsConfiguration;
 
     @OneToMany(mappedBy = "course", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OrderBy("createdDate DESC")
     @JsonIgnoreProperties(value = "course", allowSetters = true)
-    private Set<Faq> faqs = new HashSet<>();
+    private List<Faq> faqs = new ArrayList<>();
 
     // NOTE: Helpers variable names must be different from Getter name, so that Jackson ignores the @Transient annotation, but Hibernate still respects it
     @Transient
@@ -1003,11 +1006,11 @@ public class Course extends DomainObject {
         this.courseInformationSharingMessagingCodeOfConduct = courseInformationSharingMessagingCodeOfConduct;
     }
 
-    public Set<Faq> getFaqs() {
+    public List<Faq> getFaqs() {
         return faqs;
     }
 
-    public void setFaqs(Set<Faq> faqs) {
+    public void setFaqs(List<Faq> faqs) {
         this.faqs = faqs;
     }
 

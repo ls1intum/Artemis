@@ -358,7 +358,9 @@ public class ProgrammingExerciseCreationUpdateService {
             throws EntityNotFoundException {
 
         String oldProblemStatement = programmingExercise.getProblemStatement();
-        programmingExercise.setProblemStatement(problemStatement);
+        // Trim the problem statement and convert whitespace-only strings to null
+        String trimmedProblemStatement = problemStatement != null ? problemStatement.trim() : null;
+        programmingExercise.setProblemStatement(trimmedProblemStatement != null && !trimmedProblemStatement.isEmpty() ? trimmedProblemStatement : null);
         programmingExerciseTaskService.replaceTestNamesWithIds(programmingExercise);
         ProgrammingExercise updatedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
 

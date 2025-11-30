@@ -114,12 +114,7 @@ export class WebauthnService {
             }
 
             await this.webauthnApiService.loginWithPasskey(credential);
-
-            this.accountService.userIdentity.set({
-                ...this.accountService.userIdentity(),
-                loggedInWithPasskey: true,
-                internal: this.accountService.userIdentity()?.internal ?? false,
-            });
+            await this.accountService.identity(true);
         } catch (error) {
             if (error instanceof InvalidCredentialError) {
                 this.alertService.addErrorAlert('artemisApp.userSettings.passkeySettingsPage.error.invalidCredential');

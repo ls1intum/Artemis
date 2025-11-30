@@ -1,7 +1,7 @@
 import { Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 
-import { Authority } from 'app/shared/constants/authority.constants';
+import { IS_AT_LEAST_EDITOR, IS_AT_LEAST_TUTOR } from 'app/shared/constants/authority.constants';
 
 import { FileUploadExerciseManagementResolve } from 'app/fileupload/manage/services/file-upload-exercise-management-resolve.service';
 
@@ -13,7 +13,7 @@ export const routes: Routes = [
             fileUploadExercise: FileUploadExerciseManagementResolve,
         },
         data: {
-            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_EDITOR,
             pageTitle: 'artemisApp.fileUploadExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -25,7 +25,7 @@ export const routes: Routes = [
             fileUploadExercise: FileUploadExerciseManagementResolve,
         },
         data: {
-            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_EDITOR,
             pageTitle: 'artemisApp.fileUploadExercise.home.importLabel',
         },
         canActivate: [UserRouteAccessService],
@@ -38,7 +38,7 @@ export const routes: Routes = [
             fileUploadExercise: FileUploadExerciseManagementResolve,
         },
         data: {
-            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_EDITOR,
             pageTitle: 'artemisApp.fileUploadExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -47,7 +47,7 @@ export const routes: Routes = [
         path: 'file-upload-exercises/:exerciseId',
         loadComponent: () => import('./exercise-details/file-upload-exercise-detail.component').then((m) => m.FileUploadExerciseDetailComponent),
         data: {
-            authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_TUTOR,
             pageTitle: 'artemisApp.fileUploadExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -59,7 +59,7 @@ export const routes: Routes = [
             fileUploadExercise: FileUploadExerciseManagementResolve,
         },
         data: {
-            authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_TUTOR,
             pageTitle: 'exercise-statistics.title',
         },
         canActivate: [UserRouteAccessService],

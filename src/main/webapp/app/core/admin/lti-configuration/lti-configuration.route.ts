@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 
-import { Authority } from 'app/shared/constants/authority.constants';
+import { IS_AT_LEAST_ADMIN } from 'app/shared/constants/authority.constants';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 
 export const ltiConfigurationRoute: Routes = [
@@ -24,7 +24,7 @@ export const ltiConfigurationRoute: Routes = [
                 path: 'new',
                 loadComponent: () => import('app/core/admin/lti-configuration/edit/edit-lti-configuration.component').then((m) => m.EditLtiConfigurationComponent),
                 data: {
-                    authorities: [Authority.ADMIN],
+                    authorities: IS_AT_LEAST_ADMIN,
                     pageTitle: 'artemisApp.lti.addLtiPlatform',
                 },
                 canActivate: [UserRouteAccessService],
@@ -39,7 +39,7 @@ export const ltiConfigurationRoute: Routes = [
                         path: 'edit',
                         loadComponent: () => import('app/core/admin/lti-configuration/edit/edit-lti-configuration.component').then((m) => m.EditLtiConfigurationComponent),
                         data: {
-                            authorities: [Authority.ADMIN],
+                            authorities: IS_AT_LEAST_ADMIN,
                             pageTitle: 'artemisApp.lti.editLtiPlatform',
                         },
                         canActivate: [UserRouteAccessService],

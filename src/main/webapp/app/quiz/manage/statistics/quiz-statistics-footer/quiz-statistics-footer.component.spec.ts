@@ -25,7 +25,7 @@ let quizExercise = { id: 42, quizStarted: true, course, quizQuestions: [question
 let examQuizExercise = { id: 43, quizStarted: true, course, quizQuestions: [question], exerciseGroup: { id: 11, exam: { id: 10 } } } as QuizExercise;
 const route = { params: of({ questionId: 1, exerciseId: 42 }) };
 
-describe('QuizExercise Statistic Footer Component', () => {
+describe('QuizStatisticsFooterComponent', () => {
     let comp: QuizStatisticsFooterComponent;
     let fixture: ComponentFixture<QuizStatisticsFooterComponent>;
     let quizService: QuizExerciseService;

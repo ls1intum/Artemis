@@ -74,7 +74,7 @@ public abstract class AbstractGitService {
      * @param remoteRepositoryUri The URI of the remote repository, not null.
      * @param defaultBranch       The name of the default branch to be checked out, not null.
      * @param isBare              Whether the repository is a bare repository (without working directory)
-     * @param writeAccess         Whether we write to the repository or not. If true, we set the git Repo config for better performance.
+     * @param writeAccess         Whether we write to the repository or not. If true, the method sets the git Repo config for better performance.
      * @return The configured Repository instance.
      * @throws IOException             If an I/O error occurs during repository initialization or configuration.
      * @throws InvalidRefNameException If the provided default branch name is invalid.
@@ -82,20 +82,28 @@ public abstract class AbstractGitService {
     @NonNull
     public static Repository linkRepositoryForExistingGit(Path localPath, LocalVCRepositoryUri remoteRepositoryUri, String defaultBranch, boolean isBare, boolean writeAccess)
             throws IOException, InvalidRefNameException {
-        // Open the repository from the filesystem
+        // Configure a JGit repository builder for an already existing repository on disk
         FileRepositoryBuilder builder = new FileRepositoryBuilder();
 
         if (isBare) {
+            // Bare repository: repository lives directly in localPath (no working tree), this is typically used for the "remote" repository
             builder.setBare();
             builder.setGitDir(localPath.toFile());
         }
         else {
+            // Non-bare repository: working tree at localPath, metadata in .git/
             builder.setGitDir(localPath.resolve(".git").toFile());
         }
-        builder.setInitialBranch(defaultBranch).setMustExist(true).readEnvironment().findGitDir().setup(); // scan environment GIT_* variables
+
+        builder.setInitialBranch(defaultBranch) // used when initializing / linking branches
+                .setMustExist(true)              // fail fast if the repository does not exist
+                .readEnvironment()               // honor standard GIT_* environment variables
+                .findGitDir()                    // keep builder behavior consistent if GIT_DIR is set
+                .setup();                        // finalize builder configuration
 
         try (Repository repository = new Repository(builder, localPath, remoteRepositoryUri)) {
-            // Read JavaDoc for more information
+            // Apply safe default Git configuration (GC, symlinks, commit signing, HEAD, etc.)
+            // Only modify config if write access to the repository is needed
             if (writeAccess) {
                 setRepoConfig(defaultBranch, repository);
             }
@@ -104,6 +112,44 @@ public abstract class AbstractGitService {
         }
     }
 
+    /**
+     * Configures essential repository settings for a newly created or existing Git repository.
+     * <p>
+     * This method adjusts several Git configuration options to ensure predictable,
+     * secure, and stable behavior when the repository is used programmatically.
+     * Key aspects include:
+     * </p>
+     *
+     * <ul>
+     * <li><strong>Garbage collection:</strong> Disables automatic GC, auto-detach,
+     * and auto-pack operations to avoid unexpected background maintenance tasks
+     * that may interfere with server-side automation or testing workflows.</li>
+     *
+     * <li><strong>Security hardening:</strong> Explicitly disables symbolic links
+     * to prevent potential security vulnerabilities such as remote code
+     * execution on systems where symlink handling may be unsafe.</li>
+     *
+     * <li><strong>Commit signing:</strong> Turns off automatic GPG signing, ensuring
+     * consistent commit creation in environments where signing keys may not be
+     * available.</li>
+     *
+     * <li><strong>Branch configuration:</strong> Sets the remote tracking branch
+     * and merge reference for the given {@code defaultBranch} so that Git
+     * operations (e.g., merges or pulls) behave correctly.</li>
+     *
+     * <li><strong>HEAD initialization:</strong> For empty repositories, forcefully
+     * links {@code HEAD} to the default branch. This is required to ensure the
+     * new branch becomes the initial checked-out branch.</li>
+     * </ul>
+     *
+     * <p>
+     * After applying all settings, the updated configuration is persisted to disk.
+     * </p>
+     *
+     * @param defaultBranch the name of the default branch (e.g. {@code "main"})
+     * @param repository    the JGit {@link Repository} to configure
+     * @throws IOException if the configuration cannot be written to disk
+     */
     private static void setRepoConfig(String defaultBranch, Repository repository) throws IOException {
         StoredConfig gitRepoConfig = repository.getConfig();
         gitRepoConfig.setInt(ConfigConstants.CONFIG_GC_SECTION, null, ConfigConstants.CONFIG_KEY_AUTO, 0);
@@ -282,7 +328,7 @@ public abstract class AbstractGitService {
      * @param repository Local Repository Object.
      * @throws IOException if the deletion of the repository failed.
      */
-    public void deleteLocalRepository(Repository repository) throws IOException {
+    public void deleteLocalRepository(@NonNull Repository repository) throws IOException {
         Path repoPath = repository.getLocalPath();
         // if repository is not closed, it causes weird IO issues when trying to delete the repository again
         // java.io.IOException: Unable to delete file: ...\.git\objects\pack\...

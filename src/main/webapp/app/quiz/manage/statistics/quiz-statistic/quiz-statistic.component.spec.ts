@@ -26,7 +26,7 @@ const route = { params: of({ courseId: 2, exerciseId: 42 }) };
 const quizQuestionStatOne = { ratedCorrectCounter: 1, unRatedCorrectCounter: 3 };
 const quizQuestionStatTwo = { ratedCorrectCounter: 2, unRatedCorrectCounter: 4 };
 
-describe('QuizExercise Statistic Component', () => {
+describe('QuizStatisticComponent', () => {
     let comp: QuizStatisticComponent;
     let fixture: ComponentFixture<QuizStatisticComponent>;
     let quizService: QuizExerciseService;

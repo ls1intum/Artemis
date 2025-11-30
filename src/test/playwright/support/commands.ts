@@ -77,7 +77,7 @@ export class Commands {
         let exerciseParticipation: StudentParticipation;
         const startTime = Date.now();
 
-        exerciseParticipation = await exerciseAPIRequests.getExerciseParticipation(exerciseId);
+        exerciseParticipation = await exerciseAPIRequests.getProgrammingExerciseParticipation(exerciseId);
 
         const numberOfBuildResults = exerciseParticipation.submissions
             ? exerciseParticipation.submissions.reduce((sum, submission) => sum + (submission.results?.length ?? 0), 0)
@@ -85,7 +85,7 @@ export class Commands {
 
         console.log('Waiting for build of an exercise to finish...');
         while (Date.now() - startTime < timeout) {
-            exerciseParticipation = await exerciseAPIRequests.getExerciseParticipation(exerciseId);
+            exerciseParticipation = await exerciseAPIRequests.getProgrammingExerciseParticipation(exerciseId);
 
             const currentBuildResultsCount = exerciseParticipation.submissions
                 ? exerciseParticipation.submissions.reduce((sum, submission) => sum + (submission.results?.length ?? 0), 0)

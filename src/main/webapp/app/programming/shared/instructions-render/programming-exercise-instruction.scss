@@ -21,3 +21,66 @@ Instructions wrapper styles
         }
     }
 }
+
+/* Empty state styling */
+.empty-state-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    min-height: 300px;
+    padding: 2rem;
+    background: linear-gradient(135deg, rgba(var(--bs-primary-rgb), 0.02) 0%, rgba(var(--bs-info-rgb), 0.02) 100%);
+    border-radius: 8px;
+    margin: 1rem;
+}
+
+.empty-state-content {
+    text-align: center;
+    max-width: 500px;
+    animation: fadeInUp 0.5s ease-out;
+}
+
+.empty-state-icon {
+    color: var(--bs-secondary);
+    opacity: 0.5;
+    margin-bottom: 1.5rem;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+.empty-state-title {
+    color: var(--bs-body-color);
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    font-size: 1.25rem;
+}
+
+.empty-state-description {
+    color: var(--bs-secondary);
+    font-size: 0.95rem;
+    line-height: 1.6;
+    margin-bottom: 0;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes pulse {
+    0%,
+    100% {
+        opacity: 0.5;
+    }
+
+    50% {
+        opacity: 0.3;
+    }
+}

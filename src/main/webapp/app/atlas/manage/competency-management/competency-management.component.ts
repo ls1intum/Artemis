@@ -27,7 +27,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { CourseTitleBarTitleComponent } from 'app/core/course/shared/course-title-bar-title/course-title-bar-title.component';
 import { CourseTitleBarTitleDirective } from 'app/core/course/shared/directives/course-title-bar-title.directive';
 import { CourseTitleBarActionsDirective } from 'app/core/course/shared/directives/course-title-bar-actions.directive';
-import { Authority } from 'app/shared/constants/authority.constants';
+import { IS_AT_LEAST_INSTRUCTOR } from 'app/shared/constants/authority.constants';
 import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
@@ -104,7 +104,7 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
         this.localStorageService.store('alreadyVisitedCompetencyManagement', true);
 
         this.agentChatSubscription = this.featureToggleService.getFeatureToggleActive(FeatureToggle.AtlasAgent).subscribe((isFeatureEnabled) => {
-            const hasAuthority = this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR]);
+            const hasAuthority = this.accountService.hasAnyAuthorityDirect(IS_AT_LEAST_INSTRUCTOR);
             this.agentChatEnabled.set(hasAuthority && isFeatureEnabled);
         });
     }

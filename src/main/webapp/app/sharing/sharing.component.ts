@@ -7,7 +7,7 @@ import { SortService } from 'app/shared/service/sort.service';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { SharingInfo, ShoppingBasket } from './sharing.model';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
-import { Authority } from 'app/shared/constants/authority.constants';
+import { IS_AT_LEAST_EDITOR } from 'app/shared/constants/authority.constants';
 import { faPlus, faSort } from '@fortawesome/free-solid-svg-icons';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ProgrammingExerciseSharingService } from 'app/programming/manage/services/programming-exercise-sharing.service';
@@ -176,7 +176,7 @@ export class SharingComponent implements OnInit {
                 return;
             }
 
-            this.userRouteAccessService.checkLogin([Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN], this.router.url).then((isLoggedIn) => {
+            this.userRouteAccessService.checkLogin(IS_AT_LEAST_EDITOR, this.router.url).then((isLoggedIn) => {
                 if (!isLoggedIn) {
                     this.alertService.error('artemisApp.sharing.error.atLeastEditorNeeded');
                     return;

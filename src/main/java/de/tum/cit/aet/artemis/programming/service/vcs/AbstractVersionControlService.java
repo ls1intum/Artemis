@@ -77,7 +77,7 @@ public abstract class AbstractVersionControlService implements VersionControlSer
             return targetRepo.getRemoteRepositoryUri(); // should be the same as targetRepoUri
         }
         catch (IOException | LargeObjectException ex) {
-            Path localPath = gitService.getDefaultLocalPathOfRepo(targetRepoUri);
+            Path localPath = gitService.getDefaultLocalCheckOutPathOfRepo(targetRepoUri);
             // clean up in case of an error
             try {
                 // or delete the folder if it exists

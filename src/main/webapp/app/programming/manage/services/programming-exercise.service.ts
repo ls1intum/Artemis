@@ -182,12 +182,16 @@ export class ProgrammingExerciseService {
      * @param problemStatement the new problem statement
      * @param req optional request options
      */
-    updateProblemStatement(programmingExerciseId: number, problemStatement: string, req?: any) {
+    updateProblemStatement(programmingExerciseId: number, problemStatement: string | undefined, req?: any) {
         const options = createRequestOption(req);
+        // Send a single space for empty problem statements to avoid Spring Boot empty body rejection
+        // The backend will trim it and convert to null
+        const body = problemStatement?.trim() || ' ';
         return this.http
-            .patch<ProgrammingExercise>(`${this.resourceUrl}/${programmingExerciseId}/problem-statement`, problemStatement, {
+            .patch<ProgrammingExercise>(`${this.resourceUrl}/${programmingExerciseId}/problem-statement`, body, {
                 params: options,
                 observe: 'response',
+                headers: { 'Content-Type': 'text/plain' },
             })
             .pipe(map((res: EntityResponseType) => this.processProgrammingExerciseEntityResponse(res)));
     }

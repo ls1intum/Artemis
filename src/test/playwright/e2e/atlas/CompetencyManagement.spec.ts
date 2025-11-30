@@ -5,15 +5,6 @@ import { expect } from '@playwright/test';
 import dayjs from 'dayjs';
 import type { Page } from '@playwright/test';
 
-async function navigateToCompetencyManagement(page: Page, courseId?: number) {
-    if (courseId === undefined) {
-        throw new Error('navigateToCompetencyManagement called without courseId');
-    }
-    await page.goto(`/course-management/${courseId}/competency-management`);
-    const closeButton = page.locator('#close-button');
-    await closeButton.click();
-}
-
 async function selectDateInPicker(page: Page, monthsAhead: number, day: number) {
     await page.locator('.btn.position-absolute').first().click();
     for (let i = 0; i < monthsAhead; i++) {
@@ -30,7 +21,11 @@ test.describe('Competency Management', { tag: '@fast' }, () => {
         course = await courseManagementAPIRequests.createCourse();
     });
 
-    test('Creates a competency', async ({ page }) => {
+    test.afterEach('Delete course', async ({ courseManagementAPIRequests }) => {
+        await courseManagementAPIRequests.deleteCourse(course, admin);
+    });
+
+    test('Creates a competency', async ({ page, competencyManagement }) => {
         const competencyData = {
             title: 'Multiplication',
             description: 'The student should learn how to multiply two integers.',
@@ -38,7 +33,7 @@ test.describe('Competency Management', { tag: '@fast' }, () => {
             taxonomy: 'UNDERSTAND',
         };
 
-        await navigateToCompetencyManagement(page, course!.id);
+        await competencyManagement.goto(course!.id!);
 
         // Create competency
         await page.getByRole('link', { name: 'Create competency' }).click();
@@ -68,11 +63,11 @@ test.describe('Competency Management', { tag: '@fast' }, () => {
             taxonomy: 'UNDERSTAND',
         };
 
-        test.beforeEach('Create competency', async ({ page, courseManagementAPIRequests }) => {
+        test.beforeEach('Create competency', async ({ page, courseManagementAPIRequests, competencyManagement }) => {
             // Create competency via API
             await courseManagementAPIRequests.createCompetency(course, competencyData.title, competencyData.description);
 
-            await navigateToCompetencyManagement(page, course!.id);
+            await competencyManagement.goto(course!.id!);
 
             // Verify creation
             await expect(page.getByRole('cell', { name: competencyData.title })).toBeVisible();
@@ -118,11 +113,11 @@ test.describe('Competency Management', { tag: '@fast' }, () => {
             taxonomy: 'UNDERSTAND',
         };
 
-        test.beforeEach('Create competency', async ({ page, courseManagementAPIRequests }) => {
+        test.beforeEach('Create competency', async ({ page, courseManagementAPIRequests, competencyManagement }) => {
             // Create competency via API
             await courseManagementAPIRequests.createCompetency(course, competencyData.title, competencyData.description);
 
-            await navigateToCompetencyManagement(page, course!.id);
+            await competencyManagement.goto(course!.id!);
             await expect(page.getByRole('cell', { name: competencyData.title })).toBeVisible();
         });
 
@@ -138,10 +133,6 @@ test.describe('Competency Management', { tag: '@fast' }, () => {
             // Verify removal
             await expect(page.locator('tr', { has: page.getByRole('cell', { name: competencyData.title }) })).toHaveCount(0);
         });
-    });
-
-    test.afterEach('Delete course', async ({ courseManagementAPIRequests }) => {
-        await courseManagementAPIRequests.deleteCourse(course, admin);
     });
 });
 
@@ -159,8 +150,12 @@ test.describe('Prerequisite Management', { tag: '@fast' }, () => {
         course = await courseManagementAPIRequests.createCourse();
     });
 
-    test('Creates a prerequisite', async ({ page }) => {
-        await navigateToCompetencyManagement(page, course!.id);
+    test.afterEach('Delete course', async ({ courseManagementAPIRequests }) => {
+        await courseManagementAPIRequests.deleteCourse(course, admin);
+    });
+
+    test('Creates a prerequisite', async ({ page, competencyManagement }) => {
+        await competencyManagement.goto(course!.id!);
 
         // Create prerequisite
         await page.getByRole('link', { name: 'Create prerequisite' }).click();
@@ -183,11 +178,11 @@ test.describe('Prerequisite Management', { tag: '@fast' }, () => {
     });
 
     test.describe('Prerequisite editing', () => {
-        test.beforeEach('Create prerequisite', async ({ page, courseManagementAPIRequests }) => {
+        test.beforeEach('Create prerequisite', async ({ page, courseManagementAPIRequests, competencyManagement }) => {
             // Create prerequisite via API
             await courseManagementAPIRequests.createPrerequisite(course, prerequisiteData.title, prerequisiteData.description);
 
-            await navigateToCompetencyManagement(page, course!.id);
+            await competencyManagement.goto(course!.id!);
 
             // Verify prerequisite was created
             await expect(page.getByRole('link', { name: prerequisiteData.title })).toBeVisible();
@@ -234,11 +229,11 @@ test.describe('Prerequisite Management', { tag: '@fast' }, () => {
             taxonomy: 'UNDERSTAND',
         };
 
-        test.beforeEach('Create prerequisite to delete', async ({ page, courseManagementAPIRequests }) => {
+        test.beforeEach('Create prerequisite to delete', async ({ page, courseManagementAPIRequests, competencyManagement }) => {
             // Create prerequisite via API
             await courseManagementAPIRequests.createPrerequisite(course, prerequisiteData.title, prerequisiteData.description);
 
-            await navigateToCompetencyManagement(page, course!.id);
+            await competencyManagement.goto(course!.id!);
             await expect(page.getByRole('link', { name: prerequisiteData.title })).toBeVisible();
         });
 
@@ -254,9 +249,5 @@ test.describe('Prerequisite Management', { tag: '@fast' }, () => {
             // Verify removal
             await expect(page.locator('tr', { has: page.getByRole('link', { name: prerequisiteData.title }) })).toHaveCount(0);
         });
-    });
-
-    test.afterEach('Delete course', async ({ courseManagementAPIRequests }) => {
-        await courseManagementAPIRequests.deleteCourse(course, admin);
     });
 });

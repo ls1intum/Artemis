@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.exam.web;
 
+import java.util.List;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -69,13 +70,13 @@ public class ExamRoomDistributionResource {
      * @param examId                the id of the exam
      * @param useOnlyDefaultLayouts if we want to only use 'default' layouts
      * @param reserveFactor         how much percent of seats should remain unassigned. Defaults to 0%
-     * @param examRoomIds           the ids of all the exam rooms we want to distribute the students to
+     * @param examRoomIds           the ids of all the exam rooms we want to distribute the students to, ordered
      * @return 200 (OK) if the distribution was successful
      */
     @PostMapping("courses/{courseId}/exams/{examId}/distribute-registered-students")
     @EnforceAtLeastInstructor
     public ResponseEntity<Void> distributeRegisteredStudents(@PathVariable long courseId, @PathVariable long examId,
-            @RequestParam(defaultValue = "true") boolean useOnlyDefaultLayouts, @RequestParam(defaultValue = "0.0") double reserveFactor, @RequestBody Set<Long> examRoomIds) {
+            @RequestParam(defaultValue = "true") boolean useOnlyDefaultLayouts, @RequestParam(defaultValue = "0.0") double reserveFactor, @RequestBody List<Long> examRoomIds) {
         log.debug("REST request to distribute students across rooms for exam : {}", examId);
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
 
@@ -87,7 +88,7 @@ public class ExamRoomDistributionResource {
             throw new BadRequestAlertException("You didn't specify any room IDs", ENTITY_NAME, "noRoomIDs");
         }
 
-        if (!examRoomService.allRoomsExistAndAreNewestVersions(examRoomIds)) {
+        if (!examRoomService.allRoomsExistAndAreNewestVersions(Set.copyOf(examRoomIds))) {
             throw new BadRequestAlertException("You have invalid room IDs", ENTITY_NAME, "invalidRoomIDs");
         }
 

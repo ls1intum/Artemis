@@ -137,7 +137,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         expect(comp.isInitial).toBeTrue();
     }));
 
-    it('should emit that no instructions are available if there is no problem statement', () => {
+    it('should process empty problem statement and show empty state', () => {
         const result: Result = { id: 1, feedbacks: [] };
         const participation: Participation = { id: 2 };
         const exercise: ProgrammingExercise = {
@@ -159,10 +159,12 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         triggerChanges(comp);
         // @ts-ignore
         expect(comp.problemStatement).toBeUndefined();
-        expect(loadInitialResultStub).not.toHaveBeenCalled();
-        expect(comp.latestResult).toBeUndefined();
-        expect(updateMarkdownStub).not.toHaveBeenCalled();
-        expect(noInstructionsAvailableSpy).toHaveBeenCalledOnce();
+        // Component now processes empty problem statements to show empty state
+        expect(loadInitialResultStub).toHaveBeenCalledOnce();
+        expect(comp.latestResult).toBe(result);
+        expect(updateMarkdownStub).toHaveBeenCalledOnce();
+        // No longer emits onNoInstructionsAvailable - shows empty state instead
+        expect(noInstructionsAvailableSpy).not.toHaveBeenCalled();
         expect(comp.isInitial).toBeFalse();
         expect(comp.isLoading).toBeFalse();
         fixture.detectChanges();

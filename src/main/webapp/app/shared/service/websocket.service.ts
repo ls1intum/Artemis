@@ -127,22 +127,18 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
             this.connectionStateInternal.next(new ConnectionState(false, this.alreadyConnectedOnce, false));
         }
         if (this.shouldReconnect) {
-            let waitUntilReconnectAttempt;
-            if (this.consecutiveFailedAttempts > 20) {
-                // NOTE: normally a user would reload here anyway
-                waitUntilReconnectAttempt = 600;
+            // the more failed attempts, the longer the client waits until the next reconnect attempt
+            let waitUntilReconnectAttempt; // in seconds
+            if (this.consecutiveFailedAttempts > 32) {
+                waitUntilReconnectAttempt = 25;
             } else if (this.consecutiveFailedAttempts > 16) {
-                // NOTE: normally a user would reload here anyway
-                waitUntilReconnectAttempt = 300;
-            } else if (this.consecutiveFailedAttempts > 12) {
-                waitUntilReconnectAttempt = 120;
-            } else if (this.consecutiveFailedAttempts > 8) {
-                waitUntilReconnectAttempt = 60;
-            } else if (this.consecutiveFailedAttempts > 4) {
                 waitUntilReconnectAttempt = 20;
-            } else if (this.consecutiveFailedAttempts > 2) {
+            } else if (this.consecutiveFailedAttempts > 8) {
+                waitUntilReconnectAttempt = 15;
+            } else if (this.consecutiveFailedAttempts > 4) {
                 waitUntilReconnectAttempt = 10;
             } else {
+                // try to reconnect after 5 seconds for the first 4 attempts
                 waitUntilReconnectAttempt = 5;
             }
             setTimeout(this.connect.bind(this), waitUntilReconnectAttempt * 1000);

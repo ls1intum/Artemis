@@ -24,6 +24,9 @@ public record CourseForQuizExerciseDTO(Long id, String title, String description
      * @return the converted CourseForQuizExerciseDTO
      */
     public static CourseForQuizExerciseDTO of(final Course course) {
+        if (course == null) {
+            return null;
+        }
         return new CourseForQuizExerciseDTO(course.getId(), course.getTitle(), course.getDescription(), course.getShortName(), course.getStudentGroupName(),
                 course.getTeachingAssistantGroupName(), course.getEditorGroupName(), course.getInstructorGroupName(), course.getStartDate(), course.getEndDate(),
                 course.getEnrollmentStartDate(), course.getEnrollmentEndDate(), course.getUnenrollmentEndDate(), course.getSemester(), course.isTestCourse(), course.getLanguage(),

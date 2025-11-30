@@ -34,7 +34,7 @@
                 "roomDistribute": "Verteilen",
                 "rooms": {
                     "dialogTitle": "Verteile Klausurteilnehmer",
-                    "introText": "In diesem Dialogfeld kannst du die für eine Prüfung angemeldeten Studierenden auf verschiedene Räume verteilen.",
+                    "introText": "In diesem Dialogfeld kannst du die für eine Prüfung angemeldeten Studierenden auf verschiedene Räume verteilen. Artemis verteilt Studenten in der Reihenfolge der angegebenen Räume.",
                     "reserveFactor": "Reservierte Sitze %",
                     "reserveFactorTooltip": "Der Prozentsatz der Sitze, die reserviert werden sollten, d. h. nicht verteilt werden sollten; gilt für jeden Raum einzeln",
                     "allowNarrowLayouts": "Engere Layouts zulassen?",

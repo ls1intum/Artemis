@@ -201,7 +201,7 @@ public class CourseService {
             course.setNumberOfTutorialGroups(0L);
         }
         if (course.isFaqEnabled()) {
-            course.setFaqs(faqRepository.findAllByCourseIdAndFaqState(courseId, FaqState.ACCEPTED));
+            course.setFaqs(faqRepository.findAllByCourseIdAndFaqStateOrderByCreatedDateDesc(courseId, FaqState.ACCEPTED));
         }
         if (authCheckService.isOnlyStudentInCourse(course, user) && examRepositoryApi.isPresent()) {
             var examRepoApi = examRepositoryApi.get();

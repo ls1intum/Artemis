@@ -1,7 +1,7 @@
 import { Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 
-import { Authority } from 'app/shared/constants/authority.constants';
+import { IS_AT_LEAST_EDITOR, IS_AT_LEAST_TUTOR } from 'app/shared/constants/authority.constants';
 
 import { ModelingExerciseResolver } from 'app/modeling/manage/services/modeling-exercise-resolver.service';
 
@@ -13,7 +13,7 @@ export const routes: Routes = [
             modelingExercise: ModelingExerciseResolver,
         },
         data: {
-            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_EDITOR,
             pageTitle: 'artemisApp.modelingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -25,7 +25,7 @@ export const routes: Routes = [
             modelingExercise: ModelingExerciseResolver,
         },
         data: {
-            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_EDITOR,
             pageTitle: 'artemisApp.modelingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -37,7 +37,7 @@ export const routes: Routes = [
             modelingExercise: ModelingExerciseResolver,
         },
         data: {
-            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_EDITOR,
             pageTitle: 'artemisApp.modelingExercise.home.importLabel',
         },
         canActivate: [UserRouteAccessService],
@@ -46,7 +46,7 @@ export const routes: Routes = [
         path: 'modeling-exercises/:exerciseId',
         loadComponent: () => import('./detail/modeling-exercise-detail.component').then((m) => m.ModelingExerciseDetailComponent),
         data: {
-            authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_TUTOR,
             pageTitle: 'artemisApp.modelingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -58,7 +58,7 @@ export const routes: Routes = [
             exercise: ModelingExerciseResolver,
         },
         data: {
-            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_EDITOR,
             pageTitle: 'artemisApp.exampleSubmission.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -70,7 +70,7 @@ export const routes: Routes = [
             exercise: ModelingExerciseResolver,
         },
         data: {
-            authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_TUTOR,
             pageTitle: 'exercise-statistics.title',
         },
         canActivate: [UserRouteAccessService],
@@ -79,7 +79,7 @@ export const routes: Routes = [
         path: 'modeling-exercises/:exerciseId/example-submissions/:exampleSubmissionId',
         loadComponent: () => import('app/modeling/manage/example-modeling/example-modeling-submission.component').then((m) => m.ExampleModelingSubmissionComponent),
         data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
+            authorities: IS_AT_LEAST_TUTOR,
             pageTitle: 'artemisApp.exampleSubmission.home.editor',
         },
         canActivate: [UserRouteAccessService],

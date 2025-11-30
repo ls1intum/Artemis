@@ -11,6 +11,10 @@ test.describe('Learning Path Management', { tag: '@fast' }, () => {
         course = await courseManagementAPIRequests.createCourse();
     });
 
+    test.afterEach(async ({ courseManagementAPIRequests }) => {
+        await courseManagementAPIRequests.deleteCourse(course, admin);
+    });
+
     test('Instructor enables learning paths via activation card', async ({ page }) => {
         // Arrange: course initially without learning paths enabled
         await page.goto(`/course-management/${course.id}/learning-path-management`);
@@ -90,9 +94,5 @@ test.describe('Learning Path Management', { tag: '@fast' }, () => {
 
         await page.reload();
         await expect(page.locator('.learning-paths-analytics-container')).toBeVisible();
-    });
-
-    test.afterEach(async ({ courseManagementAPIRequests }) => {
-        await courseManagementAPIRequests.deleteCourse(course, admin);
     });
 });

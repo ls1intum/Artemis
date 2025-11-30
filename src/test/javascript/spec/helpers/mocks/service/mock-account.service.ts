@@ -19,6 +19,7 @@ export class MockAccountService implements IAccountService {
     updateLanguage = (languageKey: string) => of({});
     getImageUrl = () => 'blob';
     hasAuthority = (authority: string) => Promise.resolve(true);
+    isAtLeastTutor = () => this.hasAnyAuthorityDirect(['ROLE_TUTOR']);
     isAtLeastTutorInCourse = (course: Course) => true;
     isAtLeastEditorInCourse = (course: Course) => course.isAtLeastEditor!;
     isAtLeastInstructorInCourse = (course: Course) => course.isAtLeastInstructor!;

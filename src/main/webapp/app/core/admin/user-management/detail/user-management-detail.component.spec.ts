@@ -10,7 +10,7 @@ describe('User Management Detail Component', () => {
     let comp: UserManagementDetailComponent;
     let fixture: ComponentFixture<UserManagementDetailComponent>;
     const route = {
-        data: of({ user: new User(1, 'user', 'first', 'last', 'first@last.com', true, 'en', [Authority.USER], ['admin']) }),
+        data: of({ user: new User(1, 'user', 'first', 'last', 'first@last.com', true, 'en', [Authority.STUDENT], ['admin']) }),
         children: [],
     } as any as ActivatedRoute;
 
@@ -49,7 +49,7 @@ describe('User Management Detail Component', () => {
                     email: 'first@last.com',
                     activated: true,
                     langKey: 'en',
-                    authorities: [Authority.USER],
+                    authorities: [Authority.STUDENT],
                     groups: ['admin'],
                 }),
             );
