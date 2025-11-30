@@ -1,8 +1,8 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { IrisSettingsUpdateComponent } from 'app/iris/manage/settings/iris-settings-update/iris-settings-update.component';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { MockComponent, MockProvider } from 'ng-mocks';
-import { BehaviorSubject, of } from 'rxjs';
+import { BehaviorSubject, of, throwError } from 'rxjs';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { IrisCommonSubSettingsUpdateComponent } from 'app/iris/manage/settings/iris-settings-update/iris-common-sub-settings-update/iris-common-sub-settings-update.component';
 import { mockSettings } from 'test/helpers/mocks/iris/mock-settings';
@@ -94,4 +94,55 @@ describe('IrisExerciseSettingsUpdateComponent Component', () => {
         expect(setSettingsSpy).toHaveBeenCalledWith(2, irisSettings);
         expect(comp.settingsUpdateComponent!.irisSettings).toEqual(irisSettingsSaved);
     });
+
+    it('Updates ids when route params change after init', () => {
+        fixture.detectChanges();
+        routeParamsSubject.next({ courseId: 5, exerciseId: 42 });
+        fixture.detectChanges();
+        expect(comp.courseId).toBe(5);
+        expect(comp.exerciseId).toBe(42);
+    });
+
+    it('Handles missing child settings component gracefully', () => {
+        fixture.detectChanges();
+        comp.settingsUpdateComponent = undefined;
+        expect(comp.canDeactivate()).toBeTrue();
+        expect(comp.canDeactivateWarning).toBeUndefined();
+    });
+
+    it('Does not render settings update when ids are missing', () => {
+        routeParamsSubject.next({});
+        fixture.detectChanges();
+
+        expect(comp.courseId).toBeNaN();
+        expect(comp.exerciseId).toBeNaN();
+        expect(fixture.debugElement.query(By.directive(IrisSettingsUpdateComponent))).toBeNull();
+        expect(getSettingsSpy).not.toHaveBeenCalled();
+        expect(getParentSettingsSpy).not.toHaveBeenCalled();
+    });
+
+    it('Parses numeric ids from string route params', () => {
+        routeParamsSubject.next({ courseId: '11', exerciseId: '13' });
+        fixture.detectChanges();
+
+        expect(comp.courseId).toBe(11);
+        expect(comp.exerciseId).toBe(13);
+        expect(getSettingsSpy).toHaveBeenCalledWith(13);
+        expect(getParentSettingsSpy).toHaveBeenCalledWith(11);
+    });
+
+    it('should not overwrite settings when save fails', fakeAsync(() => {
+        fixture.detectChanges();
+        const irisSettings = mockSettings();
+        irisSettings.id = undefined;
+        const setSettingsSpy = jest.spyOn(irisSettingsService, 'setExerciseSettings').mockReturnValue(throwError(() => new Error('save-failed')));
+        comp.settingsUpdateComponent!.irisSettings = { ...irisSettings };
+        const before = { ...comp.settingsUpdateComponent!.irisSettings! };
+
+        comp.settingsUpdateComponent!.saveIrisSettings();
+        tick();
+
+        expect(setSettingsSpy).toHaveBeenCalledWith(2, before);
+        expect(comp.settingsUpdateComponent!.irisSettings).toEqual(before);
+    }));
 });
