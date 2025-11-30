@@ -89,7 +89,7 @@ public interface ConversationMessageRepository extends ArtemisJpaRepository<Post
         // Make sure to sort the posts in the same order as the postIds
         Map<Long, Post> postMap = posts.stream().collect(Collectors.toMap(Post::getId, post -> post));
         posts = postIds.stream().map(postMap::get).toList();
-        log.info("findByPostIdsWithEagerRelationships took {}", TimeLogUtil.formatDurationFrom(start2));
+        log.debug("findByPostIdsWithEagerRelationships took {}", TimeLogUtil.formatDurationFrom(start2));
         // Recreate the page with the fetched posts
         return new PageImpl<>(posts, postIds.getPageable(), postIds.getTotalElements());
     }

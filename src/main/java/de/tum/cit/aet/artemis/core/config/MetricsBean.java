@@ -646,7 +646,7 @@ public class MetricsBean {
         if (!scheduledMetricsEnabled) {
             return;
         }
-        log.info("start updatePublicArtemisMetrics");
+        log.debug("start updatePublicArtemisMetrics");
 
         final long startDate = System.currentTimeMillis();
 
@@ -672,14 +672,13 @@ public class MetricsBean {
         // Exam metrics
         if (examMetricsApi.isPresent()) {
             ExamMetricsApi api = examMetricsApi.get();
-            // TODO: we only need the exam ids, exam title and course.id
             final Set<ExamStudentCountDTO> examStudentCountDtos = api.findExamStudentCountsByCourseIds(courseIds);
             updateStudentsExamMultiGauge(examStudentCountDtos, courses);
             activeExamsGauge.set(api.countAllActiveExams(now));
             examsGauge.set((int) api.count());
         }
 
-        log.info("updatePublicArtemisMetrics took {}ms", System.currentTimeMillis() - startDate);
+        log.debug("updatePublicArtemisMetrics took {}ms", System.currentTimeMillis() - startDate);
     }
 
     private void updateActiveUserMultiGauge(ZonedDateTime now) {
