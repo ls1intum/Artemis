@@ -194,7 +194,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
         return new ReactorNettyTcpClient<>(client -> client.remoteAddress(() -> {
             int i = Math.floorMod(index.getAndIncrement(), brokerAddressList.size());
             InetSocketAddress addr = brokerAddressList.get(i);
-            log.info("STOMP relay connecting to broker[{}] {}:{}", i, addr.getHostString(), addr.getPort());
+            log.debug("STOMP relay connecting to broker[{}] {}:{}", i, addr.getHostString(), addr.getPort());
             return addr;
         }), new StompReactorNettyCodec());
     }
