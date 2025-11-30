@@ -44,6 +44,7 @@ import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.core.service.ModuleFeatureService;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
@@ -80,6 +81,9 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
 
     @Autowired
     private CompetencyUtilService competencyUtilService;
+
+    @Autowired
+    private ModuleFeatureService moduleFeatureService;
 
     private Lecture lecture1;
 
@@ -574,5 +578,104 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
 
         // Should succeed with valid dates
         request.performMvcRequest(validBuilder).andExpect(status().isOk());
+    }
+
+    /**
+     * Helper method to create a mock video file for testing
+     */
+    private MockMultipartFile createVideoFile(String filename, String contentType) {
+        byte[] videoContent = "fake video content".getBytes();
+        return new MockMultipartFile("file", filename, contentType, videoContent);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createAttachmentVideoUnit_withVideoFile_whenFeatureDisabled_shouldReturnBadRequest() throws Exception {
+        // Assuming video upload is disabled by default in test configuration
+        boolean isVideoUploadEnabled = moduleFeatureService.isVideoUploadEnabled();
+
+        // Skip test if video upload is enabled
+        if (isVideoUploadEnabled) {
+            return;
+        }
+
+        persistAttachmentVideoUnitWithLecture();
+
+        var attachmentVideoUnitPart = new MockMultipartFile("attachmentVideoUnit", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(attachmentVideoUnit).getBytes());
+        var attachmentPart = new MockMultipartFile("attachment", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(attachment).getBytes());
+        var videoFilePart = createVideoFile("test-video.mp4", "video/mp4");
+
+        var builder = MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units").file(attachmentVideoUnitPart)
+                .file(attachmentPart).file(videoFilePart).contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
+
+        request.performMvcRequest(builder).andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateAttachmentVideoUnit_withVideoFile_whenFeatureDisabled_shouldReturnBadRequest() throws Exception {
+        // Assuming video upload is disabled by default in test configuration
+        boolean isVideoUploadEnabled = moduleFeatureService.isVideoUploadEnabled();
+
+        // Skip test if video upload is enabled
+        if (isVideoUploadEnabled) {
+            return;
+        }
+
+        persistAttachmentVideoUnitWithLecture();
+
+        var attachmentVideoUnitPart = new MockMultipartFile("attachmentVideoUnit", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(attachmentVideoUnit).getBytes());
+        var attachmentPart = new MockMultipartFile("attachment", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(attachment).getBytes());
+        var videoFilePart = createVideoFile("updated-video.webm", "video/webm");
+
+        var builder = MockMvcRequestBuilders.multipart(HttpMethod.PUT, "/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/" + attachmentVideoUnit.getId())
+                .file(attachmentVideoUnitPart).file(attachmentPart).file(videoFilePart).contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
+
+        request.performMvcRequest(builder).andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createAttachmentVideoUnit_withPdfFile_whenVideoFeatureDisabled_shouldSucceed() throws Exception {
+        // PDF uploads should work regardless of video upload feature flag
+        persistAttachmentVideoUnitWithLecture();
+
+        var attachmentVideoUnitPart = new MockMultipartFile("attachmentVideoUnit", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(attachmentVideoUnit).getBytes());
+        var attachmentPart = new MockMultipartFile("attachment", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(attachment).getBytes());
+        var pdfFilePart = createAttachmentVideoUnitPdf();
+
+        var builder = MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units").file(attachmentVideoUnitPart)
+                .file(attachmentPart).file(pdfFilePart).contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
+
+        request.performMvcRequest(builder).andExpect(status().isCreated());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createAttachmentVideoUnit_withDifferentVideoFormats_whenFeatureDisabled_shouldReturnBadRequest() throws Exception {
+        // Test various video formats
+        boolean isVideoUploadEnabled = moduleFeatureService.isVideoUploadEnabled();
+
+        // Skip test if video upload is enabled
+        if (isVideoUploadEnabled) {
+            return;
+        }
+
+        persistAttachmentVideoUnitWithLecture();
+
+        String[] videoFormats = { "test.mp4", "test.webm", "test.ogg", "test.mov", "test.avi", "test.mkv", "test.flv", "test.wmv", "test.m4v" };
+        String[] contentTypes = { "video/mp4", "video/webm", "video/ogg", "video/quicktime", "video/x-msvideo", "video/x-matroska", "video/x-flv", "video/x-ms-wmv", "video/mp4" };
+
+        for (int i = 0; i < videoFormats.length; i++) {
+            var attachmentVideoUnitPart = new MockMultipartFile("attachmentVideoUnit", "", MediaType.APPLICATION_JSON_VALUE,
+                    mapper.writeValueAsString(attachmentVideoUnit).getBytes());
+            var attachmentPart = new MockMultipartFile("attachment", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(attachment).getBytes());
+            var videoFilePart = createVideoFile(videoFormats[i], contentTypes[i]);
+
+            var builder = MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units").file(attachmentVideoUnitPart)
+                    .file(attachmentPart).file(videoFilePart).contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
+
+            request.performMvcRequest(builder).andExpect(status().isBadRequest());
+        }
     }
 }

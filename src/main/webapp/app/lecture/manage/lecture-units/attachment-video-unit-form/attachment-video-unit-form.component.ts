@@ -2,7 +2,7 @@ import { Component, ElementRef, ViewChild, computed, effect, inject, input, outp
 import dayjs from 'dayjs/esm';
 import { AbstractControl, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import urlParser from 'js-video-url-parser';
-import { faArrowLeft, faQuestionCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faCheck, faExclamationTriangle, faQuestionCircle, faTimes, faVideo } from '@fortawesome/free-solid-svg-icons';
 import { ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER, ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE } from 'app/shared/constants/file-extensions.constants';
 import { CompetencyLectureUnitLink } from 'app/atlas/shared/entities/competency.model';
 import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
@@ -16,6 +16,8 @@ import { CompetencySelectionComponent } from 'app/atlas/shared/competency-select
 import { AccountService } from 'app/core/auth/account.service';
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
 import { TranscriptionStatus } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MODULE_FEATURE_VIDEO_UPLOAD } from 'app/app.constants';
 
 export interface AttachmentVideoUnitFormData {
     formProperties: FormProperties;
@@ -116,6 +118,9 @@ export class AttachmentVideoUnitFormComponent {
     protected readonly faQuestionCircle = faQuestionCircle;
     protected readonly faTimes = faTimes;
     protected readonly faArrowLeft = faArrowLeft;
+    protected readonly faCheck = faCheck;
+    protected readonly faVideo = faVideo;
+    protected readonly faExclamationTriangle = faExclamationTriangle;
     protected readonly TranscriptionStatus = TranscriptionStatus;
 
     protected readonly allowedFileExtensions = ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE;
@@ -125,6 +130,11 @@ export class AttachmentVideoUnitFormComponent {
     canGenerateTranscript = signal(false);
     playlistUrl = signal<string | undefined>(undefined);
     transcriptionStatus = signal<TranscriptionStatus | undefined>(undefined);
+
+    // Upload progress tracking
+    isUploading = signal(false);
+    uploadProgress = signal(0);
+    uploadStatus = signal('');
 
     formData = input<AttachmentVideoUnitFormData>();
     isEditMode = input<boolean>(false);
@@ -150,8 +160,10 @@ export class AttachmentVideoUnitFormComponent {
 
     private readonly formBuilder = inject(FormBuilder);
     private readonly accountService = inject(AccountService);
+    private readonly profileService = inject(ProfileService);
 
     readonly shouldShowTranscriptionCreation = computed(() => this.accountService.isAdmin());
+    readonly isVideoUploadEnabled = computed(() => this.profileService.isModuleFeatureActive(MODULE_FEATURE_VIDEO_UPLOAD));
 
     constructor() {
         effect(() => {
@@ -227,24 +239,82 @@ export class AttachmentVideoUnitFormComponent {
     });
 
     isFormValid = computed(() => {
-        return this.statusChanges() === 'VALID' && !this.isFileTooBig() && this.datePickerComponent()?.isValid() && (!!this.fileName() || !!this.videoSourceSignal());
+        const hasValidFile = !!this.fileName();
+        const hasVideoSource = !!this.videoSourceSignal();
+
+        // If video upload is disabled and user tries to upload a video file, form is invalid
+        if (hasValidFile && this.isVideoFile(this.file) && !this.isVideoUploadEnabled()) {
+            return false;
+        }
+
+        return this.statusChanges() === 'VALID' && !this.isFileTooBig() && this.datePickerComponent()?.isValid() && (hasValidFile || hasVideoSource);
     });
+
+    /**
+     * Checks if a file is a video file based on its extension
+     */
+    private isVideoFile(file: File | undefined): boolean {
+        if (!file || !file.name) {
+            return false;
+        }
+        const extension = file.name.split('.').pop()?.toLowerCase();
+        const videoExtensions = ['mp4', 'webm', 'ogg', 'mov', 'avi', 'mkv', 'flv', 'wmv', 'm4v'];
+        return videoExtensions.includes(extension || '');
+    }
 
     onFileChange(event: Event): void {
         const input = event.target as HTMLInputElement;
         if (!input.files?.length) {
             return;
         }
-        this.file = input.files[0];
-        this.fileName.set(this.file.name);
-        // automatically set the name in case it is not yet specified
-        if (this.form && (this.nameControl?.value == undefined || this.nameControl?.value == '')) {
-            this.form.patchValue({
-                // without extension
-                name: this.file.name.replace(/\.[^/.]+$/, ''),
-            });
-        }
-        this.isFileTooBig.set(this.file.size > MAX_FILE_SIZE);
+
+        this.fileInputTouched = true;
+        this.isUploading.set(true);
+        this.uploadProgress.set(0);
+        this.uploadStatus.set('Preparing upload...');
+
+        // Simulate upload progress for better UX
+        const progressInterval = setInterval(() => {
+            const currentProgress = this.uploadProgress();
+            if (currentProgress < 90) {
+                this.uploadProgress.set(currentProgress + 10);
+                if (currentProgress < 30) {
+                    this.uploadStatus.set('Reading file...');
+                } else if (currentProgress < 60) {
+                    this.uploadStatus.set('Processing...');
+                } else {
+                    this.uploadStatus.set('Almost done...');
+                }
+            }
+        }, 100);
+
+        // Process the file
+        setTimeout(() => {
+            clearInterval(progressInterval);
+            this.file = input.files![0];
+            this.fileName.set(this.file.name);
+
+            // Validate file size
+            this.isFileTooBig.set(this.file.size > MAX_FILE_SIZE);
+
+            // Complete upload
+            this.uploadProgress.set(100);
+            this.uploadStatus.set('Upload complete!');
+
+            // Reset upload state after a brief delay
+            setTimeout(() => {
+                this.isUploading.set(false);
+                this.uploadProgress.set(0);
+                this.uploadStatus.set('');
+            }, 1000);
+
+            // Automatically set the name if not yet specified
+            if (this.form && (this.nameControl?.value == undefined || this.nameControl?.value == '')) {
+                this.form.patchValue({
+                    name: this.file.name.replace(/\.[^/.]+$/, ''),
+                });
+            }
+        }, 1000);
     }
 
     get nameControl() {

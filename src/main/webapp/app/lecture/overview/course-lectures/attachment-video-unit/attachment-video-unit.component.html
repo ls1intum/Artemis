@@ -51,6 +51,15 @@
             </div>
         } @else if (playlistUrl() && hasTranscript()) {
             <jhi-video-player [videoUrl]="playlistUrl()!" [transcriptSegments]="transcriptSegments()" />
+        } @else if (isUploadedVideoFile()) {
+            <div class="video-player-container">
+                <div class="ratio ratio-16x9">
+                    <video id="uploadedVideo" class="rounded" controls preload="auto" playsinline>
+                        <source [src]="videoUrl() | safeResourceUrl" />
+                        Your browser does not support the video tag.
+                    </video>
+                </div>
+            </div>
         } @else {
             <div class="video-player-container">
                 <div class="ratio ratio-16x9">
