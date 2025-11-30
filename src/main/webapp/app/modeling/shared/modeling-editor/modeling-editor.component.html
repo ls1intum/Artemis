@@ -116,6 +116,12 @@
     }
 
     @if (withExplanation) {
-        <jhi-modeling-explanation-editor [explanation]="explanation" (explanationChange)="onExplanationInput($event)" [readOnly]="readOnly" />
+        <!-- <jhi-modeling-explanation-editor [explanation]="explanation" (explanationChange)="onExplanationInput($event)" [readOnly]="readOnly" /> -->
+
+        <!-- workaround until further investigation into example solution rendering -->
+        <label for="explanationText" jhiTranslate="artemisApp.modelingSubmission.explanationText"></label>
+        <div class="p-3 border markdown-preview">
+            <p id="explanationText" [innerHTML]="explanation | htmlForMarkdown"></p>
+        </div>
     }
 </div>
