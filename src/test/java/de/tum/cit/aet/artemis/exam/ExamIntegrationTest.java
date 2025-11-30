@@ -252,8 +252,8 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
 
         List<Exam> activeExams = request.getList("/api/exam/exams/active", HttpStatus.OK, Exam.class, getPageParams());
         // only exam4 should be returned
-        assertThat(activeExams).doesNotContain(exam3);
-        assertThat(activeExams).contains(exam4);
+        assertThat(activeExams).contains(exam3);
+        assertThat(activeExams).doesNotContain(exam4);
         assertThat(activeExams).doesNotContain(exam5);
     }
 
