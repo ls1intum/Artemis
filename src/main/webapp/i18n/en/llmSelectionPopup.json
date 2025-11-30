@@ -1,0 +1,32 @@
+{
+    "artemisApp": {
+        "llmSelectionPopup": {
+            "header": "Choose Your AI Experience",
+            "subtitleOne": "Your data, your choice.",
+            "subtitleTwo": "Use Artemis with cutting-edge cloud models on Azure backed by enterprise-grade safeguards, or opt for open-source stack in the university datacenter for enhanced privacy.",
+            "cloud": "Cloud",
+            "onPremise": "On-premise",
+            "noAI": "No AI",
+            "recommended": "Recommended",
+            "experimental": "Experimental",
+            "descriptionCloud": "Fast, high-quality AI powered by cutting-edge cloud models",
+            "descriptionLocal": "Ideal for highest privacy, but with some limitations",
+            "descriptionNo": "You can still use Artemis, but without AI assistance",
+            "featureCloudOne": "State-of-the-art models like GPT-5",
+            "featureCloudTwo": "High response quality",
+            "featureCloudThree": "Fast response times",
+            "featureCloudFour": "GDPR-compliant processing in Azure's EU datacenters",
+            "featureCloudFive": "All data stored on university datacenters",
+            "featureLocalOne": "Latest open-source models like GPT-OSS",
+            "featureLocalTwo": "Lower response quality",
+            "featureLocalThree": "Slower response times",
+            "featureLocalFour": "Processing only in university datacenters",
+            "featureLocalFive": "All data stored on university servers",
+            "featureNoOne": "No Iris tutoring support",
+            "featureNoTwo": "No automated AI feedback on modeling and text exercises",
+            "featureNoThree": "No AI-powered guidance",
+            "disclaimer": "Artemis will never send your personal data such as your registration number or your email address to a large language model •",
+            "disclaimerButton": "Learn more about your options"
+        }
+    }
+}

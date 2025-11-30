@@ -91,6 +91,8 @@ public class UserDTO extends AuditingEntityDTO {
 
     private ZonedDateTime externalLLMUsageAccepted;
 
+    private ZonedDateTime internalLLMUsageAccepted;
+
     private boolean memirisEnabled = false;
 
     public UserDTO() {
@@ -130,6 +132,7 @@ public class UserDTO extends AuditingEntityDTO {
         this.groups = groups;
         this.organizations = organizations;
         this.externalLLMUsageAccepted = externalLLMUsageAccepted;
+        this.internalLLMUsageAccepted = internalLLMUsageAccepted;
         this.memirisEnabled = memirisEnabled;
         this.isLoggedInWithPasskey = isLoggedInWithPasskey;
         this.isPasskeySuperAdminApproved = isPasskeySuperAdminApproved;
@@ -298,6 +301,14 @@ public class UserDTO extends AuditingEntityDTO {
 
     public void setExternalLLMUsageAccepted(ZonedDateTime externalLLMUsageAccepted) {
         this.externalLLMUsageAccepted = externalLLMUsageAccepted;
+    }
+
+    public ZonedDateTime getInternalLLMUsageAccepted() {
+        return internalLLMUsageAccepted;
+    }
+
+    public void setInternalLLMUsageAccepted(ZonedDateTime internalLLMUsageAccepted) {
+        this.internalLLMUsageAccepted = internalLLMUsageAccepted;
     }
 
     public boolean isMemirisEnabled() {
