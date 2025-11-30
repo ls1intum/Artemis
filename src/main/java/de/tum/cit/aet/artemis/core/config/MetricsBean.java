@@ -696,9 +696,10 @@ public class MetricsBean {
     }
 
     private void updateStudentsCourseMultiGauge(Set<ActiveCourseDTO> activeCourses) {
-        // A mutable list is required here because otherwise the values can not be updated correctly
+        // A mutable collection is required here because otherwise the values can not be updated correctly
         final Set<MultiGauge.Row<?>> gauges = activeCourses.stream().map(course -> {
-            final Tags tags = Tags.of("courseId", Long.toString(course.id()), "courseName", course.title(), "semester", course.semester());
+            final String semesterTag = course.semester() != null ? course.semester() : NO_SEMESTER_TAG;
+            final Tags tags = Tags.of("courseId", Long.toString(course.id()), "courseName", course.title(), "semester", semesterTag);
             final long studentCount = course.numberOfStudents();
             return MultiGauge.Row.of(tags, studentCount);
         }).collect(Collectors.toSet());
