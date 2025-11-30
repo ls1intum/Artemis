@@ -16,11 +16,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.hazelcast.core.HazelcastInstance;
 
-import de.tum.cit.aet.artemis.core.config.websocket.WebsocketBrokerReconnectionService;
 import de.tum.cit.aet.artemis.core.dto.WebsocketNodeDTO;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.service.messaging.WebsocketBrokerReconnectionMessagingService;
+import de.tum.cit.aet.artemis.core.service.messaging.WebsocketBrokerReconnectionService;
 
 @Profile(PROFILE_CORE)
 @EnforceAdmin

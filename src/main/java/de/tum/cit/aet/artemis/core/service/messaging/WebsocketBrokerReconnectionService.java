@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.config.websocket;
+package de.tum.cit.aet.artemis.core.service.messaging;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
@@ -9,17 +9,20 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
+import jakarta.annotation.PostConstruct;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationListener;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.messaging.simp.broker.BrokerAvailabilityEvent;
 import org.springframework.messaging.simp.stomp.StompBrokerRelayMessageHandler;
 import org.springframework.messaging.tcp.TcpOperations;
 import org.springframework.scheduling.TaskScheduler;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
@@ -32,7 +35,8 @@ import com.hazelcast.map.IMap;
  * automatic reconnect attempts until an explicit connect/reconnect request clears the suppression.
  */
 @Profile(PROFILE_CORE)
-@Component
+@Lazy
+@Service
 public class WebsocketBrokerReconnectionService implements ApplicationListener<BrokerAvailabilityEvent>, DisposableBean {
 
     private static final Logger log = LoggerFactory.getLogger(WebsocketBrokerReconnectionService.class);
@@ -47,9 +51,11 @@ public class WebsocketBrokerReconnectionService implements ApplicationListener<B
 
     private final Optional<StompBrokerRelayMessageHandler> stompBrokerRelayMessageHandler;
 
-    private final IMap<String, Boolean> brokerStatusMap;
+    private final HazelcastInstance hazelcastInstance;
 
-    private final String localMemberId;
+    private IMap<String, Boolean> brokerStatusMap;
+
+    private String localMemberId;
 
     private final Supplier<TcpOperations<byte[]>> stompTcpClientSupplier;
 
@@ -75,6 +81,11 @@ public class WebsocketBrokerReconnectionService implements ApplicationListener<B
         this.messageBrokerTaskScheduler = messageBrokerTaskScheduler;
         this.stompBrokerRelayMessageHandler = stompBrokerRelayMessageHandler;
         this.stompTcpClientSupplier = stompTcpClientSupplier;
+        this.hazelcastInstance = hazelcastInstance;
+    }
+
+    @PostConstruct
+    void initBrokerStatusPublisher() {
         this.brokerStatusMap = hazelcastInstance.getMap(WEBSOCKET_BROKER_STATUS_MAP);
         this.localMemberId = hazelcastInstance.getCluster().getLocalMember().getUuid().toString();
         updateBrokerStatus(false);
@@ -118,13 +129,10 @@ public class WebsocketBrokerReconnectionService implements ApplicationListener<B
         return true;
     }
 
-    /**
-     * Manually stop the broker relay and suppress automatic reconnect attempts.
-     */
-    public void triggerManualDisconnect() {
+    public boolean triggerManualDisconnect() {
         if (stompBrokerRelayMessageHandler.isEmpty()) {
             log.warn("Manual websocket broker disconnect requested, but no external broker relay is configured");
-            return;
+            return false;
         }
 
         stopReconnectAttempts("manual disconnect requested");
@@ -135,6 +143,7 @@ public class WebsocketBrokerReconnectionService implements ApplicationListener<B
             }
         });
         updateBrokerStatus(false);
+        return true;
     }
 
     /**
@@ -219,7 +228,9 @@ public class WebsocketBrokerReconnectionService implements ApplicationListener<B
     @Override
     public void destroy() {
         stopReconnectAttempts("application shutdown");
-        brokerStatusMap.remove(localMemberId);
+        if (brokerStatusMap != null) {
+            brokerStatusMap.remove(localMemberId);
+        }
         if (statusPublishTask != null) {
             statusPublishTask.cancel(false);
         }
@@ -232,7 +243,9 @@ public class WebsocketBrokerReconnectionService implements ApplicationListener<B
      */
     private void updateBrokerStatus(boolean brokerAvailable) {
         lastKnownBrokerAvailable = brokerAvailable;
-        brokerStatusMap.put(localMemberId, brokerAvailable);
+        if (brokerStatusMap != null) {
+            brokerStatusMap.put(localMemberId, brokerAvailable);
+        }
     }
 
     /**

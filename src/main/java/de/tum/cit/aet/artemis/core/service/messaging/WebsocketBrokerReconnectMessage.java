@@ -3,8 +3,6 @@ package de.tum.cit.aet.artemis.core.service.messaging;
 import java.io.Serializable;
 import java.time.Instant;
 
-import de.tum.cit.aet.artemis.core.config.websocket.WebsocketBrokerReconnectionService;
-
 /**
  * Payload sent over Hazelcast to request a websocket broker reconnect on a specific node or on all nodes.
  *

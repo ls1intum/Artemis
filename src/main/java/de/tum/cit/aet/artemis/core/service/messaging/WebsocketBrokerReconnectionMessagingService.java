@@ -20,8 +20,6 @@ import com.hazelcast.topic.ITopic;
 import com.hazelcast.topic.Message;
 import com.hazelcast.topic.MessageListener;
 
-import de.tum.cit.aet.artemis.core.config.websocket.WebsocketBrokerReconnectionService;
-
 @Lazy
 @Service
 @Profile(PROFILE_CORE)

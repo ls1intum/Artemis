@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.config.websocket;
+package de.tum.cit.aet.artemis.core.service.messaging;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -77,6 +77,7 @@ class WebsocketBrokerReconnectionServiceTest {
 
         websocketBrokerReconnectionService = new WebsocketBrokerReconnectionService(taskScheduler, Optional.of(stompBrokerRelayMessageHandler), tcpClientSupplier,
                 hazelcastInstance);
+        websocketBrokerReconnectionService.initBrokerStatusPublisher();
     }
 
     @Test
@@ -120,6 +121,7 @@ class WebsocketBrokerReconnectionServiceTest {
     @Test
     void manualReconnectSkippedWithoutRelay() {
         var serviceWithoutRelay = new WebsocketBrokerReconnectionService(taskScheduler, Optional.empty(), tcpClientSupplier, hazelcastInstance);
+        serviceWithoutRelay.initBrokerStatusPublisher();
         assertThat(serviceWithoutRelay.triggerManualReconnect()).isFalse();
         verifyNoInteractions(tcpClientSupplier);
     }

@@ -201,6 +201,7 @@ public class CacheConfiguration {
         String displayName = !buildAgentDisplayName.isBlank() ? buildAgentDisplayName : instanceId;
         if (!displayName.isBlank()) {
             MemberAttributeConfig memberAttributeConfig = config.getMemberAttributeConfig();
+            log.info("Will use instanceId '{}' for Hazelcast member attributes", displayName);
             memberAttributeConfig.setAttribute("instanceId", displayName);
         }
 
