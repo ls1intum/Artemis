@@ -1,10 +1,11 @@
-import Callout from '../../../src/components/Callout/Callout';
-import { CalloutVariant } from '../../../src/components/Callout/Callout.types';
+import Callout from "../../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
 
 # Programming Exercise Adjustments
 
 There are several variables that can be configured when using programming exercises.
 They are presented in this separate section to keep the 'normal' setup guide shorter.
+
 
 ## Path Variables
 
@@ -12,32 +13,34 @@ There are variables for several paths:
 
 - `artemis.repo-clone-path`
 
-    Repositories that the Artemis server needs are stored in this folder.
-    This e.g. affects repositories from students which use the online code editor or
-    the template/solution repositories of new exercises, as they are pushed to the VCS after modification.
+  Repositories that the Artemis server needs are stored in this folder.
+  This e.g. affects repositories from students which use the online code editor or
+  the template/solution repositories of new exercises, as they are pushed to the VCS after modification.
 
-    Files in this directory are usually not critical, as the latest pushed version of these repositories are
-    also stored at the VCS.
-    However, changes that are saved in the online code editor but not yet committed will be lost when
-    this folder is deleted.
+  Files in this directory are usually not critical, as the latest pushed version of these repositories are
+  also stored at the VCS.
+  However, changes that are saved in the online code editor but not yet committed will be lost when
+  this folder is deleted.
 
 - `artemis.repo-download-clone-path`
 
-    Repositories that were downloaded from Artemis are stored in this directory.
+  Repositories that were downloaded from Artemis are stored in this directory.
 
-    Files in this directory can be removed without loss of data, if the downloaded repositories are still present
-    at the VCS.
-    No changes to the data in the VCS are stored in this directory (or they can be retrieved by performing
-    the download-action again).
+  Files in this directory can be removed without loss of data, if the downloaded repositories are still present
+  at the VCS.
+  No changes to the data in the VCS are stored in this directory (or they can be retrieved by performing
+  the download-action again).
 
 - `artemis.template-path`
 
-    Templates are available within Artemis.
-    The templates should fit to most environments, but there might be cases where one wants to change the templates.
+  Templates are available within Artemis.
+  The templates should fit to most environments, but there might be cases where one wants to change the templates.
 
-    This value specifies the path to the templates which should overwrite the default ones.
-    Note that this is the path to the folder where the `templates` folder is located, not the path to the
-    `templates` folder itself.
+  This value specifies the path to the templates which should overwrite the default ones.
+  Note that this is the path to the folder where the `templates` folder is located, not the path to the
+  `templates` folder itself.
+
+
 
 ## Templates
 
@@ -50,6 +53,7 @@ Files that are present in the file system will be used, if a file is not present
 it is loaded from the classpath (e.g. the `.war` archive).
 
 We plan to make other folders configurable as well, but this is not supported yet.
+
 
 ### Jenkins Template
 
@@ -64,7 +68,6 @@ loading the actual exercise-specific pipeline script from the Artemis server.
     - with `pipeline` (there must not be a comment before pipeline, but there can be one at any other position,
       if the Jenkinsfile-syntax allows it)
     - or the special comment `// ARTEMIS: JenkinsPipeline` in the first line.
-
 </Callout>
 
 The actual programming language or exercise-type specific pipeline steps are defined in the form of
@@ -78,7 +81,7 @@ Inside the `pipeline.groovy` some placeholders exist that will be filled by Arte
 server or exercise settings:
 
 | Variable                       | Replacement                                                    | Origin                 |
-| ------------------------------ | -------------------------------------------------------------- | ---------------------- |
+|--------------------------------|----------------------------------------------------------------|------------------------|
 | `#dockerImage`                 | The container image that the tests will run in.                | Server configuration   |
 | `#dockerArgs`                  | Additional flags passed to Docker when starting the container. | Server configuration   |
 | `#isStaticCodeAnalysisEnabled` | Defines if static code analysis should be performed.           | Exercise configuration |
@@ -86,27 +89,31 @@ server or exercise settings:
 The `pipeline.groovy` file can be customized further by instructors after creating the exercise from within
 Artemis via the ‘Edit Build Plan’ button on the details page of the exercise.
 
+
 ## Caching Maven Dependencies with Sonatype Nexus {#caching-sonatype-nexus}
 
 With Sonatype Nexus you can run a caching server in your local network for Maven dependencies.
 An alternative approach for caching is with Docker volumes, see [this section](#caching-docker-volumes).
 
 <Callout variant={CalloutVariant.info}>
-    The following steps assume `artemis.example.com` is the host `10.0.73.42` and is using port `8443` for the cache. Adapt the URLs for your actual setup.
+  The following steps assume `artemis.example.com` is the host `10.0.73.42` and is using port `8443` for the cache.
+  Adapt the URLs for your actual setup.
 </Callout>
+
 
 ### Sonatype Nexus Setup
 
 1. Set up Sonatype Nexus to run on `artemis.example.com:8443`, e.g. in a [Docker container](https://hub.docker.com/r/sonatype/nexus3/) behind a [proxy](https://help.sonatype.com/en/run-behind-a-reverse-proxy.html).
 2. In the initial setup steps: Allow anonymous access.
 3. Set up the Maven proxy repository:
-   a. Create a new repository (_Repository - Repositories - Create repository_) of type `maven2 (proxy)` with name `maven-proxy`.
-   b. The remote URL is https://repo1.maven.org/maven2/.
-4. Optionally create a new cleanup policy under _Repository - Cleanup Policies_
+    a. Create a new repository (*Repository - Repositories - Create repository*) of type `maven2 (proxy)` with name `maven-proxy`.
+    b. The remote URL is https://repo1.maven.org/maven2/.
+4. Optionally create a new cleanup policy under *Repository - Cleanup Policies*
     1. Format: `maven2`
     2. Release type: Releases & Pre-releases/Snapshots
     3. Cleanup criteria: e.g. ‘Component Usage 14’ will remove all files that have not been downloaded for 14 days.
     4. You can now add this cleanup policy to the policies in the repository you created earlier.
+
 
 ### Adding proxy to a Maven build
 
@@ -131,6 +138,7 @@ Configure Maven so that it can find your Maven cache:
 </pluginRepositories>
 ```
 
+
 #### Option 2 (more rigorous alternative)
 
 This setup forces Maven to exclusively download dependencies from the own proxy.
@@ -151,10 +159,12 @@ This setup forces Maven to exclusively download dependencies from the own proxy.
   </settings>
 ```
 
+
 ```bash title=".mvn/maven.config"
 --settings
 ./.mvn/local-settings.xml
 ```
+
 
 #### Adding proxy to a Gradle build
 
@@ -169,6 +179,7 @@ repositories {
 }
 ```
 
+
 ```kotlin title="build.gradle.kts"
 repositories {
     maven {
@@ -178,10 +189,12 @@ repositories {
 }
 ```
 
+
 ## Caching with Docker Volumes {#caching-docker-volumes}
 
 With Docker volumes you can cache Maven dependencies.
 An alternative approach for caching is with Sonatype Nexus, see [this section](#caching-sonatype-nexus).
+
 
 ### Example for Maven
 
@@ -206,11 +219,9 @@ You can use [Ares](https://github.com/ls1intum/Ares) to prevent this by restrict
 the student's code can access.
 
 Alternatively, you can restrict the access to the mounted volume by changing the `dockerFlags` to
-
 ```groovy
 dockerFlags = '#dockerArgs -e MAVEN_OPTS="-Dmaven.repo.local=/maven_cache/repository"'
 ```
-
 and changing the `testRunner` method into
 
 ```groovy
@@ -234,6 +245,7 @@ private void setup() {
 This mounts the cache as writeable only when executing the tests for the solution repository, and as read-only when
 running the tests for students’ code.
 
+
 ### Example for Gradle
 
 In case of always writeable caches you can set `-e GRADLE_USER_HOME=/gradle_cache` as part of the `dockerFlags`
@@ -252,6 +264,7 @@ private void setup() {
     }
 }
 ```
+
 
 ### Security Considerations
 
@@ -272,9 +285,11 @@ private void setup() {
 }
 ```
 
+
 ## Security Considerations for Secret Tests
 
 When you are using secret tests as part of your exercise, you might want to restrict network traffic leaving the CI run to avoid students leaking information.
+
 
 ### Jenkins
 
@@ -293,6 +308,7 @@ docker network create --opt com.docker.network.bridge.name=artemis-restr artemis
 iptables -I DOCKER-USER -i artemis-restr -j DROP
 iptables -I DOCKER-USER -i artemis-restr -d $IP_OF_ARTEMIS_EXAMPLE_COM_CACHE -p tcp --dport 8443 -j ACCEPT
 ```
+
 
 ## Timeout Options
 
@@ -317,6 +333,7 @@ artemis:
             default: <value>
 ```
 
+
 ## Build Log Configuration
 
 This setting is relevant only when using [Integrated Code Lifecycle Setup](https://docs.artemis.cit.tum.de/dev/setup/integrated-code-lifecycle.html).
@@ -336,6 +353,7 @@ artemis:
             max-lines-per-job: <value>
             max-chars-per-line: <value>
 ```
+
 
 ## Container Resource Restrictions
 
@@ -404,6 +422,6 @@ Default values have already been set, and modifying these values is not required
 
 ```yaml
 artemis:
-    continuous-integration:
-        pause-grace-period-seconds: <value>
+  continuous-integration:
+    pause-grace-period-seconds: <value>
 ```
