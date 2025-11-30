@@ -123,7 +123,7 @@ public class ProgrammingExerciseBuildConfigService {
     /**
      * Parses the JSON string representing Docker flags into DockerFlagsDTO. (see {@link DockerFlagsDTO})
      *
-     * @return a list of key-value pairs, or {@code null} if the JSON string is empty
+     * @return the parsed docker flags object
      * @throws IllegalArgumentException if the JSON string is invalid
      * @throws ResponseStatusException  if the network is not allowed
      */
