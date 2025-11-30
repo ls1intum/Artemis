@@ -168,6 +168,28 @@ public class PyrisPipelineService {
      */
     public void executeExerciseChatPipeline(String variant, String customInstructions, Optional<ProgrammingSubmission> latestSubmission, ProgrammingExercise exercise,
             IrisProgrammingExerciseChatSession session, Optional<String> eventVariant) {
+        executeExerciseChatPipeline(variant, customInstructions, latestSubmission, exercise, session, eventVariant, Map.of());
+    }
+
+    /**
+     * Execute the exercise chat pipeline for the given session with uncommitted file changes.
+     * It provides specific data for the exercise chat pipeline, including:
+     * - The latest submission of the student
+     * - The programming exercise
+     * - The course the exercise is part of
+     * <p>
+     *
+     * @param variant            the variant of the pipeline
+     * @param customInstructions the custom instructions for the pipeline
+     * @param latestSubmission   the latest submission of the student
+     * @param exercise           the programming exercise
+     * @param session            the chat session
+     * @param eventVariant       if this function triggers a pipeline execution due to a specific event, this is the used event variant
+     * @param uncommittedFiles   the uncommitted files from the client (working copy)
+     * @see PyrisPipelineService#executePipeline for more details on the pipeline execution process.
+     */
+    public void executeExerciseChatPipeline(String variant, String customInstructions, Optional<ProgrammingSubmission> latestSubmission, ProgrammingExercise exercise,
+            IrisProgrammingExerciseChatSession session, Optional<String> eventVariant, Map<String, String> uncommittedFiles) {
         // @formatter:off
         executePipeline(
                 "programming-exercise-chat",
@@ -178,7 +200,7 @@ public class PyrisPipelineService {
                     var course = exercise.getCourseViaExerciseGroupOrCourseMember();
                     var user = userRepository.findByIdElseThrow(session.getUserId());
                     return new PyrisExerciseChatPipelineExecutionDTO(
-                            latestSubmission.map(pyrisDTOService::toPyrisSubmissionDTO).orElse(null),
+                            latestSubmission.map(submission -> pyrisDTOService.toPyrisSubmissionDTO(submission, uncommittedFiles)).orElse(null),
                             pyrisDTOService.toPyrisProgrammingExerciseDTO(exercise),
                             new PyrisCourseDTO(course),
                             session.getTitle(),

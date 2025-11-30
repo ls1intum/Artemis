@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.iris.service.session;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -57,7 +58,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionReposi
 @Lazy
 @Service
 @Profile(PROFILE_IRIS)
-public class IrisExerciseChatSessionService extends AbstractIrisChatSessionService<IrisProgrammingExerciseChatSession> implements IrisRateLimitedFeatureInterface {
+public class IrisExerciseChatSessionService extends AbstractIrisChatSessionService<IrisProgrammingExerciseChatSession> {
 
     private static final Logger log = LoggerFactory.getLogger(IrisExerciseChatSessionService.class);
 
@@ -152,7 +153,17 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
      */
     @Override
     public void requestAndHandleResponse(IrisProgrammingExerciseChatSession session) {
-        requestAndHandleResponse(session, Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty());
+        requestAndHandleResponse(session, Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Map.of());
+    }
+
+    /**
+     * Sends all messages of the session to an LLM with uncommitted file changes and handles the response.
+     *
+     * @param session          The chat session to send to the LLM
+     * @param uncommittedFiles The uncommitted files from the client (working copy)
+     */
+    public void requestAndHandleResponseWithUncommittedChanges(IrisProgrammingExerciseChatSession session, Map<String, String> uncommittedFiles) {
+        requestAndHandleResponse(session, Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), uncommittedFiles);
     }
 
     /**
@@ -167,6 +178,23 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
      */
     public void requestAndHandleResponse(IrisProgrammingExerciseChatSession session, Optional<String> event, Optional<IrisCombinedProgrammingExerciseChatSubSettingsDTO> settings,
             Optional<User> user, Optional<ProgrammingSubmission> latestSubmission) {
+        requestAndHandleResponse(session, event, settings, user, latestSubmission, Map.of());
+    }
+
+    /**
+     * Sends all messages of the session to an LLM and handles the response by saving the message
+     * and sending it to the student via the Websocket.
+     *
+     * @param session          The chat session to send to the LLM
+     * @param event            The event to trigger on Pyris side
+     * @param settings         Optional settings to use if already loaded elsewhere. If not provided, the settings will be fetched
+     * @param user             Optional user to use if already loaded elsewhere. If not provided, the user will be fetched
+     * @param latestSubmission Optional latest submission to use if already loaded elsewhere. If not provided, the latest submission will be fetched
+     * @param uncommittedFiles The uncommitted files from the client (working copy)
+     */
+    private void requestAndHandleResponse(IrisProgrammingExerciseChatSession session, Optional<String> event,
+            Optional<IrisCombinedProgrammingExerciseChatSubSettingsDTO> settings, Optional<User> user, Optional<ProgrammingSubmission> latestSubmission,
+            Map<String, String> uncommittedFiles) {
         var exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(session.getExerciseId());
         if (exercise.isExamExercise()) {
             throw new ConflictException("Iris is not supported for exam exercises", "Iris", "irisExamExercise");
@@ -183,7 +211,7 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
 
         var chatSession = (IrisProgrammingExerciseChatSession) irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
         pyrisPipelineService.executeExerciseChatPipeline(actualSettings.selectedVariant(), actualSettings.customInstructions(), actualLatestSubmission, exercise, chatSession,
-                event);
+                event, uncommittedFiles);
     }
 
     /**
