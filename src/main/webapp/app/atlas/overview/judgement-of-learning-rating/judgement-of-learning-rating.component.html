@@ -1,4 +1,3 @@
-<!-- eslint-disable @angular-eslint/template/eqeqeq -->
 <div class="alert alert-info">
     <div class="d-flex gap-1 align-items-center">
         <b>
@@ -11,11 +10,11 @@
         uncheckedColor="var(--gray-500)"
         [value]="rating() ?? 0"
         [size]="'24'"
-        [readOnly]="rating() != undefined"
+        [readOnly]="rating() !== undefined && rating() !== null"
         [totalStars]="5"
         (rate)="onRate($event)"
     />
-    @if (rating() != undefined && mastery() != undefined) {
+    @if (rating() !== undefined && rating() !== null && mastery() !== undefined && mastery() !== null) {
         <div class="mt-2">
             <span jhiTranslate="artemisApp.courseStudentDashboard.judgementOfLearning.artemisRating"></span>
             <star-rating checkedColor="var(--info)" uncheckedColor="var(--gray-500)" [value]="((mastery() ?? 0) / 100) * 5" [size]="'24'" [readOnly]="true" [totalStars]="5" />

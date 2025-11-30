@@ -90,10 +90,10 @@ export class ProgrammingExerciseGradingComponent implements AfterContentInit, On
     calculateFormStatus() {
         const newFormValidValue = Boolean(
             this.maxScoreField?.valid &&
-                this.bonusPointsField?.valid &&
-                (this.maxPenaltyField?.valid || !this.programmingExercise.staticCodeAnalysisEnabled) &&
-                !this.submissionPolicyUpdateComponent?.invalid &&
-                this.lifecycleComponent?.formValid,
+            this.bonusPointsField?.valid &&
+            (this.maxPenaltyField?.valid || !this.programmingExercise.staticCodeAnalysisEnabled) &&
+            !this.submissionPolicyUpdateComponent?.invalid &&
+            this.lifecycleComponent?.formValid,
         );
 
         this.formValidSignal.set(newFormValidValue);
