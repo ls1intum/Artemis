@@ -128,10 +128,13 @@ public class WebsocketBrokerReconnectionService implements ApplicationListener<B
         return true;
     }
 
-    public boolean triggerManualDisconnect() {
+    /**
+     * Allows to manually disconnect from the external websocket broker and suppress automatic reconnect attempts.
+     */
+    public void triggerManualDisconnect() {
         if (stompBrokerRelayMessageHandler.isEmpty()) {
             log.warn("Manual websocket broker disconnect requested, but no external broker relay is configured");
-            return false;
+            return;
         }
 
         stopReconnectAttempts("manual disconnect requested");
@@ -142,23 +145,20 @@ public class WebsocketBrokerReconnectionService implements ApplicationListener<B
             }
         });
         updateBrokerStatus(false);
-        return true;
     }
 
     /**
      * Manually start the broker relay without scheduling repeated reconnect attempts.
-     *
-     * @return true if the broker relay exists, false otherwise
      */
-    public boolean triggerManualConnect() {
+    public void triggerManualConnect() {
         if (stompBrokerRelayMessageHandler.isEmpty()) {
             log.warn("Manual websocket broker connect requested, but no external broker relay is configured");
-            return false;
+            return;
         }
 
         stopReconnectAttempts("manual connect requested");
         manualDisconnectRequested.set(false);
-        return restartBrokerRelayInternal(true);
+        restartBrokerRelayInternal(true);
     }
 
     private void startReconnectAttempts(String reason) {
@@ -178,7 +178,7 @@ public class WebsocketBrokerReconnectionService implements ApplicationListener<B
         restartBrokerRelayInternal(false);
     }
 
-    private boolean restartBrokerRelayInternal(boolean explicitRequest) {
+    private void restartBrokerRelayInternal(boolean explicitRequest) {
         stompBrokerRelayMessageHandler.ifPresent(handler -> {
             if (!restartInProgress.compareAndSet(false, true)) {
                 return; // Avoid overlapping restart attempts
@@ -206,7 +206,6 @@ public class WebsocketBrokerReconnectionService implements ApplicationListener<B
         if (explicitRequest) {
             updateBrokerStatus(false);
         }
-        return stompBrokerRelayMessageHandler.isPresent();
     }
 
     /**
