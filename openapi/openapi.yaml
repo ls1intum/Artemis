@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   title: Artemis Application Server API
   contact: {name: Stephan Krusche, email: krusche@tum.de}
-  version: 8.4.0
+  version: 8.6.2
 servers:
 - {url: 'http://localhost:8080', description: Generated server url}
 paths:
@@ -150,7 +150,7 @@ paths:
                 items: {$ref: '#/components/schemas/TutorialGroupRegistrationImport'}
   /api/hyperion/programming-exercises/{programmingExerciseId}/consistency-check:
     post:
-      tags: [hyperion-review-and-refine]
+      tags: [hyperion-problem-statement]
       operationId: checkExerciseConsistency
       parameters:
       - name: programmingExerciseId
@@ -165,7 +165,7 @@ paths:
               schema: {$ref: '#/components/schemas/ConsistencyCheckResponse'}
   /api/hyperion/courses/{courseId}/problem-statements/rewrite:
     post:
-      tags: [hyperion-review-and-refine]
+      tags: [hyperion-problem-statement]
       operationId: rewriteProblemStatement
       parameters:
       - name: courseId
@@ -183,6 +183,46 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/ProblemStatementRewriteResponse'}
+  /api/hyperion/courses/{courseId}/problem-statements/refine:
+    post:
+      tags: [hyperion-problem-statement]
+      operationId: refineProblemStatement
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ProblemStatementRefinementRequest'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ProblemStatementRefinementResponse'}
+  /api/hyperion/courses/{courseId}/problem-statements/generate:
+    post:
+      tags: [hyperion-problem-statement]
+      operationId: generateProblemStatement
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ProblemStatementGenerationRequest'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ProblemStatementGenerationResponse'}
   /api/tutorialgroup/tutorial-groups/{tutorialGroupId}/title:
     get:
       tags: [tutorial-group]
@@ -278,6 +318,25 @@ paths:
                 type: array
                 items: {type: string}
                 uniqueItems: true
+  /api/tutorialgroup/courses/{courseId}/tutorial-group-detail/{tutorialGroupId}:
+    get:
+      tags: [tutorial-group]
+      operationId: getTutorialGroupDetailGroupDTO
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: tutorialGroupId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/TutorialGroupDetailGroup'}
   /api/tutorialgroup/courses/{courseId}/tutorial-groups/{tutorialGroupId}/deregister/{studentLogin}:
     delete:
       tags: [tutorial-group]
@@ -299,6 +358,21 @@ paths:
         '200': {description: OK}
 components:
   schemas:
+    ProblemStatementRefinementResponse:
+      type: object
+      description: Response containing generated problem statement
+      properties:
+        refinedProblemStatement: {type: string, description: Refined problem statement
+            text}
+        originalProblemStatement: {type: string, description: Original problem statement
+            if refinement failed}
+    ProblemStatementGenerationRequest:
+      type: object
+      description: Request to generate a problem statement
+      properties:
+        userPrompt: {type: string, description: User prompt describing the problem
+            statement requirements, maxLength: 1000, minLength: 0}
+      required: [userPrompt]
     ProblemStatementRewriteResponse:
       type: object
       description: Response containing rewritten problem statement
@@ -357,6 +431,13 @@ components:
         language: {type: string}
         additionalInformation: {type: string}
         isOnline: {type: boolean}
+    ProblemStatementGenerationResponse:
+      type: object
+      description: Response containing generated problem statement
+      properties:
+        draftProblemStatement: {type: string, description: Draft problem statement
+            text}
+        error: {type: string, description: Error message if generation failed}
     Student:
       type: object
       properties:
@@ -371,6 +452,16 @@ components:
         notificationText: {type: string, maxLength: 1000, minLength: 1}
         updateTutorialGroupChannelName: {type: boolean}
       required: [tutorialGroup]
+    ExamSeat:
+      type: object
+      properties:
+        name: {type: string}
+        condition:
+          type: string
+          enum: [USABLE, NO_TABLE, DEFECT, WHEELCHAIR]
+        x: {type: number, format: double}
+        y: {type: number, format: double}
+      required: [condition, name]
     ConsistencyCheckResponse:
       type: object
       description: Response containing consistency check results
@@ -380,6 +471,27 @@ components:
           description: List of consistency issues found
           items: {$ref: '#/components/schemas/ConsistencyIssue'}
       required: [issues]
+    ProblemStatementRefinementRequest:
+      type: object
+      description: Request to rewrite a problem statement
+      properties:
+        problemStatementText: {type: string, description: Original problem statement
+            text to be refined, minLength: 1}
+        userPrompt: {type: string, description: User prompt describing the problem
+            statement requirements, maxLength: 1000, minLength: 0}
+      required: [problemStatementText, userPrompt]
+    TutorialGroupDetailSession:
+      type: object
+      properties:
+        start: {type: string, format: date-time}
+        end: {type: string, format: date-time}
+        location: {type: string}
+        isCancelled: {type: boolean}
+        locationChanged: {type: boolean}
+        timeChanged: {type: boolean}
+        dateChanged: {type: boolean}
+        attendanceCount: {type: integer, format: int32}
+      required: [end, location, start]
     TutorialGroupFreePeriodRequest:
       type: object
       properties:
@@ -464,7 +576,6 @@ components:
         startTime: {type: string}
         endTime: {type: string}
         location: {type: string, maxLength: 2000, minLength: 1}
-      required: [date, endTime, startTime]
     ProblemStatementRewriteRequest:
       type: object
       description: Request to rewrite a problem statement
@@ -472,6 +583,25 @@ components:
         problemStatementText: {type: string, description: Original problem statement
             text to be improved, minLength: 1}
       required: [problemStatementText]
+    TutorialGroupDetailGroup:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        language: {type: string}
+        isOnline: {type: boolean}
+        teachingAssistantName: {type: string}
+        teachingAssistantLogin: {type: string}
+        teachingAssistantImageUrl: {type: string}
+        capacity: {type: integer, format: int32}
+        campus: {type: string}
+        groupChannelId: {type: integer, format: int64}
+        tutorChatId: {type: integer, format: int64}
+        sessions:
+          type: array
+          items: {$ref: '#/components/schemas/TutorialGroupDetailSession'}
+      required: [language, sessions, teachingAssistantLogin, teachingAssistantName,
+        title]
     StudentExport:
       type: object
       properties:
