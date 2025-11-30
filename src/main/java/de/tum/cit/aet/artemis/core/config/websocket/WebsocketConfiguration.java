@@ -16,9 +16,10 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
-import org.apache.commons.collections4.IteratorUtils;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -123,7 +124,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
     protected void configureMessageBroker(@NonNull MessageBrokerRegistry config) {
         // Try to create a TCP client that will connect to the message broker (or the message brokers if multiple exists).
         // If tcpClient is null, there is no valid address specified in the config. This could be due to a development setup or a mistake in the config.
-        TcpOperations<byte[]> tcpClient = createTcpClient();
+        TcpOperations<byte[]> tcpClient = websocketBrokerTcpClientSupplier().get();
         if (tcpClient != null) {
             log.debug("Enabling StompBrokerRelay for WebSocket messages using {}", String.join(", ", brokerAddresses));
             config
@@ -173,16 +174,34 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
      *
      * @return a TCP client with a round-robin use
      */
-    private ReactorNettyTcpClient<byte[]> createTcpClient() {
+    private TcpOperations<byte[]> createTcpClient() {
         final List<InetSocketAddress> brokerAddressList = brokerAddresses.stream().map(InetSocketAddressValidator::getValidAddress).flatMap(Optional::stream).toList();
 
         // Return null if no valid addresses can be found. This is e.g. due to an invalid config or a development setup without a broker.
-        if (!brokerAddressList.isEmpty()) {
-            // This provides a round-robin use of brokers, we only want to use the fallback broker if the primary broker fails, so we have the same order of brokers in all nodes
-            var addressIterator = IteratorUtils.loopingIterator(brokerAddressList);
-            return new ReactorNettyTcpClient<>(client -> client.remoteAddress(addressIterator::next), new StompReactorNettyCodec());
+        if (brokerAddressList.isEmpty()) {
+            return null;
         }
-        return null;
+
+        // === Single broker: always connect to this one ===
+        if (brokerAddressList.size() == 1) {
+            final InetSocketAddress addr = brokerAddressList.getFirst();
+            return new ReactorNettyTcpClient<>(addr.getHostString(), addr.getPort(), new StompReactorNettyCodec());
+        }
+
+        // === Multiple brokers: thread-safe round robin ===
+        AtomicInteger index = new AtomicInteger(0);
+
+        return new ReactorNettyTcpClient<>(client -> client.remoteAddress(() -> {
+            int i = Math.floorMod(index.getAndIncrement(), brokerAddressList.size());
+            InetSocketAddress addr = brokerAddressList.get(i);
+            log.debug("STOMP relay connecting to broker[{}] {}:{}", i, addr.getHostString(), addr.getPort());
+            return addr;
+        }), new StompReactorNettyCodec());
+    }
+
+    @Bean(name = "websocketBrokerTcpClientSupplier")
+    public Supplier<TcpOperations<byte[]>> websocketBrokerTcpClientSupplier() {
+        return this::createTcpClient;
     }
 
     @Override
