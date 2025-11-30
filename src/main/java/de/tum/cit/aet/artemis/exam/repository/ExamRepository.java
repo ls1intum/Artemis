@@ -29,6 +29,7 @@ import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.dto.ExamSidebarDataDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamStudentCountDTO;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 
 /**
@@ -42,11 +43,18 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
     List<Exam> findByCourseId(long courseId);
 
     @Query("""
-            SELECT DISTINCT exam
-            FROM Exam exam
-            WHERE exam.course.id IN :courses
+            SELECT DISTINCT new de.tum.cit.aet.artemis.exam.dto.ExamStudentCountDTO(
+                ex.id,
+                ex.title,
+                COUNT(DISTINCT se),
+                ex.course.id
+            )
+            FROM Exam ex
+                JOIN StudentExam se ON se.exam.id = ex.id AND se.testRun = FALSE
+            WHERE ex.course.id IN :courseIds
+            GROUP BY ex.id, ex.title, ex.course.id
             """)
-    List<Exam> findExamsInCourses(@Param("courses") Iterable<Long> courseId);
+    Set<ExamStudentCountDTO> findExamStudentCountsByCourseIds(@Param("courseIds") Collection<Long> courseIds);
 
     @Query("""
             SELECT DISTINCT ex

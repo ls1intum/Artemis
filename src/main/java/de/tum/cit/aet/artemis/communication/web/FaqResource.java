@@ -180,6 +180,7 @@ public class FaqResource {
 
     /**
      * GET /courses/:courseId/faqs : get all the faqs of a course
+     * Students only see accepted faqs, while tutors and instructors can see all faqs.
      *
      * @param courseId the courseId of the course for which all faqs should be returned
      * @return the ResponseEntity with status 200 (OK) and the list of faqs in body
@@ -188,8 +189,9 @@ public class FaqResource {
     @EnforceAtLeastStudentInCourse
     public ResponseEntity<List<FaqDTO>> getFaqsForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all Faqs for the course with id : {}", courseId);
-        List<Faq> faqs = authCheckService.isAtLeastTeachingAssistantInCourse(courseId) ? faqRepository.findAllByCourseIdOrderByCreatedDateDesc(courseId)
-                : faqRepository.findAllByCourseIdAndFaqStateOrderByCreatedDateDesc(courseId, FaqState.ACCEPTED);
+        List<Faq> faqs = authCheckService.isAtLeastTeachingAssistantInCourse(courseId) ? faqRepository.findAllByCourseIdOrderByCreatedDateDesc(courseId) // TAs and Instructors see
+                                                                                                                                                         // all FAQs
+                : faqRepository.findAllByCourseIdAndFaqStateOrderByCreatedDateDesc(courseId, FaqState.ACCEPTED); // Students see only accepted FAQs
         List<FaqDTO> faqDTOS = faqs.stream().map(FaqDTO::new).toList();
         return ResponseEntity.ok().body(faqDTOS);
     }
