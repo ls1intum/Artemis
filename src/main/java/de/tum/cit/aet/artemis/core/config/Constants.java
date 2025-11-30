@@ -544,6 +544,8 @@ public final class Constants {
 
     public static final String LOCAL = "Local";
 
+    public static final String AI_SELECTION_DECISION = "AI_SELECTION_DECISION";
+
     private Constants() {
     }
 }

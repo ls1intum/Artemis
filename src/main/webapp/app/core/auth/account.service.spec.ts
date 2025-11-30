@@ -630,7 +630,7 @@ describe('AccountService', () => {
             jest.useRealTimers();
         });
 
-        it('should set externalLLMUsageAccepted when user identity exists', () => {
+        it('should set SelectedLLMUsage when user identity exists', () => {
             // Setup user identity
             accountService.userIdentity.set({ id: 1, groups: ['USER'] } as User);
 
