@@ -1071,6 +1071,18 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     }
 
     @Query(value = """
+            SELECT COUNT(DISTINCT u.id)
+            FROM User u
+                JOIN Course c ON c.id = :courseId
+            WHERE u.deleted = FALSE
+                AND c.studentGroupName MEMBER OF u.groups
+                AND c.instructorGroupName NOT MEMBER OF u.groups
+                AND c.teachingAssistantGroupName NOT MEMBER OF u.groups
+                AND c.editorGroupName NOT MEMBER OF u.groups
+                """)
+    Long countOnlyStudents(long courseId);
+
+    @Query(value = """
             SELECT *
             FROM jhi_user u
             WHERE is_deleted = FALSE

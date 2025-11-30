@@ -217,7 +217,7 @@ public class StatisticsService {
             Long studentParticipations = exerciseRepository.getStudentParticipationCountById(exercise.getId());
             numberOfParticipationsOfStudentsOrTeams = studentParticipations == null ? 0L : studentParticipations;
 
-            numberOfStudentsOrTeams = userRepository.countUserInGroup(course.getStudentGroupName());
+            numberOfStudentsOrTeams = userRepository.countOnlyStudents(course.getId());
         }
 
         // post stats
