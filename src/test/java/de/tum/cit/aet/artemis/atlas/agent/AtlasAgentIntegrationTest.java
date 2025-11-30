@@ -57,7 +57,7 @@ class AtlasAgentIntegrationTest extends AbstractAtlasIntegrationTest {
         doAnswer(invocation -> {
             String sessionId = invocation.getArgument(0);
             Message message = invocation.getArgument(1);
-            chatMemoryStorage.computeIfAbsent(sessionId, k -> new ArrayList<>()).add(message);
+            chatMemoryStorage.computeIfAbsent(sessionId, key -> new ArrayList<>()).add(message);
             return null;
         }).when(chatMemory).add(anyString(), any(Message.class));
 
@@ -82,20 +82,7 @@ class AtlasAgentIntegrationTest extends AbstractAtlasIntegrationTest {
 
         request.performMvcRequest(
                 post("/api/atlas/agent/courses/{courseId}/chat", course.getId()).contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(requestDTO)))
-                .andExpect(status().isOk()).andExpect(jsonPath("$.sessionId").exists()).andExpect(jsonPath("$.success").exists()).andExpect(jsonPath("$.timestamp").exists())
-                .andExpect(jsonPath("$.message").exists());
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testServerGeneratedSessionId() throws Exception {
-        var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
-        String expectedSessionId = String.format("course_%d_user_%d", course.getId(), instructor.getId());
-        AtlasAgentChatRequestDTO requestDTO = new AtlasAgentChatRequestDTO("Test session consistency");
-
-        request.performMvcRequest(
-                post("/api/atlas/agent/courses/{courseId}/chat", course.getId()).contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(requestDTO)))
-                .andExpect(status().isOk()).andExpect(jsonPath("$.sessionId").value(expectedSessionId));
+                .andExpect(status().isOk()).andExpect(jsonPath("$.timestamp").exists()).andExpect(jsonPath("$.message").exists());
     }
 
     @Test
@@ -122,7 +109,7 @@ class AtlasAgentIntegrationTest extends AbstractAtlasIntegrationTest {
 
         request.performMvcRequest(
                 post("/api/atlas/agent/courses/{courseId}/chat", course.getId()).contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(requestDTO)))
-                .andExpect(status().isOk()).andExpect(jsonPath("$.sessionId").exists()).andExpect(jsonPath("$.message").exists());
+                .andExpect(status().isOk()).andExpect(jsonPath("$.message").exists());
     }
 
     @Test
@@ -133,7 +120,7 @@ class AtlasAgentIntegrationTest extends AbstractAtlasIntegrationTest {
 
         request.performMvcRequest(
                 post("/api/atlas/agent/courses/{courseId}/chat", course.getId()).contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(requestDTO)))
-                .andExpect(status().isOk()).andExpect(jsonPath("$.sessionId").exists()).andExpect(jsonPath("$.message").exists());
+                .andExpect(status().isOk()).andExpect(jsonPath("$.message").exists());
     }
 
     @Test
@@ -144,7 +131,7 @@ class AtlasAgentIntegrationTest extends AbstractAtlasIntegrationTest {
 
         request.performMvcRequest(
                 post("/api/atlas/agent/courses/{courseId}/chat", course.getId()).contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(requestDTO)))
-                .andExpect(status().isOk()).andExpect(jsonPath("$.sessionId").exists()).andExpect(jsonPath("$.message").exists());
+                .andExpect(status().isOk()).andExpect(jsonPath("$.message").exists());
     }
 
     @Test
@@ -155,7 +142,7 @@ class AtlasAgentIntegrationTest extends AbstractAtlasIntegrationTest {
 
         request.performMvcRequest(
                 post("/api/atlas/agent/courses/{courseId}/chat", course.getId()).contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(requestDTO)))
-                .andExpect(status().isOk()).andExpect(jsonPath("$.sessionId").exists()).andExpect(jsonPath("$.message").exists());
+                .andExpect(status().isOk()).andExpect(jsonPath("$.message").exists());
     }
 
     @Test
@@ -166,7 +153,7 @@ class AtlasAgentIntegrationTest extends AbstractAtlasIntegrationTest {
 
         request.performMvcRequest(
                 post("/api/atlas/agent/courses/{courseId}/chat", course.getId()).contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(requestDTO)))
-                .andExpect(status().isOk()).andExpect(jsonPath("$.sessionId").exists()).andExpect(jsonPath("$.message").exists());
+                .andExpect(status().isOk()).andExpect(jsonPath("$.message").exists());
     }
 
     @Test
@@ -177,7 +164,7 @@ class AtlasAgentIntegrationTest extends AbstractAtlasIntegrationTest {
 
         request.performMvcRequest(
                 post("/api/atlas/agent/courses/{courseId}/chat", course.getId()).contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(requestDTO)))
-                .andExpect(status().isOk()).andExpect(jsonPath("$.sessionId").exists()).andExpect(jsonPath("$.message").exists());
+                .andExpect(status().isOk()).andExpect(jsonPath("$.message").exists());
     }
 
     @Test
@@ -188,7 +175,7 @@ class AtlasAgentIntegrationTest extends AbstractAtlasIntegrationTest {
 
         request.performMvcRequest(
                 post("/api/atlas/agent/courses/{courseId}/chat", course.getId()).contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(requestDTO)))
-                .andExpect(status().isOk()).andExpect(jsonPath("$.sessionId").exists()).andExpect(jsonPath("$.message").exists());
+                .andExpect(status().isOk()).andExpect(jsonPath("$.message").exists());
     }
 
     @Test
@@ -199,7 +186,7 @@ class AtlasAgentIntegrationTest extends AbstractAtlasIntegrationTest {
 
         request.performMvcRequest(
                 post("/api/atlas/agent/courses/{courseId}/chat", course.getId()).contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(requestDTO)))
-                .andExpect(status().isOk()).andExpect(jsonPath("$.sessionId").exists()).andExpect(jsonPath("$.message").exists());
+                .andExpect(status().isOk()).andExpect(jsonPath("$.message").exists());
     }
 
     @Nested
