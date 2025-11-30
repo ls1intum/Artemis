@@ -231,11 +231,15 @@
                 "testCaseCommand": "Testfall einfügen",
                 "tasksOfExercise": "Teilaufgaben:",
                 "generationAssistance": "Entwurf der Problemstellung erstellen",
+                "refinementAssistance": "Problemstellung verfeinern",
                 "generateDraftDescription": "Verwende dieses Feld, um die Aufgabenbeschreibung zu entwerfen oder die aktuelle Formulierung zu verfeinern. Deine Eingaben steuern sowohl die Problemstellung als auch die Lernziele. Sei konkret zu Anforderungen, Konzepten und Randbedingungen.",
                 "yourRequirements": "Deine Anforderungen",
                 "examplePlaceholder": "Beispiel: Erstelle eine Java-Übung zur Implementierung eines binären Suchbaums mit Insert-, Delete- und Search-Operationen. Studierende sollen Verständnis für Baumtraversal und rekursive Algorithmen demonstrieren.",
                 "generationSuccess": "Aufgabenstellung wurde erfolgreich generiert.",
-                "generationError": "Fehler beim Generieren der Aufgabenstellung. Bitte versuche es erneut."
+                "generationError": "Fehler beim Generieren der Aufgabenstellung. Bitte versuche es erneut.",
+                "refinementSuccess": "Aufgabenstellung wurde erfolgreich verfeinert.",
+                "refinementError": "Fehler beim Verfeinern der Aufgabenstellung. Bitte versuche es erneut.",
+                "refinementFailed": "Aufgabenstellung konnte nicht verfeinert werden. Die ursprüngliche Aufgabenstellung wurde beibehalten."
             },
             "status": {
                 "solutionFailsTest": "Das Solution-Repository erfüllt einen oder mehrere Testfälle nicht. Das könnte auf ein Problem mit dem Solution-Repository oder den Testfällen hinweisen.",

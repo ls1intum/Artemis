@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnDestroy, Output, inject, input, output } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, computed, inject, input, output, signal } from '@angular/core';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
@@ -17,6 +17,7 @@ import { PopoverModule } from 'primeng/popover';
 import { ButtonModule } from 'primeng/button';
 import { HyperionProblemStatementApiService } from 'app/openapi/api/hyperionProblemStatementApi.service';
 import { ProblemStatementGenerationRequest } from 'app/openapi/model/problemStatementGenerationRequest';
+import { ProblemStatementRefinementRequest } from 'app/openapi/model/problemStatementRefinementRequest';
 import { finalize } from 'rxjs';
 import { Subscription } from 'rxjs';
 import { facArtemisIntelligence } from 'app/shared/icons/icons';
@@ -27,6 +28,7 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { FileService } from 'app/shared/service/file.service';
 
 @Component({
     selector: 'jhi-programming-exercise-problem',
@@ -46,7 +48,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
         HelpIconComponent,
     ],
 })
-export class ProgrammingExerciseProblemComponent implements OnDestroy {
+export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
     protected readonly ProgrammingLanguage = ProgrammingLanguage;
     protected readonly ProjectType = ProjectType;
     protected readonly AssessmentType = AssessmentType;
@@ -57,13 +59,22 @@ export class ProgrammingExerciseProblemComponent implements OnDestroy {
     isEditFieldDisplayedRecord = input<Record<ProgrammingExerciseInputField, boolean>>();
     programmingExercise = input<ProgrammingExercise>();
     @Output() problemStatementChange = new EventEmitter<string>();
+
+    /**
+     * Handles problem statement changes from the editor
+     */
+    onProblemStatementChange(newProblemStatement: string): void {
+        this.currentProblemStatement.set(newProblemStatement);
+        this.problemStatementChange.emit(newProblemStatement);
+    }
     programmingExerciseChange = output<ProgrammingExercise>();
     // Problem statement generation properties
     userPrompt = '';
     isGenerating = false;
+    isRefining = false;
     private currentGenerationSubscription: Subscription | undefined = undefined;
-    private profileService = inject(ProfileService);
-    hyperionEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
+    private templateProblemStatement = signal<string>('');
+    private currentProblemStatement = signal<string>('');
 
     // icons
     facArtemisIntelligence = facArtemisIntelligence;
@@ -75,6 +86,10 @@ export class ProgrammingExerciseProblemComponent implements OnDestroy {
     private hyperionApiService = inject(HyperionProblemStatementApiService);
     private translateService = inject(TranslateService);
     private alertService = inject(AlertService);
+    private profileService = inject(ProfileService);
+    private fileService = inject(FileService);
+
+    hyperionEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
 
     /**
      * Lifecycle hook that is called when the component is destroyed.
@@ -88,7 +103,29 @@ export class ProgrammingExerciseProblemComponent implements OnDestroy {
     }
 
     /**
-     * Cancels the ongoing problem statement generation.
+     * Lifecycle hook to capture the initial problem statement for comparison.
+     * Also loads the template problem statement for robust comparison.
+     */
+    ngOnInit(): void {
+        const exercise = this.programmingExercise();
+
+        // Initialize current problem statement
+        if (exercise?.problemStatement) {
+            this.currentProblemStatement.set(exercise.problemStatement);
+        }
+
+        // Load the template problem statement for comparison
+        if (exercise?.programmingLanguage) {
+            this.fileService.getTemplateFile(exercise.programmingLanguage, exercise.projectType).subscribe({
+                next: (template) => {
+                    this.templateProblemStatement.set(template);
+                },
+            });
+        }
+    }
+
+    /**
+     * Cancels the ongoing problem statement generation or refinement.
      * Preserves the user's prompt so they can retry or modify it.
      */
     cancelGeneration(): void {
@@ -97,7 +134,40 @@ export class ProgrammingExerciseProblemComponent implements OnDestroy {
             this.currentGenerationSubscription = undefined;
         }
         this.isGenerating = false;
+        this.isRefining = false;
     }
+
+    /**
+     * Normalizes a string by trimming whitespace and normalizing line endings.
+     * This helps compare problem statements that might have formatting differences.
+     */
+    private normalizeString(str: string): string {
+        if (!str) return '';
+        // Normalize line endings to \n and trim
+        return str.replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim();
+    }
+
+    /**
+     * Computed signal that determines whether to show the generate or refine button.
+     * Reacts to changes in the problem statement.
+     */
+    shouldShowGenerateButton = computed(() => {
+        const problemStatement = this.currentProblemStatement();
+        const template = this.templateProblemStatement();
+
+        // Show generate button if problem statement is empty or only whitespace
+        if (!problemStatement || problemStatement.trim() === '') {
+            return true;
+        }
+
+        // Normalize both strings for comparison to handle whitespace/line ending differences
+        const normalizedProblemStatement = this.normalizeString(problemStatement);
+        const normalizedTemplate = this.normalizeString(template);
+
+        // Compare against the loaded template problem statement
+        return !!(normalizedTemplate && normalizedProblemStatement === normalizedTemplate);
+    });
+
     /**
      * Generates a draft problem statement using the user's prompt
      */
@@ -145,6 +215,66 @@ export class ProgrammingExerciseProblemComponent implements OnDestroy {
                     this.alertService.error('artemisApp.programmingExercise.problemStatement.generationError');
                 },
             });
+    }
+
+    /**
+     * Refines an existing problem statement using the user's prompt
+     */
+    refineProblemStatement(): void {
+        const exercise = this.programmingExercise();
+        const courseId = exercise?.course?.id ?? exercise?.exerciseGroup?.exam?.course?.id;
+        if (!this.userPrompt?.trim() || !courseId || !exercise?.problemStatement) {
+            return;
+        }
+
+        this.isRefining = true;
+
+        const request: ProblemStatementRefinementRequest = {
+            problemStatementText: exercise.problemStatement,
+            userPrompt: this.userPrompt.trim(),
+        };
+
+        this.currentGenerationSubscription = this.hyperionApiService
+            .refineProblemStatement(courseId, request)
+            .pipe(
+                finalize(() => {
+                    this.isRefining = false;
+                    this.currentGenerationSubscription = undefined;
+                }),
+            )
+            .subscribe({
+                next: (response) => {
+                    // Check if refinement was successful
+                    if (response.refinedProblemStatement && response.refinedProblemStatement.trim() !== '') {
+                        // Success: use the refined problem statement
+                        exercise.problemStatement = response.refinedProblemStatement;
+                        this.programmingExerciseCreationConfig.hasUnsavedChanges = true;
+                        this.problemStatementChange.emit(response.refinedProblemStatement);
+                        this.programmingExerciseChange.emit(exercise);
+                        this.userPrompt = '';
+                        this.alertService.success('artemisApp.programmingExercise.problemStatement.refinementSuccess');
+                    } else if (response.originalProblemStatement) {
+                        // Refinement failed: keep the original problem statement
+                        this.alertService.warning('artemisApp.programmingExercise.problemStatement.refinementFailed');
+                    } else {
+                        this.alertService.error('artemisApp.programmingExercise.problemStatement.refinementError');
+                    }
+                },
+                error: (error) => {
+                    this.alertService.error('artemisApp.programmingExercise.problemStatement.refinementError');
+                },
+            });
+    }
+
+    /**
+     * Handles the button click - either generates or refines based on current state
+     */
+    handleProblemStatementAction(): void {
+        if (this.shouldShowGenerateButton()) {
+            this.generateProblemStatement();
+        } else {
+            this.refineProblemStatement();
+        }
     }
 
     protected readonly ButtonSize = ButtonSize;

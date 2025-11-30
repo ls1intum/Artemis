@@ -2,7 +2,7 @@
     <h3 jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepTitle" id="artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepTitle"></h3>
     <p jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepMessage"></p>
     <!-- User Prompt Input -->
-    @if (!programmingExercise()?.id && hyperionEnabled) {
+    @if (hyperionEnabled) {
         <div class="mb-4">
             <label for="userPrompt" class="form-label" jhiTranslate="artemisApp.programmingExercise.problemStatement.yourRequirements"></label>
             <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.problemStatement.generateDraftDescription" />
@@ -11,19 +11,23 @@
                 [(ngModel)]="userPrompt"
                 class="form-control"
                 rows="4"
-                [placeholder]="isGenerating ? userPrompt : getTranslatedPlaceholder()"
-                [disabled]="isGenerating"
+                [placeholder]="isGenerating || isRefining ? userPrompt : getTranslatedPlaceholder()"
+                [disabled]="isGenerating || isRefining"
             >
             </textarea>
         </div>
         <div class="d-flex justify-content-start gap-2">
-            <button class="btn btn-outline-primary" type="button" [disabled]="!userPrompt?.trim() || isGenerating" (click)="generateProblemStatement()">
-                @if (isGenerating) {
+            <button class="btn btn-outline-primary" type="button" [disabled]="!userPrompt?.trim() || isGenerating || isRefining" (click)="handleProblemStatementAction()">
+                @if (isGenerating || isRefining) {
                     <fa-icon [icon]="faSpinner" animation="spin" />
                 } @else {
                     <fa-icon [icon]="facArtemisIntelligence" />
                 }
-                <span class="ms-2" jhiTranslate="artemisApp.programmingExercise.problemStatement.generationAssistance"></span>
+                @if (shouldShowGenerateButton()) {
+                    <span class="ms-2" jhiTranslate="artemisApp.programmingExercise.problemStatement.generationAssistance"></span>
+                } @else {
+                    <span class="ms-2" jhiTranslate="artemisApp.programmingExercise.problemStatement.refinementAssistance"></span>
+                }
             </button>
             <button type="button" id="cancel-generation" class="btn btn-sm btn-secondary" (click)="cancelGeneration()">
                 <fa-icon [fixedWidth]="true" [icon]="faBan" class="sm" />
@@ -67,7 +71,7 @@
                     [showStatus]="!!programmingExercise()?.id"
                     [editMode]="!!programmingExercise()?.id"
                     (hasUnsavedChanges)="programmingExerciseCreationConfig.hasUnsavedChanges = $event"
-                    (instructionChange)="problemStatementChange.emit($event)"
+                    (instructionChange)="onProblemStatementChange($event)"
                     (exerciseChange)="programmingExerciseChange.emit($event)"
                     [forceRender]="programmingExerciseCreationConfig.rerenderSubject"
                     class="form__editable-instructions"

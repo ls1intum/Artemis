@@ -231,11 +231,15 @@
                 "testCaseCommand": "Insert Test Case",
                 "tasksOfExercise": "Tasks:",
                 "generationAssistance": "Generate Draft Problem Statement",
+                "refinementAssistance": "Refine Problem Statement",
                 "generateDraftDescription": "Use this field to draft the exercise brief or refine the current statement. Your input drives both the Problem Statement and the Learning Objectives. Be concrete about requirements, concepts, and constraints.",
                 "yourRequirements": "Your Requirements",
                 "examplePlaceholder": "Example: Create a Java exercise about implementing a binary search tree with insert, delete, and search operations. Students should demonstrate understanding of tree traversal and recursive algorithms.",
                 "generationSuccess": "Problem statement has been successfully generated.",
-                "generationError": "Failed to generate problem statement. Please try again."
+                "generationError": "Failed to generate problem statement. Please try again.",
+                "refinementSuccess": "Problem statement has been successfully refined.",
+                "refinementError": "Failed to refine problem statement. Please try again.",
+                "refinementFailed": "Problem statement could not be refined. The original problem statement has been kept."
             },
             "status": {
                 "solutionFailsTest": "The Solution Repository does not fulfill one or more test cases. This could indicate an issue with the Solution Repository or the test cases.",
