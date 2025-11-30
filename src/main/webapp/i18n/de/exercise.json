@@ -60,6 +60,10 @@
             "problemStatement": "Aufgabenstellung",
             "problemStatementEditor": "Aufgabenstellung (Editor)",
             "emptyProblemStatement": "(Keine Aufgabenstellung)",
+            "emptyProblemStatementPreview": {
+                "title": "Noch keine Aufgabenstellung",
+                "description": "Die Aufgabenstellung für diese Übung wurde noch nicht erstellt."
+            },
             "instructions": "Anweisungen",
             "exampleSolution": "Beispiellösung",
             "emptyExampleSolution": "(Keine Beispiellösung)",

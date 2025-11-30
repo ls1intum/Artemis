@@ -395,6 +395,11 @@ public final class Constants {
     public static final String FEATURE_PASSKEY = "passkey";
 
     /**
+     * The name of the module feature indicating passkey is required for administrator features.
+     */
+    public static final String FEATURE_PASSKEY_REQUIRE_ADMIN = "passkeyRequiredForAdministratorFeatures";
+
+    /**
      * The name of the module feature used for Atlas functionality.
      */
     public static final String MODULE_FEATURE_ATLAS = "atlas";
@@ -463,6 +468,11 @@ public final class Constants {
      * The name of the property used to enable or disable the passkey authentication functionality.
      */
     public static final String PASSKEY_ENABLED_PROPERTY_NAME = "artemis.user-management.passkey.enabled";
+
+    /**
+     * The name of the property used to require passkey authentication for access to administrator features.
+     */
+    public static final String PASSKEY_REQUIRE_FOR_ADMINISTRATOR_FEATURES_PROPERTY_NAME = "artemis.user-management.passkey.require-for-administrator-features";
 
     /**
      * The name of the property used to enable or disable the sharing functionality.
