@@ -275,9 +275,16 @@
                 <button type="button" class="btn btn-secondary" (click)="resetToPreviousState()">
                     <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
                 </button>
-                <button id="save-exam" type="submit" [disabled]="editForm.form.invalid || !isValidConfiguration || isSaving" class="btn btn-primary">
-                    <fa-icon [icon]="faSave" />&nbsp;{{ 'entity.action.' + (isImport ? 'import' : 'save') | artemisTranslate }}
-                </button>
+                <jhi-button
+                    id="save-exam"
+                    [btnType]="ButtonType.PRIMARY"
+                    [btnSize]="ButtonSize.MEDIUM"
+                    [disabled]="editForm.form.invalid || !isValidConfiguration"
+                    [isLoading]="isSaving"
+                    [icon]="faSave"
+                    [title]="saveTitle()"
+                />
+
                 <ng-template #renderedWarning>
                     <div jhiTranslate="artemisApp.examManagement.reviewDatesInvalidExplanation"></div>
                 </ng-template>
