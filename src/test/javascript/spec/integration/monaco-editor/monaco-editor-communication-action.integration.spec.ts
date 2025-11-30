@@ -112,7 +112,7 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
             users = [metisUser1, metisUser2, metisTutor];
             jest.spyOn(courseManagementService, 'searchMembersForUserMentions').mockReturnValue(of(new HttpResponse({ body: users, status: 200 })));
             exercises = metisService.getCourse().exercises!;
-            faqs = metisService.getCourse().faqs!;
+            faqs = metisService.getFaqs()!;
 
             switch (actionId) {
                 case ChannelReferenceAction.ID:

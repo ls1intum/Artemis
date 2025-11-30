@@ -34,7 +34,7 @@ export class MockMetisService {
     }
 
     getFaqs(): Faq[] {
-        return this.getCourse().faqs ?? [];
+        return this.getFaqs() ?? [];
     }
 
     getPageType(): PageType {
