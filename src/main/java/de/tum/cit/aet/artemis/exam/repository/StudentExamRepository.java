@@ -85,14 +85,6 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
     Set<StudentExam> findByExamId(@Param("examId") long examId);
 
     @Query("""
-            SELECT COUNT(DISTINCT se)
-            FROM StudentExam se
-            WHERE se.exam.id = :examId
-                AND se.testRun = FALSE
-            """)
-    long countByExamId(@Param("examId") long examId);
-
-    @Query("""
             SELECT se
             FROM StudentExam se
                 LEFT JOIN FETCH se.examSessions
