@@ -81,7 +81,7 @@ class QuizExerciseVersionIntegrationTest extends AbstractQuizExerciseIntegration
         assertThat(changedQuiz).isNotNull();
         changedQuiz.setTitle("New title");
 
-        QuizExercise createdExercise = importQuizExerciseWithFiles(changedQuiz, changedQuiz.getId(), List.of(), HttpStatus.CREATED);
+        QuizExercise createdExercise = importQuizExerciseWithFiles(changedQuiz, List.of(), HttpStatus.CREATED);
         assertThat(createdExercise).isNotNull();
 
         exerciseVersionUtilService.verifyExerciseVersionCreated(createdExercise.getId(), TEST_PREFIX + "instructor1", ExerciseType.QUIZ);

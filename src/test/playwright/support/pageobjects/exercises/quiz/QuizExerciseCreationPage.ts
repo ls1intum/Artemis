@@ -119,7 +119,7 @@ export class QuizExerciseCreationPage extends AbstractExerciseCreationPage {
     }
 
     async import() {
-        const responsePromise = this.page.waitForResponse(`${QUIZ_EXERCISE_BASE}/import/*`);
+        const responsePromise = this.page.waitForResponse(QUIZ_EXERCISE_BASE_CREATION);
         await this.page.locator('#quiz-save').click();
         return await responsePromise;
     }
