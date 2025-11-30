@@ -61,7 +61,9 @@ describe('CourseFaqs', () => {
                                 paramMap: convertToParamMap({ courseId: '1', faqId: '1' }),
                             },
                         },
-                        queryParams: of({ faqId: '1' }),
+                        snapshot: {
+                            queryParamMap: convertToParamMap({ faqId: '1' }),
+                        },
                     },
                 },
                 MockProvider(FaqService, {
