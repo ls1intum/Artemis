@@ -198,7 +198,7 @@ public class CacheConfiguration {
         String buildAgentDisplayName = env.getProperty("artemis.continuous-integration.build-agent.display-name", "");
         String instanceId = env.getProperty("eureka.instance.instanceId", "");
         // Prefer a human-friendly build agent display name if configured; otherwise fall back to the discovery instance id
-        String displayName = !buildAgentDisplayName.isBlank() ? buildAgentDisplayName : instanceId;
+        String displayName = !buildAgentDisplayName.isBlank() && !buildAgentDisplayName.equals("Unnamed Artemis Node") ? buildAgentDisplayName : instanceId;
         if (!displayName.isBlank()) {
             MemberAttributeConfig memberAttributeConfig = config.getMemberAttributeConfig();
             log.info("Will use instanceId '{}' for Hazelcast member attributes", displayName);

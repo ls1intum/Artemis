@@ -55,7 +55,7 @@ public class WebsocketBrokerReconnectionService implements ApplicationListener<B
 
     private IMap<String, Boolean> brokerStatusMap;
 
-    private String localMemberId;
+    private String lastPublishedMemberId;
 
     private final Supplier<TcpOperations<byte[]>> stompTcpClientSupplier;
 
@@ -87,7 +87,6 @@ public class WebsocketBrokerReconnectionService implements ApplicationListener<B
     @PostConstruct
     void initBrokerStatusPublisher() {
         this.brokerStatusMap = hazelcastInstance.getMap(WEBSOCKET_BROKER_STATUS_MAP);
-        this.localMemberId = hazelcastInstance.getCluster().getLocalMember().getUuid().toString();
         updateBrokerStatus(false);
         scheduleStatusPublisher();
     }
@@ -229,7 +228,9 @@ public class WebsocketBrokerReconnectionService implements ApplicationListener<B
     public void destroy() {
         stopReconnectAttempts("application shutdown");
         if (brokerStatusMap != null) {
-            brokerStatusMap.remove(localMemberId);
+            if (lastPublishedMemberId != null) {
+                brokerStatusMap.remove(lastPublishedMemberId);
+            }
         }
         if (statusPublishTask != null) {
             statusPublishTask.cancel(false);
@@ -242,9 +243,14 @@ public class WebsocketBrokerReconnectionService implements ApplicationListener<B
      * @param brokerAvailable whether the broker is currently available for this node
      */
     private void updateBrokerStatus(boolean brokerAvailable) {
+        String currentMemberId = currentMemberId();
+        if (lastPublishedMemberId != null && !lastPublishedMemberId.equals(currentMemberId)) {
+            brokerStatusMap.remove(lastPublishedMemberId);
+        }
         lastKnownBrokerAvailable = brokerAvailable;
         if (brokerStatusMap != null) {
-            brokerStatusMap.put(localMemberId, brokerAvailable);
+            brokerStatusMap.put(currentMemberId, brokerAvailable);
+            lastPublishedMemberId = currentMemberId;
         }
     }
 
@@ -255,13 +261,22 @@ public class WebsocketBrokerReconnectionService implements ApplicationListener<B
     private void scheduleStatusPublisher() {
         statusPublishTask = messageBrokerTaskScheduler.scheduleWithFixedDelay(() -> {
             try {
-                brokerStatusMap.put(localMemberId, lastKnownBrokerAvailable);
-                log.info("Published websocket broker status {} for member {}", lastKnownBrokerAvailable, localMemberId);
+                String currentMemberId = currentMemberId();
+                if (lastPublishedMemberId != null && !lastPublishedMemberId.equals(currentMemberId)) {
+                    brokerStatusMap.remove(lastPublishedMemberId);
+                }
+                brokerStatusMap.put(currentMemberId, lastKnownBrokerAvailable);
+                lastPublishedMemberId = currentMemberId;
+                log.debug("Published websocket broker status {} for member {}", lastKnownBrokerAvailable, currentMemberId);
             }
             catch (Exception ex) {
-                log.warn("Failed to publish websocket broker status: {}", ex.getMessage());
+                log.debug("Failed to publish websocket broker status: {}", ex.getMessage());
             }
         }, Instant.now().plusSeconds(5), STATUS_PUBLISH_INTERVAL);
+    }
+
+    private String currentMemberId() {
+        return hazelcastInstance.getCluster().getLocalMember().getUuid().toString();
     }
 
     public enum ControlAction {
