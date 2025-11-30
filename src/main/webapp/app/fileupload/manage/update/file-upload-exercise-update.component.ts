@@ -189,15 +189,15 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnDestr
                 title: 'artemisApp.exercise.sections.grading',
                 valid: Boolean(
                     this.points.valid &&
-                        this.bonusPoints.valid &&
-                        (this.isExamMode ||
-                            (!this.fileUploadExercise.startDateError &&
-                                !this.fileUploadExercise.dueDateError &&
-                                !this.fileUploadExercise.assessmentDueDateError &&
-                                this.releaseDateField?.dateInput.valid &&
-                                this.startDateField?.dateInput.valid &&
-                                this.dueDateField?.dateInput.valid &&
-                                this.assessmentDateField?.dateInput.valid)),
+                    this.bonusPoints.valid &&
+                    (this.isExamMode ||
+                        (!this.fileUploadExercise.startDateError &&
+                            !this.fileUploadExercise.dueDateError &&
+                            !this.fileUploadExercise.assessmentDueDateError &&
+                            this.releaseDateField?.dateInput.valid &&
+                            this.startDateField?.dateInput.valid &&
+                            this.dueDateField?.dateInput.valid &&
+                            this.assessmentDateField?.dateInput.valid)),
                 ),
                 empty:
                     !this.isExamMode &&
