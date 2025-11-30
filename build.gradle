@@ -83,6 +83,21 @@ modernizer {
     exclusions = ["java/util/Optional.get:()Ljava/lang/Object;"]
 }
 
+gitProperties {
+    // Only override branch when CI (= env variable present)
+    def ciBranch = System.getenv('GIT_BRANCH')
+    if (ciBranch) {
+        branch = ciBranch
+    }
+
+    // Optional: if you ever want to override commit from CI as well:
+    def ciCommit = System.getenv('GIT_COMMIT')
+    if (ciCommit) {
+        customProperty 'git.commit.id', ciCommit
+        customProperty 'git.commit.id.abbrev', ciCommit.take(7)
+    }
+}
+
 configurations {
     mockitoAgent
 }
