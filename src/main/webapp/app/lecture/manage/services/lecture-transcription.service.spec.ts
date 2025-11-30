@@ -80,4 +80,24 @@ describe('LectureTranscriptionService', () => {
         req.flush('error', { status: 404, statusText: 'Not Found' });
         expect(result).toBeUndefined();
     });
+
+    it('should cancel transcription', () => {
+        const lectureUnitId = 1;
+        let result: boolean | undefined;
+        service.cancelTranscription(lectureUnitId).subscribe((r) => (result = r));
+
+        const req = httpMock.expectOne({ method: 'DELETE', url: `api/nebula/lecture-unit/${lectureUnitId}/transcriber/cancel` });
+        req.flush({}, { status: 200, statusText: 'OK' });
+        expect(result).toBeTrue();
+    });
+
+    it('should return false on cancel transcription error', () => {
+        const lectureUnitId = 1;
+        let result: boolean | undefined;
+        service.cancelTranscription(lectureUnitId).subscribe((r) => (result = r));
+
+        const req = httpMock.expectOne(`api/nebula/lecture-unit/${lectureUnitId}/transcriber/cancel`);
+        req.flush('error', { status: 500, statusText: 'Server Error' });
+        expect(result).toBeFalse();
+    });
 });
