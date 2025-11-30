@@ -43,6 +43,7 @@ describe('AttachmentVideoUnitFormComponent', () => {
                 provideHttpClientTesting(),
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
+                { provide: ProfileService, useClass: MockProfileService },
             ],
         }).compileComponents();
 
