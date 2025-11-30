@@ -15,6 +15,8 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { HttpClient } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
