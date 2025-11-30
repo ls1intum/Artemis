@@ -47,6 +47,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisQuizService } from 'app/quiz/shared/service/quiz.service';
 import { addTemporaryHighlightToQuestion } from 'app/quiz/shared/questions/quiz-stepwizard.util';
+import { isStudentParticipation } from 'app/exercise/result/result.utils';
 
 @Component({
     selector: 'jhi-quiz',
@@ -950,8 +951,12 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         this.isSubmitting = false;
         this.submission = result.submission as QuizSubmission;
         // make sure the additional information (explanations, correct answers) is available
-        const quizExercise = (this.submission.participation! as StudentParticipation).exercise as QuizExercise;
-        this.transferInformationToQuizExercise(quizExercise);
+        const participation = this.submission.participation;
+        if (!isStudentParticipation(participation) || !participation.exercise) {
+            captureException('Received quiz submission without valid student participation');
+            return;
+        }
+        this.transferInformationToQuizExercise(participation.exercise as QuizExercise);
         this.applySubmission();
         this.showResult(result);
     }

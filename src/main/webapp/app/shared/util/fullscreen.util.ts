@@ -2,16 +2,15 @@
  * checks if this component is the current fullscreen component
  */
 export function isFullScreen(): boolean {
-    const docElement = document as any;
-    // check if this component is the current fullscreen component for different browser types
+    const docElement = document as FullscreenDocument;
     if (docElement.fullscreenElement !== undefined) {
-        return docElement.fullscreenElement;
+        return !!docElement.fullscreenElement;
     } else if (docElement.webkitFullscreenElement !== undefined) {
-        return docElement.webkitFullscreenElement;
+        return !!docElement.webkitFullscreenElement;
     } else if (docElement.mozFullScreenElement !== undefined) {
-        return docElement.mozFullScreenElement;
+        return !!docElement.mozFullScreenElement;
     } else if (docElement.msFullscreenElement !== undefined) {
-        return docElement.msFullscreenElement;
+        return !!docElement.msFullscreenElement;
     }
     return false;
 }
@@ -20,7 +19,7 @@ export function isFullScreen(): boolean {
  * exit fullscreen
  */
 export function exitFullscreen() {
-    const docElement = document as any;
+    const docElement = document as FullscreenDocument;
     // exit fullscreen for different browser types
     if (document.exitFullscreen) {
         document.exitFullscreen();
@@ -37,14 +36,30 @@ export function exitFullscreen() {
  * enter full screen
  */
 export function enterFullscreen(element: any) {
+    const target: FullscreenElement = element;
     // requestFullscreen for different browser types
-    if (element.requestFullscreen) {
-        element.requestFullscreen();
-    } else if (element.mozRequestFullScreen) {
-        element.mozRequestFullScreen();
-    } else if (element.msRequestFullscreen) {
-        element.msRequestFullscreen();
-    } else if (element.webkitRequestFullscreen) {
-        element.webkitRequestFullscreen();
+    if (target.requestFullscreen) {
+        target.requestFullscreen();
+    } else if (target.mozRequestFullScreen) {
+        target.mozRequestFullScreen();
+    } else if (target.msRequestFullscreen) {
+        target.msRequestFullscreen();
+    } else if (target.webkitRequestFullscreen) {
+        target.webkitRequestFullscreen();
     }
 }
+
+type FullscreenDocument = Document & {
+    webkitFullscreenElement?: Element | null;
+    mozFullScreenElement?: Element | null;
+    msFullscreenElement?: Element | null;
+    webkitExitFullscreen?: () => void;
+    mozCancelFullScreen?: () => void;
+    msRequestFullscreen?: () => void;
+};
+
+type FullscreenElement = Element & {
+    webkitRequestFullscreen?: () => Promise<void> | void;
+    mozRequestFullScreen?: () => Promise<void> | void;
+    msRequestFullscreen?: () => Promise<void> | void;
+};

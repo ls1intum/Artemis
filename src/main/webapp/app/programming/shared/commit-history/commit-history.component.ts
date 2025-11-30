@@ -8,11 +8,16 @@ import { ProgrammingExerciseParticipationService } from 'app/programming/manage/
 import { tap } from 'rxjs/operators';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { CommitsInfoComponent } from '../commits-info/commits-info.component';
+import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
+import {
+    isProgrammingExerciseStudentParticipation,
+    isSolutionProgrammingExerciseParticipation,
+    isTemplateProgrammingExerciseParticipation,
+} from 'app/programming/shared/utils/programming-exercise.utils';
 import { SolutionProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/solution-programming-exercise-participation.model';
 import { TemplateProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/template-programming-exercise-participation.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
-import { CommitsInfoComponent } from '../commits-info/commits-info.component';
-import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 
 @Component({
     selector: 'jhi-commit-history',
@@ -68,17 +73,15 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
             .pipe(
                 tap((exerciseRes) => {
                     this.exercise = exerciseRes.body!;
-                    if (this.repositoryType === 'TEMPLATE') {
-                        this.participation = this.exercise.templateParticipation!;
-                        (this.participation as TemplateProgrammingExerciseParticipation).programmingExercise = this.exercise;
-                    } else if (this.repositoryType === 'SOLUTION') {
-                        this.participation = this.exercise.solutionParticipation!;
-                        (this.participation as SolutionProgrammingExerciseParticipation).programmingExercise = this.exercise;
-                    } else if (this.repositoryType === 'TESTS') {
+                    if (this.repositoryType === RepositoryType.TEMPLATE && isTemplateProgrammingExerciseParticipation(this.exercise.templateParticipation)) {
+                        this.participation = { ...this.exercise.templateParticipation, programmingExercise: this.exercise };
+                    } else if (this.repositoryType === RepositoryType.SOLUTION && isSolutionProgrammingExerciseParticipation(this.exercise.solutionParticipation)) {
+                        this.participation = { ...this.exercise.solutionParticipation, programmingExercise: this.exercise };
+                    } else if (this.repositoryType === RepositoryType.TESTS && isTemplateProgrammingExerciseParticipation(this.exercise.templateParticipation)) {
                         this.isTestRepository = true;
-                        this.participation = this.exercise.templateParticipation!;
-                    } else if (this.repositoryType === 'AUXILIARY') {
-                        this.participation = this.exercise.templateParticipation!;
+                        this.participation = this.exercise.templateParticipation;
+                    } else if (this.repositoryType === RepositoryType.AUXILIARY && isTemplateProgrammingExerciseParticipation(this.exercise.templateParticipation)) {
+                        this.participation = this.exercise.templateParticipation;
                     }
                 }),
             )
@@ -101,12 +104,14 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
             .getStudentParticipationWithAllResults(this.repositoryId!)
             .pipe(
                 tap((participation) => {
-                    this.participation = participation;
-                    this.participation.submissions?.forEach((submission) => {
-                        submission.results?.forEach((result) => {
-                            result.submission = submission;
+                    if (isProgrammingExerciseStudentParticipation(participation)) {
+                        participation.submissions?.forEach((submission) => {
+                            submission.results?.forEach((result) => {
+                                result.submission = submission;
+                            });
                         });
-                    });
+                        this.participation = participation;
+                    }
                 }),
             )
             .subscribe({
