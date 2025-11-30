@@ -1,13 +1,11 @@
 package de.tum.cit.aet.artemis.programming;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.NEW_SUBMISSION_TOPIC;
-import static de.tum.cit.aet.artemis.core.util.TestConstants.COMMIT_HASH_OBJECT_ID;
 import static de.tum.cit.aet.artemis.core.util.TestResourceUtils.HalfSecond;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.argThat;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.timeout;
@@ -16,18 +14,21 @@ import static org.mockito.Mockito.verify;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
-import org.eclipse.jgit.lib.ObjectId;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
@@ -37,7 +38,6 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
-import de.tum.cit.aet.artemis.core.util.TestConstants;
 import de.tum.cit.aet.artemis.core.util.TestResourceUtils;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
@@ -51,6 +51,10 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
+import de.tum.cit.aet.artemis.programming.icl.LocalVCLocalCITestService;
+import de.tum.cit.aet.artemis.programming.service.GitService;
+import de.tum.cit.aet.artemis.programming.util.LocalRepository;
+import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 
 class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegrationJenkinsLocalVCTest {
 
@@ -60,11 +64,22 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
 
     private ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation;
 
+    @Autowired
+    private LocalVCLocalCITestService localVCLocalCITestService;
+
+    // Spy is only used for simulating non-feasible failure scenarios. Please use the real bean otherwise.
+    @MockitoSpyBean
+    private GitService gitServiceSpy;
+
+    private final Map<String, String> participationCommitHashes = new HashMap<>();
+
     @BeforeEach
-    void init() {
+    void init() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 10, 2, 1, 2);
         var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
         exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, exercise);
+        exercise = programmingExerciseRepository.save(exercise);
         exercise = programmingExerciseRepository.findWithEagerStudentParticipationsStudentAndSubmissionsById(exercise.getId()).orElseThrow();
         programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(exercise);
         programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(exercise);
@@ -73,22 +88,18 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
         Result result = participationUtilService.addProgrammingParticipationWithResultForExercise(exercise, TEST_PREFIX + "student1");
         ProgrammingExerciseStudentParticipation participation = (ProgrammingExerciseStudentParticipation) result.getSubmission().getParticipation();
 
+        seedRepositoryForParticipation(participation, "Student1Seed.java");
+
         exercise.setTestCasesChanged(true);
         programmingExerciseRepository.save(exercise);
 
         programmingExerciseStudentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student2");
-
-        var newObjectId = new ObjectId(4, 5, 2, 5, 3);
-        doReturn(newObjectId).when(gitService).getLastCommitHash(null);
-        doReturn(newObjectId).when(gitService).getLastCommitHash(exercise.getTemplateParticipation().getVcsRepositoryUri());
-
-        var dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
-        doReturn(ObjectId.fromString(dummyHash)).when(gitService).getLastCommitHash(programmingExerciseStudentParticipation.getVcsRepositoryUri());
-        doReturn(ObjectId.fromString(dummyHash)).when(gitService).getLastCommitHash(participation.getVcsRepositoryUri());
+        seedRepositoryForParticipation(programmingExerciseStudentParticipation, "Student2Seed.java");
     }
 
     @AfterEach
     void tearDown() throws Exception {
+        RepositoryExportTestUtil.cleanupTrackedRepositories();
         jenkinsRequestMockProvider.reset();
     }
 
@@ -96,10 +107,11 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
     @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
     void triggerBuildStudent() throws Exception {
         jenkinsRequestMockProvider.enableMockingOfRequests();
-        doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
 
         String login = TEST_PREFIX + "student2";
-        StudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, login);
+        ProgrammingExerciseStudentParticipation participation = (ProgrammingExerciseStudentParticipation) participationUtilService
+                .addStudentParticipationForProgrammingExercise(exercise, login);
+        seedRepositoryForParticipation(participation, "ManualTrigger.java");
         final var programmingExerciseParticipation = ((ProgrammingExerciseParticipation) participation);
         jenkinsRequestMockProvider.mockTriggerBuild(programmingExerciseParticipation.getProgrammingExercise().getProjectKey(), programmingExerciseParticipation.getBuildPlanId(),
                 false);
@@ -136,9 +148,10 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void triggerBuildInstructor() throws Exception {
         jenkinsRequestMockProvider.enableMockingOfRequests();
-        doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
         String login = TEST_PREFIX + "student2";
-        StudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, login);
+        ProgrammingExerciseStudentParticipation participation = (ProgrammingExerciseStudentParticipation) participationUtilService
+                .addStudentParticipationForProgrammingExercise(exercise, login);
+        seedRepositoryForParticipation(participation, "InstructorTrigger.java");
         final var programmingExerciseParticipation = ((ProgrammingExerciseParticipation) participation);
         jenkinsRequestMockProvider.mockTriggerBuild(programmingExerciseParticipation.getProgrammingExercise().getProjectKey(), programmingExerciseParticipation.getBuildPlanId(),
                 false);
@@ -169,7 +182,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void triggerBuildInstructor_cannotGetLastCommitHash() throws Exception {
         jenkinsRequestMockProvider.enableMockingOfRequests();
-        doThrow(EntityNotFoundException.class).when(gitService).getLastCommitHash(any());
+        doThrow(EntityNotFoundException.class).when(gitServiceSpy).getLastCommitHash(any());
         String login = TEST_PREFIX + "student1";
         StudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, login);
         final var programmingExerciseParticipation = ((ProgrammingExerciseParticipation) participation);
@@ -213,14 +226,17 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void triggerBuildForExerciseAsInstructor() throws Exception {
         jenkinsRequestMockProvider.enableMockingOfRequests();
-        doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
 
         String login1 = TEST_PREFIX + "student1";
         String login2 = TEST_PREFIX + "student2";
         String login3 = TEST_PREFIX + "student3";
-        final var firstParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, login1);
-        participationUtilService.addStudentParticipationForProgrammingExercise(exercise, login2);
-        participationUtilService.addStudentParticipationForProgrammingExercise(exercise, login3);
+        final var firstParticipation = (ProgrammingExerciseStudentParticipation) participationUtilService.addStudentParticipationForProgrammingExercise(exercise, login1);
+        final var secondParticipation = (ProgrammingExerciseStudentParticipation) participationUtilService.addStudentParticipationForProgrammingExercise(exercise, login2);
+        final var thirdParticipation = (ProgrammingExerciseStudentParticipation) participationUtilService.addStudentParticipationForProgrammingExercise(exercise, login3);
+
+        seedRepositoryForParticipation(firstParticipation, "TriggerSeed1.java");
+        seedRepositoryForParticipation(secondParticipation, "TriggerSeed2.java");
+        seedRepositoryForParticipation(thirdParticipation, "TriggerSeed3.java");
 
         // Set test cases changed to true; after the build run it should be false;
         exercise.setTestCasesChanged(true);
@@ -228,10 +244,10 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
         final var firstProgrammingExerciseParticipation = ((ProgrammingExerciseParticipation) firstParticipation);
         jenkinsRequestMockProvider.mockTriggerBuild(firstProgrammingExerciseParticipation.getProgrammingExercise().getProjectKey(),
                 firstProgrammingExerciseParticipation.getBuildPlanId(), false);
-        final var secondProgrammingExerciseParticipation = ((ProgrammingExerciseParticipation) firstParticipation);
+        final var secondProgrammingExerciseParticipation = ((ProgrammingExerciseParticipation) secondParticipation);
         jenkinsRequestMockProvider.mockTriggerBuild(secondProgrammingExerciseParticipation.getProgrammingExercise().getProjectKey(),
                 secondProgrammingExerciseParticipation.getBuildPlanId(), false);
-        final var thirdProgrammingExerciseParticipation = ((ProgrammingExerciseParticipation) firstParticipation);
+        final var thirdProgrammingExerciseParticipation = ((ProgrammingExerciseParticipation) thirdParticipation);
         jenkinsRequestMockProvider.mockTriggerBuild(thirdProgrammingExerciseParticipation.getProgrammingExercise().getProjectKey(),
                 thirdProgrammingExerciseParticipation.getBuildPlanId(), false);
 
@@ -307,8 +323,6 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
 
         List<Long> participationsToTrigger = new ArrayList<>(Arrays.asList(participation1.getId(), participation3.getId()));
 
-        doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
-
         // Perform a call to trigger-instructor-build-all twice. We want to check that the submissions
         // aren't being re-created.
         String url = "/api/programming/programming-exercises/" + exercise.getId() + "/trigger-instructor-build";
@@ -355,7 +369,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
         var submission = new ProgrammingSubmission();
         submission.setSubmissionDate(ZonedDateTime.now().minusMinutes(4));
         submission.setSubmitted(true);
-        submission.setCommitHash(TestConstants.COMMIT_HASH_STRING);
+        submission.setCommitHash(participationCommitHashes.get(programmingExerciseStudentParticipation.getParticipantIdentifier()));
         submission.setType(SubmissionType.MANUAL);
         submission = programmingExerciseUtilService.addProgrammingSubmission(exercise, submission, user.getLogin());
         var optionalParticipation = participationRepository.findById(submission.getParticipation().getId());
@@ -395,8 +409,6 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
     void triggerFailedBuild_CIException() throws Exception {
         var participation = createExerciseWithSubmissionAndParticipation(TEST_PREFIX + "student2");
         jenkinsRequestMockProvider.enableMockingOfRequests();
-        var repoUri = uriService.getRepositorySlugFromRepositoryUri(participation.getVcsRepositoryUri());
-        doReturn(participation.getVcsRepositoryUri()).when(versionControlService).getCloneRepositoryUri(exercise.getProjectKey(), repoUri);
         mockConnectorRequestsForResumeParticipation(exercise, participation.getParticipantIdentifier(), participation.getParticipant().getParticipants(), true);
         String url = "/api/programming/programming-submissions/" + participation.getId() + "/trigger-failed-build";
         request.postWithoutLocation(url, null, HttpStatus.OK, null);
@@ -430,10 +442,11 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void triggerFailedBuildEmptyLatestPendingSubmission() throws Exception {
         jenkinsRequestMockProvider.enableMockingOfRequests();
-        doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
 
         String login = TEST_PREFIX + "student1";
-        StudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, login);
+        ProgrammingExerciseStudentParticipation participation = (ProgrammingExerciseStudentParticipation) participationUtilService
+                .addStudentParticipationForProgrammingExercise(exercise, login);
+        seedRepositoryForParticipation(participation, "FailedBuild.java");
         final var programmingExerciseParticipation = ((ProgrammingExerciseParticipation) participation);
         jenkinsRequestMockProvider.mockTriggerBuild(programmingExerciseParticipation.getProgrammingExercise().getProjectKey(), programmingExerciseParticipation.getBuildPlanId(),
                 false);
@@ -755,5 +768,13 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
             programmingExerciseUtilService.addProgrammingSubmissionWithResultAndAssessor(exercise, submission, TEST_PREFIX + "student" + i, assessor, AssessmentType.SEMI_AUTOMATIC,
                     false);
         }
+    }
+
+    private void seedRepositoryForParticipation(ProgrammingExerciseStudentParticipation participation, String filename) throws Exception {
+        LocalRepository repo = RepositoryExportTestUtil.seedStudentRepositoryForParticipation(localVCLocalCITestService, participation);
+        RepositoryExportTestUtil.writeFilesAndPush(repo, Map.of(filename, "class %s {}".formatted(filename.replace('.', '_'))), "seed " + filename);
+        participationRepository.save(participation);
+        var latestCommit = RepositoryExportTestUtil.getLatestCommit(repo);
+        participationCommitHashes.put(participation.getParticipantIdentifier(), latestCommit.getName());
     }
 }
