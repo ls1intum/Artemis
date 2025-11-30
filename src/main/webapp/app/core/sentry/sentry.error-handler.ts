@@ -33,12 +33,27 @@ export class SentryErrorHandler extends ErrorHandler {
             this.environment = 'local';
         }
 
+        let defaultSampleRate: number = this.environment !== PROFILE_PROD ? 1.0 : 0.05;
+
         init({
             dsn: profileInfo.sentry.dsn,
             release: VERSION,
             environment: this.environment,
             integrations: integrations,
-            tracesSampleRate: this.environment !== PROFILE_PROD ? 1.0 : 0.2,
+            tracesSampler: (samplingContext) => {
+                const { name, inheritOrSampleWith } = samplingContext;
+
+                // Sample none of the time transactions
+                if (name.includes("api/core/public/time")) {
+                    return 0.0;
+                }
+                // Sample less of the iris status transactions
+                if (name.includes("api/iris/status")) {
+                    return 0.001;
+                }
+                // Fall back to default sample rate
+                return inheritOrSampleWith(defaultSampleRate);
+            },
         });
 
         this.reportIfPasskeyIsNotSupported();
