@@ -22,6 +22,15 @@ def sanitize_exercise_name(exercise_name: str, short_name_index: int) -> str:
         valid_short_name = f"A{valid_short_name}"
     return f"{valid_short_name}{short_name_index}"
 
+def read_problem_statement(file_path: str) -> str:
+    """
+    Reads a markdown file and returns its content as a single string.
+    """
+    with open(file_path, 'r', encoding='utf-8') as file:
+        content = file.read()
+    
+    return content
+
 def convert_variant_to_zip(variant_path: str, course_id: int) -> bool:
     """
     Convert the programming exercise located at variant_path into a ZIP file.
@@ -70,13 +79,20 @@ def convert_variant_to_zip(variant_path: str, course_id: int) -> bool:
         logging.exception(f"Error while creating intermediate zip files: {e}")
         return False
     
-    # Overwrite exercise ID, course ID, title and shortName in the config file
+    # Overwrite problem statement, exercise ID, course ID, title and shortName in the config file
+    problem_statement_file_path = os.path.join(variant_path, "problem-statement.md")
+    if os.path.exists(problem_statement_file_path):
+        problem_statement_content = read_problem_statement(problem_statement_file_path)
+
     config_file_path = os.path.join(variant_path, config_file)
     try:
+        logging.info("Overwriting problem statement, exercise ID, course ID, title and shortName in the config file.")
         with open(config_file_path, 'r') as config_file:
             exercise_details: Dict[str, Any] = json.load(config_file)
             
             exercise_details['id'] = None
+            
+            exercise_details['problemStatement'] = problem_statement_content
             exercise_details['course']['id'] = course_id
             
             exercise_name = exercise_details.get('title', 'Untitled')
@@ -85,7 +101,6 @@ def convert_variant_to_zip(variant_path: str, course_id: int) -> bool:
             exercise_details['shortName'] = sanitize_exercise_name(exercise_name, int(variant_id))
             exercise_details["projectKey"] = f"{variant_id}ITP2425{exercise_details['shortName']}"
             
-            logging.info("Overwriting exercise ID, course ID, title and shortName in the config file.")
 
         with open(config_file_path, 'w') as config_file:
             json.dump(exercise_details, config_file, indent=4)
