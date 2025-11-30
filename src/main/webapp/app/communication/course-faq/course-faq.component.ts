@@ -1,7 +1,7 @@
 import { Component, ElementRef, OnDestroy, OnInit, Renderer2, ViewEncapsulation, effect, inject, viewChildren } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { debounceTime, map, takeUntil } from 'rxjs/operators';
-import { BehaviorSubject, Subject, Subscription } from 'rxjs';
+import { debounceTime, map } from 'rxjs/operators';
+import { BehaviorSubject } from 'rxjs';
 import { faFilter } from '@fortawesome/free-solid-svg-icons';
 import { ButtonType } from 'app/shared/components/buttons/button/button.component';
 
@@ -14,7 +14,6 @@ import { FaqCategory } from 'app/communication/shared/entities/faq-category.mode
 import { loadCourseFaqCategories } from 'app/communication/faq/faq.utils';
 import { onError } from 'app/shared/util/global.utils';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
-import { SortService } from 'app/shared/service/sort.service';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -30,8 +29,6 @@ import { CustomExerciseCategoryBadgeComponent } from 'app/exercise/exercise-cate
 })
 export class CourseFaqComponent implements OnInit, OnDestroy {
     faqElements = viewChildren<ElementRef>('faqElement');
-    private ngUnsubscribe = new Subject<void>();
-    private parentParamSubscription: Subscription;
 
     courseId: number;
     referencedFaqId: number;
@@ -48,15 +45,11 @@ export class CourseFaqComponent implements OnInit, OnDestroy {
     searchInput = new BehaviorSubject<string>('');
 
     readonly ButtonType = ButtonType;
-
-    // Icons
     readonly faFilter = faFilter;
 
     private route = inject(ActivatedRoute);
-
     private faqService = inject(FaqService);
     private alertService = inject(AlertService);
-    private sortService = inject(SortService);
     private renderer = inject(Renderer2);
 
     constructor() {
@@ -68,15 +61,11 @@ export class CourseFaqComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit(): void {
-        this.parentParamSubscription = this.route.parent!.params.subscribe((params) => {
-            this.courseId = Number(params.courseId);
-            this.loadFaqs();
-            this.loadCourseExerciseCategories(this.courseId);
-        });
+        this.courseId = Number(this.route.parent!.snapshot.paramMap.get('courseId'));
+        this.referencedFaqId = Number(this.route.snapshot.queryParamMap.get('faqId'));
 
-        this.route.queryParams.pipe(takeUntil(this.ngUnsubscribe)).subscribe((params) => {
-            this.referencedFaqId = params['faqId'];
-        });
+        this.loadFaqs();
+        this.loadCourseExerciseCategories(this.courseId);
 
         this.searchInput.pipe(debounceTime(300)).subscribe((searchTerm: string) => {
             this.refreshFaqList(searchTerm);
@@ -98,16 +87,12 @@ export class CourseFaqComponent implements OnInit, OnDestroy {
                 next: (res: Faq[]) => {
                     this.faqs = res;
                     this.applyFilters();
-                    this.sortFaqs();
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });
     }
 
     ngOnDestroy() {
-        this.ngUnsubscribe.next();
-        this.ngUnsubscribe.complete();
-        this.parentParamSubscription?.unsubscribe();
         this.searchInput.complete();
     }
 
@@ -133,10 +118,6 @@ export class CourseFaqComponent implements OnInit, OnDestroy {
     refreshFaqList(searchTerm: string) {
         this.applyFilters();
         this.applySearch(searchTerm);
-    }
-
-    sortFaqs() {
-        this.sortService.sortByProperty(this.filteredFaqs, 'id', true);
     }
 
     scrollToFaq(faqId: number): void {

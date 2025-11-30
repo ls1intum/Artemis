@@ -51,10 +51,16 @@ function createDragAndDropSubmittedAnswerFromStudentDTO(submittedAnswer: DragAnd
         type: 'drag-and-drop',
         questionId: submittedAnswer.quizQuestion?.id,
         mappings:
-            submittedAnswer.mappings?.map((mapping) => ({
-                dragItemId: mapping.dragItem?.id!,
-                dropLocationId: mapping.dropLocation?.id!,
-            })) ?? [],
+            submittedAnswer.mappings?.reduce<DragAndDropMapping[]>((collectedMappings, mapping) => {
+                const dragItemId = mapping.dragItem?.id;
+                const dropLocationId = mapping.dropLocation?.id;
+
+                if (dragItemId !== undefined && dropLocationId !== undefined) {
+                    collectedMappings.push({ dragItemId, dropLocationId });
+                }
+
+                return collectedMappings;
+            }, []) ?? [],
     };
 }
 
@@ -63,10 +69,16 @@ function createShortAnswerSubmittedAnswerFromStudentDTO(submittedAnswer: ShortAn
         type: 'short-answer',
         questionId: submittedAnswer.quizQuestion?.id,
         submittedTexts:
-            submittedAnswer.submittedTexts?.map((submittedText) => ({
-                text: submittedText.text!,
-                spotId: submittedText.spot?.id!,
-            })) ?? [],
+            submittedAnswer.submittedTexts?.reduce<ShortAnswerSubmittedText[]>((texts, submittedText) => {
+                const text = submittedText.text;
+                const spotId = submittedText.spot?.id;
+
+                if (text !== undefined && spotId !== undefined) {
+                    texts.push({ text, spotId });
+                }
+
+                return texts;
+            }, []) ?? [],
     };
 }
 
