@@ -235,6 +235,30 @@ def main():
     logging.info("All consistency checks completed.")
 
     # Step 8: Generate report and statistics
+    logging.info("Generating analysis and reports...")
+
+    commands = [
+        ["pecv-bench", "variants-analysis", "--results-dir", "results/artemis-bench", "--clear"],
+        ["pecv-bench", "variants-analysis", "--results-dir", "results/artemis-bench", "--plot"],
+        ["pecv-bench", "report", "--benchmark", "artemis-bench"]
+    ]
+
+    for cmd in commands:
+        try:
+            logging.info(f"Running command: {' '.join(cmd)}")
+
+            subprocess.run(
+                cmd,
+                cwd=pecv_bench_dir,
+                check=True,
+                capture_output=True
+            )
+        except subprocess.CalledProcessError as e:
+            logging.error(f"Command failed: {' '.join(cmd)}")
+            logging.error(f"Error: {e}")
+
+            sys.exit(1)
+    # TODO retrieve aggregated results from results/pecv-reference and results/artemis-bench and add ad-hoc to report.md file    
 
     logging.info("PECV-Bench Hyperion Benchmark Workflow completed.")
 
