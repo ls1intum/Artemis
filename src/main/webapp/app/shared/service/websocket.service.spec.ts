@@ -186,27 +186,23 @@ describe('WebsocketService', () => {
 
         websocketService.stompFailureCallback();
         expect(websocketService['consecutiveFailedAttempts']).toBe(3);
-        expect(timeoutSpy).toHaveBeenCalledWith(expect.any(Function), 10000);
+        expect(timeoutSpy).toHaveBeenCalledWith(expect.any(Function), 5000);
 
         websocketService['consecutiveFailedAttempts'] = 4;
         websocketService.stompFailureCallback();
-        expect(timeoutSpy).toHaveBeenCalledWith(expect.any(Function), 20000);
+        expect(timeoutSpy).toHaveBeenCalledWith(expect.any(Function), 5000);
 
-        websocketService['consecutiveFailedAttempts'] = 8;
+        websocketService['consecutiveFailedAttempts'] = 5;
         websocketService.stompFailureCallback();
-        expect(timeoutSpy).toHaveBeenCalledWith(expect.any(Function), 60000);
+        expect(timeoutSpy).toHaveBeenCalledWith(expect.any(Function), 10000);
 
-        websocketService['consecutiveFailedAttempts'] = 12;
+        websocketService['consecutiveFailedAttempts'] = 9;
         websocketService.stompFailureCallback();
-        expect(timeoutSpy).toHaveBeenCalledWith(expect.any(Function), 120000);
+        expect(timeoutSpy).toHaveBeenCalledWith(expect.any(Function), 15000);
 
         websocketService['consecutiveFailedAttempts'] = 17;
         websocketService.stompFailureCallback();
-        expect(timeoutSpy).toHaveBeenCalledWith(expect.any(Function), 300000);
-
-        websocketService['consecutiveFailedAttempts'] = 20;
-        websocketService.stompFailureCallback();
-        expect(timeoutSpy).toHaveBeenCalledWith(expect.any(Function), 600000);
+        expect(timeoutSpy).toHaveBeenCalledWith(expect.any(Function), 20000);
 
         jest.useRealTimers();
     }));

@@ -5,6 +5,8 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthIndicator;
@@ -21,6 +23,8 @@ import de.tum.cit.aet.artemis.core.service.connectors.ConnectorHealth;
 @Lazy
 public class WebsocketBrokerHealthIndicator implements HealthIndicator, ApplicationListener<BrokerAvailabilityEvent> {
 
+    private static final Logger log = LoggerFactory.getLogger(WebsocketBrokerHealthIndicator.class);
+
     private boolean isBrokerAvailable = false; // Will be updated to true by event listener once connection is established
 
     // Split the addresses by comma
@@ -35,6 +39,12 @@ public class WebsocketBrokerHealthIndicator implements HealthIndicator, Applicat
 
     @Override
     public void onApplicationEvent(BrokerAvailabilityEvent event) {
+        if (event.isBrokerAvailable()) {
+            log.info("Websocket broker is now available.");
+        }
+        else {
+            log.warn("Websocket broker is now unavailable.");
+        }
         // The event is fired if the broker gets (un-)available
         this.isBrokerAvailable = event.isBrokerAvailable();
     }

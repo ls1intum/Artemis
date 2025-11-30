@@ -77,6 +77,12 @@
             </a>
         </li>
         <li>
+            <a class="dropdown-item" routerLink="/admin/websocket" routerLinkActive="active" (click)="collapseNavbar()">
+                <fa-icon [icon]="faPlug" [fixedWidth]="true" />
+                <span jhiTranslate="global.menu.admin.websocket"></span>
+            </a>
+        </li>
+        <li>
             <a class="dropdown-item" routerLink="/admin/configuration" routerLinkActive="active" (click)="collapseNavbar()">
                 <fa-icon [icon]="faList" [fixedWidth]="true" />
                 <span jhiTranslate="global.menu.admin.configuration"></span>

@@ -62,7 +62,7 @@ jobs:
             }
 
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Append Feature Proposal Template to Issue Description
         uses: actions/github-script@v8

@@ -59,7 +59,7 @@ jobs:
           cat workflow-context.txt
 
       - name: Upload workflow context
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: workflow-context
           path: workflow-context.txt
@@ -71,11 +71,11 @@ jobs:
           echo "::notice title=Triggered by workflow run::This E2E test was triggered by workflow run #${{ github.event.workflow_run.id }} - View it at https://github.com/${{ github.repository }}/actions/runs/${{ github.event.workflow_run.id }}"
 
       - name: Git Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           ref: ${{ github.event.workflow_run.head_branch }}
       - name: Download Docker tag
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
         with:
           name: docker-tag
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -115,7 +115,7 @@ jobs:
 
       - name: Upload JUnit Test Results
         if: success() || failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: JUnit Test Results
           if-no-files-found: error
@@ -123,7 +123,7 @@ jobs:
 
       - name: Upload Client Test Coverage Report
         if: success() || failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: E2E Client Coverage Report
           path: src/test/playwright/test-reports/client-coverage
