@@ -17,3 +17,7 @@ export interface CapacityDisplayDTO {
     usableCapacity: number;
     percentage: number;
 }
+
+export interface SeatsOfExamRoomDTO {
+    seats: string[];
+}

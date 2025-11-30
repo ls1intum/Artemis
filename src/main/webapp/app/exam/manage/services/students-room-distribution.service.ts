@@ -1,7 +1,7 @@
 import { Injectable, Signal, WritableSignal, computed, inject, signal } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable, catchError, map, throwError } from 'rxjs';
-import { ExamDistributionCapacityDTO, RoomForDistributionDTO } from 'app/exam/manage/students/room-distribution/students-room-distribution.model';
+import { ExamDistributionCapacityDTO, RoomForDistributionDTO, SeatsOfExamRoomDTO } from 'app/exam/manage/students/room-distribution/students-room-distribution.model';
 
 @Injectable({ providedIn: 'root' })
 export class StudentsRoomDistributionService {
@@ -83,5 +83,65 @@ export class StudentsRoomDistributionService {
         const params = new HttpParams().set('reserveFactor', reserveFactor).set('useOnlyDefaultLayouts', useOnlyDefaultLayouts);
 
         return this.http.post<void>(requestUrl, roomIds, { params, observe: 'response' });
+    }
+
+    /**
+     * Sends a GET request to retrieve all rooms that are already used in the given exam
+     *
+     * @param courseId id of the course
+     * @param examId id of the exam
+     */
+    loadRoomsUsedInExam(courseId: number, examId: number): Observable<RoomForDistributionDTO[]> {
+        const requestUrl = `${this.BASE_URL}/courses/${courseId}/exams/${examId}/rooms-used`;
+        return this.http.get<RoomForDistributionDTO[]>(requestUrl).pipe(
+            map((rooms: RoomForDistributionDTO[]) => rooms),
+            catchError((error) => {
+                return throwError(() => error);
+            }),
+        );
+    }
+
+    /**
+     * Sends a GET request to retrieve all seats of a specific exam room
+     *
+     * @param examRoomNumber id of the exam room
+     */
+    loadSeatsOfExamRoom(examRoomNumber: string): Observable<SeatsOfExamRoomDTO> {
+        const requestUrl = `${this.BASE_URL}/rooms/seats`;
+        const params = new HttpParams().set('examRoomNumber', examRoomNumber);
+
+        return this.http.get<SeatsOfExamRoomDTO>(requestUrl, { params }).pipe(
+            map((seatsOfExamRoom: SeatsOfExamRoomDTO) => seatsOfExamRoom),
+            catchError((error) => {
+                return throwError(() => error);
+            }),
+        );
+    }
+
+    /**
+     * Sends a POST request to reseat a specific student to a new room and seat
+     *
+     * @param courseId id of the course
+     * @param examId id of the exam
+     * @param examUserId id of the exam user/student
+     * @param newRoom name (more specifically the room number) of the room
+     * @param newSeat name of the new seat
+     * @param persistedLocation whether the location is persisted in the database
+     */
+    reseatStudent(courseId: number, examId: number, examUserId: number, newRoom: string, newSeat: string, persistedLocation: boolean): Observable<void> {
+        const requestUrl = `${this.BASE_URL}/courses/${courseId}/exams/${examId}/reseat-student`;
+        const requestBody = {
+            examUserId: examUserId,
+            newRoom: newRoom,
+            newSeat: newSeat,
+            persistedLocation: persistedLocation,
+        };
+
+        return this.http.post<void>(requestUrl, requestBody).pipe(
+            map(() => {}),
+            catchError((error) => {
+                return throwError(() => error);
+            }),
+        );
     }
 }
