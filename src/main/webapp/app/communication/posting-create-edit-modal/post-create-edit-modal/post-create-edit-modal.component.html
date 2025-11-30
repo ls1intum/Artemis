@@ -19,18 +19,6 @@
                     <input id="title" formControlName="title" type="text" class="form-control" name="title" />
                 </div>
             </div>
-            <!-- tags -->
-            @if (pageType !== PageType.PLAGIARISM_CASE_INSTRUCTOR && pageType !== PageType.PLAGIARISM_CASE_STUDENT && !isCommunicationPage() && !posting.conversation) {
-                <div class="position-relative mb-3">
-                    <div>
-                        <label jhiTranslate="artemisApp.metis.post.tags"></label>
-                        <jhi-help-icon text="artemisApp.metis.post.tagsTooltip" />
-                    </div>
-                    <div>
-                        <jhi-post-tag-selector [(postTags)]="tags" />
-                    </div>
-                </div>
-            }
             <div class="position-relative mb-1">
                 <div>
                     <label class="mb-1" jhiTranslate="artemisApp.metis.post.content"></label>
