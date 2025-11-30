@@ -13,6 +13,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.quiz.api.QuizQuestionApi;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestionProgress;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestionProgressData;
@@ -20,7 +21,6 @@ import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.dto.question.QuizQuestionTrainingDTO;
 import de.tum.cit.aet.artemis.quiz.dto.question.QuizQuestionWithSolutionDTO;
 import de.tum.cit.aet.artemis.quiz.repository.QuizQuestionProgressRepository;
-import de.tum.cit.aet.artemis.quiz.repository.QuizQuestionRepository;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -29,15 +29,15 @@ public class QuizQuestionProgressService {
 
     private final QuizQuestionProgressRepository quizQuestionProgressRepository;
 
-    private final QuizQuestionRepository quizQuestionRepository;
-
     private final QuizTrainingLeaderboardService quizTrainingLeaderboardService;
 
-    public QuizQuestionProgressService(QuizQuestionProgressRepository quizQuestionProgressRepository, QuizQuestionRepository quizQuestionRepository,
-            QuizTrainingLeaderboardService quizTrainingLeaderboardService) {
+    private final QuizQuestionApi quizQuestionApi;
+
+    public QuizQuestionProgressService(QuizQuestionProgressRepository quizQuestionProgressRepository, QuizTrainingLeaderboardService quizTrainingLeaderboardService,
+            QuizQuestionApi quizQuestionApi) {
         this.quizQuestionProgressRepository = quizQuestionProgressRepository;
-        this.quizQuestionRepository = quizQuestionRepository;
         this.quizTrainingLeaderboardService = quizTrainingLeaderboardService;
+        this.quizQuestionApi = quizQuestionApi;
     }
 
     /**
@@ -117,13 +117,13 @@ public class QuizQuestionProgressService {
     }
 
     private boolean areQuestionsDue(Long courseId, int notDueCount) {
-        long totalQuestionsCount = quizQuestionRepository.countAllPracticeQuizQuestionsByCourseId(courseId);
+        long totalQuestionsCount = quizQuestionApi.countAllQuizQuestionsByCourseIdAvailableForPractice(courseId);
 
         return notDueCount < totalQuestionsCount;
     }
 
     private Slice<QuizQuestionTrainingDTO> loadDueQuestions(Set<Long> questionIds, Long courseId, Pageable pageable, boolean isNewSession) {
-        Slice<QuizQuestion> questionPage = quizQuestionRepository.findAllDueQuestions(questionIds, courseId, pageable);
+        Slice<QuizQuestion> questionPage = quizQuestionApi.findAllQuizQuestionsByCourseIdAvailableForPracticeNotIn(questionIds, courseId, pageable);
 
         return questionPage.map(question -> {
             QuizQuestionWithSolutionDTO dto = QuizQuestionWithSolutionDTO.of(question);
@@ -132,7 +132,7 @@ public class QuizQuestionProgressService {
     }
 
     private Slice<QuizQuestionTrainingDTO> loadAllPracticeQuestions(Long courseId, Pageable pageable, boolean isNewSession) {
-        Slice<QuizQuestion> questionPage = quizQuestionRepository.findAllPracticeQuizQuestionsByCourseId(courseId, pageable);
+        Slice<QuizQuestion> questionPage = quizQuestionApi.findAllQuizQuestionsByCourseIdAvailableForPractice(courseId, pageable);
 
         return questionPage.map(question -> {
             QuizQuestionWithSolutionDTO dto = QuizQuestionWithSolutionDTO.of(question);
@@ -254,7 +254,7 @@ public class QuizQuestionProgressService {
      * @return true if there are questions availble for training, false otherwise
      */
     public boolean questionsAvailableForTraining(Long courseId) {
-        return quizQuestionRepository.areQuizQuestionsAvailableForPractice(courseId);
+        return quizQuestionApi.areQuizExercisesInCourseAvailableForPractice(courseId);
     }
 
     /**

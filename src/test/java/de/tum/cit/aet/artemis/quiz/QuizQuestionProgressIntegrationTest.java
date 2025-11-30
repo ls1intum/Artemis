@@ -143,7 +143,6 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
 
         QuizExercise quizExercise = new QuizExercise();
         quizExercise.setCourse(course);
-        quizExercise.setIsOpenForPractice(true);
         quizExerciseTestRepository.save(quizExercise);
 
         List<QuizQuestion> questions = new ArrayList<>();
@@ -184,7 +183,6 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
 
         QuizExercise quizExercise = new QuizExercise();
         quizExercise.setCourse(course);
-        quizExercise.setIsOpenForPractice(true);
         quizExerciseTestRepository.save(quizExercise);
 
         List<QuizQuestion> questions = new ArrayList<>();
@@ -335,7 +333,6 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
 
         Course course = quizExerciseUtilService.addCourseWithOneQuizExercise();
         QuizExercise quizExercise = (QuizExercise) course.getExercises().stream().findFirst().get();
-        quizExercise.setIsOpenForPractice(true);
         quizExerciseService.save(quizExercise);
 
         List<QuizQuestionTrainingDTO> quizQuestions = Arrays.asList(
@@ -439,7 +436,6 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
 
         QuizExercise quizExercise = new QuizExercise();
         quizExercise.setCourse(course);
-        quizExercise.setIsOpenForPractice(true);
         quizExerciseTestRepository.save(quizExercise);
 
         QuizQuestion question = new MultipleChoiceQuestion();

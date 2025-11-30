@@ -26,7 +26,6 @@ describe('Quiz Service', () => {
         randomizeQuestionOrder: true,
         releaseDate: undefined,
         isVisibleBeforeStart: false,
-        isOpenForPractice: false,
         isPlannedToStart: false,
         isActiveQuiz: false,
         isPracticeModeAvailable: true,
