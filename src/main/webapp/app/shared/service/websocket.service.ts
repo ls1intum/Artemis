@@ -113,12 +113,9 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
      * Callback function managing the amount of failed connection attempts to the websocket and the timeout until the next reconnect attempt.
      *
      * Wait 5 seconds before reconnecting in case the connection does not work or the client is disconnected,
-     * after  2 failed attempts in row, increase the timeout to 10 seconds,
-     * after  4 failed attempts in row, increase the timeout to 20 seconds
-     * after  8 failed attempts in row, increase the timeout to 60 seconds
-     * after 12 failed attempts in row, increase the timeout to 120 seconds
-     * after 16 failed attempts in row, increase the timeout to 300 seconds
-     * after 20 failed attempts in row, increase the timeout to 600 seconds
+     * after  4 failed attempts in row, increase the timeout to 10 seconds
+     * after  8 failed attempts in row, increase the timeout to 15 seconds
+     * after 16 failed attempts in row, increase the timeout to 20 seconds
      */
     stompFailureCallback() {
         this.connecting = false;
@@ -129,9 +126,7 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
         if (this.shouldReconnect) {
             // the more failed attempts, the longer the client waits until the next reconnect attempt
             let waitUntilReconnectAttempt; // in seconds
-            if (this.consecutiveFailedAttempts > 32) {
-                waitUntilReconnectAttempt = 25;
-            } else if (this.consecutiveFailedAttempts > 16) {
+            if (this.consecutiveFailedAttempts > 16) {
                 waitUntilReconnectAttempt = 20;
             } else if (this.consecutiveFailedAttempts > 8) {
                 waitUntilReconnectAttempt = 15;
