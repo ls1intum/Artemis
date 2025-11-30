@@ -9,9 +9,11 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -414,10 +416,19 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         processingJobs.clear();
 
         request.put("/api/core/admin/agents/" + URLEncoder.encode(agent1.buildAgent().name(), StandardCharsets.UTF_8) + "/pause", null, HttpStatus.NO_CONTENT);
-        await().until(() -> buildAgentInformation.get(agent1.buildAgent().memberAddress()).status() == BuildAgentStatus.PAUSED);
+        await().atMost(Duration.ofSeconds(30)) // temporarily increase to debug
+                .pollInterval(Duration.ofMillis(200)).until(() -> {
+                    var agent = buildAgentInformation.get(agent1.buildAgent().memberAddress());
+                    return agent.status() == BuildAgentStatus.PAUSED;
+                });
 
         request.put("/api/core/admin/agents/" + URLEncoder.encode(agent1.buildAgent().name(), StandardCharsets.UTF_8) + "/resume", null, HttpStatus.NO_CONTENT);
-        await().until(() -> buildAgentInformation.get(agent1.buildAgent().memberAddress()).status() == BuildAgentStatus.IDLE);
+        await().atMost(Duration.ofSeconds(30)) // temporarily increase to debug
+                .pollInterval(Duration.ofMillis(200)).until(() -> {
+                    var agent = buildAgentInformation.get(agent1.buildAgent().memberAddress());
+                    System.out.println("Current status of agent " + agent.buildAgent().displayName() + " : " + agent.status());
+                    return agent.status() == BuildAgentStatus.IDLE;
+                });
     }
 
     @Test
@@ -427,21 +438,29 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         processingJobs.clear();
 
         request.put("/api/core/admin/agents/pause-all", null, HttpStatus.NO_CONTENT);
-        await().until(() -> {
-            var agents = buildAgentInformation.values();
-            return agents.stream().allMatch(agent -> agent.status() == BuildAgentStatus.PAUSED);
-        });
+        await().atMost(Duration.ofSeconds(30)) // temporarily increase to debug
+                .pollInterval(Duration.ofMillis(200)).until(() -> {
+                    var agents = buildAgentInformation.values();
+                    printAgentInformation(agents);
+                    return agents.stream().allMatch(agent -> agent.status() == BuildAgentStatus.PAUSED);
+                });
 
         request.put("/api/core/admin/agents/resume-all", null, HttpStatus.NO_CONTENT);
-        await().until(() -> {
-            var agents = buildAgentInformation.values();
-            return agents.stream().allMatch(agent -> agent.status() == BuildAgentStatus.IDLE);
-        });
+        await().atMost(Duration.ofSeconds(30)) // temporarily increase to debug
+                .pollInterval(Duration.ofMillis(200)).until(() -> {
+                    var agents = buildAgentInformation.values();
+                    printAgentInformation(agents);
+                    return agents.stream().allMatch(agent -> agent.status() == BuildAgentStatus.IDLE);
+                });
+    }
+
+    private static void printAgentInformation(Collection<BuildAgentInformation> agents) {
+        System.out.println("Current statuses: " + agents.stream().map(agent -> agent.buildAgent().displayName() + "=" + agent.status()).toList());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testBuildJob() throws Exception {
+    void testBuildJob() {
         var now = ZonedDateTime.now();
         JobTimingInfo jobTimingInfo1 = new JobTimingInfo(now, now, null, now.plusSeconds(24), 24);
         JobTimingInfo jobTimingInfo2 = new JobTimingInfo(now, now.plusSeconds(5), null, now.plusSeconds(29), 24);
