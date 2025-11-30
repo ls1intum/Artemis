@@ -513,6 +513,13 @@ describe('AttachmentVideoUnitComponent', () => {
         });
 
         it('should fall back to embedded source when no video file', () => {
+            // Mock urlParser to recognize the YouTube URL
+            jest.spyOn(urlParser, 'parse').mockReturnValue({
+                provider: 'youtube',
+                id: 'test',
+                mediaType: 'video',
+            } as any);
+
             const videoUnit: AttachmentVideoUnit = {
                 id: 1,
                 description: 'Embedded video',

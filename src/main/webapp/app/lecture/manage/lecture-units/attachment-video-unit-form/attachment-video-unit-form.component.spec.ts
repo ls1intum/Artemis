@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync, flushMicrotasks } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, flushMicrotasks, tick } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 import { AttachmentVideoUnitFormComponent, AttachmentVideoUnitFormData } from 'app/lecture/manage/lecture-units/attachment-video-unit-form/attachment-video-unit-form.component';
@@ -283,7 +283,7 @@ describe('AttachmentVideoUnitFormComponent', () => {
         expect(onFileChangeStub).toHaveBeenCalledOnce();
     });
 
-    it('should disable submit button for too big file', () => {
+    it('should disable submit button for too big file', fakeAsync(() => {
         const fakeFile = new File([''], 'Test-File.pdf', {
             type: 'application/pdf',
             lastModified: Date.now(),
@@ -295,12 +295,15 @@ describe('AttachmentVideoUnitFormComponent', () => {
         attachmentVideoUnitFormComponent.onFileChange({
             target: { files: [fakeFile] } as unknown as EventTarget,
         } as Event);
+
+        // Wait for the setTimeout in onFileChange to complete (1000ms for file processing + 1000ms for reset)
+        tick(1100);
         attachmentVideoUnitFormComponentFixture.detectChanges();
 
         const submitButton = attachmentVideoUnitFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
         expect(attachmentVideoUnitFormComponent.isFileTooBig()).toBeTrue();
         expect(submitButton.disabled).toBeTrue();
-    });
+    }));
 
     it('should not submit a form when file and videoSource is missing', () => {
         attachmentVideoUnitFormComponentFixture.detectChanges();
@@ -641,7 +644,7 @@ describe('AttachmentVideoUnitFormComponent', () => {
         expect(attachmentVideoUnitFormComponent.form.get('generateTranscript')!.value).toBeFalse();
     }));
 
-    it('onFileChange: auto-fills name when empty and marks large files', () => {
+    it('onFileChange: auto-fills name when empty and marks large files', fakeAsync(() => {
         attachmentVideoUnitFormComponentFixture.detectChanges();
 
         // Name initially empty -> should be auto-filled without extension
@@ -655,10 +658,13 @@ describe('AttachmentVideoUnitFormComponent', () => {
 
         attachmentVideoUnitFormComponent.onFileChange({ target: input } as any);
 
+        // Wait for the setTimeout in onFileChange to complete (1000ms for file processing + 1000ms for reset)
+        tick(1100);
+
         expect(attachmentVideoUnitFormComponent.fileName()).toBe('Lecture-01.mp4');
         expect(attachmentVideoUnitFormComponent.nameControl!.value).toBe('Lecture-01');
         expect(attachmentVideoUnitFormComponent.isFileTooBig()).toBeTrue();
-    });
+    }));
 
     it('isTransformable reflects urlHelper validity', () => {
         attachmentVideoUnitFormComponentFixture.detectChanges();
