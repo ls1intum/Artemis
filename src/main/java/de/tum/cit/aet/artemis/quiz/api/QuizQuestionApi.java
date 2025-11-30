@@ -9,15 +9,15 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.core.api.AbstractApi;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
 import de.tum.cit.aet.artemis.quiz.repository.QuizQuestionRepository;
 
 @Profile(PROFILE_CORE)
+@Controller
 @Lazy
-@Service
 public class QuizQuestionApi implements AbstractApi {
 
     private final QuizQuestionRepository quizQuestionRepository;
