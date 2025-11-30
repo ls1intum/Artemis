@@ -21,10 +21,13 @@ import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyCheckResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementGenerationRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementGenerationResponseDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementRefinementRequestDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementRefinementResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementRewriteRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementRewriteResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionConsistencyCheckService;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionProblemStatementGenerationService;
+import de.tum.cit.aet.artemis.hyperion.service.HyperionProblemStatementRefinementService;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionProblemStatementRewriteService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
@@ -50,14 +53,17 @@ public class HyperionProblemStatementResource {
 
     private final HyperionProblemStatementGenerationService problemStatementGenerationService;
 
+    private final HyperionProblemStatementRefinementService problemStatementRefinementService;
+
     public HyperionProblemStatementResource(CourseRepository courseRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             HyperionConsistencyCheckService consistencyCheckService, HyperionProblemStatementRewriteService problemStatementRewriteService,
-            HyperionProblemStatementGenerationService problemStatementGenerationService) {
+            HyperionProblemStatementGenerationService problemStatementGenerationService, HyperionProblemStatementRefinementService problemStatementRefinementService) {
         this.courseRepository = courseRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.consistencyCheckService = consistencyCheckService;
         this.problemStatementRewriteService = problemStatementRewriteService;
         this.problemStatementGenerationService = problemStatementGenerationService;
+        this.problemStatementRefinementService = problemStatementRefinementService;
     }
 
     /**
@@ -106,6 +112,23 @@ public class HyperionProblemStatementResource {
         log.debug("REST request to Hyperion generate draft problem statement for course [{}]", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         var result = problemStatementGenerationService.generateProblemStatement(course, request.userPrompt());
+        return ResponseEntity.ok(result);
+    }
+
+    /**
+     * POST courses/{courseId}/problem-statements/refine: Refine an existing problem statement for a programming exercise in the given course.
+     *
+     * @param courseId the id of the course the problem statement belongs to
+     * @param request  the request containing the original problem statement and the user prompt
+     * @return the ResponseEntity with status 200 (OK) and the refined problem statement or an error status
+     */
+    @EnforceAtLeastEditorInCourse
+    @PostMapping("courses/{courseId}/problem-statements/refine")
+    public ResponseEntity<ProblemStatementRefinementResponseDTO> refineProblemStatement(@PathVariable long courseId,
+            @Valid @RequestBody ProblemStatementRefinementRequestDTO request) {
+        log.debug("REST request to Hyperion refine the problem statement for course [{}]", courseId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        var result = problemStatementRefinementService.refineProblemStatement(course, request.problemStatementText(), request.userPrompt());
         return ResponseEntity.ok(result);
     }
 }

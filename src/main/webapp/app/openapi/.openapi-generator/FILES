@@ -13,6 +13,8 @@ model/consistencyIssue.ts
 model/conversationUser.ts
 model/problemStatementGenerationRequest.ts
 model/problemStatementGenerationResponse.ts
+model/problemStatementRefinementRequest.ts
+model/problemStatementRefinementResponse.ts
 model/problemStatementRewriteRequest.ts
 model/problemStatementRewriteResponse.ts
 model/student.ts

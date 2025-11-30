@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   title: Artemis Application Server API
   contact: {name: Stephan Krusche, email: krusche@tum.de}
-  version: 8.5.1
+  version: 8.6.2
 servers:
 - {url: 'http://localhost:8080', description: Generated server url}
 paths:
@@ -183,6 +183,26 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/ProblemStatementRewriteResponse'}
+  /api/hyperion/courses/{courseId}/problem-statements/refine:
+    post:
+      tags: [hyperion-problem-statement]
+      operationId: refineProblemStatement
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ProblemStatementRefinementRequest'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ProblemStatementRefinementResponse'}
   /api/hyperion/courses/{courseId}/problem-statements/generate:
     post:
       tags: [hyperion-problem-statement]
@@ -338,6 +358,14 @@ paths:
         '200': {description: OK}
 components:
   schemas:
+    ProblemStatementRefinementResponse:
+      type: object
+      description: Response containing generated problem statement
+      properties:
+        refinedProblemStatement: {type: string, description: Refined problem statement
+            text}
+        originalProblemStatement: {type: string, description: Original problem statement
+            if refinement failed}
     ProblemStatementGenerationRequest:
       type: object
       description: Request to generate a problem statement
@@ -443,6 +471,15 @@ components:
           description: List of consistency issues found
           items: {$ref: '#/components/schemas/ConsistencyIssue'}
       required: [issues]
+    ProblemStatementRefinementRequest:
+      type: object
+      description: Request to rewrite a problem statement
+      properties:
+        problemStatementText: {type: string, description: Original problem statement
+            text to be refined, minLength: 1}
+        userPrompt: {type: string, description: User prompt describing the problem
+            statement requirements, maxLength: 1000, minLength: 0}
+      required: [problemStatementText, userPrompt]
     TutorialGroupDetailSession:
       type: object
       properties:
@@ -539,7 +576,6 @@ components:
         startTime: {type: string}
         endTime: {type: string}
         location: {type: string, maxLength: 2000, minLength: 1}
-      required: [date, endTime, startTime]
     ProblemStatementRewriteRequest:
       type: object
       description: Request to rewrite a problem statement
