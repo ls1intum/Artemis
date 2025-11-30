@@ -1,4 +1,4 @@
-import { Observable, of } from 'rxjs';
+import { BehaviorSubject, Observable, of } from 'rxjs';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { Posting } from 'app/communication/shared/entities/posting.model';
@@ -16,6 +16,7 @@ let pageType: PageType;
 
 export class MockMetisService {
     currentConversation = undefined;
+    private faqsSubject = new BehaviorSubject<Faq[]>([]);
 
     get tags(): Observable<string[]> {
         return of(metisTags);
@@ -33,8 +34,12 @@ export class MockMetisService {
         return metisCourse;
     }
 
-    getFaqs(): Faq[] {
-        return [];
+    getFaqs(): Observable<Faq[]> {
+        return this.faqsSubject.asObservable();
+    }
+
+    setFaqs(faqs: Faq[]): void {
+        this.faqsSubject.next(faqs);
     }
 
     getPageType(): PageType {

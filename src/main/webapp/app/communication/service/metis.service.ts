@@ -67,7 +67,8 @@ export class MetisService implements OnDestroy {
     private activeConversationSubscription: Subscription;
 
     private course: Course;
-    private faqs: Faq[] = [];
+    // Expose FAQs as observable so consumers react once async loading finishes (setupMetis fetches from REST)
+    private faqs$: BehaviorSubject<Faq[]> = new BehaviorSubject<Faq[]>([]);
 
     constructor() {
         this.accountService.identity().then((user: User) => {
@@ -153,12 +154,12 @@ export class MetisService implements OnDestroy {
         return this.course;
     }
 
-    getFaqs(): Faq[] {
-        return this.faqs;
+    getFaqs(): Observable<Faq[]> {
+        return this.faqs$.asObservable();
     }
 
     setFaqs(faqs: Faq[]): void {
-        this.faqs = faqs;
+        this.faqs$.next(faqs);
     }
 
     /**

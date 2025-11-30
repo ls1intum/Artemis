@@ -3,7 +3,7 @@ import { MockProvider } from 'ng-mocks';
 import { MetisService } from 'app/communication/service/metis.service';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { HttpResponse } from '@angular/common/http';
-import { of } from 'rxjs';
+import { firstValueFrom, of } from 'rxjs';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { ChannelService } from 'app/communication/conversations/service/channel.service';
 import { MockMetisService } from 'test/helpers/mocks/service/mock-metis-service.service';
@@ -104,7 +104,7 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
         let exercises: Exercise[];
         let faqs: Faq[];
 
-        beforeEach(() => {
+        beforeEach(async () => {
             fixture.detectChanges();
             comp.changeModel('initial', '');
             channels = [metisGeneralChannelDTO, metisExamChannelDTO, metisExerciseChannelDTO];
@@ -112,7 +112,7 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
             users = [metisUser1, metisUser2, metisTutor];
             jest.spyOn(courseManagementService, 'searchMembersForUserMentions').mockReturnValue(of(new HttpResponse({ body: users, status: 200 })));
             exercises = metisService.getCourse().exercises!;
-            faqs = metisService.getFaqs()!;
+            faqs = await firstValueFrom(metisService.getFaqs());
 
             switch (actionId) {
                 case ChannelReferenceAction.ID:
@@ -265,11 +265,22 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
 
     describe('FaqReferenceAction', () => {
         it('should initialize with empty values if faqs are not available', () => {
-            jest.spyOn(metisService, 'getCourse').mockReturnValue({ faqs: undefined } as any);
+            jest.spyOn(metisService, 'getFaqs').mockReturnValue(of([]));
 
             fixture.detectChanges();
             comp.registerAction(faqReferenceAction);
             expect(faqReferenceAction.getValues()).toEqual([]);
+        });
+
+        it('should update values when faqs are loaded', () => {
+            fixture.detectChanges();
+            comp.registerAction(faqReferenceAction);
+
+            const faq: Faq = { id: 99, questionTitle: 'Loaded FAQ', questionAnswer: 'Answer' };
+            // Simulate REST-loaded FAQs arriving via the observable
+            metisService.setFaqs([faq]);
+
+            expect(faqReferenceAction.getValues()).toEqual([{ id: faq.id!.toString(), value: faq.questionTitle!, type: 'faq' }]);
         });
     });
 
