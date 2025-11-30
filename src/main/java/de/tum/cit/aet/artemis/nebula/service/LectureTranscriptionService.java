@@ -278,13 +278,17 @@ public class LectureTranscriptionService {
             HttpEntity<?> entity = new HttpEntity<>(headers);
 
             String url = nebulaBaseUrl + "/transcribe/cancel/" + jobId;
-            restTemplate.exchange(url, HttpMethod.POST, entity, Void.class);
+            ResponseEntity<Void> response = restTemplate.exchange(url, HttpMethod.POST, entity, Void.class);
 
-            // Permanently delete the transcription record
-            lectureTranscriptionsRepositoryApi.deleteById(transcription.getId());
-            lectureTranscriptionsRepositoryApi.flush();
-
-            log.info("Transcription cancelled and deleted successfully for lectureUnitId={}, jobId={}", lectureUnitId, jobId);
+            // Only delete if cancellation was successful
+            if (response.getStatusCode().is2xxSuccessful()) {
+                lectureTranscriptionsRepositoryApi.deleteById(transcription.getId());
+                lectureTranscriptionsRepositoryApi.flush();
+                log.info("Transcription cancelled and deleted successfully for lectureUnitId={}, jobId={}", lectureUnitId, jobId);
+            }
+            else {
+                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Nebula cancellation returned status: " + response.getStatusCode());
+            }
         }
         catch (Exception e) {
             log.error("Error cancelling transcription for lectureUnitId: {}, jobId: {} → {}", lectureUnitId, jobId, e.getMessage(), e);

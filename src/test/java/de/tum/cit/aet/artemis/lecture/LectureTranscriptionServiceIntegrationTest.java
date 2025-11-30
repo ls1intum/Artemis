@@ -346,5 +346,76 @@ class LectureTranscriptionServiceIntegrationTest extends AbstractSpringIntegrati
 
         assertThatThrownBy(() -> lectureTranscriptionService.cancelNebulaTranscription(unitId)).isInstanceOf(ResponseStatusException.class)
                 .hasMessageContaining("Failed to cancel transcription");
+
+        // Verify transcription was NOT deleted when Nebula call failed
+        var transcriptions = transcriptionRepository.findByLectureUnit_Id(unitId);
+        assertThat(transcriptions).isPresent();
+        assertThat(transcriptions.get().getJobId()).isEqualTo(jobId);
+    }
+
+    @Test
+    void cancelNebulaTranscription_nebula4xxError_doesNotDeleteTranscription() {
+        var lecture = new Lecture();
+        lecture.setTitle("L1");
+        lecture = lectureRepository.saveAndFlush(lecture);
+
+        var unit = new AttachmentVideoUnit();
+        unit.setName("U1");
+        unit.setLecture(lecture);
+        lecture.addLectureUnit(unit);
+        lecture = lectureRepository.saveAndFlush(lecture);
+        unit = (AttachmentVideoUnit) lecture.getLectureUnits().get(0);
+        final Long unitId = unit.getId();
+
+        var jobId = "job-4xx-error";
+        var t = createTranscription(jobId, TranscriptionStatus.PENDING);
+        t.setLectureUnit(unit);
+        t = transcriptionRepository.saveAndFlush(t);
+
+        // Mock Nebula returning a 4xx error (e.g., BAD_REQUEST)
+        when(nebulaRestTemplate.exchange(eq("http://localhost:8080/transcribe/cancel/" + jobId), eq(HttpMethod.POST), any(HttpEntity.class), eq(Void.class)))
+                .thenReturn(new ResponseEntity<>(HttpStatus.BAD_REQUEST));
+
+        assertThatThrownBy(() -> lectureTranscriptionService.cancelNebulaTranscription(unitId)).isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("Nebula cancellation returned status: 400 BAD_REQUEST");
+
+        // Verify transcription was NOT deleted when Nebula returned non-2xx status
+        var transcriptions = transcriptionRepository.findByLectureUnit_Id(unitId);
+        assertThat(transcriptions).isPresent();
+        assertThat(transcriptions.get().getJobId()).isEqualTo(jobId);
+        assertThat(transcriptions.get().getTranscriptionStatus()).isEqualTo(TranscriptionStatus.PENDING);
+    }
+
+    @Test
+    void cancelNebulaTranscription_nebula5xxError_doesNotDeleteTranscription() {
+        var lecture = new Lecture();
+        lecture.setTitle("L1");
+        lecture = lectureRepository.saveAndFlush(lecture);
+
+        var unit = new AttachmentVideoUnit();
+        unit.setName("U1");
+        unit.setLecture(lecture);
+        lecture.addLectureUnit(unit);
+        lecture = lectureRepository.saveAndFlush(lecture);
+        unit = (AttachmentVideoUnit) lecture.getLectureUnits().get(0);
+        final Long unitId = unit.getId();
+
+        var jobId = "job-5xx-error";
+        var t = createTranscription(jobId, TranscriptionStatus.PENDING);
+        t.setLectureUnit(unit);
+        t = transcriptionRepository.saveAndFlush(t);
+
+        // Mock Nebula returning a 5xx error (e.g., INTERNAL_SERVER_ERROR)
+        when(nebulaRestTemplate.exchange(eq("http://localhost:8080/transcribe/cancel/" + jobId), eq(HttpMethod.POST), any(HttpEntity.class), eq(Void.class)))
+                .thenReturn(new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR));
+
+        assertThatThrownBy(() -> lectureTranscriptionService.cancelNebulaTranscription(unitId)).isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("Nebula cancellation returned status: 500 INTERNAL_SERVER_ERROR");
+
+        // Verify transcription was NOT deleted when Nebula returned non-2xx status
+        var transcriptions = transcriptionRepository.findByLectureUnit_Id(unitId);
+        assertThat(transcriptions).isPresent();
+        assertThat(transcriptions.get().getJobId()).isEqualTo(jobId);
+        assertThat(transcriptions.get().getTranscriptionStatus()).isEqualTo(TranscriptionStatus.PENDING);
     }
 }
