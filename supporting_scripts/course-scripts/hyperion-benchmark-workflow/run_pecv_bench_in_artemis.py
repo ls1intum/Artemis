@@ -203,7 +203,7 @@ def main():
                                             # NOTE sprint.ai.mode.chat + spring.ai.azure.openai.chat.options.deployment-name
     
     logging.info(f"Starting consistency checks for {len(programming_exercises)} variants using up to {MAX_THREADS} threads")
-    course_dir = os.path.join(pecv_bench_dir, "results", "artemis-bench", model_name, "cases", COURSE)
+    course_dir = os.path.join(pecv_bench_dir, "results", "artemis-benchmark", model_name, "cases", COURSE)
     for EXERCISE in EXERCISES:
         os.makedirs(os.path.join(course_dir, EXERCISE), exist_ok=True)
     
@@ -238,9 +238,9 @@ def main():
     logging.info("Generating analysis and reports...")
 
     commands = [
-        ["pecv-bench", "variants-analysis", "--results-dir", "results/artemis-bench", "--clear"],
-        ["pecv-bench", "variants-analysis", "--results-dir", "results/artemis-bench", "--plot"],
-        ["pecv-bench", "report", "--benchmark", "artemis-bench"]
+        ["pecv-bench", "variants-analysis", "--results-dir", "results/artemis-benchmark", "--clear"],
+        ["pecv-bench", "variants-analysis", "--results-dir", "results/artemis-benchmark", "--plot"],
+        ["pecv-bench", "report", "--benchmark", "artemis-benchmark"]
     ]
 
     for cmd in commands:
@@ -258,7 +258,7 @@ def main():
             logging.error(f"Error: {e}")
 
             sys.exit(1)
-    # TODO retrieve aggregated results from results/pecv-reference and results/artemis-bench and add ad-hoc to report.md file    
+    # TODO retrieve aggregated results from results/pecv-reference and results/artemis-benchmark and add ad-hoc to report.md file    
 
     logging.info("PECV-Bench Hyperion Benchmark Workflow completed.")
 
