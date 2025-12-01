@@ -80,9 +80,6 @@ public class IrisMessageResource {
 
     /**
      * POST sessions/{sessionId}/messages: Send a new message from the user to the LLM
-     * <p>
-     * Backward compatible: uncommittedFiles is optional and can be omitted.
-     * Legacy requests without uncommittedFiles will work as before.
      *
      * @param sessionId  of the session
      * @param requestDTO containing message content and optional uncommitted files
@@ -98,15 +95,12 @@ public class IrisMessageResource {
         irisSessionService.checkHasAccessToIrisSession(session, user);
         irisSessionService.checkRateLimit(session, user);
 
-        // Build IrisMessage from DTO
         var message = new IrisMessage();
         message.setContent(requestDTO.content());
         message.setMessageDifferentiator(requestDTO.messageDifferentiator());
 
         var savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.USER);
         irisSessionService.sendOverWebsocket(savedMessage, session);
-
-        // Pass uncommitted files to the service layer (empty map if not provided)
         irisSessionService.requestMessageFromIris(session, requestDTO.uncommittedFiles());
 
         var uriString = "/api/iris/sessions/" + session.getId() + "/messages/" + savedMessage.getId();

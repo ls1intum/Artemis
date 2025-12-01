@@ -71,12 +71,10 @@ public class PyrisDTOService {
     }
 
     /**
-     * Helper method to convert a ProgrammingSubmission to a PyrisSubmissionDTO.
-     * This notably includes fetching the contents of the student repository, if it exists.
      * Uncommitted files override the committed files if they have the same path.
      *
-     * @param submission       the students submission
-     * @param uncommittedFiles the uncommitted files from the client (working copy)
+     * @param submission       the student's submission
+     * @param uncommittedFiles the uncommitted files from the client
      * @return the converted PyrisSubmissionDTO
      */
     public PyrisSubmissionDTO toPyrisSubmissionDTO(ProgrammingSubmission submission, Map<String, String> uncommittedFiles) {

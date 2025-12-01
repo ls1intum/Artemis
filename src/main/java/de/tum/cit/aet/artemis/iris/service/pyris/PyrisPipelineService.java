@@ -172,21 +172,10 @@ public class PyrisPipelineService {
     }
 
     /**
-     * Execute the exercise chat pipeline for the given session with uncommitted file changes.
-     * It provides specific data for the exercise chat pipeline, including:
-     * - The latest submission of the student
-     * - The programming exercise
-     * - The course the exercise is part of
-     * <p>
+     * Execute the exercise chat pipeline with uncommitted file changes.
+     * Uncommitted files are merged with committed files, with uncommitted taking priority.
      *
-     * @param variant            the variant of the pipeline
-     * @param customInstructions the custom instructions for the pipeline
-     * @param latestSubmission   the latest submission of the student
-     * @param exercise           the programming exercise
-     * @param session            the chat session
-     * @param eventVariant       if this function triggers a pipeline execution due to a specific event, this is the used event variant
-     * @param uncommittedFiles   the uncommitted files from the client (working copy)
-     * @see PyrisPipelineService#executePipeline for more details on the pipeline execution process.
+     * @see #executeExerciseChatPipeline(String, String, Optional, ProgrammingExercise, IrisProgrammingExerciseChatSession, Optional)
      */
     public void executeExerciseChatPipeline(String variant, String customInstructions, Optional<ProgrammingSubmission> latestSubmission, ProgrammingExercise exercise,
             IrisProgrammingExerciseChatSession session, Optional<String> eventVariant, Map<String, String> uncommittedFiles) {

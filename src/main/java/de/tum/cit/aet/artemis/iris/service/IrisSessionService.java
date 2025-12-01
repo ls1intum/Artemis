@@ -117,13 +117,8 @@ public class IrisSessionService {
     }
 
     /**
-     * Sends a request to Iris to get a message for the given session with uncommitted file changes.
-     * It decides which Iris subsystem should handle it based on the session type.
-     *
-     * @param session          The session to get a message for
-     * @param uncommittedFiles The uncommitted files from the client (working copy)
-     * @param <S>              The type of the session
-     * @throws BadRequestException If the session type is invalid or if uncommitted files are provided for unsupported session types
+     * @see #requestMessageFromIris(IrisSession)
+     * @param uncommittedFiles The uncommitted files from the client
      */
     public <S extends IrisSession> void requestMessageFromIris(S session, Map<String, String> uncommittedFiles) {
         var wrapper = getIrisSessionSubService(session);
