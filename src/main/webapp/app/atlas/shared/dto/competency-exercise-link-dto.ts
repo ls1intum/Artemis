@@ -23,8 +23,6 @@ export function toCompetencyExerciseLinkDTO(link: CompetencyExerciseLink): Compe
 }
 
 /**
- * Maps an array of CompetencyExerciseLink to DTO list.
+ * Maps an array of CompetencyExerciseLink → CompetencyExerciseLinkDTO[].
  */
-export function mapCompetencyLinks(links: CompetencyExerciseLink[] | undefined): CompetencyExerciseLinkDTO[] {
-    return links?.map((l) => toCompetencyExerciseLinkDTO(l)) ?? [];
-}
+export const mapCompetencyLinks = (links: CompetencyExerciseLink[] | undefined): CompetencyExerciseLinkDTO[] => links?.map(toCompetencyExerciseLinkDTO) ?? [];

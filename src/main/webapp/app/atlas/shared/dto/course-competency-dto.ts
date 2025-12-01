@@ -8,19 +8,20 @@ export interface CourseCompetencyDTO {
 }
 
 /**
- * Convert CourseCompetency (client model) → CourseCompetencyDTO (API DTO).
+ * Maps a CourseCompetency → CourseCompetencyDTO.
  */
-export function toCourseCompetencyDTO(competency: CourseCompetency): CourseCompetencyDTO {
+export const toCourseCompetencyDTO = (competency: CourseCompetency): CourseCompetencyDTO => {
     if (competency.id === undefined) {
-        throw new Error('Cannot map CourseCompetency to DTO: id is missing.');
+        throw new Error('Cannot map CourseCompetency: id is missing.');
     }
     if (!competency.title) {
-        throw new Error('Cannot map CourseCompetency to DTO: title is missing.');
+        throw new Error('Cannot map CourseCompetency: title is missing.');
     }
+
     return {
         id: competency.id,
         title: competency.title,
-        description: competency.description ?? undefined,
-        taxonomy: competency.taxonomy ?? undefined,
+        description: competency.description,
+        taxonomy: competency.taxonomy,
     };
-}
+};
