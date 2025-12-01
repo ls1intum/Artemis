@@ -22,7 +22,7 @@ PECV_BENCH_URL: str = config.get('PECVBenchSettings', 'pecv_bench_repo', fallbac
 COURSE: str = config.get('PECVBenchSettings', 'course', fallback="ITP2425")
 EXERCISES: List[str] = [exercise.strip() for exercise in config.get('PECVBenchSettings', 'exercises', fallback="H01E01-Lectures").split(',')]
 MAX_THREADS: int = int(config.get('Settings', 'max_threads', fallback="5"))
-REFERENCE: str = config.get('PECVBenchSettings', 'reference')
+REFERENCE: str = config.get('PECVBenchSettings', 'reference', fallback="No Data Available")
 
 def clone_pecv_bench(pecv_bench_url: str, pecv_bench_dir: str) -> None:
     """Clones a repository if it doesn't exist, or pulls updates if it does."""
@@ -163,8 +163,9 @@ def process_single_variant_import(session: requests.Session,
                                     server_url = server_url,
                                     variant_folder_path = variant_id_path
                                     )
-        if response_data is not None and response_data["id"] is not None:
-            return (dict_key, response_data["id"])
+        exercise_id = response_data.get("id") if response_data else None
+        if exercise_id is not None:    
+            return (dict_key, exercise_id)
         else:
             logging.error(f"Failed to import programming exercise for {dict_key}. Moving to next variant.")
             return (dict_key, None)

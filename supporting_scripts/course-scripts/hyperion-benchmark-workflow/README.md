@@ -6,7 +6,8 @@ This project contains Python scripts that automate the PECV Bench Course setup a
 
 ## Prerequisites
 
-- Python 3.13 (other versions might not work due to models incompability)
+
+- Python 3.13 (other versions might not work due to model incompatibility)
 - pip
 
 ## 1. Create and activate a virtual environment in **hyperion-benchmark-workflow** folder
@@ -22,7 +23,7 @@ It is recommended to use a virtual environment to manage dependencies in isolati
       python3 -m pip install virtualenv
       ```
 
-2. Create a virtual environment in **hyperion-benchmarl-workflow** folder:
+2. Create a virtual environment in **hyperion-benchmark-workflow** folder:
     ```shell
     python3 -m venv venv
     ```

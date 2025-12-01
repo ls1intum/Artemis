@@ -1,7 +1,7 @@
 import requests
 import configparser
 from logging_config import logging
-from typing import Dict, Any, List
+from typing import Dict, Any
 
 config = configparser.ConfigParser()
 config.read(['config.ini'])

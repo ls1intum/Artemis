@@ -1,4 +1,3 @@
-import sys
 import requests
 import configparser
 import json
@@ -126,6 +125,9 @@ def delete_pecv_bench_course(session: Session, course_short_name: str, max_retri
         if course["shortName"] == course_short_name:
             course_id = course["id"]
             break
+    if course_id is None:
+        logging.error(f"Course with shortName {course_short_name} not found")
+        return False
     
     delete_url = f"{SERVER_URL}/core/admin/courses/{course_id}"
     logging.info(f"Deleting course with ID {course_id} at URL {delete_url}")

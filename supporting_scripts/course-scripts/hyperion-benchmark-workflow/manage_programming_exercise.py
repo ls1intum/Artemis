@@ -1,12 +1,10 @@
 import json
 import os
-import sys
 import re
 import requests
 import zipfile
 import shutil
 import urllib3
-from tracemalloc import start
 from logging_config import logging
 from typing import Dict, Any, List, Tuple
 from requests import Session
@@ -91,8 +89,8 @@ def convert_variant_to_zip(variant_path: str, course_id: int) -> bool:
             exercise_details: Dict[str, Any] = json.load(cf)
             
             exercise_details['id'] = None
-            
-            exercise_details['problemStatement'] = problem_statement_content
+            if problem_statement_content is not None:
+                exercise_details['problemStatement'] = problem_statement_content
             exercise_details['course']['id'] = course_id
             
             exercise_name = exercise_details.get('title', 'Untitled')
