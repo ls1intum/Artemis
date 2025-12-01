@@ -441,7 +441,7 @@ public class ExamRoomService {
      *                            {@link SeatCondition#USABLE}, if false no filtering is performed
      * @return List of rows (sorted) of seats (sorted)
      */
-    private static List<List<ExamSeatDTO>> getSortedRowsWithSortedSeats(ExamRoom examRoom, boolean onlyUsableSeats) {
+    public static List<List<ExamSeatDTO>> getSortedRowsWithSortedSeats(ExamRoom examRoom, boolean onlyUsableSeats) {
         List<ExamSeatDTO> examSeats = examRoom.getSeats();
         if (onlyUsableSeats) {
             examSeats = examSeats.stream().filter(examSeatDTO -> examSeatDTO.seatCondition() == SeatCondition.USABLE).toList();

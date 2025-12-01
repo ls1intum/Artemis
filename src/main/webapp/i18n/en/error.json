@@ -135,7 +135,8 @@
             "invalidLayout": "The layout {{ layoutName }} in room {{ roomNumber }} is invalid",
             "seatNotFoundFixedSelection": "The seat at row index {{ rowIndex }} and seat index {{ seatIndex }} in room {{ roomNumber }} does not exist",
             "missingDefaultLayout": "The room {{ roomNumber }} does not have a default layout",
-            "missingSpecifiedLayout": "The room {{ roomNumber }} does not have a {{ layoutName }} layout"
+            "missingSpecifiedLayout": "The room {{ roomNumber }} does not have a {{ layoutName }} layout",
+            "notFound": "The specified room does not exist"
         },
         "examUser": {
             "service": {

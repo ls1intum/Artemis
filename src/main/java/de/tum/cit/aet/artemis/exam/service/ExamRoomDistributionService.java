@@ -6,7 +6,11 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import jakarta.validation.constraints.NotEmpty;
 
@@ -27,6 +31,7 @@ import de.tum.cit.aet.artemis.exam.dto.room.AttendanceCheckerAppExamInformationD
 import de.tum.cit.aet.artemis.exam.dto.room.ExamDistributionCapacityDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomForDistributionDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamSeatDTO;
+import de.tum.cit.aet.artemis.exam.dto.room.SeatsOfExamRoomDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExamRoomExamAssignmentRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExamRoomRepository;
@@ -299,5 +304,163 @@ public class ExamRoomDistributionService {
         Set<ExamRoom> examRooms = examRoomRepository.findAllByExamId(examId);
 
         return AttendanceCheckerAppExamInformationDTO.from(exam, examRooms);
+    }
+
+    /**
+     * Gets all rooms that are used in a given exam
+     *
+     * @param examId The id of the exam
+     * @return A DTO representation of all exam rooms that are used in the exam.
+     */
+    public Set<ExamRoomForDistributionDTO> getRoomsUsedInExam(long examId) {
+        return examRoomRepository.findAllByExamId(examId).stream().map(ExamRoomForDistributionDTO::from).collect(Collectors.toSet());
+    }
+
+    /**
+     * Obtains a list of all names of all seats of a room
+     *
+     * @param examRoomId The id of the exam room
+     * @return A DTO containing information about all seats of the room
+     */
+    public SeatsOfExamRoomDTO getSeatsOfExamRoom(long examRoomId) {
+        Optional<ExamRoom> room = examRoomRepository.findById(examRoomId);
+
+        if (room.isEmpty()) {
+            throw new BadRequestAlertException("Exam room does not exist", ENTITY_NAME, "room.notFound");
+        }
+
+        return SeatsOfExamRoomDTO.from(room.get());
+    }
+
+    /**
+     * Reseats a student to a different seat.
+     *
+     * @param examUser          The exam user, where all associated exam users have their transient room and seats set,
+     *                              if possible
+     * @param newRoomNumber     The {@code roomNumber} of the new room
+     * @param newSeatName       The {@code seatName} of the new seat
+     * @param persistedLocation Whether the seat exists in an actual {@link ExamRoom} entity and that entity is
+     *                              connected to this exam. A room is connected to an exam if the room was one of
+     *                              the rooms the instructor did distribute to via the {@code Distribute} button.
+     * @throws BadRequestAlertException if the new seat is already occupied
+     */
+    public void reseatStudent(ExamUser examUser, String newRoomNumber, String newSeatName, boolean persistedLocation) {
+        String oldRoomNumber = examUser.getPlannedRoom();
+        String oldSeatName = examUser.getPlannedSeat();
+        boolean isOldLocationPersisted = examUser.getPlannedRoomTransient() != null;
+
+        ExamUser lastStudentInOldRoom = null;
+        if (isOldLocationPersisted) {
+            lastStudentInOldRoom = findLastStudentInRoom(examUser.getPlannedRoomTransient(), examUser.getExam().getExamUsers());
+        }
+
+        if (newSeatName == null) {
+            if (!persistedLocation) {
+                throw new BadRequestAlertException("Can't automatically determine seat of unpersisted room", ENTITY_NAME, "room.noAutomaticSeat");
+            }
+
+            reseatStudentDynamicLocation(examUser, newRoomNumber);
+        }
+        else {
+            reseatStudentFixedSeat(examUser, newRoomNumber, newSeatName);
+        }
+
+        boolean movedInTheSameRoom = oldRoomNumber.equals(newRoomNumber);
+        if (movedInTheSameRoom || lastStudentInOldRoom == null || lastStudentInOldRoom.getId().equals(examUser.getId())) {
+            // We don't need to fill a gap because we either don't have information about the old room,
+            // because the student was moved inside the same room, or because the student we moved didn't create a gap
+            return;
+        }
+
+        setRoomAndSeatAndSaveExamUser(lastStudentInOldRoom, oldRoomNumber, oldSeatName);
+    }
+
+    /**
+     * Finds the last student in an exam room. A student is the last student in a room if they are last in the ascending
+     * order of seats.
+     *
+     * @param room      The exam room
+     * @param examUsers The exam users participating in the exam. Must contain at least all exam users that are in the
+     *                      given room
+     *
+     * @return The last student in the room
+     */
+    private ExamUser findLastStudentInRoom(ExamRoom room, Set<ExamUser> examUsers) {
+        List<List<ExamSeatDTO>> rowsOfSeats = ExamRoomService.getSortedRowsWithSortedSeats(room, true);
+        Map<ExamSeatDTO, ExamUser> seatToUser = getExamUserInRoomBySeat(examUsers, room);
+
+        for (List<ExamSeatDTO> row : rowsOfSeats.reversed()) {
+            for (ExamSeatDTO seat : row.reversed()) {
+                if (!seatToUser.containsKey(seat)) {
+                    continue;
+                }
+
+                return seatToUser.get(seat);
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Updates the planned seat of a student to a fixed seat, if the seat is available.
+     *
+     * @param examUser The exam user
+     * @param newRoom  The new room's room number
+     * @param newSeat  The new seat's name
+     */
+    private void reseatStudentFixedSeat(ExamUser examUser, String newRoom, String newSeat) {
+        Set<ExamUser> examUsers = examUser.getExam().getExamUsers();
+        checkSeatNotAlreadyTakenOrElseThrow(examUsers, newRoom, newSeat);
+
+        setRoomAndSeatAndSaveExamUser(examUser, newRoom, newSeat);
+    }
+
+    private Map<ExamSeatDTO, ExamUser> getExamUserInRoomBySeat(Set<ExamUser> examUsers, ExamRoom examRoom) {
+        return examUsers.stream().filter(examUser -> examUser.getPlannedRoomTransient().getId().equals(examRoom.getId()))
+                .collect(Collectors.toMap(ExamUser::getPlannedSeatTransient, Function.identity()));
+    }
+
+    private void setRoomAndSeatAndSaveExamUser(ExamUser examUser, String newRoom, String newSeat) {
+        examUser.setPlannedRoom(newRoom);
+        examUser.setPlannedSeat(newSeat);
+        examUserRepository.save(examUser);
+    }
+
+    private void checkSeatNotAlreadyTakenOrElseThrow(Set<ExamUser> examUsers, String roomNumber, String seatName) {
+        if (examUsers.stream().anyMatch(eu -> Objects.equals(roomNumber, eu.getPlannedRoom()) && Objects.equals(seatName, eu.getPlannedSeat()))) {
+            throw new BadRequestAlertException("Someone already sits here", ENTITY_NAME, "room.seatTaken");
+        }
+    }
+
+    /**
+     * Reseats a student to a different room. This function dynamically determines the next free seat.
+     *
+     * @param examUser      The exam user where the associated exam users have the transient room and seat properties set
+     * @param newRoomNumber The room number of the new room
+     */
+    public void reseatStudentDynamicLocation(ExamUser examUser, String newRoomNumber) {
+        if (examUser.getPlannedRoom().equals(newRoomNumber)) {
+            throw new BadRequestAlertException("The student already sits in this room", ENTITY_NAME, "room.alreadyInRoom");
+        }
+
+        Set<ExamRoom> connectedRooms = examRoomRepository.findAllByExamId(examUser.getExam().getId());
+        ExamRoom newRoom = connectedRooms.stream().filter(room -> room.getRoomNumber().equals(newRoomNumber)).findFirst().orElse(null);
+        if (newRoom == null) {
+            throw new BadRequestAlertException("New room could not be found", ENTITY_NAME, "room.notFound");
+        }
+
+        Set<ExamUser> examUsers = examUser.getExam().getExamUsers();
+        Map<ExamSeatDTO, ExamUser> seatToUser = getExamUserInRoomBySeat(examUsers, newRoom);
+
+        List<ExamSeatDTO> seatsOfNewRoom = examRoomService.getDefaultUsableSeats(newRoom, 0.0);
+        for (ExamSeatDTO seat : seatsOfNewRoom) {
+            if (!seatToUser.containsKey(seat)) {
+                setRoomAndSeatAndSaveExamUser(examUser, newRoomNumber, seat.name());
+                return;
+            }
+        }
+
+        throw new BadRequestAlertException("Not enough space in the new room", ENTITY_NAME, "room.noFreeSeats");
     }
 }

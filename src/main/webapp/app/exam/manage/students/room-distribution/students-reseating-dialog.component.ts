@@ -1,6 +1,21 @@
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { Component, InputSignal, ModelSignal, OutputEmitterRef, ViewEncapsulation, WritableSignal, effect, inject, input, model, output, signal } from '@angular/core';
+import {
+    Component,
+    InputSignal,
+    ModelSignal,
+    OutputEmitterRef,
+    Signal,
+    ViewEncapsulation,
+    WritableSignal,
+    computed,
+    effect,
+    inject,
+    input,
+    model,
+    output,
+    signal,
+} from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
 import { NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
@@ -11,7 +26,7 @@ import { StudentsRoomDistributionService } from 'app/exam/manage/services/studen
 import { ExamUser } from 'app/exam/shared/entities/exam-user.model';
 import { faBan, faChair } from '@fortawesome/free-solid-svg-icons';
 import { RoomForDistributionDTO, SeatsOfExamRoomDTO } from './students-room-distribution.model';
-import { Observable, debounceTime, distinctUntilChanged, map } from 'rxjs';
+import { Observable, debounceTime, distinctUntilChanged, finalize, map } from 'rxjs';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 
 @Component({
@@ -37,20 +52,22 @@ export class StudentsReseatingDialogComponent {
     private roomsUsedInExam: WritableSignal<RoomForDistributionDTO[]> = signal([]);
     useCustomLocation: WritableSignal<boolean> = signal(false);
     selectedRoomNumber: WritableSignal<string> = signal('');
+    private readonly selectedRoomId: Signal<number | undefined> = computed(() => this.getRoomDTOFromSelectedRoomNumber()?.id);
+    private readonly selectedRoomIsPersisted: Signal<boolean> = computed(() => this.selectedRoomId() !== undefined);
     private seatsOfSelectedRoom: WritableSignal<SeatsOfExamRoomDTO> = signal({ seats: [] });
     selectedSeat: WritableSignal<string> = signal('');
 
     constructor() {
         effect(() => {
-            const plannedRoomNumber: string = this.selectedRoomNumber();
-            if (plannedRoomNumber === '' || this.useCustomLocation()) {
+            if (!this.selectedRoomIsPersisted()) {
                 this.seatsOfSelectedRoom.set({ seats: [] });
-                this.useCustomLocation.set(true);
                 return;
             }
 
-            this.studentsRoomDistributionService.loadSeatsOfExamRoom(plannedRoomNumber).subscribe({
-                next: (data) => this.seatsOfSelectedRoom.set(data),
+            this.studentsRoomDistributionService.loadSeatsOfExamRoom(this.selectedRoomId()!).subscribe({
+                next: (data) => {
+                    this.seatsOfSelectedRoom.set(data);
+                },
                 // An error is expected whenever the room is not persisted
                 error: () => this.seatsOfSelectedRoom.set({ seats: [] }),
             });
@@ -63,15 +80,21 @@ export class StudentsReseatingDialogComponent {
         this.selectedSeat.set(this.examUser()!.plannedSeat ?? '');
         this.dialogVisible.set(true);
 
-        this.studentsRoomDistributionService.loadRoomsUsedInExam(this.courseId(), this.exam().id!).subscribe({
-            next: (rooms: RoomForDistributionDTO[]) => {
-                this.roomsUsedInExam.set(rooms);
-            },
-            error: (_err) => {
-                this.roomsUsedInExam.set([]);
-            },
-        });
-        this.studentsRoomDistributionService.loadRoomData();
+        this.studentsRoomDistributionService
+            .loadRoomsUsedInExam(this.courseId(), this.exam().id!)
+            .pipe(
+                finalize(() => {
+                    this.useCustomLocation.set(!this.selectedRoomIsPersisted());
+                }),
+            )
+            .subscribe({
+                next: (rooms: RoomForDistributionDTO[]) => {
+                    this.roomsUsedInExam.set(rooms);
+                },
+                error: (_err) => {
+                    this.roomsUsedInExam.set([]);
+                },
+            });
     }
 
     closeDialog(): void {
@@ -226,8 +249,12 @@ export class StudentsReseatingDialogComponent {
     }
 
     getDefaultValueForRoomSelection(): string {
-        const selectedRoomDTO = this.roomsUsedInExam().find((room) => room.roomNumber === this.selectedRoomNumber());
+        const selectedRoomDTO = this.getRoomDTOFromSelectedRoomNumber();
         return selectedRoomDTO ? this.roomFormatter(selectedRoomDTO) : '';
+    }
+
+    private getRoomDTOFromSelectedRoomNumber(): RoomForDistributionDTO | undefined {
+        return this.roomsUsedInExam().find((room) => room.roomNumber === this.selectedRoomNumber());
     }
 
     protected setUnassignedRoomNumber($event: Event) {

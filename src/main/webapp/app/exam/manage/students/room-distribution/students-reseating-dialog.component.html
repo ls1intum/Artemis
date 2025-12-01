@@ -6,15 +6,17 @@
     </ng-template>
     <form id="roomDistributionDialogForm" name="distributionForm" role="form" novalidate (keydown.enter)="$event.preventDefault()">
         <p jhiTranslate="artemisApp.exam.examUsers.rooms.reseating.introText" class="intro-text"></p>
-        <p
-            jhiTranslate="artemisApp.exam.examUsers.rooms.reseating.selectedStudent"
-            [translateValues]="{
-                studentLogin: examUser()?.user?.login ?? '',
-                studentName: getSelectedStudentName(),
-                plannedRoom: examUser()?.plannedRoom ?? '',
-                plannedSeat: examUser()?.plannedSeat ?? '',
-            }"
-        ></p>
+        <b>
+            <p
+                jhiTranslate="artemisApp.exam.examUsers.rooms.reseating.selectedStudent"
+                [translateValues]="{
+                    studentLogin: examUser()?.user?.login ?? '',
+                    studentName: getSelectedStudentName(),
+                    plannedRoom: examUser()?.plannedRoom ?? '',
+                    plannedSeat: examUser()?.plannedSeat ?? '',
+                }"
+            ></p>
+        </b>
         <div class="form-check form-switch ms-auto">
             <label for="useCustomLocationToggle" jhiTranslate="artemisApp.exam.examUsers.rooms.reseating.useCustomLocation" class="form-check-label"></label>
             <input id="useCustomLocationToggle" type="checkbox" class="form-check-input" [checked]="useCustomLocation()" (change)="toggleCustomLocation()" />
@@ -56,7 +58,6 @@
                 placeholder="{{ 'artemisApp.exam.examUsers.rooms.reseating.examSeatSearchPlaceholder' | artemisTranslate }}"
                 [ngbTypeahead]="examSeatSearch"
                 container="body"
-                [defaultValue]="examSeatFormatter(selectedSeat())"
                 [resultFormatter]="examSeatFormatter"
                 [inputFormatter]="examSeatFormatter"
                 (selectItem)="pickSelectedSeat($event)"

@@ -104,13 +104,12 @@ export class StudentsRoomDistributionService {
     /**
      * Sends a GET request to retrieve all seats of a specific exam room
      *
-     * @param examRoomNumber id of the exam room
+     * @param examRoomId id of the exam room
      */
-    loadSeatsOfExamRoom(examRoomNumber: string): Observable<SeatsOfExamRoomDTO> {
-        const requestUrl = `${this.BASE_URL}/rooms/seats`;
-        const params = new HttpParams().set('examRoomNumber', examRoomNumber);
+    loadSeatsOfExamRoom(examRoomId: number): Observable<SeatsOfExamRoomDTO> {
+        const requestUrl = `${this.BASE_URL}/rooms/${examRoomId}/seats`;
 
-        return this.http.get<SeatsOfExamRoomDTO>(requestUrl, { params }).pipe(
+        return this.http.get<SeatsOfExamRoomDTO>(requestUrl).pipe(
             map((seatsOfExamRoom: SeatsOfExamRoomDTO) => seatsOfExamRoom),
             catchError((error) => {
                 return throwError(() => error);
