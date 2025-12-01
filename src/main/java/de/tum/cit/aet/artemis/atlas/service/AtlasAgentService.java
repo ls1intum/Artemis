@@ -206,7 +206,7 @@ public class AtlasAgentService {
                     }
                 }
 
-                // Stay on MAIN_AGENT - Atlas Core continues managing the workflow
+                sessionAgentMap.put(sessionId, AgentType.MAIN_AGENT);
                 return CompletableFuture
                         .completedFuture(new AtlasAgentChatResponseDTO(delegationResponse, ZonedDateTime.now(), competencyModifiedInCurrentRequest.get(), previews));
             }
@@ -236,6 +236,7 @@ public class AtlasAgentService {
                     }
                 }
 
+                sessionAgentMap.put(sessionId, AgentType.MAIN_AGENT);
                 return CompletableFuture.completedFuture(new AtlasAgentChatResponseDTO(creationResponse, ZonedDateTime.now(), competencyModifiedInCurrentRequest.get(), previews));
             }
             else if (response.contains(RETURN_TO_MAIN_AGENT)) {
