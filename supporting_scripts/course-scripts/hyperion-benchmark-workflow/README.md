@@ -20,12 +20,12 @@ It is recommended to use a virtual environment to manage dependencies in isolati
       ```
    - Otherwise, you can use pip to install `virtualenv`:
       ```shell
-      python3 -m pip install virtualenv
+      python3.13 -m pip install virtualenv
       ```
 
 2. Create a virtual environment in **hyperion-benchmark-workflow** folder:
     ```shell
-    python3 -m venv venv
+    python3.13 -m venv venv
     ```
 
 3. Activate the virtual environment:
