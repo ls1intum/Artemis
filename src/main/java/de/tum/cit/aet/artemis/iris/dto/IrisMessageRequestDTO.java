@@ -15,7 +15,7 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageContent;
  *
  * @param content               the message content
  * @param messageDifferentiator used to differentiate messages
- * @param uncommittedFiles      optional map of uncommitted file changes (path to content), can be null
+ * @param uncommittedFiles      optional map of uncommitted file changes (path to content)
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record IrisMessageRequestDTO(@NonNull List<IrisMessageContent> content, @Nullable Integer messageDifferentiator, @Nullable Map<String, String> uncommittedFiles) {
