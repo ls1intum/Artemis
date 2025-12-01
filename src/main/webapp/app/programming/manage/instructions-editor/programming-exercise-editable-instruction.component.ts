@@ -158,9 +158,9 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     saveInstructions(event: any) {
         event.stopPropagation();
         this.savingInstructions = true;
-        const problemStatementToSave = this.exercise.problemStatement?.trim() || undefined;
+        const problemStatementToSave = this.programmingExercise().problemStatement?.trim() || undefined;
         return this.programmingExerciseService
-            .updateProblemStatement(this.exercise.id!, problemStatementToSave)
+            .updateProblemStatement(this.programmingExercise().id!, problemStatementToSave)
             .pipe(
                 tap(() => {
                     this.unsavedChanges = false;
