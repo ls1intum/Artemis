@@ -1,0 +1,72 @@
+/* Root container: behaves like .markdown-editor-wrapper */
+.markdown-diff-editor-root {
+    display: flex;
+    flex-flow: column nowrap;
+    flex: 1 1 auto;
+    height: inherit;
+    color: var(--md-wrapper-color);
+    background-color: var(--md-editor-background);
+
+    // Safari fullscreen fix – keep toolbar + editor usable
+    &:-webkit-full-screen {
+        width: 100%;
+        height: 100%;
+    }
+
+    .markdown-diff-editor-wrapper {
+        display: flex;
+        flex-direction: column;
+        flex: 1 1 auto;
+        min-height: 0;
+        border: 1px solid var(--border-color);
+        background-color: var(--md-editor-background);
+        overflow: auto; // allow scrolling in fullscreen
+    }
+
+    .markdown-diff-editor-toolbar {
+        background-color: var(--md-tab-list-bg);
+        border-bottom: 1px solid var(--border-color);
+        flex-shrink: 0;
+
+        .btn {
+            margin-right: 2px;
+
+            &:hover {
+                background-color: var(--bs-btn-hover-bg);
+            }
+        }
+
+        .btn-group {
+            margin-right: 2px;
+        }
+
+        .no-dropdown-indicator::after {
+            display: none;
+        }
+    }
+
+    .markdown-diff-editor-container {
+        flex: 1 1 auto;
+        min-height: 0;
+        width: 100%;
+
+        .monaco-editor {
+            width: 100%;
+            height: 100%;
+        }
+    }
+}
+
+/* Shared helpers copied from markdown editor styling */
+.dropdown-menu {
+    max-height: 300px;
+    overflow-y: auto;
+
+    li {
+        position: relative;
+    }
+}
+
+.default-font-size {
+    font-size: var(--bs-body-font-size);
+}

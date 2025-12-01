@@ -1,0 +1,61 @@
+<!-- Root element used for fullscreen (toolbar + editor) -->
+<div #fullElement class="markdown-diff-editor-root default-font-size">
+    <!-- Markdown Formatting Toolbar -->
+    <div class="markdown-diff-editor-toolbar d-flex align-items-center p-2">
+        <!-- Standard Actions -->
+        @for (action of defaultActions(); track action.id) {
+            <ng-container [ngTemplateOutlet]="simpleActionButton" [ngTemplateOutletContext]="{ action }" />
+        }
+        <!-- Color Action -->
+        @if (colorAction()) {
+            <div class="btn-group ms-1">
+                <button type="button" class="btn btn-sm px-2 py-0 color-preview" (click)="openColorSelector($event)" [jhiTranslate]="colorAction()!.translationKey"></button>
+                <jhi-color-selector [tagColors]="colorSignal()" (selectedColor)="onSelectColor($event)" />
+            </div>
+        }
+
+        <!-- Domain Actions (without options) -->
+        @for (action of domainActionsWithoutOptions(); track action.id) {
+            <ng-container [ngTemplateOutlet]="simpleActionButton" [ngTemplateOutletContext]="{ action }" />
+        }
+
+        <!-- Domain Actions (with options) -->
+        @for (action of domainActionsWithOptions(); track action.id) {
+            <div class="btn-group ms-1" ngbDropdown role="group">
+                <button class="btn btn-sm px-2 py-0" type="button" ngbDropdownToggle>
+                    <span [jhiTranslate]="action.translationKey"></span>
+                </button>
+                <div class="dropdown-menu" ngbDropdownMenu>
+                    @if (action.values.length) {
+                        @for (value of action.values; track value.id) {
+                            <button type="button" class="dropdown-item" (click)="executeDomainAction(action, value)">
+                                <span>{{ value.value }}</span>
+                            </button>
+                        }
+                    } @else {
+                        <button type="button" class="dropdown-item" [disabled]="true" jhiTranslate="global.generic.emptyList"></button>
+                    }
+                </div>
+            </div>
+        }
+
+        <!-- Meta Actions (includes Fullscreen) -->
+        @for (action of metaActions(); track action.id) {
+            <ng-container [ngTemplateOutlet]="simpleActionButton" [ngTemplateOutletContext]="{ action }" />
+        }
+    </div>
+
+    <!-- Wrapper in which the diff editor container is injected in ngAfterViewInit -->
+    <div #wrapper class="markdown-diff-editor-wrapper"></div>
+</div>
+
+<!-- Template for simple action buttons -->
+<ng-template #simpleActionButton let-action="action">
+    <button type="button" class="btn btn-sm py-0" [ngbTooltip]="action.icon ? (action.translationKey | artemisTranslate) : undefined" (click)="executeAction(action)">
+        @if (action.icon) {
+            <fa-icon [icon]="action.icon" />
+        } @else {
+            <span [jhiTranslate]="action.translationKey"></span>
+        }
+    </button>
+</ng-template>

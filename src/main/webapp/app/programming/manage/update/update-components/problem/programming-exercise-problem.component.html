@@ -83,8 +83,15 @@
                 !programmingExerciseCreationConfig.isImportFromExistingExercise
             ) {
                 @if (showDiff) {
-                    <!-- Inline Diff Editor -->
-                    <jhi-monaco-diff-editor [allowSplitView]="false" #diffEditor />
+                    <!-- Markdown Diff Editor with formatting toolbar -->
+                    <jhi-markdown-diff-editor-monaco
+                        #diffEditor
+                        class="overflow-hidden flex-grow-1"
+                        [allowSplitView]="false"
+                        [domainActions]="domainActions"
+                        [metaActions]="metaActions"
+                    >
+                    </jhi-markdown-diff-editor-monaco>
                 } @else {
                     <!-- Regular Editable Instructions -->
                     <jhi-programming-exercise-editable-instructions

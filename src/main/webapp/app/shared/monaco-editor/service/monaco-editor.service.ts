@@ -79,7 +79,7 @@ export class MonacoEditorService {
             automaticLayout: true,
             glyphMargin: true,
             minimap: { enabled: false },
-            readOnly: true,
+            readOnly: false,
             renderSideBySide: true,
             scrollBeyondLastLine: false,
             lineHeight: 16,

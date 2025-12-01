@@ -1,7 +1,7 @@
 import { AfterViewChecked, Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild, computed, inject, input, output, signal } from '@angular/core';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
-import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faQuestionCircle, faSave, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ProgrammingExerciseEditableInstructionComponent } from 'app/programming/manage/instructions-editor/programming-exercise-editable-instruction.component';
 import { ProgrammingExerciseCreationConfig } from 'app/programming/manage/update/programming-exercise-creation-config';
@@ -18,10 +18,8 @@ import { ButtonModule } from 'primeng/button';
 import { HyperionProblemStatementApiService } from 'app/openapi/api/hyperionProblemStatementApi.service';
 import { ProblemStatementGenerationRequest } from 'app/openapi/model/problemStatementGenerationRequest';
 import { ProblemStatementRefinementRequest } from 'app/openapi/model/problemStatementRefinementRequest';
-import { finalize } from 'rxjs';
-import { Subscription } from 'rxjs';
+import { Subscription, finalize } from 'rxjs';
 import { facArtemisIntelligence } from 'app/shared/icons/icons';
-import { faBan, faSave, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { ButtonSize } from 'app/shared/components/buttons/button/button.component';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -29,7 +27,13 @@ import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.com
 import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { FileService } from 'app/shared/service/file.service';
-import { MonacoDiffEditorComponent } from 'app/shared/monaco-editor/diff-editor/monaco-diff-editor.component';
+import { MarkdownDiffEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-diff-editor-monaco.component';
+import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
+import { TextEditorDomainAction } from 'app/shared/monaco-editor/model/actions/text-editor-domain-action.model';
+import { FullscreenAction } from 'app/shared/monaco-editor/model/actions/fullscreen.action';
+import { FormulaAction } from 'app/shared/monaco-editor/model/actions/formula.action';
+import { TaskAction } from 'app/shared/monaco-editor/model/actions/task.action';
+import { TestCaseAction } from 'app/shared/monaco-editor/model/actions/test-case.action';
 
 @Component({
     selector: 'jhi-programming-exercise-problem',
@@ -47,7 +51,7 @@ import { MonacoDiffEditorComponent } from 'app/shared/monaco-editor/diff-editor/
         ButtonModule,
         FaIconComponent,
         HelpIconComponent,
-        MonacoDiffEditorComponent,
+        MarkdownDiffEditorMonacoComponent,
     ],
 })
 export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy, AfterViewChecked {
@@ -69,6 +73,11 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy, A
         this.currentProblemStatement.set(newProblemStatement);
         this.problemStatementChange.emit(newProblemStatement);
     }
+
+    get exerciseId(): number | undefined {
+        const exercise = this.programmingExercise();
+        return exercise?.id;
+    }
     programmingExerciseChange = output<ProgrammingExercise>();
     // Problem statement generation properties
     userPrompt = '';
@@ -81,9 +90,12 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy, A
     originalProblemStatement = '';
     refinedProblemStatement = '';
     private diffContentSet = false;
-    @ViewChild('diffEditor') diffEditor?: MonacoDiffEditorComponent;
+    @ViewChild('diffEditor') diffEditor?: MarkdownDiffEditorMonacoComponent;
     private templateProblemStatement = signal<string>('');
     private currentProblemStatement = signal<string>('');
+    private readonly testCaseAction: TextEditorDomainAction = new TestCaseAction();
+    domainActions: TextEditorDomainAction[] = [new FormulaAction(), new TaskAction(), this.testCaseAction];
+    metaActions: TextEditorAction[] = [new FullscreenAction()];
 
     // icons
     facArtemisIntelligence = facArtemisIntelligence;
