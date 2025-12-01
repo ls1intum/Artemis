@@ -117,7 +117,6 @@ artemis:
     lecture:
         video-upload:
             enabled: false  # Set to true to enable video file uploads for lecture units in tests
-Update hibernate to hibernate_version=6.6.34.Final.
 spring:
     application:
         name: Artemis
