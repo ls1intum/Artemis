@@ -4,6 +4,7 @@ import { UserCredentials } from './users';
 import { NavigationBar } from './pageobjects/NavigationBar';
 import { CourseManagementAPIRequests } from './requests/CourseManagementAPIRequests';
 import { CourseManagementPage } from './pageobjects/course/CourseManagementPage';
+import { CompetencyManagementPage } from './pageobjects/course/CompetencyManagementPage';
 import { CourseCreationPage } from './pageobjects/course/CourseCreationPage';
 import { UserManagementAPIRequests } from './requests/UserManagementAPIRequests';
 import { Commands } from './commands';
@@ -97,6 +98,7 @@ export type ArtemisPageObjects = {
     studentAssessment: StudentAssessmentPage;
     textExerciseAssessment: TextExerciseAssessmentPage;
     courseManagement: CourseManagementPage;
+    competencyManagement: CompetencyManagementPage;
     courseManagementExercises: CourseManagementExercisesPage;
     courseCreation: CourseCreationPage;
     courseList: CoursesPage;
@@ -210,6 +212,9 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
     },
     courseManagement: async ({ page }, use) => {
         await use(new CourseManagementPage(page));
+    },
+    competencyManagement: async ({ page }, use) => {
+        await use(new CompetencyManagementPage(page));
     },
     courseManagementExercises: async ({ page }, use) => {
         await use(new CourseManagementExercisesPage(page));
