@@ -146,25 +146,22 @@
                                 } @else {
                                     <fa-icon [icon]="faCheckDouble" class="text-white me-2" />
                                 }
-                                <span jhiTranslate="artemisApp.consistencyCheck.button"></span>
+                                <span jhiTranslate="artemisApp.hyperion.consistencyCheck.button"></span>
                             </button>
 
-                            <!-- Small arrow part: opens dropdown -->
-                            <button class="btn btn-primary dropdown-toggle dropdown-toggle-split" ngbDropdownToggle [disabled]="!consistencyIssues().length">
-                                <span class="visually-hidden">Toggle consistency issues dropdown</span>
-                            </button>
+                            <button class="btn btn-primary dropdown-toggle dropdown-toggle-split" ngbDropdownToggle [disabled]="!consistencyIssues().length"></button>
 
                             <!-- Dropdown menu with issues -->
                             <div ngbDropdownMenu class="px-0 py-1">
                                 @for (issue of sortedIssues(); track issue; let last = $last) {
-                                    <div class="dropdown-item dropdown-item-nohover d-flex align-items-center justify-content-between" style="gap: 0.5rem">
-                                        <div class="d-flex align-items-center" style="gap: 0.25rem">
+                                    <div class="dropdown-item dropdown-item-nohover d-flex align-items-center justify-content-between consistency-issue-item">
+                                        <div class="d-flex align-items-center consistency-issue-item__meta">
                                             <fa-icon [icon]="getSeverityIcon(issue)" [class]="getSeverityColor(issue) + ' me-1'" />
-                                            <span>{{ getIssueLabel(issue) }}</span>
+                                            <span [jhiTranslate]="'artemisApp.hyperion.consistencyCheck.category.' + issue.category"></span>
                                         </div>
 
                                         <!-- Right side: two arrow buttons -->
-                                        <div class="d-flex align-items-center" style="gap: 0.25rem">
+                                        <div class="d-flex align-items-center consistency-issue-item__actions">
                                             <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-1" (click)="onIssueNavigate(issue, -1, $event)">
                                                 <fa-icon [icon]="faArrowLeft" class="text-primary" />
                                             </button>

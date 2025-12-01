@@ -9,3 +9,9 @@
         color: inherit !important;
     }
 }
+
+.consistency-issue-item,
+.consistency-issue-item__meta,
+.consistency-issue-item__actions {
+    gap: 0.25rem;
+}

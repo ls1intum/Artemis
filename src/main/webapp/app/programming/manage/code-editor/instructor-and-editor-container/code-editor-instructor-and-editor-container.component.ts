@@ -123,7 +123,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         this.consistencyIssues.set([]);
 
         if (!exercise.id) {
-            this.alertService.error(this.translateService.instant('artemisApp.consistencyCheck.checkFailedAlert'));
+            this.alertService.error(this.translateService.instant('artemisApp.hyperion.consistencyCheck.checkFailedAlert'));
             return;
         }
 
@@ -144,18 +144,18 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                         this.consistencyIssues.set(response.issues ?? []);
 
                         if (this.consistencyIssues().length === 0) {
-                            this.alertService.success(this.translateService.instant('artemisApp.consistencyCheck.noInconsistencies'));
+                            this.alertService.success(this.translateService.instant('artemisApp.hyperion.consistencyCheck.noInconsistencies'));
                         } else {
-                            this.alertService.warning(this.translateService.instant('artemisApp.consistencyCheck.inconsistenciesFoundAlert'));
+                            this.alertService.warning(this.translateService.instant('artemisApp.hyperion.consistencyCheck.inconsistenciesFoundAlert'));
                         }
                     },
                     error: () => {
-                        this.alertService.error(this.translateService.instant('artemisApp.consistencyCheck.checkFailedAlert'));
+                        this.alertService.error(this.translateService.instant('artemisApp.hyperion.consistencyCheck.checkFailedAlert'));
                     },
                 });
             },
             error: (err) => {
-                this.alertService.error(this.translateService.instant('artemisApp.consistencyCheck.checkFailedAlert'));
+                this.alertService.error(this.translateService.instant('artemisApp.hyperion.consistencyCheck.checkFailedAlert'));
             },
         });
     }
@@ -240,23 +240,29 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             this.locationIndex = deltaIndex === 1 ? 0 : issue.relatedLocations.length - 1;
         }
 
-        // Set parameters for when fileLoad is called
-        this.lineJumpOnFileLoad = issue.relatedLocations[this.locationIndex].endLine;
-        this.fileToJumpOn = getRepoPath(issue.relatedLocations[this.locationIndex]);
-
         if (issue.relatedLocations[this.locationIndex].type === 'PROBLEM_STATEMENT') {
             this.codeEditorContainer.selectedFile = this.codeEditorContainer.problemStatementIdentifier;
             this.editableInstructions.jumpToLine(issue.relatedLocations[this.locationIndex].endLine);
             return;
         }
 
-        if (issue.relatedLocations[this.locationIndex].type === 'TEMPLATE_REPOSITORY' && this.codeEditorContainer.selectedRepository() !== 'TEMPLATE') {
-            await this.selectTemplateParticipation();
-        } else if (issue.relatedLocations[this.locationIndex].type === 'SOLUTION_REPOSITORY' && this.codeEditorContainer.selectedRepository() !== 'SOLUTION') {
-            await this.selectSolutionParticipation();
-        } else if (issue.relatedLocations[this.locationIndex].type === 'TESTS_REPOSITORY' && this.codeEditorContainer.selectedRepository() !== 'TESTS') {
-            await this.selectTestRepository();
+        try {
+            if (issue.relatedLocations[this.locationIndex].type === 'TEMPLATE_REPOSITORY' && this.codeEditorContainer.selectedRepository() !== 'TEMPLATE') {
+                await this.selectTemplateParticipation();
+            } else if (issue.relatedLocations[this.locationIndex].type === 'SOLUTION_REPOSITORY' && this.codeEditorContainer.selectedRepository() !== 'SOLUTION') {
+                await this.selectSolutionParticipation();
+            } else if (issue.relatedLocations[this.locationIndex].type === 'TESTS_REPOSITORY' && this.codeEditorContainer.selectedRepository() !== 'TESTS') {
+                await this.selectTestRepository();
+            }
+        } catch (error) {
+            this.alertService.error(this.translateService.instant('artemisApp.hyperion.consistencyCheck.navigationFailed'));
+            this.lineJumpOnFileLoad = undefined;
+            this.fileToJumpOn = undefined;
         }
+
+        // Set parameters for when fileLoad is called
+        this.lineJumpOnFileLoad = issue.relatedLocations[this.locationIndex].endLine;
+        this.fileToJumpOn = getRepoPath(issue.relatedLocations[this.locationIndex]);
 
         // We need to wait for the editor to be fully loaded,
         // else the file content does not show

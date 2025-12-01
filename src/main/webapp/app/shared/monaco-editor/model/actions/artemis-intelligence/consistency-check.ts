@@ -44,7 +44,7 @@ export function addCommentBoxes(
  * @param translateService  Service to translate text in the comments.
  */
 export function addCommentBox(editor: MonacoEditorComponent, issue: InlineConsistencyIssue, id: number, translateService: TranslateService) {
-    const headingText = translateService.instant('artemisApp.consistencyCheck.issueHeading');
+    const headingText = translateService.instant('artemisApp.hyperion.consistencyCheck.issueHeading');
     const node = document.createElement('div');
     node.className = 'alert alert-warning alert-dismissible text-start fade show';
     node.innerHTML = `

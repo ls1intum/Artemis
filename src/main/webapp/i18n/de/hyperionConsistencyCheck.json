@@ -1,0 +1,22 @@
+{
+    "artemisApp": {
+        "hyperion": {
+            "consistencyCheck": {
+                "button": "Konsistenzprüfung",
+                "noInconsistencies": "Keine Inkonsistenzen gefunden",
+                "inconsistenciesFoundAlert": "Es wurden Inkonsistenzen in der Programmieraufgabe gefunden",
+                "checkFailedAlert": "Es gab einen Fehler bei der Konsistenzprüfung",
+                "issueHeading": "Konsistenzfehler gefunden",
+                "navigationFailed": "Es konnte nicht zur Inkonsistenz gesprungen werden",
+                "category": {
+                    "METHOD_RETURN_TYPE_MISMATCH": "Rückgabetyp der Methode stimmt nicht überein",
+                    "METHOD_PARAMETER_MISMATCH": "Methodenparameter stimmen nicht überein",
+                    "CONSTRUCTOR_PARAMETER_MISMATCH": "Konstruktorparameter stimmen nicht überein",
+                    "ATTRIBUTE_TYPE_MISMATCH": "Attributtyp stimmt nicht überein",
+                    "VISIBILITY_MISMATCH": "Sichtbarkeit stimmt nicht überein",
+                    "IDENTIFIER_NAMING_INCONSISTENCY": "Inkonsistente Benennung von Bezeichnern"
+                }
+            }
+        }
+    }
+}
