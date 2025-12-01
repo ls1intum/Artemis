@@ -9,6 +9,7 @@ import { ASSIGNMENT_REPO_NAME, TEST_REPO_NAME } from 'app/shared/constants/input
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
+import { getDefaultContainerConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
 
 @Component({
     selector: 'jhi-programming-exercise-custom-build-plan',
@@ -38,7 +39,7 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
         if (this._editor) {
             this.setupEditor();
             if (this.programmingExercise.id || this.isImportFromFile) {
-                this.code = this.programmingExercise.buildConfig?.buildScript || '';
+                this.code = getDefaultContainerConfig(this.programmingExercise.buildConfig).buildScript || '';
             }
             this._editor.setText(this.code);
         }
@@ -69,8 +70,8 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
      */
     resetCustomBuildPlan() {
         this.programmingExercise.buildConfig!.windfile = undefined;
-        this.programmingExercise.buildConfig!.buildPlanConfiguration = undefined;
-        this.programmingExercise.buildConfig!.buildScript = undefined;
+        getDefaultContainerConfig(this.programmingExercise.buildConfig!).buildPlanConfiguration = undefined;
+        getDefaultContainerConfig(this.programmingExercise.buildConfig!).buildScript = undefined;
     }
 
     /**
@@ -102,7 +103,7 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
         if (!this.programmingExercise.buildConfig?.windfile) {
             this.resetCustomBuildPlan();
         }
-        if (!isImportFromFile || !this.programmingExercise.buildConfig?.buildScript) {
+        if (!isImportFromFile || !getDefaultContainerConfig(this.programmingExercise.buildConfig).buildScript) {
             this.aeolusService.getAeolusTemplateScript(this.programmingLanguage, this.projectType, this.staticCodeAnalysisEnabled, this.sequentialTestRuns).subscribe({
                 next: (file: string) => {
                     file = this.replacePlaceholders(file);
@@ -110,11 +111,11 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
                     this.editor?.setText(file);
                 },
                 error: () => {
-                    this.programmingExercise.buildConfig!.buildScript = undefined;
+                    getDefaultContainerConfig(this.programmingExercise.buildConfig!).buildScript = undefined;
                 },
             });
         }
-        if (!this.programmingExercise.buildConfig?.buildScript) {
+        if (!getDefaultContainerConfig(this.programmingExercise.buildConfig).buildScript) {
             this.resetCustomBuildPlan();
         }
         if (!this.programmingExercise.buildConfig?.timeoutSeconds) {
@@ -132,7 +133,7 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
         const code = typeof codeOrEvent === 'string' ? codeOrEvent : codeOrEvent.text;
         this.code = code;
         this.editor?.setText(code);
-        this.programmingExercise.buildConfig!.buildScript = code;
+        getDefaultContainerConfig(this.programmingExercise.buildConfig!).buildScript = code;
     }
 
     /**

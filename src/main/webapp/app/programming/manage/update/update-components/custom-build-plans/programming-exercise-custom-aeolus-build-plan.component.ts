@@ -11,6 +11,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { NgClass } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { getDefaultContainerConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
 
 @Component({
     selector: 'jhi-programming-exercise-custom-aeolus-build-plan',
@@ -69,7 +70,7 @@ export class ProgrammingExerciseCustomAeolusBuildPlanComponent implements OnChan
      */
     resetCustomBuildPlan() {
         this.programmingExercise.buildConfig!.windfile = undefined;
-        this.programmingExercise.buildConfig!.buildPlanConfiguration = undefined;
+        getDefaultContainerConfig(this.programmingExercise.buildConfig!).buildPlanConfiguration = undefined;
     }
 
     /**
@@ -81,8 +82,10 @@ export class ProgrammingExerciseCustomAeolusBuildPlanComponent implements OnChan
     loadAeolusTemplate(isImportFromFile: boolean = false) {
         if (this.programmingExercise?.id || isImportFromFile) {
             if (!this.programmingExerciseCreationConfig.buildPlanLoaded && !this.programmingExercise.buildConfig?.windfile) {
-                if (this.programmingExercise.buildConfig?.buildPlanConfiguration) {
-                    this.programmingExercise.buildConfig!.windfile = this.aeolusService.parseWindFile(this.programmingExercise.buildConfig?.buildPlanConfiguration);
+                if (getDefaultContainerConfig(this.programmingExercise.buildConfig).buildPlanConfiguration) {
+                    this.programmingExercise.buildConfig!.windfile = this.aeolusService.parseWindFile(
+                        getDefaultContainerConfig(this.programmingExercise.buildConfig).buildPlanConfiguration!,
+                    );
                 }
                 this.programmingExerciseCreationConfig.buildPlanLoaded = true;
             }

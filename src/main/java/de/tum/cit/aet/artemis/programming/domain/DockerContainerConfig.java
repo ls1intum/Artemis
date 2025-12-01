@@ -24,6 +24,7 @@ public class DockerContainerConfig {
     private Long id;
 
     @Column(name = "config_name")
+    @JsonIgnore
     private String name;
 
     @Column(name = "build_plan_configuration", columnDefinition = "longtext")

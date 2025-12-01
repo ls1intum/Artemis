@@ -1,13 +1,14 @@
 import { Component, OnInit, effect, inject, input, output, viewChild } from '@angular/core';
 import { FormsModule, NgModel } from '@angular/forms';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
-import { faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faAngleDown, faAngleRight, faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { TableEditableFieldComponent } from 'app/shared/table/editable-field/table-editable-field.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { getDefaultContainerConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
 
 const NOT_SUPPORTED_NETWORK_DISABLED_LANGUAGES = [ProgrammingLanguage.EMPTY];
 
@@ -17,6 +18,19 @@ interface DockerFlags {
     cpuCount?: number;
     memory?: number;
     memorySwap?: number;
+}
+
+interface MockDockerContainer {
+    id: number;
+    name: string;
+    image: string;
+    branch: string;
+    script: string;
+    timeoutSeconds: number;
+    allowBranching: boolean;
+    flags: string[];
+    notes?: string;
+    open?: boolean;
 }
 
 @Component({
@@ -55,11 +69,44 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
 
     faPlus = faPlus;
     faTrash = faTrash;
+    faAngleDown = faAngleDown;
+    faAngleRight = faAngleRight;
+
+    mockDockerContainers: MockDockerContainer[] = [
+        {
+            id: 1,
+            name: 'Default Test Runner',
+            image: 'artemis/default-runner:latest',
+            branch: 'refs/heads/main',
+            script: './gradlew clean test',
+            timeoutSeconds: 420,
+            allowBranching: false,
+            flags: ['--cpus=2', '--memory=4g'],
+            notes: 'Runs the standard Maven/Gradle tests',
+            open: true,
+        },
+        {
+            id: 2,
+            name: 'GPU Evaluation',
+            image: 'artemis/gpu-runner:cuda-12',
+            branch: 'refs/heads/gpu-support',
+            script: 'python evaluate.py',
+            timeoutSeconds: 900,
+            allowBranching: true,
+            flags: ['--gpus=all', '--shm-size=2g'],
+            notes: 'Used for ML grading tasks requiring CUDA',
+            open: false,
+        },
+    ];
 
     constructor() {
         effect(() => {
             this.setIsLanguageSupported();
         });
+    }
+
+    toggleMockContainer(container: MockDockerContainer) {
+        container.open = !container.open;
     }
 
     ngOnInit() {
@@ -91,13 +138,15 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
             }
         }
 
-        if (this.programmingExercise()?.buildConfig?.dockerFlags) {
+        if (getDefaultContainerConfig(this.programmingExercise()?.buildConfig).dockerFlags) {
             this.initDockerFlags();
         }
     }
 
     initDockerFlags() {
-        this.dockerFlags = JSON.parse(this.programmingExercise()?.buildConfig?.dockerFlags ?? '') as DockerFlags;
+        const containerConfig = getDefaultContainerConfig(this.programmingExercise()?.buildConfig);
+        this.dockerFlags = JSON.parse(containerConfig?.dockerFlags ?? '') as DockerFlags;
+
         this.isNetworkDisabled = this.dockerFlags.network === 'none';
         if (this.dockerFlags.cpuCount) {
             this.cpuCount = this.dockerFlags.cpuCount;
@@ -169,7 +218,7 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
             }
         });
         this.dockerFlags = { network: this.isNetworkDisabled ? 'none' : undefined, env: newEnv, cpuCount: this.cpuCount, memory: this.memory, memorySwap: this.memorySwap };
-        this.programmingExercise()!.buildConfig!.dockerFlags = JSON.stringify(this.dockerFlags);
+        getDefaultContainerConfig(this.programmingExercise()!.buildConfig!).dockerFlags = JSON.stringify(this.dockerFlags);
     }
 
     setIsLanguageSupported() {

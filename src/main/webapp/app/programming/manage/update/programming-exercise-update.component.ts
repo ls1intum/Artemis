@@ -2,7 +2,7 @@ import { ActivatedRoute, Params } from '@angular/router';
 import { AfterViewInit, Component, OnDestroy, OnInit, ViewChild, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
-import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
+import { ProgrammingExerciseBuildConfig, getDefaultContainerConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
 import { Observable, Subject, Subscription } from 'rxjs';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType, resetProgrammingForImport } from 'app/programming/shared/entities/programming-exercise.model';
@@ -333,7 +333,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             this.buildPlanLoaded = false;
             if (this.programmingExercise.buildConfig) {
                 this.programmingExercise.buildConfig.windfile = undefined;
-                this.programmingExercise.buildConfig.buildPlanConfiguration = undefined;
+                getDefaultContainerConfig(this.programmingExercise.buildConfig).buildPlanConfiguration = undefined;
             } else {
                 this.programmingExercise.buildConfig = new ProgrammingExerciseBuildConfig();
             }
@@ -454,8 +454,10 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.notificationText = undefined;
         this.activatedRoute.data.subscribe(({ programmingExercise }) => {
             this.programmingExercise = programmingExercise;
-            if (this.programmingExercise.buildConfig?.buildPlanConfiguration) {
-                this.programmingExercise.buildConfig!.windfile = this.aeolusService.parseWindFile(this.programmingExercise.buildConfig!.buildPlanConfiguration);
+            if (getDefaultContainerConfig(this.programmingExercise.buildConfig).buildPlanConfiguration) {
+                this.programmingExercise.buildConfig!.windfile = this.aeolusService.parseWindFile(
+                    getDefaultContainerConfig(this.programmingExercise.buildConfig).buildPlanConfiguration!,
+                );
             }
             this.backupExercise = cloneDeep(this.programmingExercise);
             this.selectedProgrammingLanguageValue = this.programmingExercise.programmingLanguage!;
@@ -734,9 +736,11 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         }
 
         if (this.programmingExercise.customizeBuildPlanWithAeolus || this.isImportFromFile || this.isImportFromSharing) {
-            this.programmingExercise.buildConfig!.buildPlanConfiguration = this.aeolusService.serializeWindFile(this.programmingExercise.buildConfig!.windfile!);
+            getDefaultContainerConfig(this.programmingExercise.buildConfig!).buildPlanConfiguration = this.aeolusService.serializeWindFile(
+                this.programmingExercise.buildConfig!.windfile!,
+            );
         } else {
-            this.programmingExercise.buildConfig!.buildPlanConfiguration = undefined;
+            getDefaultContainerConfig(this.programmingExercise.buildConfig!).buildPlanConfiguration = undefined;
             this.programmingExercise.buildConfig!.windfile = undefined;
         }
 

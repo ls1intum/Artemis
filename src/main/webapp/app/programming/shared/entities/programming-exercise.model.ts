@@ -7,6 +7,9 @@ import { AuxiliaryRepository } from 'app/programming/shared/entities/programming
 import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
 import { SubmissionPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';
 import dayjs from 'dayjs/esm';
+/*import {
+    DockerContainerConfig
+} from 'app/programming/shared/entities/docker-container.config'; TODO*/
 
 export enum ProgrammingLanguage {
     EMPTY = 'EMPTY',
@@ -112,11 +115,18 @@ export function copyBuildConfigFromExerciseJson(exerciseJson: ProgrammingExercis
     buildConfig.assignmentCheckoutPath = exerciseJson.assignmentCheckoutPath ?? '';
     buildConfig.solutionCheckoutPath = exerciseJson.solutionCheckoutPath ?? '';
     buildConfig.testCheckoutPath = exerciseJson.testCheckoutPath ?? '';
-    buildConfig.buildPlanConfiguration = exerciseJson.buildPlanConfiguration ?? '';
     buildConfig.checkoutSolutionRepository = exerciseJson.checkoutSolutionRepository ?? false;
     buildConfig.timeoutSeconds = exerciseJson.timeoutSeconds ?? 0;
     buildConfig.windfile = exerciseJson.windfile ?? undefined;
-    buildConfig.buildScript = exerciseJson.buildScript ?? '';
-    buildConfig.dockerFlags = exerciseJson.dockerFlags ?? '';
+
+    // TODO: Ensure the old compatability is not broken!
+    /*const containerConfig: DockerContainerConfig = {
+        buildPlanConfiguration: exerciseJson.buildPlanConfiguration ?? '',
+        buildScript: exerciseJson.buildScript ?? '',
+        dockerFlags: exerciseJson.dockerFlags ?? '',
+        name: 'Container 1',
+    }; TODO I don't really understand. Fix it later. */
+    buildConfig.containerConfigs = exerciseJson.containerConfigs; //  [containerConfig];
+
     return buildConfig;
 }

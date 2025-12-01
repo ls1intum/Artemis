@@ -67,6 +67,7 @@ import { catchError, map, mergeMap, switchMap, tap } from 'rxjs/operators';
 import { ProgrammingExerciseInstructorExerciseSharingComponent } from '../../shared/actions/programming-exercise-instructor-exercise-sharing.component';
 import { RepositoryType } from '../../shared/code-editor/model/code-editor.model';
 import { ProgrammingExerciseSharingService } from '../services/programming-exercise-sharing.service';
+import { getDefaultContainerConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -571,18 +572,18 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     },
                 },
                 diffReportDetail,
-                !!exercise.buildConfig?.buildScript &&
+                !!getDefaultContainerConfig(exercise.buildConfig).buildScript &&
                     !!exercise.buildConfig?.windfile?.metadata?.docker?.image && {
                         type: DetailType.Text,
                         title: 'artemisApp.programmingExercise.dockerImage',
                         data: { text: exercise.buildConfig?.windfile?.metadata?.docker?.image },
                     },
-                !!exercise.buildConfig?.buildScript &&
+                !!getDefaultContainerConfig(exercise.buildConfig).buildScript &&
                     !!exercise.buildConfig?.windfile?.metadata?.docker?.image && {
                         type: DetailType.Markdown,
                         title: 'artemisApp.programmingExercise.script',
                         titleHelpText: 'artemisApp.programmingExercise.revertToTemplateBuildPlan',
-                        data: { innerHtml: this.artemisMarkdown.safeHtmlForMarkdown('```bash\n' + exercise.buildConfig?.buildScript + '\n```') },
+                        data: { innerHtml: this.artemisMarkdown.safeHtmlForMarkdown('```bash\n' + getDefaultContainerConfig(exercise.buildConfig).buildScript + '\n```') },
                     },
                 {
                     type: DetailType.Text,
@@ -780,8 +781,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
      * @param exercise the programming exercise to check
      */
     checkAndSetWindFile(exercise: ProgrammingExercise) {
-        if (exercise.buildConfig && exercise.buildConfig?.buildPlanConfiguration && !exercise.buildConfig?.windfile) {
-            exercise.buildConfig!.windfile = this.aeolusService.parseWindFile(exercise.buildConfig?.buildPlanConfiguration);
+        if (exercise.buildConfig && getDefaultContainerConfig(exercise.buildConfig).buildPlanConfiguration && !exercise.buildConfig?.windfile) {
+            exercise.buildConfig!.windfile = this.aeolusService.parseWindFile(getDefaultContainerConfig(exercise.buildConfig).buildPlanConfiguration!);
         }
     }
 

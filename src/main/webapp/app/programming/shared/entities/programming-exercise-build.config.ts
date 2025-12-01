@@ -1,19 +1,18 @@
 import { WindFile } from 'app/programming/shared/entities/wind.file';
+import { DockerContainerConfig } from './docker-container.config';
 
 export class ProgrammingExerciseBuildConfig {
     public sequentialTestRuns?: boolean;
-    public buildPlanConfiguration?: string;
-    public buildScript?: string;
     public checkoutSolutionRepository: boolean;
     public assignmentCheckoutPath?: string;
     public testCheckoutPath?: string;
     public solutionCheckoutPath?: string;
     public timeoutSeconds?: number;
-    public dockerFlags?: string;
     public windfile?: WindFile;
     public theiaImage?: string;
     public allowBranching: boolean;
     public branchRegex: string;
+    public containerConfigs: { [key: string]: DockerContainerConfig };
 
     constructor() {
         this.checkoutSolutionRepository = false; // default value
@@ -21,3 +20,7 @@ export class ProgrammingExerciseBuildConfig {
         this.branchRegex = '.*'; // default value
     }
 }
+
+export const getDefaultContainerConfig = (buildConfig: ProgrammingExerciseBuildConfig | undefined): DockerContainerConfig => {
+    return buildConfig!.containerConfigs['Container 1']!;
+};
