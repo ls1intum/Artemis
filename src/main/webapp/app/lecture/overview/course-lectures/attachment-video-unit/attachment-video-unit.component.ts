@@ -59,8 +59,22 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
 
     readonly hasTranscript = computed(() => this.transcriptSegments().length > 0);
 
+    private readonly videoExtensions = ['mp4', 'webm', 'ogg', 'mov', 'avi', 'mkv', 'flv', 'wmv', 'm4v'];
+
     // TODO: This must use a server configuration to make it compatible with deployments other than TUM
     private readonly videoUrlAllowList = [RegExp('^https://(?:live\\.rbg\\.tum\\.de|tum\\.live)/w/\\w+/\\d+(/(CAM|COMB|PRES))?\\?video_only=1')];
+
+    /**
+     * Checks if the current video is an uploaded video file (not an embedded URL)
+     */
+    readonly isUploadedVideoFile = computed(() => {
+        const attachment = this.lectureUnit().attachment;
+        if (!attachment?.link) {
+            return false;
+        }
+        const fileExtension = attachment.link.split('.').pop()?.toLowerCase();
+        return this.videoExtensions.includes(fileExtension || '');
+    });
 
     /**
      * Return the URL of the video source
@@ -76,8 +90,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         const attachment = this.lectureUnit().attachment;
         if (attachment?.link) {
             const fileExtension = attachment.link.split('.').pop()?.toLowerCase();
-            const videoExtensions = ['mp4', 'webm', 'ogg', 'mov', 'avi', 'mkv', 'flv', 'wmv', 'm4v'];
-            if (videoExtensions.includes(fileExtension || '')) {
+            if (this.videoExtensions.includes(fileExtension || '')) {
                 // Return the attachment link as a playable URL
                 return addPublicFilePrefix(attachment.link);
             }
@@ -215,22 +228,9 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     }
 
     /**
-     * Checks if the current video is an uploaded video file (not an embedded URL)
-     */
-    isUploadedVideoFile(): boolean {
-        const attachment = this.lectureUnit().attachment;
-        if (!attachment?.link) {
-            return false;
-        }
-        const fileExtension = attachment.link.split('.').pop()?.toLowerCase();
-        const videoExtensions = ['mp4', 'webm', 'ogg', 'mov', 'avi', 'mkv', 'flv', 'wmv', 'm4v'];
-        return videoExtensions.includes(fileExtension || '');
-    }
-
-    /**
      * Returns the matching icon for the file extension of the attachment
      */
-    getAttachmentIcon(): IconDefinition {
+    readonly attachmentIcon = computed((): IconDefinition => {
         // Show video icon if there's an embedded video source OR an uploaded video file
         if (this.hasVideo() || this.isUploadedVideoFile()) {
             return faFileVideo;
@@ -286,5 +286,5 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             }
         }
         return faFile;
-    }
+    });
 }

@@ -112,6 +112,7 @@ function validJsonOrEmpty(control: AbstractControl): ValidationErrors | null {
 @Component({
     selector: 'jhi-attachment-video-unit-form',
     templateUrl: './attachment-video-unit-form.component.html',
+    styleUrl: './attachment-video-unit-form.component.scss',
     imports: [FormsModule, ReactiveFormsModule, TranslateDirective, FaIconComponent, NgbTooltip, FormDateTimePickerComponent, CompetencySelectionComponent, ArtemisTranslatePipe],
 })
 export class AttachmentVideoUnitFormComponent {
