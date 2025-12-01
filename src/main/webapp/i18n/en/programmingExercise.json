@@ -239,7 +239,11 @@
                 "generationError": "Failed to generate problem statement. Please try again.",
                 "refinementSuccess": "Problem statement has been successfully refined.",
                 "refinementError": "Failed to refine problem statement. Please try again.",
-                "refinementFailed": "Problem statement could not be refined. The original problem statement has been kept."
+                "refinementFailed": "Problem statement could not be refined. The original problem statement has been kept.",
+                "reviewChanges": "Review Changes",
+                "reviewChangesDescription": "Green lines will be added, red lines will be removed.",
+                "acceptChanges": "Accept Changes",
+                "rejectChanges": "Reject Changes"
             },
             "status": {
                 "solutionFailsTest": "The Solution Repository does not fulfill one or more test cases. This could indicate an issue with the Solution Repository or the test cases.",

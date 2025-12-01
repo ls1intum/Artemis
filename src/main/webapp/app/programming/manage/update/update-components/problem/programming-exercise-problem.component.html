@@ -38,6 +38,24 @@
     @if (isEditFieldDisplayedRecord()?.problemStatement) {
         <div class="form-group" id="field_problemStatement" name="problemStatement">
             <label class="form-control-label" for="field_problemStatement" jhiTranslate="artemisApp.programmingExercise.problemStatement.title"></label>
+            @if (showDiff) {
+                <div class="alert alert-info d-flex justify-content-between align-items-center mb-2">
+                    <span>
+                        <strong jhiTranslate="artemisApp.programmingExercise.problemStatement.reviewChanges"></strong>
+                        <span class="ms-2" jhiTranslate="artemisApp.programmingExercise.problemStatement.reviewChangesDescription"></span>
+                    </span>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-success btn-sm" type="button" (click)="acceptRefinement()">
+                            <fa-icon [icon]="faSave" class="me-1" />
+                            <span jhiTranslate="artemisApp.programmingExercise.problemStatement.acceptChanges"></span>
+                        </button>
+                        <button class="btn btn-secondary btn-sm" type="button" (click)="rejectRefinement()">
+                            <fa-icon [icon]="faBan" class="me-1" />
+                            <span jhiTranslate="artemisApp.programmingExercise.problemStatement.rejectChanges"></span>
+                        </button>
+                    </div>
+                </div>
+            }
             @if (programmingExerciseCreationConfig.isImportFromExistingExercise || programmingExerciseCreationConfig.isImportFromFile) {
                 <ngb-alert [dismissible]="false">
                     <span class="font-weight-bold">
@@ -64,18 +82,24 @@
                 programmingExerciseCreationConfig.templateParticipationResultLoaded &&
                 !programmingExerciseCreationConfig.isImportFromExistingExercise
             ) {
-                <jhi-programming-exercise-editable-instructions
-                    [participation]="programmingExercise()?.templateParticipation!"
-                    [exercise]="programmingExercise()!"
-                    [initialEditorHeight]="MarkdownEditorHeight.MEDIUM"
-                    [showStatus]="!!programmingExercise()?.id"
-                    [editMode]="!!programmingExercise()?.id"
-                    (hasUnsavedChanges)="programmingExerciseCreationConfig.hasUnsavedChanges = $event"
-                    (instructionChange)="onProblemStatementChange($event)"
-                    (exerciseChange)="programmingExerciseChange.emit($event)"
-                    [forceRender]="programmingExerciseCreationConfig.rerenderSubject"
-                    class="form__editable-instructions"
-                />
+                @if (showDiff) {
+                    <!-- Inline Diff Editor -->
+                    <jhi-monaco-diff-editor [allowSplitView]="false" #diffEditor />
+                } @else {
+                    <!-- Regular Editable Instructions -->
+                    <jhi-programming-exercise-editable-instructions
+                        [participation]="programmingExercise()?.templateParticipation!"
+                        [exercise]="programmingExercise()!"
+                        [initialEditorHeight]="MarkdownEditorHeight.MEDIUM"
+                        [showStatus]="!!programmingExercise()?.id"
+                        [editMode]="!!programmingExercise()?.id"
+                        (hasUnsavedChanges)="programmingExerciseCreationConfig.hasUnsavedChanges = $event"
+                        (instructionChange)="onProblemStatementChange($event)"
+                        (exerciseChange)="programmingExerciseChange.emit($event)"
+                        [forceRender]="programmingExerciseCreationConfig.rerenderSubject"
+                        class="form__editable-instructions"
+                    />
+                }
             }
         </div>
     }

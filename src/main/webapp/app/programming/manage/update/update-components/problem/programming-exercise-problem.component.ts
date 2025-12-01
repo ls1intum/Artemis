@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, computed, inject, input, output, signal } from '@angular/core';
+import { AfterViewChecked, Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild, computed, inject, input, output, signal } from '@angular/core';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
@@ -29,6 +29,7 @@ import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.com
 import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { FileService } from 'app/shared/service/file.service';
+import { MonacoDiffEditorComponent } from 'app/shared/monaco-editor/diff-editor/monaco-diff-editor.component';
 
 @Component({
     selector: 'jhi-programming-exercise-problem',
@@ -46,9 +47,10 @@ import { FileService } from 'app/shared/service/file.service';
         ButtonModule,
         FaIconComponent,
         HelpIconComponent,
+        MonacoDiffEditorComponent,
     ],
 })
-export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
+export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy, AfterViewChecked {
     protected readonly ProgrammingLanguage = ProgrammingLanguage;
     protected readonly ProjectType = ProjectType;
     protected readonly AssessmentType = AssessmentType;
@@ -73,6 +75,13 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
     isGenerating = false;
     isRefining = false;
     private currentGenerationSubscription: Subscription | undefined = undefined;
+
+    // Diff mode properties
+    showDiff = false;
+    originalProblemStatement = '';
+    refinedProblemStatement = '';
+    private diffContentSet = false;
+    @ViewChild('diffEditor') diffEditor?: MonacoDiffEditorComponent;
     private templateProblemStatement = signal<string>('');
     private currentProblemStatement = signal<string>('');
 
@@ -99,6 +108,17 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
         if (this.currentGenerationSubscription) {
             this.currentGenerationSubscription.unsubscribe();
             this.currentGenerationSubscription = undefined;
+        }
+    }
+
+    /**
+     * Lifecycle hook called after every check of the component's view.
+     * Used to set diff editor content when it becomes available.
+     */
+    ngAfterViewChecked(): void {
+        if (this.showDiff && this.diffEditor && !this.diffContentSet) {
+            this.diffEditor.setFileContents(this.originalProblemStatement, this.refinedProblemStatement, 'original.md', 'refined.md');
+            this.diffContentSet = true;
         }
     }
 
@@ -246,13 +266,12 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
                 next: (response) => {
                     // Check if refinement was successful
                     if (response.refinedProblemStatement && response.refinedProblemStatement.trim() !== '') {
-                        // Success: use the refined problem statement
-                        exercise.problemStatement = response.refinedProblemStatement;
-                        this.programmingExerciseCreationConfig.hasUnsavedChanges = true;
-                        this.problemStatementChange.emit(response.refinedProblemStatement);
-                        this.programmingExerciseChange.emit(exercise);
+                        // Store original and refined content for diff view
+                        this.originalProblemStatement = exercise.problemStatement || '';
+                        this.refinedProblemStatement = response.refinedProblemStatement;
+                        this.diffContentSet = false; // Reset flag so content will be set in ngAfterViewChecked
+                        this.showDiff = true;
                         this.userPrompt = '';
-                        this.alertService.success('artemisApp.programmingExercise.problemStatement.refinementSuccess');
                     } else if (response.originalProblemStatement) {
                         // Refinement failed: keep the original problem statement
                         this.alertService.warning('artemisApp.programmingExercise.problemStatement.refinementFailed');
@@ -264,6 +283,44 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
                     this.alertService.error('artemisApp.programmingExercise.problemStatement.refinementError');
                 },
             });
+    }
+
+    /**
+     * Accepts the refined problem statement and applies the changes
+     */
+    acceptRefinement(): void {
+        const exercise = this.programmingExercise();
+        if (exercise && this.refinedProblemStatement) {
+            exercise.problemStatement = this.refinedProblemStatement;
+            this.programmingExerciseCreationConfig.hasUnsavedChanges = true;
+            this.problemStatementChange.emit(this.refinedProblemStatement);
+            this.programmingExerciseChange.emit(exercise);
+            this.currentProblemStatement.set(this.refinedProblemStatement);
+            this.closeDiff();
+            // Set diff editor content after view update
+            setTimeout(() => {
+                if (this.diffEditor) {
+                    this.diffEditor.setFileContents(this.originalProblemStatement, this.refinedProblemStatement, 'original.md', 'refined.md');
+                }
+            }, 0);
+        }
+    }
+
+    /**
+     * Rejects the refined problem statement and keeps the original
+     */
+    rejectRefinement(): void {
+        this.closeDiff();
+    }
+
+    /**
+     * Closes the diff view and resets diff state
+     */
+    closeDiff(): void {
+        this.showDiff = false;
+        this.originalProblemStatement = '';
+        this.refinedProblemStatement = '';
+        this.diffContentSet = false;
     }
 
     /**

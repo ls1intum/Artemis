@@ -239,7 +239,11 @@
                 "generationError": "Fehler beim Generieren der Aufgabenstellung. Bitte versuche es erneut.",
                 "refinementSuccess": "Aufgabenstellung wurde erfolgreich verfeinert.",
                 "refinementError": "Fehler beim Verfeinern der Aufgabenstellung. Bitte versuche es erneut.",
-                "refinementFailed": "Aufgabenstellung konnte nicht verfeinert werden. Die ursprüngliche Aufgabenstellung wurde beibehalten."
+                "refinementFailed": "Aufgabenstellung konnte nicht verfeinert werden. Die ursprüngliche Aufgabenstellung wurde beibehalten.",
+                "reviewChanges": "Änderungen überprüfen",
+                "reviewChangesDescription": "Grüne Zeilen werden hinzugefügt, rote Zeilen werden entfernt.",
+                "acceptChanges": "Änderungen akzeptieren",
+                "rejectChanges": "Änderungen ablehnen"
             },
             "status": {
                 "solutionFailsTest": "Das Solution-Repository erfüllt einen oder mehrere Testfälle nicht. Das könnte auf ein Problem mit dem Solution-Repository oder den Testfällen hinweisen.",
