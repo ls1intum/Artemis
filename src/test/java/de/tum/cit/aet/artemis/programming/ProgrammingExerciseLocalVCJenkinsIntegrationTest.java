@@ -40,7 +40,6 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 import de.tum.cit.aet.artemis.core.exception.GitException;
 import de.tum.cit.aet.artemis.exam.util.InvalidExamExerciseDatesArgumentProvider;
@@ -49,7 +48,6 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.programming.domain.AeolusTarget;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
-import de.tum.cit.aet.artemis.programming.service.GitService;
 
 // TODO: rewrite this test to use LocalVC
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -57,10 +55,6 @@ import de.tum.cit.aet.artemis.programming.service.GitService;
 class ProgrammingExerciseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegrationJenkinsLocalVCTest {
 
     private static final String TEST_PREFIX = "progexlocalvcjenkins";
-
-    // Spy is only used for simulating non-feasible failure scenarios. Please use the real bean otherwise.
-    @MockitoSpyBean
-    private GitService gitServiceSpy;
 
     @BeforeEach
     void setup() throws Exception {
@@ -470,7 +464,7 @@ class ProgrammingExerciseLocalVCJenkinsIntegrationTest extends AbstractProgrammi
     void copyRepository_testNotCreatedError() throws Exception {
         var teamLocalPath = Files.createTempDirectory("teamLocalRepo");
         try {
-            doReturn(teamLocalPath).when(gitServiceSpy).getDefaultLocalPathOfRepo(any());
+            doReturn(teamLocalPath).when(gitServiceSpy).getDefaultLocalCheckOutPathOfRepo(any());
             doThrow(new IOException("Checkout got interrupted!")).when(gitServiceSpy).copyBareRepositoryWithoutHistory(any(), any(), anyString());
 
             programmingExerciseTestService.copyRepository_testNotCreatedError();

@@ -2165,14 +2165,6 @@ public class ProgrammingExerciseTestService {
     public void copyRepository_testNotCreatedError() throws Exception {
         Team team = setupTeamForBadRequestForStartExercise();
 
-        var participantRepoTestUrl = new LocalVCRepositoryUri(convertToLocalVcUriString(studentTeamRepo));
-        final var teamLocalPath = studentTeamRepo.workingCopyGitRepoFile.toPath();
-        doReturn(teamLocalPath).when(gitService).getDefaultLocalCheckOutPathOfRepo(participantRepoTestUrl);
-        doThrow(new IOException("Checkout got interrupted!")).when(gitService).copyBareRepositoryWithoutHistory(any(), any(), anyString());
-
-        // the local repo should exist before startExercise()
-        assertThat(teamLocalPath).exists();
-
         // Start participation
         assertThatExceptionOfType(VersionControlException.class).isThrownBy(() -> participationService.startExercise(exercise, team, false))
                 .matches(exception -> !exception.getMessage().isEmpty());
