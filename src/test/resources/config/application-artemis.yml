@@ -79,9 +79,6 @@ artemis:
         internal:
             allowed-cidrs:
                 - 127.0.0.0/8
-    lecture:
-        video-upload:
-            enabled: false  # Set to true to enable video file uploads for lecture units in tests
 
 info:
     operatorName: Some Artemis Operator # Must be set before starting the application in production. Shown in the about us page, and sent to the telemetry service

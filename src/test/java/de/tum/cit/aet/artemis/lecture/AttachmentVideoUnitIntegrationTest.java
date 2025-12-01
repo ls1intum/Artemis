@@ -641,17 +641,7 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createAttachmentVideoUnit_withPdfFile_whenVideoFeatureDisabled_shouldSucceed() throws Exception {
         // PDF uploads should work regardless of video upload feature flag
-        persistAttachmentVideoUnitWithLecture();
-
-        MockMultipartFile attachmentVideoUnitPart = new MockMultipartFile("attachmentVideoUnit", "", MediaType.APPLICATION_JSON_VALUE,
-                mapper.writeValueAsString(attachmentVideoUnit).getBytes());
-        MockMultipartFile attachmentPart = new MockMultipartFile("attachment", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(attachment).getBytes());
-        MockMultipartFile pdfFilePart = createAttachmentVideoUnitPdf();
-
-        MockHttpServletRequestBuilder builder = MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units")
-                .file(attachmentVideoUnitPart).file(attachmentPart).file(pdfFilePart).contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
-
-        request.performMvcRequest(builder).andExpect(status().isCreated());
+        request.performMvcRequest(buildCreateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isCreated());
     }
 
     @Test

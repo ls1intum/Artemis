@@ -114,7 +114,10 @@ artemis:
         secret-token: test-secret         # dummy secret for tests
     tum-live:
         api-base-url: https://mocke.tum.live/api/v2
-
+    lecture:
+        video-upload:
+            enabled: false  # Set to true to enable video file uploads for lecture units in tests
+Update hibernate to hibernate_version=6.6.34.Final.
 spring:
     application:
         name: Artemis
