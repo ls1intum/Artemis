@@ -78,8 +78,8 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     private artemisIntelligenceService = inject(ArtemisIntelligenceService);
     private profileService = inject(ProfileService);
 
-    private lineJumpOnFileLoad: number | undefined = undefined;
-    private fileToJumpOn: string | undefined = undefined;
+    lineJumpOnFileLoad: number | undefined = undefined;
+    fileToJumpOn: string | undefined = undefined;
     selectedIssue: ConsistencyIssue | undefined = undefined;
     locationIndex: number = 0;
 
