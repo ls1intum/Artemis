@@ -8,7 +8,9 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Optional;
+import java.util.Set;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import jakarta.ws.rs.BadRequestException;
 
@@ -30,16 +32,21 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLearningObjectLink;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.core.dto.OnlineResourceDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
-import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLecture.EnforceAtLeastEditorInLecture;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastEditorInLectureUnit;
-import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.OnlineUnit;
+import de.tum.cit.aet.artemis.lecture.dto.CompetencyDTO;
+import de.tum.cit.aet.artemis.lecture.dto.CompetencyLinkDTO;
+import de.tum.cit.aet.artemis.lecture.dto.OnlineUnitDTO;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
+import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.OnlineUnitRepository;
 import de.tum.cit.aet.artemis.lecture.service.LectureUnitService;
 
@@ -57,19 +64,19 @@ public class OnlineUnitResource {
 
     private final LectureRepository lectureRepository;
 
-    private final AuthorizationCheckService authorizationCheckService;
-
     private final Optional<CompetencyProgressApi> competencyProgressApi;
 
     private final LectureUnitService lectureUnitService;
 
-    public OnlineUnitResource(LectureRepository lectureRepository, AuthorizationCheckService authorizationCheckService, OnlineUnitRepository onlineUnitRepository,
-            Optional<CompetencyProgressApi> competencyProgressApi, LectureUnitService lectureUnitService) {
+    private final LectureUnitRepository lectureUnitRepository;
+
+    public OnlineUnitResource(LectureRepository lectureRepository, OnlineUnitRepository onlineUnitRepository, Optional<CompetencyProgressApi> competencyProgressApi,
+            LectureUnitService lectureUnitService, LectureUnitRepository lectureUnitRepository) {
         this.lectureRepository = lectureRepository;
-        this.authorizationCheckService = authorizationCheckService;
         this.onlineUnitRepository = onlineUnitRepository;
         this.competencyProgressApi = competencyProgressApi;
         this.lectureUnitService = lectureUnitService;
+        this.lectureUnitRepository = lectureUnitRepository;
     }
 
     /**
@@ -91,28 +98,49 @@ public class OnlineUnitResource {
     /**
      * PUT /lectures/:lectureId/online-units : Updates an existing online unit .
      *
-     * @param lectureId  the id of the lecture to which the online unit belongs to update
-     * @param onlineUnit the online unit to update
+     * @param lectureId     the id of the lecture to which the online unit belongs to update
+     * @param onlineUnitDto the online unit to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated onlineUnit
      */
     @PutMapping("lectures/{lectureId}/online-units")
-    @EnforceAtLeastEditor
-    public ResponseEntity<OnlineUnit> updateOnlineUnit(@PathVariable Long lectureId, @RequestBody OnlineUnit onlineUnit) {
-        log.debug("REST request to update an online unit : {}", onlineUnit);
-        if (onlineUnit.getId() == null) {
+    @EnforceAtLeastEditorInLecture
+    public ResponseEntity<OnlineUnitDTO> updateOnlineUnit(@PathVariable Long lectureId, @RequestBody OnlineUnitDTO onlineUnitDto) {
+        log.debug("REST request to update an online unit : {}", onlineUnitDto);
+        if (onlineUnitDto.id() == null) {
             throw new BadRequestException();
         }
 
-        var existingOnlineUnit = onlineUnitRepository.findByIdWithCompetenciesElseThrow(onlineUnit.getId());
+        var existingOnlineUnit = onlineUnitRepository.findByIdWithCompetenciesElseThrow(onlineUnitDto.id());
 
+        // Validation
         checkOnlineUnitCourseAndLecture(existingOnlineUnit, lectureId);
-        lectureUnitService.validateUrlStringAndReturnUrl(onlineUnit.getSource());
+        lectureUnitService.validateUrlStringAndReturnUrl(onlineUnitDto.source());
 
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, onlineUnit.getLecture().getCourse(), null);
+        // Precompute original competency IDs for progress update below
+        Set<Long> originalCompetencyIds = existingOnlineUnit.getCompetencyLinks().stream().map(CompetencyLearningObjectLink::getCompetency).map(CourseCompetency::getId)
+                .collect(Collectors.toSet());
 
-        OnlineUnit result = lectureUnitService.saveWithCompetencyLinks(onlineUnit, onlineUnitRepository::save);
+        // copy all attributes
+        existingOnlineUnit.setDescription(onlineUnitDto.description());
+        existingOnlineUnit.setSource(onlineUnitDto.source());
+        existingOnlineUnit.setName(onlineUnitDto.name());
+        existingOnlineUnit.setReleaseDate(onlineUnitDto.releaseDate());
 
-        competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsync(existingOnlineUnit, Optional.of(onlineUnit)));
+        // This method computes the relevant changes for competency links and applies them to the existingTextUnit
+        lectureUnitService.updateCompetencyLinks(onlineUnitDto, existingOnlineUnit);
+
+        // Note: Competency links are persisted automatically (due to CascadeType.PERSIST)
+        existingOnlineUnit = onlineUnitRepository.save(existingOnlineUnit);
+
+        if (competencyProgressApi.isPresent()) {
+            // NOTE: this can be a very expensive operation, depending on how many users have progress for this learning object
+            competencyProgressApi.get().updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds(originalCompetencyIds, existingOnlineUnit);
+        }
+
+        // convert into DTO
+        var result = new OnlineUnitDTO(existingOnlineUnit.getId(), existingOnlineUnit.getName(), existingOnlineUnit.getReleaseDate(), existingOnlineUnit.getDescription(),
+                existingOnlineUnit.getSource(), existingOnlineUnit.getCompetencyLinks().stream()
+                        .map(link -> new CompetencyLinkDTO(new CompetencyDTO(link.getCompetency().getId()), link.getWeight())).collect(Collectors.toSet()));
 
         return ResponseEntity.ok(result);
     }
@@ -126,33 +154,33 @@ public class OnlineUnitResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("lectures/{lectureId}/online-units")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastEditorInLecture
     public ResponseEntity<OnlineUnit> createOnlineUnit(@PathVariable Long lectureId, @RequestBody final OnlineUnit onlineUnit) throws URISyntaxException {
         log.debug("REST request to create onlineUnit : {}", onlineUnit);
         if (onlineUnit.getId() != null) {
-            throw new BadRequestException();
+            throw new BadRequestAlertException("A new online unit cannot have an id", ENTITY_NAME, "idExists");
         }
 
         lectureUnitService.validateUrlStringAndReturnUrl(onlineUnit.getSource());
 
-        Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lectureId);
-        if (lecture.getCourse() == null) {
-            throw new BadRequestAlertException("Specified lecture is not part of a course", ENTITY_NAME, "courseMissing");
+        Lecture lecture = lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId);
+        if (lecture.getCourse() == null || (onlineUnit.getLecture() != null && !lecture.getId().equals(onlineUnit.getLecture().getId()))) {
+            throw new BadRequestAlertException("Input data not valid", ENTITY_NAME, "inputInvalid");
         }
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, lecture.getCourse(), null);
 
-        // persist lecture unit before lecture to prevent "null index column for collection" error
-        onlineUnit.setLecture(null);
+        lectureUnitRepository.reconnectCompetencyLinks(onlineUnit);
 
-        OnlineUnit persistedOnlineUnit = lectureUnitService.saveWithCompetencyLinks(onlineUnit, onlineUnitRepository::saveAndFlush);
+        lecture.addLectureUnit(onlineUnit);
+        Lecture updatedLecture = lectureRepository.saveAndFlush(lecture);
 
-        persistedOnlineUnit.setLecture(lecture);
-        lecture.addLectureUnit(persistedOnlineUnit);
-        lectureRepository.save(lecture);
+        OnlineUnit persistedUnit = (OnlineUnit) updatedLecture.getLectureUnits().getLast();
+        // From now on, only use persistedUnit
+        lectureUnitService.saveWithCompetencyLinks(persistedUnit, onlineUnitRepository::saveAndFlush);
+        competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(persistedUnit));
 
-        competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(persistedOnlineUnit));
-
-        return ResponseEntity.created(new URI("/api/online-units/" + persistedOnlineUnit.getId())).body(persistedOnlineUnit);
+        // TODO: return a DTO instead to avoid manipulation of the entity before sending it to the client
+        lectureUnitService.disconnectCompetencyLectureUnitLinks(persistedUnit);
+        return ResponseEntity.created(new URI("/api/online-units/" + persistedUnit.getId())).body(persistedUnit);
     }
 
     private static final Pattern DOMAIN_PATTERN = Pattern.compile("^(?=.{1,253}$)(?!-)[A-Za-z0-9-]{1,63}(?<!-)(\\.(?!-)[A-Za-z0-9-]{1,63}(?<!-))*\\.[A-Za-z]{2,}$");

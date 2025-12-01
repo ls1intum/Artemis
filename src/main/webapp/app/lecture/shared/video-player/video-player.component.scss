@@ -1,0 +1,40 @@
+.video-wrapper {
+    display: flex;
+    gap: 1rem;
+    width: 100%;
+    padding: 0.5rem;
+    box-sizing: border-box;
+    align-items: flex-start;
+
+    // Stack vertically on smaller screens
+    @media (max-width: 992px) {
+        flex-direction: column;
+    }
+}
+
+.video-column {
+    flex: 3;
+    position: relative;
+    aspect-ratio: 16 / 9;
+    background: #000;
+    min-width: 400px; // Ensure video doesn't collapse below this width
+
+    // Take full width on smaller screens
+    @media (max-width: 992px) {
+        flex: none;
+        width: 100%;
+        min-width: 100%;
+    }
+}
+
+.video-player {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100% !important;
+    height: 100% !important;
+    border-radius: 0.5rem;
+    box-shadow: 0 0 0.625rem rgba(0, 0, 0, 0.2);
+    background: #000;
+    object-fit: contain;
+}
