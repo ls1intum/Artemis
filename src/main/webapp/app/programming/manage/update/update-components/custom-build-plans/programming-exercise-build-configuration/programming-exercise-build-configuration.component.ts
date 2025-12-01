@@ -124,7 +124,7 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
         }
     }
 
-    onNetworkChange(value: any) {
+    onNetworkChange(value: string | undefined) {
         this.network.set(value);
         this.parseDockerFlagsToString();
     }
@@ -176,7 +176,7 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
                 newEnv![key] = value;
             }
         });
-        const network = this.network() == '' ? undefined : this.network();
+        const network = this.network() === '' ? undefined : this.network();
         this.dockerFlags = { env: newEnv, network: network, cpuCount: this.cpuCount, memory: this.memory, memorySwap: this.memorySwap };
         this.programmingExercise()!.buildConfig!.dockerFlags = JSON.stringify(this.dockerFlags);
     }
