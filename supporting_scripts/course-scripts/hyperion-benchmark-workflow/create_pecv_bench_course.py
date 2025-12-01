@@ -4,7 +4,7 @@ import configparser
 import json
 import urllib3
 import re
-import uuid
+import time
 from logging_config import logging
 from requests import Session
 
@@ -80,57 +80,74 @@ def create_pecv_bench_course(session: Session) -> requests.Response:
     headers = {
         'Content-Type': content_type,
     }
+    
+    logging.info(f"Creating course {COURSE_NAME} with shortName {course_short_name}")
 
     response: requests.Response = session.post(url, data=body, headers=headers)
     
-    if response.status_code == 201:
-        logging.info(f"Created course {COURSE_NAME} with shortName {course_short_name} \n {response.json()}")
-    elif response.status_code == 400:
-        logging.info(f"Course with shortName {course_short_name} already exists.")
-        
+    if response.status_code == 400:
+        logging.error(f"Course with shortName {course_short_name} already exists")
+
         course_is_deleted = delete_pecv_bench_course(session, course_short_name)
-        
+
         if course_is_deleted:
-            logging.info(f"Retrying course creation for {COURSE_NAME} after deletion.")
+            logging.info(f"Waiting 2 seconds for server cleanup before recreation")
+            time.sleep(2)
             
+            logging.info(f"RETRYING: Creating course {COURSE_NAME} with shortName {course_short_name}")
             response: requests.Response = session.post(url, data=body, headers=headers)
-            
-            if response.status_code == 201:
-                logging.info(f"Created course {COURSE_NAME} with shortName {course_short_name}")
-            else:
-                logging.error(f"Failed to create course {COURSE_NAME} after deletion. Status code: {response.status_code}\n Response content: {response.text}")
-                sys.exit(1)
         else:
-            logging.error(f"Failed to delete existing course {COURSE_NAME}. Cannot proceed with creation.")
-            sys.exit(1)
-    else:
-        logging.error("Problem with the group 'students' and interacting with a test server? "
-                        "Is 'is_local_course' in 'config.ini' set to 'False'?")
+            raise Exception(f"Failed to delete existing course {COURSE_NAME} after multiple attempts. Cannot proceed")
+    
+    # final check for successful creation
+    if response.status_code == 201:
+        logging.info(f"Successfully created course '{COURSE_NAME}' (ShortName: {course_short_name})")
+        return response.json()
+    else:        
         raise Exception(
-            f"Could not create course {COURSE_NAME}; Status code: {response.status_code}\n"
-            f"Double check whether the courseShortName {course_short_name} is valid (e.g. no special characters such as '-')!\n"
-            f"Response content: {response.text}")
+                f"Could not create course {COURSE_NAME}; Status code: {response.status_code}\n"
+                f"Double check whether the courseShortName {course_short_name} is valid (e.g. no special characters such as '-')!\n"
+                f"Response content: {response.text}")
     
-    return response.json()
 
-def delete_pecv_bench_course(session: Session, course_short_name: str) -> bool:
-    """Delete a course using the given session and course ID."""
+def delete_pecv_bench_course(session: Session, course_short_name: str, max_retries: int = 3) -> bool:
+    """Delete a course with retry logic using the given session and course ID.
     
-    logging.info(f"Deleting course with shortName {course_short_name}...")
-    coursesResponse: requests.Response = session.get(f"{SERVER_URL}/core/courses")
-
-    courses = coursesResponse.json()
+    Sometimes it takes multiple scripts reruns to successfully delete a course.
+    This approach fixes this.
+    """
+    
+    logging.info(f"Attempting to delete course with shortName {course_short_name}...")
+    
+    courseResponse: requests.Response = session.get(f"{SERVER_URL}/core/courses")
+    courses = courseResponse.json()
     course_id = None
     for course in courses:
         if course["shortName"] == course_short_name:
             course_id = course["id"]
             break
     
-    deleteCourseResponse: requests.Response = session.delete(f"{SERVER_URL}/core/admin/courses/{course_id}")
-    if deleteCourseResponse.status_code == 200:
-        logging.info(f"Deleted course with shortName {course_short_name}")
-        return True
-    else:
-        logging.error(f"Could not delete course with shortName {course_short_name}")
-        return False
+    delete_url = f"{SERVER_URL}/core/admin/courses/{course_id}"
+    logging.info(f"Deleting course with ID {course_id} at URL {delete_url}")
+
+    for attempt in range(1, max_retries +1):
+        logging.info(f"Deletion attempt {attempt}/{max_retries}")
+        try:
+            # If server takes longer than 60s, it raises a Timeout exception, triggering the retry logic.
+            logging.info(f"Sending DELETE request, it can take around 30 seconds to delete a course")
+            deleteCourseResponse: requests.Response = session.delete(delete_url, timeout = 60)
+            if deleteCourseResponse.status_code == 200:
+                logging.info(f"Deleted course with shortName {course_short_name}")
+                return True
+            else:
+                logging.error(f"Deletion attempt {attempt}/{max_retries} for {course_short_name} failed with status code {deleteCourseResponse.status_code}")
+        except Exception as e:
+            logging.exception(f"Exception during deletion attempt {attempt}/{max_retries} for {course_short_name}: {e}")
+
+        if attempt < max_retries:
+            wait_time = 2 * attempt
+            logging.info(f"Waiting {wait_time} seconds before retrying deletion...")
+            time.sleep(wait_time)
+    logging.error(f"Failed to delete course with shortName {course_short_name} after {max_retries} attempts.")
+    return False
     
