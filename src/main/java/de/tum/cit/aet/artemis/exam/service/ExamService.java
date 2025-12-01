@@ -23,9 +23,8 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import jakarta.annotation.Nullable;
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -304,7 +303,7 @@ public class ExamService {
      *                        and questions for the quiz should be loaded
      * @return the exam with exercise groups
      */
-    @NotNull
+    @NonNull
     public Exam findByIdWithExerciseGroupsAndExercisesElseThrow(Long examId, boolean withDetails) {
         log.debug("Request to get exam {} with exercise groups (with details: {})", examId, withDetails);
         if (!withDetails) {
@@ -398,13 +397,13 @@ public class ExamService {
                 .filter(templateProgrammingExerciseParticipation -> templateProgrammingExerciseParticipation.getProgrammingExercise() != null
                         && templateProgrammingExerciseParticipation.getProgrammingExercise().getId() != null)
                 .collect(Collectors.toMap(templateProgrammingExerciseParticipation -> templateProgrammingExerciseParticipation.getProgrammingExercise().getId(),
-                        Function.identity(), (a, b) -> a));
+                        Function.identity(), (a, _) -> a));
 
         Map<Long, SolutionProgrammingExerciseParticipation> solutionByExerciseId = solutionParticipations.stream()
                 .filter(solutionProgrammingExerciseParticipation -> solutionProgrammingExerciseParticipation.getProgrammingExercise() != null
                         && solutionProgrammingExerciseParticipation.getProgrammingExercise().getId() != null)
                 .collect(Collectors.toMap(solutionProgrammingExerciseParticipation -> solutionProgrammingExerciseParticipation.getProgrammingExercise().getId(),
-                        Function.identity(), (a, b) -> a));
+                        Function.identity(), (a, _) -> a));
 
         programmingExercises.forEach(exercise -> {
             if (templateByExerciseId.containsKey(exercise.getId())) {
@@ -456,7 +455,7 @@ public class ExamService {
 
         return resultRepository.findLatestResultsByParticipationIds(participationIds).stream()
                 .filter(result -> result.getSubmission() != null && result.getSubmission().getId() != null)
-                .collect(Collectors.toMap(result -> result.getSubmission().getId(), Function.identity(), (r1, r2) -> r1));
+                .collect(Collectors.toMap(result -> result.getSubmission().getId(), Function.identity(), (r1, _) -> r1));
     }
 
     /**
@@ -517,7 +516,7 @@ public class ExamService {
             List<StudentParticipation> regularParticipations = studentParticipationRepository
                     .findByStudentIdsAndIndividualExercisesWithEagerLatestSubmissionResultIgnoreTestRuns(regularStudentIds, allExercises);
             regularParticipations.forEach(participation -> participation.getStudent()
-                    .ifPresent(student -> participationsByStudentId.computeIfAbsent(student.getId(), key -> new ArrayList<>()).add(participation)));
+                    .ifPresent(student -> participationsByStudentId.computeIfAbsent(student.getId(), _ -> new ArrayList<>()).add(participation)));
         }
 
         var studentResults = new ArrayList<ExamScoresDTO.StudentResult>();
@@ -560,7 +559,7 @@ public class ExamService {
      * @param studentExamGrades grade scores for the given studentExam with eagerly loaded latest submission and result
      * @return Student Exam results with exam grade calculated if applicable
      */
-    @NotNull
+    @NonNull
     public StudentExamWithGradeDTO calculateStudentResultWithGradeAndPoints(StudentExam studentExam, Set<ExamGradeScoreDTO> studentExamGrades) {
         // load again from the database because the exam object of the student exam might not have all the properties we need
         var exam = examRepository.findByIdElseThrow(studentExam.getExam().getId());
@@ -1371,32 +1370,33 @@ public class ExamService {
      * @return data about an exam including all exercises, plus some data for the tutor as tutor status for assessment
      */
     public StatsForDashboardDTO getStatsForExamAssessmentDashboard(Course course, Long examId) {
-        Exam exam = examRepository.findById(examId).orElseThrow();
         StatsForDashboardDTO stats = new StatsForDashboardDTO();
+        Set<Long> exerciseIds = examRepository.findExerciseIdsByExamId(examId);
 
-        final long numberOfSubmissions = submissionRepository.countByExamIdSubmittedSubmissionsIgnoreTestRuns(examId)
-                + programmingExerciseRepository.countSubmissionsByExamIdSubmitted(examId);
+        final long numberOfSubmissions = submissionRepository.countByExerciseIdsSubmittedSubmissionsIgnoreTestRuns(exerciseIds)
+                + programmingExerciseRepository.countSubmissionsByExerciseIdsSubmitted(exerciseIds);
         stats.setNumberOfSubmissions(new DueDateStat(numberOfSubmissions, 0));
 
-        DueDateStat[] numberOfAssessmentsOfCorrectionRounds = resultRepository.countNumberOfFinishedAssessmentsForExamForCorrectionRounds(examId,
-                exam.getNumberOfCorrectionRoundsInExam());
+        int numberOfCorrectionRoundsInExam = examRepository.findNumberOfCorrectionRoundsByExamId(examId);
+
+        DueDateStat[] numberOfAssessmentsOfCorrectionRounds = resultRepository.countNumberOfFinishedAssessmentsForExamForCorrectionRounds(exerciseIds,
+                numberOfCorrectionRoundsInExam);
         stats.setNumberOfAssessmentsOfCorrectionRounds(numberOfAssessmentsOfCorrectionRounds);
 
-        final long numberOfComplaints = complaintRepository.countByResult_Submission_Participation_Exercise_ExerciseGroup_Exam_IdAndComplaintType(examId, ComplaintType.COMPLAINT);
+        final long numberOfComplaints = complaintRepository.countByExerciseIdsAndComplaintType(exerciseIds, ComplaintType.COMPLAINT);
         stats.setNumberOfComplaints(numberOfComplaints);
 
-        final long numberOfComplaintResponses = complaintResponseRepository
-                .countByComplaint_Result_Submission_Participation_Exercise_ExerciseGroup_Exam_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(examId,
-                        ComplaintType.COMPLAINT);
+        final long numberOfComplaintResponses = complaintResponseRepository.countComplaintResponsesForExerciseIdsAndComplaintType(exerciseIds, ComplaintType.COMPLAINT);
         stats.setNumberOfOpenComplaints(numberOfComplaints - numberOfComplaintResponses);
 
-        final long numberOfAssessmentLocks = submissionRepository.countLockedSubmissionsByUserIdAndExamId(userRepository.getUserWithGroupsAndAuthorities().getId(), examId);
+        final long numberOfAssessmentLocks = submissionRepository.countLockedSubmissionsByUserIdAndExerciseIds(userRepository.getUserWithGroupsAndAuthorities().getId(),
+                exerciseIds);
         stats.setNumberOfAssessmentLocks(numberOfAssessmentLocks);
 
-        final long totalNumberOfAssessmentLocks = submissionRepository.countLockedSubmissionsByExamId(examId);
+        final long totalNumberOfAssessmentLocks = submissionRepository.countLockedSubmissionsByExerciseIds(exerciseIds);
         stats.setTotalNumberOfAssessmentLocks(totalNumberOfAssessmentLocks);
 
-        List<TutorLeaderboardDTO> leaderboardEntries = tutorLeaderboardService.getExamLeaderboard(course, exam);
+        List<TutorLeaderboardDTO> leaderboardEntries = tutorLeaderboardService.getExamLeaderboard(course, exerciseIds);
         stats.setTutorLeaderboardEntries(leaderboardEntries);
         return stats;
     }
@@ -1477,16 +1477,33 @@ public class ExamService {
     }
 
     /**
-     * Get all exams of the user. The result is paged
+     * Fetches all active exams that should be visible to the given user based on role-dependent
+     * visibility windows.
      *
-     * @param pageable The search query defining the search term and the size of the returned page
-     * @param user     The user for whom to fetch all available exercises
-     * @return exam page
+     * <p>
+     * Visibility policy:
+     * <ul>
+     * <li><b>Instructors</b>: exams visible from now − {@code EXAM_ACTIVE_DAYS} days to now + {@code EXAM_ACTIVE_DAYS} days.</li>
+     * <li><b>Editors and tutors</b>: exams visible only from now to now + {@code EXAM_ACTIVE_DAYS} days.</li>
+     * </ul>
+     *
+     * <p>
+     * The method precomputes all required timestamps in Java and delegates to a JPQL
+     * query that applies the correct lower bound via a {@code CASE} expression. This preserves
+     * efficient database-side paging and ensures consistency across different database systems
+     * (MySQL, PostgreSQL).
+     * </p>
+     *
+     * @param user     the authenticated user whose visibility window should be applied
+     * @param pageable paging specification
+     * @return a page of exams visible to the user
      */
     public Page<Exam> getAllActiveExams(final Pageable pageable, final User user) {
         // active exam means that exam has visible date in the past 7 days or next 7 days.
-        return examRepository.findAllActiveExamsInCoursesWhereInstructor(user.getGroups(), pageable, ZonedDateTime.now().minusDays(EXAM_ACTIVE_DAYS),
-                ZonedDateTime.now().plusDays(EXAM_ACTIVE_DAYS));
+        var now = ZonedDateTime.now();
+        var fromDate = now.minusDays(EXAM_ACTIVE_DAYS);
+        var toDate = now.plusDays(EXAM_ACTIVE_DAYS);
+        return examRepository.findAllActiveExamsInCoursesWhereAtLeastTutor(user.getGroups(), pageable, fromDate, now, toDate);
     }
 
     /**
@@ -1516,6 +1533,10 @@ public class ExamService {
      *                                 (to extend time) or negative (to reduce time).
      */
     public void updateStudentExamsAndRescheduleExercises(Exam exam, int originalExamDuration, int workingTimeChange) {
+        if (workingTimeChange == 0) {
+            return;
+        }
+
         var now = now();
 
         var studentExams = exam.getStudentExams();

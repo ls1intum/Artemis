@@ -42,8 +42,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import jakarta.validation.constraints.NotNull;
-
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.CanceledException;
@@ -54,6 +52,7 @@ import org.eclipse.jgit.lib.ObjectReader;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.treewalk.CanonicalTreeParser;
+import org.jspecify.annotations.NonNull;
 import org.mockito.ArgumentCaptor;
 import org.mockito.MockedStatic;
 import org.slf4j.Logger;
@@ -2057,7 +2056,7 @@ public class ProgrammingExerciseTestService {
         return participation;
     }
 
-    @NotNull
+    @NonNull
     private Team setupTeam(User user) {
         // create a team for the user (necessary condition before starting an exercise)
         Set<User> students = Set.of(user);
@@ -2149,7 +2148,7 @@ public class ProgrammingExerciseTestService {
 
         var participantRepoTestUrl = new LocalVCRepositoryUri(convertToLocalVcUriString(studentTeamRepo));
         final var teamLocalPath = studentTeamRepo.workingCopyGitRepoFile.toPath();
-        doReturn(teamLocalPath).when(gitService).getDefaultLocalPathOfRepo(participantRepoTestUrl);
+        doReturn(teamLocalPath).when(gitService).getDefaultLocalCheckOutPathOfRepo(participantRepoTestUrl);
         doThrow(new IOException("Checkout got interrupted!")).when(gitService).copyBareRepositoryWithoutHistory(any(), any(), anyString());
 
         // the local repo should exist before startExercise()
@@ -2163,7 +2162,7 @@ public class ProgrammingExerciseTestService {
         assertThat(teamLocalPath).doesNotExist();
     }
 
-    @NotNull
+    @NonNull
     private Team setupTeamForBadRequestForStartExercise() {
         setupTeamExercise();
 

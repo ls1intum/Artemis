@@ -713,6 +713,7 @@ public class ProgrammingExerciseUtilService {
         submission.setParticipation(participation);
         submission.addResult(result);
         result.setSubmission(submission);
+        result.setExerciseId(exercise.getId());
         programmingSubmissionRepo.save(submission);
         resultRepo.save(result);
         studentParticipationRepo.save(participation);
@@ -732,6 +733,7 @@ public class ProgrammingExerciseUtilService {
         submission = submissionRepository.save(submission);
         // TODO check if it needs to be persisted like before
         Result result = new Result();
+        result.setExerciseId(programmingExercise.getId());
         templateParticipation.addSubmission(submission);
         submission.setParticipation(templateParticipation);
         submission.addResult(result);
@@ -754,11 +756,13 @@ public class ProgrammingExerciseUtilService {
         ProgrammingSubmission submission = new ProgrammingSubmission();
         submission = submissionRepository.save(submission);
         Result result = new Result();
+        result.setExerciseId(programmingExercise.getId());
         templateParticipation.addSubmission(submission);
         submission.setParticipation(templateParticipation);
         submission.addResult(result);
         submission = submissionRepository.save(submission);
         result.setSubmission(submission);
+
         result = resultRepo.save(result);
         solutionProgrammingExerciseParticipationRepository.save(templateParticipation);
         return result;
@@ -792,6 +796,7 @@ public class ProgrammingExerciseUtilService {
         submission.setParticipation(participation);
 
         result.setSubmission(submission);
+        result.setExerciseId(exercise.getId());
         result = resultRepo.save(result);
         submission.addResult(result);
         // Manual results are always rated
@@ -815,6 +820,7 @@ public class ProgrammingExerciseUtilService {
         submission.addResult(result);
         submission.setCommitHash(commitHash);
         result.setSubmission(submission);
+        result.setExerciseId(participation.getExercise().getId());
         resultRepo.save(result);
         participation.addSubmission(submission);
         studentParticipationRepo.save(participation);

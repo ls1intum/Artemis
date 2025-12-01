@@ -1,4 +1,4 @@
-import { Authority } from 'app/shared/constants/authority.constants';
+import { IS_AT_LEAST_INSTRUCTOR, IS_AT_LEAST_TUTOR } from 'app/shared/constants/authority.constants';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 
 export const repositorySubRoutes = [
@@ -6,7 +6,7 @@ export const repositorySubRoutes = [
         path: '',
         loadComponent: () => import('app/programming/shared/repository-view/repository-view.component').then((m) => m.RepositoryViewComponent),
         data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
+            authorities: IS_AT_LEAST_TUTOR,
             pageTitle: 'artemisApp.repository.title',
         },
         canActivate: [UserRouteAccessService],
@@ -15,7 +15,7 @@ export const repositorySubRoutes = [
         path: 'commit-history',
         loadComponent: () => import('app/programming/shared/commit-history/commit-history.component').then((m) => m.CommitHistoryComponent),
         data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
+            authorities: IS_AT_LEAST_TUTOR,
             pageTitle: 'artemisApp.repository.title',
         },
         canActivate: [UserRouteAccessService],
@@ -24,7 +24,7 @@ export const repositorySubRoutes = [
         path: 'commit-history/:commitHash',
         loadComponent: () => import('app/programming/manage/commit-details-view/commit-details-view.component').then((m) => m.CommitDetailsViewComponent),
         data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
+            authorities: IS_AT_LEAST_TUTOR,
             pageTitle: 'artemisApp.repository.title',
         },
         canActivate: [UserRouteAccessService],
@@ -34,7 +34,7 @@ export const repositorySubRoutes = [
         loadComponent: () =>
             import('app/programming/manage/vcs-repository-access-log-view/vcs-repository-access-log-view.component').then((m) => m.VcsRepositoryAccessLogViewComponent),
         data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
+            authorities: IS_AT_LEAST_INSTRUCTOR,
             pageTitle: 'artemisApp.repository.title',
         },
         canActivate: [UserRouteAccessService],

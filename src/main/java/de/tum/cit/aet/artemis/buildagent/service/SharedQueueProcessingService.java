@@ -86,6 +86,8 @@ public class SharedQueueProcessingService {
 
     private static final Logger log = LoggerFactory.getLogger(SharedQueueProcessingService.class);
 
+    private static final Duration BUILD_CHECK_AVAILABILITY_INTERVAL = Duration.ofSeconds(5);
+
     private final BuildAgentConfiguration buildAgentConfiguration;
 
     private final BuildJobManagementService buildJobManagementService;
@@ -189,12 +191,12 @@ public class SharedQueueProcessingService {
         this.listenerId = this.distributedDataAccessService.getDistributedBuildJobQueue().addItemListener(new QueuedBuildJobItemListener());
 
         /*
-         * Check every 10 seconds whether the node has at least one thread available for a new build job.
+         * Check every 5 seconds whether the node has at least one thread available for a new build job.
          * If so, process the next build job.
          * This is a backup mechanism in case the build queue is not empty, no new build jobs are entering the queue and the
          * node otherwise stopped checking for build jobs in the queue.
          */
-        scheduledFuture = taskScheduler.scheduleAtFixedRate(this::checkAvailabilityAndProcessNextBuild, Duration.ofSeconds(10));
+        scheduledFuture = taskScheduler.scheduleAtFixedRate(this::checkAvailabilityAndProcessNextBuild, BUILD_CHECK_AVAILABILITY_INTERVAL);
 
         distributedDataAccessService.getPauseBuildAgentTopic().addMessageListener(buildAgentName -> {
             if (buildAgentShortName.equals(buildAgentName)) {
@@ -228,10 +230,10 @@ public class SharedQueueProcessingService {
     }
 
     /**
-     * Wait 1 minute after startup and then every 1 minute update the build agent information of the local hazelcast member.
+     * Wait 10 seconds after startup and then every 10 seconds update the build agent information of the local hazelcast member.
      * This is necessary because the build agent information is not updated automatically when a node joins the cluster.
      */
-    @Scheduled(initialDelay = 60000, fixedRate = 60000) // 1 minute initial delay, 1 minute fixed rate
+    @Scheduled(initialDelay = 10_000, fixedRate = 10_000) // 10 seconds initial delay, 10 seconds fixed rate
     public void updateBuildAgentInformation() {
         if (distributedDataAccessService.noDataMemberInClusterAvailable()) {
             log.debug("There are only lite member in the cluster. Not updating build agent information.");
@@ -476,28 +478,63 @@ public class SharedQueueProcessingService {
     }
 
     /**
-     * Transition the agent to <em>paused</em>:
+     * Pauses the local build agent and transitions it into a {@code PAUSED} state.
+     * <p>
+     * The method performs the following steps:
      * <ol>
-     * <li>Mark paused and stop listener & scheduler.</li>
-     * <li>Update cluster-visible agent info.</li>
-     * <li>Gracefully wait up to {@code pauseGracePeriodSeconds} for running jobs.</li>
-     * <li>On timeout: gate result publication, cancel running jobs, requeue them, then close services.</li>
+     * <li>Serializes the state transition using {@link #agentStateTransitionLock} so that
+     * pause and resume operations cannot interfere with each other.</li>
+     * <li>Checks whether the agent is already paused and returns early if so
+     * (the operation is idempotent).</li>
+     * <li>Marks the agent as paused via {@link #isPaused}, removes listeners and scheduled
+     * tasks that may enqueue new jobs, and updates the distributed
+     * build-agent information so other components observe the {@code PAUSED} status.</li>
+     * <li>Looks up all currently running build jobs and collects their associated
+     * {@link java.util.concurrent.CompletableFuture}s.</li>
+     * <li>After releasing the state-transition lock, waits for all running jobs to finish
+     * for at most {@link #pauseGracePeriodSeconds} seconds. If they do not finish in time,
+     * {@link #handleTimeoutAndCancelRunningJobs()} is invoked to enforce cancellation.</li>
+     * <li>Finally, closes the local build-agent services
+     * (e.g. executors, Docker client) via {@link #buildAgentConfiguration#closeBuildAgentServices()}.</li>
      * </ol>
      *
-     * @param dueToFailures whether this pause was triggered by repeated failures
+     * <h3>Concurrency and locking semantics</h3>
+     * <ul>
+     * <li>The {@code isPaused} flag is both read and written <strong>only while holding</strong>
+     * {@link #agentStateTransitionLock}. This prevents time-of-check/time-of-use (TOCTOU)
+     * races between pause and resume operations.</li>
+     * <li>The method intentionally does <strong>not</strong> hold
+     * {@link #agentStateTransitionLock} while waiting for running jobs to complete.
+     * This avoids potential deadlocks where completion callbacks of those futures
+     * might themselves try to acquire the same lock or update build-agent state.</li>
+     * <li>The distributed build-agent information is updated immediately after setting
+     * {@code isPaused = true}, so other nodes and services can already treat the agent
+     * as paused while it is still finishing or cancelling in-flight jobs.</li>
+     * </ul>
+     *
+     * @param dueToFailures {@code true} if the pause was triggered by repeated build failures
+     *                          (e.g. to implement back-off behaviour), {@code false} if the pause
+     *                          was initiated administratively or for maintenance.
      */
     private void pauseBuildAgent(boolean dueToFailures) {
-        if (isPaused.get()) {
-            log.info("Build agent is already paused");
-            return;
-        }
+        // Collect running job futures outside the lock so we can wait on them without holding it.
+        List<CompletableFuture<BuildResult>> runningFuturesWrapper = List.of();
 
         agentStateTransitionLock.lock();
         try {
+            if (isPaused.get()) {
+                log.info("Build agent is already paused");
+                return;
+            }
             log.info("Pausing build agent with address {}", distributedDataAccessService.getLocalMemberAddress());
 
+            // Mark the agent as paused so all subsequent logic and status updates are consistent.
             isPaused.set(true);
+
+            // Stop accepting / scheduling new work before we update the distributed state.
             removeListenerAndCancelScheduledFuture();
+
+            // Persist the paused state so other components in the system see the agent as PAUSED.
             buildAgentInformationService.updateLocalBuildAgentInformation(isPaused.get(), dueToFailures, consecutiveBuildJobFailures.get());
 
             log.info("Gracefully cancelling running build jobs");
@@ -506,30 +543,37 @@ public class SharedQueueProcessingService {
                 log.info("No running build jobs to cancel");
             }
             else {
-                List<CompletableFuture<BuildResult>> runningFuturesWrapper = runningBuildJobIds.stream().map(buildJobManagementService::getRunningBuildJobFutureWrapper)
-                        .filter(Objects::nonNull).toList();
-
-                if (!runningFuturesWrapper.isEmpty()) {
-                    CompletableFuture<Void> allFuturesWrapper = CompletableFuture.allOf(runningFuturesWrapper.toArray(new CompletableFuture[0]));
-
-                    try {
-                        allFuturesWrapper.get(pauseGracePeriodSeconds, TimeUnit.SECONDS);
-                        log.info("All running build jobs finished during grace period");
-                    }
-                    catch (TimeoutException e) {
-                        handleTimeoutAndCancelRunningJobs();
-                    }
-                    catch (InterruptedException | ExecutionException e) {
-                        log.error("Error while waiting for running build jobs to finish", e);
-                    }
-                }
+                runningFuturesWrapper = runningBuildJobIds.stream().map(buildJobManagementService::getRunningBuildJobFutureWrapper).filter(Objects::nonNull).toList();
             }
-            // Close the build executor and docker client
-            buildAgentConfiguration.closeBuildAgentServices();
+            // We intentionally do NOT wait for the futures while holding the lock.
         }
         finally {
             agentStateTransitionLock.unlock();
         }
+
+        // Outside of the lock: wait for running jobs to finish up to the configured grace period.
+        if (!runningFuturesWrapper.isEmpty()) {
+            CompletableFuture<Void> allFuturesWrapper = CompletableFuture.allOf(runningFuturesWrapper.toArray(new CompletableFuture[0]));
+
+            try {
+                allFuturesWrapper.get(pauseGracePeriodSeconds, TimeUnit.SECONDS);
+                log.info("All running build jobs finished during grace period");
+            }
+            catch (TimeoutException e) {
+                log.warn("Not all running build jobs finished within {} seconds, enforcing cancellation", pauseGracePeriodSeconds, e);
+                handleTimeoutAndCancelRunningJobs();
+            }
+            catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                log.error("Interrupted while waiting for running build jobs to finish", e);
+            }
+            catch (ExecutionException e) {
+                log.error("Error while waiting for running build jobs to finish", e);
+            }
+        }
+
+        // After handling all running jobs, close the underlying services of the build agent.
+        buildAgentConfiguration.closeBuildAgentServices();
     }
 
     private void handleTimeoutAndCancelRunningJobs() {
@@ -550,43 +594,85 @@ public class SharedQueueProcessingService {
     }
 
     /**
-     * Transition the agent back to <em>running</em>:
+     * Resumes the local build agent from a {@code PAUSED} state and transitions it back into a
+     * state where it can accept and execute new build jobs.
+     * <p>
+     * The method performs the following steps:
      * <ol>
-     * <li>Open services, clear failure counter, resume result publication.</li>
-     * <li>Cleanup Docker containers.</li>
-     * <li>Re-attach listener and restart scheduler.</li>
-     * <li>Trigger immediate availability check.</li>
+     * <li>Serializes the state transition using {@link #agentStateTransitionLock} so that
+     * pause and resume operations cannot interfere with each other.</li>
+     * <li>Checks whether the agent is currently paused and returns early if it is already
+     * running (the operation is idempotent).</li>
+     * <li>Marks the agent as not paused via {@link #isPaused}, enables result processing,
+     * opens the build-agent services, and resets the consecutive failure counter.</li>
+     * <li>Cleans up any stale Docker containers from previous runs or aborted jobs.</li>
+     * <li>Re-initializes the integration with the distributed build-job queue by
+     * removing any existing listener/scheduled task and attaching a fresh listener and
+     * scheduling the periodic availability check.</li>
+     * <li>Updates the distributed build-agent information so other components observe the
+     * agent as available again.</li>
+     * <li>After releasing the state-transition lock, triggers an immediate availability
+     * check to start processing queued build jobs as soon as possible.</li>
      * </ol>
+     *
+     * <h3>Concurrency and locking semantics</h3>
+     * <ul>
+     * <li>Both the check and the update of {@link #isPaused} are performed while holding
+     * {@link #agentStateTransitionLock}. This mirrors {@code pauseBuildAgent(...)} and
+     * avoids time-of-check/time-of-use (TOCTOU) races between pause and resume.</li>
+     * <li>Listener and scheduler reconfiguration are also performed under the same lock to
+     * guarantee that at most one listener and one scheduled task are active at any time,
+     * even in the presence of concurrent pause/resume calls.</li>
+     * <li>{@link #checkAvailabilityAndProcessNextBuild()} is invoked <strong>after</strong>
+     * the lock is released to avoid re-entrancy or deadlocks if the availability check
+     * itself interacts with state protected by {@link #agentStateTransitionLock} or
+     * shared services.</li>
+     * </ul>
      */
     private void resumeBuildAgent() {
-        if (!isPaused.get()) {
-            log.info("Build agent is already running");
-            return;
-        }
-
         agentStateTransitionLock.lock();
         try {
+            // Re-check paused state under the lock to avoid races with pause operations.
+            if (!isPaused.get()) {
+                log.info("Build agent is already running");
+                return;
+            }
+
             log.info("Resuming build agent with address {}", distributedDataAccessService.getLocalMemberAddress());
+
+            // Mark the agent as running again and enable result processing.
             isPaused.set(false);
             processResults.set(true);
+
+            // Re-open the underlying services (executors, Docker client, etc.) required to run jobs.
             buildAgentConfiguration.openBuildAgentServices();
+
+            // Reset the consecutive failure counter so that previous failures do not penalize new runs.
             consecutiveBuildJobFailures.set(0);
 
-            // Cleanup docker containers
+            // Cleanup any stale Docker containers from previous runs or aborted jobs.
             buildAgentDockerService.cleanUpContainers();
 
-            // We remove the listener and scheduledTask first to avoid having multiple listeners and scheduled tasks running
+            // To avoid multiple listeners and scheduled tasks, remove any existing ones first.
             removeListenerAndCancelScheduledFuture();
-            log.info("Re-adding item listener to distributed build job queue for build agent with address {}", distributedDataAccessService.getLocalMemberAddress());
-            listenerId = distributedDataAccessService.getDistributedBuildJobQueue().addItemListener(new QueuedBuildJobItemListener());
-            scheduledFuture = taskScheduler.scheduleAtFixedRate(this::checkAvailabilityAndProcessNextBuild, Duration.ofSeconds(10));
 
+            log.info("Re-adding item listener to distributed build job queue for build agent with address {}", distributedDataAccessService.getLocalMemberAddress());
+
+            // Attach a new listener to the distributed build job queue.
+            listenerId = distributedDataAccessService.getDistributedBuildJobQueue().addItemListener(new QueuedBuildJobItemListener());
+
+            // Restart the periodic availability check & job processing scheduler.
+            scheduledFuture = taskScheduler.scheduleAtFixedRate(this::checkAvailabilityAndProcessNextBuild, BUILD_CHECK_AVAILABILITY_INTERVAL);
+
+            // Persist the resumed state so other components see the agent as available again.
             buildAgentInformationService.updateLocalBuildAgentInformation(isPaused.get());
         }
         finally {
             agentStateTransitionLock.unlock();
         }
 
+        // Outside of the lock: trigger an immediate availability check so queued jobs
+        // do not have to wait for the next scheduled interval.
         checkAvailabilityAndProcessNextBuild();
     }
 
