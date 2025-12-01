@@ -121,8 +121,8 @@ class PyrisDTOServiceUncommittedChangesTest extends AbstractIrisIntegrationTest 
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testToPyrisSubmissionDTO_multipleUncommittedFiles() {
         // Arrange - Multiple files with different paths
-        var uncommittedFiles = Map.of("src/de/tum/Main.java", "package de.tum; public class Main { }", "src/de/tum/model/User.java",
-                "package de.tum.model; public class User { }", "README.md", "# Updated README");
+        var uncommittedFiles = Map.of("src/de/tum/Main.java", "package de.tum; public class Main { }", "src/de/tum/model/User.java", "package de.tum.model; public class User { }",
+                "README.md", "# Updated README");
 
         // Act
         var result = pyrisDTOService.toPyrisSubmissionDTO(submission, uncommittedFiles);

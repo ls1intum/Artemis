@@ -15,9 +15,8 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageContent;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record IrisMessageRequestDTO(
         // Message content - can be at root level (legacy) or nested
-        List<IrisMessageContent> content,
-        Integer messageDifferentiator,
-        
+        List<IrisMessageContent> content, Integer messageDifferentiator,
+
         // Optional uncommitted files (new feature)
         Map<String, String> uncommittedFiles) {
 

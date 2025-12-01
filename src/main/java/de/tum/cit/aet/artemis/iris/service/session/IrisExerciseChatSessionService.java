@@ -192,9 +192,8 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
      * @param latestSubmission Optional latest submission to use if already loaded elsewhere. If not provided, the latest submission will be fetched
      * @param uncommittedFiles The uncommitted files from the client (working copy)
      */
-    private void requestAndHandleResponse(IrisProgrammingExerciseChatSession session, Optional<String> event,
-            Optional<IrisCombinedProgrammingExerciseChatSubSettingsDTO> settings, Optional<User> user, Optional<ProgrammingSubmission> latestSubmission,
-            Map<String, String> uncommittedFiles) {
+    private void requestAndHandleResponse(IrisProgrammingExerciseChatSession session, Optional<String> event, Optional<IrisCombinedProgrammingExerciseChatSubSettingsDTO> settings,
+            Optional<User> user, Optional<ProgrammingSubmission> latestSubmission, Map<String, String> uncommittedFiles) {
         var exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(session.getExerciseId());
         if (exercise.isExamExercise()) {
             throw new ConflictException("Iris is not supported for exam exercises", "Iris", "irisExamExercise");
