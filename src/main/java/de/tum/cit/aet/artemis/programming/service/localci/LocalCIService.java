@@ -75,8 +75,9 @@ public class LocalCIService implements ContinuousIntegrationService {
         String script = buildScriptProviderService.getScriptFor(exercise);
         Windfile windfile = aeolusTemplateService.getDefaultWindfileFor(exercise);
         ProgrammingExerciseBuildConfig buildConfig = exercise.getBuildConfig();
-        buildConfig.setBuildScript(script);
-        buildConfig.setBuildPlanConfiguration(new ObjectMapper().writeValueAsString(windfile));
+        // TODO: This is almost certainly wrong like this! We need to enable recreating build plans for exercises with multiple containers. Maybe we delete the other containers?
+        buildConfig.getDefaultContainerConfig().setBuildScript(script);
+        buildConfig.getDefaultContainerConfig().setBuildPlanConfiguration(new ObjectMapper().writeValueAsString(windfile));
         // recreating the build plans for the exercise means we need to store the updated build config in the database
         programmingExerciseBuildConfigRepository.save(buildConfig);
     }

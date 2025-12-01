@@ -307,6 +307,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
     }
 
+    // TODO: There would be potentially more than one build config. Currently using the default one, but this is wrong!
     private BuildConfig getBuildConfig(ProgrammingExerciseParticipation participation, String commitHashToBuild, String assignmentCommitHash, String testCommitHash,
             ProgrammingExerciseBuildConfig buildConfig) {
         String branch = participation instanceof ProgrammingExerciseStudentParticipation studentParticipation ? studentParticipation.getBranch() : buildConfig.getBranch();
@@ -319,7 +320,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         Windfile windfile;
         String dockerImage;
         try {
-            windfile = buildConfig.getWindfile();
+            windfile = buildConfig.getDefaultWindfile();
             dockerImage = windfile.metadata().docker().getFullImageName();
         }
         catch (NullPointerException e) {

@@ -45,7 +45,7 @@ public class LocalCIBuildConfigurationService {
         buildScriptBuilder.append("cd ").append(LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY).append("/testing-dir\n");
 
         ProgrammingExerciseBuildConfig buildConfig = programmingExercise.getBuildConfig();
-        String customScript = buildConfig.getBuildScript();
+        String customScript = buildConfig.getDefaultContainerConfig().getBuildScript();
         // Todo: get default script if custom script is null before trying to get actions from windfile
         if (customScript != null) {
             buildScriptBuilder.append(customScript);
@@ -53,7 +53,7 @@ public class LocalCIBuildConfigurationService {
         else {
             List<ScriptAction> actions;
 
-            Windfile windfile = buildConfig.getWindfile();
+            Windfile windfile = buildConfig.getDefaultWindfile();
 
             if (windfile == null) {
                 windfile = aeolusTemplateService.getDefaultWindfileFor(programmingExercise);

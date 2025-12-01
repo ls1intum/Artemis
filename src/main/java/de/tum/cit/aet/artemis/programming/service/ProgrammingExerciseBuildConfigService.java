@@ -123,16 +123,17 @@ public class ProgrammingExerciseBuildConfigService {
      */
     @Nullable
     DockerFlagsDTO parseDockerFlags(ProgrammingExerciseBuildConfig buildConfig) {
-        if (StringUtils.isBlank(buildConfig.getDockerFlags())) {
+        // TODO: This is also not good. Has to be changed. Probably delete the entire method tbh.
+        if (StringUtils.isBlank(buildConfig.getDefaultContainerConfig().getDockerFlags())) {
             return null;
         }
 
         try {
-            return objectMapper.readValue(buildConfig.getDockerFlags(), DockerFlagsDTO.class);
+            return objectMapper.readValue(buildConfig.getDefaultContainerConfig().getDockerFlags(), DockerFlagsDTO.class);
         }
         catch (Exception e) {
-            log.error("Failed to parse DockerRunConfig from JSON string: {}. Using default settings.", buildConfig.getDockerFlags());
-            throw new IllegalArgumentException("Failed to parse DockerRunConfig from JSON string: " + buildConfig.getDockerFlags(), e);
+            log.error("Failed to parse DockerRunConfig from JSON string: {}. Using default settings.", buildConfig.getDefaultContainerConfig().getDockerFlags());
+            throw new IllegalArgumentException("Failed to parse DockerRunConfig from JSON string: " + buildConfig.getDefaultContainerConfig().getDockerFlags(), e);
         }
     }
 }

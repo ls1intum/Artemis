@@ -126,7 +126,7 @@ public class JenkinsBuildPlanService {
         String job = jobFolder + "-" + planKey;
         boolean couldCreateBuildPlan = false;
 
-        if (aeolusBuildPlanService.isPresent() && exercise.getBuildConfig().getBuildPlanConfiguration() != null) {
+        if (aeolusBuildPlanService.isPresent() && exercise.getBuildConfig().getDefaultContainerConfig().getBuildPlanConfiguration() != null) {
             var createdJob = createCustomAeolusBuildPlanForExercise(exercise, jobFolder + "/" + job, internalRepositoryUris.assignmentRepositoryUri(),
                     internalRepositoryUris.testRepositoryUri(), internalRepositoryUris.solutionRepositoryUri());
             couldCreateBuildPlan = createdJob != null;
@@ -404,12 +404,12 @@ public class JenkinsBuildPlanService {
      */
     private String createCustomAeolusBuildPlanForExercise(ProgrammingExercise programmingExercise, String buildPlanId, VcsRepositoryUri repositoryUri,
             VcsRepositoryUri testRepositoryUri, VcsRepositoryUri solutionRepositoryUri) throws ContinuousIntegrationBuildPlanException {
-        if (aeolusBuildPlanService.isEmpty() || programmingExercise.getBuildConfig().getBuildPlanConfiguration() == null) {
+        if (aeolusBuildPlanService.isEmpty() || programmingExercise.getBuildConfig().getDefaultContainerConfig().getBuildPlanConfiguration() == null) {
             return null;
         }
         try {
             ProgrammingExerciseBuildConfig buildConfig = programmingExercise.getBuildConfig();
-            Windfile windfile = buildConfig.getWindfile();
+            Windfile windfile = buildConfig.getDefaultWindfile();
             Map<String, AeolusRepository> repositories = aeolusBuildPlanService.get().createRepositoryMapForWindfile(programmingExercise.getProgrammingLanguage(),
                     buildConfig.getBranch(), buildConfig.getCheckoutSolutionRepository(), repositoryUri, testRepositoryUri, solutionRepositoryUri, List.of());
 

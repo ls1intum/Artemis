@@ -1,18 +1,28 @@
 package de.tum.cit.aet.artemis.programming.domain;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.MapKey;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Size;
 
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -36,11 +46,11 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
     @Column(name = "branch")
     private String branch;
 
-    @Column(name = "build_plan_configuration", columnDefinition = "longtext")
-    private String buildPlanConfiguration;
-
-    @Column(name = "build_script", columnDefinition = "longtext")
-    private String buildScript;
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "buildConfig", fetch = FetchType.EAGER) // TODO: Cascade type?, Maybe use @transactional instead of eager fetch type.
+    @MapKey(name = "name")
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    @JsonIgnoreProperties("buildConfig")
+    private Map<String, DockerContainerConfig> containerConfigs = new HashMap<>();
 
     /**
      * This boolean flag determines whether the solution repository should be checked out during the build (additional to the student's submission).
@@ -60,9 +70,6 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
 
     @Column(name = "timeout_seconds")
     private int timeoutSeconds;
-
-    @Column(name = "docker_flags", columnDefinition = "longtext")
-    private String dockerFlags;
 
     @OneToOne(mappedBy = "buildConfig")
     private ProgrammingExercise programmingExercise;
@@ -88,14 +95,15 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
 
     public ProgrammingExerciseBuildConfig(ProgrammingExerciseBuildConfig originalBuildConfig) {
         this.setBranch(originalBuildConfig.getBranch());
-        this.setBuildPlanConfiguration(originalBuildConfig.getBuildPlanConfiguration());
+
+        this.containerConfigs = originalBuildConfig.getContainerConfigs().entrySet().stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, e -> new DockerContainerConfig(e.getValue(), this)));
+
         this.setTestCheckoutPath(originalBuildConfig.getTestCheckoutPath());
         this.setAssignmentCheckoutPath(originalBuildConfig.getAssignmentCheckoutPath());
         this.setSolutionCheckoutPath(originalBuildConfig.getSolutionCheckoutPath());
         this.setCheckoutSolutionRepository(originalBuildConfig.getCheckoutSolutionRepository());
-        this.setDockerFlags(originalBuildConfig.getDockerFlags());
         this.setSequentialTestRuns(originalBuildConfig.hasSequentialTestRuns());
-        this.setBuildScript(originalBuildConfig.getBuildScript());
         this.setTimeoutSeconds(originalBuildConfig.getTimeoutSeconds());
         this.setTheiaImage(originalBuildConfig.getTheiaImage());
         this.setAllowBranching(originalBuildConfig.isAllowBranching());
@@ -125,40 +133,31 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
         this.branch = branch;
     }
 
-    /**
-     * Returns the JSON encoded custom build plan configuration
-     *
-     * @return the JSON encoded custom build plan configuration or null if the default one should be used
-     */
-    public String getBuildPlanConfiguration() {
-        return buildPlanConfiguration;
+    private DockerContainerConfig getContainerConfig(String configName) {
+        if (!containerConfigs.containsKey(configName)) {
+            DockerContainerConfig newConfig = new DockerContainerConfig();
+            newConfig.setName(configName);
+            newConfig.setBuildConfig(this);
+            containerConfigs.put(configName, newConfig);
+        }
+        return containerConfigs.get(configName);
     }
 
     /**
-     * Sets the JSON encoded custom build plan configuration
+     * TODO
      *
-     * @param buildPlanConfiguration the JSON encoded custom build plan configuration
      */
-    public void setBuildPlanConfiguration(String buildPlanConfiguration) {
-        this.buildPlanConfiguration = buildPlanConfiguration;
+    @JsonIgnore
+    public DockerContainerConfig getDefaultContainerConfig() {
+        return getContainerConfig("Container 1");
     }
 
     /**
-     * We store the bash script in the database
+     * TODO
      *
-     * @return the build script or null if the build script does not exist
      */
-    public String getBuildScript() {
-        return buildScript;
-    }
-
-    /**
-     * Update the build script
-     *
-     * @param buildScript the new build script for the programming exercise
-     */
-    public void setBuildScript(String buildScript) {
-        this.buildScript = buildScript;
+    public Map<String, DockerContainerConfig> getContainerConfigs() {
+        return containerConfigs;
     }
 
     public boolean getCheckoutSolutionRepository() {
@@ -183,14 +182,6 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
 
     public void setTimeoutSeconds(int timeoutSeconds) {
         this.timeoutSeconds = timeoutSeconds;
-    }
-
-    public String getDockerFlags() {
-        return dockerFlags;
-    }
-
-    public void setDockerFlags(String dockerFlags) {
-        this.dockerFlags = dockerFlags;
     }
 
     @Nullable
@@ -234,12 +225,32 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
      *
      * @return the {@link Windfile} object or null if the JSON string could not be parsed
      */
-    public Windfile getWindfile() {
-        if (buildPlanConfiguration == null) {
+    /*
+     * public Windfile getWindfile() {
+     * if (getBuildPlanConfiguration() == null) {
+     * return null;
+     * }
+     * try {
+     * return Windfile.deserialize(getBuildPlanConfiguration());
+     * }
+     * catch (JsonProcessingException e) {
+     * log.error("Could not parse build plan configuration for programming exercise {}", this.getId(), e);
+     * }
+     * return null;
+     * }
+     */
+
+    /**
+     * TODO
+     *
+     */
+    @JsonIgnore
+    public Windfile getDefaultWindfile() {
+        if (getDefaultContainerConfig().getBuildPlanConfiguration() == null) {
             return null;
         }
         try {
-            return Windfile.deserialize(buildPlanConfiguration);
+            return Windfile.deserialize(getDefaultContainerConfig().getBuildPlanConfiguration());
         }
         catch (JsonProcessingException e) {
             log.error("Could not parse build plan configuration for programming exercise {}", this.getId(), e);
@@ -248,8 +259,10 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
     }
 
     public void filterSensitiveInformation() {
-        setBuildPlanConfiguration(null);
-        setBuildScript(null);
+        for (DockerContainerConfig config : containerConfigs.values()) {
+            config.setBuildPlanConfiguration(null);
+            config.setBuildScript(null);
+        }
     }
 
     public ProgrammingExercise getProgrammingExercise() {
@@ -291,9 +304,10 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
 
     @Override
     public String toString() {
-        return "BuildJobConfig{" + "id=" + getId() + ", sequentialTestRuns=" + sequentialTestRuns + ", branch='" + branch + '\'' + ", buildPlanConfiguration='"
-                + buildPlanConfiguration + '\'' + ", buildScript='" + buildScript + '\'' + ", checkoutSolutionRepository=" + checkoutSolutionRepository + ", checkoutPath='"
-                + testCheckoutPath + '\'' + ", timeoutSeconds=" + timeoutSeconds + ", dockerFlags='" + dockerFlags + '\'' + ", theiaImage='" + theiaImage + '\''
-                + ", allowBranching=" + allowBranching + ", branchRegex='" + branchRegex + '\'' + '}';
+        String containerConfigsString = containerConfigs.values().stream().map(DockerContainerConfig::toString).collect(Collectors.joining(", "));
+
+        return "BuildJobConfig{" + "id=" + getId() + ", sequentialTestRuns=" + sequentialTestRuns + ", branch='" + branch + '\'' + ", containerConfigs=[" + containerConfigsString
+                + "], checkoutSolutionRepository=" + checkoutSolutionRepository + ", checkoutPath='" + testCheckoutPath + '\'' + ", timeoutSeconds=" + timeoutSeconds
+                + ", theiaImage='" + theiaImage + '\'' + ", allowBranching=" + allowBranching + ", branchRegex='" + branchRegex + '\'' + '}';
     }
 }

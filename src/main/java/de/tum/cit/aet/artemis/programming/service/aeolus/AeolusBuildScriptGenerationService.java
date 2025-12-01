@@ -51,7 +51,8 @@ public class AeolusBuildScriptGenerationService extends BuildScriptGenerationSer
         if (!profileService.isLocalCIActive()) {
             return null;
         }
-        Windfile windfile = programmingExercise.getBuildConfig().getWindfile();
+        // TODO: I have no idea what this is. So jay. Probably wrong entirely.
+        Windfile windfile = programmingExercise.getBuildConfig().getDefaultWindfile();
         if (windfile == null) {
             windfile = aeolusTemplateService.getDefaultWindfileFor(programmingExercise);
         }

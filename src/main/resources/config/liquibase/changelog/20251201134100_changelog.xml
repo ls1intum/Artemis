@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="20251201134100-multiple-docker-containers"
+               author="erik stern">
+        <createTable tableName="docker_container_config">
+            <column autoIncrement="true" name="id" type="bigint">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="config_name" type="varchar(128)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="build_plan_configuration" type="longtext"/>
+            <column name="build_script" type="longtext"/>
+            <column name="docker_flags" type="longtext"/>
+            <column name="build_config_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint baseTableName="docker_container_config"
+                                 baseColumnNames="build_config_id"
+                                 constraintName="fk_docker_container_build_config_id"
+                                 referencedTableName="programming_exercise_build_config"
+                                 referencedColumnNames="id" onDelete="CASCADE"/>
+
+        <!-- TODO: Transfer old data over!!!! Does this work? -->
+        <sql>
+            INSERT INTO docker_container_config (config_name, build_plan_configuration, build_script, docker_flags, build_config_id)
+            SELECT 'Container 1', bc.build_plan_configuration, bc.build_script, bc.docker_flags, bc.id
+            FROM programming_exercise_build_config bc
+        </sql>
+
+        <dropColumn tableName="programming_exercise_build_config"
+                    columnName="build_plan_configuration"/>
+        <dropColumn tableName="programming_exercise_build_config"
+                    columnName="build_script"/>
+        <dropColumn tableName="programming_exercise_build_config"
+                    columnName="docker_flags"/>
+
+
+        <rollback>
+            <addColumn tableName="programming_exercise_build_config">
+                <column name="build_plan_configuration" type="longtext"/>
+                <column name="build_script" type="longtext"/>
+                <column name="docker_flags" type="longtext"/>
+            </addColumn>
+
+            <!-- TODO: Incomplete -->
+            <sql>
+                INSERT INTO programming_exercise_build_config (id, build_plan_configuration, build_script, docker_flags)
+                SELECT dcc.build_config_id, dcc.build_plan_configuration, dcc.build_script, dcc.docker_flags
+                FROM docker_container_config dcc
+            </sql>
+
+            <dropForeignKeyConstraint baseTableName="fk_docker_container_build_config_id"/>
+
+            <dropTable tableName="docker_container_config"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

@@ -82,11 +82,12 @@ public class ProgrammingExerciseBuildPlanService {
         // solution build plan
         continuousIntegration.createBuildPlanForExercise(programmingExercise, SOLUTION.getName(), solutionRepoUri, testsRepoUri, solutionRepoUri);
 
-        Windfile windfile = programmingExercise.getBuildConfig().getWindfile();
-        if (windfile != null && buildScriptGenerationService.isPresent() && programmingExercise.getBuildConfig().getBuildScript() == null) {
+        // TODO: Idk if we should just use the default here everywhere. Investage later, plz future me. Probably this is wrong.
+        Windfile windfile = programmingExercise.getBuildConfig().getDefaultWindfile();
+        if (windfile != null && buildScriptGenerationService.isPresent() && programmingExercise.getBuildConfig().getDefaultContainerConfig().getBuildScript() == null) {
             String script = buildScriptGenerationService.get().getScript(programmingExercise);
-            programmingExercise.getBuildConfig().setBuildPlanConfiguration(new ObjectMapper().writeValueAsString(windfile));
-            programmingExercise.getBuildConfig().setBuildScript(script);
+            programmingExercise.getBuildConfig().getDefaultContainerConfig().setBuildPlanConfiguration(new ObjectMapper().writeValueAsString(windfile));
+            programmingExercise.getBuildConfig().getDefaultContainerConfig().setBuildScript(script);
             programmingExerciseBuildConfigRepository.saveAndFlush(programmingExercise.getBuildConfig());
         }
 
@@ -104,10 +105,12 @@ public class ProgrammingExerciseBuildPlanService {
     public void addDefaultBuildPlanConfigForLocalCI(ProgrammingExercise programmingExercise) throws JsonProcessingException {
         // For LocalCI and Aeolus, we store the build plan definition in the database as a windfile, we don't do that for Jenkins as
         // we want to use the default approach of Jenkinsfiles and Build Plans if no customizations are made
-        if (aeolusTemplateService.isPresent() && programmingExercise.getBuildConfig().getBuildPlanConfiguration() == null && !profileService.isJenkinsActive()) {
+        // TODO: Investigate the user of default stuff here too.
+        if (aeolusTemplateService.isPresent() && programmingExercise.getBuildConfig().getDefaultContainerConfig().getBuildPlanConfiguration() == null
+                && !profileService.isJenkinsActive()) {
             Windfile windfile = aeolusTemplateService.get().getDefaultWindfileFor(programmingExercise);
             if (windfile != null) {
-                programmingExercise.getBuildConfig().setBuildPlanConfiguration(new ObjectMapper().writeValueAsString(windfile));
+                programmingExercise.getBuildConfig().getDefaultContainerConfig().setBuildPlanConfiguration(new ObjectMapper().writeValueAsString(windfile));
                 programmingExerciseBuildConfigRepository.saveAndFlush(programmingExercise.getBuildConfig());
             }
             else {
@@ -124,13 +127,14 @@ public class ProgrammingExerciseBuildPlanService {
      * @param updatedProgrammingExercise      the changed programming exercise with its new values
      */
     public void updateBuildPlanForExercise(ProgrammingExercise programmingExerciseBeforeUpdate, ProgrammingExercise updatedProgrammingExercise) throws JsonProcessingException {
-        if (continuousIntegrationService.isEmpty() || Objects.equals(programmingExerciseBeforeUpdate.getBuildConfig().getBuildPlanConfiguration(),
-                updatedProgrammingExercise.getBuildConfig().getBuildPlanConfiguration())) {
+        // TODO: Investigate the user of default stuff here too.
+        if (continuousIntegrationService.isEmpty() || Objects.equals(programmingExerciseBeforeUpdate.getBuildConfig().getDefaultContainerConfig().getBuildPlanConfiguration(),
+                updatedProgrammingExercise.getBuildConfig().getDefaultContainerConfig().getBuildPlanConfiguration())) {
             return;
         }
         // we only update the build plan configuration if it has changed and is not null, otherwise we
         // do not have a valid exercise anymore
-        if (updatedProgrammingExercise.getBuildConfig().getBuildPlanConfiguration() != null) {
+        if (updatedProgrammingExercise.getBuildConfig().getDefaultContainerConfig().getBuildPlanConfiguration() != null) {
             if (!profileService.isLocalCIActive()) {
                 continuousIntegrationService.get().deleteProject(updatedProgrammingExercise.getProjectKey());
                 continuousIntegrationService.get().createProjectForExercise(updatedProgrammingExercise);
@@ -141,13 +145,14 @@ public class ProgrammingExerciseBuildPlanService {
             // We skip this for pure LocalCI to prevent the build script from being overwritten by the default one.
             if (profileService.isAeolusActive() && buildScriptGenerationService.isPresent()) {
                 String script = buildScriptGenerationService.get().getScript(updatedProgrammingExercise);
-                updatedProgrammingExercise.getBuildConfig().setBuildScript(script);
+                updatedProgrammingExercise.getBuildConfig().getDefaultContainerConfig().setBuildScript(script);
                 programmingExerciseBuildConfigRepository.save(updatedProgrammingExercise.getBuildConfig());
             }
         }
         else {
             // if the user does not change the build plan configuration, we have to set the old one again
-            updatedProgrammingExercise.getBuildConfig().setBuildPlanConfiguration(programmingExerciseBeforeUpdate.getBuildConfig().getBuildPlanConfiguration());
+            updatedProgrammingExercise.getBuildConfig().getDefaultContainerConfig()
+                    .setBuildPlanConfiguration(programmingExerciseBeforeUpdate.getBuildConfig().getDefaultContainerConfig().getBuildPlanConfiguration());
         }
     }
 

@@ -149,10 +149,12 @@ public class ProgrammingExerciseImportBasicService {
         programmingExerciseCreationUpdateService.initParticipations(newProgrammingExercise);
 
         newProgrammingExercise.getBuildConfig().setBranch(defaultBranch);
-        if (newProgrammingExercise.getBuildConfig().getBuildPlanConfiguration() == null) {
+        // TODO: This is completely wrong too. Ofc all have to be imported. Honestly, more things should be imported????
+        if (newProgrammingExercise.getBuildConfig().getDefaultContainerConfig().getBuildPlanConfiguration() == null) {
             // this means the user did not override the build plan config when importing the
             // exercise and want to reuse it from the existing exercise
-            newProgrammingExercise.getBuildConfig().setBuildPlanConfiguration(originalProgrammingExercise.getBuildConfig().getBuildPlanConfiguration());
+            newProgrammingExercise.getBuildConfig().getDefaultContainerConfig()
+                    .setBuildPlanConfiguration(originalProgrammingExercise.getBuildConfig().getDefaultContainerConfig().getBuildPlanConfiguration());
         }
 
         // Hints, tasks, test cases and static code analysis categories
