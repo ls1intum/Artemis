@@ -152,7 +152,7 @@ def import_programming_exercise(session: Session, course_id: int, server_url: st
     url: str = f"{server_url}/programming/courses/{course_id}/programming-exercises/import-from-file"
     
     variant_id = os.path.basename(variant_folder_path)
-    config_file_path = os.path.join(variant_folder_path, "Exercise-Details.json") 
+    config_file_path = os.path.join(variant_folder_path, "exercise-details.json") 
     exercise_zip_path = os.path.join(variant_folder_path, f"{variant_id}-FullExercise.zip")
 
     try:

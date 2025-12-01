@@ -5,7 +5,6 @@ import subprocess
 import os
 import sys
 import requests
-from logging import config
 from typing import Dict, List, Tuple
 from logging_config import logging
 from utils import login_as_admin, SERVER_URL
@@ -257,7 +256,7 @@ def main():
 
     # Step 5: Create PECV Bench Course
     response_data = create_pecv_bench_course(session)
-    course_id = response_data["id"]
+    course_id = response_data.get("id")
     
     # Step 6: Store variant_id to exercise_id mapping, create zip files and import programming exercises
     programming_exercises: Dict[str, int] = {} # {'<NAME>-001': 92, <VARIANT_ID>: <exercise_id>, ...}
