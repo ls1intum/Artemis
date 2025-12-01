@@ -22,6 +22,7 @@ PECV_BENCH_URL: str = config.get('PECVBenchSettings', 'pecv_bench_repo', fallbac
 COURSE: str = config.get('PECVBenchSettings', 'course', fallback="ITP2425")
 EXERCISES: List[str] = [exercise.strip() for exercise in config.get('PECVBenchSettings', 'exercises', fallback="H01E01-Lectures").split(',')]
 MAX_THREADS: int = int(config.get('Settings', 'max_threads', fallback="5"))
+REFERENCE: str = config.get('PECVBenchSettings', 'reference')
 
 def clone_pecv_bench(pecv_bench_url: str, pecv_bench_dir: str) -> None:
     """Clones a repository if it doesn't exist, or pulls updates if it does."""
@@ -43,6 +44,7 @@ def clone_pecv_bench(pecv_bench_url: str, pecv_bench_dir: str) -> None:
                 check=True,
             )
             logging.info("Successfully pulled latest changes.")
+
         except subprocess.CalledProcessError as e:
             logging.error(f"ERROR: Failed to pull updates for {pecv_bench_dir}.")
             logging.error(f"Stderr: {e.stderr}")
@@ -55,6 +57,7 @@ def clone_pecv_bench(pecv_bench_url: str, pecv_bench_dir: str) -> None:
                 check=True,
             )
             logging.info("Successfully cloned the repository.")
+            
         except subprocess.CalledProcessError as e:
             logging.error(f"ERROR: Failed to clone repository from {pecv_bench_url}.")
             logging.error(f"Stderr: {e.stderr}")
@@ -67,9 +70,7 @@ def install_pecv_bench_dependencies(project_path: str):
         subprocess.run(
             [sys.executable, "-m", "pip", "install", "-e", "."],
             check=True,
-            capture_output=True,
-            text=True,
-            cwd=project_path  # Run the command in the pecv-bench directory
+            cwd=project_path
         )
         logging.info("Successfully installed pecv-bench dependencies.")
     except subprocess.CalledProcessError as e:
@@ -135,6 +136,59 @@ def create_all_variants(course, exercise):
         logging.info(f"Successfully created {len(all_variants)} variants.")
     except Exception as e:
         logging.exception(f"Critical Error: {e}")
+
+def summarize_report(report_md_path: str, summary_md_path: str) -> None:
+    """
+    Reads content from summary.md and inserts it into report.md 
+    immediately after the '# Variants Analysis Report' header.
+    """
+    if not os.path.exists(report_md_path):
+        logging.error(f"Report file not found at {report_md_path}")
+        return
+    
+    if not os.path.exists(summary_md_path):
+        logging.error(f"Summary file not found at {summary_md_path}")
+        return
+
+    try:
+        # read the summary text
+        with open(summary_md_path, 'r', encoding='utf-8') as f:
+            summary_text = f.readlines()
+
+        new_summary_text = []
+        inserted_reference = False
+        for line in summary_text:
+            if not inserted_reference and line.startswith("| artemis-benchmark "):
+                new_summary_text.append(line)
+                new_summary_text.append(REFERENCE + "\n")
+                inserted_reference = True
+                continue
+            new_summary_text.append(line)
+
+        # read the report lines
+        with open(report_md_path, 'r', encoding='utf-8') as f:
+            lines = f.readlines()
+
+        new_lines = []
+        inserted = False
+        
+        header_marker = "# Variants Analysis Report"
+
+        for line in lines:
+            new_lines.append(line)
+            if not inserted and header_marker in line:
+                # add a newline, the summary text, and another newline
+                new_lines.append("\n" + "".join(new_summary_text) + "\n")
+                inserted = True
+
+        # write back to report.md
+        with open(report_md_path, 'w', encoding='utf-8') as f:
+            f.writelines(new_lines)
+            
+        logging.info(f"Successfully injected summary from {summary_md_path} into {report_md_path}")
+
+    except Exception as e:
+        logging.exception(f"Error while injecting summary into report: {e}")
 
 def main():
     logging.info("Starting PECV-Bench Hyperion Benchmark Workflow...")
@@ -258,7 +312,10 @@ def main():
             logging.error(f"Error: {e}")
 
             sys.exit(1)
-    # TODO retrieve aggregated results from results/pecv-reference and results/artemis-benchmark and add ad-hoc to report.md file    
+    
+    report_md_path = os.path.join(pecv_bench_dir, "results", "artemis-benchmark", "report.md")
+    summary_md_path = os.path.join(pecv_bench_dir, "results", "artemis-benchmark", "summary.md")
+    summarize_report(report_md_path, summary_md_path)
 
     logging.info("PECV-Bench Hyperion Benchmark Workflow completed.")
 
