@@ -604,8 +604,6 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         // Skip test if video upload is enabled in test configuration
         org.junit.jupiter.api.Assumptions.assumeFalse(moduleFeatureService.isVideoUploadEnabled(), "Skipping test because video upload feature is enabled");
 
-        persistAttachmentVideoUnitWithLecture();
-
         MockMultipartFile attachmentVideoUnitPart = new MockMultipartFile("attachmentVideoUnit", "", MediaType.APPLICATION_JSON_VALUE,
                 mapper.writeValueAsString(attachmentVideoUnit).getBytes());
         MockMultipartFile attachmentPart = new MockMultipartFile("attachment", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(attachment).getBytes());
@@ -623,15 +621,19 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         // Skip test if video upload is enabled in test configuration
         org.junit.jupiter.api.Assumptions.assumeFalse(moduleFeatureService.isVideoUploadEnabled(), "Skipping test because video upload feature is enabled");
 
-        persistAttachmentVideoUnitWithLecture();
+        // First create a valid attachment video unit with PDF
+        MvcResult createResult = request.performMvcRequest(buildCreateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isCreated()).andReturn();
+        AttachmentVideoUnit createdUnit = mapper.readValue(createResult.getResponse().getContentAsString(), AttachmentVideoUnit.class);
 
+        // Now try to update it with a video file, which should be rejected
         MockMultipartFile attachmentVideoUnitPart = new MockMultipartFile("attachmentVideoUnit", "", MediaType.APPLICATION_JSON_VALUE,
-                mapper.writeValueAsString(attachmentVideoUnit).getBytes());
-        MockMultipartFile attachmentPart = new MockMultipartFile("attachment", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(attachment).getBytes());
+                mapper.writeValueAsString(createdUnit).getBytes());
+        MockMultipartFile attachmentPart = new MockMultipartFile("attachment", "", MediaType.APPLICATION_JSON_VALUE,
+                mapper.writeValueAsString(createdUnit.getAttachment()).getBytes());
         MockMultipartFile videoFilePart = createVideoFile("updated-video.webm", "video/webm");
 
         MockHttpServletRequestBuilder builder = MockMvcRequestBuilders
-                .multipart(HttpMethod.PUT, "/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/" + attachmentVideoUnit.getId()).file(attachmentVideoUnitPart)
+                .multipart(HttpMethod.PUT, "/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/" + createdUnit.getId()).file(attachmentVideoUnitPart)
                 .file(attachmentPart).file(videoFilePart).contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
 
         request.performMvcRequest(builder).andExpect(status().isBadRequest());
@@ -649,8 +651,6 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
     void createAttachmentVideoUnit_withDifferentVideoFormats_whenFeatureDisabled_shouldReturnBadRequest() throws Exception {
         // Skip test if video upload is enabled in test configuration
         org.junit.jupiter.api.Assumptions.assumeFalse(moduleFeatureService.isVideoUploadEnabled(), "Skipping test because video upload feature is enabled");
-
-        persistAttachmentVideoUnitWithLecture();
 
         String[] videoFormats = { "test.mp4", "test.webm", "test.ogg", "test.mov", "test.avi", "test.mkv", "test.flv", "test.wmv", "test.m4v" };
         String[] contentTypes = { "video/mp4", "video/webm", "video/ogg", "video/quicktime", "video/x-msvideo", "video/x-matroska", "video/x-flv", "video/x-ms-wmv", "video/mp4" };
