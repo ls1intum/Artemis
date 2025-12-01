@@ -397,13 +397,13 @@ public class ExamService {
                 .filter(templateProgrammingExerciseParticipation -> templateProgrammingExerciseParticipation.getProgrammingExercise() != null
                         && templateProgrammingExerciseParticipation.getProgrammingExercise().getId() != null)
                 .collect(Collectors.toMap(templateProgrammingExerciseParticipation -> templateProgrammingExerciseParticipation.getProgrammingExercise().getId(),
-                        Function.identity(), (a, b) -> a));
+                        Function.identity(), (a, _) -> a));
 
         Map<Long, SolutionProgrammingExerciseParticipation> solutionByExerciseId = solutionParticipations.stream()
                 .filter(solutionProgrammingExerciseParticipation -> solutionProgrammingExerciseParticipation.getProgrammingExercise() != null
                         && solutionProgrammingExerciseParticipation.getProgrammingExercise().getId() != null)
                 .collect(Collectors.toMap(solutionProgrammingExerciseParticipation -> solutionProgrammingExerciseParticipation.getProgrammingExercise().getId(),
-                        Function.identity(), (a, b) -> a));
+                        Function.identity(), (a, _) -> a));
 
         programmingExercises.forEach(exercise -> {
             if (templateByExerciseId.containsKey(exercise.getId())) {
@@ -455,7 +455,7 @@ public class ExamService {
 
         return resultRepository.findLatestResultsByParticipationIds(participationIds).stream()
                 .filter(result -> result.getSubmission() != null && result.getSubmission().getId() != null)
-                .collect(Collectors.toMap(result -> result.getSubmission().getId(), Function.identity(), (r1, r2) -> r1));
+                .collect(Collectors.toMap(result -> result.getSubmission().getId(), Function.identity(), (r1, _) -> r1));
     }
 
     /**
@@ -516,7 +516,7 @@ public class ExamService {
             List<StudentParticipation> regularParticipations = studentParticipationRepository
                     .findByStudentIdsAndIndividualExercisesWithEagerLatestSubmissionResultIgnoreTestRuns(regularStudentIds, allExercises);
             regularParticipations.forEach(participation -> participation.getStudent()
-                    .ifPresent(student -> participationsByStudentId.computeIfAbsent(student.getId(), key -> new ArrayList<>()).add(participation)));
+                    .ifPresent(student -> participationsByStudentId.computeIfAbsent(student.getId(), _ -> new ArrayList<>()).add(participation)));
         }
 
         var studentResults = new ArrayList<ExamScoresDTO.StudentResult>();
@@ -1500,8 +1500,10 @@ public class ExamService {
      */
     public Page<Exam> getAllActiveExams(final Pageable pageable, final User user) {
         // active exam means that exam has visible date in the past 7 days or next 7 days.
-        return examRepository.findAllActiveExamsInCoursesWhereAtLeastTutor(user.getGroups(), pageable, ZonedDateTime.now().minusDays(EXAM_ACTIVE_DAYS), ZonedDateTime.now(),
-                ZonedDateTime.now().plusDays(EXAM_ACTIVE_DAYS));
+        var now = ZonedDateTime.now();
+        var fromDate = now.minusDays(EXAM_ACTIVE_DAYS);
+        var toDate = now.plusDays(EXAM_ACTIVE_DAYS);
+        return examRepository.findAllActiveExamsInCoursesWhereAtLeastTutor(user.getGroups(), pageable, fromDate, now, toDate);
     }
 
     /**
@@ -1531,6 +1533,10 @@ public class ExamService {
      *                                 (to extend time) or negative (to reduce time).
      */
     public void updateStudentExamsAndRescheduleExercises(Exam exam, int originalExamDuration, int workingTimeChange) {
+        if (workingTimeChange == 0) {
+            return;
+        }
+
         var now = now();
 
         var studentExams = exam.getStudentExams();
