@@ -78,6 +78,7 @@ def install_pecv_bench_dependencies(project_path: str):
         logging.error(f"Pip install stderr: {e.stderr}")
         sys.exit(1)
 
+# Helper function
 def create_variant(course, exercise, variant_id):
     """
     Imports VariantManager and ExerciseIdentifier from pecv-bench and creates a specific variant with materialize_variant func.
@@ -137,6 +138,40 @@ def create_all_variants(course, exercise):
     except Exception as e:
         logging.exception(f"Critical Error: {e}")
 
+def process_single_variant_import(session: requests.Session, 
+                                    server_url: str,
+                                    course_id: int,
+                                    exercise_name: str,
+                                    variant_id: str,
+                                    variant_id_path: str) -> Tuple[str, int]:
+    """
+    Worker function to zip and import a single variant.
+    Returns: (exercise_variant_local_id, exercise_server_id) or (exercise_variant_local_id, None) on failure.
+    """
+    dict_key = f"{exercise_name}:{variant_id}"
+
+    # Step 1: Convert variant to zip
+    zip_created = convert_variant_to_zip(variant_id_path, course_id)
+    if not zip_created:
+        logging.error(f"Failed to create zip for {dict_key}. Skipping import.")
+        return (dict_key, None)
+
+    # Step 2: Import programming exercise
+    try:            
+        response_data = import_programming_exercise(session = session, 
+                                    course_id = course_id,
+                                    server_url = server_url,
+                                    variant_folder_path = variant_id_path
+                                    )
+        if response_data is not None and response_data["id"] is not None:
+            return (dict_key, response_data["id"])
+        else:
+            logging.error(f"Failed to import programming exercise for {dict_key}. Moving to next variant.")
+            return (dict_key, None)
+    except Exception as e:
+        logging.exception(f"Exception during import of {dict_key}: {e}")
+        return (dict_key, None)
+
 def summarize_report(report_md_path: str, summary_md_path: str) -> None:
     """
     Reads content from summary.md and inserts it into report.md 
@@ -185,7 +220,7 @@ def summarize_report(report_md_path: str, summary_md_path: str) -> None:
         with open(report_md_path, 'w', encoding='utf-8') as f:
             f.writelines(new_lines)
             
-        logging.info(f"Successfully injected summary from {summary_md_path} into {report_md_path}")
+        logging.info(f"Successfully injected summary from {os.path.basename(summary_md_path)} into {os.path.basename(report_md_path)}")
 
     except Exception as e:
         logging.exception(f"Error while injecting summary into report: {e}")
@@ -225,35 +260,48 @@ def main():
     
     # Step 6: Store variant_id to exercise_id mapping, create zip files and import programming exercises
     programming_exercises: Dict[str, int] = {} # {'<NAME>-001': 92, <VARIANT_ID>: <exercise_id>, ...}
-    for EXERCISE in EXERCISES:
-        variants_folder_path: str = f"{pecv_bench_dir}/data/{COURSE}/{EXERCISE}/variants"
-        list_of_variants = sorted(os.listdir(variants_folder_path))
+    logging.info(f"Preparing to import variants for {len(EXERCISES)} exercises using {MAX_THREADS} threads")
+    with ThreadPoolExecutor(max_workers=MAX_THREADS) as executor:
+        futures = []
+        
+        # submit all tasks
+        for EXERCISE in EXERCISES:
+            variants_folder_path: str = f"{pecv_bench_dir}/data/{COURSE}/{EXERCISE}/variants"
+            list_of_variants = sorted(os.listdir(variants_folder_path))
 
-        for variant_id in list_of_variants:
-            if not os.path.isdir(os.path.join(variants_folder_path, variant_id)):
-                continue
+            for variant_id in list_of_variants:
+                if not os.path.isdir(os.path.join(variants_folder_path, variant_id)):
+                    continue
+                variant_id_path = os.path.join(variants_folder_path, variant_id)
+
+                futures.append(executor.submit(
+                    process_single_variant_import,
+                    session,
+                    SERVER_URL,
+                    course_id,
+                    EXERCISE,
+                    variant_id,
+                    variant_id_path
+                ))
+        
+        # collect results as they finish and thread-safe dictionary update
+        for future in as_completed(futures):
+            try:
+                key, exercise_server_id = future.result()
+                if exercise_server_id is not None:
+                    programming_exercises[key] = exercise_server_id
+                    logging.info(f"Imported variant {key} with exercise ID {exercise_server_id}.")
+                else:
+                    logging.error(f"Failed to import variant {key}.")
+            except Exception as e:
+                logging.exception(f"Thread failed with error: {e}")
             
-            variant_id_path = os.path.join(variants_folder_path, variant_id)
-            programming_exercises[f"{EXERCISE}:{variant_id}"] = None
-            
-            zip_created = convert_variant_to_zip(variant_id_path, course_id)
-            if not zip_created:
-                logging.error(f"Failed to create zip for variant {variant_id}. Skipping import.")
-                continue
-            
-            response_data = import_programming_exercise(session = session, 
-                                    course_id = course_id,
-                                    server_url = SERVER_URL,
-                                    variant_folder_path = variant_id_path)
-            if response_data is not None and response_data["id"] is not None:
-                programming_exercises[f"{EXERCISE}:{variant_id}"] = response_data["id"]
-            else:
-                logging.error(f"Failed to import programming exercise for variant {variant_id}. Moving to next variant.")
-                continue    
     logging.info(f"Imported {len(programming_exercises)} programming exercises into course ID {course_id}.")
+    print(f"\n{programming_exercises}\n")
     
     # Step 7: Run consistency checks for all programming exercises and store results
-    model_name = "azure-openai-gpt-5-mini"  # NOTE implement PyYAML parser to extract from src/main/resources//config/application-local.yml
+    model_name = "azure-openai-gpt-5-mini"  # NOTE future implementation
+                                            # NOTE implement PyYAML parser to extract from src/main/resources//config/application-local.yml
                                             # NOTE sprint.ai.mode.chat + spring.ai.azure.openai.chat.options.deployment-name
     
     logging.info(f"Starting consistency checks for {len(programming_exercises)} variants using up to {MAX_THREADS} threads")

@@ -137,7 +137,7 @@ def delete_pecv_bench_course(session: Session, course_short_name: str, max_retri
             logging.info(f"Sending DELETE request, it can take around 30 seconds to delete a course")
             deleteCourseResponse: requests.Response = session.delete(delete_url, timeout = 60)
             if deleteCourseResponse.status_code == 200:
-                logging.info(f"DELETED: Course with shortName {course_short_name} deleted successfully")
+                logging.info(f"DELETED: on attempt {attempt} course with shortName {course_short_name} was deleted successfully ")
                 return True
             else:
                 logging.error(f"Deletion attempt {attempt}/{max_retries} for {course_short_name} failed with status code {deleteCourseResponse.status_code}")
