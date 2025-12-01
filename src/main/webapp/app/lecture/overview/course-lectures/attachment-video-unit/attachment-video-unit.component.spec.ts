@@ -126,11 +126,10 @@ describe('AttachmentVideoUnitComponent', () => {
         ['odf', faFilePen],
         ['exotic', faFile],
     ])('should use correct icon for extension %s', async (extension: string, icon: IconDefinition) => {
-        const getAttachmentIconSpy = jest.spyOn(component, 'getAttachmentIcon');
         component.lectureUnit().attachment!.link = `/path/to/file/test.${extension}`;
         fixture.detectChanges();
 
-        expect(getAttachmentIconSpy).toHaveReturnedWith(icon);
+        expect(component.attachmentIcon()).toBe(icon);
     });
 
     it('should download attachment when clicked', () => {
@@ -463,7 +462,7 @@ describe('AttachmentVideoUnitComponent', () => {
             fixture.componentRef.setInput('lectureUnit', videoUnit);
             fixture.detectChanges();
 
-            const icon = component.getAttachmentIcon();
+            const icon = component.attachmentIcon();
             expect(icon.iconName).toBe('file-video');
         });
 
