@@ -156,7 +156,7 @@
                                 @for (issue of sortedIssues(); track issue; let last = $last) {
                                     <div class="dropdown-item dropdown-item-nohover d-flex align-items-center justify-content-between consistency-issue-item">
                                         <div class="d-flex align-items-center consistency-issue-item__meta">
-                                            <fa-icon [icon]="getSeverityIcon(issue)" [class]="getSeverityColor(issue) + ' me-1'" />
+                                            <fa-icon [icon]="getSeverityIcon(issue.severity)" [class]="getSeverityColor(issue.severity) + ' me-1'" />
                                             <span [jhiTranslate]="'artemisApp.hyperion.consistencyCheck.category.' + issue.category"></span>
                                         </div>
 

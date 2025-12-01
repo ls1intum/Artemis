@@ -35,7 +35,7 @@ import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ConsistencyCheckError } from 'app/programming/shared/entities/consistency-check-result.model';
 import { ConsistencyCheckResponse } from 'app/openapi/model/consistencyCheckResponse';
-import { getRepoPath, humanizeCategory } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check';
+import { getRepoPath } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check';
 
 const SEVERITY_ORDER = {
     HIGH: 0,
@@ -161,29 +161,16 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     }
 
     /**
-     * Produces a human-readable label for the issue based on its category.
+     * Returns the appropriate FontAwesome icon for the given severity.
      *
-     * @param {ConsistencyIssue} issue
-     *        The issue whose category is converted to a readable label.
-     *
-     * @returns {string}
-     *          The humanized category name.
-     */
-    getIssueLabel(issue: ConsistencyIssue): string {
-        return humanizeCategory(issue.category);
-    }
-
-    /**
-     * Returns the appropriate FontAwesome icon for the given issue severity.
-     *
-     * @param {ConsistencyIssue} issue
-     *        The issue whose severity determines the returned icon.
+     * @param {ConsistencyIssue.SeverityEnum} severity
+     *        The severity that determines the returned icon.
      *
      * @returns
      *          A FontAwesome icon representing high, medium, or low severity.
      */
-    getSeverityIcon(issue: ConsistencyIssue) {
-        switch (issue.severity) {
+    getSeverityIcon(severity: ConsistencyIssue.SeverityEnum) {
+        switch (severity) {
             case 'HIGH':
                 return this.faCircleExclamation;
             case 'MEDIUM':
@@ -196,16 +183,16 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     }
 
     /**
-     * Returns a Bootstrap text color class based on the issue's severity.
+     * Returns a Bootstrap text color class based on an issue's severity.
      *
-     * @param {ConsistencyIssue} issue
-     *        The issue whose severity determines the color.
+     * @param {ConsistencyIssue.SeverityEnum} severity
+     *        The severity that determines the color.
      *
      * @returns
      *          A text color class (`text-danger`, `text-warning`, `text-info`, or `text-secondary`).
      */
-    getSeverityColor(issue: ConsistencyIssue) {
-        switch (issue.severity) {
+    getSeverityColor(severity: ConsistencyIssue.SeverityEnum) {
+        switch (severity) {
             case 'HIGH':
                 return 'text-danger';
             case 'MEDIUM':
