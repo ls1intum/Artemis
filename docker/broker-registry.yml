@@ -1,3 +1,7 @@
+# ----------------------------------------------------------------------------------------------------------------------
+# Broker and Registry Docker Compose configuration file
+# ----------------------------------------------------------------------------------------------------------------------
+
 services:
     jhipster-registry:
         container_name: artemis-jhipster-registry
@@ -28,7 +32,7 @@ services:
 
     activemq-broker:
         container_name: artemis-activemq-broker
-        image: docker.io/apache/activemq-artemis:2.41.0-alpine
+        image: docker.io/apache/activemq-artemis:2.44.0-alpine
         pull_policy: missing
         environment:
             ARTEMIS_USER: ${BROKER_USER:-guest}
@@ -42,3 +46,8 @@ services:
             test: wget -nv -t1 --spider http://localhost:8161/ || exit 1
             start_period: 600s
             interval: 1s
+
+networks:
+  artemis:
+    driver: "bridge"
+    name: artemis
