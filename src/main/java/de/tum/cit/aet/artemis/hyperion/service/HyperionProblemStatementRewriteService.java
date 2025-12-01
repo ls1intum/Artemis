@@ -56,7 +56,7 @@ public class HyperionProblemStatementRewriteService {
 
         var current = observationRegistry.getCurrentObservation();
         if (current != null) {
-            String ctx = "rewrite problem statement for exercise id: " + course.getId();
+            String ctx = "rewrite problem statement for course id: " + course.getId();
             current.contextualName(ctx);
             current.highCardinalityKeyValue(io.micrometer.common.KeyValue.of("lf.trace.name", ctx));
         }
