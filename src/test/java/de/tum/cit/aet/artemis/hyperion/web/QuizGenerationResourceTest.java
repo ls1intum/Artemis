@@ -22,6 +22,7 @@ import org.springframework.core.env.Environment;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.TestPropertySource;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
@@ -35,6 +36,7 @@ import de.tum.cit.aet.artemis.hyperion.service.AiQuizGenerationService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 @ActiveProfiles("hyperion")
+@TestPropertySource(properties = "artemis.hyperion.enabled=true")
 class QuizGenerationResourceTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "quizgeneration";
