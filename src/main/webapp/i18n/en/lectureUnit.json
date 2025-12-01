@@ -202,7 +202,8 @@
                 "nextResult": "Next result",
                 "noResults": "No results",
                 "noMatchingTranscript": "No matching transcript found",
-                "loading": "Loading..."
+                "loading": "Loading...",
+                "notSupported": "Your browser does not support the video tag."
             }
         },
         "exerciseUnit": {

@@ -601,13 +601,8 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createAttachmentVideoUnit_withVideoFile_whenFeatureDisabled_shouldReturnBadRequest() throws Exception {
-        // Assuming video upload is disabled by default in test configuration
-        boolean isVideoUploadEnabled = moduleFeatureService.isVideoUploadEnabled();
-
-        // Skip test if video upload is enabled
-        if (isVideoUploadEnabled) {
-            return;
-        }
+        // Skip test if video upload is enabled in test configuration
+        org.junit.jupiter.api.Assumptions.assumeFalse(moduleFeatureService.isVideoUploadEnabled(), "Skipping test because video upload feature is enabled");
 
         persistAttachmentVideoUnitWithLecture();
 
@@ -625,13 +620,8 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateAttachmentVideoUnit_withVideoFile_whenFeatureDisabled_shouldReturnBadRequest() throws Exception {
-        // Assuming video upload is disabled by default in test configuration
-        boolean isVideoUploadEnabled = moduleFeatureService.isVideoUploadEnabled();
-
-        // Skip test if video upload is enabled
-        if (isVideoUploadEnabled) {
-            return;
-        }
+        // Skip test if video upload is enabled in test configuration
+        org.junit.jupiter.api.Assumptions.assumeFalse(moduleFeatureService.isVideoUploadEnabled(), "Skipping test because video upload feature is enabled");
 
         persistAttachmentVideoUnitWithLecture();
 
@@ -667,13 +657,8 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createAttachmentVideoUnit_withDifferentVideoFormats_whenFeatureDisabled_shouldReturnBadRequest() throws Exception {
-        // Test various video formats
-        boolean isVideoUploadEnabled = moduleFeatureService.isVideoUploadEnabled();
-
-        // Skip test if video upload is enabled
-        if (isVideoUploadEnabled) {
-            return;
-        }
+        // Skip test if video upload is enabled in test configuration
+        org.junit.jupiter.api.Assumptions.assumeFalse(moduleFeatureService.isVideoUploadEnabled(), "Skipping test because video upload feature is enabled");
 
         persistAttachmentVideoUnitWithLecture();
 

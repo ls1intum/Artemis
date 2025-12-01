@@ -202,7 +202,8 @@
                 "nextResult": "Nächstes Ergebnis",
                 "noResults": "Keine Ergebnisse",
                 "noMatchingTranscript": "Kein passendes Transkript gefunden",
-                "loading": "Lädt..."
+                "loading": "Lädt...",
+                "notSupported": "Ihr Browser unterstützt das Video-Tag nicht."
             }
         },
         "exerciseUnit": {

@@ -56,7 +56,7 @@
                 <div class="ratio ratio-16x9">
                     <video id="uploadedVideo" class="rounded" controls preload="auto" playsinline>
                         <source [src]="videoUrl() | safeResourceUrl" />
-                        Your browser does not support the video tag.
+                        <span jhiTranslate="artemisApp.attachmentVideoUnit.videoPlayer.notSupported"></span>
                     </video>
                 </div>
             </div>
