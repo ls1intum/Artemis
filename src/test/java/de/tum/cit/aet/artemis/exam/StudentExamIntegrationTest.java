@@ -884,7 +884,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testExamAttendanceCheck() throws Exception {
         exam1.setVisibleDate(ZonedDateTime.now().minusMinutes(1));
         exam1 = examRepository.save(exam1);
@@ -901,7 +901,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testExamsCanNotBeSentBeforeVisibleDateForAttendance() throws Exception {
         exam1.setVisibleDate(ZonedDateTime.now().plusMinutes(1));
         exam1 = examRepository.save(exam1);
