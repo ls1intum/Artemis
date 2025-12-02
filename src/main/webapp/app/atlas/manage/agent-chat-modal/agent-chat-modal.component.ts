@@ -1,4 +1,4 @@
-import { AfterViewChecked, AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, OnInit, computed, inject, output, signal, viewChild } from '@angular/core';
+import { AfterViewChecked, AfterViewInit, Component, ElementRef, OnInit, computed, inject, output, signal, viewChild } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faPaperPlane, faRobot, faUser } from '@fortawesome/free-solid-svg-icons';
@@ -20,7 +20,6 @@ import { Competency } from 'app/atlas/shared/entities/competency.model';
     imports: [CommonModule, TranslateDirective, FontAwesomeModule, FormsModule, ArtemisTranslatePipe, CompetencyCardComponent],
     templateUrl: './agent-chat-modal.component.html',
     styleUrl: './agent-chat-modal.component.scss',
-    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterViewChecked {
     private readonly messagesContainer = viewChild.required<ElementRef>('messagesContainer');

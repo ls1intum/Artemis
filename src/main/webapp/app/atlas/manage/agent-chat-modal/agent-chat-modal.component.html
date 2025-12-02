@@ -119,7 +119,7 @@
                     class="form-control message-input"
                     [ngModel]="currentMessage()"
                     (ngModelChange)="currentMessage.set($event)"
-                    (keypress)="onKeyPress($event)"
+                    (keydown)="onKeyPress($event)"
                     (input)="onTextareaInput()"
                     placeholder="Type your message here..."
                     [disabled]="isAgentTyping()"
