@@ -3,7 +3,7 @@ import dayjs from 'dayjs/esm';
 import { omit } from 'lodash-es';
 import { combineLatest, takeWhile } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { Component, OnDestroy, OnInit, TemplateRef, computed, inject, viewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, TemplateRef, inject, viewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { faBan, faExclamationTriangle, faSave } from '@fortawesome/free-solid-svg-icons';
@@ -82,7 +82,6 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
     private componentActive = true;
     // Link to the component enabling the selection of exercise groups and exercises for import
     examExerciseImportComponent = viewChild.required(ExamExerciseImportComponent);
-    saveTitle = computed<string>(() => (this.isImport ? 'entity.action.import' : 'entity.action.save'));
 
     public workingTimeConfirmationContent = viewChild<TemplateRef<any>>('workingTimeConfirmationContent');
 
@@ -539,6 +538,18 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
         return (
             warningForInstructionsText + readCarefullyText + workOnYourOwnText + checkForPlagiarismText + programmingSubmissionText + submissionPeriodText + workingInstructionText
         );
+    }
+
+    /**
+     * Returns the appropriate translation key for the save button title.
+     *
+     * If the exam is being imported, the title reflects an import action;
+     * otherwise, it reflects a standard save action.
+     *
+     * @returns {string} The translation key for the save button title.
+     */
+    get saveTitle(): string {
+        return this.isImport ? 'entity.action.import' : 'entity.action.save';
     }
 }
 
