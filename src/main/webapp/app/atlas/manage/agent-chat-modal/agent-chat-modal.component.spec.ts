@@ -406,7 +406,7 @@ describe('AgentChatModalComponent', () => {
             fixture.detectChanges();
 
             const textarea = fixture.debugElement.nativeElement.querySelector('textarea');
-            const enterEvent = new KeyboardEvent('keypress', {
+            const enterEvent = new KeyboardEvent('keydown', {
                 key: 'Enter',
                 shiftKey: false,
             });
