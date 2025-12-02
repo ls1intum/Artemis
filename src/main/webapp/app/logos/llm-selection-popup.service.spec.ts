@@ -17,16 +17,17 @@ describe('LLMSelectionModalService', () => {
     });
 
     describe('openModal$', () => {
-        it('should be an observable', () => {
+        it('should be defined', () => {
             expect(service.openModal$).toBeDefined();
-            expect(service.openModal$.subscribe).toBeDefined();
         });
 
         it('should emit when open is called', () => {
-            return new Promise<void>((done) => {
-                service.openModal$.subscribe(() => {
-                    expect(true).toBeTrue();
-                    done();
+            return new Promise<void>((resolve) => {
+                service.openModal$.subscribe({
+                    next: () => {
+                        expect(true).toBeTrue();
+                        resolve();
+                    },
                 });
 
                 // Trigger emission by calling open and immediately emitting a choice
@@ -37,18 +38,19 @@ describe('LLMSelectionModalService', () => {
     });
 
     describe('choice$', () => {
-        it('should be an observable', () => {
+        it('should be defined', () => {
             expect(service.choice$).toBeDefined();
-            expect(service.choice$.subscribe).toBeDefined();
         });
 
         it('should emit choice when emitChoice is called', () => {
-            return new Promise<void>((done) => {
+            return new Promise<void>((resolve) => {
                 const expectedChoice: LLMSelectionChoice = 'cloud';
 
-                service.choice$.subscribe((choice) => {
-                    expect(choice).toBe(expectedChoice);
-                    done();
+                service.choice$.subscribe({
+                    next: (choice) => {
+                        expect(choice).toBe(expectedChoice);
+                        resolve();
+                    },
                 });
 
                 service.emitChoice(expectedChoice);
