@@ -16,14 +16,6 @@
                     [isAeolus]="false"
                 />
             }
-            <label jhiTranslate="artemisApp.programmingExercise.script" class="mb-2"></label>
-            <div class="ms-1 p-0 card col-12 col-md-12">
-                <div class="card-text d-flex flex-column" [style.height.vh]="40">
-                    <div class="mh-100 flex-shrink-1 flex-grow-1">
-                        <jhi-monaco-editor #editor [stickyScroll]="false" [shrinkToFit]="false" (textChanged)="codeChanged($event)" />
-                    </div>
-                </div>
-            </div>
         </div>
     }
 </div>

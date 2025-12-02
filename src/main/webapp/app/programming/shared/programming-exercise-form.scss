@@ -9,3 +9,21 @@
 .guided-mode-button {
     float: right;
 }
+
+.container-card {
+    border-left: 3px solid var(--bs-border-color);
+    margin-bottom: 0.5rem;
+
+    &__header {
+        padding: 0.5rem 0.75rem;
+        cursor: pointer;
+    }
+}
+
+.editable-name {
+    cursor: pointer;
+
+    .edit-icon {
+        font-size: 0.75rem;
+    }
+}

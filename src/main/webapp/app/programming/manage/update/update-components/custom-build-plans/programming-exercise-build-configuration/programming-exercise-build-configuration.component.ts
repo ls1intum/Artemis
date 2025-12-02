@@ -1,7 +1,7 @@
 import { Component, OnInit, effect, inject, input, output, viewChild } from '@angular/core';
 import { FormsModule, NgModel } from '@angular/forms';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
-import { faAngleDown, faAngleRight, faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faAngleDown, faAngleRight, faPencil, faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
@@ -9,6 +9,7 @@ import { TableEditableFieldComponent } from 'app/shared/table/editable-field/tab
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { getDefaultContainerConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
+import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 
 const NOT_SUPPORTED_NETWORK_DISABLED_LANGUAGES = [ProgrammingLanguage.EMPTY];
 
@@ -37,7 +38,7 @@ interface MockDockerContainer {
     selector: 'jhi-programming-exercise-build-configuration',
     templateUrl: './programming-exercise-build-configuration.component.html',
     styleUrls: ['../../../../../shared/programming-exercise-form.scss'],
-    imports: [TranslateDirective, HelpIconComponent, FormsModule, NgxDatatableModule, TableEditableFieldComponent, FaIconComponent],
+    imports: [TranslateDirective, HelpIconComponent, FormsModule, NgxDatatableModule, TableEditableFieldComponent, FaIconComponent, MonacoEditorComponent],
 })
 export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
     private profileService = inject(ProfileService);
@@ -71,11 +72,14 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
     faTrash = faTrash;
     faAngleDown = faAngleDown;
     faAngleRight = faAngleRight;
+    faPencil = faPencil;
+
+    editingContainerId: number | null = null;
 
     mockDockerContainers: MockDockerContainer[] = [
         {
             id: 1,
-            name: 'Default Test Runner',
+            name: 'Default Container',
             image: 'artemis/default-runner:latest',
             branch: 'refs/heads/main',
             script: './gradlew clean test',
@@ -107,6 +111,14 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
 
     toggleMockContainer(container: MockDockerContainer) {
         container.open = !container.open;
+    }
+
+    startEditing(container: MockDockerContainer) {
+        this.editingContainerId = container.id;
+    }
+
+    stopEditing() {
+        this.editingContainerId = null;
     }
 
     ngOnInit() {
