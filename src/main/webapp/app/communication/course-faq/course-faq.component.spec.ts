@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -57,9 +57,13 @@ describe('CourseFaqs', () => {
                     provide: ActivatedRoute,
                     useValue: {
                         parent: {
-                            params: of({ courseId: '1' }),
+                            snapshot: {
+                                paramMap: convertToParamMap({ courseId: '1', faqId: '1' }),
+                            },
                         },
-                        queryParams: of({ faqId: '1' }),
+                        snapshot: {
+                            queryParamMap: convertToParamMap({ faqId: '1' }),
+                        },
                     },
                 },
                 MockProvider(FaqService, {
@@ -75,6 +79,14 @@ describe('CourseFaqs', () => {
                         return of(new HttpResponse({ status: 200 }));
                     },
                     findAllCategoriesByCourseId: () => {
+                        return of(
+                            new HttpResponse({
+                                body: [],
+                                status: 200,
+                            }),
+                        );
+                    },
+                    findAllCategoriesByCourseIdAndCategory: () => {
                         return of(
                             new HttpResponse({
                                 body: [],

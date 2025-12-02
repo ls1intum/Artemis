@@ -1,12 +1,14 @@
 package de.tum.cit.aet.artemis.communication.repository;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.util.List;
 import java.util.Set;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -25,6 +27,7 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 @Repository
 public interface FaqRepository extends ArtemisJpaRepository<Faq, Long> {
 
+    @EntityGraph(type = LOAD, attributePaths = "categories")
     List<Faq> findAllByCourseIdOrderByCreatedDateDesc(Long courseId);
 
     @Query("""
@@ -41,6 +44,7 @@ public interface FaqRepository extends ArtemisJpaRepository<Faq, Long> {
             """)
     Set<String> findAllCategoriesByCourseIdAndState(@Param("courseId") Long courseId, @Param("faqState") FaqState faqState);
 
+    @EntityGraph(type = LOAD, attributePaths = "categories")
     List<Faq> findAllByCourseIdAndFaqStateOrderByCreatedDateDesc(Long courseId, FaqState faqState);
 
     @Transactional // ok because of delete
