@@ -1533,6 +1533,10 @@ public class ExamService {
      *                                 (to extend time) or negative (to reduce time).
      */
     public void updateStudentExamsAndRescheduleExercises(Exam exam, int originalExamDuration, int workingTimeChange) {
+        if (workingTimeChange == 0) {
+            return;
+        }
+
         var now = now();
 
         var studentExams = exam.getStudentExams();

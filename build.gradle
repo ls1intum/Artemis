@@ -32,7 +32,7 @@ plugins {
 }
 
 group = "de.tum.cit.aet.artemis"
-version = "8.6.2"
+version = "8.6.3"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -81,6 +81,21 @@ modernizer {
     includeTestClasses = true
     // Copy the rule name as defined in https://github.com/gaul/modernizer-maven-plugin/blob/master/modernizer-maven-plugin/src/main/resources/modernizer.xml to exclude it
     exclusions = ["java/util/Optional.get:()Ljava/lang/Object;"]
+}
+
+gitProperties {
+    // Only override branch when CI (= env variable present)
+    def ciBranch = System.getenv('GIT_BRANCH')
+    if (ciBranch) {
+        branch = ciBranch
+    }
+
+    // Optional: if you ever want to override commit from CI as well:
+    def ciCommit = System.getenv('GIT_COMMIT')
+    if (ciCommit) {
+        customProperty 'git.commit.id', ciCommit
+        customProperty 'git.commit.id.abbrev', ciCommit.take(7)
+    }
 }
 
 configurations {
