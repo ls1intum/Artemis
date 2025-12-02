@@ -100,6 +100,11 @@
     box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
 }
 
+.option-card:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
 .cloud-card {
     background: var(--ai-modal-cloud-bg);
 }
