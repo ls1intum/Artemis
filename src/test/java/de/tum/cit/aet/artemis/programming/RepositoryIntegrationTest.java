@@ -38,6 +38,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
@@ -117,6 +118,9 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     @Autowired
     private SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository;
 
+    @LocalServerPort
+    private int port;
+
     private static final String TEST_PREFIX = "repositoryintegration";
 
     private final String studentRepoBaseUrl = "/api/programming/repository/";
@@ -171,6 +175,9 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
         programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).orElseThrow();
+
+        // LocalVC helper needs the running server port for URI construction
+        localVCLocalCITestService.setPort(port);
 
         programmingExercise.setReleaseDate(ZonedDateTime.now().minusHours(1));
         programmingExerciseRepository.save(programmingExercise);
