@@ -15,7 +15,7 @@ import { ExamParticipationService } from 'app/exam/overview/services/exam-partic
 import { ArtemisServerDateService } from 'app/shared/service/server-date.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
-import { Authority } from 'app/shared/constants/authority.constants';
+import { IS_AT_LEAST_ADMIN, IS_AT_LEAST_EDITOR, IS_AT_LEAST_TUTOR } from 'app/shared/constants/authority.constants';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/shared/service/alert.service';
 import { LANGUAGES } from 'app/core/language/shared/language.constants';
@@ -157,8 +157,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
             neededWidthForIconOptionsToBeInMainNavBar = 580 + nameLength;
             neededWidthToNotRequireCollapse = 700 + nameLength;
 
-            const hasServerAdminOption = this.accountService.hasAnyAuthorityDirect([Authority.ADMIN]);
-            const hasCourseManageOption = this.accountService.hasAnyAuthorityDirect([Authority.TA, Authority.INSTRUCTOR, Authority.EDITOR, Authority.ADMIN]);
+            const hasServerAdminOption = this.accountService.hasAnyAuthorityDirect(IS_AT_LEAST_ADMIN);
+            const hasCourseManageOption = this.accountService.hasAnyAuthorityDirect(IS_AT_LEAST_TUTOR);
             if (hasCourseManageOption) {
                 neededWidthToNotRequireCollapse += 200;
                 neededWidthToDisplayCollapsedOptionsHorizontally += 200;
@@ -302,6 +302,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         test: 'artemisApp.editor.home.title',
         ide: 'artemisApp.editor.home.title',
         lectures: 'artemisApp.lecture.home.title',
+        tutorial_lectures: 'artemisApp.lecture.tutorialLecture.title',
         attachments: 'artemisApp.lecture.attachments.title',
         unit_management: 'artemisApp.lectureUnit.home.title',
         exams: 'artemisApp.examManagement.title',
@@ -449,6 +450,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 case 'exercises':
                     this.addResolvedTitleAsCrumb(EntityType.EXERCISE, [Number(segment)], currentPath, segment);
                     return;
+                case 'tutorial-lectures':
+                    this.addResolvedTitleAsCrumb(EntityType.LECTURE, [Number(segment)], currentPath, segment);
+                    return;
                 default:
                     const exercisesMatcher = this.lastRouteUrlSegment?.match(/.+-exercises/);
                     if (exercisesMatcher) {
@@ -594,8 +598,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
             case 'overview':
                 break;
             case 'example-submissions':
-                // Hide example submission dashboard for non instructor users
-                if (this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR])) {
+                // Hide example submission dashboard for non editor users
+                if (this.accountService.hasAnyAuthorityDirect(IS_AT_LEAST_EDITOR)) {
                     this.addTranslationAsCrumb(currentPath, segment);
                 }
                 break;
@@ -603,6 +607,10 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 // only a scores list exists, no special one for submissions
                 const updatedLink = currentPath.replace('/submissions/', '/scores/');
                 this.addTranslationAsCrumb(updatedLink, 'submissions');
+                break;
+            case 'tutorial-lectures':
+                const tutorialGroupsLink = currentPath.replace('/tutorial-lectures/', '');
+                this.addTranslationAsCrumb(tutorialGroupsLink, segment);
                 break;
             default:
                 // Special cases:

@@ -92,7 +92,7 @@ const config: Config = {
             {
                 path: 'docs/student',
                 routeBasePath: 'student',
-                sidebarPath: './sidebars.ts',
+                sidebarPath: './sidebar-students.ts',
                 editUrl: EDIT_URL,
                 exclude: ['**/README.md'],
             },
@@ -103,7 +103,7 @@ const config: Config = {
                 id: 'instructor',
                 path: 'docs/instructor',
                 routeBasePath: 'instructor',
-                sidebarPath: './sidebars.ts',
+                sidebarPath: './sidebar-instructors.ts',
                 editUrl: EDIT_URL,
                 exclude: ['**/README.md'],
             },

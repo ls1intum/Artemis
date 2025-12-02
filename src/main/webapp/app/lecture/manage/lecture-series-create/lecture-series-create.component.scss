@@ -42,27 +42,11 @@
         gap: 1rem;
         align-items: center;
 
-        @container frame (max-width: 810px) {
-            flex-wrap: wrap;
-        }
-
         .initial-lecture-delete-button {
             flex-shrink: 0;
 
             &:hover {
                 color: var(--danger);
-            }
-        }
-
-        .long-lecture-warning {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            color: var(--warning);
-
-            .warning-text {
-                font-size: 0.75rem;
             }
         }
     }
