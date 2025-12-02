@@ -101,14 +101,15 @@ public abstract class AbstractGitService {
                 .findGitDir()                    // keep builder behavior consistent if GIT_DIR is set
                 .setup();                        // finalize builder configuration
 
-        Repository repository = new Repository(builder, localPath, remoteRepositoryUri);
-        // Apply safe default Git configuration (GC, symlinks, commit signing, HEAD, etc.)
-        // Only modify config if write access to the repository is needed
-        if (writeAccess) {
-            setRepoConfig(defaultBranch, repository);
-        }
+        try (Repository repository = new Repository(builder, localPath, remoteRepositoryUri)) {
+            // Apply safe default Git configuration (GC, symlinks, commit signing, HEAD, etc.)
+            // Only modify config if write access to the repository is needed
+            if (writeAccess) {
+                setRepoConfig(defaultBranch, repository);
+            }
 
-        return repository;
+            return repository;
+        }
     }
 
     /**
@@ -189,7 +190,9 @@ public abstract class AbstractGitService {
         builder.setGitDir(localPath.toFile());
         builder.setInitialBranch(defaultBranch).setMustExist(true).readEnvironment().findGitDir().setup(); // scan environment GIT_* variables
 
-        return new Repository(builder, localPath, bareRepositoryUri);
+        try (Repository repository = new Repository(builder, localPath, bareRepositoryUri)) {
+            return repository;
+        }
     }
 
     @NonNull
