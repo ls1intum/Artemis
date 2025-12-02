@@ -9,22 +9,29 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.core.JsonProcessingException;
+
+import de.tum.cit.aet.artemis.programming.dto.aeolus.Windfile;
 
 @Entity
 @Table(name = "docker_container_config")
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
+@JsonInclude(JsonInclude.Include.NON_DEFAULT)
 public class DockerContainerConfig {
+
+    private static final Logger log = LoggerFactory.getLogger(DockerContainerConfig.class);
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
-    @JsonIgnore
     private Long id;
 
     @Column(name = "config_name")
-    @JsonIgnore
+    // TODO: Temp passing through duplicately @JsonIgnore
     private String name;
 
     @Column(name = "build_plan_configuration", columnDefinition = "longtext")
@@ -115,6 +122,25 @@ public class DockerContainerConfig {
 
     public void setBuildConfig(ProgrammingExerciseBuildConfig buildConfig) {
         this.buildConfig = buildConfig;
+    }
+
+    /**
+     * We store the build plan configuration as a JSON string in the database, as it is easier to handle than a complex object structure.
+     * This method parses the JSON string and returns a {@link Windfile} object.
+     *
+     * @return the {@link Windfile} object or null if the JSON string could not be parsed
+     */
+    public Windfile getWindfile() {
+        if (getBuildPlanConfiguration() == null) {
+            return null;
+        }
+        try {
+            return Windfile.deserialize(getBuildPlanConfiguration());
+        }
+        catch (JsonProcessingException e) {
+            log.error("Could not parse build plan configuration for programming exercise {}", this.getId(), e);
+        }
+        return null;
     }
 
     @Override

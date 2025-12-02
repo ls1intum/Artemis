@@ -1,4 +1,3 @@
-import { WindFile } from 'app/programming/shared/entities/wind.file';
 import { DockerContainerConfig } from './docker-container.config';
 
 export class ProgrammingExerciseBuildConfig {
@@ -8,7 +7,6 @@ export class ProgrammingExerciseBuildConfig {
     public testCheckoutPath?: string;
     public solutionCheckoutPath?: string;
     public timeoutSeconds?: number;
-    public windfile?: WindFile;
     public theiaImage?: string;
     public allowBranching: boolean;
     public branchRegex: string;

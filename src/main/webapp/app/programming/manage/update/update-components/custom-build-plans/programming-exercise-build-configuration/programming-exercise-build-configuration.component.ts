@@ -8,8 +8,9 @@ import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { TableEditableFieldComponent } from 'app/shared/table/editable-field/table-editable-field.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { getDefaultContainerConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
+import { DockerContainerConfig } from 'app/programming/shared/entities/docker-container.config';
+import { WindFile } from 'app/programming/shared/entities/wind.file';
 
 const NOT_SUPPORTED_NETWORK_DISABLED_LANGUAGES = [ProgrammingLanguage.EMPTY];
 
@@ -21,17 +22,14 @@ interface DockerFlags {
     memorySwap?: number;
 }
 
-interface MockDockerContainer {
-    id: number;
-    name: string;
-    image: string;
-    branch: string;
-    script: string;
-    timeoutSeconds: number;
-    allowBranching: boolean;
-    flags: string[];
-    notes?: string;
-    open?: boolean;
+interface DockerFlagsFlat {
+    envVars: [string, string][];
+    isNetworkDisabled: boolean;
+    cpuCount: number | undefined;
+    memory: number | undefined;
+    memorySwap: number | undefined;
+    dockerFlags: DockerFlags;
+    open: boolean;
 }
 
 @Component({
@@ -44,18 +42,14 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
     private profileService = inject(ProfileService);
 
     programmingExercise = input<ProgrammingExercise>();
-    dockerImage = input.required<string>();
-    dockerImageChange = output<string>();
+    containerConfigsList: DockerContainerConfig[];
+    containerConfigsById: { [key: number]: DockerContainerConfig };
+    dockerFlags: { [key: number]: DockerFlagsFlat };
+
+    containerConfigsChange = output<{ [key: string]: DockerContainerConfig }>();
 
     timeout = input<number>();
     timeoutChange = output<number>();
-
-    envVars: [string, string][] = [];
-    isNetworkDisabled = false;
-    cpuCount: number | undefined;
-    memory: number | undefined;
-    memorySwap: number | undefined;
-    dockerFlags: DockerFlags = {};
 
     isAeolus = input.required<boolean>();
 
@@ -76,49 +70,68 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
 
     editingContainerId: number | null = null;
 
-    mockDockerContainers: MockDockerContainer[] = [
-        {
-            id: 1,
-            name: 'Default Container',
-            image: 'artemis/default-runner:latest',
-            branch: 'refs/heads/main',
-            script: './gradlew clean test',
-            timeoutSeconds: 420,
-            allowBranching: false,
-            flags: ['--cpus=2', '--memory=4g'],
-            notes: 'Runs the standard Maven/Gradle tests',
-            open: true,
-        },
-        {
-            id: 2,
-            name: 'GPU Evaluation',
-            image: 'artemis/gpu-runner:cuda-12',
-            branch: 'refs/heads/gpu-support',
-            script: 'python evaluate.py',
-            timeoutSeconds: 900,
-            allowBranching: true,
-            flags: ['--gpus=all', '--shm-size=2g'],
-            notes: 'Used for ML grading tasks requiring CUDA',
-            open: false,
-        },
-    ];
-
     constructor() {
         effect(() => {
             this.setIsLanguageSupported();
         });
+        effect(() => {
+            this.containerConfigsList = Object.values(this.getContainerConfigs());
+            this.containerConfigsById = {};
+            this.dockerFlags = {};
+            for (const containerConfig of this.containerConfigsList) {
+                this.containerConfigsById[containerConfig.id] = containerConfig;
+                this.dockerFlags[containerConfig.id] = this.initDockerFlags(containerConfig);
+            }
+        });
     }
 
-    toggleMockContainer(container: MockDockerContainer) {
-        container.open = !container.open;
+    getContainerConfigs(): { [key: string]: DockerContainerConfig } {
+        return this.programmingExercise()!.buildConfig!.containerConfigs;
     }
 
-    startEditing(container: MockDockerContainer) {
-        this.editingContainerId = container.id;
+    toggleMockContainer(containerId: number) {
+        const flags = this.dockerFlags[containerId];
+        flags.open = !flags.open;
+    }
+
+    startEditing(containerId: number) {
+        this.editingContainerId = containerId;
     }
 
     stopEditing() {
         this.editingContainerId = null;
+    }
+
+    onAddContainer() {
+        const currentConfigs = this.getContainerConfigs();
+        const nextIndex = Object.keys(currentConfigs).length + 1;
+        const newName = `Container ${nextIndex}`;
+
+        const newContainerConfig: DockerContainerConfig = {
+            id: Date.now(),
+            name: newName,
+            buildPlanConfiguration: '',
+            buildScript: '',
+            dockerFlags: '',
+            windfile: new WindFile(),
+        };
+
+        // TODO: Note for later this.defaultDockerFlags.cpuCount = profileInfo.defaultContainerCpuCount;
+        // TODO: Note for later this.defaultDockerFlags.memory = profileInfo.defaultContainerMemoryLimitInMB;
+        // TODO: Note for later this.defaultDockerFlags.memorySwap = profileInfo.defaultContainerMemorySwapLimitInMB;
+
+        const updatedConfigs = {
+            ...currentConfigs,
+            [newName]: newContainerConfig,
+        };
+        // TODO: Name could be a duplicate!
+
+        this.containerConfigsChange.emit(updatedConfigs);
+        this.editingContainerId = newContainerConfig.id;
+
+        // Update the local caches.
+        this.containerConfigsById[newContainerConfig.id] = newContainerConfig;
+        this.dockerFlags[newContainerConfig.id] = this.initDockerFlags(newContainerConfig);
     }
 
     ngOnInit() {
@@ -138,99 +151,96 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
             if (!this.timeout) {
                 this.timeoutChange.emit(this.timeoutDefaultValue);
             }
-
-            if (!this.cpuCount) {
-                this.cpuCount = profileInfo.defaultContainerCpuCount;
-            }
-            if (!this.memory) {
-                this.memory = profileInfo.defaultContainerMemoryLimitInMB;
-            }
-            if (!this.memorySwap) {
-                this.memorySwap = profileInfo.defaultContainerMemorySwapLimitInMB;
-            }
-        }
-
-        if (getDefaultContainerConfig(this.programmingExercise()?.buildConfig).dockerFlags) {
-            this.initDockerFlags();
         }
     }
 
-    initDockerFlags() {
-        const containerConfig = getDefaultContainerConfig(this.programmingExercise()?.buildConfig);
-        this.dockerFlags = JSON.parse(containerConfig?.dockerFlags ?? '') as DockerFlags;
+    initDockerFlags(containerConfig: DockerContainerConfig): DockerFlagsFlat {
+        const dockerFlags = JSON.parse(containerConfig?.dockerFlags ?? '') as DockerFlags;
+        const dockerFlagsFlat: DockerFlagsFlat = {
+            envVars: [],
+            isNetworkDisabled: false,
+            cpuCount: undefined,
+            memory: undefined,
+            memorySwap: undefined,
+            dockerFlags: dockerFlags,
+            open: false,
+        };
 
-        this.isNetworkDisabled = this.dockerFlags.network === 'none';
-        if (this.dockerFlags.cpuCount) {
-            this.cpuCount = this.dockerFlags.cpuCount;
+        dockerFlagsFlat.isNetworkDisabled = dockerFlags.network === 'none';
+        if (dockerFlags.cpuCount) {
+            dockerFlagsFlat.cpuCount = dockerFlags.cpuCount;
         }
-        if (this.dockerFlags.memory) {
-            this.memory = this.dockerFlags.memory;
+        if (dockerFlags.memory) {
+            dockerFlagsFlat.memory = dockerFlags.memory;
         }
-        if (this.dockerFlags.memorySwap) {
-            this.memorySwap = this.dockerFlags.memorySwap;
+        if (dockerFlags.memorySwap) {
+            dockerFlagsFlat.memorySwap = dockerFlags.memorySwap;
         }
-        this.envVars = [];
-        if (this.dockerFlags.env) {
-            for (const key in this.dockerFlags.env) {
-                this.envVars.push([key, this.dockerFlags.env?.[key] ?? '']);
+        if (dockerFlags.env) {
+            for (const key in dockerFlags.env) {
+                dockerFlagsFlat.envVars.push([key, dockerFlags.env?.[key] ?? '']);
             }
         }
+
+        return dockerFlagsFlat;
     }
 
-    onDisableNetworkAccessChange(event: any) {
-        this.isNetworkDisabled = event.target.checked;
-        this.parseDockerFlagsToString();
+    onDisableNetworkAccessChange(containerId: number, event: any) {
+        this.dockerFlags[containerId].isNetworkDisabled = event.target.checked;
+        this.parseDockerFlagsToString(containerId);
     }
 
-    onCpuCountChange(event: any) {
-        this.cpuCount = event.target.value;
-        this.parseDockerFlagsToString();
+    onCpuCountChange(containerId: number, event: any) {
+        this.dockerFlags[containerId].cpuCount = event.target.value;
+        this.parseDockerFlagsToString(containerId);
     }
 
-    onMemoryChange(event: any) {
-        this.memory = event.target.value;
-        this.parseDockerFlagsToString();
+    onMemoryChange(containerId: number, event: any) {
+        this.dockerFlags[containerId].memory = event.target.value;
+        this.parseDockerFlagsToString(containerId);
     }
 
-    onMemorySwapChange(event: any) {
-        this.memorySwap = event.target.value;
-        this.parseDockerFlagsToString();
+    onMemorySwapChange(containerId: number, event: any) {
+        this.dockerFlags[containerId].memorySwap = event.target.value;
+        this.parseDockerFlagsToString(containerId);
     }
 
-    onEnvVarsKeyChange(row: [string, string]) {
+    onEnvVarsKeyChange(containerId: number, row: [string, string]) {
         return (newValue: string) => {
             row[0] = newValue;
-            this.parseDockerFlagsToString();
+            this.parseDockerFlagsToString(containerId);
             return row[0];
         };
     }
 
-    onEnvVarsValueChange(row: [string, string]) {
+    onEnvVarsValueChange(containerId: number, row: [string, string]) {
         return (newValue: string) => {
             row[1] = newValue;
-            this.parseDockerFlagsToString();
+            this.parseDockerFlagsToString(containerId);
             return row[1];
         };
     }
 
-    addEnvVar() {
-        this.envVars.push(['', '']);
+    addEnvVar(containerId: number) {
+        this.dockerFlags[containerId].envVars.push(['', '']);
     }
 
-    removeEnvVar(index: number) {
-        this.envVars.splice(index, 1);
-        this.parseDockerFlagsToString();
+    removeEnvVar(containerId: number, index: number) {
+        this.dockerFlags[containerId].envVars.splice(index, 1);
+        this.parseDockerFlagsToString(containerId);
     }
 
-    parseDockerFlagsToString() {
+    parseDockerFlagsToString(containerId: number) {
+        const df = this.dockerFlags[containerId];
         const newEnv = {} as { [key: string]: string } | undefined;
-        this.envVars.forEach(([key, value]) => {
+        df.envVars.forEach(([key, value]) => {
             if (key.trim()) {
                 newEnv![key] = value;
             }
         });
-        this.dockerFlags = { network: this.isNetworkDisabled ? 'none' : undefined, env: newEnv, cpuCount: this.cpuCount, memory: this.memory, memorySwap: this.memorySwap };
-        getDefaultContainerConfig(this.programmingExercise()!.buildConfig!).dockerFlags = JSON.stringify(this.dockerFlags);
+        df.dockerFlags = { network: df.isNetworkDisabled ? 'none' : undefined, env: newEnv, cpuCount: df.cpuCount, memory: df.memory, memorySwap: df.memorySwap };
+        this.containerConfigsById[containerId].dockerFlags = JSON.stringify(df.dockerFlags);
+        // TODO: I think this can go now. But keeping it in case i messed up! getDefaultContainerConfig(this.programmingExercise()!.buildConfig!).dockerFlags =
     }
 
     setIsLanguageSupported() {

@@ -573,13 +573,13 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 },
                 diffReportDetail,
                 !!getDefaultContainerConfig(exercise.buildConfig).buildScript &&
-                    !!exercise.buildConfig?.windfile?.metadata?.docker?.image && {
+                    !!getDefaultContainerConfig(exercise.buildConfig).windfile?.metadata?.docker?.image && {
                         type: DetailType.Text,
                         title: 'artemisApp.programmingExercise.dockerImage',
-                        data: { text: exercise.buildConfig?.windfile?.metadata?.docker?.image },
+                        data: { text: getDefaultContainerConfig(exercise.buildConfig).windfile?.metadata?.docker?.image },
                     },
                 !!getDefaultContainerConfig(exercise.buildConfig).buildScript &&
-                    !!exercise.buildConfig?.windfile?.metadata?.docker?.image && {
+                    !!getDefaultContainerConfig(exercise.buildConfig).windfile?.metadata?.docker?.image && {
                         type: DetailType.Markdown,
                         title: 'artemisApp.programmingExercise.script',
                         titleHelpText: 'artemisApp.programmingExercise.revertToTemplateBuildPlan',
@@ -781,8 +781,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
      * @param exercise the programming exercise to check
      */
     checkAndSetWindFile(exercise: ProgrammingExercise) {
-        if (exercise.buildConfig && getDefaultContainerConfig(exercise.buildConfig).buildPlanConfiguration && !exercise.buildConfig?.windfile) {
-            exercise.buildConfig!.windfile = this.aeolusService.parseWindFile(getDefaultContainerConfig(exercise.buildConfig).buildPlanConfiguration!);
+        if (exercise.buildConfig && getDefaultContainerConfig(exercise.buildConfig).buildPlanConfiguration && !getDefaultContainerConfig(exercise.buildConfig).windfile) {
+            getDefaultContainerConfig(exercise.buildConfig!).windfile = this.aeolusService.parseWindFile(getDefaultContainerConfig(exercise.buildConfig).buildPlanConfiguration!);
         }
     }
 

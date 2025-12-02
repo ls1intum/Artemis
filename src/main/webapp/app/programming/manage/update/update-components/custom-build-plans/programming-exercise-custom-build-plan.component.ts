@@ -10,12 +10,13 @@ import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { getDefaultContainerConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
+import { DockerContainerConfig } from 'app/programming/shared/entities/docker-container.config';
 
 @Component({
     selector: 'jhi-programming-exercise-custom-build-plan',
     templateUrl: './programming-exercise-custom-build-plan.component.html',
     styleUrls: ['../../../../shared/programming-exercise-form.scss'],
-    imports: [FormsModule, TranslateDirective, HelpIconComponent, ProgrammingExerciseBuildConfigurationComponent, MonacoEditorComponent],
+    imports: [FormsModule, TranslateDirective, HelpIconComponent, ProgrammingExerciseBuildConfigurationComponent],
 })
 export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
     private aeolusService = inject(AeolusService);
@@ -69,7 +70,7 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
      * @private
      */
     resetCustomBuildPlan() {
-        this.programmingExercise.buildConfig!.windfile = undefined;
+        // TODO: this.programmingExercise.buildConfig!.windfile = undefined;
         getDefaultContainerConfig(this.programmingExercise.buildConfig!).buildPlanConfiguration = undefined;
         getDefaultContainerConfig(this.programmingExercise.buildConfig!).buildScript = undefined;
     }
@@ -89,7 +90,7 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
         this.staticCodeAnalysisEnabled = this.programmingExercise.staticCodeAnalysisEnabled;
         this.sequentialTestRuns = this.programmingExercise.buildConfig?.sequentialTestRuns;
         this.isImportFromFile = isImportFromFile;
-        if (!isImportFromFile || !this.programmingExercise.buildConfig?.windfile) {
+        /* TODO: if (!isImportFromFile || !this.programmingExercise.buildConfig?.windfile) {
             this.aeolusService.getAeolusTemplateFile(this.programmingLanguage, this.projectType, this.staticCodeAnalysisEnabled, this.sequentialTestRuns).subscribe({
                 next: (file) => {
                     this.programmingExercise.buildConfig!.windfile = this.aeolusService.parseWindFile(file);
@@ -98,11 +99,11 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
                     this.programmingExercise.buildConfig!.windfile = undefined;
                 },
             });
-        }
+        }*/
         this.programmingExerciseCreationConfig.buildPlanLoaded = true;
-        if (!this.programmingExercise.buildConfig?.windfile) {
+        /* TODO: if (!this.programmingExercise.buildConfig?.windfile) {
             this.resetCustomBuildPlan();
-        }
+        }*/
         if (!isImportFromFile || !getDefaultContainerConfig(this.programmingExercise.buildConfig).buildScript) {
             this.aeolusService.getAeolusTemplateScript(this.programmingLanguage, this.projectType, this.staticCodeAnalysisEnabled, this.sequentialTestRuns).subscribe({
                 next: (file: string) => {
@@ -129,6 +130,7 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
 
     faQuestionCircle = faQuestionCircle;
 
+    // TODO: This has to be moved aswell, later!
     codeChanged(codeOrEvent: string | { text: string; fileName: string }): void {
         const code = typeof codeOrEvent === 'string' ? codeOrEvent : codeOrEvent.text;
         this.code = code;
@@ -146,11 +148,12 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
         this._editor.changeModel('build-plan.sh', '');
     }
 
-    setDockerImage(dockerImage: string) {
-        if (!this.programmingExercise.buildConfig?.windfile || !this.programmingExercise.buildConfig?.windfile.metadata.docker) {
+    onContainerConfigsChange(containerConfigs: { [key: string]: DockerContainerConfig }) {
+        this.programmingExercise.buildConfig!.containerConfigs = containerConfigs;
+        /* TODO: if (!this.programmingExercise.buildConfig?.windfile || !this.programmingExercise.buildConfig?.windfile.metadata.docker) {
             return;
-        }
-        this.programmingExercise.buildConfig!.windfile.metadata.docker.image = dockerImage.trim();
+        }*/
+        // TODO: this.programmingExercise.buildConfig!.windfile.metadata.docker.image = dockerImage.trim();
     }
 
     setTimeout(timeout: number) {

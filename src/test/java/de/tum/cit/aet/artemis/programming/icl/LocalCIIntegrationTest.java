@@ -221,7 +221,7 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         assertThat(buildJob.getCourseId()).isEqualTo(course.getId());
         assertThat(buildJob.getExerciseId()).isEqualTo(programmingExercise.getId());
         assertThat(buildJob.getParticipationId()).isEqualTo(studentParticipation.getId());
-        assertThat(buildJob.getDockerImage()).isEqualTo(programmingExercise.getBuildConfig().getWindfile().metadata().docker().getFullImageName());
+        assertThat(buildJob.getDockerImage()).isEqualTo(programmingExercise.getBuildConfig().getDefaultContainerConfig().getWindfile().metadata().docker().getFullImageName());
         assertThat(buildJob.getRepositoryName()).isEqualTo(assignmentRepositorySlug);
         assertThat(buildJob.getPriority()).isEqualTo(2);
         assertThat(buildJob.getRetryCount()).isEqualTo(0);
@@ -292,7 +292,7 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
             assertThat(buildJob.getCourseId()).isEqualTo(course.getId());
             assertThat(buildJob.getExerciseId()).isEqualTo(programmingExercise.getId());
             assertThat(buildJob.getParticipationId()).isEqualTo(studentParticipation.getId());
-            assertThat(buildJob.getDockerImage()).isEqualTo(programmingExercise.getBuildConfig().getWindfile().metadata().docker().getFullImageName());
+            assertThat(buildJob.getDockerImage()).isEqualTo(programmingExercise.getBuildConfig().getDefaultContainerConfig().getWindfile().metadata().docker().getFullImageName());
             assertThat(buildJob.getRepositoryName()).isEqualTo(assignmentRepositorySlug);
             assertThat(buildJob.getPriority()).isEqualTo(2);
             assertThat(buildJob.getRetryCount()).isEqualTo(0);
@@ -767,7 +767,7 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testDisableNetworkAccessAndEnvVars() {
         var buildConfig = programmingExercise.getBuildConfig();
-        buildConfig.setDockerFlags("{\"network\": \"none\", \"env\": {\"key\": \"value\"}}");
+        buildConfig.getDefaultContainerConfig().setDockerFlags("{\"network\": \"none\", \"env\": {\"key\": \"value\"}}");
         ProgrammingExerciseStudentParticipation participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
         programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
 
@@ -780,7 +780,7 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testPerfDockerFlags() {
         var buildConfig = programmingExercise.getBuildConfig();
-        buildConfig.setDockerFlags("{\"cpuCount\": 4, \"memory\": 3072, \"memorySwap\": 2048}");
+        buildConfig.getDefaultContainerConfig().setDockerFlags("{\"cpuCount\": 4, \"memory\": 3072, \"memorySwap\": 2048}");
         ProgrammingExerciseStudentParticipation participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
         programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
 

@@ -1,164 +1,201 @@
 <div class="mb-3">
-    @for (container of mockDockerContainers; track container.id; let last = $last) {
-        <div class="container-card ps-2" [class.container-card--expanded]="container.open">
-            <div class="d-flex align-items-center gap-2 container-card__header" (click)="toggleMockContainer(container)">
-                <fa-icon [icon]="container.open ? faAngleDown : faAngleRight" class="text-secondary" />
-                @if (editingContainerId === container.id) {
-                    <input
-                        type="text"
-                        class="form-control form-control-sm flex-grow-1"
-                        [(ngModel)]="container.name"
-                        (blur)="stopEditing()"
-                        (keydown.enter)="stopEditing()"
-                        (click)="$event.stopPropagation()"
-                    />
-                } @else {
-                    <span class="fw-semibold flex-grow-1 editable-name" (click)="startEditing(container); $event.stopPropagation()">
-                        {{ container.name }}
-                        <fa-icon [icon]="faPencil" class="ms-1 text-secondary edit-icon" />
-                    </span>
-                }
-                <button type="button" class="btn btn-link text-danger p-0" (click)="$event.stopPropagation()">
-                    <fa-icon [icon]="faTrash" />
-                </button>
-            </div>
-            @if (container.open) {
-                <div class="mb-2">
-                    <label>
-                        <span jhiTranslate="artemisApp.programmingExercise.dockerImage"></span>
-                    </label>
-                    <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.customizeDockerImage" />
-                    <input
-                        #dockerImageField="ngModel"
-                        required
-                        type="text"
-                        class="form-control"
-                        name="dockerImage"
-                        id="field_dockerImage"
-                        [ngModel]="dockerImage()"
-                        (ngModelChange)="dockerImageChange.emit($event)"
-                    />
-                </div>
-                @if (!isAeolus()) {
-                    @if (isLanguageSupported) {
-                        <div class="form-check mb-2">
-                            <label class="form-check-label" for="field_disableNetworkAccess">
-                                <input
-                                    class="form-check-input"
-                                    type="checkbox"
-                                    name="disableNetworkAccess"
-                                    id="field_disableNetworkAccess"
-                                    [checked]="isNetworkDisabled"
-                                    (change)="onDisableNetworkAccessChange($event)"
-                                />
-                                <span jhiTranslate="artemisApp.programmingExercise.dockerFlags.disableNetworkAccess.title"></span>
-                                <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.dockerFlags.disableNetworkAccess.description" />
-                            </label>
-                        </div>
-                        @if (isNetworkDisabled) {
-                            <div class="warning alert-warning mb-2" role="alert">
-                                <span jhiTranslate="artemisApp.programmingExercise.dockerFlags.disableNetworkAccess.warning"></span>
-                            </div>
-                        }
+    @for (container of containerConfigsList; track container.id) {
+        @if (container.windfile && container.windfile?.metadata && container.windfile?.metadata?.docker) {
+            <div class="container-card ps-2" [class.container-card--expanded]="dockerFlags[container.id].open">
+                <div class="d-flex align-items-center gap-2 container-card__header" (click)="toggleMockContainer(container.id)">
+                    <fa-icon [icon]="dockerFlags[container.id].open ? faAngleDown : faAngleRight" class="text-secondary" />
+                    @if (editingContainerId === container.id) {
+                        <input
+                            type="text"
+                            class="form-control form-control-sm flex-grow-1"
+                            [(ngModel)]="container.name"
+                            (blur)="stopEditing()"
+                            (keydown.enter)="stopEditing()"
+                            (click)="$event.stopPropagation()"
+                        />
+                    } @else {
+                        <span class="fw-semibold flex-grow-1 editable-name" (click)="startEditing(container.id); $event.stopPropagation()">
+                            {{ container.name }}
+                            <fa-icon [icon]="faPencil" class="ms-1 text-secondary edit-icon" />
+                        </span>
                     }
-
+                    <button type="button" class="btn btn-link text-danger p-0" (click)="$event.stopPropagation()">
+                        <fa-icon [icon]="faTrash" />
+                    </button>
+                </div>
+                @if (dockerFlags[container.id].open) {
                     <div class="mb-2">
-                        <span jhiTranslate="artemisApp.programmingExercise.dockerFlags.envVars.title"></span>
-                        <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.dockerFlags.envVars.description" />
-                        <ngx-datatable id="envVarsTable" class="bootstrap" trackByProp="id" [headerHeight]="50" [columnMode]="'force'" [rowHeight]="'auto'" [rows]="envVars">
-                            <ngx-datatable-column [name]="'Key'" [maxWidth]="200">
-                                <ng-template ngx-datatable-cell-template let-row="row" let-rowIndex="rowIndex">
-                                    <jhi-table-editable-field [id]="'key' + rowIndex" [value]="row[0] || ''" [onValueUpdate]="this.onEnvVarsKeyChange(row)" [isRequired]="true" />
-                                </ng-template>
-                            </ngx-datatable-column>
-                            <ngx-datatable-column [name]="'Value'">
-                                <ng-template ngx-datatable-cell-template let-row="row" let-rowIndex="rowIndex">
-                                    <jhi-table-editable-field
-                                        [id]="'value' + rowIndex"
-                                        [value]="row[1] || ''"
-                                        [onValueUpdate]="this.onEnvVarsValueChange(row)"
-                                        [isRequired]="true"
-                                    />
-                                </ng-template>
-                            </ngx-datatable-column>
-                            <ngx-datatable-column [maxWidth]="150">
-                                <ng-template ngx-datatable-cell-template let-row="row" let-rowIndex="rowIndex">
-                                    <button class="btn btn-sm btn-danger" (click)="removeEnvVar(rowIndex)">
-                                        <fa-icon [icon]="faTrash" />
-                                        <span jhiTranslate="artemisApp.programmingExercise.dockerFlags.envVars.removeEnvVar"></span>
-                                    </button>
-                                </ng-template>
-                            </ngx-datatable-column>
-                        </ngx-datatable>
-                        <button class="btn btn-sm btn-primary mb-2" (click)="addEnvVar()">
-                            <fa-icon [icon]="faPlus" />
-                            <span jhiTranslate="artemisApp.programmingExercise.dockerFlags.envVars.addEnvVar"></span>
-                        </button>
+                        <label>
+                            <span jhiTranslate="artemisApp.programmingExercise.dockerImage"></span>
+                        </label>
+                        <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.customizeDockerImage" />
+                        <input
+                            #dockerImageField="ngModel"
+                            required
+                            type="text"
+                            class="form-control"
+                            name="dockerImage"
+                            id="field_dockerImage"
+                            [ngModel]="container.windfile!.metadata.docker.image"
+                        />
+                        <!-- TODO: dockerImageChange???? Not working currectly now! -->
                     </div>
-                    <div class="d-flex align-items-center justify-content-start gap-4 mb-2">
-                        <div>
-                            <label>
-                                <span jhiTranslate="artemisApp.programmingExercise.timeout.title"></span>
-                            </label>
-                            <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.timeout.customize" />
+                    @if (!isAeolus()) {
+                        @if (isLanguageSupported) {
+                            <div class="form-check mb-2">
+                                <label class="form-check-label" for="field_disableNetworkAccess">
+                                    <input
+                                        class="form-check-input"
+                                        type="checkbox"
+                                        name="disableNetworkAccess"
+                                        id="field_disableNetworkAccess"
+                                        [checked]="dockerFlags[container.id].isNetworkDisabled"
+                                        (change)="onDisableNetworkAccessChange(container.id, $event)"
+                                    />
+                                    <span jhiTranslate="artemisApp.programmingExercise.dockerFlags.disableNetworkAccess.title"></span>
+                                    <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.dockerFlags.disableNetworkAccess.description" />
+                                </label>
+                            </div>
+                            @if (dockerFlags[container.id].isNetworkDisabled) {
+                                <div class="warning alert-warning mb-2" role="alert">
+                                    <span jhiTranslate="artemisApp.programmingExercise.dockerFlags.disableNetworkAccess.warning"></span>
+                                </div>
+                            }
+                        }
+
+                        <div class="mb-2">
+                            <span jhiTranslate="artemisApp.programmingExercise.dockerFlags.envVars.title"></span>
+                            <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.dockerFlags.envVars.description" />
+                            <ngx-datatable
+                                id="envVarsTable"
+                                class="bootstrap"
+                                trackByProp="id"
+                                [headerHeight]="50"
+                                [columnMode]="'force'"
+                                [rowHeight]="'auto'"
+                                [rows]="dockerFlags[container.id].envVars"
+                            >
+                                <ngx-datatable-column [name]="'Key'" [maxWidth]="200">
+                                    <ng-template ngx-datatable-cell-template let-row="row" let-rowIndex="rowIndex">
+                                        <jhi-table-editable-field
+                                            [id]="'key' + rowIndex"
+                                            [value]="row[0] || ''"
+                                            [onValueUpdate]="this.onEnvVarsKeyChange(container.id, row)"
+                                            [isRequired]="true"
+                                        />
+                                    </ng-template>
+                                </ngx-datatable-column>
+                                <ngx-datatable-column [name]="'Value'">
+                                    <ng-template ngx-datatable-cell-template let-row="row" let-rowIndex="rowIndex">
+                                        <jhi-table-editable-field
+                                            [id]="'value' + rowIndex"
+                                            [value]="row[1] || ''"
+                                            [onValueUpdate]="this.onEnvVarsValueChange(container.id, row)"
+                                            [isRequired]="true"
+                                        />
+                                    </ng-template>
+                                </ngx-datatable-column>
+                                <ngx-datatable-column [maxWidth]="150">
+                                    <ng-template ngx-datatable-cell-template let-row="row" let-rowIndex="rowIndex">
+                                        <button class="btn btn-sm btn-danger" (click)="removeEnvVar(container.id, rowIndex)">
+                                            <fa-icon [icon]="faTrash" />
+                                            <span jhiTranslate="artemisApp.programmingExercise.dockerFlags.envVars.removeEnvVar"></span>
+                                        </button>
+                                    </ng-template>
+                                </ngx-datatable-column>
+                            </ngx-datatable>
+                            <button class="btn btn-sm btn-primary mb-2" (click)="addEnvVar(container.id)">
+                                <fa-icon [icon]="faPlus" />
+                                <span jhiTranslate="artemisApp.programmingExercise.dockerFlags.envVars.addEnvVar"></span>
+                            </button>
                         </div>
-                        <div class="w-50">
+                        <div class="d-flex align-items-center justify-content-start gap-4 mb-2">
+                            <div>
+                                <label>
+                                    <!-- TODO: Timeout should be *global* for all, not local to each container. Unnecessary mess this way. -->
+                                    <span jhiTranslate="artemisApp.programmingExercise.timeout.title"></span>
+                                </label>
+                                <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.timeout.customize" />
+                            </div>
+                            <div class="w-50">
+                                <input
+                                    class="w-100 mt-1"
+                                    #timeoutField="ngModel"
+                                    type="range"
+                                    min="{{ timeoutMinValue }}"
+                                    max="{{ timeoutMaxValue }}"
+                                    step="1"
+                                    value="{{ timeoutDefaultValue }}"
+                                    id="field_timeout"
+                                    [ngModel]="timeout()"
+                                    (ngModelChange)="timeoutChange!.emit($event)"
+                                />
+                            </div>
+                            <span class="slider-label">
+                                <span class="slider-value">{{ timeout() }} s</span>
+                            </span>
+                        </div>
+
+                        <div class="mb-2">
+                            <label>
+                                <span jhiTranslate="artemisApp.programmingExercise.dockerFlags.cpuCount.label"></span>
+                            </label>
+                            <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.dockerFlags.cpuCount.help" />
                             <input
-                                class="w-100 mt-1"
-                                #timeoutField="ngModel"
-                                type="range"
-                                min="{{ timeoutMinValue }}"
-                                max="{{ timeoutMaxValue }}"
-                                step="1"
-                                value="{{ timeoutDefaultValue }}"
-                                id="field_timeout"
-                                [ngModel]="timeout()"
-                                (ngModelChange)="timeoutChange!.emit($event)"
+                                type="text"
+                                class="form-control"
+                                name="cpuCount"
+                                id="field_dockerCpuCount"
+                                [value]="dockerFlags[container.id].cpuCount"
+                                (input)="onCpuCountChange(container.id, $event)"
                             />
                         </div>
-                        <span class="slider-label">
-                            <span class="slider-value">{{ timeout() }} s</span>
-                        </span>
-                    </div>
 
-                    <div class="mb-2">
-                        <label>
-                            <span jhiTranslate="artemisApp.programmingExercise.dockerFlags.cpuCount.label"></span>
-                        </label>
-                        <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.dockerFlags.cpuCount.help" />
-                        <input type="text" class="form-control" name="cpuCount" id="field_dockerCpuCount" [value]="cpuCount" (input)="onCpuCountChange($event)" />
-                    </div>
+                        <div class="mb-2">
+                            <label>
+                                <span jhiTranslate="artemisApp.programmingExercise.dockerFlags.memory.label"></span>
+                            </label>
+                            <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.dockerFlags.memory.help" />
+                            <input
+                                type="text"
+                                class="form-control"
+                                name="memory"
+                                id="field_memory"
+                                [value]="dockerFlags[container.id].memory"
+                                (input)="onMemoryChange(container.id, $event)"
+                            />
+                        </div>
 
-                    <div class="mb-2">
-                        <label>
-                            <span jhiTranslate="artemisApp.programmingExercise.dockerFlags.memory.label"></span>
-                        </label>
-                        <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.dockerFlags.memory.help" />
-                        <input type="text" class="form-control" name="memory" id="field_memory" [value]="memory" (input)="onMemoryChange($event)" />
-                    </div>
+                        <div class="mb-2">
+                            <label>
+                                <span jhiTranslate="artemisApp.programmingExercise.dockerFlags.memorySwap.label"></span>
+                            </label>
+                            <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.dockerFlags.memorySwap.help" />
+                            <input
+                                type="text"
+                                class="form-control"
+                                name="memorySwap"
+                                id="field_memorySwap"
+                                [value]="dockerFlags[container.id].memorySwap"
+                                (input)="onMemorySwapChange(container.id, $event)"
+                            />
+                        </div>
+                    }
 
-                    <div class="mb-2">
-                        <label>
-                            <span jhiTranslate="artemisApp.programmingExercise.dockerFlags.memorySwap.label"></span>
-                        </label>
-                        <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.dockerFlags.memorySwap.help" />
-                        <input type="text" class="form-control" name="memorySwap" id="field_memorySwap" [value]="memorySwap" (input)="onMemorySwapChange($event)" />
-                    </div>
-                }
-
-                <label jhiTranslate="artemisApp.programmingExercise.script" class="mb-2"></label>
-                <div class="ms-1 p-0 card col-12 col-md-12">
-                    <div class="card-text d-flex flex-column" [style.height.vh]="40">
-                        <div class="mh-100 flex-shrink-1 flex-grow-1">
-                            <jhi-monaco-editor #editor [stickyScroll]="false" [shrinkToFit]="false" /><!--(textChanged)="codeChanged($event)" />-->
+                    <label jhiTranslate="artemisApp.programmingExercise.script" class="mb-2"></label>
+                    <div class="ms-1 p-0 card col-12 col-md-12">
+                        <div class="card-text d-flex flex-column" [style.height.vh]="40">
+                            <div class="mh-100 flex-shrink-1 flex-grow-1">
+                                <jhi-monaco-editor #editor [stickyScroll]="false" [shrinkToFit]="false" /><!--(textChanged)="codeChanged($event)" />-->
+                            </div>
                         </div>
                     </div>
-                </div>
-            }
-        </div>
+                }
+            </div>
+        }
     }
     <div class="pt-2">
-        <button type="button" class="btn btn-outline-primary btn-sm">
+        <button type="button" class="btn btn-outline-primary btn-sm" (click)="onAddContainer()">
             <fa-icon [icon]="faPlus" class="me-1" />
             Add container
         </button>

@@ -117,7 +117,6 @@ export function copyBuildConfigFromExerciseJson(exerciseJson: ProgrammingExercis
     buildConfig.testCheckoutPath = exerciseJson.testCheckoutPath ?? '';
     buildConfig.checkoutSolutionRepository = exerciseJson.checkoutSolutionRepository ?? false;
     buildConfig.timeoutSeconds = exerciseJson.timeoutSeconds ?? 0;
-    buildConfig.windfile = exerciseJson.windfile ?? undefined;
 
     // TODO: Ensure the old compatability is not broken!
     /*const containerConfig: DockerContainerConfig = {

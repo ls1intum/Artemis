@@ -332,7 +332,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             this.withDependenciesValue = false;
             this.buildPlanLoaded = false;
             if (this.programmingExercise.buildConfig) {
-                this.programmingExercise.buildConfig.windfile = undefined;
+                getDefaultContainerConfig(this.programmingExercise.buildConfig).windfile = undefined;
                 getDefaultContainerConfig(this.programmingExercise.buildConfig).buildPlanConfiguration = undefined;
             } else {
                 this.programmingExercise.buildConfig = new ProgrammingExerciseBuildConfig();
@@ -455,7 +455,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.activatedRoute.data.subscribe(({ programmingExercise }) => {
             this.programmingExercise = programmingExercise;
             if (getDefaultContainerConfig(this.programmingExercise.buildConfig).buildPlanConfiguration) {
-                this.programmingExercise.buildConfig!.windfile = this.aeolusService.parseWindFile(
+                getDefaultContainerConfig(this.programmingExercise.buildConfig).windfile = this.aeolusService.parseWindFile(
                     getDefaultContainerConfig(this.programmingExercise.buildConfig).buildPlanConfiguration!,
                 );
             }
@@ -731,17 +731,16 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
      */
     saveExercise() {
         // trim potential whitespaces that can lead to issues
-        if (this.programmingExercise.buildConfig!.windfile?.metadata?.docker?.image) {
-            this.programmingExercise.buildConfig!.windfile.metadata.docker.image = this.programmingExercise.buildConfig!.windfile.metadata.docker.image.trim();
+        const containerConfig = getDefaultContainerConfig(this.programmingExercise.buildConfig);
+        if (containerConfig.windfile?.metadata?.docker?.image) {
+            containerConfig.windfile.metadata.docker.image = containerConfig.windfile.metadata.docker.image.trim();
         }
 
         if (this.programmingExercise.customizeBuildPlanWithAeolus || this.isImportFromFile || this.isImportFromSharing) {
-            getDefaultContainerConfig(this.programmingExercise.buildConfig!).buildPlanConfiguration = this.aeolusService.serializeWindFile(
-                this.programmingExercise.buildConfig!.windfile!,
-            );
+            containerConfig.buildPlanConfiguration = this.aeolusService.serializeWindFile(containerConfig.windfile!);
         } else {
-            getDefaultContainerConfig(this.programmingExercise.buildConfig!).buildPlanConfiguration = undefined;
-            this.programmingExercise.buildConfig!.windfile = undefined;
+            containerConfig.buildPlanConfiguration = undefined;
+            containerConfig.windfile = undefined;
         }
 
         if (this.programmingExercise.buildConfig?.timeoutSeconds && this.programmingExercise.buildConfig?.timeoutSeconds < 1) {

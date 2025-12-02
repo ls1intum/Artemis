@@ -6,15 +6,15 @@
     </div>
     @if (programmingExercise.customizeBuildPlanWithAeolus) {
         <div class="row m-1">
-            @if (programmingExercise.buildConfig?.windfile && programmingExercise.buildConfig?.windfile?.metadata && programmingExercise.buildConfig?.windfile?.metadata?.docker) {
+            @if (programmingExercise.buildConfig?.containerConfigs) {
                 <jhi-programming-exercise-build-configuration
                     [programmingExercise]="programmingExercise"
-                    [dockerImage]="programmingExercise.buildConfig!.windfile!.metadata.docker.image"
-                    (dockerImageChange)="setDockerImage($event)"
+                    (containerConfigsChange)="onContainerConfigsChange($event)"
                     [timeout]="programmingExercise.buildConfig!.timeoutSeconds === 0 ? 120 : programmingExercise.buildConfig!.timeoutSeconds!"
                     (timeoutChange)="setTimeout($event)"
                     [isAeolus]="false"
                 />
+                <!-- TODO: Why is dockerImageChange necessary? Change it! -->
             }
         </div>
     }

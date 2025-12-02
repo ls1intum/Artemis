@@ -1,4 +1,4 @@
-<div class="form-group">
+<!-- TODO: Reenable later, bc. there is a ton of errors here! <div class="form-group">
     <div class="form-check custom-checkbox">
         <input class="form-check-input" type="checkbox" name="customizeBuildPlan" id="field_customizeBuildPlan" [(ngModel)]="programmingExercise.customizeBuildPlanWithAeolus" />
         <label class="form-check-label custom-control-label" for="field_customizeBuildPlan" jhiTranslate="artemisApp.programmingExercise.customizeBuildPlanWithAeolus"></label>
@@ -7,6 +7,7 @@
     @if (programmingExercise.customizeBuildPlanWithAeolus) {
         <div class="row m-1">
             @if (programmingExercise.buildConfig?.windfile && programmingExercise.buildConfig?.windfile?.metadata && programmingExercise.buildConfig?.windfile?.metadata?.docker) {
+                TODO Recomment port this to aeolus TODO Recomment
                 <jhi-programming-exercise-build-configuration
                     [dockerImage]="programmingExercise.buildConfig!.windfile!.metadata.docker.image"
                     (dockerImageChange)="setDockerImage($event)"
@@ -72,3 +73,4 @@
         </div>
     }
 </div>
+-->
