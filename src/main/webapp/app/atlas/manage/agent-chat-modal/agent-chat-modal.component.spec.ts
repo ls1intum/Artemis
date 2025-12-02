@@ -571,8 +571,10 @@ describe('AgentChatModalComponent', () => {
         });
 
         it('should handle case when textarea element is not available', () => {
-            component.messages.set([]);
-
+            Object.defineProperty(component, 'messageInput', {
+                get: () => () => null,
+                configurable: true,
+            });
             expect(() => component.onTextareaInput()).not.toThrow();
         });
     });
@@ -681,9 +683,11 @@ describe('AgentChatModalComponent', () => {
 
         describe('Scroll behavior edge cases', () => {
             it('should handle scrollToBottom when messagesContainer is null', () => {
-                component.messages.set([]);
+                Object.defineProperty(component, 'messagesContainer', {
+                    get: () => () => null,
+                    configurable: true,
+                });
                 component.shouldScrollToBottom.set(true);
-
                 expect(() => component.ngAfterViewChecked()).not.toThrow();
             });
 
