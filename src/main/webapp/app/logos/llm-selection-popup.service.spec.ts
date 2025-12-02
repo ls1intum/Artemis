@@ -25,12 +25,11 @@ describe('LLMSelectionModalService', () => {
             return new Promise<void>((resolve) => {
                 service.openModal$.subscribe({
                     next: () => {
-                        expect(true).toBeTrue();
                         resolve();
                     },
                 });
 
-                // Trigger emission by calling open and immediately emitting a choice
+                // Call open() to trigger openModal$ emission, then clean up with emitChoice
                 service.open();
                 service.emitChoice('cloud');
             });
@@ -70,7 +69,6 @@ describe('LLMSelectionModalService', () => {
         it('should emit to openModalSubject', () => {
             return new Promise<void>((done) => {
                 service.openModal$.subscribe(() => {
-                    expect(true).toBeTrue();
                     done();
                 });
 
