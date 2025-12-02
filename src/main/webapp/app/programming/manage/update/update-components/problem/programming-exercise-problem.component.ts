@@ -1,4 +1,4 @@
-import { AfterViewChecked, Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild, computed, inject, input, output, signal } from '@angular/core';
+import { AfterViewChecked, Component, EventEmitter, Input, OnDestroy, OnInit, Output, computed, inject, input, output, signal, viewChild } from '@angular/core';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { faBan, faQuestionCircle, faSave, faSpinner } from '@fortawesome/free-solid-svg-icons';
@@ -90,7 +90,7 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy, A
     originalProblemStatement = '';
     refinedProblemStatement = '';
     private diffContentSet = false;
-    @ViewChild('diffEditor') diffEditor?: MarkdownDiffEditorMonacoComponent;
+    diffEditor = viewChild<MarkdownDiffEditorMonacoComponent>('diffEditor');
     private templateProblemStatement = signal<string>('');
     private currentProblemStatement = signal<string>('');
     private readonly testCaseAction: TextEditorDomainAction = new TestCaseAction();
@@ -128,8 +128,9 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy, A
      * Used to set diff editor content when it becomes available.
      */
     ngAfterViewChecked(): void {
-        if (this.showDiff && this.diffEditor && !this.diffContentSet) {
-            this.diffEditor.setFileContents(this.originalProblemStatement, this.refinedProblemStatement, 'original.md', 'refined.md');
+        const editor = this.diffEditor();
+        if (this.showDiff && editor && !this.diffContentSet) {
+            editor.setFileContents(this.originalProblemStatement, this.refinedProblemStatement, 'original.md', 'refined.md');
             this.diffContentSet = true;
         }
     }
@@ -292,6 +293,13 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy, A
                     }
                 },
                 error: (error) => {
+                    // Preserve original problem statement from error parameters
+                    const originalFromError = error?.error?.params?.originalProblemStatement;
+                    if (originalFromError && exercise) {
+                        // Restore original statement if it was included in error
+                        exercise.problemStatement = originalFromError;
+                        this.programmingExerciseChange.emit(exercise);
+                    }
                     this.alertService.error('artemisApp.programmingExercise.problemStatement.refinementError');
                 },
             });
@@ -311,8 +319,9 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy, A
             this.closeDiff();
             // Set diff editor content after view update
             setTimeout(() => {
-                if (this.diffEditor) {
-                    this.diffEditor.setFileContents(this.originalProblemStatement, this.refinedProblemStatement, 'original.md', 'refined.md');
+                const editor = this.diffEditor();
+                if (editor) {
+                    editor.setFileContents(this.originalProblemStatement, this.refinedProblemStatement, 'original.md', 'refined.md');
                 }
             }, 0);
         }

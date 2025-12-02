@@ -86,7 +86,15 @@ public class HyperionProblemStatementRefinementService {
         }
         catch (Exception e) {
             log.error("Error refining problem statement for course [{}]: {}", course.getId(), e.getMessage(), e);
-            return new ProblemStatementRefinementResponseDTO("", originalProblemStatementText);
+            // Create exception with original problem statement in params for frontend to preserve it
+            var exception = new InternalServerErrorAlertException("Failed to refine problem statement: " + e.getMessage(), "ProblemStatement", "problemStatementRefinementFailed");
+            // Add original problem statement to the params map
+            if (exception.getParameters() != null && exception.getParameters().get("params") instanceof Map) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> params = (Map<String, Object>) exception.getParameters().get("params");
+                params.put("originalProblemStatement", originalProblemStatementText);
+            }
+            throw exception;
         }
     }
 }

@@ -5,7 +5,6 @@ import {
     ElementRef,
     OnDestroy,
     Renderer2,
-    ViewChild,
     ViewEncapsulation,
     computed,
     effect,
@@ -13,11 +12,13 @@ import {
     input,
     output,
     signal,
+    viewChild,
 } from '@angular/core';
 import { Disposable } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
 import { LineChange } from 'app/programming/shared/utils/diff.utils';
 import { MonacoEditorService } from 'app/shared/monaco-editor/service/monaco-editor.service';
 import * as monaco from 'monaco-editor';
+import { CdkDrag, CdkDragMove, Point } from '@angular/cdk/drag-drop';
 import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
 import { BoldAction } from 'app/shared/monaco-editor/model/actions/bold.action';
 import { ItalicAction } from 'app/shared/monaco-editor/model/actions/italic.action';
@@ -33,6 +34,7 @@ import { OrderedListAction } from 'app/shared/monaco-editor/model/actions/ordere
 import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faGripLines, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { NgTemplateOutlet } from '@angular/common';
 import { MonacoTextEditorAdapter } from 'app/shared/monaco-editor/model/actions/adapter/monaco-text-editor.adapter';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -52,20 +54,43 @@ export type MonacoEditorDiffText = { original: string; modified: string };
     styleUrls: ['./markdown-diff-editor-monaco.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
     encapsulation: ViewEncapsulation.None,
-    imports: [NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, TranslateDirective, FaIconComponent, NgbTooltip, NgTemplateOutlet, ArtemisTranslatePipe, ColorSelectorComponent],
+    imports: [
+        NgbDropdown,
+        NgbDropdownToggle,
+        NgbDropdownMenu,
+        TranslateDirective,
+        FaIconComponent,
+        NgbTooltip,
+        NgTemplateOutlet,
+        ArtemisTranslatePipe,
+        ColorSelectorComponent,
+        CdkDrag,
+    ],
 })
 export class MarkdownDiffEditorMonacoComponent implements AfterViewInit, OnDestroy {
     private _editor: monaco.editor.IStandaloneDiffEditor;
     monacoDiffEditorContainerElement: HTMLElement;
 
-    @ViewChild('fullElement', { static: true }) fullElement!: ElementRef<HTMLDivElement>;
-    @ViewChild('wrapper', { static: true }) wrapper!: ElementRef<HTMLDivElement>;
-    @ViewChild(ColorSelectorComponent, { static: false }) colorSelector?: ColorSelectorComponent;
+    fullElement = viewChild.required<ElementRef<HTMLDivElement>>('fullElement');
+    wrapper = viewChild.required<ElementRef<HTMLDivElement>>('wrapper');
+    resizePlaceholder = viewChild<ElementRef<HTMLDivElement>>('resizePlaceholder');
+    colorSelector = viewChild<ColorSelectorComponent>(ColorSelectorComponent);
 
+    // Inputs
     allowSplitView = input<boolean>(true);
-    onReadyForDisplayChange = output<{ ready: boolean; lineChange: LineChange }>();
+    enableResize = input<boolean>(true);
+    enableFileUpload = input<boolean>(true);
+    initialEditorHeight = input<number>(300);
+    resizableMinHeight = input<number>(200);
+    resizableMaxHeight = input<number>(800);
+    allowedFileExtensions = input<string>('.png, .jpg, .jpeg, .gif, .svg, .pdf');
+    maxFileSize = input<number>(5); // MB
 
-    // Markdown editing actions - configurable via signals
+    // Outputs
+    onReadyForDisplayChange = output<{ ready: boolean; lineChange: LineChange }>();
+    onFileUpload = output<FileList>();
+    onFileDrop = output<DragEvent>();
+
     defaultActions = input<TextEditorAction[]>([
         new BoldAction(),
         new ItalicAction(),
@@ -105,6 +130,15 @@ export class MarkdownDiffEditorMonacoComponent implements AfterViewInit, OnDestr
     readonly colorPickerMarginTop = 35;
     readonly colorPickerHeight = 110;
 
+    targetWrapperHeight = 300; // Default, will be updated from input in ngAfterViewInit
+    minWrapperHeight = 200; // Default, will be updated from input in ngAfterViewInit
+    constrainDragPositionFn?: (pointerPosition: Point) => Point;
+    isResizing = false;
+
+    // Icons
+    readonly faGripLines = faGripLines;
+    readonly faQuestionCircle = faQuestionCircle;
+
     /*
      * Subscriptions and listeners that need to be disposed of when this component is destroyed.
      */
@@ -128,25 +162,32 @@ export class MarkdownDiffEditorMonacoComponent implements AfterViewInit, OnDestr
         effect(() => {
             this._editor.updateOptions({
                 renderSideBySide: this.allowSplitView(),
+                scrollbar: {
+                    vertical: 'auto',
+                    horizontal: 'auto',
+                    handleMouseWheel: true,
+                    alwaysConsumeMouseWheel: false,
+                },
             });
         });
     }
 
     ngAfterViewInit(): void {
-        // Append the diff editor container below the toolbar
-        this.renderer.appendChild(this.wrapper.nativeElement, this.monacoDiffEditorContainerElement);
+        this.renderer.appendChild(this.wrapper().nativeElement, this.monacoDiffEditorContainerElement);
 
-        // Wire fullscreen actions so they fullscreen the whole component (toolbar + editor)
         this.metaActions()
             .filter((a) => a instanceof FullscreenAction)
             .forEach((fs) => {
-                (fs as FullscreenAction).element = this.fullElement.nativeElement;
+                (fs as FullscreenAction).element = this.fullElement().nativeElement;
             });
 
-        // Initial layout
+        this.targetWrapperHeight = this.initialEditorHeight();
+        this.minWrapperHeight = this.resizableMinHeight();
+        this.constrainDragPositionFn = this.constrainDragPosition.bind(this);
+
         this._editor.layout({
-            width: this.wrapper.nativeElement.clientWidth,
-            height: this.wrapper.nativeElement.clientHeight,
+            width: this.wrapper().nativeElement.clientWidth,
+            height: this.wrapper().nativeElement.clientHeight,
         });
     }
 
@@ -160,7 +201,10 @@ export class MarkdownDiffEditorMonacoComponent implements AfterViewInit, OnDestr
      */
     setupDiffListener(): void {
         const diffListener = this._editor.onDidUpdateDiff(() => {
-            this.adjustContainerHeight(this.getMaximumContentHeight());
+            // Only auto-adjust height if resize is disabled
+            if (!this.enableResize()) {
+                this.adjustContainerHeight(this.getMaximumContentHeight());
+            }
 
             const monacoLineChanges = this._editor.getLineChanges() ?? [];
             this.onReadyForDisplayChange.emit({
@@ -177,16 +221,17 @@ export class MarkdownDiffEditorMonacoComponent implements AfterViewInit, OnDestr
      */
     setupContentHeightListeners(): void {
         const editors = [this._editor.getOriginalEditor(), this._editor.getModifiedEditor()];
-
         editors.forEach((editor) => {
-            const contentSizeListener = editor.onDidContentSizeChange((e: monaco.editor.IContentSizeChangedEvent) => {
-                if (e.contentHeightChanged) {
+            const contentSizeListener = editor.onDidContentSizeChange(() => {
+                if (!this.enableResize()) {
                     this.adjustContainerHeight(this.getMaximumContentHeight());
                 }
             });
 
             const hiddenAreaListener = editor.onDidChangeHiddenAreas(() => {
-                this.adjustContainerHeight(this.getContentHeightOfEditor(editor));
+                if (!this.enableResize()) {
+                    this.adjustContainerHeight(this.getContentHeightOfEditor(editor));
+                }
             });
 
             this.listeners.push(contentSizeListener, hiddenAreaListener);
@@ -198,12 +243,11 @@ export class MarkdownDiffEditorMonacoComponent implements AfterViewInit, OnDestr
      * and relayouts the diff editor.
      */
     adjustContainerHeight(newContentHeight: number) {
-        // Let the container grow within the flex wrapper; scrolling is handled by CSS
         this.monacoDiffEditorContainerElement.style.height = `${newContentHeight}px`;
 
         this._editor.layout({
-            width: this.wrapper.nativeElement.clientWidth,
-            height: this.wrapper.nativeElement.clientHeight,
+            width: this.wrapper().nativeElement.clientWidth,
+            height: this.wrapper().nativeElement.clientHeight,
         });
     }
 
@@ -211,10 +255,10 @@ export class MarkdownDiffEditorMonacoComponent implements AfterViewInit, OnDestr
         this.onReadyForDisplayChange.emit({ ready: false, lineChange: { addedLineCount: 0, removedLineCount: 0 } });
 
         const originalModelUri = monaco.Uri.parse(`inmemory://model/original-${this._editor.getId()}/${originalFileName ?? 'left'}`);
-        const modifiedFileUri = monaco.Uri.parse(`inmemory://model/modified-${this._editor.getId()}/${modifiedFileName ?? 'right'}`);
+        const modifiedModelUri = monaco.Uri.parse(`inmemory://model/modified-${this._editor.getId()}/${modifiedFileName ?? 'right'}`);
 
         const originalModel = monaco.editor.getModel(originalModelUri) ?? monaco.editor.createModel(original ?? '', 'markdown', originalModelUri);
-        const modifiedModel = monaco.editor.getModel(modifiedFileUri) ?? monaco.editor.createModel(modified ?? '', 'markdown', modifiedFileUri);
+        const modifiedModel = monaco.editor.getModel(modifiedModelUri) ?? monaco.editor.createModel(modified ?? '', 'markdown', modifiedModelUri);
 
         originalModel.setValue(original ?? '');
         modifiedModel.setValue(modified ?? '');
@@ -224,7 +268,6 @@ export class MarkdownDiffEditorMonacoComponent implements AfterViewInit, OnDestr
 
         this._editor.setModel({ original: originalModel, modified: modifiedModel });
 
-        // Ensure layout after new content
         this.adjustContainerHeight(this.getMaximumContentHeight());
     }
 
@@ -248,7 +291,52 @@ export class MarkdownDiffEditorMonacoComponent implements AfterViewInit, OnDestr
     }
 
     getContentHeightOfEditor(editor: monaco.editor.IStandaloneCodeEditor): number {
-        return editor.getContentHeight();
+        return editor.getScrollHeight();
+    }
+
+    /**
+     * Constrains the drag position of the resize handle.
+     */
+    constrainDragPosition(pointerPosition: Point): Point {
+        const wrapperTop = this.wrapper().nativeElement.getBoundingClientRect().top;
+        const minY = wrapperTop + this.resizableMinHeight();
+        const maxY = wrapperTop + this.resizableMaxHeight();
+        return {
+            x: pointerPosition.x,
+            y: Math.max(minY, Math.min(maxY, pointerPosition.y)),
+        };
+    }
+
+    /**
+     * Called when the user moves the resize handle.
+     */
+    onResizeMoved(event: CdkDragMove) {
+        const wrapperTop = this.wrapper().nativeElement.getBoundingClientRect().top;
+        const dragElemHeight = this.getElementClientHeight(event.source.element.nativeElement);
+        const newHeight = event.pointerPosition.y - wrapperTop - dragElemHeight / 2;
+
+        if (newHeight >= this.resizableMinHeight() && newHeight <= this.resizableMaxHeight()) {
+            this.targetWrapperHeight = newHeight;
+            this._editor.layout();
+        }
+
+        event.source.reset();
+    }
+
+    getElementClientHeight(element: HTMLElement): number {
+        return element.clientHeight;
+    }
+
+    handleFileUpload(event: Event): void {
+        const inputElem = event.target as HTMLInputElement;
+        if (inputElem.files && inputElem.files.length > 0) {
+            this.onFileUpload.emit(inputElem.files);
+        }
+    }
+
+    handleFileDrop(event: DragEvent): void {
+        event.preventDefault();
+        this.onFileDrop.emit(event);
     }
 
     getText(): MonacoEditorDiffText {
@@ -270,8 +358,9 @@ export class MarkdownDiffEditorMonacoComponent implements AfterViewInit, OnDestr
     }
 
     openColorSelector(event: MouseEvent): void {
-        if (this.colorSelector) {
-            this.colorSelector.openColorSelector(event, this.colorPickerMarginTop, this.colorPickerHeight);
+        const selector = this.colorSelector();
+        if (selector) {
+            selector.openColorSelector(event, this.colorPickerMarginTop, this.colorPickerHeight);
         }
     }
 

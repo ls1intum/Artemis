@@ -85,7 +85,16 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
                 .call(any(Prompt.class));
     }
 
+    private void mockRefineSuccess() {
+        doReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("Refined problem statement generated successfully."))))).when(azureOpenAiChatModel)
+                .call(any(Prompt.class));
+    }
+
     private void mockGenerateFailure() {
+        doThrow(new RuntimeException("AI service unavailable")).when(azureOpenAiChatModel).call(any(Prompt.class));
+    }
+
+    private void mockRefineFailure() {
         doThrow(new RuntimeException("AI service unavailable")).when(azureOpenAiChatModel).call(any(Prompt.class));
     }
 
@@ -238,5 +247,67 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
         request.performMvcRequest(post("/api/hyperion/courses/{courseId}/problem-statements/generate", courseId).contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isInternalServerError()).andExpect(jsonPath("$.title").value("Failed to generate problem statement: AI service unavailable"))
                 .andExpect(jsonPath("$.message").value("error.problemStatementGenerationFailed")).andExpect(jsonPath("$.errorKey").value("problemStatementGenerationFailed"));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    void shouldRefineProblemStatementForInstructor() throws Exception {
+        long courseId = persistedCourseId;
+        mockRefineSuccess();
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        courseRepository.findById(courseId).orElseThrow();
+        String body = "{\"problemStatementText\":\"Original problem statement\",\"userPrompt\":\"Make it better\"}";
+        request.performMvcRequest(post("/api/hyperion/courses/{courseId}/problem-statements/refine", courseId).contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.refinedProblemStatement").isString());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = { "USER", "EDITOR" })
+    void shouldRefineProblemStatementForEditor() throws Exception {
+        long courseId = persistedCourseId;
+        mockRefineSuccess();
+        userUtilService.changeUser(TEST_PREFIX + "editor1");
+        courseRepository.findById(courseId).orElseThrow();
+        String body = "{\"problemStatementText\":\"Original problem statement\",\"userPrompt\":\"Make it better\"}";
+        request.performMvcRequest(post("/api/hyperion/courses/{courseId}/problem-statements/refine", courseId).contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.refinedProblemStatement").isString());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = { "USER", "TA" })
+    void shouldReturnForbiddenForRefineTutor() throws Exception {
+        long courseId = persistedCourseId;
+
+        userUtilService.changeUser(TEST_PREFIX + "tutor1");
+        courseRepository.findById(courseId).orElseThrow();
+
+        String body = "{\"problemStatementText\":\"Original problem statement\",\"userPrompt\":\"Make it better\"}";
+        request.performMvcRequest(post("/api/hyperion/courses/{courseId}/problem-statements/refine", courseId).contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = { "USER", "STUDENT" })
+    void shouldReturnForbiddenForRefineStudent() throws Exception {
+        long courseId = persistedCourseId;
+        userUtilService.changeUser(TEST_PREFIX + "student1");
+        courseRepository.findById(courseId).orElseThrow();
+        String body = "{\"problemStatementText\":\"Original problem statement\",\"userPrompt\":\"Make it better\"}";
+        request.performMvcRequest(post("/api/hyperion/courses/{courseId}/problem-statements/refine", courseId).contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    void shouldReturnInternalServerErrorWhenRefinementFails() throws Exception {
+        long courseId = persistedCourseId;
+        mockRefineFailure();
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        courseRepository.findById(courseId).orElseThrow();
+        String body = "{\"problemStatementText\":\"Original problem statement\",\"userPrompt\":\"Make it better\"}";
+        request.performMvcRequest(post("/api/hyperion/courses/{courseId}/problem-statements/refine", courseId).contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isInternalServerError()).andExpect(jsonPath("$.title").value("Failed to refine problem statement: AI service unavailable"))
+                .andExpect(jsonPath("$.message").value("error.problemStatementRefinementFailed")).andExpect(jsonPath("$.errorKey").value("problemStatementRefinementFailed"))
+                .andExpect(jsonPath("$.params.originalProblemStatement").value("Original problem statement"));
     }
 }

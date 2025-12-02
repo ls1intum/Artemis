@@ -1,4 +1,3 @@
-<!-- Root element used for fullscreen (toolbar + editor) -->
 <div #fullElement class="markdown-diff-editor-root default-font-size">
     <!-- Markdown Formatting Toolbar -->
     <div class="markdown-diff-editor-toolbar d-flex align-items-center p-2">
@@ -6,6 +5,7 @@
         @for (action of defaultActions(); track action.id) {
             <ng-container [ngTemplateOutlet]="simpleActionButton" [ngTemplateOutletContext]="{ action }" />
         }
+
         <!-- Color Action -->
         @if (colorAction()) {
             <div class="btn-group ms-1">
@@ -39,14 +39,56 @@
             </div>
         }
 
-        <!-- Meta Actions (includes Fullscreen) -->
         @for (action of metaActions(); track action.id) {
             <ng-container [ngTemplateOutlet]="simpleActionButton" [ngTemplateOutletContext]="{ action }" />
         }
     </div>
 
-    <!-- Wrapper in which the diff editor container is injected in ngAfterViewInit -->
-    <div #wrapper class="markdown-diff-editor-wrapper"></div>
+    <div
+        #wrapper
+        class="markdown-diff-editor-wrapper"
+        [style.height.px]="targetWrapperHeight"
+        [style.cursor]="isResizing ? 'ns-resize' : undefined"
+        [style.min-height.px]="minWrapperHeight"
+    ></div>
+
+    <!-- Footer with file upload and markdown guide -->
+    @if (enableFileUpload()) {
+        <div class="d-flex align-items-center border-top" #fileUploadFooter>
+            <input
+                id="file-upload-diff-editor"
+                class="file-upload-footer-input"
+                type="file"
+                [accept]="allowedFileExtensions()"
+                [multiple]="true"
+                (change)="handleFileUpload($event)"
+            />
+            <label for="file-upload-diff-editor" class="file-upload-footer-label d-inline" [style.cursor]="isResizing ? 'ns-resize !important' : undefined">
+                <div class="row mx-0 align-items-baseline">
+                    <span class="col upload-subtitle" jhiTranslate="artemisApp.markdownEditor.fileUpload"></span>
+                </div>
+            </label>
+            <a class="col-auto mx-1" href="https://markdown-it.github.io/" target="_blank" rel="noopener noreferrer">
+                <fa-icon [icon]="faQuestionCircle" [ngbTooltip]="'artemisApp.markdownEditor.guide' | artemisTranslate" />
+            </a>
+        </div>
+    }
+
+    @if (enableResize()) {
+        <div #resizePlaceholder [style.cursor]="isResizing ? 'ns-resize' : undefined" class="d-flex justify-content-center resize-placeholder">
+            <fa-icon
+                cdkDrag
+                cdkDragLockAxis="y"
+                [cdkDragConstrainPosition]="constrainDragPositionFn"
+                (cdkDragStarted)="isResizing = true"
+                (cdkDragMoved)="onResizeMoved($event)"
+                (cdkDragEnded)="isResizing = false"
+                [icon]="faGripLines"
+                [style.cursor]="'ns-resize'"
+                class="rg-bottom md-resize-icon"
+            />
+        </div>
+    }
 </div>
 
 <!-- Template for simple action buttons -->
