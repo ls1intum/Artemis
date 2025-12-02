@@ -320,21 +320,6 @@
     }
 }
 
-@media (max-width: 600px) {
-    .modal-content {
-        padding: 32px 24px;
-    }
-
-    .modal-header h1 {
-        font-size: 30px;
-    }
-
-    .option-card {
-        flex: 1 1 100%;
-        max-width: 100%;
-    }
-}
-
 @media (max-width: 640px) {
     .modal-backdrop {
         padding: 30px 12px;
@@ -389,5 +374,20 @@
     .icons-wrapper {
         min-height: 100px;
         padding: 12px;
+    }
+}
+
+@media (max-width: 600px) {
+    .modal-content {
+        padding: 32px 24px;
+    }
+
+    .modal-header h1 {
+        font-size: 30px;
+    }
+
+    .option-card {
+        flex: 1 1 100%;
+        max-width: 100%;
     }
 }
