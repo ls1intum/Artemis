@@ -8,6 +8,7 @@
     <body>
         <p th:text="#{email.courseRequest.greeting(${courseRequest.requester.login})}">Hello,</p>
         <p th:text="#{email.courseRequest.accepted.text(${courseRequest.title})}">Welcome to your new course.</p>
+        <p th:text="#{email.courseRequest.accepted.followUp}">You can adjust the course after opening it.</p>
         <p>
             <a th:with="url=(@{|${baseUrl}/course-management/${course.id}|})" th:href="${url}" th:text="#{email.courseRequest.accepted.linkText}">Open course</a>
         </p>

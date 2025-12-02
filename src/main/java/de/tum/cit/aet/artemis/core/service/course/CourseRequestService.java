@@ -2,6 +2,9 @@ package de.tum.cit.aet.artemis.core.service.course;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
@@ -17,6 +20,7 @@ import org.springframework.util.StringUtils;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.core.domain.CourseRequest;
 import de.tum.cit.aet.artemis.core.domain.CourseRequestStatus;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -29,6 +33,7 @@ import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.CourseRequestRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 
 @Service
 @Profile(PROFILE_CORE)
@@ -38,6 +43,8 @@ public class CourseRequestService {
     private static final Logger log = LoggerFactory.getLogger(CourseRequestService.class);
 
     private static final int MAX_TITLE_LENGTH = 255;
+
+    private final ResourceLoaderService resourceLoaderService;
 
     @Value("${info.contact:}")
     private String contactEmail;
@@ -55,13 +62,14 @@ public class CourseRequestService {
     private final MailSendingService mailSendingService;
 
     public CourseRequestService(CourseRequestRepository courseRequestRepository, CourseRepository courseRepository, UserRepository userRepository,
-            CourseAccessService courseAccessService, ChannelService channelService, MailSendingService mailSendingService) {
+            CourseAccessService courseAccessService, ChannelService channelService, MailSendingService mailSendingService, ResourceLoaderService resourceLoaderService) {
         this.courseRequestRepository = courseRequestRepository;
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
         this.courseAccessService = courseAccessService;
         this.channelService = channelService;
         this.mailSendingService = mailSendingService;
+        this.resourceLoaderService = resourceLoaderService;
     }
 
     /**
@@ -171,21 +179,48 @@ public class CourseRequestService {
 
     private Course createCourseFromRequest(CourseRequest request) {
         Course course = new Course();
+
+        // TODO: set a few default values that are currently missing
+
         course.setTitle(request.getTitle());
         course.setShortName(request.getShortName());
         course.setSemester(request.getSemester());
         course.setStartDate(request.getStartDate());
         course.setEndDate(request.getEndDate());
         course.setTestCourse(request.isTestCourse());
+        course.setOnlineCourse(Boolean.FALSE);
+        course.setEnrollmentEnabled(Boolean.FALSE);
+        course.setLearningPathsEnabled(false);
+        course.setStudentCourseAnalyticsDashboardEnabled(false);
+        course.setRestrictedAthenaModulesAccess(false);
+        course.setAccuracyOfScores(1);
+        course.setFaqEnabled(true);
+        course.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
 
-        // TODO: set a few default values that are currently missing
+        try {
+            var templatePath = Path.of("templates", "codeofconduct", "README.md");
+            log.debug("REST request to get template : {}", templatePath);
+            var resource = resourceLoaderService.getResource(templatePath);
+            var informationSharingMessageCodeOfConduct = new String(resource.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+            course.setCourseInformationSharingMessagingCodeOfConduct(informationSharingMessageCodeOfConduct);
+        }
+        catch (IOException e) {
+            log.warn("Could not load code of conduct template from path: {}", "templates/codeofconduct/README.md", e);
+        }
+
+        courseAccessService.setDefaultGroupsIfNotSet(course);
 
         course.validateShortName();
         course.validateStartAndEndDate();
-        courseAccessService.setDefaultGroupsIfNotSet(course);
+        course.validateEnrollmentStartAndEndDate();
+        course.validateUnenrollmentEndDate();
+        course.validateEnrollmentConfirmationMessage();
+        course.validateComplaintsAndRequestMoreFeedbackConfig();
+        course.validateOnlineCourseAndEnrollmentEnabled();
+        course.validateAccuracyOfScores();
 
         Course createdCourse = courseRepository.save(course);
-        channelService.createDefaultChannels(course);
+        channelService.createDefaultChannels(createdCourse);
 
         if (request.getRequester() != null) {
             User requesterWithGroups = userRepository.findByIdWithGroupsAndAuthoritiesElseThrow(request.getRequester().getId());

@@ -78,12 +78,20 @@
                         <td class="text-end">
                             @if (request.status === CourseRequestStatus.PENDING) {
                                 <div class="d-flex justify-content-end gap-2">
-                                    <jhi-button [btnType]="ButtonType.SUCCESS" [btnSize]="ButtonSize.SMALL" [icon]="faCheck" (click)="accept(request)">
-                                        {{ 'artemisApp.courseRequest.admin.accept' | artemisTranslate }}
-                                    </jhi-button>
-                                    <jhi-button [btnType]="ButtonType.ERROR" [btnSize]="ButtonSize.SMALL" [icon]="faTimes" (click)="openRejectModal(rejectModal, request)">
-                                        {{ 'artemisApp.courseRequest.admin.reject' | artemisTranslate }}
-                                    </jhi-button>
+                                    <jhi-button
+                                        [btnType]="ButtonType.SUCCESS"
+                                        [btnSize]="ButtonSize.SMALL"
+                                        [icon]="faCheck"
+                                        (click)="accept(request)"
+                                        [title]="'artemisApp.courseRequest.admin.accept'"
+                                    />
+                                    <jhi-button
+                                        [btnType]="ButtonType.ERROR"
+                                        [btnSize]="ButtonSize.SMALL"
+                                        [icon]="faTimes"
+                                        (click)="openRejectModal(rejectModal, request)"
+                                        [title]="'artemisApp.courseRequest.admin.reject'"
+                                    />
                                 </div>
                             }
                         </td>
@@ -114,11 +122,7 @@
         }
     </div>
     <div class="modal-footer">
-        <jhi-button [btnType]="ButtonType.SECONDARY" (click)="modal.dismiss()">
-            {{ 'entity.action.cancel' | artemisTranslate }}
-        </jhi-button>
-        <jhi-button [btnType]="ButtonType.ERROR" [icon]="faTimes" (click)="reject()">
-            {{ 'artemisApp.courseRequest.admin.rejectConfirm' | artemisTranslate }}
-        </jhi-button>
+        <jhi-button [btnType]="ButtonType.SECONDARY" (click)="modal.dismiss()" [title]="'entity.action.cancel'" />
+        <jhi-button [btnType]="ButtonType.ERROR" [icon]="faTimes" (click)="reject()" [title]="'artemisApp.courseRequest.admin.rejectConfirm'" />
     </div>
 </ng-template>
