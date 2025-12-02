@@ -101,15 +101,17 @@ public abstract class AbstractGitService {
                 .findGitDir()                    // keep builder behavior consistent if GIT_DIR is set
                 .setup();                        // finalize builder configuration
 
-        try (Repository repository = new Repository(builder, localPath, remoteRepositoryUri)) {
-            // Apply safe default Git configuration (GC, symlinks, commit signing, HEAD, etc.)
-            // Only modify config if write access to the repository is needed
-            if (writeAccess) {
-                setRepoConfig(defaultBranch, repository);
-            }
-
-            return repository;
+        // Note: Do NOT use try-with-resources here. The caller is responsible for closing
+        // the repository when done. Using try-with-resources would close the repository
+        // immediately after return, leaving the caller with a closed/unusable repository.
+        Repository repository = new Repository(builder, localPath, remoteRepositoryUri);
+        // Apply safe default Git configuration (GC, symlinks, commit signing, HEAD, etc.)
+        // Only modify config if write access to the repository is needed
+        if (writeAccess) {
+            setRepoConfig(defaultBranch, repository);
         }
+
+        return repository;
     }
 
     /**
@@ -190,9 +192,9 @@ public abstract class AbstractGitService {
         builder.setGitDir(localPath.toFile());
         builder.setInitialBranch(defaultBranch).setMustExist(true).readEnvironment().findGitDir().setup(); // scan environment GIT_* variables
 
-        try (Repository repository = new Repository(builder, localPath, bareRepositoryUri)) {
-            return repository;
-        }
+        // Note: Do NOT use try-with-resources here. The caller is responsible for closing
+        // the repository when done.
+        return new Repository(builder, localPath, bareRepositoryUri);
     }
 
     @NonNull
