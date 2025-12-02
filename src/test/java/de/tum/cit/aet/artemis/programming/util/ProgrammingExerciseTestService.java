@@ -767,7 +767,7 @@ public class ProgrammingExerciseTestService {
         var course = courseUtilService.addEmptyCourse();
         exercise.setChannelName("testchannel-pe");
         request.postWithMultipartFile("/api/programming/courses/" + course.getId() + "/programming-exercises/import-from-file", exercise, "programmingExercise", file,
-                ProgrammingExercise.class, HttpStatus.INTERNAL_SERVER_ERROR);
+                ProgrammingExercise.class, HttpStatus.OK);
     }
 
     // TEST

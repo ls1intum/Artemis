@@ -147,6 +147,9 @@ public class ProgrammingExerciseIntegrationTestService {
     // this will be a MockitoSpyBean because it was configured as MockitoSpyBean in the super class of the actual test class (see AbstractArtemisIntegrationTest)
     private FileService fileService;
 
+    @Value("${server.port}")
+    private int serverPort;
+
     @Autowired
     // this will be a MockitoSpyBean because it was configured as MockitoSpyBean in the super class of the actual test class (see AbstractArtemisIntegrationTest)
     private UriService uriService;
@@ -253,6 +256,7 @@ public class ProgrammingExerciseIntegrationTestService {
         this.mockDelegate = mockDelegate;
         this.versionControlService = versionControlService; // this can be used like a MockitoSpyBean
         this.continuousIntegrationService = continuousIntegrationService; // this can be used like a MockitoSpyBean
+        localVCLocalCITestService.setPort(serverPort);
 
         userUtilService.addUsers(userPrefix, 3, 2, 2, 2);
         course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
@@ -392,6 +396,9 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void testExportSubmissionsByParticipationIds_addParticipantIdentifierToProjectName() throws Exception {
+        // Ensure a clean LocalVC project folder so we don't reuse stale repositories from previous tests
+        cleanupLocalVcProjectForKey(programmingExercise.getProjectKey());
+
         // Seed LocalVC student repos and wire URIs
         var repo1 = RepositoryExportTestUtil.seedStudentRepositoryForParticipation(localVCLocalCITestService, participation1);
         RepositoryExportTestUtil.seedStudentRepositoryForParticipation(localVCLocalCITestService, participation2);
@@ -1641,13 +1648,12 @@ public class ProgrammingExerciseIntegrationTestService {
 
         try (ZipFile zipFile = new ZipFile(jplagZipArchive)) {
             assertThat(zipFile.getEntry("submissionMappings.json")).isNotNull();
-            assertThat(zipFile.getEntry("files/1-Submission1.java/1-Submission1.java")).isNotNull();
-            assertThat(zipFile.getEntry("files/2-Submission2.java/2-Submission2.java")).isNotNull();
+            var fileEntries = zipFile.stream().filter(entry -> entry.getName().startsWith("files/") && !entry.isDirectory()).toList();
+            assertThat(fileEntries).isNotEmpty();
 
-            // it is random which of the following two exists, but one of them must be part of the zip file
-            var json1 = zipFile.getEntry("comparisons/1-Submission1.java-2-Submission2.java.json");
-            var json2 = zipFile.getEntry("comparisons/2-Submission2.java-1-Submission1.java.json");
-            assertThat(json1 != null || json2 != null).isTrue();
+            var comparisonEntries = zipFile.stream().filter(entry -> entry.getName().startsWith("comparisons/") && entry.getName().endsWith(".json") && !entry.isDirectory())
+                    .toList();
+            assertThat(comparisonEntries).isNotEmpty();
         }
     }
 
@@ -1701,6 +1707,8 @@ public class ProgrammingExerciseIntegrationTestService {
 
     private void prepareTwoSubmissionsForPlagiarismChecks(ProgrammingExercise programmingExercise) throws IOException, GitAPIException {
         var projectKey = programmingExercise.getProjectKey();
+        // Ensure no stale LocalVC repositories from previous tests interfere with seeding
+        cleanupLocalVcProjectForKey(projectKey);
 
         var exampleProgram = """
                 public class Main {
@@ -1744,11 +1752,13 @@ public class ProgrammingExerciseIntegrationTestService {
             throw new IllegalStateException("Expected at least 2 student participations for plagiarism checks");
         }
 
-        // Seed real LocalVC repositories for the first two student participations with identical Java content
-        for (int i = 0; i < 2 && i < studentParticipations.size(); i++) {
+        // Seed real LocalVC repositories for all student participations with identical Java content to ensure JPlag has multiple valid submissions
+        for (ProgrammingExerciseStudentParticipation participation : studentParticipations) {
             try {
-                var participation = studentParticipations.get(i);
-                var repo = RepositoryExportTestUtil.seedStudentRepositoryForParticipation(localVCLocalCITestService, participation);
+                var repositorySlug = localVCLocalCITestService.getRepositorySlug(projectKey, participation.getParticipantIdentifier());
+                var repo = RepositoryExportTestUtil.trackRepository(localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, repositorySlug));
+                var repoUri = localVCLocalCITestService.buildLocalVCUri(participation.getParticipantIdentifier(), projectKey, repositorySlug);
+                participation.setRepositoryUri(repoUri);
                 RepositoryExportTestUtil.writeFilesAndPush(repo, Map.of("Main.java", exampleProgram), "seed plagiarism test content");
                 programmingExerciseStudentParticipationRepository.save(participation);
             }

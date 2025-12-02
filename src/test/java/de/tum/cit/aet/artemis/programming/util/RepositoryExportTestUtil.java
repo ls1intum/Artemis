@@ -190,7 +190,7 @@ public final class RepositoryExportTestUtil {
         String projectKey = participation.getProgrammingExercise().getProjectKey();
         String slug = localVCLocalCITestService.getRepositorySlug(projectKey, participation.getParticipantIdentifier());
         LocalRepository repo = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, slug);
-        String uri = localVCLocalCITestService.buildLocalVCUri(null, null, projectKey, slug);
+        String uri = localVCLocalCITestService.buildLocalVCUri(participation.getParticipantIdentifier(), projectKey, slug);
         participation.setRepositoryUri(uri);
         return trackRepository(repo);
     }

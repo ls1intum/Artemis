@@ -16,6 +16,7 @@ import static de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType.TEMP
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.io.IOException;
+import java.net.ServerSocket;
 import java.net.URI;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -23,12 +24,15 @@ import java.util.List;
 import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.parallel.ResourceLock;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
@@ -56,12 +60,39 @@ import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
 @ActiveProfiles({ SPRING_PROFILE_TEST, PROFILE_ARTEMIS, PROFILE_CORE, PROFILE_SCHEDULING, PROFILE_LOCALVC, PROFILE_JENKINS, PROFILE_ATHENA, PROFILE_LTI, PROFILE_AEOLUS,
         PROFILE_APOLLON, "local" })
-@TestPropertySource(properties = { "server.port=49153", "artemis.version-control.url=http://localhost:49153", "artemis.user-management.use-external=false",
+@TestPropertySource(properties = { "artemis.user-management.use-external=false",
         "artemis.user-management.course-enrollment.allowed-username-pattern=^(?!authorizationservicestudent2).*$",
-        "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_jenkins_localvc", "artemis.version-control.ssh-port=1235", "info.contact=test@localhost",
-        "artemis.version-control.ssh-template-clone-url=ssh://git@localhost:1235/",
+        "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_jenkins_localvc", "info.contact=test@localhost",
         "artemis.continuous-integration.artemis-authentication-token-value=ThisIsAReallyLongTopSecretTestingToken" })
 public abstract class AbstractSpringIntegrationJenkinsLocalVCTest extends AbstractArtemisIntegrationTest {
+
+    private static int serverPort;
+
+    private static int sshPort;
+
+    @BeforeAll
+    static void initPorts() {
+        serverPort = findAvailableTcpPort();
+        sshPort = findAvailableTcpPort();
+    }
+
+    @DynamicPropertySource
+    static void registerDynamicProperties(DynamicPropertyRegistry registry) {
+        registry.add("server.port", () -> serverPort);
+        registry.add("artemis.version-control.url", () -> "http://localhost:" + serverPort);
+        registry.add("artemis.version-control.ssh-port", () -> sshPort);
+        registry.add("artemis.version-control.ssh-template-clone-url", () -> "ssh://git@localhost:" + sshPort + "/");
+    }
+
+    private static int findAvailableTcpPort() {
+        try (ServerSocket socket = new ServerSocket(0)) {
+            socket.setReuseAddress(true);
+            return socket.getLocalPort();
+        }
+        catch (IOException e) {
+            throw new IllegalStateException("Could not find an available TCP port", e);
+        }
+    }
 
     // please only use this to verify method calls using Mockito. Do not mock methods, instead mock the communication with Jenkins using the corresponding RestTemplate.
     @MockitoSpyBean
