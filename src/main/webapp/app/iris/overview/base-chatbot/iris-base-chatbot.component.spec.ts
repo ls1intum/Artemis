@@ -615,7 +615,7 @@ describe('IrisBaseChatbotComponent', () => {
         });
 
         it('should call showAISelectionModal when user has not accepted', async () => {
-            component.userAccepted = undefined;
+            accountService.userIdentity.set({ selectedLLMUsage: undefined } as User);
             const showModalSpy = jest.spyOn(component, 'showAISelectionModal').mockResolvedValue();
 
             component.ngOnInit();
