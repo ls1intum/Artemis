@@ -4,6 +4,7 @@ import java.time.ZonedDateTime;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
@@ -27,8 +28,8 @@ public record UpdateModelingExerciseDTO(long id, @Nullable String title, @Nullab
         @Nullable IncludedInOverallScore includedInOverallScore, @Nullable Boolean allowComplaintsForAutomaticAssessments, @Nullable Boolean allowFeedbackRequests,
         @Nullable String gradingInstructions, @Nullable ZonedDateTime releaseDate, @Nullable ZonedDateTime startDate, @Nullable ZonedDateTime dueDate,
         @Nullable ZonedDateTime assessmentDueDate, @Nullable ZonedDateTime exampleSolutionPublicationDate, @Nullable String exampleSolutionModel,
-        @Nullable String exampleSolutionExplanation, @Nullable Long courseId, @Nullable Long exerciseGroupId, @Nullable Set<GradingCriterionDTO> gradingCriteria,
-        @Nullable Set<CompetencyExerciseLinkDTO> competencyLinks) {
+        @Nullable String exampleSolutionExplanation, @Nullable Long courseId, @Nullable Long exerciseGroupId, @Nullable @Valid Set<GradingCriterionDTO> gradingCriteria,
+        @Nullable @Valid Set<CompetencyExerciseLinkDTO> competencyLinks) {
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record CompetencyExerciseLinkDTO(@NotNull CourseCompetencyDTO courseCompetencyDTO, @Nullable Double weight, @Nullable Long courseId) {
@@ -60,19 +61,24 @@ public record UpdateModelingExerciseDTO(long id, @Nullable String title, @Nullab
         Long courseId = exercise.getCourseViaExerciseGroupOrCourseMember() != null ? exercise.getCourseViaExerciseGroupOrCourseMember().getId() : null;
         Long exerciseGroupId = exercise.getExerciseGroup() != null ? exercise.getExerciseGroup().getId() : null;
 
-        Set<GradingCriterionDTO> gradingCriterionDTOs = Set.of();
-        Set<CompetencyExerciseLinkDTO> competencyLinkDTOs = Set.of();
+        Set<GradingCriterionDTO> gradingCriterionDTOs;
+        Set<CompetencyExerciseLinkDTO> competencyLinkDTOs;
 
         Set<GradingCriterion> criteria = exercise.getGradingCriteria();
         Set<CompetencyExerciseLink> competencyLinks = exercise.getCompetencyLinks();
 
         if (criteria != null && Hibernate.isInitialized(criteria)) {
-            gradingCriterionDTOs = criteria.stream().map(GradingCriterionDTO::of).collect(Collectors.toSet());
+            gradingCriterionDTOs = criteria.isEmpty() ? Set.of() : criteria.stream().map(GradingCriterionDTO::of).collect(Collectors.toSet());
+        }
+        else {
+            gradingCriterionDTOs = null;
         }
         if (competencyLinks != null && Hibernate.isInitialized(competencyLinks)) {
-            competencyLinkDTOs = competencyLinks.stream().map(CompetencyExerciseLinkDTO::of).collect(Collectors.toSet());
+            competencyLinkDTOs = competencyLinks.isEmpty() ? Set.of() : competencyLinks.stream().map(CompetencyExerciseLinkDTO::of).collect(Collectors.toSet());
         }
-
+        else {
+            competencyLinkDTOs = null;
+        }
         return new UpdateModelingExerciseDTO(exercise.getId(), exercise.getTitle(), exercise.getChannelName(), exercise.getShortName(), exercise.getProblemStatement(),
                 exercise.getCategories(), exercise.getDifficulty(), exercise.getMaxPoints(), exercise.getBonusPoints(), exercise.getIncludedInOverallScore(),
                 exercise.getAllowComplaintsForAutomaticAssessments(), exercise.getAllowFeedbackRequests(), exercise.getGradingInstructions(), exercise.getReleaseDate(),
