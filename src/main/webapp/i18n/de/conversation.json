@@ -3,11 +3,6 @@
         "errors": {
             "channelNameDuplicate": "Kanal mit Name {{ channelName }} existiert bereits"
         },
-        "messageWarning": {
-            "headerText": "Warnung vor vertraulichen Informationen",
-            "mainParagraph": "Gib im Chat keine vertraulichen Informationen wie Passwörter, Kreditkartennummern oder persönliche Identifikationsnummern weiter. Diese Informationen sind sensibel und könnten für Identitätsdiebstahl oder Betrug verwendet werden, wenn sie in die falschen Hände geraten.",
-            "lastParagraph": "Bewahre deine persönlichen Daten sicher auf, indem du sie für dich behältst und sie nicht online weitergibst."
-        },
         "conversationsLayout": {
             "tabTitle": "Kursnachrichten",
             "breadCrumbLabel": "Nachrichten",

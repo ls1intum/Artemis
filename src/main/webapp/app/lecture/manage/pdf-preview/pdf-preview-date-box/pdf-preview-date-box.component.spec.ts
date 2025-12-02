@@ -21,7 +21,7 @@ describe('PdfPreviewDateBoxComponent', () => {
         { id: 1, type: ExerciseType.QUIZ, dueDate: dayjs('2024-02-01T10:00') },
         { id: 2, type: ExerciseType.QUIZ, dueDate: dayjs('2024-02-02T10:00') },
         { id: 3, type: ExerciseType.PROGRAMMING, dueDate: dayjs('2024-02-03T10:00') },
-        { id: 4, type: ExerciseType.PROGRAMMING, dueDate: null }, // Should be filtered out
+        { id: 4, type: ExerciseType.PROGRAMMING, dueDate: undefined }, // Should be filtered out
     ] as Exercise[];
 
     const mockSelectedPages = [
@@ -50,7 +50,7 @@ describe('PdfPreviewDateBoxComponent', () => {
         fixture = TestBed.createComponent(PdfPreviewDateBoxComponent);
         component = fixture.componentInstance;
 
-        fixture.componentRef.setInput('course', mockCourse);
+        fixture.componentRef.setInput('courseId', mockCourse.id);
         fixture.componentRef.setInput('selectedPages', mockSelectedPages);
 
         fixture.detectChanges();
@@ -97,7 +97,7 @@ describe('PdfPreviewDateBoxComponent', () => {
                 { id: 1, type: ExerciseType.QUIZ, dueDate: dayjs(futureDate).add(1, 'day') },
                 { id: 2, type: ExerciseType.QUIZ, dueDate: dayjs(futureDate).add(2, 'days') },
                 { id: 3, type: ExerciseType.PROGRAMMING, dueDate: dayjs(futureDate).add(3, 'days') },
-                { id: 4, type: ExerciseType.PROGRAMMING, dueDate: null },
+                { id: 4, type: ExerciseType.PROGRAMMING, dueDate: undefined },
             ] as Exercise[];
 
             courseExerciseServiceMock.findAllExercisesWithDueDatesForCourse.mockReturnValue(of(new HttpResponse({ body: futureMockExercises })));
@@ -154,7 +154,7 @@ describe('PdfPreviewDateBoxComponent', () => {
             expect(component.hideForever()).toBeTruthy();
             expect(component.calendarSelected()).toBeFalsy();
             expect(component.exerciseSelected()).toBeFalsy();
-            expect(component.selectedExercise()).toBeNull();
+            expect(component.selectedExercise()).toBeUndefined();
         });
     });
 
@@ -174,12 +174,12 @@ describe('PdfPreviewDateBoxComponent', () => {
                 {
                     slideId: '1',
                     date: dayjs('9999-12-31'),
-                    exerciseId: null,
+                    exerciseId: undefined,
                 },
                 {
                     slideId: '2',
                     date: dayjs('9999-12-31'),
-                    exerciseId: null,
+                    exerciseId: undefined,
                 },
             ]);
         });
@@ -200,7 +200,7 @@ describe('PdfPreviewDateBoxComponent', () => {
                 {
                     slideId: '3',
                     date: dayjs(testDate),
-                    exerciseId: null,
+                    exerciseId: undefined,
                 },
             ]);
         });
