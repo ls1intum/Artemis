@@ -539,9 +539,11 @@ public class ProgrammingExerciseIntegrationTestService {
 
         // Checks: file present and single anonymized commit
         assertThat(entries).anyMatch(entry -> entry.endsWith("Test.java"));
-        Optional<Path> extractedRepo1 = entries.stream()
-                .filter(entry -> entry.toString().endsWith(Path.of("-" + participation1.getId() + "-student-submission.git", ".git").toString())).findFirst();
-        assertThat(extractedRepo1).isPresent();
+        // The exported repo format is: courseShortName-exerciseTitle-participationId-student-submission.git
+        // We match the suffix pattern that includes participation id and the anonymized suffix
+        String expectedSuffix = "-" + participation1.getId() + "-student-submission.git" + File.separator + ".git";
+        Optional<Path> extractedRepo1 = entries.stream().filter(entry -> entry.toString().endsWith(expectedSuffix)).findFirst();
+        assertThat(extractedRepo1).as("Expected to find exported repo matching pattern *%s but entries were: %s", expectedSuffix, entries).isPresent();
         try (Git downloadedGit = Git.open(extractedRepo1.get().toFile())) {
             RevCommit commit = downloadedGit.log().setMaxCount(1).call().iterator().next();
             assertThat(commit.getAuthorIdent().getName()).isEqualTo("student");
