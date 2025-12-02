@@ -770,6 +770,22 @@ public class ProgrammingExerciseTestService {
                 ProgrammingExercise.class, HttpStatus.OK);
     }
 
+    /**
+     * Test that verifies directory cleanup happens even when an exception is thrown during import.
+     * This method expects the request to fail with INTERNAL_SERVER_ERROR due to mocked exceptions.
+     */
+    public void importFromFile_exception_DirectoryDeleted_WithCleanup() throws Exception {
+        deleteLocalVcProjectIfPresent(exercise);
+        mockDelegate.mockConnectorRequestForImportFromFile(exercise);
+        Resource resource = new ClassPathResource("test-data/import-from-file/valid-import.zip");
+
+        var file = new MockMultipartFile("file", "test.zip", "application/zip", resource.getInputStream());
+        var course = courseUtilService.addEmptyCourse();
+        exercise.setChannelName("testchannel-pe");
+        request.postWithMultipartFile("/api/programming/courses/" + course.getId() + "/programming-exercises/import-from-file", exercise, "programmingExercise", file,
+                ProgrammingExercise.class, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
     // TEST
     public void createProgrammingExercise_validExercise_withStaticCodeAnalysis(ProgrammingLanguage language, ProgrammingLanguageFeature programmingLanguageFeature)
             throws Exception {

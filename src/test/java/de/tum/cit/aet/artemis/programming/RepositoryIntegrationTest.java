@@ -1179,6 +1179,9 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         studentRepository = createRepositoryForSlug(studentSlug);
         studentFilePath = studentRepository.workingCopyGitRepoFile.toPath().resolve(currentLocalFileName);
         participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, studentLogin);
+        // Update participation URI to use the correct port
+        participation.setRepositoryUri(buildLocalVcUri(studentSlug));
+        studentParticipationRepository.save(participation);
     }
 
     private LocalRepository createRepositoryForSlug(String repositorySlug) throws Exception {

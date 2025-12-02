@@ -9,7 +9,6 @@ import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.PYTH
 import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.SWIFT;
 import static de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseTestService.STUDENT_LOGIN;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -41,7 +40,6 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.cit.aet.artemis.core.exception.GitException;
 import de.tum.cit.aet.artemis.exam.util.InvalidExamExerciseDatesArgumentProvider;
 import de.tum.cit.aet.artemis.exam.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
@@ -276,9 +274,8 @@ class ProgrammingExerciseLocalVCJenkinsIntegrationTest extends AbstractProgrammi
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importExerciseFromFile_exception_directoryDeleted() throws Exception {
-        doThrow(new GitException()).when(gitServiceSpy).commitAndPush(any(), anyString(), anyBoolean(), any());
         doThrow(new RuntimeException("Error")).when(zipFileService).extractZipFileRecursively(any(Path.class));
-        programmingExerciseTestService.importFromFile_exception_DirectoryDeleted();
+        programmingExerciseTestService.importFromFile_exception_DirectoryDeleted_WithCleanup();
         verify(fileService).scheduleDirectoryPathForRecursiveDeletion(any(Path.class), eq(5L));
     }
 
