@@ -90,7 +90,7 @@ def create_variant(course, exercise, variant_id):
     try:
         exercise_id = ExerciseIdentifier(course=course, exercise=exercise)
         manager = VariantManager(exercise_id)
-        
+
         # apply git patch
         manager.materialize_variant(variant_id, force=True)
         logging.info(f"Successfully created variant {variant_id}.")

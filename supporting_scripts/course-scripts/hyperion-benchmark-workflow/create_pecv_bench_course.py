@@ -83,7 +83,7 @@ def create_pecv_bench_course(session: Session) -> requests.Response:
     logging.info(f"Creating course {COURSE_NAME} with shortName {course_short_name}")
 
     response: requests.Response = session.post(url, data=body, headers=headers)
-    
+
     if response.status_code == 400:
         logging.error(f"Course with shortName {course_short_name} already exists")
 

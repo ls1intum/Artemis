@@ -57,7 +57,7 @@ def convert_variant_to_zip(variant_path: str, course_id: int) -> bool:
     EXERCISE_ZIP_PATH = os.path.join(variant_path, EXERCISE_ZIP_FILENAME) #...001/001-FullExercise.zip
 
     logging.info(f"Final zip file: {EXERCISE_ZIP_FILENAME} will be created at {EXERCISE_ZIP_PATH}")
-    
+
     # Create intermediate zip files for solution, template and tests
     zip_files = []
     try:
