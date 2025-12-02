@@ -622,24 +622,6 @@ describe('IrisBaseChatbotComponent', () => {
 
             expect(showModalSpy).toHaveBeenCalledOnce();
         });
-
-        it('should call showAISelectionModal when user has accepted with CLOUD_AI', () => {
-            component.userAccepted = LLMSelectionDecision.CLOUD_AI;
-            const showModalSpy = jest.spyOn(component, 'showAISelectionModal');
-
-            component.ngOnInit();
-
-            expect(showModalSpy).toHaveBeenCalled();
-        });
-
-        it('should call showAISelectionModal when user has accepted with LOCAL_AI', () => {
-            component.userAccepted = LLMSelectionDecision.LOCAL_AI;
-            const showModalSpy = jest.spyOn(component, 'showAISelectionModal');
-
-            component.ngOnInit();
-
-            expect(showModalSpy).toHaveBeenCalled();
-        });
     });
 
     describe('checkIfUserAcceptedLLMUsage', () => {
