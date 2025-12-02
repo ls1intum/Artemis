@@ -3,7 +3,7 @@ import { CompetencyExerciseLink } from 'app/atlas/shared/entities/competency.mod
 
 export interface CompetencyExerciseLinkDTO {
     courseCompetencyDTO: CourseCompetencyDTO;
-    weight: number;
+    weight?: number;
     courseId?: number;
 }
 

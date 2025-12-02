@@ -31,7 +31,7 @@ public record UpdateModelingExerciseDTO(long id, @Nullable String title, @Nullab
         @Nullable Set<CompetencyExerciseLinkDTO> competencyLinks) {
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record CompetencyExerciseLinkDTO(@NotNull CourseCompetencyDTO courseCompetencyDTO, double weight, Long courseId) {
+    public record CompetencyExerciseLinkDTO(@NotNull CourseCompetencyDTO courseCompetencyDTO, Double weight, Long courseId) {
 
         /**
          * Creates a DTO from a CompetencyExerciseLink entity.
