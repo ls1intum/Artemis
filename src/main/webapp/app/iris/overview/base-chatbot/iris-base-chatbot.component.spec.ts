@@ -567,4 +567,134 @@ describe('IrisBaseChatbotComponent', () => {
             setupAndVerifyRelatedEntityButton(session, '../exercises/99');
         }));
     });
+    describe('showAISelectionModal', () => {
+        it('should handle cloud choice from modal', async () => {
+            const acceptPermissionSpy = jest.spyOn(component, 'acceptPermission');
+            const updateConsentSpy = jest.spyOn(chatService, 'updateLLMUsageConsent');
+
+            jest.spyOn(component['llmModalService'], 'open').mockResolvedValue('cloud');
+
+            await component.showAISelectionModal();
+
+            expect(acceptPermissionSpy).toHaveBeenCalledWith(LLMSelectionDecision.CLOUD_AI);
+            expect(updateConsentSpy).toHaveBeenCalledWith(LLMSelectionDecision.CLOUD_AI);
+        });
+
+        it('should handle local choice from modal', async () => {
+            const acceptPermissionSpy = jest.spyOn(component, 'acceptPermission');
+            const updateConsentSpy = jest.spyOn(chatService, 'updateLLMUsageConsent');
+
+            jest.spyOn(component['llmModalService'], 'open').mockResolvedValue('local');
+
+            await component.showAISelectionModal();
+
+            expect(acceptPermissionSpy).toHaveBeenCalledWith(LLMSelectionDecision.LOCAL_AI);
+            expect(updateConsentSpy).toHaveBeenCalledWith(LLMSelectionDecision.LOCAL_AI);
+        });
+
+        it('should handle no_ai choice from modal', async () => {
+            const updateConsentSpy = jest.spyOn(chatService, 'updateLLMUsageConsent');
+            const closeChatSpy = jest.spyOn(component, 'closeChat');
+
+            jest.spyOn(component['llmModalService'], 'open').mockResolvedValue('no_ai');
+
+            await component.showAISelectionModal();
+
+            expect(updateConsentSpy).toHaveBeenCalledWith(LLMSelectionDecision.NO_AI);
+            expect(closeChatSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should handle none choice from modal', async () => {
+            const closeChatSpy = jest.spyOn(component, 'closeChat');
+
+            jest.spyOn(component['llmModalService'], 'open').mockResolvedValue('none');
+
+            await component.showAISelectionModal();
+
+            expect(closeChatSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should call showAISelectionModal when user has not accepted', async () => {
+            component.userAccepted = undefined;
+            const showModalSpy = jest.spyOn(component, 'showAISelectionModal').mockResolvedValue();
+
+            component.ngOnInit();
+
+            expect(showModalSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should call showAISelectionModal when user has accepted with CLOUD_AI', () => {
+            component.userAccepted = LLMSelectionDecision.CLOUD_AI;
+            const showModalSpy = jest.spyOn(component, 'showAISelectionModal');
+
+            component.ngOnInit();
+
+            expect(showModalSpy).toHaveBeenCalled();
+        });
+
+        it('should call showAISelectionModal when user has accepted with LOCAL_AI', () => {
+            component.userAccepted = LLMSelectionDecision.LOCAL_AI;
+            const showModalSpy = jest.spyOn(component, 'showAISelectionModal');
+
+            component.ngOnInit();
+
+            expect(showModalSpy).toHaveBeenCalled();
+        });
+    });
+
+    describe('checkIfUserAcceptedLLMUsage', () => {
+        it('should set userAccepted from accountService', () => {
+            accountService.userIdentity.set({ selectedLLMUsage: LLMSelectionDecision.LOCAL_AI } as User);
+
+            component.checkIfUserAcceptedLLMUsage();
+
+            expect(component.userAccepted).toBe(LLMSelectionDecision.LOCAL_AI);
+        });
+
+        it('should set userAccepted to undefined when user has no selection', () => {
+            accountService.userIdentity.set({ selectedLLMUsage: undefined } as User);
+
+            component.checkIfUserAcceptedLLMUsage();
+
+            expect(component.userAccepted).toBeUndefined();
+        });
+    });
+
+    describe('onSuggestionClick', () => {
+        it('should set newMessageTextContent to suggestion', () => {
+            const suggestion = 'This is a test suggestion';
+            jest.spyOn(component, 'onSend').mockImplementation();
+
+            component.onSuggestionClick(suggestion);
+
+            expect(component.newMessageTextContent).toBe(suggestion);
+        });
+
+        it('should call onSend after setting suggestion', () => {
+            const suggestion = 'Another suggestion';
+            const onSendSpy = jest.spyOn(component, 'onSend').mockImplementation();
+
+            component.onSuggestionClick(suggestion);
+
+            expect(onSendSpy).toHaveBeenCalledOnce();
+        });
+    });
+
+    describe('closeChat', () => {
+        it('should call chatService.messagesRead', () => {
+            const readSpy = jest.spyOn(chatService, 'messagesRead');
+
+            component.closeChat();
+
+            expect(readSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should emit closeClicked event', () => {
+            const emitSpy = jest.spyOn(component.closeClicked, 'emit');
+
+            component.closeChat();
+
+            expect(emitSpy).toHaveBeenCalledOnce();
+        });
+    });
 });
