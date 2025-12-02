@@ -3,7 +3,7 @@ import dayjs from 'dayjs/esm';
 import { omit } from 'lodash-es';
 import { combineLatest, takeWhile } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { Component, OnDestroy, OnInit, TemplateRef, inject, viewChild } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, TemplateRef, inject, viewChild, viewChildren } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { faBan, faExclamationTriangle, faSave } from '@fortawesome/free-solid-svg-icons';
@@ -49,7 +49,7 @@ import { CalendarService } from 'app/core/calendar/shared/service/calendar.servi
         ArtemisTranslatePipe,
     ],
 })
-export class ExamUpdateComponent implements OnInit, OnDestroy {
+export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
     private route = inject(ActivatedRoute);
     private examManagementService = inject(ExamManagementService);
     private alertService = inject(AlertService);
@@ -80,6 +80,9 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
     examExerciseImportComponent = viewChild.required(ExamExerciseImportComponent);
 
     public workingTimeConfirmationContent = viewChild<TemplateRef<any>>('workingTimeConfirmationContent');
+    readonly datePickers = viewChildren(FormDateTimePickerComponent);
+
+    private viewInitialized = false;
 
     ngOnInit(): void {
         combineLatest([this.route.url, this.route.data])
@@ -112,7 +115,13 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
                     this.exam.startText = this.examDefaultStartText;
                 }
                 this.hideChannelNameInput = (!!exam.id && !exam.channelName) || !isCommunicationEnabled(this.course);
+                this.refreshDatePickerValidation();
             });
+    }
+
+    ngAfterViewInit() {
+        this.viewInitialized = true;
+        this.refreshDatePickerValidation();
     }
 
     ngOnDestroy() {
@@ -148,6 +157,14 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
 
     get newWorkingTime(): number | undefined {
         return this.exam.workingTime;
+    }
+
+    private refreshDatePickerValidation() {
+        if (!this.viewInitialized) {
+            return;
+        }
+        // Delay until the current change detection cycle completed so the pickers have the latest ngModel values.
+        setTimeout(() => this.datePickers().forEach((picker) => picker.updateSignals()), 0);
     }
 
     /**

@@ -44,6 +44,13 @@ const routes: Routes = [
         },
     },
     {
+        path: 'websocket',
+        loadComponent: () => import('app/core/admin/websocket/websocket-admin.component').then((m) => m.WebsocketAdminComponent),
+        data: {
+            pageTitle: 'artemisApp.websocketAdmin.title',
+        },
+    },
+    {
         path: 'logs',
         loadComponent: () => import('app/core/admin/logs/logs.component').then((m) => m.LogsComponent),
         data: {
