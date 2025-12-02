@@ -13,20 +13,20 @@
         <div class="row g-2">
             <!-- topic -->
             <div class="col-8">
-                <label class="form-label" jhiTranslate="artemisApp.quizExercise.aiGeneration.topic"></label>
-                <input class="form-control" name="topic" [(ngModel)]="formData.topic" required />
+                <label for="topic" class="form-label" jhiTranslate="artemisApp.quizExercise.aiGeneration.topic"></label>
+                <input id="topic" class="form-control" name="topic" [(ngModel)]="formData.topic" required />
             </div>
 
             <!-- number of questions -->
             <div class="col-4">
-                <label class="form-label" jhiTranslate="artemisApp.quizExercise.aiGeneration.count"></label>
-                <input class="form-control" type="number" min="1" name="numberOfQuestions" [(ngModel)]="formData.numberOfQuestions" required />
+                <label for="numberOfQuestions" class="form-label" jhiTranslate="artemisApp.quizExercise.aiGeneration.count"></label>
+                <input id="numberOfQuestions" class="form-control" type="number" min="1" name="numberOfQuestions" [(ngModel)]="formData.numberOfQuestions" required />
             </div>
 
             <!-- language -->
             <div class="col-4">
-                <label class="form-label" jhiTranslate="artemisApp.quizExercise.aiGeneration.language"></label>
-                <select class="form-select" name="language" [(ngModel)]="formData.language" required>
+                <label for="language" class="form-label" jhiTranslate="artemisApp.quizExercise.aiGeneration.language"></label>
+                <select id="language" class="form-select" name="language" [(ngModel)]="formData.language" required>
                     <option [ngValue]="AiLanguage.ENGLISH" jhiTranslate="artemisApp.quizExercise.aiGeneration.languages.english"></option>
                     <option [ngValue]="AiLanguage.GERMAN" jhiTranslate="artemisApp.quizExercise.aiGeneration.languages.german"></option>
                 </select>
@@ -34,8 +34,9 @@
 
             <!-- difficulty slider -->
             <div class="col-4">
-                <label class="form-label" jhiTranslate="artemisApp.quizExercise.aiGeneration.difficulty"></label>
+                <label for="difficulty" class="form-label" jhiTranslate="artemisApp.quizExercise.aiGeneration.difficulty"></label>
                 <input
+                    id="difficulty"
                     type="range"
                     min="0"
                     max="2"
@@ -53,8 +54,8 @@
 
             <!-- subtype -->
             <div class="col-4">
-                <label class="form-label" jhiTranslate="artemisApp.quizExercise.aiGeneration.subtype"></label>
-                <select class="form-select" name="requestedSubtype" [(ngModel)]="formData.requestedSubtype" required>
+                <label for="requestedSubtype" class="form-label" jhiTranslate="artemisApp.quizExercise.aiGeneration.subtype"></label>
+                <select id="requestedSubtype" class="form-select" name="requestedSubtype" [(ngModel)]="formData.requestedSubtype" required>
                     <option [ngValue]="AiRequestedSubtype.SINGLE_CORRECT" jhiTranslate="artemisApp.quizExercise.aiGeneration.subtypes.single"></option>
                     <option [ngValue]="AiRequestedSubtype.MULTI_CORRECT" jhiTranslate="artemisApp.quizExercise.aiGeneration.subtypes.multi"></option>
                     <option [ngValue]="AiRequestedSubtype.TRUE_FALSE" jhiTranslate="artemisApp.quizExercise.aiGeneration.subtypes.trueFalse"></option>
@@ -63,11 +64,12 @@
 
             <!-- optional prompt hint -->
             <div class="col-12">
-                <label class="form-label d-inline-flex align-items-center gap-2">
+                <label for="promptHint" class="form-label d-inline-flex align-items-center gap-2">
                     <span jhiTranslate="artemisApp.quizExercise.aiGeneration.promptHint"></span>
                     <fa-icon [icon]="faQuestionCircle" ngbTooltip="{{ 'artemisApp.quizExercise.aiGeneration.promptHintTooltip' | artemisTranslate }}" class="ms-1 text-muted" />
                 </label>
                 <textarea
+                    id="promptHint"
                     class="form-control"
                     rows="2"
                     name="promptHint"
