@@ -54,14 +54,14 @@ pip install -r requirements.txt
 1. Ensure that the [hyperion-benchmark-workflow/config.ini](./config.ini) file is correctly configured before running any scripts.
 2. **Always test the scripts on a local setup before running them on a production or test server! ⚠️**
 
-# Usage 
+# Usage
 The script will automatically perform all the necessary steps (running from hyperion-benchmark-workflow):
 
 ```shell
 python3 run_pecv_bench_in_artemis.py
 ```
 
-1. Authenticate as admin. 
+1. Authenticate as admin.
 2. Create course.
 3. Materialize variants
 4. Convert variants to zip files

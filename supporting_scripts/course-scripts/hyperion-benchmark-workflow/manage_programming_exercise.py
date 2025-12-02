@@ -76,7 +76,7 @@ def convert_variant_to_zip(variant_path: str, course_id: int) -> bool:
     except Exception as e:
         logging.exception(f"Error while creating intermediate zip files: {e}")
         return False
-    
+
     # Overwrite problem statement, exercise ID, course ID, title and shortName in the config file
     problem_statement_file_path = os.path.join(variant_path, "problem-statement.md")
     if os.path.exists(problem_statement_file_path):
@@ -87,18 +87,18 @@ def convert_variant_to_zip(variant_path: str, course_id: int) -> bool:
         logging.info("Overwriting problem statement, exercise ID, course ID, title and shortName in the config file.")
         with open(config_file_path, 'r') as cf:
             exercise_details: Dict[str, Any] = json.load(cf)
-            
+
             exercise_details['id'] = None
             if problem_statement_content is not None:
                 exercise_details['problemStatement'] = problem_statement_content
             exercise_details['course']['id'] = course_id
-            
+
             exercise_name = exercise_details.get('title', 'Untitled')
             exercise_details['title'] = f"{VARIANT_ID} - {exercise_details.get('title', 'Untitled')}"
-            
+
             exercise_details['shortName'] = sanitize_exercise_name(exercise_name, int(VARIANT_ID))
             exercise_details["projectKey"] = f"{VARIANT_ID}ITP2425{exercise_details['shortName']}"
-            
+
 
         with open(config_file_path, 'w') as cf:
             json.dump(exercise_details, cf, indent=4)
@@ -119,7 +119,7 @@ def convert_variant_to_zip(variant_path: str, course_id: int) -> bool:
                 zipf.write(new_name, arcname=arcname)
                 logging.info(f"Added {os.path.basename(new_name)} to final zip as {arcname}.")
                 continue
-            
+
             if os.path.basename(file).lower() == CONFIG_FILE.lower(): # rename exercise-details.json to Exercise-Details.json
                 arcname = "Exercise-Details.json"
                 zipf.write(file, arcname=arcname)
@@ -142,7 +142,7 @@ def convert_variant_to_zip(variant_path: str, course_id: int) -> bool:
 def import_programming_exercise(session: Session, course_id: int, server_url: str, variant_folder_path: str) -> requests.Response:
     """
     Imports a programming exercise to the Artemis server using a multipart/form-data request.
-    
+
     The request includes two parts:
     1. 'programmingExercise': The configuration JSON (metadata).
     2. 'file': The exercise content as a ZIP archive.
@@ -150,7 +150,7 @@ def import_programming_exercise(session: Session, course_id: int, server_url: st
     Returns the JSON response from the server (the newly created exercise object).
     """
     url: str = f"{server_url}/programming/courses/{course_id}/programming-exercises/import-from-file"
-    
+
     variant_id = os.path.basename(variant_folder_path)
     config_file_path = os.path.join(variant_folder_path, "exercise-details.json")
     exercise_zip_path = os.path.join(variant_folder_path, f"{variant_id}-FullExercise.zip")
@@ -163,7 +163,7 @@ def import_programming_exercise(session: Session, course_id: int, server_url: st
     except OSError as e:
         logging.error(f"Failed to read programming exercise JSON file at {config_file_path}: {e}")
         return None
-    
+
     logging.info(f"Preparing to import exercise: {exercise_details.get('title', 'Untitled')}")
     try:
         with open(exercise_zip_path, 'rb') as file:
@@ -172,7 +172,7 @@ def import_programming_exercise(session: Session, course_id: int, server_url: st
     except OSError as e:
         logging.error(f"Failed to read programming exercise ZIP file at {exercise_zip_path}: {e}")
         return None
-    
+
     files_payload = {
         'programmingExercise': (
             'Exercise-Details.json',
@@ -185,14 +185,14 @@ def import_programming_exercise(session: Session, course_id: int, server_url: st
             'application/zip'
         )
     }
-    
+
     body, content_type = urllib3.filepost.encode_multipart_formdata(files_payload)
     logging.info(f"Multipart form-data body and content type prepared.")
-        
+
     headers  = {
         "Content-Type": content_type
         }
-    
+
     logging.info(f"Sending request to: {url}")
 
     response: requests.Response = session.post(url, data=body, headers=headers)
@@ -203,17 +203,17 @@ def import_programming_exercise(session: Session, course_id: int, server_url: st
     else:
         logging.error(f"Failed to import programming exercise; Status code: {response.status_code}\nResponse content: {response.text}")
         return None
-    
+
 
 def check_exercise_consistency(session: Session, exercise_server_id: int, server_url: str, exercise_variant_local_id: str):
     """Check the consistency of the programming exercise with Hyperion System.
-    
+
     returns the consistency issues as a list of dictionaries along with the programming exercise ID.
     """
     logging.info(f"[{exercise_variant_local_id}] \t\tStarting consistency check for programming exercise ID: {exercise_server_id}")
-    
+
     url: str = f"{server_url}/hyperion/programming-exercises/{exercise_server_id}/consistency-check"
-    
+
     response: requests.Response = session.post(url)
 
     if response.status_code == 200:
@@ -235,7 +235,7 @@ def process_variant_consistency_check(session: Session, server_url: str, exercis
 
     # 1. Network Request
     consistency_issue = check_exercise_consistency(session=session, exercise_server_id=exercise_server_id, server_url=server_url, exercise_variant_local_id=exercise_variant_local_id)
-    
+
     exercise = exercise_variant_local_id.split(":")[0]
     variant = exercise_variant_local_id.split(":")[1]
     # 2. Data Enrichment

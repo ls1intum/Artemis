@@ -92,12 +92,12 @@ def create_pecv_bench_course(session: Session) -> requests.Response:
         if course_is_deleted:
             logging.info(f"Waiting 2 seconds for server cleanup before recreation")
             time.sleep(2)
-            
+
             logging.info(f"RETRYING: Creating course {COURSE_NAME} with shortName {course_short_name}")
             response: requests.Response = session.post(url, data=body, headers=headers)
         else:
             raise Exception(f"Failed to delete existing course {COURSE_NAME} after multiple attempts. Cannot proceed")
-    
+
     # final check for successful creation
     if response.status_code == 201:
         logging.info(f"Successfully created course '{COURSE_NAME}' (ShortName: {course_short_name})")
@@ -107,17 +107,17 @@ def create_pecv_bench_course(session: Session) -> requests.Response:
                 f"Could not create course {COURSE_NAME}; Status code: {response.status_code}\n"
                 f"Double check whether the courseShortName {course_short_name} is valid (e.g. no special characters such as '-')!\n"
                 f"Response content: {response.text}")
-    
+
 
 def delete_pecv_bench_course(session: Session, course_short_name: str, max_retries: int = 3) -> bool:
     """Delete a course with retry logic using the given session and course ID.
-    
+
     Sometimes it takes multiple scripts reruns to successfully delete a course.
     This approach fixes this.
     """
-    
+
     logging.info(f"Attempting to delete course with shortName {course_short_name}")
-    
+
     courseResponse: requests.Response = session.get(f"{SERVER_URL}/core/courses")
     courses = courseResponse.json()
     course_id = None
@@ -128,7 +128,7 @@ def delete_pecv_bench_course(session: Session, course_short_name: str, max_retri
     if course_id is None:
         logging.error(f"Course with shortName {course_short_name} not found")
         return False
-    
+
     delete_url = f"{SERVER_URL}/core/admin/courses/{course_id}"
     logging.info(f"Deleting course with ID {course_id} at URL {delete_url}")
 
@@ -152,4 +152,3 @@ def delete_pecv_bench_course(session: Session, course_short_name: str, max_retri
             time.sleep(wait_time)
     logging.error(f"Failed to delete course with shortName {course_short_name} after {max_retries} attempts.")
     return False
-    
