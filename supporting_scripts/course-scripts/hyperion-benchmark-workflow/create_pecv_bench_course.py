@@ -79,7 +79,7 @@ def create_pecv_bench_course(session: Session) -> requests.Response:
     headers = {
         'Content-Type': content_type,
     }
-    
+
     logging.info(f"Creating course {COURSE_NAME} with shortName {course_short_name}")
 
     response: requests.Response = session.post(url, data=body, headers=headers)
@@ -102,7 +102,7 @@ def create_pecv_bench_course(session: Session) -> requests.Response:
     if response.status_code == 201:
         logging.info(f"Successfully created course '{COURSE_NAME}' (ShortName: {course_short_name})")
         return response.json()
-    else:        
+    else:
         raise Exception(
                 f"Could not create course {COURSE_NAME}; Status code: {response.status_code}\n"
                 f"Double check whether the courseShortName {course_short_name} is valid (e.g. no special characters such as '-')!\n"

@@ -1,6 +1,5 @@
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import configparser
-import json
 import subprocess
 import os
 import sys
@@ -9,8 +8,7 @@ from typing import Dict, List, Tuple
 from logging_config import logging
 from utils import login_as_admin, SERVER_URL
 from create_pecv_bench_course import create_pecv_bench_course
-from manage_programming_exercise import check_exercise_consistency, convert_variant_to_zip, import_programming_exercise, process_variant_consistency_check
-from pathlib import Path
+from manage_programming_exercise import convert_variant_to_zip, import_programming_exercise, process_variant_consistency_check
 
 # Load configuration
 config = configparser.ConfigParser()
@@ -32,7 +30,7 @@ def clone_pecv_bench(pecv_bench_url: str, pecv_bench_dir: str) -> None:
             subprocess.run(
                 ["git","reset", "--hard", "HEAD"],
                 cwd=pecv_bench_dir,
-                check=True)    
+                check=True)
             subprocess.run(
                 ["git", "clean", "-fd"],
                 cwd=pecv_bench_dir,
@@ -56,7 +54,7 @@ def clone_pecv_bench(pecv_bench_url: str, pecv_bench_dir: str) -> None:
                 check=True,
             )
             logging.info("Successfully cloned the repository.")
-            
+
         except subprocess.CalledProcessError as e:
             logging.error(f"ERROR: Failed to clone repository from {pecv_bench_url}.")
             logging.error(f"Stderr: {e.stderr}")
@@ -127,7 +125,7 @@ def create_all_variants(course, exercise):
         for variant in all_variants:
             try:
                 # 'variant.variant_id' gets the ID string like "001"
-                path = manager.materialize_variant(variant.variant_id, force=True)
+                manager.materialize_variant(variant.variant_id, force=True)
                 logging.info(f"Generated {variant.variant_id}")
             except Exception as e:
                 logging.exception(f"Failed to create variant {variant.variant_id}: {e}")
@@ -137,7 +135,7 @@ def create_all_variants(course, exercise):
     except Exception as e:
         logging.exception(f"Critical Error: {e}")
 
-def process_single_variant_import(session: requests.Session, 
+def process_single_variant_import(session: requests.Session,
                                     server_url: str,
                                     course_id: int,
                                     exercise_name: str,
@@ -156,14 +154,14 @@ def process_single_variant_import(session: requests.Session,
         return (dict_key, None)
 
     # Step 2: Import programming exercise
-    try:            
-        response_data = import_programming_exercise(session = session, 
+    try:
+        response_data = import_programming_exercise(session = session,
                                     course_id = course_id,
                                     server_url = server_url,
                                     variant_folder_path = variant_id_path
                                     )
         exercise_id = response_data.get("id") if response_data else None
-        if exercise_id is not None:    
+        if exercise_id is not None:
             return (dict_key, exercise_id)
         else:
             logging.error(f"Failed to import programming exercise for {dict_key}. Moving to next variant.")
@@ -240,9 +238,6 @@ def main():
     if pecv_bench_dir not in sys.path:
         sys.path.insert(0, pecv_bench_dir)
     try:
-        from cli.commands.variants import VariantManager
-        from cli.utils import ExerciseIdentifier
-        
         for EXERCISE in EXERCISES:
             create_all_variants(COURSE, EXERCISE)
 
@@ -297,7 +292,6 @@ def main():
                 logging.exception(f"Thread failed with error: {e}")
             
     logging.info(f"Imported {len(programming_exercises)} programming exercises into course ID {course_id}.")
-    print(f"\n{programming_exercises}\n")
     
     # Step 7: Run consistency checks for all programming exercises and store results
     model_name = "azure-openai-gpt-5-mini"  # NOTE future implementation
@@ -367,5 +361,5 @@ def main():
 
     logging.info("PECV-Bench Hyperion Benchmark Workflow completed.")
 
-if __name__ == "__main__":  
+if __name__ == "__main__":
     main()
