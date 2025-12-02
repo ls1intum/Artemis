@@ -38,7 +38,34 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
     participationSubscriptionTypes: Map<number /* ID of participation */, boolean /* Whether the participation was subscribed in personal mode */> = new Map<number, boolean>();
 
     private getNotifyAllSubscribersPipe = () => {
-        return pipe(tap(this.notifyResultSubscribers), switchMap(this.addResultToParticipation), tap(this.notifyParticipationSubscribers));
+        return pipe(
+            tap((result: Result) => {
+                // eslint-disable-next-line no-undef
+                console.log('[WS] new result from server', {
+                    resultId: result.id,
+                    participationId: result.submission?.participation?.id,
+                    exerciseId: result.submission?.participation?.exercise?.id,
+                });
+            }),
+            tap(this.notifyResultSubscribers),
+            switchMap(this.addResultToParticipation),
+            tap((participation: Participation | undefined) => {
+                if (participation) {
+                    // eslint-disable-next-line no-undef
+                    console.log('[WS] participation updated in cache', {
+                        participationId: participation.id,
+                        exerciseId: participation.exercise?.id,
+                        totalSubmissions: participation.submissions?.length,
+                        totalResultsFromSubmissions: participation.submissions?.flatMap((s) => s.results ?? []).length,
+                        flatResultsField: (participation as any).results?.length,
+                    });
+                } else {
+                    // eslint-disable-next-line no-undef
+                    console.log('[WS] no cached participation found for result');
+                }
+            }),
+            tap(this.notifyParticipationSubscribers),
+        );
     };
 
     /**
@@ -89,16 +116,54 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      * @param result
      */
     private addResultToParticipation = (result: Result) => {
-        const cachedParticipation = this.cachedParticipations.get(result.submission!.participation!.id!);
-        if (cachedParticipation) {
-            // update the results with the new received one by filtering the old result
-            const updatedResults = [...getAllResultsOfAllSubmissions(cachedParticipation.submissions)].filter((r) => r.id !== result.id);
-            updatedResults.push(result);
-            // create a clone
-            this.cachedParticipations.set(result.submission!.participation!.id!, { ...cachedParticipation, results: updatedResults } as StudentParticipation);
-            return of(this.cachedParticipations.get(result.submission!.participation!.id!));
+        const participationId = result.submission!.participation!.id!;
+        const cachedParticipation = this.cachedParticipations.get(participationId);
+
+        if (!cachedParticipation) {
+            // eslint-disable-next-line no-undef
+            console.log('[addResultToParticipation] no cached participation for', participationId);
+            return of();
         }
-        return of();
+
+        const submissions = cachedParticipation.submissions ?? [];
+        const updatedSubmissions = submissions.map((submission) => {
+            if (submission.id !== result.submission!.id) {
+                return submission;
+            }
+
+            const oldResults = submission.results ?? [];
+            const withoutOld = oldResults.filter((r) => r.id !== result.id);
+            const newResults = [...withoutOld, result];
+            // eslint-disable-next-line no-undef
+            console.log('[addResultToParticipation] updating submission', {
+                participationId,
+                submissionId: submission.id,
+                oldResultsCount: oldResults.length,
+                newResultsCount: newResults.length,
+                newResultId: result.id,
+            });
+            return {
+                ...submission,
+                results: [...withoutOld, result],
+            };
+        });
+
+        const allResults = getAllResultsOfAllSubmissions(updatedSubmissions);
+
+        this.cachedParticipations.set(participationId, {
+            ...cachedParticipation,
+            submissions: updatedSubmissions,
+            results: allResults,
+        } as StudentParticipation);
+        // eslint-disable-next-line no-undef
+        console.log('[addResultToParticipation] after update', {
+            participationId,
+            submissionsCount: updatedSubmissions.length,
+            totalResultsFromSubmissions: updatedSubmissions.flatMap((s) => s.results ?? []).length,
+            flatResultsFieldCount: allResults.length,
+        });
+
+        return of(this.cachedParticipations.get(participationId));
     };
 
     /**
@@ -245,6 +310,13 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      * @param exerciseId optional exerciseId of the exercise where the participation is part of, only needed if personal == false
      */
     public subscribeForLatestResultOfParticipation(participationId: number, personal: boolean, exerciseId?: number): BehaviorSubject<Result | undefined> {
+        // eslint-disable-next-line no-undef
+        console.log('[ParticipationWS] subscribeForLatestResultOfParticipation', {
+            participationId,
+            personal,
+            exerciseId,
+            hasExistingSubject: this.resultObservables.has(participationId),
+        });
         this.openResultWebsocketSubscriptionIfNotExisting(participationId, personal, exerciseId);
         let resultObservable = this.resultObservables.get(participationId)!;
         if (!resultObservable) {
