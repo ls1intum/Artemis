@@ -4,12 +4,13 @@ import { parseNumber } from './support/utils';
 import 'app/shared/util/map.extension';
 import 'app/shared/util/string.extension';
 import 'app/shared/util/array.extension';
+import path from 'path';
 
 /**
  * Read environment variables from file.
  * https://github.com/motdotla/dotenv
  */
-dotenv.config({ path: `./playwright.env` });
+dotenv.config({ path: path.join(__dirname, 'playwright.env') });
 
 /**
  * See https://playwright.dev/docs/test-configuration.

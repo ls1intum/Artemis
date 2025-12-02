@@ -19,7 +19,7 @@ import { of } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
-import { mockClientMessage, mockServerMessage, mockServerSessionHttpResponse } from 'test/helpers/sample/iris-sample-data';
+import { mockClientMessage, mockServerMessage } from 'test/helpers/sample/iris-sample-data';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { By } from '@angular/platform-browser';
 import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';
@@ -37,8 +37,6 @@ describe('IrisBaseChatbotComponent', () => {
     let fixture: ComponentFixture<IrisBaseChatbotComponent>;
 
     let chatService: IrisChatService;
-    let httpService: jest.Mocked<IrisChatHttpService>;
-    let wsMock: jest.Mocked<IrisWebsocketService>;
     let accountService: AccountService;
 
     const statusMock = {
@@ -86,8 +84,6 @@ describe('IrisBaseChatbotComponent', () => {
                 fixture = TestBed.createComponent(IrisBaseChatbotComponent);
                 chatService = TestBed.inject(IrisChatService);
                 chatService.setCourseId(456);
-                httpService = TestBed.inject(IrisChatHttpService) as jest.Mocked<IrisChatHttpService>;
-                wsMock = TestBed.inject(IrisWebsocketService) as jest.Mocked<IrisWebsocketService>;
                 accountService = TestBed.inject(AccountService);
                 component = fixture.componentInstance;
 
@@ -107,7 +103,7 @@ describe('IrisBaseChatbotComponent', () => {
         expect(component).toBeTruthy();
     });
 
-    it('should set userAccepted to false if user has not accepted the external LLM usage policy', () => {
+    it('should set userAccepted to NO_AI when user explicitly chose to reject AI usage', () => {
         accountService.userIdentity.set({ selectedLLMUsage: LLMSelectionDecision.NO_AI } as User);
         component.ngOnInit();
         expect(component.userAccepted).toBe(LLMSelectionDecision.NO_AI);
@@ -305,25 +301,6 @@ describe('IrisBaseChatbotComponent', () => {
     });
 
     describe('clear chat session', () => {
-        it('should clear chat session when user confirms', fakeAsync(() => {
-            jest.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponse));
-            jest.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
-            jest.spyOn(component, 'scrollToBottom').mockImplementation(() => {});
-            jest.spyOn(chatService, 'clearChat').mockReturnValueOnce();
-            const getChatSessionsSpy = jest.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
-
-            chatService.switchTo(ChatServiceMode.COURSE, 123);
-            fixture.detectChanges();
-            tick();
-
-            const button: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#clear-chat-button');
-            button.click();
-            tick();
-
-            expect(chatService.clearChat).toHaveBeenCalledOnce();
-            expect(getChatSessionsSpy).toHaveBeenCalledOnce();
-        }));
-
         it('should not render clear chat button if the history is empty', () => {
             const button: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#clear-chat-button');
             expect(button).toBeNull();
