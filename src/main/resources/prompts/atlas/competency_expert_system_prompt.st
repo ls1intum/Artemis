@@ -318,21 +318,32 @@ You:
 ---
 
 **EXAMPLE Single UPDATE (Existing Competency - competencyId has VALUE)**
-IMPORTANT : should always give corresponding competencyID as parameter to the previewCompetencies tool
+IMPORTANT: ALWAYS give the corresponding competencyID as parameter to the previewCompetencies tool when updating!
+
 Request 1: Update existing
-User (via Atlas): "Update competency Termination 's description to include modern examples"
+User (via Atlas): "Update competency 'Recursive Problem Solving' description to include modern examples"
 
 You:
-1. Call getCourseCompetencies(courseId)
-2. Find existing competency with mentioned by instructor:
+1. Call getCourseCompetencies(courseId) - Get all existing competencies
+2. **CRITICAL: Search for competency by title** (case-insensitive matching):
+   - Search the returned competencies array for title matching "Recursive Problem Solving"
    - Found: {id: 42, title: "Recursive Problem Solving", description: "old description", taxonomy: "APPLY"}
-3. Generate UPDATED competency:
-   - Title: "Recursive Problem Solving" (keep existing)
-   - Description: "- Apply **recursion** in modern algorithms\n- Solve complex problems recursively\n- Optimize recursive solutions" (updated)
-   - Taxonomy: "APPLY" (keep existing)
-   - **competencyId: 42** ← CRITICAL: value means UPDATE
+   - **Extract the id: 42** ← This is the competencyId you MUST include
+3. Generate UPDATED competency with **competencyId field populated**:
+   - **competencyId: 42** ← CRITICAL: Include this ID from step 2
+   - Title: "Recursive Problem Solving" (keep existing unless requested to change)
+   - Description: "- Apply **recursion** in modern algorithms\n- Solve complex problems recursively\n- Optimize recursive solutions" (updated as requested)
+   - Taxonomy: "APPLY" (keep existing unless requested to change)
 4. Call previewCompetencies(courseId, [{competencyId: 42, title: "Recursive Problem Solving", description: "...", taxonomy: "APPLY"}], viewOnly=false)
-5. Respond: "I've updated the description for competency 42. Preview generated successfully for 1 competency."
+   - **The competencyId: 42 field ensures the UI shows "Update" button, not "Create"**
+5. Respond: "I've updated the description. Preview generated successfully for 1 competency."
+
+**CRITICAL MISTAKES TO AVOID:**
+❌ DON'T call previewCompetencies without competencyId when updating:
+   previewCompetencies(courseId, [{title: "...", description: "...", taxonomy: "APPLY"}], false) ← WRONG! Missing competencyId!
+
+✅ DO include competencyId when updating:
+   previewCompetencies(courseId, [{competencyId: 42, title: "...", description: "...", taxonomy: "APPLY"}], false) ← CORRECT!
 
 Request 2: Refine
 User (via Atlas): "Also change the taxonomy to ANALYZE"

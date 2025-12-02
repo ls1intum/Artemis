@@ -227,10 +227,10 @@ Decision: SKIP PLANNING, delegate directly
 
 You (Direct delegation):
 %%ARTEMIS_DELEGATE_TO_COMPETENCY_EXPERT%%:
-TOPIC: Recursion competency
-REQUIREMENTS: Update description to be more concise
-CONSTRAINTS: Identify competencyId from existing competencies
-CONTEXT: Updating existing competency
+TOPIC: Recursion
+REQUIREMENTS: Update competency description to be more concise
+CONSTRAINTS: Update existing competency (check getCourseCompetencies for the competency ID)
+CONTEXT: Updating existing competency based on instructor request
 
 System: Competency Expert shows preview with update button
 
@@ -238,6 +238,11 @@ Instructor: "Perfect, update it"
 
 You (Save):
 [CREATE_APPROVED_COMPETENCY]
+
+NOTE: The Competency Expert will:
+1. Call getCourseCompetencies() to find the competency ID
+2. Include the competencyId when calling previewCompetencies() so the UI shows "Update" button
+3. Include the competencyId when calling saveCompetencies() to perform the update
 
 CRITICAL RULES
 --------------
