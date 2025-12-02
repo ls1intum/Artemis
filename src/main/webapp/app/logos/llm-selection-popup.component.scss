@@ -20,6 +20,7 @@
     from {
         opacity: 0;
     }
+
     to {
         opacity: 1;
     }
@@ -271,6 +272,14 @@
     color: var(--bs-body-color);
 }
 
+.check-icon,
+.neutral-icon,
+.cross-icon {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+}
+
 .feature-item.checked .check-icon {
     color: var(--success);
 }
@@ -281,14 +290,6 @@
 
 .feature-item.unchecked .cross-icon {
     color: var(--danger);
-}
-
-.check-icon,
-.neutral-icon,
-.cross-icon {
-    width: 18px;
-    height: 18px;
-    flex-shrink: 0;
 }
 
 /* --- FOOTER --- */

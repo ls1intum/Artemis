@@ -3,6 +3,14 @@ hr {
     border-color: var(--bs-border-color);
 }
 
+.benefits-list,
+.security-list,
+.limitations-list {
+    li {
+        padding-left: 0.5rem;
+    }
+}
+
 .option-section {
     margin-bottom: 2.5rem;
 
@@ -43,14 +51,6 @@ hr {
                 color: var(--bs-body-color);
             }
         }
-    }
-}
-
-.benefits-list,
-.security-list,
-.limitations-list {
-    li {
-        padding-left: 0.5rem;
     }
 }
 
