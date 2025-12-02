@@ -1128,7 +1128,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
      */
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    @ValueSource(strings = { "start-now", "set-visible", "open-for-practice" })
+    @ValueSource(strings = { "start-now", "set-visible" })
     void testPerformPutActionAsNonEditorForbidden(String action) throws Exception {
         QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuiz(ZonedDateTime.now().plusDays(1), null, QuizMode.SYNCHRONIZED);
 

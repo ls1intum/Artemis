@@ -60,14 +60,14 @@ public interface QuizQuestionRepository extends ArtemisJpaRepository<QuizQuestio
     @Query("""
             SELECT COUNT(q) > 0
             FROM QuizQuestion q
-            WHERE q.exercise.course.id = :courseId and q.exercise.dueDate IS NOT NULL AND q.exercise.dueDate < :now
+            WHERE q.exercise.course.id = :courseId AND q.exercise.dueDate IS NOT NULL AND q.exercise.dueDate < :now
             """)
     boolean areQuizExercisesWithDueDateBefore(@Param("courseId") long courseId, @Param("now") ZonedDateTime now);
 
     @Query("""
             SELECT COUNT(q)
             FROM QuizQuestion q
-            WHERE q.exercise.course.id = :courseId and q.exercise.dueDate IS NOT NULL AND q.exercise.dueDate < :now
+            WHERE q.exercise.course.id = :courseId AND q.exercise.dueDate IS NOT NULL AND q.exercise.dueDate < :now
             """)
     long countAllQuizQuestionsByCourseIdBefore(@Param("courseId") long courseId, @Param("now") ZonedDateTime now);
 
