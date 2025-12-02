@@ -4,10 +4,12 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.SequencedMap;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -100,14 +102,16 @@ public class ExamRoomDistributionService {
      * Existing planned seats and room assignments are replaced.
      *
      * @param examId                The exam
-     * @param examRoomIds           The ids of the rooms to distribute to
+     * @param examRoomIds           The ids of the rooms to distribute to, ordered, no duplicates
      * @param useOnlyDefaultLayouts if we want to only use 'default' layouts
      * @param reserveFactor         Percentage of seats that should not be included
      * @throws BadRequestAlertException if the capacity doesn't suffice to seat the students
      */
-    public void distributeRegisteredStudents(long examId, @NotEmpty Set<Long> examRoomIds, boolean useOnlyDefaultLayouts, double reserveFactor) {
+    public void distributeRegisteredStudents(long examId, @NotEmpty List<Long> examRoomIds, boolean useOnlyDefaultLayouts, double reserveFactor) {
+        examRoomIds = examRoomIds.stream().distinct().toList();
+
         final Exam exam = examRepository.findByIdWithExamUsersElseThrow(examId);
-        final Set<ExamRoom> examRoomsForExam = examRoomRepository.findAllWithEagerLayoutStrategiesByIdIn(examRoomIds);
+        final Set<ExamRoom> examRoomsForExam = examRoomRepository.findAllWithEagerLayoutStrategiesByIdIn(Set.copyOf(examRoomIds));
 
         ExamDistributionCapacityDTO capacities = getDistributionCapacities(examRoomsForExam, reserveFactor);
         int numberOfExamUsers = exam.getExamUsers().size();
@@ -126,12 +130,19 @@ public class ExamRoomDistributionService {
 
         assignExamRoomsToExam(exam, examRoomsForExam);
 
+        List<ExamRoom> orderedExamRooms = getOrderedExamRooms(examRoomsForExam, examRoomIds);
         if (defaultLayoutsSuffice) {
-            distributeExamUsersToDefaultUsableSeatsInRooms(exam, examRoomsForExam, reserveFactor);
+            distributeExamUsersToDefaultUsableSeatsInRooms(exam, orderedExamRooms, reserveFactor);
         }
         else {
-            distributeExamUsersToAnyUsableSeatsInRooms(exam, examRoomsForExam, reserveFactor);
+            distributeExamUsersToAnyUsableSeatsInRooms(exam, orderedExamRooms, reserveFactor);
         }
+    }
+
+    private List<ExamRoom> getOrderedExamRooms(Set<ExamRoom> examRooms, List<Long> examRoomIds) {
+        Map<Long, ExamRoom> roomById = examRooms.stream().collect(Collectors.toMap(ExamRoom::getId, Function.identity()));
+
+        return examRoomIds.stream().map(roomById::get).toList();
     }
 
     /**
@@ -160,13 +171,13 @@ public class ExamRoomDistributionService {
      * @param examRoomsForExam all exam rooms that students of this exam can be distributed to
      * @param reserveFactor    Percentage of seats that should not be included
      */
-    private void distributeExamUsersToDefaultUsableSeatsInRooms(Exam exam, Set<ExamRoom> examRoomsForExam, double reserveFactor) {
-        Map<String, List<ExamSeatDTO>> roomNumberToUsableSeatsDefaultLayout = new HashMap<>();
+    private void distributeExamUsersToDefaultUsableSeatsInRooms(Exam exam, List<ExamRoom> examRoomsForExam, double reserveFactor) {
+        SequencedMap<String, List<ExamSeatDTO>> roomNumberToUsableSeatsDefaultLayout = new LinkedHashMap<>();
         for (ExamRoom examRoom : examRoomsForExam) {
             roomNumberToUsableSeatsDefaultLayout.put(examRoom.getRoomNumber(), examRoomService.getDefaultUsableSeats(examRoom, reserveFactor));
         }
 
-        setPlannedRoomAndPlannedSeatForExamUsersRandomly(exam, roomNumberToUsableSeatsDefaultLayout);
+        setPlannedRoomAndPlannedSeatForExamUsersInExamRoomOrder(exam, roomNumberToUsableSeatsDefaultLayout);
     }
 
     /**
@@ -179,12 +190,12 @@ public class ExamRoomDistributionService {
      * @param examRoomsForExam all exam rooms that students of this exam can be distributed to
      * @param reserveFactor    Percentage of seats that should not be included
      */
-    private void distributeExamUsersToAnyUsableSeatsInRooms(Exam exam, Set<ExamRoom> examRoomsForExam, double reserveFactor) {
+    private void distributeExamUsersToAnyUsableSeatsInRooms(Exam exam, List<ExamRoom> examRoomsForExam, double reserveFactor) {
         final int numberOfExamUsers = exam.getExamUsers().size();
 
-        Map<Long, LayoutStrategy> layoutStrategyToBeUsedByRoomId = getBestLayoutPerRoomCombination(examRoomsForExam, numberOfExamUsers, reserveFactor);
+        Map<Long, LayoutStrategy> layoutStrategyToBeUsedByRoomId = getBestLayoutPerRoomCombination(Set.copyOf(examRoomsForExam), numberOfExamUsers, reserveFactor);
 
-        Map<String, List<ExamSeatDTO>> roomNumberToUsableSeats = new HashMap<>();
+        SequencedMap<String, List<ExamSeatDTO>> roomNumberToUsableSeats = new LinkedHashMap<>();
         for (ExamRoom examRoom : examRoomsForExam) {
             LayoutStrategy layoutStrategyForThisRoom = layoutStrategyToBeUsedByRoomId.get(examRoom.getId());
             List<ExamSeatDTO> seatsForThisStrategy = examRoomService.getUsableSeatsForLayout(examRoom, layoutStrategyForThisRoom, reserveFactor);
@@ -192,7 +203,7 @@ public class ExamRoomDistributionService {
             roomNumberToUsableSeats.put(examRoom.getRoomNumber(), seatsForThisStrategy);
         }
 
-        setPlannedRoomAndPlannedSeatForExamUsersRandomly(exam, roomNumberToUsableSeats);
+        setPlannedRoomAndPlannedSeatForExamUsersInExamRoomOrder(exam, roomNumberToUsableSeats);
     }
 
     private Map<Long, LayoutStrategy> getBestLayoutPerRoomCombination(Set<ExamRoom> examRoomsForExam, int numberOfExamUsers, double reserveFactor) {
@@ -258,7 +269,7 @@ public class ExamRoomDistributionService {
         return best;
     }
 
-    private void setPlannedRoomAndPlannedSeatForExamUsersRandomly(Exam exam, Map<String, List<ExamSeatDTO>> roomNumberToUsableSeats) {
+    private void setPlannedRoomAndPlannedSeatForExamUsersInExamRoomOrder(Exam exam, SequencedMap<String, List<ExamSeatDTO>> roomNumberToUsableSeats) {
         Iterator<ExamUser> examUsersIterator = exam.getExamUsers().iterator();
 
         do_while_students: for (var roomNumberToUsableSeatsEntry : roomNumberToUsableSeats.entrySet()) {
