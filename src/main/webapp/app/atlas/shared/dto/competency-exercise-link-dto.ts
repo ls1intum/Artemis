@@ -10,7 +10,7 @@ export interface CompetencyExerciseLinkDTO {
 /**
  * Maps a CompetencyExerciseLink client model → CompetencyExerciseLinkDTO for API updates.
  */
-export function toCompetencyExerciseLinkDTO(link: CompetencyExerciseLink): CompetencyExerciseLinkDTO {
+export const toCompetencyExerciseLinkDTO = (link: CompetencyExerciseLink): CompetencyExerciseLinkDTO => {
     if (!link.competency) {
         throw new Error('Cannot map CompetencyExerciseLink: missing competency.');
     }
@@ -20,7 +20,7 @@ export function toCompetencyExerciseLinkDTO(link: CompetencyExerciseLink): Compe
         weight: link.weight,
         courseId: link.competency.course?.id ?? undefined,
     };
-}
+};
 
 /**
  * Maps an array of CompetencyExerciseLink → CompetencyExerciseLinkDTO[].

@@ -31,7 +31,7 @@ public record UpdateModelingExerciseDTO(long id, @Nullable String title, @Nullab
         @Nullable Set<CompetencyExerciseLinkDTO> competencyLinks) {
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record CompetencyExerciseLinkDTO(@NotNull CourseCompetencyDTO courseCompetencyDTO, Double weight, Long courseId) {
+    public record CompetencyExerciseLinkDTO(@NotNull CourseCompetencyDTO courseCompetencyDTO, @Nullable Double weight, @Nullable Long courseId) {
 
         /**
          * Creates a DTO from a CompetencyExerciseLink entity.
@@ -56,12 +56,12 @@ public record UpdateModelingExerciseDTO(long id, @Nullable String title, @Nullab
      * @param exercise the ModelingExercise entity to convert
      * @return a new UpdateModelingExerciseDTO with data from the entity
      */
-    public static UpdateModelingExerciseDTO of(ModelingExercise exercise) {
+    public static UpdateModelingExerciseDTO of(@NotNull ModelingExercise exercise) {
         Long courseId = exercise.getCourseViaExerciseGroupOrCourseMember() != null ? exercise.getCourseViaExerciseGroupOrCourseMember().getId() : null;
         Long exerciseGroupId = exercise.getExerciseGroup() != null ? exercise.getExerciseGroup().getId() : null;
 
-        Set<GradingCriterionDTO> gradingCriterionDTOs = null;
-        Set<CompetencyExerciseLinkDTO> competencyLinkDTOs = null;
+        Set<GradingCriterionDTO> gradingCriterionDTOs = Set.of();
+        Set<CompetencyExerciseLinkDTO> competencyLinkDTOs = Set.of();
 
         Set<GradingCriterion> criteria = exercise.getGradingCriteria();
         Set<CompetencyExerciseLink> competencyLinks = exercise.getCompetencyLinks();
