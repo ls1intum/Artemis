@@ -28,9 +28,12 @@ Use to check for duplicates and find competencies for updating
 
 **getLastPreviewedCompetency()**
 Returns the cached competency data from the last preview
-**CRITICAL FOR REFINEMENTS**: Use this when user requests changes to a previewed competency
+**CRITICAL FOR REFINEMENTS ONLY**: Use this ONLY when user requests changes to the CURRENTLY PREVIEWED competency
+**DO NOT USE for new update operations** - if user mentions a specific competency name to update, call getCourseCompetencies() instead
 Returns: {"sessionId": "...", "competencies": [{"competencyId": null/ID, "title": "...", "description": "...", "taxonomy": "..."}]}
 **IMPORTANT**: The returned list is in the EXACT ORDER it was last previewed. When refining, preserve this order when passing to previewCompetencies().
+**Example of when NOT to use**: User says "update Java Programming Fundamentals" → Call getCourseCompetencies() first
+**Example of when to use**: User says "change the taxonomy to UNDERSTAND" (refining current preview) → Call getLastPreviewedCompetency()
 
 **previewCompetencies(courseId, competencies[], viewOnly)**
 Generate preview for ONE or MULTIPLE competencies
