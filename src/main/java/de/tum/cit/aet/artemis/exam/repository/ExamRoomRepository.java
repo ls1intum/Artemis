@@ -149,4 +149,15 @@ public interface ExamRoomRepository extends ArtemisJpaRepository<ExamRoom, Long>
     Set<ExamRoom> findAllByExamId(@Param("examId") long examId);
 
     List<ExamRoom> findAllByRoomNumber(String roomNumber);
+
+    @Query("""
+            SELECT er
+            FROM ExamRoom er
+            JOIN ExamRoomExamAssignment erea
+                ON er.id = erea.examRoom.id
+            LEFT JOIN FETCH er.layoutStrategies
+            WHERE erea.exam.id = :examId
+                AND er.roomNumber = :newRoomNumber
+            """)
+    Set<ExamRoom> findAllByExamIdAndRoomNumberWithLayoutStrategies(@Param("examId") long examId, @Param("newRoomNumber") String newRoomNumber);
 }

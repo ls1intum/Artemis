@@ -32,7 +32,6 @@ import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomForDistributionDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamSeatDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ReseatInformationDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.SeatsOfExamRoomDTO;
-import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
 import de.tum.cit.aet.artemis.exam.service.ExamAccessService;
 import de.tum.cit.aet.artemis.exam.service.ExamRoomDistributionService;
 import de.tum.cit.aet.artemis.exam.service.ExamRoomService;
@@ -58,16 +57,13 @@ public class ExamRoomDistributionResource {
 
     private final ExamRoomDistributionService examRoomDistributionService;
 
-    private final ExamUserRepository examUserRepository;
-
     private final ExamUserService examUserService;
 
     public ExamRoomDistributionResource(ExamAccessService examAccessService, ExamRoomService examRoomService, ExamRoomDistributionService examRoomDistributionService,
-            ExamUserRepository examUserRepository, ExamUserService examUserService) {
+            ExamUserService examUserService) {
         this.examAccessService = examAccessService;
         this.examRoomService = examRoomService;
         this.examRoomDistributionService = examRoomDistributionService;
-        this.examUserRepository = examUserRepository;
         this.examUserService = examUserService;
     }
 
@@ -236,7 +232,9 @@ public class ExamRoomDistributionResource {
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<Void> reseatStudent(@PathVariable long courseId, @PathVariable long examId, @Valid @RequestBody ReseatInformationDTO reseatInformation) {
         log.debug("REST request to reseat exam user : {}, for exam : {}", reseatInformation.examUserId(), examId);
+
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
+        examUserService.checkExamUserExistsAndBelongsToExamElseThrow(reseatInformation.examUserId(), examId);
 
         if (StringUtil.isBlank(reseatInformation.newRoom())) {
             throw new BadRequestAlertException("Invalid room number", ENTITY_NAME, "room.invalidRoomNumber");

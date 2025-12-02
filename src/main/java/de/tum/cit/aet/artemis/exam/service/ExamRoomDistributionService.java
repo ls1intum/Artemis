@@ -339,12 +339,12 @@ public class ExamRoomDistributionService {
      * @param examUserId    The id of the exam user
      * @param newRoomNumber The {@code roomNumber} of the new room
      * @param newSeatName   The {@code seatName} of the new seat
-     *
      * @throws BadRequestAlertException if the new seat is already occupied
      */
     public void reseatStudent(long examUserId, String newRoomNumber, String newSeatName) {
         ExamUser examUser = examUserRepository.findWithExamWithExamUsersById(examUserId).orElseThrow();
-        examUserService.setActualRoomAndSeatTransientForExamUsers(examUser.getExam().getExamUsers());
+        Set<ExamUser> examUsers = examUser.getExam().getExamUsers();
+        examUserService.setPlannedRoomAndSeatTransientForExamUsers(examUsers);
 
         String oldRoomNumber = examUser.getPlannedRoom();
         String oldSeatName = examUser.getPlannedSeat();
@@ -352,7 +352,7 @@ public class ExamRoomDistributionService {
 
         ExamUser lastStudentInOldRoom = null;
         if (isOldLocationPersisted) {
-            lastStudentInOldRoom = findLastStudentInRoom(examUser.getPlannedRoomTransient(), examUser.getExam().getExamUsers());
+            lastStudentInOldRoom = findLastStudentInRoom(examUser.getPlannedRoomTransient(), examUsers);
         }
 
         if (StringUtil.isBlank(newSeatName)) {
@@ -362,9 +362,9 @@ public class ExamRoomDistributionService {
             seatStudentFixedSeat(examUser, newRoomNumber, newSeatName);
         }
 
-        if (oldRoomNumber == null || oldRoomNumber.equals(newRoomNumber) || lastStudentInOldRoom == null || lastStudentInOldRoom.getId().equals(examUser.getId())) {
+        if (StringUtil.isBlank(oldRoomNumber) || oldRoomNumber.equals(newRoomNumber) || lastStudentInOldRoom == null || lastStudentInOldRoom.getId().equals(examUser.getId())) {
             // We don't need to fill a gap.
-            // This is either because the student did have a room assignment,
+            // This is either because the student did not have a room assignment prior,
             // because we don't have information about the old room,
             // because the student was moved inside the same room,
             // or because the student we moved didn't create a gap
@@ -381,7 +381,6 @@ public class ExamRoomDistributionService {
      * @param room      The exam room
      * @param examUsers The exam users participating in the exam. Must contain at least all exam users that are in the
      *                      given room
-     *
      * @return The last student in the room
      */
     private ExamUser findLastStudentInRoom(ExamRoom room, Set<ExamUser> examUsers) {
@@ -416,7 +415,7 @@ public class ExamRoomDistributionService {
     }
 
     private Map<ExamSeatDTO, ExamUser> getExamUserInRoomBySeat(Set<ExamUser> examUsers, ExamRoom examRoom) {
-        return examUsers.stream().filter(examUser -> examUser.getPlannedRoomTransient().getId().equals(examRoom.getId()))
+        return examUsers.stream().filter(examUser -> examUser.getPlannedRoomTransient() != null && examUser.getPlannedRoomTransient().getId().equals(examRoom.getId()))
                 .collect(Collectors.toMap(ExamUser::getPlannedSeatTransient, Function.identity()));
     }
 
@@ -439,12 +438,11 @@ public class ExamRoomDistributionService {
      * @param newRoomNumber The room number of the new room
      */
     public void seatStudentDynamicLocation(ExamUser examUser, String newRoomNumber) {
-        if (examUser.getPlannedRoom().equals(newRoomNumber)) {
+        if (Objects.equals(examUser.getPlannedRoom(), newRoomNumber)) {
             throw new BadRequestAlertException("The student already sits in this room", ENTITY_NAME, "room.alreadyInRoom");
         }
 
-        Set<ExamRoom> connectedRooms = examRoomRepository.findAllByExamId(examUser.getExam().getId());
-        ExamRoom newRoom = connectedRooms.stream().filter(room -> room.getRoomNumber().equals(newRoomNumber)).findFirst()
+        ExamRoom newRoom = examRoomRepository.findAllByExamIdAndRoomNumberWithLayoutStrategies(examUser.getExam().getId(), newRoomNumber).stream().findFirst()
                 .orElseThrow(() -> new BadRequestAlertException("New room could not be found", ENTITY_NAME, "room.notFound"));
 
         Set<ExamUser> examUsers = examUser.getExam().getExamUsers();
