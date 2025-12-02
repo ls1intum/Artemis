@@ -3,16 +3,17 @@
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
     <!--
-    Increase exam_live_event.created_by column length from VARCHAR(50) to VARCHAR(70)
+    Increase exam_live_event.created_by column length from VARCHAR(50) to VARCHAR(100)
 
     Reason:
-    Regarding the length of full names, i.e. the UK Government Data Standards Catalogue recommends 70 characters.
+    Regarding the length of full names, i.e. the UK Government Data Standards Catalogue recommends minimum 70 characters.
+    To be consistend with jhi_user, where the first and last name each have 50 chars, we use 100 chars for created_by.
     -->
     <changeSet id="20231110-01" author="briksa">
         <modifyDataType
                 tableName="exam_live_event"
                 columnName="created_by"
-                newDataType="varchar(70)"/>
+                newDataType="varchar(100)"/>
         <rollback>
             <modifyDataType
                     tableName="exam_live_event"
