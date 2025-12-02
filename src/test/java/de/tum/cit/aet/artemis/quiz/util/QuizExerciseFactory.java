@@ -544,11 +544,11 @@ public class QuizExerciseFactory {
     public static MultipleChoiceQuestion createMultipleChoiceQuestionWithAllTypesOfAnswerOptions() {
         MultipleChoiceQuestion mc = (MultipleChoiceQuestion) new MultipleChoiceQuestion().title("MC").score(4d).text("Q1");
         mc.setScoringType(ScoringType.ALL_OR_NOTHING);
-        mc.getAnswerOptions().add(new AnswerOption().text("A").hint("H1").explanation("E1").isCorrect(true));
-        mc.getAnswerOptions().add(new AnswerOption().text("B").hint("H2").explanation("E2").isCorrect(false));
-        mc.getAnswerOptions().add(new AnswerOption().text("C").hint("H3").explanation("E3").isInvalid(true).isCorrect(false));
-        mc.getAnswerOptions().add(new AnswerOption().text("D").hint("H4").explanation("E4").isCorrect(true));
-        mc.getAnswerOptions().add(new AnswerOption().text("E").hint("H5").explanation("E5").isCorrect(false));
+        mc.addAnswerOption(new AnswerOption().text("A").hint("H1").explanation("E1").isCorrect(true));
+        mc.addAnswerOption(new AnswerOption().text("B").hint("H2").explanation("E2").isCorrect(false));
+        mc.addAnswerOption(new AnswerOption().text("C").hint("H3").explanation("E3").isInvalid(true).isCorrect(false));
+        mc.addAnswerOption(new AnswerOption().text("D").hint("H4").explanation("E4").isCorrect(true));
+        mc.addAnswerOption(new AnswerOption().text("E").hint("H5").explanation("E5").isCorrect(false));
         return mc;
     }
 
