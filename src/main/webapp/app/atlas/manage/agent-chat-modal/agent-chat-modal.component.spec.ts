@@ -1122,11 +1122,13 @@ describe('AgentChatModalComponent', () => {
                         planPending: true,
                     };
 
+                    const translateSpy = jest.spyOn(mockTranslateService, 'instant');
+
                     component['onApprovePlan'](message);
                     tick();
 
                     expect(component.isAgentTyping()).toBeFalse();
-                    expect(jest.spyOn(mockTranslateService, 'instant')).toHaveBeenCalledWith('artemisApp.agent.chat.error');
+                    expect(translateSpy).toHaveBeenCalledWith('artemisApp.agent.chat.error');
                 }));
             });
 
