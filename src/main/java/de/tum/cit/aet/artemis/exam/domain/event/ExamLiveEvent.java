@@ -38,7 +38,7 @@ import de.tum.cit.aet.artemis.exam.service.ExamLiveEventsService;
 public abstract class ExamLiveEvent extends DomainObject {
 
     @CreatedBy
-    @Column(name = "created_by", nullable = false, length = 70, updatable = false)
+    @Column(name = "created_by", nullable = false, length = 100, updatable = false)
     private String createdBy;
 
     @CreatedDate
