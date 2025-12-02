@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.communication.service.conversation;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
+import de.tum.cit.aet.artemis.communication.domain.DefaultChannelType;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.dto.ChannelDTO;
 import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
@@ -476,5 +478,34 @@ public class ChannelService {
         if (exerciseChannelId != null) {
             conversationService.deleteConversation(exerciseChannelId);
         }
+    }
+
+    /**
+     * Creates a default channel with the given name and adds all students, tutors and instructors as participants.
+     *
+     * @param course      the course, where the channel should be created
+     * @param channelType the default channel type
+     */
+    public void createDefaultChannel(Course course, DefaultChannelType channelType) {
+        Channel channelToCreate = new Channel();
+        channelToCreate.setName(channelType.getName());
+        channelToCreate.setIsPublic(true);
+        channelToCreate.setIsCourseWide(true);
+        channelToCreate.setIsAnnouncementChannel(channelType.equals(DefaultChannelType.ANNOUNCEMENT));
+        channelToCreate.setIsArchived(false);
+        channelToCreate.setDescription(null);
+        createChannel(course, channelToCreate, Optional.empty());
+    }
+
+    /**
+     * Creates all default communication channels for the given course.
+     * <p>
+     * See {@link de.tum.cit.aet.artemis.communication.domain.DefaultChannelType}
+     * for the list of channel types that will be created.
+     *
+     * @param course the course for which the default channels should be created
+     */
+    public void createDefaultChannels(Course course) {
+        Arrays.stream(DefaultChannelType.values()).forEach(channelType -> createDefaultChannel(course, channelType));
     }
 }

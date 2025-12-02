@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <title th:text="#{email.courseRequest.rejected.title}">Course request rejected</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <link rel="icon" type="image/svg+xml" sizes="any" th:href="@{|${baseUrl}/logo/favicon.svg|}" />
+    </head>
+    <body>
+        <p th:text="#{email.courseRequest.greeting(${courseRequest.requester.login})}">Hello,</p>
+        <p th:text="#{email.courseRequest.rejected.text(${courseRequest.title})}">Your request was rejected.</p>
+        <p>
+            <strong th:text="#{email.courseRequest.rejected.reasonTitle}">Provided reason:</strong>
+        </p>
+        <p th:text="${courseRequest.decisionReason}">Reason</p>
+    </body>
+</html>

@@ -1,0 +1,49 @@
+{
+    "artemisApp": {
+        "courseRequest": {
+            "title": "Request a new course",
+            "description": "Fill out the basic course information. We will notify you once an administrator processes your request.",
+            "form": {
+                "title": "Course title",
+                "shortName": "Short name",
+                "semester": "Semester",
+                "startDate": "Start date",
+                "endDate": "End date",
+                "testCourse": "This is a test course",
+                "reason": "Reason",
+                "reasonPlaceholder": "Why do you need this course?",
+                "submit": "Submit request",
+                "dateError": "The start date must be before the end date."
+            },
+            "success": "Your course request was submitted successfully. We'll be in touch soon.",
+            "error": "The course request could not be submitted.",
+            "status": {
+                "PENDING": "Pending",
+                "ACCEPTED": "Accepted",
+                "REJECTED": "Rejected"
+            },
+            "admin": {
+                "title": "Course requests",
+                "subtitle": "Review course requests submitted by users and create the course with one click.",
+                "requester": "Requester",
+                "course": "Course",
+                "semester": "Semester",
+                "dates": "Dates",
+                "reason": "Requester reason",
+                "decision": "Decision",
+                "status": "Status",
+                "created": "Created",
+                "actions": "Actions",
+                "testCourse": "Test course",
+                "accept": "Accept",
+                "reject": "Reject",
+                "rejectReasonLabel": "Rejection reason",
+                "rejectConfirm": "Send rejection",
+                "noRequests": "No course requests available yet.",
+                "acceptSuccess": "Course request \"{{ title }}\" accepted. Course {{ shortName }} created.",
+                "rejectSuccess": "Course request \"{{ title }}\" rejected.",
+                "link": "Open course"
+            }
+        }
+    }
+}

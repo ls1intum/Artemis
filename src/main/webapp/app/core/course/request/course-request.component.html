@@ -1,0 +1,104 @@
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <h2 class="mb-2" jhiTranslate="artemisApp.courseRequest.title"></h2>
+            <p class="text-secondary mb-4" jhiTranslate="artemisApp.courseRequest.description"></p>
+
+            <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold" for="title" jhiTranslate="artemisApp.courseRequest.form.title"></label>
+                    <input
+                        id="title"
+                        type="text"
+                        class="form-control"
+                        formControlName="title"
+                        [class.is-invalid]="form.get('title')?.invalid && form.get('title')?.touched"
+                        maxlength="255"
+                    />
+                    @if (form.get('title')?.invalid && form.get('title')?.touched) {
+                        <div class="invalid-feedback" jhiTranslate="entity.validation.required"></div>
+                    }
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold" for="shortName" jhiTranslate="artemisApp.courseRequest.form.shortName"></label>
+                    <input
+                        id="shortName"
+                        type="text"
+                        class="form-control"
+                        formControlName="shortName"
+                        [pattern]="SHORT_NAME_PATTERN.source"
+                        [class.is-invalid]="form.get('shortName')?.invalid && form.get('shortName')?.touched"
+                    />
+                    @if (form.get('shortName')?.invalid && form.get('shortName')?.touched) {
+                        <div class="invalid-feedback" jhiTranslate="entity.validation.required"></div>
+                    }
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md">
+                        <label class="form-label mb-0" for="semester" jhiTranslate="artemisApp.courseRequest.form.semester"></label>
+                        <select id="semester" class="form-select" formControlName="semester">
+                            <option value=""></option>
+                            @for (semester of semesters; track semester) {
+                                <option [value]="semester">{{ semester }}</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md">
+                        <jhi-date-time-picker
+                            id="startDate"
+                            labelName="{{ 'artemisApp.courseRequest.form.startDate' | artemisTranslate }}"
+                            formControlName="startDate"
+                            [error]="dateRangeInvalid"
+                        />
+                    </div>
+                    <div class="col-md">
+                        <jhi-date-time-picker
+                            id="endDate"
+                            labelName="{{ 'artemisApp.courseRequest.form.endDate' | artemisTranslate }}"
+                            formControlName="endDate"
+                            [error]="dateRangeInvalid"
+                        />
+                    </div>
+                </div>
+                @if (dateRangeInvalid) {
+                    <div class="text-danger mb-3" jhiTranslate="artemisApp.courseRequest.form.dateError"></div>
+                }
+
+                <div class="form-check mb-3">
+                    <input id="testCourse" type="checkbox" class="form-check-input" formControlName="testCourse" />
+                    <label class="form-check-label" for="testCourse" jhiTranslate="artemisApp.courseRequest.form.testCourse"></label>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label fw-semibold" for="reason" jhiTranslate="artemisApp.courseRequest.form.reason"></label>
+                    <textarea
+                        id="reason"
+                        class="form-control"
+                        formControlName="reason"
+                        rows="4"
+                        [class.is-invalid]="form.get('reason')?.invalid && form.get('reason')?.touched"
+                        [placeholder]="'artemisApp.courseRequest.form.reasonPlaceholder' | artemisTranslate"
+                    ></textarea>
+                    @if (form.get('reason')?.invalid && form.get('reason')?.touched) {
+                        <div class="invalid-feedback" jhiTranslate="entity.validation.required"></div>
+                    }
+                </div>
+
+                <div class="d-flex justify-content-end">
+                    <jhi-button
+                        id="submit-course-request"
+                        [btnType]="ButtonType.PRIMARY"
+                        [btnSize]="ButtonSize.LARGE"
+                        type="submit"
+                        [disabled]="isSubmitting"
+                        [icon]="faPaperPlane"
+                    >
+                        {{ 'artemisApp.courseRequest.form.submit' | artemisTranslate }}
+                    </jhi-button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

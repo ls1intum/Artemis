@@ -130,6 +130,14 @@
                         </span>
                     </a>
                 </li>
+                <li class="nav-item" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+                    <a class="nav-link py-0" routerLink="/course-requests" (click)="collapseNavbar()" id="course-request-menu">
+                        <span>
+                            <fa-icon [icon]="faBook" />
+                            <span jhiTranslate="global.menu.courseRequests"></span>
+                        </span>
+                    </a>
+                </li>
             }
             <li
                 *jhiHasAnyAuthority="['ROLE_TA', 'ROLE_EDITOR', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN']"

@@ -191,6 +191,8 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
 
     List<Course> findAllByShortName(String shortName);
 
+    boolean existsByShortNameIgnoreCase(String shortName);
+
     /**
      * Returns the title of the course with the given id.
      *

@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <title th:text="#{email.courseRequest.accepted.title}">Course request accepted</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <link rel="icon" type="image/svg+xml" sizes="any" th:href="@{|${baseUrl}/logo/favicon.svg|}" />
+    </head>
+    <body>
+        <p th:text="#{email.courseRequest.greeting(${courseRequest.requester.login})}">Hello,</p>
+        <p th:text="#{email.courseRequest.accepted.text(${courseRequest.title})}">Welcome to your new course.</p>
+        <p>
+            <a th:with="url=(@{|${baseUrl}/course-management/${course.id}|})" th:href="${url}" th:text="#{email.courseRequest.accepted.linkText}">Open course</a>
+        </p>
+    </body>
+</html>

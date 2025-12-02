@@ -1,0 +1,124 @@
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-start mb-3">
+        <div>
+            <h2 class="mb-1" jhiTranslate="artemisApp.courseRequest.admin.title"></h2>
+            <p class="text-secondary mb-0" jhiTranslate="artemisApp.courseRequest.admin.subtitle"></p>
+        </div>
+        <jhi-button [btnType]="ButtonType.SECONDARY" [icon]="faSync" (click)="load()" [disabled]="loading">
+            {{ 'global.form.refresh' | artemisTranslate }}
+        </jhi-button>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-striped align-middle">
+            <thead>
+                <tr>
+                    <th scope="col" jhiTranslate="artemisApp.courseRequest.admin.course"></th>
+                    <th scope="col" jhiTranslate="artemisApp.courseRequest.admin.semester"></th>
+                    <th scope="col" jhiTranslate="artemisApp.courseRequest.admin.dates"></th>
+                    <th scope="col" jhiTranslate="artemisApp.courseRequest.admin.requester"></th>
+                    <th scope="col" jhiTranslate="artemisApp.courseRequest.admin.reason"></th>
+                    <th scope="col" jhiTranslate="artemisApp.courseRequest.admin.decision"></th>
+                    <th scope="col" class="text-end" jhiTranslate="artemisApp.courseRequest.admin.actions"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!requests.length) {
+                    <tr>
+                        <td colspan="7" class="text-center text-secondary" jhiTranslate="artemisApp.courseRequest.admin.noRequests"></td>
+                    </tr>
+                }
+                @for (request of requests; track request.id) {
+                    <tr>
+                        <td>
+                            <div class="fw-semibold">{{ request.title }}</div>
+                            <div class="text-muted">{{ request.shortName }}</div>
+                            @if (request.testCourse) {
+                                <span class="badge bg-info" jhiTranslate="artemisApp.courseRequest.admin.testCourse"></span>
+                            }
+                            <div class="mt-1">
+                                <span class="badge" [ngClass]="badgeClass(request.status)">
+                                    {{ 'artemisApp.courseRequest.status.' + (request.status ?? 'PENDING') | artemisTranslate }}
+                                </span>
+                            </div>
+                        </td>
+                        <td>{{ request.semester }}</td>
+                        <td>
+                            <div>
+                                <span class="text-muted" jhiTranslate="artemisApp.courseRequest.form.startDate"></span>:
+                                {{ request.startDate | artemisDate: 'short' }}
+                            </div>
+                            <div>
+                                <span class="text-muted" jhiTranslate="artemisApp.courseRequest.form.endDate"></span>:
+                                {{ request.endDate | artemisDate: 'short' }}
+                            </div>
+                            <div class="text-muted">
+                                <span jhiTranslate="artemisApp.courseRequest.admin.created"></span>:
+                                {{ request.createdDate | artemisDate: 'short' }}
+                            </div>
+                        </td>
+                        <td>
+                            <div class="fw-semibold">{{ request.requester?.login }}</div>
+                            <div class="text-muted">{{ request.requester?.email }}</div>
+                        </td>
+                        <td class="text-break">{{ request.reason }}</td>
+                        <td class="text-break">
+                            @if (request.status === CourseRequestStatus.REJECTED) {
+                                <div class="text-danger fw-semibold">
+                                    {{ 'artemisApp.courseRequest.status.' + request.status | artemisTranslate }}
+                                </div>
+                                <div>{{ request.decisionReason }}</div>
+                            } @else if (request.status === CourseRequestStatus.ACCEPTED && request.createdCourseId) {
+                                <a [routerLink]="['/course-management', request.createdCourseId]" class="text-decoration-none">
+                                    <fa-icon [icon]="faExternalLinkAlt" class="me-1" />
+                                    <span jhiTranslate="artemisApp.courseRequest.admin.link"></span>
+                                </a>
+                            }
+                        </td>
+                        <td class="text-end">
+                            @if (request.status === CourseRequestStatus.PENDING) {
+                                <div class="d-flex justify-content-end gap-2">
+                                    <jhi-button [btnType]="ButtonType.SUCCESS" [btnSize]="ButtonSize.SMALL" [icon]="faCheck" (click)="accept(request)">
+                                        {{ 'artemisApp.courseRequest.admin.accept' | artemisTranslate }}
+                                    </jhi-button>
+                                    <jhi-button [btnType]="ButtonType.ERROR" [btnSize]="ButtonSize.SMALL" [icon]="faTimes" (click)="openRejectModal(rejectModal, request)">
+                                        {{ 'artemisApp.courseRequest.admin.reject' | artemisTranslate }}
+                                    </jhi-button>
+                                </div>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<ng-template #rejectModal let-modal>
+    <div class="modal-header">
+        <h5 class="modal-title" jhiTranslate="artemisApp.courseRequest.admin.reject"></h5>
+        <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
+    </div>
+    <div class="modal-body">
+        <label class="form-label fw-semibold" for="rejectReason" jhiTranslate="artemisApp.courseRequest.admin.rejectReasonLabel"></label>
+        <textarea
+            id="rejectReason"
+            class="form-control"
+            rows="4"
+            [(ngModel)]="decisionReason"
+            [class.is-invalid]="reasonInvalid"
+            placeholder="Provide a reason for rejecting the request"
+        ></textarea>
+        @if (reasonInvalid) {
+            <div class="invalid-feedback d-block" jhiTranslate="entity.validation.required"></div>
+        }
+    </div>
+    <div class="modal-footer">
+        <jhi-button [btnType]="ButtonType.SECONDARY" (click)="modal.dismiss()">
+            {{ 'entity.action.cancel' | artemisTranslate }}
+        </jhi-button>
+        <jhi-button [btnType]="ButtonType.ERROR" [icon]="faTimes" (click)="reject()">
+            {{ 'artemisApp.courseRequest.admin.rejectConfirm' | artemisTranslate }}
+        </jhi-button>
+    </div>
+</ng-template>
