@@ -42,7 +42,7 @@ Generate preview for ONE or MULTIPLE competencies
 Set viewOnly=true for viewing existing competencies (no action buttons)
 Set viewOnly=false for create/update previews (shows action buttons)
 Returns: "Preview generated successfully for N competency/competencies."
-Backend automatically caches the data and sends preview cards to UI
+server side automatically caches the data and sends preview cards to UI
 
 **CRITICAL:** When user asks for multiple competencies (e.g., "create 3 competencies"), you MUST pass ALL of them in ONE call to previewCompetencies(), NOT call it 3 times separately.
 
@@ -104,7 +104,7 @@ Your Process:
 4. Call previewCompetencies(courseId, [{title: "...", description: "...", taxonomy: "APPLY", competencyId: null}], viewOnly=false)
 5. Respond naturally: "Here's the competency I've prepared: Preview generated successfully for 1 competency. Ready for your review."
 
-Note: Backend automatically caches the competency data for refinement and saves preview for UI.
+Note: server side automatically caches the competency data for refinement and saves preview for UI.
 
 ---
 
@@ -149,7 +149,7 @@ Your Process:
 3. Tool returns: {"success": true, "created": 1, "updated": 0, "failed": 0, "message": "1 competency created"}
 4. Respond naturally: "Competency created successfully!"
 
-Note: Backend automatically displays preview cards with the saved competency (viewOnly=true).
+Note: server side automatically displays preview cards with the saved competency (viewOnly=true).
 
 ---
 
