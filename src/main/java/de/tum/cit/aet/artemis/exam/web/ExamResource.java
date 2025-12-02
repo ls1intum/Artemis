@@ -250,6 +250,7 @@ public class ExamResource {
      */
     @PutMapping("courses/{courseId}/exams")
     @EnforceAtLeastInstructor
+    // TODO: use a DTO here
     public ResponseEntity<Exam> updateExam(@PathVariable Long courseId, @RequestBody Exam updatedExam) throws URISyntaxException {
         log.debug("REST request to update an exam : {}", updatedExam);
 
@@ -274,6 +275,7 @@ public class ExamResource {
         updatedExam.setExerciseGroups(originalExam.getExerciseGroups());
         updatedExam.setStudentExams(originalExam.getStudentExams());
         updatedExam.setExamUsers(originalExam.getExamUsers());
+        updatedExam.setExamRoomAssignments(originalExam.getExamRoomAssignments());
 
         Channel updatedChannel = channelService.updateExamChannel(originalExam, updatedExam);
 
@@ -296,8 +298,8 @@ public class ExamResource {
         }
 
         // NOTE: if the end date was changed, we need to update student exams and re-schedule exercises
-        if (comparator.compare(originalExam.getEndDate(), savedExam.getEndDate()) != 0) {
-            int workingTimeChange = savedExam.getDuration() - originalExamDuration;
+        int workingTimeChange = savedExam.getDuration() - originalExamDuration;
+        if (workingTimeChange != 0) {
             Exam examWithStudentExams = examRepository.findOneWithEagerExercisesGroupsAndStudentExams(savedExam.getId());
             examService.updateStudentExamsAndRescheduleExercises(examWithStudentExams, originalExamDuration, workingTimeChange);
         }
