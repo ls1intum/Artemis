@@ -8,7 +8,6 @@ import { QuizConfiguration } from 'app/quiz/shared/entities/quiz-configuration.m
 import { QuizParticipation } from 'app/quiz/shared/entities/quiz-participation.model';
 
 export enum QuizStatus {
-    CLOSED,
     OPEN_FOR_PRACTICE,
     ACTIVE,
     VISIBLE,
