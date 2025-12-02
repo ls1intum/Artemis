@@ -36,6 +36,7 @@ import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExamRoomExamAssignmentRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExamRoomRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
+import jodd.util.StringUtil;
 
 /**
  * Service Implementation for managing distributions of exam users to exam rooms in an exam.
@@ -335,16 +336,16 @@ public class ExamRoomDistributionService {
     /**
      * Reseats a student to a different seat.
      *
-     * @param examUser          The exam user, where all associated exam users have their transient room and seats set,
-     *                              if possible
-     * @param newRoomNumber     The {@code roomNumber} of the new room
-     * @param newSeatName       The {@code seatName} of the new seat
-     * @param persistedLocation Whether the seat exists in an actual {@link ExamRoom} entity and that entity is
-     *                              connected to this exam. A room is connected to an exam if the room was one of
-     *                              the rooms the instructor did distribute to via the {@code Distribute} button.
+     * @param examUserId    The id of the exam user
+     * @param newRoomNumber The {@code roomNumber} of the new room
+     * @param newSeatName   The {@code seatName} of the new seat
+     *
      * @throws BadRequestAlertException if the new seat is already occupied
      */
-    public void reseatStudent(ExamUser examUser, String newRoomNumber, String newSeatName, boolean persistedLocation) {
+    public void reseatStudent(long examUserId, String newRoomNumber, String newSeatName) {
+        ExamUser examUser = examUserRepository.findWithExamWithExamUsersById(examUserId).orElseThrow();
+        examUserService.setActualRoomAndSeatTransientForExamUsers(examUser.getExam().getExamUsers());
+
         String oldRoomNumber = examUser.getPlannedRoom();
         String oldSeatName = examUser.getPlannedSeat();
         boolean isOldLocationPersisted = examUser.getPlannedRoomTransient() != null;
@@ -354,21 +355,19 @@ public class ExamRoomDistributionService {
             lastStudentInOldRoom = findLastStudentInRoom(examUser.getPlannedRoomTransient(), examUser.getExam().getExamUsers());
         }
 
-        if (newSeatName == null) {
-            if (!persistedLocation) {
-                throw new BadRequestAlertException("Can't automatically determine seat of unpersisted room", ENTITY_NAME, "room.noAutomaticSeat");
-            }
-
-            reseatStudentDynamicLocation(examUser, newRoomNumber);
+        if (StringUtil.isBlank(newSeatName)) {
+            seatStudentDynamicLocation(examUser, newRoomNumber);
         }
         else {
-            reseatStudentFixedSeat(examUser, newRoomNumber, newSeatName);
+            seatStudentFixedSeat(examUser, newRoomNumber, newSeatName);
         }
 
-        boolean movedInTheSameRoom = oldRoomNumber.equals(newRoomNumber);
-        if (movedInTheSameRoom || lastStudentInOldRoom == null || lastStudentInOldRoom.getId().equals(examUser.getId())) {
-            // We don't need to fill a gap because we either don't have information about the old room,
-            // because the student was moved inside the same room, or because the student we moved didn't create a gap
+        if (oldRoomNumber == null || oldRoomNumber.equals(newRoomNumber) || lastStudentInOldRoom == null || lastStudentInOldRoom.getId().equals(examUser.getId())) {
+            // We don't need to fill a gap.
+            // This is either because the student did have a room assignment,
+            // because we don't have information about the old room,
+            // because the student was moved inside the same room,
+            // or because the student we moved didn't create a gap
             return;
         }
 
@@ -409,7 +408,7 @@ public class ExamRoomDistributionService {
      * @param newRoom  The new room's room number
      * @param newSeat  The new seat's name
      */
-    private void reseatStudentFixedSeat(ExamUser examUser, String newRoom, String newSeat) {
+    private void seatStudentFixedSeat(ExamUser examUser, String newRoom, String newSeat) {
         Set<ExamUser> examUsers = examUser.getExam().getExamUsers();
         checkSeatNotAlreadyTakenOrElseThrow(examUsers, newRoom, newSeat);
 
@@ -434,21 +433,19 @@ public class ExamRoomDistributionService {
     }
 
     /**
-     * Reseats a student to a different room. This function dynamically determines the next free seat.
+     * Seats a student to a new, persisted room. This function dynamically determines the next free seat.
      *
      * @param examUser      The exam user where the associated exam users have the transient room and seat properties set
      * @param newRoomNumber The room number of the new room
      */
-    public void reseatStudentDynamicLocation(ExamUser examUser, String newRoomNumber) {
+    public void seatStudentDynamicLocation(ExamUser examUser, String newRoomNumber) {
         if (examUser.getPlannedRoom().equals(newRoomNumber)) {
             throw new BadRequestAlertException("The student already sits in this room", ENTITY_NAME, "room.alreadyInRoom");
         }
 
         Set<ExamRoom> connectedRooms = examRoomRepository.findAllByExamId(examUser.getExam().getId());
-        ExamRoom newRoom = connectedRooms.stream().filter(room -> room.getRoomNumber().equals(newRoomNumber)).findFirst().orElse(null);
-        if (newRoom == null) {
-            throw new BadRequestAlertException("New room could not be found", ENTITY_NAME, "room.notFound");
-        }
+        ExamRoom newRoom = connectedRooms.stream().filter(room -> room.getRoomNumber().equals(newRoomNumber)).findFirst()
+                .orElseThrow(() -> new BadRequestAlertException("New room could not be found", ENTITY_NAME, "room.notFound"));
 
         Set<ExamUser> examUsers = examUser.getExam().getExamUsers();
         Map<ExamSeatDTO, ExamUser> seatToUser = getExamUserInRoomBySeat(examUsers, newRoom);

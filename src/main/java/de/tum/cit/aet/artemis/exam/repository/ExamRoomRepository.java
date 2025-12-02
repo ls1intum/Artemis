@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.exam.repository;
 
+import java.util.List;
 import java.util.Set;
 
 import org.springframework.context.annotation.Conditional;
@@ -146,4 +147,6 @@ public interface ExamRoomRepository extends ArtemisJpaRepository<ExamRoom, Long>
             WHERE erea.exam.id = :examId
             """)
     Set<ExamRoom> findAllByExamId(@Param("examId") long examId);
+
+    List<ExamRoom> findAllByRoomNumber(String roomNumber);
 }

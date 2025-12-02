@@ -19,51 +19,36 @@
         </b>
         <div class="form-check form-switch ms-auto">
             <label for="useCustomLocationToggle" jhiTranslate="artemisApp.exam.examUsers.rooms.reseating.useCustomLocation" class="form-check-label"></label>
-            <input id="useCustomLocationToggle" type="checkbox" class="form-check-input" [checked]="useCustomLocation()" (change)="toggleCustomLocation()" />
+            <input id="useCustomLocationToggle" type="checkbox" class="form-check-input" [checked]="selectedRoomIsPersisted()" [disabled]="true" />
             <jhi-help-icon class="ps-1" text="artemisApp.exam.examUsers.rooms.reseating.useCustomLocationTooltip" />
         </div>
         <p jhiTranslate="artemisApp.exam.examUsers.rooms.reseating.selectRoom"></p>
-        @if (useCustomLocation()) {
-            <input
-                type="text"
-                placeholder="{{ 'artemisApp.exam.examUsers.rooms.reseating.unassignedExamRoomSearchPlaceholder' | artemisTranslate }}"
-                [defaultValue]="selectedRoomNumber()"
-                (change)="setUnassignedRoomNumber($event)"
-            />
-        } @else {
-            <input
-                type="text"
-                class="form-control"
-                placeholder="{{ 'artemisApp.exam.examUsers.rooms.searchPlaceholder' | artemisTranslate }}"
-                [ngbTypeahead]="roomSearch"
-                container="body"
-                [defaultValue]="getDefaultValueForRoomSelection()"
-                [resultFormatter]="roomFormatter"
-                [inputFormatter]="roomFormatter"
-                (selectItem)="pickSelectedRoom($event)"
-                (focusin)="selectAllTextAndOpenDropdown($event)"
-            />
-        }
+        <input
+            type="text"
+            class="form-control"
+            placeholder="{{ 'artemisApp.exam.examUsers.rooms.reseating.examRoomSearchPlaceholder' | artemisTranslate }}"
+            [ngbTypeahead]="roomSearch"
+            container="body"
+            [resultFormatter]="roomFormatter"
+            [inputFormatter]="roomRoomNumberFormatter"
+            (change)="setUnassignedRoomNumber($event)"
+            (selectItem)="pickSelectedRoom($event)"
+            (focusin)="selectAllTextAndOpenDropdown($event)"
+        />
         <p jhiTranslate="artemisApp.exam.examUsers.rooms.reseating.selectSeat"></p>
-        @if (useCustomLocation()) {
-            <input
-                type="text"
-                placeholder="{{ 'artemisApp.exam.examUsers.rooms.reseating.unassignedExamSeatSearchPlaceholder' | artemisTranslate }}"
-                (change)="setUnassignedSeat($event)"
-            />
-        } @else {
-            <input
-                type="text"
-                class="form-control"
-                placeholder="{{ 'artemisApp.exam.examUsers.rooms.reseating.examSeatSearchPlaceholder' | artemisTranslate }}"
-                [ngbTypeahead]="examSeatSearch"
-                container="body"
-                [resultFormatter]="examSeatFormatter"
-                [inputFormatter]="examSeatFormatter"
-                (selectItem)="pickSelectedSeat($event)"
-                (focusin)="selectAllTextAndOpenDropdown($event)"
-            />
-        }
+        <input
+            type="text"
+            class="form-control"
+            placeholder="{{ 'artemisApp.exam.examUsers.rooms.reseating.examSeatSearchPlaceholder' | artemisTranslate }}"
+            [ngbTypeahead]="examSeatSearch"
+            container="body"
+            [value]="selectedSeat()"
+            [resultFormatter]="examSeatFormatter"
+            [inputFormatter]="examSeatFormatter"
+            (change)="setUnassignedSeat($event)"
+            (selectItem)="pickSelectedSeat($event)"
+            (focusin)="selectAllTextAndOpenDropdown($event)"
+        />
     </form>
     <ng-template pTemplate="footer">
         <button id="cancel-button" type="button" class="btn btn-secondary cancel" (click)="closeDialog()">

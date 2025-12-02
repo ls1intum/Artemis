@@ -26,15 +26,16 @@ import { StudentsRoomDistributionService } from 'app/exam/manage/services/studen
 import { ExamUser } from 'app/exam/shared/entities/exam-user.model';
 import { faBan, faChair } from '@fortawesome/free-solid-svg-icons';
 import { RoomForDistributionDTO, SeatsOfExamRoomDTO } from './students-room-distribution.model';
-import { Observable, debounceTime, distinctUntilChanged, finalize, map } from 'rxjs';
+import { Observable, debounceTime, distinctUntilChanged, map } from 'rxjs';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 
 @Component({
     selector: 'jhi-students-reseating-dialog',
     standalone: true,
     templateUrl: './students-reseating-dialog.component.html',
     encapsulation: ViewEncapsulation.None,
-    imports: [FormsModule, TranslateDirective, FaIconComponent, NgbTypeaheadModule, ArtemisTranslatePipe, DialogModule, ButtonModule, HelpIconComponent],
+    imports: [FormsModule, TranslateDirective, FaIconComponent, NgbTypeaheadModule, ArtemisTranslatePipe, DialogModule, ButtonModule, HelpIconComponent, MatSlideToggleModule],
 })
 export class StudentsReseatingDialogComponent {
     // Icons
@@ -50,10 +51,10 @@ export class StudentsReseatingDialogComponent {
     onSave: OutputEmitterRef<void> = output();
 
     private roomsUsedInExam: WritableSignal<RoomForDistributionDTO[]> = signal([]);
-    useCustomLocation: WritableSignal<boolean> = signal(false);
     selectedRoomNumber: WritableSignal<string> = signal('');
-    private readonly selectedRoomId: Signal<number | undefined> = computed(() => this.getRoomDTOFromSelectedRoomNumber()?.id);
-    private readonly selectedRoomIsPersisted: Signal<boolean> = computed(() => this.selectedRoomId() !== undefined);
+    private readonly selectedRoom: Signal<RoomForDistributionDTO | undefined> = computed(() => this.getRoomDTOFromSelectedRoomNumber());
+    private readonly selectedRoomId: Signal<number | undefined> = computed(() => this.selectedRoom()?.id);
+    readonly selectedRoomIsPersisted: Signal<boolean> = computed(() => this.selectedRoomId() !== undefined);
     private seatsOfSelectedRoom: WritableSignal<SeatsOfExamRoomDTO> = signal({ seats: [] });
     selectedSeat: WritableSignal<string> = signal('');
 
@@ -77,24 +78,17 @@ export class StudentsReseatingDialogComponent {
     openDialog(examUser: ExamUser): void {
         this.examUser.set(examUser);
         this.selectedRoomNumber.set(this.examUser()!.plannedRoom ?? '');
-        this.selectedSeat.set(this.examUser()!.plannedSeat ?? '');
+        this.selectedSeat.set('');
         this.dialogVisible.set(true);
 
-        this.studentsRoomDistributionService
-            .loadRoomsUsedInExam(this.courseId(), this.exam().id!)
-            .pipe(
-                finalize(() => {
-                    this.useCustomLocation.set(!this.selectedRoomIsPersisted());
-                }),
-            )
-            .subscribe({
-                next: (rooms: RoomForDistributionDTO[]) => {
-                    this.roomsUsedInExam.set(rooms);
-                },
-                error: (_err) => {
-                    this.roomsUsedInExam.set([]);
-                },
-            });
+        this.studentsRoomDistributionService.loadRoomsUsedInExam(this.courseId(), this.exam().id!).subscribe({
+            next: (rooms: RoomForDistributionDTO[]) => {
+                this.roomsUsedInExam.set(rooms);
+            },
+            error: (_err) => {
+                this.roomsUsedInExam.set([]);
+            },
+        });
     }
 
     closeDialog(): void {
@@ -102,8 +96,9 @@ export class StudentsReseatingDialogComponent {
     }
 
     attemptReseatAndCloseDialogOnSuccess(): void {
+        const actualSelectedRoomNumber: string = this.selectedRoom()?.roomNumber ?? this.selectedRoomNumber();
         this.studentsRoomDistributionService
-            .reseatStudent(this.courseId(), this.exam().id!, this.examUser()!.id!, this.selectedRoomNumber(), this.selectedSeat(), !this.useCustomLocation())
+            .reseatStudent(this.courseId(), this.exam().id!, this.examUser()!.id!, actualSelectedRoomNumber, this.selectedSeat() || undefined)
             .subscribe({
                 next: () => {
                     this.closeDialog();
@@ -195,6 +190,10 @@ export class StudentsReseatingDialogComponent {
         return `${namePart} – ${numberPart} - [${room.building}]`;
     }
 
+    roomRoomNumberFormatter(room: RoomForDistributionDTO): string {
+        return room.roomNumber;
+    }
+
     /**
      * Formats the metadata of an exam seat into a human-readable format for the dropdown search menu
      *
@@ -244,13 +243,9 @@ export class StudentsReseatingDialogComponent {
         return name.trim();
     }
 
-    toggleCustomLocation(): void {
-        this.useCustomLocation.update((value) => !value);
-    }
-
     getDefaultValueForRoomSelection(): string {
         const selectedRoomDTO = this.getRoomDTOFromSelectedRoomNumber();
-        return selectedRoomDTO ? this.roomFormatter(selectedRoomDTO) : '';
+        return selectedRoomDTO ? this.roomFormatter(selectedRoomDTO) : this.selectedRoomNumber();
     }
 
     private getRoomDTOFromSelectedRoomNumber(): RoomForDistributionDTO | undefined {

@@ -229,8 +229,6 @@ public class ExamRoomDistributionResource {
      *                              <li><strong>newRoom</strong> – the {@link ExamRoom#roomNumber} of the new room</li>
      *                              <li><strong>newSeat</strong> – the {@link ExamSeatDTO#name} of the new seat;
      *                              automatically determined if omitted and {@code persistedLocation == true}</li>
-     *                              <li><strong>persistedLocation</strong> – whether the new location should be stored in
-     *                              the database and connected to the exam</li>
      *                              </ul>
      * @return 200 (OK) on success
      */
@@ -244,10 +242,11 @@ public class ExamRoomDistributionResource {
             throw new BadRequestAlertException("Invalid room number", ENTITY_NAME, "room.invalidRoomNumber");
         }
 
-        ExamUser examUser = examUserRepository.findWithExamById(reseatInformation.examUserId()).orElseThrow();
-        examUserService.setActualRoomAndSeatTransientForExamUsers(examUser.getExam().getExamUsers());
+        if (StringUtil.isBlank(reseatInformation.newSeat()) && !examRoomService.isRoomPersisted(reseatInformation.newRoom())) {
+            throw new BadRequestAlertException("Can't automatically determine seat of unpersisted room", ENTITY_NAME, "room.noAutomaticSeat");
+        }
 
-        examRoomDistributionService.reseatStudent(examUser, reseatInformation.newRoom(), reseatInformation.newSeat(), reseatInformation.persistedLocation());
+        examRoomDistributionService.reseatStudent(reseatInformation.examUserId(), reseatInformation.newRoom(), reseatInformation.newSeat());
         return ResponseEntity.ok().build();
     }
 }

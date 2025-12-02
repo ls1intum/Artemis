@@ -125,15 +125,13 @@ export class StudentsRoomDistributionService {
      * @param examUserId id of the exam user/student
      * @param newRoom name (more specifically the room number) of the room
      * @param newSeat name of the new seat
-     * @param persistedLocation whether the location is persisted in the database
      */
-    reseatStudent(courseId: number, examId: number, examUserId: number, newRoom: string, newSeat: string, persistedLocation: boolean): Observable<void> {
+    reseatStudent(courseId: number, examId: number, examUserId: number, newRoom: string, newSeat?: string): Observable<void> {
         const requestUrl = `${this.BASE_URL}/courses/${courseId}/exams/${examId}/reseat-student`;
         const requestBody = {
             examUserId: examUserId,
             newRoom: newRoom,
             newSeat: newSeat,
-            persistedLocation: persistedLocation,
         };
 
         return this.http.post<void>(requestUrl, requestBody).pipe(

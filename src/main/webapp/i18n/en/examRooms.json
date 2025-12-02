@@ -7,14 +7,13 @@
                     "reseating": {
                         "dialogTitle": "Reseat Student",
                         "introText": "This dialog can be used to reseat a student.",
-                        "useCustomLocation": "Use custom location",
-                        "useCustomLocationTooltip": "If enabled, allows you to specify seats in rooms that are not recognized by this exam",
+                        "useCustomLocation": "Location known",
+                        "useCustomLocationTooltip": "Shows if the seat you are assigning to will be viewable in the attendance checker iPad app",
                         "selectedStudent": "Selected student: {{ studentLogin }} ({{ studentName }}); Room '{{ plannedRoom }}', Seat: '{{ plannedSeat }}'",
                         "selectRoom": "New room:",
                         "selectSeat": "New seat:",
-                        "examSeatSearchPlaceholder": "Search by row name and/or seat number",
-                        "unassignedExamRoomSearchPlaceholder": "Please set the room",
-                        "unassignedExamSeatSearchPlaceholder": "Please set the seat",
+                        "examRoomSearchPlaceholder": "Search by room number, name, and/or building. Alternatively set a custom room",
+                        "examSeatSearchPlaceholder": "Leave empty to automatically find a seat",
                         "reseat": "Reseat"
                     }
                 }

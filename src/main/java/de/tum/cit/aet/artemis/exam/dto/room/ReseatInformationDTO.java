@@ -8,5 +8,5 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 /* Purely received from the client */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ReseatInformationDTO(@NotNull Long examUserId, @NotBlank String newRoom, @Nullable String newSeat, @NotNull Boolean persistedLocation) {
+public record ReseatInformationDTO(@NotNull Long examUserId, @NotBlank String newRoom, @Nullable String newSeat) {
 }

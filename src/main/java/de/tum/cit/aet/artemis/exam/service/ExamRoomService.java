@@ -13,6 +13,8 @@ import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import jakarta.validation.constraints.NotBlank;
+
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -566,6 +568,10 @@ public class ExamRoomService {
      */
     public boolean allRoomsExistAndAreNewestVersions(Set<Long> examRoomIds) {
         return examRoomRepository.findAllIdsOfCurrentExamRooms().containsAll(examRoomIds);
+    }
+
+    public boolean isRoomPersisted(@NotBlank String roomNumber) {
+        return !examRoomRepository.findAllByRoomNumber(roomNumber).isEmpty();
     }
 
 }
