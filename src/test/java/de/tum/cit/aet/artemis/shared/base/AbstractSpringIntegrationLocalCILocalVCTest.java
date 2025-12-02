@@ -21,7 +21,6 @@ import java.nio.file.Path;
 import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.parallel.ResourceLock;
 import org.mockito.Mockito;
@@ -93,14 +92,14 @@ import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 @ContextConfiguration(classes = TestBuildAgentConfiguration.class)
 public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends AbstractArtemisIntegrationTest {
 
-    private static int serverPort;
+    private static final int serverPort;
 
-    private static int sshPort;
+    private static final int sshPort;
 
-    private static int hazelcastPort;
+    private static final int hazelcastPort;
 
-    @BeforeAll
-    static void initPorts() {
+    // Static initializer runs before @DynamicPropertySource, ensuring ports are available when Spring context starts
+    static {
         serverPort = findAvailableTcpPort();
         sshPort = findAvailableTcpPort();
         hazelcastPort = findAvailableTcpPort();
