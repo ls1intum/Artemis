@@ -22,8 +22,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.parallel.ResourceLock;
 import org.mockito.Mockito;
-import org.springframework.ai.chat.memory.ChatMemory;
-import org.springframework.ai.chat.memory.ChatMemoryRepository;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -177,12 +175,6 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     // we explicitly want a mock here, as we don't want to test the actual chat model calls and avoid any autoconfiguration or instantiation of Spring AI internals
     @MockitoBean
     protected ChatModel azureOpenAiChatModel;
-
-    @MockitoBean
-    protected ChatMemory chatMemory;
-
-    @MockitoBean
-    protected ChatMemoryRepository chatMemoryRepository;
 
     protected URI localVCBaseUri;
 

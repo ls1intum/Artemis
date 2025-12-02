@@ -37,7 +37,7 @@ import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import tech.jhipster.config.DefaultProfileUtil;
 import tech.jhipster.config.JHipsterConstants;
 
-@SpringBootApplication(exclude = { org.springframework.ai.model.chat.memory.repository.jdbc.autoconfigure.JdbcChatMemoryRepositoryAutoConfiguration.class })
+@SpringBootApplication
 @EnableConfigurationProperties({ LiquibaseProperties.class, ProgrammingLanguageConfiguration.class, TheiaConfiguration.class, LicenseConfiguration.class,
         ArtemisCompatibleVersionsConfiguration.class })
 public class ArtemisApp {
