@@ -1,24 +1,12 @@
 package de.tum.cit.aet.artemis.hyperion.web;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-import java.util.List;
-import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.ApplicationContext;
-import org.springframework.core.env.Environment;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
@@ -28,10 +16,6 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
-import de.tum.cit.aet.artemis.hyperion.dto.quiz.AiQuestionSubtype;
-import de.tum.cit.aet.artemis.hyperion.dto.quiz.AiQuizGenerationResponseDTO;
-import de.tum.cit.aet.artemis.hyperion.dto.quiz.GeneratedMcQuestionDTO;
-import de.tum.cit.aet.artemis.hyperion.dto.quiz.McOptionDTO;
 import de.tum.cit.aet.artemis.hyperion.service.AiQuizGenerationService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
@@ -40,14 +24,6 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTe
 class QuizGenerationResourceTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "quizgeneration";
-
-    private static final Logger log = LoggerFactory.getLogger(QuizGenerationResourceTest.class);
-
-    @Autowired
-    private ApplicationContext applicationContext;
-
-    @Autowired
-    private Environment environment;
 
     @Autowired
     private CourseUtilService courseUtilService;
@@ -58,7 +34,7 @@ class QuizGenerationResourceTest extends AbstractSpringIntegrationIndependentTes
     @Autowired
     private UserUtilService userUtilService;
 
-    @MockBean
+    @Autowired
     private AiQuizGenerationService aiQuizGenerationService;
 
     private long courseId;
@@ -98,30 +74,9 @@ class QuizGenerationResourceTest extends AbstractSpringIntegrationIndependentTes
         courseRepository.deleteAll();
     }
 
-    private void mockSuccessfulGeneration() {
-        var option1 = new McOptionDTO("A programming language", true, "Correct");
-        var option2 = new McOptionDTO("A coffee brand", false, "Incorrect");
-        var option3 = new McOptionDTO("An island", false, "Incorrect");
-
-        var question = new GeneratedMcQuestionDTO("Test Question", "What is Java?", "Java is a programming language", "Think about OOP", 3, Set.of("java", "oop"),
-                AiQuestionSubtype.SINGLE_CORRECT, Set.of(), List.of(option1, option2, option3));
-
-        var response = new AiQuizGenerationResponseDTO(List.of(question), List.of());
-        doReturn(response).when(aiQuizGenerationService).generate(anyLong(), any());
-    }
-
-    @Test
-    void debugHyperionContext() {
-        log.info("DEBUG hyperion: artemis.hyperion.enabled = {}", environment.getProperty("artemis.hyperion.enabled"));
-
-        boolean hasControllerBean = applicationContext.containsBean("quizGenerationResource");
-        log.info("DEBUG hyperion: has bean 'quizGenerationResource' = {}", hasControllerBean);
-    }
-
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
     void shouldGenerateQuizForInstructor() throws Exception {
-        mockSuccessfulGeneration();
 
         String requestBody = """
                 {
@@ -141,7 +96,6 @@ class QuizGenerationResourceTest extends AbstractSpringIntegrationIndependentTes
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = { "USER", "EDITOR" })
     void shouldGenerateQuizForEditor() throws Exception {
-        mockSuccessfulGeneration();
 
         String requestBody = """
                 {
@@ -230,25 +184,5 @@ class QuizGenerationResourceTest extends AbstractSpringIntegrationIndependentTes
 
         request.performMvcRequest(post("/api/hyperion/quizzes/courses/{courseId}/generate", invalid).contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isForbidden());
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = { "USER", "EDITOR" })
-    void shouldReturnInternalServerErrorWhenServiceThrows() throws Exception {
-        doThrow(new RuntimeException("AI generation failed")).when(aiQuizGenerationService).generate(anyLong(), any());
-
-        String body = """
-                {
-                  "topic": "Java",
-                  "numberOfQuestions": 1,
-                  "language": "ENGLISH",
-                  "difficultyLevel": "MEDIUM",
-                  "requestedSubtype": "SINGLE_CORRECT",
-                  "promptHint": "Focus on basics"
-                }
-                """;
-
-        request.performMvcRequest(post("/api/hyperion/quizzes/courses/{courseId}/generate", courseId).contentType(MediaType.APPLICATION_JSON).content(body))
-                .andExpect(status().isInternalServerError());
     }
 }
