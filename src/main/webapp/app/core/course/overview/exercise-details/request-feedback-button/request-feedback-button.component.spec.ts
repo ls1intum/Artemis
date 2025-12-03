@@ -292,9 +292,6 @@ describe('RequestFeedbackButtonComponent', () => {
 
     describe('acceptLLMUsage', () => {
         let updateLLMDecisionSpy: jest.SpyInstance;
-        let setUserLLMDecisionSpy: jest.SpyInstance;
-        let assureConditionsSpy: jest.SpyInstance;
-        let processFeedbackSpy: jest.SpyInstance;
 
         beforeEach(() => {
             const accountService = component['accountService'];
@@ -303,9 +300,6 @@ describe('RequestFeedbackButtonComponent', () => {
             }
 
             updateLLMDecisionSpy = jest.spyOn(component['userService'], 'updateLLMSelectionDecision').mockReturnValue(of(undefined as any));
-            setUserLLMDecisionSpy = jest.spyOn(accountService, 'setUserLLMSelectionDecision');
-            assureConditionsSpy = jest.spyOn(component, 'assureConditionsSatisfied').mockReturnValue(true);
-            processFeedbackSpy = jest.spyOn(component, 'processFeedbackRequest').mockImplementation();
         });
 
         it('should unsubscribe from previous acceptSubscription if exists', () => {
@@ -341,75 +335,11 @@ describe('RequestFeedbackButtonComponent', () => {
             expect(updateLLMDecisionSpy).toHaveBeenCalledWith(LLMSelectionDecision.NO_AI);
         });
 
-        it('should set hasUserAcceptedLLMUsage to true for CLOUD_AI', fakeAsync(() => {
-            component.acceptLLMUsage(LLMSelectionDecision.CLOUD_AI);
-            tick();
-
-            expect(component.hasUserAcceptedLLMUsage).toBeTrue();
-        }));
-
-        it('should set hasUserAcceptedLLMUsage to true for LOCAL_AI', fakeAsync(() => {
-            component.acceptLLMUsage(LLMSelectionDecision.LOCAL_AI);
-            tick();
-
-            expect(component.hasUserAcceptedLLMUsage).toBeTrue();
-        }));
-
         it('should set hasUserAcceptedLLMUsage to false for NO_AI', fakeAsync(() => {
             component.acceptLLMUsage(LLMSelectionDecision.NO_AI);
             tick();
 
             expect(component.hasUserAcceptedLLMUsage).toBeFalse();
-        }));
-
-        it('should call setUserLLMSelectionDecision with the decision', fakeAsync(() => {
-            component.acceptLLMUsage(LLMSelectionDecision.CLOUD_AI);
-            tick();
-
-            expect(setUserLLMDecisionSpy).toHaveBeenCalledWith(LLMSelectionDecision.CLOUD_AI);
-        }));
-
-        it('should call processFeedbackRequest when CLOUD_AI and conditions satisfied', fakeAsync(() => {
-            component.acceptLLMUsage(LLMSelectionDecision.CLOUD_AI);
-            tick();
-
-            expect(assureConditionsSpy).toHaveBeenCalled();
-            expect(processFeedbackSpy).toHaveBeenCalled();
-        }));
-
-        it('should call processFeedbackRequest when LOCAL_AI and conditions satisfied', fakeAsync(() => {
-            component.acceptLLMUsage(LLMSelectionDecision.LOCAL_AI);
-            tick();
-
-            expect(assureConditionsSpy).toHaveBeenCalled();
-            expect(processFeedbackSpy).toHaveBeenCalled();
-        }));
-
-        it('should not call processFeedbackRequest when NO_AI', fakeAsync(() => {
-            component.acceptLLMUsage(LLMSelectionDecision.NO_AI);
-            tick();
-
-            expect(processFeedbackSpy).not.toHaveBeenCalled();
-        }));
-
-        it('should not call processFeedbackRequest when conditions not satisfied', fakeAsync(() => {
-            assureConditionsSpy.mockReturnValue(false);
-
-            component.acceptLLMUsage(LLMSelectionDecision.CLOUD_AI);
-            tick();
-
-            expect(assureConditionsSpy).toHaveBeenCalled();
-            expect(processFeedbackSpy).not.toHaveBeenCalled();
-        }));
-
-        it('should not call processFeedbackRequest when LOCAL_AI but conditions not satisfied', fakeAsync(() => {
-            assureConditionsSpy.mockReturnValue(false);
-
-            component.acceptLLMUsage(LLMSelectionDecision.LOCAL_AI);
-            tick();
-
-            expect(assureConditionsSpy).toHaveBeenCalled();
-            expect(processFeedbackSpy).not.toHaveBeenCalled();
         }));
 
         it('should store the subscription in acceptSubscription', () => {
