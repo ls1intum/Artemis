@@ -29,6 +29,7 @@ import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.dto.ExamSidebarDataDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamStudentCountDTO;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 
 /**
@@ -42,11 +43,18 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
     List<Exam> findByCourseId(long courseId);
 
     @Query("""
-            SELECT DISTINCT exam
-            FROM Exam exam
-            WHERE exam.course.id IN :courses
+            SELECT DISTINCT new de.tum.cit.aet.artemis.exam.dto.ExamStudentCountDTO(
+                ex.id,
+                ex.title,
+                COUNT(DISTINCT se),
+                ex.course.id
+            )
+            FROM Exam ex
+                JOIN StudentExam se ON se.exam.id = ex.id AND se.testRun = FALSE
+            WHERE ex.course.id IN :courseIds
+            GROUP BY ex.id, ex.title, ex.course.id
             """)
-    List<Exam> findExamsInCourses(@Param("courses") Iterable<Long> courseId);
+    Set<ExamStudentCountDTO> findExamStudentCountsByCourseIds(@Param("courseIds") Collection<Long> courseIds);
 
     @Query("""
             SELECT DISTINCT ex
@@ -105,11 +113,6 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
      * </ul>
      *
      * <p>
-     * The lower bound is computed dynamically in the database via a JPQL {@code CASE} expression,
-     * ensuring that paging is performed directly in the database and remains efficient.
-     * </p>
-     *
-     * <p>
      * This method is database-agnostic and works on both MySQL and PostgreSQL, because all
      * temporal arithmetic is performed in Java, and the query uses only portable JPQL.
      * </p>
@@ -124,15 +127,13 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
     @Query("""
             SELECT e
             FROM Exam e
-            WHERE
-                e.visibleDate <= :toDate
-                AND (
-                        (e.course.instructorGroupName IN :groups
-                         AND e.visibleDate >= :fromDate)
-                    OR
-                        ((e.course.editorGroupName IN :groups OR e.course.teachingAssistantGroupName IN :groups)
-                         AND e.visibleDate >= :nowDate)
-                )
+            WHERE :fromDate <= e.visibleDate
+                AND
+                    ((e.course.instructorGroupName IN :groups
+                     AND e.visibleDate <= :toDate)
+                OR
+                    ((e.course.editorGroupName IN :groups OR e.course.teachingAssistantGroupName IN :groups)
+                     AND e.visibleDate <= :nowDate))
             """)
     Page<Exam> findAllActiveExamsInCoursesWhereAtLeastTutor(@Param("groups") Set<String> groups, Pageable pageable, @Param("fromDate") ZonedDateTime fromDate,
             @Param("nowDate") ZonedDateTime nowDate, @Param("toDate") ZonedDateTime toDate);
