@@ -15,7 +15,7 @@ import { IrisStatusService } from 'app/iris/overview/services/iris-status.servic
 import { IrisChatHttpService } from 'app/iris/overview/services/iris-chat-http.service';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { IrisWebsocketService } from 'app/iris/overview/services/iris-websocket.service';
-import { IrisMessage, IrisSender } from 'app/iris/shared/entities/iris-message.model';
+import { IrisAssistantMessage, IrisMessage, IrisSender } from 'app/iris/shared/entities/iris-message.model';
 import { of } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -998,7 +998,7 @@ describe('IrisBaseChatbotComponent', () => {
         });
 
         it('should set message.helpful to true when rated helpful', () => {
-            const llmMessage = { ...mockServerMessage, sender: IrisSender.LLM, helpful: undefined } as IrisMessage;
+            const llmMessage = { ...mockServerMessage, sender: IrisSender.LLM, helpful: undefined } as IrisAssistantMessage;
             jest.spyOn(chatService, 'rateMessage').mockReturnValue(of(undefined as any));
 
             component.rateMessage(llmMessage, true);
@@ -1007,7 +1007,7 @@ describe('IrisBaseChatbotComponent', () => {
         });
 
         it('should set message.helpful to false when rated unhelpful', () => {
-            const llmMessage = { ...mockServerMessage, sender: IrisSender.LLM, helpful: undefined } as IrisMessage;
+            const llmMessage = { ...mockServerMessage, sender: IrisSender.LLM, helpful: undefined } as IrisAssistantMessage;
             jest.spyOn(chatService, 'rateMessage').mockReturnValue(of(undefined as any));
 
             component.rateMessage(llmMessage, false);
@@ -1016,7 +1016,7 @@ describe('IrisBaseChatbotComponent', () => {
         });
 
         it('should set message.helpful to false when rating is undefined', () => {
-            const llmMessage = { ...mockServerMessage, sender: IrisSender.LLM, helpful: undefined } as IrisMessage;
+            const llmMessage = { ...mockServerMessage, sender: IrisSender.LLM, helpful: undefined } as IrisAssistantMessage;
             jest.spyOn(chatService, 'rateMessage').mockReturnValue(of(undefined as any));
 
             component.rateMessage(llmMessage, undefined);
