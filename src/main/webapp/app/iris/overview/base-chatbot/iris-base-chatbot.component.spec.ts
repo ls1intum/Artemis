@@ -1061,7 +1061,7 @@ describe('IrisBaseChatbotComponent', () => {
             expect(messagesReadSpy).toHaveBeenCalled();
         });
 
-        it('should set isLoading to true when sending message', () => {
+        it('should set isLoading to false when sending message', () => {
             component.newMessageTextContent = 'Test message';
             jest.spyOn(chatService, 'sendMessage').mockReturnValue(of(undefined as any));
 
