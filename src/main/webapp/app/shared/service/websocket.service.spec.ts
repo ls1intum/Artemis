@@ -200,7 +200,6 @@ describe('WebsocketService', () => {
         jest.useFakeTimers();
         const timeoutSpy = jest.spyOn(global, 'setTimeout');
 
-        websocketService.enableReconnect();
         websocketService['usingSockJS'] = true;
         websocketService['sockJSFallbackAttempted'] = true;
         websocketService['consecutiveFailedAttempts'] = 0;
@@ -239,7 +238,6 @@ describe('WebsocketService', () => {
     it('should not reconnect when reconnect is disabled', fakeAsync(() => {
         jest.useFakeTimers();
         const connectSpy = jest.spyOn(websocketService, 'connect');
-        websocketService.disableReconnect();
         websocketService['usingSockJS'] = true;
         websocketService['sockJSFallbackAttempted'] = true;
         websocketService.stompFailureCallback();
@@ -355,17 +353,5 @@ describe('WebsocketService', () => {
         expect(websocketService['observables'].size).toBe(1);
         websocketService.receive('/test/topictwo');
         expect(websocketService['observables'].size).toBe(2);
-    });
-
-    it('should enable and disable reconnect when functions are called', () => {
-        const connectSpy = jest.spyOn(websocketService, 'connect');
-        websocketService.connect();
-        websocketService['stompClient']!.connected = false;
-        expect(websocketService['shouldReconnect']).toBeFalsy();
-        websocketService.enableReconnect();
-        expect(websocketService['shouldReconnect']).toBeTruthy();
-        expect(connectSpy).toHaveBeenCalledTimes(2);
-        websocketService.disableReconnect();
-        expect(websocketService['shouldReconnect']).toBeFalsy();
     });
 });

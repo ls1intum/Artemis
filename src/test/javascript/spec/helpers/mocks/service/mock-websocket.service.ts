@@ -4,11 +4,7 @@ import { ConnectionState, IWebsocketService } from 'app/shared/service/websocket
 export class MockWebsocketService implements IWebsocketService {
     connect = () => {};
 
-    disableReconnect(): void {}
-
     disconnect(): void {}
-
-    enableReconnect(): void {}
 
     isConnected(): boolean {
         return true;

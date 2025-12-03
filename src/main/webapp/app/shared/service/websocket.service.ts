@@ -51,16 +51,6 @@ export interface IWebsocketService {
     unsubscribe(channel: string): void;
 
     /**
-     * Enable automatic reconnect
-     */
-    enableReconnect(): void;
-
-    /**
-     * Disable automatic reconnect
-     */
-    disableReconnect(): void;
-
-    /**
      * Get updates on current connection status
      */
     get connectionState(): Observable<ConnectionState>;
@@ -95,7 +85,6 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
     private waitUntilConnectionSubscriptions = new Map<string, Subscription>();
 
     private alreadyConnectedOnce = false;
-    private shouldReconnect = false;
     private readonly connectionStateInternal: BehaviorSubject<ConnectionState>;
     private consecutiveFailedAttempts = 0;
     private connecting = false;
@@ -119,10 +108,10 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
     /**
      * Callback function managing the amount of failed connection attempts to the websocket and the timeout until the next reconnect attempt.
      *
-     * Wait 5 seconds before reconnecting in case the connection does not work or the client is disconnected,
-     * after  4 failed attempts in row, increase the timeout to 10 seconds
-     * after  8 failed attempts in row, increase the timeout to 15 seconds
-     * after 16 failed attempts in row, increase the timeout to 20 seconds
+     * Wait 3 seconds before reconnecting in case the connection does not work or the client is disconnected,
+     * after  4 failed attempts in row, increase the timeout to 6 seconds
+     * after  8 failed attempts in row, increase the timeout to 9 seconds
+     * after 16 failed attempts in row, increase the timeout to 12 seconds
      *
      * The first native WebSocket failure triggers a SockJS reconnect attempt
      * (to work around environments that block WebSockets) before entering the backoff loop.
@@ -144,21 +133,19 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
             this.connect(true);
             return;
         }
-        if (this.shouldReconnect) {
-            // the more failed attempts, the longer the client waits until the next reconnect attempt
-            let waitUntilReconnectAttempt; // in seconds
-            if (this.consecutiveFailedAttempts > 16) {
-                waitUntilReconnectAttempt = 20;
-            } else if (this.consecutiveFailedAttempts > 8) {
-                waitUntilReconnectAttempt = 15;
-            } else if (this.consecutiveFailedAttempts > 4) {
-                waitUntilReconnectAttempt = 10;
-            } else {
-                // try to reconnect after 5 seconds for the first 4 attempts
-                waitUntilReconnectAttempt = 5;
-            }
-            setTimeout(() => this.connect(this.usingSockJS), waitUntilReconnectAttempt * 1000);
+        // the more failed attempts, the longer the client waits until the next reconnect attempt
+        let waitUntilReconnectAttempt; // in seconds
+        if (this.consecutiveFailedAttempts > 16) {
+            waitUntilReconnectAttempt = 12;
+        } else if (this.consecutiveFailedAttempts > 8) {
+            waitUntilReconnectAttempt = 9;
+        } else if (this.consecutiveFailedAttempts > 4) {
+            waitUntilReconnectAttempt = 6;
+        } else {
+            // try to reconnect after 3 seconds for the first 4 attempts
+            waitUntilReconnectAttempt = 3;
         }
+        setTimeout(() => this.connect(this.usingSockJS), waitUntilReconnectAttempt * 1000);
     }
 
     /**
@@ -442,24 +429,6 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
         return new Observable((subscriber: Subscriber<T>) => {
             this.subscribers.set(channel, subscriber);
         });
-    }
-
-    /**
-     * Enable automatic reconnect (includes SockJS fallback on the first post-login failure).
-     */
-    enableReconnect() {
-        if (this.stompClient && !this.stompClient.connected) {
-            this.connect();
-        }
-        this.shouldReconnect = true;
-    }
-
-    /**
-     * Disable automatic reconnect.
-     * Does not actively disconnect; callers handle cleanup (e.g. logout).
-     */
-    disableReconnect() {
-        this.shouldReconnect = false;
     }
 
     /**
