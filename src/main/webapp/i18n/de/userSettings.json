@@ -29,9 +29,7 @@
                 "internalDeclined": "Du hast die Nutzung von internen LLMs nicht akzeptiert.",
                 "AIDeclined": "Du hast die Nutzung von LLMs am {{acceptedDate}} explizit abgelehnt.",
                 "noAISelected": "Du hast noch keine Entscheidung über die Verwendung von LLMs getroffen",
-                "cloudAI": "Cloud AI (Zum Wechseln klicken)",
-                "localAI": "Local AI (Zum Wechseln klicken)",
-                "noAI": "No AI (Zum Wechseln klicken)"
+                "chooseAI": "Auswahl ändern"
             },
             "sshSettingsPage": {
                 "sshSettingsInfoText": "Hier kannst du einen öffentlichen SSH-Schlüssel festlegen, um Git-Repositories über SSH zu klonen. Weitere Einzelheiten findest du in der Dokumentation.",

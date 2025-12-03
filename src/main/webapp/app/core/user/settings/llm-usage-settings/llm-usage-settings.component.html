@@ -30,13 +30,5 @@
         }
     </div>
 
-    @if (currentLLMSelectionDecision() === 'CLOUD_AI') {
-        <button type="button" class="btn btn-primary" (click)="openSelectionModal()" jhiTranslate="artemisApp.userSettings.LLMUsageSettingsPage.cloudAI"></button>
-    } @else if (currentLLMSelectionDecision() === 'LOCAL_AI') {
-        <button type="button" class="btn btn-primary" (click)="openSelectionModal()" jhiTranslate="artemisApp.userSettings.LLMUsageSettingsPage.localAI"></button>
-    } @else if (currentLLMSelectionDecision() === 'NO_AI') {
-        <button type="button" class="btn btn-primary" (click)="openSelectionModal()" jhiTranslate="artemisApp.userSettings.LLMUsageSettingsPage.noAI"></button>
-    } @else {
-        <button type="button" class="btn btn-primary" (click)="openSelectionModal()" jhiTranslate="artemisApp.userSettings.LLMUsageSettingsPage.noAISelected"></button>
-    }
+    <button type="button" class="btn btn-primary" (click)="openSelectionModal()" jhiTranslate="artemisApp.userSettings.LLMUsageSettingsPage.chooseAI"></button>
 </div>
