@@ -1,16 +1,16 @@
-import { ErrorHandler, Injectable, inject } from '@angular/core';
+import { ErrorHandler, Injectable, inject } from "@angular/core";
 import {
     browserTracingIntegration,
     captureException,
     dedupeIntegration,
     init,
 } from "@sentry/angular";
-import type { Integration } from '@sentry/core';
-import { PROFILE_PROD, PROFILE_TEST, VERSION } from 'app/app.constants';
-import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import type { Integration } from "@sentry/core";
+import { PROFILE_PROD, PROFILE_TEST, VERSION } from "app/app.constants";
+import { ProfileInfo } from "app/core/layouts/profiles/profile-info.model";
+import { LocalStorageService } from "app/shared/service/local-storage.service";
 
-@Injectable({ providedIn: 'root' })
+@Injectable({ providedIn: "root" })
 export class SentryErrorHandler extends ErrorHandler {
     private environment: string;
     private localStorageService = inject(LocalStorageService);
@@ -37,7 +37,7 @@ export class SentryErrorHandler extends ErrorHandler {
                 ]);
             }
         } else {
-            this.environment = 'local';
+            this.environment = "local";
         }
 
         let defaultSampleRate: number =
@@ -72,23 +72,35 @@ export class SentryErrorHandler extends ErrorHandler {
      * @param error
      */
     override handleError(error: any): void {
-        if (error && error.name === 'HttpErrorResponse' && error.status < 500 && error.status >= 400) {
+        if (
+            error &&
+            error.name === "HttpErrorResponse" &&
+            error.status < 500 &&
+            error.status >= 400
+        ) {
             super.handleError(error);
             return;
         }
-        if (this.environment !== 'local') {
-            const exception = error.error || error.message || error.originalError || error;
+        if (this.environment !== "local") {
+            const exception =
+                error.error || error.message || error.originalError || error;
             captureException(exception);
         }
         super.handleError(error);
     }
 
     private isSameDay(firstDay: Date, secondDay: Date): boolean {
-        return firstDay.getFullYear() === secondDay.getFullYear() && firstDay.getMonth() === secondDay.getMonth() && firstDay.getDate() === secondDay.getDate();
+        return (
+            firstDay.getFullYear() === secondDay.getFullYear() &&
+            firstDay.getMonth() === secondDay.getMonth() &&
+            firstDay.getDate() === secondDay.getDate()
+        );
     }
 
     private hasBeenReportedToday() {
-        const lastReported = this.localStorageService.retrieveDate('webauthnNotSupportedTimestamp');
+        const lastReported = this.localStorageService.retrieveDate(
+            "webauthnNotSupportedTimestamp",
+        );
         const today = new Date();
         return lastReported && this.isSameDay(lastReported, today);
     }
@@ -105,13 +117,21 @@ export class SentryErrorHandler extends ErrorHandler {
                 return;
             }
 
-            this.localStorageService.store<Date>('webauthnNotSupportedTimestamp', new Date());
-            captureException(new Error('Browser does not support WebAuthn - no Passkey authentication possible'), {
-                tags: {
-                    feature: 'Passkey Authentication',
-                    browser: navigator.userAgent,
+            this.localStorageService.store<Date>(
+                "webauthnNotSupportedTimestamp",
+                new Date(),
+            );
+            captureException(
+                new Error(
+                    "Browser does not support WebAuthn - no Passkey authentication possible",
+                ),
+                {
+                    tags: {
+                        feature: "Passkey Authentication",
+                        browser: navigator.userAgent,
+                    },
                 },
-            });
+            );
         }
     }
 }
