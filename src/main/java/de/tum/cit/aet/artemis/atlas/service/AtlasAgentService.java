@@ -13,6 +13,7 @@ import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.MessageType;
 import org.springframework.ai.tool.ToolCallbackProvider;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -46,7 +47,8 @@ public class AtlasAgentService {
 
     private final ChatClient baseChatClient;
 
-    public AtlasAgentService(@Nullable ChatClient baseChatClient, AtlasPromptTemplateService templateService, @Nullable ToolCallbackProvider mainAgentToolCallbackProvider,
+    public AtlasAgentService(@Nullable ChatClient baseChatClient, AtlasPromptTemplateService templateService,
+            @Nullable @Qualifier("mainAgentToolCallbackProvider") ToolCallbackProvider mainAgentToolCallbackProvider,
             @Nullable ToolCallbackProvider competencyExpertToolCallbackProvider, @Nullable ChatMemory chatMemory, @Value("${atlas.chat-model:gpt-4o}") String deploymentName,
             @Value("${atlas.chat-temperature:0.2}") double temperature) {
         this.baseChatClient = baseChatClient;
@@ -165,7 +167,7 @@ public class AtlasAgentService {
      * @return true if the service is ready, false otherwise
      */
     public boolean isAvailable() {
-        return baseChatClient != null && chatMemory != null;
+        return baseChatClient != null;
     }
 
     /**
