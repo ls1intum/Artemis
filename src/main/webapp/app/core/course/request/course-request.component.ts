@@ -4,7 +4,7 @@ import { faPaperPlane } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 
 import { CourseRequestService } from 'app/core/course/request/course-request.service';
-import { NewCourseRequest } from 'app/core/shared/entities/course-request.model';
+import { BaseCourseRequest } from 'app/core/shared/entities/course-request.model';
 import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -57,7 +57,7 @@ export class CourseRequestComponent {
             return;
         }
 
-        const payload: NewCourseRequest = {
+        const payload: BaseCourseRequest = {
             title: this.form.get('title')!.value!,
             shortName: this.form.get('shortName')!.value!,
             semester: this.form.get('semester')!.value ?? undefined,

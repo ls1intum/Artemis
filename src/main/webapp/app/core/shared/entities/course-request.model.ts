@@ -8,8 +8,7 @@ export enum CourseRequestStatus {
     REJECTED = 'REJECTED',
 }
 
-export interface CourseRequest {
-    id?: number;
+export interface BaseCourseRequest {
     title: string;
     shortName: string;
     semester?: string;
@@ -17,6 +16,10 @@ export interface CourseRequest {
     endDate?: dayjs.Dayjs;
     testCourse: boolean;
     reason: string;
+}
+
+export interface CourseRequest extends BaseCourseRequest {
+    id?: number;
     status?: CourseRequestStatus;
     createdDate?: dayjs.Dayjs;
     processedDate?: dayjs.Dayjs;
@@ -24,5 +27,3 @@ export interface CourseRequest {
     requester?: User;
     createdCourseId?: number;
 }
-
-export type NewCourseRequest = Omit<CourseRequest, 'id' | 'status' | 'createdDate' | 'processedDate' | 'decisionReason' | 'requester' | 'createdCourseId'>;
