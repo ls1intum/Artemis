@@ -1,5 +1,10 @@
 import { ErrorHandler, Injectable, inject } from '@angular/core';
-import { browserTracingIntegration, captureException, dedupeIntegration, init } from '@sentry/angular';
+import {
+    browserTracingIntegration,
+    captureException,
+    dedupeIntegration,
+    init,
+} from "@sentry/angular";
 import type { Integration } from '@sentry/core';
 import { PROFILE_PROD, PROFILE_TEST, VERSION } from 'app/app.constants';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
@@ -27,13 +32,16 @@ export class SentryErrorHandler extends ErrorHandler {
             } else {
                 this.environment = PROFILE_PROD;
                 // all Sentry integrations that should only be active in prod are added here
-                integrations = integrations.concat([browserTracingIntegration()]);
+                integrations = integrations.concat([
+                    browserTracingIntegration(),
+                ]);
             }
         } else {
             this.environment = 'local';
         }
 
-        let defaultSampleRate: number = this.environment !== PROFILE_PROD ? 1.0 : 0.05;
+        let defaultSampleRate: number =
+            this.environment !== PROFILE_PROD ? 1.0 : 0.05;
 
         init({
             dsn: profileInfo.sentry.dsn,
