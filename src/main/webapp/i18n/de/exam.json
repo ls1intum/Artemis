@@ -300,7 +300,7 @@
             "exerciseOverview": "Das ist die Aufgabenübersicht",
             "connected": "Deine Antworten werden alle 30s gespeichert.",
             "ideConnected": "Deine Antworten müssen manuell abgesendet werden.",
-            "disconnected": "Du bekommst keine Live-Updates. Bitte überprüfe deine Internetverbindung. Ggf. kannst du weiterarbeiten.",
+            "disconnected": "Du erhältst keine Live-Updates. Bitte überprüfe deine Internetverbindung. Das Speichern ist voraussichtlich nicht beeinträchtigt – bitte überprüfe dies eigenständig",
             "waitForStart": "Bitte warte, bis die Klausur \"{{ title }}\" beginnt.",
             "timeUntilPlannedStart": "Verbleibende Zeit bis zum geplanten Start:",
             "finishExam": "Beenden",

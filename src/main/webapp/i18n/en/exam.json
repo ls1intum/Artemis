@@ -300,7 +300,7 @@
             "exerciseOverview": "This is the exercise overview",
             "connected": "Your answers are saved automatically every 30s.",
             "ideConnected": "Your answers have to be submitted manually.",
-            "disconnected": "You are not receiving live updates. Please check your internet configuration. You might be able to continue working.",
+            "disconnected": "You are not receiving live updates. Please check your internet connection. Saving is likely unaffected - please verify this independently.",
             "waitForStart": "Please wait until the exam \"{{ title }}\" begins.",
             "timeUntilPlannedStart": "Time until planned start:",
             "finishExam": "Finish",
