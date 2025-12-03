@@ -248,7 +248,9 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         // This enables just calling this method to refresh the course, without subscribing to it:
         this.loadCourseSubscription?.unsubscribe();
         if (refresh) {
-            this.loadCourseSubscription = observable.subscribe();
+            this.loadCourseSubscription = observable.subscribe({
+                next: () => this.sidebarItems.set(this.getSidebarItems()),
+            });
             this.calendarService.reloadEvents();
         }
         return observable;

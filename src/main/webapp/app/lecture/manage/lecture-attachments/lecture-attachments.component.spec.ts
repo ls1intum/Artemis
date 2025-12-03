@@ -17,7 +17,6 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { of, take, throwError } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -27,7 +26,6 @@ import { FileService } from 'app/shared/service/file.service';
 describe('LectureAttachmentsComponent', () => {
     let comp: LectureAttachmentsComponent;
     let fixture: ComponentFixture<LectureAttachmentsComponent>;
-    let lectureService: LectureService;
     let attachmentService: AttachmentService;
     let attachmentServiceFindAllByLectureIdStub: jest.SpyInstance;
     let attachmentServiceUpdateStub: jest.SpyInstance;
@@ -84,8 +82,15 @@ describe('LectureAttachmentsComponent', () => {
         attachmentType: 'FILE',
     } as Attachment;
 
-    beforeEach(() => {
-        return TestBed.configureTestingModule({
+    const activatedRouteMock = {
+        snapshot: {
+            data: { lecture },
+        },
+        data: of({ lecture }),
+    } as unknown as Partial<ActivatedRoute>;
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             imports: [MockDirective(NgbTooltip), RouterModule, ReactiveFormsModule, FormsModule, MockModule(OwlDateTimeModule), MockModule(OwlNativeDateTimeModule)],
             declarations: [
                 LectureAttachmentsComponent,
@@ -96,7 +101,7 @@ describe('LectureAttachmentsComponent', () => {
                 MockPipe(ArtemisDatePipe),
             ],
             providers: [
-                { provide: ActivatedRoute, useValue: { parent: { data: of({ lecture }) } } },
+                { provide: ActivatedRoute, useValue: activatedRouteMock },
                 { provide: FileService, useClass: MockFileService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 SessionStorageService,
@@ -104,16 +109,12 @@ describe('LectureAttachmentsComponent', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(LectureAttachmentsComponent);
-                comp = fixture.componentInstance;
-                attachmentService = TestBed.inject(AttachmentService);
-                lectureService = TestBed.inject(LectureService);
-                attachmentServiceFindAllByLectureIdStub = jest.spyOn(attachmentService, 'findAllByLectureId').mockReturnValue(of(new HttpResponse({ body: [...attachments] })));
-                attachmentServiceUpdateStub = jest.spyOn(attachmentService, 'update').mockReturnValue(of(new HttpResponse({ body: newAttachment })));
-            });
+        }).compileComponents();
+        fixture = TestBed.createComponent(LectureAttachmentsComponent);
+        comp = fixture.componentInstance;
+        attachmentService = TestBed.inject(AttachmentService);
+        attachmentServiceFindAllByLectureIdStub = jest.spyOn(attachmentService, 'findAllByLectureId').mockReturnValue(of(new HttpResponse({ body: [...attachments] })));
+        attachmentServiceUpdateStub = jest.spyOn(attachmentService, 'update').mockReturnValue(of(new HttpResponse({ body: newAttachment })));
     });
 
     afterEach(() => {
@@ -121,22 +122,10 @@ describe('LectureAttachmentsComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should load existing lecture', fakeAsync(() => {
-        fixture.componentRef.setInput('lectureId', 42);
-        const findWithDetailsStub = jest.spyOn(lectureService, 'findWithDetails').mockReturnValue(
-            of(
-                new HttpResponse({
-                    body: {
-                        ...lecture,
-                        id: 42,
-                    },
-                }),
-            ),
-        );
+    it('should load attachments', fakeAsync(() => {
         const findAllAttachmentsByLectureId = jest.spyOn(attachmentService, 'findAllByLectureId').mockReturnValue(of(new HttpResponse({ body: attachments })));
         fixture.detectChanges();
-        expect(findWithDetailsStub).toHaveBeenCalledWith(42);
-        expect(findAllAttachmentsByLectureId).toHaveBeenCalledWith(42);
+        expect(findAllAttachmentsByLectureId).toHaveBeenCalledWith(4);
     }));
 
     it('should exit saveAttachment', fakeAsync(() => {
