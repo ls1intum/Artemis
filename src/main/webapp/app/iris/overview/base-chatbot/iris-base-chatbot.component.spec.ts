@@ -1142,4 +1142,315 @@ describe('IrisBaseChatbotComponent', () => {
             expect(resetSpy).toHaveBeenCalled();
         }));
     });
+
+    describe('resendMessage', () => {
+        beforeEach(() => {
+            component.userAccepted = LLMSelectionDecision.CLOUD_AI;
+            fixture.detectChanges();
+        });
+
+        it('should not resend if message sender is not USER', () => {
+            const llmMessage = { ...mockServerMessage, sender: IrisSender.LLM };
+            const resendSpy = jest.spyOn(chatService, 'resendMessage');
+            const sendSpy = jest.spyOn(chatService, 'sendMessage');
+
+            component.resendMessage(llmMessage);
+
+            expect(resendSpy).not.toHaveBeenCalled();
+            expect(sendSpy).not.toHaveBeenCalled();
+        });
+
+        it('should set resendAnimationActive to false after resending with id', () => {
+            const userMessage = { ...mockClientMessage, id: 123, sender: IrisSender.USER };
+            jest.spyOn(chatService, 'resendMessage').mockReturnValue(of(userMessage as any));
+
+            component.resendMessage(userMessage);
+
+            expect(component.resendAnimationActive).toBeFalse();
+        });
+
+        it('should call resendMessage when message has id', () => {
+            const userMessage = { ...mockClientMessage, id: 123, sender: IrisSender.USER };
+            const resendSpy = jest.spyOn(chatService, 'resendMessage').mockReturnValue(of(userMessage as any));
+
+            component.resendMessage(userMessage);
+
+            expect(resendSpy).toHaveBeenCalledWith(userMessage);
+        });
+
+        it('should set isLoading to false after resending message with id', () => {
+            const userMessage = { ...mockClientMessage, id: 123, sender: IrisSender.USER };
+            jest.spyOn(chatService, 'resendMessage').mockReturnValue(of(userMessage as any));
+
+            component.resendMessage(userMessage);
+
+            expect(component.isLoading).toBeFalse();
+        });
+
+        it('should call sendMessage when message has no id but has content', () => {
+            const userMessage = {
+                ...mockClientMessage,
+                id: undefined,
+                sender: IrisSender.USER,
+                content: [{ textContent: 'Test message', type: 'text' } as any],
+            };
+            const sendSpy = jest.spyOn(chatService, 'sendMessage').mockReturnValue(of(undefined as any));
+
+            component.resendMessage(userMessage);
+
+            expect(sendSpy).toHaveBeenCalledWith('Test message');
+        });
+
+        it('should set isLoading to false after sending message without id', () => {
+            const userMessage = {
+                ...mockClientMessage,
+                id: undefined,
+                sender: IrisSender.USER,
+                content: [{ textContent: 'Test message', type: 'text' } as any],
+            };
+            jest.spyOn(chatService, 'sendMessage').mockReturnValue(of(undefined as any));
+
+            component.resendMessage(userMessage);
+
+            expect(component.isLoading).toBeFalse();
+        });
+
+        it('should set resendAnimationActive to false and return when no id and no content', () => {
+            const userMessage = {
+                ...mockClientMessage,
+                id: undefined,
+                sender: IrisSender.USER,
+                content: [],
+            };
+            const sendSpy = jest.spyOn(chatService, 'sendMessage');
+            const resendSpy = jest.spyOn(chatService, 'resendMessage');
+
+            component.resendMessage(userMessage);
+
+            expect(component.resendAnimationActive).toBeFalse();
+            expect(sendSpy).not.toHaveBeenCalled();
+            expect(resendSpy).not.toHaveBeenCalled();
+        });
+
+        it('should return early when message has no id and content has no textContent', () => {
+            const userMessage = {
+                ...mockClientMessage,
+                id: undefined,
+                sender: IrisSender.USER,
+                content: [{ type: 'text' } as any],
+            };
+            const sendSpy = jest.spyOn(chatService, 'sendMessage');
+
+            component.resendMessage(userMessage);
+
+            expect(component.resendAnimationActive).toBeFalse();
+            expect(sendSpy).not.toHaveBeenCalled();
+        });
+
+        it('should set resendAnimationActive to false after resend completes', fakeAsync(() => {
+            const userMessage = { ...mockClientMessage, id: 123, sender: IrisSender.USER };
+            jest.spyOn(chatService, 'resendMessage').mockReturnValue(of(userMessage as any));
+
+            component.resendMessage(userMessage);
+            tick();
+
+            expect(component.resendAnimationActive).toBeFalse();
+        }));
+
+        it('should set isLoading to false after resend completes', fakeAsync(() => {
+            const userMessage = { ...mockClientMessage, id: 123, sender: IrisSender.USER };
+            jest.spyOn(chatService, 'resendMessage').mockReturnValue(of(userMessage as any));
+
+            component.resendMessage(userMessage);
+            tick();
+
+            expect(component.isLoading).toBeFalse();
+        }));
+
+        it('should call messagesRead after resend completes', fakeAsync(() => {
+            const userMessage = { ...mockClientMessage, id: 123, sender: IrisSender.USER };
+            jest.spyOn(chatService, 'resendMessage').mockReturnValue(of(userMessage as any));
+            const messagesReadSpy = jest.spyOn(chatService, 'messagesRead');
+
+            component.resendMessage(userMessage);
+            tick();
+
+            expect(messagesReadSpy).toHaveBeenCalled();
+        }));
+
+        it('should set resendAnimationActive to false after send completes for message without id', fakeAsync(() => {
+            const userMessage = {
+                ...mockClientMessage,
+                id: undefined,
+                sender: IrisSender.USER,
+                content: [{ textContent: 'Test', type: 'text' } as any],
+            };
+            jest.spyOn(chatService, 'sendMessage').mockReturnValue(of(undefined as any));
+
+            component.resendMessage(userMessage);
+            tick();
+
+            expect(component.resendAnimationActive).toBeFalse();
+        }));
+
+        it('should set isLoading to false after send completes for message without id', fakeAsync(() => {
+            const userMessage = {
+                ...mockClientMessage,
+                id: undefined,
+                sender: IrisSender.USER,
+                content: [{ textContent: 'Test', type: 'text' } as any],
+            };
+            jest.spyOn(chatService, 'sendMessage').mockReturnValue(of(undefined as any));
+
+            component.resendMessage(userMessage);
+            tick();
+
+            expect(component.isLoading).toBeFalse();
+        }));
+    });
+
+    describe('onInput', () => {
+        beforeEach(() => {
+            component.userAccepted = LLMSelectionDecision.CLOUD_AI;
+            fixture.detectChanges();
+        });
+
+        it('should call adjustTextareaRows', () => {
+            const adjustSpy = jest.spyOn(component, 'adjustTextareaRows');
+
+            component.onInput();
+
+            expect(adjustSpy).toHaveBeenCalledOnce();
+        });
+    });
+
+    describe('onPaste', () => {
+        beforeEach(() => {
+            component.userAccepted = LLMSelectionDecision.CLOUD_AI;
+            fixture.detectChanges();
+        });
+
+        it('should call adjustTextareaRows after timeout', fakeAsync(() => {
+            const adjustSpy = jest.spyOn(component, 'adjustTextareaRows');
+
+            component.onPaste();
+            tick(0);
+
+            expect(adjustSpy).toHaveBeenCalledOnce();
+        }));
+
+        it('should delay adjustTextareaRows call', fakeAsync(() => {
+            const adjustSpy = jest.spyOn(component, 'adjustTextareaRows');
+
+            component.onPaste();
+
+            expect(adjustSpy).not.toHaveBeenCalled();
+
+            tick(0);
+
+            expect(adjustSpy).toHaveBeenCalled();
+        }));
+    });
+
+    describe('scrollToBottom', () => {
+        beforeEach(() => {
+            component.userAccepted = LLMSelectionDecision.CLOUD_AI;
+
+            const mockMessages = [mockClientMessage, mockServerMessage];
+            jest.spyOn(chatService, 'currentMessages').mockReturnValue(of(mockMessages));
+
+            component.ngOnInit();
+            fixture.detectChanges();
+        });
+
+        it('should call scrollTo with smooth behavior', fakeAsync(() => {
+            const scrollToSpy = jest.spyOn(component.messagesElement.nativeElement, 'scrollTo');
+
+            component.scrollToBottom('smooth');
+            tick();
+
+            expect(scrollToSpy).toHaveBeenCalledWith({
+                top: 0,
+                behavior: 'smooth',
+            });
+        }));
+
+        it('should call scrollTo with auto behavior', fakeAsync(() => {
+            const scrollToSpy = jest.spyOn(component.messagesElement.nativeElement, 'scrollTo');
+
+            component.scrollToBottom('auto');
+            tick();
+
+            expect(scrollToSpy).toHaveBeenCalledWith({
+                top: 0,
+                behavior: 'auto',
+            });
+        }));
+
+        it('should handle null messagesElement gracefully', fakeAsync(() => {
+            component.messagesElement = null as any;
+
+            expect(() => {
+                component.scrollToBottom('smooth');
+                tick();
+            }).not.toThrow();
+        }));
+
+        it('should scroll to top position 0', fakeAsync(() => {
+            const scrollToSpy = jest.spyOn(component.messagesElement.nativeElement, 'scrollTo');
+
+            component.scrollToBottom('auto');
+            tick();
+
+            expect(scrollToSpy).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    top: 0,
+                }),
+            );
+        }));
+    });
+
+    describe('onClearSession', () => {
+        let modalRef: any;
+
+        beforeEach(() => {
+            component.userAccepted = LLMSelectionDecision.CLOUD_AI;
+            fixture.detectChanges();
+
+            modalRef = {
+                result: Promise.resolve('confirm'),
+            };
+        });
+
+        it('should open modal with provided content', () => {
+            const openSpy = jest.spyOn(component.modalService, 'open').mockReturnValue(modalRef);
+            const content = { template: 'test' };
+
+            component.onClearSession(content);
+
+            expect(openSpy).toHaveBeenCalledWith(content);
+        });
+
+        it('should not call clearChat when result is not confirm', fakeAsync(() => {
+            modalRef.result = Promise.resolve('cancel');
+            jest.spyOn(component.modalService, 'open').mockReturnValue(modalRef);
+            const clearChatSpy = jest.spyOn(chatService, 'clearChat');
+
+            component.onClearSession({});
+            tick();
+
+            expect(clearChatSpy).not.toHaveBeenCalled();
+        }));
+
+        it('should not set isLoading to false when result is not confirm', fakeAsync(() => {
+            modalRef.result = Promise.resolve('cancel');
+            jest.spyOn(component.modalService, 'open').mockReturnValue(modalRef);
+            component.isLoading = true;
+
+            component.onClearSession({});
+            tick();
+
+            expect(component.isLoading).toBeTrue();
+        }));
+    });
 });
