@@ -15,7 +15,7 @@ import { IrisStatusService } from 'app/iris/overview/services/iris-status.servic
 import { IrisChatHttpService } from 'app/iris/overview/services/iris-chat-http.service';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { IrisWebsocketService } from 'app/iris/overview/services/iris-websocket.service';
-import { IrisSender } from 'app/iris/shared/entities/iris-message.model';
+import { IrisMessage, IrisSender } from 'app/iris/shared/entities/iris-message.model';
 import { of } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -1007,7 +1007,7 @@ describe('IrisBaseChatbotComponent', () => {
         });
 
         it('should set message.helpful to false when rated unhelpful', () => {
-            const llmMessage = { ...mockServerMessage, sender: IrisSender.LLM };
+            const llmMessage = { ...mockServerMessage, sender: IrisSender.LLM } as IrisMessage;
             jest.spyOn(chatService, 'rateMessage').mockReturnValue(of(undefined as any));
 
             component.rateMessage(llmMessage, false);
@@ -1016,7 +1016,7 @@ describe('IrisBaseChatbotComponent', () => {
         });
 
         it('should set message.helpful to false when rating is undefined', () => {
-            const llmMessage = { ...mockServerMessage, sender: IrisSender.LLM };
+            const llmMessage = { ...mockServerMessage, sender: IrisSender.LLM } as IrisMessage;
             jest.spyOn(chatService, 'rateMessage').mockReturnValue(of(undefined as any));
 
             component.rateMessage(llmMessage, undefined);
@@ -1025,7 +1025,7 @@ describe('IrisBaseChatbotComponent', () => {
         });
 
         it('should call chatService.rateMessage with message and rating', () => {
-            const llmMessage = { ...mockServerMessage, sender: IrisSender.LLM };
+            const llmMessage = { ...mockServerMessage, sender: IrisSender.LLM } as IrisMessage;
             const rateSpy = jest.spyOn(chatService, 'rateMessage').mockReturnValue(of(undefined as any));
 
             component.rateMessage(llmMessage, true);
@@ -1034,7 +1034,7 @@ describe('IrisBaseChatbotComponent', () => {
         });
 
         it('should subscribe to rateMessage observable', () => {
-            const llmMessage = { ...mockServerMessage, sender: IrisSender.LLM };
+            const llmMessage = { ...mockServerMessage, sender: IrisSender.LLM } as IrisMessage;
             const mockObservable = of(undefined as any);
             const subscribeSpy = jest.spyOn(mockObservable, 'subscribe');
             jest.spyOn(chatService, 'rateMessage').mockReturnValue(mockObservable);
