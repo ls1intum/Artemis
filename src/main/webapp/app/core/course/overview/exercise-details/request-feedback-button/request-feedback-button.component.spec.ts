@@ -18,6 +18,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { NgbModal, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
+import { LLMSelectionDecision } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
 
 describe('RequestFeedbackButtonComponent', () => {
     let component: RequestFeedbackButtonComponent;
@@ -241,4 +242,225 @@ describe('RequestFeedbackButtonComponent', () => {
         expect(modalSpy).not.toHaveBeenCalled();
         expect(processFeedbackSpy).toHaveBeenCalledWith(exercise.id);
     }));
+
+    describe('showLLMSelectionModal', () => {
+        it('should call acceptLLMUsage with CLOUD_AI when cloud is chosen', async () => {
+            jest.spyOn(component['llmModalService'], 'open').mockResolvedValue('cloud');
+            const acceptSpy = jest.spyOn(component, 'acceptLLMUsage');
+
+            await component.showLLMSelectionModal();
+
+            expect(acceptSpy).toHaveBeenCalledWith(LLMSelectionDecision.CLOUD_AI);
+        });
+
+        it('should call acceptLLMUsage with LOCAL_AI when local is chosen', async () => {
+            jest.spyOn(component['llmModalService'], 'open').mockResolvedValue('local');
+            const acceptSpy = jest.spyOn(component, 'acceptLLMUsage');
+
+            await component.showLLMSelectionModal();
+
+            expect(acceptSpy).toHaveBeenCalledWith(LLMSelectionDecision.LOCAL_AI);
+        });
+
+        it('should call acceptLLMUsage with NO_AI when no_ai is chosen', async () => {
+            jest.spyOn(component['llmModalService'], 'open').mockResolvedValue('no_ai');
+            const acceptSpy = jest.spyOn(component, 'acceptLLMUsage');
+
+            await component.showLLMSelectionModal();
+
+            expect(acceptSpy).toHaveBeenCalledWith(LLMSelectionDecision.NO_AI);
+        });
+
+        it('should not call acceptLLMUsage when none is chosen', async () => {
+            jest.spyOn(component['llmModalService'], 'open').mockResolvedValue('none');
+            const acceptSpy = jest.spyOn(component, 'acceptLLMUsage');
+
+            await component.showLLMSelectionModal();
+
+            expect(acceptSpy).not.toHaveBeenCalled();
+        });
+
+        it('should open the LLM modal', async () => {
+            const openSpy = jest.spyOn(component['llmModalService'], 'open').mockResolvedValue('cloud');
+            jest.spyOn(component, 'acceptLLMUsage').mockImplementation();
+
+            await component.showLLMSelectionModal();
+
+            expect(openSpy).toHaveBeenCalledOnce();
+        });
+    });
+
+    describe('acceptLLMUsage', () => {
+        let updateLLMDecisionSpy: jest.SpyInstance;
+        let setUserLLMDecisionSpy: jest.SpyInstance;
+        let assureConditionsSpy: jest.SpyInstance;
+        let processFeedbackSpy: jest.SpyInstance;
+
+        beforeEach(() => {
+            const accountService = component['accountService'];
+            if (!accountService.setUserLLMSelectionDecision) {
+                accountService.setUserLLMSelectionDecision = jest.fn();
+            }
+
+            updateLLMDecisionSpy = jest.spyOn(component['userService'], 'updateLLMSelectionDecision').mockReturnValue(of(undefined as any));
+            setUserLLMDecisionSpy = jest.spyOn(accountService, 'setUserLLMSelectionDecision');
+            assureConditionsSpy = jest.spyOn(component, 'assureConditionsSatisfied').mockReturnValue(true);
+            processFeedbackSpy = jest.spyOn(component, 'processFeedbackRequest').mockImplementation();
+        });
+
+        it('should unsubscribe from previous acceptSubscription if exists', () => {
+            const mockSubscription = { unsubscribe: jest.fn() } as any;
+            component['acceptSubscription'] = mockSubscription;
+
+            component.acceptLLMUsage(LLMSelectionDecision.CLOUD_AI);
+
+            expect(mockSubscription.unsubscribe).toHaveBeenCalledOnce();
+        });
+
+        it('should not throw error if acceptSubscription is undefined', () => {
+            component['acceptSubscription'] = undefined;
+
+            expect(() => component.acceptLLMUsage(LLMSelectionDecision.CLOUD_AI)).not.toThrow();
+        });
+
+        it('should call updateLLMSelectionDecision with CLOUD_AI', () => {
+            component.acceptLLMUsage(LLMSelectionDecision.CLOUD_AI);
+
+            expect(updateLLMDecisionSpy).toHaveBeenCalledWith(LLMSelectionDecision.CLOUD_AI);
+        });
+
+        it('should call updateLLMSelectionDecision with LOCAL_AI', () => {
+            component.acceptLLMUsage(LLMSelectionDecision.LOCAL_AI);
+
+            expect(updateLLMDecisionSpy).toHaveBeenCalledWith(LLMSelectionDecision.LOCAL_AI);
+        });
+
+        it('should call updateLLMSelectionDecision with NO_AI', () => {
+            component.acceptLLMUsage(LLMSelectionDecision.NO_AI);
+
+            expect(updateLLMDecisionSpy).toHaveBeenCalledWith(LLMSelectionDecision.NO_AI);
+        });
+
+        it('should set hasUserAcceptedLLMUsage to true for CLOUD_AI', fakeAsync(() => {
+            component.acceptLLMUsage(LLMSelectionDecision.CLOUD_AI);
+            tick();
+
+            expect(component.hasUserAcceptedLLMUsage).toBeTrue();
+        }));
+
+        it('should set hasUserAcceptedLLMUsage to true for LOCAL_AI', fakeAsync(() => {
+            component.acceptLLMUsage(LLMSelectionDecision.LOCAL_AI);
+            tick();
+
+            expect(component.hasUserAcceptedLLMUsage).toBeTrue();
+        }));
+
+        it('should set hasUserAcceptedLLMUsage to false for NO_AI', fakeAsync(() => {
+            component.acceptLLMUsage(LLMSelectionDecision.NO_AI);
+            tick();
+
+            expect(component.hasUserAcceptedLLMUsage).toBeFalse();
+        }));
+
+        it('should call setUserLLMSelectionDecision with the decision', fakeAsync(() => {
+            component.acceptLLMUsage(LLMSelectionDecision.CLOUD_AI);
+            tick();
+
+            expect(setUserLLMDecisionSpy).toHaveBeenCalledWith(LLMSelectionDecision.CLOUD_AI);
+        }));
+
+        it('should call processFeedbackRequest when CLOUD_AI and conditions satisfied', fakeAsync(() => {
+            component.acceptLLMUsage(LLMSelectionDecision.CLOUD_AI);
+            tick();
+
+            expect(assureConditionsSpy).toHaveBeenCalled();
+            expect(processFeedbackSpy).toHaveBeenCalled();
+        }));
+
+        it('should call processFeedbackRequest when LOCAL_AI and conditions satisfied', fakeAsync(() => {
+            component.acceptLLMUsage(LLMSelectionDecision.LOCAL_AI);
+            tick();
+
+            expect(assureConditionsSpy).toHaveBeenCalled();
+            expect(processFeedbackSpy).toHaveBeenCalled();
+        }));
+
+        it('should not call processFeedbackRequest when NO_AI', fakeAsync(() => {
+            component.acceptLLMUsage(LLMSelectionDecision.NO_AI);
+            tick();
+
+            expect(processFeedbackSpy).not.toHaveBeenCalled();
+        }));
+
+        it('should not call processFeedbackRequest when conditions not satisfied', fakeAsync(() => {
+            assureConditionsSpy.mockReturnValue(false);
+
+            component.acceptLLMUsage(LLMSelectionDecision.CLOUD_AI);
+            tick();
+
+            expect(assureConditionsSpy).toHaveBeenCalled();
+            expect(processFeedbackSpy).not.toHaveBeenCalled();
+        }));
+
+        it('should not call processFeedbackRequest when LOCAL_AI but conditions not satisfied', fakeAsync(() => {
+            assureConditionsSpy.mockReturnValue(false);
+
+            component.acceptLLMUsage(LLMSelectionDecision.LOCAL_AI);
+            tick();
+
+            expect(assureConditionsSpy).toHaveBeenCalled();
+            expect(processFeedbackSpy).not.toHaveBeenCalled();
+        }));
+
+        it('should store the subscription in acceptSubscription', () => {
+            component.acceptLLMUsage(LLMSelectionDecision.CLOUD_AI);
+
+            expect(component['acceptSubscription']).toBeDefined();
+        });
+    });
+
+    describe('requestAIFeedback', () => {
+        let showModalSpy: jest.SpyInstance;
+        let requestFeedbackSpy: jest.SpyInstance;
+
+        beforeEach(() => {
+            showModalSpy = jest.spyOn(component, 'showLLMSelectionModal').mockResolvedValue();
+            requestFeedbackSpy = jest.spyOn(component, 'requestFeedback').mockImplementation();
+        });
+
+        it('should call showLLMSelectionModal when user has not accepted LLM usage', async () => {
+            component.hasUserAcceptedLLMUsage = false;
+
+            await component.requestAIFeedback();
+
+            expect(showModalSpy).toHaveBeenCalledOnce();
+            expect(requestFeedbackSpy).not.toHaveBeenCalled();
+        });
+
+        it('should call requestFeedback when user has accepted LLM usage', async () => {
+            component.hasUserAcceptedLLMUsage = true;
+
+            await component.requestAIFeedback();
+
+            expect(showModalSpy).not.toHaveBeenCalled();
+            expect(requestFeedbackSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should return early after showing modal when user has not accepted', async () => {
+            component.hasUserAcceptedLLMUsage = false;
+
+            await component.requestAIFeedback();
+
+            expect(showModalSpy).toHaveBeenCalledOnce();
+            expect(requestFeedbackSpy).not.toHaveBeenCalled();
+        });
+
+        it('should not show modal when user has already accepted', async () => {
+            component.hasUserAcceptedLLMUsage = true;
+
+            await component.requestAIFeedback();
+
+            expect(showModalSpy).not.toHaveBeenCalled();
+        });
+    });
 });

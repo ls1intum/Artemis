@@ -2,6 +2,7 @@ import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { of } from 'rxjs';
+import dayjs from 'dayjs/esm';
 import { MockService } from 'ng-mocks';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
@@ -650,6 +651,112 @@ describe('AccountService', () => {
 
             // Verify that calling the function doesn't throw an error
             expect(() => accountService.setUserLLMSelectionDecision(LLMSelectionDecision.CLOUD_AI)).not.toThrow();
+        });
+
+        it('should set selectedLLMUsage to CLOUD_AI', () => {
+            accountService.userIdentity.set({ id: 1, groups: ['USER'] } as User);
+
+            accountService.setUserLLMSelectionDecision(LLMSelectionDecision.CLOUD_AI);
+
+            expect(accountService.userIdentity()?.selectedLLMUsage).toBe(LLMSelectionDecision.CLOUD_AI);
+        });
+
+        it('should set selectedLLMUsage to LOCAL_AI', () => {
+            accountService.userIdentity.set({ id: 1, groups: ['USER'] } as User);
+
+            accountService.setUserLLMSelectionDecision(LLMSelectionDecision.LOCAL_AI);
+
+            expect(accountService.userIdentity()?.selectedLLMUsage).toBe(LLMSelectionDecision.LOCAL_AI);
+        });
+
+        it('should set selectedLLMUsage to NO_AI', () => {
+            accountService.userIdentity.set({ id: 1, groups: ['USER'] } as User);
+
+            accountService.setUserLLMSelectionDecision(LLMSelectionDecision.NO_AI);
+
+            expect(accountService.userIdentity()?.selectedLLMUsage).toBe(LLMSelectionDecision.NO_AI);
+        });
+
+        it('should update existing selectedLLMUsage value', () => {
+            accountService.userIdentity.set({
+                id: 1,
+                groups: ['USER'],
+                selectedLLMUsage: LLMSelectionDecision.NO_AI,
+            } as User);
+
+            accountService.setUserLLMSelectionDecision(LLMSelectionDecision.CLOUD_AI);
+
+            expect(accountService.userIdentity()?.selectedLLMUsage).toBe(LLMSelectionDecision.CLOUD_AI);
+        });
+
+        it('should update timestamp even if selectedLLMUsage was previously set', () => {
+            const oldTimestamp = dayjs('2024-01-01');
+            accountService.userIdentity.set({
+                id: 1,
+                groups: ['USER'],
+                selectedLLMUsage: LLMSelectionDecision.LOCAL_AI,
+                selectedLLMUsageTimestamp: oldTimestamp,
+            } as User);
+
+            accountService.setUserLLMSelectionDecision(LLMSelectionDecision.CLOUD_AI);
+
+            const newTimestamp = accountService.userIdentity()?.selectedLLMUsageTimestamp;
+            expect(newTimestamp).toBeDefined();
+            expect(newTimestamp?.format('YYYY-MM-DD')).toBe('2025-11-28');
+            expect(newTimestamp).not.toEqual(oldTimestamp);
+        });
+
+        it('should return undefined when userIdentity is null', () => {
+            accountService.userIdentity.set(undefined);
+
+            accountService.setUserLLMSelectionDecision(LLMSelectionDecision.CLOUD_AI);
+
+            expect(accountService.userIdentity()).toBeUndefined();
+        });
+
+        it('should preserve other user properties when updating LLM selection', () => {
+            const originalUser = {
+                id: 1,
+                login: 'testuser',
+                groups: ['USER', 'ADMIN'],
+                authorities: [Authority.ADMIN],
+                email: 'test@example.com',
+            } as User;
+
+            accountService.userIdentity.set(originalUser);
+
+            accountService.setUserLLMSelectionDecision(LLMSelectionDecision.LOCAL_AI);
+
+            const updatedUser = accountService.userIdentity();
+            expect(updatedUser?.id).toBe(1);
+            expect(updatedUser?.login).toBe('testuser');
+            expect(updatedUser?.groups).toEqual(['USER', 'ADMIN']);
+            expect(updatedUser?.authorities).toEqual([Authority.ADMIN]);
+            expect(updatedUser?.email).toBe('test@example.com');
+        });
+
+        it('should set both timestamp and decision in a single update', () => {
+            accountService.userIdentity.set({ id: 1, groups: ['USER'] } as User);
+
+            accountService.setUserLLMSelectionDecision(LLMSelectionDecision.NO_AI);
+
+            const user = accountService.userIdentity();
+            expect(user?.selectedLLMUsage).toBe(LLMSelectionDecision.NO_AI);
+            expect(user?.selectedLLMUsageTimestamp).toBeDefined();
+            expect(user?.selectedLLMUsageTimestamp?.format('YYYY-MM-DD')).toBe('2025-11-28');
+        });
+
+        it('should handle multiple consecutive updates correctly', () => {
+            accountService.userIdentity.set({ id: 1, groups: ['USER'] } as User);
+
+            accountService.setUserLLMSelectionDecision(LLMSelectionDecision.CLOUD_AI);
+            expect(accountService.userIdentity()?.selectedLLMUsage).toBe(LLMSelectionDecision.CLOUD_AI);
+
+            accountService.setUserLLMSelectionDecision(LLMSelectionDecision.LOCAL_AI);
+            expect(accountService.userIdentity()?.selectedLLMUsage).toBe(LLMSelectionDecision.LOCAL_AI);
+
+            accountService.setUserLLMSelectionDecision(LLMSelectionDecision.NO_AI);
+            expect(accountService.userIdentity()?.selectedLLMUsage).toBe(LLMSelectionDecision.NO_AI);
         });
     });
 });
