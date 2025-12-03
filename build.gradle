@@ -19,8 +19,8 @@ plugins {
     id "com.github.andygoossens.modernizer" version "${modernizer_plugin_version}"
     id "com.github.ben-manes.versions" version "0.53.0"
     id "com.github.node-gradle.node" version "${gradle_node_plugin_version}"
-    id "com.google.cloud.tools.jib" version "3.5.0"
-    id "com.gorylenko.gradle-git-properties" version "2.5.3"
+    id "com.google.cloud.tools.jib" version "3.5.1"
+    id "com.gorylenko.gradle-git-properties" version "2.5.4"
     id "io.spring.dependency-management" version "1.1.7"
     id "nebula.lint" version "21.1.3"
     id "org.liquibase.gradle" version "${liquibase_plugin_version}"
@@ -32,7 +32,7 @@ plugins {
 }
 
 group = "de.tum.cit.aet.artemis"
-version = "8.5.1"
+version = "8.6.3"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -42,7 +42,7 @@ java {
 }
 
 wrapper {
-    gradleVersion = "9.2.0"
+    gradleVersion = "9.2.1"
 }
 
 node {
@@ -81,6 +81,21 @@ modernizer {
     includeTestClasses = true
     // Copy the rule name as defined in https://github.com/gaul/modernizer-maven-plugin/blob/master/modernizer-maven-plugin/src/main/resources/modernizer.xml to exclude it
     exclusions = ["java/util/Optional.get:()Ljava/lang/Object;"]
+}
+
+gitProperties {
+    // Only override branch when CI (= env variable present)
+    def ciBranch = System.getenv('GIT_BRANCH')
+    if (ciBranch) {
+        branch = ciBranch
+    }
+
+    // Optional: if you ever want to override commit from CI as well:
+    def ciCommit = System.getenv('GIT_COMMIT')
+    if (ciCommit) {
+        customProperty 'git.commit.id', ciCommit
+        customProperty 'git.commit.id.abbrev', ciCommit.take(7)
+    }
 }
 
 configurations {
@@ -376,8 +391,8 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-oauth2-resource-server:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-oauth2-client:${spring_boot_version}"
 
-    implementation "org.springframework.data:spring-data-jpa:3.5.5"
-    implementation "org.springframework.data:spring-data-ldap:3.5.5"
+    implementation "org.springframework.data:spring-data-jpa:3.5.6"
+    implementation "org.springframework.data:spring-data-ldap:3.5.6"
     implementation "org.springframework.ldap:spring-ldap-core:3.3.4"
 
     implementation "org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:${spring_cloud_version}"
@@ -425,8 +440,8 @@ dependencies {
     runtimeOnly "io.jsonwebtoken:jjwt-jackson:${jwt_version}"
 
     // required by sshd-git
-    implementation "org.bouncycastle:bcpkix-jdk18on:1.82"
-    implementation "org.bouncycastle:bcprov-jdk18on:1.82"
+    implementation "org.bouncycastle:bcpkix-jdk18on:1.83"
+    implementation "org.bouncycastle:bcprov-jdk18on:1.83"
 
     implementation "com.mysql:mysql-connector-j:${mysql_version}"
     implementation "org.postgresql:postgresql:42.7.8"
@@ -463,7 +478,7 @@ dependencies {
     checkstyle "org.apache.commons:commons-lang3:${commons_lang3_version}"
     checkstyle "org.apache.commons:commons-text:${commons_text_version}"
 
-    implementation "com.google.errorprone:error_prone_annotations:2.44.0"
+    implementation "com.google.errorprone:error_prone_annotations:2.45.0"
     // needed for OpenAPI generation
     implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.14"
 
@@ -508,9 +523,9 @@ dependencies {
     testImplementation "io.github.classgraph:classgraph:4.8.184"
     testImplementation "org.awaitility:awaitility:4.3.0"
     testImplementation "org.apache.maven.shared:maven-invoker:3.3.0"
-    testImplementation "org.gradle:gradle-tooling-api:9.2.0"
+    testImplementation "org.gradle:gradle-tooling-api:9.2.1"
     testImplementation "org.apache.maven.surefire:surefire-report-parser:3.5.4"
-    testImplementation "io.zonky.test:embedded-database-spring-test:2.7.0"
+    testImplementation "io.zonky.test:embedded-database-spring-test:2.7.1"
     testImplementation "com.redis:testcontainers-redis:2.2.4"
     testImplementation "com.tngtech.archunit:archunit:1.4.1"
     testImplementation "org.skyscreamer:jsonassert:1.5.3"

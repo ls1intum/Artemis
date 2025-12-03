@@ -356,12 +356,12 @@ public class GitService extends AbstractGitService {
         }
     }
 
-    public Path getDefaultLocalPathOfRepo(LocalVCRepositoryUri targetUrl) {
+    public Path getDefaultLocalCheckOutPathOfRepo(LocalVCRepositoryUri targetUrl) {
         return getLocalPathOfRepo(repoClonePath, targetUrl);
     }
 
     /**
-     * Creates a local path by specifying a target path and the target url
+     * Creates a local path by specifying a target path and the target url, this is typically used to resolve the check out path for local repositories
      *
      * @param targetPath target directory
      * @param targetUrl  url of the repository
@@ -385,7 +385,8 @@ public class GitService extends AbstractGitService {
      * @param remoteRepositoryUri the remote repository uri for the git repository, will be added to the Repository object for later use, can be null
      * @return the git repository in the localPath or **null** if it does not exist on the server.
      */
-    public Repository getExistingCheckedOutRepositoryByLocalPath(@NonNull Path localPath, @Nullable LocalVCRepositoryUri remoteRepositoryUri) {
+    @Nullable
+    public Repository getExistingCheckedOutRepositoryByLocalPath(@NonNull Path localPath, LocalVCRepositoryUri remoteRepositoryUri) {
         return getExistingCheckedOutRepositoryByLocalPath(localPath, remoteRepositoryUri, defaultBranch, false);
     }
 
@@ -398,8 +399,8 @@ public class GitService extends AbstractGitService {
      * @param writeAccess         whether the repository should be opened with write access
      * @return the git repository in the localPath or **null** if it does not exist on the server.
      */
-    public Repository getExistingCheckedOutRepositoryByLocalPath(@NonNull Path localPath, @Nullable LocalVCRepositoryUri remoteRepositoryUri, String defaultBranch,
-            boolean writeAccess) {
+    @Nullable
+    public Repository getExistingCheckedOutRepositoryByLocalPath(@NonNull Path localPath, LocalVCRepositoryUri remoteRepositoryUri, String defaultBranch, boolean writeAccess) {
         try {
             if (!Files.exists(localPath)) {
                 return null;
@@ -1363,7 +1364,7 @@ public class GitService extends AbstractGitService {
      * @throws IOException if the deletion of the repository failed.
      */
     @Override
-    public void deleteLocalRepository(Repository repository) throws IOException {
+    public void deleteLocalRepository(@NonNull Repository repository) throws IOException {
         super.deleteLocalRepository(repository);
     }
 
@@ -1374,13 +1375,16 @@ public class GitService extends AbstractGitService {
      */
     public void deleteLocalRepository(LocalVCRepositoryUri repoUri) {
         try {
-            if (repoUri != null && repositoryAlreadyExists(repoUri)) {
+            if (repoUri != null && checkedOutRepositoryAlreadyExists(repoUri)) {
                 // We need to close the possibly still open repository otherwise an IOException will be thrown on Windows
-                Repository repo = getOrCheckoutRepository(repoUri, false, false);
-                deleteLocalRepository(repo);
+                Path localPath = getLocalPathOfRepo(repoClonePath, repoUri);
+                Repository repo = getExistingCheckedOutRepositoryByLocalPath(localPath, repoUri);
+                if (repo != null) {
+                    deleteLocalRepository(repo);
+                }
             }
         }
-        catch (IOException | GitAPIException e) {
+        catch (IOException e) {
             log.error("Error while deleting local repository", e);
         }
     }
@@ -1409,9 +1413,9 @@ public class GitService extends AbstractGitService {
      * @param repoUri URL of the remote repository.
      * @return True if repo exists on disk
      */
-    public boolean repositoryAlreadyExists(LocalVCRepositoryUri repoUri) {
-        Path localPath = getDefaultLocalPathOfRepo(repoUri);
-        return Files.exists(localPath);
+    public boolean checkedOutRepositoryAlreadyExists(LocalVCRepositoryUri repoUri) {
+        Path localCheckedOutRepoPath = getDefaultLocalCheckOutPathOfRepo(repoUri);
+        return Files.exists(localCheckedOutRepoPath);
     }
 
     /**
