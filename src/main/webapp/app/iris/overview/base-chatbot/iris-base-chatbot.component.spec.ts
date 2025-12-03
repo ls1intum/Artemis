@@ -989,7 +989,7 @@ describe('IrisBaseChatbotComponent', () => {
         });
 
         it('should not rate if message sender is not LLM', () => {
-            const userMessage = { ...mockClientMessage, sender: IrisSender.USER };
+            const userMessage = { ...mockClientMessage, sender: IrisSender.USER } as IrisMessage;
             const rateSpy = jest.spyOn(chatService, 'rateMessage');
 
             component.rateMessage(userMessage, true);
@@ -998,7 +998,7 @@ describe('IrisBaseChatbotComponent', () => {
         });
 
         it('should set message.helpful to true when rated helpful', () => {
-            const llmMessage = { ...mockServerMessage, sender: IrisSender.LLM };
+            const llmMessage = { ...mockServerMessage, sender: IrisSender.LLM } as IrisMessage;
             jest.spyOn(chatService, 'rateMessage').mockReturnValue(of(undefined as any));
 
             component.rateMessage(llmMessage, true);
