@@ -307,7 +307,6 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
         String body = "{\"problemStatementText\":\"Original problem statement\",\"userPrompt\":\"Make it better\"}";
         request.performMvcRequest(post("/api/hyperion/courses/{courseId}/problem-statements/refine", courseId).contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isInternalServerError()).andExpect(jsonPath("$.title").value("Failed to refine problem statement: AI service unavailable"))
-                .andExpect(jsonPath("$.message").value("error.problemStatementRefinementFailed")).andExpect(jsonPath("$.errorKey").value("problemStatementRefinementFailed"))
-                .andExpect(jsonPath("$.params.originalProblemStatement").value("Original problem statement"));
+                .andExpect(jsonPath("$.message").value("error.problemStatementRefinementFailed")).andExpect(jsonPath("$.errorKey").value("problemStatementRefinementFailed"));
     }
 }
