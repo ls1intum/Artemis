@@ -48,6 +48,7 @@
                   "react-is",
                   "rfdc",
                   "shallowequal",
+                  "sockjs-client",
                   "markdown-it-class",
                   "use-sync-external-store/shim",
                   "use-sync-external-store/shim/with-selector",

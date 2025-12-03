@@ -169,11 +169,40 @@ describe('WebsocketService', () => {
         expect(originalPayload).toEqual(jsonPayload);
     });
 
+    it('should fall back to SockJS on initial connection failure', () => {
+        const connectSpy = jest.spyOn(websocketService, 'connect').mockImplementation(() => {});
+        websocketService['alreadyConnectedOnce'] = false;
+
+        websocketService.stompFailureCallback();
+
+        expect(websocketService['sockJSFallbackAttempted']).toBeTrue();
+        expect(connectSpy).toHaveBeenCalledWith(true);
+        expect(websocketService['consecutiveFailedAttempts']).toBe(1);
+    });
+
+    it('should fall back to SockJS after repeated failures post-connect', () => {
+        const connectSpy = jest.spyOn(websocketService, 'connect').mockImplementation(() => {});
+        websocketService['alreadyConnectedOnce'] = true;
+        websocketService['consecutiveFailedAttempts'] = 0;
+
+        websocketService.stompFailureCallback();
+        expect(websocketService['sockJSFallbackAttempted']).toBeFalse();
+        expect(connectSpy).not.toHaveBeenCalledWith(true);
+        expect(websocketService['consecutiveFailedAttempts']).toBe(1);
+
+        websocketService.stompFailureCallback();
+        expect(websocketService['sockJSFallbackAttempted']).toBeTrue();
+        expect(connectSpy).toHaveBeenCalledWith(true);
+        expect(websocketService['consecutiveFailedAttempts']).toBe(2);
+    });
+
     it('should handle reconnection with backoff', fakeAsync(() => {
         jest.useFakeTimers();
         const timeoutSpy = jest.spyOn(global, 'setTimeout');
 
         websocketService.enableReconnect();
+        websocketService['usingSockJS'] = true;
+        websocketService['sockJSFallbackAttempted'] = true;
         websocketService['consecutiveFailedAttempts'] = 0;
 
         websocketService.stompFailureCallback();
@@ -211,6 +240,8 @@ describe('WebsocketService', () => {
         jest.useFakeTimers();
         const connectSpy = jest.spyOn(websocketService, 'connect');
         websocketService.disableReconnect();
+        websocketService['usingSockJS'] = true;
+        websocketService['sockJSFallbackAttempted'] = true;
         websocketService.stompFailureCallback();
         jest.runAllTimers();
         expect(connectSpy).not.toHaveBeenCalled();

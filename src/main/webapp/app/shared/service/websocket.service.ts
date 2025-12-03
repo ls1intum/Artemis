@@ -1,5 +1,6 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { BehaviorSubject, Observable, Subscriber, Subscription, first } from 'rxjs';
+import SockJS from 'sockjs-client';
 import Stomp, { Client, ConnectionHeaders, Frame, Message, Subscription as StompSubscription } from 'webstomp-client';
 import { gzip, ungzip } from 'pako';
 import { captureException } from '@sentry/angular';
@@ -100,6 +101,12 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
     private connecting = false;
     private subscriptionCounter = 0;
     private sessionId = '';
+    // Tracks whether the current connection attempt uses SockJS instead of native WebSockets.
+    private usingSockJS = false;
+    // Ensures we attempt the SockJS fallback only once per failure cycle.
+    private sockJSFallbackAttempted = false;
+    // Number of consecutive failures (after at least one successful WS session) before falling back to SockJS.
+    private readonly sockjsFallbackThreshold = 2;
 
     constructor() {
         this.connectionStateInternal = new BehaviorSubject<ConnectionState>(new ConnectionState(false, false, true));
@@ -116,12 +123,26 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
      * after  4 failed attempts in row, increase the timeout to 10 seconds
      * after  8 failed attempts in row, increase the timeout to 15 seconds
      * after 16 failed attempts in row, increase the timeout to 20 seconds
+     *
+     * The first native WebSocket failure triggers a SockJS reconnect attempt
+     * (to work around environments that block WebSockets) before entering the backoff loop.
+     * After an earlier successful session, we wait for multiple consecutive failures before falling back,
+     * to avoid downgrading because of brief client sleep/network glitches.
      */
     stompFailureCallback() {
         this.connecting = false;
         this.consecutiveFailedAttempts++;
         if (this.connectionStateInternal.getValue().connected) {
             this.connectionStateInternal.next(new ConnectionState(false, this.alreadyConnectedOnce, false));
+        }
+        const isInitialConnectAttempt = !this.alreadyConnectedOnce;
+        const reachedPostConnectFallbackThreshold = this.alreadyConnectedOnce && this.consecutiveFailedAttempts >= this.sockjsFallbackThreshold;
+        // If native WebSocket failed, try a single SockJS attempt (initially or after repeated failures) before applying backoff.
+        const shouldTrySockJSFallback = !this.usingSockJS && !this.sockJSFallbackAttempted && (isInitialConnectAttempt || reachedPostConnectFallbackThreshold);
+        if (shouldTrySockJSFallback) {
+            this.sockJSFallbackAttempted = true;
+            this.connect(true);
+            return;
         }
         if (this.shouldReconnect) {
             // the more failed attempts, the longer the client waits until the next reconnect attempt
@@ -136,7 +157,7 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
                 // try to reconnect after 5 seconds for the first 4 attempts
                 waitUntilReconnectAttempt = 5;
             }
-            setTimeout(this.connect.bind(this), waitUntilReconnectAttempt * 1000);
+            setTimeout(() => this.connect(this.usingSockJS), waitUntilReconnectAttempt * 1000);
         }
     }
 
@@ -155,46 +176,69 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
 
     /**
      * Set up the websocket connection.
+     * Starts with a native WebSocket. On the first failure in a cycle, a SockJS retry is triggered;
+     * subsequent failures follow the backoff strategy with the last transport used.
      */
-    connect() {
+    connect(useSockJS = false) {
         if (this.isConnected() || this.connecting) {
             return; // don't connect, if already connected or connecting
         }
         this.connecting = true;
-        // NOTE: we add 'websocket' twice to use STOMP without SockJS
-        const url = `//${window.location.host}/websocket/websocket`;
+        this.usingSockJS = useSockJS;
+        try {
+            this.stompClient = this.createStompClient(useSockJS);
+            // Note: debugging is deactivated to prevent console log statements
+            this.stompClient.debug = () => {};
+            const headers = {} as ConnectionHeaders;
+
+            this.stompClient.connect(
+                headers,
+                (frame?: Frame) => {
+                    // check if a session id is part of the frame, otherwise use a random string
+                    this.sessionId = frame?.headers['session'] || this.generateSecureSessionId();
+                    this.connecting = false;
+                    if (!this.connectionStateInternal.getValue().connected) {
+                        this.connectionStateInternal.next(new ConnectionState(true, this.alreadyConnectedOnce, false));
+                    }
+                    this.consecutiveFailedAttempts = 0;
+                    this.sockJSFallbackAttempted = false;
+                    if (this.alreadyConnectedOnce) {
+                        // (re)connect to all existing channels
+                        if (this.observables.size !== 0) {
+                            this.observables.forEach((_observable, channel) => this.addSubscription(channel));
+                        }
+                    } else {
+                        this.alreadyConnectedOnce = true;
+                    }
+                },
+                this.stompFailureCallback.bind(this),
+            );
+        } catch (error) {
+            // If constructing the native WebSocket fails synchronously, fall back via the normal failure path.
+            captureException('Failed to initialize websocket client', error);
+            this.stompFailureCallback();
+        }
+    }
+
+    /**
+     * Create a STOMP client either over native WebSockets or SockJS (for environments where WebSockets are blocked).
+     * Native WS hits `/websocket/websocket`, SockJS negotiates via `/websocket` and falls back to XHR streaming/polling.
+     */
+    private createStompClient(useSockJS: boolean): Client {
         const options = {
             heartbeat: { outgoing: 10000, incoming: 10000 },
             debug: false,
             protocols: ['v12.stomp'],
         };
-        // TODO: consider to switch to RxStomp (like in the latest jhipster version)
-        this.stompClient = Stomp.client(url, options);
-        // Note: debugging is deactivated to prevent console log statements
-        this.stompClient.debug = () => {};
-        const headers = {} as ConnectionHeaders;
 
-        this.stompClient.connect(
-            headers,
-            (frame?: Frame) => {
-                // check if a session id is part of the frame, otherwise use a random string
-                this.sessionId = frame?.headers['session'] || this.generateSecureSessionId();
-                this.connecting = false;
-                if (!this.connectionStateInternal.getValue().connected) {
-                    this.connectionStateInternal.next(new ConnectionState(true, this.alreadyConnectedOnce, false));
-                }
-                this.consecutiveFailedAttempts = 0;
-                if (this.alreadyConnectedOnce) {
-                    // (re)connect to all existing channels
-                    if (this.observables.size !== 0) {
-                        this.observables.forEach((_observable, channel) => this.addSubscription(channel));
-                    }
-                } else {
-                    this.alreadyConnectedOnce = true;
-                }
-            },
-            this.stompFailureCallback.bind(this),
-        );
+        if (useSockJS) {
+            // SockJS uses HTTP(S) and falls back to XHR streaming/polling if WebSockets are blocked
+            const sockJS = new SockJS(`//${window.location.host}/websocket`, undefined, { transports: ['websocket', 'xhr-streaming', 'xhr-polling'] });
+            return Stomp.over(sockJS, options);
+        }
+
+        // NOTE: we add 'websocket' twice to use STOMP without SockJS
+        return Stomp.client(`//${window.location.host}/websocket/websocket`, options);
     }
 
     /**
@@ -282,6 +326,7 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
 
     /**
      * Checks whether the WebSocket connection is currently established.
+     * Works for both native WebSocket and SockJS transports.
      *
      * @returns true if the WebSocket connection is active; otherwise, false.
      */
@@ -290,7 +335,8 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
     }
 
     /**
-     * Close the connection to the websocket (e.g. due to logout), unsubscribe all observables and set alreadyConnectedOnce to false
+     * Close the connection to the websocket (e.g. due to logout), unsubscribe all observables and set alreadyConnectedOnce to false.
+     * Clears the SockJS fallback flag so the next session can start fresh with native WS again.
      */
     disconnect() {
         this.observables.forEach((_observable, channel) => this.unsubscribe(channel));
@@ -303,6 +349,8 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
             }
         }
         this.alreadyConnectedOnce = false;
+        this.usingSockJS = false;
+        this.sockJSFallbackAttempted = false;
     }
 
     /**
@@ -322,7 +370,7 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
      * Only compresses data if the JSON stringified payload size is larger than 1 KB.
      * 1. Convert the data into JSON
      * 2. Compress the JSON payload into binary data if it is larger than 1 KB
-     * 3. Convert the binary data into a Base64 string
+     * 3. Convert the binary data into a Base64 string (and mark it with the compression header)
      *
      * @param path the path for the websocket connection
      * @param data the data to send through the websocket connection
@@ -349,7 +397,8 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
     }
 
     /**
-     * Subscribe to a channel: add the channel to the observables and create a STOMP subscription for the channel if this has not been done before
+     * Subscribe to a channel: add the channel to the observables and create a STOMP subscription for the channel if this has not been done before.
+     * Subscriptions are re-established after reconnects (native or SockJS), keyed by `channel`.
      * @param channel
      */
     subscribe(channel: string): IWebsocketService {
@@ -396,7 +445,7 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
     }
 
     /**
-     * Enable automatic reconnect
+     * Enable automatic reconnect (includes SockJS fallback on the first post-login failure).
      */
     enableReconnect() {
         if (this.stompClient && !this.stompClient.connected) {
@@ -406,7 +455,8 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
     }
 
     /**
-     * Disable automatic reconnect
+     * Disable automatic reconnect.
+     * Does not actively disconnect; callers handle cleanup (e.g. logout).
      */
     disableReconnect() {
         this.shouldReconnect = false;
