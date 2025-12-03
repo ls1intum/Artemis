@@ -8,10 +8,12 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.ai.azure.openai.AzureOpenAiChatOptions;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.ChatClient.ChatClientRequestSpec;
+import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.MessageType;
 import org.springframework.ai.tool.ToolCallbackProvider;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -28,22 +30,32 @@ import de.tum.cit.aet.artemis.atlas.dto.AtlasAgentHistoryMessageDTO;
 @Conditional(AtlasEnabled.class)
 public class AtlasAgentService {
 
-    private final ChatClient chatClient;
-
     private final AtlasPromptTemplateService templateService;
 
-    private final ToolCallbackProvider toolCallbackProvider;
+    private final ToolCallbackProvider mainAgentToolCallbackProvider;
+
+    private final ToolCallbackProvider competencyExpertToolCallbackProvider;
 
     private final ChatMemory chatMemory;
 
+    private final String deploymentName;
+
+    private final double temperature;
+
     private static final ThreadLocal<Boolean> competencyCreatedInCurrentRequest = ThreadLocal.withInitial(() -> false);
 
-    public AtlasAgentService(@Nullable ChatClient chatClient, AtlasPromptTemplateService templateService, @Nullable ToolCallbackProvider toolCallbackProvider,
-            @Nullable ChatMemory chatMemory) {
-        this.chatClient = chatClient;
+    private final ChatClient baseChatClient;
+
+    public AtlasAgentService(@Nullable ChatClient baseChatClient, AtlasPromptTemplateService templateService, @Nullable ToolCallbackProvider mainAgentToolCallbackProvider,
+            @Nullable ToolCallbackProvider competencyExpertToolCallbackProvider, @Nullable ChatMemory chatMemory, @Value("${atlas.chat-model:gpt-4o}") String deploymentName,
+            @Value("${atlas.chat-temperature:0.2}") double temperature) {
+        this.baseChatClient = baseChatClient;
         this.templateService = templateService;
-        this.toolCallbackProvider = toolCallbackProvider;
+        this.mainAgentToolCallbackProvider = mainAgentToolCallbackProvider;
+        this.competencyExpertToolCallbackProvider = competencyExpertToolCallbackProvider;
         this.chatMemory = chatMemory;
+        this.deploymentName = deploymentName;
+        this.temperature = temperature;
     }
 
     /**
@@ -56,13 +68,23 @@ public class AtlasAgentService {
      * @return Result containing the AI response and competency modification flag
      */
     public CompletableFuture<AgentChatResult> processChatMessage(String message, Long courseId, String sessionId) {
-        if (chatClient == null) {
+        if (baseChatClient == null) {
             return CompletableFuture.completedFuture(new AgentChatResult("Atlas Agent is not available. Please contact your administrator.", false));
         }
 
         try {
             // Reset the ThreadLocal flag at the start of each request
             competencyCreatedInCurrentRequest.set(false);
+
+            // Build a new ChatClient with memory advisor for this specific conversation
+            ChatClient.Builder clientBuilder = baseChatClient.mutate();
+
+            // Add memory advisor only for Atlas with conversation-specific session ID
+            if (chatMemory != null) {
+                clientBuilder.defaultAdvisors(MessageChatMemoryAdvisor.builder(chatMemory).conversationId(sessionId).build());
+            }
+
+            ChatClient atlasClient = clientBuilder.build();
 
             // Load system prompt from external template
             String resourcePath = "/prompts/atlas/agent_system_prompt.st";
@@ -72,18 +94,13 @@ public class AtlasAgentService {
             // Add course ID to system prompt instead of user message to avoid storing it in chat history
             String enhancedSystemPrompt = String.format("%s\n\nContext: You are assisting with Course ID: %d", systemPrompt, courseId);
 
-            AzureOpenAiChatOptions options = AzureOpenAiChatOptions.builder().deploymentName("gpt-4o").temperature(1.0).build();
+            AzureOpenAiChatOptions options = AzureOpenAiChatOptions.builder().deploymentName(deploymentName).temperature(temperature).build();
 
-            ChatClientRequestSpec promptSpec = chatClient.prompt().system(enhancedSystemPrompt).user(message).options(options);
-
-            // Add chat memory advisor using persistent JDBC-based memory
-            if (chatMemory != null) {
-                promptSpec = promptSpec.advisors(advisor -> advisor.param(ChatMemory.CONVERSATION_ID, sessionId));
-            }
+            ChatClientRequestSpec promptSpec = atlasClient.prompt().system(enhancedSystemPrompt).user(message).options(options);
 
             // Add tools
-            if (toolCallbackProvider != null) {
-                promptSpec = promptSpec.toolCallbacks(toolCallbackProvider);
+            if (mainAgentToolCallbackProvider != null) {
+                promptSpec = promptSpec.toolCallbacks(mainAgentToolCallbackProvider);
             }
 
             // Execute the chat (tools are executed internally by Spring AI)
@@ -148,7 +165,7 @@ public class AtlasAgentService {
      * @return true if the service is ready, false otherwise
      */
     public boolean isAvailable() {
-        return chatClient != null && chatMemory != null;
+        return baseChatClient != null && chatMemory != null;
     }
 
     /**
