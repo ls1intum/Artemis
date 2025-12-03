@@ -67,6 +67,8 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
 
     private final Map<String, String> participationCommitHashes = new HashMap<>();
 
+    private final List<LocalRepository> createdRepos = new ArrayList<>();
+
     @BeforeEach
     void init() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 10, 2, 1, 2);
@@ -94,6 +96,8 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
     @AfterEach
     void tearDown() throws Exception {
         RepositoryExportTestUtil.cleanupTrackedRepositories();
+        RepositoryExportTestUtil.resetRepos(createdRepos.toArray(LocalRepository[]::new));
+        createdRepos.clear();
         jenkinsRequestMockProvider.reset();
     }
 
@@ -766,6 +770,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
 
     private void seedRepositoryForParticipation(ProgrammingExerciseStudentParticipation participation, String filename) throws Exception {
         LocalRepository repo = RepositoryExportTestUtil.seedStudentRepositoryForParticipation(localVCLocalCITestService, participation);
+        createdRepos.add(repo);
         RepositoryExportTestUtil.writeFilesAndPush(repo, Map.of(filename, "class %s {}".formatted(filename.replace('.', '_'))), "seed " + filename);
         participationRepository.save(participation);
         var latestCommit = RepositoryExportTestUtil.getLatestCommit(repo);
