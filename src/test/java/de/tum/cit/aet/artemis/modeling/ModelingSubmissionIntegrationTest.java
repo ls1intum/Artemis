@@ -328,6 +328,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
         result.setScore(100D);
         result.setRated(true);
         result.setAssessor(user);
+        result.setExerciseId(classExercise.getId());
         submission.addResult(result);
         ModelingSubmission storedSubmission = request.postWithResponseBody("/api/modeling/exercises/" + classExercise.getId() + "/modeling-submissions", submission,
                 ModelingSubmission.class);
@@ -1029,6 +1030,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
         if (assessor != null) {
             result.setAssessor(assessor);
         }
+        result.setExerciseId(participation.getExercise().getId());
         resultRepository.save(result);
         submission.addResult(result);
         modelingSubmissionRepo.save(submission);

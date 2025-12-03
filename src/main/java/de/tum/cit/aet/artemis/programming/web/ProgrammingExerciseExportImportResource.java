@@ -20,10 +20,9 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import jakarta.validation.constraints.NotNull;
-
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.errors.LargeObjectException;
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -466,7 +465,7 @@ public class ProgrammingExerciseExportImportResource {
         return commitHashes;
     }
 
-    private ResponseEntity<Resource> provideZipForParticipations(@NotNull Collection<ProgrammingExerciseStudentParticipation> studentParticipations,
+    private ResponseEntity<Resource> provideZipForParticipations(@NonNull Collection<ProgrammingExerciseStudentParticipation> studentParticipations,
             ProgrammingExercise programmingExercise, RepositoryExportOptionsDTO repositoryExportOptions, Map<Long, String> participationCommitHashes) throws IOException {
         long start = System.nanoTime();
 

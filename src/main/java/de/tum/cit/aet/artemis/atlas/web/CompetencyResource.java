@@ -5,8 +5,7 @@ import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Set;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -44,7 +43,6 @@ import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
-import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
@@ -139,7 +137,7 @@ public class CompetencyResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("courses/{courseId}/competencies")
-    @EnforceAtLeastInstructorInCourse
+    @EnforceAtLeastEditorInCourse
     public ResponseEntity<Competency> createCompetency(@PathVariable long courseId, @RequestBody Competency competency) throws URISyntaxException {
         log.debug("REST request to create Competency : {}", competency);
         checkCompetencyAttributesForCreation(competency);
@@ -163,7 +161,7 @@ public class CompetencyResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("courses/{courseId}/competencies/bulk")
-    @EnforceAtLeastInstructorInCourse
+    @EnforceAtLeastEditorInCourse
     public ResponseEntity<List<Competency>> createCompetencies(@PathVariable Long courseId, @RequestBody List<Competency> competencies) throws URISyntaxException {
         log.debug("REST request to create Competencies : {}", competencies);
         for (Competency competency : competencies) {
@@ -188,7 +186,7 @@ public class CompetencyResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("courses/{courseId}/competencies/import")
-    @EnforceAtLeastInstructorInCourse
+    @EnforceAtLeastEditorInCourse
     public ResponseEntity<Competency> importCompetency(@PathVariable long courseId, @RequestBody CompetencyImportOptionsDTO importOptions) throws URISyntaxException {
         log.info("REST request to import a competency: {}", importOptions.competencyIds());
 
@@ -255,7 +253,7 @@ public class CompetencyResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("courses/{courseId}/competencies/import-all")
-    @EnforceAtLeastInstructorInCourse
+    @EnforceAtLeastEditorInCourse
     public ResponseEntity<Set<CompetencyWithTailRelationDTO>> importAllCompetenciesFromCourse(@PathVariable long courseId, @RequestBody CompetencyImportOptionsDTO importOptions)
             throws URISyntaxException {
         log.info("REST request to all competencies from course {} into course {}", importOptions.sourceCourseId(), courseId);
@@ -305,7 +303,7 @@ public class CompetencyResource {
      * @return the ResponseEntity with status 200 (OK) and with body the updated competency
      */
     @PutMapping("courses/{courseId}/competencies")
-    @EnforceAtLeastInstructorInCourse
+    @EnforceAtLeastEditorInCourse
     public ResponseEntity<Competency> updateCompetency(@PathVariable long courseId, @RequestBody Competency competency) {
         log.debug("REST request to update Competency : {}", competency);
         checkCompetencyAttributesForUpdate(competency);
@@ -330,7 +328,7 @@ public class CompetencyResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("courses/{courseId}/competencies/{competencyId}")
-    @EnforceAtLeastInstructorInCourse
+    @EnforceAtLeastEditorInCourse
     public ResponseEntity<Void> deleteCompetency(@PathVariable long competencyId, @PathVariable long courseId) {
         log.info("REST request to delete a Competency : {}", competencyId);
 
@@ -376,7 +374,7 @@ public class CompetencyResource {
      * @return the ResponseEntity with status 200 (OK) and with body the suggested competency relations
      */
     @GetMapping("courses/{courseId}/competencies/relations/suggest")
-    @EnforceAtLeastStudentInCourse
+    @EnforceAtLeastEditorInCourse
     @FeatureToggle(Feature.AtlasML)
     public ResponseEntity<SuggestCompetencyRelationsResponseDTO> suggestCompetencyRelations(@PathVariable long courseId) {
         log.debug("REST request to suggest competency relations using AtlasML for course: {}", courseId);
@@ -421,7 +419,7 @@ public class CompetencyResource {
      * @param operationType        the operation type (UPDATE or DELETE)
      * @param operationDescription the description of the operation for logging purposes
      */
-    private void notifyAtlasML(List<Competency> competencies, @NotNull OperationTypeDTO operationType, String operationDescription) {
+    private void notifyAtlasML(List<Competency> competencies, @NonNull OperationTypeDTO operationType, String operationDescription) {
         try {
             atlasMLApi.saveCompetencies(competencies, operationType);
         }
@@ -436,7 +434,7 @@ public class CompetencyResource {
      * @param course     The course for which to check the authorization role for
      * @param competency The competency to be accessed by the user
      */
-    private void checkCourseForCompetency(@NotNull Course course, @NotNull CourseCompetency competency) {
+    private void checkCourseForCompetency(@NonNull Course course, @NonNull CourseCompetency competency) {
         if (competency.getCourse() == null) {
             throw new BadRequestAlertException("A competency must belong to a course", ENTITY_NAME, "competencyNoCourse");
         }

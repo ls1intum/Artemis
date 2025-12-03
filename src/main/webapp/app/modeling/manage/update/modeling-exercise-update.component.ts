@@ -259,15 +259,15 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
                 title: 'artemisApp.exercise.sections.grading',
                 valid: Boolean(
                     this.points?.valid &&
-                        this.bonusPoints?.valid &&
-                        (this.isExamMode ||
-                            (!this.modelingExercise.startDateError &&
-                                !this.modelingExercise.dueDateError &&
-                                !this.modelingExercise.assessmentDueDateError &&
-                                this.releaseDateField?.dateInput.valid &&
-                                this.startDateField?.dateInput.valid &&
-                                this.dueDateField?.dateInput.valid &&
-                                this.assessmentDateField?.dateInput.valid)),
+                    this.bonusPoints?.valid &&
+                    (this.isExamMode ||
+                        (!this.modelingExercise.startDateError &&
+                            !this.modelingExercise.dueDateError &&
+                            !this.modelingExercise.assessmentDueDateError &&
+                            this.releaseDateField?.dateInput.valid &&
+                            this.startDateField?.dateInput.valid &&
+                            this.dueDateField?.dateInput.valid &&
+                            this.assessmentDateField?.dateInput.valid)),
                 ),
                 empty:
                     !this.isExamMode &&

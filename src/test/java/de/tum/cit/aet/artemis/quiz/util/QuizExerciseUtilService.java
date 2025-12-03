@@ -9,9 +9,8 @@ import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
-import jakarta.validation.constraints.NotNull;
-
 import org.apache.commons.io.FileUtils;
+import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -249,7 +248,7 @@ public class QuizExerciseUtilService {
      * @param endDate   The end date of the exam, also used to set the end date of the course the exam is in.
      * @return The created exam quiz exercise.
      */
-    @NotNull
+    @NonNull
     public QuizExercise createAndSaveExamQuiz(ZonedDateTime startDate, ZonedDateTime endDate) {
         Course course = createAndSaveCourse(null, startDate.minusDays(1), endDate.plusDays(1), new HashSet<>());
 
@@ -324,7 +323,7 @@ public class QuizExerciseUtilService {
         submittedAnswerMC.setQuizQuestion(multipleChoiceQuestion);
         var submittedAnswerSC = new MultipleChoiceSubmittedAnswer();
         MultipleChoiceQuestion singleChoiceQuestion = (MultipleChoiceQuestion) (quizExercise.getQuizQuestions().get(3));
-        submittedAnswerSC.setSelectedOptions(Set.of(multipleChoiceQuestion.getAnswerOptions().getFirst()));
+        submittedAnswerSC.setSelectedOptions(Set.of(singleChoiceQuestion.getAnswerOptions().getFirst()));
         submittedAnswerSC.setQuizQuestion(singleChoiceQuestion);
         var submittedShortAnswer = new ShortAnswerSubmittedAnswer();
         ShortAnswerQuestion shortAnswerQuestion = (ShortAnswerQuestion) (quizExercise.getQuizQuestions().get(2));
@@ -387,6 +386,8 @@ public class QuizExerciseUtilService {
         dragAndDropMapping.setQuestion(dragAndDropQuestion);
         incorrectDragAndDropMapping.setQuestion(dragAndDropQuestion);
         mappingWithImage.setQuestion(dragAndDropQuestion);
+        quizQuestionRepository.saveAndFlush(multipleChoiceQuestion);
+        quizQuestionRepository.saveAndFlush(singleChoiceQuestion);
         quizQuestionRepository.save(dragAndDropQuestion);
         submittedAnswerRepository.save(submittedAnswerMC);
         submittedAnswerRepository.save(submittedAnswerSC);
