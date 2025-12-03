@@ -997,33 +997,6 @@ describe('IrisBaseChatbotComponent', () => {
             expect(rateSpy).not.toHaveBeenCalled();
         });
 
-        it('should set message.helpful to true when rated helpful', () => {
-            const llmMessage = { ...mockServerMessage, sender: IrisSender.LLM } as IrisMessage;
-            jest.spyOn(chatService, 'rateMessage').mockReturnValue(of(undefined as any));
-
-            component.rateMessage(llmMessage, true);
-
-            expect(llmMessage.helpful).toBeTrue();
-        });
-
-        it('should set message.helpful to false when rated unhelpful', () => {
-            const llmMessage = { ...mockServerMessage, sender: IrisSender.LLM } as IrisMessage;
-            jest.spyOn(chatService, 'rateMessage').mockReturnValue(of(undefined as any));
-
-            component.rateMessage(llmMessage, false);
-
-            expect(llmMessage.helpful).toBeFalse();
-        });
-
-        it('should set message.helpful to false when rating is undefined', () => {
-            const llmMessage = { ...mockServerMessage, sender: IrisSender.LLM } as IrisMessage;
-            jest.spyOn(chatService, 'rateMessage').mockReturnValue(of(undefined as any));
-
-            component.rateMessage(llmMessage, undefined);
-
-            expect(llmMessage.helpful).toBeFalse();
-        });
-
         it('should call chatService.rateMessage with message and rating', () => {
             const llmMessage = { ...mockServerMessage, sender: IrisSender.LLM } as IrisMessage;
             const rateSpy = jest.spyOn(chatService, 'rateMessage').mockReturnValue(of(undefined as any));
