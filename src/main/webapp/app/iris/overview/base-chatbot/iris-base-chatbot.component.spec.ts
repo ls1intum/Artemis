@@ -1150,7 +1150,7 @@ describe('IrisBaseChatbotComponent', () => {
         });
 
         it('should not resend if message sender is not USER', () => {
-            const llmMessage = { ...mockServerMessage, sender: IrisSender.LLM };
+            const llmMessage = { ...mockServerMessage, sender: IrisSender.LLM } as IrisMessage;
             const resendSpy = jest.spyOn(chatService, 'resendMessage');
             const sendSpy = jest.spyOn(chatService, 'sendMessage');
 
@@ -1161,7 +1161,7 @@ describe('IrisBaseChatbotComponent', () => {
         });
 
         it('should set resendAnimationActive to false after resending with id', () => {
-            const userMessage = { ...mockClientMessage, id: 123, sender: IrisSender.USER };
+            const userMessage = { ...mockClientMessage, id: 123, sender: IrisSender.USER } as IrisMessage;
             jest.spyOn(chatService, 'resendMessage').mockReturnValue(of(userMessage as any));
 
             component.resendMessage(userMessage);
@@ -1170,7 +1170,7 @@ describe('IrisBaseChatbotComponent', () => {
         });
 
         it('should call resendMessage when message has id', () => {
-            const userMessage = { ...mockClientMessage, id: 123, sender: IrisSender.USER };
+            const userMessage = { ...mockClientMessage, id: 123, sender: IrisSender.USER } as IrisMessage;
             const resendSpy = jest.spyOn(chatService, 'resendMessage').mockReturnValue(of(userMessage as any));
 
             component.resendMessage(userMessage);
@@ -1179,7 +1179,7 @@ describe('IrisBaseChatbotComponent', () => {
         });
 
         it('should set isLoading to false after resending message with id', () => {
-            const userMessage = { ...mockClientMessage, id: 123, sender: IrisSender.USER };
+            const userMessage = { ...mockClientMessage, id: 123, sender: IrisSender.USER } as IrisMessage;
             jest.spyOn(chatService, 'resendMessage').mockReturnValue(of(userMessage as any));
 
             component.resendMessage(userMessage);
@@ -1193,7 +1193,7 @@ describe('IrisBaseChatbotComponent', () => {
                 id: undefined,
                 sender: IrisSender.USER,
                 content: [{ textContent: 'Test message', type: 'text' } as any],
-            };
+            } as IrisMessage;
             const sendSpy = jest.spyOn(chatService, 'sendMessage').mockReturnValue(of(undefined as any));
 
             component.resendMessage(userMessage);
@@ -1207,7 +1207,7 @@ describe('IrisBaseChatbotComponent', () => {
                 id: undefined,
                 sender: IrisSender.USER,
                 content: [{ textContent: 'Test message', type: 'text' } as any],
-            };
+            } as IrisMessage;
             jest.spyOn(chatService, 'sendMessage').mockReturnValue(of(undefined as any));
 
             component.resendMessage(userMessage);
@@ -1221,7 +1221,7 @@ describe('IrisBaseChatbotComponent', () => {
                 id: undefined,
                 sender: IrisSender.USER,
                 content: [],
-            };
+            } as IrisMessage;
             const sendSpy = jest.spyOn(chatService, 'sendMessage');
             const resendSpy = jest.spyOn(chatService, 'resendMessage');
 
@@ -1238,7 +1238,7 @@ describe('IrisBaseChatbotComponent', () => {
                 id: undefined,
                 sender: IrisSender.USER,
                 content: [{ type: 'text' } as any],
-            };
+            } as IrisMessage;
             const sendSpy = jest.spyOn(chatService, 'sendMessage');
 
             component.resendMessage(userMessage);
@@ -1248,7 +1248,7 @@ describe('IrisBaseChatbotComponent', () => {
         });
 
         it('should set resendAnimationActive to false after resend completes', fakeAsync(() => {
-            const userMessage = { ...mockClientMessage, id: 123, sender: IrisSender.USER };
+            const userMessage = { ...mockClientMessage, id: 123, sender: IrisSender.USER } as IrisMessage;
             jest.spyOn(chatService, 'resendMessage').mockReturnValue(of(userMessage as any));
 
             component.resendMessage(userMessage);
@@ -1258,7 +1258,7 @@ describe('IrisBaseChatbotComponent', () => {
         }));
 
         it('should set isLoading to false after resend completes', fakeAsync(() => {
-            const userMessage = { ...mockClientMessage, id: 123, sender: IrisSender.USER };
+            const userMessage = { ...mockClientMessage, id: 123, sender: IrisSender.USER } as IrisMessage;
             jest.spyOn(chatService, 'resendMessage').mockReturnValue(of(userMessage as any));
 
             component.resendMessage(userMessage);
@@ -1268,7 +1268,7 @@ describe('IrisBaseChatbotComponent', () => {
         }));
 
         it('should call messagesRead after resend completes', fakeAsync(() => {
-            const userMessage = { ...mockClientMessage, id: 123, sender: IrisSender.USER };
+            const userMessage = { ...mockClientMessage, id: 123, sender: IrisSender.USER } as IrisMessage;
             jest.spyOn(chatService, 'resendMessage').mockReturnValue(of(userMessage as any));
             const messagesReadSpy = jest.spyOn(chatService, 'messagesRead');
 
@@ -1284,7 +1284,7 @@ describe('IrisBaseChatbotComponent', () => {
                 id: undefined,
                 sender: IrisSender.USER,
                 content: [{ textContent: 'Test', type: 'text' } as any],
-            };
+            } as IrisMessage;
             jest.spyOn(chatService, 'sendMessage').mockReturnValue(of(undefined as any));
 
             component.resendMessage(userMessage);
@@ -1299,7 +1299,7 @@ describe('IrisBaseChatbotComponent', () => {
                 id: undefined,
                 sender: IrisSender.USER,
                 content: [{ textContent: 'Test', type: 'text' } as any],
-            };
+            } as IrisMessage;
             jest.spyOn(chatService, 'sendMessage').mockReturnValue(of(undefined as any));
 
             component.resendMessage(userMessage);
@@ -1412,10 +1412,13 @@ describe('IrisBaseChatbotComponent', () => {
 
     describe('onClearSession', () => {
         let modalRef: any;
+        let modalService: NgbModal;
 
         beforeEach(() => {
             component.userAccepted = LLMSelectionDecision.CLOUD_AI;
             fixture.detectChanges();
+
+            modalService = TestBed.inject(NgbModal);
 
             modalRef = {
                 result: Promise.resolve('confirm'),
@@ -1423,7 +1426,7 @@ describe('IrisBaseChatbotComponent', () => {
         });
 
         it('should open modal with provided content', () => {
-            const openSpy = jest.spyOn(component.modalService, 'open').mockReturnValue(modalRef);
+            const openSpy = jest.spyOn(modalService, 'open').mockReturnValue(modalRef);
             const content = { template: 'test' };
 
             component.onClearSession(content);
@@ -1433,7 +1436,7 @@ describe('IrisBaseChatbotComponent', () => {
 
         it('should not call clearChat when result is not confirm', fakeAsync(() => {
             modalRef.result = Promise.resolve('cancel');
-            jest.spyOn(component.modalService, 'open').mockReturnValue(modalRef);
+            jest.spyOn(modalService, 'open').mockReturnValue(modalRef);
             const clearChatSpy = jest.spyOn(chatService, 'clearChat');
 
             component.onClearSession({});
@@ -1444,7 +1447,7 @@ describe('IrisBaseChatbotComponent', () => {
 
         it('should not set isLoading to false when result is not confirm', fakeAsync(() => {
             modalRef.result = Promise.resolve('cancel');
-            jest.spyOn(component.modalService, 'open').mockReturnValue(modalRef);
+            jest.spyOn(modalService, 'open').mockReturnValue(modalRef);
             component.isLoading = true;
 
             component.onClearSession({});
