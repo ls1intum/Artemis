@@ -28,7 +28,7 @@
                 "internalAccepted": "Du hast die Nutzung von internen LLMs am {{acceptedDate}} akzeptiert.",
                 "internalDeclined": "Du hast die Nutzung von internen LLMs nicht akzeptiert.",
                 "AIDeclined": "Du hast die Nutzung von LLMs am {{acceptedDate}} explizit abgelehnt.",
-                "noAISelected": "Du hast noch keine Entscheidung über die Verwendung von LLMs getroffen",
+                "noAISelected": "Du hast noch keine Entscheidung über die Verwendung von LLMs getroffen.",
                 "chooseAI": "Auswahl ändern"
             },
             "sshSettingsPage": {

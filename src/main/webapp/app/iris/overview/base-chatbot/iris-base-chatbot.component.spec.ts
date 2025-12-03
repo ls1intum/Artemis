@@ -15,6 +15,7 @@ import { IrisStatusService } from 'app/iris/overview/services/iris-status.servic
 import { IrisChatHttpService } from 'app/iris/overview/services/iris-chat-http.service';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { IrisWebsocketService } from 'app/iris/overview/services/iris-websocket.service';
+import { IrisSender } from 'app/iris/shared/entities/iris-message.model';
 import { of } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -678,5 +679,467 @@ describe('IrisBaseChatbotComponent', () => {
 
             expect(emitSpy).toHaveBeenCalledOnce();
         });
+    });
+
+    describe('onModelChange', () => {
+        beforeEach(() => {
+            component.userAccepted = LLMSelectionDecision.CLOUD_AI;
+            fixture.detectChanges();
+        });
+
+        it('should update rows when newRows is less than current rows', () => {
+            component.rows = 3;
+            component.messageTextarea.nativeElement.value = 'Line 1\nLine 2';
+            const adjustSpy = jest.spyOn(component, 'adjustScrollButtonPosition');
+
+            component.onModelChange();
+
+            expect(component.rows).toBe(2);
+            expect(adjustSpy).toHaveBeenCalledWith(2);
+        });
+
+        it('should update rows when newRows is greater than current rows', () => {
+            component.rows = 1;
+            component.messageTextarea.nativeElement.value = 'Line 1\nLine 2\nLine 3';
+            const adjustSpy = jest.spyOn(component, 'adjustScrollButtonPosition');
+
+            component.onModelChange();
+
+            expect(component.rows).toBe(3);
+            expect(adjustSpy).toHaveBeenCalledWith(3);
+        });
+
+        it('should not update rows when newRows equals current rows', () => {
+            component.rows = 2;
+            component.messageTextarea.nativeElement.value = 'Line 1\nLine 2';
+            const adjustSpy = jest.spyOn(component, 'adjustScrollButtonPosition');
+
+            component.onModelChange();
+
+            expect(adjustSpy).not.toHaveBeenCalled();
+        });
+
+        it('should not update rows when newRows exceeds 3', () => {
+            component.rows = 3;
+            component.messageTextarea.nativeElement.value = 'Line 1\nLine 2\nLine 3\nLine 4';
+            const adjustSpy = jest.spyOn(component, 'adjustScrollButtonPosition');
+
+            component.onModelChange();
+
+            expect(component.rows).toBe(3);
+            expect(adjustSpy).not.toHaveBeenCalled();
+        });
+
+        it('should set rows to 1 when textarea has single line', () => {
+            component.rows = 2;
+            component.messageTextarea.nativeElement.value = 'Single line';
+            const adjustSpy = jest.spyOn(component, 'adjustScrollButtonPosition');
+
+            component.onModelChange();
+
+            expect(component.rows).toBe(1);
+            expect(adjustSpy).toHaveBeenCalledWith(1);
+        });
+
+        it('should cap rows at 3 when textarea has more than 3 lines', () => {
+            component.rows = 2;
+            component.messageTextarea.nativeElement.value = 'Line 1\nLine 2\nLine 3\nLine 4\nLine 5';
+
+            component.onModelChange();
+
+            expect(component.rows).toBe(2); // Should not update beyond current when > 3
+        });
+    });
+
+    describe('checkChatScroll', () => {
+        beforeEach(() => {
+            component.userAccepted = LLMSelectionDecision.CLOUD_AI;
+
+            const mockMessages = [mockClientMessage, mockServerMessage];
+            jest.spyOn(chatService, 'currentMessages').mockReturnValue(of(mockMessages));
+
+            component.ngOnInit();
+            fixture.detectChanges();
+        });
+
+        it('should set isScrolledToBottom to true when scrollTop is 0', () => {
+            const messagesElement = component.messagesElement.nativeElement;
+            Object.defineProperty(messagesElement, 'scrollTop', { value: 0, writable: true, configurable: true });
+
+            component.checkChatScroll();
+
+            expect(component.isScrolledToBottom).toBeTrue();
+        });
+
+        it('should set isScrolledToBottom to true when scrollTop is less than 50', () => {
+            const messagesElement = component.messagesElement.nativeElement;
+            Object.defineProperty(messagesElement, 'scrollTop', { value: 30, writable: true, configurable: true });
+
+            component.checkChatScroll();
+
+            expect(component.isScrolledToBottom).toBeTrue();
+        });
+
+        it('should set isScrolledToBottom to true when scrollTop is exactly 49', () => {
+            const messagesElement = component.messagesElement.nativeElement;
+            Object.defineProperty(messagesElement, 'scrollTop', { value: 49, writable: true, configurable: true });
+
+            component.checkChatScroll();
+
+            expect(component.isScrolledToBottom).toBeTrue();
+        });
+
+        it('should set isScrolledToBottom to false when scrollTop is exactly 50', () => {
+            const messagesElement = component.messagesElement.nativeElement;
+            Object.defineProperty(messagesElement, 'scrollTop', { value: 50, writable: true, configurable: true });
+
+            component.checkChatScroll();
+
+            expect(component.isScrolledToBottom).toBeFalse();
+        });
+
+        it('should set isScrolledToBottom to false when scrollTop is greater than 50', () => {
+            const messagesElement = component.messagesElement.nativeElement;
+            Object.defineProperty(messagesElement, 'scrollTop', { value: 100, writable: true, configurable: true });
+
+            component.checkChatScroll();
+
+            expect(component.isScrolledToBottom).toBeFalse();
+        });
+    });
+
+    describe('computeRelatedEntityRoute', () => {
+        it('should return undefined when chatMode is undefined', () => {
+            const result = component['computeRelatedEntityRoute'](undefined, 123);
+            expect(result).toBeUndefined();
+        });
+
+        it('should return undefined when relatedEntityId is undefined', () => {
+            const result = component['computeRelatedEntityRoute'](ChatServiceMode.PROGRAMMING_EXERCISE, undefined);
+            expect(result).toBeUndefined();
+        });
+
+        it('should return undefined when both chatMode and relatedEntityId are undefined', () => {
+            const result = component['computeRelatedEntityRoute'](undefined, undefined);
+            expect(result).toBeUndefined();
+        });
+
+        it('should return correct route for PROGRAMMING_EXERCISE', () => {
+            const result = component['computeRelatedEntityRoute'](ChatServiceMode.PROGRAMMING_EXERCISE, 456);
+            expect(result).toBe('../exercises/456');
+        });
+
+        it('should return correct route for LECTURE', () => {
+            const result = component['computeRelatedEntityRoute'](ChatServiceMode.LECTURE, 789);
+            expect(result).toBe('../lectures/789');
+        });
+
+        it('should return undefined for COURSE mode', () => {
+            const result = component['computeRelatedEntityRoute'](ChatServiceMode.COURSE, 123);
+            expect(result).toBeUndefined();
+        });
+
+        it('should return undefined for unknown chat mode', () => {
+            const result = component['computeRelatedEntityRoute']('UNKNOWN_MODE' as any, 123);
+            expect(result).toBeUndefined();
+        });
+    });
+
+    describe('computeRelatedEntityLinkButtonLabel', () => {
+        it('should return undefined when chatMode is undefined', () => {
+            const result = component['computeRelatedEntityLinkButtonLabel'](undefined);
+            expect(result).toBeUndefined();
+        });
+
+        it('should return correct label for PROGRAMMING_EXERCISE', () => {
+            const result = component['computeRelatedEntityLinkButtonLabel'](ChatServiceMode.PROGRAMMING_EXERCISE);
+            expect(result).toBe('artemisApp.exerciseChatbot.goToRelatedEntityButton.exerciseLabel');
+        });
+
+        it('should return correct label for LECTURE', () => {
+            const result = component['computeRelatedEntityLinkButtonLabel'](ChatServiceMode.LECTURE);
+            expect(result).toBe('artemisApp.exerciseChatbot.goToRelatedEntityButton.lectureLabel');
+        });
+
+        it('should return undefined for COURSE mode', () => {
+            const result = component['computeRelatedEntityLinkButtonLabel'](ChatServiceMode.COURSE);
+            expect(result).toBeUndefined();
+        });
+
+        it('should return undefined for unknown chat mode', () => {
+            const result = component['computeRelatedEntityLinkButtonLabel']('UNKNOWN_MODE' as any);
+            expect(result).toBeUndefined();
+        });
+    });
+
+    describe('resetChatBodyHeight', () => {
+        beforeEach(() => {
+            component.userAccepted = LLMSelectionDecision.CLOUD_AI;
+            fixture.detectChanges();
+        });
+
+        it('should reset textarea rows to 1', () => {
+            const textarea = component.messageTextarea.nativeElement;
+            textarea.rows = 3;
+
+            component.resetChatBodyHeight();
+
+            expect(textarea.rows).toBe(1);
+        });
+
+        it('should reset textarea height style to empty string', () => {
+            const textarea = component.messageTextarea.nativeElement;
+            textarea.style.height = '100px';
+
+            component.resetChatBodyHeight();
+
+            expect(textarea.style.height).toBe('');
+        });
+
+        it('should reset scrollArrow bottom style to empty string', () => {
+            const scrollArrow = component.scrollArrow.nativeElement;
+            scrollArrow.style.bottom = '50px';
+
+            component.resetChatBodyHeight();
+
+            expect(scrollArrow.style.bottom).toBe('');
+        });
+
+        it('should reset all properties at once', () => {
+            const textarea = component.messageTextarea.nativeElement;
+            const scrollArrow = component.scrollArrow.nativeElement;
+            textarea.rows = 5;
+            textarea.style.height = '200px';
+            scrollArrow.style.bottom = '100px';
+
+            component.resetChatBodyHeight();
+
+            expect(textarea.rows).toBe(1);
+            expect(textarea.style.height).toBe('');
+            expect(scrollArrow.style.bottom).toBe('');
+        });
+    });
+
+    describe('adjustTextareaRows', () => {
+        beforeEach(() => {
+            component.userAccepted = LLMSelectionDecision.CLOUD_AI;
+            fixture.detectChanges();
+        });
+
+        it('should set textarea height to auto initially', () => {
+            const textarea = component.messageTextarea.nativeElement;
+            const adjustSpy = jest.spyOn(component, 'adjustScrollButtonPosition');
+
+            component.adjustTextareaRows();
+
+            expect(textarea.style.height).toContain('auto');
+            expect(adjustSpy).toHaveBeenCalled();
+        });
+
+        it('should calculate height based on scrollHeight when less than maxHeight', () => {
+            const textarea = component.messageTextarea.nativeElement;
+            Object.defineProperty(textarea, 'scrollHeight', { value: 50, writable: true, configurable: true });
+            jest.spyOn(window, 'getComputedStyle').mockReturnValue({ lineHeight: '20px' } as CSSStyleDeclaration);
+
+            component.adjustTextareaRows();
+
+            expect(textarea.style.height).toBe('50px');
+        });
+
+        it('should cap height at maxHeight when scrollHeight exceeds it', () => {
+            const textarea = component.messageTextarea.nativeElement;
+            Object.defineProperty(textarea, 'scrollHeight', { value: 500, writable: true, configurable: true });
+            jest.spyOn(window, 'getComputedStyle').mockReturnValue({ lineHeight: '20px' } as CSSStyleDeclaration);
+
+            component.adjustTextareaRows();
+
+            // maxHeight = (20 + 4) * 3 = 72px
+            expect(textarea.style.height).toBe('72px');
+        });
+
+        it('should call adjustScrollButtonPosition with correct value', () => {
+            const textarea = component.messageTextarea.nativeElement;
+            Object.defineProperty(textarea, 'scrollHeight', { value: 60, writable: true, configurable: true });
+            jest.spyOn(window, 'getComputedStyle').mockReturnValue({ lineHeight: '20px' } as CSSStyleDeclaration);
+            const adjustSpy = jest.spyOn(component, 'adjustScrollButtonPosition');
+
+            component.adjustTextareaRows();
+
+            // 60 / (20 + 4) = 2.5
+            expect(adjustSpy).toHaveBeenCalledWith(2.5);
+        });
+
+        it('should call adjustScrollButtonPosition with maxHeight ratio when exceeded', () => {
+            const textarea = component.messageTextarea.nativeElement;
+            Object.defineProperty(textarea, 'scrollHeight', { value: 500, writable: true, configurable: true });
+            jest.spyOn(window, 'getComputedStyle').mockReturnValue({ lineHeight: '20px' } as CSSStyleDeclaration);
+            const adjustSpy = jest.spyOn(component, 'adjustScrollButtonPosition');
+
+            component.adjustTextareaRows();
+
+            // maxHeight = 72, lineHeight = 24, ratio = 72/24 = 3
+            expect(adjustSpy).toHaveBeenCalledWith(3);
+        });
+    });
+
+    describe('rateMessage', () => {
+        beforeEach(() => {
+            component.userAccepted = LLMSelectionDecision.CLOUD_AI;
+            fixture.detectChanges();
+        });
+
+        it('should not rate if message sender is not LLM', () => {
+            const userMessage = { ...mockClientMessage, sender: IrisSender.USER };
+            const rateSpy = jest.spyOn(chatService, 'rateMessage');
+
+            component.rateMessage(userMessage, true);
+
+            expect(rateSpy).not.toHaveBeenCalled();
+        });
+
+        it('should set message.helpful to true when rated helpful', () => {
+            const llmMessage = { ...mockServerMessage, sender: IrisSender.LLM };
+            jest.spyOn(chatService, 'rateMessage').mockReturnValue(of(undefined as any));
+
+            component.rateMessage(llmMessage, true);
+
+            expect(llmMessage.helpful).toBeTrue();
+        });
+
+        it('should set message.helpful to false when rated unhelpful', () => {
+            const llmMessage = { ...mockServerMessage, sender: IrisSender.LLM };
+            jest.spyOn(chatService, 'rateMessage').mockReturnValue(of(undefined as any));
+
+            component.rateMessage(llmMessage, false);
+
+            expect(llmMessage.helpful).toBeFalse();
+        });
+
+        it('should set message.helpful to false when rating is undefined', () => {
+            const llmMessage = { ...mockServerMessage, sender: IrisSender.LLM };
+            jest.spyOn(chatService, 'rateMessage').mockReturnValue(of(undefined as any));
+
+            component.rateMessage(llmMessage, undefined);
+
+            expect(llmMessage.helpful).toBeFalse();
+        });
+
+        it('should call chatService.rateMessage with message and rating', () => {
+            const llmMessage = { ...mockServerMessage, sender: IrisSender.LLM };
+            const rateSpy = jest.spyOn(chatService, 'rateMessage').mockReturnValue(of(undefined as any));
+
+            component.rateMessage(llmMessage, true);
+
+            expect(rateSpy).toHaveBeenCalledWith(llmMessage, true);
+        });
+
+        it('should subscribe to rateMessage observable', () => {
+            const llmMessage = { ...mockServerMessage, sender: IrisSender.LLM };
+            const mockObservable = of(undefined as any);
+            const subscribeSpy = jest.spyOn(mockObservable, 'subscribe');
+            jest.spyOn(chatService, 'rateMessage').mockReturnValue(mockObservable);
+
+            component.rateMessage(llmMessage, false);
+
+            expect(subscribeSpy).toHaveBeenCalled();
+        });
+    });
+
+    describe('onSend', () => {
+        beforeEach(() => {
+            component.userAccepted = LLMSelectionDecision.CLOUD_AI;
+            fixture.detectChanges();
+        });
+
+        it('should call messagesRead', () => {
+            const messagesReadSpy = jest.spyOn(chatService, 'messagesRead');
+            component.newMessageTextContent = 'Test message';
+            jest.spyOn(chatService, 'sendMessage').mockReturnValue(of(undefined as any));
+
+            component.onSend();
+
+            expect(messagesReadSpy).toHaveBeenCalled();
+        });
+
+        it('should set isLoading to true when sending message', () => {
+            component.newMessageTextContent = 'Test message';
+            jest.spyOn(chatService, 'sendMessage').mockReturnValue(of(undefined as any));
+
+            component.onSend();
+
+            expect(component.isLoading).toBeFalse();
+        });
+
+        it('should call sendMessage when newMessageTextContent is not empty', () => {
+            const testMessage = 'Test message content';
+            component.newMessageTextContent = testMessage;
+            const sendSpy = jest.spyOn(chatService, 'sendMessage').mockReturnValue(of(undefined as any));
+
+            component.onSend();
+
+            expect(sendSpy).toHaveBeenCalledWith(testMessage);
+        });
+
+        it('should not call sendMessage when newMessageTextContent is empty', () => {
+            component.newMessageTextContent = '';
+            const sendSpy = jest.spyOn(chatService, 'sendMessage');
+
+            component.onSend();
+
+            expect(sendSpy).not.toHaveBeenCalled();
+        });
+
+        it('should clear newMessageTextContent after sending', () => {
+            component.newMessageTextContent = 'Test message';
+            jest.spyOn(chatService, 'sendMessage').mockReturnValue(of(undefined as any));
+
+            component.onSend();
+
+            expect(component.newMessageTextContent).toBe('');
+        });
+
+        it('should set isLoading to false after message is sent', fakeAsync(() => {
+            component.newMessageTextContent = 'Test message';
+            jest.spyOn(chatService, 'sendMessage').mockReturnValue(of(undefined as any));
+
+            component.onSend();
+            tick();
+
+            expect(component.isLoading).toBeFalse();
+        }));
+
+        it('should call resetChatBodyHeight', () => {
+            const resetSpy = jest.spyOn(component, 'resetChatBodyHeight');
+            component.newMessageTextContent = '';
+
+            component.onSend();
+
+            expect(resetSpy).toHaveBeenCalled();
+        });
+
+        it('should call resetChatBodyHeight even when message is empty', () => {
+            const resetSpy = jest.spyOn(component, 'resetChatBodyHeight');
+            component.newMessageTextContent = '';
+
+            component.onSend();
+
+            expect(resetSpy).toHaveBeenCalled();
+        });
+
+        it('should handle complete flow: read, send, clear, reset', fakeAsync(() => {
+            const messagesReadSpy = jest.spyOn(chatService, 'messagesRead');
+            const sendSpy = jest.spyOn(chatService, 'sendMessage').mockReturnValue(of(undefined as any));
+            const resetSpy = jest.spyOn(component, 'resetChatBodyHeight');
+            component.newMessageTextContent = 'Complete test';
+
+            component.onSend();
+            tick();
+
+            expect(messagesReadSpy).toHaveBeenCalled();
+            expect(sendSpy).toHaveBeenCalledWith('Complete test');
+            expect(component.newMessageTextContent).toBe('');
+            expect(component.isLoading).toBeFalse();
+            expect(resetSpy).toHaveBeenCalled();
+        }));
     });
 });
