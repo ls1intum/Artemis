@@ -9,6 +9,8 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 import java.net.URL;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.function.Consumer;
 
@@ -33,6 +35,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettingsType;
+import de.tum.cit.aet.artemis.iris.dto.IngestionState;
+import de.tum.cit.aet.artemis.iris.dto.IngestionStateResponseDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisHealthStatusDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisVariantDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.course.PyrisCourseChatPipelineExecutionDTO;
@@ -74,6 +78,12 @@ public class IrisRequestMockProvider {
 
     @Value("${artemis.iris.url}/api/v1/memiris")
     private URL memirisApiURL;
+
+    @Value("${artemis.iris.url}")
+    private String irisBaseUrl;
+
+    @Value("${server.url}")
+    private String serverUrl;
 
     @Autowired
     private ObjectMapper mapper;
@@ -319,6 +329,34 @@ public class IrisRequestMockProvider {
         var dto = new PyrisHealthStatusDTO(overallHealthy != null && overallHealthy, modules); // allow null → false
         shortTimeoutMockServer.expect(ExpectedCount.once(), requestTo(healthApiURL.toString())).andExpect(method(HttpMethod.GET))
                 .andRespond(withSuccess(mapper.writeValueAsString(dto), MediaType.APPLICATION_JSON));
+    }
+
+    public void mockLectureUnitIngestionState(long courseId, long lectureId, long lectureUnitId, IngestionState state) throws JsonProcessingException {
+        var encodedBaseUrl = URLEncoder.encode(URLEncoder.encode(serverUrl, StandardCharsets.UTF_8), StandardCharsets.UTF_8);
+        var url = irisBaseUrl + "/api/v1/courses/" + courseId + "/lectures/" + lectureId + "/lectureUnits/" + lectureUnitId + "/ingestion-state?base_url=" + encodedBaseUrl;
+        var responseBody = new IngestionStateResponseDTO(state);
+        mockServer.expect(ExpectedCount.once(), requestTo(url)).andExpect(method(HttpMethod.GET))
+                .andRespond(withSuccess(mapper.writeValueAsString(responseBody), MediaType.APPLICATION_JSON));
+    }
+
+    public void mockLectureUnitIngestionStateError(long courseId, long lectureId, long lectureUnitId, HttpStatus status) {
+        var encodedBaseUrl = URLEncoder.encode(URLEncoder.encode(serverUrl, StandardCharsets.UTF_8), StandardCharsets.UTF_8);
+        var url = irisBaseUrl + "/api/v1/courses/" + courseId + "/lectures/" + lectureId + "/lectureUnits/" + lectureUnitId + "/ingestion-state?base_url=" + encodedBaseUrl;
+        mockServer.expect(ExpectedCount.once(), requestTo(url)).andExpect(method(HttpMethod.GET)).andRespond(withRawStatus(status.value()));
+    }
+
+    public void mockFaqIngestionState(long courseId, long faqId, IngestionState state) throws JsonProcessingException {
+        var encodedBaseUrl = URLEncoder.encode(URLEncoder.encode(serverUrl, StandardCharsets.UTF_8), StandardCharsets.UTF_8);
+        var url = irisBaseUrl + "/api/v1/courses/" + courseId + "/faqs/" + faqId + "/ingestion-state?base_url=" + encodedBaseUrl;
+        var responseBody = new IngestionStateResponseDTO(state);
+        mockServer.expect(ExpectedCount.once(), requestTo(url)).andExpect(method(HttpMethod.GET))
+                .andRespond(withSuccess(mapper.writeValueAsString(responseBody), MediaType.APPLICATION_JSON));
+    }
+
+    public void mockFaqIngestionStateError(long courseId, long faqId, HttpStatus status) {
+        var encodedBaseUrl = URLEncoder.encode(URLEncoder.encode(serverUrl, StandardCharsets.UTF_8), StandardCharsets.UTF_8);
+        var url = irisBaseUrl + "/api/v1/courses/" + courseId + "/faqs/" + faqId + "/ingestion-state?base_url=" + encodedBaseUrl;
+        mockServer.expect(ExpectedCount.once(), requestTo(url)).andExpect(method(HttpMethod.GET)).andRespond(withRawStatus(status.value()));
     }
 
     public void verify() {
