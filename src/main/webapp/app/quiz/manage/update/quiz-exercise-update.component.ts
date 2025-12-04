@@ -51,7 +51,7 @@ import { CalendarService } from 'app/core/calendar/shared/service/calendar.servi
 import { AiDifficultyLevel, AiGeneratedQuestionDTO, AiRequestedSubtype } from 'app/quiz/manage/service/ai-quiz-generation.service';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
+import { MODULE_FEATURE_HYPERION, PROFILE_HYPERION } from 'app/app.constants';
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 
 @Component({
@@ -438,6 +438,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
             return numberOfCorrectMappings * numberOfDragItems * numberOfDropLocations > 2197;
         });
     }
+
     checkItemCountShortAnswer(shortAnswerQuestions: ShortAnswerQuestion[]): boolean {
         if (!shortAnswerQuestions) return false;
         return shortAnswerQuestions?.some((shortAnswerQuestion) => {
@@ -486,6 +487,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
             this.save();
         }
     }
+
     /**
      * Save the quiz to the server and invoke callback functions depending on result
      */
@@ -723,7 +725,10 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
             return;
         }
 
-        const modalRef: NgbModalRef = this.modalService.open(AiQuizGenerationModalComponent, { size: 'lg', backdrop: 'static' });
+        const modalRef: NgbModalRef = this.modalService.open(AiQuizGenerationModalComponent, {
+            size: 'lg',
+            backdrop: 'static',
+        });
         (modalRef.componentInstance as AiQuizGenerationModalComponent).courseId = courseId;
 
         modalRef.result
@@ -770,6 +775,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
 
         return q;
     }
+
     private mapAiDifficultyToExerciseDifficulty(ai: AiDifficultyLevel): DifficultyLevel {
         switch (ai) {
             case AiDifficultyLevel.EASY:
@@ -794,6 +800,6 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
     }
 
     get hyperionEnabled(): boolean {
-        return this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
+        return this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION) && this.profileService.isProfileActive(PROFILE_HYPERION);
     }
 }
