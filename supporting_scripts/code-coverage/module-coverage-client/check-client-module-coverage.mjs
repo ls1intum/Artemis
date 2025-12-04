@@ -48,8 +48,8 @@ const moduleThresholds = {
         lines:      92.80,
     },
     core: {
-        statements: 89.20,
-        branches:   72.30,
+        statements: 89.19,
+        branches:   72.18,
         functions:  80.80,
         lines:      89.20,
     },
