@@ -15,18 +15,15 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageContent;
  *
  * @param content               the message content
  * @param messageDifferentiator used to differentiate messages
- * @param uncommittedFiles      optional map of uncommitted file changes (path to content)
+ * @param uncommittedFiles      optional map of uncommitted file changes (path to content), defaults to empty map if null
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record IrisMessageRequestDTO(@NonNull List<IrisMessageContent> content, @Nullable Integer messageDifferentiator, @Nullable Map<String, String> uncommittedFiles) {
+public record IrisMessageRequestDTO(@NonNull List<IrisMessageContent> content, @Nullable Integer messageDifferentiator, @NonNull Map<String, String> uncommittedFiles) {
 
     /**
-     * Returns uncommitted files or empty map if null.
-     *
-     * @return Map of uncommitted files (path to content)
+     * Compact constructor that normalizes null uncommittedFiles to an empty map.
      */
-    @Override
-    public Map<String, String> uncommittedFiles() {
-        return uncommittedFiles != null ? uncommittedFiles : Map.of();
+    public IrisMessageRequestDTO {
+        uncommittedFiles = uncommittedFiles != null ? uncommittedFiles : Map.of();
     }
 }
