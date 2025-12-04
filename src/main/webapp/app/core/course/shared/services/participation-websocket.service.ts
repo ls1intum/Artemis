@@ -153,7 +153,6 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
             return of();
         }
 
-        // ORIGINAL behavior: do NOT touch submissions[].results, only recompute flat participation.results
         const oldFlattened = getAllResultsOfAllSubmissions(cachedParticipation.submissions);
         const withoutOld = oldFlattened.filter((r) => r.id !== result.id);
         const updatedResults = [...withoutOld, result];

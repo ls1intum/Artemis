@@ -153,6 +153,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     instructorActionItems: InstructorActionItem[] = [];
     exerciseIcon: IconProp;
     numberOfPracticeResults: number;
+    latestResultSubscriptions: Subscription[] = [];
 
     exampleSolutionInfo?: ExampleSolutionInfo;
 
@@ -242,6 +243,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
 
         this.showIfExampleSolutionPresent(newExerciseDetails.exercise);
         this.subscribeForNewResults();
+        this.subscribeToLatestResultsForHistory();
         this.subscribeToTeamAssignmentUpdates();
 
         this.baseResource = `/course-management/${this.courseId}/${this.exercise.type}-exercises/${this.exercise.id}/`;
@@ -570,6 +572,70 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         };
     }
 
+    subscribeToLatestResultsForHistory() {
+        // Clean up old subscriptions
+        this.latestResultSubscriptions.forEach((s) => s.unsubscribe());
+        this.latestResultSubscriptions = [];
+
+        if (!this.exercise || !this.studentParticipations?.length) {
+            return;
+        }
+
+        for (const participation of this.studentParticipations) {
+            if (!participation.id) {
+                continue;
+            }
+
+            const sub = this.participationWebsocketService
+                .subscribeForLatestResultOfParticipation(participation.id, true, this.exercise.id)
+                .pipe(filter((result): result is Result => !!result))
+                .subscribe((result) => {
+                    this.logDebug('[CourseExerciseDetails] latest result for history', {
+                        exerciseId: this.exercise?.id,
+                        courseId: this.courseId,
+                        participationId: participation.id,
+                        resultId: result.id,
+                    });
+
+                    this.updateHistoryWithResult(result);
+                });
+
+            this.latestResultSubscriptions.push(sub);
+        }
+    }
+
+    private updateHistoryWithResult(result: Result) {
+        const participationId = result.submission?.participation?.id;
+        if (!participationId) {
+            return;
+        }
+
+        const participation = this.studentParticipations.find((p) => p.id === participationId);
+        if (!participation) {
+            return;
+        }
+
+        const submissions = participation.submissions ?? [];
+
+        participation.submissions = submissions.map((submission) => {
+            if (submission.id !== result.submission!.id) {
+                return submission;
+            }
+
+            const oldResults = submission.results ?? [];
+            const withoutOld = oldResults.filter((r) => r.id !== result.id);
+            const newResults = [...withoutOld, result];
+
+            return {
+                ...submission,
+                results: newResults,
+            };
+        });
+
+        this.sortResults();
+        this.loadComplaintAndLatestRatedResult();
+    }
+
     ngOnDestroy() {
         this.participationUpdateListener?.unsubscribe();
         this.studentParticipations?.forEach((participation) => {
@@ -581,6 +647,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this.teamAssignmentUpdateListener?.unsubscribe();
         this.submissionSubscription?.unsubscribe();
         this.paramsSubscription?.unsubscribe();
+        this.latestResultSubscriptions.forEach((s) => s.unsubscribe());
     }
 
     protected readonly hasResults = hasResults;
