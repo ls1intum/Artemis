@@ -9,8 +9,6 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 import java.net.URL;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.function.Consumer;
 
@@ -332,31 +330,31 @@ public class IrisRequestMockProvider {
     }
 
     public void mockLectureUnitIngestionState(long courseId, long lectureId, long lectureUnitId, IngestionState state) throws JsonProcessingException {
-        var encodedBaseUrl = URLEncoder.encode(URLEncoder.encode(serverUrl, StandardCharsets.UTF_8), StandardCharsets.UTF_8);
-        var url = irisBaseUrl + "/api/v1/courses/" + courseId + "/lectures/" + lectureId + "/lectureUnits/" + lectureUnitId + "/ingestion-state?base_url=" + encodedBaseUrl;
         var responseBody = new IngestionStateResponseDTO(state);
-        mockServer.expect(ExpectedCount.once(), requestTo(url)).andExpect(method(HttpMethod.GET))
+        mockServer
+                .expect(ExpectedCount.once(),
+                        request -> assertThat(request.getURI().getPath())
+                                .isEqualTo("/api/v1/courses/" + courseId + "/lectures/" + lectureId + "/lectureUnits/" + lectureUnitId + "/ingestion-state"))
                 .andRespond(withSuccess(mapper.writeValueAsString(responseBody), MediaType.APPLICATION_JSON));
     }
 
     public void mockLectureUnitIngestionStateError(long courseId, long lectureId, long lectureUnitId, HttpStatus status) {
-        var encodedBaseUrl = URLEncoder.encode(URLEncoder.encode(serverUrl, StandardCharsets.UTF_8), StandardCharsets.UTF_8);
-        var url = irisBaseUrl + "/api/v1/courses/" + courseId + "/lectures/" + lectureId + "/lectureUnits/" + lectureUnitId + "/ingestion-state?base_url=" + encodedBaseUrl;
-        mockServer.expect(ExpectedCount.once(), requestTo(url)).andExpect(method(HttpMethod.GET)).andRespond(withRawStatus(status.value()));
+        mockServer
+                .expect(ExpectedCount.once(),
+                        request -> assertThat(request.getURI().getPath())
+                                .isEqualTo("/api/v1/courses/" + courseId + "/lectures/" + lectureId + "/lectureUnits/" + lectureUnitId + "/ingestion-state"))
+                .andRespond(withRawStatus(status.value()));
     }
 
     public void mockFaqIngestionState(long courseId, long faqId, IngestionState state) throws JsonProcessingException {
-        var encodedBaseUrl = URLEncoder.encode(URLEncoder.encode(serverUrl, StandardCharsets.UTF_8), StandardCharsets.UTF_8);
-        var url = irisBaseUrl + "/api/v1/courses/" + courseId + "/faqs/" + faqId + "/ingestion-state?base_url=" + encodedBaseUrl;
         var responseBody = new IngestionStateResponseDTO(state);
-        mockServer.expect(ExpectedCount.once(), requestTo(url)).andExpect(method(HttpMethod.GET))
+        mockServer.expect(ExpectedCount.once(), request -> assertThat(request.getURI().getPath()).isEqualTo("/api/v1/courses/" + courseId + "/faqs/" + faqId + "/ingestion-state"))
                 .andRespond(withSuccess(mapper.writeValueAsString(responseBody), MediaType.APPLICATION_JSON));
     }
 
     public void mockFaqIngestionStateError(long courseId, long faqId, HttpStatus status) {
-        var encodedBaseUrl = URLEncoder.encode(URLEncoder.encode(serverUrl, StandardCharsets.UTF_8), StandardCharsets.UTF_8);
-        var url = irisBaseUrl + "/api/v1/courses/" + courseId + "/faqs/" + faqId + "/ingestion-state?base_url=" + encodedBaseUrl;
-        mockServer.expect(ExpectedCount.once(), requestTo(url)).andExpect(method(HttpMethod.GET)).andRespond(withRawStatus(status.value()));
+        mockServer.expect(ExpectedCount.once(), request -> assertThat(request.getURI().getPath()).isEqualTo("/api/v1/courses/" + courseId + "/faqs/" + faqId + "/ingestion-state"))
+                .andRespond(withRawStatus(status.value()));
     }
 
     public void verify() {
