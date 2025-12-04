@@ -71,5 +71,9 @@ export class ResultHistoryComponent implements OnChanges {
             }
         }
         this.participation.set(this.participationInput() ?? this.displayedResults?.[0]?.submission?.participation);
+        this.logDebug('[ResultHistory] ngOnChanges - after compute', {
+            displayedResultsLength: this.displayedResults?.length,
+            displayedResultIds: this.displayedResults?.map((r) => r.id),
+        });
     }
 }
