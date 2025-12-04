@@ -33,8 +33,7 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
     private instanceId = ParticipationWebsocketService.nextInstanceId++;
 
     constructor() {
-        // eslint-disable-next-line no-undef
-        console.log('[ParticipationWS] ctor, instanceId =', this.instanceId);
+        this.logDebug('[ParticipationWS] ctor, instanceId =', { instanceID: this.instanceId });
     }
 
     cachedParticipations: Map<number /* ID of participation */, StudentParticipation> = new Map<number, StudentParticipation>();
@@ -45,11 +44,25 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
     subscribedExercises: Map<number /* ID of exercise */, Set<number> /* IDs of the participations of this exercise */> = new Map<number, Set<number>>();
     participationSubscriptionTypes: Map<number /* ID of participation */, boolean /* Whether the participation was subscribed in personal mode */> = new Map<number, boolean>();
 
+    private logDebug(event: string, payload: Record<string, unknown> = {}) {
+        if (typeof window === 'undefined') {
+            return;
+        }
+        const w = window as any;
+        w.__artemisDebug = w.__artemisDebug || {};
+        w.__artemisDebug.participationWS = w.__artemisDebug.participationWS || [];
+        w.__artemisDebug.participationWS.push({
+            ts: new Date().toISOString(),
+            instanceId: this.instanceId,
+            event,
+            ...payload,
+        });
+    }
+
     private getNotifyAllSubscribersPipe = () => {
         return pipe(
             tap((result: Result) => {
-                // eslint-disable-next-line no-undef
-                console.log('[WS] new result from server', {
+                this.logDebug('[WS] new result from server', {
                     resultId: result.id,
                     participationId: result.submission?.participation?.id,
                     exerciseId: result.submission?.participation?.exercise?.id,
@@ -59,8 +72,7 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
             switchMap(this.addResultToParticipation),
             tap((participation: Participation | undefined) => {
                 if (participation) {
-                    // eslint-disable-next-line no-undef
-                    console.log('[WS] participation updated in cache', {
+                    this.logDebug('[WS] participation updated in cache', {
                         participationId: participation.id,
                         exerciseId: participation.exercise?.id,
                         totalSubmissions: participation.submissions?.length,
@@ -68,8 +80,7 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
                         flatResultsField: (participation as any).results?.length,
                     });
                 } else {
-                    // eslint-disable-next-line no-undef
-                    console.log('[WS] no cached participation found for result');
+                    this.logDebug('[WS] no cached participation found for result');
                 }
             }),
             tap(this.notifyParticipationSubscribers),
@@ -97,8 +108,7 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      * @param participation
      */
     private notifyParticipationSubscribers = (participation: Participation) => {
-        // eslint-disable-next-line no-undef
-        console.log('[ParticipationWS] notifyParticipationSubscribers', {
+        this.logDebug('[ParticipationWS] notifyParticipationSubscribers', {
             instanceId: this.instanceId,
             participationId: participation.id,
             exerciseId: participation.exercise?.id,
@@ -134,8 +144,7 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
         const cachedParticipation = this.cachedParticipations.get(participationId);
 
         if (!cachedParticipation) {
-            // eslint-disable-next-line no-undef
-            console.log('[addResultToParticipation] no cached participation for', participationId);
+            this.logDebug('[addResultToParticipation] no cached participation for', { participationID: participationId });
             return of();
         }
 
@@ -148,8 +157,8 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
             const oldResults = submission.results ?? [];
             const withoutOld = oldResults.filter((r) => r.id !== result.id);
             const newResults = [...withoutOld, result];
-            // eslint-disable-next-line no-undef
-            console.log('[addResultToParticipation] updating submission', {
+
+            this.logDebug('[addResultToParticipation] updating submission', {
                 participationId,
                 submissionId: submission.id,
                 oldResultsCount: oldResults.length,
@@ -169,8 +178,8 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
             submissions: updatedSubmissions,
             results: allResults,
         } as StudentParticipation);
-        // eslint-disable-next-line no-undef
-        console.log('[addResultToParticipation] after update', {
+
+        this.logDebug('[addResultToParticipation] after update', {
             participationId,
             submissionsCount: updatedSubmissions.length,
             totalResultsFromSubmissions: updatedSubmissions.flatMap((s) => s.results ?? []).length,
@@ -308,12 +317,10 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      */
     public subscribeForParticipationChanges(): BehaviorSubject<Participation | undefined> {
         if (!this.participationObservable) {
-            // eslint-disable-next-line no-undef
-            console.log('[ParticipationWS] create participationObservable', { instanceId: this.instanceId });
+            this.logDebug('[ParticipationWS] create participationObservable', { instanceId: this.instanceId });
             this.participationObservable = new BehaviorSubject<Participation | undefined>(undefined);
         } else {
-            // eslint-disable-next-line no-undef
-            console.log('[ParticipationWS] reuse participationObservable', { instanceId: this.instanceId });
+            this.logDebug('[ParticipationWS] reuse participationObservable', { instanceId: this.instanceId });
         }
         return this.participationObservable;
     }
@@ -329,8 +336,7 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      * @param exerciseId optional exerciseId of the exercise where the participation is part of, only needed if personal == false
      */
     public subscribeForLatestResultOfParticipation(participationId: number, personal: boolean, exerciseId?: number): BehaviorSubject<Result | undefined> {
-        // eslint-disable-next-line no-undef
-        console.log('[ParticipationWS] subscribeForLatestResultOfParticipation', {
+        this.logDebug('[ParticipationWS] subscribeForLatestResultOfParticipation', {
             participationId,
             personal,
             exerciseId,
