@@ -32,7 +32,27 @@ export class ResultHistoryComponent implements OnChanges {
     displayedResults: Result[];
     movedLastRatedResult: boolean;
 
+    private logDebug(event: string, data: Record<string, unknown> = {}) {
+        if (typeof window === 'undefined') {
+            return;
+        }
+        const win = window as any;
+        win.__artemisdebug = win.__artemisdebug || {};
+        win.__artemisdebug.resultHistory = win.__artemisdebug.resultHistory || [];
+        win.__artemisdebug.resultHistory.push({
+            ts: new Date().toISOString(),
+            event,
+            ...data,
+        });
+    }
+
     ngOnChanges() {
+        this.logDebug('[ResultHistory] ngOnChanges - before compute', {
+            resultsLength: this.results()?.length,
+            exerciseId: this.exercise()?.id,
+            exerciseType: this.exercise()?.type,
+            selectedResultId: this.selectedResultId(),
+        });
         this.showPreviousDivider = this.results().length > MAX_RESULT_HISTORY_LENGTH;
         if (this.exercise()?.type === ExerciseType.TEXT || this.exercise()?.type === ExerciseType.MODELING) {
             this.displayedResults = this.results().filter((result) => result.successful !== undefined);
