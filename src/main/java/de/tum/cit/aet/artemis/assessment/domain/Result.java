@@ -14,7 +14,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import jakarta.annotation.Nullable;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -27,12 +26,13 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderColumn;
 import jakarta.persistence.Table;
-import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.lang3.StringUtils;
 import org.hibernate.Hibernate;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -134,6 +134,9 @@ public class Result extends DomainObject implements Comparable<Result> {
     @JsonIgnore
     private Instant lastModifiedDate;
 
+    @Column(name = "exercise_id", nullable = false)
+    private long exerciseId;
+
     public ZonedDateTime getCompletionDate() {
         return completionDate;
     }
@@ -169,8 +172,21 @@ public class Result extends DomainObject implements Comparable<Result> {
         return this;
     }
 
+    public Result exerciseId(long exerciseId) {
+        this.exerciseId = exerciseId;
+        return this;
+    }
+
     public Instant getLastModifiedDate() {
         return lastModifiedDate;
+    }
+
+    public long getExerciseId() {
+        return exerciseId;
+    }
+
+    public void setExerciseId(long exerciseId) {
+        this.exerciseId = exerciseId;
     }
 
     /**
@@ -230,7 +246,7 @@ public class Result extends DomainObject implements Comparable<Result> {
         this.rated = rated;
     }
 
-    private void setRatedIfNotAfterDueDate(@NotNull Participation participation, @NotNull ZonedDateTime submissionDate) {
+    private void setRatedIfNotAfterDueDate(@NonNull Participation participation, @NonNull ZonedDateTime submissionDate) {
         var optionalDueDate = ExerciseDateService.getDueDate(participation);
         if (optionalDueDate.isEmpty()) {
             this.rated = true;
@@ -485,7 +501,7 @@ public class Result extends DomainObject implements Comparable<Result> {
      *
      * @param quizExercise the quiz exercise for which the submission should be evaluated, must contain access to the course to calculate the score correctly
      */
-    public void evaluateQuizSubmission(@NotNull QuizExercise quizExercise) {
+    public void evaluateQuizSubmission(@NonNull QuizExercise quizExercise) {
         if (submission instanceof QuizSubmission quizSubmission) {
             // update score
             setScore(quizExercise.getScoreForSubmission(quizSubmission), quizExercise.getCourseViaExerciseGroupOrCourseMember());

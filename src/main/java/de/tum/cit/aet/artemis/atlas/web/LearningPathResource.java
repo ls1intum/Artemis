@@ -412,23 +412,4 @@ public class LearningPathResource {
             throw new AccessForbiddenException("You are not allowed to access another user's learning path.");
         }
     }
-
-    /**
-     * Enum representing the different graph representations that can be requested.
-     */
-    public enum NgxRequestType {
-
-        GRAPH("graph"), PATH("path");
-
-        private final String url;
-
-        NgxRequestType(String url) {
-            this.url = url;
-        }
-
-        @Override
-        public String toString() {
-            return url;
-        }
-    }
 }

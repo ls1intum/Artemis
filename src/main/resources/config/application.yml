@@ -136,7 +136,7 @@ artemis:
         url: # Set this in production environment (e.g., https://nebula.example.com)
         secret-token: # Set this in production environment
 
-    # Default security configuration for internal endpoints accessed by other Artemis components 
+    # Default security configuration for internal endpoints accessed by other Artemis components
     # Currently set to allow all IPs. Adjust as necessary for your deployment.
     security:
         internal:
@@ -195,7 +195,15 @@ management:
                 requests:
                     name: http.server.requests
 
-spring:
+spring: #disabled by default, you must enable it
+    ai:
+        model:
+            chat: none # possible values: openai, azure-openai, none
+            audio.speech: none
+            audio.transcription: none
+            embedding: none
+            image: none
+            moderation:  none
     application:
         name: Artemis
     jmx:
@@ -372,6 +380,8 @@ jhipster:
 # Eureka configuration
 eureka:
     client:
+        region: default
+        shouldEnforceRegistrationAtInit: false
         enabled: false
         service-url:
             defaultZone: http://admin:${jhipster.registry.password}@localhost:8761/eureka/
@@ -379,14 +389,15 @@ eureka:
             enabled: false
         fetch-registry: true
         register-with-eureka: true
-        instance-info-replication-interval-seconds: 10
-        registry-fetch-interval-seconds: 10
+        instance-info-replication-interval-seconds: 15
+        registry-fetch-interval-seconds: 15
+        use-dns-for-fetching-service-urls: false
     instance:
         prefer-ip-address: true
         appname: Artemis
         instanceId: Artemis:1
-        lease-renewal-interval-in-seconds: 5
-        lease-expiration-duration-in-seconds: 10
+        lease-renewal-interval-in-seconds: 20
+        lease-expiration-duration-in-seconds: 60
         status-page-url-path: ${management.endpoints.web.base-path}/info
         health-check-url-path: ${management.endpoints.web.base-path}/health
         metadata-map:

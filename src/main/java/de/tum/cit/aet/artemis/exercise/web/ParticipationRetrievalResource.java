@@ -2,10 +2,8 @@ package de.tum.cit.aet.artemis.exercise.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.security.Principal;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -15,18 +13,15 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.converter.json.MappingJacksonValue;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
@@ -35,15 +30,12 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
-import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationAuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
-import de.tum.cit.aet.artemis.exercise.service.QuizParticipationService;
-import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 
 /**
  * REST controller for retrieving information about participations.
@@ -62,8 +54,6 @@ public class ParticipationRetrievalResource {
 
     private final ParticipationAuthorizationCheckService participationAuthCheckService;
 
-    private final QuizParticipationService quizParticipationService;
-
     private final ExerciseRepository exerciseRepository;
 
     private final UserRepository userRepository;
@@ -74,7 +64,7 @@ public class ParticipationRetrievalResource {
 
     public ParticipationRetrievalResource(ParticipationService participationService, ExerciseRepository exerciseRepository, AuthorizationCheckService authCheckService,
             ParticipationAuthorizationCheckService participationAuthCheckService, UserRepository userRepository, StudentParticipationRepository studentParticipationRepository,
-            SubmissionRepository submissionRepository, QuizParticipationService quizParticipationService) {
+            SubmissionRepository submissionRepository) {
         this.participationService = participationService;
         this.exerciseRepository = exerciseRepository;
         this.authCheckService = authCheckService;
@@ -82,7 +72,6 @@ public class ParticipationRetrievalResource {
         this.userRepository = userRepository;
         this.studentParticipationRepository = studentParticipationRepository;
         this.submissionRepository = submissionRepository;
-        this.quizParticipationService = quizParticipationService;
     }
 
     /**
@@ -154,54 +143,6 @@ public class ParticipationRetrievalResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         checkAccessPermissionOwner(participation, user);
         return new ResponseEntity<>(participation, HttpStatus.OK);
-    }
-
-    /**
-     * GET /exercises/:exerciseId/participation: get the user's participation for a specific exercise. Please note: 'courseId' is only included in the call for
-     * API consistency, it is not actually used
-     *
-     * @param exerciseId the participationId of the exercise for which to retrieve the participation
-     * @param principal  The principal in form of the user's identity
-     * @return the ResponseEntity with status 200 (OK) and with body the participation, or with status 404 (Not Found)
-     */
-    @GetMapping("exercises/{exerciseId}/participation")
-    @EnforceAtLeastStudent
-    // TODO: use a proper DTO (or interface here for the return type and avoid MappingJacksonValue)
-    public ResponseEntity<MappingJacksonValue> getParticipationForCurrentUser(@PathVariable Long exerciseId, Principal principal) {
-        log.debug("REST request to get Participation for Exercise : {}", exerciseId);
-        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        // if exercise is not yet released to the students they should not have any access to it
-        // Exam exercise
-        if (exercise.isExamExercise()) {
-            // NOTE: we disable access to exam exercises over this endpoint for now, in the future we should check if there is a way to enable this
-            // e.g. by checking if there is a visible exam attached and a student exam exists
-            throw new AccessForbiddenException("You are not allowed to access this exam exercise");
-        }
-        // Course exercise
-        else {
-            if (!authCheckService.isAllowedToSeeCourseExercise(exercise, user)) {
-                throw new AccessForbiddenException();
-            }
-        }
-        MappingJacksonValue response;
-        if (exercise instanceof QuizExercise quizExercise) {
-            response = quizParticipationService.participationForQuizExercise(quizExercise, user);
-        }
-        else {
-            Optional<StudentParticipation> optionalParticipation = participationService.findOneByExerciseAndStudentLoginAnyStateWithEagerResults(exercise, principal.getName());
-            if (optionalParticipation.isEmpty()) {
-                throw new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No participation found for " + principal.getName() + " in exercise " + exerciseId);
-            }
-            Participation participation = optionalParticipation.get();
-            response = new MappingJacksonValue(participation);
-        }
-        if (response == null) {
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        }
-        else {
-            return new ResponseEntity<>(response, HttpStatus.OK);
-        }
     }
 
     private void checkAccessPermissionAtLeastInstructor(StudentParticipation participation, User user) {

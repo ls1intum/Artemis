@@ -4,14 +4,14 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.List;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
+import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.repository.ExerciseUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
@@ -42,7 +42,7 @@ public class LectureUnitApi extends AbstractLectureApi {
         this.exerciseUnitRepository = exerciseUnitRepository;
     }
 
-    public void setCompletedForAllLectureUnits(List<? extends LectureUnit> lectureUnits, @NotNull User user, boolean completed) {
+    public <T extends LectureUnit> void setCompletedForAllLectureUnits(List<T> lectureUnits, @NonNull User user, boolean completed) {
         lectureUnitService.setCompletedForAllLectureUnits(lectureUnits, user, completed);
     }
 
@@ -57,7 +57,7 @@ public class LectureUnitApi extends AbstractLectureApi {
         }
     }
 
-    public LectureUnit importLectureUnit(LectureUnit sourceLectureUnit) {
-        return lectureUnitImportService.importLectureUnit(sourceLectureUnit);
+    public LectureUnit importLectureUnit(LectureUnit sourceLectureUnit, Lecture newLecture) {
+        return lectureUnitImportService.importLectureUnit(sourceLectureUnit, newLecture);
     }
 }
