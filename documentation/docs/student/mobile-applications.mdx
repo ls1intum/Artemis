@@ -1,0 +1,286 @@
+---
+id: mobile-applications
+title: Mobile Applications
+sidebar_label: Mobile Applications
+---
+
+import Image, {ImageSize} from "../../src/components/Image/Image";
+
+import serverSelectionOverviewAndroid from "./assets/mobile-applications/android/server_selection_overview.png";
+import customServerEnteredAndroid from "./assets/mobile-applications/android/custom_server_entered.png";
+import initialLoginNotificationAndroid from "./assets/mobile-applications/android/initial_login_notification_configuration.png";
+import settingsPushAndroid from "./assets/mobile-applications/android/settings_push.png";
+import forceUpdateAndroid from "./assets/mobile-applications/android/force_update.png";
+
+import customServerEnteredIos from "./assets/mobile-applications/iOS/custom-server-entered-ios.PNG";
+import initialLoginNotificationIos from "./assets/mobile-applications/iOS/initial_login_notification_configuration.png";
+import settingsPushIos from "./assets/mobile-applications/iOS/settings_push.png";
+import settingsPushDetailIos from "./assets/mobile-applications/iOS/settings_push_detail.png";
+import forceUpdateIos from "./assets/mobile-applications/iOS/force_update.png";
+
+# Mobile Applications
+
+## Overview
+
+Artemis supports native mobile applications available for both <a href="https://github.com/ls1intum/artemis-android">Android</a> and <a href="https://github.com/ls1intum/artemis-ios">iOS</a>. We designed them to be applicable in lecture usage. Users can, for example, participate in quizzes and write questions. Furthermore, they can communicate with each other (available communication features on iOS and Android can be checked using <a href="#communication-features-availability-list">this list</a>).
+
+Both apps use native user interface components and are adapted to their associated operating system. Therefore, they can differ in their usage.
+
+The mobile applications have been designed to be compatible with all Artemis instances. Therefore, users of all Artemis instances can use the mobile application provided by us. Nevertheless, it is possible to fork our repositories and release your own versions of the mobile applications.
+
+> **Note**
+> Below, we only explain the functionalities of the mobile applications that differ or are not present in the web application.
+> For all other features, which are supported by both the mobile applications and the web application, please refer to their associated documentation.
+
+---
+
+## Android Application
+
+The Android application supports the following features:
+
+1. Login and register:
+1. Select predefined and custom Artemis servers
+2. New user registration
+3. Login with password + Saml2 + passkey
+2. View your courses:
+1. Register in new courses
+2. View courses you have already registered for
+3. View the exercises of your courses:
+1. View exercise details and problem statement
+2. View submission feedback
+3. Participate in text exercises (view, edit and submit submissions)
+4. View lectures and FAQs of your courses:
+1. View lecture details and learning units
+2. View and open attachments
+3. View FAQ details
+5. Communicate with course members:
+1. Create new messages
+2. Write replies
+3. Add emoji reactions
+6. Receive push notifications:
+1. Optionally opt in and out of push notifications
+
+### Installation
+
+The Android application is available on the <a href="https://play.google.com/store/apps/details?id=de.tum.cit.aet.artemis&hl=gsw">Google PlayStore</a>.
+
+### Server Selection
+
+After installation, users can decide which Artemis server they want to connect to. Per default, the user can choose between the following instances:
+
+- TUM: https://artemis.tum.de
+- CodeAbility: https://artemis.codeability.uibk.ac.at
+- KIT: https://artemis.praktomat.cs.kit.edu
+
+Furthermore, users have the option to select a custom instance. To do this, scroll down the list of servers to the bottom. Then, select "custom instance":
+
+<Image src={serverSelectionOverviewAndroid} alt={"Server selection overview Android"} size={ImageSize.small} />
+
+Then, enter the URL of the server as you would enter it into the browser:
+
+<Image src={customServerEnteredAndroid} alt={"Custom server entered Android"} size={ImageSize.small} />
+
+The "Set custom instance" button will be enabled if the client could connect successfully to Artemis.
+
+### Push Notifications
+
+Users may receive push notifications on their Android clients. When first logging in to an Artemis instance, users will be asked if they want to receive push notifications on that device.
+
+<Image src={initialLoginNotificationAndroid} alt={"Initial login notification configuration Android"} size={ImageSize.small} />
+
+When logged in, users can navigate to the application settings to change their push notification settings:
+
+<Image src={settingsPushAndroid} alt={"Settings push Android"} size={ImageSize.small} />
+
+### Problems
+
+Please report any issues on the <a href="https://github.com/ls1intum/artemis-android/issues">GitHub repository</a>.
+
+---
+
+## iOS Application
+
+The iOS application supports the following features:
+
+1. Login:
+1. Select predefined and custom Artemis servers
+2. Login with username + password
+
+<iframe
+    src="https://live.rbg.tum.de/w/artemisintro/35200?video_only=1&t=0"
+    allowFullScreen="1"
+    frameBorder="0"
+    width="600"
+    height="350"
+>
+    Video tutorial of the Login on TUM-Live.
+</iframe>
+
+2. View your courses:
+1. Register in new courses
+2. View courses you have already registered for
+
+3. View the exercises of your courses:
+1. View exercise details and problem statement
+2. View submission feedback
+
+<iframe
+    src="https://live.rbg.tum.de/w/artemisintro/35217?video_only=1&t=0"
+    allowFullScreen="1"
+    frameBorder="0"
+    width="600"
+    height="350"
+>
+    Video tutorial of the Exercise features on TUM-Live.
+</iframe>
+
+4. View the lectures of your courses:
+1. View lecture details and learning units
+2. View and open attachments
+
+<iframe
+    src="https://live.rbg.tum.de/w/artemisintro/35218?video_only=1&t=0"
+    allowFullScreen="1"
+    frameBorder="0"
+    width="600"
+    height="350"
+>
+    Video tutorial of the Lecture features on TUM-Live.
+</iframe>
+
+5. Communicate via Messages:
+1. Create new messages
+2. Write replies
+3. Add emoji reactions
+4. Create new conversations
+5. Edit conversation settings
+6. Restore cached messages drafts. We purge the cache after one day.
+
+<iframe
+    src="https://live.rbg.tum.de/w/artemisintro/47329?video_only=1&t=0"
+    allowFullScreen="1"
+    frameBorder="0"
+    width="600"
+    height="350"
+>
+    Video tutorial of the Messaging features on TUM-Live.
+</iframe>
+
+6. Receive push notifications:
+1. Optionally opt in and out of push notifications
+2. Choose which notifications you want to receive as push notifications
+3. In-App notification center
+
+<iframe
+    src="https://live.rbg.tum.de/w/artemisintro/35216?video_only=1&t=0"
+    allowFullScreen="1"
+    frameBorder="0"
+    width="600"
+    height="350"
+>
+    Video tutorial of the Push Notification features on TUM-Live.
+</iframe>
+
+### Installation
+
+The iOS application is available in the <a href="https://apps.apple.com/de/app/artemis-learning/id6478965616">App Store</a>.
+To test the beta version, install Apple's TestFlight app and follow the link <a href="https://testflight.apple.com/join/canwoVCk">TestFlight</a>.
+
+### Server Selection
+
+After installation, users have to first decide which Artemis server they want to connect to. Per default, the user can choose between the following instances:
+
+- TUM: https://artemis.tum.de
+- CodeAbility: https://artemis.codeability.uibk.ac.at
+- KIT: https://artemis.praktomat.cs.kit.edu
+- Hochschule Munich: https://artemis.cs.hm.edu/
+
+Furthermore, users have the option to select a custom instance. To do this, scroll down the list of servers to the bottom. Under "Custom Instance" enter the URL of the server as you would enter it into the browser:
+
+<Image src={customServerEnteredIos} alt={"Custom server entered iOS"} size={ImageSize.small} />
+
+By pressing the "Select" button the app checks if it can connect successfully to the given Artemis instance.
+
+### Push Notifications
+
+Users may receive push notifications on their iOS devices. When first logging in to an Artemis instance, users will be asked if they want to receive push notifications on that device.
+
+<Image src={initialLoginNotificationIos} alt={"Initial login notification configuration iOS"} size={ImageSize.small} />
+
+When logged in, users can navigate to the notification settings:
+
+<Image src={settingsPushIos} alt={"Settings push iOS"} size={ImageSize.small} />
+
+In this screen, users can choose which notification types they want to receive.
+
+<Image src={settingsPushDetailIos} alt={"Settings push detail iOS"} size={ImageSize.small} />
+
+### Modeling Exercises
+
+Users can participate in modeling exercises, view their submissions, and view the feedback they received in the Artemis iOS app.
+
+#### Participate in Modeling Exercise
+
+- Add UML elements to the canvas
+- Edit attributes and methods of UML elements
+- Draw UML relationships between UML elements
+- Edit UML relationship properties
+- Submit the diagram
+
+<iframe
+    src="https://live.rbg.tum.de/w/artemisintro/43388?video_only=1&t=0"
+    allowFullScreen="1"
+    frameBorder="0"
+    width="600"
+    height="350"
+>
+    Video tutorial for participating in a modeling exercise on TUM-Live.
+</iframe>
+
+#### View Modeling Exercise Submission
+
+- Interact with the submitted diagram (e.g., zooming in/out, moving the diagram for better viewing)
+- No modification to the submitted diagram is possible
+
+<iframe
+    src="https://live.rbg.tum.de/w/artemisintro/43389?video_only=1&t=0"
+    allowFullScreen="1"
+    frameBorder="0"
+    width="600"
+    height="350"
+>
+    Video tutorial for viewing a modeling exercise submission on TUM-Live.
+</iframe>
+
+#### View Modeling Exercise Result
+
+- Click on UML elements and UML relationships to view feedback and grading
+- See all feedback and grading in a list view
+
+<iframe
+    src="https://live.rbg.tum.de/w/artemisintro/43390?video_only=1&t=0"
+    allowFullScreen="1"
+    frameBorder="0"
+    width="600"
+    height="350"
+>
+    Video tutorial for viewing modeling exercise results on TUM-Live.
+</iframe>
+
+### Problems
+
+Please report any issues on the <a href="https://github.com/ls1intum/artemis-ios/issues">GitHub repository</a>.
+
+---
+
+## Force Update Mechanism
+
+The native apps support a force-update mechanism to ensure compatibility and security, especially when breaking changes are introduced.
+
+The Artemis server provides two configurable version thresholds:
+
+- `min` – the **minimum required version**. Users must update the app before continuing.
+- `recommended` – the **recommended version**. Users are prompted to update each time the app is opened, but can continue using the app if they choose.
+
+<Image src={forceUpdateAndroid} alt={"Force update Android"} size={ImageSize.small} />
+<Image src={forceUpdateIos} alt={"Force update iOS"} size={ImageSize.small} />
