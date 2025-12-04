@@ -6,6 +6,7 @@ import { Disposable } from 'app/shared/monaco-editor/model/actions/monaco-editor
 import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor.interface';
 import { TextEditorCompletionItem, TextEditorCompletionItemKind } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-completion-item.model';
 import { TextEditorRange } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-range.model';
+import { Subscription } from 'rxjs';
 
 /**
  * Action to insert a reference to a faq into the editor. Users that type a / will see a list of available faqs to reference.
@@ -15,6 +16,7 @@ export class FaqReferenceAction extends TextEditorDomainActionWithOptions {
     static readonly DEFAULT_INSERT_TEXT = '/faq';
 
     disposableCompletionProvider?: Disposable;
+    faqSubscription?: Subscription;
 
     constructor(private readonly metisService: MetisService) {
         super(FaqReferenceAction.ID, 'artemisApp.metis.editor.faq');
@@ -27,14 +29,17 @@ export class FaqReferenceAction extends TextEditorDomainActionWithOptions {
      */
     register(editor: TextEditor, translateService: TranslateService): void {
         super.register(editor, translateService);
-        const faqs = this.metisService.getCourse().faqs ?? [];
-        this.setValues(
-            faqs.map((faq) => ({
-                id: faq.id!.toString(),
-                value: faq.questionTitle!,
-                type: 'faq',
-            })),
-        );
+        this.faqSubscription?.unsubscribe();
+        // Rebuild completion values when FAQs arrive from MetisService (which now emits after REST load)
+        this.faqSubscription = this.metisService.getFaqs().subscribe((faqs) => {
+            this.setValues(
+                faqs.map((faq) => ({
+                    id: faq.id!.toString(),
+                    value: faq.questionTitle!,
+                    type: 'faq',
+                })),
+            );
+        });
 
         this.disposableCompletionProvider = this.registerCompletionProviderForCurrentModel<ValueItem>(
             editor,
@@ -64,6 +69,7 @@ export class FaqReferenceAction extends TextEditorDomainActionWithOptions {
     dispose(): void {
         super.dispose();
         this.disposableCompletionProvider?.dispose();
+        this.faqSubscription?.unsubscribe();
     }
 
     getOpeningIdentifier(): string {

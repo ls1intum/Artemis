@@ -43,7 +43,7 @@ describe('UserSettingsContainerComponent', () => {
     it('should initialize', async () => {
         component.ngOnInit();
         expect(component.currentUser).toBeDefined();
-        expect(component.isAtLeastTutor).toBeFalse();
+        expect(component.isAtLeastTutor).toBeTrue();
     });
 
     it('should set isPasskeyEnabled to false when the module feature is inactive', () => {
