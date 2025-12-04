@@ -172,8 +172,9 @@ public class PyrisPipelineService {
     }
 
     /**
-     * Execute the exercise chat pipeline with uncommitted file changes.
-     * Uncommitted files are merged with committed files, with uncommitted taking priority.
+     * Execute the exercise chat pipeline with optional uncommitted file changes.
+     * If uncommitted files are provided, they are merged with committed files (uncommitted takes priority).
+     * If the map is empty, only committed files from the repository are used.
      *
      * @see #executeExerciseChatPipeline(String, String, Optional, ProgrammingExercise, IrisProgrammingExerciseChatSession, Optional)
      */
