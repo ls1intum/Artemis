@@ -374,6 +374,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                     }
                     this.updateStudentParticipations();
                     this.mergeResultsAndSubmissionsForParticipations();
+                    this.subscribeToLatestResultsForHistory();
 
                     this.logDebug('[CourseExerciseDetails] after mergeResultsAndSubmissionsForParticipations', {
                         sortedHistoryResultsLength: this.sortedHistoryResults?.length,
@@ -598,6 +599,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                     });
 
                     this.updateHistoryWithResult(result);
+                    this.cdr.markForCheck();
                 });
 
             this.latestResultSubscriptions.push(sub);
