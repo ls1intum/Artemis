@@ -469,11 +469,7 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
             SELECT COUNT(DISTINCT p.student.id)
             FROM Exercise e
                 JOIN e.studentParticipations p
-            WHERE e.id = :exerciseId
-                AND e.course.studentGroupName MEMBER OF p.student.groups
-                AND e.course.instructorGroupName NOT MEMBER OF p.student.groups
-                AND e.course.teachingAssistantGroupName NOT MEMBER OF p.student.groups
-                AND e.course.editorGroupName NOT MEMBER OF p.student.groups
+            WHERE e.id = :exerciseId AND e.course.studentGroupName MEMBER OF p.student.groups
             """)
     Long getStudentParticipationCountById(@Param("exerciseId") Long exerciseId);
 
