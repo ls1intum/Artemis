@@ -105,20 +105,20 @@ public class IrisSessionService {
     }
 
     /**
-     * Sends a request to Iris to get a message for the given session.
-     * It decides which Iris subsystem should handle it based on the session type.
-     *
-     * @param session The session to get a message for
-     * @param <S>     The type of the session
-     * @throws BadRequestException If the session type is invalid
+     * @see #requestMessageFromIris(IrisSession, Map)
      */
     public <S extends IrisSession> void requestMessageFromIris(S session) {
         requestMessageFromIris(session, Map.of());
     }
 
     /**
-     * @see #requestMessageFromIris(IrisSession)
+     * Sends a request to Iris to get a message for the given session.
+     * It decides which Iris subsystem should handle it based on the session type.
+     *
+     * @param session          The session to get a message for
      * @param uncommittedFiles The uncommitted files from the client
+     * @param <S>              The type of the session
+     * @throws BadRequestException If the session type is invalid
      */
     public <S extends IrisSession> void requestMessageFromIris(S session, Map<String, String> uncommittedFiles) {
         var wrapper = getIrisSessionSubService(session);
