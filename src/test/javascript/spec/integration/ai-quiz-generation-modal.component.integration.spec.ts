@@ -60,7 +60,10 @@ describe('AiQuizGenerationModalComponent', () => {
                 subtype: AiRequestedSubtype.SINGLE_CORRECT,
             },
         };
+
         comp.generate(mockForm as any);
+
+        // More specific than just "called once": expect courseId + some request object
         expect(service.generate).toHaveBeenCalledExactlyOnceWith(42, expect.any(Object));
         expect(comp.generated().length).toBe(1);
         expect(comp.warnings()).toContain('warn');
@@ -103,7 +106,7 @@ describe('AiQuizGenerationModalComponent', () => {
 
     it('should dismiss modal on cancel()', () => {
         comp.cancel();
-        expect(activeModal.dismiss).toHaveBeenCalled();
+        expect(activeModal.dismiss).toHaveBeenCalledOnce();
     });
 
     it('anySelected should be false when no generated questions are selected', () => {
@@ -149,7 +152,8 @@ describe('AiQuizGenerationModalComponent', () => {
 
         comp.generate({ valid: true } as any);
 
-        expect(service.generate).toHaveBeenCalledOnce();
+        // Argument-symmetric to the first test
+        expect(service.generate).toHaveBeenCalledExactlyOnceWith(42, expect.any(Object));
         expect(comp.generated().length).toBe(0);
         expect(comp.warnings()).toContain('No questions were generated');
     });

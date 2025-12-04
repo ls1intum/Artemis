@@ -15,6 +15,7 @@ import {
 } from '../service/ai-quiz-generation.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
+import { finalize } from 'rxjs';
 
 @Component({
     standalone: true,
@@ -54,6 +55,7 @@ export class AiQuizGenerationModalComponent {
         [AiRequestedSubtype.MULTI_CORRECT]: 'artemisApp.quizExercise.aiGeneration.subtypes.multi',
         [AiRequestedSubtype.TRUE_FALSE]: 'artemisApp.quizExercise.aiGeneration.subtypes.trueFalse',
     };
+
     subtypeLabelKey(subtype: AiRequestedSubtype | string): string {
         return this.subtypeKeyMap[subtype] ?? 'artemisApp.quizExercise.aiGeneration.subtypes.single';
     }
@@ -72,16 +74,25 @@ export class AiQuizGenerationModalComponent {
         this.generated.set([]);
         this.selected = {};
 
-        this.service.generate(this.courseId, this.formData).subscribe((res: AiQuizGenerationResponse) => {
-            this.loading.set(false);
-            const questions = res.questions ?? [];
-            const warns = res.warnings ?? [];
+        this.service
+            .generate(this.courseId, this.formData)
+            .pipe(finalize(() => this.loading.set(false)))
+            .subscribe({
+                next: (res: AiQuizGenerationResponse) => {
+                    const questions = res.questions ?? [];
+                    const warns = res.warnings ?? [];
 
-            this.generated.set(questions);
-            this.warnings.set(warns);
+                    this.generated.set(questions);
+                    this.warnings.set(warns);
 
-            questions.forEach((_, i) => (this.selected[i] = true)); // preselect all
-        });
+                    // preselect all generated questions
+                    questions.forEach((_, i) => (this.selected[i] = true));
+                },
+                error: () => {
+                    // Minimal error handling – adjust if you have a helper like this.service.describeError(err)
+                    this.warnings.set(['artemisApp.quizExercise.aiGeneration.error']);
+                },
+            });
     }
 
     useInEditor(): void {

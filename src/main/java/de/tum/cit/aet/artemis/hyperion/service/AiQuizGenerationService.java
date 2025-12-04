@@ -39,10 +39,10 @@ public class AiQuizGenerationService {
 
     private final Validator validator;
 
+    @SuppressWarnings("resource")
     public AiQuizGenerationService(ChatClient chatClient, HyperionPromptTemplateService templateService) {
         this.chatClient = chatClient;
         this.templateService = templateService;
-        // will be reused for all requests
         this.validator = Validation.buildDefaultValidatorFactory().getValidator();
     }
 
@@ -117,24 +117,20 @@ public class AiQuizGenerationService {
     }
 
     /**
-     * Validates a single question according to business rules.
+     * Validates a single question according to quiz-specific business rules.
+     * <p>
+     * Bean Validation on {@link GeneratedMcQuestionDTO} is executed before this method
+     * is called, so annotation-based constraints (e.g. @NotBlank, @Size) are already enforced.
      */
     private void validateQuestion(GeneratedMcQuestionDTO question) {
-        // Check required fields (Bean Validation already covers most of these, but we keep
-        // the business rules here because they're quiz-specific and not just "not blank")
+        // Bean Validation already ensures basic fields like title/text are not blank.
+        // Here we only enforce quiz-specific business rules.
+
         if (question.options() == null || question.options().isEmpty()) {
             throw new IllegalArgumentException("At least one option is required");
         }
         if (question.subtype() == null) {
             throw new IllegalArgumentException("Question subtype is required");
-        }
-        // Check length constraints according to Artemis quiz model
-
-        if (question.explanation() != null && question.explanation().length() > 500) {
-            throw new IllegalArgumentException("The provided explanation is too long. Please shorten it to 500 characters.");
-        }
-        if (question.hint() != null && question.hint().length() > 500) {
-            throw new IllegalArgumentException("The provided hint is too long. Please shorten it to 500 characters.");
         }
 
         // Count correct answers

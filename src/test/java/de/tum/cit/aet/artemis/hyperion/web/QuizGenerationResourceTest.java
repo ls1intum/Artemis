@@ -16,7 +16,6 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
-import de.tum.cit.aet.artemis.hyperion.service.AiQuizGenerationService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 @ActiveProfiles("hyperion")
@@ -33,9 +32,6 @@ class QuizGenerationResourceTest extends AbstractSpringIntegrationIndependentTes
 
     @Autowired
     private UserUtilService userUtilService;
-
-    @Autowired
-    private AiQuizGenerationService aiQuizGenerationService;
 
     private long courseId;
 
@@ -77,7 +73,6 @@ class QuizGenerationResourceTest extends AbstractSpringIntegrationIndependentTes
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
     void shouldGenerateQuizForInstructor() throws Exception {
-
         String requestBody = """
                 {
                   "topic": "Java Programming",
@@ -131,7 +126,7 @@ class QuizGenerationResourceTest extends AbstractSpringIntegrationIndependentTes
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = { "USER" })
+    @WithMockUser(username = TEST_PREFIX + "student1")
     void shouldReturnForbiddenForStudent() throws Exception {
         String body = """
                 {

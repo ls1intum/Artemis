@@ -742,6 +742,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
             })
             .catch(() => {});
     }
+
     private mapDtoToMcQuestion(dto: AiGeneratedQuestionDTO): MultipleChoiceQuestion {
         const q = new MultipleChoiceQuestion();
         q.title = dto.title || '';
@@ -785,10 +786,8 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
             return;
         }
 
-        const mapped = this.mapAiDifficultyToExerciseDifficulty(aiDiff);
-
         // Update the underlying model
-        this.quizExercise.difficulty = mapped;
+        this.quizExercise.difficulty = this.mapAiDifficultyToExerciseDifficulty(aiDiff);
 
         // Trigger change detection to refresh the picker if using OnPush
         this.changeDetector.detectChanges();
