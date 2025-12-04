@@ -1,0 +1,35 @@
+---
+id: courses
+title: Courses
+sidebar_label: Courses
+---
+
+import Image, {ImageSize} from "../../src/components/Image/Image";
+
+import courseOverviewImg from "./assets/courses/course_overview.png";
+import courseHeaderImg from "./assets/courses/course_header.png";
+import btnCourseRegister from "./assets/courses/course_register.png";
+import btnCourseOverview from "./assets/courses/course_overview_button.png";
+
+# Customizing Courses
+
+Courses contain exercises, exams and lectures.
+Roles include **Users**, **Tutors**, **Editors**, **Instructors**, each with different permissions.
+
+---
+
+## Student-Facing Behaviour
+
+Students can register for a course if **Student Course Registration Enabled** is active.
+Registration happens via:
+
+<Image src={btnCourseOverview} alt={"course overview"} size={ImageSize.small} style={{display:"inline",verticalAlign:"middle"}} /> to
+<Image src={btnCourseRegister} alt={"course register"} size={ImageSize.small} style={{display:"inline",verticalAlign:"middle"}} />
+
+A confirmation message may appear depending on configuration.
+
+Once enrolled, students see course header, content & materials.
+
+<Image src={courseOverviewImg} alt={"Course Overview"} size={ImageSize.large} />
+
+<Image src={courseHeaderImg} alt={"Course Header"} size={ImageSize.large} />
