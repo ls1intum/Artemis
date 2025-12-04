@@ -6,7 +6,7 @@ import { BuildOverviewService } from 'app/buildagent/build-queue/build-overview.
 import dayjs from 'dayjs/esm';
 import { AccountService } from 'app/core/auth/account.service';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
-import { FinishedBuildJob } from 'app/buildagent/shared/entities/build-job.model';
+import { BuildJobStatistics, FinishedBuildJob } from 'app/buildagent/shared/entities/build-job.model';
 import { TriggeredByPushTo } from 'app/programming/shared/entities/repository-info.model';
 import { HttpResponse } from '@angular/common/http';
 import { SortingOrder } from 'app/shared/table/pageable-table';
@@ -42,7 +42,7 @@ class ActivatedRouteStub {
 })
 class StubBuildJobStatisticsComponent {
     @Input() courseId?: number;
-    @Input() buildJobStatisticsInput?: any;
+    @Input() buildJobStatisticsInput?: BuildJobStatistics;
 }
 
 describe('BuildQueueComponent', () => {
