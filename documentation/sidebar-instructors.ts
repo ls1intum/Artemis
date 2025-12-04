@@ -6,6 +6,7 @@ const sidebars: SidebarsConfig = {
         'programming',
         'lecture-series',
         'assessment',
+        'lti-configuration',
     ],
 };
 
