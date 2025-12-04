@@ -100,6 +100,7 @@ public class IrisMessageResource {
         message.setMessageDifferentiator(requestDTO.messageDifferentiator());
 
         var savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.USER);
+        savedMessage.setMessageDifferentiator(message.getMessageDifferentiator());
         irisSessionService.sendOverWebsocket(savedMessage, session);
         irisSessionService.requestMessageFromIris(session, requestDTO.uncommittedFiles());
 
