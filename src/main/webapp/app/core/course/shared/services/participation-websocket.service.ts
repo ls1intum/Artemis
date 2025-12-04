@@ -48,9 +48,14 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
         if (typeof window === 'undefined') {
             return;
         }
+        if (typeof (globalThis as any).jest !== 'undefined') {
+            return;
+        }
+
         const w = window as any;
         w.__artemisDebug = w.__artemisDebug || {};
         w.__artemisDebug.participationWS = w.__artemisDebug.participationWS || [];
+
         w.__artemisDebug.participationWS.push({
             ts: new Date().toISOString(),
             instanceId: this.instanceId,
