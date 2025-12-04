@@ -73,6 +73,7 @@ public class PyrisDTOService {
     /**
      * Uncommitted files override the committed files if they have the same path.
      *
+     * @param submission       the student's submission
      * @param uncommittedFiles the uncommitted files from the client
      * @return the converted PyrisSubmissionDTO
      */

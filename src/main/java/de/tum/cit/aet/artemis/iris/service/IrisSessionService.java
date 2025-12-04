@@ -105,6 +105,8 @@ public class IrisSessionService {
     }
 
     /**
+     * @param session The session to get a message for
+     * @param <S>     The type of the session
      * @see #requestMessageFromIris(IrisSession, Map)
      */
     public <S extends IrisSession> void requestMessageFromIris(S session) {
