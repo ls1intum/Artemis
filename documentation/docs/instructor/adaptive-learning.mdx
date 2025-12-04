@@ -1,0 +1,195 @@
+---
+id: adaptive-learning
+title: Adaptive Learning
+sidebar_label: Adaptive Learning
+---
+
+import Callout from "../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../src/components/Callout/Callout.types";
+import Image, {ImageSize} from "../../src/components/Image/Image";
+
+import instructorCompetencyManagementImg from './assets/adaptive-learning/manage-competencies.png';
+import instructorImportAllCompetenciesImg from './assets/adaptive-learning/import-all-competencies.png';
+import instructorImportCompetenciesImg from './assets/adaptive-learning/import-course-competencies.png';
+import instructorImportStandardizedCompetenciesImg from './assets/adaptive-learning/import-standardized-competencies.png';
+import instructorCompetencyEditImg from './assets/adaptive-learning/competency-edit.png';
+import instructorCompetencyLinkImg from './assets/adaptive-learning/competency-link.png';
+import instructorCompetencyRelationsImg from './assets/adaptive-learning/competency-relations.png';
+import instructorGenerateCompetenciesImg from './assets/adaptive-learning/generate-competencies.png';
+import instructorCompetencyRecommendationImg from './assets/adaptive-learning/competency-recommendation.png';
+import instructorsLearningPathManagementImg from './assets/adaptive-learning/learning-path-management.png';
+import competencyGenerationSettingsImg from './assets/adaptive-learning/competency-generation-settings.png';
+
+# Adaptive Learning
+
+Adaptive Learning in Artemis is centered around **competencies**, overarching learning objectives that tie together various lectures and exercises. Artemis is also able to provide students with individualized **learning paths** based on competencies and their relations.
+
+<iframe
+    src="https://live.rbg.tum.de/w/artemisintro/26313?video_only=1&t=0"
+    allowFullScreen="1"
+    frameBorder="0"
+    width="600"
+    height="350"
+/>
+
+Students can track their progress in `competencies_student` and view the next recommended content in their `learning_paths_student`.
+
+Instructors have multiple ways to add competencies to their course: They can `create new competencies`, `import existing ones` or `generate competencies` using the integrated LLM subsystem of Artemis.
+They can also then link exercises and lecture units to competencies and define competency relations. These relations determine the order in which competencies are presented in the students' learning paths.
+
+Administrators `manage the standardized competency catalog`, an instance-wide catalog from which instructors can import competencies into their course.
+
+---
+
+# Manage Adaptive Learning (Instructor)
+
+<Callout variant={CalloutVariant.info}>
+    <p>
+        When introducing adaptive learning into a course for the first time, you can quickly create a competency model by:
+    </p>
+    <ul>
+        <li>Generating competencies using an integrated LLM</li>
+        <li>Importing standardized competencies into your course</li>
+    </ul>
+    <p>(Given that these features are enabled on your Artemis instance)</p>
+</Callout>
+
+## Competencies
+
+A competency is an overarching learning objective that ties together various lectures and exercises. It has a title, description and a <a href="https://en.wikipedia.org/wiki/Bloom%27s_taxonomy">taxonomy</a>.
+By completing lectures and exercises, students gain mastery of a competency (see also `Competencies for Students`).
+
+A prerequisite is a competency that students are expected to have already mastered before the course. Instructors select competencies from previous courses they taught as a prerequisite, or create new ones.
+
+Competencies measure two metrics for each student:
+The progress starts at 0% and increases with every completed lecture unit and with the achieved score in exercises linked to the competency. The growth is linear, e.g. completing half of the lecture units and scoring 50% in all linked exercises results in 50% progress.
+The mastery is a weighted metric and is influenced by the following heuristics:
+
+* The mastery increases when the latest scores of the student are higher than the average score of all linked exercises and vice versa.
+* The mastery increases when the student proportionally achieved more points in exercises marked as hard compared to the distribution of points in the competency and vice versa.
+* A similar measurement applies to easy exercises, where the mastery is decreased for achieving proportionally more points in easy exercises.
+* If the student quickly solves programming exercises with a score of at least 80% based on the amount of pushes, the mastery increases. There is no decrease in mastery for slower students!
+
+### Manage Competencies
+
+Instructors can manage competencies and prerequisites of a course in the *Competency Management* view. Here they can:
+
+* View all competencies and prerequisites of their course
+* Create, edit or delete competencies and prerequisites
+* manage_relations between competencies
+* import_competencies from other courses or the standardized competency catalog
+* generate_competencies using LLMs
+
+<Image src={instructorCompetencyManagementImg} alt={"instructor-competency-management"} size={ImageSize.large} />
+
+### Create/Edit Competencies
+
+<Image src={instructorCompetencyEditImg} alt={"instructor-competency-edit"} size={ImageSize.large} />
+
+| An instructor can create or edit competencies using the following form.
+Besides a title and description, they can set a <a href="https://en.wikipedia.org/wiki/Bloom%27s_taxonomy">taxonomy</a>.
+| The mastery threshold describes the minimum mastery required for a student to consider the competency as mastered.
+The current average mastery shown on this page can be used as a basis for defining a reasonable threshold value.
+
+Instructors can link competencies to an exercise or lecture unit on the respective management page using the selection box shown below.
+
+<Image src={instructorCompetencyLinkImg} alt={"instructor-competency-link"} size={ImageSize.large} />
+
+### Manage Relations
+
+| An Instructor can create relations between competencies by selecting a source and target competency from the dropdown menus.
+They can also set a relation type, which can be one of the following:
+
+* *Assumes*: The head competency assumes the knowledge of the tail competency but does not deepen it. E.g. Class diagrams assume knowledge about object-oriented programming.
+* *Extends*: The head competency builds upon the knowledge of the tail competency and deepens it. E.g. Inheritance deepens the knowledge about object-oriented programming.
+* *Matches*: The knowledge of the head and tail competency match each other.
+
+| The relations are displayed in a diagram below the form and can be deleted by clicking on them.
+
+<Callout variant={CalloutVariant.info}>
+    <p>
+        Relations are necessary for the learning path generation. Without them, Artemis cannot suggest a reasonable order of competencies for students.
+    </p>
+</Callout>
+
+<Image src={instructorCompetencyRelationsImg} alt={"instructor-competency-relations"} size={ImageSize.large} />
+
+### Import Competencies
+
+Instructors have three ways to import competencies: Import all competencies of another course, import from other courses or import standardized competencies.
+
+**1. Import all Competencies of another Course**
+
+| This option opens a modal in which instructors can select one of their previous courses, importing all competencies (and relations) into the current course.
+| The purpose of this feature is to directly import the complete competency model of another course, e.g. when holding courses repeatedly.
+
+<Image src={instructorImportAllCompetenciesImg} alt={"instructor-import-all-competencies"} size={ImageSize.large} />
+
+**2. Import from other Courses**
+
+| When importing from other courses, instructors can view a list of competencies from all courses they have access to.
+They can sort the list based on all fields except for competency description.
+They can also filter the list through the *Competency Search* at the top of the page, which can be expanded for advanced search options.
+| All selected competencies are displayed in the *Selected Competencies* table and can be de-selected again by clicking on the trash bin icon.
+Finally, instructors can select if they also want to import the relations between the imported competencies.
+
+<Image src={instructorImportCompetenciesImg} alt={"instructor-import-competencies"} size={ImageSize.large} />
+
+**3. Import Standardized Competencies**
+
+<Callout variant={CalloutVariant.info}>
+    <p>
+        To use this feature, the <em>standardized competency feature toggle</em> needs to be enabled.
+        If you have no access to the feature, contact your instance administrators.
+    </p>
+</Callout>
+
+| When importing standardized competencies, instructors can view the complete standardized competency catalog of their Artemis instance.
+They can filter the displayed competencies by title and knowledge area.
+| Clicking on the name of a competency opens its details on the right side and clicking on the checkbox next to the name selects it for import.
+Again, selected competencies are displayed in a table and can be de-selected again by clicking on the trash bin icon.
+
+<Image src={instructorImportStandardizedCompetenciesImg} alt={"instructor-import-standardized-competencies"} size={ImageSize.large} />
+
+### Generate Competencies
+
+<Callout variant={CalloutVariant.info}>
+    <p>
+        To use this feature, Iris needs to be enabled for your Artemis instance and <em>Competency Generation</em> needs to be enabled in the Iris global settings <strong>as well as the Iris settings of your course</strong> (see image below).
+        If you cannot enable <em>Competency Generation</em> in your Iris course settings, contact your instance administrators.
+    </p>
+</Callout>
+
+<Image src={competencyGenerationSettingsImg} alt={"competency-generation-settings"} size={ImageSize.large} />
+
+<iframe
+    src="https://live.rbg.tum.de/w/artemisintro/46941?video_only=1&t=0"
+    allowFullScreen="1"
+    frameBorder="0"
+    width="600"
+    height="350"
+/>
+
+| Instructors can use the integrated LLM subsystem of Artemis, to generate competencies for their course.
+| Based on a course description, the LLM generates around 10 recommendations for possible competencies (the amount may vary depending on the description provided).
+
+<Image src={instructorGenerateCompetenciesImg} alt={"instructor-generate-competencies"} size={ImageSize.large} />
+
+| Instructors can view the details (title, description and taxonomy) of each recommendation by expanding it.
+They can then edit these details or delete the recommendation if it is unfit.
+| After saving, the recommendations are saved as actual competencies into the course of the instructor.
+
+<Image src={instructorCompetencyRecommendationImg} alt={"instructor-competency-recommendation"} size={ImageSize.large} />
+
+---
+
+## Learning Paths
+
+Instructors can enable learning paths for their courses either by editing the course or on the dedicated learning path management page. This will generate individualized learning paths for all course participants.
+
+Once the feature is enabled, instructors gain access to the Learning Paths Management page, where they can view an overview of the status of the learning paths feature.
+For example, if competencies have not yet been created or relationships between them are missing, the State panel will notify instructors of these issues.
+Instructors can also review the individual learning paths of students. The table on this page displays each student's login, name, and progress within their learning path. By clicking on a student's progress, the instructor can open the learning path graph, which illustrates the relationships between competencies and prerequisites and shows the student's mastery level for each.
+At the bottom of the page, instructors can find generalized information about the learning paths of all students. This includes a graph that presents the average mastery level for each competency or prerequisite across the entire class.
+
+<Image src={instructorsLearningPathManagementImg} alt={"instructors-learning-path-management"} size={ImageSize.large} />
