@@ -3,13 +3,14 @@
 Integrated Code Lifecycle
 =========================
 
-Artemis' Integrated Code Lifecycle consists of two main components: Local Version Control and Local Continuous Integration.
+Student Guide
+=============
 
-.. toctree::
+.. note::
+    This section has been moved to our `new student documentation <https://ls1intum.github.io/Artemis/student/integrated-code-lifecycle/>`_.
 
-   icl/general
-   icl/local-version-control
-   icl/ssh-intro
-   icl/ssh-key-creation
-   icl/ssh-add-key-to-artemis
-   icl/local-continuous-integration
+Instructor Guide
+================
+
+.. note::
+    This section has been moved to our `new instructor documentation <https://ls1intum.github.io/Artemis/instructor/integrated-code-lifecycle/>`_.
