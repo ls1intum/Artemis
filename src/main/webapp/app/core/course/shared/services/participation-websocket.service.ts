@@ -29,6 +29,14 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
     private websocketService = inject(WebsocketService);
     private participationService = inject(ParticipationService);
 
+    private static nextInstanceId = 1;
+    private instanceId = ParticipationWebsocketService.nextInstanceId++;
+
+    constructor() {
+        // eslint-disable-next-line no-undef
+        console.log('[ParticipationWS] ctor, instanceId =', this.instanceId);
+    }
+
     cachedParticipations: Map<number /* ID of participation */, StudentParticipation> = new Map<number, StudentParticipation>();
     openResultWebsocketSubscriptions: Map<number /*ID of participation */, string /* url of websocket connection */> = new Map<number, string>();
     openPersonalWebsocketSubscription?: string; /* url of websocket connection */
@@ -89,6 +97,12 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      * @param participation
      */
     private notifyParticipationSubscribers = (participation: Participation) => {
+        // eslint-disable-next-line no-undef
+        console.log('[ParticipationWS] notifyParticipationSubscribers', {
+            instanceId: this.instanceId,
+            participationId: participation.id,
+            exerciseId: participation.exercise?.id,
+        });
         if (!this.participationObservable) {
             this.participationObservable = new BehaviorSubject(participation);
         } else {
@@ -294,7 +308,12 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      */
     public subscribeForParticipationChanges(): BehaviorSubject<Participation | undefined> {
         if (!this.participationObservable) {
+            // eslint-disable-next-line no-undef
+            console.log('[ParticipationWS] create participationObservable', { instanceId: this.instanceId });
             this.participationObservable = new BehaviorSubject<Participation | undefined>(undefined);
+        } else {
+            // eslint-disable-next-line no-undef
+            console.log('[ParticipationWS] reuse participationObservable', { instanceId: this.instanceId });
         }
         return this.participationObservable;
     }

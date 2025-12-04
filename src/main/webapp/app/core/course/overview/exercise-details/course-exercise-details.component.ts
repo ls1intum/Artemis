@@ -301,6 +301,11 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     }
 
     subscribeForNewResults() {
+        // eslint-disable-next-line no-undef
+        console.log('[CourseExerciseDetails] subscribeForNewResults called', {
+            exerciseId: this.exercise?.id,
+            studentParticipationIds: this.studentParticipations?.map((p) => p.id),
+        });
         if (this.exercise && this.studentParticipations?.length) {
             this.studentParticipations.forEach((participation) => {
                 this.participationWebsocketService.addParticipation(participation, this.exercise);
@@ -313,6 +318,12 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             // Skip the first event, as it is the initial state. All data should already be loaded.
             .pipe(skip(1))
             .subscribe((changedParticipation: StudentParticipation) => {
+                // eslint-disable-next-line no-undef
+                console.log('[CourseExerciseDetails] participation changed event', {
+                    participationId: changedParticipation?.id,
+                    exerciseId: changedParticipation?.exercise?.id,
+                });
+
                 if (changedParticipation && this.exercise && changedParticipation.exercise?.id === this.exercise.id) {
                     // Notify student about late submission result
                     if (
@@ -345,6 +356,10 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                     }
                     this.updateStudentParticipations();
                     this.mergeResultsAndSubmissionsForParticipations();
+                    // eslint-disable-next-line no-undef
+                    console.log('[CourseExerciseDetails] after mergeResultsAndSubmissionsForParticipations', {
+                        sortedHistoryResultsLength: this.sortedHistoryResults?.length,
+                    });
                 }
             });
     }
