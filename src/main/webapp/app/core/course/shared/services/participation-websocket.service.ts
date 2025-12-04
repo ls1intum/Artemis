@@ -149,46 +149,31 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
         const cachedParticipation = this.cachedParticipations.get(participationId);
 
         if (!cachedParticipation) {
-            this.logDebug('[addResultToParticipation] no cached participation for', { participationID: participationId });
+            this.logDebug('[addResultToParticipation] no cached participation for', { participationId });
             return of();
         }
 
-        const submissions = cachedParticipation.submissions ?? [];
-        const updatedSubmissions = submissions.map((submission) => {
-            if (submission.id !== result.submission!.id) {
-                return submission;
-            }
+        // ORIGINAL behavior: do NOT touch submissions[].results, only recompute flat participation.results
+        const oldFlattened = getAllResultsOfAllSubmissions(cachedParticipation.submissions);
+        const withoutOld = oldFlattened.filter((r) => r.id !== result.id);
+        const updatedResults = [...withoutOld, result];
 
-            const oldResults = submission.results ?? [];
-            const withoutOld = oldResults.filter((r) => r.id !== result.id);
-            const newResults = [...withoutOld, result];
-
-            this.logDebug('[addResultToParticipation] updating submission', {
-                participationId,
-                submissionId: submission.id,
-                oldResultsCount: oldResults.length,
-                newResultsCount: newResults.length,
-                newResultId: result.id,
-            });
-            return {
-                ...submission,
-                results: [...withoutOld, result],
-            };
+        this.logDebug('[addResultToParticipation] updating participation results', {
+            participationId,
+            oldResultsCount: oldFlattened.length,
+            newResultsCount: updatedResults.length,
+            newResultId: result.id,
         });
-
-        const allResults = getAllResultsOfAllSubmissions(updatedSubmissions);
 
         this.cachedParticipations.set(participationId, {
             ...cachedParticipation,
-            submissions: updatedSubmissions,
-            results: allResults,
+            results: updatedResults,
         } as StudentParticipation);
 
         this.logDebug('[addResultToParticipation] after update', {
             participationId,
-            submissionsCount: updatedSubmissions.length,
-            totalResultsFromSubmissions: updatedSubmissions.flatMap((s) => s.results ?? []).length,
-            flatResultsFieldCount: allResults.length,
+            submissionsCount: cachedParticipation.submissions?.length,
+            flatResultsFieldCount: updatedResults.length,
         });
 
         return of(this.cachedParticipations.get(participationId));
