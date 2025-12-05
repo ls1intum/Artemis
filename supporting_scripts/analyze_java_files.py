@@ -158,14 +158,18 @@ def get_changed_java_files(event_type: str, base_branch: str) -> Set[str]:
         print(f"Error getting changed files: {e}", file=sys.stderr)
         return set()
 
+def is_path_in_changed_files(path: str, changed_files: Set[str]) -> bool:
+    """Check if a path matches any of the changed files."""
+    normalized_path = os.path.normpath(path)
+    return normalized_path in changed_files or any(normalized_path.endswith(changed_file) for changed_file in changed_files)
+
 def check_violations_in_changed_files(violations: List[Tuple[str, int]], changed_files: Set[str]) -> bool:
     """Check if any violations are in the changed files."""
     if not changed_files:
         return False
 
     for path, _ in violations:
-        normalized_path = os.path.normpath(path)
-        if normalized_path in changed_files or any(normalized_path.endswith(changedFiles) for changedFiles in changed_files):
+        if is_path_in_changed_files(path, changed_files):
             return True
     return False
 
@@ -179,8 +183,8 @@ def display_pr_violation_details(violation_type: str, violations: List[Tuple[str
         unit = "parameters"
 
     for path, value in violations:
-        normalized_path = os.path.normpath(path)
-        if normalized_path in changed_files or any(normalized_path.endswith(changedFiles) for changedFiles in changed_files):
+        if is_path_in_changed_files(path, changed_files):
+            normalized_path = os.path.normpath(path)
             print(f"  - {normalized_path}: {value} {unit}")
     print()
 
