@@ -13,11 +13,9 @@ import { ProgrammingSubmissionService } from 'app/programming/shared/services/pr
 import { areManualResultsAllowed } from 'app/exercise/util/exercise.utils';
 import { ResultService } from 'app/exercise/result/result.service';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
-import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { formatTeamAsSearchResult } from 'app/exercise/team/team.utils';
 import { faComment, faDownload, faFilter, faFolderOpen, faListAlt, faSync } from '@fortawesome/free-solid-svg-icons';
@@ -26,10 +24,11 @@ import { Range } from 'app/shared/util/utils';
 import dayjs from 'dayjs/esm';
 import { ExerciseCacheService } from 'app/exercise/services/exercise-cache.service';
 import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbPopover, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { isManualResult } from 'app/exercise/result/result.utils';
+import { isManualResult, isStudentParticipation } from 'app/exercise/result/result.utils';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
+import { isProgrammingExerciseStudentParticipation } from 'app/programming/shared/utils/programming-exercise.utils';
 import { ExternalSubmissionButtonComponent } from '../external-submission/external-submission-button.component';
 import { ExerciseActionButtonComponent } from 'app/shared/components/buttons/exercise-action-button/exercise-action-button.component';
 import { ExerciseScoresExportButtonComponent } from './export-button/exercise-scores-export-button.component';
@@ -47,7 +46,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
-
 /**
  * Filter properties for a result
  */
@@ -300,7 +298,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
      * @param participation Participation for which to return the build plan id
      */
     buildPlanId(participation: Participation) {
-        return (participation as ProgrammingExerciseStudentParticipation)?.buildPlanId;
+        return isProgrammingExerciseStudentParticipation(participation) ? participation.buildPlanId : undefined;
     }
 
     /**
@@ -315,7 +313,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
      * @param participation Participation for which to get the link for
      */
     getRepositoryLink(participation: Participation) {
-        return (participation! as ProgrammingExerciseStudentParticipation).userIndependentRepositoryUri;
+        return isProgrammingExerciseStudentParticipation(participation) ? participation.userIndependentRepositoryUri : undefined;
     }
 
     /**
@@ -325,7 +323,10 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         if (this.participations.length) {
             const rows: string[] = [];
             this.participations.forEach((participation, index) => {
-                const studentParticipation = participation as StudentParticipation;
+                if (!isStudentParticipation(participation)) {
+                    return;
+                }
+                const studentParticipation = participation;
                 const { participantName } = studentParticipation;
                 if (studentParticipation.team) {
                     if (index === 0) {
@@ -347,7 +348,10 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
      * @param participation
      */
     searchParticipationFormatter = (participation: Participation): string => {
-        const studentParticipation = participation as StudentParticipation;
+        if (!isStudentParticipation(participation)) {
+            return '';
+        }
+        const studentParticipation = participation;
         if (studentParticipation.student) {
             const { login, name } = studentParticipation.student;
             return `${login} (${name})`;
@@ -364,7 +368,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
      * @param participation
      */
     searchTextFromParticipation = (participation: Participation): string => {
-        return (participation as StudentParticipation).participantIdentifier || '';
+        return isStudentParticipation(participation) ? participation.participantIdentifier || '' : '';
     };
 
     /**

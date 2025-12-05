@@ -225,8 +225,12 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit, 
         }
 
         let showIcon = false;
+        const answers = this.sortedAnswerPosts();
+        if (!answers) {
+            return false;
+        }
         // iterate over all answer posts
-        (this.sortedAnswerPosts() as unknown as AnswerPost[]).forEach((answerPost: Posting) => {
+        answers.forEach((answerPost: Posting) => {
             // check if the answer post is newer than the last read date
             const isAuthor = this.metisService.metisUserIsAuthorOfPosting(answerPost);
             const lastReadDate = this.lastReadDate?.();

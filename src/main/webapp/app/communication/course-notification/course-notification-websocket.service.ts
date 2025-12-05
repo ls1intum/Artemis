@@ -91,12 +91,17 @@ export class CourseNotificationWebsocketService implements OnDestroy {
             .subscribe(topicPrefix + courseId)
             .receive(topicPrefix + courseId)
             .subscribe((notification: CourseNotification) => {
+                const category = this.parseCategory(notification.category);
+                const status = this.parseViewingStatus(notification.status);
+                if (category === undefined || status === undefined) {
+                    return;
+                }
                 const courseNotification = new CourseNotification(
                     notification.notificationId!,
                     notification.courseId!,
                     notification.notificationType!,
-                    CourseNotificationCategory[notification.category as unknown as keyof typeof CourseNotificationCategory],
-                    CourseNotificationViewingStatus[notification.status as unknown as keyof typeof CourseNotificationViewingStatus],
+                    category,
+                    status,
                     convertDateFromServer(notification.creationDate!)!,
                     notification.parameters!,
                     notification.relativeWebAppUrl!,
@@ -124,5 +129,25 @@ export class CourseNotificationWebsocketService implements OnDestroy {
                 delete this.courseWebsocketSubscriptions[numericCourseId];
             }
         });
+    }
+
+    private parseCategory(category: unknown): CourseNotificationCategory | undefined {
+        if (typeof category === 'number' && CourseNotificationCategory[category] !== undefined) {
+            return category as CourseNotificationCategory;
+        }
+        if (typeof category === 'string' && category in CourseNotificationCategory) {
+            return CourseNotificationCategory[category as keyof typeof CourseNotificationCategory];
+        }
+        return undefined;
+    }
+
+    private parseViewingStatus(status: unknown): CourseNotificationViewingStatus | undefined {
+        if (typeof status === 'number' && CourseNotificationViewingStatus[status] !== undefined) {
+            return status as CourseNotificationViewingStatus;
+        }
+        if (typeof status === 'string' && status in CourseNotificationViewingStatus) {
+            return CourseNotificationViewingStatus[status as keyof typeof CourseNotificationViewingStatus];
+        }
+        return undefined;
     }
 }

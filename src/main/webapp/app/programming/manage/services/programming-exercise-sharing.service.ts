@@ -8,6 +8,7 @@ import { SolutionProgrammingExerciseParticipation } from 'app/exercise/shared/en
 import { TemplateProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/template-programming-exercise-participation.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { SharingInfo, ShoppingBasket } from 'app/sharing/sharing.model';
+import { isSolutionProgrammingExerciseParticipation, isTemplateProgrammingExerciseParticipation } from 'app/programming/shared/utils/programming-exercise.utils';
 import dayjs from 'dayjs/esm';
 import { Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -78,13 +79,13 @@ export class ProgrammingExerciseSharingService {
         };
         // Remove exercise from template & solution participation to avoid circular dependency issues.
         // Also remove the results, as they can have circular structures as well and don't have to be saved here.
-        if (copy.templateParticipation) {
-            const { exercise: _ignoredExercise, results: _ignoredResults, submissions: _ignoredSubmissions, ...filteredTemplateParticipation } = copy.templateParticipation as any;
-            copy.templateParticipation = { ...filteredTemplateParticipation } as TemplateProgrammingExerciseParticipation;
+        if (isTemplateProgrammingExerciseParticipation(copy.templateParticipation)) {
+            const { exercise: _ignoredExercise, submissions: _ignoredSubmissions, ...filteredTemplateParticipation } = copy.templateParticipation;
+            copy.templateParticipation = filteredTemplateParticipation as TemplateProgrammingExerciseParticipation;
         }
-        if (copy.solutionParticipation) {
-            const { exercise: _ignoredExercise, results: _ignoredResults, submissions: _ignoredSubmissions, ...filteredSolutionParticipation } = copy.solutionParticipation as any;
-            copy.solutionParticipation = { ...filteredSolutionParticipation } as SolutionProgrammingExerciseParticipation;
+        if (isSolutionProgrammingExerciseParticipation(copy.solutionParticipation)) {
+            const { exercise: _ignoredExercise, submissions: _ignoredSubmissions, ...filteredSolutionParticipation } = copy.solutionParticipation;
+            copy.solutionParticipation = filteredSolutionParticipation as SolutionProgrammingExerciseParticipation;
         }
 
         copy.categories = ExerciseService.stringifyExerciseCategories(copy);

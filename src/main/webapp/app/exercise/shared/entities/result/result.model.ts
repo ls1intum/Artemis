@@ -55,9 +55,8 @@ export class Result implements BaseEntity {
  * @return true if the result is a practice result, false otherwise
  */
 export function isPracticeResult(result: Result | undefined): boolean {
-    let studentParticipation: StudentParticipation | undefined;
     if (result?.submission?.participation instanceof StudentParticipation) {
-        studentParticipation = result.submission.participation as StudentParticipation;
+        return result.submission.participation.testRun ?? false;
     }
-    return studentParticipation?.testRun ?? false;
+    return false;
 }

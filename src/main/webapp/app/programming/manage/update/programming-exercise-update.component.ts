@@ -716,7 +716,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                     this.saveExercise();
                 });
                 reference.componentInstance.reEvaluated.subscribe(() => {
-                    const requestOptions = {} as any;
+                    const requestOptions: Record<string, unknown> = {};
                     requestOptions.deleteFeedback = reference.componentInstance.deleteFeedback;
                     this.subscribeToSaveResponse(this.programmingExerciseService.reevaluateAndUpdate(this.programmingExercise, requestOptions));
                 });
@@ -798,7 +798,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         } else if (this.isImportFromExistingExercise) {
             this.subscribeToSaveResponse(this.programmingExerciseService.importExercise(this.programmingExercise, this.importOptions));
         } else if (this.programmingExercise.id !== undefined) {
-            const requestOptions = {} as any;
+            const requestOptions: Record<string, unknown> = {};
             if (this.notificationText) {
                 requestOptions.notificationText = this.notificationText;
             }

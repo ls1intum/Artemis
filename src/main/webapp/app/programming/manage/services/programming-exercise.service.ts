@@ -8,8 +8,6 @@ import { omit as _omit } from 'lodash-es';
 import { createRequestOption } from 'app/shared/util/request.util';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
-import { TemplateProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/template-programming-exercise-participation.model';
-import { SolutionProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/solution-programming-exercise-participation.model';
 import { PlagiarismOptions } from 'app/plagiarism/shared/entities/PlagiarismOptions';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { convertDateFromClient, convertDateFromServer } from 'app/shared/util/date.utils';
@@ -21,6 +19,7 @@ import { ImportOptions } from 'app/programming/manage/programming-exercises';
 import { CheckoutDirectoriesDto } from 'app/programming/shared/entities/checkout-directories-dto';
 import { ProgrammingExerciseTheiaConfig } from 'app/programming/shared/entities/programming-exercise-theia.config';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
+import { isSolutionProgrammingExerciseParticipation, isTemplateProgrammingExerciseParticipation } from 'app/programming/shared/utils/programming-exercise.utils';
 
 export type EntityResponseType = HttpResponse<ProgrammingExercise>;
 export type EntityArrayResponseType = HttpResponse<ProgrammingExercise[]>;
@@ -378,11 +377,13 @@ export class ProgrammingExerciseService {
         };
         // Remove exercise from template & solution participation to avoid circular dependency issues.
         // Also remove the results, as they can have circular structures as well and don't have to be saved here.
-        if (copy.templateParticipation) {
-            copy.templateParticipation = _omit(copy.templateParticipation, ['exercise', 'results']) as TemplateProgrammingExerciseParticipation;
+        if (isTemplateProgrammingExerciseParticipation(copy.templateParticipation)) {
+            const { exercise: _ignoredExercise, ...rest } = copy.templateParticipation;
+            copy.templateParticipation = rest;
         }
-        if (copy.solutionParticipation) {
-            copy.solutionParticipation = _omit(copy.solutionParticipation, ['exercise', 'results']) as SolutionProgrammingExerciseParticipation;
+        if (isSolutionProgrammingExerciseParticipation(copy.solutionParticipation)) {
+            const { exercise: _ignoredExercise, ...rest } = copy.solutionParticipation;
+            copy.solutionParticipation = rest;
         }
 
         return copy as ProgrammingExercise;
