@@ -243,7 +243,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
 
         this.showIfExampleSolutionPresent(newExerciseDetails.exercise);
         this.subscribeForNewResults();
-        this.subscribeToLatestResultsForHistory();
         this.subscribeToTeamAssignmentUpdates();
 
         this.baseResource = `/course-management/${this.courseId}/${this.exercise.type}-exercises/${this.exercise.id}/`;
@@ -566,109 +565,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             icon: faWrench,
             translation: 'entity.action.re-evaluate',
         };
-    }
-
-    subscribeToLatestResultsForHistory() {
-        // Clean up old subscriptions
-        this.latestResultSubscriptions.forEach((s) => s.unsubscribe());
-        this.latestResultSubscriptions = [];
-
-        if (!this.exercise || !this.studentParticipations?.length) {
-            return;
-        }
-
-        for (const participation of this.studentParticipations) {
-            if (!participation.id) {
-                continue;
-            }
-
-            const sub = this.participationWebsocketService
-                .subscribeForLatestResultOfParticipation(participation.id, true, this.exercise.id)
-                .pipe(filter((result): result is Result => !!result))
-                .subscribe((result) => {
-                    this.logDebug('[CourseExerciseDetails] latest result for history', {
-                        exerciseId: this.exercise?.id,
-                        courseId: this.courseId,
-                        participationId: participation.id,
-                        resultId: result.id,
-                    });
-
-                    this.updateHistoryWithResult(result);
-                    this.cdr.markForCheck();
-                });
-
-            this.latestResultSubscriptions.push(sub);
-        }
-    }
-
-    private updateHistoryWithResult(result: Result) {
-        const participationId = result.submission?.participation?.id;
-        if (!participationId) {
-            this.logDebug('[CourseExerciseDetails] updateHistoryWithResult – missing participationId on result', {
-                resultId: result.id,
-            });
-            return;
-        }
-
-        const participationIndex = this.studentParticipations.findIndex((p) => p.id === participationId);
-        if (participationIndex === -1) {
-            this.logDebug('[CourseExerciseDetails] updateHistoryWithResult – participation not found', {
-                participationId,
-                resultId: result.id,
-            });
-            return;
-        }
-
-        const participation = this.studentParticipations[participationIndex];
-
-        const submissions = [...(participation.submissions ?? [])];
-
-        let targetSubmissionIndex = submissions.findIndex((s) => s.id === result.submission?.id);
-
-        if (targetSubmissionIndex === -1 && result.submission) {
-            this.logDebug('[CourseExerciseDetails] updateHistoryWithResult – no matching submission, using result.submission', {
-                participationId,
-                resultId: result.id,
-                submissionIdFromResult: result.submission.id,
-            });
-
-            const submissionFromResult = {
-                ...result.submission,
-                participation,
-                results: [...(result.submission.results ?? []), result].filter((r, idx, arr) => r.id && arr.findIndex((rr) => rr.id === r.id) === idx),
-            };
-
-            submissions.push(submissionFromResult);
-            targetSubmissionIndex = submissions.length - 1;
-        }
-
-        if (targetSubmissionIndex === -1) {
-            return;
-        }
-
-        const targetSubmission = submissions[targetSubmissionIndex];
-
-        const oldResults = targetSubmission.results ?? [];
-        const withoutOld = oldResults.filter((r) => r.id !== result.id);
-        const newResults = [...withoutOld, result];
-
-        submissions[targetSubmissionIndex] = {
-            ...targetSubmission,
-            results: newResults,
-        };
-
-        const updatedParticipation: StudentParticipation = {
-            ...participation,
-            submissions,
-        };
-
-        this.studentParticipations = this.studentParticipations.map((p) => (p.id === updatedParticipation.id ? updatedParticipation : p));
-        if (this.exercise) {
-            this.exercise.studentParticipations = this.studentParticipations;
-        }
-
-        this.sortResults();
-        this.cdr.detectChanges();
     }
 
     ngOnDestroy() {
