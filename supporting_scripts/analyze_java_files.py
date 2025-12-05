@@ -6,6 +6,34 @@ import sys
 from collections import defaultdict
 from typing import List, Tuple, Set
 
+SEPARATOR_WIDTH = 42
+SEPARATOR_CHAR = "="
+
+def print_separator(char: str = SEPARATOR_CHAR, width: int = SEPARATOR_WIDTH):
+    """Print a separator line."""
+    print(char * width)
+
+def print_analysis_results(violations: List[Tuple[str, int]], module_counts: dict, threshold: int, description: str, unit: str):
+    """Print analysis results for a specific violation type."""
+    print(f"\nFound {len(violations)} {description} more than {threshold} {unit}:")
+    for module, count in module_counts.items():
+        print(f" - {module}: {count}")
+    for path, value in violations:
+        print(f"{path}: {value} {unit}")
+
+def print_threshold_result(violation_count: int, threshold: int, description: str, violation_type: str):
+    """Print the result of a threshold check."""
+    if violation_count > threshold:
+        if violation_type == "complex_beans":
+            excess = violation_count - threshold
+            print(f"❌ Too many {description}: {violation_count} > {threshold} ({excess} beans need to be refactored)")
+        else:
+            print(f"❌ Too many {description}: {violation_count} > {threshold}")
+        return True
+    else:
+        print(f"✅ {description.capitalize()} within threshold: {violation_count} <= {threshold}")
+        return False
+
 def extract_module(path, base_dir):
     # Extract the subfolder name after de/tum/cit/aet/artemis
     relative_path = os.path.relpath(path, base_dir)
@@ -134,7 +162,7 @@ def display_pr_context(
     max_complex_beans: int
 ):
     """Display context-specific messages for PR or push events."""
-    print("=" * 42)
+    print_separator()
 
     if event_type == 'pull_request':
         if not pr_has_large_violations and not pr_has_complex_violations:
@@ -159,7 +187,7 @@ def display_pr_context(
     else:
         print("Please refactor the classes listed above to meet the code quality standards!")
 
-    print("=" * 42)
+    print_separator()
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
@@ -225,17 +253,8 @@ if __name__ == '__main__':
     )
 
     # Print initial analysis results
-    print(f"\nFound {len(large_classes)} classes with more than {args.max_lines} lines:")
-    for module, count in large_counts.items():
-        print(f" - {module}: {count}")
-    for path, lines in large_classes:
-        print(f"{path}: {lines} lines")
-
-    print(f"\nFound {len(complex_beans)} Spring beans with constructors having more than {args.max_params} parameters:")
-    for module, count in bean_counts.items():
-        print(f" - {module}: {count}")
-    for path, params in complex_beans:
-        print(f"{path}: {params} parameters")
+    print_analysis_results(large_classes, large_counts, args.max_lines, "classes with", "lines")
+    print_analysis_results(complex_beans, bean_counts, args.max_params, "Spring beans with constructors having", "parameters")
 
     # If no thresholds specified, just print results and exit
     if args.max_large_classes is None and args.max_complex_beans is None:
@@ -243,28 +262,17 @@ if __name__ == '__main__':
 
     # Check thresholds
     print()
-    print("=" * 42)
+    print_separator()
     print("CODE QUALITY ANALYSIS SUMMARY")
-    print("=" * 42)
+    print_separator()
     print(f"Large classes found: {len(large_classes)} (max allowed: {args.max_large_classes})")
     print(f"Complex beans found: {len(complex_beans)} (max allowed: {args.max_complex_beans})")
     print()
 
-    large_class_violation = len(large_classes) > args.max_large_classes
-    complex_bean_violation = len(complex_beans) > args.max_complex_beans
+    large_class_violation = print_threshold_result(len(large_classes), args.max_large_classes, "large classes", "large_classes")
+    complex_bean_violation = print_threshold_result(len(complex_beans), args.max_complex_beans, "complex beans", "complex_beans")
 
-    if large_class_violation:
-        print(f"❌ Too many large classes: {len(large_classes)} > {args.max_large_classes}")
-    else:
-        print(f"✅ Large classes within threshold: {len(large_classes)} <= {args.max_large_classes}")
-
-    if complex_bean_violation:
-        excess = len(complex_beans) - args.max_complex_beans
-        print(f"❌ Too many complex beans: {len(complex_beans)} > {args.max_complex_beans} ({excess} beans need to be refactored)")
-    else:
-        print(f"✅ Complex beans within threshold: {len(complex_beans)} <= {args.max_complex_beans}")
-
-    print("=" * 42)
+    print_separator()
 
     # If violations found, check PR context and display details
     if large_class_violation or complex_bean_violation:
