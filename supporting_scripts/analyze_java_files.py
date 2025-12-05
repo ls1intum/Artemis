@@ -171,10 +171,10 @@ def check_violations_in_changed_files(violations: List[Tuple[str, int]], changed
 def display_pr_violation_details(violation_type: str, violations: List[Tuple[str, int]], changed_files: Set[str]):
     """Display violations that were introduced in the PR."""
     if violation_type == "large_classes":
-        print("Files you edited that are too large:")
+        print("❌ Files you edited that are too large:")
         unit = "lines"
     else:
-        print("Files you edited that have too many constructor parameters:")
+        print("❌ Files you edited that have too many constructor parameters:")
         unit = "parameters"
 
     for path, value in violations:
