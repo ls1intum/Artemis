@@ -209,12 +209,12 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
         const areCheckoutPathsValid = this.areCheckoutPathsValid();
         this.formValid = Boolean(
             this.exerciseTitleChannelComponent().titleChannelNameComponent().isValid() &&
-                this.getIsShortNameFieldValid() &&
-                isCheckoutSolutionRepositoryValid &&
-                isRecreateBuildPlansValid &&
-                isUpdateTemplateFilesValid &&
-                areAuxiliaryRepositoriesValid &&
-                areCheckoutPathsValid,
+            this.getIsShortNameFieldValid() &&
+            isCheckoutSolutionRepositoryValid &&
+            isRecreateBuildPlansValid &&
+            isUpdateTemplateFilesValid &&
+            areAuxiliaryRepositoriesValid &&
+            areCheckoutPathsValid,
         );
         this.formValidChanges.next(this.formValid);
     }
@@ -254,21 +254,21 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     isCheckoutSolutionRepositoryValid(): boolean {
         return Boolean(
             this.checkoutSolutionRepositoryField?.valid ||
-                this.programmingExercise().id ||
-                !this.programmingExercise().programmingLanguage ||
-                !this.programmingExerciseCreationConfig.checkoutSolutionRepositoryAllowed,
+            this.programmingExercise().id ||
+            !this.programmingExercise().programmingLanguage ||
+            !this.programmingExerciseCreationConfig.checkoutSolutionRepositoryAllowed,
         );
     }
 
     areCheckoutPathsValid(): boolean {
         return Boolean(
             !this.programmingExerciseEditCheckoutDirectories ||
-                (this.programmingExerciseEditCheckoutDirectories.formValid &&
-                    this.programmingExerciseEditCheckoutDirectories.areValuesUnique([
-                        this.programmingExercise().buildConfig?.assignmentCheckoutPath,
-                        this.programmingExercise().buildConfig?.testCheckoutPath,
-                        this.programmingExercise().buildConfig?.solutionCheckoutPath,
-                    ])),
+            (this.programmingExerciseEditCheckoutDirectories.formValid &&
+                this.programmingExerciseEditCheckoutDirectories.areValuesUnique([
+                    this.programmingExercise().buildConfig?.assignmentCheckoutPath,
+                    this.programmingExercise().buildConfig?.testCheckoutPath,
+                    this.programmingExercise().buildConfig?.solutionCheckoutPath,
+                ])),
         );
     }
 
