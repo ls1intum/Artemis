@@ -1601,41 +1601,37 @@ describe('QuizExerciseUpdateComponent', () => {
 
         beforeEach(waitForAsync(() => configureTestBed()));
 
-        // 2) create component + wire services
         beforeEach(() => {
             configureFixtureAndServices();
             modalService = TestBed.inject(NgbModal);
             profileService = TestBed.inject(ProfileService) as unknown as MockProfileService;
 
-            // make sure the component looks like a normal editable quiz
             comp.quizExercise = new QuizExercise({ id: 123 } as Course, undefined);
             comp.quizExercise.isEditable = true;
             comp.courseId = 123;
         });
 
         it('courseIdForGeneration should prefer route courseId, then quizExercise.course, then exam course', () => {
-            // route id already set in your test setup to 123
             expect(comp.courseIdForGeneration).toBe(123);
 
-            // remove explicit courseId so it falls back
             comp.courseId = undefined;
             comp.quizExercise.course = { id: 77 } as Course;
             expect(comp.courseIdForGeneration).toBe(77);
 
-            // remove course, use exam
             comp.quizExercise.course = undefined;
             comp.quizExercise.exerciseGroup = { exam: { course: { id: 55 } as Course } } as any;
             expect(comp.courseIdForGeneration).toBe(55);
         });
 
         it('hyperionEnabled should delegate to ProfileService', () => {
-            // both module feature + profile must be active
-            profileService.isModuleFeatureActive.mockReturnValueOnce(true);
-            profileService.isProfileActive.mockReturnValueOnce(true);
+            const moduleSpy = jest.spyOn(profileService, 'isModuleFeatureActive');
+            const profileSpy = jest.spyOn(profileService, 'isProfileActive');
+
+            moduleSpy.mockReturnValueOnce(true);
+            profileSpy.mockReturnValueOnce(true);
             expect(comp.hyperionEnabled).toBeTrue();
 
-            // if the module feature is disabled, the getter must return false
-            profileService.isModuleFeatureActive.mockReturnValueOnce(false);
+            moduleSpy.mockReturnValueOnce(false);
             expect(comp.hyperionEnabled).toBeFalse();
         });
 
@@ -1661,7 +1657,6 @@ describe('QuizExerciseUpdateComponent', () => {
 
             comp.generateQuizWithHyperion();
 
-            // wait for modal result to resolve
             await mockModalRef.result;
 
             expect(openSpy).toHaveBeenCalled();
@@ -1671,7 +1666,6 @@ describe('QuizExerciseUpdateComponent', () => {
             const added = comp.quizExercise.quizQuestions![0] as MultipleChoiceQuestion;
             expect(added.title).toBe('AI Q1');
             expect(added.answerOptions?.length).toBe(1);
-            // difficulty was applied
             expect(comp.quizExercise.difficulty).toBeDefined();
         });
 
