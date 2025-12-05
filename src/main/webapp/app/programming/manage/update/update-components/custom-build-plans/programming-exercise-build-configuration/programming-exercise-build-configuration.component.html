@@ -16,28 +16,6 @@
         />
     </div>
     @if (!isAeolus()) {
-        @if (isLanguageSupported) {
-            <div class="form-check mb-2">
-                <label class="form-check-label" for="field_disableNetworkAccess">
-                    <input
-                        class="form-check-input"
-                        type="checkbox"
-                        name="disableNetworkAccess"
-                        id="field_disableNetworkAccess"
-                        [checked]="isNetworkDisabled"
-                        (change)="onDisableNetworkAccessChange($event)"
-                    />
-                    <span jhiTranslate="artemisApp.programmingExercise.dockerFlags.disableNetworkAccess.title"></span>
-                    <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.dockerFlags.disableNetworkAccess.description" />
-                </label>
-            </div>
-            @if (isNetworkDisabled) {
-                <div class="warning alert-warning mb-2" role="alert">
-                    <span jhiTranslate="artemisApp.programmingExercise.dockerFlags.disableNetworkAccess.warning"></span>
-                </div>
-            }
-        }
-
         <div class="mb-2">
             <span jhiTranslate="artemisApp.programmingExercise.dockerFlags.envVars.title"></span>
             <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.dockerFlags.envVars.description" />
@@ -91,7 +69,31 @@
                 <span class="slider-value">{{ timeout() }} s</span>
             </span>
         </div>
-
+        @if (isLanguageSupported) {
+            <div class="mb-2">
+                <label for="networkMode">
+                    <span jhiTranslate="artemisApp.programmingExercise.dockerFlags.useCustomNetwork.title"></span>
+                    <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.dockerFlags.useCustomNetwork.description" />
+                </label>
+                <select id="networkMode" class="form-select mb-2" [ngModel]="network() ?? ''" (ngModelChange)="onNetworkChange($event)">
+                    <option value="" jhiTranslate="artemisApp.programmingExercise.dockerFlags.useCustomNetwork.defaultOption"></option>
+                    @if (allowedCustomNetworks?.length) {
+                        @for (customNetwork of allowedCustomNetworks; track customNetwork) {
+                            @if (customNetwork === 'none') {
+                                <option value="none" jhiTranslate="artemisApp.programmingExercise.dockerFlags.useCustomNetwork.noneOption"></option>
+                            } @else {
+                                <option [value]="customNetwork">{{ customNetwork }}</option>
+                            }
+                        }
+                    }
+                </select>
+                @if (network() === 'none') {
+                    <div class="alert alert-warning mb-2" role="alert">
+                        <span jhiTranslate="artemisApp.programmingExercise.dockerFlags.useCustomNetwork.disableNetworkAccessWarning"></span>
+                    </div>
+                }
+            </div>
+        }
         <div class="mb-2">
             <label>
                 <span jhiTranslate="artemisApp.programmingExercise.dockerFlags.cpuCount.label"></span>

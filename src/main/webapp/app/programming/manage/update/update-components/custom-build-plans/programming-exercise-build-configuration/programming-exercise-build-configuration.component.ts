@@ -1,4 +1,4 @@
-import { Component, OnInit, effect, inject, input, output, viewChild } from '@angular/core';
+import { Component, OnInit, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import { FormsModule, NgModel } from '@angular/forms';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
@@ -36,7 +36,7 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
     timeoutChange = output<number>();
 
     envVars: [string, string][] = [];
-    isNetworkDisabled = false;
+    allowedCustomNetworks: string[];
     cpuCount: number | undefined;
     memory: number | undefined;
     memorySwap: number | undefined;
@@ -46,6 +46,8 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
 
     dockerImageField = viewChild<NgModel>('dockerImageField');
     timeoutField = viewChild<NgModel>('timeoutField');
+
+    network = signal<string | undefined>(undefined);
 
     timeoutMinValue?: number;
     timeoutMaxValue?: number;
@@ -60,6 +62,8 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
         effect(() => {
             this.setIsLanguageSupported();
         });
+        // Note: we intentionally avoid auto-serializing docker flags here to prevent
+        // writing incomplete flags before defaults are initialized in ngOnInit.
     }
 
     ngOnInit() {
@@ -75,6 +79,8 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
             if (profileInfo.buildTimeoutDefault && profileInfo.buildTimeoutDefault >= this.timeoutMinValue && profileInfo.buildTimeoutDefault <= this.timeoutMaxValue) {
                 this.timeoutDefaultValue = profileInfo.buildTimeoutDefault;
             }
+
+            this.allowedCustomNetworks = profileInfo.allowedCustomDockerNetworks;
 
             if (!this.timeout) {
                 this.timeoutChange.emit(this.timeoutDefaultValue);
@@ -98,7 +104,9 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
 
     initDockerFlags() {
         this.dockerFlags = JSON.parse(this.programmingExercise()?.buildConfig?.dockerFlags ?? '') as DockerFlags;
-        this.isNetworkDisabled = this.dockerFlags.network === 'none';
+        if (this.dockerFlags.network) {
+            this.network.set(this.dockerFlags.network);
+        }
         if (this.dockerFlags.cpuCount) {
             this.cpuCount = this.dockerFlags.cpuCount;
         }
@@ -116,8 +124,8 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
         }
     }
 
-    onDisableNetworkAccessChange(event: any) {
-        this.isNetworkDisabled = event.target.checked;
+    onNetworkChange(value: string | undefined) {
+        this.network.set(value);
         this.parseDockerFlagsToString();
     }
 
@@ -168,7 +176,8 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
                 newEnv![key] = value;
             }
         });
-        this.dockerFlags = { network: this.isNetworkDisabled ? 'none' : undefined, env: newEnv, cpuCount: this.cpuCount, memory: this.memory, memorySwap: this.memorySwap };
+        const network = this.network() === '' ? undefined : this.network();
+        this.dockerFlags = { env: newEnv, network: network, cpuCount: this.cpuCount, memory: this.memory, memorySwap: this.memorySwap };
         this.programmingExercise()!.buildConfig!.dockerFlags = JSON.stringify(this.dockerFlags);
     }
 
