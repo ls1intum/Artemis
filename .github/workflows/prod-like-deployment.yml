@@ -117,7 +117,7 @@ jobs:
           chmod 644 ~/.ssh/known_hosts
 
       - name: Checkout Artemis-Ansible repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           repository: 'ls1intum/artemis-ansible'
 
@@ -139,7 +139,7 @@ jobs:
           export VAULT_TOKEN=$(cat ~/.vault-token)
 
       - name: Download artifact
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
         with:
           name: Artemis.war
           path: /tmp/artifact
