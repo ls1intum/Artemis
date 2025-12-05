@@ -76,8 +76,6 @@ import de.tum.cit.aet.artemis.lecture.api.SlideApi;
 @RequestMapping("api/fileupload/")
 public class FileUploadExerciseResource {
 
-    // Modifying file for which a check fails
-
     private static final Logger log = LoggerFactory.getLogger(FileUploadExerciseResource.class);
 
     private static final String ENTITY_NAME = "fileUploadExercise";
