@@ -66,6 +66,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     private contentHeightListener?: Disposable;
     private textChangedListener?: Disposable;
     private blurEditorWidgetListener?: Disposable;
+    private focusEditorTextListener?: Disposable;
     private textChangedEmitTimeouts = new Map<string, NodeJS.Timeout>();
     private customBackspaceCommandId: string | undefined;
 
@@ -166,7 +167,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
                 this.ngZone.run(() => this.onBlurEditor.emit());
             });
 
-            this._editor.onDidFocusEditorText(() => {
+            this.focusEditorTextListener = this._editor.onDidFocusEditorText(() => {
                 this.ngZone.run(() => this.registerCustomBackspaceAction(this._editor));
             });
         });
@@ -180,6 +181,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this.textChangedListener?.dispose();
         this.contentHeightListener?.dispose();
         this.blurEditorWidgetListener?.dispose();
+        this.focusEditorTextListener?.dispose();
 
         // Clean up all per-model debounce timeouts
         this.textChangedEmitTimeouts.forEach((timeout) => clearTimeout(timeout));

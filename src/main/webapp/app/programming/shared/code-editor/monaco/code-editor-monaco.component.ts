@@ -204,35 +204,39 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
             return;
         }
         this.loadingCount.set(this.loadingCount() + 1);
-        if (!this.fileSession()[fileName] || this.fileSession()[fileName].loadingError) {
-            let fileContent = '';
-            let loadingError = false;
-            try {
-                fileContent = await firstValueFrom(this.repositoryFileService.getFile(fileName).pipe(timeout(CodeEditorMonacoComponent.FILE_TIMEOUT))).then(
-                    (fileObj) => fileObj.fileContent,
-                );
-            } catch (error) {
-                loadingError = true;
-                if (error.message === ConnectionError.message) {
-                    this.onError.emit('loadingFailed' + error.message);
-                } else {
-                    this.onError.emit('loadingFailed');
+        try {
+            if (!this.fileSession()[fileName] || this.fileSession()[fileName].loadingError) {
+                let fileContent = '';
+                let loadingError = false;
+                try {
+                    fileContent = await firstValueFrom(this.repositoryFileService.getFile(fileName).pipe(timeout(CodeEditorMonacoComponent.FILE_TIMEOUT))).then(
+                        (fileObj) => fileObj.fileContent,
+                    );
+                } catch (error) {
+                    loadingError = true;
+                    if (error.message === ConnectionError.message) {
+                        this.onError.emit('loadingFailed' + error.message);
+                    } else {
+                        this.onError.emit('loadingFailed');
+                    }
                 }
+                this.fileSession.set({
+                    ...this.fileSession(),
+                    [fileName]: { code: fileContent, loadingError: loadingError, scrollTop: 0, cursor: { column: 0, lineNumber: 0 } },
+                });
             }
-            this.fileSession.set({
-                ...this.fileSession(),
-                [fileName]: { code: fileContent, loadingError: loadingError, scrollTop: 0, cursor: { column: 0, lineNumber: 0 } },
-            });
-        }
 
-        const code = this.fileSession()[fileName].code;
-        this.binaryFileSelected.set(this.fileTypeService.isBinaryContent(code));
+            const code = this.fileSession()[fileName].code;
+            this.binaryFileSelected.set(this.fileTypeService.isBinaryContent(code));
 
-        // Since fetching the file may take some time, we need to check if the file is still selected.
-        if (!this.binaryFileSelected() && this.selectedFile() === fileName) {
-            this.switchToSelectedFile(fileName, code);
+            // Since fetching the file may take some time, we need to check if the file is still selected.
+            if (!this.binaryFileSelected() && this.selectedFile() === fileName) {
+                this.switchToSelectedFile(fileName, code);
+            }
+        } finally {
+            // Always decrement loading count, even if an error occurs, to prevent stale loading state
+            this.loadingCount.set(this.loadingCount() - 1);
         }
-        this.loadingCount.set(this.loadingCount() - 1);
     }
 
     switchToSelectedFile(selectedFileName: string, code: string): void {

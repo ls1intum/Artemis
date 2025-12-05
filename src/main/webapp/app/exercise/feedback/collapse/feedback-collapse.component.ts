@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, OnInit } from '@angular/core';
 import { faAngleDown, faAngleRight } from '@fortawesome/free-solid-svg-icons';
 import { FeedbackItem } from 'app/exercise/feedback/item/feedback-item';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -9,6 +9,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     selector: 'jhi-feedback-collapse',
     styleUrls: ['./feedback-collapse.scss'],
     templateUrl: './feedback-collapse.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [FaIconComponent, FeedbackTextComponent, ArtemisTranslatePipe],
 })
 /**
