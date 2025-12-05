@@ -34,6 +34,47 @@ def print_threshold_result(violation_count: int, threshold: int, description: st
         print(f"✅ {description.capitalize()} within threshold: {violation_count} <= {threshold}")
         return False
 
+def print_local_run_instructions(args):
+    """Print instructions for running the script locally with the same parameters."""
+    print()
+    print_separator()
+    print("TO RUN THIS CHECK LOCALLY:")
+    print_separator()
+    print("Execute the following command from the repository root:")
+    print()
+
+    cmd_parts = ["python supporting_scripts/analyze_java_files.py"]
+
+    if args.dir != 'src/main/java/de/tum/cit/aet/artemis':
+        cmd_parts.append(f"--dir {args.dir}")
+    if args.max_lines != 1000:
+        cmd_parts.append(f"--max-lines {args.max_lines}")
+    if args.max_params != 10:
+        cmd_parts.append(f"--max-params {args.max_params}")
+    if args.include_repo_deps:
+        cmd_parts.append("--include-repo-deps")
+    if args.max_large_classes is not None:
+        cmd_parts.append(f"--max-large-classes {args.max_large_classes}")
+    if args.max_complex_beans is not None:
+        cmd_parts.append(f"--max-complex-beans {args.max_complex_beans}")
+    if args.event_type != 'push':
+        cmd_parts.append(f"--event-type {args.event_type}")
+    if args.base_branch != 'develop':
+        cmd_parts.append(f"--base-branch {args.base_branch}")
+
+    # Print as a single line if short, multiline if long
+    full_command = " ".join(cmd_parts)
+    if len(full_command) <= 80:
+        print(full_command)
+    else:
+        print(cmd_parts[0] + " \\")
+        for part in cmd_parts[1:-1]:
+            print(f"  {part} \\")
+        print(f"  {cmd_parts[-1]}")
+
+    print()
+    print_separator()
+
 def extract_module(path, base_dir):
     # Extract the subfolder name after de/tum/cit/aet/artemis
     relative_path = os.path.relpath(path, base_dir)
@@ -126,14 +167,6 @@ def check_violations_in_changed_files(violations: List[Tuple[str, int]], changed
         if path in changed_files:
             return True
     return False
-
-def display_violation_summary(title: str, violations: List[Tuple[str, int]], unit: str):
-    """Display a formatted list of violations."""
-    print(f"{title} ({len(violations)} items):")
-    print("-" * 48)
-    for path, value in violations:
-        print(f"{path}: {value} {unit}")
-    print()
 
 def display_pr_violation_details(violation_type: str, violations: List[Tuple[str, int]], changed_files: Set[str]):
     """Display violations that were introduced in the PR."""
@@ -286,14 +319,6 @@ if __name__ == '__main__':
         pr_has_large_violations = check_violations_in_changed_files(large_classes, changed_files) if large_class_violation else False
         pr_has_complex_violations = check_violations_in_changed_files(complex_beans, changed_files) if complex_bean_violation else False
 
-        # Display violation details
-        if large_class_violation:
-            display_violation_summary("VIOLATING LARGE CLASSES", large_classes, "lines")
-
-        if complex_bean_violation:
-            display_violation_summary("VIOLATING COMPLEX BEANS", complex_beans, "parameters")
-
-        # Display PR-specific context
         display_pr_context(
             args.event_type,
             large_class_violation,
@@ -306,6 +331,8 @@ if __name__ == '__main__':
             args.max_large_classes,
             args.max_complex_beans
         )
+
+        print_local_run_instructions(args)
 
         sys.exit(1)
     else:
