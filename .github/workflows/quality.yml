@@ -157,7 +157,7 @@ jobs:
 
           # TODO these values should become zero in the future
           max_large_classes=9
-          max_complex_beans=10
+          max_complex_beans=9
 
           echo "=========================================="
           echo "CODE QUALITY ANALYSIS SUMMARY"
