@@ -1,17 +1,4 @@
-import {
-    AfterViewChecked,
-    AfterViewInit,
-    ChangeDetectionStrategy,
-    ChangeDetectorRef,
-    Component,
-    ElementRef,
-    OnInit,
-    computed,
-    inject,
-    output,
-    signal,
-    viewChild,
-} from '@angular/core';
+import { AfterViewChecked, AfterViewInit, Component, ElementRef, OnInit, computed, inject, output, signal, viewChild } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faPaperPlane, faRobot, faUser } from '@fortawesome/free-solid-svg-icons';
@@ -20,6 +7,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { firstValueFrom } from 'rxjs';
+import { AgentChatService, CompetencyPreviewResponse } from '../services/agent-chat.service';
+import { ChatMessage } from 'app/atlas/shared/entities/chat-message.model';
 import { AgentChatService } from './agent-chat.service';
 import { ChatMessage, CompetencyPreview, CompetencyRelationPreview, RelationGraphPreview } from 'app/atlas/shared/entities/chat-message.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -34,7 +23,6 @@ import { NgxGraphModule } from '@swimlane/ngx-graph';
     imports: [CommonModule, TranslateDirective, FontAwesomeModule, FormsModule, ArtemisTranslatePipe, CompetencyCardComponent, NgxGraphModule],
     templateUrl: './agent-chat-modal.component.html',
     styleUrl: './agent-chat-modal.component.scss',
-    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterViewChecked {
     private readonly messagesContainer = viewChild.required<ElementRef>('messagesContainer');
@@ -48,13 +36,12 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
     private readonly agentChatService = inject(AgentChatService);
     private readonly competencyService = inject(CompetencyService);
     private readonly translateService = inject(TranslateService);
-    private readonly cdr = inject(ChangeDetectorRef);
 
     courseId!: number;
-    messages: ChatMessage[] = [];
+    messages = signal<ChatMessage[]>([]);
     currentMessage = signal('');
     isAgentTyping = signal(false);
-    private shouldScrollToBottom = false;
+    shouldScrollToBottom = signal(false);
 
     // Event emitted when agent likely created/modified competencies
     competencyChanged = output<void>();
@@ -76,7 +63,9 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
                     this.addMessage(this.translateService.instant('artemisApp.agent.chat.welcome'), false);
                 }
                 history.forEach((msg) => {
-                    if (msg.competencyPreview || msg.batchCompetencyPreview || msg.relationPreview || msg.batchRelationPreview || msg.relationGraphPreview) {
+                    if () {
+                        this.addMessage(msg.content, msg.isUser, msg.competencyPreviews);
+                    if (msg.competencyPreviews || msg.relationPreview || msg.batchRelationPreview || msg.relationGraphPreview) {
                         this.addMessageWithPreview(
                             msg.content,
                             msg.isUser,
@@ -102,9 +91,9 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
     }
 
     ngAfterViewChecked(): void {
-        if (this.shouldScrollToBottom) {
+        if (this.shouldScrollToBottom()) {
             this.scrollToBottom();
-            this.shouldScrollToBottom = false;
+            this.shouldScrollToBottom.set(false);
         }
     }
 
@@ -117,13 +106,12 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
         if (!this.canSendMessage()) {
             return;
         }
-
-        // Invalidate any pending plan approvals when user sends a new message
-        // This means they're refining the plan or moving to a different topic
         this.invalidatePendingPlanApprovals();
 
         this.addMessage(message, true);
         this.currentMessage.set('');
+
+        this.resetTextareaHeight();
 
         this.isAgentTyping.set(true);
 
@@ -131,15 +119,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
             next: (response) => {
                 this.isAgentTyping.set(false);
 
-                this.addMessageWithPreview(
-                    response.message || this.translateService.instant('artemisApp.agent.chat.error'),
-                    false,
-                    response.competencyPreview,
-                    response.batchCompetencyPreview,
-                    response.relationPreview,
-                    response.batchRelationPreview,
-                    response.relationGraphPreview,
-                );
+                this.addMessage(response.message || this.translateService.instant('artemisApp.agent.chat.error'), false, response.competencyPreviews);
 
                 if (response.competenciesModified) {
                     this.competencyChanged.emit();
@@ -173,56 +153,70 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
         textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
     }
 
-    protected onCreateCompetency(message: ChatMessage): void {
-        // Prevent duplicate creation/update
-        if (message.competencyCreated || !message.competencyPreview) {
+    /**
+     * Handles competency creation/update for both single and multiple competencies.
+     * Uses the unified competencyPreviews array.
+     */
+    onCreateCompetencies(message: ChatMessage): void {
+        if (message.competencyCreated || !message.competencyPreviews || message.competencyPreviews.length === 0) {
             return;
-        }
-
-        // Create competency object from preview data
-        const competency = new Competency();
-        competency.title = message.competencyPreview.title;
-        competency.description = message.competencyPreview.description;
-        competency.taxonomy = message.competencyPreview.taxonomy;
-
-        // Check if this is an update or create operation
-        const isUpdate = message.competencyPreview.competencyId !== undefined;
-        if (isUpdate) {
-            competency.id = message.competencyPreview.competencyId;
         }
 
         this.isAgentTyping.set(true);
 
-        // Call the competency service to create or update the competency
-        const operation = isUpdate ? this.competencyService.update(competency, this.courseId) : this.competencyService.create(competency, this.courseId);
+        const competencies = message.competencyPreviews.map((preview) => {
+            const competency = new Competency();
+            competency.title = preview.title;
+            competency.description = preview.description;
+            competency.taxonomy = preview.taxonomy;
+            if (preview.competencyId !== undefined) {
+                competency.id = preview.competencyId;
+            }
+            return competency;
+        });
 
-        operation.subscribe({
-            next: () => {
+        const promises = competencies.map((competency) => {
+            const isUpdate = competency.id !== undefined;
+            const operation = isUpdate ? this.competencyService.update(competency, this.courseId) : this.competencyService.create(competency, this.courseId);
+            return firstValueFrom(operation);
+        });
+
+        Promise.all(promises)
+            .then(() => {
                 this.isAgentTyping.set(false);
 
-                // Mark this message's competency as created/updated
-                this.messages = this.messages.map((msg) => (msg.id === message.id ? { ...msg, competencyCreated: true } : msg));
-                this.cdr.markForCheck();
+                this.messages.update((msgs) => msgs.map((msg) => (msg.id === message.id ? { ...msg, competencyCreated: true } : msg)));
 
-                const translationKey = isUpdate ? 'artemisApp.agent.chat.success.updatedSingle' : 'artemisApp.agent.chat.success.createdSingle';
+                const count = competencies.length;
+                const hasUpdates = competencies.some((comp) => comp.id !== undefined);
+                const hasCreates = competencies.some((comp) => comp.id === undefined);
 
-                this.addMessage(this.translateService.instant(translationKey), false);
+                let successMessage;
+                if (count === 1) {
+                    // Single competency
+                    const translationKey = hasUpdates ? 'artemisApp.agent.chat.success.updatedSingle' : 'artemisApp.agent.chat.success.createdSingle';
+                    successMessage = this.translateService.instant(translationKey);
+                } else {
+                    if (hasUpdates && hasCreates) {
+                        successMessage = this.translateService.instant('artemisApp.agent.chat.success.processed', { count });
+                    } else if (hasUpdates) {
+                        successMessage = this.translateService.instant('artemisApp.agent.chat.success.updated', { count });
+                    } else {
+                        successMessage = this.translateService.instant('artemisApp.agent.chat.success.created', { count });
+                    }
+                }
 
-                // Emit event to refresh competencies in parent component
+                this.addMessage(successMessage, false);
+
                 this.competencyChanged.emit();
 
-                // Restore focus to input
                 setTimeout(() => this.messageInput()?.nativeElement?.focus(), 10);
-            },
-            error: () => {
+            })
+            .catch(() => {
                 this.isAgentTyping.set(false);
-                const errorKey = isUpdate ? 'artemisApp.agent.chat.error.updateFailed' : 'artemisApp.agent.chat.error.createFailed';
-                this.addMessage(this.translateService.instant(errorKey), false);
-
-                // Restore focus to input
+                this.addMessage(this.translateService.instant('artemisApp.agent.chat.competencyProcessFailure'), false);
                 setTimeout(() => this.messageInput()?.nativeElement?.focus(), 10);
-            },
-        });
+            });
     }
 
     protected onCreateRelation(message: ChatMessage): void {
@@ -261,31 +255,24 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
     }
 
     protected onApprovePlan(message: ChatMessage): void {
-        // Prevent duplicate approval
         if (message.planApproved) {
             return;
         }
 
-        // Mark this message's plan as approved
-        this.messages = this.messages.map((msg) => (msg.id === message.id ? { ...msg, planApproved: true, planPending: false } : msg));
-        this.cdr.markForCheck();
+        this.messages.update((msgs) => msgs.map((msg) => (msg.id === message.id ? { ...msg, planApproved: true, planPending: false } : msg)));
 
-        // Send approval message to agent
-        this.addMessage('I approve the plan', true);
+        this.addMessage(this.translateService.instant('artemisApp.agent.chat.approvePlan'), false);
         this.isAgentTyping.set(true);
 
-        // Send approval - backend will process it
         this.agentChatService.sendMessage(this.translateService.instant('artemisApp.agent.chat.planApproval'), this.courseId).subscribe({
             next: (response) => {
                 this.isAgentTyping.set(false);
                 this.addMessage(response.message || this.translateService.instant('artemisApp.agent.chat.error'), false);
 
-                // Emit event if competencies were modified
                 if (response.competenciesModified) {
                     this.competencyChanged.emit();
                 }
 
-                // Restore focus to input
                 setTimeout(() => this.messageInput()?.nativeElement?.focus(), 10);
             },
             error: () => {
@@ -296,7 +283,11 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
         });
     }
 
-    private addMessage(content: string, isUser: boolean): void {
+    /**
+     * Adds a message to the chat with optional competency preview data.
+     * Handles plan pending markers, preview data mapping, and automatic scrolling.
+     */
+    private addMessage(content: string, isUser: boolean, competencyPreviews?: CompetencyPreviewResponse[]): void {
         const message: ChatMessage = {
             id: this.generateMessageId(),
             content,
@@ -304,6 +295,14 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
             timestamp: new Date(),
         };
 
+        if (competencyPreviews && competencyPreviews.length > 0) {
+            message.competencyPreviews = competencyPreviews.map((preview) => ({
+                title: preview.title,
+                description: preview.description,
+                taxonomy: preview.taxonomy,
+                icon: preview.icon,
+                competencyId: preview.competencyId,
+                viewOnly: preview.viewOnly,
         this.finalizeMessage(message, isUser);
     }
 
@@ -326,21 +325,6 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
             isUser,
             timestamp: new Date(),
         };
-
-        if (singlePreview?.preview) {
-            message.competencyPreview = {
-                ...singlePreview.competency,
-                competencyId: singlePreview.competencyId,
-                viewOnly: singlePreview.viewOnly,
-            };
-        }
-
-        if (batchPreview?.batchPreview) {
-            message.batchCompetencyPreview = batchPreview.competencies.map((comp) => ({
-                ...comp,
-                viewOnly: batchPreview.viewOnly,
-            }));
-        }
 
         if (singleRelationPreview?.preview) {
             message.relationPreview = {
@@ -372,112 +356,37 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
     private finalizeMessage(message: ChatMessage, isUser: boolean): void {
         // Detect [PLAN_PENDING] markers and clean message text
         if (!isUser) {
-            const planPendingData = this.extractPlanPending(message.content);
-            if (planPendingData) {
+            const cleanedContent = this.removePlanPendingMarkerFromMessageContent(message.content);
+            if (cleanedContent !== undefined) {
                 message.planPending = true;
-                message.content = planPendingData.cleanedMessage;
+                message.content = cleanedContent;
             }
         }
 
-        // Append message and trigger UI updates
-        this.messages = [...this.messages, message];
-        this.shouldScrollToBottom = true;
-        this.cdr.markForCheck();
+        this.messages.update((msgs) => [...msgs, message]);
+        this.shouldScrollToBottom.set(true);
     }
 
     /**
      * Detects [PLAN_PENDING] marker in agent responses.
      * This marker indicates that the agent has proposed a plan and is awaiting approval.
      */
-    private extractPlanPending(content: string): { cleanedMessage: string } | null {
+    private removePlanPendingMarkerFromMessageContent(content: string): string | undefined {
         if (!content) {
-            return null;
+            return undefined;
         }
         const planPendingMarker = '[PLAN_PENDING]';
         const escapedPlanPendingMarker = '\\[PLAN_PENDING\\]';
 
-        // Check for both escaped and unescaped markers
         if (content.includes(planPendingMarker)) {
-            // Remove the marker from the message
-            const cleanedMessage = content.replace(planPendingMarker, '').trim();
-            return { cleanedMessage };
+            return content.replace(planPendingMarker, '').trim();
         }
 
         if (content.includes(escapedPlanPendingMarker)) {
-            // Remove the escaped marker from the message
-            const cleanedMessage = content.replace(escapedPlanPendingMarker, '').trim();
-            return { cleanedMessage };
+            return content.replace(escapedPlanPendingMarker, '').trim();
         }
 
-        return null;
-    }
-
-    /**
-     * Handles batch competency creation/update.
-     * Creates or updates all competencies in the batch preview.
-     */
-    protected onCreateBatchCompetencies(message: ChatMessage): void {
-        // Prevent duplicate creation
-        if (message.batchCreated || !message.batchCompetencyPreview || message.batchCompetencyPreview.length === 0) {
-            return;
-        }
-
-        // Show typing indicator
-        this.isAgentTyping.set(true);
-
-        // Build operations array
-        const operations = message.batchCompetencyPreview.map((preview) => {
-            const competency = new Competency();
-            competency.title = preview.title;
-            competency.description = preview.description;
-            competency.taxonomy = preview.taxonomy;
-            if (preview.competencyId !== undefined) {
-                competency.id = preview.competencyId;
-            }
-            return competency;
-        });
-
-        // Execute all operations
-        const promises = operations.map((competency) => {
-            const isUpdate = competency.id !== undefined;
-            const operation = isUpdate ? this.competencyService.update(competency, this.courseId) : this.competencyService.create(competency, this.courseId);
-            return firstValueFrom(operation);
-        });
-
-        Promise.all(promises)
-            .then(() => {
-                this.isAgentTyping.set(false);
-
-                // Mark batch as created
-                this.messages = this.messages.map((msg) => (msg.id === message.id ? { ...msg, batchCreated: true } : msg));
-                this.cdr.markForCheck();
-
-                const count = operations.length;
-                const hasUpdates = operations.some((op) => op.id !== undefined);
-                const hasCreates = operations.some((op) => op.id === undefined);
-
-                let successMessage;
-                if (hasUpdates && hasCreates) {
-                    successMessage = this.translateService.instant('artemisApp.agent.chat.success.processed', { count });
-                } else if (hasUpdates) {
-                    successMessage = this.translateService.instant('artemisApp.agent.chat.success.updated', { count });
-                } else {
-                    successMessage = this.translateService.instant('artemisApp.agent.chat.success.created', { count });
-                }
-
-                this.addMessage(successMessage, false);
-
-                // Emit event to refresh competencies
-                this.competencyChanged.emit();
-
-                // Restore focus
-                setTimeout(() => this.messageInput()?.nativeElement?.focus(), 10);
-            })
-            .catch(() => {
-                this.isAgentTyping.set(false);
-                this.addMessage(this.translateService.instant('artemisApp.agent.chat.competencyProcessFailure'), false);
-                setTimeout(() => this.messageInput()?.nativeElement?.focus(), 10);
-            });
+        return undefined;
     }
 
     /**
@@ -486,14 +395,14 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
      * This disables the "Approve Plan" button for previous plan proposals.
      */
     private invalidatePendingPlanApprovals(): void {
-        this.messages = this.messages.map((msg) => {
-            // If a message has a pending plan that hasn't been approved yet, mark it as no longer pending
-            if (msg.planPending && !msg.planApproved) {
-                return { ...msg, planPending: false };
-            }
-            return msg;
-        });
-        this.cdr.markForCheck();
+        this.messages.update((msgs) =>
+            msgs.map((msg) => {
+                if (msg.planPending && !msg.planApproved) {
+                    return { ...msg, planPending: false };
+                }
+                return msg;
+            }),
+        );
     }
 
     private generateMessageId(): string {
@@ -504,6 +413,13 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
         if (this.messagesContainer()) {
             const element = this.messagesContainer().nativeElement;
             element.scrollTop = element.scrollHeight;
+        }
+    }
+
+    private resetTextareaHeight(): void {
+        if (this.messageInput()?.nativeElement) {
+            const textarea = this.messageInput().nativeElement;
+            textarea.style.height = 'auto';
         }
     }
 }

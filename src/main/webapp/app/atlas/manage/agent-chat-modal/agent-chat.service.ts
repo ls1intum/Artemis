@@ -4,7 +4,7 @@ import { Observable, of } from 'rxjs';
 import { catchError, timeout } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
-import { CompetencyPreview, CompetencyRelationPreview, RelationGraphPreview } from 'app/atlas/shared/entities/chat-message.model';
+import { CompetencyPreview } from 'app/atlas/shared/entities/chat-message.model';
 
 interface AgentChatRequest {
     message: string;
@@ -19,9 +19,6 @@ export interface AgentChatResponse {
     competenciesModified: boolean;
     competencyPreview?: SingleCompetencyPreviewResponse;
     batchCompetencyPreview?: BatchCompetencyPreviewResponse;
-    relationPreview?: SingleRelationPreviewResponse;
-    batchRelationPreview?: BatchRelationPreviewResponse;
-    relationGraphPreview?: RelationGraphPreview;
 }
 
 interface SingleCompetencyPreviewResponse {
@@ -38,27 +35,11 @@ interface BatchCompetencyPreviewResponse {
     viewOnly?: boolean;
 }
 
-interface SingleRelationPreviewResponse {
-    preview: boolean;
-    relation: CompetencyRelationPreview;
-    viewOnly?: boolean;
-}
-
-interface BatchRelationPreviewResponse {
-    batchPreview: boolean;
-    count: number;
-    relations: CompetencyRelationPreview[];
-    viewOnly?: boolean;
-}
-
 export interface AgentHistoryMessage {
     content: string;
     isUser: boolean;
     competencyPreview?: SingleCompetencyPreviewResponse;
     batchCompetencyPreview?: BatchCompetencyPreviewResponse;
-    relationPreview?: SingleRelationPreviewResponse;
-    batchRelationPreview?: BatchRelationPreviewResponse;
-    relationGraphPreview?: RelationGraphPreview;
 }
 
 @Injectable({

@@ -7,7 +7,6 @@ import { PointCounter } from 'app/quiz/shared/entities/point-counter.model';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
 import { QuizPointStatistic } from 'app/quiz/shared/entities/quiz-point-statistic.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
-import { Authority } from 'app/shared/constants/authority.constants';
 import { blueColor } from 'app/quiz/manage/statistics/question-statistic.component';
 import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
 import { round } from 'app/shared/util/utils';
@@ -75,7 +74,7 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
         });
         this.route.params.subscribe((params) => {
             // use different REST-call if the User is a Student
-            if (this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA])) {
+            if (this.accountService.isAtLeastTutor()) {
                 this.quizExerciseService.find(params['exerciseId']).subscribe((res) => {
                     this.loadQuizSuccess(res.body!);
                 });
@@ -163,7 +162,7 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
     loadNewData(statistic: QuizPointStatistic) {
         // if the Student finds a way to the Website
         //      -> the Student will be sent back to Courses
-        if (!this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA])) {
+        if (!this.accountService.isAtLeastTutor()) {
             this.router.navigate(['courses']);
         }
         this.quizPointStatistic = statistic;
@@ -178,7 +177,7 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
     loadQuizSuccess(quizExercise: QuizExercise) {
         // if the Student finds a way to the Website
         //      -> the Student will be sent back to Courses
-        if (!this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA])) {
+        if (!this.accountService.isAtLeastTutor()) {
             this.router.navigate(['courses']);
         }
         this.quizExercise = quizExercise;

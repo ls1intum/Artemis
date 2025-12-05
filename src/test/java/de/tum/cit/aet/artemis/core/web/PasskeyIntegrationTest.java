@@ -35,7 +35,8 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void testUpdatePasskeyLabel_Success() throws Exception {
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         PasskeyCredential existingCredential = passkeyCredentialUtilService.createAndSavePasskeyCredential(user);
-        PasskeyDTO modifiedCredential = new PasskeyDTO(existingCredential.getCredentialId(), "newLabel", existingCredential.getCreatedDate(), existingCredential.getLastUsed());
+        PasskeyDTO modifiedCredential = new PasskeyDTO(existingCredential.getCredentialId(), "newLabel", existingCredential.getCreatedDate(), existingCredential.getLastUsed(),
+                false);
 
         request.put("/api/core/passkey/" + modifiedCredential.credentialId(), modifiedCredential, HttpStatus.OK);
 
@@ -52,7 +53,8 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void testUpdatePasskeyLabel_AccessDeniedBecauseOfRole() throws Exception {
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         PasskeyCredential existingCredential = passkeyCredentialUtilService.createAndSavePasskeyCredential(user);
-        PasskeyDTO modifiedCredential = new PasskeyDTO(existingCredential.getCredentialId(), "newLabel", existingCredential.getCreatedDate(), existingCredential.getLastUsed());
+        PasskeyDTO modifiedCredential = new PasskeyDTO(existingCredential.getCredentialId(), "newLabel", existingCredential.getCreatedDate(), existingCredential.getLastUsed(),
+                false);
 
         request.put("/api/core/passkey/" + modifiedCredential.credentialId(), modifiedCredential, HttpStatus.FORBIDDEN);
     }
@@ -62,7 +64,8 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void testUpdatePasskeyLabel_NotFoundBecausePasskeyBelongsToSomebodyElse() throws Exception {
         User student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
         PasskeyCredential existingCredential = passkeyCredentialUtilService.createAndSavePasskeyCredential(student2);
-        PasskeyDTO modifiedCredential = new PasskeyDTO(existingCredential.getCredentialId(), "newLabel", existingCredential.getCreatedDate(), existingCredential.getLastUsed());
+        PasskeyDTO modifiedCredential = new PasskeyDTO(existingCredential.getCredentialId(), "newLabel", existingCredential.getCreatedDate(), existingCredential.getLastUsed(),
+                false);
 
         request.put("/api/core/passkey/" + modifiedCredential.credentialId(), modifiedCredential, HttpStatus.NOT_FOUND);
     }
@@ -72,7 +75,8 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void testUpdatePasskeyLabel_NotFound() throws Exception {
         User student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         PasskeyCredential existingCredential = passkeyCredentialUtilService.createAndSavePasskeyCredential(student2);
-        PasskeyDTO modifiedCredential = new PasskeyDTO(existingCredential.getCredentialId(), "newLabel", existingCredential.getCreatedDate(), existingCredential.getLastUsed());
+        PasskeyDTO modifiedCredential = new PasskeyDTO(existingCredential.getCredentialId(), "newLabel", existingCredential.getCreatedDate(), existingCredential.getLastUsed(),
+                false);
 
         request.put("/api/core/passkey/" + modifiedCredential.credentialId() + "idDoesNotExist", modifiedCredential, HttpStatus.NOT_FOUND);
     }

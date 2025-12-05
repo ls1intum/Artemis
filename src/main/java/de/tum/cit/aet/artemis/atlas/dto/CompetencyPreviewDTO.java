@@ -1,15 +1,21 @@
 package de.tum.cit.aet.artemis.atlas.dto;
 
+import org.jspecify.annotations.Nullable;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
- * DTO for competency preview information.
- * Matches the TypeScript CompetencyPreview interface in chat-message.model.ts.
- * Used for displaying competency cards in the agent chat UI.
+ * DTO for competency preview response sent to the client.
+ * Used when previewing competencies in the agent chat UI.
+ * Contains the data required to display competency preview cards.
  *
- * Note: For batch previews, competencyId is included per-item to enable create/update detection.
- * For single previews, competencyId is at the wrapper level (SingleCompetencyPreviewResponseDTO).
+ * @param title        The competency title
+ * @param description  The competency description
+ * @param taxonomy     The competency taxonomy level (e.g., "REMEMBER", "UNDERSTAND", "APPLY")
+ * @param icon         Font Awesome icon name for the taxonomy level
+ * @param competencyId The competency ID (null for create operations, set for update operations)
+ * @param viewOnly     Indicates whether this preview is read-only (true) or can be approved/saved (false/null)
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record CompetencyPreviewDTO(String title, String description, String taxonomy, String icon, Long competencyId) {
+public record CompetencyPreviewDTO(String title, String description, String taxonomy, String icon, @Nullable Long competencyId, @Nullable Boolean viewOnly) {
 }

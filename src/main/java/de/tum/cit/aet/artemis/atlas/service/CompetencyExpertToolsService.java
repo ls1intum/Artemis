@@ -22,10 +22,9 @@ import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
 import de.tum.cit.aet.artemis.atlas.dto.AtlasAgentCompetencyDTO;
-import de.tum.cit.aet.artemis.atlas.dto.BatchCompetencyPreviewResponseDTO;
+import de.tum.cit.aet.artemis.atlas.dto.CompetencyErrorDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyPreviewDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencySaveResponseDTO;
-import de.tum.cit.aet.artemis.atlas.dto.SingleCompetencyPreviewResponseDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
@@ -125,9 +124,7 @@ public class CompetencyExpertToolsService {
     private final AtlasAgentService atlasAgentService;
 
     // ThreadLocal storage for preview data - enables deterministic extraction without parsing LLM output
-    private static final ThreadLocal<SingleCompetencyPreviewResponseDTO> currentSinglePreview = ThreadLocal.withInitial(() -> null);
-
-    private static final ThreadLocal<BatchCompetencyPreviewResponseDTO> currentBatchPreview = ThreadLocal.withInitial(() -> null);
+    private static final ThreadLocal<List<CompetencyPreviewDTO>> currentPreviews = ThreadLocal.withInitial(() -> null);
 
     // ThreadLocal to store the current sessionId for tool calls
     private static final ThreadLocal<String> currentSessionId = ThreadLocal.withInitial(() -> null);
@@ -213,7 +210,7 @@ public class CompetencyExpertToolsService {
             return toJson(new ErrorResponse("No active session"));
         }
 
-        List<CompetencyOperation> cachedData = atlasAgentService.getCachedCompetencyData(sessionId);
+        List<CompetencyOperation> cachedData = atlasAgentService.getCachedPendingCompetencyOperations(sessionId);
         if (cachedData == null || cachedData.isEmpty()) {
             record ErrorResponse(String error) {
             }
@@ -270,32 +267,18 @@ public class CompetencyExpertToolsService {
             }
         }
 
-        // Convert operations to preview DTOs with consistent taxonomy-to-icon mapping
-        List<CompetencyPreviewDTO> previews = competencies.stream().map(comp -> {
-            String iconName = getTaxonomyIcon(comp.getTaxonomy());
-            return new CompetencyPreviewDTO(comp.getTitle(), comp.getDescription(), comp.getTaxonomy().toString(), iconName, comp.getCompetencyId());
-        }).toList();
-
         // Store preview data in ThreadLocal for deterministic extraction by AtlasAgentService
-        if (competencies.size() == 1) {
-            // Single preview
-            CompetencyOperation firstComp = competencies.getFirst();
-            CompetencyPreviewDTO firstPreview = previews.getFirst();
-            SingleCompetencyPreviewResponseDTO singlePreview = new SingleCompetencyPreviewResponseDTO(true, firstPreview, firstComp.getCompetencyId(), viewOnly);
-            currentSinglePreview.set(singlePreview);
-        }
-        else {
-            // Batch preview
-            BatchCompetencyPreviewResponseDTO batchPreview = new BatchCompetencyPreviewResponseDTO(true, previews.size(), previews, viewOnly);
-            currentBatchPreview.set(batchPreview);
-        }
+        List<CompetencyPreviewDTO> previewResponses = competencies.stream().map(comp -> new CompetencyPreviewDTO(comp.getTitle(), comp.getDescription(),
+                comp.getTaxonomy().toString(), getTaxonomyIcon(comp.getTaxonomy()), comp.getCompetencyId(), viewOnly)).toList();
+
+        currentPreviews.set(previewResponses);
 
         // Cache the competency operation data for refinement operations
         // This enables deterministic modifications (e.g., changing taxonomy while preserving title/description)
         String sessionId = currentSessionId.get();
         if (sessionId != null && !Boolean.TRUE.equals(viewOnly)) {
             // Only cache if not in view-only mode (view-only is for browsing, not editing)
-            atlasAgentService.cacheCompetencyData(sessionId, new ArrayList<>(competencies));
+            atlasAgentService.cachePendingCompetencyOperations(sessionId, new ArrayList<>(competencies));
         }
 
         // Return simple confirmation message that the LLM can use naturally in its response
@@ -354,7 +337,7 @@ public class CompetencyExpertToolsService {
         }
 
         Course course = courseOptional.get();
-        List<String> errors = new ArrayList<>();
+        List<CompetencyErrorDTO> errors = new ArrayList<>();
         List<CompetencyOperation> successfulOperations = new ArrayList<>();
         int createCount = 0;
         int updateCount = 0;
@@ -364,19 +347,19 @@ public class CompetencyExpertToolsService {
                 // Validate and normalize title once before using it
                 String rawTitle = comp.getTitle();
                 if (rawTitle == null) {
-                    errors.add("Missing or null title for competency");
+                    errors.add(new CompetencyErrorDTO(null, "MISSING_TITLE", null));
                     continue;
                 }
 
                 String sanitizedTitle = rawTitle.trim();
                 if (sanitizedTitle.isBlank()) {
-                    errors.add("Missing or empty title for competency");
+                    errors.add(new CompetencyErrorDTO(null, "EMPTY_TITLE", null));
                     continue;
                 }
 
                 // Validate taxonomy to prevent NPE during preview generation
                 if (comp.getTaxonomy() == null) {
-                    errors.add("Missing taxonomy for competency: " + sanitizedTitle);
+                    errors.add(new CompetencyErrorDTO(sanitizedTitle, "MISSING_TAXONOMY", null));
                     continue;
                 }
 
@@ -396,11 +379,16 @@ public class CompetencyExpertToolsService {
                     // Update existing competency
                     Optional<Competency> existing = competencyRepository.findById(comp.getCompetencyId());
                     if (existing.isEmpty()) {
-                        errors.add("Competency not found with ID: " + comp.getCompetencyId());
+                        errors.add(new CompetencyErrorDTO(sanitizedTitle, "NOT_FOUND", "ID: " + comp.getCompetencyId()));
                         continue;
                     }
 
                     Competency competency = existing.get();
+                    if (!competency.getCourse().getId().equals(course.getId())) {
+                        errors.add(new CompetencyErrorDTO(sanitizedTitle, "NOT_FOUND", "ID: " + comp.getCompetencyId()));
+                        continue;
+                    }
+
                     competency.setTitle(sanitizedTitle);
                     competency.setDescription(comp.getDescription());
                     competency.setTaxonomy(comp.getTaxonomy());
@@ -413,48 +401,21 @@ public class CompetencyExpertToolsService {
             }
             catch (Exception e) {
                 // Use sanitized title if available, otherwise use a placeholder for error message
-                String titleForError = comp.getTitle() != null ? comp.getTitle().trim() : "[no title]";
-                errors.add("Failed to save '" + titleForError + "': " + e.getMessage());
+                String titleForError = comp.getTitle() != null ? comp.getTitle().trim() : null;
+                errors.add(new CompetencyErrorDTO(titleForError, "SAVE_FAILED", e.getMessage()));
             }
         }
 
         // Store preview data in ThreadLocal so client can display cards for what was just saved
         // This ensures the cards appear in the response showing what was created/updated
-        // Only generate previews for successfully processed competencies to prevent NPE
         if (!successfulOperations.isEmpty()) {
-            List<CompetencyPreviewDTO> previews = successfulOperations.stream().map(comp -> {
-                String iconName = getTaxonomyIcon(comp.getTaxonomy());
-                return new CompetencyPreviewDTO(comp.getTitle(), comp.getDescription(), comp.getTaxonomy().toString(), iconName, comp.getCompetencyId());
-            }).toList();
+            List<CompetencyPreviewDTO> previewResponses = successfulOperations.stream().map(comp -> new CompetencyPreviewDTO(comp.getTitle(), comp.getDescription(),
+                    comp.getTaxonomy().toString(), getTaxonomyIcon(comp.getTaxonomy()), comp.getCompetencyId(), false)).toList();
 
-            if (successfulOperations.size() == 1) {
-                // Single save - store as single preview with viewOnly=false (action completed)
-                CompetencyOperation firstComp = successfulOperations.getFirst();
-                CompetencyPreviewDTO firstPreview = previews.getFirst();
-                SingleCompetencyPreviewResponseDTO singlePreview = new SingleCompetencyPreviewResponseDTO(true, firstPreview, firstComp.getCompetencyId(), false);
-                currentSinglePreview.set(singlePreview);
-            }
-            else {
-                // Batch save - store as batch preview with viewOnly=false (action completed)
-                BatchCompetencyPreviewResponseDTO batchPreview = new BatchCompetencyPreviewResponseDTO(true, previews.size(), previews, false);
-                currentBatchPreview.set(batchPreview);
-            }
+            currentPreviews.set(previewResponses);
         }
 
-        // Construct success message
-        List<String> messages = new ArrayList<>();
-        if (createCount > 0) {
-            messages.add(createCount + " competenc" + (createCount == 1 ? "y" : "ies") + " created");
-        }
-        if (updateCount > 0) {
-            messages.add(updateCount + " competenc" + (updateCount == 1 ? "y" : "ies") + " updated");
-        }
-        if (!errors.isEmpty()) {
-            messages.add(errors.size() + " failed");
-        }
-
-        String message = messages.isEmpty() ? null : String.join(", ", messages);
-        CompetencySaveResponseDTO response = new CompetencySaveResponseDTO(errors.isEmpty(), createCount, updateCount, errors.size(), errors.isEmpty() ? null : errors, message);
+        CompetencySaveResponseDTO response = new CompetencySaveResponseDTO(createCount, updateCount, errors.size(), errors.isEmpty() ? null : errors);
 
         if (createCount > 0 || updateCount > 0) {
             AtlasAgentService.markCompetencyModified();
@@ -479,24 +440,13 @@ public class CompetencyExpertToolsService {
     }
 
     /**
-     * Retrieves the current single competency preview from ThreadLocal
+     * Retrieves the current competency previews from ThreadLocal.
      * Used by AtlasAgentService to extract preview data after tool execution.
      *
-     * @return The stored preview, or null if none exists
+     * @return The stored list of previews, or null if none exists
      */
-    public static SingleCompetencyPreviewResponseDTO getSinglePreview() {
-
-        return currentSinglePreview.get();
-    }
-
-    /**
-     * Retrieves the current batch competency preview from ThreadLocal.
-     * Used by AtlasAgentService to extract preview data after tool execution.
-     *
-     * @return The stored batch preview, or null if none exists
-     */
-    public static BatchCompetencyPreviewResponseDTO getBatchPreview() {
-        return currentBatchPreview.get();
+    public static List<CompetencyPreviewDTO> getPreviews() {
+        return currentPreviews.get();
     }
 
     /**
@@ -504,7 +454,6 @@ public class CompetencyExpertToolsService {
      * Should be called at the start of each request to ensure clean state.
      */
     public static void clearAllPreviews() {
-        currentSinglePreview.remove();
-        currentBatchPreview.remove();
+        currentPreviews.remove();
     }
 }

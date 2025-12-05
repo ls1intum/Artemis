@@ -2,15 +2,15 @@ package de.tum.cit.aet.artemis.atlas.dto;
 
 import java.util.List;
 
-import jakarta.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
- * DTO for competency save operation response.
- * Used when creating or updating one or multiple competencies.
- * Provides detailed feedback about the operation results.
+ * DTO for competency save operation response returned to LLM tools.
+ * The LLM interprets this structured data and translates it into natural language for the user.
+ * Supports partial success scenarios where some competencies succeed and others fail.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record CompetencySaveResponseDTO(boolean success, int created, int updated, int failed, @Nullable List<String> errors, String message) {
+public record CompetencySaveResponseDTO(int created, int updated, int failed, @Nullable List<CompetencyErrorDTO> errors) {
 }

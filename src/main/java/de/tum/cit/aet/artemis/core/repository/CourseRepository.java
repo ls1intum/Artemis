@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.core.domain.Organization;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.dto.ActiveCourseDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseForArchiveDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseGroupsDTO;
 import de.tum.cit.aet.artemis.core.dto.StatisticsEntry;
@@ -88,13 +89,15 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
     List<Course> findAllActiveForUserAndLearningPathsEnabled(@Param("now") ZonedDateTime now);
 
     @Query("""
-            SELECT DISTINCT c
+            SELECT new de.tum.cit.aet.artemis.core.dto.ActiveCourseDTO(c.id, c.title, c.shortName, c.semester, COUNT(DISTINCT u))
             FROM Course c
+                JOIN User u ON u.deleted = FALSE AND c.studentGroupName MEMBER OF u.groups
             WHERE (c.startDate <= :now OR c.startDate IS NULL)
                 AND (c.endDate >= :now OR c.endDate IS NULL)
                 AND c.testCourse = FALSE
+            GROUP BY c.id, c.title, c.shortName, c.semester
             """)
-    List<Course> findAllActiveWithoutTestCourses(@Param("now") ZonedDateTime now);
+    Set<ActiveCourseDTO> findAllActiveWithoutTestCourses(@Param("now") ZonedDateTime now);
 
     @Query("""
             SELECT DISTINCT c
@@ -127,7 +130,7 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
     Optional<Course> findWithEagerExercisesAndExerciseDetailsAndLecturesById(long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "lectures", "lectures.lectureUnits", "lectures.attachments" })
-    Optional<Course> findWithEagerLecturesAndLectureUnitsById(long courseId);
+    Optional<Course> findWithLecturesAndLectureUnitsAndAttachmentsById(long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "organizations", "competencies", "prerequisites", "tutorialGroupsConfiguration", "onlineCourseConfiguration" })
     Optional<Course> findForUpdateById(long courseId);
@@ -430,8 +433,8 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
     }
 
     @NonNull
-    default Course findByIdWithLecturesAndLectureUnitsElseThrow(long courseId) {
-        return getValueElseThrow(findWithEagerLecturesAndLectureUnitsById(courseId), courseId);
+    default Course findWithLecturesAndLectureUnitsAndAttachmentsByIdElseThrow(long courseId) {
+        return getValueElseThrow(findWithLecturesAndLectureUnitsAndAttachmentsById(courseId), courseId);
     }
 
     @NonNull

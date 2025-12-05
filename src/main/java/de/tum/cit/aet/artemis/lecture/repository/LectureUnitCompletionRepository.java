@@ -39,7 +39,7 @@ public interface LectureUnitCompletionRepository extends ArtemisJpaRepository<Le
             WHERE lectureUnitCompletion.lectureUnit IN :lectureUnits
                 AND lectureUnitCompletion.user.id = :userId
             """)
-    Set<LectureUnitCompletion> findByLectureUnitsAndUserId(@Param("lectureUnits") Collection<? extends LectureUnit> lectureUnits, @Param("userId") Long userId);
+    <T extends LectureUnit> Set<LectureUnitCompletion> findByLectureUnitsAndUserId(@Param("lectureUnits") Collection<T> lectureUnits, @Param("userId") Long userId);
 
     @Query("""
             SELECT user

@@ -13,21 +13,13 @@ export interface ChatMessage {
     relationPreview?: CompetencyRelationPreview;
     batchRelationPreview?: CompetencyRelationPreview[]; // For batch relation operations
     relationGraphPreview?: RelationGraphPreview; // Graph visualization for relation preview
+    competencyPreviews?: CompetencyPreview[];
     competencyCreated?: boolean;
     batchCreated?: boolean; // For batch creation/update completion
     relationCreated?: boolean;
     batchRelationCreated?: boolean; // For batch relation creation completion
     planPending?: boolean;
     planApproved?: boolean;
-}
-
-export interface CompetencyDraft {
-    title: string;
-    description: string;
-    taxonomy: CompetencyTaxonomy;
-    masteryThreshold: number;
-    optional: boolean;
-    softDueDate?: dayjs.Dayjs;
 }
 
 export interface CompetencyPreview {

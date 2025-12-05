@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.atlas.dto;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -15,8 +16,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * Contains the agent's message, preview data for competencies and relations, and metadata.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record AtlasAgentChatResponseDTO(@NotBlank @Size(max = 10000) String message, @Nullable String sessionId, @NotNull ZonedDateTime timestamp, boolean success,
-        boolean competenciesModified, @Nullable SingleCompetencyPreviewResponseDTO competencyPreview, @Nullable BatchCompetencyPreviewResponseDTO batchCompetencyPreview,
-        @Nullable SingleRelationPreviewResponseDTO relationPreview, @Nullable BatchRelationPreviewResponseDTO batchRelationPreview,
-        @Nullable RelationGraphPreviewDTO relationGraphPreview) {
+public record AtlasAgentChatResponseDTO(@NotBlank @Size(max = 10000) String message, @NotNull ZonedDateTime timestamp, boolean competenciesModified,
+        @Nullable List<CompetencyPreviewDTO> competencyPreviews, @Nullable SingleRelationPreviewResponseDTO relationPreview,
+        @Nullable BatchRelationPreviewResponseDTO batchRelationPreview, @Nullable RelationGraphPreviewDTO relationGraphPreview) {
 }

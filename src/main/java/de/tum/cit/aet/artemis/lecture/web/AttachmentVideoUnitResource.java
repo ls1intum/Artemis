@@ -39,6 +39,7 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLecture.EnforceAtLeastEditorInLecture;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastEditorInLectureUnit;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.FileService;
@@ -50,6 +51,7 @@ import de.tum.cit.aet.artemis.lecture.dto.LectureUnitSplitInformationDTO;
 import de.tum.cit.aet.artemis.lecture.dto.SlideOrderDTO;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentVideoUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
+import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 import de.tum.cit.aet.artemis.lecture.service.AttachmentVideoUnitService;
 import de.tum.cit.aet.artemis.lecture.service.LectureUnitProcessingService;
 import de.tum.cit.aet.artemis.lecture.service.SlideSplitterService;
@@ -82,10 +84,12 @@ public class AttachmentVideoUnitResource {
 
     private final FileService fileService;
 
+    private final LectureUnitRepository lectureUnitRepository;
+
     public AttachmentVideoUnitResource(AttachmentVideoUnitRepository attachmentVideoUnitRepository, LectureRepository lectureRepository,
             LectureUnitProcessingService lectureUnitProcessingService, AuthorizationCheckService authorizationCheckService, GroupNotificationService groupNotificationService,
             AttachmentVideoUnitService attachmentVideoUnitService, Optional<CompetencyProgressApi> competencyProgressApi, SlideSplitterService slideSplitterService,
-            FileService fileService) {
+            FileService fileService, LectureUnitRepository lectureUnitRepository) {
         this.attachmentVideoUnitRepository = attachmentVideoUnitRepository;
         this.lectureUnitProcessingService = lectureUnitProcessingService;
         this.lectureRepository = lectureRepository;
@@ -95,6 +99,7 @@ public class AttachmentVideoUnitResource {
         this.competencyProgressApi = competencyProgressApi;
         this.slideSplitterService = slideSplitterService;
         this.fileService = fileService;
+        this.lectureUnitRepository = lectureUnitRepository;
     }
 
     /**
@@ -165,7 +170,7 @@ public class AttachmentVideoUnitResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping(value = "lectures/{lectureId}/attachment-video-units", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @EnforceAtLeastEditor
+    @EnforceAtLeastEditorInLecture
     public ResponseEntity<AttachmentVideoUnit> createAttachmentVideoUnit(@PathVariable Long lectureId, @RequestPart AttachmentVideoUnit attachmentVideoUnit,
             @RequestPart(required = false) Attachment attachment, @RequestPart(required = false) MultipartFile file, @RequestParam(defaultValue = "false") boolean keepFilename)
             throws URISyntaxException {
@@ -186,17 +191,22 @@ public class AttachmentVideoUnitResource {
         if (lecture.getCourse() == null) {
             throw new BadRequestAlertException("Specified lecture is not part of a course", ENTITY_NAME, "courseMissing");
         }
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, lecture.getCourse(), null);
 
-        AttachmentVideoUnit savedAttachmentVideoUnit = attachmentVideoUnitService.createAttachmentVideoUnit(attachmentVideoUnit, attachment, lecture, file, keepFilename);
-        lectureRepository.save(lecture);
+        lectureUnitRepository.reconnectCompetencyLinks(attachmentVideoUnit);
+
+        lecture.addLectureUnit(attachmentVideoUnit);
+        Lecture updatedLecture = lectureRepository.saveAndFlush(lecture);
+
+        AttachmentVideoUnit persistedUnit = attachmentVideoUnitService.saveAttachmentVideoUnit((AttachmentVideoUnit) updatedLecture.getLectureUnits().getLast(), attachment, file,
+                keepFilename);
+        // From now on, only use persistedUnit
         if (attachment != null && file != null && Objects.equals(FilenameUtils.getExtension(file.getOriginalFilename()), "pdf")) {
-            slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(savedAttachmentVideoUnit);
+            slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(persistedUnit);
         }
-        attachmentVideoUnitService.prepareAttachmentVideoUnitForClient(savedAttachmentVideoUnit);
-        competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(savedAttachmentVideoUnit));
+        attachmentVideoUnitService.prepareAttachmentVideoUnitForClient(persistedUnit);
+        competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(persistedUnit));
 
-        return ResponseEntity.created(new URI("/api/attachment-video-units/" + savedAttachmentVideoUnit.getId())).body(savedAttachmentVideoUnit);
+        return ResponseEntity.created(new URI("/api/attachment-video-units/" + persistedUnit.getId())).body(persistedUnit);
     }
 
     /**
@@ -213,7 +223,7 @@ public class AttachmentVideoUnitResource {
         int minutesUntilDeletion = 30;
         String originalFilename = file.getOriginalFilename();
         log.debug("REST request to upload file: {}", originalFilename);
-        checkLecture(lectureId);
+        checkLectureElseThrow(lectureId);
         if (!Objects.equals(FilenameUtils.getExtension(originalFilename), "pdf")) {
             throw new BadRequestAlertException("The file must be a pdf", ENTITY_NAME, "wrongFileType");
         }
@@ -236,22 +246,22 @@ public class AttachmentVideoUnitResource {
      * @return the ResponseEntity with status 200 (ok) and with body the newly created attachment video units
      */
     @PostMapping("lectures/{lectureId}/attachment-video-units/split/{filename}")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastEditorInLecture
     public ResponseEntity<List<AttachmentVideoUnit>> createAttachmentVideoUnits(@PathVariable Long lectureId,
             @RequestBody LectureUnitSplitInformationDTO lectureUnitSplitInformationDTO, @PathVariable String filename) {
         log.debug("REST request to create AttachmentVideoUnits {} with lectureId {} for file {}", lectureUnitSplitInformationDTO, lectureId, filename);
-        checkLecture(lectureId);
+        checkLectureElseThrow(lectureId);
         Path filePath = lectureUnitProcessingService.getPathForTempFilename(lectureId, filename);
         checkFile(filePath);
 
         try {
             byte[] fileBytes = fileService.getFileForPath(filePath);
-            List<AttachmentVideoUnit> savedAttachmentVideoUnits = lectureUnitProcessingService.splitAndSaveUnits(lectureUnitSplitInformationDTO, fileBytes,
-                    lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lectureId));
-            savedAttachmentVideoUnits.forEach(attachmentVideoUnitService::prepareAttachmentVideoUnitForClient);
+            var lecture = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lectureId);
+            var savedUnits = lectureUnitProcessingService.splitAndSaveUnits(lectureUnitSplitInformationDTO, fileBytes, lecture);
+            savedUnits.forEach(attachmentVideoUnitService::prepareAttachmentVideoUnitForClient);
 
-            competencyProgressApi.ifPresent(api -> savedAttachmentVideoUnits.forEach(api::updateProgressByLearningObjectAsync));
-            return ResponseEntity.ok().body(savedAttachmentVideoUnits);
+            competencyProgressApi.ifPresent(api -> savedUnits.forEach(api::updateProgressByLearningObjectAsync));
+            return ResponseEntity.ok().body(savedUnits);
         }
         catch (IOException e) {
             log.error("Could not create attachment video units automatically", e);
@@ -271,7 +281,7 @@ public class AttachmentVideoUnitResource {
     public ResponseEntity<LectureUnitSplitInformationDTO> getAttachmentVideoUnitsData(@PathVariable Long lectureId, @PathVariable String filename) {
         log.debug("REST request to split lecture file : {}", filename);
 
-        checkLecture(lectureId);
+        checkLectureElseThrow(lectureId);
         Path filePath = lectureUnitProcessingService.getPathForTempFilename(lectureId, filename);
         checkFile(filePath);
 
@@ -298,7 +308,7 @@ public class AttachmentVideoUnitResource {
     @EnforceAtLeastEditor
     public ResponseEntity<List<Integer>> getSlidesToRemove(@PathVariable Long lectureId, @PathVariable String filename, @RequestParam String commaSeparatedKeyPhrases) {
         log.debug("REST request to get slides to remove for lecture file : {} and keywords : {}", filename, commaSeparatedKeyPhrases);
-        checkLecture(lectureId);
+        checkLectureElseThrow(lectureId);
         Path filePath = lectureUnitProcessingService.getPathForTempFilename(lectureId, filename);
         checkFile(filePath);
 
@@ -360,7 +370,7 @@ public class AttachmentVideoUnitResource {
      *
      * @param lectureId The id of the lecture
      */
-    private void checkLecture(Long lectureId) {
+    private void checkLectureElseThrow(Long lectureId) {
         Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lectureId);
         if (lecture.getCourse() == null) {
             throw new BadRequestAlertException("Specified lecture is not part of a course", ENTITY_NAME, "courseMissing");

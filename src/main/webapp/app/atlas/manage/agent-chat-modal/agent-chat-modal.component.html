@@ -11,7 +11,7 @@
     <!-- Messages Container -->
     <div class="modal-body p-0">
         <div class="messages-container" #messagesContainer>
-            @for (message of messages; track message.id) {
+            @for (message of messages(); track message.id) {
                 <div class="message-wrapper" [class.user-message]="message.isUser" [class.agent-message]="!message.isUser">
                     <div class="message-content">
                         <div class="message-header">
@@ -25,57 +25,60 @@
                         }
                         @if (message.planPending && !message.planApproved) {
                             <div class="plan-approval-container mt-2">
-                                <button type="button" class="btn btn-primary btn-sm" (click)="onApprovePlan(message)" [disabled]="isAgentTyping()">Approve Plan</button>
+                                <button
+                                    type="button"
+                                    class="btn btn-primary btn-sm"
+                                    (click)="onApprovePlan(message)"
+                                    [disabled]="isAgentTyping()"
+                                    jhiTranslate="artemisApp.agent.chat.approvePlan"
+                                ></button>
                             </div>
                         }
-                        @if (message.competencyPreview) {
+                        @if (message.competencyPreviews && message.competencyPreviews.length > 0) {
                             <div class="competency-preview-container mt-2">
-                                <jhi-competency-card [courseId]="courseId" [competency]="message.competencyPreview" [noProgressRings]="true" />
-                                @if (!message.competencyPreview.viewOnly) {
+                                @if (message.competencyPreviews.length > 1) {
+                                    <div class="mb-2">
+                                        <small class="text-muted">{{ 'artemisApp.agent.chat.preview' | artemisTranslate: { count: message.competencyPreviews.length } }}</small>
+                                    </div>
+                                }
+                                @for (preview of message.competencyPreviews; track preview.title + preview.competencyId) {
+                                    <div class="mb-2">
+                                        <jhi-competency-card [courseId]="courseId" [competency]="preview" [noProgressRings]="true" />
+                                    </div>
+                                }
+                                @if (!message.competencyPreviews[0]?.viewOnly) {
                                     <button
                                         type="button"
                                         class="btn btn-sm mt-2"
                                         [class.btn-primary]="!message.competencyCreated"
                                         [class.btn-success]="message.competencyCreated"
-                                        (click)="onCreateCompetency(message)"
+                                        (click)="onCreateCompetencies(message)"
                                         [disabled]="isAgentTyping() || message.competencyCreated"
                                     >
                                         @if (message.competencyCreated) {
-                                            {{ message.competencyPreview.competencyId ? 'Updated' : 'Created' }}
+                                            @if (message.competencyPreviews.length === 1) {
+                                                {{
+                                                    message.competencyPreviews[0].competencyId
+                                                        ? ('artemisApp.agent.chat.updated' | artemisTranslate)
+                                                        : ('artemisApp.agent.chat.created' | artemisTranslate)
+                                                }}
+                                            } @else {
+                                                {{ 'artemisApp.agent.chat.completed' | artemisTranslate: { count: message.competencyPreviews.length } }}
+                                            }
                                         } @else {
-                                            {{ message.competencyPreview.competencyId ? 'Update' : 'Create' }}
-                                        }
-                                    </button>
-                                }
-                            </div>
-                        }
-                        @if (message.batchCompetencyPreview && message.batchCompetencyPreview.length > 0) {
-                            <div class="batch-competency-preview-container mt-2">
-                                <div class="mb-2">
-                                    <small class="text-muted">Preview: {{ message.batchCompetencyPreview.length }} competencies</small>
-                                </div>
-                                @for (comp of message.batchCompetencyPreview; track comp.title + comp.competencyId) {
-                                    <div class="mb-2">
-                                        <jhi-competency-card [courseId]="courseId" [competency]="comp" [noProgressRings]="true" />
-                                    </div>
-                                }
-                                @if (!message.batchCompetencyPreview[0]?.viewOnly) {
-                                    <button
-                                        type="button"
-                                        class="btn btn-sm mt-2"
-                                        [class.btn-primary]="!message.batchCreated"
-                                        [class.btn-success]="message.batchCreated"
-                                        (click)="onCreateBatchCompetencies(message)"
-                                        [disabled]="isAgentTyping() || message.batchCreated"
-                                    >
-                                        @if (message.batchCreated) {
-                                            Completed ({{ message.batchCompetencyPreview.length }})
-                                        } @else {
-                                            {{
-                                                message.batchCompetencyPreview[0]?.competencyId
-                                                    ? 'Update All (' + message.batchCompetencyPreview.length + ')'
-                                                    : 'Create All (' + message.batchCompetencyPreview.length + ')'
-                                            }}
+                                            @if (message.competencyPreviews.length === 1) {
+                                                {{
+                                                    message.competencyPreviews[0].competencyId
+                                                        ? ('artemisApp.agent.chat.update' | artemisTranslate)
+                                                        : ('artemisApp.agent.chat.create' | artemisTranslate)
+                                                }}
+                                            } @else {
+                                                {{
+                                                    message.competencyPreviews[0]?.competencyId
+                                                        ? ('artemisApp.agent.chat.updateAll' | artemisTranslate: { count: message.competencyPreviews.length })
+                                                        : ('artemisApp.agent.chat.createAll' | artemisTranslate: { count: message.competencyPreviews.length })
+                                                }}
+                                            }
                                         }
                                     </button>
                                 }
@@ -237,7 +240,7 @@
                     class="form-control message-input"
                     [ngModel]="currentMessage()"
                     (ngModelChange)="currentMessage.set($event)"
-                    (keypress)="onKeyPress($event)"
+                    (keydown)="onKeyPress($event)"
                     (input)="onTextareaInput()"
                     placeholder="Type your message here..."
                     [disabled]="isAgentTyping()"

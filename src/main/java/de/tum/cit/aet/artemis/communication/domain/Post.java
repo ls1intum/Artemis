@@ -4,9 +4,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import jakarta.persistence.CascadeType;
-import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
-import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -54,11 +52,6 @@ public class Post extends Posting {
 
     @OneToMany(mappedBy = "post", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.EAGER)
     private Set<AnswerPost> answers = new HashSet<>();
-
-    @ElementCollection(fetch = FetchType.EAGER)
-    @CollectionTable(name = "post_tag", joinColumns = @JoinColumn(name = "post_id"))
-    @Column(name = "text")
-    private Set<String> tags = new HashSet<>();
 
     @ManyToOne
     private Conversation conversation;
@@ -148,18 +141,6 @@ public class Post extends Posting {
 
     public void removeAnswerPost(AnswerPost answerPost) {
         this.answers.remove(answerPost);
-    }
-
-    public Set<String> getTags() {
-        return tags;
-    }
-
-    public void setTags(Set<String> tags) {
-        this.tags = tags;
-    }
-
-    public void addTag(String tag) {
-        this.tags.add(tag);
     }
 
     public Conversation getConversation() {
