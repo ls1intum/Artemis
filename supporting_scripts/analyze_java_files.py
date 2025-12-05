@@ -164,7 +164,8 @@ def check_violations_in_changed_files(violations: List[Tuple[str, int]], changed
         return False
 
     for path, _ in violations:
-        if path in changed_files:
+        normalized_path = os.path.normpath(path)
+        if normalized_path in changed_files or any(normalized_path.endswith(changedFiles) for changedFiles in changed_files):
             return True
     return False
 
@@ -178,8 +179,9 @@ def display_pr_violation_details(violation_type: str, violations: List[Tuple[str
         unit = "parameters"
 
     for path, value in violations:
-        if path in changed_files:
-            print(f"  - {path}: {value} {unit}")
+        normalized_path = os.path.normpath(path)
+        if normalized_path in changed_files or any(normalized_path.endswith(changedFiles) for changedFiles in changed_files):
+            print(f"  - {normalized_path}: {value} {unit}")
     print()
 
 def display_pr_context(
