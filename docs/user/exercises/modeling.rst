@@ -14,7 +14,7 @@ Modeling exercise
    - For more information please visit `Apollon Standalone`_.
 
 
-.. _Apollon: https://www.npmjs.com/package/@ls1intum/apollon
+.. _Apollon: https://www.npmjs.com/package/@tumaet/apollon
 .. _Apollon Standalone: https://github.com/ls1intum/Apollon_standalone
 
 Overview
