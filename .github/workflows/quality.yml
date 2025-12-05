@@ -131,7 +131,7 @@ jobs:
                 [ "$large_violation" = true ] && echo "  - max_large_classes: $max_large_classes → $large_classes"
                 [ "$complex_violation" = true ] && echo "  - max_complex_beans: $max_complex_beans → $complex_beans"
                 echo ""
-                echo "However, please make sure you have merged the latest develop version into your feature branch before bumping the threshold."
+                echo "Before bumping the threshold, please make sure you have merged the latest develop version into your feature branch."
               else
                 echo "⚠️  ATTENTION: Your PR modified files that are violating the quality standards!"
                 echo ""
