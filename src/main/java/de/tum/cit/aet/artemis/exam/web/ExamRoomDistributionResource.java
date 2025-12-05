@@ -30,7 +30,6 @@ import de.tum.cit.aet.artemis.exam.domain.room.ExamRoomExamAssignment;
 import de.tum.cit.aet.artemis.exam.dto.room.AttendanceCheckerAppExamInformationDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamDistributionCapacityDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomForDistributionDTO;
-import de.tum.cit.aet.artemis.exam.dto.room.ExamSeatDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ReseatInformationDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.SeatsOfExamRoomDTO;
 import de.tum.cit.aet.artemis.exam.service.ExamAccessService;
@@ -209,8 +208,9 @@ public class ExamRoomDistributionResource {
      * Obtaining this next seat is only possible if the new room is persisted.
      * <p>
      * When this function talks about persisted rooms, it refers to those {@link ExamRoom}s that are stored in the DB
-     * and connected, via {@link ExamRoomExamAssignment}, to the given exam.
-     * This function does not automatically register a new room when a student is distributed to a non-persisted room.
+     * and connected via {@link ExamRoomExamAssignment} to the given exam.
+     * This function does not automatically register a new room when a student is distributed to a stored,
+     * but non-connected room.
      * <p>
      * This function automatically fills gaps originating from moving a student out of a room if the old room is persisted.
      * This function does not automatically fill gaps originating from moving a student to a room.
@@ -223,9 +223,9 @@ public class ExamRoomDistributionResource {
      * @param reseatInformation the reseating information, containing:
      *                              <ul>
      *                              <li><strong>examUserId</strong> – the ID of the exam user</li>
-     *                              <li><strong>newRoom</strong> – the {@link ExamRoom#roomNumber} of the new room</li>
-     *                              <li><strong>newSeat</strong> – the {@link ExamSeatDTO#name} of the new seat;
-     *                              automatically determined if omitted and {@code persistedLocation == true}</li>
+     *                              <li><strong>newRoom</strong> – the room number of the new room</li>
+     *                              <li><strong>newSeat</strong> – the name of the new seat;
+     *                              automatically determined if omitted</li>
      *                              </ul>
      * @return 200 (OK) on success
      */
@@ -238,7 +238,7 @@ public class ExamRoomDistributionResource {
         examUserService.checkExamUserExistsAndBelongsToExamElseThrow(reseatInformation.examUserId(), examId);
 
         if (StringUtil.isBlank(reseatInformation.newRoom())) {
-            throw new BadRequestAlertException("Invalid room number", ENTITY_NAME, "room.invalidRoomNumber");
+            throw new BadRequestAlertException("No room number was provided", ENTITY_NAME, "room.invalidRoomNumber");
         }
 
         if (StringUtil.isBlank(reseatInformation.newSeat()) && !examRoomService.isRoomPersisted(reseatInformation.newRoom())) {

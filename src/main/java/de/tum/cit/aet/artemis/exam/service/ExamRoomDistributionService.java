@@ -345,7 +345,7 @@ public class ExamRoomDistributionService {
     }
 
     /**
-     * Reseats a student to a different seat.
+     * Reseats a student to a different seat and fill the created gap, if the old room is persisted
      *
      * @param examUserId    The id of the exam user
      * @param newRoomNumber The {@code roomNumber} of the new room
@@ -359,12 +359,9 @@ public class ExamRoomDistributionService {
 
         String oldRoomNumber = examUser.getPlannedRoom();
         String oldSeatName = examUser.getPlannedSeat();
-        boolean isOldLocationPersisted = examUser.getPlannedRoomTransient() != null;
-
-        ExamUser lastStudentInOldRoom = null;
-        if (isOldLocationPersisted) {
-            lastStudentInOldRoom = findLastStudentInRoom(examUser.getPlannedRoomTransient(), examUsers);
-        }
+        ExamRoom oldPlannedRoom = examUser.getPlannedRoomTransient();
+        boolean isOldLocationPersisted = oldPlannedRoom != null;
+        ExamUser lastStudentInOldRoom = isOldLocationPersisted ? findLastStudentInRoom(examUser.getPlannedRoomTransient(), examUsers) : null;
 
         if (StringUtil.isBlank(newSeatName)) {
             seatStudentDynamicLocation(examUser, newRoomNumber);
@@ -373,16 +370,16 @@ public class ExamRoomDistributionService {
             seatStudentFixedSeat(examUser, newRoomNumber, newSeatName);
         }
 
-        if (StringUtil.isBlank(oldRoomNumber) || oldRoomNumber.equals(newRoomNumber) || lastStudentInOldRoom == null || lastStudentInOldRoom.getId().equals(examUser.getId())) {
-            // We don't need to fill a gap.
-            // This is either because the student did not have a room assignment prior,
-            // because we don't have information about the old room,
-            // because the student was moved inside the same room,
-            // or because the student we moved didn't create a gap
-            return;
-        }
+        if (isOldLocationPersisted) {
+            examUserService.setPlannedRoomAndSeatTransientForExamUsers(Set.of(examUser));
+            ExamRoom newPlannedRoom = examUser.getPlannedRoomTransient();
+            boolean newRoomIsNotOldRoom = newPlannedRoom != null && !newPlannedRoom.getId().equals(oldPlannedRoom.getId());
+            boolean lastStudentIsNotMovedStudent = lastStudentInOldRoom != null && !lastStudentInOldRoom.getId().equals(examUser.getId());
 
-        setRoomAndSeatAndSaveExamUser(lastStudentInOldRoom, oldRoomNumber, oldSeatName);
+            if (newRoomIsNotOldRoom && lastStudentIsNotMovedStudent) {
+                setRoomAndSeatAndSaveExamUser(lastStudentInOldRoom, oldRoomNumber, oldSeatName);
+            }
+        }
     }
 
     /**
@@ -411,35 +408,9 @@ public class ExamRoomDistributionService {
         return null;
     }
 
-    /**
-     * Updates the planned seat of a student to a fixed seat, if the seat is available.
-     *
-     * @param examUser The exam user
-     * @param newRoom  The new room's room number
-     * @param newSeat  The new seat's name
-     */
-    private void seatStudentFixedSeat(ExamUser examUser, String newRoom, String newSeat) {
-        Set<ExamUser> examUsers = examUser.getExam().getExamUsers();
-        checkSeatNotAlreadyTakenOrElseThrow(examUsers, newRoom, newSeat);
-
-        setRoomAndSeatAndSaveExamUser(examUser, newRoom, newSeat);
-    }
-
     private Map<ExamSeatDTO, ExamUser> getExamUserInRoomBySeat(Set<ExamUser> examUsers, ExamRoom examRoom) {
         return examUsers.stream().filter(examUser -> examUser.getPlannedRoomTransient() != null && examUser.getPlannedRoomTransient().getId().equals(examRoom.getId()))
                 .collect(Collectors.toMap(ExamUser::getPlannedSeatTransient, Function.identity()));
-    }
-
-    private void setRoomAndSeatAndSaveExamUser(ExamUser examUser, String newRoom, String newSeat) {
-        examUser.setPlannedRoom(newRoom);
-        examUser.setPlannedSeat(newSeat);
-        examUserRepository.save(examUser);
-    }
-
-    private void checkSeatNotAlreadyTakenOrElseThrow(Set<ExamUser> examUsers, String roomNumber, String seatName) {
-        if (examUsers.stream().anyMatch(eu -> Objects.equals(roomNumber, eu.getPlannedRoom()) && Objects.equals(seatName, eu.getPlannedSeat()))) {
-            throw new BadRequestAlertException("Someone already sits here", ENTITY_NAME, "room.seatTaken");
-        }
     }
 
     /**
@@ -448,7 +419,7 @@ public class ExamRoomDistributionService {
      * @param examUser      The exam user where the associated exam users have the transient room and seat properties set
      * @param newRoomNumber The room number of the new room
      */
-    public void seatStudentDynamicLocation(ExamUser examUser, String newRoomNumber) {
+    private void seatStudentDynamicLocation(ExamUser examUser, String newRoomNumber) {
         if (Objects.equals(examUser.getPlannedRoom(), newRoomNumber)) {
             throw new BadRequestAlertException("The student already sits in this room", ENTITY_NAME, "room.alreadyInRoom");
         }
@@ -468,5 +439,31 @@ public class ExamRoomDistributionService {
         }
 
         throw new BadRequestAlertException("Not enough space in the new room", ENTITY_NAME, "room.noFreeSeats");
+    }
+
+    /**
+     * Updates the planned seat of a student to a fixed seat, if the seat is available.
+     *
+     * @param examUser The exam user
+     * @param newRoom  The new room's room number
+     * @param newSeat  The new seat's name
+     */
+    private void seatStudentFixedSeat(ExamUser examUser, String newRoom, String newSeat) {
+        Set<ExamUser> examUsers = examUser.getExam().getExamUsers();
+        checkSeatNotAlreadyTakenOrElseThrow(examUsers, newRoom, newSeat);
+
+        setRoomAndSeatAndSaveExamUser(examUser, newRoom, newSeat);
+    }
+
+    private void setRoomAndSeatAndSaveExamUser(ExamUser examUser, String newRoom, String newSeat) {
+        examUser.setPlannedRoom(newRoom);
+        examUser.setPlannedSeat(newSeat);
+        examUserRepository.save(examUser);
+    }
+
+    private void checkSeatNotAlreadyTakenOrElseThrow(Set<ExamUser> examUsers, String roomNumber, String seatName) {
+        if (examUsers.stream().anyMatch(eu -> Objects.equals(roomNumber, eu.getPlannedRoom()) && Objects.equals(seatName, eu.getPlannedSeat()))) {
+            throw new BadRequestAlertException("Someone already sits here", ENTITY_NAME, "room.seatTaken");
+        }
     }
 }
