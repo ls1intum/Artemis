@@ -1,7 +1,10 @@
 import os
 import re
 import argparse
+import subprocess
+import sys
 from collections import defaultdict
+from typing import List, Tuple, Set
 
 def extract_module(path, base_dir):
     # Extract the subfolder name after de/tum/cit/aet/artemis
@@ -55,6 +58,109 @@ def analyze_java_files(base_dir, max_lines=1000, max_params=10, include_repo_dep
 
     return large_classes, complex_beans, large_class_counts, complex_bean_counts
 
+def get_changed_java_files(event_type: str, base_branch: str) -> Set[str]:
+    """Get the list of changed Java files in a PR."""
+    if event_type != 'pull_request':
+        return set()
+
+    try:
+        print(f"Checking files changed in PR against base branch: {base_branch}", file=sys.stderr)
+        result = subprocess.run(
+            ['git', 'diff', '--name-only', f'origin/{base_branch}...HEAD'],
+            capture_output=True,
+            text=True,
+            check=True
+        )
+        changed_files = {
+            line.strip() for line in result.stdout.splitlines()
+            if line.strip().endswith('.java')
+        }
+
+        print("Changed Java files in this PR:", file=sys.stderr)
+        if changed_files:
+            for file in sorted(changed_files):
+                print(f"  - {file}", file=sys.stderr)
+        else:
+            print("  (none)", file=sys.stderr)
+        print("", file=sys.stderr)
+
+        return changed_files
+    except subprocess.CalledProcessError as e:
+        print(f"Error getting changed files: {e}", file=sys.stderr)
+        return set()
+
+def check_violations_in_changed_files(violations: List[Tuple[str, int]], changed_files: Set[str]) -> bool:
+    """Check if any violations are in the changed files."""
+    if not changed_files:
+        return False
+
+    for path, _ in violations:
+        if path in changed_files:
+            return True
+    return False
+
+def display_violation_summary(title: str, violations: List[Tuple[str, int]], unit: str):
+    """Display a formatted list of violations."""
+    print(f"{title} ({len(violations)} items):")
+    print("-" * 48)
+    for path, value in violations:
+        print(f"{path}: {value} {unit}")
+    print()
+
+def display_pr_violation_details(violation_type: str, violations: List[Tuple[str, int]], changed_files: Set[str]):
+    """Display violations that were introduced in the PR."""
+    if violation_type == "large_classes":
+        print("Files you edited that are too large:")
+        unit = "lines"
+    else:
+        print("Files you edited that have too many constructor parameters:")
+        unit = "parameters"
+
+    for path, value in violations:
+        if path in changed_files:
+            print(f"  - {path}: {value} {unit}")
+    print()
+
+def display_pr_context(
+    event_type: str,
+    large_class_violation: bool,
+    complex_bean_violation: bool,
+    pr_has_large_violations: bool,
+    pr_has_complex_violations: bool,
+    large_classes: List[Tuple[str, int]],
+    complex_beans: List[Tuple[str, int]],
+    changed_files: Set[str],
+    max_large_classes: int,
+    max_complex_beans: int
+):
+    """Display context-specific messages for PR or push events."""
+    print("=" * 42)
+
+    if event_type == 'pull_request':
+        if not pr_has_large_violations and not pr_has_complex_violations:
+            print("ℹ️  None of the violating files were modified in this PR.")
+            print("The violations likely come from another PR that was merged recently.")
+            print()
+            print("You can bump the thresholds in .github/workflows/quality.yml:")
+            if large_class_violation:
+                print(f"  - max_large_classes: {max_large_classes} → {len(large_classes)}")
+            if complex_bean_violation:
+                print(f"  - max_complex_beans: {max_complex_beans} → {len(complex_beans)}")
+            print()
+            print("Before bumping the threshold, please make sure you have merged the latest develop version into your feature branch.")
+        else:
+            print("⚠️  ATTENTION: Your PR modified files that are violating the quality standards!")
+            print()
+            if pr_has_large_violations:
+                display_pr_violation_details("large_classes", large_classes, changed_files)
+            if pr_has_complex_violations:
+                display_pr_violation_details("complex_beans", complex_beans, changed_files)
+            print("Please refactor these classes to meet the code quality standards!")
+    else:
+        print("Please refactor the classes listed above to meet the code quality standards!")
+
+    print("=" * 42)
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description='Analyze Java code for large classes and complex Spring beans.'
@@ -83,8 +189,34 @@ if __name__ == '__main__':
         help='Include constructor parameters whose type ends with "Repository" in the dependency count',
         dest='include_repo_deps'
     )
+    parser.add_argument(
+        '--max-large-classes',
+        type=int,
+        default=None,
+        help='Maximum allowed number of large classes (fails if exceeded)'
+    )
+    parser.add_argument(
+        '--max-complex-beans',
+        type=int,
+        default=None,
+        help='Maximum allowed number of complex beans (fails if exceeded)'
+    )
+    parser.add_argument(
+        '--event-type',
+        type=str,
+        default='push',
+        choices=['push', 'pull_request'],
+        help='GitHub event type (push or pull_request)'
+    )
+    parser.add_argument(
+        '--base-branch',
+        type=str,
+        default='develop',
+        help='Base branch for PR diff comparison'
+    )
     args = parser.parse_args()
 
+    # Run the analysis
     large_classes, complex_beans, large_counts, bean_counts = analyze_java_files(
         args.dir,
         max_lines=args.max_lines,
@@ -92,7 +224,7 @@ if __name__ == '__main__':
         include_repo_deps=args.include_repo_deps
     )
 
-    # Print summary
+    # Print initial analysis results
     print(f"\nFound {len(large_classes)} classes with more than {args.max_lines} lines:")
     for module, count in large_counts.items():
         print(f" - {module}: {count}")
@@ -104,3 +236,70 @@ if __name__ == '__main__':
         print(f" - {module}: {count}")
     for path, params in complex_beans:
         print(f"{path}: {params} parameters")
+
+    # If no thresholds specified, just print results and exit
+    if args.max_large_classes is None and args.max_complex_beans is None:
+        sys.exit(0)
+
+    # Check thresholds
+    print()
+    print("=" * 42)
+    print("CODE QUALITY ANALYSIS SUMMARY")
+    print("=" * 42)
+    print(f"Large classes found: {len(large_classes)} (max allowed: {args.max_large_classes})")
+    print(f"Complex beans found: {len(complex_beans)} (max allowed: {args.max_complex_beans})")
+    print()
+
+    large_class_violation = len(large_classes) > args.max_large_classes
+    complex_bean_violation = len(complex_beans) > args.max_complex_beans
+
+    if large_class_violation:
+        print(f"❌ Too many large classes: {len(large_classes)} > {args.max_large_classes}")
+    else:
+        print(f"✅ Large classes within threshold: {len(large_classes)} <= {args.max_large_classes}")
+
+    if complex_bean_violation:
+        excess = len(complex_beans) - args.max_complex_beans
+        print(f"❌ Too many complex beans: {len(complex_beans)} > {args.max_complex_beans} ({excess} beans need to be refactored)")
+    else:
+        print(f"✅ Complex beans within threshold: {len(complex_beans)} <= {args.max_complex_beans}")
+
+    print("=" * 42)
+
+    # If violations found, check PR context and display details
+    if large_class_violation or complex_bean_violation:
+        print("::error::Code quality check failed")
+        print()
+
+        # Get changed files for PR context
+        changed_files = get_changed_java_files(args.event_type, args.base_branch)
+
+        # Check if violations are in PR changes
+        pr_has_large_violations = check_violations_in_changed_files(large_classes, changed_files) if large_class_violation else False
+        pr_has_complex_violations = check_violations_in_changed_files(complex_beans, changed_files) if complex_bean_violation else False
+
+        # Display violation details
+        if large_class_violation:
+            display_violation_summary("VIOLATING LARGE CLASSES", large_classes, "lines")
+
+        if complex_bean_violation:
+            display_violation_summary("VIOLATING COMPLEX BEANS", complex_beans, "parameters")
+
+        # Display PR-specific context
+        display_pr_context(
+            args.event_type,
+            large_class_violation,
+            complex_bean_violation,
+            pr_has_large_violations,
+            pr_has_complex_violations,
+            large_classes,
+            complex_beans,
+            changed_files,
+            args.max_large_classes,
+            args.max_complex_beans
+        )
+
+        sys.exit(1)
+    else:
+        print("✅ Code quality check passed")
+        sys.exit(0)
