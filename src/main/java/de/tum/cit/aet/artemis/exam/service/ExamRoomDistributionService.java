@@ -370,13 +370,11 @@ public class ExamRoomDistributionService {
             seatStudentFixedSeat(examUser, newRoomNumber, newSeatName);
         }
 
-        if (isOldLocationPersisted) {
-            examUserService.setPlannedRoomAndSeatTransientForExamUsers(Set.of(examUser));
-            ExamRoom newPlannedRoom = examUser.getPlannedRoomTransient();
-            boolean newRoomIsNotOldRoom = newPlannedRoom != null && !newPlannedRoom.getId().equals(oldPlannedRoom.getId());
-            boolean lastStudentIsNotMovedStudent = lastStudentInOldRoom != null && !lastStudentInOldRoom.getId().equals(examUser.getId());
+        if (isOldLocationPersisted && lastStudentInOldRoom != null) {
+            boolean movedToDifferentRoom = !Objects.equals(oldRoomNumber, newRoomNumber);
+            boolean lastStudentIsNotMovedStudent = !lastStudentInOldRoom.getId().equals(examUser.getId());
 
-            if (newRoomIsNotOldRoom && lastStudentIsNotMovedStudent) {
+            if (movedToDifferentRoom && lastStudentIsNotMovedStudent) {
                 setRoomAndSeatAndSaveExamUser(lastStudentInOldRoom, oldRoomNumber, oldSeatName);
             }
         }

@@ -28,14 +28,13 @@ import { faBan, faChair } from '@fortawesome/free-solid-svg-icons';
 import { RoomForDistributionDTO, SeatsOfExamRoomDTO } from './students-room-distribution.model';
 import { Observable, debounceTime, distinctUntilChanged, map } from 'rxjs';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
-import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 
 @Component({
     selector: 'jhi-students-reseating-dialog',
     standalone: true,
     templateUrl: './students-reseating-dialog.component.html',
     encapsulation: ViewEncapsulation.None,
-    imports: [FormsModule, TranslateDirective, FaIconComponent, NgbTypeaheadModule, ArtemisTranslatePipe, DialogModule, ButtonModule, HelpIconComponent, MatSlideToggleModule],
+    imports: [FormsModule, TranslateDirective, FaIconComponent, NgbTypeaheadModule, ArtemisTranslatePipe, DialogModule, ButtonModule, HelpIconComponent],
 })
 export class StudentsReseatingDialogComponent {
     // Icons
@@ -57,6 +56,7 @@ export class StudentsReseatingDialogComponent {
     readonly selectedRoomIsPersisted: Signal<boolean> = computed(() => this.selectedRoomId() !== undefined);
     private seatsOfSelectedRoom: WritableSignal<SeatsOfExamRoomDTO> = signal({ seats: [] });
     selectedSeat: WritableSignal<string> = signal('');
+    readonly selectedSeatIsPersisted: Signal<boolean> = computed(() => this.selectedRoomIsPersisted() && this.seatsOfSelectedRoom().seats.includes(this.selectedSeat()));
 
     constructor() {
         effect(() => {
@@ -95,7 +95,7 @@ export class StudentsReseatingDialogComponent {
         this.dialogVisible.set(false);
     }
 
-    attemptReseatAndCloseDialogOnSuccess(): void {
+    protected attemptReseatAndCloseDialogOnSuccess(): void {
         const actualSelectedRoomNumber: string = this.selectedRoom()?.roomNumber ?? this.selectedRoomNumber();
         this.studentsRoomDistributionService
             .reseatStudent(this.courseId(), this.exam().id!, this.examUser()!.id!, actualSelectedRoomNumber, this.selectedSeat() || undefined)
@@ -107,13 +107,13 @@ export class StudentsReseatingDialogComponent {
             });
     }
 
-    pickSelectedRoom(event: { item: RoomForDistributionDTO }): void {
+    protected pickSelectedRoom(event: { item: RoomForDistributionDTO }): void {
         const selectedRoom: RoomForDistributionDTO = event.item as RoomForDistributionDTO;
 
         this.selectedRoomNumber.set(selectedRoom.roomNumber);
     }
 
-    pickSelectedSeat(event: { item: string }): void {
+    protected pickSelectedSeat(event: { item: string }): void {
         const selectedSeat: string = event.item as string;
 
         this.selectedSeat.set(selectedSeat);
@@ -126,7 +126,7 @@ export class StudentsReseatingDialogComponent {
      *
      * @param text$ An input text
      */
-    roomSearch = (text$: Observable<string>): Observable<RoomForDistributionDTO[]> => {
+    protected roomSearch = (text$: Observable<string>): Observable<RoomForDistributionDTO[]> => {
         return text$.pipe(debounceTime(200), distinctUntilChanged(), map(this.findAllMatchingRoomsForTerm));
     };
 
@@ -135,7 +135,7 @@ export class StudentsReseatingDialogComponent {
      *
      * @param text$ An input text
      */
-    examSeatSearch = (text$: Observable<string>): Observable<string[]> => {
+    protected examSeatSearch = (text$: Observable<string>): Observable<string[]> => {
         return text$.pipe(debounceTime(200), distinctUntilChanged(), map(this.findAllMatchingSeatsForTerm));
     };
 
@@ -183,27 +183,22 @@ export class StudentsReseatingDialogComponent {
      *
      * @param room The exam room
      */
-    roomFormatter(room: RoomForDistributionDTO): string {
+    protected roomFormatter(room: RoomForDistributionDTO): string {
         const namePart = room.alternativeName ? `${room.name} (${room.alternativeName})` : room.name;
         const numberPart = room.alternativeRoomNumber ? `${room.roomNumber} (${room.alternativeRoomNumber})` : room.roomNumber;
 
         return `${namePart} – ${numberPart} - [${room.building}]`;
     }
 
-    roomRoomNumberFormatter(room: RoomForDistributionDTO): string {
+    protected roomRoomNumberFormatter(room: RoomForDistributionDTO): string {
         return room.roomNumber;
     }
 
-    /**
-     * Formats the metadata of an exam seat into a human-readable format for the dropdown search menu
-     *
-     * @param seatName name of the seat
-     */
-    examSeatFormatter(seatName: string): string {
+    protected examSeatFormatter(seatName: string): string {
         return seatName;
     }
 
-    selectAllTextAndOpenDropdown(focusEvent: FocusEvent): void {
+    protected selectAllTextAndOpenDropdown(focusEvent: FocusEvent): void {
         const input = focusEvent.target as HTMLInputElement;
         setTimeout(() => input.select(), 0);
 
@@ -238,14 +233,9 @@ export class StudentsReseatingDialogComponent {
         return subsequenceIndex === subsequence.length;
     }
 
-    getSelectedStudentName(): string {
+    protected getSelectedStudentName(): string {
         const name: string = (this.examUser()?.user?.firstName ?? '') + ' ' + (this.examUser()?.user?.lastName ?? '');
         return name.trim();
-    }
-
-    getDefaultValueForRoomSelection(): string {
-        const selectedRoomDTO = this.getRoomDTOFromSelectedRoomNumber();
-        return selectedRoomDTO ? this.roomFormatter(selectedRoomDTO) : this.selectedRoomNumber();
     }
 
     private getRoomDTOFromSelectedRoomNumber(): RoomForDistributionDTO | undefined {
