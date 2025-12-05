@@ -25,6 +25,8 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisProgrammingExerciseChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
+import de.tum.cit.aet.artemis.iris.dto.IrisMessageContentDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisMessageRequestDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisStatusDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisExerciseChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
@@ -270,8 +272,8 @@ class IrisProgrammingExerciseChatSessionIntegrationTest extends AbstractIrisInte
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testCreateMessage_legacyFormat() throws Exception {
-        // Test that old frontend format (direct IrisMessage) still works
+    void testCreateMessage_withoutUncommittedFiles() throws Exception {
+        // Test that sending a message without uncommitted files works
         var session = createSessionForUser("student1");
         var message = createDefaultMockTextMessage(session);
 
@@ -280,8 +282,12 @@ class IrisProgrammingExerciseChatSessionIntegrationTest extends AbstractIrisInte
             // No assertion needed - just verify the call was made
         });
 
-        // Send in legacy format (just the message, no wrapper)
-        var response = request.postWithResponseBody("/api/iris/sessions/" + session.getId() + "/messages", message, IrisMessage.class, HttpStatus.CREATED);
+        // Create request DTO without uncommitted files
+        List<IrisMessageContentDTO> contentDTOs = message.getContent().stream()
+                .map(content -> (IrisMessageContentDTO) new IrisMessageContentDTO.TextContent(content.getContentAsString())).toList();
+        var requestDTO = new IrisMessageRequestDTO(contentDTOs, message.getMessageDifferentiator(), Map.of());
+
+        var response = request.postWithResponseBody("/api/iris/sessions/" + session.getId() + "/messages", requestDTO, IrisMessage.class, HttpStatus.CREATED);
 
         assertThat(response).isNotNull();
         assertThat(response.getId()).isNotNull();
@@ -304,30 +310,12 @@ class IrisProgrammingExerciseChatSessionIntegrationTest extends AbstractIrisInte
             }
         });
 
-        // The extension sends the IrisMessage with uncommittedFiles in a wrapper
-        // But Jackson can parse both the old IrisMessage format and the new IrisMessageRequestDTO format
-        // because they have compatible fields (content, messageDifferentiator)
-        // Here we just verify that sending uncommittedFiles alongside the message works
-        var response = request.postWithResponseBody("/api/iris/sessions/" + session.getId() + "/messages", message, IrisMessage.class, HttpStatus.CREATED);
+        // Create request DTO with uncommitted files
+        List<IrisMessageContentDTO> contentDTOs = message.getContent().stream()
+                .map(content -> (IrisMessageContentDTO) new IrisMessageContentDTO.TextContent(content.getContentAsString())).toList();
+        var requestDTO = new IrisMessageRequestDTO(contentDTOs, message.getMessageDifferentiator(), uncommittedFiles);
 
-        assertThat(response).isNotNull();
-        assertThat(response.getId()).isNotNull();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testCreateMessage_newFormatWithoutUncommittedFiles() throws Exception {
-        // Test new format but without uncommitted files (should work)
-        var session = createSessionForUser("student1");
-        var message = createDefaultMockTextMessage(session);
-
-        // Mock Pyris response
-        irisRequestMockProvider.mockProgrammingExerciseChatResponse(dto -> {
-            // No assertion needed - just verify the call was made
-        });
-
-        // Same as legacy format - the DTO accepts the same fields
-        var response = request.postWithResponseBody("/api/iris/sessions/" + session.getId() + "/messages", message, IrisMessage.class, HttpStatus.CREATED);
+        var response = request.postWithResponseBody("/api/iris/sessions/" + session.getId() + "/messages", requestDTO, IrisMessage.class, HttpStatus.CREATED);
 
         assertThat(response).isNotNull();
         assertThat(response.getId()).isNotNull();
