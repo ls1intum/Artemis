@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Input, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit, inject } from '@angular/core';
 import { faAngleDown, faAngleRight } from '@fortawesome/free-solid-svg-icons';
 import { FeedbackItem } from 'app/exercise/feedback/item/feedback-item';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -31,6 +31,8 @@ export class FeedbackCollapseComponent implements OnInit {
     faAngleDown = faAngleDown;
     faAngleRight = faAngleRight;
 
+    private readonly changeDetectorRef = inject(ChangeDetectorRef);
+
     ngOnInit(): void {
         this.previewText = this.computeFeedbackPreviewText(this.feedback.text);
     }
@@ -60,5 +62,6 @@ export class FeedbackCollapseComponent implements OnInit {
 
     toggleCollapse(): void {
         this.isCollapsed = !this.isCollapsed;
+        this.changeDetectorRef.markForCheck();
     }
 }
