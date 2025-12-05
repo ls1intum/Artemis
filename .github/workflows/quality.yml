@@ -54,6 +54,10 @@ jobs:
             fi
 
             while IFS= read -r violating_line; do
+              # Skip empty lines and separator lines (only dashes)
+              if [ -z "$violating_line" ] || [[ "$violating_line" =~ ^-+$ ]]; then
+                continue
+              fi
               violating_file=$(echo "$violating_line" | cut -d':' -f1)
               if echo "$changed_files" | grep -q "$violating_file"; then
                 echo "true"
@@ -76,6 +80,10 @@ jobs:
             fi
 
             while IFS= read -r violating_line; do
+              # Skip empty lines and separator lines (only dashes)
+              if [ -z "$violating_line" ] || [[ "$violating_line" =~ ^-+$ ]]; then
+                continue
+              fi
               violating_file=$(echo "$violating_line" | cut -d':' -f1)
               if echo "$changed_files" | grep -q "$violating_file"; then
                 echo "  - $violating_line"
