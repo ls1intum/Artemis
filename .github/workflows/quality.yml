@@ -84,6 +84,67 @@ jobs:
             echo ""
           }
 
+          process_violation_type() {
+            local violation_type="$1"
+            local output="$2"
+            local changed_files="$3"
+
+            local title pattern
+            if [ "$violation_type" = "large_classes" ]; then
+              title="VIOLATING LARGE CLASSES"
+              pattern='/Found [0-9]* classes with more than/,/Found [0-9]* Spring beans/p'
+              filter='\.java: [0-9]+ lines'
+              count="$large_classes"
+            else
+              title="VIOLATING COMPLEX BEANS"
+              pattern='/Found [0-9]* Spring beans with constructors having more than/,$p'
+              filter='\.java: [0-9]+ parameters'
+              count="$complex_beans"
+            fi
+
+            echo "$title ($count items):"
+            echo "$(printf '%.0s-' {1..48})"
+            local violations=$(echo "$output" | sed -n "$pattern" | grep -E "$filter")
+            echo "$violations"
+            echo ""
+
+            # Check if any violations are in PR changes and return result
+            check_violations_in_pr "$violations" "$changed_files"
+          }
+
+          display_pr_context() {
+            local large_violation="$1"
+            local complex_violation="$2"
+            local pr_large="$3"
+            local pr_complex="$4"
+            local violating_classes="$5"
+            local violating_beans="$6"
+            local changed_files="$7"
+
+            echo "=========================================="
+            if [ "${{ github.event_name }}" = "pull_request" ]; then
+              if [ "$pr_large" = false ] && [ "$pr_complex" = false ]; then
+                echo "ℹ️  None of the violating files were modified in this PR."
+                echo "The violations likely come from another PR that was merged recently."
+                echo ""
+                echo "You can bump the thresholds in .github/workflows/quality.yml:"
+                [ "$large_violation" = true ] && echo "  - max_large_classes: $max_large_classes → $large_classes"
+                [ "$complex_violation" = true ] && echo "  - max_complex_beans: $max_complex_beans → $complex_beans"
+                echo ""
+                echo "However, please make sure you have merged the latest develop version into your feature branch."
+              else
+                echo "⚠️  ATTENTION: Your PR modified files that are violating the quality standards!"
+                echo ""
+                [ "$pr_large" = true ] && display_pr_violation_details "large_classes" "$violating_classes" "$changed_files"
+                [ "$pr_complex" = true ] && display_pr_violation_details "complex_beans" "$violating_beans" "$changed_files"
+                echo "Please refactor these classes to meet the code quality standards!"
+              fi
+            else
+              echo "Please refactor the classes listed above to meet the code quality standards!"
+            fi
+            echo "=========================================="
+          }
+
           # Run the analysis and capture output
           output=$(python supporting_scripts/analyze_java_files.py)
 
@@ -95,7 +156,7 @@ jobs:
           complex_beans=$(echo "$output" | grep -o "Found [0-9]* Spring beans with constructors having more than" | grep -o "[0-9]*")
 
           # TODO these values should become zero in the future
-          max_large_classes=11
+          max_large_classes=10
           max_complex_beans=10
 
           echo "=========================================="
@@ -130,68 +191,30 @@ jobs:
             echo "::error::Code quality check failed"
             echo ""
 
-            # Get list of changed Java files in this PR (only for pull requests)
             changed_java_files=$(get_changed_java_files)
 
-            # Track if any violations are from PR changes
+            # Process violations and check if they're in PR changes
+            violating_classes=""
+            violating_beans=""
             pr_introduced_large_class_violations=false
             pr_introduced_complex_bean_violations=false
 
             if [ "$large_class_violation" = true ]; then
-              echo "VIOLATING LARGE CLASSES ($large_classes classes):"
-              echo "------------------------------------------------"
-              violating_classes=$(echo "$output" | sed -n '/Found [0-9]* classes with more than/,/Found [0-9]* Spring beans/p' | grep -E '\.java: [0-9]+ lines')
-              echo "$violating_classes"
-              echo ""
-
-              # Check if any violating classes are in PR changes
-              pr_introduced_large_class_violations=$(check_violations_in_pr "$violating_classes" "$changed_java_files")
+              violating_classes=$(process_violation_type "large_classes" "$output" "$changed_java_files")
+              pr_introduced_large_class_violations=$(echo "$violating_classes" | tail -1)
+              violating_classes=$(echo "$violating_classes" | head -n -1)
             fi
 
             if [ "$complex_bean_violation" = true ]; then
-              echo "VIOLATING COMPLEX BEANS ($complex_beans beans):"
-              echo "-----------------------------------------------"
-              violating_beans=$(echo "$output" | sed -n '/Found [0-9]* Spring beans with constructors having more than/,$p' | grep -E '\.java: [0-9]+ parameters')
-              echo "$violating_beans"
-              echo ""
-
-              # Check if any violating beans are in PR changes
-              pr_introduced_complex_bean_violations=$(check_violations_in_pr "$violating_beans" "$changed_java_files")
+              violating_beans=$(process_violation_type "complex_beans" "$output" "$changed_java_files")
+              pr_introduced_complex_bean_violations=$(echo "$violating_beans" | tail -1)
+              violating_beans=$(echo "$violating_beans" | head -n -1)
             fi
 
-            # Provide context about whether violations are from this PR
-            echo "=========================================="
-            if [ "${{ github.event_name }}" = "pull_request" ]; then
-              if [ "$pr_introduced_large_class_violations" = false ] && [ "$pr_introduced_complex_bean_violations" = false ]; then
-                echo "ℹ️  IMPORTANT: None of the violating files were modified in this PR."
-                echo "The violations likely come from another PR that was merged recently."
-                echo ""
-                echo "You can bump the thresholds in .github/workflows/quality.yml:"
-                if [ "$large_class_violation" = true ]; then
-                  echo "  - max_large_classes: $max_large_classes → $large_classes"
-                fi
-                if [ "$complex_bean_violation" = true ]; then
-                  echo "  - max_complex_beans: $max_complex_beans → $complex_beans"
-                fi
-                echo ""
-                echo "However, please verify this is not a rebase issue first by checking:"
-                echo "  1. Run 'git log' to ensure you have the latest commits from develop"
-                echo "  2. The violations listed above don't match files you edited"
-              else
-                echo "⚠️  ATTENTION: Your PR modified files that are violating the quality standards!"
-                echo ""
-                if [ "$pr_introduced_large_class_violations" = true ]; then
-                  display_pr_violation_details "large_classes" "$violating_classes" "$changed_java_files"
-                fi
-                if [ "$pr_introduced_complex_bean_violations" = true ]; then
-                  display_pr_violation_details "complex_beans" "$violating_beans" "$changed_java_files"
-                fi
-                echo "Please refactor these classes to meet the code quality standards!"
-              fi
-            else
-              echo "Please refactor the classes listed above to meet the code quality standards!"
-            fi
-            echo "=========================================="
+            display_pr_context "$large_class_violation" "$complex_bean_violation" \
+              "$pr_introduced_large_class_violations" "$pr_introduced_complex_bean_violations" \
+              "$violating_classes" "$violating_beans" "$changed_java_files"
+
             exit 1
           else
             echo "✅ Code quality check passed"
