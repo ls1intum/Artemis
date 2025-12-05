@@ -1,4 +1,4 @@
-import { Component, EventEmitter, HostListener, Input, OnChanges, Output, SimpleChanges, ViewChild, inject, input } from '@angular/core';
+import { Component, HostListener, ViewChild, effect, inject, input, output } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { isEmpty as _isEmpty, fromPairs, toPairs, uniq } from 'lodash-es';
 import { CodeEditorFileService } from 'app/programming/shared/code-editor/services/code-editor-file.service';
@@ -50,7 +50,7 @@ export enum CollapsableCodeEditorElement {
         KeysPipe,
     ],
 })
-export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeactivate {
+export class CodeEditorContainerComponent implements ComponentCanDeactivate {
     private translateService = inject(TranslateService);
     private alertService = inject(AlertService);
     private fileService = inject(CodeEditorFileService);
@@ -66,54 +66,32 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
     @ViewChild(CodeEditorMonacoComponent, { static: false }) monacoEditor: CodeEditorMonacoComponent;
     @ViewChild(CodeEditorInstructionsComponent, { static: false }) instructions: CodeEditorInstructionsComponent;
 
-    @Input()
-    editable = true;
-    @Input()
-    forRepositoryView = false;
-    @Input()
-    showInlineFeedback = true;
-    @Input()
-    buildable = true;
-    @Input()
-    showEditorInstructions = true;
-    @Input()
-    isTutorAssessment = false;
-    @Input()
-    highlightFileChanges = false;
-    @Input()
-    allowHiddenFiles = false;
-    @Input()
-    feedbackSuggestions: Feedback[] = [];
-    @Input()
-    readOnlyManualFeedback = false;
-    @Input()
-    highlightDifferences: boolean;
-    @Input()
-    disableAutoSave = false;
-
-    readonly consistencyIssues = input<ConsistencyIssue[]>([]);
-
+    editable = input(true);
+    forRepositoryView = input(false);
+    showInlineFeedback = input(true);
+    buildable = input(true);
+    showEditorInstructions = input(true);
+    isTutorAssessment = input(false);
+    highlightFileChanges = input(false);
+    allowHiddenFiles = input(false);
+    feedbackSuggestions = input<Feedback[]>([]);
+    readOnlyManualFeedback = input(false);
+    highlightDifferences = input<boolean>(false);
+    disableAutoSave = input(false);
     isProblemStatementVisible = input<boolean>(true);
+    consistencyIssues = input<ConsistencyIssue[]>([]);
+    course = input<Course | undefined>();
 
-    @Output()
-    onCommitStateChange = new EventEmitter<CommitState>();
-    @Output()
-    onFileChanged = new EventEmitter<void>();
-    @Output()
-    onUpdateFeedback = new EventEmitter<Feedback[]>();
-    @Output()
-    onFileLoad = new EventEmitter<string>();
-    @Output()
-    onAcceptSuggestion = new EventEmitter<Feedback>();
-    @Output()
-    onDiscardSuggestion = new EventEmitter<Feedback>();
-    @Input()
-    course?: Course;
+    onCommitStateChange = output<CommitState>();
+    onFileChanged = output<void>();
+    onUpdateFeedback = output<Feedback[]>();
+    onFileLoad = output<string>();
+    onAcceptSuggestion = output<Feedback>();
+    onDiscardSuggestion = output<Feedback>();
 
     /** Work in Progress: temporary properties needed to get first prototype working */
 
-    @Input()
-    participation: Participation;
+    participation = input.required<Participation>();
 
     /** END WIP */
 
@@ -151,13 +129,10 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
 
     constructor() {
         this.initializeProperties();
-    }
 
-    ngOnChanges(changes: SimpleChanges) {
-        // Update file badges when feedback suggestions change
-        if (changes.feedbackSuggestions) {
+        effect(() => {
             this.updateFileBadges();
-        }
+        });
     }
 
     get unsavedFiles() {
@@ -193,12 +168,12 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
         this.fileBadges = {};
         // Create badges for feedback suggestions
         // Get file paths from feedback suggestions:
-        const filePathsWithSuggestions = this.feedbackSuggestions
+        const filePathsWithSuggestions = this.feedbackSuggestions()
             .map((feedback) => Feedback.getReferenceFilePath(feedback))
             .filter((filePath) => filePath !== undefined) as string[];
         for (const filePath of filePathsWithSuggestions) {
             // Count the number of suggestions for this file
-            const suggestionsCount = this.feedbackSuggestions.filter((feedback) => Feedback.getReferenceFilePath(feedback) === filePath).length;
+            const suggestionsCount = this.feedbackSuggestions().filter((feedback) => Feedback.getReferenceFilePath(feedback) === filePath).length;
             this.fileBadges[filePath] = [new FileBadge(FileBadgeType.FEEDBACK_SUGGESTION, suggestionsCount)];
         }
     }
@@ -347,9 +322,9 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
      * Returns the feedbacks for the current submission or an empty array if no feedbacks are available.
      */
     feedbackForSubmission(): Feedback[] {
-        const submission = this.participation?.submissions?.[0];
+        const submission = this.participation()?.submissions?.[0];
         const result = submission?.results?.[0];
-        return this.showInlineFeedback && result?.feedbacks ? result.feedbacks : [];
+        return this.showInlineFeedback() && result?.feedbacks ? result.feedbacks : [];
     }
 
     /**

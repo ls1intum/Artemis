@@ -1,21 +1,4 @@
-import {
-    AfterViewInit,
-    Component,
-    EventEmitter,
-    HostListener,
-    Input,
-    OnChanges,
-    OnDestroy,
-    OnInit,
-    Output,
-    SimpleChanges,
-    ViewChild,
-    ViewEncapsulation,
-    computed,
-    inject,
-    input,
-    signal,
-} from '@angular/core';
+import { AfterViewInit, Component, HostListener, OnDestroy, OnInit, ViewChild, ViewEncapsulation, computed, effect, inject, input, output, signal } from '@angular/core';
 import { AlertService } from 'app/shared/service/alert.service';
 import { Observable, Subject, Subscription, of, throwError } from 'rxjs';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
@@ -24,7 +7,6 @@ import { ProblemStatementAnalysis } from 'app/programming/manage/instructions-ed
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { hasExerciseChanged } from 'app/exercise/util/exercise.utils';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 import { ProgrammingExerciseGradingService } from 'app/programming/manage/services/programming-exercise-grading.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
@@ -57,7 +39,7 @@ import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
     encapsulation: ViewEncapsulation.None,
     imports: [MarkdownEditorMonacoComponent, NgClass, FaIconComponent, TranslateDirective, NgbTooltip, ProgrammingExerciseInstructionAnalysisComponent, ArtemisTranslatePipe],
 })
-export class ProgrammingExerciseEditableInstructionComponent implements AfterViewInit, OnChanges, OnDestroy, OnInit {
+export class ProgrammingExerciseEditableInstructionComponent implements AfterViewInit, OnDestroy, OnInit {
     private activatedRoute = inject(ActivatedRoute);
     private programmingExerciseService = inject(ProgrammingExerciseService);
     private alertService = inject(AlertService);
@@ -66,8 +48,8 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     private profileService = inject(ProfileService);
     private artemisIntelligenceService = inject(ArtemisIntelligenceService);
 
-    participationValue: Participation;
-    programmingExercise: ProgrammingExercise;
+    participationValue = input.required<Participation>();
+    programmingExercise = input.required<ProgrammingExercise>();
 
     exerciseTestCases: string[] = [];
 
@@ -102,43 +84,21 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
 
     @ViewChild(MarkdownEditorMonacoComponent, { static: false }) markdownEditorMonaco?: MarkdownEditorMonacoComponent;
 
-    @Input() showStatus = true;
+    showStatus = input(true);
     // If the programming exercise is being created, some features have to be disabled (saving the problemStatement & querying test cases).
-    @Input() editMode = true;
-    @Input() enableResize = true;
-    @Input({ required: true }) initialEditorHeight: MarkdownEditorHeight | 'external';
-    @Input() showSaveButton = false;
-    @Input() templateParticipation: Participation;
-    @Input() forceRender: Observable<void>;
-    readonly consistencyIssues = input<ConsistencyIssue[]>([]);
+    editMode = input(true);
+    enableResize = input(true);
+    initialEditorHeight = input.required<MarkdownEditorHeight | 'external'>();
+    showSaveButton = input(false);
+    templateParticipation = input<Participation>();
+    forceRender = input<Observable<void>>();
+    consistencyIssues = input<ConsistencyIssue[]>([]);
 
-    @Input()
-    get exercise() {
-        return this.programmingExercise;
-    }
-    @Input()
-    get participation() {
-        return this.participationValue;
-    }
-
-    @Output() participationChange = new EventEmitter<Participation>();
-    @Output() hasUnsavedChanges = new EventEmitter<boolean>();
-    @Output() exerciseChange = new EventEmitter<ProgrammingExercise>();
-    @Output() instructionChange = new EventEmitter<string>();
+    participationValueChange = output<Participation>();
+    hasUnsavedChanges = output<boolean>();
+    programmingExerciseChange = output<ProgrammingExercise>();
+    instructionChange = output<string>();
     generateHtmlSubject: Subject<void> = new Subject<void>();
-
-    set participation(participation: Participation) {
-        this.participationValue = participation;
-        this.participationChange.emit(this.participationValue);
-    }
-
-    set exercise(exercise: ProgrammingExercise) {
-        if (this.programmingExercise && exercise.problemStatement !== this.programmingExercise.problemStatement) {
-            this.unsavedChanges = true;
-        }
-        this.programmingExercise = exercise;
-        this.exerciseChange.emit(this.programmingExercise);
-    }
 
     set unsavedChanges(hasChanges: boolean) {
         this.unsavedChangesValue = hasChanges;
@@ -155,15 +115,25 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
 
     protected readonly MarkdownEditorHeight = MarkdownEditorHeight;
 
+    constructor() {
+        let oldExercise: ProgrammingExercise | undefined = undefined;
+
+        effect(() => {
+            if (oldExercise && oldExercise.problemStatement !== this.programmingExercise().problemStatement) {
+                this.unsavedChanges = true;
+            }
+
+            if (!oldExercise || oldExercise.id !== this.programmingExercise().id) {
+                this.setupTestCaseSubscription();
+            }
+
+            oldExercise = this.programmingExercise();
+        });
+    }
+
     ngOnInit() {
         this.courseId = Number(this.activatedRoute.snapshot.paramMap.get('courseId'));
         this.exerciseId = Number(this.activatedRoute.snapshot.paramMap.get('exerciseId'));
-    }
-
-    ngOnChanges(changes: SimpleChanges): void {
-        if (hasExerciseChanged(changes)) {
-            this.setupTestCaseSubscription();
-        }
     }
 
     ngOnDestroy(): void {
@@ -177,8 +147,8 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
 
     ngAfterViewInit() {
         // If forced to render, generate the instruction HTML.
-        if (this.forceRender) {
-            this.forceRenderSubscription = this.forceRender.subscribe(() => this.generateHtml());
+        if (this.forceRender()) {
+            this.forceRenderSubscription = this.forceRender()!.subscribe(() => this.generateHtml());
         }
     }
 
@@ -188,9 +158,9 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     saveInstructions(event: any) {
         event.stopPropagation();
         this.savingInstructions = true;
-        const problemStatementToSave = this.exercise.problemStatement?.trim() || undefined;
+        const problemStatementToSave = this.programmingExercise().problemStatement?.trim() || undefined;
         return this.programmingExerciseService
-            .updateProblemStatement(this.exercise.id!, problemStatementToSave)
+            .updateProblemStatement(this.programmingExercise().id!, problemStatementToSave)
             .pipe(
                 tap(() => {
                     this.unsavedChanges = false;
@@ -223,8 +193,8 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     }
 
     updateProblemStatement(problemStatement: string) {
-        if (this.exercise.problemStatement !== problemStatement) {
-            this.exercise = { ...this.exercise, problemStatement };
+        if (this.programmingExercise().problemStatement !== problemStatement) {
+            this.programmingExerciseChange.emit({ ...this.programmingExercise(), problemStatement });
             this.unsavedChanges = true;
         }
         this.instructionChange.emit(problemStatement);
@@ -243,9 +213,9 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         }
 
         // Only set up a subscription for test cases if the exercise already exists.
-        if (this.editMode) {
+        if (this.editMode()) {
             this.testCaseSubscription = this.testCaseService
-                .subscribeForTestCases(this.exercise.id!)
+                .subscribeForTestCases(this.programmingExercise().id!)
                 .pipe(
                     switchMap((testCases: ProgrammingExerciseTestCase[] | undefined) => {
                         // If there are test cases, map them to their names, sort them and use them for the markdown editor.
@@ -255,9 +225,9 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
                                 .map((testCase) => testCase.testName!)
                                 .sort();
                             return of(sortedTestCaseNames);
-                        } else if (this.exercise.templateParticipation) {
+                        } else if (this.programmingExercise().templateParticipation) {
                             // Legacy case: If there are no test cases, but a template participation, use its feedbacks for generating test names.
-                            return this.loadTestCasesFromTemplateParticipationResult(this.exercise.templateParticipation!.id!);
+                            return this.loadTestCasesFromTemplateParticipationResult(this.programmingExercise().templateParticipation!.id!);
                         }
                         return of();
                     }),
