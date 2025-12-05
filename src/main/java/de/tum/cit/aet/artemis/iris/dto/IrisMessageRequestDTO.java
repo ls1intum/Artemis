@@ -8,8 +8,6 @@ import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageContent;
-
 /**
  * DTO for sending messages to Iris with optional uncommitted file changes.
  *
@@ -18,7 +16,7 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageContent;
  * @param uncommittedFiles      optional map of uncommitted file changes (path to content), defaults to empty map if null
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record IrisMessageRequestDTO(@NonNull List<IrisMessageContent> content, @Nullable Integer messageDifferentiator, @NonNull Map<String, String> uncommittedFiles) {
+public record IrisMessageRequestDTO(@NonNull List<IrisMessageContentDTO> content, @Nullable Integer messageDifferentiator, @NonNull Map<String, String> uncommittedFiles) {
 
     /**
      * Compact constructor that normalizes null uncommittedFiles to an empty map.

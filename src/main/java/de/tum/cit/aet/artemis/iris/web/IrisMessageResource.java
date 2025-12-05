@@ -25,8 +25,10 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
+import de.tum.cit.aet.artemis.iris.dto.IrisMessageContentDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageRequestDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
@@ -96,7 +98,8 @@ public class IrisMessageResource {
         irisSessionService.checkRateLimit(session, user);
 
         var message = new IrisMessage();
-        message.setContent(requestDTO.content());
+        List<IrisMessageContent> contentEntities = requestDTO.content().stream().map(IrisMessageContentDTO::toEntity).toList();
+        message.setContent(contentEntities);
         message.setMessageDifferentiator(requestDTO.messageDifferentiator());
 
         var savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.USER);
