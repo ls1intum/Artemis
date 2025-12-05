@@ -4,7 +4,7 @@ import { Subscription } from 'rxjs';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from '../language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-connection-status',

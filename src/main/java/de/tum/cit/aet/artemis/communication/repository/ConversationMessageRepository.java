@@ -99,10 +99,11 @@ public interface ConversationMessageRepository extends ArtemisJpaRepository<Post
             FROM Post p
                 LEFT JOIN FETCH p.author
                 LEFT JOIN FETCH p.conversation
-                LEFT JOIN FETCH p.reactions
-                LEFT JOIN FETCH p.tags
+                LEFT JOIN FETCH p.reactions r1
+                    LEFT JOIN FETCH r1.user
                 LEFT JOIN FETCH p.answers a
-                    LEFT JOIN FETCH a.reactions
+                    LEFT JOIN FETCH a.reactions r2
+                        LEFT JOIN FETCH r2.user
                     LEFT JOIN FETCH a.post
                     LEFT JOIN FETCH a.author
             WHERE p.id IN :postIds

@@ -173,51 +173,36 @@ describe('WebsocketService', () => {
         jest.useFakeTimers();
         const timeoutSpy = jest.spyOn(global, 'setTimeout');
 
-        websocketService.enableReconnect();
         websocketService['consecutiveFailedAttempts'] = 0;
 
         websocketService.stompFailureCallback();
         expect(websocketService['consecutiveFailedAttempts']).toBe(1);
-        expect(timeoutSpy).toHaveBeenCalledWith(expect.any(Function), 5000);
+        expect(timeoutSpy).toHaveBeenCalledWith(expect.any(Function), 3000);
 
         websocketService.stompFailureCallback();
         expect(websocketService['consecutiveFailedAttempts']).toBe(2);
-        expect(timeoutSpy).toHaveBeenCalledWith(expect.any(Function), 5000);
+        expect(timeoutSpy).toHaveBeenCalledWith(expect.any(Function), 3000);
 
         websocketService.stompFailureCallback();
         expect(websocketService['consecutiveFailedAttempts']).toBe(3);
-        expect(timeoutSpy).toHaveBeenCalledWith(expect.any(Function), 10000);
+        expect(timeoutSpy).toHaveBeenCalledWith(expect.any(Function), 3000);
 
         websocketService['consecutiveFailedAttempts'] = 4;
         websocketService.stompFailureCallback();
-        expect(timeoutSpy).toHaveBeenCalledWith(expect.any(Function), 20000);
+        expect(timeoutSpy).toHaveBeenCalledWith(expect.any(Function), 3000);
 
-        websocketService['consecutiveFailedAttempts'] = 8;
+        websocketService['consecutiveFailedAttempts'] = 5;
         websocketService.stompFailureCallback();
-        expect(timeoutSpy).toHaveBeenCalledWith(expect.any(Function), 60000);
+        expect(timeoutSpy).toHaveBeenCalledWith(expect.any(Function), 6000);
 
-        websocketService['consecutiveFailedAttempts'] = 12;
+        websocketService['consecutiveFailedAttempts'] = 9;
         websocketService.stompFailureCallback();
-        expect(timeoutSpy).toHaveBeenCalledWith(expect.any(Function), 120000);
+        expect(timeoutSpy).toHaveBeenCalledWith(expect.any(Function), 9000);
 
         websocketService['consecutiveFailedAttempts'] = 17;
         websocketService.stompFailureCallback();
-        expect(timeoutSpy).toHaveBeenCalledWith(expect.any(Function), 300000);
+        expect(timeoutSpy).toHaveBeenCalledWith(expect.any(Function), 12000);
 
-        websocketService['consecutiveFailedAttempts'] = 20;
-        websocketService.stompFailureCallback();
-        expect(timeoutSpy).toHaveBeenCalledWith(expect.any(Function), 600000);
-
-        jest.useRealTimers();
-    }));
-
-    it('should not reconnect when reconnect is disabled', fakeAsync(() => {
-        jest.useFakeTimers();
-        const connectSpy = jest.spyOn(websocketService, 'connect');
-        websocketService.disableReconnect();
-        websocketService.stompFailureCallback();
-        jest.runAllTimers();
-        expect(connectSpy).not.toHaveBeenCalled();
         jest.useRealTimers();
     }));
 
@@ -328,17 +313,5 @@ describe('WebsocketService', () => {
         expect(websocketService['observables'].size).toBe(1);
         websocketService.receive('/test/topictwo');
         expect(websocketService['observables'].size).toBe(2);
-    });
-
-    it('should enable and disable reconnect when functions are called', () => {
-        const connectSpy = jest.spyOn(websocketService, 'connect');
-        websocketService.connect();
-        websocketService['stompClient']!.connected = false;
-        expect(websocketService['shouldReconnect']).toBeFalsy();
-        websocketService.enableReconnect();
-        expect(websocketService['shouldReconnect']).toBeTruthy();
-        expect(connectSpy).toHaveBeenCalledTimes(2);
-        websocketService.disableReconnect();
-        expect(websocketService['shouldReconnect']).toBeFalsy();
     });
 });
