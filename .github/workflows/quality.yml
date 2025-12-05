@@ -26,6 +26,64 @@ jobs:
 
       - name: Check LOC and number of class dependencies
         run: |
+          get_changed_java_files() {
+            if [ "${{ github.event_name }}" = "pull_request" ]; then
+              base_branch="${{ github.event.pull_request.base.ref }}"
+              echo "Checking files changed in PR against base branch: $base_branch" >&2
+              changed_files=$(git diff --name-only origin/$base_branch...HEAD | grep '\.java$' || true)
+              echo "Changed Java files in this PR:" >&2
+              if [ -n "$changed_files" ]; then
+                echo "$changed_files" | while read -r file; do
+                  echo "  - $file" >&2
+                done
+              else
+                echo "  (none)" >&2
+              fi
+              echo "" >&2
+              echo "$changed_files"
+            fi
+          }
+
+          check_violations_in_pr() {
+            local violating_lines="$1"
+            local changed_files="$2"
+
+            if [ -z "$changed_files" ]; then
+              echo "false"
+              return
+            fi
+
+            while IFS= read -r violating_line; do
+              violating_file=$(echo "$violating_line" | cut -d':' -f1)
+              if echo "$changed_files" | grep -q "$violating_file"; then
+                echo "true"
+                return
+              fi
+            done <<< "$violating_lines"
+
+            echo "false"
+          }
+
+          display_pr_violation_details() {
+            local violation_type="$1"
+            local violating_lines="$2"
+            local changed_files="$3"
+
+            if [ "$violation_type" = "large_classes" ]; then
+              echo "Files you edited that are too large:"
+            else
+              echo "Files you edited that have too many constructor parameters:"
+            fi
+
+            while IFS= read -r violating_line; do
+              violating_file=$(echo "$violating_line" | cut -d':' -f1)
+              if echo "$changed_files" | grep -q "$violating_file"; then
+                echo "  - $violating_line"
+              fi
+            done <<< "$violating_lines"
+            echo ""
+          }
+
           # Run the analysis and capture output
           output=$(python supporting_scripts/analyze_java_files.py)
 
@@ -73,21 +131,7 @@ jobs:
             echo ""
 
             # Get list of changed Java files in this PR (only for pull requests)
-            changed_java_files=""
-            if [ "${{ github.event_name }}" = "pull_request" ]; then
-              base_branch="${{ github.event.pull_request.base.ref }}"
-              echo "Checking files changed in PR against base branch: $base_branch"
-              changed_java_files=$(git diff --name-only origin/$base_branch...HEAD | grep '\.java$' || true)
-              echo "Changed Java files in this PR:"
-              if [ -n "$changed_java_files" ]; then
-                echo "$changed_java_files" | while read -r file; do
-                  echo "  - $file"
-                done
-              else
-                echo "  (none)"
-              fi
-              echo ""
-            fi
+            changed_java_files=$(get_changed_java_files)
 
             # Track if any violations are from PR changes
             pr_introduced_large_class_violations=false
@@ -101,15 +145,7 @@ jobs:
               echo ""
 
               # Check if any violating classes are in PR changes
-              if [ -n "$changed_java_files" ]; then
-                while IFS= read -r violating_line; do
-                  violating_file=$(echo "$violating_line" | cut -d':' -f1)
-                  if echo "$changed_java_files" | grep -q "$violating_file"; then
-                    pr_introduced_large_class_violations=true
-                    break
-                  fi
-                done <<< "$violating_classes"
-              fi
+              pr_introduced_large_class_violations=$(check_violations_in_pr "$violating_classes" "$changed_java_files")
             fi
 
             if [ "$complex_bean_violation" = true ]; then
@@ -120,15 +156,7 @@ jobs:
               echo ""
 
               # Check if any violating beans are in PR changes
-              if [ -n "$changed_java_files" ]; then
-                while IFS= read -r violating_line; do
-                  violating_file=$(echo "$violating_line" | cut -d':' -f1)
-                  if echo "$changed_java_files" | grep -q "$violating_file"; then
-                    pr_introduced_complex_bean_violations=true
-                    break
-                  fi
-                done <<< "$violating_beans"
-              fi
+              pr_introduced_complex_bean_violations=$(check_violations_in_pr "$violating_beans" "$changed_java_files")
             fi
 
             # Provide context about whether violations are from this PR
@@ -153,24 +181,10 @@ jobs:
                 echo "⚠️  ATTENTION: Your PR modified files that are violating the quality standards!"
                 echo ""
                 if [ "$pr_introduced_large_class_violations" = true ]; then
-                  echo "Files you edited that are too large:"
-                  while IFS= read -r violating_line; do
-                    violating_file=$(echo "$violating_line" | cut -d':' -f1)
-                    if echo "$changed_java_files" | grep -q "$violating_file"; then
-                      echo "  - $violating_line"
-                    fi
-                  done <<< "$violating_classes"
-                  echo ""
+                  display_pr_violation_details "large_classes" "$violating_classes" "$changed_java_files"
                 fi
                 if [ "$pr_introduced_complex_bean_violations" = true ]; then
-                  echo "Files you edited that have too many constructor parameters:"
-                  while IFS= read -r violating_line; do
-                    violating_file=$(echo "$violating_line" | cut -d':' -f1)
-                    if echo "$changed_java_files" | grep -q "$violating_file"; then
-                      echo "  - $violating_line"
-                    fi
-                  done <<< "$violating_beans"
-                  echo ""
+                  display_pr_violation_details "complex_beans" "$violating_beans" "$changed_java_files"
                 fi
                 echo "Please refactor these classes to meet the code quality standards!"
               fi
