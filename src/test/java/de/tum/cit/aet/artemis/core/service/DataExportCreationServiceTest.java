@@ -3,11 +3,9 @@ package de.tum.cit.aet.artemis.core.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 
@@ -26,7 +24,6 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
-import org.eclipse.jgit.lib.Repository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -72,9 +69,9 @@ import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.service.apollon.ApollonConversionService;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.util.LocalRepositoryUriUtil;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseTestService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
+import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCTest;
 
@@ -214,7 +211,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
             assertCorrectContentForExercise(exercisePath, true, assessmentDueDateInTheFuture);
         }
 
-        org.apache.commons.io.FileUtils.deleteDirectory(extractedZipDirPath.toFile());
+        RepositoryExportTestUtil.safeDeleteDirectory(extractedZipDirPath);
         org.apache.commons.io.FileUtils.delete(Path.of(dataExportFromDb.getFilePath()).toFile());
     }
 
@@ -278,7 +275,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
             programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course1, false, ZonedDateTime.now().minusMinutes(1));
         }
         var participation = participationUtilService.addStudentParticipationForProgrammingExerciseForLocalRepo(programmingExercise, userLogin,
-                URI.create(LocalRepositoryUriUtil.convertToLocalVcUriString(programmingExerciseTestService.studentRepo.workingCopyGitRepoFile, localVCBasePath)));
+                URI.create(programmingExerciseTestService.getDefaultStudentRepositoryUri()));
         var submission = programmingExerciseUtilService.createProgrammingSubmission(participation, false, "abc");
         var submission2 = programmingExerciseUtilService.createProgrammingSubmission(participation, true, "def");
         participationUtilService.addResultToSubmission(submission, AssessmentType.AUTOMATIC, null, 2.0, true, ZonedDateTime.now().minusMinutes(1));
@@ -309,8 +306,6 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
         var modelingExercises = exerciseRepository.findAllExercisesByCourseId(course1.getId()).stream().filter(exercise -> exercise instanceof ModelingExercise).toList();
         createPlagiarismData(userLogin, programmingExercise, modelingExercises);
         // Mock student repo
-        Repository studentRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(programmingExerciseTestService.studentRepo.workingCopyGitRepoFile.toPath(), null);
-        doReturn(studentRepository).when(gitService).getOrCheckoutRepositoryWithTargetPath(eq(participation.getVcsRepositoryUri()), any(Path.class), anyBoolean(), anyBoolean());
         return course1;
     }
 
@@ -350,7 +345,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
         exam = examRepository.findWithExerciseGroupsExercisesParticipationsAndSubmissionsById(exam.getId()).orElseThrow();
         var studentExam = examUtilService.addStudentExamWithUser(exam, userForExport);
         examUtilService.addExercisesWithParticipationsAndSubmissionsToStudentExam(exam, studentExam, validModel,
-                URI.create(LocalRepositoryUriUtil.convertToLocalVcUriString(programmingExerciseTestService.studentRepo.workingCopyGitRepoFile, localVCBasePath)));
+                URI.create(programmingExerciseTestService.getDefaultStudentRepositoryUri()));
         Set<StudentExam> studentExams = studentExamRepository.findAllWithExercisesSubmissionPolicyParticipationsSubmissionsResultsAndFeedbacksByUserId(userForExport.getId());
         var submission = studentExams.iterator().next().getExercises().getFirst().getStudentParticipations().iterator().next().getSubmissions().iterator().next();
         participationUtilService.addResultToSubmission(submission, AssessmentType.AUTOMATIC, null, 3.0, true, ZonedDateTime.now().minusMinutes(2));
@@ -359,8 +354,6 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
         feedback.setDetailText("detailed feedback");
         feedback.setText("feedback");
         participationUtilService.addFeedbackToResult(feedback, submission.getFirstResult());
-        Repository studentRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(programmingExerciseTestService.studentRepo.workingCopyGitRepoFile.toPath(), null);
-        doReturn(studentRepository).when(gitService).getOrCheckoutRepositoryWithTargetPath(any(), any(Path.class), anyBoolean(), anyBoolean());
         return exam;
     }
 
@@ -543,7 +536,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
             assertCorrectContentForExercise(exerciseDirPath, false, false);
         }
 
-        org.apache.commons.io.FileUtils.deleteDirectory(extractedZipDirPath.toFile());
+        RepositoryExportTestUtil.safeDeleteDirectory(extractedZipDirPath);
         org.apache.commons.io.FileUtils.delete(Path.of(dataExportFromDb.getFilePath()).toFile());
     }
 
@@ -569,7 +562,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
         var examDirPath = getCourseOrExamDirectoryPath(courseDirPath, "exam");
         getExerciseDirectoryPaths(examDirPath).forEach(this::assertNoResultsFile);
 
-        org.apache.commons.io.FileUtils.deleteDirectory(extractedZipDirPath.toFile());
+        RepositoryExportTestUtil.safeDeleteDirectory(extractedZipDirPath);
         org.apache.commons.io.FileUtils.delete(Path.of(dataExportFromDb.getFilePath()).toFile());
     }
 
@@ -592,7 +585,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
             assertCorrectContentForExercise(exerciseDirectory, true, assessmentDueDateInTheFuture);
         }
 
-        org.apache.commons.io.FileUtils.deleteDirectory(extractedZipDirPath.toFile());
+        RepositoryExportTestUtil.safeDeleteDirectory(extractedZipDirPath);
         org.apache.commons.io.FileUtils.delete(Path.of(dataExportFromDb.getFilePath()).toFile());
     }
 
@@ -637,7 +630,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
             assertCorrectContentForExercise(exerciseDirectory, true, assessmentDueDateInTheFuture);
         }
 
-        org.apache.commons.io.FileUtils.deleteDirectory(extractedZipDirPath.toFile());
+        RepositoryExportTestUtil.safeDeleteDirectory(extractedZipDirPath);
         org.apache.commons.io.FileUtils.delete(Path.of(dataExportFromDb.getFilePath()).toFile());
     }
 

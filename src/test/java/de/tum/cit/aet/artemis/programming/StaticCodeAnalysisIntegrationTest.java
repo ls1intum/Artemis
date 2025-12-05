@@ -1,8 +1,6 @@
 package de.tum.cit.aet.artemis.programming;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doReturn;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -10,7 +8,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.eclipse.jgit.lib.ObjectId;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -34,6 +31,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisCategory;
 import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisIssue;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
+import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 
 class StaticCodeAnalysisIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTest {
 
@@ -46,9 +44,11 @@ class StaticCodeAnalysisIntegrationTest extends AbstractProgrammingIntegrationLo
     private Course course;
 
     @BeforeEach
-    void initTestCase() {
+    void initTestCase() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 2, 1, 1, 1);
         programmingExerciseSCAEnabled = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories();
+        RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, programmingExerciseSCAEnabled);
+        programmingExerciseSCAEnabled = programmingExerciseRepository.save(programmingExerciseSCAEnabled);
         course = courseRepository.findWithEagerExercisesById(programmingExerciseSCAEnabled.getCourseViaExerciseGroupOrCourseMember().getId());
         var tempProgrammingEx = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now(), ZonedDateTime.now().plusDays(1),
                 programmingExerciseSCAEnabled.getCourseViaExerciseGroupOrCourseMember());
@@ -130,10 +130,9 @@ class StaticCodeAnalysisIntegrationTest extends AbstractProgrammingIntegrationLo
     @EnumSource(value = ProgrammingLanguage.class, names = { "JAVA", "SWIFT", "C" })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateStaticCodeAnalysisCategories(ProgrammingLanguage programmingLanguage) throws Exception {
-        String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
-        doReturn(ObjectId.fromString(dummyHash)).when(gitService).getLastCommitHash(any());
-
         var programmingExSCAEnabled = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories(programmingLanguage);
+        RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, programmingExSCAEnabled);
+        programmingExSCAEnabled = programmingExerciseRepository.save(programmingExSCAEnabled);
         programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExSCAEnabled.getId()).orElseThrow();
         var endpoint = parameterizeEndpoint("/api/programming/programming-exercises/{exerciseId}/static-code-analysis-categories", programmingExSCAEnabled);
         // Change the first category
@@ -179,13 +178,12 @@ class StaticCodeAnalysisIntegrationTest extends AbstractProgrammingIntegrationLo
     @EnumSource(value = ProgrammingLanguage.class, names = { "JAVA", "SWIFT", "C" })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testResetCategories(ProgrammingLanguage programmingLanguage) throws Exception {
-        String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
-        doReturn(ObjectId.fromString(dummyHash)).when(gitService).getLastCommitHash(any());
-
         // Create a programming exercise with real categories
         var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(true, programmingLanguage);
         ProgrammingExercise exercise = programmingExerciseRepository
                 .findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(course.getExercises().iterator().next().getId()).orElseThrow();
+        RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, exercise);
+        exercise = programmingExerciseRepository.save(exercise);
         staticCodeAnalysisService.createDefaultCategories(exercise);
         var originalCategories = staticCodeAnalysisCategoryRepository.findByExerciseId(exercise.getId());
 
@@ -202,8 +200,9 @@ class StaticCodeAnalysisIntegrationTest extends AbstractProgrammingIntegrationLo
         final var categoriesResponse = request.patchWithResponseBody(endpoint, "{}", new TypeReference<Set<StaticCodeAnalysisCategory>>() {
         }, HttpStatus.OK);
         final Set<StaticCodeAnalysisCategory> categoriesInDB = staticCodeAnalysisCategoryRepository.findByExerciseId(exercise.getId());
+        ProgrammingExercise finalExercise = exercise;
         final Set<StaticCodeAnalysisCategory> expectedCategories = StaticCodeAnalysisConfigurer.staticCodeAnalysisConfiguration().get(exercise.getProgrammingLanguage()).stream()
-                .map(c -> c.toStaticCodeAnalysisCategory(exercise)).collect(Collectors.toSet());
+                .map(c -> c.toStaticCodeAnalysisCategory(finalExercise)).collect(Collectors.toSet());
 
         assertThat(categoriesResponse).usingRecursiveFieldByFieldElementComparatorIgnoringFields("exercise").containsExactlyInAnyOrderElementsOf(categoriesInDB);
         assertThat(categoriesInDB).usingRecursiveFieldByFieldElementComparatorIgnoringFields("exercise").containsExactlyInAnyOrderElementsOf(originalCategories);
@@ -311,10 +310,9 @@ class StaticCodeAnalysisIntegrationTest extends AbstractProgrammingIntegrationLo
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testImportCategories() throws Exception {
-        String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
-        doReturn(ObjectId.fromString(dummyHash)).when(gitService).getLastCommitHash(any());
-
         ProgrammingExercise sourceExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course, true);
+        RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, sourceExercise);
+        sourceExercise = programmingExerciseRepository.save(sourceExercise);
         staticCodeAnalysisService.createDefaultCategories(sourceExercise);
 
         var categories = staticCodeAnalysisCategoryRepository.findByExerciseId(sourceExercise.getId());

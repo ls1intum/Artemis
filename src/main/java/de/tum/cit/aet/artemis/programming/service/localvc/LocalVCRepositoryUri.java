@@ -65,7 +65,7 @@ public class LocalVCRepositoryUri extends VcsRepositoryUri {
         if (!repositoryName.matches("[a-zA-Z0-9]+-[a-zA-Z0-9-]+")) {
             throw new IllegalArgumentException("Repository name must be in the format <projectKey>-<repoType>");
         }
-        return repositoryName.split("-")[0];
+        return repositoryName.split("-")[0].toUpperCase();
     }
 
     /**

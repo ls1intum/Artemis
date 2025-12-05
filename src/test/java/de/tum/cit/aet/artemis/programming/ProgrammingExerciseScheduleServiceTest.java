@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.programming;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.after;
 import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
@@ -14,7 +13,6 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
-import org.eclipse.jgit.lib.ObjectId;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -34,15 +32,12 @@ import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ParticipationLifecycle;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
-import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 
 class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrationLocalVCSamlTest {
 
     private static final String TEST_PREFIX = "programmingexercisescheduleservice";
 
     private ProgrammingExercise programmingExercise;
-
-    private final LocalRepository studentRepository = new LocalRepository(defaultBranch);
 
     // When the scheduler is invoked, there is a small delay until the runnable is called.
     // TODO: This could be improved by e.g. manually setting the system time instead of waiting for actual time to pass.
@@ -54,9 +49,6 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
 
     @BeforeEach
     void init() throws Exception {
-        studentRepository.configureRepos(localVCBasePath, "studentLocalRepo", "studentOriginRepo");
-        doReturn(ObjectId.fromString("fffb09455885349da6e19d3ad7fd9c3404c5a0df")).when(gitService).getLastCommitHash(any());
-
         userUtilService.addUsers(TEST_PREFIX, 3, 1, 0, 1);
         var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
         programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
@@ -71,7 +63,6 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
     @AfterEach
     void tearDown() throws Exception {
         scheduleService.clearAllTasks();
-        studentRepository.resetLocalRepo();
     }
 
     @Test

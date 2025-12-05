@@ -275,7 +275,7 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
 
         buildJobQueue.add(queueItem);
 
-        await().until(() -> {
+        await().atMost(30, TimeUnit.SECONDS).until(() -> {
             var resultQueueItem = resultQueue.poll();
             return resultQueueItem != null && resultQueueItem.buildJobQueueItem().id().equals(queueItem.id())
                     && resultQueueItem.buildJobQueueItem().status() == BuildStatus.SUCCESSFUL;
@@ -327,19 +327,19 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
 
         buildJobQueue.add(queueItem);
 
-        await().until(() -> {
+        await().atMost(30, TimeUnit.SECONDS).until(() -> {
             var buildAgent = buildAgentInformation.get(distributedDataAccessService.getLocalMemberAddress());
             return buildAgent != null && buildAgent.status() == BuildAgentStatus.ACTIVE;
         });
 
         pauseBuildAgentTopic.publish(buildAgentShortName);
 
-        await().until(() -> {
+        await().atMost(30, TimeUnit.SECONDS).until(() -> {
             var buildAgent = buildAgentInformation.get(distributedDataAccessService.getLocalMemberAddress());
             return buildAgent != null && buildAgent.status() == BuildAgentStatus.PAUSED;
         });
 
-        await().until(() -> {
+        await().atMost(30, TimeUnit.SECONDS).until(() -> {
             var queued = buildJobQueue.peek();
             return queued != null && queued.id().equals(queueItem.id());
         });
@@ -351,7 +351,7 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
 
         buildJobQueue.add(queueItem);
 
-        await().until(() -> {
+        await().atMost(30, TimeUnit.SECONDS).until(() -> {
             var resultQueueItem = resultQueue.poll();
             return resultQueueItem != null && resultQueueItem.buildJobQueueItem().id().equals(queueItem.id())
                     && resultQueueItem.buildJobQueueItem().status() == BuildStatus.SUCCESSFUL;

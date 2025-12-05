@@ -11,18 +11,12 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LTI;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
 import static de.tum.cit.aet.artemis.core.config.Constants.TEST_REPO_NAME;
-import static de.tum.cit.aet.artemis.core.util.TestConstants.COMMIT_HASH_OBJECT_ID;
 import static de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType.SOLUTION;
 import static de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType.TEMPLATE;
-import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.doCallRealMethod;
-import static org.mockito.Mockito.doReturn;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.io.IOException;
+import java.net.ServerSocket;
 import java.net.URI;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -36,6 +30,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
@@ -51,10 +47,10 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.service.GitRepositoryExportService;
+import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationTriggerService;
 import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsService;
-import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 
@@ -63,20 +59,49 @@ import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
 @ActiveProfiles({ SPRING_PROFILE_TEST, PROFILE_ARTEMIS, PROFILE_CORE, PROFILE_SCHEDULING, PROFILE_LOCALVC, PROFILE_JENKINS, PROFILE_ATHENA, PROFILE_LTI, PROFILE_AEOLUS,
         PROFILE_APOLLON, "local" })
-@TestPropertySource(properties = { "server.port=49153", "artemis.version-control.url=http://localhost:49153", "artemis.user-management.use-external=false",
+@TestPropertySource(properties = { "artemis.user-management.use-external=false",
         "artemis.user-management.course-enrollment.allowed-username-pattern=^(?!authorizationservicestudent2).*$",
-        "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_jenkins_localvc", "artemis.version-control.ssh-port=1235", "info.contact=test@localhost",
-        "artemis.version-control.ssh-template-clone-url=ssh://git@localhost:1235/",
+        "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_jenkins_localvc", "info.contact=test@localhost",
         "artemis.continuous-integration.artemis-authentication-token-value=ThisIsAReallyLongTopSecretTestingToken" })
 public abstract class AbstractSpringIntegrationJenkinsLocalVCTest extends AbstractArtemisIntegrationTest {
+
+    private static final int serverPort;
+
+    private static final int sshPort;
+
+    // Static initializer runs before @DynamicPropertySource, ensuring ports are available when Spring context starts
+    static {
+        serverPort = findAvailableTcpPort();
+        sshPort = findAvailableTcpPort();
+    }
+
+    @DynamicPropertySource
+    static void registerDynamicProperties(DynamicPropertyRegistry registry) {
+        registry.add("server.port", () -> serverPort);
+        registry.add("artemis.version-control.url", () -> "http://localhost:" + serverPort);
+        registry.add("artemis.version-control.ssh-port", () -> sshPort);
+        registry.add("artemis.version-control.ssh-template-clone-url", () -> "ssh://git@localhost:" + sshPort + "/");
+    }
+
+    private static int findAvailableTcpPort() {
+        try (ServerSocket socket = new ServerSocket(0)) {
+            socket.setReuseAddress(true);
+            return socket.getLocalPort();
+        }
+        catch (IOException e) {
+            throw new IllegalStateException("Could not find an available TCP port", e);
+        }
+    }
 
     // please only use this to verify method calls using Mockito. Do not mock methods, instead mock the communication with Jenkins using the corresponding RestTemplate.
     @MockitoSpyBean
     protected JenkinsService continuousIntegrationService;
 
-    // TODO: we should remove @MockitoSpyBean here and use @Autowired instead in the future because we should NOT mock the LocalVCService anymore, all its operations can be
-    // executed in the test environment.
+    // Spy is only used for simulating non-feasible failure scenarios. Please use the real bean otherwise.
     @MockitoSpyBean
+    protected GitService gitServiceSpy;
+
+    @Autowired
     protected LocalVCService versionControlService;
 
     @MockitoSpyBean
@@ -85,7 +110,7 @@ public abstract class AbstractSpringIntegrationJenkinsLocalVCTest extends Abstra
     @MockitoSpyBean
     protected ResultWebsocketService resultWebsocketService;
 
-    @MockitoSpyBean
+    @Autowired
     protected GitRepositoryExportService gitRepositoryExportService;
 
     @Autowired
@@ -117,7 +142,7 @@ public abstract class AbstractSpringIntegrationJenkinsLocalVCTest extends Abstra
     @AfterEach
     @Override
     protected void resetSpyBeans() {
-        Mockito.reset(continuousIntegrationService, gitRepositoryExportService);
+        Mockito.reset(continuousIntegrationService, gitServiceSpy);
         super.resetSpyBeans();
     }
 
@@ -173,11 +198,6 @@ public abstract class AbstractSpringIntegrationJenkinsLocalVCTest extends Abstra
     @Override
     public void mockConnectorRequestForImportFromFile(ProgrammingExercise exerciseForImport) throws Exception {
         mockConnectorRequestsForSetup(exerciseForImport, false, false, false);
-        // the mocked values do not work as we return file paths and the git service expects git urls.
-        // mocking them turned out to be not feasible with reasonable effort as this effects a lot of other test classes and leads to many other test failures.
-        // not mocking for all tests also posed a problem due to many test failures in other classes.
-        doCallRealMethod().when(versionControlService).getCloneRepositoryUri(anyString(), anyString());
-        doCallRealMethod().when(gitService).getOrCheckoutRepository(any(LocalVCRepositoryUri.class), eq(true), anyBoolean());
     }
 
     @Override
@@ -276,8 +296,6 @@ public abstract class AbstractSpringIntegrationJenkinsLocalVCTest extends Abstra
 
     @Override
     public void mockTriggerFailedBuild(ProgrammingExerciseStudentParticipation participation) throws Exception {
-        doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
-
         var projectKey = participation.getProgrammingExercise().getProjectKey();
         var buildPlanId = participation.getBuildPlanId();
         jenkinsRequestMockProvider.mockGetBuildStatus(projectKey, buildPlanId, true, false, false, false);
@@ -295,7 +313,6 @@ public abstract class AbstractSpringIntegrationJenkinsLocalVCTest extends Abstra
 
     @Override
     public void mockTriggerParticipationBuild(ProgrammingExerciseStudentParticipation participation) throws Exception {
-        doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
         mockCopyBuildPlan(participation);
         mockConfigureBuildPlan(participation);
         jenkinsRequestMockProvider.mockTriggerBuild(participation.getProgrammingExercise().getProjectKey(), participation.getBuildPlanId(), false);
@@ -303,7 +320,6 @@ public abstract class AbstractSpringIntegrationJenkinsLocalVCTest extends Abstra
 
     @Override
     public void mockTriggerInstructorBuildAll(ProgrammingExerciseStudentParticipation participation) throws Exception {
-        doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
         mockCopyBuildPlan(participation);
         mockConfigureBuildPlan(participation);
         jenkinsRequestMockProvider.mockTriggerBuild(participation.getProgrammingExercise().getProjectKey(), participation.getBuildPlanId(), false);

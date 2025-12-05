@@ -38,6 +38,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
+import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 
 class FileUtilUnitTest {
 
@@ -50,7 +51,7 @@ class FileUtilUnitTest {
     @AfterEach
     @BeforeEach
     void deleteFiles() throws IOException {
-        FileUtils.deleteDirectory(exportTestRootPath.toFile());
+        RepositoryExportTestUtil.safeDeleteDirectory(exportTestRootPath);
     }
 
     @Test

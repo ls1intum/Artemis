@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.programming;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.verifyNoInteractions;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.HashSet;
@@ -457,7 +456,6 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
 
         request.performMvcRequest(courseTestService.buildUpdateCourse(1, course)).andExpect(status().isOk()).andReturn();
 
-        verifyNoInteractions(versionControlService);
     }
 
     @Test

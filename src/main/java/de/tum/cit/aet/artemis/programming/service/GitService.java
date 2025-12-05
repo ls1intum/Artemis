@@ -7,9 +7,12 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.FileSystems;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.ArrayDeque;
@@ -19,7 +22,6 @@ import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -30,7 +32,6 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.CommitCommand;
@@ -1209,21 +1210,6 @@ public class GitService extends AbstractGitService {
         return inserter.insert(treeFormatter);
     }
 
-    private static class FileAndDirectoryFilter implements IOFileFilter {
-
-        private static final String GIT_DIRECTORY_NAME = ".git";
-
-        @Override
-        public boolean accept(java.io.File file) {
-            return !GIT_DIRECTORY_NAME.equals(file.getName());
-        }
-
-        @Override
-        public boolean accept(java.io.File directory, String fileName) {
-            return !GIT_DIRECTORY_NAME.equals(directory.getName());
-        }
-    }
-
     /**
      * Returns all files and directories within the working copy of the given repository in a map, excluding symbolic links.
      * This method performs a file scan and filters out symbolic links.
@@ -1235,26 +1221,55 @@ public class GitService extends AbstractGitService {
      *         the corresponding {@link FileType} (FILE or FOLDER). The map excludes symbolic links.
      */
     public Map<File, FileType> listFilesAndFolders(Repository repo, boolean omitBinaries) {
-        FileAndDirectoryFilter filter = new FileAndDirectoryFilter();
-        Iterator<java.io.File> itr = FileUtils.iterateFilesAndDirs(repo.getLocalPath().toFile(), filter, filter);
         Map<File, FileType> files = new HashMap<>();
-
-        while (itr.hasNext()) {
-            File nextFile = new File(itr.next(), repo);
-            Path nextPath = nextFile.toPath();
-
-            if (Files.isSymbolicLink(nextPath)) {
-                log.warn("Found a symlink {} in the git repository {}. Do not allow access!", nextPath, repo);
-                continue;
-            }
-
-            if (omitBinaries && nextFile.isFile() && isBinaryFile(nextFile.getName())) {
-                log.debug("Omitting binary file: {}", nextFile);
-                continue;
-            }
-
-            files.put(nextFile, nextFile.isFile() ? FileType.FILE : FileType.FOLDER);
+        Path workingTree = repo.getLocalPath();
+        if (workingTree == null) {
+            log.warn("Working tree path of repository {} is not available", repo.getRemoteRepositoryUri());
+            return files;
         }
+        if (!Files.exists(workingTree)) {
+            log.warn("Working tree {} does not exist for repository {}", workingTree, repo.getRemoteRepositoryUri());
+            return files;
+        }
+
+        try {
+            Files.walkFileTree(workingTree, new SimpleFileVisitor<>() {
+
+                @Override
+                public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                    if (dir.equals(workingTree)) {
+                        return FileVisitResult.CONTINUE;
+                    }
+                    if (".git".equals(dir.getFileName().toString())) {
+                        return FileVisitResult.SKIP_SUBTREE;
+                    }
+                    if (Files.isSymbolicLink(dir)) {
+                        log.warn("Found a symlink {} in the git repository {}. Do not allow access!", dir, repo);
+                        return FileVisitResult.SKIP_SUBTREE;
+                    }
+                    files.put(new File(dir.toFile(), repo), FileType.FOLDER);
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult visitFile(Path path, BasicFileAttributes attrs) throws IOException {
+                    if (Files.isSymbolicLink(path)) {
+                        log.warn("Found a symlink {} in the git repository {}. Do not allow access!", path, repo);
+                        return FileVisitResult.CONTINUE;
+                    }
+                    if (omitBinaries && isBinaryFile(path.getFileName().toString())) {
+                        log.debug("Omitting binary file: {}", path);
+                        return FileVisitResult.CONTINUE;
+                    }
+                    files.put(new File(path.toFile(), repo), FileType.FILE);
+                    return FileVisitResult.CONTINUE;
+                }
+            });
+        }
+        catch (IOException exception) {
+            log.error("Failed to list files for repository {}: {}", repo.getRemoteRepositoryUri(), exception.getMessage());
+        }
+
         return files;
     }
 
@@ -1270,15 +1285,7 @@ public class GitService extends AbstractGitService {
      */
     @NonNull
     public Collection<File> getFiles(Repository repo) {
-        FileAndDirectoryFilter filter = new FileAndDirectoryFilter();
-        Iterator<java.io.File> itr = FileUtils.iterateFiles(repo.getLocalPath().toFile(), filter, filter);
-        Collection<File> files = new ArrayList<>();
-
-        while (itr.hasNext()) {
-            files.add(new File(itr.next(), repo));
-        }
-
-        return files;
+        return listFilesAndFolders(repo, false).entrySet().stream().filter(entry -> entry.getValue() == FileType.FILE).map(Map.Entry::getKey).toList();
     }
 
     /**

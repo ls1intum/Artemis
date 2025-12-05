@@ -3,12 +3,9 @@ package de.tum.cit.aet.artemis.exercise.service;
 import static de.tum.cit.aet.artemis.exercise.util.ExerciseVersionUtilService.zonedDateTimeBiPredicate;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 
-import org.eclipse.jgit.api.errors.GitAPIException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -36,12 +33,10 @@ import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCIL
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
-import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
-import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
-import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPenaltyPolicy;
 import de.tum.cit.aet.artemis.programming.repository.SubmissionPolicyRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
+import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.test_repository.QuizExerciseTestRepository;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseUtilService;
@@ -233,30 +228,15 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
 
             newProgrammingExercise.setAuxiliaryRepositories(new ArrayList<>());
 
-            String templateRepositorySlug = newProgrammingExercise.generateRepositoryName(RepositoryType.TEMPLATE);
-            TemplateProgrammingExerciseParticipation templateParticipation = newProgrammingExercise.getTemplateParticipation();
-            templateParticipation.setRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + templateRepositorySlug + ".git");
-            localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, templateRepositorySlug);
-            templateProgrammingExerciseParticipationRepository.save(templateParticipation);
-            newProgrammingExercise.setTemplateParticipation(templateParticipation);
+            RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, newProgrammingExercise);
+            templateProgrammingExerciseParticipationRepository.save(newProgrammingExercise.getTemplateParticipation());
+            solutionProgrammingExerciseParticipationRepository.save(newProgrammingExercise.getSolutionParticipation());
 
-            String solutionRepositorySlug = newProgrammingExercise.generateRepositoryName(RepositoryType.SOLUTION);
-            SolutionProgrammingExerciseParticipation solutionParticipation = newProgrammingExercise.getSolutionParticipation();
-            solutionParticipation.setRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + solutionRepositorySlug + ".git");
-            localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, solutionRepositorySlug);
-            solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
-            newProgrammingExercise.setSolutionParticipation(solutionParticipation);
-
-            String testSlug = newProgrammingExercise.generateRepositoryName(RepositoryType.TESTS);
-            String testRepositoryUri = localVCBaseUri + "/git/" + projectKey + "/" + testSlug + ".git";
-            newProgrammingExercise.setTestRepositoryUri(testRepositoryUri);
             newProgrammingExercise.setProjectType(ProjectType.PLAIN_GRADLE);
-            localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, testSlug);
-
             programmingExerciseRepository.saveAndFlush(newProgrammingExercise);
 
         }
-        catch (GitAPIException | IOException | URISyntaxException e) {
+        catch (Exception e) {
             log.error("Failed to create programming exercise", e);
         }
 
