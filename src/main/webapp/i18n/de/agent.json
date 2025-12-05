@@ -10,6 +10,24 @@
                 "messageTooLong": "Die Nachricht ist zu lang. Bitte kürze deine Nachricht.",
                 "you": "Du",
                 "aiAssistant": "KI-Assistent",
+                "planApproval": "Ich billige den Plan",
+                "competencyProcessFailure": "fehlgeschlagen, einige Kompetenzen zu verarbeiten. Bitte versuche es erneut",
+                "approvePlan": "Plan genehmigen",
+                "preview": "Vorschau: {{count}} Kompetenzen",
+                "update": "Aktualisieren",
+                "create": "Erstellen",
+                "updated": "Aktualisiert",
+                "created": "Erstellt",
+                "updateAll": "Alle aktualisieren",
+                "createAll": "Alle erstellen",
+                "completed": "Abgeschlossen ({{count}})",
+                "success": {
+                    "processed": "{{count}} Kompetenz(en) erfolgreich bearbeitet!",
+                    "updated": "{{count}} Kompetenz(en) erfolgreich aktualisiert!",
+                    "created": "{{count}} Kompetenz(en) erfolgreich erstellt!",
+                    "updatedSingle": "Kompetenz erfolgreich aktualisiert!",
+                    "createdSingle": "Kompetenz erfolgreich erstellt!"
+                },
                 "authentication": "Du musst authentifiziert sein, um den Agenten-Chat zu nutzen."
             }
         }
