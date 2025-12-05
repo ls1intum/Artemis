@@ -3,52 +3,14 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
-export enum AiLanguage {
-    ENGLISH = 'ENGLISH',
-    GERMAN = 'GERMAN',
-}
-export enum AiDifficultyLevel {
-    EASY = 'EASY',
-    MEDIUM = 'MEDIUM',
-    HARD = 'HARD',
-}
-export enum AiRequestedSubtype {
-    SINGLE_CORRECT = 'SINGLE_CORRECT',
-    MULTI_CORRECT = 'MULTI_CORRECT',
-    TRUE_FALSE = 'TRUE_FALSE',
-}
+import { AiDifficultyLevel, AiLanguage, AiRequestedSubtype } from 'app/quiz/manage/service/ai-quiz-generation.enums';
+import { AiGeneratedOptionDTO, AiGeneratedQuestionDTO, AiQuizGenerationRequest, AiQuizGenerationResponse } from 'app/quiz/manage/service/ai-quiz-generation.models';
 
-export interface AiQuizGenerationRequest {
-    numberOfQuestions: number;
-    language: AiLanguage;
-    topic: string;
-    promptHint?: string | null;
-    difficultyLevel: AiDifficultyLevel;
-    requestedSubtype: AiRequestedSubtype;
-}
-
-export interface AiGeneratedOptionDTO {
-    text: string;
-    correct: boolean;
-    feedback?: string | null;
-}
-
-export interface AiGeneratedQuestionDTO {
-    title: string;
-    text: string;
-    explanation?: string | null;
-    hint?: string | null;
-    difficulty?: number | null;
-    tags: string[];
-    subtype: AiRequestedSubtype;
-    competencyIds: number[];
-    options: AiGeneratedOptionDTO[];
-}
-
-export interface AiQuizGenerationResponse {
-    questions: AiGeneratedQuestionDTO[];
-    warnings?: string[];
-}
+/**
+ * Public barrel exports so other code can still import all types
+ * directly from this service module.
+ */
+export { AiLanguage, AiDifficultyLevel, AiRequestedSubtype, AiQuizGenerationRequest, AiGeneratedOptionDTO, AiGeneratedQuestionDTO, AiQuizGenerationResponse };
 
 @Injectable({ providedIn: 'root' })
 export class AiQuizGenerationService {
@@ -67,9 +29,15 @@ export class AiQuizGenerationService {
     }
 
     private describe(err: HttpErrorResponse): string {
-        if (err.status === 0) return 'Network error contacting the AI generation endpoint.';
-        if (err.status === 404) return 'AI generation is not available on this server (Hyperion disabled).';
-        const server = (err.error && (err.error.error || err.error.title || err.error.message)) || (typeof err.error === 'string' ? err.error : null);
-        return `Generation failed (HTTP ${err.status}).${server ? ` ${server}` : ''}`;
+        if (err.status === 0) {
+            return 'Network error contacting the AI generation endpoint.';
+        }
+        if (err.status === 404) {
+            return 'AI generation is not available on this server (Hyperion disabled).';
+        }
+
+        const serverMessage = (err.error && (err.error.error || err.error.title || err.error.message)) || (typeof err.error === 'string' ? err.error : null);
+
+        return `Generation failed (HTTP ${err.status}).${serverMessage ? ` ${serverMessage}` : ''}`;
     }
 }

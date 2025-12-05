@@ -89,7 +89,6 @@ export class AiQuizGenerationModalComponent {
                     questions.forEach((_, i) => (this.selected[i] = true));
                 },
                 error: () => {
-                    // Minimal error handling – adjust if you have a helper like this.service.describeError(err)
                     this.warnings.set(['artemisApp.quizExercise.aiGeneration.error']);
                 },
             });

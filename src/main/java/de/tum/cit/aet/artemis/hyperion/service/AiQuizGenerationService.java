@@ -20,6 +20,7 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
+import de.tum.cit.aet.artemis.hyperion.dto.quiz.AiQuestionSubtype;
 import de.tum.cit.aet.artemis.hyperion.dto.quiz.AiQuizGenerationRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.quiz.AiQuizGenerationResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.quiz.GeneratedMcQuestionDTO;
@@ -135,15 +136,19 @@ public class AiQuizGenerationService {
 
         // Count correct answers
         long correctCount = question.options().stream().filter(McOptionDTO::correct).count();
-
-        // Validate subtype-specific rules
         switch (question.subtype()) {
-            case SINGLE_CORRECT -> {
+            case SINGLE_CORRECT, TRUE_FALSE -> {
                 if (correctCount != 1) {
-                    throw new IllegalArgumentException("SINGLE_CORRECT must have exactly 1 correct answer, found " + correctCount);
+                    throw new IllegalArgumentException(question.subtype() + " must have exactly 1 correct answer, found " + correctCount);
                 }
-                if (question.options().size() < 2) {
+
+                int optionCount = question.options().size();
+
+                if (question.subtype() == AiQuestionSubtype.SINGLE_CORRECT && optionCount < 2) {
                     throw new IllegalArgumentException("SINGLE_CORRECT must have at least 2 options");
+                }
+                if (question.subtype() == AiQuestionSubtype.TRUE_FALSE && optionCount != 2) {
+                    throw new IllegalArgumentException("TRUE_FALSE must have exactly 2 options, found " + optionCount);
                 }
             }
             case MULTI_CORRECT -> {
@@ -154,22 +159,6 @@ public class AiQuizGenerationService {
                     throw new IllegalArgumentException("MULTI_CORRECT must have at least 2 options");
                 }
             }
-            case TRUE_FALSE -> {
-                if (question.options().size() != 2) {
-                    throw new IllegalArgumentException("TRUE_FALSE must have exactly 2 options, found " + question.options().size());
-                }
-                if (correctCount != 1) {
-                    throw new IllegalArgumentException("TRUE_FALSE must have exactly 1 correct answer, found " + correctCount);
-                }
-            }
-        }
-
-        // Non-critical fields -> just log
-        if (question.hint() == null || question.hint().isBlank()) {
-            log.debug("Question '{}' has no hint", question.title());
-        }
-        if (question.explanation() == null || question.explanation().isBlank()) {
-            log.debug("Question '{}' has no explanation", question.title());
         }
     }
 }

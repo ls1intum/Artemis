@@ -2,8 +2,10 @@ package de.tum.cit.aet.artemis.hyperion.dto.quiz;
 
 import java.util.List;
 
+import jakarta.validation.constraints.NotNull;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record AiQuizGenerationResponseDTO(List<GeneratedMcQuestionDTO> questions, List<String> warnings) {
+public record AiQuizGenerationResponseDTO(@NotNull List<GeneratedMcQuestionDTO> questions, List<String> warnings) {
 }
