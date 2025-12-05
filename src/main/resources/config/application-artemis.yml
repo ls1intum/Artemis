@@ -88,6 +88,9 @@ artemis:
     conversion-service-url: http://localhost:8080
   hyperion:
     enabled: false  # Set this to true to enable the hyperion service on startup, requires Spring AI to be configured below.
+  atlas:
+    chat-model: gpt-4o
+    temperature: 0.2
 
   scheduling: # these values are cron expressions. To generate one, you can use e.g. https://www.freeformatter.com/cron-expression-generator-quartz.html
     programming-exercises-cleanup-time: 0 0 3 * * * # every day at 3am
