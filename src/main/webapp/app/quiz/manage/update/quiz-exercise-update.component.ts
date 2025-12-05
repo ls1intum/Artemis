@@ -3,6 +3,7 @@ import { ExerciseTitleChannelNameComponent } from 'app/exercise/exercise-title-c
 import { IncludedInOverallScorePickerComponent } from 'app/exercise/included-in-overall-score-picker/included-in-overall-score-picker.component';
 import { QuizExerciseService } from '../service/quiz-exercise.service';
 import { ActivatedRoute, Router } from '@angular/router';
+import { AiQuizGenerationModalComponent } from 'app/quiz/manage/ai-quiz-generation-modal/ai-quiz-generation-modal.component';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { QuizBatch, QuizExercise, QuizMode, resetQuizForImport } from 'app/quiz/shared/entities/quiz-exercise.model';
@@ -14,8 +15,8 @@ import { NgbDate, NgbModal, NgbModalOptions, NgbModalRef, NgbTooltip } from '@ng
 import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
-import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
-import { Exercise, IncludedInOverallScore, ValidationReason } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { QuizQuestion, QuizQuestionType, ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
+import { DifficultyLevel, Exercise, IncludedInOverallScore, ValidationReason } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
@@ -47,6 +48,11 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { DifficultyPickerComponent } from 'app/exercise/difficulty-picker/difficulty-picker.component';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
+import { AiDifficultyLevel, AiGeneratedQuestionDTO, AiRequestedSubtype } from 'app/quiz/manage/service/ai-quiz-generation.service';
+import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
+import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 
 @Component({
     selector: 'jhi-quiz-exercise-detail',
@@ -88,6 +94,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
     private navigationUtilService = inject(ArtemisNavigationUtilService);
     private modalService = inject(NgbModal);
     private calendarService = inject(CalendarService);
+    private profileService = inject(ProfileService);
 
     readonly quizQuestionListEditComponent = viewChild.required<QuizQuestionListEditComponent>('quizQuestionsEdit');
 
@@ -95,7 +102,8 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
     exerciseGroup?: ExerciseGroup;
     courseRepository: CourseManagementService;
     notificationText?: string;
-
+    difficultyToSlider = AiQuizGenerationModalComponent.prototype.difficultyToSlider;
+    sliderToDifficulty = AiQuizGenerationModalComponent.prototype.sliderToDifficulty;
     isImport = false;
 
     /** Constants for 'Add existing questions' and 'Import file' features **/
@@ -430,6 +438,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
             return numberOfCorrectMappings * numberOfDragItems * numberOfDropLocations > 2197;
         });
     }
+
     checkItemCountShortAnswer(shortAnswerQuestions: ShortAnswerQuestion[]): boolean {
         if (!shortAnswerQuestions) return false;
         return shortAnswerQuestions?.some((shortAnswerQuestion) => {
@@ -478,6 +487,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
             this.save();
         }
     }
+
     /**
      * Save the quiz to the server and invoke callback functions depending on result
      */
@@ -700,5 +710,96 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         }
 
         return description;
+    }
+
+    // Course id to use for generation (works in course AND exam mode)
+    get courseIdForGeneration(): number | undefined {
+        // Prefer the routed courseId; fall back to entity relations just in case
+        return this.courseId ?? this.quizExercise?.course?.id ?? this.quizExercise?.exerciseGroup?.exam?.course?.id ?? undefined;
+    }
+
+    generateQuizWithHyperion(): void {
+        const courseId = this.courseIdForGeneration;
+        if (!courseId) {
+            this.alertService.warning(this.translateService.instant('artemisApp.quizExercise.aiGeneration.noCourseContext'));
+            return;
+        }
+
+        const modalRef: NgbModalRef = this.modalService.open(AiQuizGenerationModalComponent, {
+            size: 'lg',
+            backdrop: 'static',
+        });
+        (modalRef.componentInstance as AiQuizGenerationModalComponent).courseId = courseId;
+
+        modalRef.result
+            .then((result?: { questions: AiGeneratedQuestionDTO[]; requestedDifficulty?: AiDifficultyLevel; requestedSubtype?: AiRequestedSubtype }) => {
+                const picked = result?.questions ?? [];
+                if (!picked.length) return;
+
+                this.applyAIDifficultyToForm(result?.requestedDifficulty);
+
+                const toAdd = picked.map((dto) => this.mapDtoToMcQuestion(dto));
+                const current = this.quizExercise.quizQuestions ?? [];
+                this.quizExercise.quizQuestions = [...current, ...toAdd];
+
+                this.cacheValidation();
+                this.changeDetector.detectChanges();
+            })
+            .catch(() => {});
+    }
+
+    private mapDtoToMcQuestion(dto: AiGeneratedQuestionDTO): MultipleChoiceQuestion {
+        const q = new MultipleChoiceQuestion();
+        q.title = dto.title || '';
+        q.text = dto.text || '';
+        q.explanation = dto.explanation || '';
+        q.randomizeOrder = true;
+        q.singleChoice = dto.subtype === AiRequestedSubtype.SINGLE_CORRECT || dto.subtype === AiRequestedSubtype.TRUE_FALSE;
+        q.points = 1;
+        q.scoringType = ScoringType.ALL_OR_NOTHING;
+
+        // Map AI-generated options
+        q.answerOptions =
+            dto.options?.map((optDto) => {
+                const opt = new AnswerOption();
+                opt.text = optDto.text || '';
+                opt.isCorrect = optDto.correct ?? false;
+                opt.explanation = optDto.feedback || undefined;
+                return opt;
+            }) ?? [];
+
+        // Apply AI-provided hint if available
+        if (dto.hint) {
+            q.hint = dto.hint;
+        }
+
+        return q;
+    }
+
+    private mapAiDifficultyToExerciseDifficulty(ai: AiDifficultyLevel): DifficultyLevel {
+        switch (ai) {
+            case AiDifficultyLevel.EASY:
+                return DifficultyLevel.EASY;
+            case AiDifficultyLevel.HARD:
+                return DifficultyLevel.HARD;
+            default:
+                return DifficultyLevel.MEDIUM;
+        }
+    }
+
+    private applyAIDifficultyToForm(aiDiff: AiDifficultyLevel | undefined): void {
+        if (!aiDiff) {
+            return;
+        }
+
+        // Update the underlying model
+        this.quizExercise.difficulty = this.mapAiDifficultyToExerciseDifficulty(aiDiff);
+
+        // Trigger change detection to refresh the picker if using OnPush
+        this.changeDetector.detectChanges();
+    }
+
+    get hyperionEnabled(): boolean {
+        return this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
     }
 }
