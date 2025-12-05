@@ -1625,10 +1625,8 @@ describe('QuizExerciseUpdateComponent', () => {
 
         it('hyperionEnabled should delegate to ProfileService', () => {
             const moduleSpy = jest.spyOn(profileService, 'isModuleFeatureActive');
-            const profileSpy = jest.spyOn(profileService, 'isProfileActive');
 
             moduleSpy.mockReturnValueOnce(true);
-            profileSpy.mockReturnValueOnce(true);
             expect(comp.hyperionEnabled).toBeTrue();
 
             moduleSpy.mockReturnValueOnce(false);

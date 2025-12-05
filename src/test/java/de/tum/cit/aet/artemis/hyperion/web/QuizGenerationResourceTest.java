@@ -9,7 +9,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -18,7 +17,6 @@ import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
-@ActiveProfiles("hyperion")
 @TestPropertySource(properties = "artemis.hyperion.enabled=true")
 class QuizGenerationResourceTest extends AbstractSpringIntegrationIndependentTest {
 

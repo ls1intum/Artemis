@@ -89,8 +89,6 @@ export const PROFILE_THEIA = 'theia';
 
 export const PROFILE_LDAP = 'ldap';
 
-export const PROFILE_HYPERION = 'hyperion';
-
 export type ProfileFeature =
     | typeof PROFILE_LOCALCI
     | typeof PROFILE_AEOLUS
@@ -103,5 +101,4 @@ export type ProfileFeature =
     | typeof PROFILE_APOLLON
     | typeof PROFILE_ATHENA
     | typeof PROFILE_THEIA
-    | typeof PROFILE_LDAP
-    | typeof PROFILE_HYPERION;
+    | typeof PROFILE_LDAP;
