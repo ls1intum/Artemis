@@ -43,10 +43,7 @@ import { Duration } from 'app/quiz/manage/interfaces/quiz-exercise-interfaces';
 import { QuizQuestionListEditComponent } from 'app/quiz/manage/list-edit/quiz-question-list-edit.component';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
-
-class MockProfileService {
-    isModuleFeatureActive = jest.fn().mockReturnValue(true);
-}
+import { MockProfileService } from 'src/test/javascript/spec/helpers/mocks/service/mock-profile.service';
 
 describe('QuizExerciseUpdateComponent', () => {
     let comp: QuizExerciseUpdateComponent;
@@ -1600,14 +1597,15 @@ describe('QuizExerciseUpdateComponent', () => {
     });
     describe('Hyperion AI quiz generation integration', () => {
         let modalService: NgbModal;
-        let profileService: ProfileService;
+        let profileService: MockProfileService;
 
         beforeEach(waitForAsync(() => configureTestBed()));
+
         // 2) create component + wire services
         beforeEach(() => {
             configureFixtureAndServices();
             modalService = TestBed.inject(NgbModal);
-            profileService = TestBed.inject(ProfileService);
+            profileService = TestBed.inject(ProfileService) as unknown as MockProfileService;
 
             // make sure the component looks like a normal editable quiz
             comp.quizExercise = new QuizExercise({ id: 123 } as Course, undefined);
@@ -1631,10 +1629,13 @@ describe('QuizExerciseUpdateComponent', () => {
         });
 
         it('hyperionEnabled should delegate to ProfileService', () => {
-            (profileService.isModuleFeatureActive as jest.Mock).mockReturnValueOnce(true);
+            // both module feature + profile must be active
+            profileService.isModuleFeatureActive.mockReturnValueOnce(true);
+            profileService.isProfileActive.mockReturnValueOnce(true);
             expect(comp.hyperionEnabled).toBeTrue();
 
-            (profileService.isModuleFeatureActive as jest.Mock).mockReturnValueOnce(false);
+            // if the module feature is disabled, the getter must return false
+            profileService.isModuleFeatureActive.mockReturnValueOnce(false);
             expect(comp.hyperionEnabled).toBeFalse();
         });
 
