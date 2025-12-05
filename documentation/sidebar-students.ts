@@ -8,6 +8,7 @@ const sidebars: SidebarsConfig = {
         'quiz-training',
         'calendar',
         'faq',
+        'tutorial-groups',
     ],
 };
 

@@ -7,6 +7,7 @@ const sidebars: SidebarsConfig = {
         'lecture-series',
         'assessment',
         'faq',
+        'tutorial-groups',
     ],
 };
 
