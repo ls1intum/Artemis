@@ -1697,5 +1697,16 @@ describe('QuizExerciseUpdateComponent', () => {
             expect(mc.answerOptions?.length).toBe(2);
             expect(mc.singleChoice).toBeTrue();
         });
+
+        it('generateQuizWithHyperion should not open modal when no course context is available', () => {
+            // Remove any course context so courseIdForGeneration becomes undefined
+            comp.courseId = undefined;
+            comp.quizExercise = undefined as any;
+            const openSpy = jest.spyOn(modalService, 'open');
+
+            comp.generateQuizWithHyperion();
+
+            expect(openSpy).not.toHaveBeenCalled();
+        });
     });
 });
