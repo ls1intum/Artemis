@@ -4,7 +4,6 @@ import { FeedbackItem } from 'app/exercise/feedback/item/feedback-item';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FeedbackTextComponent } from '../text/feedback-text.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { BaseApiHttpService } from 'app/shared/service/base-api-http.service';
 
 @Component({
     selector: 'jhi-feedback-collapse',
@@ -30,8 +29,6 @@ export class FeedbackCollapseComponent implements OnInit {
     // Icons
     faAngleDown = faAngleDown;
     faAngleRight = faAngleRight;
-
-    debounceToggleCollapse = BaseApiHttpService.debounce(this.toggleCollapse.bind(this), 200);
 
     ngOnInit(): void {
         this.previewText = this.computeFeedbackPreviewText(this.feedback.text);

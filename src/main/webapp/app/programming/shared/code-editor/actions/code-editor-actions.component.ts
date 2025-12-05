@@ -70,6 +70,7 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
 
     conflictStateSubscription: Subscription;
     submissionSubscription: Subscription;
+    routeParamsSubscription: Subscription;
 
     // autoTimerInterval in seconds
     autoSaveTimer = 0;
@@ -93,7 +94,7 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
     }
 
     ngOnInit(): void {
-        this.route.params.subscribe((params) => {
+        this.routeParamsSubscription = this.route.params.subscribe((params) => {
             const repositoryType = params['repositoryType'] ?? 'USER';
             const courseId = Number(params['courseId']);
             const repositoryId = Number(params['repositoryId']);
@@ -155,6 +156,12 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
 
         if (this.conflictStateSubscription) {
             this.conflictStateSubscription.unsubscribe();
+        }
+        if (this.submissionSubscription) {
+            this.submissionSubscription.unsubscribe();
+        }
+        if (this.routeParamsSubscription) {
+            this.routeParamsSubscription.unsubscribe();
         }
     }
 

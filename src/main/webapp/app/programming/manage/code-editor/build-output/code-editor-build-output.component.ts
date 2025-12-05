@@ -234,5 +234,8 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
         if (this.submissionSubscription) {
             this.submissionSubscription.unsubscribe();
         }
+        if (this.interactResizable) {
+            this.interactResizable.unset();
+        }
     }
 }

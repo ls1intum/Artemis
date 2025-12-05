@@ -2,6 +2,7 @@ import {
     ChangeDetectionStrategy,
     ChangeDetectorRef,
     Component,
+    NgZone,
     OnChanges,
     OnDestroy,
     SimpleChanges,
@@ -70,6 +71,7 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
     private readonly changeDetectorRef = inject(ChangeDetectorRef);
     private readonly fileTypeService = inject(FileTypeService);
     private readonly translateService = inject(TranslateService);
+    private readonly ngZone = inject(NgZone);
 
     readonly editor = viewChild.required<MonacoEditorComponent>('editor');
     readonly inlineFeedbackComponents = viewChildren(CodeEditorTutorAssessmentInlineFeedbackComponent);
@@ -131,6 +133,9 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
 
     annotationsArray: Array<Annotation> = [];
     private addFeedbackKeydownListener?: Disposable;
+    private renderScheduled = false;
+    private renderFocusLine?: number;
+    private renderAnimationFrameId?: number;
 
     constructor() {
         effect(() => {
@@ -188,6 +193,9 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
 
     ngOnDestroy(): void {
         this.disposeAddFeedbackShortcut();
+        if (this.renderAnimationFrameId !== undefined) {
+            window.cancelAnimationFrame(this.renderAnimationFrameId);
+        }
     }
 
     async selectFileInEditor(fileName: string | undefined): Promise<void> {
@@ -387,29 +395,41 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
      * @protected
      */
     protected renderFeedbackWidgets(lineOfWidgetToFocus?: number) {
-        // Since the feedback widgets rely on the DOM nodes of each feedback item, Angular needs to re-render each node, hence the timeout.
-        this.changeDetectorRef.detectChanges();
-        const issues = this.consistencyIssues();
-        setTimeout(() => {
-            this.editor().disposeWidgets();
-            for (const feedback of this.filterFeedbackForSelectedFile([...this.feedbackInternal(), ...this.feedbackSuggestionsInternal()])) {
-                this.addLineWidgetWithFeedback(feedback);
-            }
+        if (lineOfWidgetToFocus !== undefined) {
+            this.renderFocusLine = lineOfWidgetToFocus;
+        }
+        if (this.renderScheduled) {
+            return;
+        }
+        this.renderScheduled = true;
+        this.renderAnimationFrameId = this.ngZone.runOutsideAngular(() =>
+            requestAnimationFrame(() => {
+                this.renderScheduled = false;
+                this.ngZone.run(() => {
+                    this.changeDetectorRef.detectChanges();
+                    const issues = this.consistencyIssues();
+                    this.editor().disposeWidgets();
+                    for (const feedback of this.filterFeedbackForSelectedFile([...this.feedbackInternal(), ...this.feedbackSuggestionsInternal()])) {
+                        this.addLineWidgetWithFeedback(feedback);
+                    }
 
-            // New, unsaved feedback has no associated object yet.
-            for (const line of this.newFeedbackLines()) {
-                const feedbackNode = this.getInlineFeedbackNodeOrElseThrow(line);
-                this.editor().addLineWidget(line + 1, 'feedback-new-' + line, feedbackNode);
-            }
+                    // New, unsaved feedback has no associated object yet.
+                    for (const line of this.newFeedbackLines()) {
+                        const feedbackNode = this.getInlineFeedbackNodeOrElseThrow(line);
+                        this.editor().addLineWidget(line + 1, 'feedback-new-' + line, feedbackNode);
+                    }
 
-            // Focus the text area of the widget on the specified line if available.
-            if (lineOfWidgetToFocus !== undefined) {
-                this.getInlineFeedbackNode(lineOfWidgetToFocus)?.querySelector<HTMLTextAreaElement>('#feedback-textarea')?.focus();
-            }
+                    const focusLine = this.renderFocusLine;
+                    this.renderFocusLine = undefined;
+                    if (focusLine !== undefined) {
+                        this.getInlineFeedbackNode(focusLine)?.querySelector<HTMLTextAreaElement>('#feedback-textarea')?.focus();
+                    }
 
-            // Readd inconsistency issue comments, because all widgets got removed
-            addCommentBoxes(this.editor(), issues, this.selectedFile(), this.selectedRepository(), this.translateService);
-        }, 0);
+                    // Readd inconsistency issue comments, because all widgets got removed
+                    addCommentBoxes(this.editor(), issues, this.selectedFile(), this.selectedRepository(), this.translateService);
+                });
+            }),
+        );
     }
 
     /**
