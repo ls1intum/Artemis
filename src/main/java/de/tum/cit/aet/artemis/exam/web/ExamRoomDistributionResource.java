@@ -179,10 +179,10 @@ public class ExamRoomDistributionResource {
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<Set<ExamRoomForDistributionDTO>> getRoomsUsedInExam(@PathVariable long courseId, @PathVariable long examId) {
         log.debug("REST request to get rooms used in exam : {}", examId);
+
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
 
         var rooms = examRoomDistributionService.getRoomsUsedInExam(examId);
-
         return ResponseEntity.ok(rooms);
     }
 
