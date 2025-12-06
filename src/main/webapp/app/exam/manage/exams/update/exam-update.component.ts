@@ -29,6 +29,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
+import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
 
 @Component({
     selector: 'jhi-exam-update',
@@ -47,6 +48,7 @@ import { CalendarService } from 'app/core/calendar/shared/service/calendar.servi
         ExamExerciseImportComponent,
         MarkdownEditorMonacoComponent,
         ArtemisTranslatePipe,
+        ButtonComponent,
     ],
 })
 export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
@@ -63,6 +65,8 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
     protected readonly faBan = faBan;
     protected readonly faExclamationTriangle = faExclamationTriangle;
     protected readonly documentationType: DocumentationType = 'Exams';
+    protected readonly ButtonType = ButtonType;
+    protected readonly ButtonSize = ButtonSize;
 
     exam: Exam;
     course: Course;
@@ -551,6 +555,18 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
         return (
             warningForInstructionsText + readCarefullyText + workOnYourOwnText + checkForPlagiarismText + programmingSubmissionText + submissionPeriodText + workingInstructionText
         );
+    }
+
+    /**
+     * Returns the appropriate translation key for the save button title.
+     *
+     * If the exam is being imported, the title reflects an import action;
+     * otherwise, it reflects a standard save action.
+     *
+     * @returns {string} The translation key for the save button title.
+     */
+    get saveTitle(): string {
+        return this.isImport ? 'entity.action.import' : 'entity.action.save';
     }
 }
 
