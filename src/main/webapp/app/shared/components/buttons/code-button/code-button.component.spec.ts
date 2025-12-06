@@ -26,6 +26,7 @@ import { ProgrammingExerciseTheiaConfig } from 'app/programming/shared/entities/
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { SshUserSettingsService } from 'app/core/user/settings/ssh-settings/ssh-user-settings.service';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
+import { ScienceService } from 'app/shared/science/science.service';
 
 describe('CodeButtonComponent', () => {
     let component: CodeButtonComponent;
@@ -67,6 +68,7 @@ describe('CodeButtonComponent', () => {
                 { provide: ProfileService, useClass: MockProfileService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
+                MockProvider(ScienceService),
             ],
         })
             .compileComponents()
