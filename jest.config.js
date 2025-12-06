@@ -21,6 +21,8 @@ const esModules = [
     '@primeuix',
     '@sentry/angular',
     '@siemens/ngx-datatable',
+    '@stomp/rx-stomp',
+    '@stomp/stompjs',
     '@swimlane/ngx-charts',
     '@swimlane/ngx-graph',
     'collapse-white-space',
