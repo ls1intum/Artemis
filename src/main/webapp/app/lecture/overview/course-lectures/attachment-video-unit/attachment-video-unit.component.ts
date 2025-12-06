@@ -59,8 +59,22 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
 
     readonly hasTranscript = computed(() => this.transcriptSegments().length > 0);
 
+    private readonly videoExtensions = ['mp4', 'webm', 'ogg', 'mov', 'avi', 'mkv', 'flv', 'wmv', 'm4v'];
+
     // TODO: This must use a server configuration to make it compatible with deployments other than TUM
     private readonly videoUrlAllowList = [RegExp('^https://(?:live\\.rbg\\.tum\\.de|tum\\.live)/w/\\w+/\\d+(/(CAM|COMB|PRES))?\\?video_only=1')];
+
+    /**
+     * Checks if the current video is an uploaded video file (not an embedded URL)
+     */
+    readonly isUploadedVideoFile = computed(() => {
+        const attachment = this.lectureUnit().attachment;
+        if (!attachment?.link) {
+            return false;
+        }
+        const fileExtension = attachment.link.split('.').pop()?.toLowerCase();
+        return this.videoExtensions.includes(fileExtension || '');
+    });
 
     /**
      * Return the URL of the video source
@@ -68,10 +82,21 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     readonly videoUrl = computed(() => this.computeVideoUrl());
 
     /**
-     * Computes the video URL based on the video source.
-     * Returns undefined if the source is invalid or doesn't match the allow list.
+     * Computes the video URL based on the video source or uploaded video file.
+     * Returns undefined if neither a valid source nor an uploaded video file exists.
      */
     private computeVideoUrl(): string | undefined {
+        // First, check if there's an uploaded video file
+        const attachment = this.lectureUnit().attachment;
+        if (attachment?.link) {
+            const fileExtension = attachment.link.split('.').pop()?.toLowerCase();
+            if (this.videoExtensions.includes(fileExtension || '')) {
+                // Return the attachment link as a playable URL
+                return addPublicFilePrefix(attachment.link);
+            }
+        }
+
+        // If no uploaded video file, check for embedded video source
         const source = this.lectureUnit().videoSource;
         if (!source) {
             return undefined;
@@ -205,8 +230,9 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     /**
      * Returns the matching icon for the file extension of the attachment
      */
-    getAttachmentIcon(): IconDefinition {
-        if (this.hasVideo()) {
+    readonly attachmentIcon = computed((): IconDefinition => {
+        // Show video icon if there's an embedded video source OR an uploaded video file
+        if (this.hasVideo() || this.isUploadedVideoFile()) {
             return faFileVideo;
         }
 
@@ -260,5 +286,5 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             }
         }
         return faFile;
-    }
+    });
 }

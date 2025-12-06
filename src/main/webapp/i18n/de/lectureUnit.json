@@ -147,11 +147,17 @@
                 "nameMaxLengthValidationError": "Der Name kann maximal 255 Zeichen lang sein.",
                 "descriptionMaxLengthValidationError": "Die Beschreibung kann maximal 1000 Zeichen lang sein.",
                 "file": "Datei",
+                "fileWithVideo": "Datei (PDF, Video oder Dokument)",
                 "version": "Version",
                 "fileRequiredValidationError": "Du musst eine Datei zum Uploaden auswählen.",
                 "chooseFile": "Datei auswählen",
+                "changeFile": "Datei ändern",
+                "uploading": "Hochladen...",
+                "noFileSelected": "Keine Datei ausgewählt",
                 "fileTooBig": "Die Datei ist zu groß! Die maximale Dateigröße beträgt 20 MB.",
                 "fileLimitation": "(max. Größe 20 MB)",
+                "videoSupported": "Videos unterstützt: MP4, WebM, OGG, MOV, AVI, MKV",
+                "fileSelected": "Ausgewählt: {{ filename }}",
                 "fileLimitationTooltip": "Unterstützte Formate: {{ extensions }}",
                 "source": "Einbettbares Video URL",
                 "sourcePlaceHolder": "Gib eine URL zu einem einbettbarem Video ein.",
@@ -196,7 +202,8 @@
                 "nextResult": "Nächstes Ergebnis",
                 "noResults": "Keine Ergebnisse",
                 "noMatchingTranscript": "Kein passendes Transkript gefunden",
-                "loading": "Lädt..."
+                "loading": "Lädt...",
+                "notSupported": "Dein Browser unterstützt das Video-Tag nicht."
             }
         },
         "exerciseUnit": {

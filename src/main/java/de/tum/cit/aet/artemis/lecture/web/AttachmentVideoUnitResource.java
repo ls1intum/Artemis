@@ -43,6 +43,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLecture.Enf
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastEditorInLectureUnit;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.FileService;
+import de.tum.cit.aet.artemis.core.service.ModuleFeatureService;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
@@ -86,10 +87,12 @@ public class AttachmentVideoUnitResource {
 
     private final LectureUnitRepository lectureUnitRepository;
 
+    private final ModuleFeatureService moduleFeatureService;
+
     public AttachmentVideoUnitResource(AttachmentVideoUnitRepository attachmentVideoUnitRepository, LectureRepository lectureRepository,
             LectureUnitProcessingService lectureUnitProcessingService, AuthorizationCheckService authorizationCheckService, GroupNotificationService groupNotificationService,
             AttachmentVideoUnitService attachmentVideoUnitService, Optional<CompetencyProgressApi> competencyProgressApi, SlideSplitterService slideSplitterService,
-            FileService fileService, LectureUnitRepository lectureUnitRepository) {
+            FileService fileService, LectureUnitRepository lectureUnitRepository, ModuleFeatureService moduleFeatureService) {
         this.attachmentVideoUnitRepository = attachmentVideoUnitRepository;
         this.lectureUnitProcessingService = lectureUnitProcessingService;
         this.lectureRepository = lectureRepository;
@@ -100,6 +103,7 @@ public class AttachmentVideoUnitResource {
         this.slideSplitterService = slideSplitterService;
         this.fileService = fileService;
         this.lectureUnitRepository = lectureUnitRepository;
+        this.moduleFeatureService = moduleFeatureService;
     }
 
     /**
@@ -146,6 +150,12 @@ public class AttachmentVideoUnitResource {
         if (!validateHiddenSlidesDates(hiddenPages)) {
             throw new BadRequestAlertException("Hidden slide dates cannot be in the past", ENTITY_NAME, "invalidHiddenDates");
         }
+
+        // Check if video upload is enabled when a video file is being uploaded
+        if (file != null && isVideoFile(file) && !moduleFeatureService.isVideoUploadEnabled()) {
+            throw new BadRequestAlertException("Video file upload is not enabled on this server", ENTITY_NAME, "videoUploadDisabled");
+        }
+
         AttachmentVideoUnit savedAttachmentVideoUnit = attachmentVideoUnitService.updateAttachmentVideoUnit(existingAttachmentVideoUnit, attachmentVideoUnit, attachment, file,
                 keepFilename, hiddenPages, pageOrder);
 
@@ -185,6 +195,11 @@ public class AttachmentVideoUnitResource {
 
         if (attachment == null && attachmentVideoUnit.getVideoSource() == null) {
             throw new BadRequestAlertException("A attachment must have a an attachment or a video source", ENTITY_NAME, "videosourceAndAttachment");
+        }
+
+        // Check if video upload is enabled when a video file is being uploaded
+        if (file != null && isVideoFile(file) && !moduleFeatureService.isVideoUploadEnabled()) {
+            throw new BadRequestAlertException("Video file upload is not enabled on this server", ENTITY_NAME, "videoUploadDisabled");
         }
 
         Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lectureId);
@@ -407,5 +422,28 @@ public class AttachmentVideoUnitResource {
             }
         }
         return true;
+    }
+
+    /**
+     * Checks if the uploaded file is a video file based on its extension
+     *
+     * @param file the file to check
+     * @return true if the file is a video file, false otherwise
+     */
+    private boolean isVideoFile(MultipartFile file) {
+        if (file == null || file.getOriginalFilename() == null) {
+            return false;
+        }
+        String extension = FilenameUtils.getExtension(file.getOriginalFilename());
+        if (extension == null) {
+            return false;
+        }
+        String[] videoExtensions = { "mp4", "webm", "ogg", "mov", "avi", "mkv", "flv", "wmv", "m4v" };
+        for (String videoExt : videoExtensions) {
+            if (videoExt.equalsIgnoreCase(extension)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

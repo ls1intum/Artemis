@@ -105,4 +105,13 @@ public class ModuleFeatureService {
     public boolean isNebulaEnabled() {
         return artemisConfigHelper.isNebulaEnabled(environment);
     }
+
+    /**
+     * Check if the video upload feature for lecture units is enabled.
+     *
+     * @return true if video upload is enabled, false otherwise
+     */
+    public boolean isVideoUploadEnabled() {
+        return artemisConfigHelper.isVideoUploadEnabled(environment);
+    }
 }
