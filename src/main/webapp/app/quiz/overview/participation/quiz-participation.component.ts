@@ -663,9 +663,6 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             // quiz hasn't started yet
             this.waitingForQuizStart = true;
 
-            // enable automatic websocket reconnect
-            this.websocketService.enableReconnect();
-
             if (this.quizBatch && this.quizBatch.startTime) {
                 // synchronize time with server
                 this.startDate = dayjs(this.quizBatch.startTime ?? this.serverDateService.now());
@@ -680,9 +677,6 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
 
             // check if quiz hasn't ended
             if (!this.quizBatch.ended) {
-                // enable automatic websocket reconnect
-                this.websocketService.enableReconnect();
-
                 // apply randomized order where necessary
                 this.quizService.randomizeOrder(this.quizExercise.quizQuestions, this.quizExercise.randomizeQuestionOrder);
             }
