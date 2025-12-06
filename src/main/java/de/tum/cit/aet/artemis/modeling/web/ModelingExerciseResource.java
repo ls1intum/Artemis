@@ -244,6 +244,9 @@ public class ModelingExerciseResource {
         // Important: use the original exercise for permission check
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, originalExercise, user);
         // Forbid changing the course the exercise belongs to.
+        if (updateModelingExerciseDTO.courseId() == null) {
+            throw new BadRequestAlertException("The courseId is required.", ENTITY_NAME, "courseIdMissing");
+        }
         if (!Objects.equals(originalExercise.getCourseViaExerciseGroupOrCourseMember().getId(), updateModelingExerciseDTO.courseId())) {
             throw new ConflictException("Exercise course id does not match the stored course id", ENTITY_NAME, "cannotChangeCourseId");
         }
@@ -257,9 +260,6 @@ public class ModelingExerciseResource {
 
         // whether is exam exercise or course exercise are not changeable
         ModelingExercise updatedExercise = modelingExerciseService.updateModelingExercise(updateModelingExerciseDTO, originalExercise);
-
-        // validates general settings: points, dates
-        updatedExercise.validateGeneralSettings();
         // Valid exercises have set either a course or an exerciseGroup
         updatedExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
         // Forbid conversion between normal course exercise and exam exercise

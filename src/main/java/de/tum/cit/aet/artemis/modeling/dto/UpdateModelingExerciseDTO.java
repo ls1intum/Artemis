@@ -4,13 +4,9 @@ import java.time.ZonedDateTime;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
-import jakarta.validation.constraints.PositiveOrZero;
 
 import org.hibernate.Hibernate;
-import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -18,21 +14,20 @@ import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.dto.GradingCriterionDTO;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.atlas.dto.CourseCompetencyDTO;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record UpdateModelingExerciseDTO(long id, @Nullable String title, @Nullable String channelName, @Nullable String shortName, @Nullable String problemStatement,
-        @Nullable Set<String> categories, @Nullable DifficultyLevel difficulty, @Nullable @Positive Double maxPoints, @Nullable @PositiveOrZero Double bonusPoints,
-        @Nullable IncludedInOverallScore includedInOverallScore, @Nullable Boolean allowComplaintsForAutomaticAssessments, @Nullable Boolean allowFeedbackRequests,
-        @Nullable String gradingInstructions, @Nullable ZonedDateTime releaseDate, @Nullable ZonedDateTime startDate, @Nullable ZonedDateTime dueDate,
-        @Nullable ZonedDateTime assessmentDueDate, @Nullable ZonedDateTime exampleSolutionPublicationDate, @Nullable String exampleSolutionModel,
-        @Nullable String exampleSolutionExplanation, @Nullable Long courseId, @Nullable Long exerciseGroupId, @Nullable @Valid Set<GradingCriterionDTO> gradingCriteria,
-        @Nullable @Valid Set<CompetencyExerciseLinkDTO> competencyLinks) {
+public record UpdateModelingExerciseDTO(long id, String title, String channelName, String shortName, String problemStatement, Set<String> categories, DifficultyLevel difficulty,
+        Double maxPoints, Double bonusPoints, IncludedInOverallScore includedInOverallScore, Boolean allowComplaintsForAutomaticAssessments, Boolean allowFeedbackRequests,
+        String gradingInstructions, ZonedDateTime releaseDate, ZonedDateTime startDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate,
+        ZonedDateTime exampleSolutionPublicationDate, String exampleSolutionModel, String exampleSolutionExplanation, Long courseId, Long exerciseGroupId,
+        Set<GradingCriterionDTO> gradingCriteria, Set<CompetencyExerciseLinkDTO> competencyLinks) {
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record CompetencyExerciseLinkDTO(@NotNull CourseCompetencyDTO courseCompetencyDTO, @Nullable Double weight, @Nullable Long courseId) {
+    public record CompetencyExerciseLinkDTO(@NotNull CourseCompetencyDTO courseCompetencyDTO, Double weight, Long courseId) {
 
         /**
          * Creates a DTO from a CompetencyExerciseLink entity.
@@ -40,10 +35,16 @@ public record UpdateModelingExerciseDTO(long id, @Nullable String title, @Nullab
          * @param competencyExerciseLink CompetencyExerciseLink entity to convert
          * @return a new CompetencyExerciseLinkDTO with data from the entity
          */
-        public static CompetencyExerciseLinkDTO of(@NotNull CompetencyExerciseLink competencyExerciseLink) {
+        public static CompetencyExerciseLinkDTO of(CompetencyExerciseLink competencyExerciseLink) {
+            if (competencyExerciseLink == null) {
+                throw new BadRequestAlertException("No competency link was provided.", "competencyExerciseLink", "competencyExerciseLink.isNull");
+            }
+            if (competencyExerciseLink.getCompetency() == null) {
+                throw new BadRequestAlertException("The competency link must reference a competency.", "competencyExerciseLink", "competencyExerciseLink.competencyMissing");
+            }
             if (competencyExerciseLink.getCompetency().getCourse() == null) {
-                throw new IllegalStateException("CompetencyExerciseLink references a competency without an associated course. Link ID: "
-                        + (competencyExerciseLink.getId() != null ? competencyExerciseLink.getId() : "unknown"));
+                throw new BadRequestAlertException("The competency referenced by this link is not associated with a course.", "competencyExerciseLink",
+                        "competencyExerciseLink.courseMissing");
             }
             return new CompetencyExerciseLinkDTO(CourseCompetencyDTO.of(competencyExerciseLink.getCompetency()), competencyExerciseLink.getWeight(),
                     competencyExerciseLink.getCompetency().getCourse().getId());
@@ -57,7 +58,10 @@ public record UpdateModelingExerciseDTO(long id, @Nullable String title, @Nullab
      * @param exercise the ModelingExercise entity to convert
      * @return a new UpdateModelingExerciseDTO with data from the entity
      */
-    public static UpdateModelingExerciseDTO of(@NotNull ModelingExercise exercise) {
+    public static UpdateModelingExerciseDTO of(ModelingExercise exercise) {
+        if (exercise == null) {
+            throw new BadRequestAlertException("No modeling exercise was provided.", "modelingExercise", "modelingExercise.isNull");
+        }
         Long courseId = exercise.getCourseViaExerciseGroupOrCourseMember() != null ? exercise.getCourseViaExerciseGroupOrCourseMember().getId() : null;
         Long exerciseGroupId = exercise.getExerciseGroup() != null ? exercise.getExerciseGroup().getId() : null;
 

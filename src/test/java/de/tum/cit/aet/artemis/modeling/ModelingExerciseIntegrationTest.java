@@ -1016,8 +1016,8 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         // Update
         var created = modelingExerciseTestRepository.findByCourseIdWithCategories(classExercise.getCourseViaExerciseGroupOrCourseMember().getId()).getFirst();
         created.setTitle("AtlasML Update");
-        UpdateModelingExerciseDTO dto = new UpdateModelingExerciseDTO(created.getId(), created.getTitle(), null, null, null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, classExercise.getCourseViaExerciseGroupOrCourseMember().getId(), null, null, null);
+        UpdateModelingExerciseDTO dto = new UpdateModelingExerciseDTO(created.getId(), created.getTitle(), null, created.getShortName(), null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, classExercise.getCourseViaExerciseGroupOrCourseMember().getId(), null, null, null);
         request.putWithResponseBody("/api/modeling/modeling-exercises", dto, ModelingExercise.class, HttpStatus.OK);
 
         // Delete

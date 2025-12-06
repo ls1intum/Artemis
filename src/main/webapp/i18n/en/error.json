@@ -171,6 +171,20 @@
         },
         "CourseCompetency": {
             "wrongCourse": "The competency does not belong to the exercise's course."
+        },
+        "CompetencyExerciseLink": {
+            "isNull": "No competency link was provided.",
+            "competencyMissing": "The competency link must reference a competency.",
+            "courseMissing": "The competency referenced by this link is not associated with a course."
+        },
+        "ModelingExercise": {
+            "isNull": "No modeling exercise was provided.",
+            "idMissing": "The modeling exercise must be saved before it can be converted.",
+            "modelingExerciseTitleInvalid": "The title is not set or is too short.",
+            "titleInvalid": "The title is invalid.",
+            "modelingExerciseShortNameInvalid": "The short name is not set or is too short.",
+            "shortnameInvalid": "The shortname is invalid.",
+            "courseIdMissing": "The courseId is required."
         }
     }
 }
