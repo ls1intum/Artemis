@@ -160,6 +160,17 @@
                 "empty": "Keine Erinnerungen gefunden.",
                 "delete": "Löschen",
                 "deleting": "Lösche...",
+                "conflict": {
+                    "warning": "Es gibt Konflikte zwischen Erinnerungen, die gelöst werden müssen.",
+                    "resolve": "Auflösen",
+                    "modalTitle": "Erinnerungskonflikte auflösen",
+                    "noConflicts": "Keine Konflikte.",
+                    "conflictCount": "Konflikt {{ current }} von {{ total }}",
+                    "keepThis": "Diese behalten",
+                    "previous": "Zurück",
+                    "next": "Weiter",
+                    "memoryId": "ID"
+                },
                 "details": {
                     "loading": "Lade Details...",
                     "learnings": "Erkenntnisse",

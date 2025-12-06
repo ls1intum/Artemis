@@ -160,6 +160,17 @@
                 "empty": "No memories found.",
                 "delete": "Delete",
                 "deleting": "Deleting...",
+                "conflict": {
+                    "warning": "There are conflicts between memories that need to be resolved.",
+                    "resolve": "Resolve",
+                    "modalTitle": "Resolve Memory Conflicts",
+                    "noConflicts": "No conflicts.",
+                    "conflictCount": "Conflict {{ current }} of {{ total }}",
+                    "keepThis": "Keep this",
+                    "previous": "Previous",
+                    "next": "Next",
+                    "memoryId": "ID"
+                },
                 "details": {
                     "loading": "Loading details...",
                     "learnings": "Learnings",
