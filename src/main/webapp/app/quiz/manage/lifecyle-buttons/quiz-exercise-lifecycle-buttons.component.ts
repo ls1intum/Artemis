@@ -1,6 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { QuizExercise, QuizMode, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { QuizBatch, QuizExercise, QuizMode, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizExerciseService } from '../service/quiz-exercise.service';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -106,8 +106,11 @@ export class QuizExerciseLifecycleButtonsComponent {
      */
     addBatch() {
         this.quizExerciseService.addBatch(this.quizExercise().id!).subscribe({
-            next: () => {
-                this.loadOne.emit(this.quizExercise().id!);
+            next: (res: HttpResponse<QuizBatch>) => {
+                if (!this.quizExercise().quizBatches) {
+                    this.quizExercise().quizBatches = [];
+                }
+                this.quizExercise().quizBatches?.push(res.body!);
             },
             error: (res: HttpErrorResponse) => {
                 this.onError(res);
