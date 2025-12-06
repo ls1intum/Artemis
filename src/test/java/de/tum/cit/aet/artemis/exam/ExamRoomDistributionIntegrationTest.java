@@ -16,11 +16,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
+import de.tum.cit.aet.artemis.exam.domain.room.ExamRoom;
 import de.tum.cit.aet.artemis.exam.dto.room.AttendanceCheckerAppExamInformationDTO;
+import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomForDistributionDTO;
+import de.tum.cit.aet.artemis.exam.dto.room.ExamSeatDTO;
+import de.tum.cit.aet.artemis.exam.dto.room.ReseatInformationDTO;
+import de.tum.cit.aet.artemis.exam.dto.room.SeatsOfExamRoomDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
 import de.tum.cit.aet.artemis.exam.service.ExamRoomDistributionService;
 import de.tum.cit.aet.artemis.exam.service.ExamRoomService;
@@ -338,5 +345,137 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
         verifyBasicAttendanceCheckerInformation(attendanceCheckerInformation);
         assertThat(attendanceCheckerInformation.examRoomsUsedInExam()).hasSize(4);
         assertThat(attendanceCheckerInformation.examUsersWithExamRoomAndSeat()).hasSize(10);
+    }
+
+    /* Tests for the GET /api/exam/courses/{courseId}/exams/{examId}/rooms-used endpoint */
+
+    @Test
+    @WithMockUser(username = EDITOR_LOGIN, roles = "EDITOR")
+    void testGetUsedRoomsAsEditorShouldBeForbidden() throws Exception {
+        request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/rooms-used", HttpStatus.FORBIDDEN, Set.class);
+    }
+
+    @Test
+    @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+    void testGetUsedRoomsAsInstructorShouldBeAllowed() throws Exception {
+        request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/rooms-used", HttpStatus.OK, Set.class);
+    }
+
+    private void uploadFourRoomsAndDistributeStudentsInExam1() {
+        examUtilService.registerUsersForExamAndSaveExam(exam1, TEST_PREFIX, NUMBER_OF_STUDENTS);
+        examRoomService.parseAndStoreExamRoomDataFromZipFile(ExamRoomZipFiles.zipFileFourExamRooms);
+        List<Long> ids = examRoomRepository.findAllNewestExamRoomVersions().stream().map(ExamRoom::getId).toList();
+        examRoomDistributionService.distributeRegisteredStudents(exam1.getId(), ids, true, 0.1);
+    }
+
+    private void reloadExam1WithExamUsers() {
+        exam1 = examRepository.findByIdWithExamUsersElseThrow(exam1.getId());
+    }
+
+    @Test
+    @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+    void testGetUsedRoomsOfExam() throws Exception {
+        uploadFourRoomsAndDistributeStudentsInExam1();
+
+        Set<ExamRoomForDistributionDTO> usedRooms = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/rooms-used", HttpStatus.OK,
+                new TypeReference<>() {
+                });
+        assertThat(usedRooms.size()).isEqualTo(4);
+        Set<ExamRoomForDistributionDTO> expectedRooms = examRoomRepository.findAllNewestExamRoomVersions().stream().map(ExamRoomForDistributionDTO::from)
+                .collect(Collectors.toSet());
+        assertThat(usedRooms).isEqualTo(expectedRooms);
+    }
+
+    /* Tests for the GET /api/exam/rooms/{examRoomId}/seats endpoint */
+
+    @Test
+    @WithMockUser(username = EDITOR_LOGIN, roles = "EDITOR")
+    void testGetSeatsInRoomAsEditorShouldBeForbidden() throws Exception {
+        examRoomService.parseAndStoreExamRoomDataFromZipFile(ExamRoomZipFiles.zipFileSingleExamRoom);
+        ExamRoom room = examRoomRepository.findAllNewestExamRoomVersions().stream().findFirst().orElseThrow();
+
+        request.get("/api/exam/rooms/" + room.getId() + "/seats", HttpStatus.FORBIDDEN, SeatsOfExamRoomDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+    void testGetSeatsInRoomAsInstructorShouldBeAllowed() throws Exception {
+        examRoomService.parseAndStoreExamRoomDataFromZipFile(ExamRoomZipFiles.zipFileSingleExamRoom);
+        ExamRoom room = examRoomRepository.findAllNewestExamRoomVersions().stream().findFirst().orElseThrow();
+
+        request.get("/api/exam/rooms/" + room.getId() + "/seats", HttpStatus.OK, SeatsOfExamRoomDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+    void testGetSeatsInRoom() throws Exception {
+        examRoomService.parseAndStoreExamRoomDataFromZipFile(ExamRoomZipFiles.zipFileRealisticScenario);
+
+        for (ExamRoom room : examRoomRepository.findAllNewestExamRoomVersions()) {
+            SeatsOfExamRoomDTO seatsOfRoom = request.get("/api/exam/rooms/" + room.getId() + "/seats", HttpStatus.OK, SeatsOfExamRoomDTO.class);
+            var expectedSeatNames = room.getSeats().stream().map(ExamSeatDTO::name).toList();
+
+            assertThat(seatsOfRoom.seats()).hasSize(expectedSeatNames.size());
+            assertThat(seatsOfRoom.seats()).isEqualTo(expectedSeatNames);
+        }
+    }
+
+    /* Tests for the POST /api/exam/courses/{courseId}/exams/{examId}/reseat-student endpoint */
+
+    @Test
+    @WithMockUser(username = EDITOR_LOGIN, roles = "EDITOR")
+    void testReseatStudentAsEditorShouldBeForbidden() throws Exception {
+        examUtilService.registerUsersForExamAndSaveExam(exam1, TEST_PREFIX, NUMBER_OF_STUDENTS);
+        ExamUser anyExamUser = exam1.getExamUsers().stream().findAny().orElseThrow();
+        ReseatInformationDTO reseatInformation = new ReseatInformationDTO(anyExamUser.getId(), "SOME.ROOM", "SOME.SEAT");
+
+        request.post("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/reseat-student", reseatInformation, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+    void testReseatStudentAsInstructorShouldBeAllowed() throws Exception {
+        examUtilService.registerUsersForExamAndSaveExam(exam1, TEST_PREFIX, NUMBER_OF_STUDENTS);
+        ExamUser anyExamUser = exam1.getExamUsers().stream().findAny().orElseThrow();
+        ReseatInformationDTO reseatInformation = new ReseatInformationDTO(anyExamUser.getId(), "SOME.ROOM", "SOME.SEAT");
+
+        request.postWithoutResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/reseat-student", reseatInformation, HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+    void testReseatStudentAsInstructorFixedSeat() throws Exception {
+        uploadFourRoomsAndDistributeStudentsInExam1();
+        reloadExam1WithExamUsers();
+
+        ExamUser anyExamUser = exam1.getExamUsers().stream().findAny().orElseThrow();
+
+        ReseatInformationDTO reseatInformation = new ReseatInformationDTO(anyExamUser.getId(), "SOME.ROOM", "SOME.SEAT");
+        request.postWithoutResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/reseat-student", reseatInformation, HttpStatus.OK);
+
+        anyExamUser = examUserRepository.findById(anyExamUser.getId()).orElseThrow();  // refresh exam user
+
+        assertThat(anyExamUser.getPlannedRoom()).isEqualTo("SOME.ROOM");
+        assertThat(anyExamUser.getPlannedSeat()).isEqualTo("SOME.SEAT");
+    }
+
+    @Test
+    @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+    void testReseatStudentAsInstructorDynamicSeat() throws Exception {
+        uploadFourRoomsAndDistributeStudentsInExam1();
+        reloadExam1WithExamUsers();
+
+        ExamUser anyExamUser = exam1.getExamUsers().stream().findAny().orElseThrow();
+        final String initialPlannedRoom = anyExamUser.getPlannedRoom();
+        ExamRoom roomToDistributeTo = examRoomRepository.findAllNewestExamRoomVersions().stream().filter(examRoom -> !examRoom.getRoomNumber().equals(initialPlannedRoom)).findAny()
+                .orElseThrow();
+
+        ReseatInformationDTO reseatInformation = new ReseatInformationDTO(anyExamUser.getId(), roomToDistributeTo.getRoomNumber(), null);
+        request.postWithoutResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/reseat-student", reseatInformation, HttpStatus.OK);
+
+        anyExamUser = examUserRepository.findById(anyExamUser.getId()).orElseThrow();  // refresh exam user
+
+        assertThat(anyExamUser.getPlannedRoom()).isEqualTo(roomToDistributeTo.getRoomNumber());
+        assertThat(anyExamUser.getPlannedSeat()).isNotBlank();
     }
 }

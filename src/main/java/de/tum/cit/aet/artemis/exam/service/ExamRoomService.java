@@ -13,6 +13,8 @@ import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import jakarta.validation.constraints.NotBlank;
+
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -441,7 +443,7 @@ public class ExamRoomService {
      *                            {@link SeatCondition#USABLE}, if false no filtering is performed
      * @return List of rows (sorted) of seats (sorted)
      */
-    private static List<List<ExamSeatDTO>> getSortedRowsWithSortedSeats(ExamRoom examRoom, boolean onlyUsableSeats) {
+    public static List<List<ExamSeatDTO>> getSortedRowsWithSortedSeats(ExamRoom examRoom, boolean onlyUsableSeats) {
         List<ExamSeatDTO> examSeats = examRoom.getSeats();
         if (onlyUsableSeats) {
             examSeats = examSeats.stream().filter(examSeatDTO -> examSeatDTO.seatCondition() == SeatCondition.USABLE).toList();
@@ -566,6 +568,10 @@ public class ExamRoomService {
      */
     public boolean allRoomsExistAndAreNewestVersions(Set<Long> examRoomIds) {
         return examRoomRepository.findAllIdsOfCurrentExamRooms().containsAll(examRoomIds);
+    }
+
+    public boolean isRoomPersisted(@NotBlank String roomNumber) {
+        return !examRoomRepository.findAllByRoomNumber(roomNumber).isEmpty();
     }
 
 }

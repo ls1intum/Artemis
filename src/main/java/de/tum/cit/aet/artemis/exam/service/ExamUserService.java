@@ -29,6 +29,7 @@ import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.ImageDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.FileService;
@@ -248,5 +249,10 @@ public class ExamUserService {
      */
     public void setActualRoomAndSeatTransientForExamUsers(Set<ExamUser> examUsers) {
         setRoomAndSeatTransientForExamUsers(examUsers, ExamUser::getActualRoom, ExamUser::getActualSeat, ExamUser::setTransientActualRoomAndSeat);
+    }
+
+    public void checkExamUserExistsAndBelongsToExamElseThrow(long examUserId, long examId) {
+        examUserRepository.findWithExamById(examUserId).filter(examUser -> examUser.getExam().getId() == examId)
+                .orElseThrow(() -> new EntityNotFoundException("Exam user with id: " + examUserId + " does not exist in exam with id: " + examId));
     }
 }
