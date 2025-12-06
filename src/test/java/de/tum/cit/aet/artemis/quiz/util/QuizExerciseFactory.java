@@ -82,7 +82,6 @@ public class QuizExerciseFactory {
         quizExercise.setProblemStatement(null);
         quizExercise.setGradingInstructions(null);
         quizExercise.setPresentationScoreEnabled(false);
-        quizExercise.setIsOpenForPractice(false);
         quizExercise.setAllowedNumberOfAttempts(1);
         quizExercise.setDuration(duration);
         quizExercise.setRandomizeQuestionOrder(true);
@@ -304,7 +303,6 @@ public class QuizExerciseFactory {
         quizExercise.setProblemStatement(null);
         quizExercise.setGradingInstructions(null);
         quizExercise.setPresentationScoreEnabled(false);
-        quizExercise.setIsOpenForPractice(false);
         quizExercise.setAllowedNumberOfAttempts(1);
         quizExercise.setDuration(120);
         quizExercise.setRandomizeQuestionOrder(true);
@@ -414,7 +412,6 @@ public class QuizExerciseFactory {
         quizExercise.setProblemStatement(null);
         quizExercise.setGradingInstructions(null);
         quizExercise.setPresentationScoreEnabled(false);
-        quizExercise.setIsOpenForPractice(false);
         quizExercise.setAllowedNumberOfAttempts(1);
         quizExercise.setDuration(10);
         quizExercise.setQuizPointStatistic(new QuizPointStatistic());

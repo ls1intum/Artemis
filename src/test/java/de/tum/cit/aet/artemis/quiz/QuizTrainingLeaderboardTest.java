@@ -209,7 +209,7 @@ class QuizTrainingLeaderboardTest extends AbstractSpringIntegrationIndependentTe
 
         QuizExercise quizExercise = new QuizExercise();
         quizExercise.setCourse(course);
-        quizExercise.setIsOpenForPractice(true);
+        quizExercise.setDueDate(ZonedDateTime.now().minusDays(1));
         quizExerciseRepository.save(quizExercise);
         QuizQuestion question1 = new MultipleChoiceQuestion();
         QuizQuestion question2 = new MultipleChoiceQuestion();
