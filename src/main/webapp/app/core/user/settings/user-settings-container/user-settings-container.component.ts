@@ -9,6 +9,7 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { tap } from 'rxjs';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ExternalDataGuard } from 'app/core/user/settings/external-data.guard';
+import { InternalDataGuard } from 'app/core/user/settings/internal-data.guard';
 
 /**
  * UserSettingsContainerComponent serves as the common ground for different settings
@@ -25,17 +26,21 @@ export class UserSettingsContainerComponent implements OnInit {
     private readonly profileService = inject(ProfileService);
     private readonly accountService = inject(AccountService);
     private readonly externalDataGuard = inject(ExternalDataGuard);
+    private readonly internalDataGuard = inject(InternalDataGuard);
 
     currentUser?: User;
 
     isPasskeyEnabled = false;
     isAtLeastTutor = false;
     isUsingExternalLLM = false;
+    isUsingInternalLLM = false;
 
     ngOnInit() {
         this.isPasskeyEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_PASSKEY);
 
         this.isUsingExternalLLM = this.externalDataGuard.isUsingExternalLLM();
+
+        this.isUsingInternalLLM = this.internalDataGuard.isUsingInternalLLM();
 
         this.accountService
             .getAuthenticationState()

@@ -49,6 +49,14 @@ const routes: Routes = [
         },
     },
     {
+        path: 'llm-selection',
+        loadComponent: () => import('./logos/llm-selection-info.component').then((m) => m.LlmSelectionInfoComponent),
+        data: {
+            pageTitle: 'artemisApp.llmSelectionInfo.pageTitle',
+            usesModuleBackground: true,
+        },
+    },
+    {
         path: 'privacy/data-exports',
         loadComponent: () => import('app/core/legal/data-export/data-export.component').then((m) => m.DataExportComponent),
         data: {
