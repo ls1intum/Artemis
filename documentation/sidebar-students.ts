@@ -7,6 +7,8 @@ const sidebars: SidebarsConfig = {
         'assessment',
         'quiz-training',
         'calendar',
+        'faq',
+        'tutorial-groups',
         'plagiarism-check',
     ],
 };
