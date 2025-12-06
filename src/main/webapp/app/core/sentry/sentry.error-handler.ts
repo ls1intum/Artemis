@@ -76,7 +76,7 @@ export class SentryErrorHandler extends ErrorHandler {
     }
 
     private isSameDay(firstDay: Date, secondDay: Date): boolean {
-        return (firstDay.getFullYear() === secondDay.getFullYear() && firstDay.getMonth() === secondDay.getMonth() && firstDay.getDate() === secondDay.getDate());
+        return firstDay.getFullYear() === secondDay.getFullYear() && firstDay.getMonth() === secondDay.getMonth() && firstDay.getDate() === secondDay.getDate();
     }
 
     private hasBeenReportedToday() {
@@ -98,8 +98,7 @@ export class SentryErrorHandler extends ErrorHandler {
             }
 
             this.localStorageService.store<Date>('webauthnNotSupportedTimestamp', new Date());
-            captureException(
-                new Error('Browser does not support WebAuthn - no Passkey authentication possible'), {
+            captureException(new Error('Browser does not support WebAuthn - no Passkey authentication possible'), {
                 tags: {
                     feature: 'Passkey Authentication',
                     browser: navigator.userAgent,
