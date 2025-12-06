@@ -18,6 +18,10 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
+import { faCircleExclamation, faCircleInfo, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
+import { ArtifactLocation } from 'app/openapi/model/artifactLocation';
+import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
+import { fakeAsync, tick } from '@angular/core/testing';
 
 describe('CodeEditorInstructorAndEditorContainerComponent', () => {
     let fixture: ComponentFixture<CodeEditorInstructorAndEditorContainerComponent>;
@@ -25,6 +29,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
     let artemisIntelligenceService: ArtemisIntelligenceService;
     let consistencyCheckService: ConsistencyCheckService;
     let alertService: AlertService;
+    let translateService: TranslateService;
 
     const course = { id: 123, exercises: [] } as Course;
     const programmingExercise = new ProgrammingExercise(course, undefined);
@@ -32,6 +37,92 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
     const error1 = new ConsistencyCheckError();
     error1.programmingExercise = programmingExercise;
     error1.type = ErrorType.TEMPLATE_BUILD_PLAN_MISSING;
+
+    const mockIssues: ConsistencyIssue[] = [
+        {
+            severity: ConsistencyIssue.SeverityEnum.High,
+            category: ConsistencyIssue.CategoryEnum.ConstructorParameterMismatch,
+            description: 'Problem statement inconsistency',
+            suggestedFix: 'Review the problem statement file.',
+            relatedLocations: [
+                {
+                    type: ArtifactLocation.TypeEnum.ProblemStatement,
+                    filePath: 'problem_statement.md',
+                    startLine: 1,
+                    endLine: 42,
+                },
+            ],
+        },
+        {
+            severity: ConsistencyIssue.SeverityEnum.Medium,
+            category: ConsistencyIssue.CategoryEnum.MethodParameterMismatch,
+            description: 'Template repository issue',
+            suggestedFix: 'Fix template repository references.',
+            relatedLocations: [
+                {
+                    type: ArtifactLocation.TypeEnum.TemplateRepository,
+                    filePath: 'src/template/Example.java',
+                    startLine: 5,
+                    endLine: 50,
+                },
+            ],
+        },
+        {
+            severity: ConsistencyIssue.SeverityEnum.Medium,
+            category: ConsistencyIssue.CategoryEnum.AttributeTypeMismatch,
+            description: 'Solution repository issue',
+            suggestedFix: 'Fix solution repository references.',
+            relatedLocations: [
+                {
+                    type: ArtifactLocation.TypeEnum.SolutionRepository,
+                    filePath: 'src/solution/Solution.java',
+                    startLine: 3,
+                    endLine: 60,
+                },
+            ],
+        },
+        {
+            severity: ConsistencyIssue.SeverityEnum.Low,
+            category: ConsistencyIssue.CategoryEnum.IdentifierNamingInconsistency,
+            description: 'Tests repository issue',
+            suggestedFix: 'Adjust tests in test repository.',
+            relatedLocations: [
+                {
+                    type: ArtifactLocation.TypeEnum.TestsRepository,
+                    filePath: 'src/tests/ExampleTest.java',
+                    startLine: 10,
+                    endLine: 70,
+                },
+            ],
+        },
+        {
+            // A multi-location issue for testing next/previous navigation
+            severity: ConsistencyIssue.SeverityEnum.High,
+            category: ConsistencyIssue.CategoryEnum.VisibilityMismatch,
+            description: 'Multi-location navigation test issue',
+            suggestedFix: 'Resolve inconsistencies across artifacts.',
+            relatedLocations: [
+                {
+                    type: ArtifactLocation.TypeEnum.TestsRepository,
+                    filePath: 'src/template/A.java',
+                    startLine: 10,
+                    endLine: 20,
+                },
+                {
+                    type: ArtifactLocation.TypeEnum.TestsRepository,
+                    filePath: 'src/template/B.java',
+                    startLine: 30,
+                    endLine: 40,
+                },
+                {
+                    type: ArtifactLocation.TypeEnum.SolutionRepository,
+                    filePath: 'src/template/C.java',
+                    startLine: 50,
+                    endLine: 60,
+                },
+            ],
+        },
+    ];
 
     beforeEach(waitForAsync(async () => {
         await TestBed.configureTestingModule({
@@ -57,6 +148,23 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
         artemisIntelligenceService = TestBed.inject(ArtemisIntelligenceService);
         consistencyCheckService = TestBed.inject(ConsistencyCheckService);
         alertService = TestBed.inject(AlertService);
+        translateService = TestBed.inject(TranslateService);
+
+        (comp as any).codeEditorContainer = {
+            selectedFile: undefined as string | undefined,
+            selectedRepository: jest.fn().mockReturnValue('SOLUTION'),
+            problemStatementIdentifier: 'problem_statement.md',
+        };
+
+        (comp as any).editableInstructions = {
+            jumpToLine: jest.fn(),
+        };
+
+        comp.fileLoad = jest.fn();
+
+        comp.selectTemplateParticipation = jest.fn().mockResolvedValue(undefined);
+        comp.selectSolutionParticipation = jest.fn().mockResolvedValue(undefined);
+        comp.selectTestRepository = jest.fn().mockResolvedValue(undefined);
     }));
 
     afterEach(() => {
@@ -108,5 +216,90 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
 
         (artemisIntelligenceService as any).isLoading = () => false;
         expect(comp.isCheckingConsistency()).toBeFalse();
+    });
+
+    it('returns right icon', () => {
+        expect(comp.getSeverityIcon('HIGH')).toBe(faCircleExclamation);
+        expect(comp.getSeverityIcon('MEDIUM')).toBe(faTriangleExclamation);
+        expect(comp.getSeverityIcon('LOW')).toBe(faCircleInfo);
+        expect(comp.getSeverityIcon(undefined as any)).toBe(faCircleInfo);
+    });
+
+    it('returns right color', () => {
+        expect(comp.getSeverityColor('HIGH')).toBe('text-danger');
+        expect(comp.getSeverityColor('MEDIUM')).toBe('text-warning');
+        expect(comp.getSeverityColor('LOW')).toBe('text-info');
+        expect(comp.getSeverityColor(undefined as any)).toBe('text-secondary');
+    });
+
+    it('sets selectedIssue and locationIndex correctly for new issue with deltaIndex = 1', fakeAsync(() => {
+        const issue = mockIssues[4]; // multi-location issue
+
+        comp.selectedIssue = undefined;
+        comp.locationIndex = 0;
+
+        comp.onIssueNavigate(issue, 1, new Event('click'));
+        tick();
+
+        expect(comp.selectedIssue).toBe(issue);
+        expect(comp.locationIndex).toBe(0);
+    }));
+
+    it('cycles through relatedLocations and wraps around for same selected issue', fakeAsync(() => {
+        const issue = mockIssues[4]; // multi-location
+        (comp as any).codeEditorContainer.selectedRepository = jest.fn().mockReturnValue('TEMPLATE'); // no repo switching
+
+        comp.selectedIssue = issue;
+        comp.locationIndex = 0;
+
+        // forward
+        comp.onIssueNavigate(issue, 1, new Event('click'));
+        tick();
+        expect(comp.locationIndex).toBe(1);
+
+        // forward (wrap to 0)
+        comp.onIssueNavigate(issue, 1, new Event('click'));
+        tick();
+        expect(comp.locationIndex).toBe(2);
+
+        // backward (wrap to last)
+        comp.onIssueNavigate(issue, 1, new Event('click'));
+        tick();
+        expect(comp.locationIndex).toBe(0);
+    }));
+
+    it('navigates to PROBLEM_STATEMENT and calls jumpToLine without scheduling file load state', fakeAsync(() => {
+        const issue = mockIssues[0]; // PROBLEM_STATEMENT
+        const loc = issue.relatedLocations[0];
+
+        const jumpToLineSpy = jest.spyOn((comp as any).editableInstructions, 'jumpToLine');
+
+        comp.onIssueNavigate(issue, 1, new Event('click'));
+        tick();
+
+        expect((comp as any).codeEditorContainer.selectedFile).toBe((comp as any).codeEditorContainer.problemStatementIdentifier);
+        expect(jumpToLineSpy).toHaveBeenCalledWith(loc.endLine);
+
+        // early return: no jump state set
+        expect(comp.lineJumpOnFileLoad).toBeUndefined();
+        expect(comp.fileToJumpOn).toBeUndefined();
+    }));
+
+    it('shows error and clears jump state when repository selection fails', async () => {
+        const issue = mockIssues[3]; // TESTS_REPOSITORY
+
+        (comp as any).codeEditorContainer.selectedRepository = jest.fn().mockReturnValue('SOLUTION');
+
+        const error = new Error('repo selection failed');
+        jest.spyOn(comp, 'selectTestRepository').mockRejectedValue(error);
+
+        const alertErrorSpy = jest.spyOn(alertService, 'error');
+        const translateSpy = jest.spyOn(translateService, 'instant');
+
+        // This awaits the async method so the rejection is handled
+        await comp.onIssueNavigate(issue, 1, new Event('click'));
+
+        expect(translateSpy).toHaveBeenCalledWith('artemisApp.hyperion.consistencyCheck.navigationFailed');
+        expect(alertErrorSpy).toHaveBeenCalled();
     });
 });
