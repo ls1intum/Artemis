@@ -84,7 +84,7 @@
                     "placeholder": "G1 Mo {{ from }}-{{ to }}",
                     "requiredValidationError": "Title is required!",
                     "maxLengthValidationError": "Title can be max {{ max }} characters long!",
-                    "regexValidationError": "Titles can only contain letters, numbers, spaces and dashes."
+                    "regexValidationError": "Titles can only contain letters, numbers, spaces, colons and dashes."
                 },
                 "updateChannelNameInput": {
                     "label": "Update Channel Name",
