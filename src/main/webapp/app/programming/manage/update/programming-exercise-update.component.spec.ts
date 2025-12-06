@@ -1,9 +1,11 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpErrorResponse, HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router, UrlSegment, convertToParamMap } from '@angular/router';
+import { ValidationReason } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { WindFile } from 'app/programming/shared/entities/wind.file';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { WebsocketService } from 'app/shared/service/websocket.service';
 import { Subject, of, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
@@ -44,6 +46,7 @@ import { ProfileInfo, ProgrammingLanguageFeature } from 'app/core/layouts/profil
 import { signal } from '@angular/core';
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { ProgrammingExerciseSharingService } from '../services/programming-exercise-sharing.service';
 
 describe('ProgrammingExerciseUpdateComponent', () => {
@@ -79,6 +82,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 SessionStorageService,
                 { provide: ProfileService, useClass: MockProfileService },
+                { provide: WebsocketService, useClass: MockWebsocketService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 MockProvider(CalendarService),
@@ -1105,7 +1109,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                     translateValues: {},
                 },
             ],
-        ])('%s', (description, profileInfo, expectedException) => {
+        ])('%s', (description: string, profileInfo: ProfileInfo, expectedException: ValidationReason) => {
             const newProfileInfo = new ProfileInfo();
             newProfileInfo.activeProfiles = profileInfo.activeProfiles;
             jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(newProfileInfo);

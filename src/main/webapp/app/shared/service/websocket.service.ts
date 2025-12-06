@@ -60,6 +60,13 @@ export interface IWebsocketService {
     connect(): void;
 
     /**
+     * Check whether the WebSocket/STOMP connection is currently established.
+     *
+     * @returns `true` if the connection is active; otherwise, `false`.
+     */
+    isConnected(): boolean;
+
+    /**
      * Close the WebSocket/STOMP connection.
      *
      * This method:
@@ -186,24 +193,14 @@ export class ConnectionState {
     readonly wasEverConnectedBefore: boolean;
 
     /**
-     * Indicates whether the current disconnected state is intentional.
-     *
-     * Typically `true` after an explicit call to {@link WebsocketService.disconnect}
-     * and `false` when the connection has dropped unexpectedly (e.g. network issues).
-     */
-    readonly intendedDisconnect: boolean;
-
-    /**
      * Create a new {@link ConnectionState} instance.
      *
      * @param connected Whether the WebSocket/STOMP connection is currently active.
      * @param wasEverConnectedBefore Whether a successful connection has been established at least once.
-     * @param intendedDisconnect Whether the current disconnected state is intentional.
      */
-    constructor(connected: boolean, wasEverConnectedBefore: boolean, intendedDisconnect: boolean) {
+    constructor(connected: boolean, wasEverConnectedBefore: boolean) {
         this.connected = connected;
         this.wasEverConnectedBefore = wasEverConnectedBefore;
-        this.intendedDisconnect = intendedDisconnect;
     }
 }
 
@@ -258,10 +255,9 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
      * The initial connection state is:
      * - `connected = false`
      * - `wasEverConnectedBefore = false`
-     * - `intendedDisconnect = true` (no connection has been attempted yet)
      */
     constructor() {
-        this.connectionStateInternal = new BehaviorSubject<ConnectionState>(new ConnectionState(false, false, true));
+        this.connectionStateInternal = new BehaviorSubject<ConnectionState>(new ConnectionState(false, false));
     }
 
     /**
@@ -292,7 +288,7 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
      *   completion. Consumers who need to react to connection establishment
      *   should subscribe to {@link connectionState}.
      */
-    connect() {
+    connect(): void {
         if (this.rxStomp) {
             void this.rxStomp.deactivate();
         }
@@ -317,7 +313,7 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
         rawClient.onConnect = () => {
             // check if a session id is part of the frame, otherwise use a random string
             if (!this.connectionStateInternal.getValue().connected) {
-                this.connectionStateInternal.next(new ConnectionState(true, false, false));
+                this.connectionStateInternal.next(new ConnectionState(true, false));
             }
         };
         this.rxStomp.activate();
@@ -425,12 +421,12 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
      * calls will behave as if no connection exists. A subsequent call to
      * {@link connect} or a lazy `subscribe` will create a new connection.
      */
-    disconnect() {
+    disconnect(): void {
         if (this.rxStomp) {
             void this.rxStomp.deactivate();
             this.rxStomp = undefined;
-            if (this.connectionStateInternal.getValue().connected || !this.connectionStateInternal.getValue().intendedDisconnect) {
-                this.connectionStateInternal.next(new ConnectionState(false, false, true));
+            if (this.connectionStateInternal.getValue().connected) {
+                this.connectionStateInternal.next(new ConnectionState(false, false));
             }
         }
     }

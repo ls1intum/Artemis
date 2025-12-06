@@ -76,7 +76,7 @@ describe('WebsocketService', () => {
         expect(rxStomp.activate).toHaveBeenCalled();
 
         rxStomp.stompClient.onConnect?.();
-        expect(states.at(-1)).toEqual(new ConnectionState(true, false, false));
+        expect(states.at(-1)).toEqual(new ConnectionState(true, false));
     });
 
     it('disconnects gracefully and updates connection state', () => {
@@ -91,7 +91,7 @@ describe('WebsocketService', () => {
 
         expect(rxStomp.deactivate).toHaveBeenCalled();
         expect((websocketService as any).rxStomp).toBeUndefined();
-        expect(latestState).toEqual(new ConnectionState(false, false, true));
+        expect(latestState).toEqual(new ConnectionState(false, false));
     });
 
     it('reports connection status via isConnected', () => {

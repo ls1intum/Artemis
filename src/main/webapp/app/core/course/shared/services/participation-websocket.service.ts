@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { BehaviorSubject, of, pipe } from 'rxjs';
+import { BehaviorSubject, Subscription, of, pipe } from 'rxjs';
 import { switchMap, tap } from 'rxjs/operators';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
@@ -30,8 +30,8 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
     private participationService = inject(ParticipationService);
 
     cachedParticipations: Map<number /* ID of participation */, StudentParticipation> = new Map<number, StudentParticipation>();
-    openResultWebsocketSubscriptions: Map<number /*ID of participation */, string /* url of websocket connection */> = new Map<number, string>();
-    openPersonalWebsocketSubscription?: string; /* url of websocket connection */
+    openResultWebsocketSubscriptions: Map<number /* ID of participation */, Subscription> = new Map<number, Subscription>();
+    openPersonalWebsocketSubscription?: Subscription;
     resultObservables: Map<number /* ID of participation */, BehaviorSubject<Result | undefined>> = new Map<number, BehaviorSubject<Result>>();
     participationObservable?: BehaviorSubject<Participation | undefined>;
     subscribedExercises: Map<number /* ID of exercise */, Set<number> /* IDs of the participations of this exercise */> = new Map<number, Set<number>>();
@@ -160,7 +160,7 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
                 // The subscription was a personal subscription, so it should only be removed if it was the last of it kind
                 const openPersonalSubscriptions = [...this.participationSubscriptionTypes.values()].filter((personal: boolean) => personal).length;
                 if (openPersonalSubscriptions === 0) {
-                    this.websocketService.unsubscribe(PERSONAL_PARTICIPATION_TOPIC);
+                    this.openPersonalWebsocketSubscription?.unsubscribe();
                     this.openPersonalWebsocketSubscription = undefined;
                 }
             } else {
@@ -170,9 +170,9 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
                     openSubscriptionsForExercise.delete(participationId);
                     if (openSubscriptionsForExercise.size === 0) {
                         this.subscribedExercises.delete(exerciseId!);
-                        const subscribedTopic = this.openResultWebsocketSubscriptions.get(exerciseId!);
-                        if (subscribedTopic) {
-                            this.websocketService.unsubscribe(subscribedTopic);
+                        const subscription = this.openResultWebsocketSubscriptions.get(exerciseId!);
+                        if (subscription) {
+                            subscription.unsubscribe();
                             this.openResultWebsocketSubscriptions.delete(exerciseId!);
                         }
                     }
@@ -194,10 +194,8 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
             let participationResultTopic: string;
             if (personal) {
                 participationResultTopic = PERSONAL_PARTICIPATION_TOPIC;
-                this.openPersonalWebsocketSubscription = participationResultTopic;
             } else {
                 participationResultTopic = EXERCISE_PARTICIPATION_TOPIC(exerciseId!);
-                this.openResultWebsocketSubscriptions.set(exerciseId!, participationResultTopic);
             }
             this.participationSubscriptionTypes.set(participationId, personal);
             if (!this.subscribedExercises.has(exerciseId!)) {
@@ -206,8 +204,12 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
             const subscribedParticipations = this.subscribedExercises.get(exerciseId!);
             subscribedParticipations!.add(participationId);
 
-            this.websocketService.subscribe(participationResultTopic);
-            this.websocketService.receive(participationResultTopic).pipe(this.getNotifyAllSubscribersPipe()).subscribe();
+            const subscription = this.websocketService.subscribe<Result>(participationResultTopic).pipe(this.getNotifyAllSubscribersPipe()).subscribe();
+            if (personal) {
+                this.openPersonalWebsocketSubscription = subscription;
+            } else {
+                this.openResultWebsocketSubscriptions.set(exerciseId!, subscription);
+            }
         }
     }
 
