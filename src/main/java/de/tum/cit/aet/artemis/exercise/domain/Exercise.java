@@ -847,16 +847,17 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
 
     /**
      * Validates score settings
-     * 1. The maxScore needs to be greater than 0
+     * 1. The maxScore needs to be greater than 0. If maxScore is null or <= 0, it is set to the default value 1.0.
      * 2. If the specified amount of bonus points is valid depending on the IncludedInOverallScore value
      */
     public void validateScoreSettings() {
         // Check if max score is set
         if (getMaxPoints() == null || getMaxPoints() <= 0) {
-            throw new BadRequestAlertException("The max points needs to be greater than 0", "Exercise", "maxScoreInvalid");
+            // make sure the default value is set properly
+            setMaxPoints(1.0);
         }
 
-        if (getBonusPoints() == null) {
+        if (getBonusPoints() == null || getBonusPoints() < 0) {
             // make sure the default value is set properly
             setBonusPoints(0.0);
         }
