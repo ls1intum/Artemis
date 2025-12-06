@@ -534,7 +534,17 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                 const latestResult = findLatestResult(getAllResultsOfAllSubmissions(participation.submissions));
                 const isPendingSubmission = !!latestSubmission && (!latestResult || (latestResult.submission && latestResult.submission.id !== latestSubmission.id));
                 // This needs to be done to clear the cache if exists and to prepare the subject for the later notification of the subscribers.
-                this.submissionSubjects[participation.id!] = new BehaviorSubject<ProgrammingSubmissionStateObj | undefined>(undefined);
+                // Update: Clearing the cache by creating a new Subject leaves older subscribers hanging. They will never receive an update anymore.
+                // A better approach is to keep the old subject and just emit the new value once processed and "clear" the cache by emitting undefined first.
+                const participationId = participation.id!;
+                if (!this.submissionSubjects[participationId]) {
+                    // First-time initialization: create the subject
+                    this.submissionSubjects[participationId] = new BehaviorSubject<ProgrammingSubmissionStateObj | undefined>(undefined);
+                } else {
+                    // “Clear cache”: reset cached value to undefined
+                    this.submissionSubjects[participationId].next(undefined);
+                }
+
                 this.processPendingSubmission(isPendingSubmission ? latestSubmission : undefined, participation.id!, exercise.id!, true).subscribe();
             });
     }

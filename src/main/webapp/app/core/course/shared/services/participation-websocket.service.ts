@@ -29,6 +29,13 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
     private websocketService = inject(WebsocketService);
     private participationService = inject(ParticipationService);
 
+    private static nextInstanceId = 1;
+    private instanceId = ParticipationWebsocketService.nextInstanceId++;
+
+    constructor() {
+        this.logDebug('[ParticipationWS] ctor, instanceId =', { instanceID: this.instanceId });
+    }
+
     cachedParticipations: Map<number /* ID of participation */, StudentParticipation> = new Map<number, StudentParticipation>();
     openResultWebsocketSubscriptions: Map<number /*ID of participation */, string /* url of websocket connection */> = new Map<number, string>();
     openPersonalWebsocketSubscription?: string; /* url of websocket connection */
@@ -37,8 +44,52 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
     subscribedExercises: Map<number /* ID of exercise */, Set<number> /* IDs of the participations of this exercise */> = new Map<number, Set<number>>();
     participationSubscriptionTypes: Map<number /* ID of participation */, boolean /* Whether the participation was subscribed in personal mode */> = new Map<number, boolean>();
 
+    private logDebug(event: string, payload: Record<string, unknown> = {}) {
+        if (typeof window === 'undefined') {
+            return;
+        }
+        if (typeof (globalThis as any).jest !== 'undefined') {
+            return;
+        }
+
+        const w = window as any;
+        w.__artemisDebug = w.__artemisDebug || {};
+        w.__artemisDebug.participationWS = w.__artemisDebug.participationWS || [];
+
+        w.__artemisDebug.participationWS.push({
+            ts: new Date().toISOString(),
+            instanceId: this.instanceId,
+            event,
+            ...payload,
+        });
+    }
+
     private getNotifyAllSubscribersPipe = () => {
-        return pipe(tap(this.notifyResultSubscribers), switchMap(this.addResultToParticipation), tap(this.notifyParticipationSubscribers));
+        return pipe(
+            tap((result: Result) => {
+                this.logDebug('[WS] new result from server', {
+                    resultId: result.id,
+                    participationId: result.submission?.participation?.id,
+                    exerciseId: result.submission?.participation?.exercise?.id,
+                });
+            }),
+            tap(this.notifyResultSubscribers),
+            switchMap(this.addResultToParticipation),
+            tap((participation: Participation | undefined) => {
+                if (participation) {
+                    this.logDebug('[WS] participation updated in cache', {
+                        participationId: participation.id,
+                        exerciseId: participation.exercise?.id,
+                        totalSubmissions: participation.submissions?.length,
+                        totalResultsFromSubmissions: participation.submissions?.flatMap((s) => s.results ?? []).length,
+                        flatResultsField: (participation as any).results?.length,
+                    });
+                } else {
+                    this.logDebug('[WS] no cached participation found for result');
+                }
+            }),
+            tap(this.notifyParticipationSubscribers),
+        );
     };
 
     /**
@@ -62,6 +113,11 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      * @param participation
      */
     private notifyParticipationSubscribers = (participation: Participation) => {
+        this.logDebug('[ParticipationWS] notifyParticipationSubscribers', {
+            instanceId: this.instanceId,
+            participationId: participation.id,
+            exerciseId: participation.exercise?.id,
+        });
         if (!this.participationObservable) {
             this.participationObservable = new BehaviorSubject(participation);
         } else {
@@ -89,16 +145,67 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      * @param result
      */
     private addResultToParticipation = (result: Result) => {
-        const cachedParticipation = this.cachedParticipations.get(result.submission!.participation!.id!);
-        if (cachedParticipation) {
-            // update the results with the new received one by filtering the old result
-            const updatedResults = [...getAllResultsOfAllSubmissions(cachedParticipation.submissions)].filter((r) => r.id !== result.id);
-            updatedResults.push(result);
-            // create a clone
-            this.cachedParticipations.set(result.submission!.participation!.id!, { ...cachedParticipation, results: updatedResults } as StudentParticipation);
-            return of(this.cachedParticipations.get(result.submission!.participation!.id!));
+        const participationId = result.submission!.participation!.id!;
+        const cachedParticipation = this.cachedParticipations.get(participationId);
+
+        if (!cachedParticipation) {
+            this.logDebug('[addResultToParticipation] no cached participation for', { participationId });
+            return of();
         }
-        return of();
+
+        const originalSubmissions = cachedParticipation.submissions ?? [];
+        const submissionId = result.submission!.id;
+        let foundMatchingSubmission = false;
+
+        let updatedSubmissions = originalSubmissions.map((submission) => {
+            if (submission.id !== submissionId) {
+                return submission;
+            }
+
+            foundMatchingSubmission = true;
+            const oldResults = submission.results ?? [];
+            const withoutOld = oldResults.filter((r) => r.id !== result.id);
+            const newResults = [...withoutOld, result];
+
+            this.logDebug('[addResultToParticipation] updating submission', {
+                participationId,
+                submissionId,
+                oldResultsCount: oldResults.length,
+                newResultsCount: newResults.length,
+                newResultId: result.id,
+            });
+
+            return {
+                ...submission,
+                results: newResults,
+            };
+        });
+
+        if (!foundMatchingSubmission && result.submission) {
+            result.submission.participation = cachedParticipation;
+            updatedSubmissions = [...updatedSubmissions, result.submission];
+
+            this.logDebug('[addResultToParticipation] appended new submission from result', {
+                participationId,
+                submissionIdFromResult: submissionId,
+            });
+        }
+
+        const allResults = getAllResultsOfAllSubmissions(updatedSubmissions);
+
+        this.logDebug('[addResultToParticipation] after update', {
+            participationId,
+            submissionsCount: updatedSubmissions.length,
+            totalResultsFromSubmissions: allResults.length,
+        });
+
+        this.cachedParticipations.set(participationId, {
+            ...cachedParticipation,
+            submissions: updatedSubmissions,
+            results: allResults,
+        } as StudentParticipation);
+
+        return of(this.cachedParticipations.get(participationId));
     };
 
     /**
@@ -229,7 +336,10 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      */
     public subscribeForParticipationChanges(): BehaviorSubject<Participation | undefined> {
         if (!this.participationObservable) {
+            this.logDebug('[ParticipationWS] create participationObservable', { instanceId: this.instanceId });
             this.participationObservable = new BehaviorSubject<Participation | undefined>(undefined);
+        } else {
+            this.logDebug('[ParticipationWS] reuse participationObservable', { instanceId: this.instanceId });
         }
         return this.participationObservable;
     }
@@ -245,6 +355,12 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      * @param exerciseId optional exerciseId of the exercise where the participation is part of, only needed if personal == false
      */
     public subscribeForLatestResultOfParticipation(participationId: number, personal: boolean, exerciseId?: number): BehaviorSubject<Result | undefined> {
+        this.logDebug('[ParticipationWS] subscribeForLatestResultOfParticipation', {
+            participationId,
+            personal,
+            exerciseId,
+            hasExistingSubject: this.resultObservables.has(participationId),
+        });
         this.openResultWebsocketSubscriptionIfNotExisting(participationId, personal, exerciseId);
         let resultObservable = this.resultObservables.get(participationId)!;
         if (!resultObservable) {
