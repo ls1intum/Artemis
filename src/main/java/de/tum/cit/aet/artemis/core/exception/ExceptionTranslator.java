@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.ConcurrencyFailureException;
 import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
@@ -172,6 +173,30 @@ public class ExceptionTranslator implements ProblemHandling, SecurityAdviceTrait
     public ResponseEntity<Problem> handleResourceNotFoundException(NoResourceFoundException ex, NativeWebRequest request) {
         final var problem = Problem.builder().withStatus(Status.NOT_FOUND).withDetail(ex.getMessage()).build();
         return create(ex, problem, request);
+    }
+
+    /**
+     * Handles {@link RateLimitExceededException} exceptions that occur when a client
+     * exceeds the configured rate limit for API requests.
+     *
+     * <p>
+     * This method constructs an HTTP response with status code {@code 429 (Too Many Requests)}.
+     * If the thrown exception specifies a retry delay, the response will include a
+     * {@code Retry-After} header indicating the number of seconds the client should wait
+     * before retrying the request.
+     * </p>
+     *
+     * @param ex the {@link RateLimitExceededException} thrown when the request rate limit is exceeded
+     * @return a {@link ResponseEntity} containing a descriptive message ("Too Many Requests"),
+     *         optional {@code Retry-After} header, and HTTP status {@code 429 (Too Many Requests)}
+     */
+    @ExceptionHandler(RateLimitExceededException.class)
+    public ResponseEntity<String> handle(RateLimitExceededException ex) {
+        HttpHeaders headers = new HttpHeaders();
+        if (ex.getRetryAfterSeconds() > 0) {
+            headers.add("Retry-After", String.valueOf(ex.getRetryAfterSeconds()));
+        }
+        return new ResponseEntity<>("Too Many Requests", headers, HttpStatus.TOO_MANY_REQUESTS);
     }
 
     @ExceptionHandler(PasskeyAuthenticationException.class)
