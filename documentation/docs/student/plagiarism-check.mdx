@@ -1,0 +1,54 @@
+---
+id: plagiarism-check
+title: Plagiarism checks
+sidebar_label: Plagiarism checks
+---
+
+import Image, {ImageSize} from "../../src/components/Image/Image";
+import studentWorkflowImg from './assets/plagiarism-check/student/student-workflow.png';
+import plagiarismCaseNavigationImg from './assets/plagiarism-check/student/plagiarism-case-navigation.png';
+import significantSimilarityButtonImg from './assets/plagiarism-check/student/significant-similarity-button.png';
+import significantSimilarityPlagCaseImg from './assets/plagiarism-check/student/significant-similarity-plagiarism-case.png';
+
+# Plagiarism checks
+
+## Introduction
+
+Artemis allows tutors and exercise instructors to check assignment submissions from students for plagiarism.
+With this feature, different types of assignments can be checked in Artemis, including programming assignments, modeling assignments, and text assignments.
+Plagiarism checks are available for both course and exam exercises.
+
+## Manual Plagiarism Checks
+
+### Students
+
+After the student got a notification that the instructor asked for the statement, he or she has one week to respond.
+The process is visualized in the following diagram.
+
+<Image src={studentWorkflowImg} alt={"student-workflow"} size={ImageSize.large} />
+
+1. Open the notified plagiarism confirmed case via:
+
+a. For course exercises: Course Overview → Course → Exercise → Plagiarism Case / Resolved Plagiarism Case.
+b. For exam exercises: Course Overview → Course → Exams → Exam → Plagiarism Case / Resolved Plagiarism Case.
+
+<Image src={plagiarismCaseNavigationImg} alt={"student-plagiarism-case-navigation"} size={ImageSize.large} />
+
+2. Reply to the message of the instructor.
+3. Wait for the final verdict.
+
+### Students
+
+When a student submits a work for which the CPC identifies significant similarity and creates a plagiarism case, the student receives a notification similar to what is sent when instructors create a classic plagiarism case.
+If the exercise due date has not passed, the student can submit updated work again.
+The CPC will check the submission the following night and will either remove or update the significant similarity plagiarism case based on the results of the check.
+Before the exercise due date, a student cannot see the submissions of other students involved in the significant similarity plagiarism case.
+
+When a significant similarity plagiarism case exists for the latest submission, the student sees a dedicated button redirecting to it:
+<Image src={significantSimilarityButtonImg} alt={"significant-similarity-button"} size={ImageSize.large} />
+
+A significant similarity plagiarism case contains a short message and an overview of similarity in the submission:
+<Image src={significantSimilarityPlagCaseImg} alt={"significant-similarity-plagiarism-case"} size={ImageSize.large} />
+
+In case the exercise due date has passed and student does not agree with the significant similarity plagiarism case,
+the student can dispute the case within the period configured by the instructor.

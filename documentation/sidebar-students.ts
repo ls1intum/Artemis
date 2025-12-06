@@ -9,6 +9,7 @@ const sidebars: SidebarsConfig = {
         'calendar',
         'faq',
         'tutorial-groups',
+        'plagiarism-check',
     ],
 };
 
