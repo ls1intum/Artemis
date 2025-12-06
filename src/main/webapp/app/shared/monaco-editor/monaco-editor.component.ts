@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, ElementRef, OnDestroy, OnInit, Renderer2, ViewEncapsulation, effect, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, NgZone, OnDestroy, OnInit, Renderer2, ViewEncapsulation, effect, inject, input, output } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { MonacoTextEditorAdapter } from 'app/shared/monaco-editor/model/actions/adapter/monaco-text-editor.adapter';
 import { Disposable, EditorPosition, EditorRange, MonacoEditorTextModel } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
@@ -66,6 +66,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     private contentHeightListener?: Disposable;
     private textChangedListener?: Disposable;
     private blurEditorWidgetListener?: Disposable;
+    private focusEditorTextListener?: Disposable;
     private textChangedEmitTimeouts = new Map<string, NodeJS.Timeout>();
     private customBackspaceCommandId: string | undefined;
 
@@ -76,6 +77,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     private readonly translateService = inject(TranslateService);
     private readonly elementRef = inject(ElementRef);
     private readonly monacoEditorService = inject(MonacoEditorService);
+    private readonly ngZone = inject(NgZone);
 
     constructor() {
         /*
@@ -145,27 +147,29 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         });
         resizeObserver.observe(this.monacoEditorContainerElement);
 
-        this.textChangedListener = this._editor.onDidChangeModelContent(() => {
-            this.emitTextChangeEvent();
-        }, this);
+        this.ngZone.runOutsideAngular(() => {
+            this.textChangedListener = this._editor.onDidChangeModelContent(() => {
+                this.ngZone.run(() => this.emitTextChangeEvent());
+            }, this);
 
-        this.contentHeightListener = this._editor.onDidContentSizeChange((event) => {
-            if (event.contentHeightChanged) {
-                this.contentHeightChanged.emit(event.contentHeight + this._editor.getOption(monaco.editor.EditorOption.lineHeight));
-            }
-        });
+            this.contentHeightListener = this._editor.onDidContentSizeChange((event) => {
+                if (event.contentHeightChanged) {
+                    this.ngZone.run(() => this.contentHeightChanged.emit(event.contentHeight + this._editor.getOption(monaco.editor.EditorOption.lineHeight)));
+                }
+            });
 
-        this.blurEditorWidgetListener = this._editor.onDidBlurEditorWidget(() => {
-            // On iOS, the editor does not lose focus when clicking outside of it. This listener ensures that the editor loses focus when the editor widget loses focus.
-            // See https://github.com/microsoft/monaco-editor/issues/307
-            if (getOS() === 'iOS' && document.activeElement && 'blur' in document.activeElement && typeof document.activeElement.blur === 'function') {
-                document.activeElement.blur();
-            }
-            this.onBlurEditor.emit();
-        });
+            this.blurEditorWidgetListener = this._editor.onDidBlurEditorWidget(() => {
+                // On iOS, the editor does not lose focus when clicking outside of it. This listener ensures that the editor loses focus when the editor widget loses focus.
+                // See https://github.com/microsoft/monaco-editor/issues/307
+                if (getOS() === 'iOS' && document.activeElement && 'blur' in document.activeElement && typeof document.activeElement.blur === 'function') {
+                    (document.activeElement as HTMLElement).blur();
+                }
+                this.ngZone.run(() => this.onBlurEditor.emit());
+            });
 
-        this._editor.onDidFocusEditorText(() => {
-            this.registerCustomBackspaceAction(this._editor);
+            this.focusEditorTextListener = this._editor.onDidFocusEditorText(() => {
+                this.ngZone.run(() => this.registerCustomBackspaceAction(this._editor));
+            });
         });
 
         this.registerCustomBackspaceAction(this._editor);
@@ -177,6 +181,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this.textChangedListener?.dispose();
         this.contentHeightListener?.dispose();
         this.blurEditorWidgetListener?.dispose();
+        this.focusEditorTextListener?.dispose();
 
         // Clean up all per-model debounce timeouts
         this.textChangedEmitTimeouts.forEach((timeout) => clearTimeout(timeout));
@@ -198,10 +203,14 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         if (existing) {
             clearTimeout(existing);
         }
-        const timeoutId = setTimeout(() => {
-            this.textChanged.emit({ text: newValue, fileName: fullFilePath });
-            this.textChangedEmitTimeouts.delete(modelKey);
-        }, delay);
+        const timeoutId = this.ngZone.runOutsideAngular(() =>
+            setTimeout(() => {
+                this.ngZone.run(() => {
+                    this.textChanged.emit({ text: newValue, fileName: fullFilePath });
+                    this.textChangedEmitTimeouts.delete(modelKey);
+                });
+            }, delay),
+        );
         this.textChangedEmitTimeouts.set(modelKey, timeoutId);
     }
 
