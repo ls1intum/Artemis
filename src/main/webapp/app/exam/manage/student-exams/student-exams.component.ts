@@ -65,6 +65,7 @@ export class StudentExamsComponent implements OnInit, OnDestroy {
     private accountService = inject(AccountService);
     private artemisTranslatePipe = inject(ArtemisTranslatePipe);
     private websocketService = inject(WebsocketService);
+    private exercisePreparationSubscription?: Subscription;
 
     courseId: number;
     examId: number;
@@ -101,15 +102,14 @@ export class StudentExamsComponent implements OnInit, OnDestroy {
         this.loadAll();
 
         const channel = getWebsocketChannel(this.examId);
-        this.websocketService.subscribe(channel);
-        this.websocketService
-            .receive(channel)
+        this.exercisePreparationSubscription = this.websocketService
+            .subscribe<ExamExerciseStartPreparationStatus>(channel)
             .pipe(tap((status: ExamExerciseStartPreparationStatus) => (status.startedAt = convertDateFromServer(status.startedAt))))
             .subscribe((status: ExamExerciseStartPreparationStatus) => this.setExercisePreparationStatus(status));
     }
 
     ngOnDestroy() {
-        this.websocketService.unsubscribe(getWebsocketChannel(this.examId));
+        this.exercisePreparationSubscription?.unsubscribe();
     }
 
     private loadAll() {

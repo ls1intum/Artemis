@@ -45,7 +45,7 @@ export class IrisStatusService implements OnDestroy {
         }, this.HEARTBEAT_INTERVAL_MS);
 
         this.websocketStatusSubscription = this.websocketService.connectionState.subscribe((status) => {
-            this.disconnected = !status.connected && !status.intendedDisconnect && status.wasEverConnectedBefore;
+            this.disconnected = !status.connected && status.wasEverConnectedBefore;
         });
     }
 

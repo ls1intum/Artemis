@@ -66,7 +66,7 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
     queuedBuildJobs: BuildJob[] = [];
     runningBuildJobs: BuildJob[] = [];
     finishedBuildJobs: FinishedBuildJob[] = [];
-    courseChannels: string[] = [];
+    websocketSubscriptions: Subscription[] = [];
 
     //icons
     readonly faTimes = faTimes;
@@ -132,11 +132,8 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
      * This method is used to unsubscribe from the websocket channels when the component is destroyed.
      */
     ngOnDestroy() {
-        this.websocketService.unsubscribe(`/topic/admin/queued-jobs`);
-        this.websocketService.unsubscribe(`/topic/admin/running-jobs`);
-        this.courseChannels.forEach((channel) => {
-            this.websocketService.unsubscribe(channel);
-        });
+        this.websocketSubscriptions.forEach((subscription) => subscription.unsubscribe());
+        this.websocketSubscriptions = [];
         clearInterval(this.buildDurationInterval);
         if (this.searchSubscription) {
             this.searchSubscription.unsubscribe();
@@ -147,26 +144,32 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
      * This method is used to initialize the websocket subscription for the build jobs. It subscribes to the channels for the queued and running build jobs.
      */
     initWebsocketSubscription() {
+        this.websocketSubscriptions.forEach((subscription) => subscription.unsubscribe());
+        this.websocketSubscriptions = [];
         if (this.courseId) {
-            this.websocketService.subscribe(`/topic/courses/${this.courseId}/queued-jobs`);
-            this.websocketService.subscribe(`/topic/courses/${this.courseId}/running-jobs`);
-            this.websocketService.receive(`/topic/courses/${this.courseId}/queued-jobs`).subscribe((queuedBuildJobs) => {
-                this.queuedBuildJobs = queuedBuildJobs;
-            });
-            this.websocketService.receive(`/topic/courses/${this.courseId}/running-jobs`).subscribe((runningBuildJobs) => {
-                this.runningBuildJobs = this.updateBuildJobDuration(runningBuildJobs);
-            });
-            this.courseChannels.push(`/topic/courses/${this.courseId}/queued-jobs`);
-            this.courseChannels.push(`/topic/courses/${this.courseId}/running-jobs`);
+            const queuedTopic = `/topic/courses/${this.courseId}/queued-jobs`;
+            const runningTopic = `/topic/courses/${this.courseId}/running-jobs`;
+            this.websocketSubscriptions.push(
+                this.websocketService.subscribe<BuildJob[]>(queuedTopic).subscribe((queuedBuildJobs: BuildJob[]) => {
+                    this.queuedBuildJobs = queuedBuildJobs;
+                }),
+            );
+            this.websocketSubscriptions.push(
+                this.websocketService.subscribe<BuildJob[]>(runningTopic).subscribe((runningBuildJobs: BuildJob[]) => {
+                    this.runningBuildJobs = this.updateBuildJobDuration(runningBuildJobs);
+                }),
+            );
         } else {
-            this.websocketService.subscribe(`/topic/admin/queued-jobs`);
-            this.websocketService.subscribe(`/topic/admin/running-jobs`);
-            this.websocketService.receive(`/topic/admin/queued-jobs`).subscribe((queuedBuildJobs) => {
-                this.queuedBuildJobs = queuedBuildJobs;
-            });
-            this.websocketService.receive(`/topic/admin/running-jobs`).subscribe((runningBuildJobs) => {
-                this.runningBuildJobs = this.updateBuildJobDuration(runningBuildJobs);
-            });
+            this.websocketSubscriptions.push(
+                this.websocketService.subscribe<BuildJob[]>(`/topic/admin/queued-jobs`).subscribe((queuedBuildJobs: BuildJob[]) => {
+                    this.queuedBuildJobs = queuedBuildJobs;
+                }),
+            );
+            this.websocketSubscriptions.push(
+                this.websocketService.subscribe<BuildJob[]>(`/topic/admin/running-jobs`).subscribe((runningBuildJobs: BuildJob[]) => {
+                    this.runningBuildJobs = this.updateBuildJobDuration(runningBuildJobs);
+                }),
+            );
         }
     }
 

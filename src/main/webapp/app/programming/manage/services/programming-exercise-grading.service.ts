@@ -1,6 +1,6 @@
 import { Injectable, OnDestroy, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { BehaviorSubject, Observable, of } from 'rxjs';
+import { BehaviorSubject, Observable, Subscription, of } from 'rxjs';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { ProgrammingExerciseTestCase, Visibility } from 'app/programming/shared/entities/programming-exercise-test-case.model';
@@ -52,7 +52,7 @@ export class ProgrammingExerciseGradingService implements IProgrammingExerciseGr
 
     public resourceUrl = 'api/programming/programming-exercises';
 
-    private connections: { [exerciseId: string]: string } = {};
+    private connections: { [exerciseId: string]: Subscription } = {};
     private subjects: { [exerciseId: string]: BehaviorSubject<ProgrammingExerciseTestCase[] | undefined> } = {};
     private testCases: Map<number, ProgrammingExerciseTestCase[]> = new Map();
 
@@ -60,7 +60,7 @@ export class ProgrammingExerciseGradingService implements IProgrammingExerciseGr
      * On destroy unsubscribe all connections.
      */
     ngOnDestroy(): void {
-        Object.values(this.connections).forEach((connection) => this.websocketService.unsubscribe(connection));
+        Object.values(this.connections).forEach((connection) => connection.unsubscribe());
     }
 
     /**
@@ -155,11 +155,9 @@ export class ProgrammingExerciseGradingService implements IProgrammingExerciseGr
      */
     private initTestCaseSubscription(exerciseId: number, initialValue: ProgrammingExerciseTestCase[] | undefined) {
         const testCaseTopic = `/topic/programming-exercises/${exerciseId}/test-cases`;
-        this.websocketService.subscribe(testCaseTopic);
-        this.connections[exerciseId] = testCaseTopic;
         this.subjects[exerciseId] = new BehaviorSubject(initialValue);
-        this.websocketService
-            .receive(testCaseTopic)
+        this.connections[exerciseId] = this.websocketService
+            .subscribe<ProgrammingExerciseTestCase[]>(testCaseTopic)
             .pipe(
                 map((testCases) => (testCases.length ? testCases : undefined)),
                 tap((testCases) => {

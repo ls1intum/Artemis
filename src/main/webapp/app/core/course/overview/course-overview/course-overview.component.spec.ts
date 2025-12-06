@@ -54,6 +54,7 @@ import { ArtemisServerDateService } from 'app/shared/service/server-date.service
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { generateExampleTutorialGroupsConfiguration } from 'test/helpers/sample/tutorialgroup/tutorialGroupsConfigurationExampleModels';
 import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
 import { CourseNotificationSettingService } from 'app/communication/course-notification/course-notification-setting.service';
@@ -209,7 +210,7 @@ describe('CourseOverviewComponent', () => {
                 MockProvider(CourseExerciseService),
                 MockProvider(CompetencyService),
                 MockProvider(TeamService),
-                MockProvider(WebsocketService),
+                { provide: WebsocketService, useClass: MockWebsocketService },
                 MockProvider(ArtemisServerDateService),
                 MockProvider(CalendarService),
                 MockProvider(AlertService),
@@ -621,13 +622,14 @@ describe('CourseOverviewComponent', () => {
     });
 
     it('should do ngOnDestroy', () => {
-        const jhiWebsocketServiceStub = jest.spyOn(jhiWebsocketService, 'unsubscribe');
-
         component.ngOnInit();
-        component.subscribeForQuizChanges(); // to have quizExercisesChannel set
+        component.subscribeForQuizChanges(); // to have quizExercisesSubscription set
+        // @ts-ignore
+        const quizUnsubscribeSpy = jest.spyOn(component.quizExercisesSubscription!, 'unsubscribe');
+
         component.ngOnDestroy();
 
-        expect(jhiWebsocketServiceStub).toHaveBeenCalledOnce();
+        expect(quizUnsubscribeSpy).toHaveBeenCalledOnce();
     });
 
     it('should render controls if child has configuration', () => {

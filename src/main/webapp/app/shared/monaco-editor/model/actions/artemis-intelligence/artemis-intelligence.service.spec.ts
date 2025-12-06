@@ -38,9 +38,7 @@ describe('ArtemisIntelligenceService', () => {
     } as unknown as MonacoEditorComponent;
 
     const mockWebsocketService = {
-        subscribe: jest.fn(),
-        unsubscribe: jest.fn(),
-        receive: jest.fn().mockReturnValue(
+        subscribe: jest.fn().mockReturnValue(
             new BehaviorSubject({
                 result: 'Rewritten Text',
                 inconsistencies: ['Some inconsistency'],
@@ -165,7 +163,6 @@ describe('ArtemisIntelligenceService', () => {
                 expect(result.improvement).toBe('Improved text');
 
                 expect(alertService.success).toHaveBeenCalledWith('artemisApp.markdownEditor.artemisIntelligence.alerts.rewrite.success');
-                expect(websocketService.unsubscribe).toHaveBeenCalledWith(`/user/topic/iris/rewriting/${courseId}`);
             });
 
             const req = httpMock.expectOne(`api/iris/courses/${courseId}/rewrite-text`);
@@ -212,7 +209,7 @@ describe('ArtemisIntelligenceService', () => {
         });
 
         it('should handle WebSocket error correctly', () => {
-            mockWebsocketService.receive.mockReturnValueOnce(throwError(() => new Error('WebSocket Error')));
+            mockWebsocketService.subscribe.mockReturnValueOnce(throwError(() => new Error('WebSocket Error')));
 
             service.rewrite('OriginalText', RewritingVariant.FAQ, 1).subscribe({
                 next: () => {

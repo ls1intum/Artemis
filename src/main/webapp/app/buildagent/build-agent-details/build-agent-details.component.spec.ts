@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { WebsocketService } from 'app/shared/service/websocket.service';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { BuildJob, FinishedBuildJob } from 'app/buildagent/shared/entities/build-job.model';
 import dayjs from 'dayjs/esm';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
@@ -29,8 +29,6 @@ describe('BuildAgentDetailsComponent', () => {
 
     const mockWebsocketService = {
         subscribe: jest.fn(),
-        unsubscribe: jest.fn(),
-        receive: jest.fn().mockReturnValue(of([])),
     };
 
     const mockBuildAgentsService = {
@@ -177,6 +175,9 @@ describe('BuildAgentDetailsComponent', () => {
         cancelAllRunningBuildJobsForAgent: jest.fn(),
     };
 
+    let agentTopicSubject: Subject<BuildAgentInformation>;
+    let runningJobsSubject: Subject<BuildJob[]>;
+
     beforeEach(waitForAsync(() => {
         TestBed.configureTestingModule({
             declarations: [],
@@ -201,23 +202,35 @@ describe('BuildAgentDetailsComponent', () => {
         alertService = TestBed.inject(AlertService);
         alertServiceAddAlertStub = jest.spyOn(alertService, 'addAlert');
 
+        agentTopicSubject = new Subject<BuildAgentInformation>();
+        runningJobsSubject = new Subject<BuildJob[]>();
+        mockWebsocketService.subscribe.mockImplementation((topic: string) => {
+            if (topic === '/topic/admin/running-jobs') {
+                return runningJobsSubject.asObservable();
+            }
+            if (topic === '/topic/admin/build-agent/' + mockBuildAgent.buildAgent?.name) {
+                return agentTopicSubject.asObservable();
+            }
+            return new Subject().asObservable();
+        });
+
         mockBuildQueueService.getRunningBuildJobs.mockReturnValue(of(mockRunningJobs1));
         mockBuildQueueService.cancelBuildJob.mockReturnValue(of({}));
         mockBuildQueueService.cancelAllRunningBuildJobsForAgent.mockReturnValue(of({}));
         mockBuildQueueService.getFinishedBuildJobs.mockReturnValue(of(mockFinishedJobsResponse));
-        mockWebsocketService.receive = jest.fn((topic: string) => {
-            if (topic === '/topic/admin/running-jobs') {
-                return of(mockRunningJobs1);
-            } else if (topic === '/topic/admin/build-agent/' + mockBuildAgent.buildAgent?.name) {
-                return of(mockBuildAgent);
-            } else {
-                return of([]);
-            }
-        });
     }));
 
     beforeEach(() => {
         jest.clearAllMocks();
+        mockWebsocketService.subscribe.mockImplementation((topic: string) => {
+            if (topic === '/topic/admin/running-jobs') {
+                return runningJobsSubject.asObservable();
+            }
+            if (topic === '/topic/admin/build-agent/' + mockBuildAgent.buildAgent?.name) {
+                return agentTopicSubject.asObservable();
+            }
+            return new Subject().asObservable();
+        });
     });
 
     it('should load build agents on initialization', () => {
@@ -236,18 +249,19 @@ describe('BuildAgentDetailsComponent', () => {
 
         expect(component.buildAgent).toEqual(mockBuildAgent);
         expect(mockWebsocketService.subscribe).toHaveBeenCalledWith('/topic/admin/build-agent/' + component.buildAgent.buildAgent?.name);
-        expect(mockWebsocketService.receive).toHaveBeenCalledWith('/topic/admin/build-agent/' + component.buildAgent.buildAgent?.name);
         expect(mockWebsocketService.subscribe).toHaveBeenCalledWith('/topic/admin/running-jobs');
-        expect(mockWebsocketService.receive).toHaveBeenCalledWith('/topic/admin/running-jobs');
     });
 
     it('should unsubscribe from the websocket channel on destruction', () => {
         component.ngOnInit();
 
+        const agentUnsubscribeSpy = jest.spyOn(component.agentDetailsWebsocketSubscription!, 'unsubscribe');
+        const runningUnsubscribeSpy = jest.spyOn(component.runningJobsWebsocketSubscription!, 'unsubscribe');
+
         component.ngOnDestroy();
 
-        expect(mockWebsocketService.unsubscribe).toHaveBeenCalledWith('/topic/admin/build-agent/' + component.buildAgent.buildAgent?.name);
-        expect(mockWebsocketService.unsubscribe).toHaveBeenCalledWith('/topic/admin/running-jobs');
+        expect(agentUnsubscribeSpy).toHaveBeenCalled();
+        expect(runningUnsubscribeSpy).toHaveBeenCalled();
     });
 
     it('should cancel a build job', () => {

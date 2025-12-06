@@ -35,8 +35,6 @@ describe('ProgrammingSubmissionService', () => {
     let httpMock: HttpTestingController;
     let httpGetStub: jest.SpyInstance;
     let wsSubscribeStub: jest.SpyInstance;
-    let wsUnsubscribeStub: jest.SpyInstance;
-    let wsReceiveStub: jest.SpyInstance;
     let participationWsLatestResultStub: jest.SpyInstance;
     let getLatestResultStub: jest.SpyInstance;
     let notifyAllResultSubscribersStub: jest.SpyInstance;
@@ -103,15 +101,13 @@ describe('ProgrammingSubmissionService', () => {
 
                 httpMock = TestBed.inject(HttpTestingController);
                 httpGetStub = jest.spyOn(httpService, 'get');
-                wsSubscribeStub = jest.spyOn(websocketService, 'subscribe');
-                wsUnsubscribeStub = jest.spyOn(websocketService, 'unsubscribe');
                 wsSubmissionSubject = new Subject<Submission | undefined>();
                 wsSubmissionProcessingSubject = new Subject<SubmissionProcessingDTO | undefined>();
-                wsReceiveStub = jest.spyOn(websocketService, 'receive').mockImplementation((topic: string) => {
+                wsSubscribeStub = jest.spyOn(websocketService, 'subscribe').mockImplementation((topic: string) => {
                     if (topic === submissionTopic) {
-                        return wsSubmissionSubject;
+                        return wsSubmissionSubject.asObservable();
                     } else if (topic === submissionProcessingTopic) {
-                        return wsSubmissionProcessingSubject;
+                        return wsSubmissionProcessingSubject.asObservable();
                     }
                     return new Subject();
                 });
@@ -158,8 +154,6 @@ describe('ProgrammingSubmissionService', () => {
         });
         expect(wsSubscribeStub).toHaveBeenCalledOnce();
         expect(wsSubscribeStub).toHaveBeenCalledWith(submissionTopic);
-        expect(wsReceiveStub).toHaveBeenCalledOnce();
-        expect(wsReceiveStub).toHaveBeenCalledWith(submissionTopic);
         expect(participationWsLatestResultStub).toHaveBeenCalledOnce();
         expect(participationWsLatestResultStub).toHaveBeenCalledWith(participationId, true, 10);
     });
@@ -178,9 +172,6 @@ describe('ProgrammingSubmissionService', () => {
         expect(wsSubscribeStub).toHaveBeenCalledTimes(2);
         expect(wsSubscribeStub).toHaveBeenNthCalledWith(1, submissionTopic);
         expect(wsSubscribeStub).toHaveBeenNthCalledWith(2, submissionProcessingTopic);
-        expect(wsReceiveStub).toHaveBeenCalledTimes(2);
-        expect(wsReceiveStub).toHaveBeenNthCalledWith(1, submissionTopic);
-        expect(wsReceiveStub).toHaveBeenNthCalledWith(2, submissionProcessingTopic);
         expect(participationWsLatestResultStub).toHaveBeenCalledOnce();
         expect(participationWsLatestResultStub).toHaveBeenCalledWith(participationId, true, 10);
     });
@@ -436,11 +427,12 @@ describe('ProgrammingSubmissionService', () => {
 
         // Should not unsubscribe as participation 2 still uses the same topic
         submissionService.unsubscribeForLatestSubmissionOfParticipation(participationId);
-        expect(wsUnsubscribeStub).not.toHaveBeenCalled();
+        const submissionTopicSubscriptions = (submissionService as any).submissionTopicSubscriptions as Map<string, any>;
+        expect(submissionTopicSubscriptions.has(submissionTopic)).toBeTrue();
 
         // Should now unsubscribe as last participation for topic was unsubscribed
         submissionService.unsubscribeForLatestSubmissionOfParticipation(2);
-        expect(wsUnsubscribeStub).toHaveBeenCalledOnce();
+        expect(submissionTopicSubscriptions.has(submissionTopic)).toBeFalse();
     });
 
     it('should only unsubscribe if no other participations use the topic with localci', () => {
@@ -451,11 +443,15 @@ describe('ProgrammingSubmissionService', () => {
 
         // Should not unsubscribe as participation 2 still uses the same topic
         submissionService.unsubscribeForLatestSubmissionOfParticipation(participationId);
-        expect(wsUnsubscribeStub).not.toHaveBeenCalled();
+        const submissionTopicSubscriptions = (submissionService as any).submissionTopicSubscriptions as Map<string, any>;
+        const processingTopicSubscriptions = (submissionService as any).submissionProcessingTopicSubscriptions as Map<string, any>;
+        expect(submissionTopicSubscriptions.has(submissionTopic)).toBeTrue();
+        expect(processingTopicSubscriptions.has(submissionProcessingTopic)).toBeTrue();
 
         // Should now unsubscribe as last participation for topic was unsubscribed
         submissionService.unsubscribeForLatestSubmissionOfParticipation(2);
-        expect(wsUnsubscribeStub).toHaveBeenCalledTimes(2);
+        expect(submissionTopicSubscriptions.has(submissionTopic)).toBeFalse();
+        expect(processingTopicSubscriptions.has(submissionProcessingTopic)).toBeFalse();
     });
 
     it('should emit the newest submission when it was received through the websocket connection with localci', () => {

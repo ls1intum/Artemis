@@ -69,8 +69,8 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     buildJobStatistics: BuildJobStatistics = new BuildJobStatistics();
     runningBuildJobs: BuildJob[] = [];
     agentName: string;
-    agentDetailsWebsocketSubscription: Subscription;
-    runningJobsWebsocketSubscription: Subscription;
+    agentDetailsWebsocketSubscription?: Subscription;
+    runningJobsWebsocketSubscription?: Subscription;
     runningJobsSubscription: Subscription;
     agentDetailsSubscription: Subscription;
     buildDurationInterval: ReturnType<typeof setInterval>;
@@ -145,8 +145,6 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
      * This method is used to unsubscribe from the websocket channels when the component is destroyed.
      */
     ngOnDestroy() {
-        this.websocketService.unsubscribe(this.channel);
-        this.websocketService.unsubscribe(this.runningBuildJobsChannel);
         this.agentDetailsWebsocketSubscription?.unsubscribe();
         this.runningJobsWebsocketSubscription?.unsubscribe();
         this.agentDetailsSubscription?.unsubscribe();
@@ -159,12 +157,10 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
      * This method is used to initialize the websocket subscription for the build agents. It subscribes to the channel for the build agents.
      */
     initWebsocketSubscription() {
-        this.websocketService.subscribe(this.channel);
-        this.agentDetailsWebsocketSubscription = this.websocketService.receive(this.channel).subscribe((buildAgent) => {
+        this.agentDetailsWebsocketSubscription = this.websocketService.subscribe<BuildAgentInformation>(this.channel).subscribe((buildAgent: BuildAgentInformation) => {
             this.updateBuildAgent(buildAgent);
         });
-        this.websocketService.subscribe(this.runningBuildJobsChannel);
-        this.runningJobsWebsocketSubscription = this.websocketService.receive(this.runningBuildJobsChannel).subscribe((runningBuildJobs) => {
+        this.runningJobsWebsocketSubscription = this.websocketService.subscribe<BuildJob[]>(this.runningBuildJobsChannel).subscribe((runningBuildJobs: BuildJob[]) => {
             const filteredBuildJobs = runningBuildJobs.filter((buildJob: BuildJob) => buildJob.buildAgent?.name === this.agentName);
             if (filteredBuildJobs.length > 0) {
                 this.runningBuildJobs = this.updateBuildJobDuration(filteredBuildJobs);

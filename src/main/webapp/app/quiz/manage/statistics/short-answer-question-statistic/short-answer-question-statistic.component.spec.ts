@@ -1,5 +1,6 @@
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { WebsocketService } from 'app/shared/service/websocket.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -22,6 +23,7 @@ import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date
 import { MockProvider } from 'ng-mocks';
 import { ChangeDetectorRef } from '@angular/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 
 const route = { params: of({ courseId: 1, exerciseId: 4, questionId: 1 }) };
 const answerSpot = { posX: 5, invalid: false, id: 1, tempID: 2 } as ShortAnswerSpot;
@@ -65,6 +67,7 @@ describe('QuizExercise Short Answer Question Statistic Component', () => {
                 SessionStorageService,
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
+                { provide: WebsocketService, useClass: MockWebsocketService },
                 MockProvider(ChangeDetectorRef),
                 provideHttpClient(),
                 provideHttpClientTesting(),

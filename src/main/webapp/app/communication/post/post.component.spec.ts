@@ -1,9 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { WebsocketService } from 'app/shared/service/websocket.service';
 import { MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { DebugElement, input, runInInjectionContext } from '@angular/core';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { PostComponent } from 'app/communication/post/post.component';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
+import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { getElement } from 'test/helpers/utils/general-test.utils';
 import { PostingFooterComponent } from 'app/communication/posting-footer/posting-footer.component';
 import { PostingHeaderComponent } from 'app/communication/posting-header/posting-header.component';
@@ -93,7 +95,7 @@ describe('PostComponent', () => {
                 MockProvider(OneToOneChatService),
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
-
+                { provide: WebsocketService, useClass: MockWebsocketService },
                 { provide: ConversationService, useClass: MockConversationService },
                 { provide: MetisConversationService, useClass: MockMetisConversationService },
             ],

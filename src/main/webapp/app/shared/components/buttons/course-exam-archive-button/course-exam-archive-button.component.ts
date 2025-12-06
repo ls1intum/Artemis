@@ -11,7 +11,7 @@ import { Exam } from 'app/exam/shared/entities/exam.model';
 import dayjs from 'dayjs/esm';
 import { ButtonSize } from 'app/shared/components/buttons/button/button.component';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
-import { Subject } from 'rxjs';
+import { Subject, Subscription } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';
 import { faArchive, faCircleNotch, faDownload, faEraser } from '@fortawesome/free-solid-svg-icons';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
@@ -68,6 +68,7 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
+    private archiveSubscription?: Subscription;
 
     // Icons
     faDownload = faDownload;
@@ -97,15 +98,14 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
      * On destroy unsubscribe all subscriptions.
      */
     ngOnDestroy() {
-        this.websocketService.unsubscribe(this.getArchiveStateTopic());
+        this.archiveSubscription?.unsubscribe();
         this.dialogErrorSource.unsubscribe();
     }
 
     registerArchiveWebsocket() {
         const topic = this.getArchiveStateTopic();
-        this.websocketService.subscribe(topic);
-        this.websocketService
-            .receive(topic)
+        this.archiveSubscription = this.websocketService
+            .subscribe<CourseExamArchiveState>(topic)
             .pipe(tap((archiveState: CourseExamArchiveState) => this.handleArchiveStateChanges(archiveState)))
             .subscribe();
     }

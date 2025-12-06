@@ -44,6 +44,7 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { MockComplaintService } from 'test/helpers/mocks/service/mock-complaint.service';
 import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 
 describe('ModelingSubmissionComponent', () => {
     let comp: ModelingSubmissionComponent;
@@ -100,6 +101,7 @@ describe('ModelingSubmissionComponent', () => {
                 SessionStorageService,
                 { provide: ActivatedRoute, useValue: route },
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
+                { provide: WebsocketService, useClass: MockWebsocketService },
                 ResultService,
                 provideHttpClientTesting(),
                 provideHttpClient(),
@@ -474,18 +476,18 @@ describe('ModelingSubmissionComponent', () => {
 
         submission.submitted = false;
         jest.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
-        const websocketService = TestBed.inject(WebsocketService);
+        // @ts-ignore
+        const websocketService = TestBed.inject(WebsocketService) as MockWebsocketService;
         jest.spyOn(websocketService, 'subscribe');
         const modelSubmission = <ModelingSubmission>(<unknown>{
-            id: 1,
+            id: submission.id,
             model: '{"elements": [{"id": 1}]}',
             submitted: true,
             participation,
         });
-        const receiveStub = jest.spyOn(websocketService, 'receive').mockReturnValue(of(modelSubmission));
         fixture.detectChanges();
+        websocketService.emit(`/user/topic/modelingSubmission/${submission.id}`, modelSubmission);
         expect(comp.submission).toEqual(modelSubmission);
-        expect(receiveStub).toHaveBeenCalledOnce();
     });
 
     it('should not process results without completionDate except for failed Athena results', () => {

@@ -1,50 +1,51 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
-import { BehaviorSubject, of, throwError } from 'rxjs';
-import { ModelingSubmissionComponent } from 'app/modeling/overview/modeling-submission/modeling-submission.component';
-import { ModelingSubmissionService } from 'app/modeling/overview/modeling-submission/modeling-submission.service';
-import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
-import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
-import { TranslateService } from '@ngx-translate/core';
-import { ActivatedRoute, RouterModule } from '@angular/router';
-import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ChangeDetectorRef, DebugElement } from '@angular/core';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { MockComplaintService } from 'test/helpers/mocks/service/mock-complaint.service';
-import dayjs from 'dayjs/esm';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
-import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
-import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
-import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
-import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { Result } from 'app/exercise/shared/entities/result/result.model';
-import { routes } from 'app/modeling/overview/modeling-participation.route';
+import { ActivatedRoute, RouterModule } from '@angular/router';
+import { UMLDiagramType, UMLElement, UMLModel } from '@ls1intum/apollon';
+import { TranslateService } from '@ngx-translate/core';
+import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
-import { WebsocketService } from 'app/shared/service/websocket.service';
-import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import { UMLDiagramType, UMLElement, UMLModel } from '@ls1intum/apollon';
-import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { HeaderParticipationPageComponent } from 'app/exercise/exercise-headers/participation-page/header-participation-page.component';
-import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
-import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
-import { TeamParticipateInfoBoxComponent } from 'app/exercise/team/team-participate/team-participate-info-box.component';
-import { TeamSubmissionSyncComponent } from 'app/exercise/team-submission-sync/team-submission-sync.component';
-import { ModelingAssessmentComponent } from 'app/modeling/manage/assess/modeling-assessment.component';
-import { AdditionalFeedbackComponent } from 'app/exercise/additional-feedback/additional-feedback.component';
-import { RatingComponent } from 'app/exercise/rating/rating.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
-import { AlertService } from 'app/shared/service/alert.service';
-import { ExerciseMode } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { SubmissionPatch } from 'app/exercise/shared/entities/submission/submission-patch.model';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
+import { AdditionalFeedbackComponent } from 'app/exercise/additional-feedback/additional-feedback.component';
+import { HeaderParticipationPageComponent } from 'app/exercise/exercise-headers/participation-page/header-participation-page.component';
+import { RatingComponent } from 'app/exercise/rating/rating.component';
+import { ExerciseMode } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { SubmissionPatch } from 'app/exercise/shared/entities/submission/submission-patch.model';
+import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
+import { TeamSubmissionSyncComponent } from 'app/exercise/team-submission-sync/team-submission-sync.component';
+import { TeamParticipateInfoBoxComponent } from 'app/exercise/team/team-participate/team-participate-info-box.component';
+import { ModelingAssessmentComponent } from 'app/modeling/manage/assess/modeling-assessment.component';
+import { routes } from 'app/modeling/overview/modeling-participation.route';
+import { ModelingSubmissionComponent } from 'app/modeling/overview/modeling-submission/modeling-submission.component';
+import { ModelingSubmissionService } from 'app/modeling/overview/modeling-submission/modeling-submission.service';
+import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
+import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { FullscreenComponent } from 'app/modeling/shared/fullscreen/fullscreen.component';
+import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
+import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
+import { AlertService } from 'app/shared/service/alert.service';
+import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { WebsocketService } from 'app/shared/service/websocket.service';
+import dayjs from 'dayjs/esm';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+import { BehaviorSubject, of, throwError } from 'rxjs';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { MockComplaintService } from 'test/helpers/mocks/service/mock-complaint.service';
+import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 
 describe('ModelingSubmissionComponent', () => {
     let comp: ModelingSubmissionComponent;
@@ -91,6 +92,7 @@ describe('ModelingSubmissionComponent', () => {
                 SessionStorageService,
                 { provide: ActivatedRoute, useValue: route },
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
+                { provide: WebsocketService, useClass: MockWebsocketService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 {
@@ -279,8 +281,7 @@ describe('ModelingSubmissionComponent', () => {
     it('should set correct properties on modeling exercise create when submitting', () => {
         fixture.detectChanges();
 
-        const modelSubmission = <ModelingSubmission>(<unknown>{ model: '{"elements": [{"id": 1}]}', submitted: true, participation });
-        comp.submission = modelSubmission;
+        comp.submission = <ModelingSubmission>(<unknown>{ model: '{"elements": [{"id": 1}]}', submitted: true, participation });
         const createStub = jest.spyOn(service, 'create').mockReturnValue(of(new HttpResponse({ body: submission })));
         comp.modelingExercise = new ModelingExercise(UMLDiagramType.DeploymentDiagram, undefined, undefined);
         comp.modelingExercise.id = 1;
@@ -329,18 +330,18 @@ describe('ModelingSubmissionComponent', () => {
     it('should update submission when new submission comes in from websocket', () => {
         submission.submitted = false;
         jest.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
-        const websocketService = TestBed.inject(WebsocketService);
+        // @ts-ignore
+        const websocketService = TestBed.inject(WebsocketService) as MockWebsocketService;
         jest.spyOn(websocketService, 'subscribe');
         const modelSubmission = <ModelingSubmission>(<unknown>{
-            id: 1,
+            id: submission.id,
             model: '{"elements": [{"id": 1}]}',
             submitted: true,
             participation,
         });
-        const receiveStub = jest.spyOn(websocketService, 'receive').mockReturnValue(of(modelSubmission));
         fixture.detectChanges();
+        websocketService.emit(`/user/topic/modelingSubmission/${submission.id}`, modelSubmission);
         expect(comp.submission).toEqual(modelSubmission);
-        expect(receiveStub).toHaveBeenCalledOnce();
     });
 
     it('should set correct properties on modeling exercise update when submitting', () => {
@@ -507,7 +508,7 @@ describe('ModelingSubmissionComponent', () => {
             usageCount: 1,
         } as GradingInstruction;
 
-        const feedbacks = [
+        comp.assessmentResult.feedbacks = [
             {
                 id: 1,
                 detailText: 'feedback1',
@@ -524,8 +525,6 @@ describe('ModelingSubmissionComponent', () => {
                 reference: 'asdf',
             } as Feedback,
         ];
-
-        comp.assessmentResult.feedbacks = feedbacks;
 
         const unreferencedFeedback = comp.unreferencedFeedback;
         const referencedFeedback = comp.referencedFeedback;

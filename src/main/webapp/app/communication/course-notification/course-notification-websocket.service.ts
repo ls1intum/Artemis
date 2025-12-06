@@ -85,11 +85,8 @@ export class CourseNotificationWebsocketService implements OnDestroy {
         if (this.courseWebsocketSubscriptions[courseId]) {
             return this.courseWebsocketSubscriptions[courseId];
         }
-
-        const topicPrefix = '/user/topic/communication/notification/';
         this.courseWebsocketSubscriptions[courseId] = this.websocketService
-            .subscribe(topicPrefix + courseId)
-            .receive(topicPrefix + courseId)
+            .subscribe('/user/topic/communication/notification/' + courseId)
             .subscribe((notification: CourseNotification) => {
                 const courseNotification = new CourseNotification(
                     notification.notificationId!,

@@ -136,7 +136,6 @@ describe('CoursesComponent', () => {
     });
 
     afterEach(() => {
-        component.ngOnDestroy();
         jest.restoreAllMocks();
     });
 

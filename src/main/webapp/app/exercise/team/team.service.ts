@@ -107,7 +107,7 @@ export class TeamService implements ITeamService, OnDestroy {
     private accountService = inject(AccountService);
 
     // Team Assignment Update Stream
-    private teamAssignmentUpdates$: Observable<TeamAssignmentPayload> | null;
+    private teamAssignmentUpdates$?: Observable<TeamAssignmentPayload>;
     private teamAssignmentUpdatesResolver: () => void;
     private authenticationStateSubscriber: Subscription;
     private websocketStatusSubscription?: Subscription;
@@ -289,9 +289,8 @@ export class TeamService implements ITeamService, OnDestroy {
                             .pipe(filter((status) => status.connected))
                             .subscribe(() => this.teamAssignmentUpdatesResolver());
                     } else {
-                        this.websocketService.unsubscribe(teamAssignmentUpdatesWebsocketTopic);
                         this.websocketStatusSubscription?.unsubscribe();
-                        this.teamAssignmentUpdates$ = null;
+                        this.teamAssignmentUpdates$ = undefined;
                         this.authenticationStateSubscriber.unsubscribe();
                     }
                 }, 500);
@@ -303,8 +302,9 @@ export class TeamService implements ITeamService, OnDestroy {
      * Subscribes to the team assignment updates websocket topic and stores the stream in teamAssignmentUpdates$
      */
     private get newTeamAssignmentUpdates$(): Observable<TeamAssignmentPayload> {
-        this.websocketService.subscribe(teamAssignmentUpdatesWebsocketTopic);
-        this.teamAssignmentUpdates$ = this.websocketService.receive(teamAssignmentUpdatesWebsocketTopic).pipe(shareReplay(16));
+        this.teamAssignmentUpdates$ = this.websocketService
+            .subscribe<TeamAssignmentPayload>(teamAssignmentUpdatesWebsocketTopic)
+            .pipe(shareReplay({ bufferSize: 16, refCount: true }));
         return this.teamAssignmentUpdates$;
     }
 

@@ -3,7 +3,7 @@ import { OnlineTeamStudent, Team } from 'app/exercise/shared/entities/team/team.
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { orderBy } from 'lodash-es';
-import { Observable } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
 import { map, throttleTime } from 'rxjs/operators';
 import dayjs from 'dayjs/esm';
 import { WebsocketService } from 'app/shared/service/websocket.service';
@@ -35,6 +35,7 @@ export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
     onlineTeamStudents: OnlineTeamStudent[] = [];
     typingTeamStudents: OnlineTeamStudent[] = [];
     websocketTopic: string;
+    private websocketSubscription?: Subscription;
 
     // Icons
     faCircle = faCircle;
@@ -56,16 +57,15 @@ export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
 
     private setupOnlineTeamStudentsReceiver() {
         this.websocketTopic = this.buildWebsocketTopic();
-        this.websocketService.subscribe(this.websocketTopic);
-        this.websocketService
-            .receive(this.websocketTopic)
+        this.websocketSubscription = this.websocketService
+            .subscribe<OnlineTeamStudent[]>(this.websocketTopic)
             .pipe(map(this.convertOnlineTeamStudentsFromServer))
             .subscribe({
                 next: (students: OnlineTeamStudent[]) => {
                     this.onlineTeamStudents = students;
                     this.computeTypingTeamStudents();
                 },
-                error: (error) => captureException(error),
+                error: (error: unknown) => captureException(error),
             });
         setTimeout(() => {
             this.websocketService.send<object>(this.buildWebsocketTopic('/trigger'), {});
@@ -76,7 +76,7 @@ export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
         if (this.typing$) {
             this.typing$.pipe(throttleTime(this.SEND_TYPING_INTERVAL)).subscribe({
                 next: () => this.websocketService.send<object>(this.buildWebsocketTopic('/typing'), {}),
-                error: (error) => captureException(error),
+                error: (error: unknown) => captureException(error),
             });
         }
     }
@@ -85,7 +85,7 @@ export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
      * Life cycle hook to indicate component destruction is done
      */
     ngOnDestroy(): void {
-        this.websocketService.unsubscribe(this.websocketTopic);
+        this.websocketSubscription?.unsubscribe();
     }
 
     get team(): Team {

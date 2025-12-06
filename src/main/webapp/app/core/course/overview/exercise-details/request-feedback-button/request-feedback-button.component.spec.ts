@@ -18,6 +18,8 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { NgbModal, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
+import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
+import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
 
 describe('RequestFeedbackButtonComponent', () => {
     let component: RequestFeedbackButtonComponent;
@@ -35,6 +37,7 @@ describe('RequestFeedbackButtonComponent', () => {
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
+                { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 provideHttpClient(),
             ],
         })
@@ -107,7 +110,6 @@ describe('RequestFeedbackButtonComponent', () => {
         );
         jest.spyOn(alertService, 'error');
 
-        // component.requestAIFeedback({} as any);
         const mockTemplateRef = {} as TemplateRef<any>;
         component.requestAIFeedback(mockTemplateRef);
         tick();
@@ -235,7 +237,6 @@ describe('RequestFeedbackButtonComponent', () => {
         setupComponentInputs(exercise, true, false);
         component.hasUserAcceptedExternalLLMUsage = false;
 
-        // Set up modal spy
         const modalService = TestBed.inject(NgbModal);
         const modalSpy = jest.spyOn(modalService, 'open').mockReturnValue({} as any);
 
@@ -256,12 +257,10 @@ describe('RequestFeedbackButtonComponent', () => {
         setupComponentInputs(exercise, true, false);
         component.hasUserAcceptedExternalLLMUsage = true;
 
-        // Set up spies
         const modalService = TestBed.inject(NgbModal);
         const modalSpy = jest.spyOn(modalService, 'open');
         const processFeedbackSpy = jest.spyOn(courseExerciseService, 'requestFeedback').mockReturnValue(of({} as StudentParticipation));
 
-        // Just call requestAIFeedback with an empty template ref object
         const mockTemplateRef = {} as TemplateRef<any>;
         component.requestAIFeedback(mockTemplateRef);
         tick();

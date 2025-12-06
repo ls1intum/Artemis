@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { WebsocketService } from 'app/shared/service/websocket.service';
 import { of } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { MockComponent, MockModule, MockProvider } from 'ng-mocks';
@@ -22,6 +23,7 @@ import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-acti
 import { ActivatedRoute, Router } from '@angular/router';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { getElement, getElements } from 'test/helpers/utils/general-test.utils';
 import {
     messagesBetweenUser1User2,
@@ -95,6 +97,7 @@ describe('DiscussionSectionComponent', () => {
                 { provide: MetisService, useClass: MetisService },
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: CourseStorageService, useClass: CourseStorageService },
+                { provide: WebsocketService, useClass: MockWebsocketService },
                 {
                     provide: ActivatedRoute,
                     useValue: new MockActivatedRoute({ postId: metisPostTechSupport.id, courseId: metisCourse.id }),

@@ -1,6 +1,6 @@
 import { Injectable, OnDestroy, inject } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject, Observable, Subscription } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -22,7 +22,7 @@ export interface IProgrammingExerciseWebsocketService {
 export class ProgrammingExerciseWebsocketService implements OnDestroy, IProgrammingExerciseWebsocketService {
     private websocketService = inject(WebsocketService);
 
-    private connections: string[] = [];
+    private connections: Subscription[] = [];
     // Uses undefined for initial value.
     private subjects: { [programmingExerciseId: number]: BehaviorSubject<boolean | undefined> } = {};
 
@@ -30,7 +30,7 @@ export class ProgrammingExerciseWebsocketService implements OnDestroy, IProgramm
      * On destroy unsubscribe all connections.
      */
     ngOnDestroy(): void {
-        Object.values(this.connections).forEach((connection) => this.websocketService.unsubscribe(connection));
+        Object.values(this.connections).forEach((connection) => connection.unsubscribe());
     }
 
     /**
@@ -48,11 +48,9 @@ export class ProgrammingExerciseWebsocketService implements OnDestroy, IProgramm
      */
     private initTestCaseStateSubscription(programmingExerciseId: number) {
         const testCaseTopic = `/topic/programming-exercises/${programmingExerciseId}/test-cases-changed`;
-        this.websocketService.subscribe(testCaseTopic);
-        this.connections[programmingExerciseId] = testCaseTopic;
         this.subjects[programmingExerciseId] = new BehaviorSubject(undefined);
-        this.websocketService
-            .receive(testCaseTopic)
+        this.connections[programmingExerciseId] = this.websocketService
+            .subscribe<boolean>(testCaseTopic)
             .pipe(tap((testCasesChanged) => this.notifySubscribers(programmingExerciseId, testCasesChanged)))
             .subscribe();
         return this.subjects[programmingExerciseId];
