@@ -41,6 +41,12 @@
             </a>
         </li>
         <li>
+            <a class="dropdown-item" routerLink="/admin/course-requests" routerLinkActive="active" (click)="collapseNavbar()">
+                <fa-icon [icon]="faList" [fixedWidth]="true" />
+                <span jhiTranslate="global.menu.admin.courseRequests"></span>
+            </a>
+        </li>
+        <li>
             <a class="dropdown-item" routerLink="/admin/feature-toggles" routerLinkActive="active" (click)="collapseNavbar()">
                 <fa-icon [icon]="faToggleOn" [fixedWidth]="true" />
                 <span jhiTranslate="global.menu.admin.featureToggles"></span>

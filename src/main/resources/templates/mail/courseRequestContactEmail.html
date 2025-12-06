@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <title th:text="#{email.courseRequest.contact.title(${courseRequest.title})}">New course request</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <link rel="icon" type="image/svg+xml" sizes="any" th:href="@{|${baseUrl}/logo/favicon.svg|}" />
+    </head>
+    <body>
+        <p th:text="#{email.courseRequest.contact.intro}">A new course request was submitted.</p>
+        <p th:text="#{email.courseRequest.contact.review}">Please review the details and accept or reject it in the server administration.</p>
+        <ul>
+            <li>
+                <strong th:text="#{email.courseRequest.label.title}">Title</strong>:
+                <span th:text="${courseRequest.title}">Title</span>
+            </li>
+            <li>
+                <strong th:text="#{email.courseRequest.label.shortName}">Short name</strong>:
+                <span th:text="${courseRequest.shortName}">short-name</span>
+            </li>
+            <li>
+                <strong th:text="#{email.courseRequest.label.semester}">Semester</strong>:
+                <span th:text="${courseRequest.semester}">Semester</span>
+            </li>
+            <li th:if="${courseRequest.startDate != null}">
+                <strong th:text="#{email.courseRequest.label.startDate}">Start date</strong>:
+                <span th:text="${#temporals.format(courseRequest.startDate, 'yyyy-MM-dd HH:mm z')}">2025-03-01</span>
+            </li>
+            <li th:if="${courseRequest.endDate != null}">
+                <strong th:text="#{email.courseRequest.label.endDate}">End date</strong>:
+                <span th:text="${#temporals.format(courseRequest.endDate, 'yyyy-MM-dd HH:mm z')}">2025-08-01</span>
+            </li>
+            <li>
+                <strong th:text="#{email.courseRequest.label.testCourse}">Test course</strong>:
+                <span th:text="${courseRequest.testCourse} ? 'Yes' : 'No'">No</span>
+            </li>
+            <li th:if="${courseRequest.requester != null}">
+                <strong th:text="#{email.courseRequest.label.requester}">Requester</strong>:
+                <span th:text="${courseRequest.requester.login}">login</span>
+                (<span th:text="${courseRequest.requester.email}">email</span>)
+            </li>
+        </ul>
+        <p>
+            <strong th:text="#{email.courseRequest.label.reason}">Reason</strong>
+        </p>
+        <p th:text="${courseRequest.reason}">Reason text</p>
+    </body>
+</html>
