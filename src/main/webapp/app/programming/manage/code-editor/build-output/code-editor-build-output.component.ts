@@ -1,5 +1,18 @@
 import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
-import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges, inject } from '@angular/core';
+import {
+    AfterViewInit,
+    ChangeDetectionStrategy,
+    ChangeDetectorRef,
+    Component,
+    EventEmitter,
+    Input,
+    OnChanges,
+    OnDestroy,
+    OnInit,
+    Output,
+    SimpleChanges,
+    inject,
+} from '@angular/core';
 import { Observable, Subscription, of } from 'rxjs';
 import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
 import { BuildLogEntry, BuildLogEntryArray } from 'app/buildagent/shared/entities/build-log.model';
@@ -28,6 +41,7 @@ import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/subm
     selector: 'jhi-code-editor-build-output',
     templateUrl: './code-editor-build-output.component.html',
     styleUrls: ['./code-editor-build-output.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [FaIconComponent, TranslateDirective, ArtemisDatePipe],
 })
 export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, OnChanges, OnDestroy {
@@ -35,6 +49,7 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
     private resultService = inject(ResultService);
     private participationWebsocketService = inject(ParticipationWebsocketService);
     private submissionService = inject(CodeEditorSubmissionService);
+    private changeDetectorRef = inject(ChangeDetectorRef);
 
     @Input()
     participation: Participation;
@@ -95,14 +110,19 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
             of(latestResult)
                 .pipe(
                     switchMap((result) => (result && !result.feedbacks ? this.loadAndAttachResultDetails(this.participation, result) : of(result))),
-                    tap((result) => (this.result = result)),
+                    tap((result) => {
+                        this.result = result;
+                        this.changeDetectorRef.markForCheck();
+                    }),
                     switchMap((result) => this.fetchBuildResults(result)),
                     map((buildLogsFromServer) => BuildLogEntryArray.fromBuildLogs(buildLogsFromServer!)),
                     tap((buildLogsFromServer: BuildLogEntryArray) => {
                         this.rawBuildLogs = buildLogsFromServer;
+                        this.changeDetectorRef.markForCheck();
                     }),
                     catchError(() => {
                         this.rawBuildLogs = new BuildLogEntryArray();
+                        this.changeDetectorRef.markForCheck();
                         return of();
                     }),
                 )
@@ -144,7 +164,12 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
     private setupSubmissionWebsocket() {
         this.submissionSubscription = this.submissionService
             .getBuildingState()
-            .pipe(tap((isBuilding: boolean) => (this.isBuilding = isBuilding)))
+            .pipe(
+                tap((isBuilding: boolean) => {
+                    this.isBuilding = isBuilding;
+                    this.changeDetectorRef.markForCheck();
+                }),
+            )
             .subscribe();
     }
 
@@ -161,14 +186,19 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
             .pipe(
                 // Ignore initial null/undefined result from service
                 filter((result) => !!result),
-                tap((result) => (this.result = result!)),
+                tap((result) => {
+                    this.result = result!;
+                    this.changeDetectorRef.markForCheck();
+                }),
                 switchMap((result) => this.fetchBuildResults(result)),
                 tap((buildLogsFromServer: BuildLogEntry[]) => {
                     this.rawBuildLogs = BuildLogEntryArray.fromBuildLogs(buildLogsFromServer);
+                    this.changeDetectorRef.markForCheck();
                 }),
                 catchError(() => {
                     this.onError.emit('failedToLoadBuildLogs');
                     this.rawBuildLogs = new BuildLogEntryArray();
+                    this.changeDetectorRef.markForCheck();
                     return of(undefined);
                 }),
             )
@@ -233,6 +263,9 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
         }
         if (this.submissionSubscription) {
             this.submissionSubscription.unsubscribe();
+        }
+        if (this.interactResizable) {
+            this.interactResizable.unset();
         }
     }
 }
