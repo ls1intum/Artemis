@@ -12,5 +12,5 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.RelationType;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record CompetencyRelationPreviewDTO(@Nullable Long relationId, long headCompetencyId, String headCompetencyTitle, long tailCompetencyId, String tailCompetencyTitle,
-        RelationType relationType) {
+        RelationType relationType, @Nullable Boolean viewOnly) {
 }

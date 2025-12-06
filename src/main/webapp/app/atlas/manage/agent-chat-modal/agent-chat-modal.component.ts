@@ -7,10 +7,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { firstValueFrom } from 'rxjs';
-import { AgentChatService, CompetencyPreviewResponse } from '../services/agent-chat.service';
+import { AgentChatService, CompetencyPreviewResponse, CompetencyRelationPreviewResponse } from '../services/agent-chat.service';
 import { ChatMessage } from 'app/atlas/shared/entities/chat-message.model';
-import { AgentChatService } from './agent-chat.service';
-import { ChatMessage, CompetencyPreview, CompetencyRelationPreview, RelationGraphPreview } from 'app/atlas/shared/entities/chat-message.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CompetencyCardComponent } from 'app/atlas/overview/competency-card/competency-card.component';
 import { CompetencyService } from 'app/atlas/manage/services/competency.service';
@@ -63,21 +61,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
                     this.addMessage(this.translateService.instant('artemisApp.agent.chat.welcome'), false);
                 }
                 history.forEach((msg) => {
-                    if () {
-                        this.addMessage(msg.content, msg.isUser, msg.competencyPreviews);
-                    if (msg.competencyPreviews || msg.relationPreview || msg.batchRelationPreview || msg.relationGraphPreview) {
-                        this.addMessageWithPreview(
-                            msg.content,
-                            msg.isUser,
-                            msg.competencyPreview,
-                            msg.batchCompetencyPreview,
-                            msg.relationPreview,
-                            msg.batchRelationPreview,
-                            msg.relationGraphPreview,
-                        );
-                    } else {
-                        this.addMessage(msg.content, msg.isUser);
-                    }
+                    this.addMessage(msg.content, msg.isUser, msg.competencyPreviews, msg.relationPreviews);
                 });
             },
             error: () => {
@@ -119,7 +103,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
             next: (response) => {
                 this.isAgentTyping.set(false);
 
-                this.addMessage(response.message || this.translateService.instant('artemisApp.agent.chat.error'), false, response.competencyPreviews);
+                this.addMessage(response.message || this.translateService.instant('artemisApp.agent.chat.error'), false, response.competencyPreviews, response.relationPreviews);
 
                 if (response.competenciesModified) {
                     this.competencyChanged.emit();
@@ -233,8 +217,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
                 this.isAgentTyping.set(false);
 
                 // Mark this message's relation as created
-                this.messages = this.messages.map((msg) => (msg.id === message.id ? { ...msg, relationCreated: true } : msg));
-                this.cdr.markForCheck();
+                this.messages.update((msgs) => msgs.map((msg) => (msg.id === message.id ? { ...msg, relationCreated: true } : msg)));
 
                 this.addMessage(this.translateService.instant('artemisApp.agent.chat.success.relationCreated'), false);
 
@@ -284,10 +267,11 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
     }
 
     /**
-     * Adds a message to the chat with optional competency preview data.
+     * Adds a message to the chat with optional competency and relation preview data.
+     * Uses unified array-based approach for both competencies and relations (similar to competency cards).
      * Handles plan pending markers, preview data mapping, and automatic scrolling.
      */
-    private addMessage(content: string, isUser: boolean, competencyPreviews?: CompetencyPreviewResponse[]): void {
+    private addMessage(content: string, isUser: boolean, competencyPreviews?: CompetencyPreviewResponse[], relationPreviews?: CompetencyRelationPreviewResponse[]): void {
         const message: ChatMessage = {
             id: this.generateMessageId(),
             content,
@@ -303,45 +287,19 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
                 icon: preview.icon,
                 competencyId: preview.competencyId,
                 viewOnly: preview.viewOnly,
-        this.finalizeMessage(message, isUser);
-    }
-
-    /**
-     * Add a message with structured preview data from the server.
-     * This method receives clean preview data as DTOs instead of parsing JSON.
-     */
-    private addMessageWithPreview(
-        content: string,
-        isUser: boolean,
-        singlePreview?: { preview: boolean; competency: CompetencyPreview; competencyId?: number; viewOnly?: boolean },
-        batchPreview?: { batchPreview: boolean; count: number; competencies: CompetencyPreview[]; viewOnly?: boolean },
-        singleRelationPreview?: { preview: boolean; relation: CompetencyRelationPreview; viewOnly?: boolean },
-        batchRelationPreview?: { batchPreview: boolean; count: number; relations: CompetencyRelationPreview[]; viewOnly?: boolean },
-        relationGraphPreview?: RelationGraphPreview,
-    ): void {
-        const message: ChatMessage = {
-            id: this.generateMessageId(),
-            content,
-            isUser,
-            timestamp: new Date(),
-        };
-
-        if (singleRelationPreview?.preview) {
-            message.relationPreview = {
-                ...singleRelationPreview.relation,
-                viewOnly: singleRelationPreview.viewOnly,
-            };
-        }
-
-        if (batchRelationPreview?.batchPreview) {
-            message.batchRelationPreview = batchRelationPreview.relations.map((rel) => ({
-                ...rel,
-                viewOnly: batchRelationPreview.viewOnly,
             }));
         }
 
-        if (relationGraphPreview) {
-            message.relationGraphPreview = relationGraphPreview;
+        if (relationPreviews && relationPreviews.length > 0) {
+            message.relationPreviews = relationPreviews.map((preview) => ({
+                relationId: preview.relationId,
+                headCompetencyId: preview.headCompetencyId,
+                headCompetencyTitle: preview.headCompetencyTitle,
+                tailCompetencyId: preview.tailCompetencyId,
+                tailCompetencyTitle: preview.tailCompetencyTitle,
+                relationType: preview.relationType,
+                viewOnly: preview.viewOnly,
+            }));
         }
 
         this.finalizeMessage(message, isUser);

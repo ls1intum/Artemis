@@ -284,7 +284,7 @@ public class CompetencyMappingToolsService {
             }
 
             CompetencyRelationPreviewDTO preview = new CompetencyRelationPreviewDTO(rel.getRelationId(), rel.getHeadCompetencyId(), headComp.get().getTitle(),
-                    rel.getTailCompetencyId(), tailComp.get().getTitle(), rel.getRelationType());
+                    rel.getTailCompetencyId(), tailComp.get().getTitle(), rel.getRelationType(), viewOnly);
             previews.add(preview);
         }
 
@@ -332,7 +332,7 @@ public class CompetencyMappingToolsService {
         // Cache the relation operation data for refinement operations
         String sessionId = currentSessionId.get();
         if (sessionId != null && !Boolean.TRUE.equals(viewOnly)) {
-            atlasAgentService.cacheRelationData(sessionId, new ArrayList<>(relations));
+            atlasAgentService.cacheRelationOperations(sessionId, new ArrayList<>(relations));
         }
 
         // Return simple confirmation message
@@ -443,7 +443,7 @@ public class CompetencyMappingToolsService {
 
                 if (headComp.isPresent() && tailComp.isPresent()) {
                     CompetencyRelationPreviewDTO preview = new CompetencyRelationPreviewDTO(rel.getRelationId(), rel.getHeadCompetencyId(), headComp.get().getTitle(),
-                            rel.getTailCompetencyId(), tailComp.get().getTitle(), rel.getRelationType());
+                            rel.getTailCompetencyId(), tailComp.get().getTitle(), rel.getRelationType(), false);
                     previews.add(preview);
                 }
             }

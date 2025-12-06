@@ -1,5 +1,4 @@
 import { CompetencyRelationType, CompetencyTaxonomy } from 'app/atlas/shared/entities/competency.model';
-import dayjs from 'dayjs/esm';
 
 export interface ChatMessage {
     id: string;
@@ -7,13 +6,13 @@ export interface ChatMessage {
     isUser: boolean;
     timestamp: Date;
     canCreateCompetencies?: boolean;
-    suggestedCompetencies?: CompetencyDraft[];
     competencyPreview?: CompetencyPreview;
     batchCompetencyPreview?: CompetencyPreview[]; // For batch operations (multiple competencies)
     relationPreview?: CompetencyRelationPreview;
     batchRelationPreview?: CompetencyRelationPreview[]; // For batch relation operations
     relationGraphPreview?: RelationGraphPreview; // Graph visualization for relation preview
-    competencyPreviews?: CompetencyPreview[];
+    competencyPreviews?: CompetencyPreview[]; // Unified array for competency previews
+    relationPreviews?: CompetencyRelationPreview[]; // Unified array for relation previews (new)
     competencyCreated?: boolean;
     batchCreated?: boolean; // For batch creation/update completion
     relationCreated?: boolean;
