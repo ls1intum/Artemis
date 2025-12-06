@@ -74,7 +74,7 @@ public record ExerciseSnapshotDTO(
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record CompetencyExerciseLinkSnapshotDTO(CompetencyExerciseLink.CompetencyExerciseId competencyId, double weight) implements Serializable {
 
-        private static CompetencyExerciseLinkSnapshotDTO of(@Nullable CompetencyExerciseLink link) {
+        public static CompetencyExerciseLinkSnapshotDTO of(@Nullable CompetencyExerciseLink link) {
             if (link == null) {
                 return null;
             }

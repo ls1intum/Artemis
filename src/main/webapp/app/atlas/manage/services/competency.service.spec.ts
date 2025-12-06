@@ -26,6 +26,7 @@ import dayjs from 'dayjs/esm';
 import { Dayjs } from 'dayjs/esm/index';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { MockExerciseService } from 'test/helpers/mocks/service/mock-exercise.service';
+import { mapCompetencyLinks, toCompetencyExerciseLinkDTO } from 'app/atlas/shared/dto/competency-exercise-link-dto';
 
 describe('CompetencyService', () => {
     let competencyService: CompetencyService;
@@ -399,5 +400,27 @@ describe('CompetencyService', () => {
         expect(convertExerciseSpy).toHaveBeenCalledTimes(2);
         expect(parseCategoriesSpy).toHaveBeenCalledTimes(2);
         expect(setAccessRightsExerciseSpy).toHaveBeenCalledTimes(2);
+    });
+
+    it('should throw if competency is missing', () => {
+        const link: any = { weight: 1 };
+        expect(() => toCompetencyExerciseLinkDTO(link)).toThrow('Cannot map CompetencyExerciseLink: missing competency.');
+    });
+
+    it('should map competency link with undefined courseId', () => {
+        const link = {
+            competency: { id: 5, title: 'competency', course: undefined },
+            weight: 2,
+        } as any;
+
+        const dto = toCompetencyExerciseLinkDTO(link);
+
+        expect(dto.courseId).toBeUndefined();
+        expect(dto.weight).toBe(2);
+    });
+
+    it('should return empty array when links is empty array', () => {
+        const dto = mapCompetencyLinks([]);
+        expect(dto).toEqual([]);
     });
 });

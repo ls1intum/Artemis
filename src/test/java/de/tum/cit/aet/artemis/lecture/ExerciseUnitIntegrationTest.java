@@ -23,7 +23,7 @@ import de.tum.cit.aet.artemis.fileupload.repository.FileUploadExerciseRepository
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
-import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
+import de.tum.cit.aet.artemis.modeling.test_repository.ModelingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
@@ -40,7 +40,7 @@ class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationIndependentTe
     private TextExerciseRepository textExerciseRepository;
 
     @Autowired
-    private ModelingExerciseRepository modelingExerciseRepository;
+    private ModelingExerciseTestRepository modelingExerciseRepository;
 
     @Autowired
     private QuizExerciseTestRepository quizExerciseRepository;
