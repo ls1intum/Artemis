@@ -1,3 +1,9 @@
 <jhi-lecture-unit-layout [isLoading]="isLoading">
-    <jhi-attachment-video-unit-form #attachmentVideoUnitForm [formData]="formData" (formSubmitted)="updateAttachmentVideoUnit($event)" [isEditMode]="true" />
+    <jhi-attachment-video-unit-form
+        #attachmentVideoUnitForm
+        [formData]="formData"
+        (formSubmitted)="updateAttachmentVideoUnit($event)"
+        [isEditMode]="true"
+        [lectureUnitId]="attachmentVideoUnit?.id"
+    />
 </jhi-lecture-unit-layout>
