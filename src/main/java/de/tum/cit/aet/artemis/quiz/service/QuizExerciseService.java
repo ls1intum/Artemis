@@ -691,6 +691,9 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         if (Files.exists(FilePathConverter.fileSystemPathForExternalUri(URI.create(path), type))) {
             Path oldPath = FilePathConverter.fileSystemPathForExternalUri(URI.create(path), type);
             Path newPath = FileUtil.copyExistingFileToTarget(oldPath, basePath, type);
+            if (newPath == null) {
+                throw new IOException("Failed to copy existing drag and drop background file to new location for path: " + oldPath);
+            }
             question.setBackgroundFilePath(FilePathConverter.externalUriForFileSystemPath(newPath, type, null).toString());
         }
         else {
