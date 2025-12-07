@@ -71,11 +71,9 @@ export class AccountService implements IAccountService {
 
         // We only subscribe the feature toggle updates when the user is logged in, otherwise we unsubscribe them.
         if (user) {
-            this.websocketService.enableReconnect();
             this.websocketService.connect();
             this.featureToggleService.subscribeFeatureToggleUpdates();
         } else {
-            this.websocketService.disableReconnect();
             if (this.websocketService.isConnected()) {
                 this.websocketService.disconnect();
             }
