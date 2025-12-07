@@ -1,6 +1,6 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { captureException } from '@sentry/angular';
-import { IWatchParams, RxStomp, RxStompConfig, RxStompState, TickerStrategy } from '@stomp/rx-stomp';
+import { IWatchParams, ReconnectionTimeMode, RxStomp, RxStompConfig, RxStompState, TickerStrategy } from '@stomp/rx-stomp';
 import { IMessage, StompHeaders } from '@stomp/stompjs';
 import { gzip, ungzip } from 'pako';
 import { BehaviorSubject, EMPTY, Observable, Subscription } from 'rxjs';
@@ -298,11 +298,12 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
         const config: RxStompConfig = {
             brokerURL: url,
             connectHeaders: {} as StompHeaders,
-            heartbeatOutgoing: 10000,
-            heartbeatIncoming: 10000,
-            reconnectDelay: 1000, // backoff handled manually via stompFailureCallback
-            connectionTimeout: 10000,
-            maxReconnectDelay: 10000,
+            heartbeatOutgoing: 10000, // should be identical to the server settings
+            heartbeatIncoming: 10000, // should be identical to the server settings
+            reconnectDelay: 500, // initial value is quite small, will be increased by ReconnectionTimeMode.EXPONENTIAL
+            reconnectTimeMode: ReconnectionTimeMode.EXPONENTIAL, // wait longer between reconnection attempts up to maxReconnectDelay
+            connectionTimeout: 10000, // abort connection attempt after 10 seconds and try again
+            maxReconnectDelay: 10000, // maximum delay between reconnection attempts is 10 seconds
             heartbeatStrategy: TickerStrategy.Worker, // use Web Worker for heartbeats so that browser tabs stay connected when in background
             discardWebsocketOnCommFailure: true,
             debug: () => {},
