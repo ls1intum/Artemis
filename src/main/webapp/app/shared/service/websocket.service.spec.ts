@@ -135,7 +135,14 @@ describe('WebsocketService', () => {
         const result = await firstValueFrom(websocketService.subscribe('/topic/test')!);
 
         expect(result).toEqual({ data: 'test' });
-        expect(watchMock).toHaveBeenCalledWith({ destination: '/topic/test', subHeaders: { id: '/topic/test' } });
+        expect(watchMock).toHaveBeenCalledWith(
+            expect.objectContaining({
+                destination: '/topic/test',
+                subHeaders: expect.objectContaining({
+                    id: expect.any(String),
+                }),
+            }),
+        );
     });
 
     it('subscribes and parses compressed messages', async () => {

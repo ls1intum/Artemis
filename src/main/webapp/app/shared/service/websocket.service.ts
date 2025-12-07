@@ -226,6 +226,18 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
     private rxStomp?: RxStomp;
 
     /**
+     * Counter for generating unique subscription IDs.
+     * @private
+     */
+    private subscriptionCounter = 0;
+
+    /**
+     * Unique session identifier for this WebSocket connection.
+     * @private
+     */
+    private sessionId = '';
+
+    /**
      * Indicates whether a successful connection has ever been established.
      * @private
      */
@@ -296,6 +308,7 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
             debug: () => {},
             webSocketFactory: () => new WebSocket(url, ['v12.stomp']),
         };
+        this.sessionId = this.generateSecureSessionId();
         this.rxStomp = new RxStomp();
         this.rxStomp.configure(config);
         this.connectionStateSubscription = this.rxStomp.connectionState$.subscribe((state: RxStompState) => {
@@ -305,6 +318,21 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
             }
         });
         this.rxStomp.activate();
+    }
+
+    /**
+     * Generates a cryptographically secure 12-character session ID.
+     *
+     * The ID is derived from 6 random bytes returned by the browser's `crypto` API.
+     * Each byte is encoded as two hexadecimal characters, yielding 2^48 (~2.8e14)
+     * possible combinations — making accidental collisions practically impossible.
+     *
+     * @returns {string} A 12-character, hex-encoded secure session ID.
+     */
+    private generateSecureSessionId(): string {
+        // 6 bytes = 48 bits of entropy → 12 hex characters
+        const byteArray = window.crypto.getRandomValues(new Uint8Array(6));
+        return Array.from(byteArray, (byte) => byte.toString(16).padStart(2, '0')).join('');
     }
 
     /**
@@ -470,16 +498,12 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
      *          be established.
      *
      * @remarks
-     * - Each subscription to the returned observable uses `RxStomp.watch(...)`
-     *   with specific {@link IWatchParams}, including `subHeaders: { id: channel }`
-     *   to identify the subscription.
-     * - When the observable subscription is **unsubscribed**, `RxStomp` will
-     *   unsubscribe from the corresponding STOMP topic.
+     * - Each subscription to the returned observable uses `RxStomp.watch(...)` with specific {@link IWatchParams}, including unique ids to identify the subscription.
+     * - When the observable subscription is **unsubscribed**, `RxStomp` will unsubscribe from the corresponding STOMP topic.
      *
      * ## Caller must unsubscribe
      *
-     * Components/services that call `subscribe` must ensure they unsubscribe
-     * from the observable when it is no longer needed. This is crucial to:
+     * Components/services that call `subscribe` must ensure they unsubscribe from the observable when it is no longer needed. This is crucial to:
      *
      * - avoid accumulating STOMP subscriptions on the server,
      * - prevent memory leaks,
@@ -497,7 +521,7 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
         if (!this.rxStomp) {
             return EMPTY;
         }
-        const params: IWatchParams = { destination: channel, subHeaders: { id: channel } };
+        const params: IWatchParams = { destination: channel, subHeaders: { id: this.sessionId + '-' + this.subscriptionCounter++ } };
         return this.rxStomp.watch(params).pipe(map(this.handleIncomingMessage<T>()));
     }
 
