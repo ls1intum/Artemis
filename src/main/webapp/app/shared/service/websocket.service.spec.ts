@@ -4,34 +4,40 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { COMPRESSION_HEADER, COMPRESSION_HEADER_KEY, ConnectionState, WebsocketService } from 'app/shared/service/websocket.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { EMPTY, firstValueFrom, of, take, toArray } from 'rxjs';
+import { RxStompState } from '@stomp/rx-stomp';
+import { BehaviorSubject, EMPTY, filter, firstValueFrom, of } from 'rxjs';
 import { IMessage } from '@stomp/stompjs';
 
 const constructedRxStompClients: any[] = [];
 const watchMock = jest.fn();
 
-jest.mock('@stomp/rx-stomp', () => ({
-    TickerStrategy: { Worker: 'worker-ticker' },
-    RxStomp: jest.fn().mockImplementation(() => {
-        const client = {
-            configure: jest.fn(),
-            activate: jest.fn(),
-            deactivate: jest.fn(),
-            publish: jest.fn(),
-            watch: watchMock,
-            connected: jest.fn().mockReturnValue(true),
-            stompClient: {
-                unsubscribe: jest.fn(),
-                onConnect: undefined as (() => void) | undefined,
-                onStompError: undefined,
-                onWebSocketClose: undefined,
-                onWebSocketError: undefined,
-            },
-        };
-        constructedRxStompClients.push(client);
-        return client;
-    }),
-}));
+jest.mock('@stomp/rx-stomp', () => {
+    const { RxStompState: ActualRxStompState } = jest.requireActual('@stomp/rx-stomp');
+    return {
+        TickerStrategy: { Worker: 'worker-ticker' },
+        RxStompState: ActualRxStompState,
+        RxStomp: jest.fn().mockImplementation(() => {
+            const client = {
+                configure: jest.fn(),
+                activate: jest.fn(),
+                deactivate: jest.fn(),
+                publish: jest.fn(),
+                watch: watchMock,
+                connected: jest.fn().mockReturnValue(true),
+                connectionState$: new BehaviorSubject<RxStompState>(ActualRxStompState.CLOSED),
+                stompClient: {
+                    unsubscribe: jest.fn(),
+                    onConnect: undefined as (() => void) | undefined,
+                    onStompError: undefined,
+                    onWebSocketClose: undefined,
+                    onWebSocketError: undefined,
+                },
+            };
+            constructedRxStompClients.push(client);
+            return client;
+        }),
+    };
+});
 
 const captureExceptionMock = jest.fn();
 jest.mock('@sentry/angular', () => ({
@@ -67,16 +73,16 @@ describe('WebsocketService', () => {
     });
 
     it('connects, configures, activates, and emits connection state on successful connect', async () => {
-        const states: ConnectionState[] = [];
-        websocketService.connectionState.pipe(take(2), toArray()).subscribe((values) => states.push(...values));
+        const openStatePromise = firstValueFrom(websocketService.connectionState.pipe(filter((state) => state.connected)));
 
         websocketService.connect();
         const rxStomp = constructedRxStompClients[0];
         expect(rxStomp.configure).toHaveBeenCalled();
         expect(rxStomp.activate).toHaveBeenCalled();
 
+        rxStomp.connectionState$.next(RxStompState.OPEN);
         rxStomp.stompClient.onConnect?.();
-        expect(states.at(-1)).toEqual(new ConnectionState(true, false));
+        expect(await openStatePromise).toEqual(new ConnectionState(true, false));
     });
 
     it('disconnects gracefully and updates connection state', () => {
@@ -142,15 +148,15 @@ describe('WebsocketService', () => {
         expect(result).toEqual({ data: 'test' });
     });
 
-    it('handles decompression errors gracefully and falls back to raw payload', async () => {
+    it('reports decompression errors and propagates them', async () => {
         const decodeSpy = jest.spyOn(WebsocketService as any, 'decodeAndDecompress').mockImplementation(() => {
             throw new Error('boom');
         });
         const message: IMessage = { ...baseMessage, body: '"raw"', headers: { [COMPRESSION_HEADER_KEY]: 'true' } };
         watchMock.mockReturnValue(of(message));
 
-        const result = await firstValueFrom(websocketService.subscribe('/topic/test')!);
-        expect(result).toBe('raw');
+        const resultPromise = firstValueFrom(websocketService.subscribe('/topic/test')!);
+        await expect(resultPromise).rejects.toThrow('boom');
         expect(decodeSpy).toHaveBeenCalled();
         expect(captureExceptionMock).toHaveBeenCalledWith('Failed to decompress message', expect.any(Error));
     });
