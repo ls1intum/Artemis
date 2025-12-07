@@ -244,6 +244,12 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
     private rxStomp?: RxStomp;
 
     /**
+     * Indicates whether a successful connection has ever been established.
+     * @private
+     */
+    private wasConnectedOnce = false;
+
+    /**
      * Internal {@link BehaviorSubject} holding the current {@link ConnectionState}.
      * Exposed as an observable via {@link connectionState}.
      */
@@ -310,7 +316,10 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
         this.rxStomp = new RxStomp();
         this.rxStomp.configure(config);
         this.rxStomp.connectionState$.subscribe((state: RxStompState) => {
-            this.connectionStateInternal.next(new ConnectionState(state == RxStompState.OPEN, false));
+            this.connectionStateInternal.next(new ConnectionState(state == RxStompState.OPEN, this.wasConnectedOnce));
+            if (state === RxStompState.OPEN) {
+                this.wasConnectedOnce = true;
+            }
         });
         this.rxStomp.activate();
     }
@@ -422,8 +431,9 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
             void this.rxStomp.deactivate();
             this.rxStomp = undefined;
             if (this.connectionStateInternal.getValue().connected) {
-                this.connectionStateInternal.next(new ConnectionState(false, false));
+                this.connectionStateInternal.next(new ConnectionState(false, this.wasConnectedOnce));
             }
+            this.wasConnectedOnce = false;
         }
     }
 
