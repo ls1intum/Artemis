@@ -3,7 +3,7 @@ import { captureException } from '@sentry/angular';
 import { IWatchParams, RxStomp, RxStompConfig, RxStompState, TickerStrategy } from '@stomp/rx-stomp';
 import { IMessage, StompHeaders } from '@stomp/stompjs';
 import { gzip, ungzip } from 'pako';
-import { BehaviorSubject, EMPTY, Observable } from 'rxjs';
+import { BehaviorSubject, EMPTY, Observable, Subscription } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 /**
@@ -102,25 +102,19 @@ export interface IWebsocketService {
     /**
      * Subscribe to a STOMP destination (topic/channel).
      *
-     * @typeParam T Expected type of the decoded message payload, after optional
-     *             decompression and JSON parsing.
+     * @typeParam T Expected type of the decoded message payload, after optional decompression and JSON parsing.
      * @param channel STOMP destination to subscribe to (e.g. `/topic/my-channel`).
-     * @returns An {@link Observable} that emits messages of type `T` whenever
-     *          the server sends a message on the given `channel`.
+     * @returns An {@link Observable} that emits messages of type `T` whenever the server sends a message on the given `channel`.
      *
      * @remarks
      * - If `channel` is falsy (empty string, `null`, etc.), {@link EMPTY} is returned.
-     * - If there is no active {@link RxStomp} client, {@link connect} is called
-     *   lazily. If connection setup fails, {@link EMPTY} is returned.
-     * - Each subscription to the returned `Observable` creates an underlying
-     *   STOMP subscription via `RxStomp.watch(...)`. When the observable
-     *   subscription is **unsubscribed**, the STOMP subscription is cleaned up
-     *   automatically by `RxStomp`.
+     * - If there is no active {@link RxStomp} client, {@link connect} is called lazily. If connection setup fails, {@link EMPTY} is returned.
+     * - Each subscription to the returned `Observable` creates an underlying STOMP subscription via `RxStomp.watch(...)`. When the observable
+     *   subscription is **unsubscribed**, the STOMP subscription is cleaned up automatically by `RxStomp`.
      *
      * ## Responsibility to unsubscribe
      *
-     * The **caller** (component/service) is responsible for unsubscribing from
-     * the `Observable`. Typical patterns include:
+     * The **caller** (component/service) is responsible for unsubscribing from the `Observable`. Typical patterns include:
      *
      * ```ts
      * // 1. Manual subscription + teardown
@@ -152,21 +146,17 @@ export interface IWebsocketService {
      * }
      * ```
      *
-     * Failing to unsubscribe keeps the WebSocket/STOMP subscription active and
-     * may lead to memory leaks and unnecessary server load.
+     * Failing to unsubscribe keeps the WebSocket/STOMP subscription active and may lead to memory leaks and unnecessary server load.
      */
     subscribe<T>(channel: string): Observable<T>;
 
     /**
      * Observe the current WebSocket connection state.
      *
-     * @returns An {@link Observable} of {@link ConnectionState}, emitting
-     *          whenever the internal connection state changes.
+     * @returns An {@link Observable} of {@link ConnectionState}, emitting whenever the internal connection state changes.
      *
      * @remarks
-     * This is useful for components that need to react to connection changes,
-     * e.g. showing a "disconnected" banner or blocking certain actions until
-     * the connection is established.
+     * This is useful for components that need to react to connection changes, e.g. showing a "disconnected" banner or blocking certain actions until the connection is established.
      */
     get connectionState(): Observable<ConnectionState>;
 }
@@ -174,8 +164,7 @@ export interface IWebsocketService {
 /**
  * Immutable representation of the WebSocket/STOMP connection state.
  *
- * Instances of this class are emitted by {@link WebsocketService.connectionState}
- * to allow observers to react to:
+ * Instances of this class are emitted by {@link WebsocketService.connectionState} to allow observers to react to:
  * - whether a connection is currently established,
  * - whether there has ever been a successful connection before, and
  * - whether the current disconnected state is intentional or due to an error.
@@ -187,8 +176,7 @@ export class ConnectionState {
     readonly connected: boolean;
 
     /**
-     * Indicates whether a successful connection has been established at least once
-     * since service initialization or the last intentional disconnect.
+     * Indicates whether a successful connection has been established at least once since service initialization or the last intentional disconnect.
      */
     readonly wasEverConnectedBefore: boolean;
 
@@ -218,16 +206,12 @@ export class ConnectionState {
  *
  * ## Subscription lifecycle and responsibility
  *
- * Each call to {@link subscribe} returns an {@link Observable} bound to an
- * underlying STOMP subscription created by `RxStomp.watch(...)`.
+ * Each call to {@link subscribe} returns an {@link Observable} bound to an underlying STOMP subscription created by `RxStomp.watch(...)`.
  *
- * - When the consumer **subscribes** to the observable, the STOMP subscription
- *   is created (or reused internally by `RxStomp`).
- * - When the consumer **unsubscribes** from the observable subscription, the
- *   STOMP subscription is cleaned up by `RxStomp`.
+ * - When the consumer **subscribes** to the observable, the STOMP subscription is created (or reused internally by `RxStomp`).
+ * - When the consumer **unsubscribes** from the observable subscription, the STOMP subscription is cleaned up by `RxStomp`.
  *
- * Therefore, any component or service that calls `subscribe` **must** call
- * `unsubscribe` on the observable subscription when it is no longer needed,
+ * Therefore, any component or service that calls `subscribe` **must** call `unsubscribe` on the observable subscription when it is no longer needed,
  * usually in `ngOnDestroy`. This is essential to:
  *
  * - free client-side resources,
@@ -237,9 +221,7 @@ export class ConnectionState {
 @Injectable({ providedIn: 'root' })
 export class WebsocketService implements IWebsocketService, OnDestroy {
     /**
-     * Underlying RxStomp client instance managing the STOMP/WebSocket connection.
-     *
-     * This is lazily created in {@link connect} and cleared in {@link disconnect}.
+     * Underlying RxStomp client instance managing the STOMP/WebSocket connection. This is lazily created in {@link connect} and cleared in {@link disconnect}.
      */
     private rxStomp?: RxStomp;
 
@@ -250,8 +232,13 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
     private wasConnectedOnce = false;
 
     /**
-     * Internal {@link BehaviorSubject} holding the current {@link ConnectionState}.
-     * Exposed as an observable via {@link connectionState}.
+     * Subscription to the RxStomp connection state observable.
+     * @private
+     */
+    private connectionStateSubscription?: Subscription;
+
+    /**
+     * Internal {@link BehaviorSubject} holding the current {@link ConnectionState}. Exposed as an observable via {@link connectionState}.
      */
     private readonly connectionStateInternal: BehaviorSubject<ConnectionState>;
 
@@ -267,9 +254,7 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
     }
 
     /**
-     * Observable view of the current WebSocket connection state.
-     *
-     * Consumers can subscribe to this observable to react to connection changes.
+     * Observable view of the current WebSocket connection state. Consumers can subscribe to this observable to react to connection changes.
      * The observable never completes as long as the service is alive.
      */
     get connectionState(): Observable<ConnectionState> {
@@ -285,18 +270,16 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
      *    - broker URL based on the current `window.location.host`
      *    - configured heartbeats and reconnect behavior
      *    - native `WebSocket` usage (no SockJS)
-     * 3. Registers a connection callback to update {@link connectionStateInternal}
-     *    when a connection is established.
+     * 3. Registers a connection callback to update {@link connectionStateInternal} when a connection is established.
      * 4. Activates the client.
      *
      * @remarks
-     * - This method does **not** return a promise or observable for connection
-     *   completion. Consumers who need to react to connection establishment
-     *   should subscribe to {@link connectionState}.
+     * This method does **not** return a promise or observable for connection completion. Consumers who need to react to connection changes subscribe to {@link connectionState}.
      */
     connect(): void {
         if (this.rxStomp) {
             void this.rxStomp.deactivate();
+            this.connectionStateSubscription?.unsubscribe();
         }
         // NOTE: we add 'websocket' twice to use STOMP without SockJS
         const url = `//${window.location.host}/websocket/websocket`;
@@ -315,7 +298,7 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
         };
         this.rxStomp = new RxStomp();
         this.rxStomp.configure(config);
-        this.rxStomp.connectionState$.subscribe((state: RxStompState) => {
+        this.connectionStateSubscription = this.rxStomp.connectionState$.subscribe((state: RxStompState) => {
             this.connectionStateInternal.next(new ConnectionState(state == RxStompState.OPEN, this.wasConnectedOnce));
             if (state === RxStompState.OPEN) {
                 this.wasConnectedOnce = true;
@@ -339,8 +322,7 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
      */
     private handleIncomingMessage<T>() {
         return (message: IMessage): T => {
-            // this code is invoked if a new websocket message was received from the server
-            // we pass the message to the subscriber (e.g. a component who will be notified and can handle the message)
+            // this code is invoked if a new websocket message was received from the server, we pass the message to the subscriber (e.g. a component who will be notified and can handle the message)
             const isCompressed = message.headers[COMPRESSION_HEADER_KEY] === 'true';
             let payload = message.body;
 
@@ -421,14 +403,13 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
      * - updates {@link connectionStateInternal} to reflect an intentional disconnect.
      *
      * @remarks
-     * This is typically invoked for use cases such as logout or application
-     * teardown. After calling this, any further {@link send} or {@link subscribe}
-     * calls will behave as if no connection exists. A subsequent call to
-     * {@link connect} or a lazy `subscribe` will create a new connection.
+     * This is typically invoked for use cases such as logout or application teardown. After calling this, any further {@link send} or {@link subscribe}
+     * calls will behave as if no connection exists. A subsequent call to {@link connect} or a lazy `subscribe` will create a new connection.
      */
     disconnect(): void {
         if (this.rxStomp) {
             void this.rxStomp.deactivate();
+            this.connectionStateSubscription?.unsubscribe();
             this.rxStomp = undefined;
             if (this.connectionStateInternal.getValue().connected) {
                 this.connectionStateInternal.next(new ConnectionState(false, this.wasConnectedOnce));

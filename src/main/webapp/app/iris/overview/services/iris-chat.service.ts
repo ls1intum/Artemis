@@ -51,7 +51,7 @@ export function chatModeToUrlComponent(mode: ChatServiceMode): string | undefine
 export class IrisChatService implements OnDestroy {
     private readonly irisChatHttpService = inject(IrisChatHttpService);
     private readonly irisWebsocketService = inject(IrisWebsocketService);
-    private readonly itisStatusService = inject(IrisStatusService);
+    private readonly irisStatusService = inject(IrisStatusService);
     private readonly userService = inject(UserService);
     private readonly accountService = inject(AccountService);
     private readonly router = inject(Router);
@@ -108,7 +108,7 @@ export class IrisChatService implements OnDestroy {
     latestStartedSession?: IrisSessionDTO;
 
     protected constructor() {
-        this.rateLimitSubscription = this.itisStatusService.currentRatelimitInfo().subscribe((info) => (this.rateLimitInfo = info));
+        this.rateLimitSubscription = this.irisStatusService.currentRatelimitInfo().subscribe((info) => (this.rateLimitInfo = info));
         this.updateCourseId();
     }
 
@@ -396,7 +396,7 @@ export class IrisChatService implements OnDestroy {
 
     private handleWebsocketMessage(payload: IrisChatWebsocketDTO) {
         if (payload.rateLimitInfo) {
-            this.itisStatusService.handleRateLimitInfo(payload.rateLimitInfo);
+            this.irisStatusService.handleRateLimitInfo(payload.rateLimitInfo);
         }
         if (payload.sessionTitle && this.sessionId) {
             if (this.latestStartedSession?.id === this.sessionId) {

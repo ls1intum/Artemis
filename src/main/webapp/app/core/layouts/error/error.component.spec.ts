@@ -6,7 +6,7 @@ import { TranslateService, TranslateStore } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('ErrorComponent', () => {
-    let routeData$: ReplaySubject<any>;
+    let routeData$: ReplaySubject<{ error403?: boolean; error404?: boolean; errorMessage?: string }>;
 
     beforeEach(async () => {
         routeData$ = new ReplaySubject(1);
@@ -19,6 +19,10 @@ describe('ErrorComponent', () => {
                 { provide: TranslateStore, useValue: {} },
             ],
         }).compileComponents();
+    });
+
+    afterEach(() => {
+        routeData$?.complete();
     });
 
     it('should set flags based on route data', () => {

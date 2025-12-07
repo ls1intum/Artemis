@@ -133,12 +133,8 @@ describe('BuildAgentSummaryComponent', () => {
 
         websocketSubject = new Subject<BuildAgentInformation[]>();
         mockWebsocketService.subscribe.mockReturnValue(websocketSubject.asObservable());
-    }));
-
-    beforeEach(() => {
         jest.clearAllMocks();
-        mockWebsocketService.subscribe.mockReturnValue(websocketSubject.asObservable());
-    });
+    }));
 
     it('should load build agents on initialization', () => {
         mockBuildAgentsService.getBuildAgentSummary.mockReturnValue(of(mockBuildAgents));
