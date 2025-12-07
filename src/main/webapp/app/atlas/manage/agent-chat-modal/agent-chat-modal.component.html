@@ -84,109 +84,19 @@
                                 }
                             </div>
                         }
-                        @if (message.relationPreview) {
-                            <div class="relation-preview-container mt-2">
-                                <div class="relation-card p-3 border rounded">
-                                    <h6 class="mb-2">Competency Relation</h6>
-                                    <div class="relation-details">
-                                        <div class="mb-2"><strong>From:</strong> {{ message.relationPreview.headCompetencyTitle }}</div>
-                                        <div class="mb-2"><strong>To:</strong> {{ message.relationPreview.tailCompetencyTitle }}</div>
-                                        <div class="mb-2"><strong>Type:</strong> {{ message.relationPreview.relationType }}</div>
-                                    </div>
-                                    @if (!message.relationPreview.viewOnly) {
-                                        <button
-                                            type="button"
-                                            class="btn btn-sm mt-2"
-                                            [class.btn-primary]="!message.relationCreated"
-                                            [class.btn-success]="message.relationCreated"
-                                            (click)="onCreateRelation(message)"
-                                            [disabled]="isAgentTyping() || message.relationCreated"
-                                        >
-                                            @if (message.relationCreated) {
-                                                {{ message.relationPreview.relationId ? 'Updated' : 'Created' }}
-                                            } @else {
-                                                {{ message.relationPreview.relationId ? 'Update' : 'Create' }}
-                                            }
-                                        </button>
+                        @if (message.relationGraphPreview) {
+                            <div class="relation-graph-preview-container mt-2 border rounded">
+                                <div style="height: 400px">
+                                    @if (getCompetenciesForMessage(message) && getRelationsForMessage(message)) {
+                                        <jhi-course-competencies-relation-graph
+                                            [courseCompetencies]="getCompetenciesForMessage(message)!"
+                                            [relations]="getRelationsForMessage(message)!"
+                                            [(selectedRelationId)]="selectedRelationId"
+                                        />
                                     }
                                 </div>
-                            </div>
-                        }
-                        @if (message.batchRelationPreview && message.batchRelationPreview.length > 0) {
-                            <div class="batch-relation-preview-container mt-2">
-                                <div class="mb-2">
-                                    <small class="text-muted">Preview: {{ message.batchRelationPreview.length }} relations</small>
-                                </div>
-                                @for (rel of message.batchRelationPreview; track rel.headCompetencyId + '_' + rel.tailCompetencyId) {
-                                    <div class="relation-card p-2 border rounded mb-2">
-                                        <div class="relation-details">
-                                            <div><strong>From:</strong> {{ rel.headCompetencyTitle }}</div>
-                                            <div><strong>To:</strong> {{ rel.tailCompetencyTitle }}</div>
-                                            <div><strong>Type:</strong> {{ rel.relationType }}</div>
-                                        </div>
-                                    </div>
-                                }
-                                @if (!message.batchRelationPreview[0]?.viewOnly) {
-                                    <button
-                                        type="button"
-                                        class="btn btn-sm mt-2"
-                                        [class.btn-primary]="!message.batchRelationCreated"
-                                        [class.btn-success]="message.batchRelationCreated"
-                                        (click)="onCreateRelation(message)"
-                                        [disabled]="isAgentTyping() || message.batchRelationCreated"
-                                    >
-                                        @if (message.batchRelationCreated) {
-                                            Completed ({{ message.batchRelationPreview.length }})
-                                        } @else {
-                                            {{
-                                                message.batchRelationPreview[0]?.relationId
-                                                    ? 'Update All (' + message.batchRelationPreview.length + ')'
-                                                    : 'Create All (' + message.batchRelationPreview.length + ')'
-                                            }}
-                                        }
-                                    </button>
-                                }
-                            </div>
-                        }
-                        @if (message.relationGraphPreview) {
-                            <div class="relation-graph-preview-container mt-2 border rounded" style="height: 400px; overflow: hidden" xmlns:svg="http://www.w3.org/2000/svg">
-                                <ngx-graph
-                                    [nodes]="message.relationGraphPreview.nodes"
-                                    [links]="message.relationGraphPreview.edges"
-                                    layout="dagreCluster"
-                                    [draggingEnabled]="false"
-                                    [enableZoom]="true"
-                                    [showMiniMap]="false"
-                                >
-                                    <ng-template #defsTemplate>
-                                        <svg:marker id="arrow-preview" viewBox="0 -5 10 10" refX="8" refY="0" markerWidth="4" markerHeight="4" orient="auto">
-                                            <svg:path d="M0,-5L10,0L0,5" class="arrow-head" fill="#999" />
-                                        </svg:marker>
-                                    </ng-template>
-                                    <ng-template #nodeTemplate let-node>
-                                        <svg:g class="node-container">
-                                            <svg:foreignObject width="150" height="50">
-                                                <div class="graph-node-label p-2 bg-light border rounded text-center" style="width: 150px">
-                                                    <small
-                                                        ><strong>{{ node.label }}</strong></small
-                                                    >
-                                                </div>
-                                            </svg:foreignObject>
-                                        </svg:g>
-                                    </ng-template>
-                                    <ng-template #linkTemplate let-link>
-                                        <svg:g class="edge">
-                                            <svg:path class="line" stroke-width="2" stroke="#999" marker-end="url(#arrow-preview)" />
-                                            <svg:text class="edge-label" text-anchor="middle" fill="#666">
-                                                <textPath class="text-path" [attr.href]="'#' + link.id" startOffset="50%">
-                                                    {{ link.label }}
-                                                </textPath>
-                                            </svg:text>
-                                        </svg:g>
-                                    </ng-template>
-                                </ngx-graph>
                                 @if (!message.relationGraphPreview.viewOnly) {
-                                    <div class="p-2">
+                                    <div class="p-3 border-top bg-light">
                                         <button
                                             type="button"
                                             class="btn btn-sm"
@@ -196,9 +106,9 @@
                                             [disabled]="isAgentTyping() || message.relationCreated"
                                         >
                                             @if (message.relationCreated) {
-                                                Created
+                                                {{ 'artemisApp.agent.chat.mapped' | artemisTranslate }}
                                             } @else {
-                                                Create Relation
+                                                {{ 'artemisApp.agent.chat.map' | artemisTranslate }}
                                             }
                                         </button>
                                     </div>

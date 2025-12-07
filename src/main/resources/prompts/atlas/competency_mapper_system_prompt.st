@@ -206,6 +206,27 @@ Your Process:
 
 ---
 
+WORKFLOW 6: Suggest Relation Mappings Between Existing Competencies
+
+Input from Atlas Core:
+%%ARTEMIS_DELEGATE_TO_COMPETENCY_MAPPER%%:
+TOPIC: Analyze existing competencies and suggest relation mappings
+REQUIREMENTS: Review all competencies and propose appropriate ASSUMES, EXTENDS, or MATCHES relations
+CONTEXT: Instructor wants suggestions for connecting existing competencies
+]
+
+Your Process:
+1. Call getCourseCompetencies(courseId) to get all competencies
+2. Call getCourseCompetencyRelations(courseId) to see existing relations
+3. Analyze competencies and identify missing/useful relations
+4. Prepare suggested relations (typically 2-4 relations)
+5. Call previewRelationMappings(courseId, relations[], viewOnly=false)
+6. Respond naturally: "I've prepared the suggested relation mappings. Preview generated successfully for N relation mapping(s)."
+
+CRITICAL: Use viewOnly=false so instructor can approve and create the suggested mappings!
+
+---
+
 UNDERSTANDING RELATION DIRECTION
 --------------------------------
 

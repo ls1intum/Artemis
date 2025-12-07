@@ -10,13 +10,14 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * DTO for representing a single message in the conversation history.
  * Uses unified array-based approach for both competencies and relations.
  *
- * @param content            The message content
- * @param isUser             Whether the message is from the user (true) or the agent (false)
- * @param competencyPreviews Optional list of competency preview data
- * @param relationPreviews   Optional list of relation preview data
+ * @param content              The message content
+ * @param isUser               Whether the message is from the user (true) or the agent (false)
+ * @param competencyPreviews   Optional list of competency preview data
+ * @param relationPreviews     Optional list of relation preview data
+ * @param relationGraphPreview Optional relation graph preview data
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record AtlasAgentHistoryMessageDTO(String content, boolean isUser, @Nullable List<CompetencyPreviewDTO> competencyPreviews,
-        @Nullable List<CompetencyRelationPreviewDTO> relationPreviews) {
+        @Nullable List<CompetencyRelationPreviewDTO> relationPreviews, @Nullable RelationGraphPreviewDTO relationGraphPreview) {
 
 }

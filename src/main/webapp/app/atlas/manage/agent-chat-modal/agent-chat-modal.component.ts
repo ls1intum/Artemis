@@ -12,13 +12,14 @@ import { ChatMessage } from 'app/atlas/shared/entities/chat-message.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CompetencyCardComponent } from 'app/atlas/overview/competency-card/competency-card.component';
 import { CompetencyService } from 'app/atlas/manage/services/competency.service';
-import { Competency } from 'app/atlas/shared/entities/competency.model';
-import { NgxGraphModule } from '@swimlane/ngx-graph';
+import { Competency, CompetencyRelationDTO, CourseCompetency } from 'app/atlas/shared/entities/competency.model';
+import { RelationGraphPreview } from 'app/atlas/shared/entities/chat-message.model';
+import { CourseCompetenciesRelationGraphComponent } from 'app/atlas/manage/course-competencies-relation-graph/course-competencies-relation-graph.component';
 
 @Component({
     selector: 'jhi-agent-chat-modal',
     standalone: true,
-    imports: [CommonModule, TranslateDirective, FontAwesomeModule, FormsModule, ArtemisTranslatePipe, CompetencyCardComponent, NgxGraphModule],
+    imports: [CommonModule, TranslateDirective, FontAwesomeModule, FormsModule, ArtemisTranslatePipe, CompetencyCardComponent, CourseCompetenciesRelationGraphComponent],
     templateUrl: './agent-chat-modal.component.html',
     styleUrl: './agent-chat-modal.component.scss',
 })
@@ -40,6 +41,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
     currentMessage = signal('');
     isAgentTyping = signal(false);
     shouldScrollToBottom = signal(false);
+    selectedRelationId = signal<number | undefined>(undefined);
 
     // Event emitted when agent likely created/modified competencies
     competencyChanged = output<void>();
@@ -61,7 +63,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
                     this.addMessage(this.translateService.instant('artemisApp.agent.chat.welcome'), false);
                 }
                 history.forEach((msg) => {
-                    this.addMessage(msg.content, msg.isUser, msg.competencyPreviews, msg.relationPreviews);
+                    this.addMessage(msg.content, msg.isUser, msg.competencyPreviews, msg.relationPreviews, msg.relationGraphPreview);
                 });
             },
             error: () => {
@@ -103,7 +105,13 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
             next: (response) => {
                 this.isAgentTyping.set(false);
 
-                this.addMessage(response.message || this.translateService.instant('artemisApp.agent.chat.error'), false, response.competencyPreviews, response.relationPreviews);
+                this.addMessage(
+                    response.message || this.translateService.instant('artemisApp.agent.chat.error'),
+                    false,
+                    response.competencyPreviews,
+                    response.relationPreviews,
+                    response.relationGraphPreview,
+                );
 
                 if (response.competenciesModified) {
                     this.competencyChanged.emit();
@@ -205,21 +213,28 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
 
     protected onCreateRelation(message: ChatMessage): void {
         // Prevent duplicate creation
-        if (message.relationCreated || !message.relationPreview) {
+        if (message.relationCreated || !message.relationPreviews || message.relationPreviews.length === 0) {
             return;
         }
 
         this.isAgentTyping.set(true);
 
         // Trigger relation creation via agent
-        this.agentChatService.sendMessage('Create the relation', this.courseId).subscribe({
-            next: () => {
+        this.agentChatService.sendMessage('[CREATE_APPROVED_RELATION]', this.courseId).subscribe({
+            next: (response) => {
                 this.isAgentTyping.set(false);
 
                 // Mark this message's relation as created
                 this.messages.update((msgs) => msgs.map((msg) => (msg.id === message.id ? { ...msg, relationCreated: true } : msg)));
 
-                this.addMessage(this.translateService.instant('artemisApp.agent.chat.success.relationCreated'), false);
+                // Add agent response message
+                this.addMessage(
+                    response.message || this.translateService.instant('artemisApp.agent.chat.success.relationCreated'),
+                    false,
+                    response.competencyPreviews,
+                    response.relationPreviews,
+                    response.relationGraphPreview,
+                );
 
                 // Emit event to refresh competencies (relations affect the graph)
                 this.competencyChanged.emit();
@@ -271,7 +286,13 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
      * Uses unified array-based approach for both competencies and relations (similar to competency cards).
      * Handles plan pending markers, preview data mapping, and automatic scrolling.
      */
-    private addMessage(content: string, isUser: boolean, competencyPreviews?: CompetencyPreviewResponse[], relationPreviews?: CompetencyRelationPreviewResponse[]): void {
+    private addMessage(
+        content: string,
+        isUser: boolean,
+        competencyPreviews?: CompetencyPreviewResponse[],
+        relationPreviews?: CompetencyRelationPreviewResponse[],
+        relationGraphPreview?: RelationGraphPreview,
+    ): void {
         const message: ChatMessage = {
             id: this.generateMessageId(),
             content,
@@ -300,6 +321,10 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
                 relationType: preview.relationType,
                 viewOnly: preview.viewOnly,
             }));
+        }
+
+        if (relationGraphPreview) {
+            message.relationGraphPreview = relationGraphPreview;
         }
 
         this.finalizeMessage(message, isUser);
@@ -379,5 +404,66 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
             const textarea = this.messageInput().nativeElement;
             textarea.style.height = 'auto';
         }
+    }
+
+    private competencyCache = new Map<string, CourseCompetency[]>();
+    private relationCache = new Map<string, CompetencyRelationDTO[]>();
+
+    /**
+     * Gets competencies for a message with caching to avoid repeated conversions.
+     */
+    protected getCompetenciesForMessage(message: ChatMessage): CourseCompetency[] | null {
+        if (!message.relationGraphPreview?.nodes) {
+            return null;
+        }
+
+        const cacheKey = message.id;
+        if (!this.competencyCache.has(cacheKey)) {
+            const competencies = message.relationGraphPreview.nodes.map((node) => {
+                const competency = new Competency();
+                competency.id = parseInt(node.id, 10);
+                competency.title = node.label;
+                return competency;
+            });
+            this.competencyCache.set(cacheKey, competencies);
+        }
+
+        return this.competencyCache.get(cacheKey)!;
+    }
+
+    /**
+     * Gets relations for a message with caching to avoid repeated conversions.
+     */
+    protected getRelationsForMessage(message: ChatMessage): CompetencyRelationDTO[] | null {
+        if (!message.relationGraphPreview?.edges) {
+            return null;
+        }
+
+        const cacheKey = message.id;
+        if (!this.relationCache.has(cacheKey)) {
+            const relations = message.relationGraphPreview.edges.map((edge) => {
+                // Parse edge ID: can be "edge-123" or "edge-new-123-456"
+                let relationId: number | undefined = undefined;
+                if (edge.id.startsWith('edge-new-')) {
+                    // New relation without DB ID - leave as undefined
+                    relationId = undefined;
+                } else if (edge.id.startsWith('edge-')) {
+                    // Existing relation with DB ID
+                    const idStr = edge.id.substring(5); // Remove "edge-" prefix
+                    const parsed = parseInt(idStr, 10);
+                    relationId = isNaN(parsed) ? undefined : parsed;
+                }
+
+                return {
+                    id: relationId,
+                    headCompetencyId: parseInt(edge.source, 10),
+                    tailCompetencyId: parseInt(edge.target, 10),
+                    relationType: edge.label as any,
+                };
+            });
+            this.relationCache.set(cacheKey, relations);
+        }
+
+        return this.relationCache.get(cacheKey)!;
     }
 }

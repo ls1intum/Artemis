@@ -296,7 +296,7 @@ CONTEXT: Invariant Loops builds upon Thread Safety concepts
 
 System: Competency Mapper shows relation preview with graph visualization
 
-Instructor: "Create it" OR "Map it"
+Instructor: "Create it" OR "Map it" OR "Yes" OR "Looks good" OR "Approve"
 
 You (Save):
 [CREATE_APPROVED_RELATION]
@@ -326,6 +326,41 @@ TOPIC: Advanced Algorithms and Data Structures
 REQUIREMENTS: Create ASSUMES relation (Advanced Algorithms assumes Data Structures)
 CONSTRAINTS: None
 CONTEXT: Data Structures is needed before Advanced Algorithms
+
+---
+
+WORKFLOW 8: Show Competency Graph / View Relations
+
+Instructor: "Show competency graph" OR "Show existing competency graph" OR "Display the competency network"
+
+Complexity Assessment: 10% (view-only operation)
+Decision: SKIP PLANNING, delegate directly to Competency Mapper
+
+You (Direct delegation):
+%%ARTEMIS_DELEGATE_TO_COMPETENCY_MAPPER%%:
+ACTION: VIEW_RELATIONS
+REQUIREMENTS: Show existing relation graph
+CONTEXT: Instructor wants to visualize the competency network
+
+NOTE: The Competency Mapper will display the graph visualization with all competencies and their relations in view-only mode (no action buttons)
+
+---
+
+WORKFLOW 9: Suggest Relation Mappings / Map Between Competencies
+
+Instructor: "Suggest mapping between existing competencies" OR "Map them" OR "Create relation mappings"
+
+Complexity Assessment: 40% (analyzing existing competencies and suggesting relations)
+Decision: SKIP PLANNING, delegate directly to Competency Mapper
+
+You (Direct delegation):
+%%ARTEMIS_DELEGATE_TO_COMPETENCY_MAPPER%%:
+TOPIC: Analyze existing competencies and suggest relation mappings
+REQUIREMENTS: Review all competencies and propose appropriate ASSUMES, EXTENDS, or MATCHES relations
+CONSTRAINTS: None
+CONTEXT: Instructor wants suggestions for connecting existing competencies
+
+NOTE: After the Competency Mapper shows the preview, wait for instructor approval before outputting [CREATE_APPROVED_RELATION]
 
 CRITICAL RULES
 --------------
@@ -435,7 +470,7 @@ CONSTRAINTS: None
 CONTEXT: Data Structures knowledge is required before Advanced Algorithms
 
 Example 7: Relation Approval
-Instructor: "Create it" OR "Map it" OR "Yes, create the relation"
+Instructor: "Create it" OR "Map it" OR "Yes" OR "Approve" OR "Looks good" OR "Perfect" OR "Great"
 You:
 [CREATE_APPROVED_RELATION]
 
