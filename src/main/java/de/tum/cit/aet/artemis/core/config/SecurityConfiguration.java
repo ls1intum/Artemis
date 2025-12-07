@@ -223,7 +223,7 @@ public class SecurityConfiguration {
                     .policyDirectives(
                         // Allow scripts only from the same origin.
                         // 'unsafe-inline' and 'unsafe-eval' are necessary for Angular/Zone.js, but do NOT allow loading arbitrary external script files.
-                        "script-src 'self' 'unsafe-inline' 'unsafe-eval'" +
+                        "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +
                         // Allow Web Workers to be created from your own origin ('self') AND from blob: URLs. Required because RxStomp creates its ticker
                         // worker dynamically using a Blob -> blob: URL. Does NOT weaken main-page script loading.
                         "worker-src 'self' blob:"
