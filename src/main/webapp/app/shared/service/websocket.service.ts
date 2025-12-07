@@ -1,6 +1,6 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { captureException } from '@sentry/angular';
-import { IWatchParams, RxStomp, RxStompConfig, TickerStrategy } from '@stomp/rx-stomp';
+import { IWatchParams, RxStomp, RxStompConfig, RxStompState, TickerStrategy } from '@stomp/rx-stomp';
 import { IMessage, StompHeaders } from '@stomp/stompjs';
 import { gzip, ungzip } from 'pako';
 import { BehaviorSubject, EMPTY, Observable } from 'rxjs';
@@ -309,13 +309,9 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
         };
         this.rxStomp = new RxStomp();
         this.rxStomp.configure(config);
-        const rawClient = this.rxStomp.stompClient;
-        rawClient.onConnect = () => {
-            // check if a session id is part of the frame, otherwise use a random string
-            if (!this.connectionStateInternal.getValue().connected) {
-                this.connectionStateInternal.next(new ConnectionState(true, false));
-            }
-        };
+        this.rxStomp.connectionState$.subscribe((state: RxStompState) => {
+            this.connectionStateInternal.next(new ConnectionState(state == RxStompState.OPEN, false));
+        });
         this.rxStomp.activate();
     }
 
