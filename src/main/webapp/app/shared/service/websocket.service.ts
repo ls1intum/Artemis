@@ -442,9 +442,12 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
             this.connectionStateSubscription?.unsubscribe();
             this.rxStomp = undefined;
             if (this.connectionStateInternal.getValue().connected) {
-                this.connectionStateInternal.next(new ConnectionState(false, this.wasConnectedOnce));
+                // we do not want to show a disconnected state if the disconnect was intentional
+                this.connectionStateInternal.next(new ConnectionState(false, false));
             }
             this.wasConnectedOnce = false;
+            this.sessionId = '';
+            this.subscriptionCounter = 0;
         }
     }
 
