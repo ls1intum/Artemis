@@ -12,10 +12,11 @@ const constructedRxStompClients: any[] = [];
 const watchMock = jest.fn();
 
 jest.mock('@stomp/rx-stomp', () => {
-    const { RxStompState: ActualRxStompState } = jest.requireActual('@stomp/rx-stomp');
+    const { RxStompState: ActualRxStompState, ReconnectionTimeMode: ActualReconnectionTimeMode } = jest.requireActual('@stomp/rx-stomp');
     return {
         TickerStrategy: { Worker: 'worker-ticker' },
         RxStompState: ActualRxStompState,
+        ReconnectionTimeMode: ActualReconnectionTimeMode,
         RxStomp: jest.fn().mockImplementation(() => {
             const client = {
                 configure: jest.fn(),
