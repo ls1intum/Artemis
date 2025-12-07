@@ -6,6 +6,9 @@ const sidebars: SidebarsConfig = {
         'programming',
         'lecture-series',
         'assessment',
+        'faq',
+        'tutorial-groups',
+        'plagiarism-check'
     ],
 };
 
