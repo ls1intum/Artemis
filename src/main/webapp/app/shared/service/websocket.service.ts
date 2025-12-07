@@ -331,6 +331,7 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
                     payload = WebsocketService.decodeAndDecompress(payload);
                 } catch (error) {
                     captureException('Failed to decompress message', error);
+                    throw error;
                 }
             }
             return WebsocketService.parseJSON<T>(payload);
