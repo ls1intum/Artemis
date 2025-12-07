@@ -9,6 +9,7 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.nio.charset.StandardCharsets;
 import java.time.ZonedDateTime;
 import java.util.Optional;
 
@@ -20,6 +21,7 @@ import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
@@ -32,6 +34,7 @@ import de.tum.cit.aet.artemis.core.dto.CourseRequestDTO;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.CourseRequestRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 
 @ExtendWith(MockitoExtension.class)
 class CourseRequestServiceTest {
@@ -53,6 +56,9 @@ class CourseRequestServiceTest {
 
     @Mock
     private MailSendingService mailSendingService;
+
+    @Mock
+    private ResourceLoaderService resourceLoaderService;
 
     @InjectMocks
     private CourseRequestService courseRequestService;
@@ -100,6 +106,7 @@ class CourseRequestServiceTest {
         });
         when(userRepository.findByIdWithGroupsAndAuthoritiesElseThrow(7L)).thenReturn(requester);
         when(courseRequestRepository.save(any(CourseRequest.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(resourceLoaderService.getResource(any())).thenReturn(new ByteArrayResource("code of conduct".getBytes(StandardCharsets.UTF_8)));
 
         CourseRequestDTO result = courseRequestService.acceptRequest(1L);
 

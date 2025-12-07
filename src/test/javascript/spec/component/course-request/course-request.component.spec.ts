@@ -53,7 +53,7 @@ describe('CourseRequestComponent', () => {
     });
 
     it('should submit when the form is valid', () => {
-        courseRequestService.create.mockReturnValue(of({}));
+        courseRequestService.create.mockReturnValue(of({} as CourseRequest));
         component.form.patchValue({
             title: 'New Course',
             shortName: 'ABC',
