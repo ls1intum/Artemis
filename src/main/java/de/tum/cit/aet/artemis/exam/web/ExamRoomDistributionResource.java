@@ -238,7 +238,7 @@ public class ExamRoomDistributionResource {
         examUserService.checkExamUserExistsAndBelongsToExamElseThrow(reseatInformation.examUserId(), examId);
 
         if (StringUtil.isBlank(reseatInformation.newRoom())) {
-            throw new BadRequestAlertException("No room number was provided", ENTITY_NAME, "room.invalidRoomNumber");
+            throw new BadRequestAlertException("No room number was provided", ENTITY_NAME, "room.noRoomProvided");
         }
 
         if (StringUtil.isBlank(reseatInformation.newSeat()) && !examRoomService.isRoomPersisted(reseatInformation.newRoom())) {

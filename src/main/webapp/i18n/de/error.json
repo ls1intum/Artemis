@@ -136,7 +136,12 @@
             "seatNotFoundFixedSelection": "Der Sitz mit Reihenindex {{ rowIndex }} und Sitzindex {{ seatIndex }} in Raum {{ roomNumber }} existiert nicht",
             "missingDefaultLayout": "Der Raum {{ roomNumber }} hat kein Standardlayout ('default')",
             "missingSpecifiedLayout": "Der Raum {{ roomNumber }} hat kein Layout namens {{ layoutName }}",
-            "notFound": "Der angegebene Raum existiert nicht"
+            "notFound": "Der angegebene Raum existiert nicht",
+            "alreadyInRoom": "Der Student sitzt bereits in diesem Raum",
+            "noFreeSeats": "Es gibt keine freien Sitze in diesem Raum",
+            "seatTaken": "{{ studentLogin }} sitzt hier bereits",
+            "noRoomProvided": "Bitte gib einen Raum an",
+            "noAutomaticSeat": "Automatische Sitzauswahl ist nur bei hinterlegten Räumen möglich"
         },
         "examUser": {
             "service": {

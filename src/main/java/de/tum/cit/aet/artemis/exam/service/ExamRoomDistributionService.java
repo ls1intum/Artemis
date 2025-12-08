@@ -460,8 +460,9 @@ public class ExamRoomDistributionService {
     }
 
     private void checkSeatNotAlreadyTakenOrElseThrow(Set<ExamUser> examUsers, String roomNumber, String seatName) {
-        if (examUsers.stream().anyMatch(eu -> Objects.equals(roomNumber, eu.getPlannedRoom()) && Objects.equals(seatName, eu.getPlannedSeat()))) {
-            throw new BadRequestAlertException("Someone already sits here", ENTITY_NAME, "room.seatTaken");
-        }
+        examUsers.stream().filter(examUser -> Objects.equals(roomNumber, examUser.getPlannedRoom()) && Objects.equals(seatName, examUser.getPlannedSeat())).findAny()
+                .ifPresent(examUser -> {
+                    throw new BadRequestAlertException("Someone already sits here", ENTITY_NAME, "room.seatTaken", Map.of("studentLogin", examUser.getUser().getLogin()));
+                });
     }
 }
