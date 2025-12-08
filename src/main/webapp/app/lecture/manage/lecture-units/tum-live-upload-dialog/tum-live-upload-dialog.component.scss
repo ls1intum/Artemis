@@ -1,0 +1,23 @@
+.auth-section,
+.upload-section {
+    min-height: 200px;
+}
+
+.success-section {
+    padding: 2rem;
+
+    .success-icon {
+        animation: scaleIn 0.3s ease-out;
+    }
+}
+
+@keyframes scaleIn {
+    from {
+        transform: scale(0);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}

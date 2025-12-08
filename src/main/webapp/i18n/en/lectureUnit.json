@@ -211,6 +211,30 @@
                 "typeNameToConfirm": "Please enter the name of the exercise for confirmation.",
                 "buttonText": "Unlink"
             }
+        },
+        "tumLiveUpload": {
+            "title": "Upload to TUM Live",
+            "sectionTitle": "TUM Live Upload",
+            "sectionDescription": "Upload your video directly to TUM Live for streaming using secure SSO authentication.",
+            "openDialog": "Upload to TUM Live",
+            "authenticating": "Authenticating with TUM Live...",
+            "ssoDescription": "Using your Artemis credentials to authenticate with TUM Live via SSO.",
+            "ssoSuccess": "Successfully authenticated via SSO!",
+            "authFailed": "Authentication Failed",
+            "ssoErrorHelp": "Make sure you are properly authenticated in Artemis and have the necessary permissions to upload videos to TUM Live.",
+            "retry": "Retry",
+            "selectCourse": "Select Course",
+            "selectCoursePlaceholder": "-- Select a course --",
+            "videoFile": "Video File",
+            "videoTitle": "Video Title",
+            "videoTitlePlaceholder": "Enter a title for the video",
+            "videoDescription": "Description (Optional)",
+            "videoDescriptionPlaceholder": "Enter a description for the video",
+            "upload": "Upload",
+            "uploadComplete": "Upload Complete!",
+            "uploadCompleteMessage": "Your video has been successfully uploaded to TUM Live.",
+            "uploadSuccess": "Video successfully uploaded to TUM Live.",
+            "uploadError": "Failed to upload video to TUM Live."
         }
     }
 }

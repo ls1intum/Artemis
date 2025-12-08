@@ -2,7 +2,7 @@ import { Component, ElementRef, ViewChild, computed, effect, inject, input, outp
 import dayjs from 'dayjs/esm';
 import { AbstractControl, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import urlParser from 'js-video-url-parser';
-import { faArrowLeft, faQuestionCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faCloudUploadAlt, faQuestionCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER, ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE } from 'app/shared/constants/file-extensions.constants';
 import { CompetencyLectureUnitLink } from 'app/atlas/shared/entities/competency.model';
 import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
@@ -10,12 +10,14 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
 import { TranscriptionStatus } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
+import { TumLiveUploadDialogComponent } from '../tum-live-upload-dialog/tum-live-upload-dialog.component';
+import { TumLiveUploadService } from '../services/tum-live-upload.service';
 
 export interface AttachmentVideoUnitFormData {
     formProperties: FormProperties;
@@ -116,15 +118,20 @@ export class AttachmentVideoUnitFormComponent {
     protected readonly faQuestionCircle = faQuestionCircle;
     protected readonly faTimes = faTimes;
     protected readonly faArrowLeft = faArrowLeft;
+    protected readonly faCloudUploadAlt = faCloudUploadAlt;
     protected readonly TranscriptionStatus = TranscriptionStatus;
 
     protected readonly allowedFileExtensions = ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE;
     protected readonly acceptedFileExtensionsFileBrowser = ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER;
 
     private readonly attachmentVideoUnitService = inject(AttachmentVideoUnitService);
+    private readonly modalService = inject(NgbModal);
+    private readonly tumLiveUploadService = inject(TumLiveUploadService);
+
     canGenerateTranscript = signal(false);
     playlistUrl = signal<string | undefined>(undefined);
     transcriptionStatus = signal<TranscriptionStatus | undefined>(undefined);
+    isTumLiveUploadAvailable = signal(false);
 
     formData = input<AttachmentVideoUnitFormData>();
     isEditMode = input<boolean>(false);
@@ -154,6 +161,11 @@ export class AttachmentVideoUnitFormComponent {
     readonly shouldShowTranscriptionCreation = computed(() => this.accountService.isAdmin());
 
     constructor() {
+        // Check if TUM Live upload is available
+        this.tumLiveUploadService.checkStatus().subscribe((isAvailable) => {
+            this.isTumLiveUploadAvailable.set(isAvailable);
+        });
+
         effect(() => {
             const formData = this.formData();
             if (this.isEditMode() && formData) {
@@ -371,5 +383,27 @@ export class AttachmentVideoUnitFormComponent {
 
     cancelForm() {
         this.onCancel.emit();
+    }
+
+    /**
+     * Opens the TUM Live upload dialog modal.
+     */
+    openTumLiveUploadDialog(): void {
+        const modalRef = this.modalService.open(TumLiveUploadDialogComponent, {
+            size: 'lg',
+            backdrop: 'static',
+            animation: true,
+        });
+
+        modalRef.result.then(
+            (result) => {
+                if (result) {
+                    // Upload was successful - could refresh or show notification
+                }
+            },
+            () => {
+                // Modal was dismissed
+            },
+        );
     }
 }

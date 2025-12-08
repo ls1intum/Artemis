@@ -1,0 +1,148 @@
+<form name="tumLiveUploadForm" role="form" novalidate>
+    <div class="modal-header">
+        <h4 class="modal-title">
+            <fa-icon [icon]="faCloudUploadAlt" class="me-2" />
+            <span jhiTranslate="artemisApp.tumLiveUpload.title">Upload to TUM Live</span>
+        </h4>
+        <button type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="close()"></button>
+    </div>
+
+    <div class="modal-body">
+        <!-- Step 1: SSO Authentication (Automatic) -->
+        @if (!isAuthenticated() && isAuthenticating()) {
+            <div class="auth-section text-center">
+                <div class="mb-3">
+                    <fa-icon [icon]="faCircleNotch" animation="spin" size="3x" class="text-primary" />
+                </div>
+                <h5 jhiTranslate="artemisApp.tumLiveUpload.authenticating">Authenticating with TUM Live...</h5>
+                <p class="text-muted" jhiTranslate="artemisApp.tumLiveUpload.ssoDescription">Using your Artemis credentials to authenticate with TUM Live via SSO.</p>
+            </div>
+        }
+
+        <!-- Authentication Error -->
+        @if (!isAuthenticated() && !isAuthenticating() && authError()) {
+            <div class="auth-section">
+                <div class="alert alert-danger">
+                    <h6 jhiTranslate="artemisApp.tumLiveUpload.authFailed">Authentication Failed</h6>
+                    <p>{{ authError() }}</p>
+                </div>
+                <div class="text-muted small" jhiTranslate="artemisApp.tumLiveUpload.ssoErrorHelp">
+                    Make sure you are properly authenticated in Artemis and have the necessary permissions to upload videos to TUM Live.
+                </div>
+            </div>
+        }
+
+        <!-- Step 2: Upload Form -->
+        @if (isAuthenticated() && !uploadComplete()) {
+            <div class="upload-section">
+                <div class="alert alert-success mb-3">
+                    <fa-icon [icon]="faCheck" class="me-2" />
+                    <span jhiTranslate="artemisApp.tumLiveUpload.ssoSuccess">Successfully authenticated via SSO!</span>
+                </div>
+
+                <div class="mb-3">
+                    <label for="courseSelect" class="form-label" jhiTranslate="artemisApp.tumLiveUpload.selectCourse">Select Course</label>
+                    <select class="form-select" id="courseSelect" [ngModel]="selectedCourseId()" (ngModelChange)="selectedCourseId.set($event)" name="courseId" required>
+                        <option [ngValue]="undefined" disabled jhiTranslate="artemisApp.tumLiveUpload.selectCoursePlaceholder">-- Select a course --</option>
+                        @for (course of availableCourses(); track course.id) {
+                            <option [ngValue]="course.id">{{ course.name }} ({{ course.term }} {{ course.year }})</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label for="videoFile" class="form-label" jhiTranslate="artemisApp.tumLiveUpload.videoFile">Video File</label>
+                    <input type="file" class="form-control" id="videoFile" accept="video/*" (change)="onFileSelect($event)" required />
+                    @if (videoFile()) {
+                        <small class="text-muted">{{ videoFile()?.name }} ({{ (videoFile()?.size ?? 0) / 1024 / 1024 | number: '1.1-1' }} MB)</small>
+                    }
+                </div>
+
+                <div class="mb-3">
+                    <label for="videoTitle" class="form-label" jhiTranslate="artemisApp.tumLiveUpload.videoTitle">Video Title</label>
+                    <input
+                        type="text"
+                        class="form-control"
+                        id="videoTitle"
+                        [(ngModel)]="videoTitle"
+                        name="videoTitle"
+                        [placeholder]="'artemisApp.tumLiveUpload.videoTitlePlaceholder' | artemisTranslate"
+                        required
+                        maxlength="255"
+                    />
+                </div>
+
+                <div class="mb-3">
+                    <label for="videoDescription" class="form-label" jhiTranslate="artemisApp.tumLiveUpload.videoDescription">Description (Optional)</label>
+                    <textarea
+                        class="form-control"
+                        id="videoDescription"
+                        [(ngModel)]="videoDescription"
+                        name="videoDescription"
+                        [placeholder]="'artemisApp.tumLiveUpload.videoDescriptionPlaceholder' | artemisTranslate"
+                        rows="3"
+                        maxlength="1000"
+                    ></textarea>
+                </div>
+
+                @if (uploadError()) {
+                    <div class="alert alert-danger">
+                        {{ uploadError() }}
+                    </div>
+                }
+            </div>
+        }
+
+        <!-- Step 3: Upload Complete -->
+        @if (uploadComplete()) {
+            <div class="success-section text-center">
+                <div class="success-icon mb-3">
+                    <fa-icon [icon]="faCheck" class="text-success" size="3x" />
+                </div>
+                <h5 jhiTranslate="artemisApp.tumLiveUpload.uploadComplete">Upload Complete!</h5>
+                <p class="text-muted" jhiTranslate="artemisApp.tumLiveUpload.uploadCompleteMessage">Your video has been successfully uploaded to TUM Live.</p>
+            </div>
+        }
+    </div>
+
+    <div class="modal-footer">
+        @if (!isAuthenticated() && !isAuthenticating()) {
+            <button type="button" class="btn btn-secondary" (click)="close()">
+                <fa-icon [icon]="faBan" class="me-1" />
+                <span jhiTranslate="entity.action.cancel">Cancel</span>
+            </button>
+            <button type="button" class="btn btn-primary" (click)="retryAuth()">
+                <fa-icon [icon]="faSignInAlt" class="me-1" />
+                <span jhiTranslate="artemisApp.tumLiveUpload.retry">Retry</span>
+            </button>
+        }
+
+        @if (isAuthenticating()) {
+            <button type="button" class="btn btn-secondary" (click)="close()">
+                <fa-icon [icon]="faBan" class="me-1" />
+                <span jhiTranslate="entity.action.cancel">Cancel</span>
+            </button>
+        }
+
+        @if (isAuthenticated() && !uploadComplete()) {
+            <button type="button" class="btn btn-secondary" (click)="close()">
+                <fa-icon [icon]="faBan" class="me-1" />
+                <span jhiTranslate="entity.action.cancel">Cancel</span>
+            </button>
+            <button type="button" class="btn btn-primary" [disabled]="!isUploadFormValid()" (click)="uploadVideo()">
+                <fa-icon [icon]="faCloudUploadAlt" class="me-1" />
+                <span jhiTranslate="artemisApp.tumLiveUpload.upload">Upload</span>
+                @if (isUploading()) {
+                    <fa-icon [icon]="faCircleNotch" animation="spin" class="ms-1" />
+                }
+            </button>
+        }
+
+        @if (uploadComplete()) {
+            <button type="button" class="btn btn-success" (click)="finish()">
+                <fa-icon [icon]="faCheck" class="me-1" />
+                <span jhiTranslate="entity.action.finish">Finish</span>
+            </button>
+        }
+    </div>
+</form>

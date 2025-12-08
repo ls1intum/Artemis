@@ -211,6 +211,30 @@
                 "typeNameToConfirm": "Bitte gib den Namen der Übung zur Bestätigung ein.",
                 "buttonText": "Trennen"
             }
+        },
+        "tumLiveUpload": {
+            "title": "Zu TUM Live hochladen",
+            "sectionTitle": "TUM Live Upload",
+            "sectionDescription": "Lade dein Video direkt zu TUM Live für Streaming mit sicherer SSO-Authentifizierung hoch.",
+            "openDialog": "Zu TUM Live hochladen",
+            "authenticating": "Authentifizierung mit TUM Live...",
+            "ssoDescription": "Verwende deine Artemis-Anmeldedaten zur Authentifizierung mit TUM Live via SSO.",
+            "ssoSuccess": "Erfolgreich via SSO authentifiziert!",
+            "authFailed": "Authentifizierung fehlgeschlagen",
+            "ssoErrorHelp": "Stelle sicher, dass du in Artemis ordnungsgemäß authentifiziert bist und die erforderlichen Berechtigungen zum Hochladen von Videos zu TUM Live hast.",
+            "retry": "Erneut versuchen",
+            "selectCourse": "Kurs auswählen",
+            "selectCoursePlaceholder": "-- Wähle einen Kurs --",
+            "videoFile": "Videodatei",
+            "videoTitle": "Videotitel",
+            "videoTitlePlaceholder": "Gib einen Titel für das Video ein",
+            "videoDescription": "Beschreibung (Optional)",
+            "videoDescriptionPlaceholder": "Gib eine Beschreibung für das Video ein",
+            "upload": "Hochladen",
+            "uploadComplete": "Upload abgeschlossen!",
+            "uploadCompleteMessage": "Dein Video wurde erfolgreich zu TUM Live hochgeladen.",
+            "uploadSuccess": "Video erfolgreich zu TUM Live hochgeladen.",
+            "uploadError": "Fehler beim Hochladen des Videos zu TUM Live."
         }
     }
 }
