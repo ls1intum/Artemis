@@ -114,20 +114,29 @@ class ProgrammingExerciseGitIntegrationTest extends AbstractProgrammingIntegrati
         Path targetPath = tempPath.resolve("lcvc-checkout").resolve("student-checkout");
         var checkedOut = gitService.getOrCheckoutRepositoryWithTargetPath(repoUri, targetPath, true, true);
 
-        // Verify we can fetch and read last commit hash from the remote
-        gitService.fetchAll(checkedOut);
-        var lastHash = gitService.getLastCommitHash(repoUri);
-        assertThat(lastHash).as("last commit hash should exist on remote").isNotNull().isInstanceOf(ObjectId.class);
+        try {
+            // Verify we can fetch and read last commit hash from the remote
+            gitService.fetchAll(checkedOut);
+            var lastHash = gitService.getLastCommitHash(repoUri);
+            assertThat(lastHash).as("last commit hash should exist on remote").isNotNull().isInstanceOf(ObjectId.class);
 
-        // Create a local change, commit and push via GitService
-        var localFile = targetPath.resolve("hello.txt");
-        Files.createDirectories(localFile.getParent());
-        FileUtils.writeStringToFile(localFile.toFile(), "hello world", java.nio.charset.StandardCharsets.UTF_8);
-        gitService.stageAllChanges(checkedOut);
-        gitService.commitAndPush(checkedOut, "Add hello.txt", true, null);
+            // Create a local change, commit and push via GitService
+            var localFile = targetPath.resolve("hello.txt");
+            Files.createDirectories(localFile.getParent());
+            FileUtils.writeStringToFile(localFile.toFile(), "hello world", java.nio.charset.StandardCharsets.UTF_8);
+            gitService.stageAllChanges(checkedOut);
+            gitService.commitAndPush(checkedOut, "Add hello.txt", true, null);
 
-        // Pull and reset operations should not throw
-        gitService.pullIgnoreConflicts(checkedOut);
-        gitService.resetToOriginHead(checkedOut);
+            // Pull and reset operations should not throw
+            gitService.pullIgnoreConflicts(checkedOut);
+            gitService.resetToOriginHead(checkedOut);
+        }
+        finally {
+            // Ensure repository handle is closed and the local clone is deleted even on failures
+            if (checkedOut != null) {
+                checkedOut.close();
+            }
+            RepositoryExportTestUtil.safeDeleteDirectory(targetPath);
+        }
     }
 }
