@@ -8,6 +8,7 @@ const sidebars: SidebarsConfig = {
         'assessment',
         'faq',
         'tutorial-groups',
+        'plagiarism-check'
     ],
 };
 
