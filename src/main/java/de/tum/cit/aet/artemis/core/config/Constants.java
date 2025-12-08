@@ -16,6 +16,8 @@ public final class Constants {
 
     public static final int PASSWORD_MAX_LENGTH = 100;
 
+    public static final String SET_UP_TEMPLATE_FOR_EXERCISE = "Set up template for exercise";
+
     public static int COMPLAINT_LOCK_DURATION_IN_MINUTES = 24 * 60; // 24h; Same as in artemisApp.locks.acquired
 
     // Regex for acceptable logins
@@ -68,7 +70,7 @@ public final class Constants {
 
     public static final String SUBMISSION_PROCESSING_TOPIC = "/topic" + SUBMISSION_PROCESSING;
 
-    public static final String ATHENA_PROGRAMMING_EXERCISE_REPOSITORY_API_PATH = "/api/athena/public/programming-exercises/";
+    public static final String ATHENA_PROGRAMMING_EXERCISE_REPOSITORY_API_PATH = "/api/athena/internal/programming-exercises/";
 
     // short names should have at least 3 characters and must start with a letter
     public static final String SHORT_NAME_REGEX = "^[a-zA-Z][a-zA-Z0-9]{2,}";
@@ -391,6 +393,11 @@ public final class Constants {
     public static final String FEATURE_PASSKEY = "passkey";
 
     /**
+     * The name of the module feature indicating passkey is required for administrator features.
+     */
+    public static final String FEATURE_PASSKEY_REQUIRE_ADMIN = "passkeyRequiredForAdministratorFeatures";
+
+    /**
      * The name of the module feature used for Atlas functionality.
      */
     public static final String MODULE_FEATURE_ATLAS = "atlas";
@@ -461,6 +468,11 @@ public final class Constants {
     public static final String PASSKEY_ENABLED_PROPERTY_NAME = "artemis.user-management.passkey.enabled";
 
     /**
+     * The name of the property used to require passkey authentication for access to administrator features.
+     */
+    public static final String PASSKEY_REQUIRE_FOR_ADMINISTRATOR_FEATURES_PROPERTY_NAME = "artemis.user-management.passkey.require-for-administrator-features";
+
+    /**
      * The name of the property used to enable or disable the sharing functionality.
      */
     public static final String SHARING_ENABLED_PROPERTY_NAME = "artemis.sharing.enabled";
@@ -525,6 +537,12 @@ public final class Constants {
     public static final String JWT_COOKIE_NAME = "jwt";
 
     public static final String BEARER_PREFIX = "Bearer ";
+
+    public static final String HAZELCAST = "Hazelcast";
+
+    public static final String REDIS = "Redis";
+
+    public static final String LOCAL = "Local";
 
     private Constants() {
     }

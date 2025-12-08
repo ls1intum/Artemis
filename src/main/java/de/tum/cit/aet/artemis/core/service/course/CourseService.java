@@ -10,9 +10,9 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.BadRequestException;
 
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -22,7 +22,6 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.atlas.api.PrerequisitesApi;
-import de.tum.cit.aet.artemis.communication.domain.FaqState;
 import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
@@ -200,9 +199,6 @@ public class CourseService {
         else {
             course.setNumberOfTutorialGroups(0L);
         }
-        if (course.isFaqEnabled()) {
-            course.setFaqs(faqRepository.findAllByCourseIdAndFaqState(courseId, FaqState.ACCEPTED));
-        }
         if (authCheckService.isOnlyStudentInCourse(course, user) && examRepositoryApi.isPresent()) {
             var examRepoApi = examRepositoryApi.get();
             course.setExams(examRepoApi.filterVisibleExams(course.getExams()));
@@ -304,7 +300,7 @@ public class CourseService {
      *
      * @param course the course to check
      */
-    public void checkLearningPathsEnabledElseThrow(@NotNull Course course) {
+    public void checkLearningPathsEnabledElseThrow(@NonNull Course course) {
         if (!course.getLearningPathsEnabled()) {
             throw new BadRequestException("Learning paths are not enabled for this course.");
         }

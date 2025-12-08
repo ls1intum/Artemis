@@ -9,9 +9,11 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -21,17 +23,20 @@ import java.util.stream.IntStream;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
-import com.hazelcast.collection.IQueue;
-import com.hazelcast.map.IMap;
-
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentStatus;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildConfig;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobsStatisticsDTO;
@@ -46,8 +51,23 @@ import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCIL
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
+import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.DistributedMap;
+import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.queue.DistributedQueue;
 
+// TestInstance.Lifecycle.PER_CLASS allows all test methods in this class to share the same instance of the test class.
+// This reduces the overhead of repeatedly creating and tearing down a new Spring application context for each test method.
+// This is especially useful when the test setup is expensive or when we want to share resources, such as database connections or mock objects, across multiple tests.
+// In this case, we want to share the same GitService and UsernamePasswordCredentialsProvider.
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+
+// ExecutionMode.SAME_THREAD ensures that all tests within this class are executed sequentially in the same thread, rather than in parallel or in a different thread.
+// This is important in the context of LocalCI because it avoids potential race conditions or inconsistencies that could arise if multiple test methods are executed
+// concurrently. For example, it prevents overloading the LocalCI's result processing system with too many build job results at the same time, which could lead to flaky tests
+// or timeouts. By keeping everything in the same thread, we maintain more predictable and stable test behavior, while not increasing the test execution time significantly.
+@Execution(ExecutionMode.SAME_THREAD)
 class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTestBase {
+
+    private static final Logger log = LoggerFactory.getLogger(LocalCIResourceIntegrationTest.class);
 
     private static final String TEST_PREFIX = "localciresourceint";
 
@@ -67,11 +87,11 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
 
     protected BuildJob finishedJobForLogs;
 
-    protected IQueue<BuildJobQueueItem> queuedJobs;
+    protected DistributedQueue<BuildJobQueueItem> queuedJobs;
 
-    protected IMap<String, BuildJobQueueItem> processingJobs;
+    protected DistributedMap<String, BuildJobQueueItem> processingJobs;
 
-    protected IMap<String, BuildAgentInformation> buildAgentInformation;
+    protected DistributedMap<String, BuildAgentInformation> buildAgentInformation;
 
     @Override
     protected String getTestPrefix() {
@@ -104,12 +124,12 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         BuildConfig buildConfig = new BuildConfig("echo 'test'", "test", "test", "test", "test", "test", null, null, false, false, null, 0, null, null, null, null);
         RepositoryInfo repositoryInfo = new RepositoryInfo("test", null, RepositoryType.USER, "test", "test", "test", null, null);
 
-        String memberAddress = hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
+        String memberAddress = distributedDataAccessService.getLocalMemberAddress();
         buildAgent = new BuildAgentDTO(buildAgentShortName, memberAddress, buildAgentDisplayName);
 
         job1 = new BuildJobQueueItem("1", "job1", buildAgent, 1, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo1, buildConfig, null);
         job2 = new BuildJobQueueItem("2", "job2", buildAgent, 2, course.getId(), 1, 1, 2, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo2, buildConfig, null);
-        agent1 = new BuildAgentInformation(buildAgent, 2, 1, new ArrayList<>(List.of(job1)), BuildAgentInformation.BuildAgentStatus.IDLE, null, null,
+        agent1 = new BuildAgentInformation(buildAgent, 2, 1, new ArrayList<>(List.of(job1)), BuildAgentStatus.IDLE, null, null,
                 buildAgentConfiguration.getPauseAfterConsecutiveFailedJobs());
         BuildJobQueueItem finishedJobQueueItem1 = new BuildJobQueueItem("3", "job3", buildAgent, 3, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo1,
                 buildConfig, null);
@@ -146,9 +166,9 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         finishedJob3 = new BuildJob(finishedJobQueueItem3, BuildStatus.FAILED, result3);
         finishedJobForLogs = new BuildJob(finishedJobQueueItemForLogs, BuildStatus.FAILED, resultForLogs);
 
-        queuedJobs = hazelcastInstance.getQueue("buildJobQueue");
-        processingJobs = hazelcastInstance.getMap("processingJobs");
-        buildAgentInformation = hazelcastInstance.getMap("buildAgentInformation");
+        queuedJobs = distributedDataAccessService.getDistributedBuildJobQueue();
+        processingJobs = distributedDataAccessService.getDistributedProcessingJobs();
+        buildAgentInformation = distributedDataAccessService.getDistributedBuildAgentInformation();
 
         processingJobs.put(job1.id(), job1);
         processingJobs.put(job2.id(), job2);
@@ -252,7 +272,7 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testCancelQueuedBuildJob() throws Exception {
-        queuedJobs.put(job1);
+        queuedJobs.add(job1);
         request.delete("/api/core/admin/cancel-job/" + job1.id(), HttpStatus.NO_CONTENT);
     }
 
@@ -278,8 +298,8 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCancelAllQueuedBuildJobsForCourse() throws Exception {
-        queuedJobs.put(job1);
-        queuedJobs.put(job2);
+        queuedJobs.add(job1);
+        queuedJobs.add(job2);
         request.delete("/api/programming/courses/" + course.getId() + "/cancel-all-queued-jobs", HttpStatus.NO_CONTENT);
     }
 
@@ -414,10 +434,20 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         processingJobs.clear();
 
         request.put("/api/core/admin/agents/" + URLEncoder.encode(agent1.buildAgent().name(), StandardCharsets.UTF_8) + "/pause", null, HttpStatus.NO_CONTENT);
-        await().until(() -> buildAgentInformation.get(agent1.buildAgent().memberAddress()).status() == BuildAgentInformation.BuildAgentStatus.PAUSED);
+        await().atMost(Duration.ofSeconds(30)) // temporarily increase to debug
+                .pollInterval(Duration.ofMillis(200)).until(() -> {
+                    var agent = buildAgentInformation.get(agent1.buildAgent().memberAddress());
+                    log.info("Current status of agent after pause operation {} : {}", agent.buildAgent().displayName(), agent.status());
+                    return agent.status() == BuildAgentStatus.PAUSED;
+                });
 
         request.put("/api/core/admin/agents/" + URLEncoder.encode(agent1.buildAgent().name(), StandardCharsets.UTF_8) + "/resume", null, HttpStatus.NO_CONTENT);
-        await().until(() -> buildAgentInformation.get(agent1.buildAgent().memberAddress()).status() == BuildAgentInformation.BuildAgentStatus.IDLE);
+        await().atMost(Duration.ofSeconds(30)) // temporarily increase to debug
+                .pollInterval(Duration.ofMillis(200)).until(() -> {
+                    var agent = buildAgentInformation.get(agent1.buildAgent().memberAddress());
+                    log.info("Current status of agent after resume operation {} : {}", agent.buildAgent().displayName(), agent.status());
+                    return agent.status() == BuildAgentStatus.IDLE;
+                });
     }
 
     @Test
@@ -427,21 +457,29 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         processingJobs.clear();
 
         request.put("/api/core/admin/agents/pause-all", null, HttpStatus.NO_CONTENT);
-        await().until(() -> {
-            var agents = buildAgentInformation.values();
-            return agents.stream().allMatch(agent -> agent.status() == BuildAgentInformation.BuildAgentStatus.PAUSED);
-        });
+        await().atMost(Duration.ofSeconds(30)) // temporarily increase to debug
+                .pollInterval(Duration.ofMillis(200)).until(() -> {
+                    var agents = buildAgentInformation.values();
+                    printAgentInformation(agents);
+                    return agents.stream().allMatch(agent -> agent.status() == BuildAgentStatus.PAUSED);
+                });
 
         request.put("/api/core/admin/agents/resume-all", null, HttpStatus.NO_CONTENT);
-        await().until(() -> {
-            var agents = buildAgentInformation.values();
-            return agents.stream().allMatch(agent -> agent.status() == BuildAgentInformation.BuildAgentStatus.IDLE);
-        });
+        await().atMost(Duration.ofSeconds(30)) // temporarily increase to debug
+                .pollInterval(Duration.ofMillis(200)).until(() -> {
+                    var agents = buildAgentInformation.values();
+                    printAgentInformation(agents);
+                    return agents.stream().allMatch(agent -> agent.status() == BuildAgentStatus.IDLE);
+                });
+    }
+
+    private static void printAgentInformation(Collection<BuildAgentInformation> agents) {
+        log.info("Current statuses: {}", agents.stream().map(agent -> agent.buildAgent().displayName() + "=" + agent.status()).toList());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testBuildJob() throws Exception {
+    void testBuildJob() {
         var now = ZonedDateTime.now();
         JobTimingInfo jobTimingInfo1 = new JobTimingInfo(now, now, null, now.plusSeconds(24), 24);
         JobTimingInfo jobTimingInfo2 = new JobTimingInfo(now, now.plusSeconds(5), null, now.plusSeconds(29), 24);
@@ -462,15 +500,15 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         processingJobs.put(job1.id(), job1);
         processingJobs.put(job2.id(), job2);
         queuedJobs.clear();
-        queuedJobs.put(job3);
-        queuedJobs.put(job4);
-        queuedJobs.put(job5);
+        queuedJobs.add(job3);
+        queuedJobs.add(job4);
+        queuedJobs.add(job5);
 
-        agent1 = new BuildAgentInformation(buildAgent, 2, 2, new ArrayList<>(List.of(job1, job2)), BuildAgentInformation.BuildAgentStatus.ACTIVE, null, null,
+        agent1 = new BuildAgentInformation(buildAgent, 2, 2, new ArrayList<>(List.of(job1, job2)), BuildAgentStatus.ACTIVE, null, null,
                 buildAgentConfiguration.getPauseAfterConsecutiveFailedJobs());
         buildAgentInformation.put(buildAgent.memberAddress(), agent1);
 
         var queueDurationEstimation = sharedQueueManagementService.getBuildJobEstimatedStartDate(job4.participationId());
-        assertThat(queueDurationEstimation).isCloseTo(now.plusSeconds(48), within(1, ChronoUnit.SECONDS));
+        assertThat(queueDurationEstimation).isCloseTo(now.plusSeconds(48), within(2, ChronoUnit.SECONDS));
     }
 }

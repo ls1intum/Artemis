@@ -101,6 +101,8 @@
                 "created": "Erstellt am",
                 "lastUsed": "Zuletzt verwendet am",
                 "label": "Bezeichnung",
+                "approved": "Freigegeben",
+                "notApproved": "Nicht freigegeben",
                 "validation": {
                     "labelLength": "Die Passkey-Bezeichnung darf maximal {{maxLabelLength}} Zeichen lang sein."
                 },
@@ -230,12 +232,11 @@
             },
             "quizTrainingSettings": {
                 "quizTraining": "Quiz Training",
-                "leaderboardSettings": "Leaderboard Einstellungen",
-                "leaderboardVisibility": "Im Leaderboard sichtbar sein",
-                "leaderboardVisibilityTooltip": "Bestimmt, ob dein Name und deine Ergebnisse im Quiz-Training Leaderboard angezeigt werden",
-                "leaderboardVisibilityInfo": "Wenn aktiviert, wird dein Name im Quiz-Training Leaderboard angezeigt. Deaktiviere diese Option, wenn du nicht im Leaderboard erscheinen möchtest.",
-                "visitQuizTrainingFirst": "Bitte besuche zuerst den Quiz-Training Modus, um die Leaderboard-Einstellungen zu aktivieren.",
-                "updateSuccess": "Leaderboard-Einstellungen wurden erfolgreich aktualisiert."
+                "leaderboardSettings": "Bestenliste Einstellungen",
+                "leaderboardVisibilityTooltip": "Bestimmt, ob dein Name und deine Ergebnisse in der Quiz-Training Bestenliste angezeigt werden",
+                "leaderboardVisibilityInfo": "Wenn aktiviert, wird dein Name kursübergreifend in der Quiz-Training Bestenliste angezeigt. Deaktiviere diese Option, wenn du nicht in der Bestenliste erscheinen möchtest.",
+                "visitQuizTrainingFirst": "Bitte besuche zuerst den Quiz-Training Modus, um die Bestenliste-Einstellungen zu aktivieren.",
+                "updateSuccess": "Bestenliste-Einstellungen wurden erfolgreich aktualisiert."
             }
         }
     }

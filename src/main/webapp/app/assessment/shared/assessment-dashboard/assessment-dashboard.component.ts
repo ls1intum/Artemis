@@ -93,7 +93,7 @@ export class AssessmentDashboardComponent implements OnInit {
     allExercises: Exercise[] = [];
     currentlyShownExercises: Exercise[] = [];
     numberOfSubmissions = new DueDateStat();
-    totalNumberOfAssessments = new DueDateStat();
+    totalNumberOfAssessments = 0;
     numberOfAssessmentsOfCorrectionRounds = [new DueDateStat()];
     numberOfCorrectionRounds = 1;
     numberOfTutorAssessments = 0;
@@ -184,9 +184,9 @@ export class AssessmentDashboardComponent implements OnInit {
                     this.numberOfSubmissions = this.stats.numberOfSubmissions;
                     this.numberOfAssessmentsOfCorrectionRounds = this.stats.numberOfAssessmentsOfCorrectionRounds;
 
-                    this.totalNumberOfAssessments = new DueDateStat();
+                    this.totalNumberOfAssessments = 0;
                     for (const dueDateStat of this.numberOfAssessmentsOfCorrectionRounds) {
-                        this.totalNumberOfAssessments.inTime += dueDateStat.inTime;
+                        this.totalNumberOfAssessments += dueDateStat.inTime;
                     }
                     this.numberOfCorrectionRounds = this.numberOfAssessmentsOfCorrectionRounds.length;
 
@@ -210,7 +210,7 @@ export class AssessmentDashboardComponent implements OnInit {
                     this.assessmentLocks = new AssessmentDashboardInformationEntry(this.stats.totalNumberOfAssessmentLocks, this.stats.numberOfAssessmentLocks);
 
                     if (this.numberOfSubmissions.total > 0) {
-                        this.totalAssessmentPercentage = Math.floor((this.totalNumberOfAssessments.total / (this.numberOfSubmissions.total * this.numberOfCorrectionRounds)) * 100);
+                        this.totalAssessmentPercentage = Math.floor((this.totalNumberOfAssessments / (this.numberOfSubmissions.total * this.numberOfCorrectionRounds)) * 100);
                     }
                     this.computeIssuesWithTutorPerformance();
                 },
@@ -264,7 +264,7 @@ export class AssessmentDashboardComponent implements OnInit {
                     this.assessmentLocks = new AssessmentDashboardInformationEntry(this.stats.totalNumberOfAssessmentLocks, this.stats.numberOfAssessmentLocks);
 
                     if (this.numberOfSubmissions.total > 0) {
-                        this.totalAssessmentPercentage = Math.floor((this.totalNumberOfAssessments.total / this.numberOfSubmissions.total) * 100);
+                        this.totalAssessmentPercentage = Math.floor((this.totalNumberOfAssessments / this.numberOfSubmissions.total) * 100);
                     }
 
                     this.computeIssuesWithTutorPerformance();
@@ -379,7 +379,7 @@ export class AssessmentDashboardComponent implements OnInit {
     private hasUnfinishedAssessments(exercise: Exercise): boolean {
         return (
             exercise.numberOfAssessmentsOfCorrectionRounds?.map((round) => round.inTime !== exercise.numberOfSubmissions?.inTime).reduce((acc, cur) => acc || cur) ||
-            exercise.totalNumberOfAssessments?.inTime !== exercise.numberOfSubmissions?.inTime
+            exercise.totalNumberOfAssessments !== exercise.numberOfSubmissions?.inTime
         );
     }
 

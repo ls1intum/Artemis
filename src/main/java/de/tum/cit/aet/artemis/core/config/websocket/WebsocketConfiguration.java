@@ -16,11 +16,12 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
-import jakarta.annotation.Nullable;
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -56,7 +57,6 @@ import org.springframework.web.socket.server.support.DefaultHandshakeHandler;
 import org.springframework.web.socket.sockjs.transport.handler.WebSocketTransportHandler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.Iterators;
 
 import de.tum.cit.aet.artemis.core.config.InetSocketAddressValidator;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
@@ -121,10 +121,10 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
     }
 
     @Override
-    protected void configureMessageBroker(@NotNull MessageBrokerRegistry config) {
+    protected void configureMessageBroker(@NonNull MessageBrokerRegistry config) {
         // Try to create a TCP client that will connect to the message broker (or the message brokers if multiple exists).
         // If tcpClient is null, there is no valid address specified in the config. This could be due to a development setup or a mistake in the config.
-        TcpOperations<byte[]> tcpClient = createTcpClient();
+        TcpOperations<byte[]> tcpClient = websocketBrokerTcpClientSupplier().get();
         if (tcpClient != null) {
             log.debug("Enabling StompBrokerRelay for WebSocket messages using {}", String.join(", ", brokerAddresses));
             config
@@ -174,17 +174,34 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
      *
      * @return a TCP client with a round-robin use
      */
-    private ReactorNettyTcpClient<byte[]> createTcpClient() {
-        final List<InetSocketAddress> brokerAddressList = brokerAddresses.stream().map(InetSocketAddressValidator::getValidAddress).filter(Optional::isPresent).map(Optional::get)
-                .toList();
+    private TcpOperations<byte[]> createTcpClient() {
+        final List<InetSocketAddress> brokerAddressList = brokerAddresses.stream().map(InetSocketAddressValidator::getValidAddress).flatMap(Optional::stream).toList();
 
         // Return null if no valid addresses can be found. This is e.g. due to an invalid config or a development setup without a broker.
-        if (!brokerAddressList.isEmpty()) {
-            // This provides a round-robin use of brokers, we only want to use the fallback broker if the primary broker fails, so we have the same order of brokers in all nodes
-            var addressIterator = Iterators.cycle(brokerAddressList);
-            return new ReactorNettyTcpClient<>(client -> client.remoteAddress(addressIterator::next), new StompReactorNettyCodec());
+        if (brokerAddressList.isEmpty()) {
+            return null;
         }
-        return null;
+
+        // === Single broker: always connect to this one ===
+        if (brokerAddressList.size() == 1) {
+            final InetSocketAddress addr = brokerAddressList.getFirst();
+            return new ReactorNettyTcpClient<>(addr.getHostString(), addr.getPort(), new StompReactorNettyCodec());
+        }
+
+        // === Multiple brokers: thread-safe round robin ===
+        AtomicInteger index = new AtomicInteger(0);
+
+        return new ReactorNettyTcpClient<>(client -> client.remoteAddress(() -> {
+            int i = Math.floorMod(index.getAndIncrement(), brokerAddressList.size());
+            InetSocketAddress addr = brokerAddressList.get(i);
+            log.debug("STOMP relay connecting to broker[{}] {}:{}", i, addr.getHostString(), addr.getPort());
+            return addr;
+        }), new StompReactorNettyCodec());
+    }
+
+    @Bean(name = "websocketBrokerTcpClientSupplier")
+    public Supplier<TcpOperations<byte[]>> websocketBrokerTcpClientSupplier() {
+        return this::createTcpClient;
     }
 
     @Override
@@ -208,7 +225,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
         registration.interceptors(new TopicSubscriptionInterceptor());
     }
 
-    @NotNull
+    @NonNull
     @Override
     protected MappingJackson2MessageConverter createJacksonConverter() {
         return new GzipMessageConverter(objectMapper);
@@ -222,8 +239,8 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
         return new HandshakeInterceptor() {
 
             @Override
-            public boolean beforeHandshake(@NotNull ServerHttpRequest request, @NotNull ServerHttpResponse response, @NotNull WebSocketHandler wsHandler,
-                    @NotNull Map<String, Object> attributes) {
+            public boolean beforeHandshake(@NonNull ServerHttpRequest request, @NonNull ServerHttpResponse response, @NonNull WebSocketHandler wsHandler,
+                    @NonNull Map<String, Object> attributes) {
                 log.debug("beforeHandshake: {}, {}, {}", request, response, wsHandler);
                 if (request instanceof ServletServerHttpRequest servletRequest) {
                     try {
@@ -241,7 +258,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
             }
 
             @Override
-            public void afterHandshake(@NotNull ServerHttpRequest request, @NotNull ServerHttpResponse response, @NotNull WebSocketHandler wsHandler, Exception exception) {
+            public void afterHandshake(@NonNull ServerHttpRequest request, @NonNull ServerHttpResponse response, @NonNull WebSocketHandler wsHandler, Exception exception) {
                 log.debug("afterHandshake: {}, {}, {}", request, response, wsHandler);
                 if (exception != null) {
                     log.warn("Exception occurred in WS.afterHandshake", exception);
@@ -254,7 +271,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
         return new DefaultHandshakeHandler() {
 
             @Override
-            protected Principal determineUser(@NotNull ServerHttpRequest request, @NotNull WebSocketHandler wsHandler, @NotNull Map<String, Object> attributes) {
+            protected Principal determineUser(@NonNull ServerHttpRequest request, @NonNull WebSocketHandler wsHandler, @NonNull Map<String, Object> attributes) {
                 Principal principal = request.getPrincipal();
                 log.debug("determineUser: {}", principal);
                 if (principal == null) {
@@ -277,7 +294,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
          * @return message that gets sent along further
          */
         @Override
-        public Message<?> preSend(@NotNull Message<?> message, @NotNull MessageChannel channel) {
+        public Message<?> preSend(@NonNull Message<?> message, @NonNull MessageChannel channel) {
             log.debug("preSend: {}, channel: {}", message, channel);
             StompHeaderAccessor headerAccessor = StompHeaderAccessor.wrap(message);
             Principal principal = headerAccessor.getUser();

@@ -1,6 +1,4 @@
 import { Component, computed, effect, inject, input, signal, viewChild } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { map } from 'rxjs/operators';
 import { NgClass } from '@angular/common';
 import dayjs, { Dayjs } from 'dayjs/esm';
 import { TutorialGroupDetailGroupDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
@@ -19,11 +17,13 @@ import { Color, PieChartComponent, PieChartModule, ScaleType } from '@swimlane/n
 import { SelectModule } from 'primeng/select';
 import { TranslateService } from '@ngx-translate/core';
 import { CourseTutorialGroupDetailSessionStatusIndicatorComponent } from 'app/tutorialgroup/overview/course-tutorial-group-detail-session-status-indicator/course-tutorial-group-detail-session-status-indicator.component';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { OneToOneChatService } from 'app/communication/conversations/service/one-to-one-chat.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ButtonModule } from 'primeng/button';
 import { AccountService } from 'app/core/auth/account.service';
+import { getCurrentLocaleSignal } from 'app/shared/util/global.utils';
+import { LectureService } from 'app/lecture/manage/services/lecture.service';
 
 interface TutorialGroupDetailSession {
     date: string;
@@ -67,42 +67,36 @@ export class CourseTutorialGroupDetailComponent {
     protected readonly faBuildingColumns = faBuildingColumns;
     protected readonly faQuestion = faQuestion;
     protected readonly faCheck = faCheck;
+    protected readonly currentTutorialLectureId = inject(LectureService).currentTutorialLectureId;
 
     private translateService = inject(TranslateService);
     private oneToOneChatService = inject(OneToOneChatService);
     private alertService = inject(AlertService);
     private accountService = inject(AccountService);
     private router = inject(Router);
-    private locale = toSignal(this.translateService.onLangChange.pipe(map((event) => event.lang)), {
-        initialValue: this.translateService.currentLang,
-    });
+    private currentLocale = getCurrentLocaleSignal(this.translateService);
     private averageAttendanceRatio = computed<number | undefined>(() => this.computeAverageAttendanceRatio(this.tutorialGroup().sessions, this.tutorialGroup().capacity));
 
+    activatedRoute = inject(ActivatedRoute);
     course = input.required<Course>();
     tutorialGroup = input.required<TutorialGroupDetailGroupDTO>();
-    tutorialGroupSessions = computed<TutorialGroupDetailSession[]>(() => {
-        this.locale();
-        return this.computeSessionsToDisplay(this.selectedSessionListOption(), this.tutorialGroup().sessions, this.tutorialGroup().capacity);
-    });
-    nextSession = computed<TutorialGroupDetailSession | undefined>(() => this.computeNextSessionDataUsing(this.tutorialGroup().sessions, this.tutorialGroup().capacity));
+    tutorialGroupSessions = computed<TutorialGroupDetailSession[]>(() => this.computeSessionsToDisplay());
+    nextSession = computed<TutorialGroupDetailSession | undefined>(() => this.computeNextSessionDataUsing());
     teachingAssistantImageUrl = computed(() => addPublicFilePrefix(this.tutorialGroup().teachingAssistantImageUrl));
     tutorialGroupLanguage = computed<string>(() => this.tutorialGroup().language);
     tutorialGroupCapacity = computed<string>(() => String(this.tutorialGroup().capacity ?? '-'));
     tutorialGroupMode = computed<string>(() => (this.tutorialGroup().isOnline ? 'artemisApp.generic.online' : 'artemisApp.generic.offline'));
     tutorialGroupCampus = computed<string>(() => this.tutorialGroup().campus ?? '-');
-    averageAttendancePercentage = computed<string | undefined>(() => this.computeAverageAttendancePercentage(this.averageAttendanceRatio()));
+    averageAttendancePercentage = computed<string | undefined>(() => this.computeAverageAttendancePercentage());
     pieChart = viewChild(PieChartComponent);
-    pieChartData = computed<NgxChartsSingleSeriesDataEntry[]>(() => this.computePieChartData(this.averageAttendanceRatio()));
-    pieChartColors = computed<Color>(() => this.computePieChartColor(this.averageAttendanceRatio()));
-    sessionListOptions = computed(() => {
-        this.locale();
-        return this.computeSessionListOptions();
-    });
+    pieChartData = computed<NgxChartsSingleSeriesDataEntry[]>(() => this.computePieChartData());
+    pieChartColors = computed<Color>(() => this.computePieChartColor());
+    sessionListOptions = computed(() => this.computeSessionListOptions());
     selectedSessionListOption = signal<ListOption>('all-sessions');
     messagingEnabled = computed<boolean>(() => isMessagingEnabled(this.course()));
-    tutorChatLink = computed(() => this.computeTutorChatLink(this.course().id, this.tutorialGroup().tutorChatId));
-    groupChannelLink = computed(() => this.computeGroupChannelLink(this.course().id, this.tutorialGroup().groupChannelId));
-    userIsNotTutor = computed(() => this.accountService.userIdentity?.login !== this.tutorialGroup().teachingAssistantLogin);
+    tutorChatLink = computed(() => this.computeTutorChatLink());
+    groupChannelLink = computed(() => this.computeGroupChannelLink());
+    userIsNotTutor = computed(() => this.accountService.userIdentity()?.login !== this.tutorialGroup().teachingAssistantLogin);
 
     constructor() {
         effect(() => {
@@ -113,7 +107,32 @@ export class CourseTutorialGroupDetailComponent {
         });
     }
 
-    private computeSessionsToDisplay(selectedListOption: ListOption, sessions: TutorialGroupDetailSessionDTO[], capacity: number | undefined): TutorialGroupDetailSession[] {
+    createTutorChat() {
+        const courseId = this.course().id;
+        const tutorLogin = this.tutorialGroup().teachingAssistantLogin;
+        if (courseId) {
+            this.oneToOneChatService.create(courseId, tutorLogin).subscribe({
+                next: (response) => {
+                    const chatId = response.body?.id;
+                    if (chatId) {
+                        this.router.navigate(['/courses', courseId, 'communication'], { queryParams: { conversationId: chatId } });
+                    } else {
+                        this.alertService.addErrorAlert('artemisApp.pages.tutorialGroupDetail.createOneToOneChatError');
+                    }
+                },
+                error: () => {
+                    this.alertService.addErrorAlert('artemisApp.pages.tutorialGroupDetail.createOneToOneChatError');
+                },
+            });
+        }
+    }
+
+    private computeSessionsToDisplay(): TutorialGroupDetailSession[] {
+        this.currentLocale();
+        const selectedListOption = this.selectedSessionListOption();
+        const tutorialGroup = this.tutorialGroup();
+        const sessions = tutorialGroup.sessions;
+        const capacity = tutorialGroup.capacity;
         const now = dayjs();
         return sessions
             .filter((session) => {
@@ -132,13 +151,15 @@ export class CourseTutorialGroupDetailComponent {
         return averageAttendance / capacity;
     }
 
-    private computeAverageAttendancePercentage(attendanceRatio: number | undefined): string | undefined {
+    private computeAverageAttendancePercentage(): string | undefined {
+        const attendanceRatio = this.averageAttendanceRatio();
         if (attendanceRatio === undefined) return undefined;
         const percentage = attendanceRatio * 100;
         return `Ø ${percentage.toFixed(0)}%`;
     }
 
-    private computePieChartData(averageAttendanceRatio: number | undefined): NgxChartsSingleSeriesDataEntry[] {
+    private computePieChartData(): NgxChartsSingleSeriesDataEntry[] {
+        const averageAttendanceRatio = this.averageAttendanceRatio();
         if (!averageAttendanceRatio) {
             return [{ name: 'Not Attended', value: 100 }];
         }
@@ -150,7 +171,8 @@ export class CourseTutorialGroupDetailComponent {
         ];
     }
 
-    private computePieChartColor(averageAttendanceRatio: number | undefined): Color {
+    private computePieChartColor(): Color {
+        const averageAttendanceRatio = this.averageAttendanceRatio();
         if (averageAttendanceRatio === undefined) {
             return {
                 group: ScaleType.Ordinal,
@@ -174,7 +196,9 @@ export class CourseTutorialGroupDetailComponent {
         }
     }
 
-    private computeTutorChatLink(courseId: number | undefined, tutorChatId: number | undefined) {
+    private computeTutorChatLink() {
+        const courseId = this.course().id;
+        const tutorChatId = this.tutorialGroup().tutorChatId;
         if (!courseId || !tutorChatId) return undefined;
         return {
             routerLink: ['/courses', courseId, 'communication'],
@@ -182,7 +206,9 @@ export class CourseTutorialGroupDetailComponent {
         };
     }
 
-    private computeGroupChannelLink(courseId: number | undefined, groupChannelId: number | undefined) {
+    private computeGroupChannelLink() {
+        const courseId = this.course().id;
+        const groupChannelId = this.tutorialGroup().groupChannelId;
         if (!courseId || !groupChannelId) return undefined;
         return {
             routerLink: ['/courses', courseId, 'communication'],
@@ -191,6 +217,7 @@ export class CourseTutorialGroupDetailComponent {
     }
 
     private computeSessionListOptions() {
+        this.currentLocale();
         const allSessionsLabelKey = 'artemisApp.pages.tutorialGroupDetail.sessionListOptionLabel.allSessions';
         const futureSessionsLabelKey = 'artemisApp.pages.tutorialGroupDetail.sessionListOptionLabel.futureSessions';
         return [
@@ -199,7 +226,10 @@ export class CourseTutorialGroupDetailComponent {
         ];
     }
 
-    private computeNextSessionDataUsing(sessions: TutorialGroupDetailSessionDTO[], capacity: number | undefined): TutorialGroupDetailSession | undefined {
+    private computeNextSessionDataUsing(): TutorialGroupDetailSession | undefined {
+        const tutorialGroup = this.tutorialGroup();
+        const sessions = tutorialGroup.sessions;
+        const capacity = tutorialGroup.capacity;
         if (sessions && sessions.length > 0) {
             const now = dayjs();
             const upcoming = sessions.filter((session) => dayjs(session.start).isAfter(now)).sort((first, second) => dayjs(first.start).diff(dayjs(second.start)));
@@ -245,25 +275,5 @@ export class CourseTutorialGroupDetailComponent {
             'global.weekdays.sunday',
         ];
         return keys[weekDayIndex - 1];
-    }
-
-    createTutorChat() {
-        const courseId = this.course().id;
-        const tutorLogin = this.tutorialGroup().teachingAssistantLogin;
-        if (courseId) {
-            this.oneToOneChatService.create(courseId, tutorLogin).subscribe({
-                next: (response) => {
-                    const chatId = response.body?.id;
-                    if (chatId) {
-                        this.router.navigate(['/courses', courseId, 'communication'], { queryParams: { conversationId: chatId } });
-                    } else {
-                        this.alertService.addErrorAlert('artemisApp.pages.tutorialGroupDetail.createOneToOneChatError');
-                    }
-                },
-                error: () => {
-                    this.alertService.addErrorAlert('artemisApp.pages.tutorialGroupDetail.createOneToOneChatError');
-                },
-            });
-        }
     }
 }

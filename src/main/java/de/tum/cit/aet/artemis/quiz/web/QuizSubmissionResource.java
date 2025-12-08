@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.quiz.web;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import jakarta.validation.Valid;
@@ -35,7 +36,6 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exam.api.ExamSubmissionApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
-import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
@@ -43,6 +43,8 @@ import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
+import de.tum.cit.aet.artemis.quiz.dto.result.ResultAfterEvaluationWithSubmissionDTO;
+import de.tum.cit.aet.artemis.quiz.dto.submission.QuizSubmissionFromStudentDTO;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizSubmissionService;
 
@@ -103,6 +105,7 @@ public class QuizSubmissionResource {
      */
     @PostMapping("exercises/{exerciseId}/submissions/live")
     @EnforceAtLeastStudentInExercise
+    // TODO: Important, we must use a DTO here and we MUST NOT save an entity object retrieved from the client directly!
     public ResponseEntity<QuizSubmission> saveOrSubmitForLiveMode(@PathVariable Long exerciseId, @Valid @RequestBody QuizSubmission quizSubmission,
             @RequestParam(name = "submit", defaultValue = "false") boolean submit) {
         log.debug("REST request to save or submit QuizSubmission for live mode : {}", quizSubmission);
@@ -110,6 +113,10 @@ public class QuizSubmissionResource {
         try {
             // we set the submitted flag on the server side
             quizSubmission.setSubmitted(submit);
+            // make sure no results are sent from client to server
+            if (quizSubmission.getResults() != null && !quizSubmission.getResults().isEmpty()) {
+                quizSubmission.setResults(List.of());
+            }
             QuizSubmission updatedQuizSubmission = quizSubmissionService.saveSubmissionForLiveMode(exerciseId, quizSubmission, userLogin, submit);
             return ResponseEntity.ok(updatedQuizSubmission);
         }
@@ -128,21 +135,10 @@ public class QuizSubmissionResource {
      */
     @PostMapping("exercises/{exerciseId}/submissions/practice")
     @EnforceAtLeastStudentInExercise
-    public ResponseEntity<Result> submitForPractice(@PathVariable Long exerciseId, @Valid @RequestBody QuizSubmission quizSubmission) {
+    public ResponseEntity<ResultAfterEvaluationWithSubmissionDTO> submitForPractice(@PathVariable Long exerciseId,
+            @Valid @RequestBody QuizSubmissionFromStudentDTO quizSubmission) {
         log.debug("REST request to submit QuizSubmission for practice : {}", quizSubmission);
-
-        // recreate pointers back to submission in each submitted answer
-        for (SubmittedAnswer submittedAnswer : quizSubmission.getSubmittedAnswers()) {
-            submittedAnswer.setSubmission(quizSubmission);
-        }
-
-        if (quizSubmission.getId() != null) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "idExists", "A new quizSubmission cannot already have an ID.")).body(null);
-        }
-
         QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(exerciseId);
-
         User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAllowedToSeeCourseExercise(quizExercise, user)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
@@ -156,20 +152,19 @@ public class QuizSubmissionResource {
                     .body(null);
         }
 
+        QuizSubmission convertedSubmission = quizSubmissionService.createNewSubmissionFromDTO(quizSubmission, quizExercise);
+
         // the following method either reuses an existing participation or creates a new one
-        StudentParticipation participation = participationService.startExercise(quizExercise, user, false);
+        StudentParticipation participation = participationService.startPracticeMode(quizExercise, user, Optional.empty(), false);
         // we set the exercise again to prevent issues with lazy loaded quiz questions
         participation.setExercise(quizExercise);
 
         // update and save submission
-        Result result = quizSubmissionService.submitForPractice(quizSubmission, quizExercise, participation);
-        // The quizScheduler is usually responsible for updating the participation to FINISHED in the database. If quizzes where the student did not participate are used for
-        // practice, the QuizScheduler does not update the participation, that's why we update it manually here
-        participation.setInitializationState(InitializationState.FINISHED);
+        Result result = quizSubmissionService.submitForPractice(convertedSubmission, quizExercise, participation);
         studentParticipationRepository.saveAndFlush(participation);
 
         // remove some redundant or unnecessary data that is not needed on client side
-        for (SubmittedAnswer answer : quizSubmission.getSubmittedAnswers()) {
+        for (SubmittedAnswer answer : convertedSubmission.getSubmittedAnswers()) {
             answer.getQuizQuestion().setQuizQuestionStatistic(null);
         }
 
@@ -178,8 +173,11 @@ public class QuizSubmissionResource {
         resultWebsocketService.broadcastNewResult(result.getSubmission().getParticipation(), result);
 
         quizExercise.setCourse(null);
+        result.getSubmission().setResults(null);
+        result.getSubmission().setParticipation(participation);
         // return result with quizSubmission, participation and quiz exercise (including the solution)
-        return ResponseEntity.ok(result);
+        ResultAfterEvaluationWithSubmissionDTO resultAfterEvaluationDTO = ResultAfterEvaluationWithSubmissionDTO.of(result);
+        return ResponseEntity.ok(resultAfterEvaluationDTO);
     }
 
     /**
@@ -191,33 +189,31 @@ public class QuizSubmissionResource {
      */
     @PostMapping("exercises/{exerciseId}/submissions/preview")
     @EnforceAtLeastTutorInExercise
-    public ResponseEntity<Result> submitForPreview(@PathVariable Long exerciseId, @Valid @RequestBody QuizSubmission quizSubmission) {
+    public ResponseEntity<ResultAfterEvaluationWithSubmissionDTO> submitForPreview(@PathVariable Long exerciseId, @Valid @RequestBody QuizSubmissionFromStudentDTO quizSubmission) {
         log.debug("REST request to submit QuizSubmission for preview : {}", quizSubmission);
-
-        if (quizSubmission.getId() != null) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "idExists", "A new quizSubmission cannot already have an ID.")).body(null);
-        }
-
         QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(exerciseId);
+        QuizSubmission convertedSubmission = quizSubmissionService.createNewSubmissionFromDTO(quizSubmission, quizExercise);
+        StudentParticipation fakeParticipation = new StudentParticipation();
+        fakeParticipation.setExercise(quizExercise);
 
         // update submission
-        quizSubmission.setSubmitted(true);
-        quizSubmission.setType(SubmissionType.MANUAL);
-        quizSubmission.calculateAndUpdateScores(quizExercise.getQuizQuestions());
-
-        // create Participation stub
-        StudentParticipation participation = new StudentParticipation().exercise(quizExercise);
+        convertedSubmission.setSubmitted(true);
+        convertedSubmission.setType(SubmissionType.MANUAL);
+        convertedSubmission.calculateAndUpdateScores(quizExercise.getQuizQuestions());
 
         // create result
-        Result result = new Result().submission(quizSubmission);
+        Result result = new Result().submission(convertedSubmission);
         result.setRated(false);
         result.setAssessmentType(AssessmentType.AUTOMATIC);
         result.setCompletionDate(ZonedDateTime.now());
         // calculate score and update result accordingly
         result.evaluateQuizSubmission(quizExercise);
 
-        return ResponseEntity.ok(result);
+        result.getSubmission().setResults(null);
+        result.getSubmission().setParticipation(fakeParticipation);
+
+        ResultAfterEvaluationWithSubmissionDTO resultAfterEvaluationDTO = ResultAfterEvaluationWithSubmissionDTO.of(result);
+        return ResponseEntity.ok(resultAfterEvaluationDTO);
     }
 
     /**

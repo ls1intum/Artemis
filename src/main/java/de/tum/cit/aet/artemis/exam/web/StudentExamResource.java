@@ -11,9 +11,9 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.BadRequestException;
 
+import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -46,6 +46,7 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.ExamExerciseStartPreparationStatus;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
@@ -226,20 +227,21 @@ public class StudentExamResource {
      * @param courseId     the course to which the student exams belong to
      * @param examId       the exam to which the student exams belong to
      * @param studentLogin the id of the student exam to find
-     * @param message      the optional instructor message to be sent to the student
+     * @param message      the optional message to be sent to the student
      * @return the ResponseEntity with status 200 (OK) and with the updated student exam as body
      */
     @PostMapping("courses/{courseId}/exams/{examId}/students/{studentLogin:" + Constants.LOGIN_REGEX + "}/attendance-check")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastTutor
     public ResponseEntity<ExamAttendanceCheckEventDTO> attendanceCheck(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable String studentLogin,
             @RequestBody(required = false) String message) {
         log.debug("REST request for attendance-check for student : {}", studentLogin);
 
-        var student = userRepository.getUserByLoginElseThrow(studentLogin);
+        examAccessService.checkCourseAndExamAccessForTeachingAssistantElseThrow(courseId, examId);
 
+        var student = userRepository.getUserByLoginElseThrow(studentLogin);
         StudentExam studentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(student.getId(), examId, false).orElseThrow();
 
-        examAccessService.checkCourseAndExamAndStudentExamAccessElseThrow(courseId, examId, studentExam.getId());
+        examAccessService.checkStudentExamExistsAndBelongsToExamElseThrow(studentExam.getId(), examId);
 
         var exam = studentExam.getExam();
         if (!exam.isVisibleToStudents()) {
@@ -400,7 +402,7 @@ public class StudentExamResource {
         return ResponseEntity.ok(testRun);
     }
 
-    @NotNull
+    @NonNull
     private StudentExam findStudentExamWithExercisesElseThrow(User user, Long examId, Long courseId, Long studentExamId) {
         StudentExam studentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExamId);
         studentExamAccessService.checkCourseAndExamAccessElseThrow(courseId, examId, user, studentExam.isTestRun(), false);

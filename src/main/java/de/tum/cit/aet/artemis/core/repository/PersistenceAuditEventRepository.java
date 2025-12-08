@@ -8,8 +8,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
-import jakarta.validation.constraints.NotNull;
-
+import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
@@ -76,7 +75,7 @@ public interface PersistenceAuditEventRepository extends ArtemisJpaRepository<Pe
      * @param pageable the pagination information.
      * @return a paginated list of {@link PersistentAuditEvent} entities. If no entities are found, returns an empty page.
      */
-    default Page<PersistentAuditEvent> findAllWithData(@NotNull Pageable pageable) {
+    default Page<PersistentAuditEvent> findAllWithData(@NonNull Pageable pageable) {
         List<Long> ids = findAllIds(pageable);
         if (ids.isEmpty()) {
             return Page.empty(pageable);
@@ -86,7 +85,7 @@ public interface PersistenceAuditEventRepository extends ArtemisJpaRepository<Pe
         return new PageImpl<>(result, pageable, count());
     }
 
-    @NotNull
+    @NonNull
     @EntityGraph(type = LOAD, attributePaths = { "data" })
-    Optional<PersistentAuditEvent> findById(@NotNull Long auditEventId);
+    Optional<PersistentAuditEvent> findById(@NonNull Long auditEventId);
 }

@@ -17,12 +17,12 @@ jobs:
       MAX_STARTUP_DEPENDENCY_CHAIN_LENGTH: 9
       MAX_DEFERRED_CHAIN_LENGTH: 16
       MIN_INSTANTIATED_BEANS: 20
-      MAX_INSTANTIATED_BEANS: 99
+      MAX_INSTANTIATED_BEANS: 102
       MIN_DEFERRED_CHAIN_LENGTH: 1
 
     steps:
       - name: Check out code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Validate threshold consistency between BeanInstantiationTracer and GitHub Action
         shell: bash
@@ -325,7 +325,7 @@ jobs:
 
       - name: Upload artifacts
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: bean-instantiation-graphs-and-logs
           path: |

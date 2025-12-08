@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.core.config;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.net.UnknownHostException;
@@ -16,9 +14,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.cloud.client.serviceregistry.Registration;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -43,7 +41,7 @@ import com.hazelcast.core.Hazelcast;
  * The class avoids connection logic in test environments and handles potential split-brain scenarios
  * by periodically verifying and initiating connections to all expected cluster members.
  */
-@Profile({ PROFILE_BUILDAGENT, PROFILE_CORE })
+@Conditional(CoreOrHazelcastBuildAgent.class)
 @Lazy
 @Configuration
 public class HazelcastConnection {
@@ -106,9 +104,9 @@ public class HazelcastConnection {
 
     /**
      * This scheduled task regularly checks if all members of the Hazelcast cluster are connected to each other.
-     * This is one countermeasure to a split cluster.
+     * This is one counter measure against a split cluster.
      */
-    @Scheduled(fixedRate = 2, initialDelay = 1, timeUnit = TimeUnit.MINUTES)
+    @Scheduled(fixedRate = 10, initialDelay = 10, timeUnit = TimeUnit.SECONDS)
     public void connectToAllMembers() {
         if (registration.isEmpty() || env.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST))) {
             return;

@@ -13,7 +13,6 @@ import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
 import java.net.URI;
-import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -100,6 +99,7 @@ import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSubmittedText;
 import de.tum.cit.aet.artemis.quiz.dto.QuizBatchJoinDTO;
 import de.tum.cit.aet.artemis.quiz.service.QuizBatchService;
+import de.tum.cit.aet.artemis.quiz.test_repository.QuizSubmissionTestRepository;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseFactory;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseUtilService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
@@ -175,6 +175,9 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     private ExamTestRepository examRepository;
 
     @Autowired
+    private QuizSubmissionTestRepository quizSubmissionRepository;
+
+    @Autowired
     private LearnerProfileUtilService learnerProfileUtilService;
 
     @Captor
@@ -182,9 +185,6 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
     @Value("${artemis.version-control.default-branch:main}")
     private String defaultBranch;
-
-    @Value("${artemis.version-control.local-vcs-repo-path}")
-    private Path localVCRepoPath;
 
     private Course course;
 
@@ -568,7 +568,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         jenkinsRequestMockProvider.enableMockingOfRequests();
         programmingExerciseTestService.setupRepositoryMocks(programmingExercise);
         var repo = new LocalRepository(defaultBranch);
-        repo.configureRepos(localVCRepoPath, "studentRepo", "studentOriginRepo");
+        repo.configureRepos(localVCBasePath, "studentRepo", "studentOriginRepo");
         repo.resetLocalRepo();
     }
 
@@ -688,13 +688,13 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
 
         var localRepo = new LocalRepository(defaultBranch);
-        localRepo.configureRepos(localVCRepoPath, "testLocalRepo", "testOriginRepo");
+        localRepo.configureRepos(localVCBasePath, "testLocalRepo", "testOriginRepo");
 
-        var localVcsRepositoryUri = new LocalVCRepositoryUri(LocalRepositoryUriUtil.convertToLocalVcUriString(localRepo.remoteBareGitRepoFile, localVCRepoPath));
+        var localVcsRepositoryUri = new LocalVCRepositoryUri(LocalRepositoryUriUtil.convertToLocalVcUriString(localRepo.remoteBareGitRepoFile, localVCBasePath));
         participation.setRepositoryUri(localVcsRepositoryUri);
         participationRepo.save(participation);
 
-        gitService.getDefaultLocalPathOfRepo(participation.getVcsRepositoryUri());
+        gitService.getDefaultLocalCheckOutPathOfRepo(participation.getVcsRepositoryUri());
 
         Result result1 = participationUtilService.createSubmissionAndResult(participation, 100, false);
         Result result2 = participationUtilService.addResultToSubmission(participation, result1.getSubmission());
@@ -735,13 +735,13 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
 
         var localRepo = new LocalRepository(defaultBranch);
-        localRepo.configureRepos(localVCRepoPath, "testLocalRepo", "testOriginRepo");
+        localRepo.configureRepos(localVCBasePath, "testLocalRepo", "testOriginRepo");
 
-        var localVcsRepositoryUri = new LocalVCRepositoryUri(LocalRepositoryUriUtil.convertToLocalVcUriString(localRepo.remoteBareGitRepoFile, localVCRepoPath));
+        var localVcsRepositoryUri = new LocalVCRepositoryUri(LocalRepositoryUriUtil.convertToLocalVcUriString(localRepo.remoteBareGitRepoFile, localVCBasePath));
         participation.setRepositoryUri(localVcsRepositoryUri);
         participationRepo.save(participation);
 
-        gitService.getDefaultLocalPathOfRepo(participation.getVcsRepositoryUri());
+        gitService.getDefaultLocalCheckOutPathOfRepo(participation.getVcsRepositoryUri());
 
         Result result1 = participationUtilService.createSubmissionAndResult(participation, 100, false);
         Result result2 = participationUtilService.addResultToSubmission(participation, result1.getSubmission());
@@ -858,13 +858,13 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
 
         var localRepo = new LocalRepository(defaultBranch);
-        localRepo.configureRepos(localVCRepoPath, "testLocalRepo", "testOriginRepo");
+        localRepo.configureRepos(localVCBasePath, "testLocalRepo", "testOriginRepo");
 
-        var localVcsRepositoryUri = new LocalVCRepositoryUri(LocalRepositoryUriUtil.convertToLocalVcUriString(localRepo.remoteBareGitRepoFile, localVCRepoPath));
+        var localVcsRepositoryUri = new LocalVCRepositoryUri(LocalRepositoryUriUtil.convertToLocalVcUriString(localRepo.remoteBareGitRepoFile, localVCBasePath));
         participation.setRepositoryUri(localVcsRepositoryUri);
         participationRepo.save(participation);
 
-        gitService.getDefaultLocalPathOfRepo(participation.getVcsRepositoryUri());
+        gitService.getDefaultLocalCheckOutPathOfRepo(participation.getVcsRepositoryUri());
 
         Result result1 = participationUtilService.createSubmissionAndResult(participation, 100, false);
         Result result2 = participationUtilService.addResultToSubmission(participation, result1.getSubmission());
@@ -968,11 +968,11 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         var participation = ParticipationFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INACTIVE, programmingExercise,
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         var localRepo = new LocalRepository(defaultBranch);
-        localRepo.configureRepos(localVCRepoPath, "testLocalRepo", "testOriginRepo");
-        var localVcsRepositoryUri = new LocalVCRepositoryUri(LocalRepositoryUriUtil.convertToLocalVcUriString(localRepo.remoteBareGitRepoFile, localVCRepoPath));
+        localRepo.configureRepos(localVCBasePath, "testLocalRepo", "testOriginRepo");
+        var localVcsRepositoryUri = new LocalVCRepositoryUri(LocalRepositoryUriUtil.convertToLocalVcUriString(localRepo.remoteBareGitRepoFile, localVCBasePath));
         participation.setRepositoryUri(localVcsRepositoryUri);
         participationRepo.save(participation);
-        gitService.getDefaultLocalPathOfRepo(participation.getVcsRepositoryUri());
+        gitService.getDefaultLocalCheckOutPathOfRepo(participation.getVcsRepositoryUri());
         var updatedParticipation = request.putWithResponseBody(
                 "/api/exercise/exercises/" + programmingExercise.getId() + "/resume-programming-participation/" + participation.getId(), null,
                 ProgrammingExerciseStudentParticipation.class, HttpStatus.OK);
@@ -1411,6 +1411,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         participationUtilService.addResultToSubmission(null, null, participation.findLatestSubmission().orElseThrow());
         var result = ParticipationFactory.generateResult(true, 70D);
         result.submission(submission).setCompletionDate(ZonedDateTime.now().minusHours(2));
+        result.setExerciseId(textExercise.getId());
         resultRepository.save(result);
         var actualParticipation = request.get("/api/exercise/participations/" + participation.getId() + "/with-latest-result", HttpStatus.OK, StudentParticipation.class);
 
@@ -1453,7 +1454,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getParticipation() throws Exception {
         var participation = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
-        var actualParticipation = request.get("/api/exercise/exercises/" + textExercise.getId() + "/participation", HttpStatus.OK, StudentParticipation.class);
+        var actualParticipation = request.get("/api/text/text-editor/" + participation.getId(), HttpStatus.OK, StudentParticipation.class);
         assertThat(actualParticipation).isEqualTo(participation);
     }
 
@@ -1475,7 +1476,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         exercise = exerciseRepository.save(exercise);
 
         var participation = participationUtilService.addTeamParticipationForExercise(exercise, team.getId());
-        var actualParticipation = request.get("/api/exercise/exercises/" + exercise.getId() + "/participation", HttpStatus.OK, StudentParticipation.class);
+        var actualParticipation = request.get("/api/text/text-editor/" + participation.getId(), HttpStatus.OK, StudentParticipation.class);
         assertThat(actualParticipation).isEqualTo(participation);
     }
 
@@ -1488,7 +1489,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         exercise = addTeamToExercise(team, exercise);
 
         var participation = participationUtilService.addTeamParticipationForExercise(exercise, team.getId());
-        var actualParticipation = request.get("/api/exercise/exercises/" + exercise.getId() + "/participation", HttpStatus.OK, StudentParticipation.class);
+        var actualParticipation = request.get("/api/text/text-editor/" + participation.getId(), HttpStatus.OK, StudentParticipation.class);
         assertThat(actualParticipation).isEqualTo(participation);
 
         var participations = participationService.findByExerciseAndStudentIdWithEagerSubmissions(exercise, student.getId());
@@ -1505,7 +1506,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         exercise = addTeamToExercise(team, exercise);
 
         var participation = participationUtilService.addTeamParticipationForExercise(exercise, team.getId());
-        var actualParticipation = request.get("/api/exercise/exercises/" + exercise.getId() + "/participation", HttpStatus.OK, StudentParticipation.class);
+        var actualParticipation = request.get("/api/text/text-editor/" + participation.getId(), HttpStatus.OK, StudentParticipation.class);
         assertThat(actualParticipation).isEqualTo(participation);
 
         var participations = participationService.findByExerciseAndStudentIdWithSubmissionsAndResults(exercise, student.getId());
@@ -1522,7 +1523,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         exercise = addTeamToExercise(team, exercise);
 
         var participation = participationUtilService.addTeamParticipationForExercise(exercise, team.getId());
-        var actualParticipation = request.get("/api/exercise/exercises/" + exercise.getId() + "/participation", HttpStatus.OK, StudentParticipation.class);
+        var actualParticipation = request.get("/api/text/text-editor/" + participation.getId(), HttpStatus.OK, StudentParticipation.class);
         assertThat(actualParticipation).isEqualTo(participation);
 
         var dbParticipation = participationService.findOneByExerciseAndStudentLoginAnyStateWithEagerResultsElseThrow(exercise, student.getLogin());
@@ -1539,7 +1540,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         exercise = addTeamToExercise(team, exercise);
 
         var participation = participationUtilService.addTeamParticipationForExercise(exercise, team.getId());
-        var actualParticipation = request.get("/api/exercise/exercises/" + exercise.getId() + "/participation", HttpStatus.OK, StudentParticipation.class);
+        var actualParticipation = request.get("/api/text/text-editor/" + participation.getId(), HttpStatus.OK, StudentParticipation.class);
         assertThat(actualParticipation).isEqualTo(participation);
 
         var participations = participationService.findOneByExerciseAndStudentLoginAnyState(exercise, student.getLogin());
@@ -1556,7 +1557,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         exercise = addTeamToExercise(team, exercise);
 
         var participation = participationUtilService.addTeamParticipationForExercise(exercise, team.getId());
-        var actualParticipation = request.get("/api/exercise/exercises/" + exercise.getId() + "/participation", HttpStatus.OK, StudentParticipation.class);
+        var actualParticipation = request.get("/api/text/text-editor/" + participation.getId(), HttpStatus.OK, StudentParticipation.class);
         assertThat(actualParticipation).isEqualTo(participation);
 
         participationDeletionService.deleteAllByTeamId(team.getId());
@@ -1587,65 +1588,10 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         return exerciseRepository.save(exercise);
     }
 
-    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    @EnumSource(QuizMode.class)
-    void getParticipation_quizExerciseNotStarted(QuizMode quizMode) throws Exception {
-        var quizEx = QuizExerciseFactory.generateQuizExercise(ZonedDateTime.now().plusHours(2), ZonedDateTime.now().plusDays(1), quizMode, course);
-        quizEx = exerciseRepository.save(quizEx);
-        request.get("/api/exercise/exercises/" + quizEx.getId() + "/participation", HttpStatus.FORBIDDEN, StudentParticipation.class);
-    }
-
-    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    @EnumSource(QuizMode.class)
-    void getParticipation_quizExerciseStartedAndNoParticipation(QuizMode quizMode) throws Exception {
-        var quizEx = QuizExerciseFactory.generateQuizExercise(ZonedDateTime.now().minusMinutes(2), ZonedDateTime.now().minusMinutes(1), quizMode, course);
-        quizEx = exerciseRepository.save(quizEx);
-        request.getNullable("/api/exercise/exercises/" + quizEx.getId() + "/participation", HttpStatus.NO_CONTENT, StudentParticipation.class);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void getParticipation_quizBatchNotPresent() throws Exception {
-        var quizEx = QuizExerciseFactory.generateQuizExercise(ZonedDateTime.now().minusMinutes(1), ZonedDateTime.now().plusMinutes(5), QuizMode.INDIVIDUAL, course).duration(360);
-        quizEx = exerciseRepository.save(quizEx);
-        var participation = request.get("/api/exercise/exercises/" + quizEx.getId() + "/participation", HttpStatus.OK, StudentParticipation.class);
-        quizEx.setRemainingNumberOfAttempts(1);
-        assertThat(participation.getExercise()).as("Participation contains exercise").isEqualTo(quizEx);
-        assertThat(((QuizExercise) participation.getExercise()).getRemainingNumberOfAttempts()).as("remainingNumberOfAttempts are returned correctly")
-                .isEqualTo(quizEx.getRemainingNumberOfAttempts());
-    }
-
-    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    @EnumSource(QuizMode.class)
-    void getParticipation_quizExerciseFinished(QuizMode quizMode) throws Exception {
-        var quizEx = QuizExerciseFactory.generateQuizExercise(ZonedDateTime.now().minusMinutes(20), ZonedDateTime.now().minusMinutes(20), quizMode, course);
-        quizEx = exerciseRepository.save(quizEx);
-        var participation = participationUtilService.createAndSaveParticipationForExercise(quizEx, TEST_PREFIX + "student1");
-        var submission = participationUtilService.addSubmission(participation, new QuizSubmission().scoreInPoints(11D).submitted(true));
-        participationUtilService.addResultToSubmission(participation, submission);
-        var actualParticipation = request.get("/api/exercise/exercises/" + quizEx.getId() + "/participation", HttpStatus.OK, StudentParticipation.class);
-        assertThat(actualParticipation).isEqualTo(participation);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void getParticipation_noParticipation() throws Exception {
-        request.get("/api/exercise/exercises/" + textExercise.getId() + "/participation", HttpStatus.FAILED_DEPENDENCY, StudentParticipation.class);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student3", roles = "USER")
-    void getParticipation_notStudentInCourse() throws Exception {
-        request.get("/api/exercise/exercises/" + textExercise.getId() + "/participation", HttpStatus.FORBIDDEN, StudentParticipation.class);
-    }
-
     @ParameterizedTest
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     @EnumSource(QuizMode.class)
-    void testCheckQuizParticipation(QuizMode quizMode) throws Exception {
+    void testCheckQuizParticipation(QuizMode quizMode) {
         QuizExercise quizExercise = QuizExerciseFactory.generateQuizExercise(ZonedDateTime.now().minusMinutes(10), ZonedDateTime.now().minusMinutes(8), quizMode, course);
         quizExercise.addQuestions(QuizExerciseFactory.createShortAnswerQuestion());
         quizExercise.setDuration(600);
@@ -1668,22 +1614,25 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         participationUtilService.addSubmission(quizExercise, quizSubmission, TEST_PREFIX + "student1");
         participationUtilService.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, quizExercise.getScoreForSubmission(quizSubmission), true);
 
-        var actualParticipation = request.get("/api/exercise/exercises/" + quizExercise.getId() + "/participation", HttpStatus.OK, StudentParticipation.class);
+        var actualParticipation = participationService.findOneByExerciseAndStudentLoginAnyStateWithEagerResultsElseThrow(quizExercise, TEST_PREFIX + "student1");
+        actualParticipation = participationService.findExerciseParticipationWithLatestSubmissionAndResultElseThrow(actualParticipation.getId());
         var actualResults = participationUtilService.getResultsForParticipation(actualParticipation);
 
         assertThat(actualResults).hasSize(1);
 
-        var actualSubmission = (QuizSubmission) actualParticipation.getSubmissions().stream().findFirst().get();
+        var actualSubmission = (QuizSubmission) actualParticipation.getSubmissions().iterator().next();
         assertThat(actualSubmission.isSubmitted()).isTrue();
 
+        // reload submission to avoid lazy loading issues
+        actualSubmission = quizSubmissionRepository.findWithEagerSubmittedAnswersById(actualSubmission.getId());
         var actualSubmittedAnswers = actualSubmission.getSubmittedAnswers();
         assertThat(actualSubmittedAnswers).hasSize(1);
 
-        var actualSubmittedAnswer = (ShortAnswerSubmittedAnswer) actualSubmittedAnswers.stream().findFirst().get();
+        var actualSubmittedAnswer = (ShortAnswerSubmittedAnswer) actualSubmittedAnswers.iterator().next();
         assertThat(actualSubmittedAnswer.getQuizQuestion()).isEqualTo(saQuestion);
         assertThat(actualSubmittedAnswer.getSubmittedTexts().stream().findFirst().isPresent()).isTrue();
 
-        var actualSubmittedAnswerText = actualSubmittedAnswer.getSubmittedTexts().stream().findFirst().get();
+        var actualSubmittedAnswerText = actualSubmittedAnswer.getSubmittedTexts().iterator().next();
         assertThat(actualSubmittedAnswerText.getText()).isEqualTo("test");
         assertThat(actualSubmittedAnswerText.isIsCorrect()).isFalse();
     }
@@ -1705,18 +1654,19 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
 
         var localRepo = new LocalRepository(defaultBranch);
-        localRepo.configureRepos(localVCRepoPath, "testLocalRepo", "testOriginRepo");
+        localRepo.configureRepos(localVCBasePath, "testLocalRepo", "testOriginRepo");
 
-        var localVcsRepositoryUri = new LocalVCRepositoryUri(LocalRepositoryUriUtil.convertToLocalVcUriString(localRepo.remoteBareGitRepoFile, localVCRepoPath));
+        var localVcsRepositoryUri = new LocalVCRepositoryUri(LocalRepositoryUriUtil.convertToLocalVcUriString(localRepo.remoteBareGitRepoFile, localVCBasePath));
         participation.setRepositoryUri(localVcsRepositoryUri);
         participationRepo.save(participation);
 
         var submission = participationUtilService.addSubmission(participation, new ProgrammingSubmission());
 
-        gitService.getDefaultLocalPathOfRepo(participation.getVcsRepositoryUri());
+        gitService.getDefaultLocalCheckOutPathOfRepo(participation.getVcsRepositoryUri());
 
         var result = ParticipationFactory.generateResult(true, 100).submission(submission);
         result.setCompletionDate(ZonedDateTime.now());
+        result.setExerciseId(programmingExercise.getId());
         resultRepository.save(result);
 
         request.putAndExpectError("/api/exercise/exercises/" + programmingExercise.getId() + "/request-feedback", null, HttpStatus.BAD_REQUEST, "preconditions not met");
@@ -1735,17 +1685,18 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
 
         var localRepo = new LocalRepository(defaultBranch);
-        localRepo.configureRepos(localVCRepoPath, "testLocalRepo", "testOriginRepo");
+        localRepo.configureRepos(localVCBasePath, "testLocalRepo", "testOriginRepo");
 
-        var localVcsRepositoryUri = new LocalVCRepositoryUri(LocalRepositoryUriUtil.convertToLocalVcUriString(localRepo.remoteBareGitRepoFile, localVCRepoPath));
+        var localVcsRepositoryUri = new LocalVCRepositoryUri(LocalRepositoryUriUtil.convertToLocalVcUriString(localRepo.remoteBareGitRepoFile, localVCBasePath));
         participation.setRepositoryUri(localVcsRepositoryUri);
         participationRepo.save(participation);
         var submission = participationUtilService.addSubmission(participation, new ProgrammingSubmission());
 
-        gitService.getDefaultLocalPathOfRepo(participation.getVcsRepositoryUri());
+        gitService.getDefaultLocalCheckOutPathOfRepo(participation.getVcsRepositoryUri());
 
         var result = ParticipationFactory.generateResult(true, 100).submission(submission);
         result.setCompletionDate(ZonedDateTime.now());
+        result.setExerciseId(programmingExercise.getId());
         resultRepository.save(result);
 
         request.putAndExpectError("/api/exercise/exercises/" + programmingExercise.getId() + "/request-feedback", null, HttpStatus.BAD_REQUEST, "feedbackRequestAfterDueDate");
@@ -1764,24 +1715,26 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
 
         var localRepo = new LocalRepository(defaultBranch);
-        localRepo.configureRepos(localVCRepoPath, "testLocalRepo", "testOriginRepo");
+        localRepo.configureRepos(localVCBasePath, "testLocalRepo", "testOriginRepo");
 
-        var localVcsRepositoryUri = new LocalVCRepositoryUri(LocalRepositoryUriUtil.convertToLocalVcUriString(localRepo.remoteBareGitRepoFile, localVCRepoPath));
+        var localVcsRepositoryUri = new LocalVCRepositoryUri(LocalRepositoryUriUtil.convertToLocalVcUriString(localRepo.remoteBareGitRepoFile, localVCBasePath));
         participation.setRepositoryUri(localVcsRepositoryUri);
         participationRepo.save(participation);
         var submission = participationUtilService.addSubmission(participation, new ProgrammingSubmission());
 
-        gitService.getDefaultLocalPathOfRepo(participation.getVcsRepositoryUri());
+        gitService.getDefaultLocalCheckOutPathOfRepo(participation.getVcsRepositoryUri());
 
         var result = ParticipationFactory.generateResult(true, 100).submission(submission);
         result.setCompletionDate(ZonedDateTime.now());
+        result.setExerciseId(programmingExercise.getId());
         resultRepository.save(result);
 
-        // generate 5 athena results
+        // generate 20 athena results
         for (int i = 0; i < 20; i++) {
             var athenaResult = ParticipationFactory.generateResult(false, 100).submission(submission);
             athenaResult.setCompletionDate(ZonedDateTime.now());
             athenaResult.setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);
+            athenaResult.setExerciseId(programmingExercise.getId());
             submission.addResult(athenaResult);
             resultRepository.save(athenaResult);
         }
@@ -1884,8 +1837,9 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
             var participation = request.postWithResponseBody("/api/quiz/quiz-exercises/" + quizEx.getId() + "/start-participation", null, StudentParticipation.class,
                     HttpStatus.OK);
             assertThat(participation.getExercise()).as("Participation contains exercise").isEqualTo(quizEx);
-            assertThat(participationUtilService.getResultsForParticipation(participation)).as("New result was added to the participation").hasSize(1);
-            assertThat(participation.getInitializationState()).as("Participation was initialized").isEqualTo(InitializationState.INITIALIZED);
+            var participationFromServer = participationService.findOneByExerciseAndStudentLoginAnyStateWithEagerResultsElseThrow(quizEx, TEST_PREFIX + "student1");
+            assertThat(participationUtilService.getResultsForParticipation(participation)).as("No result was added to the participation").hasSize(0);
+            assertThat(participationFromServer.getInitializationState()).as("Participation was initialized").isEqualTo(InitializationState.INITIALIZED);
         }
     }
 }

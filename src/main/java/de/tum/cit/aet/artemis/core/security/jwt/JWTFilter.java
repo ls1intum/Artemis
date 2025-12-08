@@ -5,11 +5,12 @@ import static de.tum.cit.aet.artemis.core.config.Constants.JWT_COOKIE_NAME;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
-import jakarta.annotation.Nullable;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletRequest;
@@ -19,6 +20,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.ws.rs.NotAuthorizedException;
 
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
@@ -171,8 +174,9 @@ public class JWTFilter extends GenericFilterBean {
      * @return the valid jwt or null if not found or invalid
      */
     @Nullable
-    public static JwtWithSource extractValidJwt(HttpServletRequest httpServletRequest, TokenProvider tokenProvider) {
-        if (isIgnoredUri(httpServletRequest.getRequestURI())) {
+    public static JwtWithSource extractValidJwt(@NonNull HttpServletRequest httpServletRequest, @NonNull TokenProvider tokenProvider) throws IllegalArgumentException {
+        final String requestUri = httpServletRequest.getRequestURI();
+        if (isIgnoredUri(requestUri)) {
             return null;
         }
 
@@ -192,22 +196,24 @@ public class JWTFilter extends GenericFilterBean {
         String source = cookie != null ? "cookie" : "bearer";
 
         if (!isJwtValid(tokenProvider, jwtToken, source)) {
+            // Suppress noisy logs for websocket or cookie-based tokens
+            if ("/websocket/websocket".equals(requestUri) && "cookie".equals(source)) {
+                return null;
+            }
             // Log the invalid JWT token details to find out how it was created in case of accidental issues
-            log.info("""
-                    Invalid JWT token detected. Details:
-                    {
-                     "source": "{}",
-                     "remote_ip": "{}",
-                     "user_agent": "{}",
-                     "request_uri": "{}",
-                     "headers": {}
-                    }
-                    """, source, httpServletRequest.getRemoteAddr(), httpServletRequest.getHeader(HttpHeaders.USER_AGENT), httpServletRequest.getRequestURI(),
-                    collectHeaders(httpServletRequest));
+            log.info("Invalid JWT token detected. Details: { source: {}, remote_ip: {}, user_agent: {}, request_uri: {}, headers: {} }", source, httpServletRequest.getRemoteAddr(),
+                    httpServletRequest.getHeader(HttpHeaders.USER_AGENT), requestUri, compactHeaders(httpServletRequest));
             return null;
         }
 
         return new JwtWithSource(jwtToken, source);
+    }
+
+    private static String compactHeaders(HttpServletRequest request) {
+        if (request.getHeaderNames() == null) {
+            return "{}";
+        }
+        return Collections.list(request.getHeaderNames()).stream().map(name -> name + "=" + request.getHeader(name)).collect(Collectors.joining(", ", "{", "}"));
     }
 
     /**
@@ -260,7 +266,7 @@ public class JWTFilter extends GenericFilterBean {
      * @param source        of the jwt token
      * @return true if the jwt is valid, false if missing or invalid
      */
-    private static boolean isJwtValid(TokenProvider tokenProvider, @Nullable String jwtToken, @Nullable String source) {
+    private static boolean isJwtValid(@NonNull TokenProvider tokenProvider, @Nullable String jwtToken, @Nullable String source) {
         return StringUtils.hasText(jwtToken) && tokenProvider.validateTokenForAuthority(jwtToken, source);
     }
 
@@ -275,9 +281,9 @@ public class JWTFilter extends GenericFilterBean {
      */
     private static boolean isIgnoredUri(final String uri) {
         // /git/**: used by Git clients with a token mechanism
-        // /api/iris/public/pyris/** used by Pyris status callbacks with a token mechanism
+        // /api/iris/internal/** used by Pyris status callbacks with a token mechanism restricted to internal access
         // /api/programming/public/programming-exercises/new-result: used by Jenkins to send test results back to Artemis,
         // uses a separate secret token.
-        return uri.startsWith("/git/") || uri.startsWith("/api/iris/public/pyris/") || "/api/programming/public/programming-exercises/new-result".equals(uri);
+        return uri.startsWith("/git/") || uri.startsWith("/api/iris/internal/") || "/api/programming/public/programming-exercises/new-result".equals(uri);
     }
 }

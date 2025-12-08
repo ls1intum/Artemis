@@ -52,8 +52,12 @@ public class AtlasMLRequestMockProvider {
     }
 
     public void enableMockingOfRequests() {
-        mockServer = MockRestServiceServer.bindTo(atlasmlRestTemplate).ignoreExpectOrder(true).bufferContent().build();
-        shortTimeoutMockServer = MockRestServiceServer.bindTo(shortTimeoutAtlasmlRestTemplate).ignoreExpectOrder(true).bufferContent().build();
+        if (mockServer == null) {
+            mockServer = MockRestServiceServer.bindTo(atlasmlRestTemplate).ignoreExpectOrder(true).bufferContent().build();
+        }
+        if (shortTimeoutMockServer == null) {
+            shortTimeoutMockServer = MockRestServiceServer.bindTo(shortTimeoutAtlasmlRestTemplate).ignoreExpectOrder(true).bufferContent().build();
+        }
     }
 
     public void reset() {
@@ -65,20 +69,28 @@ public class AtlasMLRequestMockProvider {
         }
     }
 
+    public void resetAndRebuild() {
+        reset();
+        // Nullify the servers so they can be rebuilt
+        mockServer = null;
+        shortTimeoutMockServer = null;
+        enableMockingOfRequests();
+    }
+
     public void mockHealth(boolean healthy) {
-        var url = URI.create(config.getAtlasmlBaseUrl() + "api/v1/health/");
+        var url = URI.create(config.getAtlasmlBaseUrl() + "/api/v1/health/");
         shortTimeoutMockServer.expect(MockRestRequestMatchers.requestTo(url))
                 .andRespond(healthy ? MockRestResponseCreators.withSuccess("[]", MediaType.APPLICATION_JSON) : MockRestResponseCreators.withServerError());
     }
 
     public void mockSuggestCompetencies(SuggestCompetencyRequestDTO request, SuggestCompetencyResponseDTO response) throws Exception {
-        var url = URI.create(config.getAtlasmlBaseUrl() + "api/v1/competency/suggest");
+        var url = URI.create(config.getAtlasmlBaseUrl() + "/api/v1/competency/suggest");
         mockServer.expect(MockRestRequestMatchers.requestTo(url)).andExpect(MockRestRequestMatchers.method(org.springframework.http.HttpMethod.POST))
                 .andRespond(MockRestResponseCreators.withSuccess(mapper.writeValueAsString(response), MediaType.APPLICATION_JSON));
     }
 
     public void mockSuggestCompetencyRelations(Long courseId, SuggestCompetencyRelationsResponseDTO response) throws Exception {
-        var url = URI.create(config.getAtlasmlBaseUrl() + "api/v1/competency/relations/suggest/" + courseId);
+        var url = URI.create(config.getAtlasmlBaseUrl() + "/api/v1/competency/relations/suggest/" + courseId);
         mockServer.expect(MockRestRequestMatchers.requestTo(url)).andExpect(MockRestRequestMatchers.method(org.springframework.http.HttpMethod.GET))
                 .andRespond(MockRestResponseCreators.withSuccess(mapper.writeValueAsString(response), MediaType.APPLICATION_JSON));
     }
@@ -87,7 +99,7 @@ public class AtlasMLRequestMockProvider {
      * Allows any save call to AtlasML to succeed (used as default to avoid external calls in tests).
      */
     public void mockSaveCompetenciesAny() {
-        var url = URI.create(config.getAtlasmlBaseUrl() + "api/v1/competency/save");
+        var url = URI.create(config.getAtlasmlBaseUrl() + "/api/v1/competency/save");
         mockServer.expect(ExpectedCount.manyTimes(), MockRestRequestMatchers.requestTo(url)).andExpect(MockRestRequestMatchers.method(org.springframework.http.HttpMethod.POST))
                 .andRespond(MockRestResponseCreators.withSuccess("", MediaType.APPLICATION_JSON));
     }

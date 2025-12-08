@@ -13,7 +13,6 @@ import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.
 import { TutorialGroupsConfiguration } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration.model';
 import { LearningPath } from 'app/atlas/shared/entities/learning-path.model';
 import { Prerequisite } from 'app/atlas/shared/entities/prerequisite.model';
-import { Faq } from 'app/communication/shared/entities/faq.model';
 import { addPublicFilePrefix } from 'app/app.constants';
 
 export enum CourseInformationSharingConfiguration {
@@ -116,7 +115,6 @@ export class Course implements BaseEntity {
 
     public exercises?: Exercise[];
     public lectures?: Lecture[];
-    public faqs?: Faq[];
     public competencies?: Competency[];
     public prerequisites?: Prerequisite[];
     public learningPathsEnabled?: boolean;
@@ -173,7 +171,6 @@ export class Course implements BaseEntity {
         if (course.exercises) {
             course.exercises.forEach((exercise) => {
                 exercise.numberOfSubmissions = Object.assign(new DueDateStat(), exercise.numberOfSubmissions);
-                exercise.totalNumberOfAssessments = Object.assign(new DueDateStat(), exercise.totalNumberOfAssessments);
             });
         }
         return course;

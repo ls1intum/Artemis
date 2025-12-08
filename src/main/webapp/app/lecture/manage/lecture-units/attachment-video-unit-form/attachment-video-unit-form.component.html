@@ -161,6 +161,24 @@
                         }
                     </div>
                 </div>
+                @if (showTranscriptionStatusBadge()) {
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            @if (transcriptionStatus() === TranscriptionStatus.PENDING || transcriptionStatus() === TranscriptionStatus.PROCESSING) {
+                                <div class="alert alert-info d-flex align-items-center" role="alert">
+                                    <fa-icon [icon]="faQuestionCircle" class="me-2" />
+                                    <span jhiTranslate="artemisApp.attachmentVideoUnit.transcription.editStatusProcessing"></span>
+                                </div>
+                            }
+                            @if (transcriptionStatus() === TranscriptionStatus.FAILED) {
+                                <div class="alert alert-danger d-flex align-items-center" role="alert">
+                                    <fa-icon [icon]="faTimes" class="me-2" />
+                                    <span jhiTranslate="artemisApp.attachmentVideoUnit.transcription.editStatusFailed"></span>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
             </div>
             @if (shouldShowTranscriptionCreation()) {
                 <div class="row" id="video-transcription-row">
@@ -174,6 +192,28 @@
                             [placeholder]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.videoTranscriptionPlaceholder' | artemisTranslate"
                         ></textarea>
                     </div>
+                </div>
+            }
+            @if (showTranscriptionPendingWarning()) {
+                <div class="alert alert-warning mt-3 mb-3" role="alert">
+                    <fa-icon [icon]="faQuestionCircle" />
+                    <span jhiTranslate="artemisApp.attachmentVideoUnit.transcription.pendingWarning"></span>
+                </div>
+            }
+            @if (shouldShowTranscriptCheckbox()) {
+                @if (showTranscriptionOverwriteWarning()) {
+                    <div class="alert alert-info mt-3 mb-3" role="alert">
+                        <fa-icon [icon]="faQuestionCircle" />
+                        <span jhiTranslate="artemisApp.attachmentVideoUnit.transcription.overwriteWarning"></span>
+                    </div>
+                }
+                <div class="form-check mt-3 mb-3">
+                    <input class="form-check-input" type="checkbox" id="generateTranscriptCheckbox" formControlName="generateTranscript" />
+                    <label
+                        class="form-check-label"
+                        for="generateTranscriptCheckbox"
+                        jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.generateTranscriptLabel"
+                    ></label>
                 </div>
             }
             <div class="row">

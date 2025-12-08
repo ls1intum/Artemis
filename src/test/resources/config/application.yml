@@ -109,13 +109,21 @@ artemis:
 
     # Nebula configuration for tests
     nebula:
-        enabled: false
+        enabled: true
         url: http://localhost:8080  # dummy URL for tests
-        secret: test-secret         # dummy secret for tests
+        secret-token: test-secret         # dummy secret for tests
+    tum-live:
+        api-base-url: https://mocke.tum.live/api/v2
 
 spring:
     application:
         name: Artemis
+    ai:
+        chat:
+            memory:
+                repository:
+                    jdbc:
+                        initialize-schema: never  # Disable JDBC schema init for tests (H2), prod uses Liquibase
     datasource:
         url: jdbc:mysql://artemis-mysql:3306/
         type: com.zaxxer.hikari.HikariDataSource

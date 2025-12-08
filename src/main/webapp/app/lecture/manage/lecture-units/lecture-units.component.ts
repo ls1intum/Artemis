@@ -22,7 +22,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { UnitCreationCardComponent } from 'app/lecture/manage/lecture-units/unit-creation-card/unit-creation-card.component';
 import { CreateExerciseUnitComponent } from 'app/lecture/manage/lecture-units/create-exercise-unit/create-exercise-unit.component';
 import { catchError, map, switchMap } from 'rxjs/operators';
-import { of } from 'rxjs';
+import { combineLatest, of } from 'rxjs';
 import { LectureTranscriptionService } from '../services/lecture-transcription.service';
 import { AccountService } from 'app/core/auth/account.service';
 
@@ -167,9 +167,11 @@ export class LectureUpdateUnitsComponent implements OnInit {
     }
 
     createEditAttachmentVideoUnit(attachmentVideoUnitFormData: AttachmentVideoUnitFormData): void {
-        const { description, name, releaseDate, videoSource, updateNotificationText, competencyLinks } = attachmentVideoUnitFormData.formProperties;
+        const { description, name, releaseDate, videoSource, updateNotificationText, competencyLinks, generateTranscript } = attachmentVideoUnitFormData.formProperties;
+
         const { file, fileName } = attachmentVideoUnitFormData.fileProperties;
         const { videoTranscription } = attachmentVideoUnitFormData.transcriptionProperties || {};
+
         if (!name || (!fileName && !videoSource)) {
             return;
         }
@@ -187,7 +189,6 @@ export class LectureUpdateUnitsComponent implements OnInit {
         }
 
         let notificationText: string | undefined;
-
         if (updateNotificationText) {
             notificationText = updateNotificationText;
         }
@@ -228,8 +229,28 @@ export class LectureUpdateUnitsComponent implements OnInit {
             .pipe(
                 switchMap((response) => {
                     const lectureUnit = response.body!;
+                    const lectureUnitId = lectureUnit.id!;
 
-                    if (!videoTranscription) {
+                    // First: Handle automatic transcription generation if requested
+                    let transcriptionObservable = of(lectureUnit);
+                    if (generateTranscript && lectureUnitId) {
+                        const transcriptionUrl = attachmentVideoUnitFormData.playlistUrl ?? lectureUnit.videoSource;
+                        if (transcriptionUrl) {
+                            transcriptionObservable = this.attachmentVideoUnitService.startTranscription(this.lecture.id!, lectureUnitId, transcriptionUrl).pipe(
+                                map(() => lectureUnit),
+                                catchError((err) => {
+                                    onError(this.alertService, err);
+                                    return of(lectureUnit);
+                                }),
+                            );
+                        }
+                    }
+
+                    return transcriptionObservable;
+                }),
+                switchMap((lectureUnit) => {
+                    // Second: Handle manual transcription save if provided
+                    if (!videoTranscription || !lectureUnit.id) {
                         return of(lectureUnit);
                     }
 
@@ -241,9 +262,9 @@ export class LectureUpdateUnitsComponent implements OnInit {
                         return of(lectureUnit);
                     }
 
-                    transcription.lectureUnitId = lectureUnit.id!;
+                    transcription.lectureUnitId = lectureUnit.id;
 
-                    return this.lectureTranscriptionService.createTranscription(this.lecture.id!, lectureUnit.id!, transcription).pipe(
+                    return this.lectureTranscriptionService.createTranscription(this.lecture.id!, lectureUnit.id, transcription).pipe(
                         map(() => lectureUnit),
                         // Swallow transcription errors so the primary save still counts as success
                         catchError((err) => {
@@ -299,13 +320,16 @@ export class LectureUpdateUnitsComponent implements OnInit {
         of(lectureUnit)
             .pipe(
                 switchMap((unit) => {
-                    if (this.accountService.isAdmin() && unit.type === LectureUnitType.ATTACHMENT_VIDEO) {
-                        return this.lectureTranscriptionService.getTranscription(unit.id!);
+                    if (unit.type === LectureUnitType.ATTACHMENT_VIDEO && this.accountService.isAdmin()) {
+                        return combineLatest({
+                            transcription: this.lectureTranscriptionService.getTranscription(unit.id!),
+                            transcriptionStatus: this.lectureTranscriptionService.getTranscriptionStatus(unit.id!),
+                        });
                     }
-                    return of(null);
+                    return of({ transcription: null, transcriptionStatus: undefined });
                 }),
             )
-            .subscribe((transcription) => {
+            .subscribe(({ transcription, transcriptionStatus }) => {
                 switch (lectureUnit.type) {
                     case LectureUnitType.TEXT:
                         this.textUnitFormData = {
@@ -337,7 +361,16 @@ export class LectureUpdateUnitsComponent implements OnInit {
                             transcriptionProperties: {
                                 videoTranscription: transcription ? JSON.stringify(transcription) : undefined,
                             },
+                            transcriptionStatus: transcriptionStatus,
                         };
+                        // Check if playlist URL is available for existing video to enable transcription generation
+                        this.attachmentVideoUnitService
+                            .fetchAndUpdatePlaylistUrl(this.currentlyProcessedAttachmentVideoUnit.videoSource, this.attachmentVideoUnitFormData)
+                            .subscribe({
+                                next: (updatedFormData) => {
+                                    this.attachmentVideoUnitFormData = updatedFormData;
+                                },
+                            });
                         break;
                 }
             });

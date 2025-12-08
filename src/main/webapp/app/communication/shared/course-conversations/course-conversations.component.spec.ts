@@ -45,6 +45,7 @@ import {
 } from 'app/communication/course-conversations-components/dialogs/channels-overview-dialog/channels-overview-dialog.component';
 import { ConversationGlobalSearchComponent } from 'app/communication/shared/conversation-global-search/conversation-global-search.component';
 import { AlertService } from 'app/shared/service/alert.service';
+import { FaqService } from 'app/communication/faq/faq.service';
 
 const examples: (ConversationDTO | undefined)[] = [
     undefined,
@@ -137,6 +138,7 @@ examples.forEach((activeConversation) => {
                     MockProvider(SidebarEventService),
                     MockProvider(ProfileService),
                     MockProvider(AlertService),
+                    MockProvider(FaqService),
                 ],
                 imports: [FormsModule, ReactiveFormsModule, FontAwesomeModule, NgbModule],
             }).compileComponents();
@@ -781,6 +783,138 @@ examples.forEach((activeConversation) => {
                 expect(component.focusPostId).toBe(10);
                 expect(component.openThreadOnFocus).toBeFalse();
                 expect(setActiveConversationSpy).toHaveBeenCalledWith(444);
+            });
+        });
+
+        describe('Search Clear and Conversation Restoration', () => {
+            beforeEach(() => {
+                fixture.detectChanges();
+            });
+
+            it('should clear search config and restore previous conversation when X is clicked', () => {
+                const previousConversation = { id: 42, type: 'channel' } as ConversationDTO;
+                component.activeConversation = previousConversation;
+                component.lastKnownConversationId = 42;
+
+                component.courseWideSearchConfig.searchTerm = 'test search';
+                component.courseWideSearchConfig.selectedConversations = [previousConversation];
+                component.courseWideSearchConfig.selectedAuthors = [{ id: 1 } as any];
+
+                component.onSelectionChange({
+                    searchTerm: '',
+                    selectedConversations: [previousConversation],
+                    selectedAuthors: [],
+                });
+
+                expect(component.previousConversationBeforeSearch).toEqual(previousConversation);
+
+                component.onClearSearchAndRestorePrevious();
+
+                expect(component.courseWideSearchConfig.searchTerm).toBe('');
+                expect(component.courseWideSearchConfig.selectedConversations).toEqual([]);
+                expect(component.courseWideSearchConfig.selectedAuthors).toEqual([]);
+
+                expect(setActiveConversationSpy).toHaveBeenCalledWith(42);
+                expect(component.previousConversationBeforeSearch).toBeUndefined();
+            });
+
+            it('should restore last known conversation when no previous conversation before search', () => {
+                component.previousConversationBeforeSearch = undefined;
+                component.lastKnownConversationId = 99;
+
+                component.courseWideSearchConfig.searchTerm = 'test';
+                component.courseWideSearchConfig.selectedConversations = [{ id: 1 } as ConversationDTO];
+
+                component.onClearSearchAndRestorePrevious();
+
+                expect(component.courseWideSearchConfig.searchTerm).toBe('');
+                expect(component.courseWideSearchConfig.selectedConversations).toEqual([]);
+                expect(component.courseWideSearchConfig.selectedAuthors).toEqual([]);
+
+                expect(setActiveConversationSpy).toHaveBeenCalledWith(99);
+            });
+
+            it('should trigger All messages search when no conversation to restore', () => {
+                component.previousConversationBeforeSearch = undefined;
+                component.lastKnownConversationId = undefined;
+                const updateQueryParamsSpy = jest.spyOn(component, 'updateQueryParameters');
+                const courseWideSearchMock = { onSearch: jest.fn() };
+                jest.spyOn(component, 'courseWideSearch').mockReturnValue(courseWideSearchMock as any);
+
+                component.courseWideSearchConfig.searchTerm = 'test search';
+                component.courseWideSearchConfig.selectedConversations = [{ id: 1 } as ConversationDTO];
+
+                component.onClearSearchAndRestorePrevious();
+
+                expect(component.courseWideSearchConfig.searchTerm).toBe('');
+                expect(component.courseWideSearchConfig.selectedConversations).toEqual([]);
+                expect(component.courseWideSearchConfig.selectedAuthors).toEqual([]);
+
+                expect(setActiveConversationSpy).toHaveBeenCalledWith(undefined);
+                expect(component.activeConversation).toBeUndefined();
+                expect(component.selectedSavedPostStatus).toBeUndefined();
+                expect(updateQueryParamsSpy).toHaveBeenCalled();
+                expect(courseWideSearchMock.onSearch).toHaveBeenCalled();
+            });
+
+            it('should track last known conversation ID when active conversation changes', fakeAsync(() => {
+                const newConversation = { id: 123, type: 'channel' } as ConversationDTO;
+                jest.spyOn(metisConversationService, 'activeConversation$', 'get').mockReturnValue(of(newConversation));
+
+                component.ngOnInit();
+                tick();
+
+                expect(component.lastKnownConversationId).toBe(123);
+            }));
+
+            it('should save active conversation only once when search starts', () => {
+                const conversation = { id: 50, type: 'channel' } as ConversationDTO;
+                component.activeConversation = conversation;
+                component.previousConversationBeforeSearch = undefined;
+
+                // First selection - should save
+                component.onSelectionChange({
+                    searchTerm: '',
+                    selectedConversations: [conversation],
+                    selectedAuthors: [],
+                });
+
+                expect(component.previousConversationBeforeSearch).toEqual(conversation);
+
+                // Second selection - should NOT overwrite
+                const anotherConversation = { id: 60, type: 'channel' } as ConversationDTO;
+                component.activeConversation = anotherConversation;
+
+                component.onSelectionChange({
+                    searchTerm: '',
+                    selectedConversations: [anotherConversation],
+                    selectedAuthors: [],
+                });
+
+                expect(component.previousConversationBeforeSearch).toEqual(conversation); // Still the first one
+            });
+
+            it('should not save conversation when no filters are active', () => {
+                const conversation = { id: 70, type: 'channel' } as ConversationDTO;
+                component.activeConversation = conversation;
+                component.previousConversationBeforeSearch = undefined;
+
+                component.onSelectionChange({
+                    searchTerm: '',
+                    selectedConversations: [],
+                    selectedAuthors: [],
+                });
+
+                expect(component.previousConversationBeforeSearch).toBeUndefined();
+            });
+
+            it('should call closeSidebarOnMobile when clearing search', () => {
+                const closeSidebarSpy = jest.spyOn(component, 'closeSidebarOnMobile');
+                component.lastKnownConversationId = 1;
+
+                component.onClearSearchAndRestorePrevious();
+
+                expect(closeSidebarSpy).toHaveBeenCalled();
             });
         });
     });

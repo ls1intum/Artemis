@@ -31,9 +31,9 @@ import org.springframework.cache.interceptor.KeyGenerator;
 import org.springframework.cloud.client.serviceregistry.Registration;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
 
@@ -42,6 +42,7 @@ import com.hazelcast.config.EvictionConfig;
 import com.hazelcast.config.EvictionPolicy;
 import com.hazelcast.config.MapConfig;
 import com.hazelcast.config.MaxSizePolicy;
+import com.hazelcast.config.MemberAttributeConfig;
 import com.hazelcast.config.NetworkConfig;
 import com.hazelcast.config.QueueConfig;
 import com.hazelcast.config.SerializerConfig;
@@ -87,17 +88,13 @@ import tech.jhipster.config.cache.PrefixedKeyGenerator;
  * dynamically connecting cluster nodes at runtime based on service discovery. By decoupling static
  * configuration from runtime coordination, the system ensures better modularity, testability, and maintainability.
  */
-@Profile({ PROFILE_CORE, PROFILE_BUILDAGENT })
+@Conditional(CoreOrHazelcastBuildAgent.class)
 @Lazy(value = false)
 @Configuration
 @EnableCaching
 public class CacheConfiguration {
 
     private static final Logger log = LoggerFactory.getLogger(CacheConfiguration.class);
-
-    private final Optional<GitProperties> gitProperties;
-
-    private final Optional<BuildProperties> buildProperties;
 
     private final ServerProperties serverProperties;
 
@@ -120,11 +117,8 @@ public class CacheConfiguration {
     @Value("${spring.hazelcast.localInstances:true}")
     private boolean hazelcastLocalInstances;
 
-    public CacheConfiguration(ApplicationContext applicationContext, Optional<GitProperties> gitProperties, Optional<BuildProperties> buildProperties,
-            ServerProperties serverProperties, Optional<Registration> registration, Environment env) {
+    public CacheConfiguration(ApplicationContext applicationContext, ServerProperties serverProperties, Optional<Registration> registration, Environment env) {
         this.applicationContext = applicationContext;
-        this.gitProperties = gitProperties;
-        this.buildProperties = buildProperties;
         this.serverProperties = serverProperties;
         this.registration = registration;
         this.env = env;
@@ -201,6 +195,16 @@ public class CacheConfiguration {
         // If registration == null -> this will never connect to any instance as no other ip addresses are added
         config.getNetworkConfig().getJoin().getTcpIpConfig().setEnabled(true);
 
+        String buildAgentDisplayName = env.getProperty("artemis.continuous-integration.build-agent.display-name", "");
+        String instanceId = env.getProperty("eureka.instance.instanceId", "");
+        // Prefer a human-friendly build agent display name if configured; otherwise fall back to the discovery instance id
+        String displayName = !buildAgentDisplayName.isBlank() && !buildAgentDisplayName.equals("Unnamed Artemis Node") ? buildAgentDisplayName : instanceId;
+        if (!displayName.isBlank()) {
+            MemberAttributeConfig memberAttributeConfig = config.getMemberAttributeConfig();
+            log.info("Will use instanceId '{}' for Hazelcast member attributes", displayName);
+            memberAttributeConfig.setAttribute("instanceId", displayName);
+        }
+
         // Allows using @SpringAware and therefore Spring Services in distributed tasks
         config.setManagedContext(new SpringManagedContext(applicationContext));
         config.setClassLoader(applicationContext.getClassLoader());
@@ -257,7 +261,8 @@ public class CacheConfiguration {
         config.setSplitBrainProtectionConfigs(new ConcurrentHashMap<>());
         config.addSplitBrainProtectionConfig(splitBrainProtectionConfig);
         // Specify when the first run of the split brain protection should be executed (in seconds)
-        ClusterProperty.MERGE_FIRST_RUN_DELAY_SECONDS.setSystemProperty("120");
+        ClusterProperty.MERGE_FIRST_RUN_DELAY_SECONDS.setSystemProperty("30");
+        ClusterProperty.MERGE_NEXT_RUN_DELAY_SECONDS.setSystemProperty("30");
 
         // only add the queue config if the profile "localci" is active
         Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
@@ -334,8 +339,8 @@ public class CacheConfiguration {
     }
 
     @Bean
-    public KeyGenerator keyGenerator() {
-        return new PrefixedKeyGenerator(this.gitProperties.orElse(null), this.buildProperties.orElse(null));
+    public KeyGenerator keyGenerator(GitProperties gitProperties, BuildProperties buildProperties) {
+        return new PrefixedKeyGenerator(gitProperties, buildProperties);
     }
 
     // config for files in the files system

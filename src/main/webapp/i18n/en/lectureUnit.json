@@ -84,7 +84,13 @@
             "created": "New attachment unit created",
             "updated": "Attachment unit updated",
             "notReleasedTooltip": "Attachment only visible to teaching assistants and instructors. Release date:",
+            "transcriptAvailable": "Transcription Possible",
             "transcriptionInvalidJson": "The transcription JSON is invalid and was ignored.",
+            "generateTranscription": "Generate transcription",
+            "transcriptionPossible": "Transcription Possible",
+            "transcriptionProcessing": "Transcription Processing",
+            "transcriptionFailed": "Transcription Failed",
+            "hasTranscription": "Transcription complete",
             "createAttachmentVideoUnits": {
                 "informativeText": {
                     "firstLine": "Artemis searches for the Outline (slide with title 'Outline' and bullet points with unit headings) to split the PDF into units.",
@@ -155,7 +161,8 @@
                 "urlHelperPlaceholder": "You can enter a Video URL here and use the arrow to create the correct embeddable URL from it",
                 "urlHelperValidationError": "Automatic embed link generation is not possible for this URL",
                 "videoTranscription": "Video Transcription",
-                "videoTranscriptionPlaceholder": "Insert the transcription of the video here."
+                "videoTranscriptionPlaceholder": "Insert the transcription of the video here.",
+                "generateTranscriptLabel": "Generate transcript after saving"
             },
             "editAttachmentVideoUnit": {
                 "title": "Edit Attachment Unit"
@@ -170,6 +177,26 @@
                 "question": "Do you really want to delete the attachment unit <strong>{{ title }}</strong>? The attachment will also be removed! You can not undo this action!",
                 "typeNameToConfirm": "Please enter the name of the attachment/video unit for confirmation.",
                 "buttonText": "Delete"
+            },
+            "transcription": {
+                "started": "Transcript generation started.",
+                "error": "Failed to start transcript generation.",
+                "pendingWarning": "A transcription is currently being processed for this video. Please wait for it to complete before generating a new one",
+                "overwriteWarning": "Generating a new transcript will overwrite the existing transcription for this video.",
+                "statusProcessing": "Please check the status of the transcription later",
+                "statusFailed": "Transcription generation failed for this video. You can try generating it again.",
+                "editStatusProcessing": "A transcription is currently being generated for this video.",
+                "editStatusFailed": "The previous transcription generation failed for this video."
+            },
+            "videoPlayer": {
+                "transcript": "Transcript",
+                "searchPlaceholder": "Search transcript...",
+                "clearSearch": "Clear search",
+                "previousResult": "Previous result",
+                "nextResult": "Next result",
+                "noResults": "No results",
+                "noMatchingTranscript": "No matching transcript found",
+                "loading": "Loading..."
             }
         },
         "exerciseUnit": {

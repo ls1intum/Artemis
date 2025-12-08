@@ -129,8 +129,12 @@ An attachment video unit consists of a name, file, an embedded video link, and o
 Artemis can convert the website link from common video sources to an embeddable URL using the arrow button.
 Students complete this unit when they watch the video for at least five minutes and download the attachment.
 
-For Attachment Video Units that contain a lecture recording, transcriptions can be generated using the supporting script
-according to the README.md under supporting_scripts/lecture-transcriptions.
+If your Artemis instance is connected to Nebula (see the :doc:`Nebula setup guide <../admin/setup/nebula>`), you can generate transcriptions directly in the editor:
+
+1. Create or edit the attachment video unit and paste the public TUM-Live link into the **Transform into embeddable format** helper.
+2. Click the arrow button. When Artemis resolves the playlist successfully, the **Generate transcript after saving** checkbox appears.
+3. Enable the checkbox and save the lecture unit. Artemis sends the job to Nebula and shows a toast confirming that processing started.
+4. Nebula processes the lecture asynchronously. Once finished, the transcription is attached to the unit and becomes visible the next time you open the editor.
 
 |create-attachment-video-unit|
 
@@ -194,6 +198,11 @@ Competencies
 
 Instructors can create competencies, which are desired learning objectives, and link lecture units to them.
 See :ref:`Adaptive Learning <adaptive-learning>` for more information.
+
+Lecture Series
+--------------
+
+See the new documentation’s article `Lecture Series <https://ls1intum.github.io/Artemis/instructor/lecture-series>`__.
 
 
 .. |general-menu| image:: lectures/general-menu-lecture.png

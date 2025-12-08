@@ -21,46 +21,48 @@ import {
     faTimes,
 } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { UserPublicInfoDTO } from 'app/core/user/user.model';
-import { Course, CourseInformationSharingConfiguration, isCommunicationEnabled, isMessagingEnabled } from 'app/core/course/shared/entities/course.model';
-import { ChannelDTO, ChannelSubType, getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
-import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
-import { Post } from 'app/communication/shared/entities/post.model';
-import { Posting, PostingType, SavedPostStatus, toSavedPostStatus } from 'app/communication/shared/entities/posting.model';
-import { CourseWideSearchComponent, CourseWideSearchConfig } from 'app/communication/course-conversations-components/course-wide-search/course-wide-search.component';
-import { ChannelsCreateDialogComponent } from 'app/communication/course-conversations-components/dialogs/channels-create-dialog/channels-create-dialog.component';
-import { GroupChatCreateDialogComponent } from 'app/communication/course-conversations-components/group-chat-create-dialog/group-chat-create-dialog.component';
-import { OneToOneChatCreateDialogComponent } from 'app/communication/course-conversations-components/one-to-one-chat-create-dialog/one-to-one-chat-create-dialog.component';
-import { defaultFirstLayerDialogOptions, defaultSecondLayerDialogOptions } from 'app/communication/course-conversations-components/other/conversation.util';
-import { CourseOverviewService } from 'app/core/course/overview/services/course-overview.service';
-import { CourseSidebarService } from 'app/core/course/overview/services/course-sidebar.service';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
-import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
-import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
-import { MetisService } from 'app/communication/service/metis.service';
-import { PageType, SortDirection } from 'app/communication/metis.util';
-import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
-import { EMPTY, Observable, Subject, Subscription, firstValueFrom, from } from 'rxjs';
-import { catchError, debounceTime, distinctUntilChanged, map, takeUntil } from 'rxjs/operators';
-import { CourseConversationsCodeOfConductComponent } from 'app/communication/course-conversations-components/code-of-conduct/course-conversations-code-of-conduct.component';
-import { ConversationHeaderComponent } from 'app/communication/course-conversations-components/layout/conversation-header/conversation-header.component';
-import { ConversationMessagesComponent } from 'app/communication/course-conversations-components/layout/conversation-messages/conversation-messages.component';
-import { ConversationThreadSidebarComponent } from 'app/communication/course-conversations-components/layout/conversation-thread-sidebar/conversation-thread-sidebar.component';
-import { SavedPostsComponent } from 'app/communication/course-conversations-components/saved-posts/saved-posts.component';
 import { captureException } from '@sentry/angular';
 import { canCreateChannel } from 'app/communication/conversations/conversation-permissions.utils';
+import { CourseConversationsCodeOfConductComponent } from 'app/communication/course-conversations-components/code-of-conduct/course-conversations-code-of-conduct.component';
+import { CourseWideSearchComponent, CourseWideSearchConfig } from 'app/communication/course-conversations-components/course-wide-search/course-wide-search.component';
+import { ChannelsCreateDialogComponent } from 'app/communication/course-conversations-components/dialogs/channels-create-dialog/channels-create-dialog.component';
 import {
     ChannelAction,
     ChannelsOverviewDialogComponent,
 } from 'app/communication/course-conversations-components/dialogs/channels-overview-dialog/channels-overview-dialog.component';
-import { AccordionGroups, ChannelTypeIcons, CollapseState, SidebarCardElement, SidebarData, SidebarItemShowAlways } from 'app/shared/types/sidebar';
-import { LinkifyService } from 'app/communication/link-preview/services/linkify.service';
+import { GroupChatCreateDialogComponent } from 'app/communication/course-conversations-components/group-chat-create-dialog/group-chat-create-dialog.component';
+import { ConversationHeaderComponent } from 'app/communication/course-conversations-components/layout/conversation-header/conversation-header.component';
+import { ConversationMessagesComponent } from 'app/communication/course-conversations-components/layout/conversation-messages/conversation-messages.component';
+import { ConversationThreadSidebarComponent } from 'app/communication/course-conversations-components/layout/conversation-thread-sidebar/conversation-thread-sidebar.component';
+import { OneToOneChatCreateDialogComponent } from 'app/communication/course-conversations-components/one-to-one-chat-create-dialog/one-to-one-chat-create-dialog.component';
+import { defaultFirstLayerDialogOptions, defaultSecondLayerDialogOptions } from 'app/communication/course-conversations-components/other/conversation.util';
+import { SavedPostsComponent } from 'app/communication/course-conversations-components/saved-posts/saved-posts.component';
+import { FaqService } from 'app/communication/faq/faq.service';
 import { LinkPreviewService } from 'app/communication/link-preview/services/link-preview.service';
+import { LinkifyService } from 'app/communication/link-preview/services/linkify.service';
+import { PageType, SortDirection } from 'app/communication/metis.util';
+import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
+import { MetisService } from 'app/communication/service/metis.service';
 import { ConversationGlobalSearchComponent, ConversationGlobalSearchConfig } from 'app/communication/shared/conversation-global-search/conversation-global-search.component';
+import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
+import { ChannelDTO, ChannelSubType, getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
+import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
+import { FaqState } from 'app/communication/shared/entities/faq.model';
+import { Post } from 'app/communication/shared/entities/post.model';
+import { Posting, PostingType, SavedPostStatus, toSavedPostStatus } from 'app/communication/shared/entities/posting.model';
+import { CourseOverviewService } from 'app/core/course/overview/services/course-overview.service';
+import { CourseSidebarService } from 'app/core/course/overview/services/course-sidebar.service';
+import { Course, CourseInformationSharingConfiguration, isCommunicationEnabled, isMessagingEnabled } from 'app/core/course/shared/entities/course.model';
+import { UserPublicInfoDTO } from 'app/core/user/user.model';
 import { FeatureActivationComponent } from 'app/shared/feature-activation/feature-activation.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
 import { AlertService } from 'app/shared/service/alert.service';
 import { EventManager } from 'app/shared/service/event-manager.service';
+import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
+import { AccordionGroups, ChannelTypeIcons, CollapseState, SidebarCardElement, SidebarData, SidebarItemShowAlways } from 'app/shared/types/sidebar';
+import { EMPTY, Observable, Subject, Subscription, firstValueFrom, from } from 'rxjs';
+import { catchError, debounceTime, distinctUntilChanged, map, takeUntil } from 'rxjs/operators';
 
 const DEFAULT_CHANNEL_GROUPS: AccordionGroups = {
     favoriteChannels: { entityData: [] },
@@ -148,6 +150,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     private activatedRoute = inject(ActivatedRoute);
     private metisConversationService = inject(MetisConversationService);
     private metisService = inject(MetisService);
+    private faqService = inject(FaqService);
     private courseOverviewService = inject(CourseOverviewService);
     private modalService = inject(NgbModal);
     private alertService = inject(AlertService);
@@ -169,6 +172,8 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     postInThread?: Post;
     activeConversation?: ConversationDTO = undefined;
     conversationsOfUser: ConversationDTO[] = [];
+    previousConversationBeforeSearch?: ConversationDTO;
+    lastKnownConversationId?: number;
 
     conversationSelected = true;
     sidebarData: SidebarData;
@@ -230,8 +235,17 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
 
     private setupMetis() {
         this.metisService.setPageType(PageType.OVERVIEW);
-        this.metisService.setCourse(this.course());
+        const course = this.course();
+        this.metisService.setCourse(course);
+        if (course?.faqEnabled) {
+            this.faqService.findAllByCourseIdAndState(course.id!, FaqState.ACCEPTED).subscribe({
+                next: (res) => {
+                    this.metisService.setFaqs(res.body ?? []);
+                },
+            });
+        }
     }
+
     private getParentCourse(): Course | undefined {
         return this.activatedRoute.parent?.snapshot.data?.course;
     }
@@ -379,6 +393,11 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         this.metisConversationService.activeConversation$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversation: ConversationDTO) => {
             const previousConversation = this.activeConversation;
             this.activeConversation = conversation;
+
+            if (conversation?.id) {
+                this.lastKnownConversationId = conversation.id;
+            }
+
             if (this.isMobile() && conversation && previousConversation?.id !== conversation.id) {
                 this.courseSidebarService.closeSidebar();
             }
@@ -449,12 +468,34 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     }
 
     onSelectionChange(searchInfo: ConversationGlobalSearchConfig) {
+        if ((searchInfo.selectedConversations.length > 0 || searchInfo.selectedAuthors.length > 0) && this.activeConversation && !this.previousConversationBeforeSearch) {
+            this.previousConversationBeforeSearch = this.activeConversation;
+        }
+
         this.courseWideSearchConfig.selectedConversations = searchInfo.selectedConversations;
         this.courseWideSearchConfig.selectedAuthors = searchInfo.selectedAuthors;
         this.courseWideSearch()?.onSearchConfigSelectionChange();
+    }
 
-        // We don't update the searchTerm here because that should only happen on explicit search
-        // and we don't trigger a search automatically to avoid excessive API calls
+    onClearSearchAndRestorePrevious() {
+        this.courseWideSearchConfig.searchTerm = '';
+        this.courseWideSearchConfig.selectedConversations = [];
+        this.courseWideSearchConfig.selectedAuthors = [];
+
+        if (this.previousConversationBeforeSearch?.id) {
+            this.metisConversationService.setActiveConversation(this.previousConversationBeforeSearch.id);
+        } else if (this.lastKnownConversationId) {
+            this.metisConversationService.setActiveConversation(this.lastKnownConversationId);
+        } else {
+            this.selectedSavedPostStatus = undefined;
+            this.metisConversationService.setActiveConversation(undefined);
+            this.activeConversation = undefined;
+            this.updateQueryParameters();
+            this.courseWideSearch()?.onSearch();
+        }
+
+        this.previousConversationBeforeSearch = undefined;
+        this.closeSidebarOnMobile();
     }
 
     /**

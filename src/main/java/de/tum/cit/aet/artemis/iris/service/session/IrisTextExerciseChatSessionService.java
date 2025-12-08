@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.textexercise.PyrisText
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.textexercise.PyrisTextExerciseChatStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisMessageDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisTextExerciseDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisUserDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.TextExerciseChatJob;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
@@ -111,17 +112,16 @@ public class IrisTextExerciseChatSessionService implements IrisChatBasedFeatureI
         else {
             latestSubmissionText = null;
         }
-        var conversation = session.getMessages().stream().map(PyrisMessageDTO::of).toList();
+        var chatHistory = session.getMessages().stream().map(PyrisMessageDTO::of).toList();
         // @formatter:off
         pyrisPipelineService.executePipeline(
                 "text-exercise-chat",
                 settings.selectedVariant(),
                 Optional.empty(),
                 pyrisJobService.createTokenForJob(token -> new TextExerciseChatJob(token, course.getId(), exercise.getId(), session.getId())),
-                dto -> new PyrisTextExerciseChatPipelineExecutionDTO(dto, PyrisTextExerciseDTO.of(exercise), conversation, latestSubmissionText, settings.customInstructions()),
+                dto -> new PyrisTextExerciseChatPipelineExecutionDTO(PyrisTextExerciseDTO.of(exercise), session.getTitle(), chatHistory, new PyrisUserDTO(user), latestSubmissionText, dto.settings(), dto.initialStages(), settings.customInstructions()),
                 stages -> irisChatWebsocketService.sendMessage(session, null, stages)
         );
-        // @formatter:on
     }
 
     /**

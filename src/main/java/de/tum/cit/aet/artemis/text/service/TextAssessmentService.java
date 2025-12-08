@@ -5,8 +5,7 @@ import static org.hibernate.Hibernate.isInitialized;
 import java.util.List;
 import java.util.Optional;
 
-import jakarta.annotation.Nullable;
-
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -72,6 +71,7 @@ public class TextAssessmentService extends AssessmentService {
             // We are the first ones to open assess this submission, we want to lock it.
             result = new Result();
             result.setSubmission(textSubmission);
+            result.setExerciseId(participation.getExercise().getId());
             resultService.createNewRatedManualResult(result);
             result.setCompletionDate(null);
             result = resultRepository.save(result);

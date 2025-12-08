@@ -28,9 +28,9 @@ describe('AccountService', () => {
     const updateLanguageUrl = 'api/core/public/account/change-language';
     const user = { id: 1, groups: ['USER'] } as User;
     const user2 = { id: 2, groups: ['USER'] } as User;
-    const user3 = { id: 3, groups: ['USER', 'TA'], authorities: [Authority.USER] } as User;
+    const user3 = { id: 3, groups: ['USER', 'TA'], authorities: [Authority.STUDENT] } as User;
 
-    const authorities = [Authority.USER, Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA];
+    const authorities = [Authority.STUDENT, Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TUTOR];
     const course = {
         instructorGroupName: 'INSTRUCTOR',
         editorGroupName: 'EDITOR',
@@ -76,7 +76,7 @@ describe('AccountService', () => {
 
         // @ts-ignore
         expect(userReceived).toEqual(user);
-        expect(accountService.userIdentity).toEqual(user);
+        expect(accountService.userIdentity()).toEqual(user);
         expect(accountService.isAuthenticated()).toBeTrue();
     }));
 
@@ -91,8 +91,8 @@ describe('AccountService', () => {
 
     it('should fetch the user on identity if the userIdentity is defined yet (force=true)', fakeAsync(() => {
         let userReceived: User;
-        accountService.userIdentity = user;
-        expect(accountService.userIdentity).toEqual(user);
+        accountService.userIdentity.set(user);
+        expect(accountService.userIdentity()).toEqual(user);
         expect(accountService.isAuthenticated()).toBeTrue();
 
         accountService.identity(true).then((returnedUser: User) => {
@@ -107,13 +107,13 @@ describe('AccountService', () => {
 
         // @ts-ignore
         expect(userReceived).toEqual(user2);
-        expect(accountService.userIdentity).toEqual(user2);
+        expect(accountService.userIdentity()).toEqual(user2);
         expect(accountService.isAuthenticated()).toBeTrue();
     }));
 
     it('should NOT fetch the user on identity if the userIdentity is defined (force=false)', async () => {
-        accountService.userIdentity = user;
-        expect(accountService.userIdentity).toEqual(user);
+        accountService.userIdentity.set(user);
+        expect(accountService.userIdentity()).toEqual(user);
         expect(accountService.isAuthenticated()).toBeTrue();
         getStub.mockReturnValue(of({ body: user2 }));
 
@@ -121,25 +121,25 @@ describe('AccountService', () => {
 
         expect(getStub).not.toHaveBeenCalled();
         expect(userReceived).toEqual(user);
-        expect(accountService.userIdentity).toEqual(user);
+        expect(accountService.userIdentity()).toEqual(user);
         expect(accountService.isAuthenticated()).toBeTrue();
     });
 
     it('should authenticate a user', () => {
-        expect(accountService.userIdentity).toBeUndefined();
+        expect(accountService.userIdentity()).toBeUndefined();
         expect(accountService.isAuthenticated()).toBeFalse();
 
         accountService.authenticate(user);
 
-        expect(accountService.userIdentity).toEqual(user);
+        expect(accountService.userIdentity()).toEqual(user);
     });
 
     it('should sync user groups', () => {
-        accountService.userIdentity = user;
+        accountService.userIdentity.set(user);
 
         accountService.syncGroups(user3.groups!);
 
-        expect(accountService.userIdentity.groups).toEqual(['USER', 'TA']);
+        expect(accountService.userIdentity()?.groups).toEqual(['USER', 'TA']);
     });
 
     describe('test authority check', () => {
@@ -151,28 +151,28 @@ describe('AccountService', () => {
         });
 
         it.each(authorities)('should return false if authenticated, user id but no authorities are set', async (authority: Authority) => {
-            accountService.userIdentity = user;
+            accountService.userIdentity.set(user);
             usedAuthorities.push(authority);
 
             await expect(accountService.hasAnyAuthority(usedAuthorities)).resolves.toBeFalse();
         });
 
         it.each(authorities)('should return true if user is required', async (authority: Authority) => {
-            accountService.userIdentity = user3;
+            accountService.userIdentity.set(user3);
             usedAuthorities.push(authority);
 
             await expect(accountService.hasAnyAuthority(usedAuthorities)).resolves.toBeTrue();
         });
 
         it.each(authorities)('should return true if authority matches exactly', async (authority: Authority) => {
-            accountService.userIdentity = { id: authorities.indexOf(authority), groups: ['USER'], authorities: [authority] } as User;
+            accountService.userIdentity.set({ id: authorities.indexOf(authority), groups: ['USER'], authorities: [authority] } as User);
 
             await expect(accountService.hasAnyAuthority([authority])).resolves.toBeTrue();
         });
 
         it.each(authorities)('should return false if authority does not match', async (authority: Authority) => {
             const index = authorities.indexOf(authority);
-            accountService.userIdentity = { id: index + 1, groups: ['USER'], authorities: [authorities[(index + 1) % 5]] } as User;
+            accountService.userIdentity.set({ id: index + 1, groups: ['USER'], authorities: [authorities[(index + 1) % 5]] } as User);
 
             await expect(accountService.hasAnyAuthority([authority])).resolves.toBeFalse();
         });
@@ -191,14 +191,14 @@ describe('AccountService', () => {
         });
 
         it.each(groups)('should return false if no authorities are set', (group: string) => {
-            accountService.userIdentity = user;
+            accountService.userIdentity.set(user);
             result = accountService.hasGroup(group);
 
             expect(result).toBeFalse();
         });
 
         it.each(groups)('should return false if no groups are set', (group: string) => {
-            accountService.userIdentity = { id: 10, authorities } as User;
+            accountService.userIdentity.set({ id: 10, authorities } as User);
             result = accountService.hasGroup(group);
 
             expect(result).toBeFalse();
@@ -206,7 +206,7 @@ describe('AccountService', () => {
 
         it.each(groups)('should return false if group does not match', (group: string) => {
             const index = groups.indexOf(group);
-            accountService.userIdentity = { id: 10, groups: [groups[index + (1 % 3)]], authorities } as User;
+            accountService.userIdentity.set({ id: 10, groups: [groups[index + (1 % 3)]], authorities } as User);
 
             result = accountService.hasGroup(group);
 
@@ -214,7 +214,7 @@ describe('AccountService', () => {
         });
 
         it.each(groups)('should return true if group matchs', (group: string) => {
-            accountService.userIdentity = { id: 10, groups: [group], authorities } as User;
+            accountService.userIdentity.set({ id: 10, groups: [group], authorities } as User);
 
             result = accountService.hasGroup(group);
 
@@ -224,7 +224,7 @@ describe('AccountService', () => {
 
     describe('test isAtLeastTutorInCourse', () => {
         it('should return false if user is not tutor', () => {
-            accountService.userIdentity = user2;
+            accountService.userIdentity.set(user2);
 
             result = accountService.isAtLeastTutorInCourse(course);
 
@@ -232,7 +232,7 @@ describe('AccountService', () => {
         });
 
         it.each(['TA', 'EDITOR', 'INSTRUCTOR'])('should return true if user is tutor, editor or instructor', (group: string) => {
-            accountService.userIdentity = { id: 10, groups: [group], authorities } as User;
+            accountService.userIdentity.set({ id: 10, groups: [group], authorities } as User);
 
             result = accountService.isAtLeastTutorInCourse(course);
 
@@ -240,7 +240,7 @@ describe('AccountService', () => {
         });
 
         it('should return true if user is system admin', () => {
-            accountService.userIdentity = { id: 10, groups: ['USER'], authorities } as User;
+            accountService.userIdentity.set({ id: 10, groups: ['USER'], authorities } as User);
 
             result = accountService.isAtLeastTutorInCourse(course);
 
@@ -250,7 +250,7 @@ describe('AccountService', () => {
 
     describe('test isAtLeastEditorInCourse', () => {
         it('should return false if user is not editor', () => {
-            accountService.userIdentity = user2;
+            accountService.userIdentity.set(user2);
 
             result = accountService.isAtLeastEditorInCourse(course);
 
@@ -258,7 +258,7 @@ describe('AccountService', () => {
         });
 
         it.each(['EDITOR', 'INSTRUCTOR'])('should return true if user is editor or instructor', (group: string) => {
-            accountService.userIdentity = { id: 10, groups: [group], authorities } as User;
+            accountService.userIdentity.set({ id: 10, groups: [group], authorities } as User);
 
             result = accountService.isAtLeastEditorInCourse(course);
 
@@ -266,7 +266,7 @@ describe('AccountService', () => {
         });
 
         it('should return true if user is system admin', () => {
-            accountService.userIdentity = { id: 10, groups: ['USER'], authorities } as User;
+            accountService.userIdentity.set({ id: 10, groups: ['USER'], authorities } as User);
 
             result = accountService.isAtLeastEditorInCourse(course);
 
@@ -276,7 +276,7 @@ describe('AccountService', () => {
 
     describe('test isAtLeastInstructorInCourse', () => {
         it('should return false if user is not editor', () => {
-            accountService.userIdentity = user2;
+            accountService.userIdentity.set(user2);
 
             result = accountService.isAtLeastInstructorInCourse(course);
 
@@ -284,7 +284,7 @@ describe('AccountService', () => {
         });
 
         it('should return true if user is instructor', () => {
-            accountService.userIdentity = { id: 10, groups: ['INSTRUCTOR'], authorities } as User;
+            accountService.userIdentity.set({ id: 10, groups: ['INSTRUCTOR'], authorities } as User);
 
             result = accountService.isAtLeastInstructorInCourse(course);
 
@@ -292,7 +292,7 @@ describe('AccountService', () => {
         });
 
         it('should return true if user is system admin', () => {
-            accountService.userIdentity = { id: 10, groups: ['USER'], authorities } as User;
+            accountService.userIdentity.set({ id: 10, groups: ['USER'], authorities } as User);
 
             result = accountService.isAtLeastInstructorInCourse(course);
 
@@ -302,7 +302,7 @@ describe('AccountService', () => {
 
     describe('test isAtLeastTutorForExercise', () => {
         it('should return false if user is not tutor', () => {
-            accountService.userIdentity = user2;
+            accountService.userIdentity.set(user2);
 
             result = accountService.isAtLeastTutorForExercise(exercise);
 
@@ -314,7 +314,7 @@ describe('AccountService', () => {
         });
 
         it.each(['TA', 'EDITOR', 'INSTRUCTOR'])('should return true if user is tutor, editor or instructor', (group: string) => {
-            accountService.userIdentity = { id: 10, groups: [group], authorities } as User;
+            accountService.userIdentity.set({ id: 10, groups: [group], authorities } as User);
 
             result = accountService.isAtLeastTutorForExercise(exercise);
 
@@ -326,7 +326,7 @@ describe('AccountService', () => {
         });
 
         it('should return true if user is system admin', () => {
-            accountService.userIdentity = { id: 10, groups: ['USER'], authorities } as User;
+            accountService.userIdentity.set({ id: 10, groups: ['USER'], authorities } as User);
 
             result = accountService.isAtLeastTutorForExercise(exercise);
 
@@ -340,7 +340,7 @@ describe('AccountService', () => {
 
     describe('test isAtLeastEditorForExercise', () => {
         it('should return false if user is not tutor', () => {
-            accountService.userIdentity = user2;
+            accountService.userIdentity.set(user2);
 
             result = accountService.isAtLeastEditorForExercise(exercise);
 
@@ -352,7 +352,7 @@ describe('AccountService', () => {
         });
 
         it.each(['EDITOR', 'INSTRUCTOR'])('should return true if user is editor or instructor', (group: string) => {
-            accountService.userIdentity = { id: 10, groups: [group], authorities } as User;
+            accountService.userIdentity.set({ id: 10, groups: [group], authorities } as User);
 
             result = accountService.isAtLeastEditorForExercise(exercise);
 
@@ -364,7 +364,7 @@ describe('AccountService', () => {
         });
 
         it('should return true if user is system admin', () => {
-            accountService.userIdentity = { id: 10, groups: ['USER'], authorities } as User;
+            accountService.userIdentity.set({ id: 10, groups: ['USER'], authorities } as User);
 
             result = accountService.isAtLeastEditorForExercise(exercise);
 
@@ -378,7 +378,7 @@ describe('AccountService', () => {
 
     describe('test isAtLeastInstructorForExercise', () => {
         it('should return false if user is not tutor', () => {
-            accountService.userIdentity = user2;
+            accountService.userIdentity.set(user2);
 
             result = accountService.isAtLeastInstructorForExercise(exercise);
 
@@ -390,7 +390,7 @@ describe('AccountService', () => {
         });
 
         it('should return true if user is editor or instructor', () => {
-            accountService.userIdentity = { id: 10, groups: ['INSTRUCTOR'], authorities } as User;
+            accountService.userIdentity.set({ id: 10, groups: ['INSTRUCTOR'], authorities } as User);
 
             result = accountService.isAtLeastInstructorForExercise(exercise);
 
@@ -402,7 +402,7 @@ describe('AccountService', () => {
         });
 
         it('should return true if user is system admin', () => {
-            accountService.userIdentity = { id: 10, groups: ['USER'], authorities } as User;
+            accountService.userIdentity.set({ id: 10, groups: ['USER'], authorities } as User);
 
             result = accountService.isAtLeastInstructorForExercise(exercise);
 
@@ -416,7 +416,7 @@ describe('AccountService', () => {
 
     describe('test isAdmin', () => {
         it('should return false if user is not admin', () => {
-            accountService.userIdentity = user2;
+            accountService.userIdentity.set(user2);
 
             result = accountService.isAdmin();
 
@@ -424,7 +424,7 @@ describe('AccountService', () => {
         });
 
         it('should return true if user is system admin', () => {
-            accountService.userIdentity = { id: 10, groups: ['USER'], authorities } as User;
+            accountService.userIdentity.set({ id: 10, groups: ['USER'], authorities } as User);
 
             result = accountService.isAdmin();
 
@@ -433,7 +433,7 @@ describe('AccountService', () => {
     });
 
     it('should set access rights for referenced course', () => {
-        accountService.userIdentity = { id: 10, groups: ['INSTRUCTOR'], authorities } as User;
+        accountService.userIdentity.set({ id: 10, groups: ['INSTRUCTOR'], authorities } as User);
 
         accountService.setAccessRightsForExerciseAndReferencedCourse(exercise);
 
@@ -444,7 +444,7 @@ describe('AccountService', () => {
     });
 
     it('should set access rights for referenced course in exam mode', () => {
-        accountService.userIdentity = { id: 10, groups: ['INSTRUCTOR'], authorities } as User;
+        accountService.userIdentity.set({ id: 10, groups: ['INSTRUCTOR'], authorities } as User);
 
         accountService.setAccessRightsForExerciseAndReferencedCourse(examExercise);
 
@@ -456,7 +456,7 @@ describe('AccountService', () => {
 
     it('should set access rights for referenced exercise', () => {
         course.exercises = [exercise];
-        accountService.userIdentity = { id: 10, groups: ['INSTRUCTOR'], authorities } as User;
+        accountService.userIdentity.set({ id: 10, groups: ['INSTRUCTOR'], authorities } as User);
 
         accountService.setAccessRightsForCourseAndReferencedExercises(course);
 
@@ -472,7 +472,7 @@ describe('AccountService', () => {
         const team = { students: [user4] } as Team;
         it('should return false if student is not owner', () => {
             participation = { student: user } as Participation;
-            accountService.userIdentity = user4;
+            accountService.userIdentity.set(user4);
 
             result = accountService.isOwnerOfParticipation(participation);
 
@@ -481,7 +481,7 @@ describe('AccountService', () => {
 
         it('should return true if student is owner', () => {
             participation = { student: user4 } as Participation;
-            accountService.userIdentity = user4;
+            accountService.userIdentity.set(user4);
 
             result = accountService.isOwnerOfParticipation(participation);
 
@@ -490,7 +490,7 @@ describe('AccountService', () => {
 
         it('should return false if student is not part of the team', () => {
             participation = { team } as Participation;
-            accountService.userIdentity = user;
+            accountService.userIdentity.set(user);
 
             result = accountService.isOwnerOfParticipation(participation);
 
@@ -499,7 +499,7 @@ describe('AccountService', () => {
 
         it('should return true if student is part of the team', () => {
             participation = { team } as Participation;
-            accountService.userIdentity = user4;
+            accountService.userIdentity.set(user4);
 
             result = accountService.isOwnerOfParticipation(participation);
 
@@ -517,7 +517,7 @@ describe('AccountService', () => {
 
         it('should return image url if authenticated', () => {
             const expectedUrl = 'profiles-pictures/example.png';
-            accountService.userIdentity = { imageUrl: expectedUrl } as User;
+            accountService.userIdentity.set({ imageUrl: expectedUrl } as User);
 
             url = accountService.getImageUrl();
 
@@ -558,7 +558,7 @@ describe('AccountService', () => {
 
         it('should not retrieve user if vcs token is missing but not required', () => {
             user.vcsAccessToken = undefined;
-            accountService.userIdentity = user;
+            accountService.userIdentity.set(user);
 
             accountService.identity();
             expect(fetchStub).not.toHaveBeenCalled();
@@ -566,7 +566,7 @@ describe('AccountService', () => {
 
         it('should not retrieve user if vcs token is present', () => {
             user.vcsAccessToken = 'iAmAToken';
-            accountService.userIdentity = user;
+            accountService.userIdentity.set(user);
 
             accountService.identity();
             expect(fetchStub).not.toHaveBeenCalled();
@@ -632,20 +632,20 @@ describe('AccountService', () => {
 
         it('should set externalLLMUsageAccepted when user identity exists', () => {
             // Setup user identity
-            accountService.userIdentity = { id: 1, groups: ['USER'] } as User;
+            accountService.userIdentity.set({ id: 1, groups: ['USER'] } as User);
 
             // Call the function
             accountService.setUserAcceptedExternalLLMUsage();
 
             // Check if the date was set correctly
-            const acceptedDate = accountService.userIdentity.externalLLMUsageAccepted;
+            const acceptedDate = accountService.userIdentity()?.externalLLMUsageAccepted;
             expect(acceptedDate).toBeDefined();
             expect(acceptedDate?.format('YYYY-MM-DD')).toBe('2024-02-06');
         });
 
         it('should not throw error when user identity is undefined', () => {
             // Ensure userIdentity is undefined
-            accountService.userIdentity = undefined;
+            accountService.userIdentity.set(undefined);
 
             // Verify that calling the function doesn't throw an error
             expect(() => accountService.setUserAcceptedExternalLLMUsage()).not.toThrow();

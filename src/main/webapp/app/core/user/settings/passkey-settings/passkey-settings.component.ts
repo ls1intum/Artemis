@@ -1,4 +1,4 @@
-import { Component, OnDestroy, effect, inject, signal } from '@angular/core';
+import { Component, OnDestroy, computed, effect, inject, signal } from '@angular/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { AccountService } from 'app/core/auth/account.service';
@@ -6,7 +6,6 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { faBan, faKey, faPencil, faPlus, faSave, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { User } from 'app/core/user/user.model';
 import { Observable, Subject, Subscription, of, tap } from 'rxjs';
-import { WebauthnApiService } from 'app/core/user/settings/passkey-settings/webauthn-api.service';
 import { PasskeyDTO } from 'app/core/user/settings/passkey-settings/dto/passkey.dto';
 import { PasskeySettingsApiService } from 'app/core/user/settings/passkey-settings/passkey-settings-api.service';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
@@ -16,7 +15,10 @@ import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/b
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { CustomMaxLengthDirective } from 'app/shared/validators/custom-max-length-validator/custom-max-length-validator.directive';
-import { addNewPasskey } from 'app/core/user/settings/passkey-settings/util/credential.util';
+import { WebauthnService } from 'app/core/user/settings/passkey-settings/webauthn.service';
+import { BadgeModule } from 'primeng/badge';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { Authority } from 'app/shared/constants/authority.constants';
 
 export interface DisplayedPasskey extends PasskeyDTO {
     isEditingLabel?: boolean;
@@ -25,7 +27,18 @@ export interface DisplayedPasskey extends PasskeyDTO {
 
 @Component({
     selector: 'jhi-passkey-settings',
-    imports: [TranslateDirective, FaIconComponent, DeleteButtonDirective, ArtemisDatePipe, ButtonComponent, CommonModule, FormsModule, CustomMaxLengthDirective],
+    imports: [
+        TranslateDirective,
+        FaIconComponent,
+        DeleteButtonDirective,
+        ArtemisDatePipe,
+        ButtonComponent,
+        CommonModule,
+        FormsModule,
+        CustomMaxLengthDirective,
+        BadgeModule,
+        ArtemisTranslatePipe,
+    ],
     templateUrl: './passkey-settings.component.html',
     styleUrl: './passkey-settings.component.scss',
 })
@@ -43,7 +56,7 @@ export class PasskeySettingsComponent implements OnDestroy {
     protected readonly MAX_PASSKEY_LABEL_LENGTH = 64;
 
     protected alertService = inject(AlertService);
-    protected webauthnApiService = inject(WebauthnApiService);
+    protected webauthnService = inject(WebauthnService);
     private accountService = inject(AccountService);
     private passkeySettingsApiService = inject(PasskeySettingsApiService);
 
@@ -54,6 +67,11 @@ export class PasskeySettingsComponent implements OnDestroy {
     dialogError$ = this.dialogErrorSource.asObservable();
 
     currentUser = signal<User | undefined>(undefined);
+
+    isAdmin = computed(() => {
+        const user = this.currentUser();
+        return user?.authorities?.includes(Authority.ADMIN) ?? false;
+    });
 
     deleteMessage = '';
     isDeletingPasskey = false;
@@ -73,12 +91,20 @@ export class PasskeySettingsComponent implements OnDestroy {
     }
 
     async addPasskey() {
-        await addNewPasskey(this.currentUser(), this.webauthnApiService, this.alertService);
+        await this.webauthnService.addNewPasskey(this.currentUser());
         await this.updateRegisteredPasskeys();
     }
 
     async updateRegisteredPasskeys(): Promise<void> {
         this.registeredPasskeys.set(await this.passkeySettingsApiService.getRegisteredPasskeys());
+
+        if (this.registeredPasskeys().length === 0) {
+            this.accountService.userIdentity.set({
+                ...this.accountService.userIdentity(),
+                askToSetupPasskey: true,
+                internal: this.accountService.userIdentity()?.internal ?? false,
+            });
+        }
     }
 
     private loadCurrentUser() {

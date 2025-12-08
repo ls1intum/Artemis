@@ -83,6 +83,8 @@ env:
   CI: true
   node: 24
   java: 25
+  GIT_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
+  GIT_BRANCH: ${{ github.event.pull_request.head.ref || github.ref_name }}
 
 jobs:
 
@@ -90,9 +92,13 @@ jobs:
     name: Build .war artifact
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
+        with:
+          # Use PR head commit on pull_request, otherwise fall back to the event SHA
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
       - name: Setup Node.js
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v6
         with:
           node-version: '${{ env.node }}'
           cache: 'npm'
@@ -107,7 +113,7 @@ jobs:
       - name: Production Build
         run: ./gradlew -Pprod -Pwar clean bootWar
       - name: Upload Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: Artemis.war
           path: build/libs/Artemis-*.war
@@ -148,7 +154,7 @@ jobs:
           echo "Using Docker tag: ${{ needs.docker.outputs.image_tag }}"
 
       - name: Upload Docker Tag as Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: docker-tag
           path: docker-tag.txt

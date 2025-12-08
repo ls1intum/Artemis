@@ -69,6 +69,12 @@
                 "build.plan.id": "Die Lösungs-Build-Plan-ID scheint ungültig zu sein. Stelle bitte sicher, dass sie existiert und für Artemis zugänglich ist.",
                 "repository.url": "Die Lösungs-Repository-URL scheint ungültig zu sein. Stelle bitte sicher, dass sie existiert und für Artemis zugänglich ist."
             },
+            "student": {
+                "repository.url": "Die Studierenden-Repository-URL scheint ungültig zu sein. Stelle bitte sicher, dass sie existiert und für Artemis zugänglich ist."
+            },
+            "instructor": {
+                "repository.type": "{{repositoryType}} ist kein gültiger Instruktor-Repository-Typ. Nur {{validTypes}} sind erlaubt."
+            },
             "auxiliary.repository": {
                 "id": "Die ID eines Hilfs-Repositories scheint gesetzt zu sein. Stelle bitte sicher, dass die ID nicht gesetzt ist.",
                 "name": "Der Name von mindestens einem Hilfs-Repository ist ungültig oder dupliziert. Stelle bitte sicher, dass jeder Name gültig ist und es keine Duplikate gibt.",
@@ -133,15 +139,14 @@
         },
         "examUser": {
             "service": {
-                "multipleExams": "Alle Klausurteilnehmer müssen zur selben Klausur gehören, aber aktuell gehören sie zu {{ foundExams }} verschiedenen Klausuren",
-                "missingPlannedRoomOrSeat": "Nutzer {{ userName }} hat keinen geplanten Raum oder Sitz",
-                "plannedRoomNotFound": "Der geplante Raum {{ plannedRoom }} von Nutzer {{ userName }} konnte nicht gefunden werden",
-                "plannedSeatNotFound": "Der geplante Sitz {{ plannedSeat }} von Nutzer {{ userName }} konnte nicht gefunden werden"
+                "multipleExams": "Alle Klausurteilnehmer müssen zur selben Klausur gehören, aber aktuell gehören sie zu {{ foundExams }} verschiedenen Klausuren"
             }
         },
         "notEnoughExamSeats": "Die ausgewählten Räume haben nur Kapazität für {{ numberOfUsableSeats }} der {{ numberOfExamUsers }} Klausurteilnehmer",
+        "reserveFactorOutOfRange": "Der Reservierungsfaktor muss zwischen 0 und 1 sein",
         "noRoomIDs": "Du hast keine Räume ausgewählt",
         "invalidRoomIDs": "Mindestens einer der Räume, die du ausgewählt hast, existiert nicht oder ist veraltet",
+        "noStudentDistributed": "Keinem der Klausurteilnehmer wurde ein Raum und Sitz zugewiesen",
         "wrongCourse": "Die Reaktion gehört nicht zum ausgewählten Kurs.",
         "reactionNotFound": "Die Reaktion konnte nicht gefunden werden.",
         "missingAssociation": "Die Reaktion muss einem Beitrag oder einer Antwort zugeordnet sein.",
@@ -150,6 +155,19 @@
             "isNull": "Es wurde keine Beispielabgabe übermittelt.",
             "submissionIsNull": "Diese Beispielabgabe enthält keine Lösung.",
             "submissionIdMissing": "Die Abgabe muss zuerst gespeichert werden, bevor sie umgewandelt werden kann."
+        },
+        "exerciseVersionIdMismatch": "Die angeforderte Übungsversion gehört nicht zur angegebenen Übungs-ID.",
+        "submissionExerciseMismatch": "Die Abgabe gehört nicht zur angegebenen Aufgabe.",
+        "maxAthenaResultsReached": "Maximale Anzahl an KI-Feedback-Anfragen erreicht.",
+        "submissionAlreadyHasAthenaResult": "Die Abgabe hat bereits ein Athena-Ergebnis.",
+        "missingFeedbackSuggestionModule": "Die Aufgabe hat kein Feedback-Vorschlagsmodul konfiguriert.",
+        "examExerciseNoAccessToAthena": "Klausuraufgaben haben keinen Zugriff auf Athena.",
+        "noAccessToAthenaModule": "Die Aufgabe hat keinen Zugriff auf das ausgewählte Athena-Modul.",
+        "athenaModuleChangeAfterDueDate": "Das Athena-Modul kann nach Ablauf der Abgabefrist nicht mehr geändert werden.",
+        "passkeyAuth": {
+            "notAuthenticatedWithPasskey": "Du bist nicht mit einem Passkey authentifiziert. Bitte authentifiziere dich mit einem Passkey, um auf diese Ressource zuzugreifen.",
+            "notSuperAdminApproved": "Dein Passkey ist nicht von einem Super-Admin freigegeben. Bitte überprüfe in den Nutzereinstellungen, ob dein Passkey von einem Super-Admin freigegeben wurde und melde dich erneut mit dem entsprechendem Passkey an.",
+            "loginRequiredButFeatureNotEnabled": "Für diese Funktion ist ein Passkey-Login erforderlich. Allerdings ist die Passkey-Authentifizierung auf dieser Artemis-Instanz nicht aktiviert. Bitte aktiviere die Passkey-Authentifizierung auf dieser Artemis Instanz."
         }
     }
 }

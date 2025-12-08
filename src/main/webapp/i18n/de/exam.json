@@ -30,7 +30,24 @@
                 "attendanceStatusTitle": "Status der Prüfungsteilnahme",
                 "attendanceCheckFailed": "Anwesenheitskontrolle nicht bestanden",
                 "attendanceCheckPassed": "Anwesenheitskontrolle bestanden",
-                "didNotAttend": "Hat nicht teilgenommen"
+                "didNotAttend": "Hat nicht teilgenommen",
+                "roomDistribute": "Verteilen",
+                "rooms": {
+                    "dialogTitle": "Verteile Klausurteilnehmer",
+                    "introText": "In diesem Dialogfeld kannst du die für eine Prüfung angemeldeten Studierenden auf verschiedene Räume verteilen. Artemis verteilt Studenten in der Reihenfolge der angegebenen Räume.",
+                    "reserveFactor": "Reservierte Sitze %",
+                    "reserveFactorTooltip": "Der Prozentsatz der Sitze, die reserviert werden sollten, d. h. nicht verteilt werden sollten; gilt für jeden Raum einzeln",
+                    "allowNarrowLayouts": "Engere Layouts zulassen?",
+                    "allowNarrowLayoutsTooltip": "Wenn diese Option aktiviert ist, kann Artemis die Studierenden direkt nebeneinander platzieren, falls es sonst nicht möglich ist alle Studierenden unterzubringen",
+                    "searchPlaceholder": "Suche nach Zimmernummer, Name und/oder Gebäude",
+                    "number": "Nummer",
+                    "name": "Name",
+                    "building": "Gebäude",
+                    "enoughSeatsForStudents": "Du kannst alle {{ totalStudents }} Studierenden unterbringen.",
+                    "notEnoughSeatsForStudents": "Du kannst nur {{ usableCapacity }} der {{ totalStudents }} Studierenden unterbringen ({{ percentage }}%).",
+                    "distribute": "Verteilen",
+                    "distributeWarning": "Du hast nicht ausreichend Kapazitäten"
+                }
             },
             "overview": {
                 "start": "Beginn: {{start}}",
@@ -283,10 +300,7 @@
             "exerciseOverview": "Das ist die Aufgabenübersicht",
             "connected": "Deine Antworten werden alle 30s gespeichert.",
             "ideConnected": "Deine Antworten müssen manuell abgesendet werden.",
-            "disconnected": "Deine Verbindung ist unterbrochen. Bitte überprüfe deine Internetverbindung. Du kannst weiterarbeiten, aber du musst verbunden sein, um Änderungen zu speichern!",
-            "disconnectedCodeEditorAndOfflineIDE": "Deine Verbindung ist unterbrochen. Bitte überprüfe deine Internetverbindung. Du kannst weiterhin offline arbeiten, indem du das Repository klonst.",
-            "disconnectedCodeEditorNoOfflineIDE": "Deine Verbindung ist unterbrochen. Bitte verbinde dich erneut, um im Online Code-Editor weiterarbeiten zu können.",
-            "disconnectedNoCodeEditor": "Deine Verbindung ist unterbrochen. Bitte überprüfe deine Internetverbindung.",
+            "disconnected": "Du erhältst keine Live-Updates. Bitte überprüfe deine Internetverbindung. Das Speichern ist voraussichtlich nicht beeinträchtigt – bitte überprüfe dies eigenständig",
             "waitForStart": "Bitte warte, bis die Klausur \"{{ title }}\" beginnt.",
             "timeUntilPlannedStart": "Verbleibende Zeit bis zum geplanten Start:",
             "finishExam": "Beenden",
