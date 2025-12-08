@@ -359,6 +359,9 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     List<Path> exportSubmissionsWithPracticeSubmissionByParticipationIds(boolean excludePracticeSubmissions) throws Exception {
+        // Clean up any stale LocalVC project folder from parallel tests that might share the same projectKey
+        cleanupLocalVcProjectForKey(programmingExercise.getProjectKey());
+
         // Seed LocalVC repositories for both participations and wire URIs
         RepositoryExportTestUtil.seedStudentRepositoryForParticipation(localVCLocalCITestService, participation1);
         RepositoryExportTestUtil.seedStudentRepositoryForParticipation(localVCLocalCITestService, participation2);
@@ -1614,7 +1617,8 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void testCheckPlagiarism() throws Exception {
-        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        // Use unique exercise shortName to avoid conflicts with parallel tests that share the same projectKey
+        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(false, "Plagiarism Test", "PLAG1");
         var programmingExercise = programmingExerciseRepository
                 .findWithTemplateAndSolutionParticipationById(ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class).getId()).orElseThrow();
         prepareTwoStudentAndOneInstructorRepositoriesForPlagiarismChecks(programmingExercise);
@@ -1625,7 +1629,8 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void testCheckPlagiarismForTeamExercise() throws Exception {
-        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        // Use unique exercise shortName to avoid conflicts with parallel tests that share the same projectKey
+        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(false, "Plagiarism Team Test", "PLAG2");
 
         var programmingExercise = programmingExerciseRepository
                 .findWithTemplateAndSolutionParticipationById(ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class).getId()).orElseThrow();
@@ -1640,7 +1645,8 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void testCheckPlagiarismJplagReport() throws Exception {
-        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        // Use unique exercise shortName to avoid conflicts with parallel tests that share the same projectKey
+        var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(false, "Plagiarism Report Test", "PLAG3");
         var programmingExercise = programmingExerciseRepository
                 .findWithTemplateAndSolutionParticipationById(ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class).getId()).orElseThrow();
         prepareTwoStudentAndOneInstructorRepositoriesForPlagiarismChecks(programmingExercise);
