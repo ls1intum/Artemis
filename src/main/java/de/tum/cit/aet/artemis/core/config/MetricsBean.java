@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.core.config;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.dto.ActiveCourseDTO.NO_SEMESTER_TAG;
+import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
@@ -73,7 +74,7 @@ public class MetricsBean {
 
     private static final String ARTEMIS_HEALTH_TAG = "healthindicator";
 
-    private static final int LOGGING_DELAY_SECONDS = 10;
+    private static final int WEBSOCKET_LOGGING_DELAY_SECONDS = 20;
 
     /**
      * Some metrics (e.g. the number of upcoming exercises) are calculated for multiple lookahead periods.
@@ -267,14 +268,14 @@ public class MetricsBean {
         // using Autowired leads to a weird bug, because the order of the method execution is changed. This somehow prevents messages send to single clients
         // later one, e.g. in the code editor. Therefore, we call this method here directly to get a reference and adapt the logging period!
         // Note: this mechanism prevents that this is logged during testing
-        if (profileService.isProfileActive("websocketLog")) {
-            webSocketStats.setLoggingPeriod(LOGGING_DELAY_SECONDS * 1000L);
+        if (!profileService.isProfileActive(SPRING_PROFILE_TEST)) {
+            webSocketStats.setLoggingPeriod(WEBSOCKET_LOGGING_DELAY_SECONDS * 1000L);
             scheduler.scheduleAtFixedRate(() -> {
                 final var connectedUsers = userRegistry.getUsers();
                 final var subscriptionCount = connectedUsers.stream().flatMap(simpUser -> simpUser.getSessions().stream()).map(simpSession -> simpSession.getSubscriptions().size())
                         .reduce(0, Integer::sum);
                 log.info("Currently connect users {} with active websocket subscriptions: {}", connectedUsers.size(), subscriptionCount);
-            }, Duration.of(LOGGING_DELAY_SECONDS, ChronoUnit.SECONDS));
+            }, Duration.of(WEBSOCKET_LOGGING_DELAY_SECONDS, ChronoUnit.SECONDS));
         }
     }
 
