@@ -804,13 +804,19 @@ public class ProgrammingExerciseIntegrationTestService {
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
         programmingExercise = programmingExerciseRepository.getProgrammingExerciseWithBuildConfigElseThrow(programmingExercise);
 
-        // Use the tests repository handle from base repos instead of creating a new one
+        // Use the tests repository handle from base repos
         var testsRepo = baseRepos.testsRepository();
         String testsPath = java.nio.file.Path.of("test", programmingExercise.getPackageFolderName()).toString();
         if (programmingExercise.getBuildConfig().hasSequentialTestRuns()) {
             testsPath = java.nio.file.Path.of("structural", testsPath).toString();
         }
-        RepositoryExportTestUtil.writeFilesAndPush(testsRepo, Map.of(testsPath + "/.placeholder", ""), "Init tests dir");
+        // Create tests path in tests repo so generator can write test.json (same approach as ProgrammingExerciseLocalVCExportsIntegrationTest)
+        Path testsDir = testsRepo.workingCopyGitRepoFile.toPath().resolve(testsPath);
+        Files.createDirectories(testsDir);
+        Files.createFile(testsDir.resolve(".placeholder"));
+        testsRepo.workingCopyGitRepo.add().addFilepattern(".").call();
+        GitService.commit(testsRepo.workingCopyGitRepo).setMessage("Init tests dir").call();
+        testsRepo.workingCopyGitRepo.push().setRemote("origin").call();
 
         final var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/generate-tests";
         var result = request.putWithResponseBody(path, programmingExercise, String.class, HttpStatus.OK);
@@ -1621,6 +1627,8 @@ public class ProgrammingExerciseIntegrationTestService {
         var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(false, "Plagiarism Test", "PLAG1");
         var programmingExercise = programmingExerciseRepository
                 .findWithTemplateAndSolutionParticipationById(ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class).getId()).orElseThrow();
+        // Clean up any stale LocalVC project folder BEFORE creating participations
+        cleanupLocalVcProjectForKey(programmingExercise.getProjectKey());
         prepareTwoStudentAndOneInstructorRepositoriesForPlagiarismChecks(programmingExercise);
 
         final var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/check-plagiarism";
@@ -1636,6 +1644,8 @@ public class ProgrammingExerciseIntegrationTestService {
                 .findWithTemplateAndSolutionParticipationById(ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class).getId()).orElseThrow();
         programmingExercise.setMode(ExerciseMode.TEAM);
         programmingExerciseRepository.save(programmingExercise);
+        // Clean up any stale LocalVC project folder BEFORE creating participations
+        cleanupLocalVcProjectForKey(programmingExercise.getProjectKey());
 
         prepareTwoTeamRepositoriesForPlagiarismChecks(programmingExercise);
 
@@ -1649,6 +1659,8 @@ public class ProgrammingExerciseIntegrationTestService {
         var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(false, "Plagiarism Report Test", "PLAG3");
         var programmingExercise = programmingExerciseRepository
                 .findWithTemplateAndSolutionParticipationById(ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class).getId()).orElseThrow();
+        // Clean up any stale LocalVC project folder BEFORE creating participations
+        cleanupLocalVcProjectForKey(programmingExercise.getProjectKey());
         prepareTwoStudentAndOneInstructorRepositoriesForPlagiarismChecks(programmingExercise);
 
         final var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/check-plagiarism-jplag-report";
@@ -1717,8 +1729,6 @@ public class ProgrammingExerciseIntegrationTestService {
 
     private void prepareTwoSubmissionsForPlagiarismChecks(ProgrammingExercise programmingExercise) throws Exception {
         var projectKey = programmingExercise.getProjectKey();
-        // Ensure no stale LocalVC repositories from previous tests interfere with seeding
-        cleanupLocalVcProjectForKey(projectKey);
 
         var exampleProgram = """
                 public class Main {
@@ -1775,10 +1785,8 @@ public class ProgrammingExerciseIntegrationTestService {
         // Seed real LocalVC repositories for all student participations with identical Java content to ensure JPlag has multiple valid submissions
         for (ProgrammingExerciseStudentParticipation participation : studentParticipations) {
             try {
-                var repositorySlug = localVCLocalCITestService.getRepositorySlug(projectKey, participation.getParticipantIdentifier());
-                var repo = RepositoryExportTestUtil.trackRepository(localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, repositorySlug));
-                var repoUri = localVCLocalCITestService.buildLocalVCUri(participation.getParticipantIdentifier(), projectKey, repositorySlug);
-                participation.setRepositoryUri(repoUri);
+                // Use seedStudentRepositoryForParticipation which handles repo creation/reuse properly
+                var repo = RepositoryExportTestUtil.seedStudentRepositoryForParticipation(localVCLocalCITestService, participation);
                 RepositoryExportTestUtil.writeFilesAndPush(repo, Map.of("Main.java", exampleProgram), "seed plagiarism test content");
                 programmingExerciseStudentParticipationRepository.save(participation);
             }
