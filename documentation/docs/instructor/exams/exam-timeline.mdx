@@ -1,101 +1,83 @@
----
-id: exams
-title: Exams Guide for Instructors
-sidebar_label: Exams
----
+import Callout from "../../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
+import Image, {ImageSize} from "../../../src/components/Image/Image";
+import timeline from './assets/timeline.png';
+import courseManagement from './assets/buttons/course_management.png';
+import examsButton from './assets/buttons/exams.png';
+import createNewExam from './assets/buttons/create_new_exam.png';
+import examConfiguration from './assets/exam_configuration.png';
+import examConduction from './assets/exam_conduction.png';
+import examExercises from './assets/exam_exercises.png';
+import examAssessment from './assets/exam_assessment.png';
+import importExam from './assets/buttons/import_exam.png';
+import importIndividualExam from './assets/buttons/import_individual_exam.png';
+import examImportSelection from './assets/exam_import_selection.png';
+import editButton from './assets/buttons/edit.png';
+import exerciseVariants from './assets/exercise_variants.png';
+import importExerciseGroup from './assets/buttons/import_exercise_group.png';
+import selectExerciseGroup from './assets/buttons/select_exercise_group.png';
+import exerciseGroupImportExam from './assets/exercise_group_import_exam.png';
+import exerciseGroupImportExercises from './assets/exercise_group_import_exercises.png';
+import addExercises from './assets/add_exercises.png';
+import configureGradingButton from './assets/buttons/configure_grading.png';
+import configureGrading from './assets/configure_grading.png';
+import importStudents from './assets/buttons/import_students.png';
+import importStudentsButton from './assets/buttons/import_students_button.png';
+import importStudentsDialog from './assets/import_students_dialog.png';
+import registerCourseStudents from './assets/buttons/register_course_students.png';
+import addStudents from './assets/add_students.png';
+import generateIndividualExams from './assets/buttons/generate_individual_exams.png';
+import generateMissingExams from './assets/buttons/generate_missing_exams.png';
+import prepareExerciseStart from './assets/buttons/prepare_exercise_start.png';
+import lockRepo from './assets/buttons/lock_repo.png';
+import unlockRepo from './assets/buttons/unlock_repo.png';
+import studentExams from './assets/student_exams.png';
+import individualWorkingTime from './assets/individual_working_time.png';
+import testRunManagement from './assets/test_run_management.png';
+import createTestRun from './assets/buttons/create_test_run.png';
+import createTestRunPopup from './assets/create_test_run.png';
+import assessTestRuns from './assets/buttons/assess_test_runs.png';
+import testRunConduction from './assets/test_run_conduction.png';
+import summaryButton from './assets/buttons/summary.png';
+import examChecklist from './assets/exam_checklist.png';
+import examChecklistOverview from './assets/exam_checklist_overview.png';
+import exerciseNotification from './assets/exercise-notification.png';
+import evaluateQuizzes from './assets/buttons/evaluate_quizzes.png';
+import assessUnsubmittedStudentExams from './assets/buttons/assess_unsubmitted_student_exams.png';
+import assessmentDashboard from './assets/assessment_dashboard.png';
+import exerciseDashboard from './assets/buttons/exercise_dashboard.png';
+import startNewAssessment from './assets/buttons/start_new_assessment.png';
+import programmingAssessment from './assets/programming_assessment.png';
+import setSecondCorrectionExam from './assets/set_second_correction_exam.png';
+import secondCorrectionStatus from './assets/second_correction_status.png';
+import examAssessmentDashboardSecondCorrection from './assets/exam_assessment_dashboard_second_correction.png';
+import exerciseGroupsButton from './assets/buttons/exercise_groups.png';
+import scoresButton from './assets/buttons/scores.png';
+import scoresTable from './assets/scores_table.png';
+import suspiciousBehaviorButton from './assets/buttons/suspicious_behavior.png';
+import suspiciousBehaviorExamChecklist from './assets/suspicious_behavior_exam_checklist.png';
+import analyzeSessions from './assets/buttons/analyze_sessions.png';
+import viewSessions from './assets/buttons/view_sessions.png';
+import analysisOptions from './assets/analysis_options.png';
+import suspiciousBehaviorAnalysisResults from './assets/suspicious_behavior_analysis_results.png';
+import viewPlagiarismResults from './assets/buttons/view_plagiarism_results.png';
+import viewCases from './assets/buttons/view_cases.png';
+import plagiarismCaseOverview from './assets/plagiarism_case_overview.png';
+import plagiarism from './assets/plagiarism.png';
+import checkPlagiarism from './assets/buttons/check_plagiarism.png';
+import examTimelineButton from './assets/buttons/exam_timeline.png';
+import examTimelineExample from './assets/exam_timeline_example.png';
+import gradeKeyButton from './assets/buttons/grade_key.png';
+import generateDefaultGradeKey from './assets/buttons/generate_default_grade_key.png';
+import addGradeStep from './assets/buttons/add_grade_step.png';
+import importExportButton from './assets/buttons/import_export.png';
+import gradeKeyEditor from './assets/grade_key_editor.png';
+import exportButton from './assets/buttons/export.png';
+import examStatistics from './assets/exam_statistics.png';
+import examExampleSolutionPublicationDate from './assets/exam_example_solution_publication_date.png';
+import complaintResponse from './assets/complaint_response.png';
 
-import Callout from "../../src/components/Callout/Callout";
-import {CalloutVariant} from "../../src/components/Callout/Callout.types";
-import Image, {ImageSize} from "../../src/components/Image/Image";
-import timeline from './assets/exams/timeline.png';
-import courseManagement from './assets/exams/buttons/course_management.png';
-import examsButton from './assets/exams/buttons/exams.png';
-import createNewExam from './assets/exams/buttons/create_new_exam.png';
-import examConfiguration from './assets/exams/exam_configuration.png';
-import examConduction from './assets/exams/exam_conduction.png';
-import examExercises from './assets/exams/exam_exercises.png';
-import examAssessment from './assets/exams/exam_assessment.png';
-import importExam from './assets/exams/buttons/import_exam.png';
-import importIndividualExam from './assets/exams/buttons/import_individual_exam.png';
-import examImportSelection from './assets/exams/exam_import_selection.png';
-import editButton from './assets/exams/buttons/edit.png';
-import exerciseVariants from './assets/exams/exercise_variants.png';
-import importExerciseGroup from './assets/exams/buttons/import_exercise_group.png';
-import selectExerciseGroup from './assets/exams/buttons/select_exercise_group.png';
-import exerciseGroupImportExam from './assets/exams/exercise_group_import_exam.png';
-import exerciseGroupImportExercises from './assets/exams/exercise_group_import_exercises.png';
-import addExercises from './assets/exams/add_exercises.png';
-import configureGradingButton from './assets/exams/buttons/configure_grading.png';
-import configureGrading from './assets/exams/configure_grading.png';
-import importStudents from './assets/exams/buttons/import_students.png';
-import importStudentsButton from './assets/exams/buttons/import_students_button.png';
-import importStudentsDialog from './assets/exams/import_students_dialog.png';
-import registerCourseStudents from './assets/exams/buttons/register_course_students.png';
-import addStudents from './assets/exams/add_students.png';
-import generateIndividualExams from './assets/exams/buttons/generate_individual_exams.png';
-import generateMissingExams from './assets/exams/buttons/generate_missing_exams.png';
-import prepareExerciseStart from './assets/exams/buttons/prepare_exercise_start.png';
-import lockRepo from './assets/exams/buttons/lock_repo.png';
-import unlockRepo from './assets/exams/buttons/unlock_repo.png';
-import studentExams from './assets/exams/student_exams.png';
-import individualWorkingTime from './assets/exams/individual_working_time.png';
-import testRunManagement from './assets/exams/test_run_management.png';
-import createTestRun from './assets/exams/buttons/create_test_run.png';
-import createTestRunPopup from './assets/exams/create_test_run.png';
-import assessTestRuns from './assets/exams/buttons/assess_test_runs.png';
-import testRunConduction from './assets/exams/test_run_conduction.png';
-import summaryButton from './assets/exams/buttons/summary.png';
-import examChecklist from './assets/exams/exam_checklist.png';
-import examChecklistOverview from './assets/exams/exam_checklist_overview.png';
-import exerciseNotification from './assets/exams/exercise-notification.png';
-import evaluateQuizzes from './assets/exams/buttons/evaluate_quizzes.png';
-import assessUnsubmittedStudentExams from './assets/exams/buttons/assess_unsubmitted_student_exams.png';
-import assessmentDashboard from './assets/exams/assessment_dashboard.png';
-import exerciseDashboard from './assets/exams/buttons/exercise_dashboard.png';
-import startNewAssessment from './assets/exams/buttons/start_new_assessment.png';
-import programmingAssessment from './assets/exams/programming_assessment.png';
-import setSecondCorrectionExam from './assets/exams/set_second_correction_exam.png';
-import secondCorrectionStatus from './assets/exams/second_correction_status.png';
-import examAssessmentDashboardSecondCorrection from './assets/exams/exam_assessment_dashboard_second_correction.png';
-import exerciseGroupsButton from './assets/exams/buttons/exercise_groups.png';
-import scoresButton from './assets/exams/buttons/scores.png';
-import scoresTable from './assets/exams/scores_table.png';
-import suspiciousBehaviorButton from './assets/exams/buttons/suspicious_behavior.png';
-import suspiciousBehaviorExamChecklist from './assets/exams/suspicious_behavior_exam_checklist.png';
-import analyzeSessions from './assets/exams/buttons/analyze_sessions.png';
-import viewSessions from './assets/exams/buttons/view_sessions.png';
-import analysisOptions from './assets/exams/analysis_options.png';
-import suspiciousBehaviorAnalysisResults from './assets/exams/suspicious_behavior_analysis_results.png';
-import viewPlagiarismResults from './assets/exams/buttons/view_plagiarism_results.png';
-import viewCases from './assets/exams/buttons/view_cases.png';
-import plagiarismCaseOverview from './assets/exams/plagiarism_case_overview.png';
-import plagiarism from './assets/exams/plagiarism.png';
-import checkPlagiarism from './assets/exams/buttons/check_plagiarism.png';
-import examTimelineButton from './assets/exams/buttons/exam_timeline.png';
-import examTimelineExample from './assets/exams/exam_timeline_example.png';
-import gradeKeyButton from './assets/exams/buttons/grade_key.png';
-import generateDefaultGradeKey from './assets/exams/buttons/generate_default_grade_key.png';
-import addGradeStep from './assets/exams/buttons/add_grade_step.png';
-import importExportButton from './assets/exams/buttons/import_export.png';
-import gradeKeyEditor from './assets/exams/grade_key_editor.png';
-import exportButton from './assets/exams/buttons/export.png';
-import examStatistics from './assets/exams/exam_statistics.png';
-import examExampleSolutionPublicationDate from './assets/exams/exam_example_solution_publication_date.png';
-import complaintResponse from './assets/exams/complaint_response.png';
-import uploadImages from './assets/exams/upload_images.png';
-import verifyAttendance from './assets/exams/buttons/verify_attendance.png';
-import verifyAttendanceVerificationMissing from './assets/exams/verify_attendance_verification_missing.png';
-import verifyAttendanceVerificationSuccessful from './assets/exams/verify_attendance_verification_successful.png';
-import examOverview from './assets/exams/exam_overview.png';
-import studentListView from './assets/exams/student_list_view.png';
-import studentListViewExportSignatures from './assets/exams/student_list_view_export_signatures.png';
-import studentDetailView from './assets/exams/student_detail_view.png';
-
-# Exams
-
-Artemis now includes an online exam mode that allows you to create, conduct, and assess exams directly in the platform.
-
-## Timeline of an Artemis Online Exam
+# Timeline of an Artemis Online Exam
 
 <Image src={timeline} alt="Timeline of an Artemis Exam" size={ImageSize.large} caption="Timeline of an Artemis Online Exam" />
 
@@ -205,41 +187,41 @@ During the exam creation and configuration, you can create your exam and configu
 
 - Programming exercises have multiple special options to adjust their behavior:
 
-  - You can check the option to `allow manual assessment`.
+- You can check the option to `allow manual assessment`.
 
-    <Callout variant={CalloutVariant.info}>
-      If you do not set this flag, your assessors will not be able to manually assess the student's submissions during the [assessment process](#3-assessment).
-    </Callout>
+<Callout variant={CalloutVariant.info}>
+  If you do not set this flag, your assessors will not be able to manually assess the student's submissions during the [assessment process](#3-assessment).
+</Callout>
 
-  - You can activate `Run Tests once after Due Date`. This will compile and run the test suite on all the student submissions once after the set date.
-  - After you add a programming exercise you can configure the grading via <img src={configureGradingButton} alt="Configure Grading Button" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />.
+- You can activate `Run Tests once after Due Date`. This will compile and run the test suite on all the student submissions once after the set date.
+- After you add a programming exercise you can configure the grading via <img src={configureGradingButton} alt="Configure Grading Button" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />.
 
-  - In the *Configure Grading* screen, you can tweak the `weight` of the tests, the `bonus multiplier` and add `bonus points`.
-  - You can hide tests so that they are not executed during the exam conduction by setting the test case visibility to `After Release Date of Results.` Students can not receive feedback from hidden tests during the exam conduction. This option is set by default when creating new programming exercises within an exam.
+- In the *Configure Grading* screen, you can tweak the `weight` of the tests, the `bonus multiplier` and add `bonus points`.
+- You can hide tests so that they are not executed during the exam conduction by setting the test case visibility to `After Release Date of Results.` Students can not receive feedback from hidden tests during the exam conduction. This option is set by default when creating new programming exercises within an exam.
 
-    <Callout variant={CalloutVariant.info}>
-      When importing exercises, the test case visibility of imported exercise will equal the visibility of the original exercise. You can adjust the test case visibility in the import `Assessment` section to be set to `After Release Date of Results`.
-    </Callout>
+<Callout variant={CalloutVariant.info}>
+  When importing exercises, the test case visibility of imported exercise will equal the visibility of the original exercise. You can adjust the test case visibility in the import `Assessment` section to be set to `After Release Date of Results`.
+</Callout>
 
-    <Callout variant={CalloutVariant.info}>
-      If you hide all tests, the students will only be able to see if their submission compiles during the conduction. Set the `Run Tests once after Due Date` after the exam end date to achieve this effect.
-    </Callout>
+<Callout variant={CalloutVariant.info}>
+  If you hide all tests, the students will only be able to see if their submission compiles during the conduction. Set the `Run Tests once after Due Date` after the exam end date to achieve this effect.
+</Callout>
 
-    <Image src={configureGrading} alt="Configure the Grading of a Programming Exercise" size={ImageSize.large} caption="Configure the Grading of a Programming Exercise" />
+<Image src={configureGrading} alt="Configure the Grading of a Programming Exercise" size={ImageSize.large} caption="Configure the Grading of a Programming Exercise" />
     *Configure the Grading of a Programming Exercise*
 
-  - The *Configure Grading* screen also allows the configuration of submission policies.
+- The *Configure Grading* screen also allows the configuration of submission policies.
 
 ### 1.5 Register Students
 
 - To register students to the exam, navigate from the exam management to the *Students* page. Artemis offers two options to register students. You can:
 
-  1. Add students manually by searching via the search bar.
-  2. To import multiple students, click on the <img src={importStudents} alt="Import Students" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button and provide a `CSV` file in the Import Users dialog. The required fields in the `CSV` file include the `registrationNumber` and the `login`, while `email`, `firstname`, `lastname`, `seat`, and `room` are optional. Note that the `room` and `seat` fields are only necessary for the exam participation check. You can find an example file at `docs/user/exams/instructor/example_import_students.csv`. To begin the import, press the <img src={importStudentsButton} alt="Import Students Button" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button.
+1. Add students manually by searching via the search bar.
+2. To import multiple students, click on the <img src={importStudents} alt="Import Students" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button and provide a `CSV` file in the Import Users dialog. The required fields in the `CSV` file include the `registrationNumber` and the `login`, while `email`, `firstname`, `lastname`, `seat`, and `room` are optional. Note that the `room` and `seat` fields are only necessary for the exam participation check. You can find an example file at `docs/user/exams/instructor/example_import_students.csv`. To begin the import, press the <img src={importStudentsButton} alt="Import Students Button" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button.
 
-     <Image src={importStudentsDialog} alt="Import Students Dialog" size={ImageSize.large} caption="Import Students Dialog" />
+<Image src={importStudentsDialog} alt="Import Students Dialog" size={ImageSize.large} caption="Import Students Dialog" />
 
-  3. Register every student in the course by pressing the <img src={registerCourseStudents} alt="Register Course Students" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button.
+3. Register every student in the course by pressing the <img src={registerCourseStudents} alt="Register Course Students" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button.
 
 <Callout variant={CalloutVariant.info}>
   Just registering the students to the exam will not allow them to participate in the exam. First, individual [student exams](#16-manage-student-exams) must be generated.
@@ -445,7 +427,7 @@ Once the instructor has confirmed at least one case, the <img src={viewCases} al
 - Instructors can download a `CSV` report of accepted and rejected plagiarism attempts for further processing on external systems.
 - To apply the plagiarism check, you must navigate to the individual exercise. This can be done by navigating to:
 
-  <img src={examsButton} alt="Exams" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> -> <img src={exerciseGroupsButton} alt="Exercise Groups" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> -> exercise-title
+<img src={examsButton} alt="Exams" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> -> <img src={exerciseGroupsButton} alt="Exercise Groups" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> -> exercise-title
 
 <Image src={plagiarism} alt="Detecting Plagiarism attempts on Modeling Exercises" size={ImageSize.large} caption="Detecting Plagiarism attempts on Modeling Exercises" />
 
@@ -513,9 +495,9 @@ You can specify the moment when Artemis publishes the results of the exam, see [
 
 - The exported `CSV` file includes the students' `name`, `username`, `email`, `registration number`, their assigned `exercises`, their `score` for every exercise, `overall exam points`, `overall exam score`, `grades` (before bonus if bonus is configured), `presentation score`, `submitted` (yes/no) and `passed` (yes/no) values.
 
-  - If bonus is configured, the file also contains `bonus grades` and `final grade`.
-  - If there is at least one plagiarism verdict in the exam, the file also contains `plagiarism verdicts`.
-  - If there is at least one plagiarism verdict in the bonus source, the file also contains `plagiarism verdicts in bonus course/exam`.
+- If bonus is configured, the file also contains `bonus grades` and `final grade`.
+- If there is at least one plagiarism verdict in the exam, the file also contains `plagiarism verdicts`.
+- If there is at least one plagiarism verdict in the bonus source, the file also contains `plagiarism verdicts in bonus course/exam`.
 - The exported `CSV` file also contains the aggregated statistics of the [exam conduction](#2-conduction) such as the `number of participations` and the `average score` per exercise.
 
 <Image src={examStatistics} alt="Exam Scores Page" size={ImageSize.large} caption="Exam Scores Page" />
@@ -552,66 +534,3 @@ Artemis collects the complaints submitted by the students during the student rev
 - Artemis tracks the progress of the complaint assessment and displays a progress bar in the *Assessment Dashboard*. This allows you to keep track of the complaint assessment and see how many open complaints are left.
 
 <Image src={complaintResponse} alt="Assessor responding to a Complaint" size={ImageSize.large} caption="Assessor responding to a Complaint" />
-
-## Exam Participation Checker
-
-The Artemis Exam Participation Checker iPad application streamlines the process of checking student attendance during on-site exams conducted with the Artemis platform. The application replaces the traditional paper-based method with a digitalized process, making tracking and managing student attendance easier. Using the app allows the exam supervisor to walk around, go to each student and directly control if the part-taking student is logged in with his rightful account by comparing the information on the iPad with the student's browser Artemis information. The application includes features such as student identification, digital signing, and attendance tracking. The Artemis web platform was adapted to additionally support exam management tasks, such as uploading seating arrangements and images for students.
-
-### Requirements and Web Functionality
-
-<Callout variant={CalloutVariant.info}>
-  For information regarding creating the exam, it's exercises and how to register students, please follow the instructions as described in [exam configuration](#12-create-and-configure-exam).
-</Callout>
-
-Using the Artemis Exam Participation Checker iPad application requires additional setup on the *Students* page before the exam.
-
-1. To upload images, click on the <img src={uploadImages} alt="Upload Images" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button and provide a `pdf` file in the Upload Images dialog. This `pdf` file should include a box for each student with its image and two text boxes next to it. The upper text box needs to include the `registrationNumber`, and the lower text box needs to include the `login`. An exemplary file can be found at `docs/user/exams/instructor/example_upload_images.pdf`.
-2. Setting up the room and seating information via the `CSV` import. For more information, see: [register students](#15-register-students).
-
-<Callout variant={CalloutVariant.info}>
-  Each student must have a matriculation number assigned to upload the images. The matriculation number is needed to match the image with the according student.
-</Callout>
-
-<Callout variant={CalloutVariant.info}>
-  Seats and rooms can currently only be assigned via the `CSV` import of students by defining the `seat` and `room` in the `CSV` file.
-</Callout>
-
-You can also verify the attendance in the web application by pressing the <img src={verifyAttendance} alt="Verify Attendance" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button. This button opens a new view that shows which students have started the exam in Artemis but still need to complete the check-in with a teaching assistant.
-
-<Image src={verifyAttendanceVerificationMissing} alt="Verify Attendance View: One student did not complete the check-in" size={ImageSize.large} caption="Verify Attendance View: One student did not complete the check-in" />
-
-<Image src={verifyAttendanceVerificationSuccessful} alt="Verify Attendance View: All students have been successfully checked in" size={ImageSize.large} caption="Verify Attendance View: All students have been successfully checked in" />
-
-### Download App
-
-The iOS application is available in the [App Store](https://apps.apple.com/de/app/artemis-exam-supervision/id6478390011).
-To test the beta version, install Apple's TestFlight app and follow the link [TestFlight](https://testflight.apple.com/join/HiKcHAQ3).
-
-### App Usage
-
-#### 1.1 Login
-
-You can log in to the app with your usual Artemis credentials. Via the 'Select University' button at the bottom, you can select your respective University instance or a custom Artemis instance of your choice.
-
-#### 1.2 Exam Overview
-
-The Exam Overview consists of a list of all currently available exams. The overview only shows exams where the start date is +/- one week from now, and your account has the right to access the exam. Each list cell consists of basic exam information, like the name and the start and end date of the respective exam. A tap on the cell opens up the Student List View.
-
-<Image src={examOverview} alt="Exam Overview" size={ImageSize.large} caption="Exam Overview" />
-
-#### 1.3 Student List View
-
-The sidebar hosts a list of all registered students. The list can easily be filtered by room with a clickable picker or by typing a custom search query into the search bar. Further, already checked-in students can be easily filtered out by the respective toggle. The sorting can be quickly changed from "Bottom to Top" to "Top to Bottom" by a picker. A simple counter shows the progress of the already checked-in students directly above the student list. The student list consists of one cell per student, containing the name and the seat, to enable quick identification of the student. The tutor can quickly switch between different students by clicking the respective cell. Below the list is an 'Export Signatures' button to export all local signatures taken on this device for the selected exam.
-
-<Image src={studentListView} alt="Student List View" size={ImageSize.large} caption="Student List View" />
-<Image src={studentListViewExportSignatures} alt="Export Signatures" size={ImageSize.large} caption="Export Signatures" />
-
-#### 1.4 Student Detail View
-
-The detail view contains all given information about the student. The upper part of the screen displays these information. The left side shows the student image, while the right side of the screen displays all other information. Clicking the small pen icon allows the user to edit the room and seat. In this case, the user can choose between all the available rooms through a picker. The user can change the seat by typing in the respective seat in the text field.
-
-The options below the information section allow the user to verify the information via toggles.
-
-The lower part of the screen is a large canvas that supports signing with the help of the Apple Pencil or simple input with the finger. On the right of the canvas are two small buttons. The upper button, symbolized by a swiping finger icon, enables a better signing experience with the finger when toggled on. The lower button, a trash symbol, deletes the current signing to restart the process. By clicking the save button, the server saves the data. Additionally, the device saves the signing locally, allowing the export, as mentioned above.
-
-<Image src={studentDetailView} alt="Student Detail View" size={ImageSize.large} caption="Student Detail View" />
