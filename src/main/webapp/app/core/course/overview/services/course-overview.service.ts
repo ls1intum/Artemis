@@ -21,6 +21,7 @@ import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.
 import dayjs, { Dayjs } from 'dayjs/esm';
 import { cloneDeep } from 'lodash-es';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 
 const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     future: { entityData: [] },
@@ -121,6 +122,16 @@ export class CourseOverviewService {
 
     getCorrespondingExerciseGroupByDate(exercise: Exercise): TimeGroupCategory {
         const now = dayjs();
+
+        if (exercise instanceof QuizExercise) {
+            const isReleaseDateToday = exercise.releaseDate?.isSame(now, 'day');
+            const isStartDateToday = exercise.startDate?.isSame(now, 'day');
+            const isDueDateToday = exercise.dueDate?.isSame(now, 'day');
+
+            if (isReleaseDateToday || isStartDateToday || isDueDateToday) {
+                return 'current';
+            }
+        }
 
         const startGroup = this.getStartDateGroup(exercise, now);
         const endGroup = this.getEndDateGroup(exercise, now);
