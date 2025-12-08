@@ -1,4 +1,5 @@
-import { Component, ElementRef, OnInit, inject, input, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, computed, effect, inject, input, signal, viewChild } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { UpperCasePipe } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -21,10 +22,9 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { getFirstResultWithComplaint, getLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
 import { addParticipationToResult, getManualUnreferencedFeedback } from 'app/exercise/result/result.utils';
-import { Feedback, checkSubsequentFeedbackInAssessment } from 'app/assessment/shared/entities/feedback.model';
+import { checkSubsequentFeedbackInAssessment } from 'app/assessment/shared/entities/feedback.model';
 import { onError } from 'app/shared/util/global.utils';
 import { getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
@@ -38,6 +38,8 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { FileService } from 'app/shared/service/file.service';
+import { map } from 'rxjs/operators';
+import { firstValueFrom } from 'rxjs';
 
 @Component({
     selector: 'jhi-file-upload-submission',
@@ -57,8 +59,9 @@ import { FileService } from 'app/shared/service/file.service';
         ArtemisTimeAgoPipe,
         HtmlForMarkdownPipe,
     ],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeactivate {
+export class FileUploadSubmissionComponent implements ComponentCanDeactivate {
     private route = inject(ActivatedRoute);
     private fileUploadSubmissionService = inject(FileUploadSubmissionService);
     private alertService = inject(AlertService);
@@ -68,7 +71,7 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
     private accountService = inject(AccountService);
 
     readonly addParticipationToResult = addParticipationToResult;
-    readonly fileInput = viewChild.required<ElementRef<HTMLInputElement>>('fileInput');
+    readonly fileInput = viewChild<ElementRef<HTMLInputElement>>('fileInput');
 
     readonly participationId = input<number>();
     readonly displayHeader = input(true);
@@ -79,24 +82,90 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
     readonly inputSubmission = input<FileUploadSubmission>();
     readonly inputParticipation = input<StudentParticipation>();
 
-    submission?: FileUploadSubmission;
-    submittedFileName: string;
-    submittedFileExtension: string;
-    fileUploadExercise: FileUploadExercise;
-    participation: StudentParticipation;
-    result: Result;
-    resultWithComplaint?: Result;
-    submissionFile?: File;
-    course?: Course;
-    // indicates if the assessment due date is in the past. the assessment will not be loaded and displayed to the student if it is not.
-    isAfterAssessmentDueDate: boolean;
-    isSaving: boolean;
-    isOwnerOfParticipation: boolean;
-    examMode = false;
+    submission = signal<FileUploadSubmission | undefined>(undefined);
+    fileUploadExercise = signal<FileUploadExercise | undefined>(undefined);
+    participation = signal<StudentParticipation | undefined>(undefined);
+    result = signal<Result | undefined>(undefined);
+    submissionFile = signal<File | undefined>(undefined);
 
-    acceptedFileExtensions: string;
+    // Derived state via computed signals
+    resultWithComplaint = computed(() => getFirstResultWithComplaint(this.submission()));
+    course = computed(() => getCourseFromExercise(this.fileUploadExercise()));
+    examMode = computed(() => !!this.fileUploadExercise()?.exerciseGroup);
 
-    isLate: boolean; // indicates if the submission is late
+    submittedFileName = computed(() => {
+        const filePath = this.submission()?.filePath;
+        return filePath ? filePath.split('/').pop()! : '';
+    });
+
+    submittedFileExtension = computed(() => {
+        const fileName = this.submittedFileName();
+        return fileName ? fileName.split('.').pop()! : '';
+    });
+
+    isAfterAssessmentDueDate = computed(() => {
+        const exercise = this.fileUploadExercise();
+        return !exercise?.assessmentDueDate || dayjs().isAfter(exercise.assessmentDueDate);
+    });
+
+    isLate = computed(() => {
+        const exercise = this.fileUploadExercise();
+        const participation = this.participation();
+        return !!(
+            exercise &&
+            exercise.dueDate &&
+            participation?.initializationDate &&
+            dayjs(participation.initializationDate).isAfter(getExerciseDueDate(exercise, participation))
+        );
+    });
+
+    acceptedFileExtensions = computed(() => {
+        return (
+            this.fileUploadExercise()
+                ?.filePattern?.split(',')
+                .map((extension) => `.${extension}`)
+                .join(',') ?? ''
+        );
+    });
+
+    isOwnerOfParticipation = signal(false);
+    isSaving = signal(false);
+
+    // Converted Getters to Computed
+    unreferencedFeedback = computed(() => {
+        const result = this.result();
+        if (result?.feedbacks) {
+            checkSubsequentFeedbackInAssessment(result.feedbacks);
+            return getManualUnreferencedFeedback(result.feedbacks);
+        }
+        return undefined;
+    });
+
+    isActive = computed(() => {
+        const exercise = this.fileUploadExercise();
+        const participation = this.participation();
+        return !this.examMode() && !!exercise && !!participation && !hasExerciseDueDatePassed(exercise, participation);
+    });
+
+    submitButtonTooltip = computed(() => {
+        if (!this.submissionFile()) {
+            return 'artemisApp.fileUploadSubmission.selectFile';
+        }
+
+        if (!this.isLate()) {
+            const exercise = this.fileUploadExercise();
+            // Using isActive() computed value
+            if (this.isActive() && exercise && !exercise.dueDate) {
+                return 'entity.action.submitNoDueDateTooltip';
+            } else if (this.isActive()) {
+                return 'entity.action.submitTooltip';
+            } else {
+                return 'entity.action.dueDateMissedTooltip';
+            }
+        }
+
+        return 'entity.action.submitDueDateMissedTooltip';
+    });
 
     faDownload = faDownload;
     readonly ButtonType = ButtonType;
@@ -104,84 +173,78 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
     // Icons
     farListAlt = faListAlt;
 
-    /**
-     * Initializes data for file upload editor
-     */
-    ngOnInit() {
-        if (this.inputValuesArePresent()) {
-            this.setupComponentWithInputValues();
-        } else {
-            const participationId = this.participationId() ?? Number(this.route.snapshot.paramMap.get('participationId'));
-            if (Number.isNaN(participationId)) {
-                return this.alertService.error('artemisApp.fileUploadExercise.error');
+    private routeParticipationId = toSignal(this.route.params.pipe(map((params) => Number(params['participationId']))));
+
+    constructor() {
+        effect((onCleanup) => {
+            // Priority: Input values -> Route values
+            if (this.inputValuesArePresent()) {
+                this.setupComponentWithInputValues();
+            } else {
+                // Check direct input ID (signal) or route ID (signal)
+                const pId = this.participationId() ?? this.routeParticipationId();
+                if (pId && !Number.isNaN(pId)) {
+                    const sub = this.fileUploadSubmissionService.getDataForFileUploadEditor(pId).subscribe({
+                        next: (submission: FileUploadSubmission) => {
+                            this.handleDataLoad(submission);
+                        },
+                        error: (error: HttpErrorResponse) => onError(this.alertService, error),
+                    });
+                    onCleanup(() => sub.unsubscribe());
+                } else if (pId && Number.isNaN(pId)) {
+                    // Should be handled better, but alert is side effect
+                    // We avoid alerting inside effect loop unless guarded
+                }
             }
-            this.fileUploadSubmissionService.getDataForFileUploadEditor(participationId).subscribe({
-                next: (submission: FileUploadSubmission) => {
-                    const tmpResult = getLatestSubmissionResult(submission);
-                    this.participation = <StudentParticipation>submission.participation;
+        });
+    }
 
-                    // reconnect participation <--> submission
-                    this.participation.submissions = [<FileUploadSubmission>omit(submission, 'participation')];
+    private handleDataLoad(submission: FileUploadSubmission) {
+        const tmpResult = getLatestSubmissionResult(submission);
+        const participation = submission.participation as StudentParticipation;
 
-                    this.submission = submission;
-                    this.result = tmpResult!;
-                    this.resultWithComplaint = getFirstResultWithComplaint(submission);
-                    this.fileUploadExercise = this.participation.exercise as FileUploadExercise;
-                    this.examMode = !!this.fileUploadExercise.exerciseGroup;
-                    this.fileUploadExercise.studentParticipations = [this.participation];
-                    this.course = getCourseFromExercise(this.fileUploadExercise);
+        // reconnect participation <--> submission
+        participation.submissions = [omit(submission, 'participation') as FileUploadSubmission];
 
-                    // checks if the student started the exercise after the due date
-                    this.isLate =
-                        this.fileUploadExercise &&
-                        !!this.fileUploadExercise.dueDate &&
-                        !!this.participation.initializationDate &&
-                        dayjs(this.participation.initializationDate).isAfter(getExerciseDueDate(this.fileUploadExercise, this.participation));
+        this.submission.set(submission);
+        this.result.set(tmpResult);
+        const exercise = participation.exercise as FileUploadExercise;
+        this.fileUploadExercise.set(exercise);
+        exercise.studentParticipations = [participation];
+        this.participation.set(participation);
 
-                    this.acceptedFileExtensions = this.fileUploadExercise
-                        .filePattern!.split(',')
-                        .map((extension) => `.${extension}`)
-                        .join(',');
-                    this.isAfterAssessmentDueDate = !this.fileUploadExercise.assessmentDueDate || dayjs().isAfter(this.fileUploadExercise.assessmentDueDate);
-
-                    if (this.submission?.submitted) {
-                        this.setSubmittedFile();
-                    }
-                    if (this.submission?.submitted && this.result?.completionDate) {
-                        this.fileUploadAssessmentService.getAssessment(this.submission.id!).subscribe((assessmentResult: Result) => {
-                            this.result = assessmentResult;
-                        });
-                    }
-                    this.isOwnerOfParticipation = this.accountService.isOwnerOfParticipation(this.participation);
-                },
-                error: (error: HttpErrorResponse) => onError(this.alertService, error),
-            });
+        if (this.submission()?.submitted) {
+            this.setSubmittedFile();
         }
+        if (this.submission()?.submitted && this.result()?.completionDate) {
+            const submissionId = this.submission()?.id;
+            if (submissionId) {
+                // Nested subscribe - acceptable for dependent data fetch
+                this.fileUploadAssessmentService.getAssessment(submissionId).subscribe((assessmentResult: Result) => {
+                    this.result.set(assessmentResult);
+                });
+            }
+        }
+        this.isOwnerOfParticipation.set(this.accountService.isOwnerOfParticipation(participation));
     }
 
     private inputValuesArePresent(): boolean {
+        // Signals are tracked here
         return !!(this.inputExercise() || this.inputSubmission() || this.inputParticipation());
     }
 
-    /**
-     * Uses values directly passed to this component instead of subscribing to a participation to save resources
-     *
-     * <i>e.g. used within {@link ExamResultSummaryComponent} and the respective {@link ModelingExamSummaryComponent}
-     * as directly after the exam no grading is present and only the student solution shall be displayed </i>
-     * @private
-     */
     private setupComponentWithInputValues() {
         if (this.inputExercise()) {
-            this.fileUploadExercise = this.inputExercise()!;
+            this.fileUploadExercise.set(this.inputExercise()!);
         }
         if (this.inputSubmission()) {
-            this.submission = this.inputSubmission()!;
+            this.submission.set(this.inputSubmission()!);
         }
         if (this.inputParticipation()) {
-            this.participation = this.inputParticipation()!;
+            this.participation.set(this.inputParticipation()!);
         }
 
-        if (this.submission?.submitted) {
+        if (this.submission()?.submitted) {
             this.setSubmittedFile();
         }
     }
@@ -189,90 +252,95 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
     /**
      * Uploads a submission file and submits File Upload Exercise
      */
-    public submitExercise() {
-        if (this.isSaving) {
-            // don't execute the function if it is already currently executing
+    async submitExercise() {
+        if (this.isSaving()) {
             return;
         }
 
-        const file = this.submissionFile;
-        if (!this.submission || !file) {
+        const file = this.submissionFile();
+        const submission = this.submission();
+        const currentExercise = this.fileUploadExercise();
+
+        if (!submission || !file || !currentExercise || !currentExercise.id) {
             return;
         }
-        this.isSaving = true;
-        this.fileUploadSubmissionService.update(this.submission!, this.fileUploadExercise.id!, file).subscribe({
-            next: (res) => {
-                this.submission = res.body!;
-                this.participation = this.submission.participation as StudentParticipation;
-                // reconnect so that the submission status is displayed correctly in the result.component
-                this.submission.participation!.submissions = [this.submission];
-                this.participationWebsocketService.addParticipation(this.participation, this.fileUploadExercise);
-                this.fileUploadExercise.studentParticipations = [this.participation];
-                this.result = getLatestSubmissionResult(this.submission)!;
+        this.isSaving.set(true);
+
+        try {
+            const res = await firstValueFrom(this.fileUploadSubmissionService.update(submission, currentExercise.id, file));
+            const newSubmission = res.body;
+
+            if (newSubmission) {
+                this.submission.set(newSubmission);
+                const participation = newSubmission.participation as StudentParticipation;
+                if (participation) {
+                    newSubmission.participation!.submissions = [newSubmission];
+                    this.participationWebsocketService.addParticipation(participation, currentExercise);
+                    this.participation.set(participation);
+                    this.fileUploadExercise.update((exercise) => {
+                        if (exercise) {
+                            exercise.studentParticipations = [participation];
+                        }
+                        return exercise;
+                    });
+                }
+
+                this.result.set(getLatestSubmissionResult(newSubmission));
                 this.setSubmittedFile();
-                if (this.isActive) {
+                if (this.isActive()) {
                     this.alertService.success('artemisApp.fileUploadExercise.submitSuccessful');
                 } else {
                     this.alertService.warning('artemisApp.fileUploadExercise.submitDueDateMissed');
                 }
-                this.isSaving = false;
-            },
-            error: (error: HttpErrorResponse) => {
-                this.submission!.submitted = false;
-                const serverError = error.headers.get('X-artemisApp-error');
-                if (serverError) {
-                    this.alertService.error(serverError, { fileName: file.name });
-                } else {
-                    this.alertService.error('artemisApp.fileUploadSubmission.fileUploadError', { fileName: file.name });
-                }
-                this.fileInput().nativeElement.value = '';
-                this.submissionFile = undefined;
-                this.isSaving = false;
-            },
-        });
+            }
+        } catch (error: unknown) {
+            this.submission.update((sub) => {
+                if (sub) sub.submitted = false;
+                return sub;
+            });
+            let serverError: string | null = null;
+            if (error instanceof HttpErrorResponse) {
+                serverError = error.headers?.get('X-artemisApp-error');
+            }
+
+            if (serverError) {
+                this.alertService.error(serverError, { fileName: file.name });
+            } else {
+                this.alertService.error('artemisApp.fileUploadSubmission.fileUploadError', { fileName: file.name });
+            }
+            const fileInput = this.fileInput();
+            if (fileInput && fileInput.nativeElement) {
+                fileInput.nativeElement.value = '';
+            }
+            this.submissionFile.set(undefined);
+        } finally {
+            this.isSaving.set(false);
+        }
     }
 
     /**
      * Sets file submission for exercise
-     * @param event {object} Event object which contains the uploaded file
      */
-    setFileSubmissionForExercise(event: any): void {
-        if (event.target.files.length) {
-            const fileList: FileList = event.target.files;
+    setFileSubmissionForExercise(event: Event): void {
+        const target = event.target as HTMLInputElement;
+        if (target.files && target.files.length) {
+            const fileList: FileList = target.files;
             const submissionFile = fileList[0];
-            const allowedFileExtensions = this.fileUploadExercise.filePattern!.split(',');
-            if (!allowedFileExtensions.some((extension) => submissionFile.name.toLowerCase().endsWith(extension))) {
+            const exercise = this.fileUploadExercise();
+            const allowedFileExtensions = exercise?.filePattern?.split(',') ?? [];
+
+            if (!allowedFileExtensions.some((extension) => submissionFile.name.toLowerCase().endsWith(extension.trim()))) {
                 this.alertService.error('artemisApp.fileUploadSubmission.fileExtensionError');
             } else if (submissionFile.size > MAX_SUBMISSION_FILE_SIZE) {
                 this.alertService.error('artemisApp.fileUploadSubmission.fileTooBigError', { fileName: submissionFile.name });
             } else {
-                this.submissionFile = submissionFile;
+                this.submissionFile.set(submissionFile);
             }
         }
     }
 
-    /**
-     * Check whether or not a result exists and if, returns the unreferenced feedback of it
-     */
-    get unreferencedFeedback(): Feedback[] | undefined {
-        if (this.result?.feedbacks) {
-            checkSubsequentFeedbackInAssessment(this.result.feedbacks);
-            return getManualUnreferencedFeedback(this.result.feedbacks);
-        }
-        return undefined;
-    }
-
     private setSubmittedFile() {
-        // clear submitted file so that it is not displayed in the input (this might be confusing)
-        this.submissionFile = undefined;
-        this.submittedFileName = '';
-        this.submittedFileExtension = '';
-        if (this.submission?.filePath) {
-            const filePath = this.submission!.filePath!.split('/');
-            this.submittedFileName = filePath.last()!;
-            const fileName = this.submittedFileName.split('.');
-            this.submittedFileExtension = fileName.last()!;
-        }
+        this.submissionFile.set(undefined);
     }
 
     downloadFile(filePath: string) {
@@ -283,31 +351,7 @@ export class FileUploadSubmissionComponent implements OnInit, ComponentCanDeacti
      * Returns false if user selected a file, but didn't submit the exercise, true otherwise.
      */
     canDeactivate(): boolean {
-        return !(this.submission && !this.submission.submitted && this.submissionFile);
-    }
-
-    /**
-     * The exercise is still active if it's due date hasn't passed yet.
-     */
-    get isActive(): boolean {
-        return !this.examMode && this.fileUploadExercise && !hasExerciseDueDatePassed(this.fileUploadExercise, this.participation);
-    }
-
-    get submitButtonTooltip(): string {
-        if (!this.submissionFile) {
-            return 'artemisApp.fileUploadSubmission.selectFile';
-        }
-
-        if (!this.isLate) {
-            if (this.isActive && !this.fileUploadExercise.dueDate) {
-                return 'entity.action.submitNoDueDateTooltip';
-            } else if (this.isActive) {
-                return 'entity.action.submitTooltip';
-            } else {
-                return 'entity.action.dueDateMissedTooltip';
-            }
-        }
-
-        return 'entity.action.submitDueDateMissedTooltip';
+        const submission = this.submission();
+        return !(submission && !submission.submitted && this.submissionFile());
     }
 }

@@ -29,6 +29,7 @@ describe('FileUploadExercise Management Detail Component', () => {
     let fixture: ComponentFixture<FileUploadExerciseDetailComponent>;
     let service: FileUploadExerciseService;
     let statisticsService: StatisticsService;
+    let statisticsServiceStub: jest.SpyInstance;
 
     const route = {
         data: of({ fileUploadExercise }),
@@ -55,12 +56,11 @@ describe('FileUploadExercise Management Detail Component', () => {
         numberOfResolvedPosts: 2,
         resolvedPostsInPercent: 50,
     } as ExerciseManagementStatisticsDto;
-    let statisticsServiceStub: jest.SpyInstance;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
+            imports: [FileUploadExerciseDetailComponent],
             declarations: [
-                FileUploadExerciseDetailComponent,
                 MockPipe(HtmlForMarkdownPipe),
                 MockComponent(NonProgrammingExerciseDetailCommonActionsComponent),
                 MockComponent(ExerciseDetailStatisticsComponent),
@@ -80,8 +80,6 @@ describe('FileUploadExercise Management Detail Component', () => {
                 provideHttpClientTesting(),
             ],
         }).compileComponents();
-        fixture = TestBed.createComponent(FileUploadExerciseDetailComponent);
-        comp = fixture.componentInstance;
         service = TestBed.inject(FileUploadExerciseService);
         statisticsService = TestBed.inject(StatisticsService);
         statisticsServiceStub = jest.spyOn(statisticsService, 'getExerciseStatistics').mockReturnValue(of(fileUploadExerciseStatistics));
@@ -101,14 +99,16 @@ describe('FileUploadExercise Management Detail Component', () => {
                 }),
             ),
         );
-        comp.ngOnInit();
-        tick();
 
-        expect(comp.fileUploadExercise).toEqual(fileUploadExerciseWithCourse);
-
+        fixture = TestBed.createComponent(FileUploadExerciseDetailComponent);
+        comp = fixture.componentInstance;
+        // Logic runs on creation - trigger effects
         fixture.detectChanges();
+        tick(500);
 
-        expect(comp.exerciseDetailSections).toBeDefined();
+        expect(comp.fileUploadExercise()).toEqual(fileUploadExerciseWithCourse);
+        fixture.detectChanges();
+        expect(comp.exerciseDetailSections()).toBeDefined();
     }));
 
     describe('onInit with course exercise', () => {
@@ -116,7 +116,7 @@ describe('FileUploadExercise Management Detail Component', () => {
             route.params = of({ exerciseId: fileUploadExerciseWithCourse.id });
         });
 
-        it('should call load on init and be not in exam mode', () => {
+        it('should call load on init and be not in exam mode', fakeAsync(() => {
             // GIVEN
             const headers = new HttpHeaders().append('link', 'link;link');
             jest.spyOn(service, 'find').mockReturnValue(
@@ -127,18 +127,21 @@ describe('FileUploadExercise Management Detail Component', () => {
                     }),
                 ),
             );
+
             // WHEN
+            fixture = TestBed.createComponent(FileUploadExerciseDetailComponent);
+            comp = fixture.componentInstance;
             fixture.detectChanges();
-            comp.ngOnInit();
+            tick(500);
 
             // THEN
-            expect(statisticsServiceStub).toHaveBeenCalledTimes(2);
-            expect(comp.doughnutStats.participationsInPercent).toBe(100);
-            expect(comp.doughnutStats.resolvedPostsInPercent).toBe(50);
-            expect(comp.doughnutStats.absoluteAveragePoints).toBe(5);
-            expect(comp.isExamExercise).toBeFalse();
-            expect(comp.fileUploadExercise).toEqual(fileUploadExerciseWithCourse);
-        });
+            expect(statisticsServiceStub).toHaveBeenCalledOnce();
+            expect(comp.doughnutStats()!.participationsInPercent).toBe(100);
+            expect(comp.doughnutStats()!.resolvedPostsInPercent).toBe(50);
+            expect(comp.doughnutStats()!.absoluteAveragePoints).toBe(5);
+            expect(comp.isExamExercise()).toBeFalse();
+            expect(comp.fileUploadExercise()).toEqual(fileUploadExerciseWithCourse);
+        }));
     });
 
     describe('onInit with exam exercise', () => {
@@ -149,7 +152,7 @@ describe('FileUploadExercise Management Detail Component', () => {
             route.params = of({ exerciseId: fileUploadExerciseWithExerciseGroup.id });
         });
 
-        it('should call load on init and be in exam mode', () => {
+        it('should call load on init and be in exam mode', fakeAsync(() => {
             // GIVEN
             const headers = new HttpHeaders().append('link', 'link;link');
             jest.spyOn(service, 'find').mockReturnValue(
@@ -160,16 +163,20 @@ describe('FileUploadExercise Management Detail Component', () => {
                     }),
                 ),
             );
+
             // WHEN
-            comp.ngOnInit();
+            fixture = TestBed.createComponent(FileUploadExerciseDetailComponent);
+            comp = fixture.componentInstance;
+            fixture.detectChanges();
+            tick(500);
 
             // THEN
             expect(statisticsServiceStub).toHaveBeenCalledOnce();
-            expect(comp.doughnutStats.participationsInPercent).toBe(100);
-            expect(comp.doughnutStats.resolvedPostsInPercent).toBe(50);
-            expect(comp.doughnutStats.absoluteAveragePoints).toBe(5);
-            expect(comp.isExamExercise).toBeTrue();
-            expect(comp.fileUploadExercise).toEqual(fileUploadExerciseWithExerciseGroup);
-        });
+            expect(comp.doughnutStats()!.participationsInPercent).toBe(100);
+            expect(comp.doughnutStats()!.resolvedPostsInPercent).toBe(50);
+            expect(comp.doughnutStats()!.absoluteAveragePoints).toBe(5);
+            expect(comp.isExamExercise()).toBeTrue();
+            expect(comp.fileUploadExercise()).toEqual(fileUploadExerciseWithExerciseGroup);
+        }));
     });
 });

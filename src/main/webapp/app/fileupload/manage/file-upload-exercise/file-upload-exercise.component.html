@@ -1,4 +1,4 @@
-@if (fileUploadExercises().length > 0 && filteredFileUploadExercises.length > 0) {
+@if (fileUploadExercises().length > 0 && filteredFileUploadExercises().length > 0) {
     <div class="table-responsive">
         <table class="table table-striped">
             <thead>
@@ -27,7 +27,7 @@
                 </tr>
             </thead>
             <tbody class="markdown-preview">
-                @for (fileUploadExercise of filteredFileUploadExercises; track trackId($index, fileUploadExercise)) {
+                @for (fileUploadExercise of filteredFileUploadExercises(); track trackId($index, fileUploadExercise)) {
                     <tr id="exercise-card-{{ fileUploadExercise.id }}">
                         @if (course.isAtLeastInstructor) {
                             <td class="d-md-table-cell">

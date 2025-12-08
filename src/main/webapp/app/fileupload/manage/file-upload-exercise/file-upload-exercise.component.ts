@@ -1,5 +1,6 @@
-import { Component, inject, model } from '@angular/core';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { ChangeDetectionStrategy, Component, inject, model, signal } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
 import { filter } from 'rxjs/operators';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { FileUploadExerciseService } from '../services/file-upload-exercise.service';
@@ -26,6 +27,7 @@ import { ExerciseCategoriesComponent } from 'app/exercise/exercise-categories/ex
     selector: 'jhi-file-upload-exercise',
     templateUrl: './file-upload-exercise.component.html',
     imports: [SortDirective, FormsModule, SortByDirective, TranslateDirective, FaIconComponent, RouterLink, ExerciseCategoriesComponent, DeleteButtonDirective, ArtemisDatePipe],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FileUploadExerciseComponent extends ExerciseComponent {
     protected exerciseService = inject(ExerciseService); // needed in html code
@@ -36,7 +38,7 @@ export class FileUploadExerciseComponent extends ExerciseComponent {
     private sortService = inject(SortService);
 
     fileUploadExercises = model<FileUploadExercise[]>([]);
-    filteredFileUploadExercises: FileUploadExercise[] = [];
+    filteredFileUploadExercises = signal<FileUploadExercise[]>([]);
 
     // Icons
     faSort = faSort;
@@ -52,29 +54,28 @@ export class FileUploadExerciseComponent extends ExerciseComponent {
         return this.fileUploadExercises();
     }
 
-    protected loadExercises(): void {
-        this.courseExerciseService
-            .findAllFileUploadExercisesForCourse(this.courseId)
-            .pipe(filter((res) => !!res.body))
-            .subscribe({
-                next: (res: HttpResponse<FileUploadExercise[]>) => {
-                    this.fileUploadExercises.set(res.body!);
-                    // reconnect exercise with course
-                    this.fileUploadExercises().forEach((exercise) => {
-                        exercise.course = this.course;
-                        this.accountService.setAccessRightsForExercise(exercise);
-                        this.selectedExercises = [];
-                    });
-                    this.emitExerciseCount(this.fileUploadExercises().length);
-                    this.applyFilter();
-                },
-                error: (res: HttpErrorResponse) => onError(this.alertService, res),
+    protected async loadExercises() {
+        try {
+            const res = await firstValueFrom(this.courseExerciseService.findAllFileUploadExercisesForCourse(this.courseId).pipe(filter((res) => !!res.body)));
+            const exercises = res.body ?? [];
+            this.fileUploadExercises.set(exercises);
+
+            // reconnect exercise with course
+            exercises.forEach((exercise) => {
+                exercise.course = this.course;
+                this.accountService.setAccessRightsForExercise(exercise);
             });
+            this.selectedExercises = [];
+            this.emitExerciseCount(exercises.length);
+            this.applyFilter();
+        } catch (error: unknown) {
+            onError(this.alertService, error as HttpErrorResponse);
+        }
     }
 
     protected applyFilter(): void {
-        this.filteredFileUploadExercises = this.fileUploadExercises().filter((exercise) => this.filter.matchesExercise(exercise));
-        this.emitFilteredExerciseCount(this.filteredFileUploadExercises.length);
+        this.filteredFileUploadExercises.set(this.fileUploadExercises().filter((exercise) => this.filter.matchesExercise(exercise)));
+        this.emitFilteredExerciseCount(this.filteredFileUploadExercises().length);
     }
 
     /**
@@ -90,17 +91,17 @@ export class FileUploadExerciseComponent extends ExerciseComponent {
      * Deletes file upload exercise
      * @param fileUploadExerciseId id of the exercise that will be deleted
      */
-    deleteFileUploadExercise(fileUploadExerciseId: number) {
-        this.fileUploadExerciseService.delete(fileUploadExerciseId).subscribe({
-            next: () => {
-                this.eventManager.broadcast({
-                    name: 'fileUploadExerciseListModification',
-                    content: 'Deleted an fileUploadExercise',
-                });
-                this.dialogErrorSource.next('');
-            },
-            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-        });
+    async deleteFileUploadExercise(fileUploadExerciseId: number) {
+        try {
+            await firstValueFrom(this.fileUploadExerciseService.delete(fileUploadExerciseId));
+            this.eventManager.broadcast({
+                name: 'fileUploadExerciseListModification',
+                content: 'Deleted an fileUploadExercise',
+            });
+            this.dialogErrorSource.next('');
+        } catch (error: any) {
+            this.dialogErrorSource.next(error.message);
+        }
     }
 
     protected getChangeEventName(): string {
@@ -108,7 +109,8 @@ export class FileUploadExerciseComponent extends ExerciseComponent {
     }
 
     sortRows() {
-        this.sortService.sortByProperty(this.fileUploadExercises(), this.predicate, this.reverse);
+        const sorted = this.sortService.sortByProperty([...this.fileUploadExercises()], this.predicate, this.reverse);
+        this.fileUploadExercises.set(sorted);
         this.applyFilter();
     }
 

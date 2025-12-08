@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
@@ -33,13 +33,14 @@ describe('FileUploadExercise Management Component', () => {
         TestBed.configureTestingModule({
             providers: [
                 { provide: ActivatedRoute, useValue: route },
-                LocalStorageService,
-                SessionStorageService,
+                MockProvider(LocalStorageService),
+                MockProvider(SessionStorageService),
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
                 MockProvider(EventManager),
                 provideHttpClient(),
             ],
+            imports: [FileUploadExerciseComponent],
         }).compileComponents();
 
         fixture = TestBed.createComponent(FileUploadExerciseComponent);
@@ -54,7 +55,7 @@ describe('FileUploadExercise Management Component', () => {
         jest.restoreAllMocks();
     });
 
-    it('should call loadExercises on init', () => {
+    it('should call loadExercises on init', fakeAsync(() => {
         // GIVEN
         const headers = new HttpHeaders().append('link', 'link;link');
         jest.spyOn(service, 'findAllFileUploadExercisesForCourse').mockReturnValue(
@@ -69,13 +70,14 @@ describe('FileUploadExercise Management Component', () => {
         // WHEN
         comp.course = course;
         comp.ngOnInit();
+        tick();
 
         // THEN
         expect(service.findAllFileUploadExercisesForCourse).toHaveBeenCalledOnce();
         expect(comp.fileUploadExercises()[0]).toEqual(fileUploadExercise);
-    });
+    }));
 
-    it('should delete exercise', () => {
+    it('should delete exercise', fakeAsync(() => {
         const headers = new HttpHeaders().append('link', 'link;link');
         jest.spyOn(fileUploadExerciseService, 'delete').mockReturnValue(
             of(
@@ -85,13 +87,23 @@ describe('FileUploadExercise Management Component', () => {
                 }),
             ),
         );
+        jest.spyOn(service, 'findAllFileUploadExercisesForCourse').mockReturnValue(
+            of(
+                new HttpResponse({
+                    body: [fileUploadExercise],
+                    headers,
+                }),
+            ),
+        );
 
         comp.course = course;
         comp.ngOnInit();
+        tick();
         comp.deleteFileUploadExercise(456);
+        tick();
         expect(fileUploadExerciseService.delete).toHaveBeenCalledWith(456);
         expect(fileUploadExerciseService.delete).toHaveBeenCalledOnce();
-    });
+    }));
 
     it('should return exercise id', () => {
         expect(comp.trackId(0, fileUploadExercise)).toBe(456);
@@ -101,19 +113,22 @@ describe('FileUploadExercise Management Component', () => {
         it('should show all exercises', () => {
             // WHEN
             comp.exerciseFilter = new ExerciseFilter('pdf', '', 'file-upload');
+            // Assuming applyFilter is not automatically triggered by setting property
+            (comp as any).applyFilter();
 
             // THEN
             expect(comp.fileUploadExercises()).toHaveLength(1);
-            expect(comp.filteredFileUploadExercises).toHaveLength(1);
+            expect(comp.filteredFileUploadExercises()).toHaveLength(1);
         });
 
         it('should show no exercises', () => {
             // WHEN
             comp.exerciseFilter = new ExerciseFilter('Prog', '', 'all');
+            (comp as any).applyFilter();
 
             // THEN
             expect(comp.fileUploadExercises()).toHaveLength(1);
-            expect(comp.filteredFileUploadExercises).toHaveLength(0);
+            expect(comp.filteredFileUploadExercises()).toHaveLength(0);
         });
     });
 

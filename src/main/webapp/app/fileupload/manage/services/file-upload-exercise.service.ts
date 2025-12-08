@@ -93,7 +93,9 @@ export class FileUploadExerciseService implements ExerciseServicable<FileUploadE
     }
 
     private static formatFilePattern(fileUploadExercise: FileUploadExercise): FileUploadExercise {
-        fileUploadExercise.filePattern = fileUploadExercise.filePattern!.replace(/\s/g, '').toLowerCase();
+        if (fileUploadExercise.filePattern) {
+            fileUploadExercise.filePattern = fileUploadExercise.filePattern.replace(/\s/g, '').toLowerCase();
+        }
         return fileUploadExercise;
     }
 

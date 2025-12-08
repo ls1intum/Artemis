@@ -1,3 +1,4 @@
+import 'jest-preset-angular/setup-jest';
 import 'app/shared/util/map.extension';
 import 'app/shared/util/string.extension';
 import 'app/shared/util/array.extension';
