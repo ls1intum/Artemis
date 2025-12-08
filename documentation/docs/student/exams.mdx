@@ -2,8 +2,10 @@
 id: exams
 title: Exams Guide
 sidebar_label: Exams
-sidebar_position: 4
 ---
+
+import Callout from "../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../src/components/Callout/Callout.types";
 
 # Exams
 
@@ -25,7 +27,7 @@ Artemis includes an online exam mode that allows you to take exams directly in t
 
   - **Java IDE with JDK 17**
 
-    **Recommendation:** IntelliJ IDEA 2022.3.2 or Eclipse IDE 2022-12.
+    **Recommendation:** IntelliJ IDEA 2025.2.5 or Eclipse IDE 2025-09.
 
   - **Git Client**
 
@@ -40,10 +42,9 @@ Artemis includes an online exam mode that allows you to take exams directly in t
 - Programming exercises have 2 modes.
 
   1. **Online code editor:** can only be used when you are online.
-
-     :::note
-     You have to click on ![Submit](./assets/exams/buttons/submit.png)! Otherwise your solution will *not* be pushed to the VC server and no build will be triggered.
-     :::
+        <Callout variant={CalloutVariant.warning}>
+            <p>You have to click on <img src={require('./assets/exams/buttons/submit.png').default} alt="Submit" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />! Otherwise your solution will <strong>not</strong> be pushed to the VC server and no build will be triggered.</p>
+        </Callout>
 
   2. **Local IDE:** you only need to be online when you clone the repository and when you push your commits (i.e. submit your solution).
 
