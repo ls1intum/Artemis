@@ -168,7 +168,7 @@ export class StudentsReseatingDialogComponent implements OnInit {
     };
 
     private findAllMatchingSeatsForTerm = (term: string): string[] => {
-        const potentialSeats: string[] = this.seatsOfSelectedRoom().seats.map((seatName: string): string => seatName.toLowerCase());
+        const potentialSeats: string[] = this.seatsOfSelectedRoom().seats;
 
         const trimmed = term.trim();
         if (!trimmed) {
@@ -179,8 +179,9 @@ export class StudentsReseatingDialogComponent implements OnInit {
         const tokens: string[] = trimmed.toLowerCase().split(ANY_WHITESPACE);
 
         return potentialSeats.filter((seatName) => {
+            const normalizedSeatName = seatName.toLowerCase();
             return tokens.every((token) => {
-                return this.isSubsequence(seatName, token);
+                return this.isSubsequence(normalizedSeatName, token);
             });
         });
     };

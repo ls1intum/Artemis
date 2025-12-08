@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
@@ -150,5 +150,63 @@ describe('StudentsReseatingDialogComponent', () => {
         fixture.detectChanges();
         expect(component.selectedRoomIsPersisted()).toBeTrue();
         expect(component.selectedSeatIsPersisted()).toBeTrue();
+    });
+
+    it('should format room name correctly', () => {
+        const formatted = component['roomFormatter']({
+            id: 1,
+            name: 'A',
+            alternativeName: 'Alt',
+            roomNumber: '101',
+            alternativeRoomNumber: '102',
+            building: 'B',
+        });
+        expect(formatted).toBe('A (Alt) – 101 (102) - [B]');
+    });
+
+    it('should find correct rooms', fakeAsync(() => {
+        jest.spyOn(service, 'loadRoomsUsedInExam').mockReturnValue(of(rooms));
+        fixture.detectChanges();
+        tick();
+
+        let searchResult: RoomForDistributionDTO[] = [];
+        component['roomSearch'](of('t')).subscribe((rooms) => {
+            searchResult = rooms;
+        });
+
+        tick(200);
+
+        expect(searchResult).toHaveLength(2);
+        expect(searchResult).toContainEqual(rooms[1]);
+        expect(searchResult).toContainEqual(rooms[2]);
+    }));
+
+    it('should find correct seats', fakeAsync(() => {
+        jest.spyOn(service, 'loadRoomsUsedInExam').mockReturnValue(of(rooms));
+        jest.spyOn(service, 'loadSeatsOfExamRoom').mockReturnValue(of({ seats: ['A1', 'A2', 'B1', 'B2', '1, 2', '1, 3'] }));
+
+        component.openDialog(examUser);
+        fixture.detectChanges();
+        tick();
+
+        let searchResult: string[] = [];
+        component['examSeatSearch'](of('2')).subscribe((rooms) => {
+            searchResult = rooms;
+        });
+
+        tick(200);
+
+        expect(searchResult).toHaveLength(3);
+        expect(searchResult).toContainEqual('A2');
+        expect(searchResult).toContainEqual('B2');
+        expect(searchResult).toContainEqual('1, 2');
+    }));
+
+    it('should close the dialog on pressing the close button', () => {
+        component.openDialog(examUser);
+        fixture.detectChanges();
+        const button = document.body.querySelector('#cancel-button') as HTMLButtonElement;
+        button.click();
+        expect(component.dialogVisible()).toBeFalse();
     });
 });
