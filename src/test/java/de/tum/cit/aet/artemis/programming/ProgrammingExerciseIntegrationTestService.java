@@ -8,6 +8,7 @@ import static de.tum.cit.aet.artemis.programming.exception.ProgrammingExerciseEr
 import static de.tum.cit.aet.artemis.programming.exception.ProgrammingExerciseErrorKeys.INVALID_TEMPLATE_BUILD_PLAN_ID;
 import static de.tum.cit.aet.artemis.programming.exception.ProgrammingExerciseErrorKeys.INVALID_TEMPLATE_REPOSITORY_URL;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doNothing;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -1627,6 +1628,16 @@ public class ProgrammingExerciseIntegrationTestService {
         var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(false, "Plagiarism Test", "PLAG1");
         var programmingExercise = programmingExerciseRepository
                 .findWithTemplateAndSolutionParticipationById(ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class).getId()).orElseThrow();
+
+        // Ensure template and solution participations exist
+        if (programmingExercise.getTemplateParticipation() == null) {
+            programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        }
+        if (programmingExercise.getSolutionParticipation() == null) {
+            programmingExercise = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        }
+        programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(programmingExercise.getId()).orElseThrow();
+
         // Clean up any stale LocalVC project folder BEFORE creating participations
         cleanupLocalVcProjectForKey(programmingExercise.getProjectKey());
         prepareTwoStudentAndOneInstructorRepositoriesForPlagiarismChecks(programmingExercise);
