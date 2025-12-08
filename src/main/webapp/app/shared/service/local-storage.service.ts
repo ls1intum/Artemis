@@ -49,7 +49,7 @@ export class LocalStorageService {
     }
 
     /**
-     * Clears the entire local storage except for {@link KEYS_TO_PRESERVE}.
+     * Clears the entire local storage except for specific keys that should persist across logouts.
      */
     clear() {
         // Keys that should persist across logouts (user preferences, reminders, etc.)
