@@ -8,10 +8,9 @@ const sidebars: SidebarsConfig = {
             label: 'Exercises',
             link: {
                 type: 'doc',
-                id: 'exercises/index'
+                id: 'exercises/intro'
             },
             items: [
-                'exercises/general-information',
                 'exercises/textual-exercise',
                 'exercises/file-upload-exercise',
             ]

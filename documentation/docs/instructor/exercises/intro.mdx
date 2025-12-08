@@ -1,9 +1,3 @@
----
-id: general-information
-title: General Information
-sidebar_label: General Information
----
-
 import Callout from "../../../src/components/Callout/Callout";
 import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
 import Image, {ImageSize} from "../../../src/components/Image/Image";
@@ -28,7 +22,7 @@ Artemis offers different exercise types that have these things in common:
 
 Users can reach the exercise overview by clicking on the tab labeled *Exercises*.
 
-<Image src={generalMenuExercise} alt="Exercise Menu" size={ImageSize.medium} />
+<Image src={generalMenuExercise} alt="Exercise Menu" size={ImageSize.small} caption={"Exercise Tab in Sidebar"}></Image>
 
 The exercise overview provides an organized view of all course exercises. The sidebar displays exercises categorized by time periods to help students navigate course content efficiently:
 
@@ -38,11 +32,11 @@ The exercise overview provides an organized view of all course exercises. The si
 - **Past:** Completed exercises that are no longer available for submission (due date has passed)
 - **No Date:** Exercises without specific dates assigned
 
-<Image src={sidebarCollapseExercise} alt="Sidebar Collapse Exercise" size={ImageSize.medium} />
+<Image src={sidebarCollapseExercise} alt="Sidebar Collapse Exercise" size={ImageSize.small} caption={"Exercise Sidebar with collapsed categories"}></Image>
 
 When a section (e.g., No date) contains more than 5 exercises, Artemis may create weekly subsections to improve navigation, though the exact grouping depends on exercise dates and distribution across weeks.
 
 <div style={{display: 'flex', gap: '1rem', flexWrap: 'wrap'}}>
-  <Image src={exerciseOverviewCurrent} alt="Current Exercises Overview" size={ImageSize.medium} />
-  <Image src={exerciseOverviewPast} alt="Past Exercises Overview" size={ImageSize.medium} />
+    <Image src={exerciseOverviewCurrent} alt="Current Exercises Overview" size={ImageSize.small} caption={"Exercise Overview uncollapsed (1)"}></Image>
+    <Image src={exerciseOverviewPast} alt="Past Exercises Overview" size={ImageSize.small} caption={"Exercise Overview uncollapsed (2)"}></Image>
 </div>
