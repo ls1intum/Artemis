@@ -426,6 +426,7 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
     @WithMockUser(username = EDITOR_LOGIN, roles = "EDITOR")
     void testReseatStudentAsEditorShouldBeForbidden() throws Exception {
         examUtilService.registerUsersForExamAndSaveExam(exam1, TEST_PREFIX, NUMBER_OF_STUDENTS);
+        reloadExam1WithExamUsers();
         ExamUser anyExamUser = exam1.getExamUsers().stream().findAny().orElseThrow();
         ReseatInformationDTO reseatInformation = new ReseatInformationDTO(anyExamUser.getId(), "SOME.ROOM", "SOME.SEAT");
 
@@ -436,6 +437,7 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
     @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
     void testReseatStudentAsInstructorShouldBeAllowed() throws Exception {
         examUtilService.registerUsersForExamAndSaveExam(exam1, TEST_PREFIX, NUMBER_OF_STUDENTS);
+        reloadExam1WithExamUsers();
         ExamUser anyExamUser = exam1.getExamUsers().stream().findAny().orElseThrow();
         ReseatInformationDTO reseatInformation = new ReseatInformationDTO(anyExamUser.getId(), "SOME.ROOM", "SOME.SEAT");
 
