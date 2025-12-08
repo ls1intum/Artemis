@@ -1684,7 +1684,7 @@ public class ProgrammingExerciseIntegrationTestService {
         assertThat(stats.maximalSimilarity()).isEqualTo(expectedSimilarity, Offset.offset(0.0001));
     }
 
-    private void prepareTwoStudentAndOneInstructorRepositoriesForPlagiarismChecks(ProgrammingExercise programmingExercise) throws IOException, GitAPIException {
+    private void prepareTwoStudentAndOneInstructorRepositoriesForPlagiarismChecks(ProgrammingExercise programmingExercise) throws Exception {
         var participationStudent1 = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, userPrefix + "student1");
         var participationStudent2 = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, userPrefix + "student2");
         var participationInstructor1 = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, userPrefix + "instructor1");
@@ -1704,7 +1704,7 @@ public class ProgrammingExerciseIntegrationTestService {
         return teamRepository.save(programmingExercise, team);
     }
 
-    private void prepareTwoTeamRepositoriesForPlagiarismChecks(ProgrammingExercise programmingExercise) throws IOException, GitAPIException {
+    private void prepareTwoTeamRepositoriesForPlagiarismChecks(ProgrammingExercise programmingExercise) throws Exception {
         var participationTeam1 = participationUtilService.addTeamParticipationForProgrammingExercise(programmingExercise, createTeam(programmingExercise, "1"));
         var participationTeam2 = participationUtilService.addTeamParticipationForProgrammingExercise(programmingExercise, createTeam(programmingExercise, "2"));
         var submissionTeam1 = programmingExerciseUtilService.createProgrammingSubmission(participationTeam1, false);
@@ -1715,7 +1715,7 @@ public class ProgrammingExerciseIntegrationTestService {
         prepareTwoSubmissionsForPlagiarismChecks(programmingExercise);
     }
 
-    private void prepareTwoSubmissionsForPlagiarismChecks(ProgrammingExercise programmingExercise) throws IOException, GitAPIException {
+    private void prepareTwoSubmissionsForPlagiarismChecks(ProgrammingExercise programmingExercise) throws Exception {
         var projectKey = programmingExercise.getProjectKey();
         // Ensure no stale LocalVC repositories from previous tests interfere with seeding
         cleanupLocalVcProjectForKey(projectKey);
@@ -1752,6 +1752,16 @@ public class ProgrammingExerciseIntegrationTestService {
                     }
                 }
                 """;
+
+        // Create and wire template repository - JPlag needs this as base code
+        var templateSlug = localVCLocalCITestService.getRepositorySlug(projectKey, "exercise");
+        var templateRepo = RepositoryExportTestUtil.trackRepository(localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, templateSlug));
+        var templateUri = localVCLocalCITestService.buildLocalVCUri(null, projectKey, templateSlug);
+        var templateParticipation = programmingExercise.getTemplateParticipation();
+        templateParticipation.setRepositoryUri(templateUri);
+        templateProgrammingExerciseParticipationRepository.save(templateParticipation);
+        // Write an empty template so JPlag has a baseline for comparison
+        RepositoryExportTestUtil.writeFilesAndPush(templateRepo, Map.of("Main.java", "// Template file"), "seed template for plagiarism check");
 
         // Get student participations (excluding instructor)
         var studentParticipations = programmingExerciseStudentParticipationRepository.findByExerciseId(programmingExercise.getId()).stream()
