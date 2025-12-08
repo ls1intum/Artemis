@@ -3,9 +3,9 @@ import dayjs from 'dayjs/esm';
 import { AbstractControl, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import urlParser from 'js-video-url-parser';
 import { faArrowLeft, faCheck, faExclamationTriangle, faQuestionCircle, faTimes, faVideo } from '@fortawesome/free-solid-svg-icons';
-import { ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER, ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE } from 'app/shared/constants/file-extensions.constants';
+import { ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER, ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE, VIDEO_FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants';
 import { CompetencyLectureUnitLink } from 'app/atlas/shared/entities/competency.model';
-import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
+import { MAX_FILE_SIZE, MAX_VIDEO_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -259,8 +259,7 @@ export class AttachmentVideoUnitFormComponent {
             return false;
         }
         const extension = file.name.split('.').pop()?.toLowerCase();
-        const videoExtensions = ['mp4', 'webm', 'ogg', 'mov', 'avi', 'mkv', 'flv', 'wmv', 'm4v'];
-        return videoExtensions.includes(extension || '');
+        return VIDEO_FILE_EXTENSIONS.includes(extension || '');
     }
 
     onFileChange(event: Event): void {
@@ -295,8 +294,9 @@ export class AttachmentVideoUnitFormComponent {
             this.file = input.files![0];
             this.fileName.set(this.file.name);
 
-            // Validate file size
-            this.isFileTooBig.set(this.file.size > MAX_FILE_SIZE);
+            // Validate file size - use larger limit for video files
+            const maxSize = this.isVideoFile(this.file) ? MAX_VIDEO_FILE_SIZE : MAX_FILE_SIZE;
+            this.isFileTooBig.set(this.file.size > maxSize);
 
             // Complete upload
             this.uploadProgress.set(100);

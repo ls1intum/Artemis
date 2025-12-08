@@ -28,6 +28,7 @@ import {
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { addPublicFilePrefix } from 'app/app.constants';
+import { VIDEO_FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants';
 import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
 import { FileService } from 'app/shared/service/file.service';
 import { ScienceService } from 'app/shared/science/science.service';
@@ -59,8 +60,6 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
 
     readonly hasTranscript = computed(() => this.transcriptSegments().length > 0);
 
-    private readonly videoExtensions = ['mp4', 'webm', 'ogg', 'mov', 'avi', 'mkv', 'flv', 'wmv', 'm4v'];
-
     // TODO: This must use a server configuration to make it compatible with deployments other than TUM
     private readonly videoUrlAllowList = [RegExp('^https://(?:live\\.rbg\\.tum\\.de|tum\\.live)/w/\\w+/\\d+(/(CAM|COMB|PRES))?\\?video_only=1')];
 
@@ -73,7 +72,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             return false;
         }
         const fileExtension = attachment.link.split('.').pop()?.toLowerCase();
-        return this.videoExtensions.includes(fileExtension || '');
+        return VIDEO_FILE_EXTENSIONS.includes(fileExtension || '');
     });
 
     /**
@@ -90,7 +89,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         const attachment = this.lectureUnit().attachment;
         if (attachment?.link) {
             const fileExtension = attachment.link.split('.').pop()?.toLowerCase();
-            if (this.videoExtensions.includes(fileExtension || '')) {
+            if (VIDEO_FILE_EXTENSIONS.includes(fileExtension || '')) {
                 // Return the attachment link as a playable URL
                 return addPublicFilePrefix(attachment.link);
             }

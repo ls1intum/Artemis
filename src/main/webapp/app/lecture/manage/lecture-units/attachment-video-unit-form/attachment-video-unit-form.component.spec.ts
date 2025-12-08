@@ -8,7 +8,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
+import { MAX_FILE_SIZE, MAX_VIDEO_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -651,7 +651,8 @@ describe('AttachmentVideoUnitFormComponent', () => {
         expect(attachmentVideoUnitFormComponent.nameControl!.value).toBeFalsy();
 
         const bigFile = new File(['a'.repeat(10)], 'Lecture-01.mp4', { type: 'video/mp4', lastModified: Date.now() });
-        Object.defineProperty(bigFile, 'size', { value: MAX_FILE_SIZE + 10 });
+        // Video files use MAX_VIDEO_FILE_SIZE (200MB), not MAX_FILE_SIZE (20MB)
+        Object.defineProperty(bigFile, 'size', { value: MAX_VIDEO_FILE_SIZE + 10 });
 
         const input = document.createElement('input');
         Object.defineProperty(input, 'files', { value: [bigFile] });

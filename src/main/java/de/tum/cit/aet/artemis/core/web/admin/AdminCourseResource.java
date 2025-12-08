@@ -135,6 +135,10 @@ public class AdminCourseResource {
     @PostMapping(value = "courses", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Course> createCourse(@RequestPart Course course, @RequestPart(required = false) MultipartFile file) throws URISyntaxException {
         log.debug("REST request to save Course : {}", course);
+
+        // Validate file size
+        FileUtil.validateFileSize(file, Constants.MAX_FILE_SIZE);
+
         if (course.getId() != null) {
             throw new BadRequestAlertException("A new course cannot already have an ID", Course.ENTITY_NAME, "idExists");
         }

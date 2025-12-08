@@ -136,6 +136,11 @@ artemis:
         url: # Set this in production environment (e.g., https://nebula.example.com)
         secret-token: # Set this in production environment
 
+    # Lecture video upload configuration
+    lecture:
+        video-upload:
+            enabled: false
+
     # Default security configuration for internal endpoints accessed by other Artemis components
     # Currently set to allow all IPs. Adjust as necessary for your deployment.
     security:
@@ -276,8 +281,8 @@ spring: #disabled by default, you must enable it
             enabled: always
     servlet:
         multipart:
-            max-file-size: 20MB # this should match the value in /webapp/app/shared/constants/input.constants.ts MAX_FILE_SIZE
-            max-request-size: 20MB
+            max-file-size: 200MB # this should match the value in /webapp/app/shared/constants/input.constants.ts MAX_VIDEO_FILE_SIZE
+            max-request-size: 200MB
     lifecycle:
         timeout-per-shutdown-phase: 10
     websocket:

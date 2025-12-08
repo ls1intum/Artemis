@@ -34,6 +34,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationService;
+import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
@@ -44,6 +45,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.ModuleFeatureService;
+import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
@@ -151,8 +153,11 @@ public class AttachmentVideoUnitResource {
             throw new BadRequestAlertException("Hidden slide dates cannot be in the past", ENTITY_NAME, "invalidHiddenDates");
         }
 
+        // Validate file size (videos up to 200MB, other files up to 20MB)
+        FileUtil.validateFileSize(file);
+
         // Check if video upload is enabled when a video file is being uploaded
-        if (file != null && isVideoFile(file) && !moduleFeatureService.isVideoUploadEnabled()) {
+        if (file != null && file.getOriginalFilename() != null && FileUtil.isVideoFile(file.getOriginalFilename()) && !moduleFeatureService.isVideoUploadEnabled()) {
             throw new BadRequestAlertException("Video file upload is not enabled on this server", ENTITY_NAME, "videoUploadDisabled");
         }
 
@@ -197,8 +202,11 @@ public class AttachmentVideoUnitResource {
             throw new BadRequestAlertException("A attachment must have a an attachment or a video source", ENTITY_NAME, "videosourceAndAttachment");
         }
 
+        // Validate file size (videos up to 200MB, other files up to 20MB)
+        FileUtil.validateFileSize(file);
+
         // Check if video upload is enabled when a video file is being uploaded
-        if (file != null && isVideoFile(file) && !moduleFeatureService.isVideoUploadEnabled()) {
+        if (file != null && file.getOriginalFilename() != null && FileUtil.isVideoFile(file.getOriginalFilename()) && !moduleFeatureService.isVideoUploadEnabled()) {
             throw new BadRequestAlertException("Video file upload is not enabled on this server", ENTITY_NAME, "videoUploadDisabled");
         }
 
@@ -238,6 +246,10 @@ public class AttachmentVideoUnitResource {
         int minutesUntilDeletion = 30;
         String originalFilename = file.getOriginalFilename();
         log.debug("REST request to upload file: {}", originalFilename);
+
+        // Validate file size (PDF files, not videos)
+        FileUtil.validateFileSize(file, Constants.MAX_FILE_SIZE);
+
         checkLectureElseThrow(lectureId);
         if (!Objects.equals(FilenameUtils.getExtension(originalFilename), "pdf")) {
             throw new BadRequestAlertException("The file must be a pdf", ENTITY_NAME, "wrongFileType");
@@ -351,6 +363,9 @@ public class AttachmentVideoUnitResource {
     public ResponseEntity<AttachmentVideoUnit> updateAttachmentVideoUnitStudentVersion(@PathVariable Long lectureId, @PathVariable Long attachmentVideoUnitId,
             @RequestParam("studentVersion") MultipartFile studentVersionFile) {
 
+        // Validate file size (PDF files, not videos)
+        FileUtil.validateFileSize(studentVersionFile, Constants.MAX_FILE_SIZE);
+
         AttachmentVideoUnit existingAttachmentUnit = attachmentVideoUnitRepository.findWithSlidesAndCompetenciesByIdElseThrow(attachmentVideoUnitId);
         checkAttachmentVideoUnitCourseAndLecture(existingAttachmentUnit, lectureId);
         Attachment attachment = existingAttachmentUnit.getAttachment();
@@ -422,28 +437,5 @@ public class AttachmentVideoUnitResource {
             }
         }
         return true;
-    }
-
-    /**
-     * Checks if the uploaded file is a video file based on its extension
-     *
-     * @param file the file to check
-     * @return true if the file is a video file, false otherwise
-     */
-    private boolean isVideoFile(MultipartFile file) {
-        if (file == null || file.getOriginalFilename() == null) {
-            return false;
-        }
-        String extension = FilenameUtils.getExtension(file.getOriginalFilename());
-        if (extension == null) {
-            return false;
-        }
-        String[] videoExtensions = { "mp4", "webm", "ogg", "mov", "avi", "mkv", "flv", "wmv", "m4v" };
-        for (String videoExt : videoExtensions) {
-            if (videoExt.equalsIgnoreCase(extension)) {
-                return true;
-            }
-        }
-        return false;
     }
 }

@@ -41,12 +41,15 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ibm.icu.text.CharsetDetector;
 
 import de.tum.cit.aet.artemis.core.FilePathType;
+import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.FilePathInformation;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.FilePathParsingException;
@@ -239,6 +242,51 @@ public class FileUtil {
     public static boolean isVideoFile(String filename) {
         final String fileExtension = FilenameUtils.getExtension(filename);
         return allowedVideoFileExtensions.stream().anyMatch(fileExtension::equalsIgnoreCase);
+    }
+
+    /**
+     * Validates that the file size does not exceed the maximum allowed size.
+     * Throws a ResponseStatusException with HTTP 413 (Payload Too Large) if exceeded.
+     *
+     * @param file        the file to validate
+     * @param maxFileSize the maximum allowed file size in bytes
+     * @throws ResponseStatusException if the file size exceeds the maximum allowed size
+     */
+    public static void validateFileSize(MultipartFile file, long maxFileSize) {
+        if (file != null && file.getSize() > maxFileSize) {
+            throw new ResponseStatusException(HttpStatus.PAYLOAD_TOO_LARGE, "The file is too large. Maximum file size is " + (maxFileSize / (1024 * 1024)) + " MB.");
+        }
+    }
+
+    /**
+     * Validates the file size based on whether it's a video file or not.
+     * Video files are allowed up to MAX_VIDEO_FILE_SIZE, other files up to MAX_FILE_SIZE.
+     *
+     * @param file the file to validate
+     * @throws ResponseStatusException if the file size exceeds the maximum allowed size
+     */
+    public static void validateFileSize(MultipartFile file) {
+        if (file == null || file.getOriginalFilename() == null) {
+            return;
+        }
+        long maxSize = isVideoFile(file.getOriginalFilename()) ? Constants.MAX_VIDEO_FILE_SIZE : Constants.MAX_FILE_SIZE;
+        validateFileSize(file, maxSize);
+    }
+
+    /**
+     * Validates the file size for each file in a list.
+     *
+     * @param files       the files to validate
+     * @param maxFileSize the maximum allowed file size in bytes
+     * @throws ResponseStatusException if any file size exceeds the maximum allowed size
+     */
+    public static void validateFileSize(List<MultipartFile> files, long maxFileSize) {
+        if (files == null) {
+            return;
+        }
+        for (MultipartFile file : files) {
+            validateFileSize(file, maxFileSize);
+        }
     }
 
     /**

@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.cit.aet.artemis.core.FilePathType;
+import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
@@ -82,6 +83,9 @@ public class ExamUserResource {
             @PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to update {} as exam user to exam : {}", examUserDTO.login(), examId);
 
+        // Validate file size
+        FileUtil.validateFileSize(signatureFile, Constants.MAX_FILE_SIZE);
+
         examAccessService.checkCourseAndExamAccessForTeachingAssistantElseThrow(courseId, examId);
         var student = userRepository.findOneWithGroupsAndAuthoritiesByLogin(examUserDTO.login())
                 .orElseThrow(() -> new EntityNotFoundException("User with login: \"" + examUserDTO.login() + "\" does not exist"));
@@ -132,6 +136,10 @@ public class ExamUserResource {
     @EnforceAtLeastInstructor
     public ResponseEntity<ExamUsersNotFoundDTO> saveUsersImages(@PathVariable Long courseId, @PathVariable Long examId, @RequestParam("file") MultipartFile file) {
         log.debug("REST request to parse pdf : {}", file.getOriginalFilename());
+
+        // Validate file size
+        FileUtil.validateFileSize(file, Constants.MAX_FILE_SIZE);
+
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
         return ResponseEntity.ok().body(examUserService.saveImages(examId, file));
     }

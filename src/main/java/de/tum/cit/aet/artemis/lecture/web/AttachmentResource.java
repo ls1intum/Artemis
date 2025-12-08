@@ -100,6 +100,9 @@ public class AttachmentResource {
         Attachment originalAttachment = attachmentRepository.findByIdOrElseThrow(attachment.getId());
         attachment.setAttachmentVideoUnit(originalAttachment.getAttachmentVideoUnit());
 
+        // Validate file size (videos up to 200MB, other files up to 20MB)
+        FileUtil.validateFileSize(file);
+
         if (file != null) {
             Path basePath = FilePathConverter.getLectureAttachmentFileSystemPath().resolve(originalAttachment.getLecture().getId().toString());
             Path savePath = FileUtil.saveFile(file, basePath, FilePathType.LECTURE_ATTACHMENT, true);
