@@ -13,7 +13,7 @@ import { Exam } from 'app/exam/shared/entities/exam.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { getExerciseDueDate } from 'app/exercise/util/exercise.utils';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
-import { Exercise, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { AccordionGroups, ChannelGroupCategory, SidebarCardElement, TimeGroupCategory } from 'app/shared/types/sidebar';
@@ -21,7 +21,6 @@ import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.
 import dayjs, { Dayjs } from 'dayjs/esm';
 import { cloneDeep } from 'lodash-es';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
-import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 
 const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     future: { entityData: [] },
@@ -123,7 +122,7 @@ export class CourseOverviewService {
     getCorrespondingExerciseGroupByDate(exercise: Exercise): TimeGroupCategory {
         const now = dayjs();
 
-        if (exercise instanceof QuizExercise) {
+        if (exercise.type === ExerciseType.QUIZ) {
             const isReleaseDateToday = exercise.releaseDate?.isSame(now, 'day');
             const isStartDateToday = exercise.startDate?.isSame(now, 'day');
             const isDueDateToday = exercise.dueDate?.isSame(now, 'day');
