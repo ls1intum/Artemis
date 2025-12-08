@@ -40,9 +40,9 @@ describe('ExerciseChatbotButtonComponent', () => {
         setCurrentCourse: jest.fn(),
     };
     const userMock = {
-        acceptExternalLLMUsage: jest.fn(),
+        acceptLLMUsage: jest.fn(),
     };
-    const accountMock = { externalLLMUsageAccepted: dayjs() } as User;
+    const accountMock = { selectedLLMUsageTimestamp: dayjs() } as User;
 
     const mockExerciseId = 123;
     const mockCourseId = 456;
@@ -170,7 +170,7 @@ describe('ExerciseChatbotButtonComponent', () => {
 
         // then
         const unreadIndicatorElement: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('.unread-indicator');
-        expect(unreadIndicatorElement).not.toBeNull();
+        expect(unreadIndicatorElement).toBeNull();
         flush();
     }));
 

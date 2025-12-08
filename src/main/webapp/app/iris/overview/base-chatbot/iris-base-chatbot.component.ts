@@ -44,6 +44,8 @@ import { facSidebar } from 'app/shared/icons/icons';
 import { User } from 'app/core/user/user.model';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
+import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
+import { LLMSelectionDecision } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
 
 @Component({
     selector: 'jhi-iris-base-chatbot',
@@ -73,6 +75,7 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
     protected statusService = inject(IrisStatusService);
     protected chatService = inject(IrisChatService);
     protected route = inject(ActivatedRoute);
+    protected llmModalService = inject(LLMSelectionModalService);
 
     // Icons
     protected readonly faTrash = faTrash;
@@ -140,7 +143,7 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
 
     // User preferences
     user: User | undefined;
-    userAccepted: boolean;
+    userAccepted: LLMSelectionDecision | undefined;
     isScrolledToBottom = true;
     rows = 1;
     resendAnimationActive: boolean;
@@ -239,16 +242,20 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
             this.clickedSuggestion = undefined;
         });
 
-        this.checkIfUserAcceptedExternalLLMUsage();
-
-        // Focus on message textarea
-        setTimeout(() => {
-            if (this.messageTextarea) {
-                this.messageTextarea.nativeElement.focus();
-            } else {
-                this.acceptButton.nativeElement.focus();
-            }
-        }, 150);
+        this.checkIfUserAcceptedLLMUsage();
+        if (!this.userAccepted) {
+            this.showAISelectionModal().then(() => {});
+        }
+        if (this.userAccepted === LLMSelectionDecision.LOCAL_AI || this.userAccepted === LLMSelectionDecision.CLOUD_AI) {
+            // Focus on message textarea
+            setTimeout(() => {
+                if (this.messageTextarea) {
+                    this.messageTextarea.nativeElement.focus();
+                } else {
+                    this.acceptButton.nativeElement.focus();
+                }
+            }, 150);
+        }
     }
 
     ngAfterViewInit() {
@@ -276,9 +283,31 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
         this.chatSessionsSubscription.unsubscribe();
     }
 
-    checkIfUserAcceptedExternalLLMUsage(): void {
-        this.userAccepted = !!this.accountService.userIdentity()?.externalLLMUsageAccepted;
+    checkIfUserAcceptedLLMUsage(): void {
+        this.userAccepted = this.accountService.userIdentity()?.selectedLLMUsage;
         setTimeout(() => this.adjustTextareaRows(), 0);
+    }
+
+    async showAISelectionModal(): Promise<void> {
+        const choice = await this.llmModalService.open();
+
+        switch (choice) {
+            case 'cloud':
+                this.acceptPermission(LLMSelectionDecision.CLOUD_AI);
+                this.chatService.updateLLMUsageConsent(LLMSelectionDecision.CLOUD_AI);
+                break;
+            case 'local':
+                this.acceptPermission(LLMSelectionDecision.LOCAL_AI);
+                this.chatService.updateLLMUsageConsent(LLMSelectionDecision.LOCAL_AI);
+                break;
+            case 'no_ai':
+                this.chatService.updateLLMUsageConsent(LLMSelectionDecision.NO_AI);
+                this.closeChat();
+                break;
+            case 'none':
+                this.closeChat();
+                break;
+        }
     }
 
     /**
@@ -361,9 +390,9 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
     /**
      * Accepts the permission to use the chat widget.
      */
-    acceptPermission() {
-        this.chatService.updateExternalLLMUsageConsent(true);
-        this.userAccepted = true;
+    acceptPermission(decision: LLMSelectionDecision) {
+        this.chatService.updateLLMUsageConsent(decision);
+        this.userAccepted = decision;
     }
 
     /**
@@ -575,4 +604,6 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
                 return undefined;
         }
     }
+
+    protected readonly LLMSelectionDecision = LLMSelectionDecision;
 }

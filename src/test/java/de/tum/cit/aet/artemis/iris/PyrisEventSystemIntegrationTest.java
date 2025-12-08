@@ -90,10 +90,10 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
         userUtilService.addUsers(TEST_PREFIX, 2, 0, 0, 1);
 
         var student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        student1.setExternalLLMUsageAcceptedTimestamp(ZonedDateTime.now().minusDays(1));
+        student1.setSelectedLLMUsageTimestamp(ZonedDateTime.now().minusDays(1));
         userTestRepository.save(student1);
         var student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
-        student2.setExternalLLMUsageAcceptedTimestamp(ZonedDateTime.now().minusDays(1));
+        student2.setSelectedLLMUsageTimestamp(ZonedDateTime.now().minusDays(1));
         userTestRepository.save(student2);
 
         course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();

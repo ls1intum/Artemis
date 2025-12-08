@@ -42,7 +42,7 @@ describe('TutorSuggestionComponent', () => {
         setCurrentCourse: jest.fn(),
     } as any;
     const mockUserService = {
-        updateExternalLLMUsageConsent: jest.fn(),
+        updateLLMSelectionDecision: jest.fn(),
     } as any;
 
     beforeEach(async () => {
@@ -81,7 +81,7 @@ describe('TutorSuggestionComponent', () => {
 
         jest.spyOn(featureToggleService, 'getFeatureToggleActive').mockReturnValue(of(true));
         chatService.setCourseId(123);
-        accountService.userIdentity.set({ externalLLMUsageAccepted: dayjs() } as User);
+        accountService.userIdentity.set({ selectedLLMUsageTimestamp: dayjs() } as User);
 
         componentRef.setInput('post', { id: 1 } as any);
         componentRef.setInput('course', { id: 1 } as any);

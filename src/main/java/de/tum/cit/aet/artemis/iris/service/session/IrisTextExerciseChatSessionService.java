@@ -117,6 +117,7 @@ public class IrisTextExerciseChatSessionService
         // @formatter:off
         pyrisPipelineService.executePipeline(
                 "text-exercise-chat",
+                user.getAiSelectionDecision(),
                 settings.variant().jsonValue(),
                 Optional.empty(),
                 pyrisJobService.createTokenForJob(token -> new TextExerciseChatJob(token, course.getId(), exercise.getId(), session.getId())),

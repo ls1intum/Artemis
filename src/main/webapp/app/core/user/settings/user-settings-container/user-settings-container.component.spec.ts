@@ -52,7 +52,7 @@ describe('UserSettingsContainerComponent', () => {
         expect(component.isPasskeyEnabled).toBeFalse();
     });
 
-    describe('isUsingExternalLLM behavior', () => {
+    describe('isUsingLLM behavior', () => {
         /**
          * @param activeProfiles for which true should be returned when calling isProfileActive
          */
@@ -61,38 +61,38 @@ describe('UserSettingsContainerComponent', () => {
         };
 
         /**
-         * Queries the external LLM usage link HTML from the component's template.
+         * Queries the LLM usage link HTML from the component's template.
          */
-        const queryExternalLLMLink = (): HTMLElement | null => {
+        const queryLLMLink = (): HTMLElement | null => {
             fixture.detectChanges();
-            return fixture.nativeElement.querySelector('a[routerLink="external-data"]');
+            return fixture.nativeElement.querySelector('a[routerLink="llm-usage"]');
         };
 
-        it('should not display the external LLM usage link when neither athena nor iris is active', () => {
+        it('should not display the LLM usage link when neither athena nor iris is active', () => {
             spyOnProfileService([]);
-            const externalLLMLink = queryExternalLLMLink();
-            expect(externalLLMLink).toBeFalsy();
+            const LLMLink = queryLLMLink();
+            expect(LLMLink).toBeFalsy();
         });
 
-        it('should display the external LLM usage link when athena is active', () => {
+        it('should display the LLM usage link when athena is active', () => {
             spyOnProfileService([PROFILE_ATHENA]);
-            const externalLLMLink = queryExternalLLMLink();
-            expect(externalLLMLink).toBeTruthy();
-            expect(externalLLMLink?.getAttribute('jhiTranslate')).toBe('artemisApp.userSettings.externalLLMUsage');
+            const LLMLink = queryLLMLink();
+            expect(LLMLink).toBeTruthy();
+            expect(LLMLink?.getAttribute('jhiTranslate')).toBe('artemisApp.userSettings.LLMUsage');
         });
 
-        it('should display the external LLM usage link when iris is active', () => {
+        it('should display the LLM usage link when iris is active', () => {
             spyOnProfileService([PROFILE_IRIS]);
-            const externalLLMLink = queryExternalLLMLink();
-            expect(externalLLMLink).toBeTruthy();
-            expect(externalLLMLink?.getAttribute('jhiTranslate')).toBe('artemisApp.userSettings.externalLLMUsage');
+            const LLMLink = queryLLMLink();
+            expect(LLMLink).toBeTruthy();
+            expect(LLMLink?.getAttribute('jhiTranslate')).toBe('artemisApp.userSettings.LLMUsage');
         });
 
-        it('should display the external LLM usage link when athena and iris are active', () => {
+        it('should display the LLM usage link when athena and iris are active', () => {
             spyOnProfileService([PROFILE_ATHENA, PROFILE_IRIS]);
-            const externalLLMLink = queryExternalLLMLink();
-            expect(externalLLMLink).toBeTruthy();
-            expect(externalLLMLink?.getAttribute('jhiTranslate')).toBe('artemisApp.userSettings.externalLLMUsage');
+            const LLMLink = queryLLMLink();
+            expect(LLMLink).toBeTruthy();
+            expect(LLMLink?.getAttribute('jhiTranslate')).toBe('artemisApp.userSettings.LLMUsage');
         });
     });
 });

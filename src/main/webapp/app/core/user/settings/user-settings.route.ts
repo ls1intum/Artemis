@@ -28,11 +28,10 @@ export const routes: Routes = [
                 },
             },
             {
-                path: 'external-data',
-                loadComponent: () =>
-                    import('app/core/user/settings/external-llm-usage-settings/external-llm-usage-settings.component').then((m) => m.ExternalLlmUsageSettingsComponent),
+                path: 'llm-usage',
+                loadComponent: () => import('app/core/user/settings/llm-usage-settings/llm-usage-settings.component').then((m) => m.LlmUsageSettingsComponent),
                 data: {
-                    pageTitle: 'artemisApp.userSettings.categories.externalLLMUsage',
+                    pageTitle: 'artemisApp.userSettings.categories.LLMUsage',
                 },
                 canActivate: [ExternalDataGuard],
             },
