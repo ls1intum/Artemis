@@ -12,7 +12,7 @@ Grading Keys can be either:
 
 There are two configurable special grades that are automatically treated as failing grades:
 
-- ``Plagiarism Grade`` (default ``U``) is assigned when a student has received a `Plagiarism verdict <https://docs.artemis.cit.tum.de/instructor/plagiarism-check#instructors>` in one or more exercises.
+- ``Plagiarism Grade`` (default ``U``) is assigned when a student has received a `Plagiarism verdict <https://docs.artemis.cit.tum.de/instructor/plagiarism-check#instructors>`_ in one or more exercises.
 - ``No-participation Grade`` (default ``X``) is assigned according to the conditions below for courses and exams:
 
     - For a course, a student receives this grade if they do not start any exercise, i.e., the number of participations is 0.
