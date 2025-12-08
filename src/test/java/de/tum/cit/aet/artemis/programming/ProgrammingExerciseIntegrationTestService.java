@@ -1618,8 +1618,6 @@ public class ProgrammingExerciseIntegrationTestService {
 
     void testCheckPlagiarism() throws Exception {
         // Use unique exercise shortName to avoid conflicts with parallel tests that share the same projectKey
-        // Pre-clean the project folder to ensure no stale state from previous test runs
-        cleanupLocalVcProjectForKey("SHORTPLAG1");
         var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(false, "Plagiarism Test", "PLAG1");
         var programmingExercise = programmingExerciseRepository
                 .findWithTemplateAndSolutionParticipationById(ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class).getId()).orElseThrow();
@@ -1632,8 +1630,6 @@ public class ProgrammingExerciseIntegrationTestService {
 
     void testCheckPlagiarismForTeamExercise() throws Exception {
         // Use unique exercise shortName to avoid conflicts with parallel tests that share the same projectKey
-        // Pre-clean the project folder to ensure no stale state from previous test runs
-        cleanupLocalVcProjectForKey("SHORTPLAG2");
         var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(false, "Plagiarism Team Test", "PLAG2");
 
         var programmingExercise = programmingExerciseRepository
@@ -1650,8 +1646,6 @@ public class ProgrammingExerciseIntegrationTestService {
 
     void testCheckPlagiarismJplagReport() throws Exception {
         // Use unique exercise shortName to avoid conflicts with parallel tests that share the same projectKey
-        // Pre-clean the project folder to ensure no stale state from previous test runs
-        cleanupLocalVcProjectForKey("SHORTPLAG3");
         var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(false, "Plagiarism Report Test", "PLAG3");
         var programmingExercise = programmingExerciseRepository
                 .findWithTemplateAndSolutionParticipationById(ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class).getId()).orElseThrow();
