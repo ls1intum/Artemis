@@ -6,6 +6,9 @@ sidebar_label: Exams
 
 import Callout from "../../src/components/Callout/Callout";
 import {CalloutVariant} from "../../src/components/Callout/Callout.types";
+import Image, {ImageSize} from "../../src/components/Image/Image";
+import examReloadAlert from './assets/exams/reload.png';
+import accessExam from './assets/exams/access_exam.png';
 
 # Exams
 
@@ -42,9 +45,9 @@ Artemis includes an online exam mode that allows you to take exams directly in t
 - Programming exercises have 2 modes.
 
   1. **Online code editor:** can only be used when you are online.
-        <Callout variant={CalloutVariant.warning}>
-            <p>You have to click on <img src={require('./assets/exams/buttons/submit.png').default} alt="Submit" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />! Otherwise your solution will <strong>not</strong> be pushed to the VC server and no build will be triggered.</p>
-        </Callout>
+      <Callout variant={CalloutVariant.warning}>
+          <p>You have to click on <img src={require('./assets/exams/buttons/submit.png').default} alt="Submit" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />! Otherwise your solution will <strong>not</strong> be pushed to the VC server and no build will be triggered.</p>
+      </Callout>
 
   2. **Local IDE:** you only need to be online when you clone the repository and when you push your commits (i.e. submit your solution).
 
@@ -54,7 +57,7 @@ Artemis includes an online exam mode that allows you to take exams directly in t
 
 1. Do **NOT** reload the browser
 
-   - If you reload the browser, the [Welcome Screen](#welcome-screen) screen opens and you must enter your name and confirm the checkbox again.
+   - If you reload the browser, the [Welcome Screen](#welcome-screen) screen opens, and you must enter your name and confirm the checkbox again.
    - You should only reload if an error occurs that cannot be recovered otherwise!
 
 2. Participate in **ONE** browser window and only one browser tab!
@@ -62,8 +65,7 @@ Artemis includes an online exam mode that allows you to take exams directly in t
    - Working in multiple browser windows or tabs at the same time is **not** allowed! Having multiple Artemis windows or tabs open is ok, as long as only one of them accesses the exam.
    - It will lead to synchronization issues and is seen as suspicious behavior that can be flagged as cheating.
 
-   ![Reload](./assets/exams/reload.png)
-   *Do not reload, you will receive a warning*
+   <Image src={examReloadAlert} alt={"Exam Reload Alert"} size={ImageSize.large} caption={"Do not reload, you will receive a warning"}></Image>
 
 ## Participating in the Artemis Online Exam
 
@@ -73,25 +75,24 @@ Artemis includes an online exam mode that allows you to take exams directly in t
 - The current exam should be displayed at the top of the *Course Overview* screen.
 - You can also access the exam by navigating to the course and then to the exams.
 
-  :::note
-  The exam will become visible shortly before the working time starts.
-  :::
+  <Callout variant={CalloutVariant.info}>
+    The exam will become visible shortly before the working time starts.
+  </Callout>
 
-![Access Exam](./assets/exams/access_exam.png)
-*Access Exam*
+  <Image src={accessExam} alt={"Access Exam"} size={ImageSize.large} caption={"Access Exam"}></Image>
 
 ### Welcome Screen
 
 - The welcome screen gives you an overview of all the important information you need about the exam.
 - Carefully read through the instructions.
-- Once you have read them, confirm that you will follow the rules by ticking the corresponding checkbox, sign with your full name and click ![Start Exam](./assets/exams/buttons/start_exam.png).
+- Once you have read them, confirm that you will follow the rules by ticking the corresponding checkbox, sign with your full name and click <img src={require('./assets/exams/buttons/start_exam.png').default} alt="Submit" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />!
 
   :::note
   Your full name represents your signature. You can find your full name as registered on Artemis below the input field.
   :::
 
 - After you confirm, if the exam working time has started, the [Exam Conduction](#exam-conduction) screen will automatically appear.
-- Otherwise, you must wait until the exam begins. This wont be longer than 5 minutes. A popup will appear which will notify you how much time is left before the planned start.
+- Otherwise, you must wait until the exam begins. This won't be longer than 5 minutes. A popup will appear which will notify you how much time is left before the planned start.
 
 ![Welcome Screen](./assets/exams/welcome_page.png)
 *Welcome Screen, waiting for exam start*
