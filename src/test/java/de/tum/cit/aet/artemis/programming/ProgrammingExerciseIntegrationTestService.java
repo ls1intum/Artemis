@@ -1785,8 +1785,23 @@ public class ProgrammingExerciseIntegrationTestService {
         // Seed real LocalVC repositories for all student participations with identical Java content to ensure JPlag has multiple valid submissions
         for (ProgrammingExerciseStudentParticipation participation : studentParticipations) {
             try {
-                // Use seedStudentRepositoryForParticipation which handles repo creation/reuse properly
-                var repo = RepositoryExportTestUtil.seedStudentRepositoryForParticipation(localVCLocalCITestService, participation);
+                // Get the repository slug from the participation's existing URI or create new repo
+                var repositorySlug = localVCLocalCITestService.getRepositorySlug(projectKey, participation.getParticipantIdentifier());
+                var repoPath = localVCBasePath.resolve(projectKey).resolve(repositorySlug + ".git");
+
+                LocalRepository repo;
+                if (Files.exists(repoPath)) {
+                    // Repo already exists (created by addTeamParticipationForProgrammingExercise or addStudentParticipationForProgrammingExercise)
+                    // Create a fresh working copy that points to the existing bare repo
+                    repo = new LocalRepository(defaultBranch);
+                    repo.configureRepos(localVCBasePath, "localRepo", repoPath);
+                    RepositoryExportTestUtil.trackRepository(repo);
+                }
+                else {
+                    // Repo doesn't exist yet, create it
+                    repo = RepositoryExportTestUtil.seedStudentRepositoryForParticipation(localVCLocalCITestService, participation);
+                }
+
                 RepositoryExportTestUtil.writeFilesAndPush(repo, Map.of("Main.java", exampleProgram), "seed plagiarism test content");
                 programmingExerciseStudentParticipationRepository.save(participation);
             }
