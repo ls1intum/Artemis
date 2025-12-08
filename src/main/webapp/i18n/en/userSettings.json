@@ -8,6 +8,8 @@
             "vcsAccessTokenSettings": "VCS Token",
             "passkeys": "Passkeys",
             "externalLLMUsage": "External LLM Usage",
+            "internalLLMUsage": "Internal LLM Usage",
+            "LLMUsage": "LLM Usage",
             "accountInformation": "Account Information",
             "learnerProfile": "Learner Profile",
             "notificationSettings": "Notifications",
@@ -20,9 +22,14 @@
                 "default": "Default",
                 "jetbrainsHelp": "To use JetBrains IDEs, please install the JetBrains Toolbox."
             },
-            "externalLLMUsageSettingsPage": {
-                "accepted": "You have accepted the usage of external LLMs on {{acceptedDate}}.",
-                "declined": "You have not accepted the usage of external LLMs."
+            "LLMUsageSettingsPage": {
+                "externalAccepted": "You have accepted the usage of external LLMs on {{acceptedDate}}.",
+                "externalDeclined": "You have not accepted the usage of external LLMs.",
+                "internalAccepted": "You have accepted the usage of internal LLMs on {{acceptedDate}}.",
+                "internalDeclined": "You have not accepted the usage of internal LLMs.",
+                "AIDeclined": "You have explicitly declined AI usage on {{acceptedDate}}.",
+                "noAISelected": "You haven't made a decision on the usage of LLMs.",
+                "chooseAI": "Change Selection"
             },
             "sshSettingsPage": {
                 "sshSettingsInfoText": "Here you can set a public SSH key to clone git repositories via SSH. For more details see the documentation.",
@@ -139,7 +146,7 @@
                 "sshKey": "Public SSH Key"
             },
             "categories": {
-                "externalLLMUsage": "External LLM Usage Settings",
+                "LLMUsage": "LLM Usage Settings",
                 "NOTIFICATION_SETTINGS": "Notification Settings",
                 "SCIENCE_SETTINGS": "Science Settings",
                 "SSH_SETTINGS": "SSH Settings",

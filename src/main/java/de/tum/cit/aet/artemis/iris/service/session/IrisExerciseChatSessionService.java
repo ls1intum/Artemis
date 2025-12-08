@@ -203,7 +203,7 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
         }
 
         // If the user has not accepted external LLM usage, or participation is of a team, we do not proceed
-        if (!studentParticipation.getStudent().map(User::hasAcceptedExternalLLMUsage).orElse(true)) {
+        if (!studentParticipation.getStudent().map(User::hasSelectedLLMUsage).orElse(true)) {
             return;
         }
 
@@ -322,7 +322,7 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
      * @return The current Iris session
      */
     public IrisProgrammingExerciseChatSession getCurrentSessionOrCreateIfNotExists(ProgrammingExercise exercise, User user, boolean sendInitialMessageIfCreated) {
-        user.hasAcceptedExternalLLMUsageElseThrow();
+        user.hasSelectedLLMUsageElseThrow();
         irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.PROGRAMMING_EXERCISE_CHAT, exercise);
         return getCurrentSessionOrCreateIfNotExistsInternal(exercise, user, sendInitialMessageIfCreated);
     }
@@ -343,7 +343,7 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
      * @return The created session
      */
     public IrisProgrammingExerciseChatSession createSession(ProgrammingExercise exercise, User user, boolean sendInitialMessage) {
-        user.hasAcceptedExternalLLMUsageElseThrow();
+        user.hasSelectedLLMUsageElseThrow();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
         irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.PROGRAMMING_EXERCISE_CHAT, exercise);
         return createSessionInternal(exercise, user, sendInitialMessage);

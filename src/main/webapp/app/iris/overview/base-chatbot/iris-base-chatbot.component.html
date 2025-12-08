@@ -163,7 +163,7 @@
             <div class="messages" #messagesElement (scroll)="checkChatScroll()">
                 @if (
                     suggestions?.length &&
-                    userAccepted &&
+                    (userAccepted === LLMSelectionDecision.CLOUD_AI || userAccepted === LLMSelectionDecision.LOCAL_AI) &&
                     !this.isLoading &&
                     this.active &&
                     (!this.rateLimitInfo?.rateLimit || this.rateLimitInfo?.currentMessageCount !== this.rateLimitInfo?.rateLimit) &&
@@ -235,17 +235,6 @@
             </div>
         }
         <jhi-chat-status-bar [stages]="stages" />
-        @if (!userAccepted) {
-            <div class="p-chat">
-                <div class="message-text" jhiTranslate="artemisApp.exerciseActions.externalLLMUsage.popUpMessage"></div>
-                <div class="button-container">
-                    <button type="button" class="btn btn-primary" #acceptButton (click)="acceptPermission()" jhiTranslate="artemisApp.exerciseChatbot.accept"></button>
-                    @if (showDeclineButton()) {
-                        <button type="button" class="btn btn-secondary" (click)="closeChat()" jhiTranslate="artemisApp.exerciseChatbot.decline"></button>
-                    }
-                </div>
-            </div>
-        }
         <div class="scroll-to-bottom" [hidden]="isScrolledToBottom" (click)="scrollToBottom('smooth')" #scrollArrow>
             <fa-icon [icon]="faArrowDown" />
         </div>
@@ -257,7 +246,7 @@
         @if (!active) {
             <div class="client-chat-error" [jhiTranslate]="IrisErrorMessageKey.IRIS_NOT_AVAILABLE"></div>
         }
-        @if (userAccepted) {
+        @if (userAccepted === LLMSelectionDecision.CLOUD_AI || userAccepted === LLMSelectionDecision.LOCAL_AI) {
             <div class="chat-input">
                 <textarea
                     [(ngModel)]="newMessageTextContent"
@@ -295,6 +284,8 @@
                     <span class="disclaimer-message" jhiTranslate="artemisApp.exerciseChatbot.disclaimerGPT"></span>
                 }
             </div>
+        } @else if (userAccepted === LLMSelectionDecision.NO_AI) {
+            <div class="client-chat-error" [jhiTranslate]="IrisErrorMessageKey.AI_USAGE_DECLINED"></div>
         }
     </div>
 </div>
