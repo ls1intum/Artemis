@@ -4,6 +4,6 @@ File Upload Exercise
 ====================
 
 .. note::
-   This documentation has been migrated to the new documentation system.
+   This documentation has been migrated to the new documentation.
 
-   Please visit: `File Upload Exercise Documentation <https://docs.artemis.cit.tum.de/instructor/exercises/file-upload-exercise>`_
+   Please visit: `File Upload Exercise Documentation <https://ls1intum.github.io/Artemis/instructor/exercises/file-upload-exercise>`_
