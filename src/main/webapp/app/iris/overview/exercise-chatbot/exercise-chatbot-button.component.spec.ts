@@ -39,9 +39,6 @@ describe('ExerciseChatbotButtonComponent', () => {
         currentRatelimitInfo: jest.fn().mockReturnValue(of({})),
         handleRateLimitInfo: jest.fn(),
     };
-    const userMock = {
-        acceptLLMUsage: jest.fn(),
-    };
     const accountMock = { selectedLLMUsageTimestamp: dayjs() } as User;
 
     const mockExerciseId = 123;
@@ -85,7 +82,7 @@ describe('ExerciseChatbotButtonComponent', () => {
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ActivatedRoute, useValue: mockActivatedRoute },
                 { provide: IrisStatusService, useValue: statusMock },
-                { provide: UserService, useValue: userMock },
+                { provide: UserService, useValue: {} },
             ],
         })
             .compileComponents()
