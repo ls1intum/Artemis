@@ -62,9 +62,15 @@ describe('StudentsReseatingDialogComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('openDialog() should initialize fields correctly and fetch rooms', () => {
+    it('should request used rooms on creation', () => {
         const loadSpy = jest.spyOn(service, 'loadRoomsUsedInExam').mockReturnValue(of(rooms));
+        fixture.detectChanges();
 
+        expect(loadSpy).toHaveBeenCalledExactlyOnceWith(course.id, exam.id);
+        expect(component['roomsUsedInExam']()).toEqual(rooms);
+    });
+
+    it('openDialog() should initialize fields correctly', () => {
         component.openDialog(examUser);
         fixture.detectChanges();
 
@@ -72,8 +78,6 @@ describe('StudentsReseatingDialogComponent', () => {
         expect(component.selectedRoomNumber()).toBe('2.0.1');
         expect(component.selectedSeat()).toBe('');
         expect(component.dialogVisible()).toBeTrue();
-        expect(loadSpy).toHaveBeenCalledExactlyOnceWith(course.id, exam.id);
-        expect(component['roomsUsedInExam']()).toEqual(rooms);
     });
 
     it('openDialog() should fallback to empty rooms list on error', () => {
@@ -93,22 +97,27 @@ describe('StudentsReseatingDialogComponent', () => {
         expect(component.dialogVisible()).toBeFalse();
     });
 
-    it('calling openDialog() twice should update fields to the latest user', () => {
-        const userA = { ...examUser, id: 20, plannedRoom: '1.1.1', plannedSeat: 'A1' };
-        const userB = { ...examUser, id: 30, plannedRoom: '2.2.2', plannedSeat: 'B2' };
+    it('calling openDialog() twice should update fields to the latest user and trigger a new seat load for persisted rooms', () => {
+        const userA = { ...examUser, id: 20, plannedRoom: rooms[0].roomNumber, plannedSeat: 'A1' };
+        const userB = { ...examUser, id: 30, plannedRoom: rooms[1].roomNumber, plannedSeat: 'B2' };
 
-        const loadSpy = jest.spyOn(service, 'loadRoomsUsedInExam').mockReturnValue(of(rooms));
+        const loadUsedRoomsSpy = jest.spyOn(service, 'loadRoomsUsedInExam').mockReturnValue(of(rooms));
+        const loadSeatsInSelectedRoomSpy = jest.spyOn(service, 'loadSeatsOfExamRoom');
 
         component.openDialog(userA);
         fixture.detectChanges();
+
+        expect(loadSeatsInSelectedRoomSpy).toHaveBeenCalledExactlyOnceWith(rooms[0].id);
 
         component.openDialog(userB);
         fixture.detectChanges();
 
         expect(component.examUser()).toEqual(userB);
-        expect(component.selectedRoomNumber()).toBe('2.2.2');
+        expect(component.selectedRoomNumber()).toBe(rooms[1].roomNumber);
         expect(component.selectedSeat()).toBe('');
-        expect(loadSpy).toHaveBeenCalledTimes(2);
+        expect(loadUsedRoomsSpy).toHaveBeenCalledOnce();
+        expect(loadSeatsInSelectedRoomSpy).toHaveBeenCalledTimes(2);
+        expect(loadSeatsInSelectedRoomSpy).toHaveBeenLastCalledWith(rooms[1].id);
     });
 
     it('should call reseatStudent with correct values', () => {

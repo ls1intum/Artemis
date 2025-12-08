@@ -4,6 +4,7 @@ import {
     Component,
     InputSignal,
     ModelSignal,
+    OnInit,
     OutputEmitterRef,
     Signal,
     ViewEncapsulation,
@@ -36,7 +37,7 @@ import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.com
     encapsulation: ViewEncapsulation.None,
     imports: [FormsModule, TranslateDirective, FaIconComponent, NgbTypeaheadModule, ArtemisTranslatePipe, DialogModule, ButtonModule, HelpIconComponent],
 })
-export class StudentsReseatingDialogComponent {
+export class StudentsReseatingDialogComponent implements OnInit {
     // Icons
     protected readonly faBan = faBan;
     protected readonly faChair = faChair;
@@ -65,9 +66,13 @@ export class StudentsReseatingDialogComponent {
                 return;
             }
 
-            this.studentsRoomDistributionService.loadSeatsOfExamRoom(this.selectedRoomId()!).subscribe({
+            const roomId = this.selectedRoomId()!;
+            this.studentsRoomDistributionService.loadSeatsOfExamRoom(roomId).subscribe({
                 next: (data) => {
-                    this.seatsOfSelectedRoom.set(data);
+                    if (this.selectedRoomId() === roomId) {
+                        // ignore late responses
+                        this.seatsOfSelectedRoom.set(data);
+                    }
                 },
                 // An error is expected whenever the room is not persisted
                 error: () => this.seatsOfSelectedRoom.set({ seats: [] }),
@@ -75,12 +80,7 @@ export class StudentsReseatingDialogComponent {
         });
     }
 
-    openDialog(examUser: ExamUser): void {
-        this.examUser.set(examUser);
-        this.selectedRoomNumber.set(this.examUser()!.plannedRoom ?? '');
-        this.selectedSeat.set('');
-        this.dialogVisible.set(true);
-
+    ngOnInit(): void {
         this.studentsRoomDistributionService.loadRoomsUsedInExam(this.courseId(), this.exam().id!).subscribe({
             next: (rooms: RoomForDistributionDTO[]) => {
                 this.roomsUsedInExam.set(rooms);
@@ -89,6 +89,13 @@ export class StudentsReseatingDialogComponent {
                 this.roomsUsedInExam.set([]);
             },
         });
+    }
+
+    openDialog(examUser: ExamUser): void {
+        this.examUser.set(examUser);
+        this.selectedRoomNumber.set(this.examUser()!.plannedRoom ?? '');
+        this.selectedSeat.set('');
+        this.dialogVisible.set(true);
     }
 
     closeDialog(): void {
@@ -161,7 +168,7 @@ export class StudentsReseatingDialogComponent {
     };
 
     private findAllMatchingSeatsForTerm = (term: string): string[] => {
-        const potentialSeats: string[] = this.seatsOfSelectedRoom().seats;
+        const potentialSeats: string[] = this.seatsOfSelectedRoom().seats.map((seatName: string): string => seatName.toLowerCase());
 
         const trimmed = term.trim();
         if (!trimmed) {
