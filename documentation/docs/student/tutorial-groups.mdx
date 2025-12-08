@@ -1,0 +1,38 @@
+---
+id: tutorial-groups
+title: Tutorial Groups
+sidebar_label: Tutorial Groups (Student)
+---
+
+import Image, {ImageSize} from "../../src/components/Image/Image";
+
+import studentsOwnGroupImg from './assets/tutorial-groups/students-own-groups.png';
+import studentsAllGroupImg from './assets/tutorial-groups/students-all-groups.png';
+import studentsDetailImg from './assets/tutorial-groups/students-detail.png';
+
+# Tutorial Groups
+
+## Viewing Tutorial Groups as a Student
+
+<iframe
+    src="https://live.rbg.tum.de/w/artemisintro/27043?video_only=1&t=0"
+    title="Tutorial Groups Student View"
+    allowFullScreen="1"
+    frameBorder="0"
+    width="600"
+    height="350"
+/>
+
+Students can access their tutorial groups for a specific course by navigating to the course's <code>Tutorial Group</code> page.
+
+The view is split into two tabs that can be changed via the toolbar. In the <code>Show my tutorial groups</code> tab, students can see the groups for which they are registered. Each group is displayed as a card with the date of the next session in the center. At the bottom of the card, a link to the tutorial groups communication channel is shown (if this feature is activated). On the right side of the page, all course-wide holidays are displayed where no tutorial groups meet.
+
+<Image src={studentsOwnGroupImg} alt={"student-own-groups"} size={ImageSize.large} />
+
+In the <code>Show All Tutorial Groups</code> tab, students can see the main information for all tutorial groups of the course. This includes the name, utilization and responsible tutor. This page is useful if they want to switch to a less crowded group. Then they can pick one via low utilization and contact the tutor so that they get registered.
+
+<Image src={studentsAllGroupImg} alt={"student-all-groups"} size={ImageSize.large} />
+
+To see more details about a tutorial group (including an overview of all sessions), the student can click on the name of the tutorial group. This will open the detail page of the respective group. The session table is shown at the bottom of the page. By default, only the top row is displayed which is the next session. The student can expand the whole table by clicking on the <code>Show All Sessions</code> button at the bottom.
+
+<Image src={studentsDetailImg} alt={"student-detail"} size={ImageSize.large} />
