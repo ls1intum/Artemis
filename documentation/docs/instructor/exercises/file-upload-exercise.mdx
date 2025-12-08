@@ -1,11 +1,3 @@
----
-id: file-upload-exercise
-title: File Upload Exercise
-sidebar_label: File Upload Exercise
----
-
-import Callout from "../../../src/components/Callout/Callout";
-import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
 import Image, {ImageSize} from "../../../src/components/Image/Image";
 
 import courseManagement from './assets/general/course-management.png';
@@ -38,20 +30,20 @@ The following sections describe the supported features and the process of creati
 - Open <img src={courseManagement} alt="Course Management" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />.
 - Navigate into **Exercises** of your preferred course.
 
-<Image src={courseManagementDashboard} alt="Course Management Dashboard" size={ImageSize.large} />
+<Image src={courseManagementDashboard} alt="Course Management Dashboard" size={ImageSize.large} caption="Course dashboard with the Exercises button" />
 
 - Click on **Create a new file upload exercise**.
 
-<Image src={createNewFileUploadExercise} alt="Create New File Upload Exercise" size={ImageSize.large} />
+<Image src={createNewFileUploadExercise} alt="Create New File Upload Exercise" size={ImageSize.large} caption="Button to create a new file upload exercise" />
 
 - Fill out all mandatory values and click on <img src={saveButton} alt="Save Button" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />.
 - The exercise-specific **File Pattern** defines which file types students can upload as solution. The input field accepts all file endings without leading dot separated by commas.
 
-<Image src={fileUploadExerciseCreationPattern} alt="File Upload Exercise Creation Pattern" size={ImageSize.large} />
+<Image src={fileUploadExerciseCreationPattern} alt="File Upload Exercise Creation Pattern" size={ImageSize.large} caption="File upload exercise creation form with file pattern configuration" />
 
 - Result: **File Upload Exercise**.
 
-<Image src={courseDashboardExerciseFileUpload} alt="Course Dashboard Exercise File Upload" size={ImageSize.large} />
+<Image src={courseDashboardExerciseFileUpload} alt="Course Dashboard Exercise File Upload" size={ImageSize.large} caption="Exercise Management Dashboard showing the created file upload exercise" />
 
 - Click the <img src={editButton} alt="Edit Button" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button of the file upload exercise to update the configuration and assessment instructions.
 - You can get an overview of the exercise by clicking on the title.
@@ -61,15 +53,15 @@ The following sections describe the supported features and the process of creati
 - When the exercise is released, the students can upload the requested file.
 - They can choose a file with <img src={chooseFileButton} alt="Browse Button" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> and then submit the file with <img src={submitButton} alt="Submit Button" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />.
 
-<Image src={fileUploadExerciseStudentView} alt="File Upload Exercise Student View" size={ImageSize.large} />
+<Image src={fileUploadExerciseStudentView} alt="File Upload Exercise Student View" size={ImageSize.large} caption="Student view of the file upload exercise before submission" />
 
 - After a file is uploaded it can then be downloaded again by clicking on **Download file**.
 
-<Image src={fileUploadExerciseStudentViewSubmitted} alt="File Upload Exercise Student View Submitted" size={ImageSize.large} />
+<Image src={fileUploadExerciseStudentViewSubmitted} alt="File Upload Exercise Student View Submitted" size={ImageSize.large} caption="Student view after successfully submitting a file" />
 
 ## Assessment
 
 - When the due date is over, you can assess the submissions. From the assessment dashboard, go to exercise the assessment dashboard of the file upload exercise.
 - There you can assess the submitted student submissions, by first downloading the file, and then adding feedback with points.
 
-<Image src={fileUploadExerciseAssessment} alt="File Upload Exercise Assessment" size={ImageSize.large} />
+<Image src={fileUploadExerciseAssessment} alt="File Upload Exercise Assessment" size={ImageSize.large} caption="Assessment view for grading file upload submissions" />
