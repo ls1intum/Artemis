@@ -2,8 +2,94 @@
 id: exams
 title: Exams Guide for Instructors
 sidebar_label: Exams
-sidebar_position: 3
 ---
+
+import Callout from "../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../src/components/Callout/Callout.types";
+import Image, {ImageSize} from "../../src/components/Image/Image";
+import timeline from './assets/exams/timeline.png';
+import courseManagement from './assets/exams/buttons/course_management.png';
+import examsButton from './assets/exams/buttons/exams.png';
+import createNewExam from './assets/exams/buttons/create_new_exam.png';
+import examConfiguration from './assets/exams/exam_configuration.png';
+import examConduction from './assets/exams/exam_conduction.png';
+import examExercises from './assets/exams/exam_exercises.png';
+import examAssessment from './assets/exams/exam_assessment.png';
+import importExam from './assets/exams/buttons/import_exam.png';
+import importIndividualExam from './assets/exams/buttons/import_individual_exam.png';
+import examImportSelection from './assets/exams/exam_import_selection.png';
+import editButton from './assets/exams/buttons/edit.png';
+import exerciseVariants from './assets/exams/exercise_variants.png';
+import importExerciseGroup from './assets/exams/buttons/import_exercise_group.png';
+import selectExerciseGroup from './assets/exams/buttons/select_exercise_group.png';
+import exerciseGroupImportExam from './assets/exams/exercise_group_import_exam.png';
+import exerciseGroupImportExercises from './assets/exams/exercise_group_import_exercises.png';
+import addExercises from './assets/exams/add_exercises.png';
+import configureGradingButton from './assets/exams/buttons/configure_grading.png';
+import configureGrading from './assets/exams/configure_grading.png';
+import importStudents from './assets/exams/buttons/import_students.png';
+import importStudentsButton from './assets/exams/buttons/import_students_button.png';
+import importStudentsDialog from './assets/exams/import_students_dialog.png';
+import registerCourseStudents from './assets/exams/buttons/register_course_students.png';
+import addStudents from './assets/exams/add_students.png';
+import generateIndividualExams from './assets/exams/buttons/generate_individual_exams.png';
+import generateMissingExams from './assets/exams/buttons/generate_missing_exams.png';
+import prepareExerciseStart from './assets/exams/buttons/prepare_exercise_start.png';
+import lockRepo from './assets/exams/buttons/lock_repo.png';
+import unlockRepo from './assets/exams/buttons/unlock_repo.png';
+import studentExams from './assets/exams/student_exams.png';
+import individualWorkingTime from './assets/exams/individual_working_time.png';
+import testRunManagement from './assets/exams/test_run_management.png';
+import createTestRun from './assets/exams/buttons/create_test_run.png';
+import createTestRunPopup from './assets/exams/create_test_run.png';
+import assessTestRuns from './assets/exams/buttons/assess_test_runs.png';
+import testRunConduction from './assets/exams/test_run_conduction.png';
+import summaryButton from './assets/exams/buttons/summary.png';
+import examChecklist from './assets/exams/exam_checklist.png';
+import examChecklistOverview from './assets/exams/exam_checklist_overview.png';
+import exerciseNotification from './assets/exams/exercise-notification.png';
+import evaluateQuizzes from './assets/exams/buttons/evaluate_quizzes.png';
+import assessUnsubmittedStudentExams from './assets/exams/buttons/assess_unsubmitted_student_exams.png';
+import assessmentDashboard from './assets/exams/assessment_dashboard.png';
+import exerciseDashboard from './assets/exams/buttons/exercise_dashboard.png';
+import startNewAssessment from './assets/exams/buttons/start_new_assessment.png';
+import programmingAssessment from './assets/exams/programming_assessment.png';
+import setSecondCorrectionExam from './assets/exams/set_second_correction_exam.png';
+import secondCorrectionStatus from './assets/exams/second_correction_status.png';
+import examAssessmentDashboardSecondCorrection from './assets/exams/exam_assessment_dashboard_second_correction.png';
+import exerciseGroupsButton from './assets/exams/buttons/exercise_groups.png';
+import scoresButton from './assets/exams/buttons/scores.png';
+import scoresTable from './assets/exams/scores_table.png';
+import suspiciousBehaviorButton from './assets/exams/buttons/suspicious_behavior.png';
+import suspiciousBehaviorExamChecklist from './assets/exams/suspicious_behavior_exam_checklist.png';
+import analyzeSessions from './assets/exams/buttons/analyze_sessions.png';
+import viewSessions from './assets/exams/buttons/view_sessions.png';
+import analysisOptions from './assets/exams/analysis_options.png';
+import suspiciousBehaviorAnalysisResults from './assets/exams/suspicious_behavior_analysis_results.png';
+import viewPlagiarismResults from './assets/exams/buttons/view_plagiarism_results.png';
+import viewCases from './assets/exams/buttons/view_cases.png';
+import plagiarismCaseOverview from './assets/exams/plagiarism_case_overview.png';
+import plagiarism from './assets/exams/plagiarism.png';
+import checkPlagiarism from './assets/exams/buttons/check_plagiarism.png';
+import examTimelineButton from './assets/exams/buttons/exam_timeline.png';
+import examTimelineExample from './assets/exams/exam_timeline_example.png';
+import gradeKeyButton from './assets/exams/buttons/grade_key.png';
+import generateDefaultGradeKey from './assets/exams/buttons/generate_default_grade_key.png';
+import addGradeStep from './assets/exams/buttons/add_grade_step.png';
+import importExportButton from './assets/exams/buttons/import_export.png';
+import gradeKeyEditor from './assets/exams/grade_key_editor.png';
+import exportButton from './assets/exams/buttons/export.png';
+import examStatistics from './assets/exams/exam_statistics.png';
+import examExampleSolutionPublicationDate from './assets/exams/exam_example_solution_publication_date.png';
+import complaintResponse from './assets/exams/complaint_response.png';
+import uploadImages from './assets/exams/upload_images.png';
+import verifyAttendance from './assets/exams/buttons/verify_attendance.png';
+import verifyAttendanceVerificationMissing from './assets/exams/verify_attendance_verification_missing.png';
+import verifyAttendanceVerificationSuccessful from './assets/exams/verify_attendance_verification_successful.png';
+import examOverview from './assets/exams/exam_overview.png';
+import studentListView from './assets/exams/student_list_view.png';
+import studentListViewExportSignatures from './assets/exams/student_list_view_export_signatures.png';
+import studentDetailView from './assets/exams/student_detail_view.png';
 
 # Exams
 
@@ -11,8 +97,7 @@ Artemis now includes an online exam mode that allows you to create, conduct, and
 
 ## Timeline of an Artemis Online Exam
 
-![Timeline of an Artemis Exam](./assets/exams/timeline.png)
-*Timeline of an Artemis Online Exam*
+<Image src={timeline} alt="Timeline of an Artemis Exam" size={ImageSize.large} caption="Timeline of an Artemis Online Exam" />
 
 ## 1. Creation and Configuration
 
@@ -21,10 +106,10 @@ During the exam creation and configuration, you can create your exam and configu
 ### 1.1 Accessing the Exam Management Page
 
 - Log in to Artemis with your account credentials.
-- Click on ![Course Management](./assets/exams/buttons/course_management.png).
-- Click on ![Exams](./assets/exams/buttons/exams.png) for your course. It will open the *Exam Management Screen*.
+- Click on <img src={courseManagement} alt="Course Management" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />.
+- Click on <img src={examsButton} alt="Exams" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> for your course. It will open the *Exam Management Screen*.
 - Here you have access to all the exams of your course. All aspects of the exam are managed from the management screen.
-- You can create an exam by clicking on ![Create New Exam](./assets/exams/buttons/create_new_exam.png).
+- You can create an exam by clicking on <img src={createNewExam} alt="Create New Exam" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />.
 
 ### 1.2 Create and Configure Exam
 
@@ -36,7 +121,7 @@ During the exam creation and configuration, you can create your exam and configu
 
 #### 1.2.2 Create Exam
 
-- When you click on ![Create New Exam](./assets/exams/buttons/create_new_exam.png) you are presented with the *Create Exam* view. Here you can set the basic information such as `title`, `examiner` etc.
+- When you click on <img src={createNewExam} alt="Create New Exam" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> you are presented with the *Create Exam* view. Here you can set the basic information such as `title`, `examiner` etc.
 - You can choose between the exam and test exam mode.
 - The [timeline of the exam](#timeline-of-an-artemis-online-exam) is defined by the dates: `visible from`, `start of working time`, `end of working time`, `release date of results`, `begin of student review`, `end of student review`.
 - The first three dates are mandatory when you create an exam. The rest can be set when required.
@@ -46,24 +131,20 @@ During the exam creation and configuration, you can create your exam and configu
 - Artemis will randomize the order of the exercises for each student if you activate `randomize order of exercise groups`.
 - Finally, you can fill out the exam `start text` and `end text`. Artemis will present these texts to the students during the [exam conduction](#2-conduction), at the *Start-* and *End* page respectively.
 
-![Create and Configure](./assets/exams/exam_configuration.png)
-*Create and Configure the Exam*
+<Image src={examConfiguration} alt="Create and Configure" size={ImageSize.large} caption="Create and Configure the Exam" />
 
-![Exam Conduction](./assets/exams/exam_conduction.png)
-*Exam Conduction*
+<Image src={examConduction} alt="Exam Conduction" size={ImageSize.large} caption="Exam Conduction" />
 
-![Exam Exercises](./assets/exams/exam_exercises.png)
-*Exam Exercises*
+<Image src={examExercises} alt="Exam Exercises" size={ImageSize.large} caption="Exam Exercises" />
 
-![Exam Assessment and Student Review](./assets/exams/exam_assessment.png)
-*Exam Assessment and Student Review*
+<Image src={examAssessment} alt="Exam Assessment and Student Review" size={ImageSize.large} caption="Exam Assessment and Student Review" />
 
 #### 1.2.3 Import Exam
 
-- Instead of creating a new exam, you can import an existing exam by clicking on ![Import Exam](./assets/exams/buttons/import_exam.png) from any of the courses you are an instructor in.
-- Artemis displays a list of all available exams. To select one specific exam for the import, click on the ![Import Individual Exam](./assets/exams/buttons/import_individual_exam.png) button.
+- Instead of creating a new exam, you can import an existing exam by clicking on <img src={importExam} alt="Import Exam" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> from any of the courses you are an instructor in.
+- Artemis displays a list of all available exams. To select one specific exam for the import, click on the <img src={importIndividualExam} alt="Import Individual Exam" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button.
 
-![List with all exams available for import](./assets/exams/exam_import_selection.png)
+<Image src={examImportSelection} alt="List with all exams available for import" size={ImageSize.large} caption="List with all exams available for import" />
 
 - You are now presented with the *Import Exam* view. All information except for the dates are copied from the exam you selected for the import. You can find more information regarding this view at the section [create exam](#122-create-exam).
 - Additionally, you can select or deselect exercises which are imported alongside the exam. You can find more information regarding the exercise import in the [section regarding the exercise group import](#131-import-exercise-groups).
@@ -75,10 +156,9 @@ During the exam creation and configuration, you can create your exam and configu
 - You can distinguish between mandatory exercise groups and non-mandatory exercise groups.
 - Artemis always includes mandatory exercise groups in the individual exam of a student.
 - Non-mandatory exercise groups can be left out, if there are more exercise groups than the `number of exercises` defined in the [exam configuration](#12-create-and-configure-exam).
-- By default, every exercise group is mandatory. You can set the `mandatory` flag when you add an exercise group initially, or later by clicking ![Edit](./assets/exams/buttons/edit.png) on the exercise group.
+- By default, every exercise group is mandatory. You can set the `mandatory` flag when you add an exercise group initially, or later by clicking <img src={editButton} alt="Edit" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> on the exercise group.
 
-![Exercise Groups with different Exercise Variants](./assets/exams/exercise_variants.png)
-*Exercise Groups with different Exercise Variants*
+<Image src={exerciseVariants} alt="Exercise Groups with different Exercise Variants" size={ImageSize.large} caption="Exercise Groups with different Exercise Variants" />
 
 #### 1.3.1 Import Exercise Groups
 
@@ -87,37 +167,36 @@ During the exam creation and configuration, you can create your exam and configu
 
 **Step 1: Select Exam**
 
-- When you click on ![Import Exercise Group](./assets/exams/buttons/import_exercise_group.png), you can select one exam from which exercise group(s) should be imported.
-- To select one exam, click on ![Select Exercise Group](./assets/exams/buttons/select_exercise_group.png).
+- When you click on <img src={importExerciseGroup} alt="Import Exercise Group" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />, you can select one exam from which exercise group(s) should be imported.
+- To select one exam, click on <img src={selectExerciseGroup} alt="Select Exercise Group" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />.
 
-![First step in the process to import exercise group(s). You can select one exam, from which exercise group(s) should be imported](./assets/exams/exercise_group_import_exam.png)
+<Image src={exerciseGroupImportExam} alt="First step in the process to import exercise group(s). You can select one exam, from which exercise group(s) should be imported" size={ImageSize.large} caption="First step in the process to import exercise group(s). You can select one exam, from which exercise group(s) should be imported" />
 
 **Step 2: Select Exercises and Exercise Groups**
 
 - In the next step you can select or deselect exercises which should be imported alongside the exercise groups.
 - You can also change the `title` and `isMandatory` of an exercise group, as well as the `title` (and `short-name` for programming exercises) for the individual exercises.
 - The title and short name of programming exercises must be unique. If you want to import an exercise group into the same course, you must change the title and short name before you can import the exercise group.
-- After you have started the import by clicking on ![Import Exam](./assets/exams/buttons/import_exam.png), Artemis checks if the title and short name of the selected programming exercise(s) are unique. If they are not unique, a warning is displayed and you have to change the corresponding title and short name.
+- After you have started the import by clicking on <img src={importExam} alt="Import Exam" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />, Artemis checks if the title and short name of the selected programming exercise(s) are unique. If they are not unique, a warning is displayed and you have to change the corresponding title and short name.
 
-:::note
-- Further changes to the individual exercises can be made after the import by editing the respective exercise.
-- Programming exercises are imported using their initial configuration. This import functionality cannot be used for changing the submission policy, for activating / deactivating the static code analysis or for creating new build plans. In this case, please import the exercises individually into the exercise groups.
-:::
+<Callout variant={CalloutVariant.info}>
+  - Further changes to the individual exercises can be made after the import by editing the respective exercise.
+  - Programming exercises are imported using their initial configuration. This import functionality cannot be used for changing the submission policy, for activating / deactivating the static code analysis or for creating new build plans. In this case, please import the exercises individually into the exercise groups.
+</Callout>
 
-![Second step in the process to import exercise group(s). You can select or deselect individual exercises, which should be imported alongside the exercise group(s).](./assets/exams/exercise_group_import_exercises.png)
+<Image src={exerciseGroupImportExercises} alt="Second step in the process to import exercise group(s). You can select or deselect individual exercises, which should be imported alongside the exercise group(s)." size={ImageSize.large} caption="Second step in the process to import exercise group(s). You can select or deselect individual exercises, which should be imported alongside the exercise group(s)." />
 
 ### 1.4 Add Exercises
 
 - Exercise groups can contain multiple exercises. For every [student exam](#16-manage-student-exams), Artemis will randomly select one exercise per [exercise group](#13-exercise-groups).
 
-:::note
-If you want all student to have the same exam, define only one exercise per [exercise group](#13-exercise-groups).
-:::
+<Callout variant={CalloutVariant.info}>
+  If you want all student to have the same exam, define only one exercise per [exercise group](#13-exercise-groups).
+</Callout>
 
 - To add exercises navigate to the *Exercise Groups* of the exam. On the header of each [exercise group](#13-exercise-groups) you will find the available exercise types. You can choose between `creating a new exercise` or `importing an existing one` from your courses.
 
-![Add different Exercises](./assets/exams/add_exercises.png)
-*Add different Exercises*
+<Image src={addExercises} alt="Add different Exercises" size={ImageSize.large} caption="Add different Exercises" />
 
 - For exercise types `text` and `modeling` you can also define example submissions and example assessments to guide your assessor team.
 - Assessors will review the example submissions and assessments in order to familiarise themselves with the exercise and assessment instructions, before they can assess the real submissions.
@@ -128,25 +207,25 @@ If you want all student to have the same exam, define only one exercise per [exe
 
   - You can check the option to `allow manual assessment`.
 
-    :::note
-    If you do not set this flag, your assessors will not be able to manually assess the student's submissions during the [assessment process](#3-assessment).
-    :::
+    <Callout variant={CalloutVariant.info}>
+      If you do not set this flag, your assessors will not be able to manually assess the student's submissions during the [assessment process](#3-assessment).
+    </Callout>
 
   - You can activate `Run Tests once after Due Date`. This will compile and run the test suite on all the student submissions once after the set date.
-  - After you add a programming exercise you can configure the grading via ![Configure Grading Button](./assets/exams/buttons/configure_grading.png).
+  - After you add a programming exercise you can configure the grading via <img src={configureGradingButton} alt="Configure Grading Button" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />.
 
   - In the *Configure Grading* screen, you can tweak the `weight` of the tests, the `bonus multiplier` and add `bonus points`.
   - You can hide tests so that they are not executed during the exam conduction by setting the test case visibility to `After Release Date of Results.` Students can not receive feedback from hidden tests during the exam conduction. This option is set by default when creating new programming exercises within an exam.
 
-    :::note
-    When importing exercises, the test case visibility of imported exercise will equal the visibility of the original exercise. You can adjust the test case visibility in the import `Assessment` section to be set to `After Release Date of Results`.
-    :::
+    <Callout variant={CalloutVariant.info}>
+      When importing exercises, the test case visibility of imported exercise will equal the visibility of the original exercise. You can adjust the test case visibility in the import `Assessment` section to be set to `After Release Date of Results`.
+    </Callout>
 
-    :::note
-    If you hide all tests, the students will only be able to see if their submission compiles during the conduction. Set the `Run Tests once after Due Date` after the exam end date to achieve this effect.
-    :::
+    <Callout variant={CalloutVariant.info}>
+      If you hide all tests, the students will only be able to see if their submission compiles during the conduction. Set the `Run Tests once after Due Date` after the exam end date to achieve this effect.
+    </Callout>
 
-    ![Configure the Grading of a Programming Exercise](./assets/exams/configure_grading.png)
+    <Image src={configureGrading} alt="Configure the Grading of a Programming Exercise" size={ImageSize.large} caption="Configure the Grading of a Programming Exercise" />
     *Configure the Grading of a Programming Exercise*
 
   - The *Configure Grading* screen also allows the configuration of submission policies.
@@ -156,26 +235,24 @@ If you want all student to have the same exam, define only one exercise per [exe
 - To register students to the exam, navigate from the exam management to the *Students* page. Artemis offers two options to register students. You can:
 
   1. Add students manually by searching via the search bar.
-  2. To import multiple students, click on the ![Import Students](./assets/exams/buttons/import_students.png) button and provide a `CSV` file in the Import Users dialog. The required fields in the `CSV` file include the `registrationNumber` and the `login`, while `email`, `firstname`, `lastname`, `seat`, and `room` are optional. Note that the `room` and `seat` fields are only necessary for the exam participation check. You can find an example file at `docs/user/exams/instructor/example_import_students.csv`. To begin the import, press the ![Import Students Button](./assets/exams/buttons/import_students_button.png) button.
+  2. To import multiple students, click on the <img src={importStudents} alt="Import Students" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button and provide a `CSV` file in the Import Users dialog. The required fields in the `CSV` file include the `registrationNumber` and the `login`, while `email`, `firstname`, `lastname`, `seat`, and `room` are optional. Note that the `room` and `seat` fields are only necessary for the exam participation check. You can find an example file at `docs/user/exams/instructor/example_import_students.csv`. To begin the import, press the <img src={importStudentsButton} alt="Import Students Button" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button.
 
-     ![Import Students Dialog](./assets/exams/import_students_dialog.png)
-     *Import Students Dialog*
+     <Image src={importStudentsDialog} alt="Import Students Dialog" size={ImageSize.large} caption="Import Students Dialog" />
 
-  3. Register every student in the course by pressing the ![Register Course Students](./assets/exams/buttons/register_course_students.png) button.
+  3. Register every student in the course by pressing the <img src={registerCourseStudents} alt="Register Course Students" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button.
 
-:::note
-Just registering the students to the exam will not allow them to participate in the exam. First, individual [student exams](#16-manage-student-exams) must be generated.
-:::
+<Callout variant={CalloutVariant.info}>
+  Just registering the students to the exam will not allow them to participate in the exam. First, individual [student exams](#16-manage-student-exams) must be generated.
+</Callout>
 
-:::note
-Artemis also supports validating participants signatures for on-site exams.
-For more information, please see [Exam Participation Checker](#exam-participation-checker).
-:::
+<Callout variant={CalloutVariant.info}>
+  Artemis also supports validating participants signatures for on-site exams.
+  For more information, please see [Exam Participation Checker](#exam-participation-checker).
+</Callout>
 
 - You can also remove students from the exam. When you do so, you have the option to also delete their participations and submissions linked to the user's [student exam](#16-manage-student-exams).
 
-![Register Students Page](./assets/exams/add_students.png)
-*Register Students Page*
+<Image src={addStudents} alt="Register Students Page" size={ImageSize.large} caption="Register Students Page" />
 
 ### 1.6 Manage Student Exams
 
@@ -183,68 +260,64 @@ For more information, please see [Exam Participation Checker](#exam-participatio
 - Student exams are managed via the *Student Exams* page.
 - Here you can have an overview of all student exams. When you press `View` on a student exam, you can view the `details of the student`, the allocated `working time`, their `participation status`, their `summary`, as well as their `scores`. Additionally, you will also be able to view which assessor is responsible for each exercise.
 
-:::note
-You can change the individual working time of students from here. The screenshot *Individual Working Time* below shows where you can do that.
-:::
+<Callout variant={CalloutVariant.info}>
+  You can change the individual working time of students from here. The screenshot *Individual Working Time* below shows where you can do that.
+</Callout>
 
-- To generate student exams you must click on ![Generate Individual Exams](./assets/exams/buttons/generate_individual_exams.png). This will trigger Artemis to create a student exam for every registered user.
+- To generate student exams you must click on <img src={generateIndividualExams} alt="Generate Individual Exams" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />. This will trigger Artemis to create a student exam for every registered user.
 - Artemis determines the number of exercises from the [exam configuration](#12-create-and-configure-exam) and randomly selects one exercise per [exercise group](#13-exercise-groups).
 
-:::note
-![Generate Individual Exams](./assets/exams/buttons/generate_individual_exams.png) button will be locked once the exam becomes visible to the students. You cannot perform changes to student exams once the [exam conduction](#2-conduction) has started.
-:::
+<Callout variant={CalloutVariant.info}>
+  <img src={generateIndividualExams} alt="Generate Individual Exams" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button will be locked once the exam becomes visible to the students. You cannot perform changes to student exams once the [exam conduction](#2-conduction) has started.
+</Callout>
 
-- If you have added more students recently, you can choose to ![Generate Missing Exams](./assets/exams/buttons/generate_missing_exams.png).
-- ![Prepare Exercise Start](./assets/exams/buttons/prepare_exercise_start.png) creates a participation for each exercise for every registered user, based on their assigned exercises. It also creates the individual repositories and build plans for programming exercises. This action can take a while if there are many registered students due to the communication between the version control (VC) and continuous integration (CI) server.
+- If you have added more students recently, you can choose to <img src={generateMissingExams} alt="Generate Missing Exams" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />.
+- <img src={prepareExerciseStart} alt="Prepare Exercise Start" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> creates a participation for each exercise for every registered user, based on their assigned exercises. It also creates the individual repositories and build plans for programming exercises. This action can take a while if there are many registered students due to the communication between the version control (VC) and continuous integration (CI) server.
 
-:::warning
-You must trigger ![Prepare Exercise Start](./assets/exams/buttons/prepare_exercise_start.png) before the [exam conduction](#2-conduction) begins.
-:::
+<Callout variant={CalloutVariant.warning}>
+  You must trigger <img src={prepareExerciseStart} alt="Prepare Exercise Start" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> before the [exam conduction](#2-conduction) begins.
+</Callout>
 
-- On the *Student Exams* page, you can also maintain the repositories of student exams. This functionality only affects programming exercises. You can choose to ![Lock Repo](./assets/exams/buttons/lock_repo.png) and ![Unlock Repo](./assets/exams/buttons/unlock_repo.png) all student repositories.
+- On the *Student Exams* page, you can also maintain the repositories of student exams. This functionality only affects programming exercises. You can choose to <img src={lockRepo} alt="Lock Repo" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> and <img src={unlockRepo} alt="Unlock Repo" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> all student repositories.
 
-:::note
-Artemis locks and unlocks the student repositories automatically based on the individual exam start and end date. These buttons are typically not necessary unless something went wrong.
-:::
+<Callout variant={CalloutVariant.info}>
+  Artemis locks and unlocks the student repositories automatically based on the individual exam start and end date. These buttons are typically not necessary unless something went wrong.
+</Callout>
 
-![Student Exam Page](./assets/exams/student_exams.png)
-*Student Exam Page*
+<Image src={studentExams} alt="Student Exam Page" size={ImageSize.large} caption="Student Exam Page" />
 
-![Individual Working Time](./assets/exams/individual_working_time.png)
-*Individual Working Time*
+<Image src={individualWorkingTime} alt="Individual Working Time" size={ImageSize.large} caption="Individual Working Time" />
 
 ### 1.7 Conducting Test Runs
 
-![Test Run Management](./assets/exams/test_run_management.png)
-*Test Run Management*
+<Image src={testRunManagement} alt="Test Run Management" size={ImageSize.large} caption="Test Run Management" />
 
 - Test runs are designed to offer the instructors confidence that the [exam conduction](#2-conduction) will run smoothly. They allow you to experience the exam from the student's perspective. A test run is distinct from a [student exam](#16-manage-student-exams) and is not taken into consideration during the calculation of the exam scores.
 - You can manage your test runs from the *Test Run* page.
-- To create a new test run you can press ![Create Test Run Button](./assets/exams/buttons/create_test_run.png). This will open a popup where you can select an exercise for each [exercise group](#13-exercise-groups). You can also set the `working time`. A test run will have as many exercises as there are [exercise groups](#13-exercise-groups). It does consider the `number of exercises` set in the [exam configuration](#12-create-and-configure-exam).
+- To create a new test run you can press <img src={createTestRun} alt="Create Test Run" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />. This will open a popup where you can select an exercise for each [exercise group](#13-exercise-groups). You can also set the `working time`. A test run will have as many exercises as there are [exercise groups](#13-exercise-groups). It does consider the `number of exercises` set in the [exam configuration](#12-create-and-configure-exam).
 
-:::note
-Exercise groups with no exercises are ignored.
-:::
+<Callout variant={CalloutVariant.info}>
+  Exercise groups with no exercises are ignored.
+</Callout>
 
-![Create test run popup with one exercise variant selected for each exercise group.](./assets/exams/create_test_run.png)
+<Image src={createTestRunPopup} alt="Create test run popup with one exercise variant selected for each exercise group." size={ImageSize.large} caption="Create test run popup with one exercise variant selected for each exercise group." />
 *Create test run popup with one exercise variant selected for each exercise group.*
 
 - When you start the test run, you conduct the exam similar to how a student would. You can create submissions for the different exercises and end the test run.
-- An instructor can also assess his test run submissions. To do this, you must have completed at least one test run. To navigate to the assessment screen of the test runs click ![Assess Test Runs](./assets/exams/buttons/assess_test_runs.png).
+- An instructor can also assess his test run submissions. To do this, you must have completed at least one test run. To navigate to the assessment screen of the test runs click <img src={assessTestRuns} alt="Assess Test Runs" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />.
 
-![Test run conduction marked with the banner on the top left.](./assets/exams/test_run_conduction.png)
-*Test run conduction marked with the banner on the top left.*
+<Image src={testRunConduction} alt="Test run conduction marked with the banner on the top left." size={ImageSize.large} caption="Test run conduction marked with the banner on the top left." />
 
-:::note
-Only the creator of the test run is able to assess his submissions.
-:::
+<Callout variant={CalloutVariant.info}>
+  Only the creator of the test run is able to assess his submissions.
+</Callout>
 
-- You can view the results of the assessment of the test run by clicking on ![Summary](./assets/exams/buttons/summary.png). This page simulates the *Student Exam Summary* where the students can view their submissions and the results once they are published.
+- You can view the results of the assessment of the test run by clicking on <img src={summaryButton} alt="Summary" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />. This page simulates the *Student Exam Summary* where the students can view their submissions and the results once they are published.
 - Here instructors can also use the `complaint` feature and respond to it to conclude the full [exam timeline](#timeline-of-an-artemis-online-exam).
 
-:::note
-You should delete test runs before the actual exam conduction takes place.
-:::
+<Callout variant={CalloutVariant.info}>
+  You should delete test runs before the actual exam conduction takes place.
+</Callout>
 
 ### 1.8 Exam Checklist
 
@@ -254,14 +327,12 @@ You should delete test runs before the actual exam conduction takes place.
 - Each row of the checklist includes the name of the task, description and short summary where it is applicable and the page column which navigates the instructors to the relevant action.
 - Going through each task from the start until the current task and making sure the description column contains no warnings or errors can help instructors conduct the exam smoothly.
 
-![In Progress Exam Checklist](./assets/exams/exam_checklist.png)
-*In Progress Exam Checklist*
+<Image src={examChecklist} alt="In Progress Exam Checklist" size={ImageSize.large} caption="In Progress Exam Checklist" />
 
 - The exam list page displays a more concise overview of the exam steps in the `Exam Status` column.
 - You can glance over the preparation, conduction and correction status of the exams in the list.
 
-![Exam Status Overview](./assets/exams/exam_checklist_overview.png)
-*Exam Status Overview*
+<Image src={examChecklistOverview} alt="Exam Status Overview" size={ImageSize.large} caption="Exam Status Overview" />
 
 ## 2. Conduction
 
@@ -269,10 +340,9 @@ The exam conduction starts when the exam becomes visible to the students and end
 
 ### Updating an Exercise during the Exam
 
-In case you have to update the exercise during an exam for programming, modeling, text, or file-upload exercises, you can go to the exercise details page and click on ![Edit](./assets/exams/buttons/edit.png) to edit the exercise. At the bottom of the exercise edit page, you can enter a notification text that is shown to the students in the exam mode. The screenshot below shows an example notification.
+In case you have to update the exercise during an exam for programming, modeling, text, or file-upload exercises, you can go to the exercise details page and click on <img src={editButton} alt="Edit" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> to edit the exercise. At the bottom of the exercise edit page, you can enter a notification text that is shown to the students in the exam mode. The screenshot below shows an example notification.
 
-![Field to enter a notification text](./assets/exams/exercise-notification.png)
-*Field to enter a notification text*
+<Image src={exerciseNotification} alt="Field to enter a notification text" size={ImageSize.large} caption="Field to enter a notification text" />
 
 ## 3. Assessment
 
@@ -288,65 +358,62 @@ If you want you can also enable the second correction feature for the exam.
 - Once the [exam conduction](#2-conduction) is over and the latest individual working time has passed, your team can begin the assessment process.
 - This is done through the *Assessment Dashboard*.
 
-:::note
-If the [exam conduction](#2-conduction) is not over, you will not be able to access this page.
-:::
+<Callout variant={CalloutVariant.info}>
+  If the [exam conduction](#2-conduction) is not over, you will not be able to access this page.
+</Callout>
 
 - The assessment process is anonymized. Artemis omits personal student data from the assessors.
 - The *Assessment Dashboard* provides an overview over the current assessment progress per exercise. For each exercise, you can view how many submissions have already been assessed and how many are still left. The status of the student complaints is also displayed here.
 
-- Additionally, once the [exam conduction](#2-conduction) ends, you can click on ![Evaluate Quizzes](./assets/exams/buttons/evaluate_quizzes.png). This action will evaluate all student exam submissions for all quiz exercises and assign an automatic result.
+- Additionally, once the [exam conduction](#2-conduction) ends, you can click on <img src={evaluateQuizzes} alt="Evaluate Quizzes" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />. This action will evaluate all student exam submissions for all quiz exercises and assign an automatic result.
 
-:::note
-If you do not press this button, the students quiz exercises will not be graded.
-:::
+<Callout variant={CalloutVariant.info}>
+  If you do not press this button, the students quiz exercises will not be graded.
+</Callout>
 
-- After the [exam conduction](#2-conduction) ends, you can click on ![Assess Unsubmitted Student Exams](./assets/exams/buttons/assess_unsubmitted_student_exams.png). This action will automatically evaluate all submissions with 0 points for unsubmitted student exams. Additionally, empty submissions will be automatically graded with 0 points.
+- After the [exam conduction](#2-conduction) ends, you can click on <img src={assessUnsubmittedStudentExams} alt="Assess Unsubmitted Student Exams" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />. This action will automatically evaluate all submissions with 0 points for unsubmitted student exams. Additionally, empty submissions will be automatically graded with 0 points.
 
-:::note
-If you do not press this button, the unsubmitted student submissions and the empty submissions will appear in the assessment dashboard of the exam, which leads to unnecessary effort during grading.
-:::
+<Callout variant={CalloutVariant.info}>
+  If you do not press this button, the unsubmitted student submissions and the empty submissions will appear in the assessment dashboard of the exam, which leads to unnecessary effort during grading.
+</Callout>
 
-![Assessment Dashboard](./assets/exams/assessment_dashboard.png)
-*Assessment Dashboard*
+<Image src={assessmentDashboard} alt="Assessment Dashboard" size={ImageSize.large} caption="Assessment Dashboard" />
 
-- To assess a submission for an exercise, you can click on ![Exercise Dashboard](./assets/exams/buttons/exercise_dashboard.png).
+- To assess a submission for an exercise, you can click on <img src={exerciseDashboard} alt="Exercise Dashboard" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />.
 - Your assessors must first complete the example submissions and assessments, if you have attached those to the exercise, see [Add Exercises](#14-add-exercises).
-- If there is a submission which has not been assessed yet, you can click ![Start New Assessment](./assets/exams/buttons/start_new_assessment.png). This will fetch a random student submission of this exercise which you can then assess.
+- If there is a submission which has not been assessed yet, you can click <img src={startNewAssessment} alt="Start New Assessment" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />. This will fetch a random student submission of this exercise which you can then assess.
 - Artemis grades programming exercises automatically. However, if the exercise allows a manual assessment, you can review and enhance the automatic results.
 - You can trigger Artemis to automatically grade quiz exercises via the *Manage Student Exams Screen*. Therefore, quiz exercises do not appear in the *Assessment Dashboard*.
 
-![Manually Assessing a Programming Submission](./assets/exams/programming_assessment.png)
-*Manually Assessing a Programming Submission*
+<Image src={programmingAssessment} alt="Manually Assessing a Programming Submission" size={ImageSize.large} caption="Manually Assessing a Programming Submission" />
 
 ### 3.2 Assessment with Second Correction Round
 
 - Set the number of correction rounds of the exam to 2.
 
-![Configure exam](./assets/exams/set_second_correction_exam.png)
+<Image src={setSecondCorrectionExam} alt="Configure exam" size={ImageSize.large} caption="Configure exam" />
 
 - When the second correction is enabled, the assessment progress can be observed in the Assessment Dashboard.
 - There you can see the state of the individual correction rounds, and the state of the complaints.
 
-![second correction status](./assets/exams/second_correction_status.png)
+<Image src={secondCorrectionStatus} alt="second correction status" size={ImageSize.large} caption="second correction status" />
 
 - You can toggle if tutors can assess specific exercises in the second round. Disabling the second correction again, does not affect already created second assessments.
 - Correction in the second round can be enabled/disabled anytime.
 
-![Configure exam](./assets/exams/exam_assessment_dashboard_second_correction.png)
+<Image src={examAssessmentDashboardSecondCorrection} alt="Configure exam" size={ImageSize.large} caption="Configure exam" />
 
-- To assess a submission a second time go to the exercise assessment dashboard. When it is enabled, a ![Start New Assessment](./assets/exams/buttons/start_new_assessment.png) button will be visible in the second correction round.
+- To assess a submission a second time go to the exercise assessment dashboard. When it is enabled, a <img src={startNewAssessment} alt="Start New Assessment" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button will be visible in the second correction round.
 - The new second assessment will have all the feedback copied from the first assessment. Those can be overridden, and new feedback can be added as well. This does not override the original result, but saves a separate second result.
 - Within the second correction round review instructors and tutors can highlight which feedback was created for which correction round. This is displayed as a badge at the bottom of every feedback. This view can be enabled or disabled any time during the second correction round review by pressing the button at the top of the page. The feature is currently available for text, modeling and file-upload exercises.
-- You can access each assessment of both rounds by going to the exam's ![Exercise Groups](./assets/exams/buttons/exercise_groups.png) -> ![Scores](./assets/exams/buttons/scores.png) of the respective exercise.
+- You can access each assessment of both rounds by going to the exam's <img src={exerciseGroupsButton} alt="Exercise Groups" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> -> <img src={scoresButton} alt="Scores" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> of the respective exercise.
 
-![Scores page](./assets/exams/scores_table.png)
-*Scores page*
+<Image src={scoresTable} alt="Scores page" size={ImageSize.large} caption="Scores page" />
 
 ### 3.3 Suspicious Behavior Detection
 
 You can check for specific suspicious behavior in the suspicious behavior dashboard. You find the suspicious behavior as the first step in the exam correction on the exam checklist page.
-To open the suspicious behavior dashboard click on the ![Suspicious Behavior](./assets/exams/buttons/suspicious_behavior.png) button.
+To open the suspicious behavior dashboard click on the <img src={suspiciousBehaviorButton} alt="Suspicious Behavior" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button.
 
 To get a better understanding of the feature, you can watch the following video:
 
@@ -354,26 +421,22 @@ To get a better understanding of the feature, you can watch the following video:
   Watch this video on TUM-Live.
 </iframe>
 
-![Suspicious Behavior Exam Checklist](./assets/exams/suspicious_behavior_exam_checklist.png)
-*Suspicious Behavior Exam Checklist*
+<Image src={suspiciousBehaviorExamChecklist} alt="Suspicious Behavior Exam Checklist" size={ImageSize.large} caption="Suspicious Behavior Exam Checklist" />
 
 The dashboard allows to detect exam sessions that fulfill certain criteria and gives an overview of the plagiarism detection.
 An exam session is a unique combination of IP address, user agent, instance id, a session token and the browser fingerprint. It is created whenever a student enters their exam.
-You can see the available analysis options in the first screenshot below. To start the analysis, click the ![Analyze Sessions](./assets/exams/buttons/analyze_sessions.png) button. When the analysis detects at least one suspicious case, the instructor can click the ![View Sessions](./assets/exams/buttons/view_sessions.png) button to see the details of the suspicious exam sessions.
+You can see the available analysis options in the first screenshot below. To start the analysis, click the <img src={analyzeSessions} alt="Analyze Sessions" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button. When the analysis detects at least one suspicious case, the instructor can click the <img src={viewSessions} alt="View Sessions" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button to see the details of the suspicious exam sessions.
 The second screenshot shows an example of analysis results.
 
-![Suspicious Behavior Analysis Options](./assets/exams/analysis_options.png)
-*Suspicious Behavior Analysis Options*
+<Image src={analysisOptions} alt="Suspicious Behavior Analysis Options" size={ImageSize.large} caption="Suspicious Behavior Analysis Options" />
 
-![Suspicious Behavior Analysis Results Example](./assets/exams/suspicious_behavior_analysis_results.png)
-*Suspicious Behavior Analysis Results Example*
+<Image src={suspiciousBehaviorAnalysisResults} alt="Suspicious Behavior Analysis Results Example" size={ImageSize.large} caption="Suspicious Behavior Analysis Results Example" />
 
 In the lower half of the dashboard the instructor can view the plagiarism detection overview. It only lists exercises that support plagiarism detection. The number of potential plagiarism results are the results returned when running the detection. The number of plagiarism results are the cases a instructor has classified and confirmed as plagiarism.
-To view the current detection results or run a detection click on the ![View Plagiarism Results](./assets/exams/buttons/view_plagiarism_results.png) button. This navigates to the plagiarism detection page of the exercise.
-Once the instructor has confirmed at least one case, the ![View Cases](./assets/exams/buttons/view_cases.png) button is visible at the bottom left of the table that navigates to all confirmed plagiarism cases of the exam.
+To view the current detection results or run a detection click on the <img src={viewPlagiarismResults} alt="View Plagiarism Results" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button. This navigates to the plagiarism detection page of the exercise.
+Once the instructor has confirmed at least one case, the <img src={viewCases} alt="View Cases" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button is visible at the bottom left of the table that navigates to all confirmed plagiarism cases of the exam.
 
-![Plagiarism Cases Overview](./assets/exams/plagiarism_case_overview.png)
-*Plagiarism Cases Overview*
+<Image src={plagiarismCaseOverview} alt="Plagiarism Cases Overview" size={ImageSize.large} caption="Plagiarism Cases Overview" />
 
 ### 3.4 Plagiarism detection
 
@@ -382,18 +445,17 @@ Once the instructor has confirmed at least one case, the ![View Cases](./assets/
 - Instructors can download a `CSV` report of accepted and rejected plagiarism attempts for further processing on external systems.
 - To apply the plagiarism check, you must navigate to the individual exercise. This can be done by navigating to:
 
-  ![Exams](./assets/exams/buttons/exams.png) -> ![Exercise Groups](./assets/exams/buttons/exercise_groups.png) -> exercise-title
+  <img src={examsButton} alt="Exams" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> -> <img src={exerciseGroupsButton} alt="Exercise Groups" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> -> exercise-title
 
-![Detecting Plagiarism attempts on Modeling Exercises](./assets/exams/plagiarism.png)
-*Detecting Plagiarism attempts on Modeling Exercises*
+<Image src={plagiarism} alt="Detecting Plagiarism attempts on Modeling Exercises" size={ImageSize.large} caption="Detecting Plagiarism attempts on Modeling Exercises" />
 
-- At the bottom of the page you will find the option ![Check Plagiarism](./assets/exams/buttons/check_plagiarism.png).
+- At the bottom of the page you will find the option <img src={checkPlagiarism} alt="Check Plagiarism" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />.
 
 ### 3.5 Exam Timeline
 
 - Artemis stores the current state of a submission for text, modeling, and quiz exercises every 30s or whenever the student clicks the save button.
 - As instructor, you have the possibility to view all those states as well as the submissions for file-upload or programming exercises using the exam timeline.
-- The exam timeline is available on the details page of a student exam when the student exam has been submitted by clicking on the button ![Exam Timeline](./assets/exams/buttons/exam_timeline.png). If the exam has not been submitted yet, the exam timeline button is disabled and shows an explanatory tooltip.
+- The exam timeline is available on the details page of a student exam when the student exam has been submitted by clicking on the button <img src={examTimelineButton} alt="Exam Timeline" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />. If the exam has not been submitted yet, the exam timeline button is disabled and shows an explanatory tooltip.
 - The exam timeline shows all submissions of the student in chronological order. You can navigate between the different timestamps on the slider or navigate between different exercises using the navigation bar below the timeline
 - For programming exercises, you can view a git diff between the currently selected submission and the previous submission or the template of this exercise.
 
@@ -403,33 +465,32 @@ To get a better understanding of the feature, you can watch the following video:
   Watch this video on TUM-Live.
 </iframe>
 
-![Exam timeline](./assets/exams/exam_timeline_example.png)
+<Image src={examTimelineExample} alt="Exam timeline" size={ImageSize.large} caption="Exam timeline" />
 
 ### 3.6 Grading Key
 
-- Optionally, you can create a grading key for your exam by clicking ![Grade Key](./assets/exams/buttons/grade_key.png) at the top of the exam's detail page.
+- Optionally, you can create a grading key for your exam by clicking <img src={gradeKeyButton} alt="Grade Key" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> at the top of the exam's detail page.
 - Defining a grading key allows the exam score to be converted to a grade automatically by Artemis, students are then able to see their own grades after the specified `Release Date of Results`.
 - Using a grading key also enhances the generated statistics so that the instructor is able to view grade distributions.
-- For an easy out-of-the-box configuration, you can click ![Generate Default Grade Key](./assets/exams/buttons/generate_default_grade_key.png) and then click `Save`.
+- For an easy out-of-the-box configuration, you can click <img src={generateDefaultGradeKey} alt="Generate Default Grade Key" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> and then click `Save`.
 - By default, grades are defined as percentages of the total obtainable score. You can also display their point equivalent if you specify `Maximum number of points for exam`.
-- If you would like to define custom grade steps, you can use the ![Add Grade Step](./assets/exams/buttons/add_grade_step.png) button and modify the grade step intervals.
+- If you would like to define custom grade steps, you can use the <img src={addGradeStep} alt="Add Grade Step" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button and modify the grade step intervals.
 
-:::note
-Keep an eye out for the warnings at the bottom of the page to ensure that the grading key is valid.
-:::
+<Callout variant={CalloutVariant.info}>
+  Keep an eye out for the warnings at the bottom of the page to ensure that the grading key is valid.
+</Callout>
 
 - `Inclusivity` field allows you to decide which grade should be assigned if the student's score is exactly equal to a boundary value between two grades.
 - There are two grade types you can use: `Grade` and `Bonus`. The `Grade` type allows you to set a final grade for the exam with custom grade step names, while the `Bonus` type allows you to assign bonus points to each grade step so they can contribute to the grade of another course or exam.
 
-:::note
-If the `Grade Type` is `Grade` you should set `First Passing Grade`.
-:::
+<Callout variant={CalloutVariant.info}>
+  If the `Grade Type` is `Grade` you should set `First Passing Grade`.
+</Callout>
 
 - For more fine grained control, you can switch to `Detailed` editing mode and set grade step bounds manually.
-- ![Import Export](./assets/exams/buttons/import_export.png) buttons enable you to save the grading key as a CSV file and re-use it in other courses and exams.
+- <img src={importExportButton} alt="Import Export" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> buttons enable you to save the grading key as a CSV file and re-use it in other courses and exams.
 
-![Default Grading Key](./assets/exams/grade_key_editor.png)
-*Default Grading Key*
+<Image src={gradeKeyEditor} alt="Default Grading Key" size={ImageSize.large} caption="Default Grading Key" />
 
 ## 4. Publication of Results
 
@@ -437,18 +498,18 @@ You can specify the moment when Artemis publishes the results of the exam, see [
 
 ### 4.1 Exam Scores
 
-- You can access the exam scores by clicking on ![Scores](./assets/exams/buttons/scores.png). This view aggregates the results of the students and combines them to provide an overview over the students' performance.
+- You can access the exam scores by clicking on <img src={scoresButton} alt="Scores" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />. This view aggregates the results of the students and combines them to provide an overview over the students' performance.
 - You can view the spread between different achieved scores, the average results per exercise, as well as the individual students' results.
 - Additionally, you can choose to modify the dataset by selecting `only include submitted exams` or `only include exercises with at least one non-empty submission`.
 
-:::note
-Unsubmitted exams are not eligible for the assessment process.
-:::
+<Callout variant={CalloutVariant.info}>
+  Unsubmitted exams are not eligible for the assessment process.
+</Callout>
 
 - Review student performance using various metrics such as average, median and standard deviation.
 - Unsubmitted exams are not eligible for assessment and thereby appear as having no score. The corresponding students are assigned with a no-participation special grade if a grading key exists. It can happen that an exercise is not part of any [student exam](#16-manage-student-exams). This is the case when Artemis selects a different exercise of the same exercise group for every [student exam](#16-manage-student-exams). Similarly to the unsubmitted exams, they can warp the results and statistics of the exam. By eliminating unsubmitted exams and exercises which were not part of the [exam conduction](#2-conduction), you can gain a more realistic overview of the performance of the students.
 - Review the students perceived difficulty of every exercise to improve exams in the future.
-- The exam scores can also be exported via ![Export](./assets/exams/buttons/export.png). This is useful to upload the results into university systems like [TUM Online](https://campus.tum.de) as a `CSV` file.
+- The exam scores can also be exported via <img src={exportButton} alt="Export" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />. This is useful to upload the results into university systems like [TUM Online](https://campus.tum.de) as a `CSV` file.
 
 - The exported `CSV` file includes the students' `name`, `username`, `email`, `registration number`, their assigned `exercises`, their `score` for every exercise, `overall exam points`, `overall exam score`, `grades` (before bonus if bonus is configured), `presentation score`, `submitted` (yes/no) and `passed` (yes/no) values.
 
@@ -457,8 +518,7 @@ Unsubmitted exams are not eligible for the assessment process.
   - If there is at least one plagiarism verdict in the bonus source, the file also contains `plagiarism verdicts in bonus course/exam`.
 - The exported `CSV` file also contains the aggregated statistics of the [exam conduction](#2-conduction) such as the `number of participations` and the `average score` per exercise.
 
-![Exam Scores Page](./assets/exams/exam_statistics.png)
-*Exam Scores Page*
+<Image src={examStatistics} alt="Exam Scores Page" size={ImageSize.large} caption="Exam Scores Page" />
 
 ### 4.2. Exam Solutions
 
@@ -468,8 +528,7 @@ All example solutions of these exercises are published according to this date se
 - Example solution publication date can be empty, in this case solutions are never published. This is the default value.
 - If set, example solution publication date must be the same or after the `visible from` and `end of working time` if they are set.
 
-![Example Solution Publication Date](./assets/exams/exam_example_solution_publication_date.png)
-*Example Solution Publication Date*
+<Image src={examExampleSolutionPublicationDate} alt="Example Solution Publication Date" size={ImageSize.large} caption="Example Solution Publication Date" />
 
 ## 5. Student Review
 
@@ -480,9 +539,9 @@ During the review period, students have the opportunity to review the assessment
 - Students cannot submit complaints for automatically assessed exercises like quiz and programming exercises.
 - Students will be able to submit a complaint for programming exercises, if the automatic result has been reviewed manually by an assessor. This is only possible if manual assessment is enabled for the programming exercise.
 
-:::note
-If you have found a mistake in the automatic assessment of quiz and programming exercises, you can edit those and re-trigger the evaluation for all participants.
-:::
+<Callout variant={CalloutVariant.info}>
+  If you have found a mistake in the automatic assessment of quiz and programming exercises, you can edit those and re-trigger the evaluation for all participants.
+</Callout>
 
 ## 6. Complaint Assessment
 
@@ -492,8 +551,7 @@ Artemis collects the complaints submitted by the students during the student rev
 - The original assessor of an assessment cannot respond to the complaint. A second assessor must review the complaint and respond to it.
 - Artemis tracks the progress of the complaint assessment and displays a progress bar in the *Assessment Dashboard*. This allows you to keep track of the complaint assessment and see how many open complaints are left.
 
-![Assessor responding to a Complaint](./assets/exams/complaint_response.png)
-*Assessor responding to a Complaint*
+<Image src={complaintResponse} alt="Assessor responding to a Complaint" size={ImageSize.large} caption="Assessor responding to a Complaint" />
 
 ## Exam Participation Checker
 
@@ -501,30 +559,28 @@ The Artemis Exam Participation Checker iPad application streamlines the process 
 
 ### Requirements and Web Functionality
 
-:::note
-For information regarding creating the exam, it's exercises and how to register students, please follow the instructions as described in [exam configuration](#12-create-and-configure-exam).
-:::
+<Callout variant={CalloutVariant.info}>
+  For information regarding creating the exam, it's exercises and how to register students, please follow the instructions as described in [exam configuration](#12-create-and-configure-exam).
+</Callout>
 
 Using the Artemis Exam Participation Checker iPad application requires additional setup on the *Students* page before the exam.
 
-1. To upload images, click on the ![Upload Images](./assets/exams/upload_images.png) button and provide a `pdf` file in the Upload Images dialog. This `pdf` file should include a box for each student with its image and two text boxes next to it. The upper text box needs to include the `registrationNumber`, and the lower text box needs to include the `login`. An exemplary file can be found at `docs/user/exams/instructor/example_upload_images.pdf`.
+1. To upload images, click on the <img src={uploadImages} alt="Upload Images" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button and provide a `pdf` file in the Upload Images dialog. This `pdf` file should include a box for each student with its image and two text boxes next to it. The upper text box needs to include the `registrationNumber`, and the lower text box needs to include the `login`. An exemplary file can be found at `docs/user/exams/instructor/example_upload_images.pdf`.
 2. Setting up the room and seating information via the `CSV` import. For more information, see: [register students](#15-register-students).
 
-:::note
-Each student must have a matriculation number assigned to upload the images. The matriculation number is needed to match the image with the according student.
-:::
+<Callout variant={CalloutVariant.info}>
+  Each student must have a matriculation number assigned to upload the images. The matriculation number is needed to match the image with the according student.
+</Callout>
 
-:::note
-Seats and rooms can currently only be assigned via the `CSV` import of students by defining the `seat` and `room` in the `CSV` file.
-:::
+<Callout variant={CalloutVariant.info}>
+  Seats and rooms can currently only be assigned via the `CSV` import of students by defining the `seat` and `room` in the `CSV` file.
+</Callout>
 
-You can also verify the attendance in the web application by pressing the ![Verify Attendance](./assets/exams/buttons/verify_attendance.png) button. This button opens a new view that shows which students have started the exam in Artemis but still need to complete the check-in with a teaching assistant.
+You can also verify the attendance in the web application by pressing the <img src={verifyAttendance} alt="Verify Attendance" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button. This button opens a new view that shows which students have started the exam in Artemis but still need to complete the check-in with a teaching assistant.
 
-![Verify Attendance View: One student did not complete the check-in](./assets/exams/verify_attendance_verification_missing.png)
-*Verify Attendance View: One student did not complete the check-in*
+<Image src={verifyAttendanceVerificationMissing} alt="Verify Attendance View: One student did not complete the check-in" size={ImageSize.large} caption="Verify Attendance View: One student did not complete the check-in" />
 
-![Verify Attendance View: All students have been successfully checked in](./assets/exams/verify_attendance_verification_successful.png)
-*Verify Attendance View: All students have been successfully checked in*
+<Image src={verifyAttendanceVerificationSuccessful} alt="Verify Attendance View: All students have been successfully checked in" size={ImageSize.large} caption="Verify Attendance View: All students have been successfully checked in" />
 
 ### Download App
 
@@ -541,14 +597,14 @@ You can log in to the app with your usual Artemis credentials. Via the 'Select U
 
 The Exam Overview consists of a list of all currently available exams. The overview only shows exams where the start date is +/- one week from now, and your account has the right to access the exam. Each list cell consists of basic exam information, like the name and the start and end date of the respective exam. A tap on the cell opens up the Student List View.
 
-![Exam Overview](./assets/exams/exam_overview.png)
+<Image src={examOverview} alt="Exam Overview" size={ImageSize.large} caption="Exam Overview" />
 
 #### 1.3 Student List View
 
 The sidebar hosts a list of all registered students. The list can easily be filtered by room with a clickable picker or by typing a custom search query into the search bar. Further, already checked-in students can be easily filtered out by the respective toggle. The sorting can be quickly changed from "Bottom to Top" to "Top to Bottom" by a picker. A simple counter shows the progress of the already checked-in students directly above the student list. The student list consists of one cell per student, containing the name and the seat, to enable quick identification of the student. The tutor can quickly switch between different students by clicking the respective cell. Below the list is an 'Export Signatures' button to export all local signatures taken on this device for the selected exam.
 
-![Student List View](./assets/exams/student_list_view.png)
-![Export Signatures](./assets/exams/student_list_view_export_signatures.png)
+<Image src={studentListView} alt="Student List View" size={ImageSize.large} caption="Student List View" />
+<Image src={studentListViewExportSignatures} alt="Export Signatures" size={ImageSize.large} caption="Export Signatures" />
 
 #### 1.4 Student Detail View
 
@@ -558,4 +614,4 @@ The options below the information section allow the user to verify the informati
 
 The lower part of the screen is a large canvas that supports signing with the help of the Apple Pencil or simple input with the finger. On the right of the canvas are two small buttons. The upper button, symbolized by a swiping finger icon, enables a better signing experience with the finger when toggled on. The lower button, a trash symbol, deletes the current signing to restart the process. By clicking the save button, the server saves the data. Additionally, the device saves the signing locally, allowing the export, as mentioned above.
 
-![Student Detail View](./assets/exams/student_detail_view.png)
+<Image src={studentDetailView} alt="Student Detail View" size={ImageSize.large} caption="Student Detail View" />
