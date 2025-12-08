@@ -448,6 +448,55 @@ describe('QuizExerciseUpdateComponent', () => {
             });
         });
 
+        it('should set isImport to true when route contains /import', () => {
+            configureStubs();
+            jest.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/quiz-exercises/import');
+
+            comp.ngOnInit();
+
+            expect(comp.isImport).toBeTrue();
+        });
+
+        it('should assign exerciseGroup to existing quizExercise in exam mode', () => {
+            configureStubs();
+            comp.isExamMode = true;
+
+            const testRoute = {
+                snapshot: { paramMap: convertToParamMap({ courseId: course.id, exerciseId: 456, examId: 1, exerciseGroupId: 2 }) },
+                queryParams: of({}),
+            } as any as ActivatedRoute;
+            (comp as any).route = testRoute;
+
+            comp.quizExercise = new QuizExercise(undefined, undefined);
+            comp.savedEntity = new QuizExercise(undefined, undefined);
+
+            const exerciseGroup = new ExerciseGroup();
+            exerciseGroup.id = 2;
+            exerciseGroupServiceStub.mockReturnValue(of(new HttpResponse<ExerciseGroup>({ body: exerciseGroup })));
+
+            comp.ngOnInit();
+
+            expect(comp.quizExercise.exerciseGroup).toEqual(exerciseGroup);
+        });
+
+        it('should assign course to existing quizExercise in course mode', () => {
+            configureStubs();
+            comp.isExamMode = false;
+
+            const testRoute = {
+                snapshot: { paramMap: convertToParamMap({ courseId: course.id, exerciseId: 456 }) },
+                queryParams: of({}),
+            } as any as ActivatedRoute;
+            (comp as any).route = testRoute;
+
+            comp.quizExercise = new QuizExercise(undefined, undefined);
+            comp.savedEntity = new QuizExercise(undefined, undefined);
+
+            comp.ngOnInit();
+
+            expect(comp.quizExercise.course).toEqual(course);
+        });
+
         it('should updateCategories properly by making category available for selection again when removing it', () => {
             comp.quizExercise = quizExercise;
             comp.exerciseCategories = [];
