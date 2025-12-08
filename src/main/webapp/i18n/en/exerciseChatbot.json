@@ -50,7 +50,7 @@
                 "technicalError": "There has been a technical error. Please contact Artemis Administrators if this error message persists.",
                 "irisNotAvailable": "Iris is not available. Please try again later!",
                 "rateLimitExceeded": "You have reached the maximum number of messages you can send to Iris in a {{ hours }} hour window. Please try again later!",
-                "aiUsageDeclined": "You explicitly declined the usage of AI. Accept the usage of AI in the settings to use Iris"
+                "aiUsageDeclined": "You explicitly declined the usage of AI. Accept the usage of AI in the settings to use Iris."
             },
             "disclaimer": "Iris can make mistakes. Consider checking important information.",
             "disclaimerGPT": "ChatGPT can make mistakes. Consider checking important information.",

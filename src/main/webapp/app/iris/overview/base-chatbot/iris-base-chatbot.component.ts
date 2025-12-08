@@ -276,18 +276,20 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
 
         this.checkIfUserAcceptedLLMUsage();
         if (!this.userAccepted) {
-            this.showAISelectionModal().then(() => {});
+            this.showAISelectionModal();
+        } else {
+            this.focusInputAfterAcceptance();
         }
-        if (this.userAccepted === LLMSelectionDecision.LOCAL_AI || this.userAccepted === LLMSelectionDecision.CLOUD_AI) {
-            // Focus on message textarea
-            setTimeout(() => {
-                if (this.messageTextarea) {
-                    this.messageTextarea.nativeElement.focus();
-                } else {
-                    this.acceptButton.nativeElement.focus();
-                }
-            }, 150);
-        }
+    }
+
+    private focusInputAfterAcceptance() {
+        setTimeout(() => {
+            if (this.messageTextarea) {
+                this.messageTextarea.nativeElement.focus();
+            } else if (this.acceptButton) {
+                this.acceptButton.nativeElement.focus();
+            }
+        }, 150);
     }
 
     ngAfterViewInit() {
@@ -324,11 +326,9 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
         switch (choice) {
             case 'cloud':
                 this.acceptPermission(LLMSelectionDecision.CLOUD_AI);
-                this.chatService.updateLLMUsageConsent(LLMSelectionDecision.CLOUD_AI);
                 break;
             case 'local':
                 this.acceptPermission(LLMSelectionDecision.LOCAL_AI);
-                this.chatService.updateLLMUsageConsent(LLMSelectionDecision.LOCAL_AI);
                 break;
             case 'no_ai':
                 this.chatService.updateLLMUsageConsent(LLMSelectionDecision.NO_AI);

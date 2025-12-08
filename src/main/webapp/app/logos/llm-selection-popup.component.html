@@ -1,6 +1,13 @@
 @if (isVisible) {
-    <div class="modal-backdrop" [class.dark-theme]="themeService.currentTheme() === Theme.DARK" (click)="onBackdropClick($event)">
-        <div class="modal-content">
+    <div
+        class="modal-backdrop"
+        [class.dark-theme]="themeService.currentTheme() === Theme.DARK"
+        (click)="onBackdropClick($event)"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="ai-modal-title"
+    >
+        <div class="modal-content" role="document">
             <div class="modal-header">
                 <h1 id="ai-modal-title" jhiTranslate="artemisApp.llmSelectionPopup.header"></h1>
                 <p class="subtitle" jhiTranslate="artemisApp.llmSelectionPopup.subtitleOne"></p>
@@ -9,7 +16,7 @@
 
             <div class="options-container">
                 <!-- Cloud AI Card -->
-                <div class="option-card cloud-card" (click)="selectCloud()">
+                <div class="option-card cloud-card" tabindex="0" role="button" (click)="selectCloud()" (keydown.enter)="selectCloud()" (keydown.space)="selectCloud()">
                     <div class="icons-wrapper">
                         <div class="icon-container">
                             <div class="icon-circle azure">
@@ -127,7 +134,7 @@
                 </div>
 
                 <!-- Local AI Card -->
-                <div class="option-card local-card" (click)="selectLocal()">
+                <div class="option-card local-card" tabindex="0" role="button" (click)="selectLocal()" (keydown.enter)="selectLocal()" (keydown.space)="selectLocal()">
                     <div class="icons-wrapper">
                         <div class="icon-container">
                             <div class="icon-circle gemma">
@@ -228,7 +235,7 @@
                 </div>
 
                 <!-- No AI Card -->
-                <div class="option-card no-ai-card" (click)="selectNone()">
+                <div class="option-card no-ai-card" tabindex="0" role="button" (click)="selectNone()" (keydown.enter)="selectNone()" (keydown.space)="selectNone()">
                     <div class="icons-wrapper">
                         <div class="icon-circle no-ai-icon">
                             <svg class="no-ai-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">

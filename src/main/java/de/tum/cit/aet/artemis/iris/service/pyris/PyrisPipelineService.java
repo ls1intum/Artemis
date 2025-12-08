@@ -113,14 +113,14 @@ public class PyrisPipelineService {
      * <p>
      *
      * @param name          the name of the pipeline to be executed
-     * @param AISelection   the current AI selection of the user
+     * @param aiSelection   the current AI selection of the user
      * @param variant       the variant of the pipeline
      * @param event         an optional event variant that can be used to trigger specific event of the given pipeline
      * @param jobToken      a unique job token for tracking the pipeline execution
      * @param dtoMapper     a function to create the concrete DTO type for this pipeline from the base DTO
      * @param statusUpdater a consumer to update the status of the pipeline execution
      */
-    public void executePipeline(String name, AiSelectionDecision AISelection, String variant, Optional<String> event, String jobToken,
+    public void executePipeline(String name, AiSelectionDecision aiSelection, String variant, Optional<String> event, String jobToken,
             Function<PyrisPipelineExecutionDTO, Object> dtoMapper, Consumer<List<PyrisStageDTO>> statusUpdater) {
         // Define the preparation stages of pipeline execution with their initial states
         // There will be more stages added in Pyris later
@@ -130,7 +130,7 @@ public class PyrisPipelineService {
         // Send initial status update indicating that the preparation stage is in progress
         statusUpdater.accept(List.of(preparing.inProgress(), executing.notStarted()));
 
-        var baseDto = new PyrisPipelineExecutionDTO(new PyrisPipelineExecutionSettingsDTO(jobToken, AISelection, artemisBaseUrl, variant), List.of(preparing.done()));
+        var baseDto = new PyrisPipelineExecutionDTO(new PyrisPipelineExecutionSettingsDTO(jobToken, aiSelection, artemisBaseUrl, variant), List.of(preparing.done()));
         var pipelineDto = dtoMapper.apply(baseDto);
 
         try {

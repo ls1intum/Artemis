@@ -154,7 +154,7 @@ describe('ExerciseChatbotButtonComponent', () => {
         expect(mockDialogClose).toHaveBeenCalled();
     });
 
-    it('should show new message indicator when chatbot is closed', fakeAsync(() => {
+    it('should not show new message indicator when chatbot is closed', fakeAsync(() => {
         // given
         jest.spyOn(chatHttpServiceMock, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(mockExerciseId)));
         jest.spyOn(chatHttpServiceMock, 'getChatSessions').mockReturnValue(of([]));

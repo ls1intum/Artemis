@@ -515,7 +515,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         user.setSelectedLLMUsageTimestamp(null);
         userTestRepository.save(user);
 
-        SelectedLLMUsageDTO selectedLLMUsageDTO = new SelectedLLMUsageDTO(AiSelectionDecision.LOCAL_AI);
+        SelectedLLMUsageDTO selectedLLMUsageDTO = new SelectedLLMUsageDTO(AiSelectionDecision.CLOUD_AI);
         request.put("/api/core/users/select-llm-usage", selectedLLMUsageDTO, HttpStatus.OK);
 
         Optional<User> updatedUser = userTestRepository.findOneByLogin(AUTHENTICATEDUSER);
