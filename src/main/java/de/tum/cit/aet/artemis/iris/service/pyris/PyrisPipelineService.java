@@ -175,6 +175,9 @@ public class PyrisPipelineService {
 
         var lastMessageId = session.getMessages().isEmpty() ? null : session.getMessages().getLast().getId();
         var user = userRepository.findByIdElseThrow(session.getUserId());
+        if (!featureToggleService.isFeatureEnabled(Feature.Memiris)) {
+            user.setMemirisEnabled(false);
+        }
         // @formatter:off
         executePipeline(
             "lecture-chat",
