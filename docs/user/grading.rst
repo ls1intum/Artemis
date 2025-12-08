@@ -12,7 +12,7 @@ Grading Keys can be either:
 
 There are two configurable special grades that are automatically treated as failing grades:
 
-- ``Plagiarism Grade`` (default ``U``) is assigned when a student has received a `Plagiarism verdict <https://docs.artemis.cit.tum.de/instructor/plagiarism-check#instructors>`_ in one or more exercises.
+- ``Plagiarism Grade`` (default ``U``) is assigned when a student has received a `Plagiarism verdict <https://docs.artemis.cit.tum.de/Artemis/instructor/plagiarism-check#instructors>`_ in one or more exercises.
 - ``No-participation Grade`` (default ``X``) is assigned according to the conditions below for courses and exams:
 
     - For a course, a student receives this grade if they do not start any exercise, i.e., the number of participations is 0.
@@ -38,7 +38,7 @@ It is also possible to create or modify grading keys after an exam or course is 
 In that case student grades will be adjusted automatically.
 
     .. note::
-        You can check the `how to create grading keys for courses and exams <https://docs.artemis.cit.tum.de/instructor/exams/grading/>`_ for more detailed information.
+        You can check the `how to create grading keys for courses and exams <https://docs.artemis.cit.tum.de/Artemis/instructor/exams/exam-timeline#36-grading-key>`_ for more detailed information.
 
     .. figure:: grading/grade_key_bonus.png
        :alt: Course Grading Key with Bonus type
@@ -51,7 +51,7 @@ Attainable points are the sum of the maximum points for all exercises assessed s
 This means the students can track their relative performance during the semester without having to wait until all the exercises are conducted and assessed.
 
     .. note::
-        The `Grades section <https://docs.artemis.cit.tum.de/student/exams/>`_ has more detailed information on how to read the boundaries of the grading keys.
+        The `Grades section <https://docs.artemis.cit.tum.de/Artemis/student/exams#grades>`_ has more detailed information on how to read the boundaries of the grading keys.
 
     .. figure:: grading/course_statistics_attainable.png
        :alt: Bonus Grade in Course Statistics Page
