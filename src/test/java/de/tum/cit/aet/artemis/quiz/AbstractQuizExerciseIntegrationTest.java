@@ -272,6 +272,15 @@ public class AbstractQuizExerciseIntegrationTest extends AbstractSpringIntegrati
         request.restoreSecurityContext();
     }
 
+    /**
+     * Prepares a QuizExercise for import into another course or exam.
+     * <p>
+     * This method removes all persistent identifiers and associations that would
+     * otherwise mark the contained entities as already existing in the database.
+     *
+     * @param quizExercise the quiz exercise that should be sanitized and
+     *                         detached from existing database identifiers before import
+     */
     protected void prepareQuizForImport(QuizExercise quizExercise) {
         quizExercise.setQuizBatches(Set.of());
         quizExercise.setCompetencyLinks(Set.of());

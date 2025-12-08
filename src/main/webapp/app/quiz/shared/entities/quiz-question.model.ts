@@ -58,6 +58,19 @@ export abstract class QuizQuestion implements BaseEntity, CanBecomeInvalid, Exer
     }
 }
 
+/**
+ * Resets a QuizQuestion before importing it into a course or exercise.
+ *
+ * This function removes or regenerates all attributes that uniquely identify
+ * existing persistent entities, so that the imported question and its nested
+ * objects (e.g. drag items, drop locations, solutions, spots) are treated as
+ * new records by the database.
+ *
+ * This is required to avoid accidental reuse of primary keys or references
+ * from the source instance when saving the imported quiz on the server.
+ *
+ * @param question the quiz question that should be prepared for import
+ */
 export function resetQuizQuestionForImport(question: QuizQuestion): void {
     question.id = undefined;
     if (question.type === QuizQuestionType.DRAG_AND_DROP) {
