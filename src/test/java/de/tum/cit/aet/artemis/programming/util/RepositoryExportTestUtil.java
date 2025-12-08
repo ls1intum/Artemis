@@ -173,6 +173,13 @@ public final class RepositoryExportTestUtil {
         File srcBareDir = source.remoteBareGitRepo.getRepository().getDirectory();
         File dstBareDir = target.remoteBareGitRepoFile;
         FileUtils.copyDirectory(srcBareDir, dstBareDir);
+
+        // After copying the bare repo, we need to reset the working copy to sync with the new bare content.
+        // Otherwise the working copy is out of sync (has original initial commit) while bare has source's content.
+        target.workingCopyGitRepo.fetch().setRemote("origin").call();
+        target.workingCopyGitRepo.reset().setMode(org.eclipse.jgit.api.ResetCommand.ResetType.HARD).setRef("origin/" + target.workingCopyGitRepo.getRepository().getBranch())
+                .call();
+
         return trackRepository(target);
     }
 

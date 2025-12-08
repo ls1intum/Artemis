@@ -368,8 +368,9 @@ public class ProgrammingExerciseIntegrationTestService {
         participation2.setPracticeMode(true);
         programmingExerciseStudentParticipationRepository.saveAll(List.of(participation1, participation2));
 
-        // Export with excludePracticeSubmissions
-        var participationIds = programmingExerciseStudentParticipationRepository.findAll().stream().map(participation -> participation.getId().toString()).toList();
+        // Export with excludePracticeSubmissions - only include participations for this exercise
+        var participationIds = programmingExerciseStudentParticipationRepository.findByExerciseId(programmingExercise.getId()).stream()
+                .map(participation -> participation.getId().toString()).toList();
         final var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-repos-by-participation-ids/" + String.join(",", participationIds);
         var exportOptions = new RepositoryExportOptionsDTO(false, false, false, null, excludePracticeSubmissions, false, false, false, false);
 
@@ -496,7 +497,9 @@ public class ProgrammingExerciseIntegrationTestService {
         RepositoryExportTestUtil.seedStudentRepositoryForParticipation(localVCLocalCITestService, participation2);
         programmingExerciseStudentParticipationRepository.saveAll(List.of(participation1, participation2));
 
-        var participationIds = programmingExerciseStudentParticipationRepository.findAll().stream().map(participation -> participation.getId().toString()).toList();
+        // Only get participations for this specific exercise to avoid interference from other tests
+        var participationIds = programmingExerciseStudentParticipationRepository.findByExerciseId(programmingExercise.getId()).stream()
+                .map(participation -> participation.getId().toString()).toList();
         final var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-repos-by-participation-ids/" + String.join(",", participationIds);
         // all options false by default, only test if export works at all
         var exportOptions = new RepositoryExportOptionsDTO();
@@ -794,13 +797,12 @@ public class ProgrammingExerciseIntegrationTestService {
 
     void testGenerateStructureOracle() throws Exception {
         // Wire base repositories in LocalVC and ensure tests repo has the expected directory
-        RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, programmingExercise);
+        var baseRepos = RepositoryExportTestUtil.createAndWireBaseRepositoriesWithHandles(localVCLocalCITestService, programmingExercise);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
         programmingExercise = programmingExerciseRepository.getProgrammingExerciseWithBuildConfigElseThrow(programmingExercise);
 
-        String projectKey = programmingExercise.getProjectKey();
-        String testsSlug = projectKey.toLowerCase() + "-" + RepositoryType.TESTS.getName();
-        var testsRepo = RepositoryExportTestUtil.trackRepository(localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, testsSlug));
+        // Use the tests repository handle from base repos instead of creating a new one
+        var testsRepo = baseRepos.testsRepository();
         String testsPath = java.nio.file.Path.of("test", programmingExercise.getPackageFolderName()).toString();
         if (programmingExercise.getBuildConfig().hasSequentialTestRuns()) {
             testsPath = java.nio.file.Path.of("structural", testsPath).toString();
