@@ -39,7 +39,7 @@
             [value]="selectedRoomNumber()"
             [resultFormatter]="roomFormatter"
             [inputFormatter]="roomRoomNumberFormatter"
-            (change)="setUnassignedRoomNumber($event)"
+            (change)="setSelectedRoomNumber($event)"
             (selectItem)="pickSelectedRoom($event)"
             (focusin)="selectAllTextAndOpenDropdown($event)"
         />
@@ -53,7 +53,7 @@
             [value]="selectedSeat()"
             [resultFormatter]="examSeatFormatter"
             [inputFormatter]="examSeatFormatter"
-            (change)="setUnassignedSeat($event)"
+            (change)="setSelectedSeat($event)"
             (selectItem)="pickSelectedSeat($event)"
             (focusin)="selectAllTextAndOpenDropdown($event)"
             [disabled]="!selectedRoomNumber()"

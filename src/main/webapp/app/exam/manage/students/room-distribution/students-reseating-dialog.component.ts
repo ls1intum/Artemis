@@ -242,12 +242,12 @@ export class StudentsReseatingDialogComponent {
         return this.roomsUsedInExam().find((room) => room.roomNumber === this.selectedRoomNumber());
     }
 
-    protected setUnassignedRoomNumber($event: Event) {
+    protected setSelectedRoomNumber($event: Event) {
         const input: HTMLInputElement = $event.target as HTMLInputElement;
         this.selectedRoomNumber.set(input.value);
     }
 
-    protected setUnassignedSeat($event: Event) {
+    protected setSelectedSeat($event: Event) {
         const input: HTMLInputElement = $event.target as HTMLInputElement;
         this.selectedSeat.set(input.value);
     }
