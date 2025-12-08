@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY } from 'app/core/course/overview/setup-passkey-modal/setup-passkey-modal.component';
 
 @Injectable({ providedIn: 'root' })
 export class LocalStorageService {
@@ -48,9 +49,33 @@ export class LocalStorageService {
     }
 
     /**
-     * Clears the entire local storage.
+     * Clears the entire local storage except for {@link KEYS_TO_PRESERVE}.
      */
     clear() {
+        // Keys that should persist across logouts (user preferences, reminders, etc.)
+        const KEYS_TO_PRESERVE = [EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY];
+
+        this.clearExcept(KEYS_TO_PRESERVE);
+    }
+
+    /**
+     * Clears the local storage except for the specified keys that should persist across logouts.
+     * @param keysToPreserve Array of keys that should not be cleared.
+     */
+    clearExcept(keysToPreserve: string[]) {
+        // Save values of keys to preserve
+        const preservedValues = new Map<string, string | null>();
+        keysToPreserve.forEach((key) => {
+            preservedValues.set(key, localStorage.getItem(key));
+        });
+        // Clear all localStorage
         localStorage.clear();
+
+        // Restore preserved values
+        preservedValues.forEach((value, key) => {
+            if (value !== null) {
+                localStorage.setItem(key, value);
+            }
+        });
     }
 }
