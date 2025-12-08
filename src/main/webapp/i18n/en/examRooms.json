@@ -7,9 +7,9 @@
                     "reseating": {
                         "dialogTitle": "Reseat Student",
                         "introText": "This dialog can be used to reseat a student.",
-                        "useCustomLocation": "Location known",
-                        "useCustomLocationTooltip": "Shows if the seat you are assigning to will be viewable in the attendance checker iPad app",
-                        "selectedStudent": "Selected student: {{ studentLogin }} ({{ studentName }}); Room '{{ plannedRoom }}', Seat: '{{ plannedSeat }}'",
+                        "isLocationKnown": "Location known",
+                        "isLocationKnownTooltip": "Shows if the seat you are assigning to will be viewable in the attendance checker iPad app",
+                        "selectedStudent": "Selected student: {{ studentLogin }} ({{ studentName }}); Room: '{{ plannedRoom }}', Seat: '{{ plannedSeat }}'",
                         "selectRoom": "New room:",
                         "selectSeat": "New seat:",
                         "examRoomSearchPlaceholder": "Search by room number, name, and/or building. Alternatively set a custom room",

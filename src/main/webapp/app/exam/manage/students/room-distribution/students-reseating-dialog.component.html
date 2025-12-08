@@ -18,15 +18,15 @@
             ></p>
         </b>
         <div class="form-check ms-auto">
-            <label for="useCustomLocationToggle" jhiTranslate="artemisApp.exam.examUsers.rooms.reseating.useCustomLocation" class="form-check-label"></label>
+            <label for="isLocationKnownCheckbox" jhiTranslate="artemisApp.exam.examUsers.rooms.reseating.isLocationKnown" class="form-check-label"></label>
             <input
-                id="useCustomLocationToggle"
+                id="isLocationKnownCheckbox"
                 type="checkbox"
                 class="form-check-input"
                 [checked]="selectedSeatIsPersisted() || (selectedRoomIsPersisted() && !selectedSeat())"
                 [disabled]="true"
             />
-            <jhi-help-icon class="ps-1" text="artemisApp.exam.examUsers.rooms.reseating.useCustomLocationTooltip" />
+            <jhi-help-icon class="ps-1" text="artemisApp.exam.examUsers.rooms.reseating.isLocationKnownTooltip" />
         </div>
         <p></p>
         <span jhiTranslate="artemisApp.exam.examUsers.rooms.reseating.selectRoom"></span>
