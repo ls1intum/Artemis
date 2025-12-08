@@ -138,6 +138,7 @@
                 "statistics": "Statistiken der Nutzer:innen",
                 "metrics": "Metriken",
                 "health": "Status",
+                "websocket": "Websocket-Broker",
                 "configuration": "Konfiguration",
                 "privacyStatement": "Datenschutzerklärung",
                 "imprint": "Impressum",

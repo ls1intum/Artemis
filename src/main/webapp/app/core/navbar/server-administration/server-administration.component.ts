@@ -12,6 +12,7 @@ import {
     faHeart,
     faList,
     faLock,
+    faPlug,
     faPuzzlePiece,
     faStamp,
     faTachometerAlt,
@@ -65,6 +66,7 @@ export class ServerAdministrationComponent {
     protected readonly faEye = faEye;
     protected readonly faUser = faUser;
     protected readonly faUserPlus = faUserPlus;
+    protected readonly faPlug = faPlug;
 
     private readonly accountService = inject(AccountService);
     private readonly isLoggedInWithPasskeyGuard = inject(PasskeyAuthenticationGuard);

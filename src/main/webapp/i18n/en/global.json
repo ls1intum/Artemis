@@ -138,6 +138,7 @@
                 "statistics": "User statistics",
                 "metrics": "Metrics",
                 "health": "Health",
+                "websocket": "Websocket broker",
                 "configuration": "Configuration",
                 "logs": "Logs",
                 "audits": "Audits",
