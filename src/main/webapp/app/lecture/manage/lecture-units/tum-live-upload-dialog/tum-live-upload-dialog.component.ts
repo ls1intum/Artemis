@@ -11,7 +11,7 @@ import { DecimalPipe } from '@angular/common';
 
 /**
  * Modal dialog for uploading videos to TUM Live.
- * Uses SSO-based authentication - no password required!
+ * Uses SSO authentication - automatically uses Artemis login credentials.
  */
 @Component({
     selector: 'jhi-tum-live-upload-dialog',
@@ -31,11 +31,16 @@ export class TumLiveUploadDialogComponent {
     private readonly alertService = inject(AlertService);
 
     // Authentication state
-    isAuthenticating = signal(true); // Start authenticating immediately
+    isAuthenticating = signal(false);
     isAuthenticated = signal(false);
     authToken = signal<string | undefined>(undefined);
     availableCourses = signal<TumLiveCourse[]>([]);
     authError = signal<string | undefined>(undefined);
+
+    constructor() {
+        // Automatically authenticate when dialog opens using SSO
+        this.authenticate();
+    }
 
     // Upload state
     selectedCourseId = signal<number | undefined>(undefined);
@@ -46,19 +51,15 @@ export class TumLiveUploadDialogComponent {
     uploadComplete = signal(false);
     uploadError = signal<string | undefined>(undefined);
 
-    constructor() {
-        // Automatically authenticate using SSO when dialog opens
-        this.authenticate();
-    }
-
     /**
-     * Authenticate with TUM Live using SSO (Single Sign-On).
-     * No credentials needed - user is already authenticated in Artemis!
+     * Authenticate with TUM Live using SSO.
+     * Uses the current Artemis user's credentials automatically.
      */
     authenticate(): void {
         this.isAuthenticating.set(true);
         this.authError.set(undefined);
 
+        // Use SSO authentication (user already authenticated in Artemis)
         this.tumLiveUploadService.authenticate().subscribe({
             next: (response: TumLiveAuthResponse) => {
                 this.isAuthenticating.set(false);
@@ -77,7 +78,7 @@ export class TumLiveUploadDialogComponent {
             },
             error: (error) => {
                 this.isAuthenticating.set(false);
-                this.authError.set(error?.error?.error ?? 'Authentication failed. Please try again.');
+                this.authError.set(error?.error?.error ?? 'Authentication failed. Please check your TUM Live credentials.');
             },
         });
     }
@@ -118,6 +119,17 @@ export class TumLiveUploadDialogComponent {
                 this.isUploading.set(false);
                 if (response.success) {
                     this.uploadComplete.set(true);
+
+                    // Close dialog and return the video URLs
+                    this.activeModal.close({
+                        success: true,
+                        videoUrl: response.videoUrl,
+                        embedUrl: response.embedUrl,
+                        streamId: response.streamId,
+                        title: this.videoTitle,
+                        description: this.videoDescription,
+                    });
+
                     this.alertService.success('artemisApp.tumLiveUpload.uploadSuccess');
                 } else {
                     this.uploadError.set(response.error ?? 'Upload failed');

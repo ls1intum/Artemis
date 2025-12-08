@@ -397,8 +397,21 @@ export class AttachmentVideoUnitFormComponent {
 
         modalRef.result.then(
             (result) => {
-                if (result) {
-                    // Upload was successful - could refresh or show notification
+                if (result?.success && result.embedUrl) {
+                    // Set the embed URL as the video source
+                    this.videoSourceControl?.setValue(result.embedUrl);
+
+                    // Set the title if not already set
+                    const nameControl = this.form.get('name');
+                    if (nameControl && !nameControl.value && result.title) {
+                        nameControl.setValue(result.title);
+                    }
+
+                    // Set description if provided
+                    const descriptionControl = this.form.get('description');
+                    if (descriptionControl && result.description && !descriptionControl.value) {
+                        descriptionControl.setValue(result.description);
+                    }
                 }
             },
             () => {

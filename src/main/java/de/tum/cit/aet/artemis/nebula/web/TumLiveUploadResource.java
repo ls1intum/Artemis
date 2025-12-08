@@ -13,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -82,6 +83,37 @@ public class TumLiveUploadResource {
         else {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
         }
+    }
+
+    /**
+     * POST /auth/manual : Authenticate with TUM Live using manual credentials.
+     * This endpoint accepts TUM username and password directly from the user.
+     *
+     * @param request the manual authentication request containing username and password
+     * @return ResponseEntity with authentication response including token and courses
+     */
+    @PostMapping("auth/manual")
+    @EnforceAtLeastInstructor
+    public ResponseEntity<TumLiveAuthResponseDTO> authenticateManual(@RequestBody ManualAuthRequest request) {
+        log.info("Received TUM Live manual authentication request for user '{}'", request.username());
+
+        TumLiveAuthResponseDTO response = tumLiveUploadService.authenticateWithPassword(request.username(), request.password());
+
+        if (response.success()) {
+            return ResponseEntity.ok(response);
+        }
+        else {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+        }
+    }
+
+    /**
+     * Request body for manual authentication.
+     *
+     * @param username TUM Live username
+     * @param password TUM Live password
+     */
+    public record ManualAuthRequest(String username, String password) {
     }
 
     /**

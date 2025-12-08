@@ -44,6 +44,9 @@ export interface TumLiveUploadResponse {
     success: boolean;
     message?: string;
     error?: string;
+    videoUrl?: string; // Full watch URL
+    embedUrl?: string; // Embeddable URL for iframe
+    streamId?: number; // TUM Live stream ID
 }
 
 /**
@@ -74,6 +77,17 @@ export class TumLiveUploadService {
      */
     authenticate(): Observable<TumLiveAuthResponse> {
         return this.httpClient.post<TumLiveAuthResponse>(`${this.resourceUrl}/auth`, {});
+    }
+
+    /**
+     * Authenticate with TUM Live using manual credentials.
+     * For users whose TUM Live credentials differ from their Artemis account.
+     * @param username - TUM Live username
+     * @param password - TUM Live password
+     * @returns Observable<TumLiveAuthResponse> - authentication response with token and courses
+     */
+    authenticateManual(username: string, password: string): Observable<TumLiveAuthResponse> {
+        return this.httpClient.post<TumLiveAuthResponse>(`${this.resourceUrl}/auth/manual`, { username, password });
     }
 
     /**

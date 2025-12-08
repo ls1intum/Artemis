@@ -7,6 +7,8 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,6 +50,8 @@ public class TumLiveUploadService {
     private static final Logger log = LoggerFactory.getLogger(TumLiveUploadService.class);
 
     private static final String AUTH_SSO_PATH = "/api/artemis/auth/sso";
+
+    private static final String AUTH_PASSWORD_PATH = "/api/artemis/auth/login";
 
     private static final String UPLOAD_PATH_TEMPLATE = "/api/course/artemis/%d/upload";
 
@@ -94,6 +98,66 @@ public class TumLiveUploadService {
     }
 
     /**
+     * Authenticates a user with TUM Live using manual username and password.
+     * This method sends the user's TUM credentials to TUM Live for validation.
+     *
+     * @param username the TUM username (LRZ ID)
+     * @param password the TUM password
+     * @return the authentication response containing token and available courses
+     * @throws BadRequestAlertException if TUM Live upload is not configured
+     */
+    public TumLiveAuthResponseDTO authenticateWithPassword(String username, String password) {
+        if (!isConfigured()) {
+            throw new BadRequestAlertException("TUM Live upload is not configured", "TumLiveUpload", "notConfigured");
+        }
+
+        String url = tumLiveBaseUrl + AUTH_PASSWORD_PATH;
+        log.debug("Authenticating user '{}' with TUM Live via password at {}", username, url);
+
+        // Build password auth request
+        Map<String, String> request = new HashMap<>();
+        request.put("username", username);
+        request.put("password", password);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<Map<String, String>> entity = new HttpEntity<>(request, headers);
+
+        try {
+            ResponseEntity<TumLiveAuthResponseDTO> response = restTemplate.exchange(url, HttpMethod.POST, entity, TumLiveAuthResponseDTO.class);
+
+            TumLiveAuthResponseDTO authResponse = response.getBody();
+            if (authResponse == null) {
+                log.error("TUM Live password authentication returned null response for user '{}'", username);
+                return new TumLiveAuthResponseDTO(false, null, null, null, null, "Authentication failed: empty response");
+            }
+
+            if (authResponse.success()) {
+                log.info("Successfully authenticated user '{}' with TUM Live via password. Available courses: {}", username,
+                        authResponse.courses() != null ? authResponse.courses().size() : 0);
+            }
+            else {
+                log.warn("TUM Live password authentication failed for user '{}': {}", username, authResponse.error());
+            }
+
+            return authResponse;
+        }
+        catch (HttpClientErrorException.Unauthorized e) {
+            log.warn("TUM Live password authentication failed for user '{}': Invalid credentials", username);
+            return new TumLiveAuthResponseDTO(false, null, null, null, null, "Invalid username or password");
+        }
+        catch (HttpClientErrorException.Forbidden e) {
+            log.warn("TUM Live password authentication failed for user '{}': User not authorized", username);
+            return new TumLiveAuthResponseDTO(false, null, null, null, null, "User not authorized to upload videos");
+        }
+        catch (RestClientException e) {
+            log.error("TUM Live password authentication failed for user '{}': {}", username, e.getMessage(), e);
+            return new TumLiveAuthResponseDTO(false, null, null, null, null, "Authentication failed: " + e.getMessage());
+        }
+    }
+
+    /**
      * Authenticates a user with TUM Live using SSO (Single Sign-On).
      * This method is called after the user has been authenticated via SAML in Artemis.
      *
@@ -109,10 +173,13 @@ public class TumLiveUploadService {
         String url = tumLiveBaseUrl + AUTH_SSO_PATH;
         log.debug("Authenticating user '{}' with TUM Live via SSO at {}", user.getLogin(), url);
 
+        // Build email with @mytum.de domain for TUM Live
+        String tumLiveEmail = user.getLogin() + "@mytum.de";
+
         // Build SSO request with user information from Artemis
         TumLiveSSORequestDTO request = new TumLiveSSORequestDTO(user.getLogin(), // LRZ ID
                 user.getRegistrationNumber(), // Matriculation number
-                user.getFirstName(), user.getLastName(), user.getEmail(), artemisApiKey // Shared secret
+                user.getFirstName(), user.getLastName(), tumLiveEmail, artemisApiKey // Shared secret
         );
 
         HttpHeaders headers = new HttpHeaders();
@@ -186,7 +253,16 @@ public class TumLiveUploadService {
 
             if (response.getStatusCode().is2xxSuccessful()) {
                 log.info("Successfully uploaded video '{}' to TUM Live course {}", title, courseId);
-                return TumLiveUploadResponseDTO.success("Video uploaded successfully to TUM Live");
+
+                // Extract video URLs from response headers
+                String videoUrl = response.getHeaders().getFirst("X-Video-URL");
+                String embedUrl = response.getHeaders().getFirst("X-Embed-URL");
+                String streamIdStr = response.getHeaders().getFirst("X-Stream-ID");
+                Long streamId = streamIdStr != null ? Long.parseLong(streamIdStr) : null;
+
+                log.info("Video uploaded - URL: {}, Embed: {}, StreamID: {}", videoUrl, embedUrl, streamId);
+
+                return TumLiveUploadResponseDTO.success("Video uploaded successfully to TUM Live", videoUrl, embedUrl, streamId);
             }
             else {
                 log.error("TUM Live upload failed with status {}: {}", response.getStatusCode(), response.getBody());

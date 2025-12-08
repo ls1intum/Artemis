@@ -8,14 +8,14 @@
     </div>
 
     <div class="modal-body">
-        <!-- Step 1: SSO Authentication (Automatic) -->
+        <!-- Authenticating with SSO -->
         @if (!isAuthenticated() && isAuthenticating()) {
-            <div class="auth-section text-center">
+            <div class="auth-section text-center py-5">
                 <div class="mb-3">
                     <fa-icon [icon]="faCircleNotch" animation="spin" size="3x" class="text-primary" />
                 </div>
                 <h5 jhiTranslate="artemisApp.tumLiveUpload.authenticating">Authenticating with TUM Live...</h5>
-                <p class="text-muted" jhiTranslate="artemisApp.tumLiveUpload.ssoDescription">Using your Artemis credentials to authenticate with TUM Live via SSO.</p>
+                <p class="text-muted">Using your Artemis credentials</p>
             </div>
         }
 
@@ -23,12 +23,13 @@
         @if (!isAuthenticated() && !isAuthenticating() && authError()) {
             <div class="auth-section">
                 <div class="alert alert-danger">
-                    <h6 jhiTranslate="artemisApp.tumLiveUpload.authFailed">Authentication Failed</h6>
+                    <strong>Authentication Failed</strong>
                     <p>{{ authError() }}</p>
                 </div>
-                <div class="text-muted small" jhiTranslate="artemisApp.tumLiveUpload.ssoErrorHelp">
-                    Make sure you are properly authenticated in Artemis and have the necessary permissions to upload videos to TUM Live.
-                </div>
+                <button type="button" class="btn btn-primary" (click)="authenticate()">
+                    <fa-icon [icon]="faSignInAlt" class="me-1" />
+                    Retry Authentication
+                </button>
             </div>
         }
 
@@ -37,7 +38,7 @@
             <div class="upload-section">
                 <div class="alert alert-success mb-3">
                     <fa-icon [icon]="faCheck" class="me-2" />
-                    <span jhiTranslate="artemisApp.tumLiveUpload.ssoSuccess">Successfully authenticated via SSO!</span>
+                    <span jhiTranslate="artemisApp.tumLiveUpload.authSuccess">Successfully authenticated!</span>
                 </div>
 
                 <div class="mb-3">
@@ -106,17 +107,6 @@
     </div>
 
     <div class="modal-footer">
-        @if (!isAuthenticated() && !isAuthenticating()) {
-            <button type="button" class="btn btn-secondary" (click)="close()">
-                <fa-icon [icon]="faBan" class="me-1" />
-                <span jhiTranslate="entity.action.cancel">Cancel</span>
-            </button>
-            <button type="button" class="btn btn-primary" (click)="retryAuth()">
-                <fa-icon [icon]="faSignInAlt" class="me-1" />
-                <span jhiTranslate="artemisApp.tumLiveUpload.retry">Retry</span>
-            </button>
-        }
-
         @if (isAuthenticating()) {
             <button type="button" class="btn btn-secondary" (click)="close()">
                 <fa-icon [icon]="faBan" class="me-1" />
