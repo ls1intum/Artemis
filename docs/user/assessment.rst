@@ -4,11 +4,11 @@ Assessment
 ==========
 
 Student Guide
-==========
+=============
 .. note::
-    This section has been moved to our `new documentation <https://ls1intum.github.io/Artemis/student/assessment/>`_.
+    This section has been moved to our `new student documentation <https://ls1intum.github.io/Artemis/student/assessment/>`_.
 
 Instructor Guide
-==========
+================
 .. note::
-    This section has been moved to our `new documentation <https://ls1intum.github.io/Artemis/instructor/assessment/>`_.
+    This section has been moved to our `new instructor documentation <https://ls1intum.github.io/Artemis/instructor/assessment/>`_.

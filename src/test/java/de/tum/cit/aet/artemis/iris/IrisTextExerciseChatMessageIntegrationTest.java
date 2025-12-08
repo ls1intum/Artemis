@@ -101,9 +101,9 @@ class IrisTextExerciseChatMessageIntegrationTest extends AbstractIrisIntegration
         messageToSend.setMessageDifferentiator(1453);
 
         irisRequestMockProvider.mockTextExerciseChatResponse(dto -> {
-            assertThat(dto.execution().settings().authenticationToken()).isNotNull();
+            assertThat(dto.settings().authenticationToken()).isNotNull();
 
-            assertThatNoException().isThrownBy(() -> sendStatus(dto.execution().settings().authenticationToken(), "Hello World", dto.execution().initialStages(), null));
+            assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Hello World", dto.initialStages(), null));
 
             pipelineDone.set(true);
         });
@@ -169,17 +169,17 @@ class IrisTextExerciseChatMessageIntegrationTest extends AbstractIrisIntegration
         IrisMessage messageToSend1 = IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession);
 
         irisRequestMockProvider.mockTextExerciseChatResponse(dto -> {
-            assertThat(dto.execution().settings().authenticationToken()).isNotNull();
+            assertThat(dto.settings().authenticationToken()).isNotNull();
 
-            assertThatNoException().isThrownBy(() -> sendStatus(dto.execution().settings().authenticationToken(), "Hello World 1", dto.execution().initialStages(), null));
+            assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Hello World 1", dto.initialStages(), null));
 
             pipelineDone.set(true);
         });
 
         irisRequestMockProvider.mockTextExerciseChatResponse(dto -> {
-            assertThat(dto.execution().settings().authenticationToken()).isNotNull();
+            assertThat(dto.settings().authenticationToken()).isNotNull();
 
-            assertThatNoException().isThrownBy(() -> sendStatus(dto.execution().settings().authenticationToken(), "Hello World 2", dto.execution().initialStages(), null));
+            assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Hello World 2", dto.initialStages(), null));
 
             pipelineDone.set(true);
         });
@@ -268,9 +268,9 @@ class IrisTextExerciseChatMessageIntegrationTest extends AbstractIrisIntegration
         var messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession);
 
         irisRequestMockProvider.mockTextExerciseChatResponse(dto -> {
-            assertThat(dto.execution().settings().authenticationToken()).isNotNull();
+            assertThat(dto.settings().authenticationToken()).isNotNull();
 
-            assertThatNoException().isThrownBy(() -> sendStatus(dto.execution().settings().authenticationToken(), "Hello World", dto.execution().initialStages(), null));
+            assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Hello World", dto.initialStages(), null));
 
             pipelineDone.set(true);
         });
@@ -293,9 +293,9 @@ class IrisTextExerciseChatMessageIntegrationTest extends AbstractIrisIntegration
         var messageToSend2 = IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession);
 
         irisRequestMockProvider.mockTextExerciseChatResponse(dto -> {
-            assertThat(dto.execution().settings().authenticationToken()).isNotNull();
+            assertThat(dto.settings().authenticationToken()).isNotNull();
 
-            assertThatNoException().isThrownBy(() -> sendStatus(dto.execution().settings().authenticationToken(), "Hello World", dto.execution().initialStages(), null));
+            assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Hello World", dto.initialStages(), null));
 
             pipelineDone.set(true);
         });
@@ -332,9 +332,9 @@ class IrisTextExerciseChatMessageIntegrationTest extends AbstractIrisIntegration
         final String expectedTitle = "New chat";
 
         irisRequestMockProvider.mockTextExerciseChatResponse(dto -> {
-            assertThat(dto.execution().settings().authenticationToken()).isNotNull();
+            assertThat(dto.settings().authenticationToken()).isNotNull();
 
-            assertThatNoException().isThrownBy(() -> sendStatus(dto.execution().settings().authenticationToken(), "Hello World", dto.execution().initialStages(), expectedTitle));
+            assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Hello World", dto.initialStages(), expectedTitle));
 
             pipelineDone.set(true);
         });

@@ -5,8 +5,8 @@ import { BehaviorSubject } from 'rxjs';
 export class SidebarEventService {
     private sidebarCardClickedEvent = new BehaviorSubject<string | number | null>(null);
 
-    emitSidebarCardEvent(itemId: string | number) {
-        this.sidebarCardClickedEvent.next(itemId);
+    emitSidebarCardEvent(targetComponentRoute: string | number) {
+        this.sidebarCardClickedEvent.next(targetComponentRoute);
     }
 
     emitResetValue() {

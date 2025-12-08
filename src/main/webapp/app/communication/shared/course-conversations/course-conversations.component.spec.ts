@@ -45,6 +45,7 @@ import {
 } from 'app/communication/course-conversations-components/dialogs/channels-overview-dialog/channels-overview-dialog.component';
 import { ConversationGlobalSearchComponent } from 'app/communication/shared/conversation-global-search/conversation-global-search.component';
 import { AlertService } from 'app/shared/service/alert.service';
+import { FaqService } from 'app/communication/faq/faq.service';
 
 const examples: (ConversationDTO | undefined)[] = [
     undefined,
@@ -137,6 +138,7 @@ examples.forEach((activeConversation) => {
                     MockProvider(SidebarEventService),
                     MockProvider(ProfileService),
                     MockProvider(AlertService),
+                    MockProvider(FaqService),
                 ],
                 imports: [FormsModule, ReactiveFormsModule, FontAwesomeModule, NgbModule],
             }).compileComponents();

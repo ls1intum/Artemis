@@ -4,7 +4,11 @@ const sidebars: SidebarsConfig = {
     default: [
         'intro',
         'programming',
+        'lecture-series',
         'assessment',
+        'faq',
+        'tutorial-groups',
+        'plagiarism-check'
     ],
 };
 

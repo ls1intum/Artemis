@@ -2,7 +2,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { OrganizationManagementService } from 'app/core/admin/organization-management/organization-management.service';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Organization } from 'app/core/shared/entities/organization.model';
-import { TranslateDirective } from '../language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-organization-selector',
