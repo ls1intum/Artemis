@@ -704,8 +704,7 @@ describe('CourseOverviewService', () => {
 
         it('should return "current" if the Release Date is today', () => {
             quizExercise.releaseDate = dayjs();
-            quizExercise.dueDate = dayjs().add(5, 'days'); // Future
-
+            quizExercise.dueDate = dayjs().add(5, 'days');
             const result = courseOverviewService.getCorrespondingExerciseGroupByDate(quizExercise);
             expect(result).toBe('current');
         });
@@ -713,48 +712,51 @@ describe('CourseOverviewService', () => {
         it('should return "current" if the Start Date is today', () => {
             quizExercise.startDate = dayjs();
             quizExercise.dueDate = dayjs().add(5, 'days');
-
             const result = courseOverviewService.getCorrespondingExerciseGroupByDate(quizExercise);
             expect(result).toBe('current');
         });
 
         it('should return "current" if the Due Date is today', () => {
-            quizExercise.releaseDate = dayjs().subtract(5, 'days'); // Past
+            quizExercise.releaseDate = dayjs().subtract(5, 'days');
             quizExercise.dueDate = dayjs();
+            const result = courseOverviewService.getCorrespondingExerciseGroupByDate(quizExercise);
+            expect(result).toBe('current');
+        });
+
+        it('should return "current" if now is strictly between Release Date and Due Date', () => {
+            quizExercise.releaseDate = dayjs().subtract(1, 'day');
+            quizExercise.dueDate = dayjs().add(1, 'day');
 
             const result = courseOverviewService.getCorrespondingExerciseGroupByDate(quizExercise);
             expect(result).toBe('current');
         });
 
-        it('should prioritize "current" even if other dates suggest "past" or "future"', () => {
-            quizExercise.releaseDate = dayjs();
-            quizExercise.dueDate = dayjs().subtract(1, 'day');
+        it('should return "current" if now is strictly between Start Date and Due Date', () => {
+            quizExercise.startDate = dayjs().subtract(1, 'day');
+            quizExercise.dueDate = dayjs().add(1, 'day');
 
             const result = courseOverviewService.getCorrespondingExerciseGroupByDate(quizExercise);
             expect(result).toBe('current');
         });
 
-        it('should fall back to standard logic (return "past") if no dates are today and quiz is over', () => {
+        it('should fall back to "past" if the quiz is completely over (dates in past)', () => {
             quizExercise.releaseDate = dayjs().subtract(5, 'days');
             quizExercise.dueDate = dayjs().subtract(2, 'days');
-
             const result = courseOverviewService.getCorrespondingExerciseGroupByDate(quizExercise);
             expect(result).toBe('past');
         });
 
-        it('should fall back to standard logic (return "future") if no dates are today and quiz is in future', () => {
+        it('should fall back to "future" if the quiz has not started (dates in future)', () => {
             quizExercise.releaseDate = dayjs().add(5, 'days');
             quizExercise.dueDate = dayjs().add(7, 'days');
-
             const result = courseOverviewService.getCorrespondingExerciseGroupByDate(quizExercise);
             expect(result).toBe('future');
         });
 
-        it('should handle undefined dates gracefully without errors', () => {
+        it('should handle undefined dates gracefully', () => {
             quizExercise.releaseDate = undefined;
             quizExercise.startDate = undefined;
             quizExercise.dueDate = undefined;
-
             const result = courseOverviewService.getCorrespondingExerciseGroupByDate(quizExercise);
             expect(result).toBe('noDate');
         });

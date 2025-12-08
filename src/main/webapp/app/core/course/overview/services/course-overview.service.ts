@@ -128,7 +128,11 @@ export class CourseOverviewService {
             const isStartDateToday = exercise.startDate?.isSame(now, 'day');
             const isDueDateToday = exercise.dueDate?.isSame(now, 'day');
 
-            if (isReleaseDateToday || isStartDateToday || isDueDateToday) {
+            const isBetweenReleaseAndDue = exercise.releaseDate && exercise.dueDate ? now.isBetween(exercise.releaseDate, exercise.dueDate, undefined, '[]') : false;
+
+            const isBetweenStartAndDue = exercise.startDate && exercise.dueDate ? now.isBetween(exercise.startDate, exercise.dueDate, undefined, '[]') : false;
+
+            if (isReleaseDateToday || isStartDateToday || isDueDateToday || isBetweenReleaseAndDue || isBetweenStartAndDue) {
                 return 'current';
             }
         }
@@ -252,7 +256,13 @@ export class CourseOverviewService {
     }
 
     groupConversationsByChannelType(course: Course, conversations: ConversationDTO[], messagingEnabled: boolean): AccordionGroups {
-        const channelGroups = messagingEnabled ? { ...DEFAULT_CHANNEL_GROUPS, groupChats: { entityData: [] }, directMessages: { entityData: [] } } : DEFAULT_CHANNEL_GROUPS;
+        const channelGroups = messagingEnabled
+            ? {
+                  ...DEFAULT_CHANNEL_GROUPS,
+                  groupChats: { entityData: [] },
+                  directMessages: { entityData: [] },
+              }
+            : DEFAULT_CHANNEL_GROUPS;
         const groupedConversationGroups = cloneDeep(channelGroups) as AccordionGroups;
 
         groupedConversationGroups.savedPosts = {
@@ -542,6 +552,7 @@ export class CourseOverviewService {
             return dueDateB - dueDateA !== 0 ? dueDateB - dueDateA : this.sortByTitle(a, b);
         });
     }
+
     studentParticipation(exercise: Exercise): StudentParticipation | undefined {
         return exercise.studentParticipations?.length ? exercise.studentParticipations[0] : undefined;
     }
