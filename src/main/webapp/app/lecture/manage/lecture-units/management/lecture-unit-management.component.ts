@@ -14,6 +14,7 @@ import { AttachmentVideoUnit, IngestionState, TranscriptionStatus } from 'app/le
 import { ExerciseUnit } from 'app/lecture/shared/entities/lecture-unit/exerciseUnit.model';
 import {
     IconDefinition,
+    faBan,
     faCheckCircle,
     faExclamationTriangle,
     faEye,
@@ -79,6 +80,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     protected readonly faFileAudio = faFileAudio;
     protected readonly faFileLines = faFileLines;
     protected readonly faExclamationTriangle = faExclamationTriangle;
+    protected readonly faBan = faBan;
 
     protected readonly LectureUnitType = LectureUnitType;
     protected readonly ActionType = ActionType;
@@ -107,6 +109,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     transcriptionStatus: Record<number, TranscriptionStatus> = {};
     playlistUrls: Record<number, string> = {};
     isTranscriptionLoading: Record<number, boolean> = {};
+    isCancellationLoading: Record<number, boolean> = {};
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -399,6 +402,31 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
                     this.transcriptionStatus[lectureUnitId] = TranscriptionStatus.PENDING;
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
+            });
+    }
+
+    cancelTranscription(lectureUnit: AttachmentVideoUnit) {
+        const lectureUnitId = lectureUnit.id;
+        if (!lectureUnitId || this.isCancellationLoading[lectureUnitId]) {
+            return;
+        }
+
+        this.isCancellationLoading[lectureUnitId] = true;
+        this.lectureTranscriptionService
+            .cancelTranscription(lectureUnitId)
+            .pipe(finalize(() => (this.isCancellationLoading[lectureUnitId] = false)))
+            .subscribe({
+                next: (success) => {
+                    if (success) {
+                        this.alertService.success('artemisApp.attachmentVideoUnit.transcription.cancelSuccess');
+                        delete this.transcriptionStatus[lectureUnitId];
+                    } else {
+                        this.alertService.error('artemisApp.attachmentVideoUnit.transcription.cancelError');
+                    }
+                },
+                error: () => {
+                    this.alertService.error('artemisApp.attachmentVideoUnit.transcription.cancelError');
+                },
             });
     }
 

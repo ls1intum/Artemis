@@ -10,16 +10,12 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
 import { TranscriptionStatus } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
-import { LectureTranscriptionService } from 'app/lecture/manage/services/lecture-transcription.service';
-import { AlertService } from 'app/shared/service/alert.service';
-import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal/confirm-autofocus-modal.component';
-import { finalize } from 'rxjs/operators';
 
 export interface AttachmentVideoUnitFormData {
     formProperties: FormProperties;
@@ -126,17 +122,12 @@ export class AttachmentVideoUnitFormComponent {
     protected readonly acceptedFileExtensionsFileBrowser = ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER;
 
     private readonly attachmentVideoUnitService = inject(AttachmentVideoUnitService);
-    private readonly lectureTranscriptionService = inject(LectureTranscriptionService);
-    private readonly modalService = inject(NgbModal);
-    private readonly alertService = inject(AlertService);
     canGenerateTranscript = signal(false);
     playlistUrl = signal<string | undefined>(undefined);
     transcriptionStatus = signal<TranscriptionStatus | undefined>(undefined);
-    isCancelling = signal(false);
 
     formData = input<AttachmentVideoUnitFormData>();
     isEditMode = input<boolean>(false);
-    lectureUnitId = input<number | undefined>(undefined);
 
     formSubmitted = output<AttachmentVideoUnitFormData>();
 
@@ -380,43 +371,5 @@ export class AttachmentVideoUnitFormComponent {
 
     cancelForm() {
         this.onCancel.emit();
-    }
-
-    cancelTranscription() {
-        const modalRef = this.modalService.open(ConfirmAutofocusModalComponent, { size: 'md', backdrop: 'static' });
-        modalRef.componentInstance.title = 'artemisApp.attachmentVideoUnit.transcription.cancelButton';
-        modalRef.componentInstance.text = 'artemisApp.attachmentVideoUnit.transcription.cancelConfirm';
-        modalRef.componentInstance.translateText = true;
-        modalRef.componentInstance.textIsMarkdown = false;
-
-        modalRef.result.then(
-            () => {
-                const unitId = this.lectureUnitId();
-                if (!unitId) {
-                    return;
-                }
-
-                this.isCancelling.set(true);
-                this.lectureTranscriptionService
-                    .cancelTranscription(unitId)
-                    .pipe(finalize(() => this.isCancelling.set(false)))
-                    .subscribe({
-                        next: (success) => {
-                            if (success) {
-                                this.alertService.success('artemisApp.attachmentVideoUnit.transcription.cancelSuccess');
-                                this.transcriptionStatus.set(undefined);
-                            } else {
-                                this.alertService.error('artemisApp.attachmentVideoUnit.transcription.cancelError');
-                            }
-                        },
-                        error: () => {
-                            this.alertService.error('artemisApp.attachmentVideoUnit.transcription.cancelError');
-                        },
-                    });
-            },
-            () => {
-                // User dismissed the modal
-            },
-        );
     }
 }

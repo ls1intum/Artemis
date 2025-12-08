@@ -42,7 +42,6 @@
                 (onCancel)="onCloseLectureUnitForms()"
                 (formSubmitted)="createEditAttachmentVideoUnit($event)"
                 [formData]="attachmentVideoUnitFormData"
-                [lectureUnitId]="currentlyProcessedAttachmentVideoUnit?.id"
             />
         }
         @if (isExerciseUnitFormOpen()) {

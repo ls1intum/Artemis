@@ -57,6 +57,7 @@ describe('LectureUnitManagementComponent', () => {
     let irisSettingsService: IrisSettingsService;
     let lectureTranscriptionService: LectureTranscriptionService;
     let attachmentVideoUnitService: AttachmentVideoUnitService;
+    let alertService: AlertService;
     let findLectureSpy: jest.SpyInstance;
     let findLectureWithDetailsSpy: jest.SpyInstance;
     let deleteLectureUnitSpy: jest.SpyInstance;
@@ -110,6 +111,7 @@ describe('LectureUnitManagementComponent', () => {
         irisSettingsService = TestBed.inject(IrisSettingsService);
         lectureTranscriptionService = TestBed.inject(LectureTranscriptionService);
         attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
+        alertService = TestBed.inject(AlertService);
         findLectureSpy = jest.spyOn(lectureService, 'find');
         findLectureWithDetailsSpy = jest.spyOn(lectureService, 'findWithDetails');
         deleteLectureUnitSpy = jest.spyOn(lectureUnitService, 'delete');
@@ -342,6 +344,48 @@ describe('LectureUnitManagementComponent', () => {
             lectureUnitManagementComponent.transcriptionStatus[attachmentVideoUnit.id!] = undefined as any;
             lectureUnitManagementComponent.playlistUrls[attachmentVideoUnit.id!] = undefined as any;
             expect(lectureUnitManagementComponent.canGenerateTranscription(attachmentVideoUnit)).toBeFalse();
+        });
+
+        it('should cancel transcription successfully', () => {
+            const cancelSpy = jest.spyOn(lectureTranscriptionService, 'cancelTranscription').mockReturnValue(of(true));
+            const alertSuccessSpy = jest.spyOn(alertService, 'success');
+            lectureUnitManagementComponent.transcriptionStatus[attachmentVideoUnit.id!] = TranscriptionStatus.PENDING;
+
+            lectureUnitManagementComponent.cancelTranscription(attachmentVideoUnit);
+
+            expect(cancelSpy).toHaveBeenCalledWith(attachmentVideoUnit.id);
+            expect(alertSuccessSpy).toHaveBeenCalledWith('artemisApp.attachmentVideoUnit.transcription.cancelSuccess');
+            expect(lectureUnitManagementComponent.transcriptionStatus[attachmentVideoUnit.id!]).toBeUndefined();
+        });
+
+        it('should show error when cancellation returns false', () => {
+            jest.spyOn(lectureTranscriptionService, 'cancelTranscription').mockReturnValue(of(false));
+            const alertErrorSpy = jest.spyOn(alertService, 'error');
+            lectureUnitManagementComponent.transcriptionStatus[attachmentVideoUnit.id!] = TranscriptionStatus.PENDING;
+
+            lectureUnitManagementComponent.cancelTranscription(attachmentVideoUnit);
+
+            expect(alertErrorSpy).toHaveBeenCalledWith('artemisApp.attachmentVideoUnit.transcription.cancelError');
+            expect(lectureUnitManagementComponent.transcriptionStatus[attachmentVideoUnit.id!]).toBe(TranscriptionStatus.PENDING);
+        });
+
+        it('should show error when cancellation request fails', () => {
+            jest.spyOn(lectureTranscriptionService, 'cancelTranscription').mockReturnValue(throwError(() => new Error('Network error')));
+            const alertErrorSpy = jest.spyOn(alertService, 'error');
+            lectureUnitManagementComponent.transcriptionStatus[attachmentVideoUnit.id!] = TranscriptionStatus.PENDING;
+
+            lectureUnitManagementComponent.cancelTranscription(attachmentVideoUnit);
+
+            expect(alertErrorSpy).toHaveBeenCalledWith('artemisApp.attachmentVideoUnit.transcription.cancelError');
+        });
+
+        it('should not cancel transcription if already cancelling', () => {
+            const cancelSpy = jest.spyOn(lectureTranscriptionService, 'cancelTranscription');
+            lectureUnitManagementComponent.isCancellationLoading[attachmentVideoUnit.id!] = true;
+
+            lectureUnitManagementComponent.cancelTranscription(attachmentVideoUnit);
+
+            expect(cancelSpy).not.toHaveBeenCalled();
         });
     });
 });
