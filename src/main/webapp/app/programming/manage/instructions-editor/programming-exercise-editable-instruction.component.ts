@@ -49,6 +49,8 @@ import { ActivatedRoute } from '@angular/router';
 import { Annotation } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import { RewriteResult } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-result';
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
+import { BrowserFingerprintService } from 'app/core/account/fingerprint/browser-fingerprint.service';
+import { ProblemStatementSyncService } from 'app/programming/manage/services/problem-statement-sync.service';
 
 @Component({
     selector: 'jhi-programming-exercise-editable-instructions',
@@ -65,6 +67,8 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     private testCaseService = inject(ProgrammingExerciseGradingService);
     private profileService = inject(ProfileService);
     private artemisIntelligenceService = inject(ArtemisIntelligenceService);
+    private browserFingerprintService = inject(BrowserFingerprintService);
+    private problemStatementSyncService = inject(ProblemStatementSyncService);
 
     participationValue: Participation;
     programmingExercise: ProgrammingExercise;
@@ -99,6 +103,9 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
 
     testCaseSubscription: Subscription;
     forceRenderSubscription: Subscription;
+    incomingSyncSubscription?: Subscription;
+    private isApplyingRemoteUpdate = false;
+    private syncExerciseId?: number;
 
     @ViewChild(MarkdownEditorMonacoComponent, { static: false }) markdownEditorMonaco?: MarkdownEditorMonacoComponent;
 
@@ -110,8 +117,6 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     @Input() showSaveButton = false;
     @Input() templateParticipation: Participation;
     @Input() forceRender: Observable<void>;
-    readonly consistencyIssues = input<ConsistencyIssue[]>([]);
-
     @Input()
     get exercise() {
         return this.programmingExercise;
@@ -120,6 +125,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     get participation() {
         return this.participationValue;
     }
+    readonly consistencyIssues = input<ConsistencyIssue[]>([]);
 
     @Output() participationChange = new EventEmitter<Participation>();
     @Output() hasUnsavedChanges = new EventEmitter<boolean>();
@@ -133,11 +139,16 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     }
 
     set exercise(exercise: ProgrammingExercise) {
+        const isNewExercise = !this.programmingExercise || this.programmingExercise.id !== exercise.id;
         if (this.programmingExercise && exercise.problemStatement !== this.programmingExercise.problemStatement) {
             this.unsavedChanges = true;
         }
         this.programmingExercise = exercise;
         this.exerciseChange.emit(this.programmingExercise);
+        if (isNewExercise && exercise.id) {
+            this.exerciseId = exercise.id;
+            this.initializeProblemStatementSync(exercise.id, exercise.problemStatement);
+        }
     }
 
     set unsavedChanges(hasChanges: boolean) {
@@ -158,6 +169,9 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     ngOnInit() {
         this.courseId = Number(this.activatedRoute.snapshot.paramMap.get('courseId'));
         this.exerciseId = Number(this.activatedRoute.snapshot.paramMap.get('exerciseId'));
+        if (this.exerciseId) {
+            this.initializeProblemStatementSync(this.exerciseId, this.exercise?.problemStatement);
+        }
     }
 
     ngOnChanges(changes: SimpleChanges): void {
@@ -173,6 +187,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         if (this.forceRenderSubscription) {
             this.forceRenderSubscription.unsubscribe();
         }
+        this.teardownProblemStatementSync();
     }
 
     ngAfterViewInit() {
@@ -226,6 +241,9 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         if (this.exercise.problemStatement !== problemStatement) {
             this.exercise = { ...this.exercise, problemStatement };
             this.unsavedChanges = true;
+        }
+        if (!this.isApplyingRemoteUpdate) {
+            this.problemStatementSyncService.queueLocalChange(problemStatement);
         }
         this.instructionChange.emit(problemStatement);
     }
@@ -318,4 +336,33 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
 
         return annotations;
     };
+
+    private initializeProblemStatementSync(exerciseId?: number, initialContent?: string) {
+        if (!this.editMode || !exerciseId || this.syncExerciseId === exerciseId) {
+            return;
+        }
+        this.teardownProblemStatementSync();
+        this.syncExerciseId = exerciseId;
+
+        this.problemStatementSyncService.init(exerciseId, initialContent ?? this.exercise?.problemStatement ?? '', this.browserFingerprintService.instanceIdentifier.value);
+
+        this.incomingSyncSubscription = this.problemStatementSyncService.updates$.subscribe((updatedContent) => this.applyRemoteProblemStatementUpdate(updatedContent));
+
+        this.problemStatementSyncService.requestInitialSync();
+    }
+
+    private teardownProblemStatementSync() {
+        this.incomingSyncSubscription?.unsubscribe();
+        this.incomingSyncSubscription = undefined;
+        this.syncExerciseId = undefined;
+        this.problemStatementSyncService.dispose();
+    }
+
+    private applyRemoteProblemStatementUpdate(updatedContent: string) {
+        this.isApplyingRemoteUpdate = true;
+        this.exercise = { ...this.exercise, problemStatement: updatedContent };
+        this.unsavedChanges = true;
+        this.instructionChange.emit(updatedContent);
+        this.isApplyingRemoteUpdate = false;
+    }
 }

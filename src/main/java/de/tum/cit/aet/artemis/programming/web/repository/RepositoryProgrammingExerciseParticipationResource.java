@@ -12,6 +12,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.eclipse.jgit.api.errors.CheckoutConflictException;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.WrongRepositoryStateException;
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
@@ -51,6 +52,7 @@ import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExercisePart
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
 import de.tum.cit.aet.artemis.programming.dto.FileMove;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseEditorFileSyncDTO;
 import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
@@ -160,6 +162,10 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     }
 
     private void broadcastChangesForNonStudentRepository(Long participationId) {
+        broadcastChangesForNonStudentRepository(participationId, null);
+    }
+
+    private void broadcastChangesForNonStudentRepository(Long participationId, @Nullable ProgrammingExerciseEditorFileSyncDTO filePatch) {
         try {
             ProgrammingExerciseParticipation participation = getProgrammingExerciseParticipation(participationId);
             ProgrammingExercise programmingExercise = programmingExerciseRepository.getProgrammingExerciseFromParticipation(participation);
@@ -167,10 +173,10 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
                 return;
             }
             if (participation instanceof TemplateProgrammingExerciseParticipation) {
-                this.broadcastRepositoryUpdates(programmingExercise.getId(), ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY, null);
+                this.broadcastRepositoryUpdates(programmingExercise.getId(), ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY, null, filePatch);
             }
             else if (participation instanceof SolutionProgrammingExerciseParticipation) {
-                this.broadcastRepositoryUpdates(programmingExercise.getId(), ProgrammingExerciseEditorSyncTarget.SOLUTION_REPOSITORY, null);
+                this.broadcastRepositoryUpdates(programmingExercise.getId(), ProgrammingExerciseEditorSyncTarget.SOLUTION_REPOSITORY, null, filePatch);
             }
         }
         catch (Exception e) {
@@ -322,7 +328,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     @EnforceAtLeastStudent
     public ResponseEntity<Void> createFile(@PathVariable Long participationId, @RequestParam("file") String filePath, HttpServletRequest request) {
         ResponseEntity<Void> response = super.createFile(participationId, filePath, request);
-        broadcastChangesForNonStudentRepository(participationId);
+        broadcastChangesForNonStudentRepository(participationId, new ProgrammingExerciseEditorFileSyncDTO(filePath, null, "CREATE", null, "FILE"));
         return response;
     }
 
@@ -342,7 +348,8 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     @EnforceAtLeastStudent
     public ResponseEntity<Void> renameFile(@PathVariable Long participationId, @RequestBody FileMove fileMove) {
         ResponseEntity<Void> response = super.renameFile(participationId, fileMove);
-        broadcastChangesForNonStudentRepository(participationId);
+        broadcastChangesForNonStudentRepository(participationId,
+                new ProgrammingExerciseEditorFileSyncDTO(fileMove.currentFilePath(), null, "RENAME", fileMove.newFilename(), null));
         return response;
     }
 
@@ -351,7 +358,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     @EnforceAtLeastStudent
     public ResponseEntity<Void> deleteFile(@PathVariable Long participationId, @RequestParam("file") String filename) {
         ResponseEntity<Void> response = super.deleteFile(participationId, filename);
-        broadcastChangesForNonStudentRepository(participationId);
+        broadcastChangesForNonStudentRepository(participationId, new ProgrammingExerciseEditorFileSyncDTO(filename, null, "DELETE", null, null));
         return response;
     }
 

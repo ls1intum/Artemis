@@ -12,6 +12,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.eclipse.jgit.api.errors.CheckoutConflictException;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.WrongRepositoryStateException;
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
@@ -40,6 +41,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseEditorSyncTarget;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.dto.FileMove;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseEditorFileSyncDTO;
 import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.GitService;
@@ -117,7 +119,7 @@ public class TestRepositoryResource extends RepositoryResource {
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> createFile(@PathVariable Long exerciseId, @RequestParam("file") String filePath, HttpServletRequest request) {
         ResponseEntity<Void> response = super.createFile(exerciseId, filePath, request);
-        broadcastTestRepositoryChange(exerciseId);
+        broadcastTestRepositoryChange(exerciseId, new ProgrammingExerciseEditorFileSyncDTO(filePath, null, "CREATE", null, "FILE"));
         return response;
     }
 
@@ -127,7 +129,7 @@ public class TestRepositoryResource extends RepositoryResource {
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> createFolder(@PathVariable Long exerciseId, @RequestParam("folder") String folderPath, HttpServletRequest request) {
         ResponseEntity<Void> response = super.createFolder(exerciseId, folderPath, request);
-        broadcastTestRepositoryChange(exerciseId);
+        broadcastTestRepositoryChange(exerciseId, new ProgrammingExerciseEditorFileSyncDTO(folderPath, null, "CREATE", null, "FOLDER"));
         return response;
     }
 
@@ -137,7 +139,7 @@ public class TestRepositoryResource extends RepositoryResource {
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> renameFile(@PathVariable Long exerciseId, @RequestBody FileMove fileMove) {
         ResponseEntity<Void> response = super.renameFile(exerciseId, fileMove);
-        broadcastTestRepositoryChange(exerciseId);
+        broadcastTestRepositoryChange(exerciseId, new ProgrammingExerciseEditorFileSyncDTO(fileMove.currentFilePath(), null, "RENAME", fileMove.newFilename(), null));
         return response;
     }
 
@@ -147,7 +149,7 @@ public class TestRepositoryResource extends RepositoryResource {
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> deleteFile(@PathVariable Long exerciseId, @RequestParam("file") String filename) {
         ResponseEntity<Void> response = super.deleteFile(exerciseId, filename);
-        broadcastTestRepositoryChange(exerciseId);
+        broadcastTestRepositoryChange(exerciseId, new ProgrammingExerciseEditorFileSyncDTO(filename, null, "DELETE", null, null));
         return response;
     }
 
@@ -172,7 +174,7 @@ public class TestRepositoryResource extends RepositoryResource {
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> resetToLastCommit(@PathVariable Long exerciseId) {
         ResponseEntity<Void> response = super.resetToLastCommit(exerciseId);
-        broadcastTestRepositoryChange(exerciseId);
+        broadcastTestRepositoryChange(exerciseId, null);
         return response;
     }
 
@@ -218,12 +220,12 @@ public class TestRepositoryResource extends RepositoryResource {
         }
         ResponseEntity<Map<String, String>> response = saveFilesAndCommitChanges(exerciseId, submissions, commit, repository);
         if (!commit && !submissions.isEmpty()) {
-            broadcastTestRepositoryChange(exerciseId);
+            broadcastTestRepositoryChange(exerciseId, null);
         }
         return response;
     }
 
-    private void broadcastTestRepositoryChange(Long exerciseId) {
-        this.broadcastRepositoryUpdates(exerciseId, ProgrammingExerciseEditorSyncTarget.TESTS_REPOSITORY, null);
+    private void broadcastTestRepositoryChange(Long exerciseId, @Nullable ProgrammingExerciseEditorFileSyncDTO filePatch) {
+        this.broadcastRepositoryUpdates(exerciseId, ProgrammingExerciseEditorSyncTarget.TESTS_REPOSITORY, null, filePatch);
     }
 }

@@ -22,6 +22,7 @@ describe('ProgrammingExerciseEditorSyncService', () => {
                     provide: WebsocketService,
                     useValue: {
                         subscribe: jest.fn(),
+                        send: jest.fn(),
                         receive: jest.fn().mockImplementation(() => {
                             const subject = new Subject<ProgrammingExerciseEditorSyncMessage>();
                             receiveSubjects.push(subject);

@@ -165,6 +165,7 @@ public class ExerciseVersionService {
 
     /**
      * Compare two exercise snapshots and return the change that should be broadcast to clients.
+     * TODO: on new commit, client should be able to apply new commit to active online editors. Either send diff information via this method, other use alternatice methods.
      *
      * @param exerciseId       the exercise id
      * @param newSnapshot      the new snapshot

@@ -130,6 +130,7 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
     }
 
     annotationsArray: Array<Annotation> = [];
+    private isApplyingExternalUpdate = false;
     private addFeedbackKeydownListener?: Disposable;
 
     constructor() {
@@ -235,22 +236,26 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
 
     onFileTextChanged(event: { text: string; fileName: string }): void {
         const { text, fileName } = event;
-        // Apply text change to the specific file it belongs to, not the currently selected file
-        if (fileName && this.fileSession()[fileName]) {
-            const previousText = this.fileSession()[fileName].code;
-            const previousScrollTop = this.fileSession()[fileName].scrollTop;
+        this.updateFileContent(fileName, text, true);
+    }
 
-            if (previousText !== text) {
-                this.fileSession.set({
-                    ...this.fileSession(),
-                    [fileName]: {
-                        code: text,
-                        loadingError: false,
-                        scrollTop: previousScrollTop,
-                        cursor: fileName === this.selectedFile() ? this.editor().getPosition() : this.fileSession()[fileName].cursor,
-                    },
-                });
+    private updateFileContent(fileName: string, text: string, emitChange: boolean) {
+        const existingSession = this.fileSession()[fileName] ?? ({ code: '', loadingError: false, scrollTop: 0, cursor: { column: 0, lineNumber: 0 } } as FileSession[string]);
+        const previousText = existingSession.code;
+        const previousScrollTop = existingSession.scrollTop;
 
+        if (previousText !== text) {
+            this.fileSession.set({
+                ...this.fileSession(),
+                [fileName]: {
+                    code: text,
+                    loadingError: false,
+                    scrollTop: fileName === this.selectedFile() ? this.editor().getScrollTop() : previousScrollTop,
+                    cursor: fileName === this.selectedFile() ? this.editor().getPosition() : existingSession.cursor,
+                },
+            });
+
+            if (emitChange && !this.isApplyingExternalUpdate) {
                 this.onFileContentChange.emit({ fileName, text });
             }
         }
@@ -262,6 +267,19 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
 
     getNumberOfLines(): number {
         return this.editor().getNumberOfLines();
+    }
+
+    getFileContent(fileName: string): string | undefined {
+        return this.fileSession()[fileName]?.code;
+    }
+
+    applyRemoteFileContent(fileName: string, text: string) {
+        this.isApplyingExternalUpdate = true;
+        this.updateFileContent(fileName, text, false);
+        if (this.selectedFile() === fileName) {
+            this.switchToSelectedFile(fileName, text);
+        }
+        this.isApplyingExternalUpdate = false;
     }
 
     highlightLines(startLine: number, endLine: number) {

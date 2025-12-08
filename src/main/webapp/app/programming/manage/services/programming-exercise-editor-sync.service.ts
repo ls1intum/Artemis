@@ -1,6 +1,8 @@
 import { Injectable, OnDestroy, inject } from '@angular/core';
 import { Observable, Subject, Subscription } from 'rxjs';
 import { WebsocketService } from 'app/shared/service/websocket.service';
+import { FileType } from 'app/programming/shared/code-editor/model/code-editor.model';
+
 export enum ProgrammingExerciseEditorSyncTarget {
     PROBLEM_STATEMENT = 'PROBLEM_STATEMENT',
     TEMPLATE_REPOSITORY = 'TEMPLATE_REPOSITORY',
@@ -18,6 +20,33 @@ export interface ProgrammingExerciseEditorSyncMessage {
     target?: ProgrammingExerciseEditorSyncTarget;
     auxiliaryRepositoryId?: number;
     clientInstanceId?: string;
+    problemStatementPatch?: string;
+    problemStatementFull?: string;
+    problemStatementRequest?: boolean;
+    filePatches?: ProgrammingExerciseEditorFileSync[];
+    fileRequests?: string[];
+    fileFulls?: ProgrammingExerciseEditorFileFull[];
+    timestamp?: number;
+}
+
+export enum ProgrammingExerciseEditorFileChangeType {
+    CONTENT = 'CONTENT',
+    CREATE = 'CREATE',
+    DELETE = 'DELETE',
+    RENAME = 'RENAME',
+}
+
+export interface ProgrammingExerciseEditorFileSync {
+    fileName: string;
+    patch?: string;
+    changeType?: ProgrammingExerciseEditorFileChangeType;
+    newFileName?: string;
+    fileType?: FileType;
+}
+
+export interface ProgrammingExerciseEditorFileFull {
+    fileName: string;
+    content: string;
 }
 
 export const EDITOR_SESSION_HEADER = 'X-Artemis-Client-Instance-ID';
@@ -32,6 +61,11 @@ export class ProgrammingExerciseEditorSyncService implements OnDestroy {
 
     ngOnDestroy(): void {
         Object.values(this.connections).forEach((connection) => this.websocketService.unsubscribe(connection));
+    }
+
+    sendSynchronization(exerciseId: number, message: ProgrammingExerciseEditorSyncMessage): void {
+        const topic = this.getOrCreateTopic(exerciseId);
+        this.websocketService.send(topic, { ...message, timestamp: message.timestamp ?? Date.now() });
     }
 
     getSynchronizationUpdates(exerciseId: number): Observable<ProgrammingExerciseEditorSyncMessage> {
@@ -65,9 +99,7 @@ export class ProgrammingExerciseEditorSyncService implements OnDestroy {
     }
 
     private initializeSynchronizationSubscription(exerciseId: number) {
-        const topic = `/topic/programming-exercises/${exerciseId}/synchronization`;
-        this.websocketService.subscribe(topic);
-        this.connections[exerciseId] = topic;
+        const topic = this.getOrCreateTopic(exerciseId);
 
         const subject = new Subject<ProgrammingExerciseEditorSyncMessage>();
         this.subjects[exerciseId] = subject;
@@ -76,5 +108,14 @@ export class ProgrammingExerciseEditorSyncService implements OnDestroy {
         this.subscriptions[exerciseId] = subscription;
 
         return subject;
+    }
+
+    private getOrCreateTopic(exerciseId: number): string {
+        const topic = `/topic/programming-exercises/${exerciseId}/synchronization`;
+        if (!this.connections[exerciseId]) {
+            this.websocketService.subscribe(topic);
+            this.connections[exerciseId] = topic;
+        }
+        return topic;
     }
 }

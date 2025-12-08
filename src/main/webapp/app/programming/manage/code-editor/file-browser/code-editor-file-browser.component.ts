@@ -234,7 +234,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     /**
      * Initialize repositoryFiles with Problem Statement as a first-class file type
      */
-    private initializeRepositoryFiles(): void {
+    initializeRepositoryFiles(): void {
         if (!this.repositoryFiles) {
             this.repositoryFiles = {};
         }
@@ -296,6 +296,10 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
             this.repositoryFiles[PROBLEM_STATEMENT_IDENTIFIER] = FileType.PROBLEM_STATEMENT;
         }
 
+        this.setupTreeview();
+    }
+
+    refreshTreeview(): void {
         this.setupTreeview();
     }
 

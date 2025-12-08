@@ -232,8 +232,16 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
 
         var captor = ArgumentCaptor.forClass(ProgrammingExerciseEditorSyncEventDTO.class);
         verify(websocketMessagingService).sendMessage(eq("/topic/programming-exercises/" + programmingExercise.getId() + "/synchronization"), captor.capture());
-        assertThat(captor.getValue().target()).isEqualTo(ProgrammingExerciseEditorSyncTarget.AUXILIARY_REPOSITORY);
-        assertThat(captor.getValue().auxiliaryRepositoryId()).isEqualTo(auxiliaryRepository.getId());
+
+        var syncEvent = captor.getValue();
+        assertThat(syncEvent.target()).isEqualTo(ProgrammingExerciseEditorSyncTarget.AUXILIARY_REPOSITORY);
+        assertThat(syncEvent.auxiliaryRepositoryId()).isEqualTo(auxiliaryRepository.getId());
+        assertThat(syncEvent.filePatches()).hasSize(1);
+
+        var filePatch = syncEvent.filePatches().get(0);
+        assertThat(filePatch.fileName()).isEqualTo(currentLocalFileName);
+        assertThat(filePatch.changeType()).isEqualTo("RENAME");
+        assertThat(filePatch.newFileName()).isEqualTo("renamedFile");
     }
 
     @Test
@@ -261,8 +269,15 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
 
         var captor = ArgumentCaptor.forClass(ProgrammingExerciseEditorSyncEventDTO.class);
         verify(websocketMessagingService).sendMessage(eq("/topic/programming-exercises/" + programmingExercise.getId() + "/synchronization"), captor.capture());
-        assertThat(captor.getValue().target()).isEqualTo(ProgrammingExerciseEditorSyncTarget.AUXILIARY_REPOSITORY);
-        assertThat(captor.getValue().auxiliaryRepositoryId()).isEqualTo(auxiliaryRepository.getId());
+
+        var syncEvent = captor.getValue();
+        assertThat(syncEvent.target()).isEqualTo(ProgrammingExerciseEditorSyncTarget.AUXILIARY_REPOSITORY);
+        assertThat(syncEvent.auxiliaryRepositoryId()).isEqualTo(auxiliaryRepository.getId());
+        assertThat(syncEvent.filePatches()).hasSize(1);
+
+        var filePatch = syncEvent.filePatches().get(0);
+        assertThat(filePatch.fileName()).isEqualTo(currentLocalFileName);
+        assertThat(filePatch.changeType()).isEqualTo("DELETE");
     }
 
     @Test
@@ -303,9 +318,15 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
         var captor = ArgumentCaptor.forClass(ProgrammingExerciseEditorSyncEventDTO.class);
         verify(websocketMessagingService).sendMessage(eq("/topic/programming-exercises/" + programmingExercise.getId() + "/synchronization"), captor.capture());
 
-        var synchronizationMessage = captor.getValue();
-        assertThat(synchronizationMessage.target()).isEqualTo(ProgrammingExerciseEditorSyncTarget.AUXILIARY_REPOSITORY);
-        assertThat(synchronizationMessage.auxiliaryRepositoryId()).isEqualTo(auxiliaryRepository.getId());
+        var syncEvent = captor.getValue();
+        assertThat(syncEvent.target()).isEqualTo(ProgrammingExerciseEditorSyncTarget.AUXILIARY_REPOSITORY);
+        assertThat(syncEvent.auxiliaryRepositoryId()).isEqualTo(auxiliaryRepository.getId());
+        assertThat(syncEvent.filePatches()).hasSize(1);
+
+        var filePatch = syncEvent.filePatches().get(0);
+        assertThat(filePatch.fileName()).isEqualTo("newFile");
+        assertThat(filePatch.changeType()).isEqualTo("CREATE");
+        assertThat(filePatch.fileType()).isEqualTo("FILE");
     }
 
     @Test

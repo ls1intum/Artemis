@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.programming.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.List;
+
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,6 +16,7 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseEditorSyncTarget;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseEditorFileSyncDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseEditorSyncEventDTO;
 
 @Profile(PROFILE_CORE)
@@ -49,14 +52,32 @@ public class ProgrammingExerciseEditorSyncService {
     }
 
     /**
-     * Broadcast a single change to all active editors.
+     * Broadcast a general change notification to all active editors.
      *
      * @param exerciseId            the exercise id
      * @param target                the target data type associated with this change (e.g. template repository, solution repository, auxiliary repository, problem statement)
      * @param auxiliaryRepositoryId (optional) the id of the auxiliary repository associated with this change
      */
     public void broadcastChange(long exerciseId, ProgrammingExerciseEditorSyncTarget target, @Nullable Long auxiliaryRepositoryId) {
-        var payload = new ProgrammingExerciseEditorSyncEventDTO(target, auxiliaryRepositoryId, getClientInstanceId());
+        ProgrammingExerciseEditorSyncEventDTO payload = ProgrammingExerciseEditorSyncEventDTO.forGeneralUpdate(target, auxiliaryRepositoryId, getClientInstanceId());
+        websocketMessagingService.sendMessage(getSynchronizationTopic(exerciseId), payload).exceptionally(exception -> {
+            log.warn("Cannot send synchronization message for exercise {}", exerciseId, exception);
+            return null;
+        });
+    }
+
+    /**
+     * Broadcast file-level changes to all active editors.
+     *
+     * @param exerciseId            the exercise id
+     * @param target                the target data type associated with this change (e.g. template repository, solution repository, auxiliary repository, problem statement)
+     * @param auxiliaryRepositoryId (optional) the id of the auxiliary repository associated with this change
+     * @param filePatches           the file operations to broadcast
+     */
+    public void broadcastFileChanges(long exerciseId, ProgrammingExerciseEditorSyncTarget target, @Nullable Long auxiliaryRepositoryId,
+            @Nullable ProgrammingExerciseEditorFileSyncDTO filePatch) {
+        ProgrammingExerciseEditorSyncEventDTO payload = ProgrammingExerciseEditorSyncEventDTO.forFilePatch(target, auxiliaryRepositoryId, getClientInstanceId(),
+                filePatch != null ? List.of(filePatch) : null);
         websocketMessagingService.sendMessage(getSynchronizationTopic(exerciseId), payload).exceptionally(exception -> {
             log.warn("Cannot send synchronization message for exercise {}", exerciseId, exception);
             return null;

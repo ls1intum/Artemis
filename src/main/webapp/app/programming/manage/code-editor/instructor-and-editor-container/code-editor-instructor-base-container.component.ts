@@ -14,20 +14,21 @@ import { ProgrammingExerciseService } from 'app/programming/manage/services/prog
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { SolutionProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/solution-programming-exercise-participation.model';
-import { DomainChange, DomainType, RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
+import { DomainChange, DomainType, FileType, RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { isExamExercise } from 'app/shared/util/utils';
 import { Subject } from 'rxjs';
 import { debounceTime, shareReplay } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
-import { AlertService, AlertType } from 'app/shared/service/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { BrowserFingerprintService } from 'app/core/account/fingerprint/browser-fingerprint.service';
 import {
+    ProgrammingExerciseEditorFileChangeType,
     ProgrammingExerciseEditorSyncMessage,
-    ProgrammingExerciseEditorSyncService,
     ProgrammingExerciseEditorSyncTarget,
 } from 'app/programming/manage/services/programming-exercise-editor-sync.service';
+import { RemoteFileOperation, RepositoryFileSyncService } from 'app/programming/manage/services/repository-file-sync.service';
 /**
  * Enumeration specifying the loading state
  */
@@ -52,8 +53,8 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
     private location = inject(Location);
     private participationService = inject(ParticipationService);
     private route = inject(ActivatedRoute);
-    private synchronizationService = inject(ProgrammingExerciseEditorSyncService);
     private browserFingerprintService = inject(BrowserFingerprintService);
+    private repositorySyncService = inject(RepositoryFileSyncService);
     /** Raw markdown changes from the center editor for debounce logic */
     private problemStatementChanges$ = new Subject<string>();
     protected alertService = inject(AlertService);
@@ -68,7 +69,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
     // :exerciseId/:participationId -> Load exercise and select repository according to participationId
     // :exerciseId/test -> Load exercise and select test repository
     paramSub: Subscription;
-    syncSubscription?: Subscription;
+    repositorySyncSubscription?: Subscription;
 
     // Contains all participations (template, solution, assignment)
     exercise: ProgrammingExercise;
@@ -174,6 +175,45 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
         this.problemStatementChanges$.next(markdown);
     }
 
+    onFileLoaded(fileName: string) {
+        const target = this.getCurrentRepositorySyncTarget();
+        if (!target) {
+            return;
+        }
+        const auxiliaryId = target === ProgrammingExerciseEditorSyncTarget.AUXILIARY_REPOSITORY ? this.selectedRepositoryId : undefined;
+        const currentContent = this.codeEditorContainer?.getFileContent(fileName);
+        if (currentContent !== undefined) {
+            this.repositorySyncService.registerBaseline(target, fileName, currentContent, auxiliaryId);
+        }
+        this.repositorySyncService.requestFullFile(target, fileName, auxiliaryId);
+    }
+
+    onLocalFileContentChanged(update: { fileName: string; text: string }) {
+        if (!this.exercise?.id) {
+            return;
+        }
+        const target = this.getCurrentRepositorySyncTarget();
+        if (!target) {
+            return;
+        }
+        const auxiliaryId = target === ProgrammingExerciseEditorSyncTarget.AUXILIARY_REPOSITORY ? this.selectedRepositoryId : undefined;
+        this.repositorySyncService.handleLocalChange(update.fileName, update.text, target, auxiliaryId, ProgrammingExerciseEditorFileChangeType.CONTENT);
+    }
+
+    onLocalFileChange(change: { changeType: ProgrammingExerciseEditorFileChangeType; fileName: string; newFileName?: string; fileType?: FileType }) {
+        if (!this.exercise?.id) {
+            return;
+        }
+        const target = this.getCurrentRepositorySyncTarget();
+        if (!target) {
+            return;
+        }
+        const auxiliaryId = target === ProgrammingExerciseEditorSyncTarget.AUXILIARY_REPOSITORY ? this.selectedRepositoryId : undefined;
+        const currentContent =
+            this.codeEditorContainer?.getFileContent(change.fileName) ?? (change.newFileName ? this.codeEditorContainer?.getFileContent(change.newFileName) : '') ?? '';
+        this.repositorySyncService.handleLocalChange(change.fileName, currentContent, target, auxiliaryId, change.changeType, change.newFileName, change.fileType);
+    }
+
     /**
      * Unsubscribe from paramSub and domainChangeSubscription if they are present, on component destruction
      */
@@ -184,50 +224,24 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
         if (this.paramSub) {
             this.paramSub.unsubscribe();
         }
-        if (this.syncSubscription) {
-            this.syncSubscription.unsubscribe();
-        }
-        // Clean up service resources for this exercise
-        if (this.exercise?.id) {
-            this.synchronizationService.unsubscribeFromExercise(this.exercise.id);
-        }
+        this.repositorySyncSubscription?.unsubscribe();
+        this.repositorySyncService.dispose();
     }
 
     private setupSynchronizationSubscription(exerciseId: number) {
         if (!exerciseId) {
             return;
         }
-        if (this.syncSubscription) {
-            this.syncSubscription.unsubscribe();
-        }
-        this.syncSubscription = this.synchronizationService.getSynchronizationUpdates(exerciseId).subscribe((message) => this.handleSynchronizationUpdate(message));
+        this.repositorySyncSubscription?.unsubscribe();
+        const instanceId = this.browserFingerprintService.instanceIdentifier.value;
+        this.repositorySyncSubscription = this.repositorySyncService
+            .init(exerciseId, instanceId, (message) => this.isChangeRelevant(message))
+            .subscribe((operation) => this.applyRemoteFileOperation(operation));
     }
 
-    private handleSynchronizationUpdate(message: ProgrammingExerciseEditorSyncMessage) {
-        const instanceId = this.browserFingerprintService.instanceIdentifier.value;
-        if (message.clientInstanceId && instanceId && message.clientInstanceId === instanceId) {
-            return;
-        }
-        if (!message.target || !this.isChangeRelevant(message)) {
-            return;
-        }
-
-        const problemStatementChanged = message.target === ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT;
-        const repositoryChanged = message.target !== ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT;
-
-        if (problemStatementChanged) {
-            this.alertService.addAlert({
-                type: AlertType.WARNING,
-                message: 'artemisApp.editor.synchronization.problemStatementChanged',
-                timeout: 0,
-            });
-        }
-        if (repositoryChanged) {
-            this.alertService.addAlert({
-                type: AlertType.WARNING,
-                message: 'artemisApp.editor.synchronization.repositoryChanged',
-                timeout: 0,
-            });
+    private applyRemoteFileOperation(operation: RemoteFileOperation) {
+        if (this.codeEditorContainer) {
+            this.repositorySyncService.applyRemoteOperation(operation, this.codeEditorContainer);
         }
     }
 
@@ -249,6 +263,19 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
                 return this.selectedRepository === RepositoryType.AUXILIARY && (!change.auxiliaryRepositoryId || change.auxiliaryRepositoryId === this.selectedRepositoryId);
             default:
                 return false;
+        }
+    }
+
+    private getCurrentRepositorySyncTarget(): ProgrammingExerciseEditorSyncTarget | undefined {
+        switch (this.selectedRepository) {
+            case RepositoryType.TEMPLATE:
+                return ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY;
+            case RepositoryType.SOLUTION:
+                return ProgrammingExerciseEditorSyncTarget.SOLUTION_REPOSITORY;
+            case RepositoryType.AUXILIARY:
+                return ProgrammingExerciseEditorSyncTarget.AUXILIARY_REPOSITORY;
+            default:
+                return undefined;
         }
     }
 

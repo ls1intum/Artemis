@@ -21,6 +21,7 @@ import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.errors.CheckoutConflictException;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.WrongRepositoryStateException;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -39,6 +40,7 @@ import de.tum.cit.aet.artemis.programming.domain.FileType;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseEditorSyncTarget;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.dto.FileMove;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseEditorFileSyncDTO;
 import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTO;
 import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTOType;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
@@ -417,6 +419,24 @@ public abstract class RepositoryResource {
     protected void broadcastRepositoryUpdates(Long exerciseId, ProgrammingExerciseEditorSyncTarget target, Long auxiliaryRepositoryId) {
         try {
             programmingExerciseEditorSyncService.broadcastChange(exerciseId, target, auxiliaryRepositoryId);
+        }
+        catch (Exception e) {
+            log.error("Could not broadcast repository change for synchronization of exercise {}: {}", exerciseId, e.getMessage());
+        }
+    }
+
+    /**
+     * Broadcast repository updates that include file-level operations (create/rename/delete/content).
+     *
+     * @param exerciseId            the id of the exercise
+     * @param target                the target for the synchronization messages to reach
+     * @param auxiliaryRepositoryId optional, the id of the auxiliary repository associated with this change, only needed when target is AUXILIARY_REPOSITORY
+     * @param filePatch             the file operation to broadcast
+     */
+    protected void broadcastRepositoryUpdates(Long exerciseId, ProgrammingExerciseEditorSyncTarget target, Long auxiliaryRepositoryId,
+            @Nullable ProgrammingExerciseEditorFileSyncDTO filePatch) {
+        try {
+            programmingExerciseEditorSyncService.broadcastFileChanges(exerciseId, target, auxiliaryRepositoryId, filePatch);
         }
         catch (Exception e) {
             log.error("Could not broadcast repository change for synchronization of exercise {}: {}", exerciseId, e.getMessage());

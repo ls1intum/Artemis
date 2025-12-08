@@ -12,6 +12,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.eclipse.jgit.api.errors.CheckoutConflictException;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.WrongRepositoryStateException;
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
@@ -41,6 +42,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseEditorSyncTarget;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.dto.FileMove;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseEditorFileSyncDTO;
 import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTO;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
@@ -122,7 +124,7 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> createFile(@PathVariable Long auxiliaryRepositoryId, @RequestParam("file") String filePath, HttpServletRequest request) {
         ResponseEntity<Void> response = super.createFile(auxiliaryRepositoryId, filePath, request);
-        broadcastAuxiliaryRepositoryChange(auxiliaryRepositoryId);
+        broadcastAuxiliaryRepositoryChange(auxiliaryRepositoryId, new ProgrammingExerciseEditorFileSyncDTO(filePath, null, "CREATE", null, "FILE"));
         return response;
     }
 
@@ -132,7 +134,7 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> createFolder(@PathVariable Long auxiliaryRepositoryId, @RequestParam("folder") String folderPath, HttpServletRequest request) {
         ResponseEntity<Void> response = super.createFolder(auxiliaryRepositoryId, folderPath, request);
-        broadcastAuxiliaryRepositoryChange(auxiliaryRepositoryId);
+        broadcastAuxiliaryRepositoryChange(auxiliaryRepositoryId, new ProgrammingExerciseEditorFileSyncDTO(folderPath, null, "CREATE", null, "FOLDER"));
         return response;
     }
 
@@ -142,7 +144,8 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> renameFile(@PathVariable Long auxiliaryRepositoryId, @RequestBody FileMove fileMove) {
         ResponseEntity<Void> response = super.renameFile(auxiliaryRepositoryId, fileMove);
-        broadcastAuxiliaryRepositoryChange(auxiliaryRepositoryId);
+        broadcastAuxiliaryRepositoryChange(auxiliaryRepositoryId,
+                new ProgrammingExerciseEditorFileSyncDTO(fileMove.currentFilePath(), null, "RENAME", fileMove.newFilename(), null));
         return response;
     }
 
@@ -152,7 +155,7 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> deleteFile(@PathVariable Long auxiliaryRepositoryId, @RequestParam("file") String filename) {
         ResponseEntity<Void> response = super.deleteFile(auxiliaryRepositoryId, filename);
-        broadcastAuxiliaryRepositoryChange(auxiliaryRepositoryId);
+        broadcastAuxiliaryRepositoryChange(auxiliaryRepositoryId, new ProgrammingExerciseEditorFileSyncDTO(filename, null, "DELETE", null, null));
         return response;
     }
 
@@ -177,7 +180,7 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> resetToLastCommit(@PathVariable Long auxiliaryRepositoryId) {
         ResponseEntity<Void> response = super.resetToLastCommit(auxiliaryRepositoryId);
-        broadcastAuxiliaryRepositoryChange(auxiliaryRepositoryId);
+        broadcastAuxiliaryRepositoryChange(auxiliaryRepositoryId, null);
         return response;
     }
 
@@ -224,16 +227,16 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
         }
         ResponseEntity<Map<String, String>> response = saveFilesAndCommitChanges(auxiliaryRepositoryId, submissions, commit, repository);
         if (!commit && !submissions.isEmpty()) {
-            this.broadcastAuxiliaryRepositoryChange(auxiliaryRepositoryId);
+            this.broadcastAuxiliaryRepositoryChange(auxiliaryRepositoryId, null);
         }
         return response;
     }
 
-    private void broadcastAuxiliaryRepositoryChange(Long auxiliaryRepositoryId) {
+    private void broadcastAuxiliaryRepositoryChange(Long auxiliaryRepositoryId, @Nullable ProgrammingExerciseEditorFileSyncDTO filePatch) {
         try {
             AuxiliaryRepository auxiliaryRepository = auxiliaryRepositoryRepository.findByIdElseThrow(auxiliaryRepositoryId);
             ProgrammingExercise exercise = auxiliaryRepository.getExercise();
-            this.broadcastRepositoryUpdates(exercise.getId(), ProgrammingExerciseEditorSyncTarget.AUXILIARY_REPOSITORY, auxiliaryRepositoryId);
+            this.broadcastRepositoryUpdates(exercise.getId(), ProgrammingExerciseEditorSyncTarget.AUXILIARY_REPOSITORY, auxiliaryRepositoryId, filePatch);
         }
         catch (Exception e) {
             log.debug("Could not broadcast auxiliary repository change for {}: {}", auxiliaryRepositoryId, e.getMessage());
