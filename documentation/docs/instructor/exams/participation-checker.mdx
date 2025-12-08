@@ -12,18 +12,22 @@ import studentDetailView from './assets/student_detail_view.png';
 
 # Exam Participation Checker
 
-The Artemis Exam Participation Checker iPad application streamlines the process of checking student attendance during on-site exams conducted with the Artemis platform. The application replaces the traditional paper-based method with a digitalized process, making tracking and managing student attendance easier. Using the app allows the exam supervisor to walk around, go to each student and directly control if the part-taking student is logged in with his rightful account by comparing the information on the iPad with the student's browser Artemis information. The application includes features such as student identification, digital signing, and attendance tracking. The Artemis web platform was adapted to additionally support exam management tasks, such as uploading seating arrangements and images for students.
+The Artemis Exam Participation Checker iPad application streamlines the process of checking student attendance during on-site exams conducted with the Artemis platform.
+The application replaces the traditional paper-based method with a digitalized process, making tracking and managing student attendance easier.
+Using the app allows the exam supervisor to walk around, go to each student and directly control if the part-taking student is logged in with his rightful account by comparing the information on the iPad with the student's browser Artemis information.
+The application includes features such as student identification, digital signing, and attendance tracking.
+The Artemis web platform was adapted to additionally support exam management tasks, such as uploading seating arrangements and images for students.
 
 ## Requirements and Web Functionality
 
 <Callout variant={CalloutVariant.info}>
-  For information regarding creating the exam, it's exercises and how to register students, please follow the instructions as described in [exam configuration](#12-create-and-configure-exam).
+  For information regarding creating the exam, it's exercises and how to register students, please follow the instructions as described in [exam configuration](/instructor/exams/exam-timeline#1-creation-and-configuration).
 </Callout>
 
 Using the Artemis Exam Participation Checker iPad application requires additional setup on the *Students* page before the exam.
 
 1. To upload images, click on the <img src={uploadImages} alt="Upload Images" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button and provide a `pdf` file in the Upload Images dialog. This `pdf` file should include a box for each student with its image and two text boxes next to it. The upper text box needs to include the `registrationNumber`, and the lower text box needs to include the `login`. An exemplary file can be found at `docs/user/exams/instructor/example_upload_images.pdf`.
-2. Setting up the room and seating information via the `CSV` import. For more information, see: [register students](#15-register-students).
+2. Setting up the room and seating information via the `CSV` import. For more information, see: [register students](/instructor/exams/exam-timeline#15-register-students).
 
 <Callout variant={CalloutVariant.info}>
   Each student must have a matriculation number assigned to upload the images. The matriculation number is needed to match the image with the according student.
@@ -58,17 +62,31 @@ The Exam Overview consists of a list of all currently available exams. The overv
 
 ### 1.3 Student List View
 
-The sidebar hosts a list of all registered students. The list can easily be filtered by room with a clickable picker or by typing a custom search query into the search bar. Further, already checked-in students can be easily filtered out by the respective toggle. The sorting can be quickly changed from "Bottom to Top" to "Top to Bottom" by a picker. A simple counter shows the progress of the already checked-in students directly above the student list. The student list consists of one cell per student, containing the name and the seat, to enable quick identification of the student. The tutor can quickly switch between different students by clicking the respective cell. Below the list is an 'Export Signatures' button to export all local signatures taken on this device for the selected exam.
+The sidebar hosts a list of all registered students.
+The list can easily be filtered by room with a clickable picker or by typing a custom search query into the search bar.
+Further, already checked-in students can be easily filtered out by the respective toggle. The sorting can be quickly changed from "Bottom to Top" to "Top to Bottom" by a picker.
+A simple counter shows the progress of the already checked-in students directly above the student list.
+The student list consists of one cell per student, containing the name and the seat, to enable quick identification of the student.
+The tutor can quickly switch between different students by clicking the respective cell.
+Below the list is an 'Export Signatures' button to export all local signatures taken on this device for the selected exam.
 
-<Image src={studentListView} alt="Student List View" size={ImageSize.large} caption="Student List View" />
-<Image src={studentListViewExportSignatures} alt="Export Signatures" size={ImageSize.large} caption="Export Signatures" />
+<Image src={studentListView} alt="Student List View" size={ImageSize.small} caption="Student List View" />
+<Image src={studentListViewExportSignatures} alt="Export Signatures" size={ImageSize.small} caption="Export Signatures" />
 
 ### 1.4 Student Detail View
 
-The detail view contains all given information about the student. The upper part of the screen displays these information. The left side shows the student image, while the right side of the screen displays all other information. Clicking the small pen icon allows the user to edit the room and seat. In this case, the user can choose between all the available rooms through a picker. The user can change the seat by typing in the respective seat in the text field.
+The detail view contains all given information about the student.
+The upper part of the screen displays these information.
+The left side shows the student image, while the right side of the screen displays all other information.
+Clicking the small pen icon allows the user to edit the room and seat.
+In this case, the user can choose between all the available rooms through a picker.
+The user can change the seat by typing in the respective seat in the text field.
 
 The options below the information section allow the user to verify the information via toggles.
 
-The lower part of the screen is a large canvas that supports signing with the help of the Apple Pencil or simple input with the finger. On the right of the canvas are two small buttons. The upper button, symbolized by a swiping finger icon, enables a better signing experience with the finger when toggled on. The lower button, a trash symbol, deletes the current signing to restart the process. By clicking the save button, the server saves the data. Additionally, the device saves the signing locally, allowing the export, as mentioned above.
+The lower part of the screen is a large canvas that supports signing with the help of the Apple Pencil or simple input with the finger.
+On the right of the canvas are two small buttons. The upper button, symbolized by a swiping finger icon, enables a better signing experience with the finger when toggled on.
+The lower button, a trash symbol, deletes the current signing to restart the process.
+By clicking the save button, the server saves the data. Additionally, the device saves the signing locally, allowing the export, as mentioned above.
 
 <Image src={studentDetailView} alt="Student Detail View" size={ImageSize.large} caption="Student Detail View" />
