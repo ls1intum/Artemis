@@ -42,7 +42,7 @@ describe('ExamRoomsComponentTest', () => {
         component = fixture.componentInstance;
         service = TestBed.inject(ExamRoomsService);
 
-        // getAdminOverview gets implicitly called each time the page is opened
+        // getRoomOverview gets implicitly called each time the page is opened
         jest.spyOn(service, 'getRoomOverview').mockReturnValue(
             of(
                 convertBodyToHttpResponse({
@@ -86,9 +86,9 @@ describe('ExamRoomsComponentTest', () => {
         expect(component.hasExamRoomData()).toBeFalse();
     });
 
-    it('should properly extract values from admin overview', () => {
+    it('should properly extract values from room overview', () => {
         // GIVEN
-        const uploadedRoom: ExamRoomDTO = mockServiceGetAdminOverviewSingleRoom();
+        const uploadedRoom: ExamRoomDTO = mockServiceGetRoomOverviewSingleRoom();
 
         // WHEN
         fixture.detectChanges();
@@ -284,7 +284,7 @@ describe('ExamRoomsComponentTest', () => {
     }
 
     /// Returns the exam room it uses
-    function mockServiceGetAdminOverviewSingleRoom(): ExamRoomDTO {
+    function mockServiceGetRoomOverviewSingleRoom(): ExamRoomDTO {
         const examRoom: ExamRoomDTO = {
             roomNumber: '123.456.789',
             name: 'Audimax',
