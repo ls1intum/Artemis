@@ -10,19 +10,19 @@ import jakarta.validation.Validator;
 
 import org.junit.jupiter.api.Test;
 
-class GeneratedMcQuestionDTOTest {
+class GeneratedQuizQuestionDTOTest {
 
     private final Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
 
     @Test
     void shouldFailValidationForEmptyTitleOrText() {
-        var dto = new GeneratedMcQuestionDTO("", "", "ex", "hint", 2, Set.of(), AiQuestionSubtype.SINGLE_CORRECT, Set.of(), List.of());
+        var dto = new GeneratedQuizQuestionDTO("", "", "ex", "hint", 2, Set.of(), AiQuestionSubtype.SINGLE_CORRECT, Set.of(), List.of());
         assertThat(validator.validate(dto)).isNotEmpty();
     }
 
     @Test
     void shouldFailValidationForDifficultyTooHigh() {
-        var dto = new GeneratedMcQuestionDTO("T", "Text", "ex", "hint", 10, Set.of(), AiQuestionSubtype.SINGLE_CORRECT, Set.of(), List.of());
+        var dto = new GeneratedQuizQuestionDTO("T", "Text", "ex", "hint", 10, Set.of(), AiQuestionSubtype.SINGLE_CORRECT, Set.of(), List.of());
         assertThat(validator.validate(dto)).isNotEmpty();
     }
 }

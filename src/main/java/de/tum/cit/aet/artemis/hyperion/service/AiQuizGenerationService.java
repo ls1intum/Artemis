@@ -18,11 +18,13 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.quiz.AiQuestionSubtype;
 import de.tum.cit.aet.artemis.hyperion.dto.quiz.AiQuizGenerationRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.quiz.AiQuizGenerationResponseDTO;
-import de.tum.cit.aet.artemis.hyperion.dto.quiz.GeneratedMcQuestionDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.quiz.GeneratedQuizQuestionDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.quiz.McOptionDTO;
 
 @Service
@@ -54,18 +56,16 @@ public class AiQuizGenerationService {
      */
     public AiQuizGenerationResponseDTO generate(long courseId, AiQuizGenerationRequestDTO generationParams) {
         log.debug("Generating quiz for course {}", courseId);
-
         try {
-            // load prompts from external templates
             String systemPrompt = templateService.render("/prompts/hyperion/quiz_generation_system.st", Map.of());
             String userPrompt = templateService.render("/prompts/hyperion/quiz_generation_user.st", generationParams.toTemplateVariables());
 
-            // Use Spring AI's structured output for better parsing
-            List<GeneratedMcQuestionDTO> questions = chatClient.prompt().system(systemPrompt).user(userPrompt).call().entity(new ParameterizedTypeReference<>() {
+            // Use Spring AI's structured output for parsing
+            List<GeneratedQuizQuestionDTO> questions = chatClient.prompt().system(systemPrompt).user(userPrompt).call().entity(new ParameterizedTypeReference<>() {
             });
 
             List<String> warnings = new ArrayList<>();
-            List<GeneratedMcQuestionDTO> validQuestions = new ArrayList<>();
+            List<GeneratedQuizQuestionDTO> validQuestions = new ArrayList<>();
 
             if (questions == null || questions.isEmpty()) {
                 warnings.add("No questions were generated");
@@ -73,20 +73,18 @@ public class AiQuizGenerationService {
             }
             else {
                 for (int i = 0; i < questions.size(); i++) {
-                    GeneratedMcQuestionDTO question = questions.get(i);
+                    GeneratedQuizQuestionDTO question = questions.get(i);
 
                     // 1) run Bean Validation on the DTO (title/text/not blank etc.)
-                    Set<ConstraintViolation<GeneratedMcQuestionDTO>> dtoViolations = validator.validate(question);
+                    Set<ConstraintViolation<GeneratedQuizQuestionDTO>> dtoViolations = validator.validate(question);
                     if (!dtoViolations.isEmpty()) {
                         String msg = "Question " + (i + 1) + " violated constraints: "
                                 + dtoViolations.stream().map(ConstraintViolation::getMessage).collect(Collectors.joining("; "));
                         log.warn(msg);
                         warnings.add(msg);
-                        // skip this one, continue with the others
                         continue;
                     }
 
-                    // 2) run business-rule validation (subtype-specific stuff)
                     try {
                         validateQuestion(question);
                         validQuestions.add(question);
@@ -108,20 +106,34 @@ public class AiQuizGenerationService {
 
             return new AiQuizGenerationResponseDTO(validQuestions, warnings);
         }
-        catch (Exception e) {
-            // this is the true unexpected-path fallback
-            log.error("Unexpected error during quiz generation for course {}: {}", courseId, e.getMessage(), e);
-            return new AiQuizGenerationResponseDTO(List.of(), List.of("Error during quiz generation: " + e.getMessage()));
+        catch (RuntimeException e) {
+            if (isJsonProcessingError(e)) {
+                log.warn("AI quiz generation returned an invalid JSON structure for course {}: {}", courseId, e.getMessage());
+                String msg = "The model's response could not be processed. Please try again with a different topic or adjust the settings.";
+                return new AiQuizGenerationResponseDTO(List.of(), List.of(msg));
+            }
+            throw e;
         }
+    }
+
+    private boolean isJsonProcessingError(Throwable throwable) {
+        Throwable current = throwable;
+        while (current != null) {
+            if (current instanceof JsonProcessingException) {
+                return true;
+            }
+            current = current.getCause();
+        }
+        return false;
     }
 
     /**
      * Validates a single question according to quiz-specific business rules.
      * <p>
-     * Bean Validation on {@link GeneratedMcQuestionDTO} is executed before this method
+     * Bean Validation on {@link GeneratedQuizQuestionDTO} is executed before this method
      * is called, so annotation-based constraints (e.g. @NotBlank, @Size) are already enforced.
      */
-    private void validateQuestion(GeneratedMcQuestionDTO question) {
+    private void validateQuestion(GeneratedQuizQuestionDTO question) {
         // Bean Validation already ensures basic fields like title/text are not blank.
         // Here we only enforce quiz-specific business rules.
 

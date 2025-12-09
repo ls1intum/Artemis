@@ -363,6 +363,6 @@ class AiQuizGenerationServiceTest {
         assertThat(response).isNotNull();
         assertThat(response.questions()).isEmpty();
         assertThat(response.warnings()).isNotEmpty();
-        assertThat(response.warnings().get(0)).contains("Error during quiz generation");
+        assertThat(response.warnings().get(0)).contains("response could not be processed");
     }
 }
