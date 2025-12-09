@@ -64,30 +64,20 @@ public class AtlasAgentService {
     private static final int MAX_SESSIONS = 5000;
 
     /**
-     * <p>
      * Track which agent is active for each session.
-     * </p>
-     *
      * Uses Guava Cache with automatic eviction to prevent memory leaks:
-     * <ul>
-     * <li>Entries expire after 2 hours of inactivity (<code>expireAfterAccess</code>).</li>
-     * <li>Maximum 5000 sessions cached (<code>maximumSize</code>).</li>
-     * <li>Automatic cleanup on access and during garbage collection.</li>
-     * </ul>
+     * Entries expire after 2 hours of inactivity
+     * Maximum 5000 sessions cached
+     * Automatic cleanup on access and during garbage collection.
      */
     private final Cache<String, AgentType> sessionAgentMap = CacheBuilder.newBuilder().expireAfterAccess(SESSION_EXPIRY_DURATION).maximumSize(MAX_SESSIONS).build();
 
     /**
-     * <p>
      * Track pending competency operations for each session.
-     * </p>
-     *
      * Uses Guava Cache with automatic eviction to prevent memory leaks:
-     * <ul>
-     * <li>Entries expire after 2 hours of inactivity (<code>expireAfterAccess</code>).</li>
-     * <li>Maximum 5000 sessions cached (<code>maximumSize</code>).</li>
-     * <li>Automatic cleanup on access and during garbage collection.</li>
-     * </ul>
+     * Entries expire after 2 hours of inactivity
+     * Maximum 5000 sessions cached
+     * Automatic cleanup on access and during garbage collection.
      *
      * @see <a href="https://guava.dev/releases/33.0.0-jre/api/docs/com/google/common/cache/Cache.html">Guava Cache Documentation</a>
      */

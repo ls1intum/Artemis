@@ -2,8 +2,6 @@ package de.tum.cit.aet.artemis.atlas.dto;
 
 import java.util.List;
 
-import org.jspecify.annotations.Nullable;
-
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
@@ -12,5 +10,5 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * Supports partial success scenarios where some competencies succeed and others fail.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record CompetencySaveResponseDTO(int created, int updated, int failed, @Nullable List<CompetencyErrorDTO> errors) {
+public record CompetencySaveResponseDTO(int created, int updated, int failed, List<CompetencyErrorDTO> errors) {
 }

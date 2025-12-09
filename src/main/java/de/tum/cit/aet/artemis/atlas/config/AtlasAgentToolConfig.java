@@ -32,7 +32,7 @@ public class AtlasAgentToolConfig {
 
     /**
      * Registers the tools for the Competency Expert Sub-Agent.
-     * This agent has access to both previewCompetency and createCompetency tools.
+     * This agent has access to both previewCompetency and create/update Competency tools.
      *
      * @param expertToolsService the service containing @Tool-annotated methods for the Competency Expert Sub-Agent
      * @return ToolCallbackProvider that exposes the Competency Expert Sub-Agent tools to Spring AI
