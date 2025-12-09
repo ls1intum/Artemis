@@ -130,8 +130,9 @@ export class CourseOverviewService {
             const isBetweenReleaseAndDue = exercise.releaseDate && exercise.dueDate ? now.isBetween(exercise.releaseDate, exercise.dueDate, undefined, '[]') : false;
 
             const isBetweenStartAndDue = exercise.startDate && exercise.dueDate ? now.isBetween(exercise.startDate, exercise.dueDate, undefined, '[]') : false;
+            const isReleasedWithNoDueDate = exercise.releaseDate && !exercise.dueDate && exercise.releaseDate.isBefore(now);
 
-            if (isReleaseDateToday || isStartDateToday || isDueDateToday || isBetweenReleaseAndDue || isBetweenStartAndDue) {
+            if (isReleaseDateToday || isStartDateToday || isDueDateToday || isBetweenReleaseAndDue || isBetweenStartAndDue || isReleasedWithNoDueDate) {
                 return 'current';
             }
         }
