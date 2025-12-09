@@ -4,7 +4,7 @@
     } @else {
         @if (isCollapsed) {
             <div>
-                <div class="d-inline fa-angle" (click)="debounceToggleCollapse()">
+                <div class="d-inline fa-angle" (click)="toggleCollapse()">
                     <fa-icon [icon]="faAngleRight" />
                     <strong> ({{ 'artemisApp.result.seeMore' | artemisTranslate }}) </strong>
                 </div>
@@ -13,7 +13,7 @@
             </div>
         } @else {
             <div>
-                <fa-icon class="fa-angle" [icon]="faAngleDown" (click)="debounceToggleCollapse()" />
+                <fa-icon class="fa-angle" [icon]="faAngleDown" (click)="toggleCollapse()" />
                 <jhi-feedback-text [feedback]="feedback" />
             </div>
         }
