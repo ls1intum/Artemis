@@ -1,8 +1,7 @@
 {
     "artemisApp": {
         "examRooms": {
-            "adminOverview": {
-                "pageTitle": "Admin Exam Room Management",
+            "management": {
                 "title": "Exam Room Management",
                 "uploadRoomData": "Upload Exam Room Data",
                 "invalidFile": "Something is wrong with the file you selected",

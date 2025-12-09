@@ -1,8 +1,11 @@
 <p-dialog [(visible)]="dialogVisible" [modal]="true" [closable]="true" [dismissableMask]="true" (onHide)="closeDialog()" [style]="{ width: '45dvw' }">
     <ng-template pTemplate="header">
-        <h4>
-            <span jhiTranslate="artemisApp.exam.examUsers.rooms.dialogTitle"></span>
-        </h4>
+        <div class="d-flex flex-column mb-2">
+            <h4>
+                <span jhiTranslate="artemisApp.exam.examUsers.rooms.dialogTitle"></span>
+            </h4>
+            <button jhiTranslate="artemisApp.exam.examUsers.rooms.roomManagement" class="btn btn-primary" [routerLink]="['../exam-rooms']"></button>
+        </div>
     </ng-template>
     <form id="roomDistributionDialogForm" name="distributionForm" role="form" novalidate (keydown.enter)="$event.preventDefault()">
         <p jhiTranslate="artemisApp.exam.examUsers.rooms.introText" class="intro-text"></p>

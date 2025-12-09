@@ -33,7 +33,7 @@ export interface NumberOfStored {
     uniqueLayoutStrategies: number;
 }
 
-export interface ExamRoomAdminOverviewDTO {
+export interface ExamRoomOverviewDTO {
     numberOfStoredExamRooms: number;
     numberOfStoredExamSeats: number;
     numberOfStoredLayoutStrategies: number;
