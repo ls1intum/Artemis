@@ -756,12 +756,12 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         return submissions.map(([participationId, submission]) => [parseInt(participationId, 10), submission]);
     }
 
-    private mapToExerciseBuildState(acc: ExerciseSubmissionState, val: ProgrammingSubmissionStateObj) {
-        if (!Object.keys(val).length) {
+    private mapToExerciseBuildState(exerciseSubmissionState: ExerciseSubmissionState, programmingSubmissionState: ProgrammingSubmissionStateObj) {
+        if (!Object.keys(programmingSubmissionState).length) {
             return {};
         }
-        const { participationId, submission, submissionState } = val;
-        return { ...acc, [participationId]: { participationId, submissionState, submission } };
+        const { participationId, submission, submissionState } = programmingSubmissionState;
+        return { ...exerciseSubmissionState, [participationId]: { participationId, submissionState, submission } };
     }
 
     private didSubmissionStartProcessing(commitHash: string): boolean {
