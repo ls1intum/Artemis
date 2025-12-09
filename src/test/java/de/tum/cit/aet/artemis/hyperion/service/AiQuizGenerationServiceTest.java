@@ -76,7 +76,7 @@ class AiQuizGenerationServiceTest {
     }
 
     @Test
-    void testGenerateQuiz_validMultiCorrectQuestion_success() throws Exception {
+    void testGenerateQuiz_validMultiCorrectQuestion_success() {
         String validResponse = """
                 [
                   {
@@ -113,7 +113,7 @@ class AiQuizGenerationServiceTest {
     }
 
     @Test
-    void testGenerateQuiz_validTrueFalseQuestion_success() throws Exception {
+    void testGenerateQuiz_validTrueFalseQuestion_success() {
         String validResponse = """
                 [
                   {
@@ -147,7 +147,7 @@ class AiQuizGenerationServiceTest {
     }
 
     @Test
-    void testGenerateQuiz_singleCorrectWithMultipleCorrectAnswers_validationFailure() throws Exception {
+    void testGenerateQuiz_singleCorrectWithMultipleCorrectAnswers_validationFailure() {
         // Invalid: SINGLE_CORRECT with 2 correct answers
         String invalidResponse = """
                 [
@@ -218,7 +218,7 @@ class AiQuizGenerationServiceTest {
     }
 
     @Test
-    void testGenerateQuiz_multiCorrectWithNoCorrectAnswers_validationFailure() throws Exception {
+    void testGenerateQuiz_multiCorrectWithNoCorrectAnswers_validationFailure() {
         // Invalid: MULTI_CORRECT with no correct answers
         String invalidResponse = """
                 [
@@ -287,7 +287,7 @@ class AiQuizGenerationServiceTest {
     }
 
     @Test
-    void testGenerateQuiz_multipleQuestions_success() throws Exception {
+    void testGenerateQuiz_multipleQuestions_success() {
         String validResponse = """
                 [
                   {
@@ -335,7 +335,7 @@ class AiQuizGenerationServiceTest {
     }
 
     @Test
-    void testGenerateQuiz_emptyResponse_validationFailure() throws Exception {
+    void testGenerateQuiz_emptyResponse_validationFailure() {
         String emptyResponse = "[]";
 
         when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> new ChatResponse(List.of(new Generation(new AssistantMessage(emptyResponse)))));
