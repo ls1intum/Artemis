@@ -1,7 +1,7 @@
 import { Component, Input, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
-import { NgbActiveModal, NgbAlertModule, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbActiveModal, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import {
@@ -21,7 +21,7 @@ import { finalize } from 'rxjs';
     standalone: true,
     selector: 'jhi-ai-quiz-generation-modal',
     templateUrl: './ai-quiz-generation-modal.component.html',
-    imports: [CommonModule, FormsModule, NgbAlertModule, NgbTooltipModule, TranslateDirective, ArtemisTranslatePipe, FaIconComponent],
+    imports: [CommonModule, FormsModule, NgbTooltipModule, TranslateDirective, ArtemisTranslatePipe, FaIconComponent],
 })
 export class AiQuizGenerationModalComponent {
     @Input() courseId!: number;
@@ -70,27 +70,16 @@ export class AiQuizGenerationModalComponent {
         }
 
         this.loading.set(true);
-        this.warnings.set([]);
         this.generated.set([]);
         this.selected = {};
 
         this.service
             .generate(this.courseId, this.formData)
             .pipe(finalize(() => this.loading.set(false)))
-            .subscribe({
-                next: (res: AiQuizGenerationResponse) => {
-                    const questions = res.questions ?? [];
-                    const warns = res.warnings ?? [];
-
-                    this.generated.set(questions);
-                    this.warnings.set(warns);
-
-                    // preselect all generated questions
-                    questions.forEach((_, i) => (this.selected[i] = true));
-                },
-                error: () => {
-                    this.warnings.set(['artemisApp.quizExercise.aiGeneration.error']);
-                },
+            .subscribe((res: AiQuizGenerationResponse) => {
+                const questions = res.questions ?? [];
+                this.generated.set(questions);
+                questions.forEach((_, i) => (this.selected[i] = true));
             });
     }
 

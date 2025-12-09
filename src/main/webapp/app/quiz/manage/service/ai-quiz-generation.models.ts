@@ -29,5 +29,4 @@ export interface AiGeneratedQuestionDTO {
 
 export interface AiQuizGenerationResponse {
     questions: AiGeneratedQuestionDTO[];
-    warnings?: string[];
 }

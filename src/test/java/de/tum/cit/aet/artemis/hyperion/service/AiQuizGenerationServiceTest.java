@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
@@ -18,6 +19,7 @@ import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
 
 import de.tum.cit.aet.artemis.core.domain.Language;
+import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.hyperion.dto.quiz.AiQuestionSubtype;
 import de.tum.cit.aet.artemis.hyperion.dto.quiz.AiQuizGenerationRequestDTO;
@@ -39,8 +41,7 @@ class AiQuizGenerationServiceTest {
     }
 
     @Test
-    void testGenerateQuiz_validSingleCorrectQuestion_success() throws Exception {
-        // Valid JSON response with a single SINGLE_CORRECT question
+    void testGenerateQuiz_validSingleCorrectQuestion_success() {
         String validResponse = """
                 [
                   {
@@ -69,7 +70,6 @@ class AiQuizGenerationServiceTest {
 
         assertThat(response).isNotNull();
         assertThat(response.questions()).hasSize(1);
-        assertThat(response.warnings()).isEmpty();
         assertThat(response.questions().get(0).title()).isEqualTo("What is Java?");
         assertThat(response.questions().get(0).subtype()).isEqualTo(AiQuestionSubtype.SINGLE_CORRECT);
         assertThat(response.questions().get(0).options()).hasSize(3);
@@ -106,7 +106,6 @@ class AiQuizGenerationServiceTest {
 
         assertThat(response).isNotNull();
         assertThat(response.questions()).hasSize(1);
-        assertThat(response.warnings()).isEmpty();
         assertThat(response.questions().get(0).subtype()).isEqualTo(AiQuestionSubtype.MULTI_CORRECT);
         assertThat(response.questions().get(0).options()).hasSize(4);
         assertThat(response.questions().get(0).options().stream().filter(opt -> opt.correct()).count()).isEqualTo(3);
@@ -141,14 +140,12 @@ class AiQuizGenerationServiceTest {
 
         assertThat(response).isNotNull();
         assertThat(response.questions()).hasSize(1);
-        assertThat(response.warnings()).isEmpty();
         assertThat(response.questions().get(0).subtype()).isEqualTo(AiQuestionSubtype.TRUE_FALSE);
         assertThat(response.questions().get(0).options()).hasSize(2);
     }
 
     @Test
     void testGenerateQuiz_singleCorrectWithMultipleCorrectAnswers_validationFailure() {
-        // Invalid: SINGLE_CORRECT with 2 correct answers
         String invalidResponse = """
                 [
                   {
@@ -173,18 +170,12 @@ class AiQuizGenerationServiceTest {
 
         var request = new AiQuizGenerationRequestDTO("Java", 1, Language.ENGLISH, DifficultyLevel.MEDIUM, AiQuestionSubtype.SINGLE_CORRECT, null);
 
-        AiQuizGenerationResponseDTO response = aiQuizGenerationService.generate(1L, request);
-
-        assertThat(response).isNotNull();
-        assertThat(response.questions()).isEmpty();
-        assertThat(response.warnings()).isNotEmpty();
-        assertThat(response.warnings().get(0)).contains("validation");
-        assertThat(response.warnings().get(0)).contains("exactly 1 correct answer");
+        assertThatThrownBy(() -> aiQuizGenerationService.generate(1L, request)).isInstanceOf(InternalServerErrorAlertException.class)
+                .hasMessageContaining("The generated quiz question did not follow the requested quiz settings.");
     }
 
     @Test
-    void testGenerateQuiz_trueFalseWithThreeOptions_validationFailure() throws Exception {
-        // Invalid: TRUE_FALSE with 3 options instead of 2
+    void testGenerateQuiz_trueFalseWithThreeOptions_validationFailure() {
         String invalidResponse = """
                 [
                   {
@@ -209,17 +200,12 @@ class AiQuizGenerationServiceTest {
 
         var request = new AiQuizGenerationRequestDTO("Java", 1, Language.ENGLISH, DifficultyLevel.EASY, AiQuestionSubtype.TRUE_FALSE, null);
 
-        AiQuizGenerationResponseDTO response = aiQuizGenerationService.generate(1L, request);
-
-        assertThat(response).isNotNull();
-        assertThat(response.questions()).isEmpty();
-        assertThat(response.warnings()).isNotEmpty();
-        assertThat(response.warnings().get(0)).contains("exactly 2 options");
+        assertThatThrownBy(() -> aiQuizGenerationService.generate(1L, request)).isInstanceOf(InternalServerErrorAlertException.class)
+                .hasMessageContaining("The generated quiz question did not follow the requested quiz settings.");
     }
 
     @Test
     void testGenerateQuiz_multiCorrectWithNoCorrectAnswers_validationFailure() {
-        // Invalid: MULTI_CORRECT with no correct answers
         String invalidResponse = """
                 [
                   {
@@ -243,17 +229,12 @@ class AiQuizGenerationServiceTest {
 
         var request = new AiQuizGenerationRequestDTO("Programming", 1, Language.ENGLISH, DifficultyLevel.EASY, AiQuestionSubtype.MULTI_CORRECT, null);
 
-        AiQuizGenerationResponseDTO response = aiQuizGenerationService.generate(1L, request);
-
-        assertThat(response).isNotNull();
-        assertThat(response.questions()).isEmpty();
-        assertThat(response.warnings()).isNotEmpty();
-        assertThat(response.warnings().get(0)).contains("at least 1 correct answer");
+        assertThatThrownBy(() -> aiQuizGenerationService.generate(1L, request)).isInstanceOf(InternalServerErrorAlertException.class)
+                .hasMessageContaining("The generated quiz question did not follow the requested quiz settings.");
     }
 
     @Test
-    void testGenerateQuiz_missingRequiredFields_validationFailure() throws Exception {
-        // Invalid: Missing title
+    void testGenerateQuiz_missingRequiredFields_validationFailure() {
         String invalidResponse = """
                 [
                   {
@@ -277,13 +258,8 @@ class AiQuizGenerationServiceTest {
 
         var request = new AiQuizGenerationRequestDTO("Java", 1, Language.ENGLISH, DifficultyLevel.MEDIUM, AiQuestionSubtype.SINGLE_CORRECT, null);
 
-        AiQuizGenerationResponseDTO response = aiQuizGenerationService.generate(1L, request);
-
-        assertThat(response).isNotNull();
-        assertThat(response.questions()).isEmpty();
-        assertThat(response.warnings()).isNotEmpty();
-        // relaxed assertion: match what the service actually produces
-        assertThat(response.warnings().get(0)).contains("Question 1 violated constraints").contains("must not be blank");
+        assertThatThrownBy(() -> aiQuizGenerationService.generate(1L, request)).isInstanceOf(InternalServerErrorAlertException.class)
+                .hasMessageContaining("The generated quiz question was incomplete or invalid.");
     }
 
     @Test
@@ -329,40 +305,31 @@ class AiQuizGenerationServiceTest {
 
         assertThat(response).isNotNull();
         assertThat(response.questions()).hasSize(2);
-        assertThat(response.warnings()).isEmpty();
         assertThat(response.questions().get(0).title()).isEqualTo("Question 1");
         assertThat(response.questions().get(1).title()).isEqualTo("Question 2");
     }
 
     @Test
-    void testGenerateQuiz_emptyResponse_validationFailure() {
+    void testGenerateQuiz_emptyResponse_failure() {
         String emptyResponse = "[]";
 
         when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> new ChatResponse(List.of(new Generation(new AssistantMessage(emptyResponse)))));
 
         var request = new AiQuizGenerationRequestDTO("Java", 1, Language.ENGLISH, DifficultyLevel.MEDIUM, AiQuestionSubtype.SINGLE_CORRECT, null);
 
-        AiQuizGenerationResponseDTO response = aiQuizGenerationService.generate(1L, request);
-
-        assertThat(response).isNotNull();
-        assertThat(response.questions()).isEmpty();
-        assertThat(response.warnings()).isNotEmpty();
-        assertThat(response.warnings().get(0)).contains("No questions were generated");
+        assertThatThrownBy(() -> aiQuizGenerationService.generate(1L, request)).isInstanceOf(InternalServerErrorAlertException.class)
+                .hasMessageContaining("The AI did not return any quiz questions.");
     }
 
     @Test
-    void testGenerateQuiz_invalidJson_errorHandling() throws Exception {
+    void testGenerateQuiz_invalidJson_errorHandling() {
         String invalidJson = "This is not valid JSON";
 
         when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> new ChatResponse(List.of(new Generation(new AssistantMessage(invalidJson)))));
 
         var request = new AiQuizGenerationRequestDTO("Java", 1, Language.ENGLISH, DifficultyLevel.MEDIUM, AiQuestionSubtype.SINGLE_CORRECT, null);
 
-        AiQuizGenerationResponseDTO response = aiQuizGenerationService.generate(1L, request);
-
-        assertThat(response).isNotNull();
-        assertThat(response.questions()).isEmpty();
-        assertThat(response.warnings()).isNotEmpty();
-        assertThat(response.warnings().get(0)).contains("response could not be processed");
+        assertThatThrownBy(() -> aiQuizGenerationService.generate(1L, request)).isInstanceOf(InternalServerErrorAlertException.class)
+                .hasMessageContaining("The AI response could not be processed");
     }
 }

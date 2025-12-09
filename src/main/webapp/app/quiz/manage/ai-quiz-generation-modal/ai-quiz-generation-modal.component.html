@@ -5,10 +5,6 @@
 </div>
 
 <div class="modal-body">
-    @for (w of warnings(); track $index) {
-        <ngb-alert type="warning" [dismissible]="false" class="mb-2">{{ w }}</ngb-alert>
-    }
-
     <form #genForm="ngForm" (ngSubmit)="generate(genForm)" novalidate>
         <div class="row g-2">
             <!-- topic -->

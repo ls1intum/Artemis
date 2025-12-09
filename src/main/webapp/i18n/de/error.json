@@ -168,6 +168,13 @@
             "notAuthenticatedWithPasskey": "Du bist nicht mit einem Passkey authentifiziert. Bitte authentifiziere dich mit einem Passkey, um auf diese Ressource zuzugreifen.",
             "notSuperAdminApproved": "Dein Passkey ist nicht von einem Super-Admin freigegeben. Bitte überprüfe in den Nutzereinstellungen, ob dein Passkey von einem Super-Admin freigegeben wurde und melde dich erneut mit dem entsprechendem Passkey an.",
             "loginRequiredButFeatureNotEnabled": "Für diese Funktion ist ein Passkey-Login erforderlich. Allerdings ist die Passkey-Authentifizierung auf dieser Artemis-Instanz nicht aktiviert. Bitte aktiviere die Passkey-Authentifizierung auf dieser Artemis Instanz."
+        },
+        "aiQuizGeneration": {
+            "noQuestionsGenerated": "Das Sprachmodel konnte keine Quizfragen generieren. Bitte versuche überprüfe die Eingaben und versuche es erneut.",
+            "invalidQuestion": "Das Sprachmodel hat einen Formatierungsfehler gemacht. Bitte versuche es erneut.",
+            "invalidQuestionRules": "Das Sprachmodell hat sich nicht an die Parameter gehalten. Bitte versuche es erneut, ggf mit anderen Parametern.",
+            "invalidModelResponse": "Die Antwort vom Sprachmodell konnte nicht verarbeitet werden. Bitte versuche es erneut, ggf mit anderen Parametern.",
+            "unexpectedError": "Bei der Quizgenerierung ist ein unerwarteter Fehler aufgetreten."
         }
     }
 }
