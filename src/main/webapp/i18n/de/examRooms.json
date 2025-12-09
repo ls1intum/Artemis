@@ -1,8 +1,8 @@
 {
     "artemisApp": {
         "examRooms": {
-            "adminOverview": {
-                "pageTitle": "Admin Prüfungsraum Management",
+            "management": {
+                "openButtonTitle": "Prüfungsraumverwaltung",
                 "title": "Prüfungsraum Management",
                 "uploadRoomData": "Prüfungsraumdaten hochladen",
                 "invalidFile": "Mit der Datei die du hochgeladen hast ist etwas nicht in Ordnung",

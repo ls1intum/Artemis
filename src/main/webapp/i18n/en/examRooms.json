@@ -2,6 +2,7 @@
     "artemisApp": {
         "examRooms": {
             "management": {
+                "openButtonTitle": "Exam Room Management",
                 "title": "Exam Room Management",
                 "uploadRoomData": "Upload Exam Room Data",
                 "invalidFile": "Something is wrong with the file you selected",

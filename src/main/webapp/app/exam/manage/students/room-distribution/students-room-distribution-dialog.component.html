@@ -1,11 +1,8 @@
 <p-dialog [(visible)]="dialogVisible" [modal]="true" [closable]="true" [dismissableMask]="true" (onHide)="closeDialog()" [style]="{ width: '45dvw' }">
     <ng-template pTemplate="header">
-        <div class="d-flex flex-column mb-2">
-            <h4>
-                <span jhiTranslate="artemisApp.exam.examUsers.rooms.dialogTitle"></span>
-            </h4>
-            <button jhiTranslate="artemisApp.exam.examUsers.rooms.roomManagement" class="btn btn-primary" [routerLink]="['../exam-rooms']"></button>
-        </div>
+        <h4>
+            <span jhiTranslate="artemisApp.exam.examUsers.rooms.dialogTitle"></span>
+        </h4>
     </ng-template>
     <form id="roomDistributionDialogForm" name="distributionForm" role="form" novalidate (keydown.enter)="$event.preventDefault()">
         <p jhiTranslate="artemisApp.exam.examUsers.rooms.introText" class="intro-text"></p>
@@ -88,19 +85,24 @@
         }
     </form>
     <ng-template pTemplate="footer">
-        <button id="cancel-button" type="button" class="btn btn-secondary cancel" (click)="closeDialog()">
-            <fa-icon [icon]="faBan" /><span jhiTranslate="entity.action.cancel" class="m-1"></span>
-        </button>
-        @if (hasSelectedRooms() && canSeatAllStudents()) {
-            <button class="btn btn-success" id="finish-button" (click)="attemptDistributeAndCloseDialog()">
-                <fa-icon [icon]="faThLarge" /><span jhiTranslate="artemisApp.exam.examUsers.rooms.distribute" class="m-1"></span>
-            </button>
-        } @else {
-            <span [title]="'artemisApp.exam.examUsers.rooms.distributeWarning' | artemisTranslate" class="d-inline-block">
-                <button class="btn btn-warning" id="finish-button" [disabled]="true" [hidden]="!hasSelectedRooms()">
-                    <fa-icon [icon]="faThLarge" /><span jhiTranslate="artemisApp.exam.examUsers.rooms.distribute" class="m-1"></span>
+        <div style="flex: 1; width: 100%; display: flex; justify-content: space-between; align-items: center">
+            <button jhiTranslate="artemisApp.examRooms.management.openButtonTitle" class="btn btn-primary" [routerLink]="['../exam-rooms']"></button>
+            <div class="p-d-flex p-ai-center p-gap-2">
+                <button id="cancel-button" type="button" class="btn btn-secondary cancel" (click)="closeDialog()">
+                    <fa-icon [icon]="faBan" /><span jhiTranslate="entity.action.cancel" class="m-1"></span>
                 </button>
-            </span>
-        }
+                @if (hasSelectedRooms() && canSeatAllStudents()) {
+                    <button class="btn btn-success" id="finish-button" (click)="attemptDistributeAndCloseDialog()">
+                        <fa-icon [icon]="faThLarge" /><span jhiTranslate="artemisApp.exam.examUsers.rooms.distribute" class="m-1"></span>
+                    </button>
+                } @else {
+                    <span [title]="'artemisApp.exam.examUsers.rooms.distributeWarning' | artemisTranslate" class="d-inline-block">
+                        <button class="btn btn-warning" id="finish-button" [disabled]="true" [hidden]="!hasSelectedRooms()">
+                            <fa-icon [icon]="faThLarge" /><span jhiTranslate="artemisApp.exam.examUsers.rooms.distribute" class="m-1"></span>
+                        </button>
+                    </span>
+                }
+            </div>
+        </div>
     </ng-template>
 </p-dialog>

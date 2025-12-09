@@ -34,7 +34,7 @@
                 "roomDistribute": "Distribute",
                 "rooms": {
                     "dialogTitle": "Distribute Students",
-                    "introText": "This dialog can be used to distribute students who are registered for an exam to a selection of rooms. Artemis distributes students in order of the selected rooms.",
+                    "introText": "This dialog can be used to distribute students who are registered for an exam to a selection of rooms. Artemis distributes students in order of the selected rooms. If the system cannot find a specified room, you can upload it using the Exam Room Management.",
                     "reserveFactor": "Reserved Seats %",
                     "reserveFactorTooltip": "The percentage of seats that should be reserved, i.e. not distributed to; applied to each room individually",
                     "allowNarrowLayouts": "Allow narrower layouts?",
