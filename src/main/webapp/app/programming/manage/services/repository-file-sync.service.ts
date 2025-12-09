@@ -13,7 +13,6 @@ import {
     ProgrammingExerciseEditorSyncTarget,
 } from 'app/programming/manage/services/programming-exercise-editor-sync.service';
 
-type SendFn = (message: ProgrammingExerciseEditorSyncMessage) => void;
 type TargetFilter = (message: ProgrammingExerciseEditorSyncMessage) => boolean;
 
 export type RemoteFileOperation =
@@ -26,40 +25,43 @@ export type RemoteFileOperation =
 export class RepositoryFileSyncService {
     private syncService = inject(ProgrammingExerciseEditorSyncService);
     private fileService = inject(CodeEditorFileService);
-    private readonly dmp = new DiffMatchPatch();
+    private readonly diffMatchPatch = new DiffMatchPatch();
     private baselines: Record<string, string> = {};
     private lastProcessedTimestamps: Record<string, number> = {};
     private exerciseId?: number;
     private clientInstanceId?: string;
-    private sendFn?: SendFn;
+
     private targetFilter: TargetFilter = () => true;
-    private syncSubscription?: Subscription;
+    private incomingMessageSubscription?: Subscription;
     private remoteOperations$ = new Subject<RemoteFileOperation>();
+
+    private sendFn(message: ProgrammingExerciseEditorSyncMessage) {
+        if (!this.exerciseId) {
+            throw new Error('RepositoryFileSyncService not initialized before sending synchronization message; exerciseId is undefined');
+        }
+        this.syncService.sendSynchronizationUpdate(this.exerciseId!, message);
+    }
 
     init(exerciseId: number, clientInstanceId: string | undefined, targetFilter: TargetFilter): Observable<RemoteFileOperation> {
         this.dispose();
         this.exerciseId = exerciseId;
         this.clientInstanceId = clientInstanceId;
         this.targetFilter = targetFilter;
-        this.sendFn = (payload) => this.syncService.sendSynchronization(exerciseId, payload);
         this.baselines = {};
         this.lastProcessedTimestamps = {};
-        this.syncSubscription = this.syncService.getSynchronizationUpdates(exerciseId).subscribe((message) => this.handleIncomingMessage(message));
+        this.incomingMessageSubscription = this.syncService.subscribeToUpdates(exerciseId).subscribe((message) => this.handleIncomingMessage(message));
         return this.remoteOperations$.asObservable();
     }
 
     dispose() {
-        if (this.exerciseId) {
-            this.syncService.unsubscribeFromExercise(this.exerciseId);
-        }
+        this.syncService.unsubscribe();
         this.exerciseId = undefined;
         this.clientInstanceId = undefined;
-        this.sendFn = undefined;
         this.baselines = {};
         this.lastProcessedTimestamps = {};
         this.targetFilter = () => true;
-        this.syncSubscription?.unsubscribe();
-        this.syncSubscription = undefined;
+        this.incomingMessageSubscription?.unsubscribe();
+        this.incomingMessageSubscription = undefined;
         this.remoteOperations$.complete();
         this.remoteOperations$ = new Subject<RemoteFileOperation>();
     }
@@ -108,7 +110,7 @@ export class RepositoryFileSyncService {
             delete this.baselines[baselineKey];
             filePatch.patch = renameContent;
         } else {
-            const patch = this.dmp.patch_toText(this.dmp.patch_make(previousContent, content));
+            const patch = this.diffMatchPatch.patch_toText(this.diffMatchPatch.patch_make(previousContent, content));
             const effectivePatch = patch || (changeType === ProgrammingExerciseEditorFileChangeType.CREATE ? content : '');
             if (!effectivePatch && changeType !== ProgrammingExerciseEditorFileChangeType.CREATE) {
                 return;
@@ -181,13 +183,13 @@ export class RepositoryFileSyncService {
             return { type: ProgrammingExerciseEditorFileChangeType.RENAME, fileName: filePatch.fileName, newFileName: filePatch.newFileName, content: currentContent };
         }
 
-        const patches = filePatch.patch ? this.dmp.patch_fromText(filePatch.patch) : [];
+        const patches = filePatch.patch ? this.diffMatchPatch.patch_fromText(filePatch.patch) : [];
         const currentContent = this.baselines[baselineKey] ?? '';
 
         let patchedContent: string;
         try {
             if (patches.length) {
-                const [appliedContent, results] = this.dmp.patch_apply(patches, currentContent);
+                const [appliedContent, results] = this.diffMatchPatch.patch_apply(patches, currentContent);
                 // Check if any patch failed to apply (results array contains false for failed patches)
                 const hasFailedPatches = results.some((success) => !success);
                 if (hasFailedPatches) {

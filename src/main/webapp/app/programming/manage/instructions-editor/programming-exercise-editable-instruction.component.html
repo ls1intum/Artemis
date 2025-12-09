@@ -1,6 +1,6 @@
 <div class="editable-instruction-container">
     <!-- The position of the markdown-editor in the html should not be changed, as it is used for resizing!-->
-    @if (exercise) {
+    @if (exercise()) {
         <jhi-markdown-editor-monaco
             class="overflow-hidden flex-grow-1"
             [domainActions]="domainActions"
@@ -8,7 +8,7 @@
             [initialEditorHeight]="initialEditorHeight"
             [useDefaultMarkdownEditorOptions]="false"
             [enableResize]="enableResize"
-            [markdown]="exercise.problemStatement"
+            [markdown]="exercise().problemStatement"
             [showDefaultPreview]="false"
             [showPreviewButton]="false"
             [showVisualButton]="false"
@@ -60,10 +60,10 @@
                     </div>
                 }
             </div>
-            @if (exercise?.id) {
+            @if (exercise()?.id) {
                 <jhi-programming-exercise-instruction-instructor-analysis
                     [exerciseTestCases]="exerciseTestCases"
-                    [problemStatement]="exercise.problemStatement || ''"
+                    [problemStatement]="exercise().problemStatement || ''"
                     [taskRegex]="taskRegex"
                     (problemStatementAnalysis)="onAnalysisUpdate($event)"
                     class="editable-instruction-container__status__testcase"

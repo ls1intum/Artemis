@@ -1,30 +1,11 @@
-import {
-    AfterViewInit,
-    Component,
-    EventEmitter,
-    HostListener,
-    Input,
-    OnChanges,
-    OnDestroy,
-    OnInit,
-    Output,
-    SimpleChanges,
-    ViewChild,
-    ViewEncapsulation,
-    computed,
-    inject,
-    input,
-    signal,
-} from '@angular/core';
+import { AfterViewInit, Component, HostListener, Input, OnDestroy, ViewChild, ViewEncapsulation, computed, effect, inject, input, output, signal } from '@angular/core';
 import { AlertService } from 'app/shared/service/alert.service';
 import { Observable, Subject, Subscription, of, throwError } from 'rxjs';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { ProgrammingExerciseTestCase } from 'app/programming/shared/entities/programming-exercise-test-case.model';
 import { ProblemStatementAnalysis } from 'app/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.model';
-import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { hasExerciseChanged } from 'app/exercise/util/exercise.utils';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 import { ProgrammingExerciseGradingService } from 'app/programming/manage/services/programming-exercise-grading.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
@@ -45,11 +26,9 @@ import { MODULE_FEATURE_HYPERION, PROFILE_IRIS } from 'app/app.constants';
 import RewritingVariant from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-variant';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
-import { ActivatedRoute } from '@angular/router';
 import { Annotation } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import { RewriteResult } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-result';
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
-import { BrowserFingerprintService } from 'app/core/account/fingerprint/browser-fingerprint.service';
 import { ProblemStatementSyncService } from 'app/programming/manage/services/problem-statement-sync.service';
 
 @Component({
@@ -59,19 +38,19 @@ import { ProblemStatementSyncService } from 'app/programming/manage/services/pro
     encapsulation: ViewEncapsulation.None,
     imports: [MarkdownEditorMonacoComponent, NgClass, FaIconComponent, TranslateDirective, NgbTooltip, ProgrammingExerciseInstructionAnalysisComponent, ArtemisTranslatePipe],
 })
-export class ProgrammingExerciseEditableInstructionComponent implements AfterViewInit, OnChanges, OnDestroy, OnInit {
-    private activatedRoute = inject(ActivatedRoute);
+export class ProgrammingExerciseEditableInstructionComponent implements AfterViewInit, OnDestroy {
     private programmingExerciseService = inject(ProgrammingExerciseService);
     private alertService = inject(AlertService);
     private programmingExerciseParticipationService = inject(ProgrammingExerciseParticipationService);
     private testCaseService = inject(ProgrammingExerciseGradingService);
     private profileService = inject(ProfileService);
     private artemisIntelligenceService = inject(ArtemisIntelligenceService);
-    private browserFingerprintService = inject(BrowserFingerprintService);
     private problemStatementSyncService = inject(ProblemStatementSyncService);
 
-    participationValue: Participation;
-    programmingExercise: ProgrammingExercise;
+    // Track previous values for change detection in effect
+    private previousExercise?: ProgrammingExercise;
+
+    unsavedChangesValue = false;
 
     exerciseTestCases: string[] = [];
 
@@ -79,18 +58,17 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     testCaseAction = new TestCaseAction();
     domainActions: TextEditorDomainAction[] = [new FormulaAction(), new TaskAction(), this.testCaseAction];
 
-    courseId: number;
-    exerciseId: number;
     irisEnabled = this.profileService.isProfileActive(PROFILE_IRIS);
     hyperionEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
     artemisIntelligenceActions = computed(() => {
         const actions = [];
-        if (this.hyperionEnabled) {
+        const courseId = this.exercise().course?.id;
+        if (this.hyperionEnabled && !!courseId) {
             actions.push(
                 new RewriteAction(
                     this.artemisIntelligenceService,
                     RewritingVariant.PROBLEM_STATEMENT,
-                    this.courseId, // Use exerciseId for Hyperion, not courseId
+                    courseId, // Use exerciseId for Hyperion, not courseId
                     signal<RewriteResult>({ result: '', inconsistencies: undefined, suggestions: undefined, improvement: undefined }),
                 ),
             );
@@ -99,13 +77,12 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     });
 
     savingInstructions = false;
-    unsavedChangesValue = false;
 
     testCaseSubscription: Subscription;
     forceRenderSubscription: Subscription;
     incomingSyncSubscription?: Subscription;
+
     private isApplyingRemoteUpdate = false;
-    private syncExerciseId?: number;
 
     @ViewChild(MarkdownEditorMonacoComponent, { static: false }) markdownEditorMonaco?: MarkdownEditorMonacoComponent;
 
@@ -115,47 +92,39 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     @Input() enableResize = true;
     @Input({ required: true }) initialEditorHeight: MarkdownEditorHeight | 'external';
     @Input() showSaveButton = false;
-    @Input() templateParticipation: Participation;
     @Input() forceRender: Observable<void>;
-    @Input()
-    get exercise() {
-        return this.programmingExercise;
-    }
-    @Input()
-    get participation() {
-        return this.participationValue;
-    }
+
+    readonly exercise = input.required<ProgrammingExercise>();
     readonly consistencyIssues = input<ConsistencyIssue[]>([]);
+    readonly hasUnsavedChanges = output<boolean>();
+    readonly instructionChange = output<string>();
 
-    @Output() participationChange = new EventEmitter<Participation>();
-    @Output() hasUnsavedChanges = new EventEmitter<boolean>();
-    @Output() exerciseChange = new EventEmitter<ProgrammingExercise>();
-    @Output() instructionChange = new EventEmitter<string>();
     generateHtmlSubject: Subject<void> = new Subject<void>();
-
-    set participation(participation: Participation) {
-        this.participationValue = participation;
-        this.participationChange.emit(this.participationValue);
-    }
-
-    set exercise(exercise: ProgrammingExercise) {
-        const isNewExercise = !this.programmingExercise || this.programmingExercise.id !== exercise.id;
-        if (this.programmingExercise && exercise.problemStatement !== this.programmingExercise.problemStatement) {
-            this.unsavedChanges = true;
-        }
-        this.programmingExercise = exercise;
-        this.exerciseChange.emit(this.programmingExercise);
-        if (isNewExercise && exercise.id) {
-            this.exerciseId = exercise.id;
-            this.initializeProblemStatementSync(exercise.id, exercise.problemStatement);
-        }
-    }
 
     set unsavedChanges(hasChanges: boolean) {
         this.unsavedChangesValue = hasChanges;
         if (hasChanges) {
             this.hasUnsavedChanges.emit(hasChanges);
         }
+    }
+
+    constructor() {
+        // React to exercise changes
+        effect(() => {
+            const currentExercise = this.exercise();
+
+            if (this.previousExercise && currentExercise.problemStatement !== this.previousExercise.problemStatement) {
+                this.unsavedChanges = true;
+            }
+
+            const hasExerciseIdChanged = !this.previousExercise || this.previousExercise.id !== currentExercise.id;
+            if (hasExerciseIdChanged && currentExercise.id) {
+                this.initializeProblemStatementSync(currentExercise.id, currentExercise.problemStatement);
+                this.setupTestCaseSubscription();
+            }
+
+            this.previousExercise = currentExercise;
+        });
     }
 
     // Icons
@@ -165,20 +134,6 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     faCircleNotch = faCircleNotch;
 
     protected readonly MarkdownEditorHeight = MarkdownEditorHeight;
-
-    ngOnInit() {
-        this.courseId = Number(this.activatedRoute.snapshot.paramMap.get('courseId'));
-        this.exerciseId = Number(this.activatedRoute.snapshot.paramMap.get('exerciseId'));
-        if (this.exerciseId) {
-            this.initializeProblemStatementSync(this.exerciseId, this.exercise?.problemStatement);
-        }
-    }
-
-    ngOnChanges(changes: SimpleChanges): void {
-        if (hasExerciseChanged(changes)) {
-            this.setupTestCaseSubscription();
-        }
-    }
 
     ngOnDestroy(): void {
         if (this.testCaseSubscription) {
@@ -203,9 +158,9 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     saveInstructions(event: any) {
         event.stopPropagation();
         this.savingInstructions = true;
-        const problemStatementToSave = this.exercise.problemStatement?.trim() || undefined;
+        const problemStatementToSave = this.exercise().problemStatement?.trim() || undefined;
         return this.programmingExerciseService
-            .updateProblemStatement(this.exercise.id!, problemStatementToSave)
+            .updateProblemStatement(this.exercise().id!, problemStatementToSave)
             .pipe(
                 tap(() => {
                     this.unsavedChanges = false;
@@ -238,8 +193,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     }
 
     updateProblemStatement(problemStatement: string) {
-        if (this.exercise.problemStatement !== problemStatement) {
-            this.exercise = { ...this.exercise, problemStatement };
+        if (this.exercise().problemStatement !== problemStatement) {
             this.unsavedChanges = true;
         }
         if (!this.isApplyingRemoteUpdate) {
@@ -263,7 +217,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         // Only set up a subscription for test cases if the exercise already exists.
         if (this.editMode) {
             this.testCaseSubscription = this.testCaseService
-                .subscribeForTestCases(this.exercise.id!)
+                .subscribeForTestCases(this.exercise().id!)
                 .pipe(
                     switchMap((testCases: ProgrammingExerciseTestCase[] | undefined) => {
                         // If there are test cases, map them to their names, sort them and use them for the markdown editor.
@@ -273,9 +227,9 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
                                 .map((testCase) => testCase.testName!)
                                 .sort();
                             return of(sortedTestCaseNames);
-                        } else if (this.exercise.templateParticipation) {
+                        } else if (this.exercise().templateParticipation) {
                             // Legacy case: If there are no test cases, but a template participation, use its feedbacks for generating test names.
-                            return this.loadTestCasesFromTemplateParticipationResult(this.exercise.templateParticipation!.id!);
+                            return this.loadTestCasesFromTemplateParticipationResult(this.exercise().templateParticipation!.id!);
                         }
                         return of();
                     }),
@@ -337,30 +291,25 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         return annotations;
     };
 
-    private initializeProblemStatementSync(exerciseId?: number, initialContent?: string) {
-        if (!this.editMode || !exerciseId || this.syncExerciseId === exerciseId) {
+    private initializeProblemStatementSync(exerciseId: number, initialContent?: string) {
+        if (!this.editMode) {
             return;
         }
         this.teardownProblemStatementSync();
-        this.syncExerciseId = exerciseId;
-
-        this.problemStatementSyncService.init(exerciseId, initialContent ?? this.exercise?.problemStatement ?? '', this.browserFingerprintService.instanceIdentifier.value);
-
-        this.incomingSyncSubscription = this.problemStatementSyncService.updates$.subscribe((updatedContent) => this.applyRemoteProblemStatementUpdate(updatedContent));
-
-        this.problemStatementSyncService.requestInitialSync();
+        this.incomingSyncSubscription = this.problemStatementSyncService.patchedContentObserable$.subscribe((updatedContent) =>
+            this.applyRemoteProblemStatementUpdate(updatedContent),
+        );
+        this.problemStatementSyncService.init(exerciseId, initialContent ?? this.exercise()?.problemStatement ?? '');
     }
 
     private teardownProblemStatementSync() {
         this.incomingSyncSubscription?.unsubscribe();
         this.incomingSyncSubscription = undefined;
-        this.syncExerciseId = undefined;
         this.problemStatementSyncService.dispose();
     }
 
     private applyRemoteProblemStatementUpdate(updatedContent: string) {
         this.isApplyingRemoteUpdate = true;
-        this.exercise = { ...this.exercise, problemStatement: updatedContent };
         this.unsavedChanges = true;
         this.instructionChange.emit(updatedContent);
         this.isApplyingRemoteUpdate = false;

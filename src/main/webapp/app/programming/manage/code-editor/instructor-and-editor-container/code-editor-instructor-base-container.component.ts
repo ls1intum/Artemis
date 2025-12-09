@@ -172,6 +172,9 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
     }
     /** Called by the center editor on every markdown change */
     onInstructionChanged(markdown: string) {
+        if (this.exercise) {
+            this.exercise.problemStatement = markdown;
+        }
         this.problemStatementChanges$.next(markdown);
     }
 

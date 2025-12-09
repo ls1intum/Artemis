@@ -1,7 +1,9 @@
-import { Injectable, OnDestroy, inject } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Observable, Subject, Subscription } from 'rxjs';
+import { filter } from 'rxjs/operators';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { FileType } from 'app/programming/shared/code-editor/model/code-editor.model';
+import { BrowserFingerprintService } from 'app/core/account/fingerprint/browser-fingerprint.service';
 
 export enum ProgrammingExerciseEditorSyncTarget {
     PROBLEM_STATEMENT = 'PROBLEM_STATEMENT',
@@ -52,70 +54,65 @@ export interface ProgrammingExerciseEditorFileFull {
 export const EDITOR_SESSION_HEADER = 'X-Artemis-Client-Instance-ID';
 
 @Injectable({ providedIn: 'root' })
-export class ProgrammingExerciseEditorSyncService implements OnDestroy {
+export class ProgrammingExerciseEditorSyncService {
     private websocketService = inject(WebsocketService);
+    private browserFingerprintService = inject(BrowserFingerprintService);
 
-    private connections: Record<number, string> = {};
-    private subjects: Record<number, Subject<ProgrammingExerciseEditorSyncMessage>> = {};
-    private subscriptions: Record<number, Subscription> = {};
+    private exerciseId?: number;
+    private subject: Subject<ProgrammingExerciseEditorSyncMessage> | undefined;
+    private subscription: Subscription | undefined;
 
-    ngOnDestroy(): void {
-        Object.values(this.connections).forEach((connection) => this.websocketService.unsubscribe(connection));
+    private getTopic(exerciseId: number): string {
+        return `/topic/programming-exercises/${exerciseId}/synchronization`;
     }
 
-    sendSynchronization(exerciseId: number, message: ProgrammingExerciseEditorSyncMessage): void {
-        const topic = this.getOrCreateTopic(exerciseId);
-        this.websocketService.send(topic, { ...message, timestamp: message.timestamp ?? Date.now() });
+    get clientInstanceId(): string | undefined {
+        return this.browserFingerprintService.instanceIdentifier.value;
     }
 
-    getSynchronizationUpdates(exerciseId: number): Observable<ProgrammingExerciseEditorSyncMessage> {
-        return (this.subjects[exerciseId] ?? this.initializeSynchronizationSubscription(exerciseId)).asObservable();
+    sendSynchronizationUpdate(exerciseId: number, message: ProgrammingExerciseEditorSyncMessage): void {
+        if (!this.subscription) {
+            throw new Error('Cannot send synchronization message: not subscribed to websocket topic');
+        }
+        const topic = this.getTopic(exerciseId);
+        this.websocketService.send(topic, { ...message, timestamp: message.timestamp ?? Date.now(), clientInstanceId: this.clientInstanceId });
+    }
+
+    subscribeToUpdates(exerciseId: number): Observable<ProgrammingExerciseEditorSyncMessage> {
+        if (!this.subject) {
+            const topic = this.getTopic(exerciseId);
+            this.websocketService.subscribe(topic);
+            this.exerciseId = exerciseId;
+            this.subject = new Subject<ProgrammingExerciseEditorSyncMessage>();
+            this.subscription = this.websocketService
+                .receive(topic)
+                .pipe(filter((message: ProgrammingExerciseEditorSyncMessage) => message.clientInstanceId !== this.clientInstanceId))
+                .subscribe((message: ProgrammingExerciseEditorSyncMessage) => this.subject!.next(message));
+        }
+        return this.subject;
     }
 
     /**
      * Unsubscribe from synchronization updates for a specific exercise.
      * Should be called when leaving the code editor for an exercise.
-     *
-     * @param exerciseId The ID of the exercise to unsubscribe from
      */
-    unsubscribeFromExercise(exerciseId: number): void {
+    unsubscribe(): void {
         // Unsubscribe from websocket connection
-        if (this.connections[exerciseId]) {
-            this.websocketService.unsubscribe(this.connections[exerciseId]);
-            delete this.connections[exerciseId];
+        if (this.exerciseId) {
+            this.websocketService.unsubscribe(this.getTopic(this.exerciseId));
         }
 
         // Complete the Subject to notify all observers that the stream has ended
-        if (this.subjects[exerciseId]) {
-            this.subjects[exerciseId].complete();
-            delete this.subjects[exerciseId];
+        if (this.subject) {
+            this.subject.complete();
+            delete this.subject;
         }
 
         // Unsubscribe from internal websocket subscription
-        if (this.subscriptions[exerciseId]) {
-            this.subscriptions[exerciseId].unsubscribe();
-            delete this.subscriptions[exerciseId];
+        if (this.subscription) {
+            this.subscription.unsubscribe();
+            delete this.subscription;
         }
-    }
-
-    private initializeSynchronizationSubscription(exerciseId: number) {
-        const topic = this.getOrCreateTopic(exerciseId);
-
-        const subject = new Subject<ProgrammingExerciseEditorSyncMessage>();
-        this.subjects[exerciseId] = subject;
-
-        const subscription = this.websocketService.receive(topic).subscribe((message: ProgrammingExerciseEditorSyncMessage) => subject.next(message));
-        this.subscriptions[exerciseId] = subscription;
-
-        return subject;
-    }
-
-    private getOrCreateTopic(exerciseId: number): string {
-        const topic = `/topic/programming-exercises/${exerciseId}/synchronization`;
-        if (!this.connections[exerciseId]) {
-            this.websocketService.subscribe(topic);
-            this.connections[exerciseId] = topic;
-        }
-        return topic;
+        delete this.exerciseId;
     }
 }

@@ -51,4 +51,10 @@ export class ProgrammingExerciseProblemComponent {
         this.programmingExercise = exercise;
         this.exerciseChange.emit(this.programmingExercise);
     }
+
+    onInstructionChange(problemStatement: string) {
+        this.programmingExercise.problemStatement = problemStatement;
+        this.exerciseChange.emit(this.programmingExercise);
+        this.problemStatementChange.emit(problemStatement);
+    }
 }

@@ -10,92 +10,106 @@ import {
 @Injectable({ providedIn: 'root' })
 export class ProblemStatementSyncService {
     private syncService = inject(ProgrammingExerciseEditorSyncService);
-    private readonly dmp = new DiffMatchPatch();
+    private readonly diffMatchPatch = new DiffMatchPatch();
+
     private exerciseId?: number;
-    private clientInstanceId?: string;
-    private syncSubscription?: Subscription;
-    private outgoingSyncSubscription?: Subscription;
-    private localChanges$ = new Subject<string>();
-    private updatesSubject = new Subject<string>();
-    updates$: Observable<string> = this.updatesSubject.asObservable();
+    private incomingMessageSubscription?: Subscription;
+    private outgoingDebounceSubscription?: Subscription;
+    private localChangesQueue$ = new Subject<string>();
+    private patchedContentUpdate = new Subject<string>();
+
+    patchedContentObserable$: Observable<string> = this.patchedContentUpdate.asObservable();
+
     private lastSyncedContent = '';
     private lastProcessedTimestamp = 0;
-    private hasRequestedInitialSync = false;
 
-    init(exerciseId: number, initialContent: string, clientInstanceId: string | undefined) {
-        this.dispose();
+    init(exerciseId: number, initialContent: string) {
         this.exerciseId = exerciseId;
-        this.clientInstanceId = clientInstanceId;
         this.lastSyncedContent = initialContent;
         this.lastProcessedTimestamp = 0;
-        this.hasRequestedInitialSync = false;
-
-        this.syncSubscription = this.syncService.getSynchronizationUpdates(exerciseId).subscribe((message) => this.handleRemoteMessage(message));
-        this.outgoingSyncSubscription = this.localChanges$.pipe(debounceTime(500)).subscribe((content) => this.handleLocalChange(content));
+        this.incomingMessageSubscription = this.syncService.subscribeToUpdates(exerciseId).subscribe((message) => this.handleRemoteMessage(message));
+        this.outgoingDebounceSubscription = this.localChangesQueue$.pipe(debounceTime(200)).subscribe((content) => this.handleLocalChange(content));
+        this.requestInitialSync();
     }
 
     dispose() {
-        this.syncSubscription?.unsubscribe();
-        this.syncSubscription = undefined;
-        this.outgoingSyncSubscription?.unsubscribe();
-        this.outgoingSyncSubscription = undefined;
+        this.incomingMessageSubscription?.unsubscribe();
+        this.incomingMessageSubscription = undefined;
+        this.outgoingDebounceSubscription?.unsubscribe();
+        this.outgoingDebounceSubscription = undefined;
         this.exerciseId = undefined;
-        this.clientInstanceId = undefined;
         this.lastSyncedContent = '';
         this.lastProcessedTimestamp = 0;
-        this.hasRequestedInitialSync = false;
     }
 
+    /**
+     * put the edited content into the local queue for debounced synchronization
+     * @param content The edited content to be synchronized
+     */
     queueLocalChange(content: string) {
-        this.localChanges$.next(content);
+        this.localChangesQueue$.next(content);
     }
 
+    /**
+     * Construct and send a patch for the local content change, from the localChangesQueue.
+     * This method is called debounced via the localChangesQueue$ subject.
+     * @param content The new content to be sent as a patch
+     * @returns void
+     */
     handleLocalChange(content: string) {
         if (!this.exerciseId) {
             return;
         }
-
-        const patchText = this.dmp.patch_toText(this.dmp.patch_make(this.lastSyncedContent, content));
+        const patchText = this.diffMatchPatch.patch_toText(this.diffMatchPatch.patch_make(this.lastSyncedContent, content));
         if (!patchText) {
             return;
         }
-
         this.lastSyncedContent = content;
-        this.syncService.sendSynchronization(this.exerciseId, {
+        this.syncService.sendSynchronizationUpdate(this.exerciseId, {
             target: ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT,
             problemStatementPatch: patchText,
-            clientInstanceId: this.clientInstanceId,
         });
     }
 
+    /**
+     * Request the newest problem statement content from other active editors (if exists).
+     * This ensures that unsaved problem statement from other editors are also synchronized.
+     *
+     * @returns
+     */
     requestInitialSync() {
-        if (this.hasRequestedInitialSync || !this.exerciseId) {
+        if (!this.exerciseId) {
             return;
         }
-        this.hasRequestedInitialSync = true;
-        this.syncService.sendSynchronization(this.exerciseId, {
+        this.syncService.sendSynchronizationUpdate(this.exerciseId, {
             target: ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT,
             problemStatementRequest: true,
-            clientInstanceId: this.clientInstanceId,
         });
     }
 
+    /**
+     * Respond to a request for the full problem statement content.
+     * @param content The current problem statement content to send
+     * @returns void
+     */
     private respondWithFullContent(content: string) {
         if (!this.exerciseId) {
             return;
         }
-        this.syncService.sendSynchronization(this.exerciseId, {
+        this.syncService.sendSynchronizationUpdate(this.exerciseId, {
             target: ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT,
             problemStatementFull: content,
-            clientInstanceId: this.clientInstanceId,
         });
     }
 
+    /**
+     * Respond to a synchronization message from the websocket subscription for programming exercise problem statements.
+     *
+     * @param message The synchronization message to process
+     * @returns void
+     */
     private handleRemoteMessage(message: ProgrammingExerciseEditorSyncMessage) {
         if (message.target !== ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT) {
-            return;
-        }
-        if (message.clientInstanceId && this.clientInstanceId && message.clientInstanceId === this.clientInstanceId) {
             return;
         }
         if (message.timestamp && message.timestamp <= this.lastProcessedTimestamp) {
@@ -108,33 +122,32 @@ export class ProblemStatementSyncService {
             this.respondWithFullContent(this.lastSyncedContent);
             return;
         }
+
         // Receives the full content, update the last synced content and emit the update
         if (message.problemStatementFull !== undefined) {
             this.lastSyncedContent = message.problemStatementFull;
-            this.updatesSubject.next(message.problemStatementFull);
+            this.patchedContentUpdate.next(message.problemStatementFull);
             return;
         }
+
         // Receives a patch, apply the patch to the last synced content and emit the update
         if (message.problemStatementPatch) {
-            const patches = this.dmp.patch_fromText(message.problemStatementPatch);
+            const patches = this.diffMatchPatch.patch_fromText(message.problemStatementPatch);
             if (!patches.length) {
                 return;
             }
-
             try {
-                const [patchedContent, results] = this.dmp.patch_apply(patches, this.lastSyncedContent);
+                const [patchedContent, results] = this.diffMatchPatch.patch_apply(patches, this.lastSyncedContent);
                 // Check if any patch failed to apply (results array contains false for failed patches)
                 const hasFailedPatches = results.some((success) => !success);
                 if (hasFailedPatches) {
-                    // Patch application failed - request full content sync as fallback
-                    this.requestInitialSync();
+                    // TODO: we should alert this or handle it more gracefully
                     return;
                 }
                 this.lastSyncedContent = patchedContent;
-                this.updatesSubject.next(patchedContent);
+                this.patchedContentUpdate.next(patchedContent);
             } catch (error) {
-                // If patch parsing or application throws an error, request full content sync as fallback
-                this.requestInitialSync();
+                // TODO: we should alert this or handle it more gracefully
             }
         }
     }
