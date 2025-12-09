@@ -218,7 +218,7 @@ describe('IrisChatbotWidgetComponent', () => {
             listeners: { move: (e: InteractDragMoveEvent) => void };
         };
 
-        // Resize move -> should set width/height, transform, data-x/y, and fullSize according to your logic
+        // Resize move -> should set width/height, transform, data-x/y, and fullSize
         resizableConfig.listeners.move({
             target: widget,
             rect: { width: 950, height: 900 },
