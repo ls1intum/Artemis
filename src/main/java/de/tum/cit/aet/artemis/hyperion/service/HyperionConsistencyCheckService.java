@@ -5,7 +5,6 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -104,7 +103,7 @@ public class HyperionConsistencyCheckService {
 
         long totalTokens = totalPromptTokens + totalCompletionTokens;
 
-        List<ConsistencyIssueDTO> issueDTOs = Objects.requireNonNullElse(combinedIssues, new ArrayList<ConsistencyIssue>()).stream().map(this::mapConsistencyIssueToDto).toList();
+        List<ConsistencyIssueDTO> issueDTOs = combinedIssues.stream().map(this::mapConsistencyIssueToDto).toList();
 
         Instant endTime = Instant.now();
         double durationSeconds = Duration.between(startTime, endTime).toMillis() / 1000.0;
@@ -152,8 +151,8 @@ public class HyperionConsistencyCheckService {
                 completionTokens = usage.getCompletionTokens();
                 log.info(
                     "Hyperion structural check token usage: prompt={}, completion={}, total={}",
-                    usage.getPromptTokens(),
-                    usage.getCompletionTokens(),
+                    promptTokens,
+                    completionTokens,
                     usage.getTotalTokens()
                 );
             } else {
@@ -199,8 +198,8 @@ public class HyperionConsistencyCheckService {
                 completionTokens = usage.getCompletionTokens();
                 log.info(
                     "Hyperion semantic check token usage: prompt={}, completion={}, total={}",
-                    usage.getPromptTokens(),
-                    usage.getCompletionTokens(),
+                    promptTokens,
+                    completionTokens,
                     usage.getTotalTokens()
                 );
             } else {
