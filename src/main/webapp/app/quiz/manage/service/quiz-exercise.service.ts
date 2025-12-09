@@ -13,9 +13,12 @@ import JSZip from 'jszip';
 import { FileService } from 'app/shared/service/file.service';
 import { toQuizExerciseUpdateDTO } from 'app/quiz/shared/entities/quiz-exercise-update-dto.model';
 import { convertQuizExerciseToCreationDTO } from 'app/quiz/shared/entities/quiz-exercise-creation/quiz-exercise-creation-dto.model';
+import { QuizExerciseDates } from 'app/quiz/shared/entities/quiz-exercise-dates.model';
+import { convertDateFromServer } from 'app/shared/util/date.utils';
 
 export type EntityResponseType = HttpResponse<QuizExercise>;
 export type EntityArrayResponseType = HttpResponse<QuizExercise[]>;
+export type EntityExerciseDateResponseType = HttpResponse<QuizExerciseDates>;
 
 @Injectable({ providedIn: 'root' })
 export class QuizExerciseService {
@@ -173,30 +176,30 @@ export class QuizExerciseService {
      * Start a quiz exercise
      * @param quizExerciseId the id of the quiz exercise that should be started
      */
-    start(quizExerciseId: number): Observable<EntityResponseType> {
+    start(quizExerciseId: number): Observable<EntityExerciseDateResponseType> {
         return this.http
             .put<QuizExercise>(`${this.resourceUrl}/${quizExerciseId}/start-now`, null, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
+            .pipe(map((res: EntityExerciseDateResponseType) => QuizExerciseService.convertQuizExerciseDatesFromServer(res)));
     }
 
     /**
      * End a quiz exercise
      * @param quizExerciseId the id of the quiz exercise that should be stopped
      */
-    end(quizExerciseId: number): Observable<EntityResponseType> {
+    end(quizExerciseId: number): Observable<EntityExerciseDateResponseType> {
         return this.http
             .put<QuizExercise>(`${this.resourceUrl}/${quizExerciseId}/end-now`, null, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
+            .pipe(map((res: EntityResponseType) => QuizExerciseService.convertQuizExerciseDatesFromServer(res)));
     }
 
     /**
      * Set a quiz exercise visible
      * @param quizExerciseId the id of the quiz exercise that should be set visible
      */
-    setVisible(quizExerciseId: number): Observable<EntityResponseType> {
+    setVisible(quizExerciseId: number): Observable<EntityExerciseDateResponseType> {
         return this.http
             .put<QuizExercise>(`${this.resourceUrl}/${quizExerciseId}/set-visible`, null, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
+            .pipe(map((res: EntityResponseType) => QuizExerciseService.convertQuizExerciseDatesFromServer(res)));
     }
 
     /**
@@ -328,7 +331,7 @@ export class QuizExerciseService {
      * @return the status of the quiz
      */
     getStatus(quizExercise: QuizExercise) {
-        if (!quizExercise.quizStarted) {
+        if (!quizExercise.visibleToStudents) {
             return QuizStatus.INVISIBLE;
         }
         if (quizExercise.quizEnded) {
@@ -338,5 +341,14 @@ export class QuizExerciseService {
             return QuizStatus.ACTIVE;
         }
         return QuizStatus.VISIBLE;
+    }
+
+    static convertQuizExerciseDatesFromServer(res: EntityExerciseDateResponseType): EntityExerciseDateResponseType {
+        if (res.body) {
+            res.body.releaseDate = convertDateFromServer(res.body.releaseDate);
+            res.body.startDate = convertDateFromServer(res.body.startDate);
+            res.body.dueDate = convertDateFromServer(res.body.dueDate);
+        }
+        return res;
     }
 }

@@ -10,6 +10,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { input, output } from '@angular/core';
+import { QuizExerciseDates } from 'app/quiz/shared/entities/quiz-exercise-dates.model';
 
 @Component({
     selector: 'jhi-quiz-exercise-lifecycle-buttons',
@@ -63,8 +64,10 @@ export class QuizExerciseLifecycleButtonsComponent {
      */
     startQuiz() {
         this.quizExerciseService.start(this.quizExercise().id!).subscribe({
-            next: (res: HttpResponse<QuizExercise>) => {
-                this.handleNewQuizExercise.emit(res.body!);
+            next: (res: HttpResponse<QuizExerciseDates>) => {
+                this.updateDatesForQuizExercise(res.body!);
+                this.quizExercise().quizStarted = true;
+                this.handleNewQuizExercise.emit(this.quizExercise());
             },
             error: (res: HttpErrorResponse) => {
                 this.onError(res);
@@ -77,8 +80,10 @@ export class QuizExerciseLifecycleButtonsComponent {
      */
     endQuiz() {
         return this.quizExerciseService.end(this.quizExercise().id!).subscribe({
-            next: (res: HttpResponse<QuizExercise>) => {
-                this.handleNewQuizExercise.emit(res.body!);
+            next: (res: HttpResponse<QuizExerciseDates>) => {
+                this.updateDatesForQuizExercise(res.body!);
+                this.quizExercise().quizEnded = true;
+                this.handleNewQuizExercise.emit(this.quizExercise());
                 this.dialogErrorSource.next('');
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
@@ -120,8 +125,10 @@ export class QuizExerciseLifecycleButtonsComponent {
      */
     showQuiz() {
         this.quizExerciseService.setVisible(this.quizExercise().id!).subscribe({
-            next: (res: HttpResponse<QuizExercise>) => {
-                this.handleNewQuizExercise.emit(res.body!);
+            next: (res: HttpResponse<QuizExerciseDates>) => {
+                this.updateDatesForQuizExercise(res.body!);
+                this.quizExercise().visibleToStudents = true;
+                this.handleNewQuizExercise.emit(this.quizExercise());
             },
             error: (res: HttpErrorResponse) => {
                 this.onError(res);
@@ -132,5 +139,11 @@ export class QuizExerciseLifecycleButtonsComponent {
     private onError(error: HttpErrorResponse) {
         this.alertService.error(error.headers.get('X-artemisApp-error')!);
         this.loadOne.emit(this.quizExercise().id!);
+    }
+
+    private updateDatesForQuizExercise(dates: QuizExerciseDates) {
+        this.quizExercise().releaseDate = dates.releaseDate;
+        this.quizExercise().startDate = dates.startDate;
+        this.quizExercise().dueDate = dates.dueDate;
     }
 }
