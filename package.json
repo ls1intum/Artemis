@@ -48,6 +48,7 @@
         "diff-match-patch-typescript": "1.1.2",
         "dompurify": "3.3.0",
         "emoji-js": "3.9.0",
+        "eslint-plugin-unicorn": "62.0.0",
         "export-to-csv": "1.4.0",
         "fast-json-patch": "3.1.1",
         "franc-min": "6.2.0",
