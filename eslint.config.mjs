@@ -142,6 +142,13 @@ export default tseslint.config(
                     ]
                 }
             ],
+            "no-restricted-syntax": [
+                "error",
+                {
+                    selector: "ObjectExpression > SpreadElement",
+                    message: "Do not use object spread in object literals. Use Object.assign instead."
+                }
+            ],
             'localRules/require-signal-reference-ngb-modal-input': 'error',
         },
     },
