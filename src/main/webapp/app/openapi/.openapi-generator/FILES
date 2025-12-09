@@ -11,6 +11,7 @@ model/channel.ts
 model/consistencyCheckResponse.ts
 model/consistencyIssue.ts
 model/conversationUser.ts
+model/inlineComment.ts
 model/problemStatementGenerationRequest.ts
 model/problemStatementGenerationResponse.ts
 model/problemStatementRefinementRequest.ts

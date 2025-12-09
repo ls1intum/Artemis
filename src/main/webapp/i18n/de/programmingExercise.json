@@ -245,6 +245,21 @@
                 "acceptChanges": "Änderungen akzeptieren",
                 "rejectChanges": "Änderungen ablehnen"
             },
+            "inlineComment": {
+                "placeholder": "Beschreibe, was sich in diesen Zeilen ändern soll...",
+                "save": "Speichern",
+                "applyWithAI": "Mit KI anwenden",
+                "pendingComments": "{{ count }} ausstehende(r) Kommentar(e)",
+                "applyAll": "Alle anwenden",
+                "addComment": "Kommentar hinzufügen",
+                "unsavedWarning": "Du hast ungespeicherte Inline-Kommentare. Möchtest du die Seite verlassen, ohne sie anzuwenden?",
+                "applySuccess": "Kommentar erfolgreich angewendet.",
+                "applyError": "Kommentar konnte nicht angewendet werden. Bitte versuche es erneut.",
+                "applyAllSuccess": "Alle Kommentare erfolgreich angewendet.",
+                "applyAllError": "Einige Kommentare konnten nicht angewendet werden.",
+                "line": "Zeile {{ line }}",
+                "lines": "Zeilen {{ start }}-{{ end }}"
+            },
             "status": {
                 "solutionFailsTest": "Das Solution-Repository erfüllt einen oder mehrere Testfälle nicht. Das könnte auf ein Problem mit dem Solution-Repository oder den Testfällen hinweisen.",
                 "templateFulfillsTest": "Das Template-Repository erfüllt bereits einen oder mehrere Testfälle. Das könnte auf ein Problem mit dem Template-Repository oder den Testfällen hinweisen."
@@ -676,7 +691,6 @@
                 "lineStatBetweenSubmissionsCurrentSubmissionLabel": "Zeilen, die zwischen der aktuellen Abgabe mit Commit-Hash <span class=\"font-italic text-info\"> {{ currentCommitHash }} </span>",
                 "lineStatBetweenSubmissionsPreviousSubmissionLabel": "und der vorherigen Abgabe mit Commit-Hash <span class=\"font-italic text-info\"> {{ previousCommitHash }} </span> hinzugefügt/entfernt wurden",
                 "lineStatBetweenSubmissionsTemplateLabel": "und der Vorlage hinzugefügt/entfernt wurden",
-
                 "lineStatTooltipDetailPage": "Ungefilterte Zeilen, die beim Vergleich der Template- und Lösungs-Repositories hinzugefügt und entfernt wurden",
                 "lineStatTooltipExamTimeline": "Ungefilterte Zeilen, die beim Vergleich der aktuellen und der vorherigen Abgabe hinzugefügt und entfernt wurden",
                 "lineStatTooltipFullReportExamTimeline": "Ungefilterte Zeilen, die beim Vergleich der aktuellen und der vorherigen Abgabe hinzugefügt und entfernt wurden.",

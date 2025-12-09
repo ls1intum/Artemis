@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   title: Artemis Application Server API
   contact: {name: Stephan Krusche, email: krusche@tum.de}
-  version: 8.6.2
+  version: 8.6.4
 servers:
 - {url: 'http://localhost:8080', description: Generated server url}
 paths:
@@ -471,15 +471,32 @@ components:
           description: List of consistency issues found
           items: {$ref: '#/components/schemas/ConsistencyIssue'}
       required: [issues]
+    InlineComment:
+      type: object
+      description: Inline comment for targeted refinement of specific lines
+      properties:
+        startLine: {type: integer, format: int32, description: Start line number (1-indexed),
+          maximum: 10000, minimum: 1}
+        endLine: {type: integer, format: int32, description: 'End line number (1-indexed,
+            inclusive)', maximum: 10000, minimum: 1}
+        instruction: {type: string, description: Instruction describing what should
+            change, maxLength: 500, minLength: 0}
+      required: [endLine, instruction, startLine]
     ProblemStatementRefinementRequest:
       type: object
-      description: Request to rewrite a problem statement
+      description: Request to refine a problem statement
       properties:
         problemStatementText: {type: string, description: Original problem statement
             text to be refined, minLength: 1}
-        userPrompt: {type: string, description: User prompt describing the problem
-            statement requirements, maxLength: 1000, minLength: 0}
-      required: [problemStatementText, userPrompt]
+        userPrompt: {type: string, description: User prompt for global refinement
+            (optional if inlineComments provided), maxLength: 1000, minLength: 0}
+        inlineComments:
+          type: array
+          description: Inline comments for targeted refinement of specific lines
+          items: {$ref: '#/components/schemas/InlineComment'}
+          maxItems: 10
+          minItems: 0
+      required: [problemStatementText]
     TutorialGroupDetailSession:
       type: object
       properties:

@@ -15,6 +15,7 @@
             [showEditButton]="false"
             [consistencyIssues]="consistencyIssues()"
             (markdownChange)="updateProblemStatement($event)"
+            (onSelectionChange)="onEditorSelectionChange($event)"
         />
     }
     @if (editMode) {

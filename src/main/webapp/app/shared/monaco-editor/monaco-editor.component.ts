@@ -478,6 +478,56 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this.actions.push(action);
     }
 
+    /**
+     * Registers a listener for selection changes in the editor.
+     * @param listener The callback to invoke when the selection changes.
+     * @returns A disposable to remove the listener.
+     */
+    onSelectionChange(listener: (selection: { startLineNumber: number; endLineNumber: number; startColumn: number; endColumn: number } | null) => void): Disposable {
+        return this._editor.onDidChangeCursorSelection((e) => {
+            const selection = e.selection;
+            if (selection.isEmpty()) {
+                listener(null);
+            } else {
+                listener({
+                    startLineNumber: selection.startLineNumber,
+                    endLineNumber: selection.endLineNumber,
+                    startColumn: selection.startColumn,
+                    endColumn: selection.endColumn,
+                });
+            }
+        });
+    }
+
+    /**
+     * Gets the current selection in the editor.
+     * @returns The current selection or null if no selection.
+     */
+    getSelection(): { startLineNumber: number; endLineNumber: number; startColumn: number; endColumn: number } | null {
+        const selection = this._editor.getSelection();
+        if (!selection || selection.isEmpty()) {
+            return null;
+        }
+        return {
+            startLineNumber: selection.startLineNumber,
+            endLineNumber: selection.endLineNumber,
+            startColumn: selection.startColumn,
+            endColumn: selection.endColumn,
+        };
+    }
+
+    /**
+     * Removes a line widget by its ID.
+     * @param id The ID of the widget to remove.
+     */
+    removeLineWidget(id: string): void {
+        const index = this.lineWidgets.findIndex((w) => w.getId() === id);
+        if (index !== -1) {
+            this.lineWidgets[index].dispose();
+            this.lineWidgets.splice(index, 1);
+        }
+    }
+
     setWordWrap(value: boolean): void {
         this._editor.updateOptions({
             wordWrap: value ? 'on' : 'off',

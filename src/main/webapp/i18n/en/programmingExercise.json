@@ -245,6 +245,21 @@
                 "acceptChanges": "Accept Changes",
                 "rejectChanges": "Reject Changes"
             },
+            "inlineComment": {
+                "placeholder": "Describe what should change in these lines...",
+                "save": "Save",
+                "applyWithAI": "Apply with AI",
+                "pendingComments": "{{ count }} pending comment(s)",
+                "applyAll": "Apply All",
+                "addComment": "Add comment",
+                "unsavedWarning": "You have unsaved inline comments. Do you want to leave without applying them?",
+                "applySuccess": "Comment applied successfully.",
+                "applyError": "Failed to apply comment. Please try again.",
+                "applyAllSuccess": "All comments applied successfully.",
+                "applyAllError": "Failed to apply some comments.",
+                "line": "Line {{ line }}",
+                "lines": "Lines {{ start }}-{{ end }}"
+            },
             "status": {
                 "solutionFailsTest": "The Solution Repository does not fulfill one or more test cases. This could indicate an issue with the Solution Repository or the test cases.",
                 "templateFulfillsTest": "The Template Repository already fulfills one or more test cases. This could indicate an issue with the Template Repository or the test cases."

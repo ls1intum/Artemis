@@ -44,6 +44,7 @@
     .card-second-header {
         background-color: var(--markdown-preview-editor-background);
     }
+
     .card-second-header {
         padding: 10px 15px;
     }
@@ -59,7 +60,8 @@
 
     &__status {
         display: grid;
-        grid-template-columns: 1fr 2fr; /* left | right */
+        grid-template-columns: 1fr 2fr;
+        /* left | right */
         align-items: center;
 
         .instructions-status {
@@ -88,4 +90,67 @@
             }
         }
     }
+}
+
+// Inline comment floating button
+.inline-comment-add-button-container {
+    position: absolute;
+    right: 20px;
+    z-index: 10;
+    animation: fadeIn 0.15s ease-in-out;
+}
+
+.inline-comment-add-button {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    font-size: 0.85rem;
+    white-space: nowrap;
+
+    &:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+// GitHub-style gutter hover button for adding inline comments
+.inline-comment-add-gutter-button {
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.15s ease-in-out;
+
+    &::before {
+        content: '+';
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 18px;
+        height: 18px;
+        font-size: 14px;
+        font-weight: bold;
+        color: var(--bs-white, #fff);
+        background-color: var(--bs-primary, #0d6efd);
+        border-radius: 4px;
+        margin-left: 2px;
+    }
+
+    &:hover::before {
+        background-color: var(--bs-primary-dark, #0a58ca);
+        transform: scale(1.1);
+    }
+}
+
+// Show the button on line hover
+.monaco-editor .view-line:hover ~ .line-numbers ~ .inline-comment-add-gutter-button,
+.monaco-editor .margin-view-overlays:hover .inline-comment-add-gutter-button {
+    opacity: 1;
 }

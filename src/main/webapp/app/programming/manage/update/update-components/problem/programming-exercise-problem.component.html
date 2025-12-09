@@ -34,6 +34,26 @@
                 <span class="d-none d-sm-inline" jhiTranslate="entity.action.cancel"></span>
             </button>
         </div>
+
+        <!-- Pending Inline Comments Bar -->
+        @if (hasPendingComments()) {
+            <div class="pending-comments-bar d-flex justify-content-between align-items-center mt-3 mb-0 p-2 border rounded bg-light">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="fw-medium">{{ 'artemisApp.programmingExercise.inlineComment.pendingComments' | artemisTranslate: { count: pendingCount() } }}</span>
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" (click)="clearAllComments()" [disabled]="isApplyingAll()">
+                        <span jhiTranslate="entity.action.clear"></span>
+                    </button>
+                    <button type="button" class="btn btn-outline-primary btn-sm" (click)="applyAllComments()" [disabled]="isApplyingAll()">
+                        @if (isApplyingAll()) {
+                            <fa-icon [icon]="faSpinner" animation="spin" class="me-1" />
+                        }
+                        <span>{{ 'artemisApp.programmingExercise.inlineComment.applyAll' | artemisTranslate }} ({{ pendingCount() }})</span>
+                    </button>
+                </div>
+            </div>
+        }
     }
     @if (isEditFieldDisplayedRecord()?.problemStatement) {
         <div class="form-group" id="field_problemStatement" name="problemStatement">
@@ -100,9 +120,13 @@
                         [initialEditorHeight]="MarkdownEditorHeight.MEDIUM"
                         [showStatus]="!!programmingExercise()?.id"
                         [editMode]="!!programmingExercise()?.id"
+                        [pendingComments]="pendingComments()"
                         (hasUnsavedChanges)="programmingExerciseCreationConfig.hasUnsavedChanges = $event"
                         (instructionChange)="onProblemStatementChange($event)"
                         (exerciseChange)="programmingExerciseChange.emit($event)"
+                        (onInlineCommentSave)="onSaveInlineComment($event)"
+                        (onInlineCommentApply)="onApplyInlineComment($event)"
+                        (onInlineCommentDelete)="onDeleteInlineComment($event)"
                         [forceRender]="programmingExerciseCreationConfig.rerenderSubject"
                         class="form__editable-instructions"
                     />

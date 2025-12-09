@@ -7,10 +7,11 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+import { InlineComment } from './inlineComment';
 
 
 /**
- * Request to rewrite a problem statement
+ * Request to refine a problem statement
  */
 export interface ProblemStatementRefinementRequest { 
     /**
@@ -18,8 +19,12 @@ export interface ProblemStatementRefinementRequest {
      */
     problemStatementText: string;
     /**
-     * User prompt describing the problem statement requirements
+     * User prompt for global refinement (optional if inlineComments provided)
      */
-    userPrompt: string;
+    userPrompt?: string;
+    /**
+     * Inline comments for targeted refinement of specific lines
+     */
+    inlineComments?: Array<InlineComment>;
 }
 

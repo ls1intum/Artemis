@@ -18,6 +18,7 @@ import { ButtonModule } from 'primeng/button';
 import { HyperionProblemStatementApiService } from 'app/openapi/api/hyperionProblemStatementApi.service';
 import { ProblemStatementGenerationRequest } from 'app/openapi/model/problemStatementGenerationRequest';
 import { ProblemStatementRefinementRequest } from 'app/openapi/model/problemStatementRefinementRequest';
+import { InlineComment as ApiInlineComment } from 'app/openapi/model/inlineComment';
 import { Subscription, finalize } from 'rxjs';
 import { facArtemisIntelligence } from 'app/shared/icons/icons';
 import { ButtonSize } from 'app/shared/components/buttons/button/button.component';
@@ -34,6 +35,8 @@ import { FullscreenAction } from 'app/shared/monaco-editor/model/actions/fullscr
 import { FormulaAction } from 'app/shared/monaco-editor/model/actions/formula.action';
 import { TaskAction } from 'app/shared/monaco-editor/model/actions/task.action';
 import { TestCaseAction } from 'app/shared/monaco-editor/model/actions/test-case.action';
+import { InlineCommentService } from 'app/shared/monaco-editor/service/inline-comment.service';
+import { InlineComment } from 'app/shared/monaco-editor/model/inline-comment.model';
 
 @Component({
     selector: 'jhi-programming-exercise-problem',
@@ -109,8 +112,16 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy, A
     private alertService = inject(AlertService);
     private profileService = inject(ProfileService);
     private fileService = inject(FileService);
+    private inlineCommentService = inject(InlineCommentService);
 
     hyperionEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
+
+    // Inline comment state
+    protected pendingComments = this.inlineCommentService.getPendingComments();
+    protected hasPendingComments = this.inlineCommentService.hasPendingComments;
+    protected pendingCount = this.inlineCommentService.pendingCount;
+    protected applyingCommentId = signal<string | undefined>(undefined);
+    protected isApplyingAll = signal(false);
 
     /**
      * Lifecycle hook that is called when the component is destroyed.
@@ -154,6 +165,11 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy, A
                     this.templateProblemStatement.set(template);
                 },
             });
+        }
+
+        // Initialize inline comment service with exercise context
+        if (exercise?.id) {
+            this.inlineCommentService.setExerciseContext(exercise.id);
         }
     }
 
@@ -373,5 +389,158 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy, A
             exercise.competencyLinks = competencyLinks;
             this.programmingExerciseChange.emit(exercise);
         }
+    }
+
+    // Inline Comment Methods
+
+    /**
+     * Applies a single inline comment using AI refinement.
+     */
+    applySingleComment(comment: InlineComment): void {
+        const exercise = this.programmingExercise();
+        const courseId = exercise?.course?.id ?? exercise?.exerciseGroup?.exam?.course?.id;
+
+        if (!courseId || !exercise?.problemStatement) {
+            this.alertService.error('artemisApp.programmingExercise.inlineComment.applyError');
+            return;
+        }
+
+        this.applyingCommentId.set(comment.id);
+        this.inlineCommentService.updateStatus(comment.id, 'applying');
+
+        const apiComment: ApiInlineComment = {
+            startLine: comment.startLine,
+            endLine: comment.endLine,
+            instruction: comment.instruction,
+        };
+
+        const request: ProblemStatementRefinementRequest = {
+            problemStatementText: exercise.problemStatement,
+            inlineComments: [apiComment],
+        };
+
+        this.currentGenerationSubscription = this.hyperionApiService
+            .refineProblemStatement(courseId, request)
+            .pipe(
+                finalize(() => {
+                    this.applyingCommentId.set(undefined);
+                    this.currentGenerationSubscription = undefined;
+                }),
+            )
+            .subscribe({
+                next: (response) => {
+                    if (response.refinedProblemStatement && response.refinedProblemStatement.trim() !== '') {
+                        // Store original and refined content for diff view
+                        this.originalProblemStatement = exercise.problemStatement || '';
+                        this.refinedProblemStatement = response.refinedProblemStatement;
+                        this.diffContentSet = false;
+                        this.showDiff = true;
+
+                        // Mark comment as applied and remove from pending
+                        this.inlineCommentService.markApplied(comment.id);
+                        this.alertService.success('artemisApp.programmingExercise.inlineComment.applySuccess');
+                    } else {
+                        this.inlineCommentService.updateStatus(comment.id, 'error');
+                        this.alertService.error('artemisApp.programmingExercise.inlineComment.applyError');
+                    }
+                },
+                error: () => {
+                    this.inlineCommentService.updateStatus(comment.id, 'error');
+                    this.alertService.error('artemisApp.programmingExercise.inlineComment.applyError');
+                },
+            });
+    }
+
+    /**
+     * Applies all pending inline comments in batch using AI refinement.
+     */
+    applyAllComments(): void {
+        const exercise = this.programmingExercise();
+        const courseId = exercise?.course?.id ?? exercise?.exerciseGroup?.exam?.course?.id;
+        const comments = this.pendingComments();
+
+        if (!courseId || !exercise?.problemStatement || comments.length === 0) {
+            return;
+        }
+
+        this.isApplyingAll.set(true);
+
+        // Update status for all comments
+        comments.forEach((c) => this.inlineCommentService.updateStatus(c.id, 'applying'));
+
+        const apiComments: ApiInlineComment[] = comments.map((c) => ({
+            startLine: c.startLine,
+            endLine: c.endLine,
+            instruction: c.instruction,
+        }));
+
+        const request: ProblemStatementRefinementRequest = {
+            problemStatementText: exercise.problemStatement,
+            inlineComments: apiComments,
+        };
+
+        this.currentGenerationSubscription = this.hyperionApiService
+            .refineProblemStatement(courseId, request)
+            .pipe(
+                finalize(() => {
+                    this.isApplyingAll.set(false);
+                    this.currentGenerationSubscription = undefined;
+                }),
+            )
+            .subscribe({
+                next: (response) => {
+                    if (response.refinedProblemStatement && response.refinedProblemStatement.trim() !== '') {
+                        // Store original and refined content for diff view
+                        this.originalProblemStatement = exercise.problemStatement || '';
+                        this.refinedProblemStatement = response.refinedProblemStatement;
+                        this.diffContentSet = false;
+                        this.showDiff = true;
+
+                        // Mark all comments as applied
+                        const commentIds = comments.map((c) => c.id);
+                        this.inlineCommentService.markAllApplied(commentIds);
+                        this.alertService.success('artemisApp.programmingExercise.inlineComment.applyAllSuccess');
+                    } else {
+                        comments.forEach((c) => this.inlineCommentService.updateStatus(c.id, 'error'));
+                        this.alertService.error('artemisApp.programmingExercise.inlineComment.applyAllError');
+                    }
+                },
+                error: () => {
+                    comments.forEach((c) => this.inlineCommentService.updateStatus(c.id, 'error'));
+                    this.alertService.error('artemisApp.programmingExercise.inlineComment.applyAllError');
+                },
+            });
+    }
+
+    /**
+     * Handles saving an inline comment (adds to pending list).
+     */
+    onSaveInlineComment(comment: InlineComment): void {
+        this.inlineCommentService.addExistingComment({ ...comment, status: 'pending' });
+    }
+
+    /**
+     * Handles applying an inline comment immediately.
+     */
+    onApplyInlineComment(comment: InlineComment): void {
+        // First add to service, then apply
+        if (!this.inlineCommentService.getComment(comment.id)) {
+            this.inlineCommentService.addExistingComment(comment);
+        }
+        this.applySingleComment(comment);
+    }
+
+    /**
+     * Handles deleting an inline comment.
+     */
+    onDeleteInlineComment(commentId: string): void {
+        this.inlineCommentService.removeComment(commentId);
+    }
+
+    /**
+     * Clears all pending inline comments.
+     */
+    clearAllComments(): void {
+        this.inlineCommentService.clearAll();
     }
 }
