@@ -152,12 +152,7 @@ public class ArtemisUserCredentialRepository implements UserCredentialRepository
     public List<PasskeyDTO> findPasskeyDtosByUserId(Bytes userId) {
         Optional<User> user = userRepository.findById(BytesConverter.bytesToLong(userId));
 
-        List<CredentialRecord> credentialRecords = user
-                .map(passkeyUser -> passkeyCredentialsRepository.findByUser(passkeyUser.getId()).stream().map(PasskeyCredential::toCredentialRecord).toList()).orElseGet(List::of);
-
-        return credentialRecords.stream()
-                .map(credential -> new PasskeyDTO(credential.getCredentialId().toBase64UrlString(), credential.getLabel(), credential.getCreated(), credential.getLastUsed()))
-                .toList();
+        return user.map(passkeyUser -> passkeyCredentialsRepository.findByUser(passkeyUser.getId()).stream().map(PasskeyCredential::toDto).toList()).orElseGet(List::of);
     }
 
     /**

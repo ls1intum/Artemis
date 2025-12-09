@@ -1,0 +1,8 @@
+<div class="video-wrapper">
+    <div class="video-column">
+        <!-- Native HTML5 video element for hls.js -->
+        <video #videoRef id="video-player" class="video-player" controls preload="auto" playsinline></video>
+    </div>
+
+    <jhi-transcript-viewer #transcriptViewer [transcriptSegments]="transcriptSegments()" [currentSegmentIndex]="currentSegmentIndex()" (segmentClicked)="seekTo($event)" />
+</div>

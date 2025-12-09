@@ -123,7 +123,7 @@ export class UpdatingResultComponent implements OnInit, OnChanges, OnDestroy {
                 // Ignore ungraded results if ungraded results are supposed to be ignored.
                 // If the result is a preliminary feedback(being generated), show it
                 filter((result: Result) => this.showUngradedResults || result.rated === true || isAthenaAIResult(result)),
-                map((result) => ({ ...result, completionDate: convertDateFromServer(result.completionDate), participation: this.participation })),
+                map((result): Result => ({ ...result, completionDate: convertDateFromServer(result.completionDate) }) satisfies Result),
                 tap((result) => {
                     if ((isAthenaAIResult(result) && isAIResultAndIsBeingProcessed(result)) || result.rated) {
                         this.result = result;
