@@ -127,7 +127,7 @@ export const mockServerSessionHttpResponse = {
 } as HttpResponse<IrisSession>;
 
 export const mockServerSessionHttpResponseWithEmptyConversation = {
-    body: { ...mockConversationWithNoMessages, id: 123 },
+    body: Object.assign({}, mockConversationWithNoMessages, { id: 123 }),
 } as HttpResponse<IrisSession>;
 
 /**
@@ -151,10 +151,10 @@ export function mockUserMessageWithContent(content: string): IrisUserMessage {
 export function mockServerSessionHttpResponseWithId(id: number, empty: boolean = false): HttpResponse<IrisSession> {
     if (empty) {
         return {
-            body: { ...mockConversationWithNoMessages, id },
+            body: Object.assign({}, mockConversationWithNoMessages, { id }),
         } as HttpResponse<IrisSession>;
     }
     return {
-        body: { ...mockConversation, id },
+        body: Object.assign({}, mockConversation, { id }),
     } as HttpResponse<IrisSession>;
 }

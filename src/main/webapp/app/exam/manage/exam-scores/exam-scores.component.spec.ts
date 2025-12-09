@@ -201,36 +201,25 @@ describe('ExamScoresComponent', () => {
     } as StudentResult;
 
     const studentResultsWithBonusGradesAndPlagiarism = [
-        {
-            ...studentResult1,
+        Object.assign({}, studentResult1, {
             gradeWithBonus: { bonusGrade: 1, finalGrade: '2.0', bonusStrategy: BonusStrategy.GRADES_DISCRETE },
             mostSeverePlagiarismVerdict: PlagiarismVerdict.WARNING,
-        },
-        { ...studentResult2, gradeWithBonus: { bonusGrade: 2, finalGrade: '1.0', bonusStrategy: BonusStrategy.GRADES_DISCRETE } },
-        {
-            ...studentResult3,
+        }),
+        Object.assign({}, studentResult2, { gradeWithBonus: { bonusGrade: 2, finalGrade: '1.0', bonusStrategy: BonusStrategy.GRADES_DISCRETE } }),
+        Object.assign({}, studentResult3, {
             gradeWithBonus: {
                 bonusGrade: 2,
                 finalGrade: '5.0',
                 bonusStrategy: BonusStrategy.GRADES_DISCRETE,
                 mostSeverePlagiarismVerdict: PlagiarismVerdict.WARNING,
             },
-        },
+        }),
     ];
 
     const studentResultsWithBonusPoints = [
-        {
-            ...studentResult1,
-            gradeWithBonus: { bonusGrade: 20, finalGrade: '2.0', bonusStrategy: BonusStrategy.POINTS },
-        },
-        {
-            ...studentResult2,
-            gradeWithBonus: { bonusGrade: 40, finalGrade: '1.0', bonusStrategy: BonusStrategy.POINTS },
-        },
-        {
-            ...studentResult3,
-            gradeWithBonus: { bonusGrade: 40, finalGrade: '5.0', bonusStrategy: BonusStrategy.POINTS },
-        },
+        Object.assign({}, studentResult1, { gradeWithBonus: { bonusGrade: 20, finalGrade: '2.0', bonusStrategy: BonusStrategy.POINTS } }),
+        Object.assign({}, studentResult2, { gradeWithBonus: { bonusGrade: 40, finalGrade: '1.0', bonusStrategy: BonusStrategy.POINTS } }),
+        Object.assign({}, studentResult3, { gradeWithBonus: { bonusGrade: 40, finalGrade: '5.0', bonusStrategy: BonusStrategy.POINTS } }),
     ];
 
     let findExamScoresSpy: jest.SpyInstance;
@@ -598,7 +587,7 @@ describe('ExamScoresComponent', () => {
 
     it('should initialize correctly with bonus grades and plagiarism', () => {
         jest.spyOn(examService, 'getExamScores').mockReturnValue(
-            of(new HttpResponse({ body: { ...examScoreDTO, studentResults: studentResultsWithBonusGradesAndPlagiarism } as ExamScoreDTO })),
+            of(new HttpResponse({ body: Object.assign({}, examScoreDTO, { studentResults: studentResultsWithBonusGradesAndPlagiarism }) as ExamScoreDTO })),
         );
         fixture.detectChanges();
         const finalGrades = studentResultsWithBonusGradesAndPlagiarism.map((studentResult) => studentResult.gradeWithBonus.finalGrade);
@@ -610,7 +599,7 @@ describe('ExamScoresComponent', () => {
 
     it('should initialize correctly with bonus points', () => {
         jest.spyOn(examService, 'getExamScores').mockReturnValue(
-            of(new HttpResponse({ body: { ...examScoreDTO, studentResults: studentResultsWithBonusPoints } as ExamScoreDTO })),
+            of(new HttpResponse({ body: Object.assign({}, examScoreDTO, { studentResults: studentResultsWithBonusPoints }) as ExamScoreDTO })),
         );
         fixture.detectChanges();
         const finalGrades = studentResultsWithBonusGradesAndPlagiarism.map((studentResult) => studentResult.gradeWithBonus.finalGrade);
@@ -623,7 +612,7 @@ describe('ExamScoresComponent', () => {
     it('should generate csv correctly with bonus grades and plagiarism', () => {
         const noOfSubmittedExercises = examScoreDTO.studentResults.length;
         jest.spyOn(examService, 'getExamScores').mockReturnValue(
-            of(new HttpResponse({ body: { ...examScoreDTO, studentResults: studentResultsWithBonusGradesAndPlagiarism } as ExamScoreDTO })),
+            of(new HttpResponse({ body: Object.assign({}, examScoreDTO, { studentResults: studentResultsWithBonusGradesAndPlagiarism }) as ExamScoreDTO })),
         );
         fixture.detectChanges();
         comp.gradingScale = gradingScale;

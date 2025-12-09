@@ -57,11 +57,11 @@ export abstract class BaseApiHttpService {
     ): Promise<T> {
         try {
             const response = await lastValueFrom(
-                this.httpClient.request(method, `${this.baseUrl}/${url}`, {
-                    observe: 'body',
-                    ...options,
-                    responseType: options?.responseType ?? 'json',
-                }),
+                this.httpClient.request(
+                    method,
+                    `${this.baseUrl}/${url}`,
+                    Object.assign({ observe: 'body' as const }, options ?? {}, { responseType: options?.responseType ?? 'json' }),
+                ),
             );
             return response as T;
         } catch (error) {
@@ -144,7 +144,7 @@ export abstract class BaseApiHttpService {
             responseType?: 'json' | 'text';
         },
     ): Promise<T> {
-        return await this.request<T>(HttpMethod.Post, url, { body: body, ...options });
+        return await this.request<T>(HttpMethod.Post, url, Object.assign({ body: body }, options));
     }
 
     /**
@@ -205,7 +205,7 @@ export abstract class BaseApiHttpService {
             responseType?: 'json' | 'text';
         },
     ): Promise<T> {
-        return await this.request<T>(HttpMethod.Patch, url, { body: body, ...options });
+        return await this.request<T>(HttpMethod.Patch, url, Object.assign({ body: body }, options));
     }
 
     /**
@@ -236,6 +236,6 @@ export abstract class BaseApiHttpService {
             responseType?: 'json' | 'text';
         },
     ): Promise<T> {
-        return await this.request<T>(HttpMethod.Put, url, { body: body, ...options });
+        return await this.request<T>(HttpMethod.Put, url, Object.assign({ body: body }, options));
     }
 }

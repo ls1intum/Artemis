@@ -98,7 +98,7 @@ describe('PlagiarismComparison', () => {
 
     describe('Edge cases and validation', () => {
         it('should handle comparisons with identical submissions', () => {
-            const identicalSubmission = { ...mockSubmissionA };
+            const identicalSubmission = Object.assign({}, mockSubmissionA);
             plagiarismComparison.submissionA = mockSubmissionA;
             plagiarismComparison.submissionB = identicalSubmission;
             plagiarismComparison.similarity = 100;

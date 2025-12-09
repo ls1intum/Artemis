@@ -85,10 +85,9 @@ describe('PostingDirective', () => {
 
         fixture = TestBed.createComponent(TestPostingComponent);
         component = fixture.componentInstance;
-        jest.mock('app/core/course/shared/entities/course.model', () => ({
-            ...jest.requireActual('app/core/course/shared/entities/course.model'),
-            isMessagingEnabled: jest.fn(),
-        }));
+        jest.mock('app/core/course/shared/entities/course.model', () =>
+            Object.assign({}, jest.requireActual('app/core/course/shared/entities/course.model'), { isMessagingEnabled: jest.fn() }),
+        );
         mockReactionsBar = new MockReactionsBar();
         component.reactionsBar = mockReactionsBar;
         const user = new User();

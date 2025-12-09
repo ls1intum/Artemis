@@ -68,7 +68,7 @@ export class LearningPathStudentPageComponent {
                 this.learningPath.set(learningPath);
             }
             await this.learningApiService.startLearningPathForCurrentUser(this.learningPath()!.id);
-            this.learningPath.update((learningPath) => ({ ...learningPath!, startedByStudent: true }));
+            this.learningPath.update((learningPath) => Object.assign({}, learningPath!, { startedByStudent: true }));
         } catch (error) {
             this.alertService.error(error);
         } finally {

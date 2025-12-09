@@ -270,7 +270,7 @@ describe('BuildAgentDetailsComponent', () => {
     });
 
     it('should show an alert when pausing build agent without a name', () => {
-        component.buildAgent = { ...mockBuildAgent, buildAgent: { ...mockBuildAgent.buildAgent, name: '' } };
+        component.buildAgent = Object.assign({}, mockBuildAgent, { buildAgent: Object.assign({}, mockBuildAgent.buildAgent, { name: '' }) });
         component.pauseBuildAgent();
 
         expect(alertServiceAddAlertStub).toHaveBeenCalledWith({
@@ -280,7 +280,7 @@ describe('BuildAgentDetailsComponent', () => {
     });
 
     it('should show an alert when resuming build agent without a name', () => {
-        component.buildAgent = { ...mockBuildAgent, buildAgent: { ...mockBuildAgent.buildAgent, name: '' } };
+        component.buildAgent = Object.assign({}, mockBuildAgent, { buildAgent: Object.assign({}, mockBuildAgent.buildAgent, { name: '' }) });
         component.resumeBuildAgent();
 
         expect(alertServiceAddAlertStub).toHaveBeenCalledWith({
@@ -338,7 +338,7 @@ describe('BuildAgentDetailsComponent', () => {
         component.searchTerm = 'search';
         component.triggerLoadFinishedJobs();
 
-        const requestWithSearchTerm = { ...request };
+        const requestWithSearchTerm = Object.assign({}, request);
         requestWithSearchTerm.searchTerm = 'search';
         // Wait for the debounce time to pass
         await new Promise((resolve) => setTimeout(resolve, 110));

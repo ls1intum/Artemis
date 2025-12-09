@@ -162,7 +162,7 @@ describe('TutorialGroupSessionTableComponent', () => {
         changes.tutorialGroup = new SimpleChange(undefined, component.tutorialGroup(), true);
         component.ngOnChanges(changes);
 
-        const sessionWithAttendanceData = { ...upcomingSession, attendanceCount: 1 } as TutorialGroupSession;
+        const sessionWithAttendanceData = Object.assign({}, upcomingSession, { attendanceCount: 1 }) as TutorialGroupSession;
         component.onAttendanceChanged(sessionWithAttendanceData);
         fixture.detectChanges();
         expect(component.nextSession).toEqual(sessionWithAttendanceData);
@@ -177,7 +177,7 @@ describe('TutorialGroupSessionTableComponent', () => {
         changes.tutorialGroup = new SimpleChange(undefined, component.tutorialGroup(), true);
         component.ngOnChanges(changes);
 
-        const sessionWithAttendanceData = { ...pastSession, attendanceCount: 1 } as TutorialGroupSession;
+        const sessionWithAttendanceData = Object.assign({}, pastSession, { attendanceCount: 1 }) as TutorialGroupSession;
         component.onAttendanceChanged(sessionWithAttendanceData);
         fixture.detectChanges();
         expect(component.nextSession).toEqual(sessionWithAttendanceData);

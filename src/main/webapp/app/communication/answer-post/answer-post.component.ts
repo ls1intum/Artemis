@@ -114,7 +114,7 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
     }
 
     onReactionsUpdated(updatedReactions: Reaction[]) {
-        this.posting = { ...this.posting, reactions: updatedReactions };
+        this.posting = Object.assign({}, this.posting, { reactions: updatedReactions });
     }
 
     /**

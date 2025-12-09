@@ -106,11 +106,7 @@ describe('ImportCourseCompetenciesSettingsComponent', () => {
 
     it('should retain isReleaseDate when reference date is already set', () => {
         const initialDate = new Date(2022, 0, 1);
-        component.importSettings.update((settings) => ({
-            ...settings,
-            referenceDate: initialDate,
-            isReleaseDate: false,
-        }));
+        component.importSettings.update((settings) => Object.assign({}, settings, { referenceDate: initialDate, isReleaseDate: false }));
 
         const newDate = new Date(2023, 0, 1);
         const dateEvent = { value: newDate.toDateString() } as HTMLInputElement;

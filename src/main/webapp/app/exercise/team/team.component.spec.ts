@@ -106,7 +106,7 @@ describe('TeamComponent', () => {
     describe('ngOnInit with team owner', () => {
         it('should set team owner true if user is team owner', () => {
             waitForAsync(() => {
-                identityStub.mockReturnValue(Promise.resolve({ ...user, id: 1 }));
+                identityStub.mockReturnValue(Promise.resolve(Object.assign({}, user, { id: 1 })));
                 fixture = TestBed.createComponent(TeamComponent);
                 comp = fixture.componentInstance;
                 comp.ngOnInit();

@@ -72,7 +72,7 @@ describe('CancellationModalComponent', () => {
 
         component.reasonControl!.setValue('National Holiday');
         runOnPushChangeDetection(fixture);
-        fixture.componentRef.setInput('tutorialGroupSession', { ...tutorialGroupSession, status: TutorialGroupSessionStatus.CANCELLED });
+        fixture.componentRef.setInput('tutorialGroupSession', Object.assign({}, tutorialGroupSession, { status: TutorialGroupSessionStatus.CANCELLED }));
         // click button with id cancel-activate-button
         const button = fixture.debugElement.nativeElement.querySelector('#cancel-activate-button');
         button.click();

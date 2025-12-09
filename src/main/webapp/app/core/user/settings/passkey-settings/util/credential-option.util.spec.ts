@@ -47,7 +47,7 @@ describe('Credential Option Util', () => {
     });
 
     it('should handle missing excludeCredentials gracefully', () => {
-        const optionsWithoutExcludeCredentials = { ...mockOptions, excludeCredentials: undefined };
+        const optionsWithoutExcludeCredentials = Object.assign({}, mockOptions, { excludeCredentials: undefined });
 
         const result = createCredentialOptions(optionsWithoutExcludeCredentials, mockUser);
 

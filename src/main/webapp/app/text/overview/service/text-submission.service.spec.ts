@@ -31,12 +31,9 @@ describe('TextSubmission Service', () => {
     });
 
     it('should create a TextSubmission', fakeAsync(() => {
-        const returnedFromService = {
-            id: 1,
-            ...elemDefault,
-        };
+        const returnedFromService = Object.assign({ id: 1 }, elemDefault);
 
-        const expected = { ...returnedFromService };
+        const expected = Object.assign({}, returnedFromService);
         service
             .create(new TextSubmission(), 1)
             .pipe(take(1))
@@ -49,12 +46,9 @@ describe('TextSubmission Service', () => {
     }));
 
     it('should update a TextSubmission', fakeAsync(() => {
-        const returnedFromService = {
-            text: 'BBBBBB',
-            ...elemDefault,
-        };
+        const returnedFromService = Object.assign({ text: 'BBBBBB' }, elemDefault);
 
-        const expected = { ...returnedFromService };
+        const expected = Object.assign({}, returnedFromService);
         service
             .update(expected, 1)
             .pipe(take(1))

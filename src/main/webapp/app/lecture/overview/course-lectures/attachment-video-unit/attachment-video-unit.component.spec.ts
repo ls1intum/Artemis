@@ -72,7 +72,7 @@ describe('AttachmentVideoUnitComponent', () => {
         fixture = TestBed.createComponent(AttachmentVideoUnitComponent);
         component = fixture.componentInstance;
 
-        fixture.componentRef.setInput('lectureUnit', { ...attachmentVideoUnit });
+        fixture.componentRef.setInput('lectureUnit', Object.assign({}, attachmentVideoUnit));
         fixture.componentRef.setInput('courseId', 1);
     });
 

@@ -99,11 +99,9 @@ export class PasskeySettingsComponent implements OnDestroy {
         this.registeredPasskeys.set(await this.passkeySettingsApiService.getRegisteredPasskeys());
 
         if (this.registeredPasskeys().length === 0) {
-            this.accountService.userIdentity.set({
-                ...this.accountService.userIdentity(),
-                askToSetupPasskey: true,
-                internal: this.accountService.userIdentity()?.internal ?? false,
-            });
+            this.accountService.userIdentity.set(
+                Object.assign({}, this.accountService.userIdentity(), { askToSetupPasskey: true, internal: this.accountService.userIdentity()?.internal ?? false }),
+            );
         }
     }
 

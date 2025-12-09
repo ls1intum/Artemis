@@ -124,8 +124,8 @@ describe('Modeling Assessment Service', () => {
                 complaintResponse.id = 1;
                 complaintResponse.responseText = 'That is true';
                 const submissionId = 1;
-                const returnedFromService = { ...elemDefault };
-                const expected = { ...returnedFromService };
+                const returnedFromService = Object.assign({}, elemDefault);
+                const expected = Object.assign({}, returnedFromService);
                 service
                     .updateAssessmentAfterComplaint(feedbacks, complaintResponse, submissionId)
                     .pipe(take(1))

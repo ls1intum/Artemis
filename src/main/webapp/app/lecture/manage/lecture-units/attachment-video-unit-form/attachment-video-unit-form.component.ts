@@ -301,7 +301,7 @@ export class AttachmentVideoUnitFormComponent {
 
     submitForm() {
         const formValue = this.form.value;
-        const formProperties: FormProperties = { ...formValue };
+        const formProperties: FormProperties = Object.assign({}, formValue);
 
         formProperties.videoTranscription = undefined;
         const fileProperties: FileProperties = {

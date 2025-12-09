@@ -35,25 +35,20 @@ export class ImportCourseCompetenciesSettingsComponent {
     readonly isReleaseDate = computed(() => this.importSettings().isReleaseDate);
 
     protected toggleImportSetting(setting: keyof CourseCompetencyImportSettings): void {
-        this.importSettings.update((settings) => ({
-            ...settings,
-            [setting]: !settings[setting],
-        }));
+        this.importSettings.update((settings) => Object.assign({}, settings, { [setting]: !settings[setting] }));
     }
 
     public setReferenceDate(dateEvent?: HTMLInputElement): void {
-        this.importSettings.update((settings) => ({
-            ...settings,
-            referenceDate: dateEvent ? new Date(dateEvent.value) : undefined,
-            isReleaseDate: dateEvent ? (settings.referenceDate ? settings.isReleaseDate : true) : undefined,
-        }));
+        this.importSettings.update((settings) =>
+            Object.assign({}, settings, {
+                referenceDate: dateEvent ? new Date(dateEvent.value) : undefined,
+                isReleaseDate: dateEvent ? (settings.referenceDate ? settings.isReleaseDate : true) : undefined,
+            }),
+        );
     }
 
     protected setReferenceDateType(event: Event): void {
         const target = event.target as HTMLInputElement;
-        this.importSettings.update((settings) => ({
-            ...settings,
-            isReleaseDate: JSON.parse(target.value),
-        }));
+        this.importSettings.update((settings) => Object.assign({}, settings, { isReleaseDate: JSON.parse(target.value) }));
     }
 }

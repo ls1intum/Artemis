@@ -169,7 +169,7 @@ describe('AthenaService', () => {
         const mockProfileInfo = { activeProfiles: [PROFILE_ATHENA] } as ProfileInfo;
         jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(mockProfileInfo);
 
-        const exerciseWithoutFeedbackSuggestions = { ...textExercise, feedbackSuggestionModule: undefined } as Exercise;
+        const exerciseWithoutFeedbackSuggestions = Object.assign({}, textExercise, { feedbackSuggestionModule: undefined }) as Exercise;
 
         athenaService.getTextFeedbackSuggestions(exerciseWithoutFeedbackSuggestions, { id: 2, text: '' } as TextSubmission).subscribe((suggestions: TextBlockRef[]) => {
             response = suggestions;

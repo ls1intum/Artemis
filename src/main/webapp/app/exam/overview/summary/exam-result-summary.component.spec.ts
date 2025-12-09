@@ -236,7 +236,7 @@ describe('ExamResultSummaryComponent', () => {
     }));
 
     it('should retrieve grade info correctly', () => {
-        const serviceSpy = jest.spyOn(TestBed.inject(ExamParticipationService), 'loadStudentExamGradeInfoForSummary').mockReturnValue(of({ ...gradeInfo }));
+        const serviceSpy = jest.spyOn(TestBed.inject(ExamParticipationService), 'loadStudentExamGradeInfoForSummary').mockReturnValue(of(Object.assign({}, gradeInfo)));
 
         fixture.detectChanges();
 
@@ -244,7 +244,7 @@ describe('ExamResultSummaryComponent', () => {
         expect(component.studentExam).toEqual(studentExam);
         expect(serviceSpy).toHaveBeenCalledOnce();
         expect(serviceSpy).toHaveBeenCalledWith(courseId, studentExam.exam!.id, studentExam.id, studentExam.user!.id);
-        expect(component.studentExamGradeInfoDTO).toEqual({ ...gradeInfo, studentExam });
+        expect(component.studentExamGradeInfoDTO).toEqual(Object.assign({}, gradeInfo, { studentExam }));
     });
 
     it.each([
@@ -451,7 +451,7 @@ describe('ExamResultSummaryComponent', () => {
                 },
             } as StudentResult;
 
-            component.studentExamGradeInfoDTO = { ...gradeInfo, studentExam, studentResult };
+            component.studentExamGradeInfoDTO = Object.assign({}, gradeInfo, { studentExam, studentResult });
         });
 
         it('should return undefined if exercise result is undefined', () => {
@@ -525,7 +525,7 @@ describe('ExamResultSummaryComponent', () => {
             } as unknown as HTMLElement);
 
             component.studentExam = studentExam;
-            component.studentExamGradeInfoDTO = { ...gradeInfo, studentExam };
+            component.studentExamGradeInfoDTO = Object.assign({}, gradeInfo, { studentExam });
 
             fixture.detectChanges();
 

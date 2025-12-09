@@ -92,7 +92,7 @@ describe('StandardizedCompetencyEditComponent', () => {
 
         component.save();
 
-        expect(saveSpy).toHaveBeenCalledWith({ ...defaultCompetency, ...newValues });
+        expect(saveSpy).toHaveBeenCalledWith(Object.assign({}, defaultCompetency, newValues));
         expect(component.isEditing).toBeFalse();
     });
 

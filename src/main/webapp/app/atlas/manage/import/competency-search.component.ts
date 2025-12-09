@@ -48,7 +48,7 @@ export class CompetencySearchComponent {
      * Update a single field on the search model. Used by template event bindings.
      */
     updateSearchField(field: 'title' | 'description' | 'courseTitle' | 'semester', value: string) {
-        this.search.update((s) => ({ ...s, [field]: value }) as CourseCompetencyFilter);
+        this.search.update((s) => Object.assign({}, s, { [field]: value }) as CourseCompetencyFilter);
     }
 
     /**
@@ -57,7 +57,7 @@ export class CompetencySearchComponent {
      */
     performSearch() {
         if (this.advancedSearchEnabled) {
-            this.search.update((s) => ({ ...s }));
+            this.search.update((s) => Object.assign({}, s));
         } else {
             //only search with competency title if advancedSearch is disabled
             this.search.set({

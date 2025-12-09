@@ -69,22 +69,21 @@ export class ProgrammingExerciseSharingService {
      * @param exercise for which the data should be converted
      */
     convertDataFromClient(exercise: ProgrammingExercise) {
-        const copy = {
-            ...ExerciseService.convertExerciseDatesFromClient(exercise),
+        const copy = Object.assign({}, ExerciseService.convertExerciseDatesFromClient(exercise), {
             buildAndTestStudentSubmissionsAfterDueDate:
                 exercise.buildAndTestStudentSubmissionsAfterDueDate && dayjs(exercise.buildAndTestStudentSubmissionsAfterDueDate).isValid()
                     ? dayjs(exercise.buildAndTestStudentSubmissionsAfterDueDate).toJSON()
                     : undefined,
-        };
+        });
         // Remove exercise from template & solution participation to avoid circular dependency issues.
         // Also remove the results, as they can have circular structures as well and don't have to be saved here.
         if (copy.templateParticipation) {
             const { exercise: _ignoredExercise, results: _ignoredResults, submissions: _ignoredSubmissions, ...filteredTemplateParticipation } = copy.templateParticipation as any;
-            copy.templateParticipation = { ...filteredTemplateParticipation } as TemplateProgrammingExerciseParticipation;
+            copy.templateParticipation = Object.assign({}, filteredTemplateParticipation) as TemplateProgrammingExerciseParticipation;
         }
         if (copy.solutionParticipation) {
             const { exercise: _ignoredExercise, results: _ignoredResults, submissions: _ignoredSubmissions, ...filteredSolutionParticipation } = copy.solutionParticipation as any;
-            copy.solutionParticipation = { ...filteredSolutionParticipation } as SolutionProgrammingExerciseParticipation;
+            copy.solutionParticipation = Object.assign({}, filteredSolutionParticipation) as SolutionProgrammingExerciseParticipation;
         }
 
         copy.categories = ExerciseService.stringifyExerciseCategories(copy);

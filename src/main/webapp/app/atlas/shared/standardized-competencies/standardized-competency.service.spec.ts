@@ -33,7 +33,7 @@ describe('StandardizedCompetencyService', () => {
     it('should get competency', fakeAsync(() => {
         let actualCompetency = new HttpResponse<StandardizedCompetency>();
         const expectedCompetency = defaultStandardizedCompetency;
-        const returnedFromService: StandardizedCompetency = { ...expectedCompetency };
+        const returnedFromService: StandardizedCompetency = Object.assign({}, expectedCompetency);
 
         standardizedCompetencyService
             .getStandardizedCompetency(1)

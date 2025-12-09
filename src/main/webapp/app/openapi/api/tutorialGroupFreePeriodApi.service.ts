@@ -80,15 +80,7 @@ export class TutorialGroupFreePeriodApiService extends BaseService {
         let localVarPath = `/api/tutorialgroup/courses/${this.configuration.encodeParam({name: "courseId", value: courseId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/tutorial-groups-configuration/${this.configuration.encodeParam({name: "tutorialGroupsConfigurationId", value: tutorialGroupsConfigurationId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/tutorial-free-periods/${this.configuration.encodeParam({name: "tutorialGroupFreePeriodId", value: tutorialGroupFreePeriodId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}`;
         const { basePath, withCredentials } = this.configuration;
         return this.httpClient.request<any>('delete', `${basePath}${localVarPath}`,
-            {
-                context: localVarHttpContext,
-                responseType: <any>responseType_,
-                ...(withCredentials ? { withCredentials } : {}),
-                headers: localVarHeaders,
-                observe: observe,
-                transferCache: localVarTransferCache,
-                reportProgress: reportProgress
-            }
+            Object.assign({ context: localVarHttpContext, responseType: <any>responseType_ }, (withCredentials ? { withCredentials } : {}), { headers: localVarHeaders, observe: observe, transferCache: localVarTransferCache, reportProgress: reportProgress })
         );
     }
 

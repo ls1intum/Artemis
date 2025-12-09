@@ -185,11 +185,11 @@ async function generateDragAndDropItemForRelationship(
     let margin = {};
     if (element.bounds.width < MIN_SIZE) {
         const delta = MIN_SIZE - element.bounds.width;
-        margin = { ...margin, right: delta / 2, left: delta / 2 };
+        margin = Object.assign({}, margin, { right: delta / 2, left: delta / 2 });
     }
     if (element.bounds.height < MIN_SIZE) {
         const delta = MIN_SIZE - element.bounds.height;
-        margin = { ...margin, top: delta / 2, bottom: delta / 2 };
+        margin = Object.assign({}, margin, { top: delta / 2, bottom: delta / 2 });
     }
 
     const renderedElement: SVG = await ApollonEditor.exportModelAsSvg(model, { margin, include: [element.id] });

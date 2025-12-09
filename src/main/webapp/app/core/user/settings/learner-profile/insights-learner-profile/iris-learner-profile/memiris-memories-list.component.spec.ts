@@ -83,7 +83,7 @@ describe('MemirisMemoriesListComponent', () => {
     it('should provide details with/without connections depending on service response', async () => {
         jest.spyOn(http, 'getUserMemory').mockImplementation((id: string) => {
             if (id === 'm1') return of(mockDetails as any);
-            return of({ ...mockDetails, id: 'm2', connections: [] } as any);
+            return of(Object.assign({}, mockDetails, { id: 'm2', connections: [] }) as any);
         });
         await component.loadMemories();
         await component.toggleOpen(component.memories[0]);

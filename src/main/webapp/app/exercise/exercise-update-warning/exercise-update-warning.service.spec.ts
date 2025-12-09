@@ -14,11 +14,11 @@ describe('Exercise Update Warning Service', () => {
     let openSpy: jest.SpyInstance;
 
     const gradingInstruction = { id: 1, credits: 1, gradingScale: 'scale', instructionDescription: 'description', feedback: 'feedback', usageCount: 0 } as GradingInstruction;
-    const gradingInstructionCreditsChanged = { ...gradingInstruction, credits: 3 } as GradingInstruction;
-    const gradingInstructionUsageCountChanged = { ...gradingInstruction, usageCount: 2 } as GradingInstruction;
+    const gradingInstructionCreditsChanged = Object.assign({}, gradingInstruction, { credits: 3 }) as GradingInstruction;
+    const gradingInstructionUsageCountChanged = Object.assign({}, gradingInstruction, { usageCount: 2 }) as GradingInstruction;
     const gradingCriterion = { id: 1, title: 'testCriteria', structuredGradingInstructions: [gradingInstruction] } as GradingCriterion;
-    const gradingCriterionCreditsChanged = { ...gradingCriterion, structuredGradingInstructions: [gradingInstructionCreditsChanged] } as GradingCriterion;
-    const gradingCriterionUsageCountChanged = { ...gradingCriterion, structuredGradingInstructions: [gradingInstructionUsageCountChanged] } as GradingCriterion;
+    const gradingCriterionCreditsChanged = Object.assign({}, gradingCriterion, { structuredGradingInstructions: [gradingInstructionCreditsChanged] }) as GradingCriterion;
+    const gradingCriterionUsageCountChanged = Object.assign({}, gradingCriterion, { structuredGradingInstructions: [gradingInstructionUsageCountChanged] }) as GradingCriterion;
     const gradingCriterionWithoutInstruction = { id: 1, title: 'testCriteria' } as GradingCriterion;
     let exercise: Exercise;
     let backupExercise: Exercise;

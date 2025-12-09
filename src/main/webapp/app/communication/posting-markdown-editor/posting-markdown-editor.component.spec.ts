@@ -360,7 +360,7 @@ describe('PostingsMarkdownEditor', () => {
     });
 
     const simulateKeydownEvent = (key: string, modifiers: { shiftKey?: boolean; metaKey?: boolean } = {}) => {
-        const event = new KeyboardEvent('keydown', { key, ...modifiers });
+        const event = new KeyboardEvent('keydown', Object.assign({ key }, modifiers));
         const preventDefaultSpy = jest.spyOn(event, 'preventDefault');
         const stopPropagationSpy = jest.spyOn(event, 'stopPropagation');
 

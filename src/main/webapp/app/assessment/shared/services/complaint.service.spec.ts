@@ -33,7 +33,7 @@ describe('ComplaintService', () => {
     clientComplaint1.submittedTime = dayjsTime1;
     clientComplaint1.complaintText = 'Test text';
 
-    const serverComplaint1 = { ...clientComplaint1, submittedTime: stringTime1 };
+    const serverComplaint1 = Object.assign({}, clientComplaint1, { submittedTime: stringTime1 });
 
     const clientComplaint2 = new Complaint();
     clientComplaint2.id = 42;
@@ -42,7 +42,7 @@ describe('ComplaintService', () => {
     clientComplaint2.submittedTime = dayjsTime2;
     clientComplaint2.complaintText = 'Test text';
 
-    const serverComplaint2 = { ...clientComplaint2, submittedTime: stringTime2 };
+    const serverComplaint2 = Object.assign({}, clientComplaint2, { submittedTime: stringTime2 });
 
     const clientComplaintReq = new ComplaintRequestDTO();
     clientComplaintReq.examId = 1337;

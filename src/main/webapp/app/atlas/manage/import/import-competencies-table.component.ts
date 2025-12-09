@@ -33,7 +33,7 @@ export class ImportCompetenciesTableComponent {
      * @param pageNumber The current page number
      */
     onPageChange(pageNumber: number) {
-        this.search.update((search) => ({ ...search, page: pageNumber }));
+        this.search.update((search) => Object.assign({}, search, { page: pageNumber }));
     }
 
     /**
@@ -41,11 +41,9 @@ export class ImportCompetenciesTableComponent {
      * @param change an object containing the column to sort by and boolean if the sort is ascending
      */
     onSortChange(change: { predicate: string; ascending: boolean }) {
-        this.search.update((search) => ({
-            ...search,
-            sortedColumn: change.predicate,
-            sortingOrder: change.ascending ? SortingOrder.ASCENDING : SortingOrder.DESCENDING,
-        }));
+        this.search.update((search) =>
+            Object.assign({}, search, { sortedColumn: change.predicate, sortingOrder: change.ascending ? SortingOrder.ASCENDING : SortingOrder.DESCENDING }),
+        );
         this.ascending = change.ascending;
     }
 }

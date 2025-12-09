@@ -32,36 +32,37 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
 
 // Mock the diff.utils module to avoid Monaco Editor issues in tests
-jest.mock('app/programming/shared/utils/diff.utils', () => ({
-    ...jest.requireActual('app/programming/shared/utils/diff.utils'),
-    processRepositoryDiff: jest.fn().mockImplementation((templateFiles, solutionFiles) => {
-        // Handle the case where files are undefined (when repository fetch fails)
-        if (!templateFiles || !solutionFiles) {
-            return Promise.resolve(undefined);
-        }
-        return Promise.resolve({
-            diffInformations: [
-                {
-                    originalFileContent: 'testing line differences',
-                    modifiedFileContent: 'testing line diff\nnew line',
-                    originalPath: 'Example.java',
-                    modifiedPath: 'Example.java',
-                    diffReady: true,
-                    fileStatus: 'unchanged',
-                    lineChange: {
-                        addedLineCount: 2,
-                        removedLineCount: 1,
+jest.mock('app/programming/shared/utils/diff.utils', () =>
+    Object.assign({}, jest.requireActual('app/programming/shared/utils/diff.utils'), {
+        processRepositoryDiff: jest.fn().mockImplementation((templateFiles, solutionFiles) => {
+            // Handle the case where files are undefined (when repository fetch fails)
+            if (!templateFiles || !solutionFiles) {
+                return Promise.resolve(undefined);
+            }
+            return Promise.resolve({
+                diffInformations: [
+                    {
+                        originalFileContent: 'testing line differences',
+                        modifiedFileContent: 'testing line diff\nnew line',
+                        originalPath: 'Example.java',
+                        modifiedPath: 'Example.java',
+                        diffReady: true,
+                        fileStatus: 'unchanged',
+                        lineChange: {
+                            addedLineCount: 2,
+                            removedLineCount: 1,
+                        },
+                        title: 'Example.java',
                     },
-                    title: 'Example.java',
+                ],
+                totalLineChange: {
+                    addedLineCount: 2,
+                    removedLineCount: 1,
                 },
-            ],
-            totalLineChange: {
-                addedLineCount: 2,
-                removedLineCount: 1,
-            },
-        } as RepositoryDiffInformation);
+            } as RepositoryDiffInformation);
+        }),
     }),
-}));
+);
 
 /*
  *  separate test spec file for sharing aspects of the programming details component. Could be merged into programming-exercise-detail.component.spec.ts on the long run.

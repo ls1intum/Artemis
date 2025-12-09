@@ -155,27 +155,23 @@ describe('Participation Service', () => {
         exercise.categories = undefined;
         exercise.exampleSolutionPublicationDate = undefined;
 
-        const returnedFromService = {
-            ...participationDefault,
+        const returnedFromService = Object.assign({}, participationDefault, {
             repositoryUri: 'BBBBBB',
             buildPlanId: 'BBBBBB',
             initializationState: 'BBBBBB',
             initializationDate: currentDate,
             presentationScore: 1,
             exercise,
-            // the update service will make the participation results and submissions
-            // empty arrays instead of undefined, so we need to adapt our expected
-            // values accordingly
             results: [],
             submissions: [],
-        };
+        });
 
         const expected = Object.assign({}, returnedFromService) as StudentParticipation;
 
         service
             .update(exercise, expected)
             .pipe(take(1))
-            .subscribe((resp) => expect(resp.body).toMatchObject({ ...expected }));
+            .subscribe((resp) => expect(resp.body).toMatchObject(Object.assign({}, expected)));
         const req = httpMock.expectOne({ method: 'PUT' });
         req.flush(returnedFromService);
         tick();
@@ -219,7 +215,7 @@ describe('Participation Service', () => {
         let resultGetBuildJobId: any;
         const resultIdToBuildJobIdMap: { [key: string]: boolean } = { '1': true, '2': false };
         const returnedFromService = resultIdToBuildJobIdMap;
-        const expected = { ...returnedFromService };
+        const expected = Object.assign({}, returnedFromService);
 
         service
             .getBuildJobIdsForResultsOfParticipation(1)

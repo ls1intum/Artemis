@@ -422,7 +422,7 @@ export class CodeButtonComponent implements OnInit {
             // Theia requires the Build Config of the programming exercise to be set
             this.programmingExerciseService.getTheiaConfig(exercise.id!).subscribe((theiaConfig) => {
                 // Merge the theiaConfig (containing the theiaImage) into the buildConfig
-                this.exercise()!.buildConfig = { ...exercise.buildConfig!, ...theiaConfig };
+                this.exercise()!.buildConfig = Object.assign({}, exercise.buildConfig!, theiaConfig);
 
                 // Set variables now, sanitize later on
                 this.theiaPortalURL = profileInfo.theiaPortalURL ?? '';

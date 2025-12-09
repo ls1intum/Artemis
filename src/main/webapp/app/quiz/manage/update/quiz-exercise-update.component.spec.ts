@@ -1002,7 +1002,7 @@ describe('QuizExerciseUpdateComponent', () => {
         it('should delete a question', () => {
             const mcQuestion = createValidMCQuestion().question;
             const dndQuestion = createValidDnDQuestion().question;
-            comp.quizExercise = { ...quizExercise, quizQuestions: [mcQuestion, dndQuestion] } as QuizExercise;
+            comp.quizExercise = Object.assign({}, quizExercise, { quizQuestions: [mcQuestion, dndQuestion] }) as QuizExercise;
             comp.deleteQuestion(dndQuestion);
             expect(comp.quizExercise.quizQuestions).toEqual([mcQuestion]);
         });

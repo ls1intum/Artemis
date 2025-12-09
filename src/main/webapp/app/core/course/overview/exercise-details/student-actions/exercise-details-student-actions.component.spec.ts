@@ -58,13 +58,8 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         studentAssignedTeamIdComputed: false,
     };
 
-    const teamExerciseWithoutTeamAssigned: Exercise = {
-        ...exercise,
-        mode: ExerciseMode.TEAM,
-        teamMode: true,
-        studentAssignedTeamIdComputed: true,
-    };
-    const teamExerciseWithTeamAssigned = { ...teamExerciseWithoutTeamAssigned, studentAssignedTeamId: team.id, allowOfflineIde: true } as ProgrammingExercise;
+    const teamExerciseWithoutTeamAssigned: Exercise = Object.assign({}, exercise, { mode: ExerciseMode.TEAM, teamMode: true, studentAssignedTeamIdComputed: true });
+    const teamExerciseWithTeamAssigned = Object.assign({}, teamExerciseWithoutTeamAssigned, { studentAssignedTeamId: team.id, allowOfflineIde: true }) as ProgrammingExercise;
 
     const testRunParticipation = { id: 2, initializationState: InitializationState.INITIALIZED, testRun: true } as ProgrammingExerciseStudentParticipation;
 
@@ -122,7 +117,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
     it.each([ExerciseType.MODELING, ExerciseType.FILE_UPLOAD, ExerciseType.PROGRAMMING, ExerciseType.TEXT])(
         'should not show the buttons "Team" and "Start exercise" for a team exercise when not assigned to a team yet',
         fakeAsync((exerciseType: ExerciseType) => {
-            comp.exercise = { ...teamExerciseWithoutTeamAssigned, type: exerciseType };
+            comp.exercise = Object.assign({}, teamExerciseWithoutTeamAssigned, { type: exerciseType });
             comp.ngOnChanges();
             fixture.detectChanges();
             tick();
@@ -138,7 +133,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
     it.each([ExerciseType.TEXT, ExerciseType.MODELING, ExerciseType.FILE_UPLOAD, ExerciseType.PROGRAMMING])(
         'should show the buttons "Team" and "Start exercise" for a team exercise for a student to view his team when assigned to a team',
         fakeAsync((exerciseType: ExerciseType) => {
-            comp.exercise = { ...teamExerciseWithTeamAssigned, type: exerciseType };
+            comp.exercise = Object.assign({}, teamExerciseWithTeamAssigned, { type: exerciseType });
             comp.ngOnChanges();
             fixture.detectChanges();
             tick();

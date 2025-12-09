@@ -209,7 +209,7 @@ describe('CodeEditorInstructorIntegration', () => {
 
     const initContainer = (exercise: ProgrammingExercise, routeParams?: any) => {
         comp.ngOnInit();
-        routeSubject.next({ exerciseId: 1, ...routeParams });
+        routeSubject.next(Object.assign({ exerciseId: 1 }, routeParams));
         expect(comp.codeEditorContainer).toBeUndefined(); // Have to use this as it's a component
         expect(findWithParticipationsStub).toHaveBeenCalledOnce();
         expect(findWithParticipationsStub).toHaveBeenCalledWith(exercise.id);
@@ -235,8 +235,8 @@ describe('CodeEditorInstructorIntegration', () => {
             p.exercise = exercise;
             return p;
         });
-        exercise.templateParticipation = { ...exercise.templateParticipation, programmingExercise: exercise };
-        exercise.solutionParticipation = { ...exercise.solutionParticipation, programmingExercise: exercise };
+        exercise.templateParticipation = Object.assign({}, exercise.templateParticipation, { programmingExercise: exercise });
+        exercise.solutionParticipation = Object.assign({}, exercise.solutionParticipation, { programmingExercise: exercise });
 
         getFeedbackDetailsForResultStub.mockReturnValue(of([]));
         const setDomainSpy = jest.spyOn(domainService, 'setDomain');

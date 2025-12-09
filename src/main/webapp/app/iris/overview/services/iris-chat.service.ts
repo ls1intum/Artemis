@@ -167,10 +167,7 @@ export class IrisChatService implements OnDestroy {
             ? this.modeRequiresLLMAcceptance.get(Object.values(ChatServiceMode).find((mode) => this.sessionCreationIdentifier?.includes(mode)) as ChatServiceMode)
             : true;
         if (requiresAcceptance === false || this.accountService.userIdentity()?.externalLLMUsageAccepted || this.hasJustAcceptedExternalLLMUsage) {
-            this.getCurrentSessionOrCreate().subscribe({
-                ...this.handleNewSession(),
-                complete: () => this.loadChatSessions(),
-            });
+            this.getCurrentSessionOrCreate().subscribe(Object.assign({}, this.handleNewSession(), { complete: () => this.loadChatSessions() }));
         }
     }
 
@@ -388,10 +385,7 @@ export class IrisChatService implements OnDestroy {
 
     public clearChat(): void {
         this.close();
-        this.createNewSession().subscribe({
-            ...this.handleNewSession(),
-            complete: () => this.loadChatSessions(),
-        });
+        this.createNewSession().subscribe(Object.assign({}, this.handleNewSession(), { complete: () => this.loadChatSessions() }));
     }
 
     private handleWebsocketMessage(payload: IrisChatWebsocketDTO) {
@@ -400,11 +394,13 @@ export class IrisChatService implements OnDestroy {
         }
         if (payload.sessionTitle && this.sessionId) {
             if (this.latestStartedSession?.id === this.sessionId) {
-                this.latestStartedSession = { ...this.latestStartedSession, title: payload.sessionTitle };
+                this.latestStartedSession = Object.assign({}, this.latestStartedSession, { title: payload.sessionTitle });
             }
 
             // Update the observable list immutably so OnPush change detection picks up the new title immediately.
-            const updatedSessions = this.chatSessions.getValue().map((session) => (session.id === this.sessionId ? { ...session, title: payload.sessionTitle } : session));
+            const updatedSessions = this.chatSessions
+                .getValue()
+                .map((session) => (session.id === this.sessionId ? Object.assign({}, session, { title: payload.sessionTitle }) : session));
             this.chatSessions.next(updatedSessions);
         }
         switch (payload.type) {

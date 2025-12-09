@@ -101,7 +101,7 @@ describe('CompetencyService', () => {
     }));
 
     it('should get individual progress for a competency', fakeAsync(() => {
-        const returnedFromService = { ...defaultCompetencyProgress };
+        const returnedFromService = Object.assign({}, defaultCompetencyProgress);
         competencyService
             .getProgress(1, 1)
             .pipe(take(1))
@@ -115,7 +115,7 @@ describe('CompetencyService', () => {
     }));
 
     it('should get course progress for a competency', fakeAsync(() => {
-        const returnedFromService = { ...defaultCompetencyCourseProgress };
+        const returnedFromService = Object.assign({}, defaultCompetencyCourseProgress);
         competencyService
             .getCourseProgress(1, 1)
             .pipe(take(1))
@@ -129,8 +129,8 @@ describe('CompetencyService', () => {
     }));
 
     it('should create a Competency', fakeAsync(() => {
-        const returnedFromService = { ...defaultCompetencies.first(), id: 0 };
-        const expected = { ...returnedFromService };
+        const returnedFromService = Object.assign({}, defaultCompetencies.first(), { id: 0 });
+        const expected = Object.assign({}, returnedFromService);
         competencyService
             .create({}, 1)
             .pipe(take(1))
@@ -144,8 +144,8 @@ describe('CompetencyService', () => {
     }));
 
     it('should update a Competency', fakeAsync(() => {
-        const returnedFromService = { ...defaultCompetencies.first(), title: 'Test' };
-        const expected = { ...returnedFromService };
+        const returnedFromService = Object.assign({}, defaultCompetencies.first(), { title: 'Test' });
+        const expected = Object.assign({}, returnedFromService);
         competencyService
             .update(expected, 1)
             .pipe(take(1))
@@ -170,7 +170,7 @@ describe('CompetencyService', () => {
 
     it('should add a Competency relation', fakeAsync(() => {
         const returnedFromService: CompetencyRelation = { tailCompetency: { id: 1 }, headCompetency: { id: 2 }, type: CompetencyRelationType.ASSUMES };
-        const expected: CompetencyRelation = { ...returnedFromService };
+        const expected: CompetencyRelation = Object.assign({}, returnedFromService);
         let result: any;
         competencyService
             .createCompetencyRelation(expected, 1)
@@ -223,7 +223,7 @@ describe('CompetencyService', () => {
 
     it('should import all competencies of a course', fakeAsync(() => {
         const competencyDTO = new CompetencyWithTailRelationDTO();
-        competencyDTO.competency = { ...defaultCompetencies.first(), id: 1 };
+        competencyDTO.competency = Object.assign({}, defaultCompetencies.first(), { id: 1 });
         competencyDTO.tailRelations = [];
         const returnedFromService = [competencyDTO];
         const expected = [...returnedFromService];
@@ -242,7 +242,7 @@ describe('CompetencyService', () => {
 
     it('should bulk import competencies', fakeAsync(() => {
         const competencyDTO = new CompetencyWithTailRelationDTO();
-        competencyDTO.competency = { ...defaultCompetencies.first(), id: 1 };
+        competencyDTO.competency = Object.assign({}, defaultCompetencies.first(), { id: 1 });
         competencyDTO.tailRelations = [];
         const returnedFromService = [competencyDTO];
         const expected = [...returnedFromService];
@@ -280,7 +280,7 @@ describe('CompetencyService', () => {
 
     it('should import competency', fakeAsync(() => {
         const returnedFromService = defaultCompetencies[0];
-        const expected = { ...returnedFromService };
+        const expected = Object.assign({}, returnedFromService);
 
         competencyService
             .import(expected, 2)
@@ -319,7 +319,7 @@ describe('CompetencyService', () => {
             resultsOnPage: defaultCompetencies,
             numberOfPages: 1,
         };
-        const expected = { ...returnedFromService };
+        const expected = Object.assign({}, returnedFromService);
         const search: CompetencyPageableSearch = {
             courseTitle: '',
             description: '',
@@ -380,7 +380,7 @@ describe('CompetencyService', () => {
             softDueDate: dayjs('2022-02-20') as Dayjs,
             course: { id: 1 },
             lectureUnitLinks: [new CompetencyLectureUnitLink(this, { id: 1 }, 1), new CompetencyLectureUnitLink(this, { id: 2 }, 1)],
-            exerciseLinks: [new CompetencyExerciseLink(this, { id: 3, ...exercise }, 1), new CompetencyExerciseLink(this, { id: 4, ...exercise }, 1)],
+            exerciseLinks: [new CompetencyExerciseLink(this, Object.assign({ id: 3 }, exercise), 1), new CompetencyExerciseLink(this, Object.assign({ id: 4 }, exercise), 1)],
         };
 
         competencyService['convertCompetencyResponseFromServer']({} as HttpResponse<Competency>);

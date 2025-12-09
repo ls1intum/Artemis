@@ -267,7 +267,7 @@ export class MetisService implements OnDestroy {
                     if (indexOfAnswer === -1) {
                         if (!this.cachedPosts[indexOfCachedPost].answers) {
                             // Need to create a new message object since Angular doesn't detect changes otherwise
-                            this.cachedPosts[indexOfCachedPost] = { ...this.cachedPosts[indexOfCachedPost], answers: [], reactions: [] };
+                            this.cachedPosts[indexOfCachedPost] = Object.assign({}, this.cachedPosts[indexOfCachedPost], { answers: [], reactions: [] });
                         }
                         this.cachedPosts[indexOfCachedPost].answers!.push(createdAnswerPost);
                         this.posts$.next(this.cachedPosts);
@@ -323,7 +323,7 @@ export class MetisService implements OnDestroy {
                 if (indexOfCachedPost > -1) {
                     const indexOfAnswer = this.cachedPosts[indexOfCachedPost].answers?.findIndex((answer) => answer.id === updatedAnswerPost.id) ?? -1;
                     if (indexOfAnswer > -1) {
-                        updatedAnswerPost.post = { ...this.cachedPosts[indexOfCachedPost], answers: [], reactions: [] };
+                        updatedAnswerPost.post = Object.assign({}, this.cachedPosts[indexOfCachedPost], { answers: [], reactions: [] });
                         updatedAnswerPost.authorRole = this.cachedPosts[indexOfCachedPost].answers![indexOfAnswer].authorRole;
                         this.cachedPosts[indexOfCachedPost].answers![indexOfAnswer] = updatedAnswerPost;
                         this.posts$.next(this.cachedPosts);
@@ -437,7 +437,7 @@ export class MetisService implements OnDestroy {
                         cachedPost.reactions = cachedPost.reactions ?? [];
                         cachedPost.reactions!.push(createdReaction);
                         // Need to create a new message object since Angular doesn't detect changes otherwise
-                        this.cachedPosts[indexToUpdate] = { ...cachedPost };
+                        this.cachedPosts[indexToUpdate] = Object.assign({}, cachedPost);
                         this.posts$.next(this.cachedPosts);
                         this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPosts);
                     }
@@ -462,7 +462,7 @@ export class MetisService implements OnDestroy {
                     if (indexOfReaction > -1) {
                         cachedPost.reactions!.splice(indexOfReaction, 1);
                         // Need to create a new message object since Angular doesn't detect changes otherwise
-                        this.cachedPosts[indexToUpdate] = { ...cachedPost };
+                        this.cachedPosts[indexToUpdate] = Object.assign({}, cachedPost);
                         this.posts$.next(this.cachedPosts);
                         this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPosts);
                     }
@@ -955,7 +955,7 @@ export class MetisService implements OnDestroy {
                                 const postIndex = this.cachedPosts.findIndex((post) => post.id === fm.destinationPost?.id);
                                 if (postIndex > -1) {
                                     const post = this.cachedPosts[postIndex];
-                                    this.cachedPosts[postIndex] = { ...post, hasForwardedMessages: true };
+                                    this.cachedPosts[postIndex] = Object.assign({}, post, { hasForwardedMessages: true });
                                 }
                             });
 

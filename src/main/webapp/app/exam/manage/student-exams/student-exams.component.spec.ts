@@ -163,8 +163,8 @@ describe('StudentExamsComponent', () => {
         exam.course = course;
         exam.id = 1;
         exam.examUsers = [
-            { didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...studentOne, user: studentOne },
-            { didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...studentTwo, user: studentTwo },
+            Object.assign({ didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false }, studentOne, { user: studentOne }),
+            Object.assign({ didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false }, studentTwo, { user: studentTwo }),
         ];
         exam.endDate = dayjs();
         exam.startDate = exam.endDate.subtract(60, 'seconds');

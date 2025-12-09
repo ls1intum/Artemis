@@ -83,7 +83,7 @@ export class KnowledgeAreaEditComponent {
 
     save() {
         const updatedValues = this.form.getRawValue();
-        const updatedKnowledgeArea: KnowledgeAreaDTO = { ...this.knowledgeArea, ...updatedValues };
+        const updatedKnowledgeArea: KnowledgeAreaDTO = Object.assign({}, this.knowledgeArea, updatedValues);
         this.isEditing = false;
         this.onSave.emit(updatedKnowledgeArea);
     }

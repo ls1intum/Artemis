@@ -67,11 +67,7 @@ describe('MessageInlineInputComponent', () => {
             content: newContent,
         });
         component.confirm();
-        expect(metisServiceCreateStub).toHaveBeenCalledWith({
-            ...component.posting,
-            content: newContent,
-            title: undefined,
-        });
+        expect(metisServiceCreateStub).toHaveBeenCalledWith(Object.assign({}, component.posting, { content: newContent, title: undefined }));
         tick();
         expect(component.isLoading).toBeFalse();
         expect(onCreateSpy).toHaveBeenCalledOnce();
@@ -109,11 +105,7 @@ describe('MessageInlineInputComponent', () => {
 
         component.confirm();
 
-        expect(metisServiceUpdateStub).toHaveBeenCalledWith({
-            ...component.posting,
-            content: editedContent,
-            title: undefined,
-        });
+        expect(metisServiceUpdateStub).toHaveBeenCalledWith(Object.assign({}, component.posting, { content: editedContent, title: undefined }));
         tick();
         expect(component.isLoading).toBeFalse();
         expect(onEditSpy).toHaveBeenCalledOnce();

@@ -289,42 +289,10 @@ describe('QuizExercise Service', () => {
         [[], true, undefined, 0],
         [[], false, 'test', 0],
         [[], true, 'test', 0],
-        [
-            [
-                { ...q, exportQuiz: false },
-                { ...q, exportQuiz: true },
-            ],
-            false,
-            undefined,
-            1,
-        ],
-        [
-            [
-                { ...q, exportQuiz: false },
-                { ...q, exportQuiz: true },
-            ],
-            true,
-            undefined,
-            2,
-        ],
-        [
-            [
-                { ...q, exportQuiz: false },
-                { ...q, exportQuiz: true },
-            ],
-            false,
-            'test',
-            1,
-        ],
-        [
-            [
-                { ...q, exportQuiz: false },
-                { ...q, exportQuiz: true },
-            ],
-            true,
-            'test',
-            2,
-        ],
+        [[Object.assign({}, q, { exportQuiz: false }), Object.assign({}, q, { exportQuiz: true })], false, undefined, 1],
+        [[Object.assign({}, q, { exportQuiz: false }), Object.assign({}, q, { exportQuiz: true })], true, undefined, 2],
+        [[Object.assign({}, q, { exportQuiz: false }), Object.assign({}, q, { exportQuiz: true })], false, 'test', 1],
+        [[Object.assign({}, q, { exportQuiz: false }), Object.assign({}, q, { exportQuiz: true })], true, 'test', 2],
     ])('should export a quiz with no assets as json (%#)', async (questions, exportAll, filename, count) => {
         const spy = jest.spyOn(downloadUtil, 'downloadFile').mockReturnValue();
         service.exportQuiz(questions, exportAll, filename);

@@ -159,8 +159,8 @@ describe('LearningPathStudentNavComponent', () => {
     it('should set current to previous unit on complete button', async () => {
         const completeLearningPathSpy = jest.spyOn(learningPathNavigationService, 'completeLearningPath');
         learningPathNavigationSpy.mockReturnValue({
-            predecessorLearningObject: { ...navigationDto.predecessorLearningObject },
-            currentLearningObject: { ...navigationDto.currentLearningObject },
+            predecessorLearningObject: Object.assign({}, navigationDto.predecessorLearningObject),
+            currentLearningObject: Object.assign({}, navigationDto.currentLearningObject),
             progress: 95,
         });
 

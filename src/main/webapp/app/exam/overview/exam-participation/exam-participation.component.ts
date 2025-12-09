@@ -697,7 +697,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             .observeNewEventsAsSystem([ExamLiveEventType.WORKING_TIME_UPDATE])
             .subscribe((event: WorkingTimeUpdateEvent) => {
                 // Create new object to make change detection work, otherwise the date will not update
-                this.studentExam = { ...this.studentExam, workingTime: event.newWorkingTime! };
+                this.studentExam = Object.assign({}, this.studentExam, { workingTime: event.newWorkingTime! });
                 this.examParticipationService.currentlyLoadedStudentExam.next(this.studentExam);
                 this.individualStudentEndDate = dayjs(startDate).add(this.studentExam.workingTime!, 'seconds');
                 this.individualStudentEndDateWithGracePeriod = this.individualStudentEndDate.clone().add(this.exam.gracePeriod!, 'seconds');
@@ -972,7 +972,11 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         // TODO: This is a dark hack to just make it work; the client assumes that ProgrammingSubmissionStateObj contains a submission
                         // TODO: but this is not always the case (only on the initial REST fetch call). WS submission updates are stripped down DTOs only.
                         const studentParticipation = exerciseForSubmission.studentParticipations?.[0] || {};
-                        exerciseForSubmission.studentParticipations[0] = { ...studentParticipation, ...submissionStateObj.submission.participation } satisfies StudentParticipation;
+                        exerciseForSubmission.studentParticipations[0] = Object.assign(
+                            {},
+                            studentParticipation,
+                            submissionStateObj.submission.participation,
+                        ) satisfies StudentParticipation;
                     }
                 }),
             )

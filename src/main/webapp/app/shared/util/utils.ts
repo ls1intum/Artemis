@@ -134,7 +134,7 @@ export class Range {
 }
 
 export function getAsMutableObject(object: any) {
-    return { ...object };
+    return Object.assign({}, object);
 }
 
 /**

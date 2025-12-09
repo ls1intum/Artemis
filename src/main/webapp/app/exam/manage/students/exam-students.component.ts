@@ -124,20 +124,13 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
                 this.allRegisteredUsers =
                     exam.examUsers?.map((examUser) => {
                         const studentExam = studentExams?.filter((studentExam) => studentExam.user?.id === examUser.user!.id).first();
-                        return {
-                            ...examUser.user!,
-                            ...examUser,
-                            didExamUserAttendExam: !!studentExam?.started,
-                        };
+                        return Object.assign({}, examUser.user!, examUser, { didExamUserAttendExam: !!studentExam?.started });
                     }) || [];
             });
         } else {
             this.allRegisteredUsers =
                 exam.examUsers?.map((examUser) => {
-                    return {
-                        ...examUser.user!,
-                        ...examUser,
-                    };
+                    return Object.assign({}, examUser.user!, examUser);
                 }) || [];
         }
         this.isTestExam = this.exam.testExam!;

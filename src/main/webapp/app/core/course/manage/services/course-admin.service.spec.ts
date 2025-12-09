@@ -46,7 +46,7 @@ describe('Course Admin Service', () => {
         course.endDate = undefined;
         course.competencies = [];
         course.prerequisites = [];
-        returnedFromService = { ...course } as Course;
+        returnedFromService = Object.assign({}, course) as Course;
     });
 
     afterEach(() => {
@@ -58,9 +58,9 @@ describe('Course Admin Service', () => {
         delete course.id;
 
         courseAdminService
-            .create({ ...course })
+            .create(Object.assign({}, course))
             .pipe(take(1))
-            .subscribe((res) => expect(res.body).toEqual({ ...course, id: 1234 }));
+            .subscribe((res) => expect(res.body).toEqual(Object.assign({}, course, { id: 1234 })));
 
         const req = httpMock.expectOne({ method: 'POST', url: resourceUrl });
         req.flush(returnedFromService);

@@ -70,7 +70,7 @@ describe('FileUploadExercise Service', () => {
     }));
 
     it('should update a FileUploadExercise', fakeAsync(() => {
-        const returnedFromService = { ...elemDefault, filePattern: 'bbbbbb' };
+        const returnedFromService = Object.assign({}, elemDefault, { filePattern: 'bbbbbb' });
 
         const expected = Object.assign({}, returnedFromService);
         service
@@ -82,7 +82,7 @@ describe('FileUploadExercise Service', () => {
         tick();
     }));
     it('should import a file upload exercise', () => {
-        const fileUploadExerciseReturned = { ...elemDefault };
+        const fileUploadExerciseReturned = Object.assign({}, elemDefault);
         fileUploadExerciseReturned.id = 123;
         service
             .import(fileUploadExerciseReturned)

@@ -269,11 +269,8 @@ describe('CourseLectureDetailsComponent', () => {
     }));
 
     it('should not show discussion section when communication is disabled', fakeAsync(() => {
-        const lecture = {
-            ...lectureUnit3.lecture,
-            course: { courseInformationSharingConfiguration: CourseInformationSharingConfiguration.DISABLED },
-        };
-        const response = of(new HttpResponse({ body: { ...lecture }, status: 200 }));
+        const lecture = Object.assign({}, lectureUnit3.lecture, { course: { courseInformationSharingConfiguration: CourseInformationSharingConfiguration.DISABLED } });
+        const response = of(new HttpResponse({ body: Object.assign({}, lecture), status: 200 }));
         jest.spyOn(TestBed.inject(LectureService), 'findWithDetails').mockReturnValue(response);
 
         fixture.detectChanges();

@@ -148,7 +148,7 @@ export class AttachmentVideoUnitService {
         return this.getPlaylistUrl(videoSource).pipe(
             map((playlist) => {
                 if (playlist) {
-                    return { ...currentFormData, playlistUrl: playlist };
+                    return Object.assign({}, currentFormData, { playlistUrl: playlist });
                 }
                 return currentFormData;
             }),

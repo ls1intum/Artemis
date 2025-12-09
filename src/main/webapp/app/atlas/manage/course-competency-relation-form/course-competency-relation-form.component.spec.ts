@@ -214,7 +214,7 @@ describe('CourseCompetencyRelationFormComponent', () => {
         });
         const newRelations = [...relations].map((relation) => {
             if (relation.id === selectedRelationId) {
-                return { ...relation, relationType: CompetencyRelationType.ASSUMES };
+                return Object.assign({}, relation, { relationType: CompetencyRelationType.ASSUMES });
             }
             return relation;
         });

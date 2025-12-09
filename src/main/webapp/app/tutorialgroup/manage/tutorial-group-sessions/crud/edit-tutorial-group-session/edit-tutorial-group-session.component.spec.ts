@@ -76,10 +76,7 @@ describe('EditTutorialGroupSessionComponent', () => {
     });
 
     it('should send PUT request upon form submission and navigate', () => {
-        const changedSession: TutorialGroupSession = {
-            ...exampleSession,
-            location: 'Changed',
-        };
+        const changedSession: TutorialGroupSession = Object.assign({}, exampleSession, { location: 'Changed' });
 
         const updateResponse: HttpResponse<TutorialGroupSession> = new HttpResponse({
             body: changedSession,

@@ -204,8 +204,8 @@ describe('StandardizedCompetencyManagementComponent', () => {
 
         //important that this has no id, so we create a competency!
         const competencyToCreate: StandardizedCompetencyDTO = { title: 'competency1', knowledgeAreaId: 1 };
-        const createdCompetency: StandardizedCompetencyDTO = { id: 5, ...competencyToCreate };
-        const expectedCompetencyInTree: StandardizedCompetencyForTree = { ...createdCompetency, isVisible: true };
+        const createdCompetency: StandardizedCompetencyDTO = Object.assign({ id: 5 }, competencyToCreate);
+        const expectedCompetencyInTree: StandardizedCompetencyForTree = Object.assign({}, createdCompetency, { isVisible: true });
         component['selectedCompetency'] = competencyToCreate;
         const adminStandardizedCompetencyService = TestBed.inject(AdminStandardizedCompetencyService);
         const createSpy = jest.spyOn(adminStandardizedCompetencyService, 'createStandardizedCompetency');
@@ -224,7 +224,7 @@ describe('StandardizedCompetencyManagementComponent', () => {
     it('should update competency', () => {
         const competencyToUpdate = createCompetencyDTO(1, 'title', 'description', CompetencyTaxonomy.ANALYZE, 1);
         const updatedCompetency = createCompetencyDTO(1, 'new title', 'new description', CompetencyTaxonomy.CREATE, 1);
-        const expectedCompetencyInTree: StandardizedCompetencyForTree = { ...updatedCompetency, isVisible: true };
+        const expectedCompetencyInTree: StandardizedCompetencyForTree = Object.assign({}, updatedCompetency, { isVisible: true });
         const tree: KnowledgeAreaDTO[] = [
             {
                 id: 1,
@@ -242,7 +242,7 @@ describe('StandardizedCompetencyManagementComponent', () => {
     it('should move competency on update', () => {
         const competencyToUpdate = createCompetencyDTO(1, 'title', 'description', CompetencyTaxonomy.ANALYZE, 1);
         const updatedCompetency = createCompetencyDTO(1, 'new title', 'new description', CompetencyTaxonomy.ANALYZE, 2);
-        const expectedCompetencyInTree: StandardizedCompetencyForTree = { ...updatedCompetency, isVisible: true };
+        const expectedCompetencyInTree: StandardizedCompetencyForTree = Object.assign({}, updatedCompetency, { isVisible: true });
         const tree: KnowledgeAreaDTO[] = [
             {
                 id: 1,
@@ -389,7 +389,7 @@ describe('StandardizedCompetencyManagementComponent', () => {
 
         //important that this has no id, so we create!
         const knowledgeAreaToCreate: KnowledgeAreaDTO = { title: 'ka1', parentId: 1 };
-        const createdKnowledgeArea: KnowledgeAreaDTO = { id: 5, ...knowledgeAreaToCreate };
+        const createdKnowledgeArea: KnowledgeAreaDTO = Object.assign({ id: 5 }, knowledgeAreaToCreate);
         const expectedKnowledgeAreaInTree = convertToKnowledgeAreaForTree(createdKnowledgeArea, true, 1);
         component['selectedKnowledgeArea'] = knowledgeAreaToCreate;
         const adminStandardizedCompetencyService = TestBed.inject(AdminStandardizedCompetencyService);
@@ -419,7 +419,7 @@ describe('StandardizedCompetencyManagementComponent', () => {
 
         //important that this has no id, so we create!
         const knowledgeAreaToCreate: KnowledgeAreaDTO = { title: 'ka1', parentId: 1 };
-        const createdKnowledgeArea: KnowledgeAreaDTO = { id: 5, ...knowledgeAreaToCreate };
+        const createdKnowledgeArea: KnowledgeAreaDTO = Object.assign({ id: 5 }, knowledgeAreaToCreate);
         const expectedKnowledgeAreaInTree = convertToKnowledgeAreaForTree(createdKnowledgeArea, false, 1);
         const adminStandardizedCompetencyService = TestBed.inject(AdminStandardizedCompetencyService);
         const createSpy = jest.spyOn(adminStandardizedCompetencyService, 'createKnowledgeArea');

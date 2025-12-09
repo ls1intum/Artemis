@@ -81,7 +81,7 @@ describe('ComplaintResponseService', () => {
     });
 
     it('should call refreshLock', async () => {
-        const returnedFromService = { ...complaintResponseResolve };
+        const returnedFromService = Object.assign({}, complaintResponseResolve);
         complaintResponseService
             .refreshLockOrResolveComplaint(complaintResponseResolve, 1)
             .pipe(take(1))
@@ -102,7 +102,7 @@ describe('ComplaintResponseService', () => {
     });
 
     it('should call createLock', async () => {
-        const returnedFromService = { ...defaultComplaintResponse };
+        const returnedFromService = Object.assign({}, defaultComplaintResponse);
         complaintResponseService
             .createLock(1)
             .pipe(take(1))
@@ -113,7 +113,7 @@ describe('ComplaintResponseService', () => {
     });
 
     it('should call resolveComplaint', async () => {
-        const returnedFromService = { ...complaintResponseRefresh };
+        const returnedFromService = Object.assign({}, complaintResponseRefresh);
         complaintResponseService
             .refreshLockOrResolveComplaint(complaintResponseResolve, 1)
             .pipe(take(1))

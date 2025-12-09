@@ -118,7 +118,7 @@ describe('ProgrammingExerciseGradingService', () => {
     });
 
     it('should notify subscribers on new test case value', () => {
-        const newTestCasesOracle = testCases1.map((testCase) => ({ ...testCase, weight: 30 }));
+        const newTestCasesOracle = testCases1.map((testCase) => Object.assign({}, testCase, { weight: 30 }));
         let testCasesExercise1Subscriber1;
         let testCasesExercise1Subscriber2;
         // Subscriber 1.

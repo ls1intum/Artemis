@@ -44,7 +44,7 @@ describe('External Submission Service', () => {
         let createResult: EntityResponseType | undefined;
         service.create(exercise, user, result).subscribe((subResult) => (createResult = subResult));
         const req = httpMock.expectOne({ url: `api/assessment/exercises/1/external-submission-results?studentLogin=ab12cde`, method: 'POST' });
-        const returned = { ...result, id: 4 };
+        const returned = Object.assign({}, result, { id: 4 });
         req.flush(returned);
         expect(convertDateFromServerSpy).toHaveBeenCalledOnce();
         expect(convertDateFromServerSpy).toHaveBeenCalledWith(createResult);

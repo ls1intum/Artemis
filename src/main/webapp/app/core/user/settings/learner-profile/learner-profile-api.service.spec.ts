@@ -53,10 +53,7 @@ describe('LearnerProfileApiService', () => {
     });
 
     it('should update a course learner profile', async () => {
-        const updatedProfile = Object.assign(new CourseLearnerProfileDTO(), {
-            ...mockCourseLearnerProfiles[0],
-            aimForGradeOrBonus: 4,
-        });
+        const updatedProfile = Object.assign(new CourseLearnerProfileDTO(), Object.assign({}, mockCourseLearnerProfiles[0], { aimForGradeOrBonus: 4 }));
         const promise = service.putUpdatedCourseLearnerProfile(updatedProfile);
         const req = httpMock.expectOne(`api/atlas/course-learner-profiles/${updatedProfile.id}`);
         expect(req.request.method).toBe('PUT');

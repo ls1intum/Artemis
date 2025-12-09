@@ -149,7 +149,7 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
     });
 
     it('should change feedback request allowed after toggling', () => {
-        comp.exercise = { ...exercise, allowFeedbackRequests: false };
+        comp.exercise = Object.assign({}, exercise, { allowFeedbackRequests: false });
         expect(comp.exercise.allowFeedbackRequests).toBeFalse();
 
         comp.toggleFeedbackRequests();
@@ -190,7 +190,7 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
     });
 
     it('should change publication of tests for programming exercise with published solution', () => {
-        comp.exercise = { ...exercise, exampleSolutionPublicationDate: dayjs() };
+        comp.exercise = Object.assign({}, exercise, { exampleSolutionPublicationDate: dayjs() });
         expect(comp.exercise.releaseTestsWithExampleSolution).toBeFalsy();
         comp.toggleReleaseTests();
         expect(comp.exercise.releaseTestsWithExampleSolution).toBeTrue();
@@ -258,7 +258,7 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
     it('should alert each distinct string only once', () => {
         const alertSpy = jest.spyOn(window, 'alert');
 
-        const newExercise = { ...exercise, includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY };
+        const newExercise = Object.assign({}, exercise, { includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY });
 
         const now = dayjs();
         newExercise.dueDate = now.add(10, 'days');
@@ -274,7 +274,7 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
         expect(alertSpy).toHaveBeenNthCalledWith(++nthCall, 'artemisApp.programmingExercise.timeline.alertNewAfterDueDate');
         expect(alertSpy).toHaveBeenNthCalledWith(++nthCall, 'artemisApp.programmingExercise.timeline.alertNewExampleSolutionPublicationDateAsDueDate');
 
-        const newerExercise = { ...newExercise };
+        const newerExercise = Object.assign({}, newExercise);
         newerExercise.dueDate = now.add(40, 'days');
         comp.exercise = newerExercise;
         comp.ngOnChanges({ exercise: { currentValue: newerExercise } as SimpleChange });

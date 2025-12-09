@@ -177,7 +177,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
                         ]),
                 );
                 this.initialHiddenPages.set(hiddenPagesMap);
-                this.hiddenPages.set({ ...hiddenPagesMap });
+                this.hiddenPages.set(Object.assign({}, hiddenPagesMap));
 
                 this.fetchPdfFile('attachmentVideoUnit', slides);
             } else {
@@ -766,10 +766,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             }
         }
 
-        return workingPageOrder.map((page, index) => ({
-            ...page,
-            order: index + 1,
-        }));
+        return workingPageOrder.map((page, index) => Object.assign({}, page, { order: index + 1 }));
     }
 
     /**
@@ -819,10 +816,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
 
             const remainingPages = this.pageOrder().filter((page) => !slideIds.includes(page.slideId));
 
-            const updatedPageOrder = remainingPages.map((page, index) => ({
-                ...page,
-                order: index + 1,
-            }));
+            const updatedPageOrder = remainingPages.map((page, index) => Object.assign({}, page, { order: index + 1 }));
 
             this.operations.update((ops) => [
                 ...ops,
@@ -843,7 +837,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             this.pageOrder.set(updatedPageOrder);
 
             this.hiddenPages.update((current) => {
-                const updated = { ...current };
+                const updated = Object.assign({}, current);
                 slideIds.forEach((id) => delete updated[id]);
                 return updated;
             });
@@ -908,7 +902,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         this.hasOperations.set(true);
 
         this.hiddenPages.update((current) => {
-            const updated = { ...current };
+            const updated = Object.assign({}, current);
             slideIds.forEach((id) => delete updated[id]);
             return updated;
         });
@@ -933,7 +927,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         this.hasOperations.set(true);
 
         this.hiddenPages.update((currentMap) => {
-            const updatedMap = { ...currentMap };
+            const updatedMap = Object.assign({}, currentMap);
             pages.forEach((page) => {
                 updatedMap[page.slideId] = {
                     date: page.date,

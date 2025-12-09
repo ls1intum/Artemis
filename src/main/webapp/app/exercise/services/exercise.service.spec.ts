@@ -246,13 +246,16 @@ describe('Exercise Service', () => {
     });
 
     it('should fill & empty example modeling solution', () => {
-        let exampleSolutionInfo = ExerciseService.extractExampleSolutionInfo({ ...modelingExercise, exampleSolutionPublicationDate: dayjs().subtract(1, 'm') }, artemisMarkdown);
+        let exampleSolutionInfo = ExerciseService.extractExampleSolutionInfo(
+            Object.assign({}, modelingExercise, { exampleSolutionPublicationDate: dayjs().subtract(1, 'm') }),
+            artemisMarkdown,
+        );
         expect(exampleSolutionInfo.exampleSolution).toBeUndefined();
         expect(exampleSolutionInfo.exampleSolutionUML).toEqual(JSON.parse(modelingExercise.exampleSolutionModel!));
         expect(exampleSolutionInfo.programmingExercise).toBeUndefined();
         expect(exampleSolutionInfo.exampleSolutionPublished).toBeTrue();
 
-        exampleSolutionInfo = ExerciseService.extractExampleSolutionInfo({ ...exercise }, artemisMarkdown);
+        exampleSolutionInfo = ExerciseService.extractExampleSolutionInfo(Object.assign({}, exercise), artemisMarkdown);
         expect(exampleSolutionInfo.exampleSolution).toBeUndefined();
         expect(exampleSolutionInfo.exampleSolutionUML).toBeUndefined();
         expect(exampleSolutionInfo.programmingExercise).toBeUndefined();
@@ -262,7 +265,10 @@ describe('Exercise Service', () => {
     it('should fill & empty example text solution', () => {
         const artemisMarkdownSpy = jest.spyOn(artemisMarkdown, 'safeHtmlForMarkdown').mockReturnValue({} as SafeHtml);
 
-        let exampleSolutionInfo = ExerciseService.extractExampleSolutionInfo({ ...textExercise, exampleSolutionPublicationDate: dayjs().subtract(1, 'm') }, artemisMarkdown);
+        let exampleSolutionInfo = ExerciseService.extractExampleSolutionInfo(
+            Object.assign({}, textExercise, { exampleSolutionPublicationDate: dayjs().subtract(1, 'm') }),
+            artemisMarkdown,
+        );
         expect(exampleSolutionInfo.exampleSolution).toBeDefined();
         expect(exampleSolutionInfo.exampleSolutionUML).toBeUndefined();
         expect(exampleSolutionInfo.programmingExercise).toBeUndefined();
@@ -270,7 +276,7 @@ describe('Exercise Service', () => {
         expect(artemisMarkdownSpy).toHaveBeenCalledOnce();
         expect(artemisMarkdownSpy).toHaveBeenCalledWith(textExercise.exampleSolution);
 
-        exampleSolutionInfo = ExerciseService.extractExampleSolutionInfo({ ...exercise }, artemisMarkdown);
+        exampleSolutionInfo = ExerciseService.extractExampleSolutionInfo(Object.assign({}, exercise), artemisMarkdown);
         expect(exampleSolutionInfo.exampleSolution).toBeUndefined();
         expect(exampleSolutionInfo.exampleSolutionUML).toBeUndefined();
         expect(exampleSolutionInfo.programmingExercise).toBeUndefined();
@@ -280,7 +286,10 @@ describe('Exercise Service', () => {
     it('should fill & empty example file upload solution', () => {
         const artemisMarkdownSpy = jest.spyOn(artemisMarkdown, 'safeHtmlForMarkdown').mockReturnValue({} as SafeHtml);
 
-        let exampleSolutionInfo = ExerciseService.extractExampleSolutionInfo({ ...fileUploadExercise, exampleSolutionPublicationDate: dayjs().subtract(1, 'm') }, artemisMarkdown);
+        let exampleSolutionInfo = ExerciseService.extractExampleSolutionInfo(
+            Object.assign({}, fileUploadExercise, { exampleSolutionPublicationDate: dayjs().subtract(1, 'm') }),
+            artemisMarkdown,
+        );
         expect(exampleSolutionInfo.exampleSolution).toBeDefined();
         expect(exampleSolutionInfo.exampleSolutionUML).toBeUndefined();
         expect(exampleSolutionInfo.programmingExercise).toBeUndefined();
@@ -288,7 +297,7 @@ describe('Exercise Service', () => {
         expect(artemisMarkdownSpy).toHaveBeenCalledOnce();
         expect(artemisMarkdownSpy).toHaveBeenCalledWith(fileUploadExercise.exampleSolution);
 
-        exampleSolutionInfo = ExerciseService.extractExampleSolutionInfo({ ...exercise }, artemisMarkdown);
+        exampleSolutionInfo = ExerciseService.extractExampleSolutionInfo(Object.assign({}, exercise), artemisMarkdown);
         expect(exampleSolutionInfo.exampleSolution).toBeUndefined();
         expect(exampleSolutionInfo.exampleSolutionUML).toBeUndefined();
         expect(exampleSolutionInfo.programmingExercise).toBeUndefined();
@@ -296,17 +305,23 @@ describe('Exercise Service', () => {
     });
 
     it('should fill & empty example programming exercise solution', () => {
-        let exampleSolutionInfo = ExerciseService.extractExampleSolutionInfo({ ...programmingExercise, exampleSolutionPublicationDate: dayjs().subtract(1, 'm') }, artemisMarkdown);
+        let exampleSolutionInfo = ExerciseService.extractExampleSolutionInfo(
+            Object.assign({}, programmingExercise, { exampleSolutionPublicationDate: dayjs().subtract(1, 'm') }),
+            artemisMarkdown,
+        );
         expect(exampleSolutionInfo.exampleSolution).toBeUndefined();
         expect(exampleSolutionInfo.exampleSolutionUML).toBeUndefined();
         expect(exampleSolutionInfo.exampleSolutionPublished).toBeTrue();
 
-        exampleSolutionInfo = ExerciseService.extractExampleSolutionInfo({ ...programmingExercise, exampleSolutionPublicationDate: dayjs().add(1, 'm') }, artemisMarkdown);
+        exampleSolutionInfo = ExerciseService.extractExampleSolutionInfo(
+            Object.assign({}, programmingExercise, { exampleSolutionPublicationDate: dayjs().add(1, 'm') }),
+            artemisMarkdown,
+        );
         expect(exampleSolutionInfo.exampleSolution).toBeUndefined();
         expect(exampleSolutionInfo.exampleSolutionUML).toBeUndefined();
         expect(exampleSolutionInfo.exampleSolutionPublished).toBeFalse();
 
-        exampleSolutionInfo = ExerciseService.extractExampleSolutionInfo({ ...exercise }, artemisMarkdown);
+        exampleSolutionInfo = ExerciseService.extractExampleSolutionInfo(Object.assign({}, exercise), artemisMarkdown);
         expect(exampleSolutionInfo.exampleSolution).toBeUndefined();
         expect(exampleSolutionInfo.exampleSolutionUML).toBeUndefined();
         expect(exampleSolutionInfo.programmingExercise).toBeUndefined();

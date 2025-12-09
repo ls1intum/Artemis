@@ -58,7 +58,7 @@ describe('AttachmentVideoUnitService', () => {
     });
 
     it('should find a AttachmentVideoUnit', fakeAsync(() => {
-        const returnedFromService = { ...elemDefault };
+        const returnedFromService = Object.assign({}, elemDefault);
         service
             .findById(1, 1)
             .pipe(take(1))
@@ -69,8 +69,8 @@ describe('AttachmentVideoUnitService', () => {
     }));
 
     it('should create an AttachmentVideoUnit', fakeAsync(() => {
-        const returnedFromService = { ...elemDefault, id: 0 };
-        const expected = { ...returnedFromService };
+        const returnedFromService = Object.assign({}, elemDefault, { id: 0 });
+        const expected = Object.assign({}, returnedFromService);
         const formData = new FormData();
         formData.append('file', new Blob(), 'filename.pdf');
         formData.append('attachment', objectToJsonBlob(elemDefault.attachment!));
@@ -85,8 +85,8 @@ describe('AttachmentVideoUnitService', () => {
     }));
 
     it('should update a AttachmentVideoUnit', fakeAsync(() => {
-        const returnedFromService = { ...elemDefault, name: 'Test' };
-        const expected = { ...returnedFromService };
+        const returnedFromService = Object.assign({}, elemDefault, { name: 'Test' });
+        const expected = Object.assign({}, returnedFromService);
         elemDefault.id = 42;
         const formData = new FormData();
         formData.append('attachment', objectToJsonBlob(elemDefault.attachment!));
@@ -124,9 +124,9 @@ describe('AttachmentVideoUnitService', () => {
             },
         ];
         let response: any;
-        const returnedFromService = { ...returnedAttachmentVideoUnits };
+        const returnedFromService = Object.assign({}, returnedAttachmentVideoUnits);
 
-        const expected = { ...returnedFromService };
+        const expected = Object.assign({}, returnedFromService);
         const filename = 'filename-on-server';
         const lectureUnitInformation: LectureUnitInformationDTO = {
             units: [
@@ -161,7 +161,7 @@ describe('AttachmentVideoUnitService', () => {
         let response: any;
         const returnedFromService = { lectureUnitDTOS: [unit1], numberOfPages: 20 };
 
-        const expected = { ...returnedFromService };
+        const expected = Object.assign({}, returnedFromService);
 
         const filename = 'filename-on-server';
         service

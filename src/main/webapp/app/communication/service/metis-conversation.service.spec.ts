@@ -310,7 +310,7 @@ describe('MetisConversationService', () => {
                 complete: () => {
                     const websocketDTO = new ConversationWebsocketDTO();
                     websocketDTO.action = MetisPostAction.UPDATE;
-                    websocketDTO.conversation = { ...channel, name: 'newtitle' } as ChannelDTO;
+                    websocketDTO.conversation = Object.assign({}, channel, { name: 'newtitle' }) as ChannelDTO;
 
                     receiveMockSubject.next(websocketDTO);
                     metisConversationService.conversationsOfUser$.subscribe((conversationsOfUser) => {
@@ -334,7 +334,7 @@ describe('MetisConversationService', () => {
                     websocketDTO.action = MetisPostAction.NEW_MESSAGE;
                     // 1 of january 2022
                     const lastMessageDate = dayjs('2022-01-01T00:00:00.000Z');
-                    websocketDTO.conversation = { ...channel, lastMessageDate } as ChannelDTO;
+                    websocketDTO.conversation = Object.assign({}, channel, { lastMessageDate }) as ChannelDTO;
 
                     receiveMockSubject.next(websocketDTO);
                     metisConversationService.conversationsOfUser$.subscribe((conversationsOfUser) => {
@@ -354,7 +354,7 @@ describe('MetisConversationService', () => {
                 complete: () => {
                     const websocketDTO = new ConversationWebsocketDTO();
                     websocketDTO.action = MetisPostAction.DELETE;
-                    websocketDTO.conversation = { ...channel } as ChannelDTO;
+                    websocketDTO.conversation = Object.assign({}, channel) as ChannelDTO;
 
                     receiveMockSubject.next(websocketDTO);
                     metisConversationService.conversationsOfUser$.subscribe((conversationsOfUser) => {
@@ -461,7 +461,7 @@ describe('MetisConversationService', () => {
         });
 
         it('should not update conversationsOfUser if active conversation is not found in the array', () => {
-            const nonExistentConversation = { ...groupChat, id: 999 };
+            const nonExistentConversation = Object.assign({}, groupChat, { id: 999 });
             (metisConversationService as any).activeConversation = nonExistentConversation;
 
             const nextSpy = jest.spyOn((metisConversationService as any)._conversationsOfUser$, 'next');
@@ -490,9 +490,9 @@ describe('MetisConversationService', () => {
     describe('markAllChannelsAsRead', () => {
         it('should update all conversations and call service', () => {
             (metisConversationService as any).conversationsOfUser = [
-                { ...groupChat, unreadMessagesCount: 3, hasUnreadMessage: true },
-                { ...oneToOneChat, unreadMessagesCount: 2, hasUnreadMessage: true },
-                { ...channel, unreadMessagesCount: 1, hasUnreadMessage: true },
+                Object.assign({}, groupChat, { unreadMessagesCount: 3, hasUnreadMessage: true }),
+                Object.assign({}, oneToOneChat, { unreadMessagesCount: 2, hasUnreadMessage: true }),
+                Object.assign({}, channel, { unreadMessagesCount: 1, hasUnreadMessage: true }),
             ];
 
             // @ts-ignore

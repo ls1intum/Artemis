@@ -383,7 +383,7 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit, 
                 hasReacted: metaDataMap[reaction.emojiId!] ? metaDataMap[reaction.emojiId!].hasReacted || hasReacted : hasReacted,
                 reactingUsers: metaDataMap[reaction.emojiId!] ? metaDataMap[reaction.emojiId!].reactingUsers.concat(reactingUser) : [reactingUser],
             };
-            return { ...metaDataMap, [reaction.emojiId!]: reactionMetaData };
+            return Object.assign({}, metaDataMap, { [reaction.emojiId!]: reactionMetaData });
         }, {});
     }
 

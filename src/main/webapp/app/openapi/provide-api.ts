@@ -9,7 +9,7 @@ export function provideApi(configOrBasePath: string | ConfigurationParameters): 
             ? { provide: BASE_PATH, useValue: configOrBasePath }
             : {
                 provide: Configuration,
-                useValue: new Configuration({ ...configOrBasePath }),
+                useValue: new Configuration(Object.assign({}, configOrBasePath)),
             },
     ]);
 }

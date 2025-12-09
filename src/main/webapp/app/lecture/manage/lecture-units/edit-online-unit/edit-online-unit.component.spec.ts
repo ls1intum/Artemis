@@ -131,10 +131,7 @@ describe('EditOnlineUnitComponent', () => {
         expect(findByIdStub).toHaveBeenCalledOnce();
         expect(editOnlineUnitComponent.onlineUnit).toEqual(onlineUnitInDatabase);
 
-        const changedUnit: OnlineUnit = {
-            ...onlineUnitInDatabase,
-            name: 'Changed',
-        };
+        const changedUnit: OnlineUnit = Object.assign({}, onlineUnitInDatabase, { name: 'Changed' });
 
         const updateResponse: HttpResponse<OnlineUnit> = new HttpResponse({
             body: changedUnit,

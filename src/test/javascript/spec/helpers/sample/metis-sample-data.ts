@@ -87,44 +87,17 @@ const courseWideChannelTemplate = {
     description: 'Course-wide channel',
 };
 
-const metisExerciseChannel = {
-    ...courseWideChannelTemplate,
-    id: 14,
-    name: 'exercise-channel',
-    exercise: metisExercise,
-} as Channel;
+const metisExerciseChannel = Object.assign({}, courseWideChannelTemplate, { id: 14, name: 'exercise-channel', exercise: metisExercise }) as Channel;
 
-const metisLectureChannel = {
-    ...courseWideChannelTemplate,
-    id: 15,
-    name: 'lecture-channel',
-    lecture: metisLecture,
-} as Channel;
+const metisLectureChannel = Object.assign({}, courseWideChannelTemplate, { id: 15, name: 'lecture-channel', lecture: metisLecture }) as Channel;
 
-const metisTechSupportChannel = {
-    ...courseWideChannelTemplate,
-    id: 16,
-    name: 'tech-support',
-} as Channel;
+const metisTechSupportChannel = Object.assign({}, courseWideChannelTemplate, { id: 16, name: 'tech-support' }) as Channel;
 
-const metisOrganizationChannel = {
-    ...courseWideChannelTemplate,
-    id: 17,
-    name: 'organization',
-} as Channel;
+const metisOrganizationChannel = Object.assign({}, courseWideChannelTemplate, { id: 17, name: 'organization' }) as Channel;
 
-const metisRandomChannel = {
-    ...courseWideChannelTemplate,
-    id: 18,
-    name: 'random',
-} as Channel;
+const metisRandomChannel = Object.assign({}, courseWideChannelTemplate, { id: 18, name: 'random' }) as Channel;
 
-const metisAnnouncementChannel = {
-    ...courseWideChannelTemplate,
-    id: 19,
-    name: 'announcement',
-    isAnnouncementChannel: true,
-} as Channel;
+const metisAnnouncementChannel = Object.assign({}, courseWideChannelTemplate, { id: 19, name: 'announcement', isAnnouncementChannel: true }) as Channel;
 
 export const metisPostTechSupport = {
     id: 1,

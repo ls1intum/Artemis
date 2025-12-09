@@ -35,8 +35,8 @@ describe('GroupChatService', () => {
     });
 
     it('create', fakeAsync(() => {
-        const returnedFromService = { ...elemDefault, id: 0 };
-        const expected = { ...returnedFromService };
+        const returnedFromService = Object.assign({}, elemDefault, { id: 0 });
+        const expected = Object.assign({}, returnedFromService);
         service
             .create(1, ['user1', 'user2'])
             .pipe(take(1))
@@ -48,8 +48,8 @@ describe('GroupChatService', () => {
     }));
 
     it('update', fakeAsync(() => {
-        const returnedFromService = { ...elemDefault, name: 'test' };
-        const expected = { ...returnedFromService };
+        const returnedFromService = Object.assign({}, elemDefault, { name: 'test' });
+        const expected = Object.assign({}, returnedFromService);
 
         service
             .update(1, 1, new GroupChatDTO())

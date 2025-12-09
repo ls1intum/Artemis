@@ -337,7 +337,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         sortedPosts.forEach((post) => {
             if (!currentGroup) {
                 // Start new group if none exists.
-                currentGroup = { author: post.author, posts: [{ ...post, isConsecutive: false }] };
+                currentGroup = { author: post.author, posts: [Object.assign({}, post, { isConsecutive: false })] };
                 return;
             }
 
@@ -351,10 +351,10 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             }
 
             if (this.isAuthorEqual(currentGroup, { author: post.author, posts: [] }) && timeDiff < 5 && timeDiff >= 0) {
-                currentGroup.posts.push({ ...post, isConsecutive: true });
+                currentGroup.posts.push(Object.assign({}, post, { isConsecutive: true }));
             } else {
                 computedGroups.push(currentGroup);
-                currentGroup = { author: post.author, posts: [{ ...post, isConsecutive: false }] };
+                currentGroup = { author: post.author, posts: [Object.assign({}, post, { isConsecutive: false })] };
             }
         });
         if (currentGroup) {

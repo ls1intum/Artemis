@@ -52,7 +52,7 @@ export class CompetencyFormComponent extends CourseCompetencyFormComponent imple
     }
 
     submitForm() {
-        const competencyFormData: CourseCompetencyFormData = { ...this.form.value };
+        const competencyFormData: CourseCompetencyFormData = Object.assign({}, this.form.value);
         this.formSubmitted.emit(competencyFormData);
     }
 }

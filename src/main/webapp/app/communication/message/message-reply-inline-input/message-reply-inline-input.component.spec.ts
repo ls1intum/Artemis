@@ -59,7 +59,7 @@ describe('MessageReplyInlineInputComponent', () => {
     });
 
     it('should invoke metis service with created message reply', fakeAsync(() => {
-        component.posting = { ...metisPostToCreateUser1 };
+        component.posting = Object.assign({}, metisPostToCreateUser1);
         component.ngOnChanges();
 
         const newContent = 'new content';
@@ -68,13 +68,10 @@ describe('MessageReplyInlineInputComponent', () => {
             content: newContent,
         });
         component.confirm();
-        expect(metisServiceCreateStub).toHaveBeenCalledWith({
-            ...component.posting,
-            title: undefined,
-        });
+        expect(metisServiceCreateStub).toHaveBeenCalledWith(Object.assign({}, component.posting, { title: undefined }));
         tick();
         expect(component.isLoading).toBeFalse();
-        expect(onCreateSpy).toHaveBeenCalledExactlyOnceWith({ ...component.posting, content: newContent });
+        expect(onCreateSpy).toHaveBeenCalledExactlyOnceWith(Object.assign({}, component.posting, { content: newContent }));
     }));
 
     it('should stop loading when metis service throws error during replying to message', fakeAsync(() => {
@@ -108,11 +105,7 @@ describe('MessageReplyInlineInputComponent', () => {
 
         component.confirm();
 
-        expect(metisServiceUpdateStub).toHaveBeenCalledWith({
-            ...component.posting,
-            content: editedContent,
-            title: undefined,
-        });
+        expect(metisServiceUpdateStub).toHaveBeenCalledWith(Object.assign({}, component.posting, { content: editedContent, title: undefined }));
         tick();
         expect(component.isLoading).toBeFalse();
     }));

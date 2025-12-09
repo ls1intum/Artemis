@@ -363,7 +363,7 @@ describe('CourseStatisticsComponent', () => {
     });
 
     it('should group all exercises', () => {
-        const courseToAdd = { ...course };
+        const courseToAdd = Object.assign({}, course);
         courseToAdd.exercises = [programmingExercise, quizExercise, ...modelingExercises, fileUploadExercise];
         jest.spyOn(courseStorageService, 'getCourse').mockReturnValue(courseToAdd);
         const mockParticipationResult: ParticipationResultDTO = { rated: true, score: 100, participationId: 1 };
@@ -387,7 +387,7 @@ describe('CourseStatisticsComponent', () => {
     });
 
     it('should filter all exercises not included in score', () => {
-        const courseToAdd = { ...course };
+        const courseToAdd = Object.assign({}, course);
         courseToAdd.exercises = [...modelingExercises];
         jest.spyOn(courseStorageService, 'getCourse').mockReturnValue(courseToAdd);
         const mockParticipationResult: ParticipationResultDTO = { rated: true, score: 100, participationId: 1 };
@@ -420,7 +420,7 @@ describe('CourseStatisticsComponent', () => {
     });
 
     it('should set the scores correctly after retrieving them from the store', () => {
-        const courseToAdd = { ...course };
+        const courseToAdd = Object.assign({}, course);
         courseToAdd.exercises = [...modelingExercises];
         jest.spyOn(courseStorageService, 'getCourse').mockReturnValue(courseToAdd);
         const mockScoresPerExerciseType: Map<ExerciseType, CourseScores> = new Map<ExerciseType, CourseScores>();
@@ -459,7 +459,7 @@ describe('CourseStatisticsComponent', () => {
         // Should not have found a course yet.
         expect(comp.course).toBeUndefined();
 
-        const courseToSubscribeTo = { ...course };
+        const courseToSubscribeTo = Object.assign({}, course);
         courseToSubscribeTo.exercises = [...modelingExercises];
         courseStorageService.setCourses([courseToSubscribeTo]);
 
@@ -534,14 +534,11 @@ describe('CourseStatisticsComponent', () => {
         });
 
         const setupExercisesWithCategories = () => {
-            const courseToAdd = { ...course };
+            const courseToAdd = Object.assign({}, course);
             const programmingCategory = generateExerciseCategory(ExerciseType.PROGRAMMING, 1);
-            const programmingWithCategory = {
-                ...programmingExercise,
-                categories: [programmingCategory] as ExerciseCategory[],
-            };
+            const programmingWithCategory = Object.assign({}, programmingExercise, { categories: [programmingCategory] as ExerciseCategory[] });
             const quizCategory = generateExerciseCategory(ExerciseType.QUIZ, 1);
-            const quizWithCategory = { ...quizExercise, categories: [quizCategory] as ExerciseCategory[] };
+            const quizWithCategory = Object.assign({}, quizExercise, { categories: [quizCategory] as ExerciseCategory[] });
             courseToAdd.exercises = [...modelingExercises, programmingWithCategory, quizWithCategory];
             jest.spyOn(courseStorageService, 'getCourse').mockReturnValue(courseToAdd);
             comp.ngOnInit();

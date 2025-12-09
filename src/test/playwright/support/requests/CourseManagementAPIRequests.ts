@@ -176,14 +176,7 @@ export class CourseManagementAPIRequests {
      * @returns Promise<Lecture> representing the lecture created.
      */
     async createLecture(course: Course, title = 'Lecture ' + generateUUID(), startDate = dayjs(), endDate = dayjs().add(10, 'minutes')): Promise<Lecture> {
-        const data = {
-            ...lectureTemplate,
-            course,
-            title,
-            startDate,
-            endDate,
-            channelName: 'lecture-' + titleLowercase(title),
-        };
+        const data = Object.assign({}, lectureTemplate, { course, title, startDate, endDate, channelName: 'lecture-' + titleLowercase(title) });
         const response = await this.page.request.post(`api/lecture/lectures`, { data });
         return response.json();
     }

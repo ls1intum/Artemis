@@ -205,7 +205,7 @@ describe('ResultComponent', () => {
     });
 
     it('should navigate to text exercise details when exercise type is TEXT', () => {
-        comp.exercise = { ...mockExercise, type: ExerciseType.TEXT };
+        comp.exercise = Object.assign({}, mockExercise, { type: ExerciseType.TEXT });
         comp.participation = mockParticipation;
         const navigateSpy = jest.spyOn(router, 'navigate');
         const courseId = 42;
@@ -344,7 +344,7 @@ describe('ResultComponent', () => {
     describe('ResultComponent - Feedback Generation', () => {
         beforeEach(() => {
             jest.useFakeTimers();
-            comp.result = { ...mockResult, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: undefined, completionDate: dayjs().add(1, 'minute') };
+            comp.result = Object.assign({}, mockResult, { assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: undefined, completionDate: dayjs().add(1, 'minute') });
             comp.exercise = mockExercise;
             comp.participation = mockParticipation;
         });
@@ -354,7 +354,7 @@ describe('ResultComponent', () => {
         });
 
         it('should call evaluate again after the specified due time', () => {
-            comp.result = { ...comp.result, completionDate: dayjs().add(2, 'seconds') };
+            comp.result = Object.assign({}, comp.result, { completionDate: dayjs().add(2, 'seconds') });
             comp.templateStatus = ResultTemplateStatus.IS_GENERATING_FEEDBACK;
             comp.evaluate();
 
@@ -375,7 +375,7 @@ describe('ResultComponent', () => {
     });
 
     it('should use special handling if result is an automatic AI result', () => {
-        comp.result = { ...mockResult, score: 90, assessmentType: AssessmentType.AUTOMATIC_ATHENA };
+        comp.result = Object.assign({}, mockResult, { score: 90, assessmentType: AssessmentType.AUTOMATIC_ATHENA });
 
         comp.evaluate();
 

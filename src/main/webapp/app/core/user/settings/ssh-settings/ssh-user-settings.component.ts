@@ -83,10 +83,7 @@ export class SshUserSettingsComponent implements OnInit, OnDestroy {
                 tap((publicKeys: UserSshPublicKey[]) => {
                     this.sshPublicKeys = publicKeys;
                     this.sshUserSettingsService.sshKeys = publicKeys;
-                    this.sshPublicKeys = this.sshPublicKeys.map((key) => ({
-                        ...key,
-                        hasExpired: key.expiryDate && dayjs().isAfter(dayjs(key.expiryDate)),
-                    }));
+                    this.sshPublicKeys = this.sshPublicKeys.map((key) => Object.assign({}, key, { hasExpired: key.expiryDate && dayjs().isAfter(dayjs(key.expiryDate)) }));
                     this.keyCount = publicKeys.length;
                     this.isLoading = false;
                 }),

@@ -47,7 +47,7 @@ describe('OnlineUnitService', () => {
     });
 
     it('should find a OnlineUnit', fakeAsync(() => {
-        const returnedFromService = { ...elemDefault };
+        const returnedFromService = Object.assign({}, elemDefault);
         service
             .findById(1, 1)
             .pipe(take(1))
@@ -58,8 +58,8 @@ describe('OnlineUnitService', () => {
     }));
 
     it('should create a OnlineUnit', fakeAsync(() => {
-        const returnedFromService = { ...elemDefault, id: 0 };
-        const expected = { ...returnedFromService };
+        const returnedFromService = Object.assign({}, elemDefault, { id: 0 });
+        const expected = Object.assign({}, returnedFromService);
         service
             .create(new OnlineUnit(), 1)
             .pipe(take(1))
@@ -70,8 +70,8 @@ describe('OnlineUnitService', () => {
     }));
 
     it('should update a OnlineUnit', fakeAsync(() => {
-        const returnedFromService = { ...elemDefault, name: 'Test' };
-        const expected = { ...returnedFromService };
+        const returnedFromService = Object.assign({}, elemDefault, { name: 'Test' });
+        const expected = Object.assign({}, returnedFromService);
         service
             .update(expected, 1)
             .pipe(take(1))

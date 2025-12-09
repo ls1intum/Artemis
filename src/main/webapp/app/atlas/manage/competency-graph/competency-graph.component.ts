@@ -21,12 +21,7 @@ export class CompetencyGraphComponent {
     });
     readonly nodes = computed(() => this.internalCompetencyGraph().nodes || []);
     readonly edges = computed(() => {
-        return (
-            this.internalCompetencyGraph().edges?.map((edge) => ({
-                ...edge,
-                id: `edge-${edge.id}`,
-            })) || []
-        );
+        return this.internalCompetencyGraph().edges?.map((edge) => Object.assign({}, edge, { id: `edge-${edge.id}` })) || [];
     });
 
     readonly update$ = new Subject<boolean>();

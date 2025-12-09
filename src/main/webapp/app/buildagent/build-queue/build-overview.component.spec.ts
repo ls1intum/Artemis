@@ -518,7 +518,7 @@ describe('BuildQueueComponent', () => {
         component.searchTerm = 'search';
         component.triggerLoadFinishedJobs();
 
-        const requestWithSearchTerm = { ...request };
+        const requestWithSearchTerm = Object.assign({}, request);
         requestWithSearchTerm.searchTerm = 'search';
         // Wait for the debounce time to pass
         await new Promise((resolve) => setTimeout(resolve, 110));

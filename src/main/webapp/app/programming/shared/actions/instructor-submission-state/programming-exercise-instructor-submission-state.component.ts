@@ -91,6 +91,6 @@ export class ProgrammingExerciseInstructorSubmissionStateComponent implements On
 
     private sumSubmissionStates = (buildState: ExerciseSubmissionState) =>
         Object.values(buildState).reduce((acc: { [state: string]: number }, { submissionState }) => {
-            return { ...acc, [submissionState]: (acc[submissionState] || 0) + 1 };
+            return Object.assign({}, acc, { [submissionState]: (acc[submissionState] || 0) + 1 });
         }, {});
 }

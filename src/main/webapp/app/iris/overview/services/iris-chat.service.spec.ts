@@ -339,7 +339,7 @@ describe('IrisChatService', () => {
         });
 
         it('should switch to a different session if llm usage is accepted', fakeAsync(() => {
-            const newSession = { ...mockConversation, id: 456, chatMode: ChatServiceMode.COURSE, entityName: 'Course 1' };
+            const newSession = Object.assign({}, mockConversation, { id: 456, chatMode: ChatServiceMode.COURSE, entityName: 'Course 1' });
 
             const closeSpy = jest.spyOn(service as any, 'close');
             jest.spyOn(httpService, 'getChatSessionById').mockReturnValue(of(newSession));

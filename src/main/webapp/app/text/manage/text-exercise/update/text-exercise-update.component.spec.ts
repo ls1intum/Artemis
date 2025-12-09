@@ -74,7 +74,7 @@ describe('TextExercise Management Update Component', () => {
                 // GIVEN
                 comp.ngOnInit();
 
-                const entity = { ...textExercise };
+                const entity = Object.assign({}, textExercise);
                 jest.spyOn(service, 'update').mockReturnValue(of(new HttpResponse({ body: entity })));
                 const calendarService = TestBed.inject(CalendarService);
                 const refreshSpy = jest.spyOn(calendarService, 'reloadEvents');
@@ -120,7 +120,7 @@ describe('TextExercise Management Update Component', () => {
                 // GIVEN
                 comp.ngOnInit();
 
-                const entity = { ...textExercise };
+                const entity = Object.assign({}, textExercise);
                 jest.spyOn(service, 'create').mockReturnValue(of(new HttpResponse({ body: entity })));
                 const calendarService = TestBed.inject(CalendarService);
                 const refreshSpy = jest.spyOn(calendarService, 'reloadEvents');
@@ -151,7 +151,7 @@ describe('TextExercise Management Update Component', () => {
                 comp.ngOnInit();
                 comp.isImport = true;
 
-                const entity = { ...textExercise };
+                const entity = Object.assign({}, textExercise);
                 jest.spyOn(service, 'import').mockReturnValue(of(new HttpResponse({ body: entity })));
 
                 // WHEN

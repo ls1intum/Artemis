@@ -96,7 +96,7 @@ export class StandardizedCompetencyEditComponent {
 
     save() {
         const updatedValues = this.form.getRawValue();
-        const updatedCompetency: StandardizedCompetencyDTO = { ...this.competency, ...updatedValues };
+        const updatedCompetency: StandardizedCompetencyDTO = Object.assign({}, this.competency, updatedValues);
         this.isEditing = false;
         this.onSave.emit(updatedCompetency);
     }

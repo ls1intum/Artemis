@@ -267,11 +267,7 @@ describe('FeedbackComponent', () => {
         const { feedbacks } = generateFeedbacksAndExpectedItems();
         comp.exerciseType = ExerciseType.PROGRAMMING;
         comp.result.feedbacks = feedbacks;
-        comp.result.submission = {
-            ...comp.result.submission,
-            type: SubmissionType.MANUAL,
-            commitHash: '123456789ab',
-        } as ProgrammingSubmission;
+        comp.result.submission = Object.assign({}, comp.result.submission, { type: SubmissionType.MANUAL, commitHash: '123456789ab' }) as ProgrammingSubmission;
 
         comp.ngOnInit();
 
@@ -405,11 +401,7 @@ describe('FeedbackComponent', () => {
         const feedbackItem = generateManualFeedbackPair(true, 'Positive', 'This is good', 4).item;
         const feedbackItem1 = generateManualFeedbackPair(true, 'Positive', 'This is good', 4).item;
 
-        const feedbackGroup: FeedbackGroup = {
-            ...feedbackItem,
-            members: [feedbackItem1],
-            open: false,
-        } as unknown as FeedbackGroup;
+        const feedbackGroup: FeedbackGroup = Object.assign({}, feedbackItem, { members: [feedbackItem1], open: false }) as unknown as FeedbackGroup;
         comp.feedbackItemNodes = [feedbackGroup];
 
         // start printing => expand feedback

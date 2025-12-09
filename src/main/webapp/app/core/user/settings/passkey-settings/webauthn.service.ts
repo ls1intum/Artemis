@@ -69,11 +69,9 @@ export class WebauthnService {
                 },
             });
 
-            this.accountService.userIdentity.set({
-                ...this.accountService.userIdentity(),
-                askToSetupPasskey: false,
-                internal: this.accountService.userIdentity()?.internal ?? false,
-            });
+            this.accountService.userIdentity.set(
+                Object.assign({}, this.accountService.userIdentity(), { askToSetupPasskey: false, internal: this.accountService.userIdentity()?.internal ?? false }),
+            );
         } catch (error) {
             const userPressedCancelInPasskeyCreationDialog = error.name === UserAbortedPasskeyCreationError.name && error.code === UserAbortedPasskeyCreationError.code;
             if (userPressedCancelInPasskeyCreationDialog) {

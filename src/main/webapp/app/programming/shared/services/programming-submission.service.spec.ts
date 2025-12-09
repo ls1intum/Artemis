@@ -77,11 +77,7 @@ describe('ProgrammingSubmissionService', () => {
             buildStartDate: buildTimingInfo.buildStartDate,
             submissionDate: dayjs().subtract(20, 'seconds'),
         };
-        mockSubmissionProcessingDTOOld = {
-            ...mockSubmissionProcessingDTO,
-            commitHash: 'abc123Old',
-            submissionDate: dayjs().subtract(40, 'seconds'),
-        };
+        mockSubmissionProcessingDTOOld = Object.assign({}, mockSubmissionProcessingDTO, { commitHash: 'abc123Old', submissionDate: dayjs().subtract(40, 'seconds') });
 
         TestBed.configureTestingModule({
             providers: [
@@ -301,7 +297,7 @@ describe('ProgrammingSubmissionService', () => {
         expect(getLatestResultStub).toHaveBeenCalledOnce();
         expect(getLatestResultStub).toHaveBeenCalledWith(participationId);
         expect(notifyAllResultSubscribersStub).toHaveBeenCalledOnce();
-        expect(notifyAllResultSubscribersStub).toHaveBeenCalledWith({ ...result });
+        expect(notifyAllResultSubscribersStub).toHaveBeenCalledWith(Object.assign({}, result));
         wsLatestResultSubject.next(result);
 
         // HAS_NO_PENDING_SUBMISSION is expected as the result provided by getLatestResult matches the pending submission
@@ -402,12 +398,12 @@ describe('ProgrammingSubmissionService', () => {
     it('should recalculate the result eta based on the number of open submissions', () => {
         const exerciseId = 10;
         // Simulate 340 participations with one pending submission each.
-        const submissionState = _range(340).reduce((acc, n) => ({ ...acc, [n]: { submissionDate: dayjs().subtract(1, 'minutes') } as ProgrammingSubmission }), {});
+        const submissionState = _range(340).reduce((acc, n) => Object.assign({}, acc, { [n]: { submissionDate: dayjs().subtract(1, 'minutes') } as ProgrammingSubmission }), {});
         const expectedSubmissionState = Object.entries(submissionState).reduce(
-            (acc, [participationID, submission]: [string, ProgrammingSubmission]) => ({
-                ...acc,
-                [participationID]: { submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission, participationId: parseInt(participationID, 10) },
-            }),
+            (acc, [participationID, submission]: [string, ProgrammingSubmission]) =>
+                Object.assign({}, acc, {
+                    [participationID]: { submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission, participationId: parseInt(participationID, 10) },
+                }),
             {},
         );
         // @ts-ignore

@@ -124,7 +124,7 @@ export class OnlineUnitFormComponent implements OnChanges {
     }
 
     submitForm() {
-        const onlineUnitFormData: OnlineUnitFormData = { ...this.form.value };
+        const onlineUnitFormData: OnlineUnitFormData = Object.assign({}, this.form.value);
         this.formSubmitted.emit(onlineUnitFormData);
     }
 

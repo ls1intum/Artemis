@@ -258,10 +258,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         triggerChanges(comp, { property: 'commitState', currentValue: CommitState.UNDEFINED });
         fixture.detectChanges();
         expect(comp.isLoadingFiles).toBeFalse();
-        expect(comp.repositoryFiles).toEqual({
-            ...repositoryContent,
-            [PROBLEM_STATEMENT_IDENTIFIER]: FileType.PROBLEM_STATEMENT,
-        });
+        expect(comp.repositoryFiles).toEqual(Object.assign({}, repositoryContent, { [PROBLEM_STATEMENT_IDENTIFIER]: FileType.PROBLEM_STATEMENT }));
         const renderedFolders = debugElement.queryAll(By.css('jhi-code-editor-file-browser-folder'));
         const renderedFiles = debugElement.queryAll(By.css('jhi-code-editor-file-browser-file'));
         expect(renderedFolders).toHaveLength(1);
@@ -388,20 +385,14 @@ describe('CodeEditorFileBrowserComponent', () => {
             '.hidden': FileType.FILE,
             '.': FileType.FOLDER,
         };
-        const repositoryContent = {
-            ...allowedFiles,
-            ...forbiddenFiles,
-        };
+        const repositoryContent = Object.assign({}, allowedFiles, forbiddenFiles);
         getRepositoryContentStub.mockReturnValue(of(repositoryContent));
         getStatusStub.mockReturnValue(of({ repositoryStatus: CommitState.CLEAN }));
         comp.commitState = CommitState.UNDEFINED;
         triggerChanges(comp, { property: 'commitState', currentValue: CommitState.UNDEFINED });
         fixture.detectChanges();
         expect(comp.isLoadingFiles).toBeFalse();
-        expect(comp.repositoryFiles).toEqual({
-            ...allowedFiles,
-            [PROBLEM_STATEMENT_IDENTIFIER]: FileType.PROBLEM_STATEMENT,
-        });
+        expect(comp.repositoryFiles).toEqual(Object.assign({}, allowedFiles, { [PROBLEM_STATEMENT_IDENTIFIER]: FileType.PROBLEM_STATEMENT }));
 
         // tree should contain exactly the allowed file and PS
         expect(comp.filesTreeViewItem).toHaveLength(2);
@@ -425,10 +416,7 @@ describe('CodeEditorFileBrowserComponent', () => {
             '.git': FileType.FOLDER,
             '.other_hidden_folder': FileType.FOLDER,
         };
-        const allFolders = {
-            ...allowedFolders,
-            ...hiddenFolders,
-        };
+        const allFolders = Object.assign({}, allowedFolders, hiddenFolders);
         getRepositoryContentStub.mockReturnValue(of(allFolders));
 
         comp.loadFiles().subscribe((filteredFiles) => {
@@ -632,7 +620,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         expect(setupTreeviewSpy).toHaveBeenCalledOnce();
         expect(setupTreeviewSpy).toHaveBeenCalledWith();
         expect(onFileChangeSpy).toHaveBeenCalledOnce();
-        expect(comp.repositoryFiles).toEqual({ ...repositoryFiles, [filePath]: FileType.FILE });
+        expect(comp.repositoryFiles).toEqual(Object.assign({}, repositoryFiles, { [filePath]: FileType.FILE }));
         creatingElement = debugElement.query(By.css('jhi-code-editor-file-browser-create-node'));
         expect(creatingElement).toBeNull();
     }));
@@ -684,7 +672,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         expect(setupTreeviewSpy).toHaveBeenCalledOnce();
         expect(setupTreeviewSpy).toHaveBeenCalledWith();
         expect(onFileChangeSpy).toHaveBeenCalledOnce();
-        expect(comp.repositoryFiles).toEqual({ ...repositoryFiles, [filePath]: FileType.FOLDER });
+        expect(comp.repositoryFiles).toEqual(Object.assign({}, repositoryFiles, { [filePath]: FileType.FOLDER }));
         creatingElement = debugElement.query(By.css('jhi-code-editor-file-browser-create-node'));
         expect(creatingElement).toBeNull();
     }));

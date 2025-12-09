@@ -135,7 +135,7 @@ export abstract class ImportCourseCompetenciesComponent implements OnInit, Compo
      */
     performSearch() {
         this.isLoading = true;
-        this.courseCompetencyService.getForImport({ ...this.filter, ...this.search }).subscribe({
+        this.courseCompetencyService.getForImport(Object.assign({}, this.filter, this.search)).subscribe({
             next: (res) => {
                 this.searchedCourseCompetencies = res;
                 this.isLoading = false;

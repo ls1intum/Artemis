@@ -48,8 +48,8 @@ describe('Faq Service', () => {
 
     describe('Service methods', () => {
         it('should create a faq', () => {
-            const returnedFromService = { ...elemDefault };
-            const expected = { ...returnedFromService };
+            const returnedFromService = Object.assign({}, elemDefault);
+            const expected = Object.assign({}, returnedFromService);
             service
                 .create(courseId, createFaqDTODefault)
                 .pipe(take(1))
@@ -63,8 +63,8 @@ describe('Faq Service', () => {
         });
 
         it('should update a faq', () => {
-            const returnedFromService = { ...elemDefault };
-            const expected = { ...returnedFromService };
+            const returnedFromService = Object.assign({}, elemDefault);
+            const expected = Object.assign({}, returnedFromService);
             const faqId = elemDefault.id!;
             service
                 .update(courseId, updateFaqDTODefault)
@@ -79,7 +79,7 @@ describe('Faq Service', () => {
         });
 
         it('should delete a faq', () => {
-            const returnedFromService = { ...elemDefault };
+            const returnedFromService = Object.assign({}, elemDefault);
             const faqId = elemDefault.id!;
             service
                 .delete(courseId, faqId)
@@ -98,8 +98,8 @@ describe('Faq Service', () => {
                 color: '#6ae8ac',
                 category: 'category1',
             } as FaqCategory;
-            const returnedFromService = { ...elemDefault, categories: [JSON.stringify(category)] };
-            const expected = { ...elemDefault, categories: [new FaqCategory('category1', '#6ae8ac')] };
+            const returnedFromService = Object.assign({}, elemDefault, { categories: [JSON.stringify(category)] });
+            const expected = Object.assign({}, elemDefault, { categories: [new FaqCategory('category1', '#6ae8ac')] });
             const faqId = elemDefault.id!;
             service
                 .find(courseId, faqId)
@@ -118,8 +118,8 @@ describe('Faq Service', () => {
                 color: '#6ae8ac',
                 category: 'category1',
             } as FaqCategory;
-            const returnedFromService = [{ ...elemDefault, categories: [JSON.stringify(category)] }];
-            const expected = [{ ...elemDefault, categories: [new FaqCategory('category1', '#6ae8ac')] }];
+            const returnedFromService = [Object.assign({}, elemDefault, { categories: [JSON.stringify(category)] })];
+            const expected = [Object.assign({}, elemDefault, { categories: [new FaqCategory('category1', '#6ae8ac')] })];
             const courseId = 1;
             service
                 .findAllByCourseId(courseId)
@@ -138,8 +138,8 @@ describe('Faq Service', () => {
                 color: '#6ae8ac',
                 category: 'category1',
             } as FaqCategory;
-            const returnedFromService = [{ ...elemDefault, categories: [JSON.stringify(category)] }];
-            const expected = [{ ...elemDefault, categories: [new FaqCategory('category1', '#6ae8ac')] }];
+            const returnedFromService = [Object.assign({}, elemDefault, { categories: [JSON.stringify(category)] })];
+            const expected = [Object.assign({}, elemDefault, { categories: [new FaqCategory('category1', '#6ae8ac')] })];
             const courseId = 1;
             service
                 .findAllByCourseIdAndState(courseId, FaqState.ACCEPTED)
@@ -159,7 +159,7 @@ describe('Faq Service', () => {
                 category: 'category1',
             } as FaqCategory;
             const returnedFromService = { categories: [JSON.stringify(category)] };
-            const expected = { ...returnedFromService };
+            const expected = Object.assign({}, returnedFromService);
             const courseId = 1;
             service
                 .findAllCategoriesByCourseId(courseId)
@@ -179,7 +179,7 @@ describe('Faq Service', () => {
                 category: 'category1',
             } as FaqCategory;
             const returnedFromService = { categories: [JSON.stringify(category)] };
-            const expected = { ...returnedFromService };
+            const expected = Object.assign({}, returnedFromService);
             const courseId = 1;
             const faqState = FaqState.ACCEPTED;
             service

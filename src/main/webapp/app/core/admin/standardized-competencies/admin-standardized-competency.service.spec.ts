@@ -39,7 +39,7 @@ describe('AdminStandardizedCompetencyService', () => {
     it('should create competency', fakeAsync(() => {
         let actualCompetency = new HttpResponse<StandardizedCompetencyDTO>();
         const expectedCompetency = defaultStandardizedCompetency;
-        const returnedFromService: StandardizedCompetencyDTO = { ...expectedCompetency };
+        const returnedFromService: StandardizedCompetencyDTO = Object.assign({}, expectedCompetency);
 
         adminStandardizedCompetencyService
             .createStandardizedCompetency(expectedCompetency)
@@ -56,7 +56,7 @@ describe('AdminStandardizedCompetencyService', () => {
     it('should update competency', fakeAsync(() => {
         let actualCompetency = new HttpResponse<StandardizedCompetencyDTO>();
         const expectedCompetency = defaultStandardizedCompetency;
-        const returnedFromService: StandardizedCompetencyDTO = { ...expectedCompetency };
+        const returnedFromService: StandardizedCompetencyDTO = Object.assign({}, expectedCompetency);
 
         adminStandardizedCompetencyService
             .updateStandardizedCompetency(expectedCompetency)
@@ -88,7 +88,7 @@ describe('AdminStandardizedCompetencyService', () => {
     it('should create knowledge area', fakeAsync(() => {
         let actualKnowledgeArea = new HttpResponse<KnowledgeAreaDTO>();
         const expectedKnowledgeArea = defaultKnowledgeArea;
-        const returnedFromService: KnowledgeAreaDTO = { ...expectedKnowledgeArea };
+        const returnedFromService: KnowledgeAreaDTO = Object.assign({}, expectedKnowledgeArea);
 
         adminStandardizedCompetencyService
             .createKnowledgeArea(expectedKnowledgeArea)
@@ -105,7 +105,7 @@ describe('AdminStandardizedCompetencyService', () => {
     it('should update knowledge area', fakeAsync(() => {
         let actualCompetency = new HttpResponse<KnowledgeAreaDTO>();
         const expectedKnowledgeArea = defaultKnowledgeArea;
-        const returnedFromService: KnowledgeAreaDTO = { ...expectedKnowledgeArea };
+        const returnedFromService: KnowledgeAreaDTO = Object.assign({}, expectedKnowledgeArea);
 
         adminStandardizedCompetencyService
             .updateKnowledgeArea(expectedKnowledgeArea)

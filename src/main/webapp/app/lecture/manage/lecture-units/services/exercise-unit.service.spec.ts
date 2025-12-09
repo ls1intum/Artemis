@@ -54,7 +54,7 @@ describe('ExerciseUnitService', () => {
     });
 
     it('should find a list of ExerciseUnit', async () => {
-        const returnedFromService = [{ ...elemDefault }];
+        const returnedFromService = [Object.assign({}, elemDefault)];
         service
             .findAllByLectureId(1)
             .pipe(take(1))
@@ -65,8 +65,8 @@ describe('ExerciseUnitService', () => {
     });
 
     it('should create an ExerciseUnit', async () => {
-        const returnedFromService = { ...elemDefault, id: 0 };
-        const expected = { ...returnedFromService };
+        const returnedFromService = Object.assign({}, elemDefault, { id: 0 });
+        const expected = Object.assign({}, returnedFromService);
         service
             .create(new ExerciseUnit(), 1)
             .pipe(take(1))

@@ -188,14 +188,14 @@ describe('ImportTableComponent', () => {
 
     it('should sort TITLE column DESCENDING', async () => {
         const invertedObjectList = objectList.reverse();
-        searchSpy.mockReturnValueOnce(of({ ...searchResult, resultsOnPage: invertedObjectList }));
+        searchSpy.mockReturnValueOnce(of(Object.assign({}, searchResult, { resultsOnPage: invertedObjectList })));
 
         await loadDataAndClickColumn(2, 2, 'TITLE', SortingOrder.DESCENDING, 'Object 10');
     });
 
     it('should sort ID column DESCENDING', async () => {
         const invertedObjectList = objectList.reverse();
-        searchSpy.mockReturnValue(of({ ...searchResult, resultsOnPage: invertedObjectList }));
+        searchSpy.mockReturnValue(of(Object.assign({}, searchResult, { resultsOnPage: invertedObjectList })));
 
         await loadDataAndClickColumn(1, 1, 'ID', SortingOrder.DESCENDING, 'Object 10');
     });

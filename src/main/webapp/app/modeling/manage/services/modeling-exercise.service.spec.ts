@@ -56,12 +56,8 @@ describe('ModelingExercise Service', () => {
     }));
 
     it('should create a ModelingExercise', fakeAsync(() => {
-        const returnedFromService = {
-            id: 0,
-            ...elemDefault,
-            categories,
-        };
-        const expected = { ...returnedFromService, categories: [category] };
+        const returnedFromService = Object.assign({ id: 0 }, elemDefault, { categories });
+        const expected = Object.assign({}, returnedFromService, { categories: [category] });
         service
             .create(new ModelingExercise(UMLDiagramType.ComponentDiagram, undefined, undefined))
             .pipe(take(1))
@@ -74,15 +70,11 @@ describe('ModelingExercise Service', () => {
     }));
 
     it('should update a ModelingExercise', fakeAsync(() => {
-        const returnedFromService = {
-            diagramType: UMLDiagramType.ClassDiagram,
-            exampleSolutionModel: 'BBBBBB',
-            exampleSolutionExplanation: 'BBBBBB',
-            ...elemDefault,
+        const returnedFromService = Object.assign({ diagramType: UMLDiagramType.ClassDiagram, exampleSolutionModel: 'BBBBBB', exampleSolutionExplanation: 'BBBBBB' }, elemDefault, {
             categories,
-        };
+        });
 
-        const expected = { ...returnedFromService, categories: [category] };
+        const expected = Object.assign({}, returnedFromService, { categories: [category] });
         service
             .update(expected)
             .pipe(take(1))
@@ -112,7 +104,7 @@ describe('ModelingExercise Service', () => {
     }));
 
     it('should re-evaluate and update a modelling exercise', () => {
-        const modelingExerciseReturned = { ...elemDefault };
+        const modelingExerciseReturned = Object.assign({}, elemDefault);
         modelingExerciseReturned.id = 111;
         service
             .reevaluateAndUpdate(modelingExerciseReturned)
@@ -125,17 +117,14 @@ describe('ModelingExercise Service', () => {
     });
 
     it('should import a modeling exercise', fakeAsync(() => {
-        const modelingExercise = { ...elemDefault };
+        const modelingExercise = Object.assign({}, elemDefault);
         modelingExercise.id = 445;
         modelingExercise.categories = [category];
-        const returnedFromService = {
-            ...modelingExercise,
-            categories,
-        };
+        const returnedFromService = Object.assign({}, modelingExercise, { categories });
 
-        const expected = { ...returnedFromService, categories: [category] };
+        const expected = Object.assign({}, returnedFromService, { categories: [category] });
         service
-            .import({ ...modelingExercise, categories })
+            .import(Object.assign({}, modelingExercise, { categories }))
             .pipe(take(1))
             .subscribe((resp) => {
                 expect(resp.body).toEqual(expected);

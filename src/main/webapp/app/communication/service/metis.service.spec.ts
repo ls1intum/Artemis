@@ -122,7 +122,7 @@ describe('Metis Service', () => {
         forwardedMessageCreateSpy = jest.spyOn(forwardedMessageService, 'createForwardedMessage').mockImplementation((fm: ForwardedMessage) =>
             of(
                 new HttpResponse({
-                    body: { ...fm, id: Math.floor(Math.random() * 10000) } as ForwardedMessage,
+                    body: Object.assign({}, fm, { id: Math.floor(Math.random() * 10000) }) as ForwardedMessage,
                 }),
             ),
         );
@@ -296,12 +296,12 @@ describe('Metis Service', () => {
         it('should create an answer post', fakeAsync(() => {
             const answerPostServiceSpy = jest.spyOn(answerPostService, 'create');
             const createdPostSub = metisService.createPost(post).subscribe();
-            answerPost = { ...answerPost, post };
+            answerPost = Object.assign({}, answerPost, { post });
 
             const createdAnswerPostSub = metisService.createAnswerPost(answerPost).subscribe((createdAnswerPost) => {
                 expect(createdAnswerPost).toEqual(answerPost);
             });
-            const cachedPostsSub = metisService.posts.subscribe((posts) => expect(posts).toEqual([{ ...post, answers: [answerPost] }]));
+            const cachedPostsSub = metisService.posts.subscribe((posts) => expect(posts).toEqual([Object.assign({}, post, { answers: [answerPost] })]));
 
             expect(answerPostServiceSpy).toHaveBeenCalledOnce();
             tick();
@@ -314,11 +314,11 @@ describe('Metis Service', () => {
         it('should delete an answer post', fakeAsync(() => {
             const answerPostServiceSpy = jest.spyOn(answerPostService, 'delete');
             const createdPostSub = metisService.createPost(post).subscribe();
-            answerPost = { ...answerPost, post };
+            answerPost = Object.assign({}, answerPost, { post });
             const createdAnswerPostSub = metisService.createAnswerPost(answerPost).subscribe();
 
             metisService.deleteAnswerPost(answerPost);
-            const cachedPostsSub = metisService.posts.subscribe((posts) => expect(posts).toEqual([{ ...post, answers: [] }]));
+            const cachedPostsSub = metisService.posts.subscribe((posts) => expect(posts).toEqual([Object.assign({}, post, { answers: [] })]));
 
             expect(answerPostServiceSpy).toHaveBeenCalledOnce();
             tick();
@@ -331,13 +331,13 @@ describe('Metis Service', () => {
         it('should update an answer post', fakeAsync(() => {
             const answerPostServiceSpy = jest.spyOn(answerPostService, 'update');
             const createdPostSub = metisService.createPost(post).subscribe();
-            answerPost = { ...answerPost, post };
+            answerPost = Object.assign({}, answerPost, { post });
             const createdAnswerPostSub = metisService.createAnswerPost(answerPost).subscribe();
 
             const updatedAnswerPostSub = metisService.updateAnswerPost(answerPost).subscribe((updatedAnswerPost) => {
                 expect(updatedAnswerPost).toEqual(answerPost);
             });
-            const cachedPostsSub = metisService.posts.subscribe((posts) => expect(posts).toEqual([{ ...post, answers: [answerPost] }]));
+            const cachedPostsSub = metisService.posts.subscribe((posts) => expect(posts).toEqual([Object.assign({}, post, { answers: [answerPost] })]));
 
             expect(answerPostServiceSpy).toHaveBeenCalledOnce();
             tick();
@@ -353,12 +353,12 @@ describe('Metis Service', () => {
         it('should create a reaction', fakeAsync(() => {
             const reactionServiceSpy = jest.spyOn(reactionService, 'create');
             const createdPostSub = metisService.createPost(post).subscribe();
-            reaction = { ...reaction, post };
+            reaction = Object.assign({}, reaction, { post });
 
             const createdReactionSub = metisService.createReaction(reaction).subscribe((createdReaction) => {
                 expect(createdReaction).toEqual(reaction);
             });
-            const cachedPostsSub = metisService.posts.subscribe((posts) => expect(posts).toEqual([{ ...post, reactions: [reaction] }]));
+            const cachedPostsSub = metisService.posts.subscribe((posts) => expect(posts).toEqual([Object.assign({}, post, { reactions: [reaction] })]));
 
             expect(reactionServiceSpy).toHaveBeenCalledOnce();
             tick();
@@ -370,14 +370,14 @@ describe('Metis Service', () => {
 
         it('should delete a reaction', fakeAsync(() => {
             const reactionServiceSpy = jest.spyOn(reactionService, 'delete');
-            post = { ...post, reactions: [reaction] };
+            post = Object.assign({}, post, { reactions: [reaction] });
             reaction.post = post;
             const createdPostSub = metisService.createPost(post).subscribe();
 
             metisService.deleteReaction(reaction).subscribe(() => {
                 expect(metisServiceGetFilteredPostsSpy).not.toHaveBeenCalled();
             });
-            const cachedPostsSub = metisService.posts.subscribe((posts) => expect(posts).toEqual([{ ...post, reactions: [] }]));
+            const cachedPostsSub = metisService.posts.subscribe((posts) => expect(posts).toEqual([Object.assign({}, post, { reactions: [] })]));
 
             tick();
             expect(reactionServiceSpy).toHaveBeenCalledOnce();
@@ -482,11 +482,8 @@ describe('Metis Service', () => {
     });
 
     it('should return "Direct Message" when conversation is a one-to-one chat', () => {
-        const dmConversation = { ...conversationBetweenUser1User2, type: ConversationType.ONE_TO_ONE };
-        const directMessagePost: Post = {
-            ...directMessageUser2,
-            conversation: dmConversation,
-        };
+        const dmConversation = Object.assign({}, conversationBetweenUser1User2, { type: ConversationType.ONE_TO_ONE });
+        const directMessagePost: Post = Object.assign({}, directMessageUser2, { conversation: dmConversation });
         metisService.setCourse(course);
         const contextInformation = metisService.getContextInformation(directMessagePost);
 
@@ -680,7 +677,7 @@ describe('Metis Service', () => {
 
         it('should update plagiarism posts received over WebSocket', () => {
             // Setup
-            const post = { ...plagiarismPost };
+            const post = Object.assign({}, plagiarismPost);
 
             const mockPostDTO = {
                 post: post,
@@ -705,7 +702,7 @@ describe('Metis Service', () => {
             // Setup
             const channel = 'someChannel';
             const mockPostDTO = {
-                post: { ...metisPostInChannel, content: 'search Text' },
+                post: Object.assign({}, metisPostInChannel, { content: 'search Text' }),
                 action: MetisPostAction.CREATE,
             };
             const mockReceiveObservable = new Subject();
@@ -732,7 +729,7 @@ describe('Metis Service', () => {
             mockReceiveObservable.next(mockPostDTO);
             // Emulate receiving a message not matching the search text
             mockReceiveObservable.next({
-                post: { ...metisPostInChannel, content: 'other Text' },
+                post: Object.assign({}, metisPostInChannel, { content: 'other Text' }),
                 action: MetisPostAction.CREATE,
             });
 
@@ -994,11 +991,11 @@ describe('Metis Service', () => {
             const pinnedPost = { id: 123, displayPriority: DisplayPriority.PINNED, conversation: { id: 22 } } as Post;
             const mockDeleteDTO: MetisPostDTO = {
                 action: MetisPostAction.DELETE,
-                post: { ...pinnedPost },
+                post: Object.assign({}, pinnedPost),
             };
 
             metisService['pinnedPosts$'].next([pinnedPost]);
-            metisService['cachedPosts'].push({ ...pinnedPost });
+            metisService['cachedPosts'].push(Object.assign({}, pinnedPost));
             metisService['getFilteredPosts']({ conversationIds: [22] } as PostContextFilter);
             metisService['handleNewOrUpdatedMessage'](mockDeleteDTO);
 

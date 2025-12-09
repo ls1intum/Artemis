@@ -372,7 +372,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
 
     handleFileChange(fileChange: FileChange) {
         if (fileChange instanceof CreateFileChange) {
-            this.repositoryFiles = { ...this.repositoryFiles, [fileChange.fileName]: fileChange.fileType };
+            this.repositoryFiles = Object.assign({}, this.repositoryFiles, { [fileChange.fileName]: fileChange.fileType });
         } else {
             this.repositoryFiles = this.fileService.updateFileReferences(this.repositoryFiles, fileChange);
         }
@@ -516,11 +516,11 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     compressTree(node: FileTreeItem): FileTreeItem {
         // If the node has only one child and that child is a folder, we can compress the tree.
         if (node.children && node.children.length === 1 && this.repositoryFiles[node.children[0].value] === FileType.FOLDER) {
-            return this.compressTree({ ...node.children[0], text: node.text + '/' + node.children[0].text, folder: node.folder, file: node.file });
+            return this.compressTree(Object.assign({}, node.children[0], { text: node.text + '/' + node.children[0].text, folder: node.folder, file: node.file }));
         }
         // If the node has children, we cannot compress it. However, we can try to compress its children.
         else if (node.children) {
-            return { ...node, children: node.children.map(this.compressTree.bind(this)) };
+            return Object.assign({}, node, { children: node.children.map(this.compressTree.bind(this)) });
         }
         // If the node has no children, there is nothing to compress.
         else {

@@ -82,7 +82,7 @@ export class TutorialGroupSessionRowComponent {
                     this.initialized = true;
                     this.updateSomethingBasedOnSession();
                 }
-                this.localSession.set({ ...session });
+                this.localSession.set(Object.assign({}, session));
                 this.persistedAttendanceCount = session.attendanceCount ?? 0;
             }
         });
@@ -109,10 +109,7 @@ export class TutorialGroupSessionRowComponent {
     }
 
     onAttendanceInput(newAttendanceCount: number | null) {
-        this.localSession.update((session) => ({
-            ...session,
-            attendanceCount: newAttendanceCount === null ? undefined : newAttendanceCount,
-        }));
+        this.localSession.update((session) => Object.assign({}, session, { attendanceCount: newAttendanceCount === null ? undefined : newAttendanceCount }));
     }
 
     saveAttendanceCount() {
@@ -132,10 +129,7 @@ export class TutorialGroupSessionRowComponent {
                 },
                 error: (res: HttpErrorResponse) => {
                     onError(this.alertService, res);
-                    this.localSession.update((session) => ({
-                        ...session,
-                        attendanceCount: this.persistedAttendanceCount,
-                    }));
+                    this.localSession.update((session) => Object.assign({}, session, { attendanceCount: this.persistedAttendanceCount }));
                 },
             })
             .add(() => {

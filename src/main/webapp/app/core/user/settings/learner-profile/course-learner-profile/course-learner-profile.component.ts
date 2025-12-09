@@ -139,12 +139,14 @@ export class CourseLearnerProfileComponent implements OnInit {
 
         // Create a new CourseLearnerProfileDTO object with the updated values
         const updatedProfile = new CourseLearnerProfileDTO();
-        Object.assign(updatedProfile, {
-            ...courseLearnerProfile,
-            aimForGradeOrBonus: this.aimForGradeOrBonus(),
-            timeInvestment: this.timeInvestment(),
-            repetitionIntensity: this.repetitionIntensity(),
-        });
+        Object.assign(
+            updatedProfile,
+            Object.assign({}, courseLearnerProfile, {
+                aimForGradeOrBonus: this.aimForGradeOrBonus(),
+                timeInvestment: this.timeInvestment(),
+                repetitionIntensity: this.repetitionIntensity(),
+            }),
+        );
 
         if (!updatedProfile.isValid()) {
             this.alertService.addAlert({

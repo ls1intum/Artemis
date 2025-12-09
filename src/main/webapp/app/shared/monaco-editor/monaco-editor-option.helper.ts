@@ -47,8 +47,4 @@ const defaultMarkdownOptions: EditorOptions = {
 
 export const DEFAULT_MARKDOWN_EDITOR_OPTIONS = new MonacoEditorOptionPreset(defaultMarkdownOptions);
 
-export const COMMUNICATION_MARKDOWN_EDITOR_OPTIONS = new MonacoEditorOptionPreset({
-    ...defaultMarkdownOptions,
-    // Separates the editor suggest widget from the editor's layout. It will stick to the page, but it won't interfere with other elements.
-    fixedOverflowWidgets: true,
-});
+export const COMMUNICATION_MARKDOWN_EDITOR_OPTIONS = new MonacoEditorOptionPreset(Object.assign({}, defaultMarkdownOptions, { fixedOverflowWidgets: true }));

@@ -54,7 +54,7 @@ describe('AthenaService file map behaviour', () => {
     });
 
     it('should rehydrate grading instructions for text suggestions', async () => {
-        const exercise = { ...exerciseBase, type: 'text' } as Exercise;
+        const exercise = Object.assign({}, exerciseBase, { type: 'text' }) as Exercise;
         const submission = { id: 5, text: 'Hello World' } as TextSubmission;
         const suggestion = new TextFeedbackSuggestion(1, exercise.id!, submission.id!, 'Title', 'Description', 2, 99, undefined, undefined);
         const suggestionsPromise = lastValueFrom(service.getTextFeedbackSuggestions(exercise, submission));
@@ -68,7 +68,7 @@ describe('AthenaService file map behaviour', () => {
     });
 
     it('should use lineStart fallback when programming suggestion lacks an end line', async () => {
-        const exercise = { ...exerciseBase, type: 'programming' } as Exercise;
+        const exercise = Object.assign({}, exerciseBase, { type: 'programming' }) as Exercise;
         const programmingSuggestion = new ProgrammingFeedbackSuggestion(2, exercise.id!, 9, 'Issue', 'Fix it', 0.5, 99, 'src/Main.java', 4, undefined);
         const suggestionsPromise = lastValueFrom(service.getProgrammingFeedbackSuggestions(exercise, 9));
         httpMock.expectOne('api/athena/programming-exercises/10/submissions/9/feedback-suggestions').flush([programmingSuggestion]);
@@ -80,7 +80,7 @@ describe('AthenaService file map behaviour', () => {
     });
 
     it('should mark programming suggestions without location as unreferenced', async () => {
-        const exercise = { ...exerciseBase, type: 'programming' } as Exercise;
+        const exercise = Object.assign({}, exerciseBase, { type: 'programming' }) as Exercise;
         const suggestion = new ProgrammingFeedbackSuggestion(3, exercise.id!, 9, 'Hint', 'Think about edge cases', 1, undefined, '', undefined, undefined);
         const suggestionsPromise = lastValueFrom(service.getProgrammingFeedbackSuggestions(exercise, 9));
         httpMock.expectOne('api/athena/programming-exercises/10/submissions/9/feedback-suggestions').flush([suggestion]);
@@ -91,7 +91,7 @@ describe('AthenaService file map behaviour', () => {
     });
 
     it('should split modeling references into type and id and expose positivity', async () => {
-        const exercise = { ...exerciseBase, type: 'modeling' } as Exercise;
+        const exercise = Object.assign({}, exerciseBase, { type: 'modeling' }) as Exercise;
         const modelingSuggestion = new ModelingFeedbackSuggestion(4, exercise.id!, 11, 'Model', 'Looks good', 2, 99, 'element:123');
         const submission = { id: 11 } as ModelingSubmission;
         const suggestionsPromise = lastValueFrom(service.getModelingFeedbackSuggestions(exercise, submission));
@@ -107,7 +107,7 @@ describe('AthenaService file map behaviour', () => {
     });
 
     it('should fallback to suggestion metadata when modeling reference is missing', async () => {
-        const exercise = { ...exerciseBase, type: 'modeling' } as Exercise;
+        const exercise = Object.assign({}, exerciseBase, { type: 'modeling' }) as Exercise;
         const modelingSuggestion = new ModelingFeedbackSuggestion(5, exercise.id!, 11, 'Model', 'Needs work', 0, undefined, undefined);
         const submission = { id: 11 } as ModelingSubmission;
         const suggestionsPromise = lastValueFrom(service.getModelingFeedbackSuggestions(exercise, submission));

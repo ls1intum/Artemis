@@ -102,7 +102,7 @@ describe('LearningPathsStateComponent', () => {
 
     it.each([HealthStatus.NO_COMPETENCIES, HealthStatus.NO_RELATIONS])('should navigate to competencies page on %s status', async (status) => {
         const navigateSpy = jest.spyOn(router, 'navigate');
-        getLearningPathHealthStatusSpy.mockResolvedValue({ ...learningPathHealth, status: [status] });
+        getLearningPathHealthStatusSpy.mockResolvedValue(Object.assign({}, learningPathHealth, { status: [status] }));
 
         await clickHealthStateButton(`#health-state-button-${status}`);
 
@@ -112,7 +112,7 @@ describe('LearningPathsStateComponent', () => {
     it('should generate missing learning paths', async () => {
         const generateMissingLearningPathsSpy = jest.spyOn(learningPathApiService, 'generateMissingLearningPaths').mockResolvedValue();
         const successSpy = jest.spyOn(alertService, 'success');
-        getLearningPathHealthStatusSpy.mockResolvedValue({ ...learningPathHealth, status: [HealthStatus.MISSING] });
+        getLearningPathHealthStatusSpy.mockResolvedValue(Object.assign({}, learningPathHealth, { status: [HealthStatus.MISSING] }));
 
         await clickHealthStateButton(`#health-state-button-${HealthStatus.MISSING}`);
 
@@ -124,7 +124,7 @@ describe('LearningPathsStateComponent', () => {
     it('should show error when generating missing learning paths fails', async () => {
         jest.spyOn(learningPathApiService, 'generateMissingLearningPaths').mockRejectedValue(new Error('Error generating missing learning paths'));
         const onErrorSpy = jest.spyOn(alertService, 'addAlert');
-        getLearningPathHealthStatusSpy.mockResolvedValue({ ...learningPathHealth, status: [HealthStatus.MISSING] });
+        getLearningPathHealthStatusSpy.mockResolvedValue(Object.assign({}, learningPathHealth, { status: [HealthStatus.MISSING] }));
 
         await clickHealthStateButton(`#health-state-button-${HealthStatus.MISSING}`);
 

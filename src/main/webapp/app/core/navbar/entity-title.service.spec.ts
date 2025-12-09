@@ -8,10 +8,7 @@ import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.ser
 // Preliminary mock before import to prevent errors
 jest.mock('@sentry/angular', () => {
     const originalModule = jest.requireActual('@sentry/angular');
-    return {
-        ...originalModule,
-        captureException: jest.fn(),
-    };
+    return Object.assign({}, originalModule, { captureException: jest.fn() });
 });
 
 describe('EntityTitleService', () => {

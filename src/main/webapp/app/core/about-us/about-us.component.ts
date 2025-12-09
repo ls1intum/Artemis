@@ -63,10 +63,9 @@ export class AboutUsComponent implements OnInit {
     ngOnInit(): void {
         this.staticContentService.getStaticJsonFromArtemisServer('about-us.json').subscribe((data) => {
             // Map contributors into the model, as the returned data are just plain objects
-            this.data = {
-                ...data,
+            this.data = Object.assign({}, data, {
                 contributors: data.contributors.map((con: any) => new ContributorModel(con.fullName, con.photoDirectory, con.sortBy, con.role, con.website)),
-            };
+            });
 
             // Sort by last name
             // Either the last "word" in the name, or the dedicated sortBy field, if present

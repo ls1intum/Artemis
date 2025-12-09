@@ -37,7 +37,7 @@ export class CropService {
             width,
             height,
             imagePosition,
-            cropperPosition: { ...cropper },
+            cropperPosition: Object.assign({}, cropper),
         };
         if (settings.containWithinAspectRatio) {
             output.offsetImagePosition = CropService.getOffsetImagePosition(sourceImage, loadedImage, cropper, settings);

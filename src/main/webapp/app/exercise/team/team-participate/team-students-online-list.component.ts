@@ -151,11 +151,10 @@ export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
 
     private convertOnlineTeamStudentsFromServer(students: OnlineTeamStudent[]) {
         return students.map((student) => {
-            return {
-                ...student,
+            return Object.assign({}, student, {
                 lastTypingDate: student.lastTypingDate !== null ? dayjs(student.lastTypingDate) : null,
                 lastActionDate: student.lastActionDate !== null ? dayjs(student.lastActionDate) : null,
-            };
+            });
         });
     }
 

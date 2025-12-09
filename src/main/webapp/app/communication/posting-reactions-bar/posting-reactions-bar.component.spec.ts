@@ -249,7 +249,9 @@ describe('PostingReactionsBarComponent', () => {
         } as ChannelDTO;
         jest.spyOn(metisService, 'getCurrentConversation').mockReturnValue(channelConversation);
         runInInjectionContext(fixture.debugElement.injector, () => {
-            component.posting = input<Posting>({ ...metisResolvingAnswerPostUser1, post: { ...metisPostInChannel }, authorRole: UserRole.USER } as AnswerPost);
+            component.posting = input<Posting>(
+                Object.assign({}, metisResolvingAnswerPostUser1, { post: Object.assign({}, metisPostInChannel), authorRole: UserRole.USER }) as AnswerPost,
+            );
             component.isEmojiCount = input<boolean>(false);
         });
         component.ngOnInit();
@@ -301,7 +303,7 @@ describe('PostingReactionsBarComponent', () => {
         } as ChannelDTO;
         jest.spyOn(metisService, 'getCurrentConversation').mockReturnValue(channelConversation);
         runInInjectionContext(fixture.debugElement.injector, () => {
-            component.posting = input<Posting>({ ...metisPostInChannel, authorRole: UserRole.USER });
+            component.posting = input<Posting>(Object.assign({}, metisPostInChannel, { authorRole: UserRole.USER }));
         });
         component.ngOnInit();
         fixture.detectChanges();
@@ -344,7 +346,7 @@ describe('PostingReactionsBarComponent', () => {
         } as ChannelDTO;
         jest.spyOn(metisService, 'getCurrentConversation').mockReturnValue(channelConversation);
         runInInjectionContext(fixture.debugElement.injector, () => {
-            component.posting = input<Posting>({ ...metisPostInChannel, authorRole: UserRole.USER });
+            component.posting = input<Posting>(Object.assign({}, metisPostInChannel, { authorRole: UserRole.USER }));
         });
 
         component.ngOnInit();

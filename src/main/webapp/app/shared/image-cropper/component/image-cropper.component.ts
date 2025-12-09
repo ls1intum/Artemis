@@ -274,7 +274,7 @@ export class ImageCropperComponent implements OnChanges, OnInit {
             this.setCropperScaledMinSize();
             this.setCropperScaledMaxSize();
             this.resetCropperPosition();
-            this.cropperReady.emit({ ...this.maxSize });
+            this.cropperReady.emit(Object.assign({}, this.maxSize));
             this.changeDetector.markForCheck();
         } else {
             this.setImageMaxSizeRetries++;
@@ -347,14 +347,10 @@ export class ImageCropperComponent implements OnChanges, OnInit {
         if (event.preventDefault) {
             event.preventDefault();
         }
-        this.moveStart = {
-            active: true,
-            type: moveType,
-            position,
-            clientX: this.cropperPositionService.getClientX(event),
-            clientY: this.cropperPositionService.getClientY(event),
-            ...this.cropper,
-        };
+        this.moveStart = Object.assign(
+            { active: true, type: moveType, position, clientX: this.cropperPositionService.getClientX(event), clientY: this.cropperPositionService.getClientY(event) },
+            this.cropper,
+        );
     }
 
     @HostListener('document:mousemove', ['$event'])

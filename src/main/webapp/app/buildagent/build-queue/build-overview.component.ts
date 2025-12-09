@@ -368,7 +368,7 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
                 buildJob.jobTimingInfo.buildDuration = now.diff(start, 'seconds');
             }
             // This is necessary to update the view when the build job duration is updated
-            return { ...buildJob };
+            return Object.assign({}, buildJob);
         });
     }
 

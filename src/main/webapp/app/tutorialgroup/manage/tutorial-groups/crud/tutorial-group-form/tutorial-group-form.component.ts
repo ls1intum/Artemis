@@ -175,9 +175,9 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges, OnDestroy 
         } else if (!originalHasSchedule && !updateHasSchedule) {
             return false;
         } else {
-            const newScheduleValues = { ...this.form.value.schedule };
+            const newScheduleValues = Object.assign({}, this.form.value.schedule);
             delete newScheduleValues.location;
-            const existingScheduleValues = { ...this.existingScheduleFormDate };
+            const existingScheduleValues = Object.assign({}, this.existingScheduleFormDate);
             // we do not consider the location when comparing the schedules as change it has no irreversible effect
             delete existingScheduleValues.location;
             return !isEqual(newScheduleValues, existingScheduleValues);
@@ -205,7 +205,7 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges, OnDestroy 
     }
 
     submitForm() {
-        const tutorialGroupFormData: TutorialGroupFormData = { ...this.form.value };
+        const tutorialGroupFormData: TutorialGroupFormData = Object.assign({}, this.form.value);
         tutorialGroupFormData.additionalInformation = this.additionalInformation;
         if (!this.configureSchedule) {
             tutorialGroupFormData.schedule = undefined;
@@ -279,7 +279,7 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges, OnDestroy 
     }
 
     private createUserWithLabel(user: User): UserWithLabel {
-        return { ...user, label: this.createUserLabel(user) };
+        return Object.assign({}, user, { label: this.createUserLabel(user) });
     }
 
     private createUserLabel(ta: User) {

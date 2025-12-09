@@ -392,7 +392,7 @@ describe('ChartCategoryFilter', () => {
     it('should display an exercise with multiple categories unless both are deselected', () => {
         const quizCategory1 = generateExerciseCategory(ExerciseType.QUIZ, 1);
         const quizCategory2 = generateExerciseCategory(ExerciseType.QUIZ, 2);
-        const newQuizExercise = { ...quizExercise, categories: [quizCategory1, quizCategory2] as ExerciseCategory[] };
+        const newQuizExercise = Object.assign({}, quizExercise, { categories: [quizCategory1, quizCategory2] as ExerciseCategory[] });
 
         categoryFilter.setupCategoryFilter([newQuizExercise]);
 

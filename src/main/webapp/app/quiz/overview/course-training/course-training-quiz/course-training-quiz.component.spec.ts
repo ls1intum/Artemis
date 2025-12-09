@@ -235,7 +235,7 @@ describe('CourseTrainingQuizComponent', () => {
 
     it('should handle submit error', () => {
         const alertSpy = jest.spyOn(TestBed.inject(AlertService), 'addAlert');
-        jest.spyOn(component, 'currentQuestion').mockReturnValue({ ...question1 } as any);
+        jest.spyOn(component, 'currentQuestion').mockReturnValue(Object.assign({}, question1) as any);
         const error = new HttpErrorResponse({
             error: 'error',
             status: 400,

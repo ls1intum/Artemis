@@ -48,7 +48,7 @@ describe('TutorialGroupSessionRowComponent', () => {
     });
 
     it('should display session canceled button when sessions are cancelled', () => {
-        fixture.componentRef.setInput('session', { ...session, status: TutorialGroupSessionStatus.CANCELLED });
+        fixture.componentRef.setInput('session', Object.assign({}, session, { status: TutorialGroupSessionStatus.CANCELLED }));
         fixture.detectChanges();
 
         const sessionCanceledButton = fixture.debugElement.query(By.css('button.btn-outline-danger'));
@@ -59,7 +59,7 @@ describe('TutorialGroupSessionRowComponent', () => {
         const tutorialGroupSessionService = TestBed.inject(TutorialGroupSessionService);
         const updateAttendanceCountSpy = jest
             .spyOn(tutorialGroupSessionService, 'updateAttendanceCount')
-            .mockReturnValue(of(new HttpResponse<TutorialGroupSession>({ body: { ...session, attendanceCount: 5 } })));
+            .mockReturnValue(of(new HttpResponse<TutorialGroupSession>({ body: Object.assign({}, session, { attendanceCount: 5 }) })));
         const attendanceChangedSpy = jest.spyOn(component.attendanceChanged, 'emit');
         changeAttendanceInputAndSave();
 
@@ -67,7 +67,7 @@ describe('TutorialGroupSessionRowComponent', () => {
             expect(updateAttendanceCountSpy).toHaveBeenCalledOnce();
             expect(updateAttendanceCountSpy).toHaveBeenCalledWith(tutorialGroup.course?.id, tutorialGroup.id, session.id, 5);
             expect(attendanceChangedSpy).toHaveBeenCalledOnce();
-            expect(attendanceChangedSpy).toHaveBeenCalledWith({ ...session, attendanceCount: 5 });
+            expect(attendanceChangedSpy).toHaveBeenCalledWith(Object.assign({}, session, { attendanceCount: 5 }));
             expect(component.attendanceDiffersFromPersistedValue()).toBeFalse();
             expect(component.localSession().attendanceCount).toBe(5);
         });
