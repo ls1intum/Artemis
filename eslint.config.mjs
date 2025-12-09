@@ -89,7 +89,7 @@ export default tseslint.config(
             '@typescript-eslint': tsPlugin,
             '@angular-eslint': angularPlugin,
             prettier: prettierPlugin,
-            localRules: localRulesPlugin
+            localRules: localRulesPlugin,
         },
         // TODO: adapt the rules of the newest jhipster version, e.g. no-inferrable-types, restrict-plus-operands, etc.
         rules: {
@@ -108,13 +108,16 @@ export default tseslint.config(
             '@typescript-eslint/no-empty-function': 'off',
             '@typescript-eslint/no-non-null-asserted-optional-chain': 'warn',
             '@typescript-eslint/no-explicit-any': 'off',
-            '@typescript-eslint/no-unused-vars': ['error', {
-                vars: 'all',
-                varsIgnorePattern: '^_', // Ignore variables prefixed with `_`
-                args: 'none',
-                ignoreRestSiblings: true,
-                caughtErrors: 'none',
-            },],
+            '@typescript-eslint/no-unused-vars': [
+                'error',
+                {
+                    vars: 'all',
+                    varsIgnorePattern: '^_', // Ignore variables prefixed with `_`
+                    args: 'none',
+                    ignoreRestSiblings: true,
+                    caughtErrors: 'none',
+                },
+            ],
             'no-unused-private-class-members': 'error',
             'no-case-declarations': 'off',
             'prefer-const': 'warn',
@@ -133,27 +136,27 @@ export default tseslint.config(
                     paths: [
                         {
                             name: 'dayjs',
-                            message: "Please import from 'dayjs/esm' instead."
+                            message: "Please import from 'dayjs/esm' instead.",
                         },
                         {
                             name: 'lodash',
-                            message: "Please import from 'lodash-es' instead."
-                        }
-                    ]
-                }
+                            message: "Please import from 'lodash-es' instead.",
+                        },
+                    ],
+                },
             ],
-            "no-restricted-syntax": [
-                "error",
+            'no-restricted-syntax': [
+                'error',
                 {
-                    selector: "ObjectExpression > SpreadElement",
-                    message: "Do not use object spread in object literals. Use Object.assign instead."
-                }
+                    selector: 'ObjectExpression > SpreadElement',
+                    message: 'Do not use object spread in object literals. Use Object.assign instead.',
+                },
             ],
             'localRules/require-signal-reference-ngb-modal-input': 'error',
         },
     },
     {
-        files: ['src/test/javascript/**','src/main/webapp/app/**/*.spec.ts'],
+        files: ['src/test/javascript/**', 'src/main/webapp/app/**/*.spec.ts'],
         plugins: {
             jest: jestPlugin,
             'jest-extended': jestExtendedPlugin,
@@ -168,13 +171,16 @@ export default tseslint.config(
             '@typescript-eslint/no-empty-function': 'off',
             '@typescript-eslint/ban-ts-comment': 'off',
             '@typescript-eslint/no-var-requires': 'off',
-            '@typescript-eslint/no-unused-vars': ['warn', {
-                vars: 'all',
-                varsIgnorePattern: '^_',
-                args: 'none',
-                ignoreRestSiblings: true,
-                caughtErrors: 'none',
-            }],
+            '@typescript-eslint/no-unused-vars': [
+                'warn',
+                {
+                    vars: 'all',
+                    varsIgnorePattern: '^_',
+                    args: 'none',
+                    ignoreRestSiblings: true,
+                    caughtErrors: 'none',
+                },
+            ],
             'no-unused-private-class-members': 'error',
             'no-unused-vars': 'off',
             'no-undef': 'off',
