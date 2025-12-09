@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.hyperion.web;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,7 +36,6 @@ class QuizGenerationResourceTest extends AbstractSpringIntegrationLocalCILocalVC
 
         Course course = courseUtilService.addEmptyCourse();
         course.setTitle("Quiz Generation Test Course");
-        course.setShortName(TEST_PREFIX + "course");
         course.setStudentGroupName(TEST_PREFIX + "student");
         course.setTeachingAssistantGroupName(TEST_PREFIX + "tutor");
         course.setEditorGroupName(TEST_PREFIX + "editor");
@@ -59,11 +57,6 @@ class QuizGenerationResourceTest extends AbstractSpringIntegrationLocalCILocalVC
         userTestRepository.save(tutor);
         userTestRepository.save(editor);
         userTestRepository.save(instructor);
-    }
-
-    @AfterEach
-    void cleanUpTestData() {
-        courseRepository.deleteAll();
     }
 
     @Test
