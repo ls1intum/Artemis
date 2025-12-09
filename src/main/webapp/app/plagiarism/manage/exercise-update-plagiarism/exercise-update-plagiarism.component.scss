@@ -1,0 +1,50 @@
+.label-row {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    white-space: nowrap;
+    overflow: hidden;
+    margin-bottom: 0.5rem;
+    min-width: 0;
+}
+
+.label-row .form-control-label {
+    flex: 1 1 0;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    line-height: 1.1;
+}
+
+fa-icon,
+:host ::ng-deep fa-icon {
+    display: inline-flex;
+    flex: 0 0 auto;
+    vertical-align: middle;
+    margin-left: 0.15rem;
+    font-size: 0.95em;
+}
+
+.form-group.d-flex {
+    padding-top: 0.6rem;
+    padding-bottom: 0.6rem;
+}
+
+.form-group.d-flex .form-control {
+    min-height: 42px;
+}
+
+.form-control.mt-auto {
+    margin-top: 0 !important;
+}
+
+@media (max-width: 767.98px) {
+    .label-row {
+        display: inline-flex;
+    }
+    .form-group.d-flex {
+        padding-top: 0.5rem;
+        padding-bottom: 0.5rem;
+    }
+}
