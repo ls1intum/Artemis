@@ -113,13 +113,13 @@ export default tseslint.config(
                 },
             ],
 
-            // "no-restricted-syntax": [
-            //     "error",
-            //     {
-            //         selector: "ObjectExpression > SpreadElement",
-            //         message: "Do not use object spread. Use Object.assign instead."
-            //     }
-            // ],
+            "no-restricted-syntax": [
+                "error",
+                {
+                    selector: "ObjectExpression > SpreadElement",
+                    message: "Do not use object spread in object literals. Use Object.assign instead."
+                }
+            ],
             // vs.
             // Prefer object spread over Object.assign
             // 'prefer-object-spread': 'error',
