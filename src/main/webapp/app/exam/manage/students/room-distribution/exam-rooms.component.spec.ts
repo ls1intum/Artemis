@@ -43,7 +43,7 @@ describe('ExamRoomsComponentTest', () => {
         service = TestBed.inject(ExamRoomsService);
 
         // getAdminOverview gets implicitly called each time the page is opened
-        jest.spyOn(service, 'getAdminOverview').mockReturnValue(
+        jest.spyOn(service, 'getRoomOverview').mockReturnValue(
             of(
                 convertBodyToHttpResponse({
                     numberOfStoredExamRooms: 0,
@@ -116,7 +116,7 @@ describe('ExamRoomsComponentTest', () => {
 
     it('should show error message on loadExamRoomOverview fail', () => {
         // GIVEN
-        jest.spyOn(service, 'getAdminOverview').mockReturnValue(throwError(() => new Error()));
+        jest.spyOn(service, 'getRoomOverview').mockReturnValue(throwError(() => new Error()));
 
         // WHEN
         fixture.detectChanges();
@@ -299,7 +299,7 @@ describe('ExamRoomsComponentTest', () => {
             ],
         } as ExamRoomDTO;
 
-        jest.spyOn(service, 'getAdminOverview').mockReturnValue(
+        jest.spyOn(service, 'getRoomOverview').mockReturnValue(
             of(
                 convertBodyToHttpResponse({
                     numberOfStoredExamRooms: 1,
