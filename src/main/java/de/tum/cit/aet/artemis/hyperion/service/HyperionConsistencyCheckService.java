@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.service;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -19,6 +21,8 @@ import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyCheckResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyIssueCategory;
 import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyIssueDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.Severity;
+import de.tum.cit.aet.artemis.hyperion.dto.TimingDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.TokensDTO;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import reactor.core.publisher.Flux;
@@ -59,6 +63,9 @@ public class HyperionConsistencyCheckService {
         this.exerciseContextRenderer = exerciseContextRenderer;
     }
 
+    private record AIResult(List<ConsistencyIssue> issues, long promptTokens, long completionTokens) {
+    }
+
     /**
      * Execute structural and semantic consistency checks. Model calls run concurrently on bounded elastic threads.
      * Any individual failure degrades gracefully to an empty list; the aggregated response is always non-null.
@@ -68,23 +75,43 @@ public class HyperionConsistencyCheckService {
      */
     public ConsistencyCheckResponseDTO checkConsistency(ProgrammingExercise exercise) {
         log.info("Performing consistency check for exercise {}", exercise.getId());
+
+        Instant startTime = Instant.now();
+
         var exerciseWithParticipations = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
 
         String renderedRepositoryContext = exerciseContextRenderer.renderContext(exerciseWithParticipations);
         String programmingLanguage = exerciseWithParticipations.getProgrammingLanguage() != null ? exerciseWithParticipations.getProgrammingLanguage().name() : "JAVA";
         var input = Map.of("rendered_context", renderedRepositoryContext, "programming_language", programmingLanguage);
 
-        var structuralMono = Mono.fromCallable(() -> runStructuralCheck(input)).subscribeOn(Schedulers.boundedElastic()).onErrorReturn(List.of());
-        var semanticMono = Mono.fromCallable(() -> runSemanticCheck(input)).subscribeOn(Schedulers.boundedElastic()).onErrorReturn(List.of());
+        var structuralMono = Mono.fromCallable(() -> runStructuralCheck(input)).subscribeOn(Schedulers.boundedElastic()).onErrorReturn(new AIResult(List.of(), 0, 0));
+        var semanticMono = Mono.fromCallable(() -> runSemanticCheck(input)).subscribeOn(Schedulers.boundedElastic()).onErrorReturn(new AIResult(List.of(), 0, 0));
 
         // @formatter:off
-        List<ConsistencyIssue> combinedIssues = Flux.merge(
-            structuralMono.flatMapMany(Flux::fromIterable),
-            semanticMono.flatMapMany(Flux::fromIterable)
-        ).collectList().block();
+        List<AIResult> aiResults = Flux.merge(structuralMono, semanticMono).collectList().block();
         // @formatter:on
+        List<ConsistencyIssue> combinedIssues = new ArrayList<>();
+        long totalPromptTokens = 0;
+        long totalCompletionTokens = 0;
+
+        if (aiResults != null) {
+            for (AIResult res : aiResults) {
+                combinedIssues.addAll(res.issues());
+                totalPromptTokens += res.promptTokens();
+                totalCompletionTokens += res.completionTokens();
+            }
+        }
+
+        long totalTokens = totalPromptTokens + totalCompletionTokens;
 
         List<ConsistencyIssueDTO> issueDTOs = Objects.requireNonNullElse(combinedIssues, new ArrayList<ConsistencyIssue>()).stream().map(this::mapConsistencyIssueToDto).toList();
+
+        Instant endTime = Instant.now();
+        double durationSeconds = Duration.between(startTime, endTime).toMillis() / 1000.0;
+
+        var timingDTO = new TimingDTO(startTime.toString(), endTime.toString(), durationSeconds);
+        var tokenDTO = new TokensDTO(totalPromptTokens, totalCompletionTokens, totalTokens);
+
         if (issueDTOs.isEmpty()) {
             log.info("No consistency issues found for exercise {}", exercise.getId());
         }
@@ -94,7 +121,7 @@ public class HyperionConsistencyCheckService {
                 log.info("Consistency issue for exercise {}: [{}] {} - Suggested fix: {}", exercise.getId(), issue.severity(), issue.description(), issue.suggestedFix());
             }
         }
-        return new ConsistencyCheckResponseDTO(issueDTOs);
+        return new ConsistencyCheckResponseDTO(Instant.now(), issueDTOs, timingDTO, tokenDTO);
     }
 
     /**
@@ -103,7 +130,7 @@ public class HyperionConsistencyCheckService {
      * @param input prompt variables (rendered_context, programming_language)
      * @return structural issues (never null)
      */
-    private List<ConsistencyIssue> runStructuralCheck(Map<String, String> input) {
+    private AIResult runStructuralCheck(Map<String, String> input) {
         var resourcePath = "/prompts/hyperion/consistency_structural.st";
         String renderedPrompt = templates.render(resourcePath, input);
         try {
@@ -116,9 +143,13 @@ public class HyperionConsistencyCheckService {
                 .responseEntity(StructuredOutputSchema.StructuralConsistencyIssues.class);
 
             var chatResponse = structuralIssuesResponse.getResponse();
+            long promptTokens = 0;
+            long completionTokens = 0;
 
             if (chatResponse != null && chatResponse.getMetadata().getUsage() != null) {
                 var usage = chatResponse.getMetadata().getUsage();
+                promptTokens = usage.getPromptTokens();
+                completionTokens = usage.getCompletionTokens();
                 log.info(
                     "Hyperion structural check token usage: prompt={}, completion={}, total={}",
                     usage.getPromptTokens(),
@@ -130,11 +161,13 @@ public class HyperionConsistencyCheckService {
             }
 
             // @formatter:on
-            return toGenericConsistencyIssue(structuralIssuesResponse.entity());
+            List<ConsistencyIssue> issues = toGenericConsistencyIssue(structuralIssuesResponse.entity());
+
+            return new AIResult(issues, promptTokens, completionTokens);
         }
         catch (RuntimeException e) {
             log.warn("Failed to obtain or parse AI response for {} - returning empty list", resourcePath, e);
-            return new ArrayList<>();
+            return new AIResult(List.of(), 0, 0);
         }
     }
 
@@ -144,7 +177,7 @@ public class HyperionConsistencyCheckService {
      * @param input prompt variables (rendered_context, programming_language)
      * @return semantic issues
      */
-    private List<ConsistencyIssue> runSemanticCheck(Map<String, String> input) {
+    private AIResult runSemanticCheck(Map<String, String> input) {
         var resourcePath = "/prompts/hyperion/consistency_semantic.st";
         String renderedPrompt = templates.render(resourcePath, input);
         try {
@@ -157,9 +190,13 @@ public class HyperionConsistencyCheckService {
                 .responseEntity(StructuredOutputSchema.SemanticConsistencyIssues.class);
 
             var chatResponse = semanticIssuesResponse.getResponse();
+            long promptTokens = 0;
+            long completionTokens = 0;
 
             if (chatResponse != null && chatResponse.getMetadata().getUsage() != null) {
                 var usage = chatResponse.getMetadata().getUsage();
+                promptTokens = usage.getPromptTokens();
+                completionTokens = usage.getCompletionTokens();
                 log.info(
                     "Hyperion semantic check token usage: prompt={}, completion={}, total={}",
                     usage.getPromptTokens(),
@@ -171,11 +208,13 @@ public class HyperionConsistencyCheckService {
             }
 
             // @formatter:on
-            return toGenericConsistencyIssue(semanticIssuesResponse.entity());
+            List<ConsistencyIssue> issues = toGenericConsistencyIssue(semanticIssuesResponse.entity());
+
+            return new AIResult(issues, promptTokens, completionTokens);
         }
         catch (RuntimeException e) {
-            log.warn("Failed to obtain or parse AI response for {} - returning empty list", resourcePath, e);
-            return new ArrayList<>();
+            log.warn("Failed semantic check", e);
+            return new AIResult(List.of(), 0, 0);
         }
     }
 
