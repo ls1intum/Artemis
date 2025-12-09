@@ -1,5 +1,6 @@
 import {
     AfterViewInit,
+    ChangeDetectorRef,
     Component,
     ElementRef,
     EventEmitter,
@@ -17,7 +18,7 @@ import {
 } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Observable, Subscription, of, throwError } from 'rxjs';
-import { catchError, map as rxMap, switchMap, tap } from 'rxjs/operators';
+import { catchError, finalize, map as rxMap, switchMap, tap } from 'rxjs/operators';
 import { fromPairs, toPairs } from 'lodash-es';
 import { Interactable } from '@interactjs/core/Interactable';
 import interact from 'interactjs';
@@ -176,6 +177,8 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     filesTreeViewItem: TreeViewItem<string>[] = [];
     compressFolders = true;
 
+    private readonly changeDetectorRef = inject(ChangeDetectorRef);
+
     collapsed = false;
 
     @ViewChild('renamingInput', { static: false }) renamingInput: ElementRef;
@@ -305,6 +308,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
 
     initializeComponent = () => {
         this.isLoadingFiles = true;
+        this.changeDetectorRef.markForCheck();
         // We need to make sure to not trigger multiple requests on the git repo at the same time.
         // This is why we first wait until the repository state was checked and then load the files.
         this.checkIfRepositoryIsClean()
@@ -336,16 +340,21 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
                 }),
                 tap((filesWithInfoAboutChange) => {
                     this.repositoryFilesWithInformationAboutChange = filesWithInfoAboutChange;
-                    this.isLoadingFiles = false;
                     this.setupTreeview();
+                    this.changeDetectorRef.markForCheck();
+                }),
+                finalize(() => {
+                    // Guarantee that the loading indicator is cleared even if an upstream error or cancellation happens.
+                    this.isLoadingFiles = false;
+                    this.changeDetectorRef.markForCheck();
                 }),
             )
             .subscribe({
                 error: (error: Error) => {
-                    this.isLoadingFiles = false;
                     this.initializeRepositoryFiles();
                     this.setupTreeview();
                     this.onError.emit(error.message);
+                    this.changeDetectorRef.markForCheck();
                 },
             });
     };

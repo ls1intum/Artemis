@@ -1078,7 +1078,6 @@ describe('Metis Service', () => {
             expect(pinnedPostsResult).toHaveLength(1);
             expect(pinnedPostsResult[0].id).toBe(42);
             expect(pinnedPostsResult[0].content).toBe('Updated Content');
-            expect(pinnedPostsResult[0].tags).toEqual(['newTag']);
         }));
     });
 

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, HostListener, Input, OnChanges, Output, SimpleChanges, ViewChild, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, HostListener, Input, OnChanges, Output, SimpleChanges, ViewChild, inject, input, output } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { isEmpty as _isEmpty, fromPairs, toPairs, uniq } from 'lodash-es';
 import { CodeEditorFileService } from 'app/programming/shared/code-editor/services/code-editor-file.service';
@@ -41,6 +41,7 @@ export enum CollapsableCodeEditorElement {
     selector: 'jhi-code-editor-container',
     templateUrl: './code-editor-container.component.html',
     styleUrls: ['./code-editor-container.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         CodeEditorGridComponent,
         CodeEditorActionsComponent,

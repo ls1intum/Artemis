@@ -128,18 +128,7 @@
                             @if (!connected) {
                                 <div class="update-footer gap-4 disconnected">
                                     <div class="exam-footer-content">
-                                        @if (!isProgrammingExercise()) {
-                                            <p jhiTranslate="artemisApp.examParticipation.disconnected" class="mb-0"></p>
-                                        }
-                                        @if (isProgrammingExerciseWithCodeEditor()) {
-                                            @if (isProgrammingExerciseWithOfflineIDE()) {
-                                                <p jhiTranslate="artemisApp.examParticipation.disconnectedCodeEditorAndOfflineIDE" class="mb-0"></p>
-                                            } @else {
-                                                <p jhiTranslate="artemisApp.examParticipation.disconnectedCodeEditorNoOfflineIDE" class="mb-0"></p>
-                                            }
-                                        } @else if (isProgrammingExerciseWithOfflineIDE()) {
-                                            <p jhiTranslate="artemisApp.examParticipation.disconnectedNoCodeEditor" class="mb-0"></p>
-                                        }
+                                        <p jhiTranslate="artemisApp.examParticipation.disconnected" class="mb-0"></p>
                                         <jhi-connection-status [isExamMode]="true" class="mx-3 connection-status-exam-participation" />
                                     </div>
                                 </div>

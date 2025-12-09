@@ -105,10 +105,10 @@ export class ProgrammingExerciseLanguageComponent implements AfterViewChecked, A
     isPackageNameValid(): boolean {
         return Boolean(
             !this.programmingExercise.programmingLanguage ||
-                !this.programmingExerciseCreationConfig.packageNameRequired ||
-                this.programmingExercise.projectType === ProjectType.XCODE ||
-                this.packageNameField?.isDisabled ||
-                this.packageNameField?.valid,
+            !this.programmingExerciseCreationConfig.packageNameRequired ||
+            this.programmingExercise.projectType === ProjectType.XCODE ||
+            this.packageNameField?.isDisabled ||
+            this.packageNameField?.valid,
         );
     }
 
