@@ -158,7 +158,6 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
 
     // Inline comment selection state
     currentSelection: { startLine: number; endLine: number } | null = null;
-    addButtonTop = 0;
 
     set participation(participation: Participation) {
         this.participationValue = participation;
@@ -446,11 +445,6 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      */
     onEditorSelectionChange(selection: { startLine: number; endLine: number } | null): void {
         this.currentSelection = selection;
-        // Position the button near the selection (basic positioning)
-        if (selection) {
-            // Approximate positioning based on line number
-            this.addButtonTop = Math.max(50, (selection.endLine - 1) * 20 + 40);
-        }
     }
 
     /**

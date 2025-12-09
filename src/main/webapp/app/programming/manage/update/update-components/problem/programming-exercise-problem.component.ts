@@ -251,6 +251,7 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy, A
 
                     if (response.draftProblemStatement && exercise) {
                         exercise.problemStatement = response.draftProblemStatement;
+                        this.currentProblemStatement.set(response.draftProblemStatement);
                         this.programmingExerciseCreationConfig.hasUnsavedChanges = true;
                         this.problemStatementChange.emit(response.draftProblemStatement);
                         this.programmingExerciseChange.emit(exercise);
@@ -314,6 +315,7 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy, A
                     if (originalFromError && exercise) {
                         // Restore original statement if it was included in error
                         exercise.problemStatement = originalFromError;
+                        this.currentProblemStatement.set(originalFromError);
                         this.programmingExerciseChange.emit(exercise);
                     }
                     this.alertService.error('artemisApp.programmingExercise.problemStatement.refinementError');
@@ -333,13 +335,6 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy, A
             this.programmingExerciseChange.emit(exercise);
             this.currentProblemStatement.set(this.refinedProblemStatement);
             this.closeDiff();
-            // Set diff editor content after view update
-            setTimeout(() => {
-                const editor = this.diffEditor();
-                if (editor) {
-                    editor.setFileContents(this.originalProblemStatement, this.refinedProblemStatement, 'original.md', 'refined.md');
-                }
-            }, 0);
         }
     }
 

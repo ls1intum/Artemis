@@ -69,7 +69,8 @@ class HyperionProblemStatementRefinementServiceTest {
     @Test
     void refineProblemStatement_throwsExceptionOnExcessivelyLongResponse() throws Exception {
         String originalStatement = "Original problem statement";
-        // Generate a string longer than MAX_PROBLEM_STATEMENT_LENGTH (50,000 characters)
+        // Generate a string longer than MAX_PROBLEM_STATEMENT_LENGTH (50,000
+        // characters)
         String excessivelyLongRefinement = "a".repeat(50_001);
         when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> new ChatResponse(List.of(new Generation(new AssistantMessage(excessivelyLongRefinement)))));
 
@@ -140,11 +141,11 @@ class HyperionProblemStatementRefinementServiceTest {
         course.setTitle("Test Course");
         course.setDescription("Test Description");
 
-        // Should return empty refinement and original when input is null
+        // Should return empty refinement and empty original when input is null
         ProblemStatementRefinementResponseDTO resp = hyperionProblemStatementRefinementService.refineProblemStatement(course, null, "Refine this");
         assertThat(resp).isNotNull();
         assertThat(resp.refinedProblemStatement()).isEmpty();
-        assertThat(resp.originalProblemStatement()).isNull();
+        assertThat(resp.originalProblemStatement()).isEmpty();
     }
 
     @Test

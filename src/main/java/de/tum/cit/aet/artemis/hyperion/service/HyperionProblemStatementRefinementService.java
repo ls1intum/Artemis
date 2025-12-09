@@ -59,7 +59,7 @@ public class HyperionProblemStatementRefinementService {
 
         if (originalProblemStatementText == null || originalProblemStatementText.isBlank()) {
             log.warn("Cannot refine empty problem statement for course [{}]", course.getId());
-            return new ProblemStatementRefinementResponseDTO("", originalProblemStatementText);
+            return new ProblemStatementRefinementResponseDTO("", java.util.Objects.toString(originalProblemStatementText, ""));
         }
 
         try {
@@ -154,8 +154,16 @@ public class HyperionProblemStatementRefinementService {
 
     /**
      * Handles refinement errors by logging and throwing appropriate exception.
+     * Re-throws InternalServerErrorAlertException unchanged to preserve specific
+     * error keys.
      */
     private ProblemStatementRefinementResponseDTO handleRefinementError(Course course, String originalProblemStatementText, Exception e) {
+        // Re-throw InternalServerErrorAlertException unchanged to preserve specific
+        // error keys
+        if (e instanceof InternalServerErrorAlertException alertException) {
+            throw alertException;
+        }
+
         log.error("Error refining problem statement for course [{}]: {}", course.getId(), e.getMessage(), e);
         // Create exception with original problem statement in params for frontend to
         // preserve it

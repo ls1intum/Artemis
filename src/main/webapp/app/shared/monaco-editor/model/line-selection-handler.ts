@@ -5,6 +5,14 @@ export interface LineSelectionCallbacks {
     onAddComment: (startLine: number, endLine: number) => void;
 }
 
+/**
+ * Options for the line selection handler.
+ */
+export interface LineSelectionOptions {
+    /** Localized tooltip text for the add button (e.g., "Add inline comment") */
+    addButtonTooltip: string;
+}
+
 export interface LineSelectionDisposable {
     dispose: () => void;
 }
@@ -15,12 +23,14 @@ export interface LineSelectionDisposable {
  *
  * @param editor The Monaco editor instance
  * @param callbacks Callbacks for user actions
- * @returns Disposable to clean up listeners
+ * @param options Options including localized strings
+ * @returns Disposable to clean up listeners. Callers must call dispose() (e.g., in ngOnDestroy) to prevent memory leaks.
  */
-export function setupLineSelectionHandler(editor: monaco.editor.IStandaloneCodeEditor, callbacks: LineSelectionCallbacks): LineSelectionDisposable {
+export function setupLineSelectionHandler(editor: monaco.editor.IStandaloneCodeEditor, callbacks: LineSelectionCallbacks, options: LineSelectionOptions): LineSelectionDisposable {
     const disposables: monaco.IDisposable[] = [];
     let currentDecorations: string[] = [];
     let addButtonOverlay: HTMLElement | undefined;
+    let currentSelection: { startLine: number; endLine: number } | undefined;
 
     // Gutter decoration style
     const gutterDecorationClass = 'inline-comment-add-gutter';
@@ -35,11 +45,13 @@ export function setupLineSelectionHandler(editor: monaco.editor.IStandaloneCodeE
             // No selection - clear decorations
             currentDecorations = editor.deltaDecorations(currentDecorations, []);
             removeAddButton();
+            currentSelection = undefined;
             return;
         }
 
         const startLine = selection.startLineNumber;
         const endLine = selection.endLineNumber;
+        currentSelection = { startLine, endLine };
 
         // Add gutter decoration for selected lines
         currentDecorations = editor.deltaDecorations(currentDecorations, [
@@ -59,53 +71,68 @@ export function setupLineSelectionHandler(editor: monaco.editor.IStandaloneCodeE
 
     /**
      * Shows the "+" button in the gutter area.
+     * Creates the button only once if not already existing.
      */
     function showAddButton(startLine: number, endLine: number): void {
-        removeAddButton();
-
         const domNode = editor.getDomNode();
         if (!domNode) {
             return;
         }
 
-        // Create the add button
-        addButtonOverlay = document.createElement('div');
-        addButtonOverlay.className = 'inline-comment-add-button';
-        addButtonOverlay.innerHTML = '+';
-        addButtonOverlay.title = 'Add inline comment';
+        // Create the button only if it doesn't exist
+        if (!addButtonOverlay) {
+            addButtonOverlay = document.createElement('div');
+            addButtonOverlay.className = 'inline-comment-add-button';
+            addButtonOverlay.textContent = '+';
+            addButtonOverlay.title = options.addButtonTooltip;
 
-        // Position the button at the start line
+            const lineHeight = editor.getOption(monaco.editor.EditorOption.lineHeight);
+
+            addButtonOverlay.style.position = 'absolute';
+            addButtonOverlay.style.left = '4px';
+            addButtonOverlay.style.width = '20px';
+            addButtonOverlay.style.height = `${lineHeight}px`;
+            addButtonOverlay.style.lineHeight = `${lineHeight}px`;
+            addButtonOverlay.style.cursor = 'pointer';
+            addButtonOverlay.style.zIndex = '10';
+            addButtonOverlay.style.textAlign = 'center';
+            addButtonOverlay.style.fontWeight = 'bold';
+            addButtonOverlay.style.fontSize = '14px';
+            addButtonOverlay.style.color = 'var(--bs-primary)';
+            addButtonOverlay.style.backgroundColor = 'var(--bs-tertiary-bg)';
+            addButtonOverlay.style.borderRadius = '4px';
+            addButtonOverlay.style.border = '1px solid var(--bs-border-color)';
+
+            addButtonOverlay.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (currentSelection) {
+                    callbacks.onAddComment(currentSelection.startLine, currentSelection.endLine);
+                }
+            });
+
+            // Append to editor's parent for proper positioning
+            const overlayContainer = domNode.querySelector('.margin') || domNode;
+            if (overlayContainer && overlayContainer instanceof HTMLElement) {
+                overlayContainer.style.position = 'relative';
+                overlayContainer.appendChild(addButtonOverlay);
+            }
+        }
+
+        // Update position
+        repositionAddButton(startLine);
+    }
+
+    /**
+     * Repositions the add button based on current scroll position.
+     */
+    function repositionAddButton(startLine: number): void {
+        if (!addButtonOverlay) {
+            return;
+        }
+
         const lineTop = editor.getTopForLineNumber(startLine);
         const scrollTop = editor.getScrollTop();
-        const lineHeight = editor.getOption(monaco.editor.EditorOption.lineHeight);
-
-        addButtonOverlay.style.position = 'absolute';
-        addButtonOverlay.style.left = '4px';
         addButtonOverlay.style.top = `${lineTop - scrollTop}px`;
-        addButtonOverlay.style.width = '20px';
-        addButtonOverlay.style.height = `${lineHeight}px`;
-        addButtonOverlay.style.lineHeight = `${lineHeight}px`;
-        addButtonOverlay.style.cursor = 'pointer';
-        addButtonOverlay.style.zIndex = '10';
-        addButtonOverlay.style.textAlign = 'center';
-        addButtonOverlay.style.fontWeight = 'bold';
-        addButtonOverlay.style.fontSize = '14px';
-        addButtonOverlay.style.color = 'var(--bs-primary)';
-        addButtonOverlay.style.backgroundColor = 'var(--bs-tertiary-bg)';
-        addButtonOverlay.style.borderRadius = '4px';
-        addButtonOverlay.style.border = '1px solid var(--bs-border-color)';
-
-        addButtonOverlay.addEventListener('click', (e) => {
-            e.stopPropagation();
-            callbacks.onAddComment(startLine, endLine);
-        });
-
-        // Append to editor's parent for proper positioning
-        const overlayContainer = domNode.querySelector('.margin') || domNode;
-        if (overlayContainer && overlayContainer instanceof HTMLElement) {
-            overlayContainer.style.position = 'relative';
-            overlayContainer.appendChild(addButtonOverlay);
-        }
     }
 
     /**
@@ -126,9 +153,8 @@ export function setupLineSelectionHandler(editor: monaco.editor.IStandaloneCodeE
 
     // Listen for scroll changes to reposition the button
     const scrollListener = editor.onDidScrollChange(() => {
-        const selection = editor.getSelection();
-        if (selection && !selection.isEmpty()) {
-            showAddButton(selection.startLineNumber, selection.endLineNumber);
+        if (currentSelection && addButtonOverlay) {
+            repositionAddButton(currentSelection.startLine);
         }
     });
     disposables.push(scrollListener);
@@ -140,6 +166,7 @@ export function setupLineSelectionHandler(editor: monaco.editor.IStandaloneCodeE
             if (!editor.hasTextFocus()) {
                 currentDecorations = editor.deltaDecorations(currentDecorations, []);
                 removeAddButton();
+                currentSelection = undefined;
             }
         }, 200);
     });
@@ -150,6 +177,7 @@ export function setupLineSelectionHandler(editor: monaco.editor.IStandaloneCodeE
             disposables.forEach((d) => d.dispose());
             currentDecorations = editor.deltaDecorations(currentDecorations, []);
             removeAddButton();
+            currentSelection = undefined;
         },
     };
 }

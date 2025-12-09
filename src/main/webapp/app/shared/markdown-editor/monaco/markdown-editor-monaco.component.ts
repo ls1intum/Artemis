@@ -293,6 +293,8 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     inEditMode = true;
     uniqueMarkdownEditorId: string;
     resizeObserver?: ResizeObserver;
+    /** Disposable for the selection change listener */
+    private selectionChangeDisposable?: { dispose: () => void };
     targetWrapperHeight?: number;
     minWrapperHeight?: number;
     constrainDragPositionFn?: (pointerPosition: Point) => Point;
@@ -455,7 +457,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         this.renderConsistencyIssues();
 
         // Set up selection change listener for inline comments
-        this.monacoEditor.onSelectionChange((selection) => {
+        this.selectionChangeDisposable = this.monacoEditor.onSelectionChange((selection) => {
             if (selection) {
                 this.onSelectionChange.emit({
                     startLine: selection.startLineNumber,
@@ -484,6 +486,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
     ngOnDestroy(): void {
         this.resizeObserver?.disconnect();
+        this.selectionChangeDisposable?.dispose();
     }
 
     onTextChanged(event: { text: string; fileName: string }): void {

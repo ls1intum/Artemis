@@ -49,9 +49,11 @@ public class HyperionProblemStatementGenerationService {
      * Generate a problem statement for an exercise
      *
      * @param course     the course context for the problem statement
-     * @param userPrompt the user's requirements and instructions for the problem statement
+     * @param userPrompt the user's requirements and instructions for the problem
+     *                       statement
      * @return the generated problem statement response
-     * @throws InternalServerErrorAlertException if generation fails or response is too long
+     * @throws InternalServerErrorAlertException if generation fails or response is
+     *                                               too long
      */
     public ProblemStatementGenerationResponseDTO generateProblemStatement(Course course, String userPrompt) {
         log.debug("Generating problem statement for course [{}]", course.getId());
@@ -65,8 +67,14 @@ public class HyperionProblemStatementGenerationService {
             String prompt = templateService.render("/prompts/hyperion/generate_draft_problem_statement.st", templateVariables);
             String generatedProblemStatement = chatClient.prompt().user(prompt).call().content();
 
+            // Validate response is not null
+            if (generatedProblemStatement == null) {
+                log.warn("Generated problem statement is null for course [{}]", course.getId());
+                throw new InternalServerErrorAlertException("Generated problem statement is null", "ProblemStatement", "problemStatementGenerationNull");
+            }
+
             // Validate response length
-            if (generatedProblemStatement != null && generatedProblemStatement.length() > MAX_PROBLEM_STATEMENT_LENGTH) {
+            if (generatedProblemStatement.length() > MAX_PROBLEM_STATEMENT_LENGTH) {
                 log.warn("Generated problem statement for course [{}] exceeds maximum length: {} characters", course.getId(), generatedProblemStatement.length());
                 throw new InternalServerErrorAlertException(
                         "Generated problem statement is too long (" + generatedProblemStatement.length() + " characters). Maximum allowed: " + MAX_PROBLEM_STATEMENT_LENGTH,
