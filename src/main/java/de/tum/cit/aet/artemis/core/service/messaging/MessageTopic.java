@@ -22,7 +22,8 @@ public enum MessageTopic {
     SLIDE_UNHIDE_SCHEDULE("slide-unhide-schedule"),
     SLIDE_UNHIDE_SCHEDULE_CANCEL("slide-unhide-schedule-cancel"),
     LECTURE_UNIT_AUTO_INGESTION_SCHEDULE("lecture-unit-auto-ingestion-schedule"),
-    LECTURE_UNIT_AUTO_INGESTION_SCHEDULE_CANCEL("lecture-unit-auto-ingestion-schedule-cancel");
+    LECTURE_UNIT_AUTO_INGESTION_SCHEDULE_CANCEL("lecture-unit-auto-ingestion-schedule-cancel"),
+    WEBSOCKET_BROKER_RECONNECT("websocket-broker-reconnect");
     // @formatter:on
 
     private final String topic;

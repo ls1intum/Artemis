@@ -33,9 +33,8 @@ public interface AttachmentVideoUnitRepository extends ArtemisJpaRepository<Atta
             WHERE lecture.id = :lectureId
                 AND TYPE (lectureUnit) = AttachmentVideoUnit
                 AND attachment.attachmentType = :attachmentType
-            ORDER BY INDEX(lectureUnit)
+            ORDER BY lectureUnit.lectureUnitOrder
             """)
-    // INDEX() is used to retrieve the order saved by @OrderColumn, see https://en.wikibooks.org/wiki/Java_Persistence/JPQL#Special_Operators
     List<AttachmentVideoUnit> findAllByLectureIdAndAttachmentType(@Param("lectureId") long lectureId, @Param("attachmentType") AttachmentType attachmentType);
 
     /**

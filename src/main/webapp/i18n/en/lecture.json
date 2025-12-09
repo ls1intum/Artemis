@@ -37,7 +37,7 @@
                 }
             },
             "attachments": {
-                "title": "Attachments of lecture",
+                "title": "Attachments",
                 "name": "Name",
                 "type": "Type",
                 "link": "Link",
@@ -91,7 +91,11 @@
                 "singleLectureLabel": "Single Lecture",
                 "lectureSeriesLabel": "Lecture Series"
             },
-            "longLectureWarning": "Avoid lectures that take more than a couple of hours. They quickly overcrowd the calendar.",
+            "tutorialLecture": {
+                "tutorialLectureTooltip": "A tutorial lecture will only be part of the tutorial tab and can be used to deliver tutorial contents.",
+                "tutorialLectureCheckboxLabel": "Make this a tutorial lecture.",
+                "title": "Lessons"
+            },
             "createSeries": {
                 "startAndEndDateExplanation": "Quickly create a lecture series by only defining titles and timing. Add lecture contents later. Start by specifying start and end of at least one lecture, that you would like to repeat weekly:",
                 "seriesEndDateExplanation": "Now define a date on which you would like the repeated lectures to end:",

@@ -3,7 +3,6 @@ import { UserRouteAccessService } from 'app/core/auth/user-route-access-service'
 import { userManagementRoute } from 'app/core/admin/user-management/user-management.route';
 import { systemNotificationManagementRoute } from 'app/core/admin/system-notification-management/system-notification-management.route';
 import { IrisGuard } from 'app/iris/shared/iris-guard.service';
-import { Authority } from 'app/shared/constants/authority.constants';
 
 import { organizationMgmtRoute } from 'app/core/admin/organization-management/organization-management.route';
 
@@ -12,6 +11,7 @@ import { ltiConfigurationRoute } from 'app/core/admin/lti-configuration/lti-conf
 
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 import { UpcomingExamsAndExercisesComponent } from 'app/core/admin/upcoming-exams-and-exercises/upcoming-exams-and-exercises.component';
+import { IS_AT_LEAST_ADMIN } from 'app/shared/constants/authority.constants';
 
 const routes: Routes = [
     {
@@ -41,6 +41,13 @@ const routes: Routes = [
         loadComponent: () => import('app/core/admin/health/health.component').then((m) => m.HealthComponent),
         data: {
             pageTitle: 'health.title',
+        },
+    },
+    {
+        path: 'websocket',
+        loadComponent: () => import('app/core/admin/websocket/websocket-admin.component').then((m) => m.WebsocketAdminComponent),
+        data: {
+            pageTitle: 'artemisApp.websocketAdmin.title',
         },
     },
     {
@@ -120,21 +127,21 @@ const routes: Routes = [
         path: 'privacy-statement',
         loadComponent: () => import('app/core/admin/legal/legal-document-update.component').then((m) => m.LegalDocumentUpdateComponent),
         data: {
-            authorities: [Authority.ADMIN],
+            authorities: IS_AT_LEAST_ADMIN,
         },
     },
     {
         path: 'imprint',
         loadComponent: () => import('app/core/admin/legal/legal-document-update.component').then((m) => m.LegalDocumentUpdateComponent),
         data: {
-            authorities: [Authority.ADMIN],
+            authorities: IS_AT_LEAST_ADMIN,
         },
     },
     {
         path: 'iris',
         loadComponent: () => import('app/iris/manage/settings/iris-global-settings-update/iris-global-settings-update.component').then((m) => m.IrisGlobalSettingsUpdateComponent),
         data: {
-            authorities: [Authority.ADMIN],
+            authorities: IS_AT_LEAST_ADMIN,
             pageTitle: 'artemisApp.iris.settings.title.global',
         },
         canActivate: [UserRouteAccessService, IrisGuard],
@@ -158,7 +165,7 @@ const routes: Routes = [
         path: 'exam-rooms',
         loadComponent: () => import('app/core/admin/exam-rooms/exam-rooms.component').then((m) => m.ExamRoomsComponent),
         data: {
-            authorities: [Authority.ADMIN],
+            authorities: IS_AT_LEAST_ADMIN,
             pageTitle: 'global.menu.admin.examRooms',
         },
     },

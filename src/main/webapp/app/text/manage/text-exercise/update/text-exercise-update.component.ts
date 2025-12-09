@@ -245,16 +245,16 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
                     title: 'artemisApp.exercise.sections.grading',
                     valid: Boolean(
                         this.points.valid &&
-                            this.bonusPoints.valid &&
-                            (this.isExamMode ||
-                                (this.exerciseUpdatePlagiarismComponent()?.isFormValid() &&
-                                    !this.textExercise.startDateError &&
-                                    !this.textExercise.dueDateError &&
-                                    !this.textExercise.assessmentDueDateError &&
-                                    this.releaseDateField?.dateInput.valid &&
-                                    this.startDateField?.dateInput.valid &&
-                                    this.dueDateField?.dateInput.valid &&
-                                    this.assessmentDateField?.dateInput.valid)),
+                        this.bonusPoints.valid &&
+                        (this.isExamMode ||
+                            (this.exerciseUpdatePlagiarismComponent()?.isFormValid() &&
+                                !this.textExercise.startDateError &&
+                                !this.textExercise.dueDateError &&
+                                !this.textExercise.assessmentDueDateError &&
+                                this.releaseDateField?.dateInput.valid &&
+                                this.startDateField?.dateInput.valid &&
+                                this.dueDateField?.dateInput.valid &&
+                                this.assessmentDateField?.dateInput.valid)),
                     ),
                     empty:
                         !this.isExamMode &&

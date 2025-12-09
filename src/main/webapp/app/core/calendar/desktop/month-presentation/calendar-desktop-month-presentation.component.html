@@ -1,24 +1,23 @@
 <div class="frame">
     <div class="header">
-        @for (dayNameKey of utils.getWeekDayNameKeys(); track dayNameKey) {
-            <div class="day-name" jhiTranslate="{{ dayNameKey }}"></div>
+        @for (weekdayNameKey of weekdayNameKeys; track weekdayNameKey) {
+            <div class="day-name" jhiTranslate="{{ weekdayNameKey }}"></div>
         }
     </div>
-    @for (week of weeks(); track utils.identify(week)) {
+    @for (week of weeks(); track week.id) {
         <div class="week-row">
-            @for (day of week; track utils.identify(day)) {
+            @for (day of week.days; track day.id) {
                 <div class="day-cell">
-                    @if (utils.areDatesInSameMonth(day, firstDayOfCurrentMonth())) {
-                        <jhi-calendar-day-badge [day]="day" />
-                        @let events = getEventsOf(day);
-                        @if (events.length > 3) {
-                            @for (event of utils.limitToLengthTwo(events); track event.id) {
-                                <ng-container *ngTemplateOutlet="eventCell; context: { $implicit: event }" />
+                    @if (day.isInDisplayedMonth) {
+                        <jhi-calendar-day-badge [date]="day.date" />
+                        @if (day.eventsAndMetadata.length > 3) {
+                            @for (eventAndMetadata of day.firstTwoEventsAndMetadata; track eventAndMetadata.event.id) {
+                                <ng-container *ngTemplateOutlet="eventCell; context: { $implicit: eventAndMetadata }" />
                             }
-                            <div class="more-events-info">+{{ events.length - 2 }} more</div>
+                            <div class="more-events-label">+{{ day.eventsAndMetadata.length - 2 }} more</div>
                         } @else {
-                            @for (event of events; track event.id) {
-                                <ng-container *ngTemplateOutlet="eventCell; context: { $implicit: event }" />
+                            @for (eventAndMetadata of day.eventsAndMetadata; track eventAndMetadata.event.id) {
+                                <ng-container *ngTemplateOutlet="eventCell; context: { $implicit: eventAndMetadata }" />
                             }
                         }
                     }
@@ -28,20 +27,13 @@
     }
 </div>
 
-<ng-template #eventCell let-event>
-    <div
-        class="event-cell"
-        [ngClass]="{
-            'exam-event-cell': event.isOfType(CalendarEventType.Exam),
-            'lecture-event-cell': event.isOfType(CalendarEventType.Lecture),
-            'tutorial-event-cell': event.isOfType(CalendarEventType.Tutorial),
-            'exercise-event-cell': event.isOfExerciseType(),
-        }"
-        (click)="eventDetailPopover.open($event, event)"
-        [attr.data-testid]="event.title"
-    >
+<ng-template #eventCell let-eventAndMetadata>
+    @let event = eventAndMetadata.event;
+    @let color = eventAndMetadata.color;
+    @let icon = eventAndMetadata.icon;
+    <div class="event-cell" [style.background-color]="color" (click)="eventDetailPopover.open($event, event)" [attr.data-testid]="event.title">
         <div class="event-label">{{ event.title }}</div>
-        <fa-icon [icon]="utils.getIconForEvent(event)" />
+        <fa-icon [icon]="icon" />
     </div>
 </ng-template>
 

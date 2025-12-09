@@ -30,6 +30,7 @@ import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
 import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
 import de.tum.cit.aet.artemis.assessment.service.ComplaintService;
 import de.tum.cit.aet.artemis.assessment.service.CourseScoreCalculationService;
+import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.CourseForDashboardDTO;
@@ -91,9 +92,11 @@ public class CourseOverviewResource {
 
     private final TeamRepository teamRepository;
 
+    private final FaqRepository faqRepository;
+
     public CourseOverviewResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, AuthorizationCheckService authCheckService,
             CourseScoreCalculationService courseScoreCalculationService, GradingScaleRepository gradingScaleRepository, Optional<ExamRepositoryApi> examRepositoryApi,
-            ComplaintService complaintService, TeamRepository teamRepository, QuizQuestionProgressService quizQuestionProgressService) {
+            ComplaintService complaintService, TeamRepository teamRepository, QuizQuestionProgressService quizQuestionProgressService, FaqRepository faqRepository) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.authCheckService = authCheckService;
@@ -104,6 +107,7 @@ public class CourseOverviewResource {
         this.complaintService = complaintService;
         this.teamRepository = teamRepository;
         this.quizQuestionProgressService = quizQuestionProgressService;
+        this.faqRepository = faqRepository;
     }
 
     /**
@@ -243,6 +247,8 @@ public class CourseOverviewResource {
      * @param courseId the id of the course to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the course, or with status 404 (Not Found)
      */
+    // TODO: this method is invoked quite often as part of course management resolve. However, it might not be necessary to fetch tutorial group configuration and online course
+    // configuration in such cases.
     @GetMapping("courses/{courseId}")
     @EnforceAtLeastStudent
     public ResponseEntity<Course> getCourse(@PathVariable Long courseId) {

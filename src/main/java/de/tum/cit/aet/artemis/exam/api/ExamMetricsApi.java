@@ -1,14 +1,15 @@
 package de.tum.cit.aet.artemis.exam.api;
 
 import java.time.ZonedDateTime;
-import java.util.List;
+import java.util.Collection;
+import java.util.Set;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
-import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.dto.ExamStudentCountDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 
 @Conditional(ExamEnabled.class)
@@ -38,8 +39,8 @@ public class ExamMetricsApi extends AbstractExamApi {
         return examRepository.countExamUsersInExamsWithStartDateBetween(minDate, maxDate);
     }
 
-    public List<Exam> findExamsInCourses(Iterable<Long> courseId) {
-        return examRepository.findExamsInCourses(courseId);
+    public Set<ExamStudentCountDTO> findExamStudentCountsByCourseIds(Collection<Long> courseId) {
+        return examRepository.findExamStudentCountsByCourseIds(courseId);
     }
 
     public Integer countAllActiveExams(ZonedDateTime now) {

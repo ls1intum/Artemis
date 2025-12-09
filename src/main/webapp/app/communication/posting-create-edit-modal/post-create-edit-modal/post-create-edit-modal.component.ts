@@ -14,7 +14,6 @@ import { Conversation } from 'app/communication/shared/entities/conversation/con
 import { getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { PostingMarkdownEditorComponent } from 'app/communication/posting-markdown-editor/posting-markdown-editor.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { PostTagSelectorComponent } from 'app/communication/posting-create-edit-modal/post-create-edit-modal/post-tag-selector/post-tag-selector.component';
 
 const TITLE_MAX_LENGTH = 200;
 
@@ -26,23 +25,13 @@ export interface ContextSelectorOption {
     selector: 'jhi-post-create-edit-modal',
     templateUrl: './post-create-edit-modal.component.html',
     styleUrls: ['../../metis.component.scss'],
-    imports: [
-        FormsModule,
-        ReactiveFormsModule,
-        TranslateDirective,
-        HelpIconComponent,
-        PostTagSelectorComponent,
-        PostingMarkdownEditorComponent,
-        PostingButtonComponent,
-        ArtemisTranslatePipe,
-    ],
+    imports: [FormsModule, ReactiveFormsModule, TranslateDirective, HelpIconComponent, PostingMarkdownEditorComponent, PostingButtonComponent, ArtemisTranslatePipe],
 })
 export class PostCreateEditModalComponent extends PostingCreateEditModalDirective<Post> implements OnInit, OnChanges {
     isCommunicationPage = input<boolean>(false);
 
     exercises?: Exercise[];
     lectures?: Lecture[];
-    tags: string[];
     course: Course;
     pageType: PageType;
     isAtLeastTutorInCourse: boolean;
@@ -101,7 +90,6 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
      */
     resetFormGroup(): void {
         this.pageType = this.metisService.getPageType();
-        this.tags = this.posting?.tags ?? [];
         this.similarPosts = [];
         this.posting.title = this.posting.title ?? '';
         this.resetCurrentContextSelectorOption();
@@ -160,7 +148,6 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
 
     private setPostProperties(post: Post): Post {
         post.title = this.formGroup.get('title')?.value;
-        post.tags = this.tags;
         post.content = this.formGroup.get('content')?.value;
         const currentContextSelectorOption: ContextSelectorOption = {
             ...this.formGroup.get('context')?.value,

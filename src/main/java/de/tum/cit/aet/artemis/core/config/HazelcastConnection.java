@@ -104,9 +104,9 @@ public class HazelcastConnection {
 
     /**
      * This scheduled task regularly checks if all members of the Hazelcast cluster are connected to each other.
-     * This is one countermeasure to a split cluster.
+     * This is one counter measure against a split cluster.
      */
-    @Scheduled(fixedRate = 2, initialDelay = 1, timeUnit = TimeUnit.MINUTES)
+    @Scheduled(fixedRate = 10, initialDelay = 10, timeUnit = TimeUnit.SECONDS)
     public void connectToAllMembers() {
         if (registration.isEmpty() || env.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST))) {
             return;

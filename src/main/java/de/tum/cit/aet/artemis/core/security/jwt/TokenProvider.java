@@ -6,6 +6,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import jakarta.annotation.PostConstruct;
@@ -49,6 +50,8 @@ public class TokenProvider {
     private static final String AUTHORITIES_KEY = "auth";
 
     private static final String AUTHENTICATION_METHOD = "auth-method";
+
+    public static final String IS_PASSKEY_SUPER_ADMIN_APPROVED = "is-passkey-super-admin-approved";
 
     private static final String TOOLS_KEY = "tools";
 
@@ -142,11 +145,17 @@ public class TokenProvider {
             authenticationMethod = AuthenticationMethod.PASSKEY;
         }
 
+        boolean isPasskeyApproved = false;
+        if (authenticationMethod == AuthenticationMethod.PASSKEY && authentication.getDetails() instanceof Map<?, ?> details) {
+            isPasskeyApproved = Boolean.TRUE.equals(details.get(IS_PASSKEY_SUPER_ADMIN_APPROVED));
+        }
+
         // @formatter:off
         JwtBuilder jwtBuilder = Jwts.builder()
             .subject(authentication.getName())
             .claim(AUTHORITIES_KEY, authorities)
             .claim(AUTHENTICATION_METHOD, authenticationMethod)
+            .claim(IS_PASSKEY_SUPER_ADMIN_APPROVED, isPasskeyApproved)
             .issuedAt(issuedAt != null ? issuedAt : new Date());
         // @formatter:on
 
@@ -219,7 +228,7 @@ public class TokenProvider {
         catch (IllegalArgumentException e) {
             log.error("Token validation error {}", e.getMessage());
         }
-        log.info("Invalid JWT token: {} from source {}", authToken, source);
+        log.debug("Invalid JWT token: {} from source {}", authToken, source);
         return false;
     }
 
@@ -273,6 +282,21 @@ public class TokenProvider {
         catch (UnsupportedJwtException | IllegalArgumentException e) {
             log.warn("Failed to parse authentication method from token: {}", e.getMessage());
             return null;
+        }
+    }
+
+    /**
+     * @param authToken of which the passkey super admin approval status should be extracted
+     * @return true if the passkey was super admin approved, false otherwise
+     */
+    public boolean isPasskeySuperAdminApproved(String authToken) {
+        try {
+            Boolean isApproved = parseClaims(authToken).get(IS_PASSKEY_SUPER_ADMIN_APPROVED, Boolean.class);
+            return Boolean.TRUE.equals(isApproved);
+        }
+        catch (UnsupportedJwtException | MalformedJwtException | IllegalArgumentException e) {
+            log.warn("Failed to parse passkey super admin approval status from token: {}", e.getMessage());
+            return false;
         }
     }
 }
