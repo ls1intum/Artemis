@@ -20,7 +20,7 @@
             <!-- number of questions -->
             <div class="col-4">
                 <label for="numberOfQuestions" class="form-label" jhiTranslate="artemisApp.quizExercise.aiGeneration.count"></label>
-                <input id="numberOfQuestions" class="form-control" type="number" min="1" name="numberOfQuestions" [(ngModel)]="formData.numberOfQuestions" required />
+                <input id="numberOfQuestions" class="form-control" type="number" min="1" max="10" name="numberOfQuestions" [(ngModel)]="formData.numberOfQuestions" required />
             </div>
 
             <!-- language -->
