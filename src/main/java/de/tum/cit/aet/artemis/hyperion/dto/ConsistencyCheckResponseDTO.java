@@ -22,11 +22,5 @@ public record ConsistencyCheckResponseDTO(
 
         @Schema(description = "Execution timing details") TimingDTO timing,
 
-        @Schema(description = "Token usage statistics") TokenUsageDTO tokens) {
-
-    public record TimingDTO(String startTime, String endTime, double durationS) {
-    }
-
-    public record TokenUsageDTO(long prompt, long completion, long total) {
-    }
+        @Schema(description = "Token usage statistics") TokensDTO tokens) {
 }
