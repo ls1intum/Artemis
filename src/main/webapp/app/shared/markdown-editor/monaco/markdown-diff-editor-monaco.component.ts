@@ -153,7 +153,7 @@ export class MarkdownDiffEditorMonacoComponent implements AfterViewInit, OnDestr
     constructor() {
         // Create editor container, real attachment happens in ngAfterViewInit
         this.monacoDiffEditorContainerElement = this.renderer.createElement('div');
-        this._editor = this.monacoEditorService.createStandaloneDiffEditor(this.monacoDiffEditorContainerElement);
+        this._editor = this.monacoEditorService.createStandaloneDiffEditor(this.monacoDiffEditorContainerElement, false);
         this.renderer.addClass(this.monacoDiffEditorContainerElement, 'markdown-diff-editor-container');
 
         this.setupDiffListener();

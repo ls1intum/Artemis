@@ -73,13 +73,14 @@ export class MonacoEditorService {
     /**
      * Creates a standalone diff editor (see {@link MonacoDiffEditorComponent}) with sensible default settings and inserts it into the given DOM element.
      * @param domElement The DOM element to insert the editor into.
+     * @param readOnly Whether the editor should be read-only. Defaults to true.
      */
-    createStandaloneDiffEditor(domElement: HTMLElement): monaco.editor.IStandaloneDiffEditor {
+    createStandaloneDiffEditor(domElement: HTMLElement, readOnly: boolean = true): monaco.editor.IStandaloneDiffEditor {
         return monaco.editor.createDiffEditor(domElement, {
             automaticLayout: true,
             glyphMargin: true,
             minimap: { enabled: false },
-            readOnly: false,
+            readOnly,
             renderSideBySide: true,
             scrollBeyondLastLine: false,
             lineHeight: 16,
