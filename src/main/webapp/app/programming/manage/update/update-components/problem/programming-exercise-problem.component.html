@@ -93,7 +93,7 @@
             @if (programmingExerciseCreationConfig.isImportFromExistingExercise) {
                 <jhi-programming-exercise-instructions
                     [exercise]="programmingExercise()!"
-                    [participation]="programmingExercise()?.templateParticipation"
+                    [participation]="programmingExercise()!.templateParticipation!"
                     [personalParticipation]="false"
                 />
             }
@@ -115,7 +115,7 @@
                 } @else {
                     <!-- Regular Editable Instructions -->
                     <jhi-programming-exercise-editable-instructions
-                        [participation]="programmingExercise()?.templateParticipation"
+                        [participation]="programmingExercise()!.templateParticipation!"
                         [exercise]="programmingExercise()!"
                         [initialEditorHeight]="MarkdownEditorHeight.MEDIUM"
                         [showStatus]="!!programmingExercise()?.id"

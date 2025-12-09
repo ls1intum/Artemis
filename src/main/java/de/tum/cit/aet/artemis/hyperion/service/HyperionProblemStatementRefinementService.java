@@ -71,6 +71,12 @@ public class HyperionProblemStatementRefinementService {
             String prompt = templateService.render("/prompts/hyperion/refine_problem_statement.st", templateVariables);
             String refinedProblemStatementText = chatClient.prompt().user(prompt).call().content();
 
+            // Validate AI response is not null
+            if (refinedProblemStatementText == null) {
+                log.warn("AI returned null response for problem statement refinement for course [{}]", course.getId());
+                throw new InternalServerErrorAlertException("Refined problem statement is missing", "ProblemStatement", "refinedProblemStatementMissing");
+            }
+
             return validateAndReturnResponse(course, originalProblemStatementText, refinedProblemStatementText);
         }
         catch (Exception e) {
@@ -113,6 +119,12 @@ public class HyperionProblemStatementRefinementService {
             String prompt = templateService.render("/prompts/hyperion/refine_problem_statement.st", templateVariables);
             String refinedProblemStatementText = chatClient.prompt().user(prompt).call().content();
 
+            // Validate AI response is not null
+            if (refinedProblemStatementText == null) {
+                log.warn("AI returned null response for problem statement refinement with comments for course [{}]", course.getId());
+                throw new InternalServerErrorAlertException("Refined problem statement is missing", "ProblemStatement", "refinedProblemStatementMissing");
+            }
+
             return validateAndReturnResponse(course, originalProblemStatementText, refinedProblemStatementText);
         }
         catch (Exception e) {
@@ -149,6 +161,12 @@ public class HyperionProblemStatementRefinementService {
             throw new InternalServerErrorAlertException("Problem statement is the same after refinement", "ProblemStatement", "refinedProblemStatementUnchanged");
         }
 
+        // Validate response is not null
+        if (refinedProblemStatementText == null) {
+            log.warn("Refined problem statement is null for course [{}]", course.getId());
+            throw new InternalServerErrorAlertException("Refined problem statement is missing", "ProblemStatement", "refinedProblemStatementMissing");
+        }
+
         return new ProblemStatementRefinementResponseDTO(refinedProblemStatementText);
     }
 
@@ -164,16 +182,10 @@ public class HyperionProblemStatementRefinementService {
             throw alertException;
         }
 
-        log.error("Error refining problem statement for course [{}]: {}", course.getId(), e.getMessage(), e);
-        // Create exception with original problem statement in params for frontend to
-        // preserve it
-        var exception = new InternalServerErrorAlertException("Failed to refine problem statement: " + e.getMessage(), "ProblemStatement", "problemStatementRefinementFailed");
-        // Add original problem statement to the params map
-        if (exception.getParameters() != null && exception.getParameters().get("params") instanceof Map) {
-            @SuppressWarnings("unchecked")
-            Map<String, Object> params = (Map<String, Object>) exception.getParameters().get("params");
-            params.put("originalProblemStatement", originalProblemStatementText);
-        }
-        throw exception;
+        // Log the error with the original problem statement for debugging purposes
+        log.error("Error refining problem statement for course [{}]. Original statement length: {}. Error: {}", course.getId(),
+                originalProblemStatementText != null ? originalProblemStatementText.length() : 0, e.getMessage(), e);
+
+        throw new InternalServerErrorAlertException("Failed to refine problem statement: " + e.getMessage(), "ProblemStatement", "problemStatementRefinementFailed");
     }
 }
