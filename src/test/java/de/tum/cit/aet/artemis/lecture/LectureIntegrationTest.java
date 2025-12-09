@@ -118,7 +118,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         List<Course> courses = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, true, numberOfTutors);
         this.course1 = this.courseRepository.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(courses.getFirst().getId());
 
-        var lectures = this.course1.getLectures().stream().toList();
+        var lectures = this.course1.getLectures().stream().sorted(Comparator.comparing(Lecture::getStartDate)).toList();
         createChannelsForLectures(lectures);
 
         lecture2.setIsTutorialLecture(true);
@@ -544,12 +544,12 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         request.postWithoutResponseBody("/api/lecture/courses/" + course1.getId() + "/lectures", List.of(dto1, dto2), HttpStatus.NO_CONTENT);
 
-        List<Lecture> lectures = lectureRepository.findAllByCourseId(course1.getId()).stream().sorted(Comparator.comparing(Lecture::getStartDate)).toList();
-        assertThat(lectures).hasSize(4);
-        Lecture firstLecture = lectures.getFirst();
-        Lecture secondLecture = lectures.get(1);
-        Lecture thirdLecture = lectures.get(2);
-        Lecture fourthLecture = lectures.get(3);
+        List<Lecture> lecturesAfter = lectureRepository.findAllByCourseId(course1.getId()).stream().sorted(Comparator.comparing(Lecture::getStartDate)).toList();
+        assertThat(lecturesAfter).hasSize(4);
+        Lecture firstLecture = lecturesAfter.getFirst();
+        Lecture secondLecture = lecturesAfter.get(1);
+        Lecture thirdLecture = lecturesAfter.get(2);
+        Lecture fourthLecture = lecturesAfter.get(3);
 
         assertThat(firstLecture.getTitle()).isEqualTo(titleNewLecture1);
         assertThat(firstLecture.getStartDate().toInstant()).isEqualTo(startNewLecture1.toInstant());
@@ -564,7 +564,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         Set<Channel> channels = channelRepository.findLectureChannelsByCourseId(course1.getId());
 
-        assertThat(channels.stream().map(Channel::getLecture).collect(Collectors.toSet())).containsExactlyInAnyOrderElementsOf(lectures);
+        assertThat(channels.stream().map(Channel::getLecture).collect(Collectors.toSet())).containsExactlyInAnyOrderElementsOf(lecturesAfter);
 
         Map<Long, Channel> lectureIdToChannelMap = channels.stream().collect(Collectors.toMap(channel -> channel.getLecture().getId(), Function.identity()));
         Channel firstLectureChannel = lectureIdToChannelMap.get(firstLecture.getId());

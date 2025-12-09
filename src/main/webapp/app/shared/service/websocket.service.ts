@@ -50,16 +50,6 @@ export interface IWebsocketService {
     unsubscribe(channel: string): void;
 
     /**
-     * Enable automatic reconnect
-     */
-    enableReconnect(): void;
-
-    /**
-     * Disable automatic reconnect
-     */
-    disableReconnect(): void;
-
-    /**
      * Get updates on current connection status
      */
     get connectionState(): Observable<ConnectionState>;
@@ -94,7 +84,6 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
     private waitUntilConnectionSubscriptions = new Map<string, Subscription>();
 
     private alreadyConnectedOnce = false;
-    private shouldReconnect = false;
     private readonly connectionStateInternal: BehaviorSubject<ConnectionState>;
     private consecutiveFailedAttempts = 0;
     private connecting = false;
@@ -112,13 +101,10 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
     /**
      * Callback function managing the amount of failed connection attempts to the websocket and the timeout until the next reconnect attempt.
      *
-     * Wait 5 seconds before reconnecting in case the connection does not work or the client is disconnected,
-     * after  2 failed attempts in row, increase the timeout to 10 seconds,
-     * after  4 failed attempts in row, increase the timeout to 20 seconds
-     * after  8 failed attempts in row, increase the timeout to 60 seconds
-     * after 12 failed attempts in row, increase the timeout to 120 seconds
-     * after 16 failed attempts in row, increase the timeout to 300 seconds
-     * after 20 failed attempts in row, increase the timeout to 600 seconds
+     * Wait 3 seconds before reconnecting in case the connection does not work or the client is disconnected,
+     * after  4 failed attempts in row, increase the timeout to 6 seconds
+     * after  8 failed attempts in row, increase the timeout to 9 seconds
+     * after 16 failed attempts in row, increase the timeout to 12 seconds
      */
     stompFailureCallback() {
         this.connecting = false;
@@ -126,27 +112,19 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
         if (this.connectionStateInternal.getValue().connected) {
             this.connectionStateInternal.next(new ConnectionState(false, this.alreadyConnectedOnce, false));
         }
-        if (this.shouldReconnect) {
-            let waitUntilReconnectAttempt;
-            if (this.consecutiveFailedAttempts > 20) {
-                // NOTE: normally a user would reload here anyway
-                waitUntilReconnectAttempt = 600;
-            } else if (this.consecutiveFailedAttempts > 16) {
-                // NOTE: normally a user would reload here anyway
-                waitUntilReconnectAttempt = 300;
-            } else if (this.consecutiveFailedAttempts > 12) {
-                waitUntilReconnectAttempt = 120;
-            } else if (this.consecutiveFailedAttempts > 8) {
-                waitUntilReconnectAttempt = 60;
-            } else if (this.consecutiveFailedAttempts > 4) {
-                waitUntilReconnectAttempt = 20;
-            } else if (this.consecutiveFailedAttempts > 2) {
-                waitUntilReconnectAttempt = 10;
-            } else {
-                waitUntilReconnectAttempt = 5;
-            }
-            setTimeout(this.connect.bind(this), waitUntilReconnectAttempt * 1000);
+        // the more failed attempts, the longer the client waits until the next reconnect attempt
+        let waitUntilReconnectAttempt; // in seconds
+        if (this.consecutiveFailedAttempts > 16) {
+            waitUntilReconnectAttempt = 12;
+        } else if (this.consecutiveFailedAttempts > 8) {
+            waitUntilReconnectAttempt = 9;
+        } else if (this.consecutiveFailedAttempts > 4) {
+            waitUntilReconnectAttempt = 6;
+        } else {
+            // try to reconnect after 3 seconds for the first 4 attempts
+            waitUntilReconnectAttempt = 3;
         }
+        setTimeout(this.connect.bind(this), waitUntilReconnectAttempt * 1000);
     }
 
     /**
@@ -402,23 +380,6 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
         return new Observable((subscriber: Subscriber<T>) => {
             this.subscribers.set(channel, subscriber);
         });
-    }
-
-    /**
-     * Enable automatic reconnect
-     */
-    enableReconnect() {
-        if (this.stompClient && !this.stompClient.connected) {
-            this.connect();
-        }
-        this.shouldReconnect = true;
-    }
-
-    /**
-     * Disable automatic reconnect
-     */
-    disableReconnect() {
-        this.shouldReconnect = false;
     }
 
     /**

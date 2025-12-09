@@ -20,7 +20,7 @@ plugins {
     id "com.github.ben-manes.versions" version "0.53.0"
     id "com.github.node-gradle.node" version "${gradle_node_plugin_version}"
     id "com.google.cloud.tools.jib" version "3.5.1"
-    id "com.gorylenko.gradle-git-properties" version "2.5.3"
+    id "com.gorylenko.gradle-git-properties" version "2.5.4"
     id "io.spring.dependency-management" version "1.1.7"
     id "nebula.lint" version "21.1.3"
     id "org.liquibase.gradle" version "${liquibase_plugin_version}"
@@ -32,7 +32,7 @@ plugins {
 }
 
 group = "de.tum.cit.aet.artemis"
-version = "8.6.2"
+version = "8.6.4"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -81,6 +81,21 @@ modernizer {
     includeTestClasses = true
     // Copy the rule name as defined in https://github.com/gaul/modernizer-maven-plugin/blob/master/modernizer-maven-plugin/src/main/resources/modernizer.xml to exclude it
     exclusions = ["java/util/Optional.get:()Ljava/lang/Object;"]
+}
+
+gitProperties {
+    // Only override branch when CI (= env variable present)
+    def ciBranch = System.getenv('GIT_BRANCH')
+    if (ciBranch) {
+        branch = ciBranch
+    }
+
+    // Optional: if you ever want to override commit from CI as well:
+    def ciCommit = System.getenv('GIT_COMMIT')
+    if (ciCommit) {
+        customProperty 'git.commit.id', ciCommit
+        customProperty 'git.commit.id.abbrev', ciCommit.take(7)
+    }
 }
 
 configurations {
@@ -425,8 +440,8 @@ dependencies {
     runtimeOnly "io.jsonwebtoken:jjwt-jackson:${jwt_version}"
 
     // required by sshd-git
-    implementation "org.bouncycastle:bcpkix-jdk18on:1.82"
-    implementation "org.bouncycastle:bcprov-jdk18on:1.82"
+    implementation "org.bouncycastle:bcpkix-jdk18on:1.83"
+    implementation "org.bouncycastle:bcprov-jdk18on:1.83"
 
     implementation "com.mysql:mysql-connector-j:${mysql_version}"
     implementation "org.postgresql:postgresql:42.7.8"
@@ -463,7 +478,7 @@ dependencies {
     checkstyle "org.apache.commons:commons-lang3:${commons_lang3_version}"
     checkstyle "org.apache.commons:commons-text:${commons_text_version}"
 
-    implementation "com.google.errorprone:error_prone_annotations:2.44.0"
+    implementation "com.google.errorprone:error_prone_annotations:2.45.0"
     // needed for OpenAPI generation
     implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.14"
 
