@@ -853,12 +853,12 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     public void validateScoreSettings() {
         // Check if max score is set
         if (getMaxPoints() == null || getMaxPoints() <= 0) {
-            // make sure the default value is set properly
+            // Correct invalid maxPoints to default value (prevents invalid state)
             setMaxPoints(1.0);
         }
 
         if (getBonusPoints() == null || getBonusPoints() < 0) {
-            // make sure the default value is set properly
+            // Correct invalid bonusPoints to default value (prevents invalid state)
             setBonusPoints(0.0);
         }
 
