@@ -67,6 +67,8 @@ public class AtlasMLService {
 
     private static final String SUGGEST_RELATIONS_ENDPOINT = "/api/v1/competency/relations/suggest/%s";
 
+    private static final String MAP_COMPETENCY_TO_COMPETENCY_ENDPOINT = "/api/v1/competency/map-competency-to-competency";
+
     public AtlasMLService(@Qualifier("atlasmlRestTemplate") RestTemplate atlasmlRestTemplate,
             @Qualifier("shortTimeoutAtlasmlRestTemplate") RestTemplate shortTimeoutAtlasmlRestTemplate, AtlasMLRestTemplateConfiguration config,
             CompetencyExerciseLinkRepository competencyExerciseLinkRepository, FeatureToggleService featureToggleService) {
@@ -187,6 +189,45 @@ public class AtlasMLService {
         }
         catch (Exception e) {
             throw new AtlasMLServiceException("Unexpected error while suggesting competency relations", e);
+        }
+    }
+
+    /**
+     * Map a competency to another competency in AtlasML (bidirectional relationship).
+     *
+     * @param sourceCompetencyId the source competency ID
+     * @param targetCompetencyId the target competency ID
+     * @return true if successful, false otherwise
+     */
+    public boolean mapCompetencyToCompetency(Long sourceCompetencyId, Long targetCompetencyId) {
+        try {
+            log.debug("Mapping competency {} to competency {}", sourceCompetencyId, targetCompetencyId);
+
+            HttpHeaders headers = buildHeadersWithAuth();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+
+            de.tum.cit.aet.artemis.atlas.dto.atlasml.MapCompetencyToCompetencyRequestDTO requestBody = new de.tum.cit.aet.artemis.atlas.dto.atlasml.MapCompetencyToCompetencyRequestDTO(
+                    sourceCompetencyId, targetCompetencyId);
+            HttpEntity<de.tum.cit.aet.artemis.atlas.dto.atlasml.MapCompetencyToCompetencyRequestDTO> entity = new HttpEntity<>(requestBody, headers);
+
+            String url = config.getAtlasmlBaseUrl() + MAP_COMPETENCY_TO_COMPETENCY_ENDPOINT;
+            ResponseEntity<Void> response = atlasmlRestTemplate.exchange(url, HttpMethod.POST, entity, Void.class);
+
+            boolean isSuccessful = response.getStatusCode().is2xxSuccessful();
+            log.debug("Map competency to competency result: {}", isSuccessful);
+            return isSuccessful;
+        }
+        catch (HttpClientErrorException | HttpServerErrorException e) {
+            log.warn("Failed to map competency to competency with HTTP error: {}", e.getMessage());
+            return false;
+        }
+        catch (ResourceAccessException e) {
+            log.warn("Failed to map competency to competency due to connection issue: {}", e.getMessage());
+            return false;
+        }
+        catch (Exception e) {
+            log.error("Unexpected error while mapping competency to competency", e);
+            return false;
         }
     }
 
