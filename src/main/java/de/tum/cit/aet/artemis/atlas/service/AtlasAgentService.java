@@ -342,10 +342,21 @@ public class AtlasAgentService {
                     }
                 }
 
-                String creationResponse = delegateTheRightAgent(CREATE_APPROVED_RELATION, courseId, sessionId);
+                // Construct explicit instruction for the agent to use cached data
+                String saveInstruction = CREATE_APPROVED_RELATION
+                        + "\n\nINSTRUCTION: Call getLastPreviewedRelation() to retrieve the cached relation data, then call saveRelationMappings() with that exact data. Do not create new relations or modify the cached data.";
+                String creationResponse = delegateTheRightAgent(saveInstruction, courseId, sessionId);
 
                 // Remove the marker from the response if it appears
                 creationResponse = creationResponse.replace(CREATE_APPROVED_RELATION, "").trim();
+
+                // Extract relation preview data from ThreadLocal (stored by CompetencyMappingToolsService after save)
+                SingleRelationPreviewResponseDTO singleRelationPreview = CompetencyMappingToolsService.getSingleRelationPreview();
+                BatchRelationPreviewResponseDTO batchRelationPreview = CompetencyMappingToolsService.getBatchRelationPreview();
+                RelationGraphPreviewDTO relationGraphPreview = CompetencyMappingToolsService.getRelationGraphPreview();
+
+                // Convert to unified relation preview list
+                List<CompetencyRelationPreviewDTO> relationPreviews = convertToRelationPreviewsList(singleRelationPreview, batchRelationPreview);
 
                 if (cachedData != null && !cachedData.isEmpty()) {
                     // Clear the cache after successful save
@@ -355,9 +366,9 @@ public class AtlasAgentService {
                 // Reset to MAIN_AGENT
                 sessionAgentMap.put(sessionId, AgentType.MAIN_AGENT);
 
-                // Don't send preview data after creation - just the success message
-                return CompletableFuture
-                        .completedFuture(new AtlasAgentChatResponseDTO(creationResponse, ZonedDateTime.now(), competencyModifiedInCurrentRequest.get(), null, null, null));
+                // Return success message with preview data for the saved relations
+                return CompletableFuture.completedFuture(new AtlasAgentChatResponseDTO(creationResponse, ZonedDateTime.now(), competencyModifiedInCurrentRequest.get(), null,
+                        relationPreviews, relationGraphPreview));
             }
             else if (response.contains(RETURN_TO_MAIN_AGENT)) {
                 sessionAgentMap.put(sessionId, AgentType.MAIN_AGENT);

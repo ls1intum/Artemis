@@ -441,17 +441,18 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
 
         const cacheKey = message.id;
         if (!this.relationCache.has(cacheKey)) {
-            const relations = message.relationGraphPreview.edges.map((edge) => {
+            const relations = message.relationGraphPreview.edges.map((edge, index) => {
                 // Parse edge ID: can be "edge-123" or "edge-new-123-456"
                 let relationId: number | undefined = undefined;
                 if (edge.id.startsWith('edge-new-')) {
-                    // New relation without DB ID - leave as undefined
-                    relationId = undefined;
+                    // New relation without DB ID - use a temporary negative ID to avoid conflicts
+                    // This ensures the graph component can generate proper edge IDs
+                    relationId = -(index + 1);
                 } else if (edge.id.startsWith('edge-')) {
                     // Existing relation with DB ID
                     const idStr = edge.id.substring(5); // Remove "edge-" prefix
                     const parsed = parseInt(idStr, 10);
-                    relationId = isNaN(parsed) ? undefined : parsed;
+                    relationId = isNaN(parsed) ? -(index + 1) : parsed;
                 }
 
                 return {

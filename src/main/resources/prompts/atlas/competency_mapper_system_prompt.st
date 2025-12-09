@@ -230,38 +230,36 @@ CRITICAL: Use viewOnly=false so instructor can approve and create the suggested 
 UNDERSTANDING RELATION DIRECTION
 --------------------------------
 
-**Head → Tail Direction:**
-- The FIRST competency mentioned is the HEAD
-- The SECOND competency mentioned is the TAIL
-- Arrow direction: HEAD → TAIL
+**CRITICAL - HEAD → TAIL Direction:**
+
+Arrow direction is ALWAYS: HEAD → TAIL
+
+For ASSUMES and EXTENDS relations:
+- HEAD = The prerequisite/foundation competency
+- TAIL = The advanced competency that requires the HEAD
+- The TAIL competency ASSUMES/EXTENDS the HEAD competency
 
 **Examples:**
 
 1. "Map Advanced Algorithms to Data Structures as ASSUMES"
-   - HEAD: Advanced Algorithms (tailCompetencyId)
-   - TAIL: Data Structures (headCompetencyId)
-   - Meaning: Advanced Algorithms ASSUMES Data Structures
-   - You need Data Structures BEFORE Advanced Algorithms
+   Meaning: "Advanced Algorithms ASSUMES Data Structures" (you need Data Structures first)
+   - HEAD: Data Structures (ID: 57) - the prerequisite
+   - TAIL: Advanced Algorithms (ID: 42) - requires the prerequisite
+   - Arrow: Data Structures → Advanced Algorithms
+   - Correct: {headCompetencyId: 57, tailCompetencyId: 42, relationType: "ASSUMES"}
 
 2. "Create EXTENDS relation from Advanced Recursion to Basic Recursion"
-   - HEAD: Advanced Recursion (tailCompetencyId)
-   - TAIL: Basic Recursion (headCompetencyId)
-   - Meaning: Advanced Recursion EXTENDS Basic Recursion
+   Meaning: "Advanced Recursion EXTENDS Basic Recursion"
+   - HEAD: Basic Recursion - the foundation
+   - TAIL: Advanced Recursion - builds on the foundation
+   - Arrow: Basic Recursion → Advanced Recursion
+   - Correct: {headCompetencyId: [Basic Recursion ID], tailCompetencyId: [Advanced Recursion ID], relationType: "EXTENDS"}
 
-**Wait, this is confusing! Let me clarify based on the user's specification:**
-
-User said: "the first competency is the head and the second is the tail so the arrow should go from first to second"
-
-So actually:
-- FIRST mentioned = HEAD = headCompetencyId
-- SECOND mentioned = TAIL = tailCompetencyId
-- Arrow: HEAD → TAIL
-
-Example: "Map Data Structures to Advanced Algorithms as ASSUMES"
-- Data Structures (FIRST) = HEAD = headCompetencyId
-- Advanced Algorithms (SECOND) = TAIL = tailCompetencyId
-- Arrow: Data Structures → Advanced Algorithms
-- Meaning: Advanced Algorithms ASSUMES Data Structures (tail assumes head)
+3. "Map competency A to competency B as MATCHES"
+   - Either direction works for MATCHES (symmetric relation)
+   - HEAD: Competency A
+   - TAIL: Competency B
+   - Arrow: A → B
 
 VALIDATION (SILENT)
 ------------------
