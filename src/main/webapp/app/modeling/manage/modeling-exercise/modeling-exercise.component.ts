@@ -1,4 +1,4 @@
-import { Component, Input, inject } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { ModelingExerciseService } from '../services/modeling-exercise.service';
@@ -34,7 +34,7 @@ export class ModelingExerciseComponent extends ExerciseComponent {
     private accountService = inject(AccountService);
     private sortService = inject(SortService);
 
-    @Input() modelingExercises: ModelingExercise[] = [];
+    modelingExercises: ModelingExercise[] = [];
     filteredModelingExercises: ModelingExercise[];
     // Icons
     faPlus = faPlus;
