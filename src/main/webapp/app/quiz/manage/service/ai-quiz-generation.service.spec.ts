@@ -37,13 +37,12 @@ describe('AiQuizGenerationService', () => {
                     options: [],
                 },
             ],
-            warnings: [],
         };
 
         service.generate(42, payload).subscribe((res) => {
             expect(res.questions).toHaveLength(1);
             expect(res.questions[0].title).toBe('Q1');
-            expect(res.warnings?.length).toBe(0);
+            expect((res as any).errorKey).toBeUndefined();
         });
 
         const req = httpMock.expectOne('api/hyperion/quizzes/courses/42/generate');
@@ -51,7 +50,7 @@ describe('AiQuizGenerationService', () => {
         req.flush(mockResponse);
     });
 
-    it('should catch errors and return a warning message', () => {
+    it('should catch HTTP 500 errors and return an empty question list with an errorKey', () => {
         const payload = {
             numberOfQuestions: 1,
             language: AiLanguage.ENGLISH,
@@ -62,14 +61,15 @@ describe('AiQuizGenerationService', () => {
 
         service.generate(5, payload).subscribe((res) => {
             expect(res.questions).toEqual([]);
-            expect(res.warnings?.[0]).toContain('HTTP 500');
+            expect((res as any).errorKey).toBeDefined();
         });
 
         const req = httpMock.expectOne('api/hyperion/quizzes/courses/5/generate');
+        expect(req.request.method).toBe('POST');
         req.flush('Internal Server Error', { status: 500, statusText: 'Server Error' });
     });
 
-    it('should describe network and 404 errors correctly', () => {
+    it('should map network and 404 errors to an errorKey', () => {
         const payload = {
             numberOfQuestions: 1,
             language: AiLanguage.GERMAN,
@@ -78,18 +78,24 @@ describe('AiQuizGenerationService', () => {
             requestedSubtype: AiRequestedSubtype.MULTI_CORRECT,
         };
 
+        // Network error (status 0)
         service.generate(1, payload).subscribe((res) => {
-            expect(res.warnings?.[0]).toContain('Network error');
+            expect(res.questions).toEqual([]);
+            expect((res as any).errorKey).toBeDefined();
         });
 
         const req1 = httpMock.expectOne('api/hyperion/quizzes/courses/1/generate');
+        expect(req1.request.method).toBe('POST');
         req1.error(new ProgressEvent('network'), { status: 0 });
 
+        // 404 Not Found
         service.generate(2, payload).subscribe((res) => {
-            expect(res.warnings?.[0]).toContain('not available');
+            expect(res.questions).toEqual([]);
+            expect((res as any).errorKey).toBeDefined();
         });
 
         const req2 = httpMock.expectOne('api/hyperion/quizzes/courses/2/generate');
+        expect(req2.request.method).toBe('POST');
         req2.flush('Not Found', { status: 404, statusText: 'Not Found' });
     });
 });
