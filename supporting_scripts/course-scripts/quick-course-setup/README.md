@@ -137,6 +137,8 @@ The large_course_main script performs all necessary steps to set up a large cour
    
    You will need to update values here if you want to run the script against a test server.
 
+   **IMPORTANT:** Do not create users with weak passwords on production or test servers. Ensure that the `student_password_base` follows the password policies of the server.
+
    | Variable                | Description                                                                    |
    |-------------------------|--------------------------------------------------------------------------------|
    | `admin_user`            |                                                                                |
