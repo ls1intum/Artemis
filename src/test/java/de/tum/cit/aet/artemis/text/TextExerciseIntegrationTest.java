@@ -700,7 +700,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
         textExerciseUtilService.addAndSaveTextBlocksToTextSubmission(Set.of(manualTextBlock, automaticTextBlock), (TextSubmission) exampleSubmission.getSubmission());
 
-        participationUtilService.addResultToSubmission(exampleSubmission.getSubmission(), AssessmentType.MANUAL);
+        participationUtilService.addResultToSubmission(exampleSubmission.getSubmission(), AssessmentType.MANUAL, textExercise.getId());
         TextExercise newTextExercise = request.postWithResponseBody("/api/text/text-exercises/import/" + textExercise.getId(), textExercise, TextExercise.class,
                 HttpStatus.CREATED);
         assertThat(newTextExercise.getExampleSubmissions()).hasSize(1);
@@ -1279,7 +1279,8 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         Set<ExampleSubmission> exampleSubmissionSet = new HashSet<>();
         var exampleSubmission = participationUtilService.generateExampleSubmission("text", textExercise, true);
         exampleSubmission = participationUtilService.addExampleSubmission(exampleSubmission);
-        TextSubmission textSubmission = (TextSubmission) participationUtilService.addResultToSubmission(exampleSubmission.getSubmission(), AssessmentType.MANUAL);
+        TextSubmission textSubmission = (TextSubmission) participationUtilService.addResultToSubmission(exampleSubmission.getSubmission(), AssessmentType.MANUAL,
+                textExercise.getId());
         textSubmission.setExampleSubmission(true);
         Result result = textSubmission.getLatestResult();
         result.setExampleResult(true);
@@ -1411,7 +1412,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         // Create example submission
         var exampleSubmission = participationUtilService.generateExampleSubmission("text", textExercise, true);
         exampleSubmission = participationUtilService.addExampleSubmission(exampleSubmission);
-        participationUtilService.addResultToSubmission(exampleSubmission.getSubmission(), AssessmentType.MANUAL);
+        participationUtilService.addResultToSubmission(exampleSubmission.getSubmission(), AssessmentType.MANUAL, textExercise.getId());
         var submission = textSubmissionRepository.findByIdWithEagerResultsAndFeedbackAndTextBlocksElseThrow(exampleSubmission.getSubmission().getId());
 
         Feedback feedback = ParticipationFactory.generateFeedback().getFirst();

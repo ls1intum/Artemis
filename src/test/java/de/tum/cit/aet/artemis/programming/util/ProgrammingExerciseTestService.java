@@ -2148,7 +2148,7 @@ public class ProgrammingExerciseTestService {
 
         var participantRepoTestUrl = new LocalVCRepositoryUri(convertToLocalVcUriString(studentTeamRepo));
         final var teamLocalPath = studentTeamRepo.workingCopyGitRepoFile.toPath();
-        doReturn(teamLocalPath).when(gitService).getDefaultLocalPathOfRepo(participantRepoTestUrl);
+        doReturn(teamLocalPath).when(gitService).getDefaultLocalCheckOutPathOfRepo(participantRepoTestUrl);
         doThrow(new IOException("Checkout got interrupted!")).when(gitService).copyBareRepositoryWithoutHistory(any(), any(), anyString());
 
         // the local repo should exist before startExercise()

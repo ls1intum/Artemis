@@ -186,6 +186,7 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
         orphanTeamScore = teamScoreRepository.save(orphanTeamScore);
 
         var orphanResult = new Result();
+        orphanResult.setExerciseId(oldExercise.getId());
         orphanResult = resultRepository.save(orphanResult);
 
         orphanFeedback.setResult(orphanResult);
@@ -199,6 +200,7 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
 
         Result nonOrphanResult = new Result();
         nonOrphanResult.setSubmission(submission);
+        nonOrphanResult.setExerciseId(submission.getParticipation().getExercise().getId());
         nonOrphanFeedback.setResult(nonOrphanResult);
         nonOrphanResult = resultRepository.save(nonOrphanResult);
 
