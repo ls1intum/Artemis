@@ -9,6 +9,7 @@ config.read(['../config.ini', 'config.ini'])
 SERVER_URL: str = config.get('Settings', 'server_url')
 ADMIN_USER: str = config.get('Settings', 'admin_user')
 ADMIN_PASSWORD: str = config.get('Settings', 'admin_password')
+USER_PASSWORD_BASE: str = config.get('Settings', 'student_password_base')
 
 def login_as_admin(session: requests.Session) -> None:
     """Authenticate as an admin using the provided session."""
@@ -49,7 +50,7 @@ def authenticate_user(username: str, password: str, session: requests.Session = 
 def get_user_details_by_index(user_index: int) -> Dict[str, Any]:
     """Generate user details based on the index for predefined users."""
     username: str = f"artemis_test_user_{user_index}"
-    password: str = username
+    password: str = f"{USER_PASSWORD_BASE}{user_index}"
     authorities: List[str] = []
     groups: List[str] = []
 
@@ -83,8 +84,11 @@ def get_user_details_by_index(user_index: int) -> Dict[str, Any]:
 
 def get_student_details_by_index(user_index: int) -> Dict[str, Any]:
     """Generate user details based on the index for students."""
-    username: str = f"student{user_index}"
+    username: str = f"artemis_test_user_{user_index}"
     password: str = "Password123!"
+    if USER_PASSWORD_BASE and USER_PASSWORD_BASE.strip():
+        password = f"{USER_PASSWORD_BASE}{user_index}"
+
     user_role: str = "ROLE_USER"
     authorities: List[str] = [user_role]
     groups: List[str] = ["students"]
