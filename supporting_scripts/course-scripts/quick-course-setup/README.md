@@ -133,7 +133,19 @@ The large_course_main script performs all necessary steps to set up a large cour
    | `exercise_name`    | Name of the programming exercises to be created                                          |
    | `create_course`    | Set to `False` to use an existing course and provide a valid `course_id`.                |
    | `create_exercises` | Set to `False` to use an existing programming exercise and provide valid `exercise_Ids`. |
-4. You can use the play button within IntelliJ (if Python is configured properly) to run the script.
+4. Update the shared [config.ini](../config.ini) to your needs
+   
+   You will need to update values here if you want to run the script against a test server.
+
+   | Variable                | Description                                                                    |
+   |-------------------------|--------------------------------------------------------------------------------|
+   | `admin_user`            |                                                                                |
+   | `admin_password`        |                                                                                |
+   | `student_password_base` | According to the passwords used on the system                                  |
+   | `student_group_name`    | Student group name of the course for which the script is run                   |
+   | `server_url`            | Of the server against which the script shall be run                            |
+   | `client_url`            | Of the client against the script shall be run (usually the same as server url) |
+5. You can use the play button within IntelliJ (if Python is configured properly) to run the script.
 ```shell
 python3 large_course_main.py
 ```
