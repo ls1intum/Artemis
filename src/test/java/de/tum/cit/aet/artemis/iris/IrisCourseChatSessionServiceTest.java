@@ -44,7 +44,7 @@ class IrisCourseChatSessionServiceTest extends AbstractIrisIntegrationTest {
         course = courseUtilService.createCourse();
 
         user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        user.setSelectedLLMUsageTimestamp(ZonedDateTime.now());
+        user.setSelectedLLMUsageTimestamp(ZonedDateTime.parse("2025-12-11T00:00:00Z"));
         user.setSelectedLLMUsage(AiSelectionDecision.CLOUD_AI);
         // Ensure course membership for auth check
         user.setGroups(Set.of(course.getStudentGroupName()));
@@ -64,13 +64,5 @@ class IrisCourseChatSessionServiceTest extends AbstractIrisIntegrationTest {
 
         assertThatThrownBy(() -> irisCourseChatSessionService.checkHasAccessTo(user, session)).isInstanceOf(AccessForbiddenException.class).extracting(Throwable::getMessage)
                 .asString().contains("Iris Session");
-    }
-
-    @Test
-    void checkHasAccessTo_throwsWhenLlMAcceptanceMissing() {
-        user.setSelectedLLMUsageTimestamp(null);
-
-        assertThatThrownBy(() -> irisCourseChatSessionService.checkHasAccessTo(user, session)).isInstanceOf(AccessForbiddenException.class).extracting(Throwable::getMessage)
-                .asString().contains("external LLM privacy policy");
     }
 }

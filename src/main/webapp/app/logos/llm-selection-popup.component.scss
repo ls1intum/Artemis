@@ -97,7 +97,8 @@
 
 .option-card:hover {
     transform: translateY(-4px);
-    box-shadow: 0 12px 24px var(--ai-modal-no-ai-bg-hover);
+    box-shadow: 0 12px 24px var(--ai-modal-shadow-hover);
+    background: var(--ai-modal-no-ai-bg-hover);
 }
 
 .option-card:focus-visible {
@@ -216,14 +217,8 @@
     color: var(--bs-body-color);
 }
 
-.card-header h2 {
-    font-size: 22px;
-    font-weight: 700;
-    margin: 0;
-    color: var(--bs-body-color);
-}
-
-.card-header h1 {
+.card-header h2,
+h1 {
     font-size: 22px;
     font-weight: 700;
     margin: 0;
@@ -303,7 +298,7 @@
     margin-top: 20px;
     font-size: 13px;
     line-height: 1.5;
-    color: var(--ai-model-subtitle);
+    color: var(--ai-modal-subtitle);
 }
 
 .learn-more-link {
