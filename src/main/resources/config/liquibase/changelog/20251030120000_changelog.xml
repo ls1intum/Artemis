@@ -30,11 +30,12 @@
                     'customInstructions', NULLIF(btrim(pes.custom_instructions), ''),
                     'variant', LOWER(COALESCE(NULLIF(pes.selected_variant, ''), 'default')),
                     'rateLimit', CASE
-                        WHEN pes.rate_limit IS NULL AND pes.rate_limit_timeframe_hours IS NULL THEN NULL
-                        ELSE jsonb_build_object(
-                            'requests', pes.rate_limit,
-                            'timeframeHours', pes.rate_limit_timeframe_hours
-                        )
+                        WHEN pes.rate_limit IS NOT NULL AND pes.rate_limit_timeframe_hours IS NOT NULL THEN
+                            jsonb_build_object(
+                                'requests', pes.rate_limit,
+                                'timeframeHours', pes.rate_limit_timeframe_hours
+                            )
+                        ELSE NULL
                     END
                 )::json
             FROM iris_settings cs
@@ -51,11 +52,12 @@
                     'customInstructions', NULLIF(TRIM(pes.custom_instructions), ''),
                     'variant', LOWER(COALESCE(NULLIF(pes.selected_variant, ''), 'default')),
                     'rateLimit', CASE
-                        WHEN pes.rate_limit IS NULL AND pes.rate_limit_timeframe_hours IS NULL THEN NULL
-                        ELSE JSON_OBJECT(
-                            'requests', pes.rate_limit,
-                            'timeframeHours', pes.rate_limit_timeframe_hours
-                        )
+                        WHEN pes.rate_limit IS NOT NULL AND pes.rate_limit_timeframe_hours IS NOT NULL THEN
+                            JSON_OBJECT(
+                                'requests', pes.rate_limit,
+                                'timeframeHours', pes.rate_limit_timeframe_hours
+                            )
+                        ELSE NULL
                     END
                 )
             FROM iris_settings cs
@@ -129,12 +131,10 @@
             <addForeignKeyConstraint baseTableName="iris_settings" baseColumnNames="iris_lecture_ingestion_settings_id"
                                      referencedTableName="iris_sub_settings" referencedColumnNames="id"
                                      constraintName="FK_IRIS_SETTINGS_ON_IRIS_LECTURE_INGESTION_SETTINGS"/>
-            <addForeignKeyConstraint baseTableName="iris_settings" baseColumnNames="iris_text_exercise_chat_settings_id"
-                                     referencedTableName="iris_sub_settings" referencedColumnNames="id"
-                                     constraintName="FK_IRIS_SETTINGS_ON_IRIS_TEXT_CHAT_SETTINGS"/>
             <addForeignKeyConstraint baseTableName="iris_settings" baseColumnNames="iris_course_chat_settings_id"
                                      referencedTableName="iris_sub_settings" referencedColumnNames="id"
-                                     constraintName="FK_IRIS_SETTINGS_ON_IRIS_COURSE_CHAT_SETTINGS"/>
+                                     onDelete="SET NULL" onUpdate="CASCADE"
+                                     constraintName="fk_iris_settings_iris_course_chat_settings_id"/>
             <addForeignKeyConstraint baseTableName="iris_settings" baseColumnNames="iris_faq_ingestion_settings_id"
                                      referencedTableName="iris_sub_settings" referencedColumnNames="id"
                                      constraintName="FK_IRIS_SETTINGS_ON_IRIS_FAQ_INGESTION_SETTINGS"/>
@@ -143,6 +143,7 @@
                                      constraintName="FK_IRIS_SETTINGS_ON_IRIS_LECTURE_CHAT_SETTINGS"/>
             <addForeignKeyConstraint baseTableName="iris_settings" baseColumnNames="iris_tutor_suggestion_settings_id"
                                      referencedTableName="iris_sub_settings" referencedColumnNames="id"
+                                     onDelete="CASCADE"
                                      constraintName="FK_IRIS_SETTINGS_ON_IRIS_TUTOR_SUGGESTION_SETTINGS"/>
 
             <createIndex indexName="course_id" tableName="iris_settings" unique="true">
@@ -270,9 +271,12 @@
             <!-- MySQL: Restore course settings - Insert all 8 sub_settings types -->
             <sql dbms="mysql">
                 INSERT INTO iris_sub_settings (enabled, rate_limit, rate_limit_timeframe_hours, selected_variant, custom_instructions, discriminator, auto_ingest_on_lecture_attachment_upload, auto_ingest_on_faq_creation)
-                SELECT JSON_EXTRACT(settings, '$.enabled') = true, JSON_EXTRACT(settings, '$.rateLimit.requests'),
-                       JSON_EXTRACT(settings, '$.rateLimit.timeframeHours'), JSON_UNQUOTE(JSON_EXTRACT(settings, '$.variant')),
-                       JSON_UNQUOTE(JSON_EXTRACT(settings, '$.customInstructions')), 'PROGRAMMING_EXERCISE_CHAT', false, false
+                SELECT JSON_EXTRACT(settings, '$.enabled') = true,
+                       CAST(NULLIF(JSON_UNQUOTE(JSON_EXTRACT(settings, '$.rateLimit.requests')), 'null') AS SIGNED),
+                       CAST(NULLIF(JSON_UNQUOTE(JSON_EXTRACT(settings, '$.rateLimit.timeframeHours')), 'null') AS SIGNED),
+                       JSON_UNQUOTE(JSON_EXTRACT(settings, '$.variant')),
+                       NULLIF(JSON_UNQUOTE(JSON_EXTRACT(settings, '$.customInstructions')), 'null'),
+                       'PROGRAMMING_EXERCISE_CHAT', false, false
                 FROM course_iris_settings ORDER BY course_id;
             </sql>
             <sql dbms="mysql">
