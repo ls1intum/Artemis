@@ -27,9 +27,9 @@ export interface DropInfo {
 export class ModelingAssessmentComponent extends ModelingComponent implements AfterViewInit, OnDestroy, OnChanges {
     private artemisTranslatePipe = inject(ArtemisTranslatePipe);
 
-    maxScore = input<number | undefined>(undefined);
+    maxScore = input<number>(undefined!);
     maxBonusPoints = input(0);
-    totalScore = input<number | undefined>(undefined);
+    totalScore = input<number>(undefined!);
     readonly title = input<string | undefined>(undefined);
     readonly enablePopups = input(true);
     readonly displayPoints = input(true);
