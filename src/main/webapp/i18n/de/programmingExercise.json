@@ -243,7 +243,8 @@
                 "reviewChanges": "Änderungen überprüfen",
                 "reviewChangesDescription": "Grüne Zeilen werden hinzugefügt, rote Zeilen werden entfernt.",
                 "acceptChanges": "Änderungen akzeptieren",
-                "rejectChanges": "Änderungen ablehnen"
+                "rejectChanges": "Änderungen ablehnen",
+                "changesApplied": "Änderungen wurden auf die Aufgabenstellung angewendet."
             },
             "inlineComment": {
                 "placeholder": "Beschreibe, was sich in diesen Zeilen ändern soll...",
