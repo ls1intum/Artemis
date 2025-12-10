@@ -1,8 +1,7 @@
-import { Component, ElementRef, OnDestroy, OnInit, computed, effect, inject, viewChild } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, inject, viewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { ApollonEditor, ApollonMode, Locale, UMLModel } from '@ls1intum/apollon';
+import { ApollonEditor, ApollonMode, Locale, UMLModel } from '@tumaet/apollon';
 import { NgbModal, NgbModalRef, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { convertRenderedSVGToPNG } from '../exercise-generation/svg-renderer';
 import { ApollonDiagramService } from 'app/quiz/manage/apollon-diagrams/services/apollon-diagram.service';
 import { ApollonDiagram } from 'app/modeling/shared/entities/apollon-diagram.model';
@@ -20,8 +19,7 @@ import { FormsModule, NgModel } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { input, output, signal } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { signal } from '@angular/core';
 
 @Component({
     selector: 'jhi-apollon-diagram-detail',
@@ -34,50 +32,22 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
     private courseService = inject(CourseManagementService);
     private alertService = inject(AlertService);
     private translateService = inject(TranslateService);
-    private languageHelper = inject(JhiLanguageHelper);
     private modalService = inject(NgbModal);
     private route = inject(ActivatedRoute);
 
     readonly editorContainer = viewChild.required<ElementRef>('editorContainer');
     readonly titleField = viewChild<NgModel>('titleField');
 
-    courseId = input<number | undefined>(undefined);
-    apollonDiagramId = input<number | undefined>(undefined);
+    @Input() courseId: number;
+    @Input() apollonDiagramId: number;
 
-    closeEdit = output<DragAndDropQuestion | undefined>();
-    closeModal = output();
-
-    private routeParams = toSignal(this.route.params, { initialValue: {} });
-
-    resolvedCourseId = computed(() => {
-        const direct = this.courseId();
-        if (direct !== undefined) return direct;
-
-        const p = this.routeParams();
-        if (!('courseId' in p) || p.courseId == null || p.courseId === '') return undefined;
-
-        const n = Number(p.courseId);
-        return Number.isNaN(n) ? undefined : n;
-    });
-
-    resolvedApollonDiagramId = computed(() => {
-        const direct = this.apollonDiagramId();
-        if (direct !== undefined) return direct;
-
-        const p = this.routeParams();
-        if (!('id' in p) || p.id == null || p.id === '') return undefined;
-
-        const n = Number(p.id);
-        return Number.isNaN(n) ? undefined : n;
-    });
+    @Output() closeEdit = new EventEmitter<DragAndDropQuestion | undefined>();
+    @Output() closeModal = new EventEmitter();
 
     course = signal<Course>(undefined!);
 
     apollonDiagram = signal<ApollonDiagram>(undefined!);
-    apollonEditor = signal<ApollonEditor | undefined>(undefined);
-
-    // This is a temporary workaround until Apollon supports signals which would cause the hasInteractive signal to update automatically.
-    modelChangeCounter = signal(0);
+    apollonEditor?: ApollonEditor;
 
     isSaved = true;
 
@@ -89,32 +59,20 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
     crop = true;
 
     /** Whether some elements are interactive in the apollon editor. */
-    hasInteractive = computed(() => {
-        this.modelChangeCounter();
-        try {
-            return (
-                !!this.apollonEditor() &&
-                (Object.entries(this.apollonEditor()!.model.interactive.elements).some(([, selected]) => selected) ||
-                    Object.entries(this.apollonEditor()!.model.interactive.relationships).some(([, selected]) => selected))
-            );
-        } catch {
-            return false;
-        }
-    });
+    get hasInteractive(): boolean {
+        return (
+            !!this.apollonEditor &&
+            (Object.entries(this.apollonEditor.model.nodes).some(([, selected]) => selected) || Object.entries(this.apollonEditor.model.edges).some(([, selected]) => selected))
+        );
+    }
 
     /** Whether some elements are selected in the apollon editor. */
-    hasSelection = computed(() => {
-        this.modelChangeCounter();
-        try {
-            return (
-                !!this.apollonEditor() &&
-                (Object.entries(this.apollonEditor()!.selection.elements).some(([, selected]) => selected) ||
-                    Object.entries(this.apollonEditor()!.selection.relationships).some(([, selected]) => selected))
-            );
-        } catch {
-            return false;
-        }
-    });
+    get hasSelection(): boolean {
+        return (
+            !!this.apollonEditor &&
+            (Object.entries(this.apollonEditor.getNodes()).some(([, selected]) => selected) || Object.entries(this.apollonEditor.getEdges()).some(([, selected]) => selected))
+        );
+    }
 
     // Icons
     faDownload = faDownload;
@@ -122,15 +80,15 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
     faArrow = faArrowLeft;
     faX = faX;
 
-    constructor() {
-        effect(() => {
-            const courseId = this.resolvedCourseId();
-            const diagramId = this.resolvedApollonDiagramId();
-            if (courseId === undefined || diagramId === undefined) {
-                return;
-            }
+    /**
+     * Initializes Apollon Editor and sets auto save timer
+     */
+    ngOnInit() {
+        this.route.params.subscribe((params) => {
+            this.apollonDiagramId ??= Number(params['id']);
+            this.courseId ??= Number(params['courseId']);
 
-            this.courseService.find(courseId).subscribe({
+            this.courseService.find(this.courseId).subscribe({
                 next: (response) => {
                     this.course.set(response.body!);
                 },
@@ -139,7 +97,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
                 },
             });
 
-            this.apollonDiagramService.find(diagramId, courseId).subscribe({
+            this.apollonDiagramService.find(this.apollonDiagramId, this.courseId).subscribe({
                 next: (response) => {
                     const diagram = response.body!;
 
@@ -157,26 +115,12 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Initializes Apollon Editor and sets auto save timer
-     */
-    ngOnInit() {
-        this.languageHelper.language.subscribe(async (languageKey: string) => {
-            const editor = this.apollonEditor();
-            if (editor) {
-                await editor.nextRender;
-                editor.locale = languageKey as Locale;
-            }
-        });
-    }
-
-    /**
      * Clears auto save interval and destroys Apollon Editor
      */
     ngOnDestroy() {
         clearInterval(this.autoSaveInterval);
-        const editor = this.apollonEditor();
-        if (editor) {
-            editor.destroy();
+        if (this.apollonEditor) {
+            this.apollonEditor.destroy();
         }
     }
 
@@ -184,27 +128,22 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
      * Initializes Apollon Editor with UML Model
      * @param initialModel
      */
-    async initializeApollonEditor(initialModel: UMLModel) {
-        const currentEditor = this.apollonEditor();
-        if (currentEditor) {
-            currentEditor.destroy();
+    initializeApollonEditor(initialModel: UMLModel) {
+        if (this.apollonEditor) {
+            // eslint-disable-next-line no-undef
+            console.log('DEBUG initializeApollonEditor destroy');
+            this.apollonEditor.destroy();
         }
 
-        const newEditor = new ApollonEditor(this.editorContainer().nativeElement, {
-            mode: ApollonMode.Exporting,
+        this.apollonEditor = new ApollonEditor(this.editorContainer().nativeElement, {
+            mode: ApollonMode.Modelling,
             model: initialModel,
             type: this.apollonDiagram()!.diagramType,
             locale: this.translateService.currentLang as Locale,
         });
-
-        await newEditor.nextRender;
-
-        newEditor.subscribeToModelChange((newModel) => {
+        this.apollonEditor.subscribeToModelChange((newModel) => {
             this.isSaved = JSON.stringify(newModel) === this.apollonDiagram()?.jsonRepresentation;
-            this.modelChangeCounter.update((counter) => counter + 1);
         });
-
-        this.apollonEditor.set(newEditor);
     }
 
     /**
@@ -214,13 +153,13 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
         if (!this.apollonDiagram()) {
             return false;
         }
-        const umlModel = this.apollonEditor()!.model;
+        const umlModel = this.apollonEditor!.model;
         const updatedDiagram: ApollonDiagram = {
             ...this.apollonDiagram(),
             jsonRepresentation: JSON.stringify(umlModel),
         };
 
-        const result = await lastValueFrom(this.apollonDiagramService.update(updatedDiagram, this.resolvedCourseId()!));
+        const result = await lastValueFrom(this.apollonDiagramService.update(updatedDiagram, this.courseId));
         if (result?.ok) {
             this.alertService.success('artemisApp.apollonDiagram.updated', { title: this.apollonDiagram()?.title });
             this.isSaved = true;
@@ -257,7 +196,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
         if (closeModal) {
             this.closeModal.emit();
         } else {
-            this.closeEdit.emit(undefined);
+            this.closeEdit.emit();
         }
     }
 
@@ -281,16 +220,15 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
      * @async
      */
     async generateExercise() {
-        if (!this.hasInteractive()) {
+        if (!this.hasInteractive) {
             this.alertService.error('artemisApp.apollonDiagram.create.validationError');
             return;
         }
 
-        const editor = this.apollonEditor();
-        if (editor && this.apollonDiagram()) {
+        if (this.apollonEditor && this.apollonDiagram()) {
             const isSaved = await this.saveDiagram();
             if (isSaved) {
-                const question = await generateDragAndDropQuizExercise(this.course(), this.apollonDiagram().title!, editor.model!);
+                const question = await generateDragAndDropQuizExercise(this.course(), this.apollonDiagram().title!, this.apollonEditor.model!);
                 this.closeEdit.emit(question);
             }
         }
@@ -302,19 +240,19 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
      * @async
      */
     async downloadSelection() {
-        if (!this.hasSelection()) {
+        if (!this.hasSelection) {
             return;
         }
 
         const selection = [
-            ...Object.entries(this.apollonEditor()!.selection.elements)
+            ...Object.entries(this.apollonEditor!.getNodes())
                 .filter(([, selected]) => selected)
                 .map(([id]) => id),
-            ...Object.entries(this.apollonEditor()!.selection.relationships)
+            ...Object.entries(this.apollonEditor!.getEdges())
                 .filter(([, selected]) => selected)
                 .map(([id]) => id),
         ];
-        const svg = await this.apollonEditor()!.exportAsSVG({
+        const svg = await this.apollonEditor!.exportAsSVG({
             keepOriginalSize: !this.crop,
             include: selection,
         });

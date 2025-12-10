@@ -1,4 +1,4 @@
-import { UMLDiagramType } from '@ls1intum/apollon';
+import { UMLDiagramType } from '@tumaet/apollon';
 import { BaseEntity } from 'app/shared/model/base-entity';
 
 export class ApollonDiagram implements BaseEntity {

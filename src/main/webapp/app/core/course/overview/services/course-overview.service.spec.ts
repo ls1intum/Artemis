@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { CourseOverviewService } from 'app/core/course/overview/services/course-overview.service';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { UMLDiagramType } from '@ls1intum/apollon';
+import { UMLDiagramType } from '@tumaet/apollon';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
