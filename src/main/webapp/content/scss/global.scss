@@ -1220,3 +1220,19 @@ Note: This class assumes that the scrollbar is already present (e.g. overflow-y 
         background-color: var(--scrollbar-color);
     }
 }
+
+/* ==========================================================================
+Inline Comment Gutter Styles (for Monaco editor line selection)
+========================================================================== */
+.inline-comment-add-gutter {
+    background-color: rgba(var(--bs-primary-rgb), 0.1);
+}
+
+.inline-comment-glyph-margin {
+    background-color: rgba(var(--bs-primary-rgb), 0.2);
+}
+
+.inline-comment-add-button:hover {
+    background-color: var(--bs-primary) !important;
+    color: white !important;
+}

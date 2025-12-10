@@ -70,55 +70,58 @@ export function setupLineSelectionHandler(editor: monaco.editor.IStandaloneCodeE
     }
 
     /**
+     * Creates and styles the add button element.
+     */
+    function createAddButton(lineHeight: number): HTMLElement {
+        const button = document.createElement('div');
+        button.className = 'inline-comment-add-button';
+        button.textContent = '+';
+        button.title = options.addButtonTooltip;
+
+        Object.assign(button.style, {
+            position: 'absolute',
+            left: '4px',
+            width: '20px',
+            height: `${lineHeight}px`,
+            lineHeight: `${lineHeight}px`,
+            cursor: 'pointer',
+            zIndex: '10',
+            textAlign: 'center',
+            fontWeight: 'bold',
+            fontSize: '14px',
+            color: 'var(--bs-primary)',
+            backgroundColor: 'var(--bs-tertiary-bg)',
+            borderRadius: '4px',
+            border: '1px solid var(--bs-border-color)',
+        });
+
+        button.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (currentSelection) {
+                callbacks.onAddComment(currentSelection.startLine, currentSelection.endLine);
+            }
+        });
+
+        return button;
+    }
+
+    /**
      * Shows the "+" button in the gutter area.
-     * Creates the button only once if not already existing.
      */
     function showAddButton(startLine: number, endLine: number): void {
         const domNode = editor.getDomNode();
-        if (!domNode) {
-            return;
-        }
+        if (!domNode) return;
 
-        // Create the button only if it doesn't exist
         if (!addButtonOverlay) {
-            addButtonOverlay = document.createElement('div');
-            addButtonOverlay.className = 'inline-comment-add-button';
-            addButtonOverlay.textContent = '+';
-            addButtonOverlay.title = options.addButtonTooltip;
+            addButtonOverlay = createAddButton(editor.getOption(monaco.editor.EditorOption.lineHeight));
 
-            const lineHeight = editor.getOption(monaco.editor.EditorOption.lineHeight);
-
-            addButtonOverlay.style.position = 'absolute';
-            addButtonOverlay.style.left = '4px';
-            addButtonOverlay.style.width = '20px';
-            addButtonOverlay.style.height = `${lineHeight}px`;
-            addButtonOverlay.style.lineHeight = `${lineHeight}px`;
-            addButtonOverlay.style.cursor = 'pointer';
-            addButtonOverlay.style.zIndex = '10';
-            addButtonOverlay.style.textAlign = 'center';
-            addButtonOverlay.style.fontWeight = 'bold';
-            addButtonOverlay.style.fontSize = '14px';
-            addButtonOverlay.style.color = 'var(--bs-primary)';
-            addButtonOverlay.style.backgroundColor = 'var(--bs-tertiary-bg)';
-            addButtonOverlay.style.borderRadius = '4px';
-            addButtonOverlay.style.border = '1px solid var(--bs-border-color)';
-
-            addButtonOverlay.addEventListener('click', (e) => {
-                e.stopPropagation();
-                if (currentSelection) {
-                    callbacks.onAddComment(currentSelection.startLine, currentSelection.endLine);
-                }
-            });
-
-            // Append to editor's parent for proper positioning
             const overlayContainer = domNode.querySelector('.margin') || domNode;
-            if (overlayContainer && overlayContainer instanceof HTMLElement) {
+            if (overlayContainer instanceof HTMLElement) {
                 overlayContainer.style.position = 'relative';
                 overlayContainer.appendChild(addButtonOverlay);
             }
         }
 
-        // Update position
         repositionAddButton(startLine);
     }
 
@@ -181,22 +184,3 @@ export function setupLineSelectionHandler(editor: monaco.editor.IStandaloneCodeE
         },
     };
 }
-
-/**
- * CSS styles to be injected for the line selection handler.
- * Add this to a global stylesheet or component styles.
- */
-export const LINE_SELECTION_HANDLER_STYLES = `
-.inline-comment-add-gutter {
-    background-color: rgba(var(--bs-primary-rgb), 0.1);
-}
-
-.inline-comment-glyph-margin {
-    background-color: rgba(var(--bs-primary-rgb), 0.2);
-}
-
-.inline-comment-add-button:hover {
-    background-color: var(--bs-primary) !important;
-    color: white !important;
-}
-`;

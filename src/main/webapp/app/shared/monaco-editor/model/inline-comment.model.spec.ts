@@ -2,7 +2,7 @@ import { InlineComment, SerializedInlineComment, createInlineComment, deserializ
 
 describe('inline-comment.model', () => {
     describe('createInlineComment', () => {
-        it('should create a new inline comment with default values', () => {
+        it('should create comment with default values and unique IDs', () => {
             const comment = createInlineComment(1, 5, 'Test instruction');
 
             expect(comment.id).toBeDefined();
@@ -12,32 +12,27 @@ describe('inline-comment.model', () => {
             expect(comment.instruction).toBe('Test instruction');
             expect(comment.status).toBe('draft');
             expect(comment.createdAt).toBeInstanceOf(Date);
-        });
 
-        it('should create unique IDs for each comment', () => {
-            const comment1 = createInlineComment(1, 5, 'Test 1');
+            // Unique IDs
             const comment2 = createInlineComment(1, 5, 'Test 2');
+            expect(comment.id).not.toBe(comment2.id);
 
-            expect(comment1.id).not.toBe(comment2.id);
-        });
-
-        it('should handle single line comments', () => {
-            const comment = createInlineComment(5, 5, 'Single line comment');
-
-            expect(comment.startLine).toBe(5);
-            expect(comment.endLine).toBe(5);
+            // Single line
+            const singleLine = createInlineComment(5, 5, 'Single line');
+            expect(singleLine.startLine).toBe(singleLine.endLine);
         });
     });
 
     describe('serializeComment', () => {
-        it('should serialize a comment to a storage-friendly format', () => {
+        it('should serialize comment with ISO date string', () => {
+            const now = new Date('2024-01-01T00:00:00Z');
             const comment: InlineComment = {
                 id: 'test-id-123',
                 startLine: 1,
                 endLine: 5,
                 instruction: 'Test instruction',
                 status: 'pending',
-                createdAt: new Date('2024-01-01T00:00:00Z'),
+                createdAt: now,
             };
 
             const serialized = serializeComment(comment);
@@ -47,22 +42,12 @@ describe('inline-comment.model', () => {
             expect(serialized.endLine).toBe(5);
             expect(serialized.instruction).toBe('Test instruction');
             expect(serialized.status).toBe('pending');
-            expect(serialized.createdAt).toBe('2024-01-01T00:00:00.000Z');
-        });
-
-        it('should convert createdAt Date to ISO string', () => {
-            const now = new Date();
-            const comment = createInlineComment(1, 5, 'Test');
-            comment.createdAt = now;
-
-            const serialized = serializeComment(comment);
-
             expect(serialized.createdAt).toBe(now.toISOString());
         });
     });
 
     describe('deserializeComment', () => {
-        it('should deserialize a comment from storage format', () => {
+        it('should deserialize comment and handle all status types', () => {
             const serialized: SerializedInlineComment = {
                 id: 'test-id-123',
                 startLine: 1,
@@ -81,34 +66,22 @@ describe('inline-comment.model', () => {
             expect(deserialized.status).toBe('applying');
             expect(deserialized.createdAt).toBeInstanceOf(Date);
             expect(deserialized.createdAt.toISOString()).toBe('2024-01-01T00:00:00.000Z');
-        });
 
-        it('should handle all status types', () => {
+            // All status types
             const statuses = ['draft', 'pending', 'applying', 'applied', 'error'] as const;
-
             for (const status of statuses) {
-                const serialized: SerializedInlineComment = {
-                    id: 'test-id',
-                    startLine: 1,
-                    endLine: 5,
-                    instruction: 'Test',
-                    status,
-                    createdAt: '2024-01-01T00:00:00.000Z',
-                };
-
-                const deserialized = deserializeComment(serialized);
-                expect(deserialized.status).toBe(status);
+                const s: SerializedInlineComment = { ...serialized, status };
+                expect(deserializeComment(s).status).toBe(status);
             }
         });
     });
 
-    describe('serialize and deserialize roundtrip', () => {
+    describe('roundtrip', () => {
         it('should preserve all data through serialization roundtrip', () => {
-            const original = createInlineComment(10, 20, 'Complex instruction with special chars: <>&"\'');
+            const original = createInlineComment(10, 20, 'Complex instruction <>');
             original.status = 'error';
 
-            const serialized = serializeComment(original);
-            const deserialized = deserializeComment(serialized);
+            const deserialized = deserializeComment(serializeComment(original));
 
             expect(deserialized.id).toBe(original.id);
             expect(deserialized.startLine).toBe(original.startLine);
