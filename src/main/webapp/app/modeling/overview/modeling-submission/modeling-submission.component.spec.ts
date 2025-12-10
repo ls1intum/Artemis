@@ -744,9 +744,10 @@ describe('ModelingSubmissionComponent', () => {
                 },
             ],
         });
-        comp.inputExercise = participation.exercise;
-        comp.inputSubmission = modelingSubmission;
-        comp.inputParticipation = participation;
+
+        fixture.componentRef.setInput('inputExercise', participation.exercise);
+        fixture.componentRef.setInput('inputSubmission', modelingSubmission);
+        fixture.componentRef.setInput('inputParticipation', participation);
 
         fixture.detectChanges();
 

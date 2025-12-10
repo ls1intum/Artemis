@@ -1,5 +1,5 @@
 <div [id]="'exercise-' + modelingExercise?.id">
-    @if (displayHeader) {
+    @if (displayHeader()) {
         <jhi-header-participation-page class="d-block mb-4" [exercise]="modelingExerciseHeader" [participation]="modelingParticipationHeader">
             <span pagetitle>
                 {{ 'artemisApp.modelingSubmission.modelingEditor' | artemisTranslate }}:
@@ -66,10 +66,10 @@
     }
 
     @if (modelingExercise) {
-        <jhi-resizeable-container [isExerciseParticipation]="true" [isBeingPrinted]="isPrinting" [expandProblemStatement]="expandProblemStatement" [collapsed]="isFeedbackView">
+        <jhi-resizeable-container [isExerciseParticipation]="true" [isBeingPrinted]="isPrinting()" [expandProblemStatement]="expandProblemStatement()" [collapsed]="isFeedbackView">
             <!--region Left Panel-->
             <ng-container left-body>
-                @if (!submission || submission.submitted || !isExamSummary) {
+                @if (!submission || submission.submitted || !isExamSummary()) {
                     <div class="w-100">
                         <div class="submission-container d-flex flex-column w-100">
                             <div class="d-flex flex-column flex-md-row">
