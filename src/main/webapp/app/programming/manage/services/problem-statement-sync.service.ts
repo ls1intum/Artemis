@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { DiffMatchPatch } from 'diff-match-patch-typescript';
-import { Observable, Subject, Subscription, debounceTime } from 'rxjs';
+import { Subject, Subscription, debounceTime } from 'rxjs';
 import {
     ProgrammingExerciseEditorSyncMessage,
     ProgrammingExerciseEditorSyncService,
@@ -15,28 +15,33 @@ export class ProblemStatementSyncService {
     private exerciseId?: number;
     private incomingMessageSubscription?: Subscription;
     private outgoingDebounceSubscription?: Subscription;
-    private localChangesQueue$ = new Subject<string>();
-    private patchedContentUpdate = new Subject<string>();
 
-    patchedContentObserable$: Observable<string> = this.patchedContentUpdate.asObservable();
+    private localChangesQueue = new Subject<string>();
+    private patchOperations = new Subject<string>();
 
     private lastSyncedContent = '';
     private lastProcessedTimestamp = 0;
 
     init(exerciseId: number, initialContent: string) {
+        this.reset();
         this.exerciseId = exerciseId;
         this.lastSyncedContent = initialContent;
         this.lastProcessedTimestamp = 0;
+        this.patchOperations = new Subject<string>();
+        this.localChangesQueue = new Subject<string>();
         this.incomingMessageSubscription = this.syncService.subscribeToUpdates(exerciseId).subscribe((message) => this.handleRemoteMessage(message));
-        this.outgoingDebounceSubscription = this.localChangesQueue$.pipe(debounceTime(200)).subscribe((content) => this.handleLocalChange(content));
+        this.outgoingDebounceSubscription = this.localChangesQueue.pipe(debounceTime(200)).subscribe((content) => this.handleLocalChange(content));
         this.requestInitialSync();
+        return this.patchOperations.asObservable();
     }
 
-    dispose() {
+    reset() {
         this.incomingMessageSubscription?.unsubscribe();
         this.incomingMessageSubscription = undefined;
         this.outgoingDebounceSubscription?.unsubscribe();
         this.outgoingDebounceSubscription = undefined;
+        this.patchOperations.complete();
+        this.localChangesQueue.complete();
         this.exerciseId = undefined;
         this.lastSyncedContent = '';
         this.lastProcessedTimestamp = 0;
@@ -47,7 +52,7 @@ export class ProblemStatementSyncService {
      * @param content The edited content to be synchronized
      */
     queueLocalChange(content: string) {
-        this.localChangesQueue$.next(content);
+        this.localChangesQueue.next(content);
     }
 
     /**
@@ -126,7 +131,7 @@ export class ProblemStatementSyncService {
         // Receives the full content, update the last synced content and emit the update
         if (message.problemStatementFull !== undefined) {
             this.lastSyncedContent = message.problemStatementFull;
-            this.patchedContentUpdate.next(message.problemStatementFull);
+            this.patchOperations.next(message.problemStatementFull);
             return;
         }
 
@@ -145,7 +150,7 @@ export class ProblemStatementSyncService {
                     return;
                 }
                 this.lastSyncedContent = patchedContent;
-                this.patchedContentUpdate.next(patchedContent);
+                this.patchOperations.next(patchedContent);
             } catch (error) {
                 // TODO: we should alert this or handle it more gracefully
             }

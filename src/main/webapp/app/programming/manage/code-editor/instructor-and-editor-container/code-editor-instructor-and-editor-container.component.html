@@ -24,8 +24,7 @@
             [course]="course"
             [allowHiddenFiles]="true"
             [consistencyIssues]="consistencyIssues()"
-            (fileContentSync)="onLocalFileContentChanged($event)"
-            (fileChangeSync)="onLocalFileChange($event)"
+            (fileOperationSync)="onLocalFileOperationSync($event)"
             (onFileLoad)="onFileLoaded($event)"
         >
             <div editorTitle>

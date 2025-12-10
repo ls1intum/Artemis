@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable, Subject, Subscription } from 'rxjs';
 import { DiffMatchPatch } from 'diff-match-patch-typescript';
 import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor/container/code-editor-container.component';
-import { DeleteFileChange, FileType, RenameFileChange } from 'app/programming/shared/code-editor/model/code-editor.model';
+import { DeleteFileChange, FileType, RenameFileChange, RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { CodeEditorFileService } from 'app/programming/shared/code-editor/services/code-editor-file.service';
 import {
     ProgrammingExerciseEditorFileChangeType,
@@ -15,134 +15,361 @@ import {
 
 type TargetFilter = (message: ProgrammingExerciseEditorSyncMessage) => boolean;
 
-export type RemoteFileOperation =
-    | { type: ProgrammingExerciseEditorFileChangeType.CONTENT; fileName: string; content: string }
-    | { type: ProgrammingExerciseEditorFileChangeType.CREATE; fileName: string; content: string; fileType?: FileType }
-    | { type: ProgrammingExerciseEditorFileChangeType.DELETE; fileName: string }
-    | { type: ProgrammingExerciseEditorFileChangeType.RENAME; fileName: string; newFileName: string; content: string };
+export type FileContentEditOperation = { type: ProgrammingExerciseEditorFileChangeType.CONTENT; fileName: string; content: string };
+export type FileCreateOperation = { type: ProgrammingExerciseEditorFileChangeType.CREATE; fileName: string; content: string; fileType?: FileType };
+export type FileDeleteOperation = { type: ProgrammingExerciseEditorFileChangeType.DELETE; fileName: string };
+export type FileRenameOperation = { type: ProgrammingExerciseEditorFileChangeType.RENAME; fileName: string; newFileName: string; content: string };
 
+export type FileOperation = FileContentEditOperation | FileCreateOperation | FileDeleteOperation | FileRenameOperation;
+
+/**
+ * Service responsible for synchronizing file changes across multiple code editors in real-time.
+ * This enables collaborative editing of programming exercise repositories (template, solution, tests, auxiliary)
+ * by broadcasting local file changes to other connected editors and applying remote changes received from them.
+ *
+ * @see ProgrammingExerciseEditorSyncService for WebSocket message handling
+ * @see CodeEditorContainerComponent for integration with the code editor UI
+ * @see ProblemStatementSyncService for synchronization of problem statement
+ */
 @Injectable({ providedIn: 'root' })
 export class RepositoryFileSyncService {
     private syncService = inject(ProgrammingExerciseEditorSyncService);
     private fileService = inject(CodeEditorFileService);
+
+    /** Google's diff-match-patch library for generating and applying text diffs */
     private readonly diffMatchPatch = new DiffMatchPatch();
+
+    /** Reference snapshots of file content used as the base for diff calculations */
     private baselines: Record<string, string> = {};
+
+    /** Timestamps of last processed messages per file, used to prevent duplicate processing */
     private lastProcessedTimestamps: Record<string, number> = {};
+
+    /** The current programming exercise ID being synchronized */
     private exerciseId?: number;
-    private clientInstanceId?: string;
 
+    /** Filter function to determine which incoming sync messages to process */
     private targetFilter: TargetFilter = () => true;
-    private incomingMessageSubscription?: Subscription;
-    private remoteOperations$ = new Subject<RemoteFileOperation>();
 
-    private sendFn(message: ProgrammingExerciseEditorSyncMessage) {
+    /** WebSocket subscription for incoming synchronization messages */
+    private incomingMessageSubscription?: Subscription;
+
+    /** Subject that emits file operations received from other editors */
+    private patchOperations = new Subject<FileOperation>();
+
+    /**
+     * Sends a synchronization message to other connected editors via WebSocket.
+     * This is the central point for all outgoing synchronization messages.
+     *
+     * @param message - The synchronization message containing file changes, requests, or full file content
+     * @throws Error if the service hasn't been initialized with an exercise ID
+     * @private
+     */
+    private send(message: ProgrammingExerciseEditorSyncMessage) {
         if (!this.exerciseId) {
             throw new Error('RepositoryFileSyncService not initialized before sending synchronization message; exerciseId is undefined');
         }
         this.syncService.sendSynchronizationUpdate(this.exerciseId!, message);
     }
 
-    init(exerciseId: number, clientInstanceId: string | undefined, targetFilter: TargetFilter): Observable<RemoteFileOperation> {
-        this.dispose();
+    /**
+     * Initializes the synchronization service for a specific programming exercise.
+     * This must be called before any file operations can be synchronized.
+     *
+     * Key responsibilities:
+     * - Resets any previous state from earlier exercises
+     * - Sets up WebSocket subscription to receive incoming file changes
+     * - Configures filtering to determine which messages should be processed
+     *
+     * @param exerciseId - The ID of the programming exercise to sync
+     * @param targetFilter - Function to filter which sync messages should be processed (e.g., only template repo)
+     * @returns Observable that emits FileOperation events when remote changes are received
+     */
+    init(exerciseId: number, targetFilter: TargetFilter): Observable<FileOperation> {
+        this.reset();
         this.exerciseId = exerciseId;
-        this.clientInstanceId = clientInstanceId;
         this.targetFilter = targetFilter;
         this.baselines = {};
         this.lastProcessedTimestamps = {};
         this.incomingMessageSubscription = this.syncService.subscribeToUpdates(exerciseId).subscribe((message) => this.handleIncomingMessage(message));
-        return this.remoteOperations$.asObservable();
+        return this.patchOperations.asObservable();
     }
 
-    dispose() {
+    /**
+     * Resets the service to its initial state, cleaning up all resources.
+     * Called automatically during init() and should be called when navigating away from an exercise.
+     *
+     * Cleanup operations:
+     * - Unsubscribes from WebSocket synchronization messages
+     * - Clears all baseline content snapshots
+     * - Resets timestamp tracking for duplicate detection
+     * - Completes the patchOperations observable and creates a new one
+     */
+    reset() {
         this.syncService.unsubscribe();
         this.exerciseId = undefined;
-        this.clientInstanceId = undefined;
         this.baselines = {};
         this.lastProcessedTimestamps = {};
         this.targetFilter = () => true;
         this.incomingMessageSubscription?.unsubscribe();
         this.incomingMessageSubscription = undefined;
-        this.remoteOperations$.complete();
-        this.remoteOperations$ = new Subject<RemoteFileOperation>();
+        this.patchOperations.complete();
+        this.patchOperations = new Subject<FileOperation>();
     }
 
-    registerBaseline(target: ProgrammingExerciseEditorSyncTarget, fileName: string, content: string, auxiliaryId?: number) {
+    /**
+     * Registers a baseline (reference snapshot) of a file's content.
+     * This baseline is used as the starting point for generating and applying diff patches.
+     *
+     * When to call this:
+     * - When a file is first loaded from the server
+     * - When a file is created or renamed
+     * - After successfully applying a remote change
+     *
+     * The baseline ensures that both local and remote editors work from the same reference point
+     * when calculating diffs, preventing divergence in collaborative editing scenarios.
+     *
+     * @param repositoryType - The repository type (template, solution, tests, auxiliary)
+     * @param fileName - The file path within the repository
+     * @param content - The current content snapshot to use as baseline
+     * @param auxiliaryId - Optional ID for auxiliary repositories
+     */
+    registerBaseline(repositoryType: RepositoryType, fileName: string, content: string, auxiliaryId?: number) {
+        const target = RepositoryFileSyncService.REPOSITORY_TYPE_TO_SYNC_TARGET[repositoryType];
+        if (!target) {
+            return;
+        }
         const key = this.getBaselineKey(target, fileName, auxiliaryId);
         this.baselines[key] = content;
     }
 
-    requestFullFile(target: ProgrammingExerciseEditorSyncTarget, fileName: string, auxiliaryId?: number) {
-        if (!this.sendFn || !this.exerciseId) {
+    /**
+     * Requests the full content of a file from other connected editors.
+     * This is used as a fallback when patch application fails or when synchronizing a new editor.
+     *
+     * When this is needed:
+     * - When an editor joins and needs to catch up
+     *
+     * Other editors listening to the sync channel will respond with the full file content
+     * via the respondWithFullFiles() method.
+     *
+     * @param repositoryType - The repository type to request from
+     * @param fileName - The file path to request
+     * @param auxiliaryId - Optional ID for auxiliary repositories
+     */
+    requestFullFile(repositoryType: RepositoryType, fileName: string, auxiliaryId?: number) {
+        if (!this.send || !this.exerciseId) {
             return;
         }
-        this.sendFn({
+        const target = RepositoryFileSyncService.REPOSITORY_TYPE_TO_SYNC_TARGET[repositoryType];
+        if (!target) {
+            return;
+        }
+        this.send({
             target,
             auxiliaryRepositoryId: auxiliaryId,
             fileRequests: [fileName],
-            clientInstanceId: this.clientInstanceId,
         });
     }
 
-    handleLocalChange(
-        fileName: string,
-        content: string,
-        target: ProgrammingExerciseEditorSyncTarget | undefined,
-        auxiliaryId?: number,
-        changeType: ProgrammingExerciseEditorFileChangeType = ProgrammingExerciseEditorFileChangeType.CONTENT,
-        newFileName?: string,
-        fileType?: FileType,
-    ) {
-        if (!this.exerciseId || !this.sendFn || !target) {
+    /**
+     * Main dispatcher for handling local file operations.
+     * Routes the FileOperation event to the appropriate handler based on operation type.
+     *
+     * @param operation - The file operation event from CodeEditorContainerComponent
+     * @param repositoryType - The repository type (template, solution, tests, etc.)
+     * @param auxiliaryId - Optional auxiliary repository ID
+     */
+    handleLocalFileOperation(operation: FileOperation, repositoryType: RepositoryType, auxiliaryId?: number) {
+        if (!this.exerciseId || !this.send) {
             return;
         }
 
-        const baselineKey = this.getBaselineKey(target, fileName, auxiliaryId);
+        const target = RepositoryFileSyncService.REPOSITORY_TYPE_TO_SYNC_TARGET[repositoryType];
+        if (!target) {
+            return;
+        }
+
+        switch (operation.type) {
+            case ProgrammingExerciseEditorFileChangeType.CONTENT:
+                this.handleLocalContentEdit(operation, target, auxiliaryId);
+                break;
+            case ProgrammingExerciseEditorFileChangeType.CREATE:
+                this.handleLocalFileCreate(operation, target, auxiliaryId);
+                break;
+            case ProgrammingExerciseEditorFileChangeType.DELETE:
+                this.handleLocalFileDelete(operation, target, auxiliaryId);
+                break;
+            case ProgrammingExerciseEditorFileChangeType.RENAME:
+                this.handleLocalFileRename(operation, target, auxiliaryId);
+                break;
+        }
+    }
+
+    /**
+     * Handles local file content edits and broadcasts them as diff patches.
+     *
+     * 1. Retrieves the previously saved baseline (reference snapshot)
+     * 2. Generates a diff patch between the baseline and new content
+     * 3. Updates the baseline to the new content
+     * 4. Sends the patch to other editors via WebSocket
+     *
+     * @param operation - The content edit operation with fileName and new content
+     * @param target - The sync target (which repository type)
+     * @param auxiliaryId - Optional ID for auxiliary repositories
+     * @private
+     */
+    private handleLocalContentEdit(operation: FileContentEditOperation, target: ProgrammingExerciseEditorSyncTarget, auxiliaryId?: number) {
+        const baselineKey = this.getBaselineKey(target, operation.fileName, auxiliaryId);
         const previousContent = this.baselines[baselineKey] ?? '';
 
-        const filePatch: ProgrammingExerciseEditorFileSync = { fileName, changeType, fileType };
-        if (changeType === ProgrammingExerciseEditorFileChangeType.DELETE) {
-            delete this.baselines[baselineKey];
-        } else if (changeType === ProgrammingExerciseEditorFileChangeType.RENAME) {
-            filePatch.newFileName = newFileName;
-            // Keep the current content even if we never registered a baseline for the old path.
-            const renameContent = previousContent || content;
-            this.baselines[this.getBaselineKey(target, newFileName ?? fileName, auxiliaryId)] = renameContent;
-            delete this.baselines[baselineKey];
-            filePatch.patch = renameContent;
-        } else {
-            const patch = this.diffMatchPatch.patch_toText(this.diffMatchPatch.patch_make(previousContent, content));
-            const effectivePatch = patch || (changeType === ProgrammingExerciseEditorFileChangeType.CREATE ? content : '');
-            if (!effectivePatch && changeType !== ProgrammingExerciseEditorFileChangeType.CREATE) {
-                return;
-            }
-            filePatch.patch = effectivePatch;
-            this.baselines[baselineKey] = content;
+        const patch = this.diffMatchPatch.patch_toText(this.diffMatchPatch.patch_make(previousContent, operation.content));
+        if (!patch) {
+            // No changes detected
+            return;
         }
 
-        this.sendFn({
+        this.baselines[baselineKey] = operation.content;
+
+        this.send({
             target,
             auxiliaryRepositoryId: auxiliaryId,
-            filePatches: [filePatch],
-            clientInstanceId: this.clientInstanceId,
+            filePatches: [{ fileName: operation.fileName, changeType: ProgrammingExerciseEditorFileChangeType.CONTENT, patch }],
         });
     }
 
-    handleRemoteMessage(message: ProgrammingExerciseEditorSyncMessage): RemoteFileOperation[] | undefined {
-        if (!message.target || !message.filePatches?.length) {
-            return undefined;
+    /**
+     * Handles local file creation and broadcasts it to other editors.
+     *
+     * Process:
+     * 1. Registers the initial content as the baseline
+     * 2. Sends the full file content (using 'patch' field for initial content)
+     * 3. Includes file type metadata for proper rendering
+     *
+     * Note: For CREATE operations, the 'patch' field actually contains the full content,
+     * not a diff patch. This is intentional for initial file creation.
+     *
+     * @param operation - The create operation with fileName, content, and optional fileType
+     * @param target - The sync target (which repository type)
+     * @param auxiliaryId - Optional ID for auxiliary repositories
+     * @private
+     */
+    private handleLocalFileCreate(operation: FileCreateOperation, target: ProgrammingExerciseEditorSyncTarget, auxiliaryId?: number) {
+        const baselineKey = this.getBaselineKey(target, operation.fileName, auxiliaryId);
+        this.baselines[baselineKey] = operation.content;
+
+        this.send({
+            target,
+            auxiliaryRepositoryId: auxiliaryId,
+            filePatches: [{ fileName: operation.fileName, changeType: ProgrammingExerciseEditorFileChangeType.CREATE, patch: operation.content, fileType: operation.fileType }],
+        });
+    }
+
+    /**
+     * Handles local file deletion and broadcasts it to other editors.
+     *
+     * Process:
+     * 1. Removes the file's baseline from tracking
+     * 2. Sends a DELETE message with just the fileName (no content needed)
+     *
+     * Other editors will remove the file from their UI and tracking.
+     *
+     * @param operation - The delete operation with fileName
+     * @param target - The sync target (which repository type)
+     * @param auxiliaryId - Optional ID for auxiliary repositories
+     * @private
+     */
+    private handleLocalFileDelete(operation: FileDeleteOperation, target: ProgrammingExerciseEditorSyncTarget, auxiliaryId?: number) {
+        const baselineKey = this.getBaselineKey(target, operation.fileName, auxiliaryId);
+        delete this.baselines[baselineKey];
+
+        this.send({
+            target,
+            auxiliaryRepositoryId: auxiliaryId,
+            filePatches: [{ fileName: operation.fileName, changeType: ProgrammingExerciseEditorFileChangeType.DELETE }],
+        });
+    }
+
+    /**
+     * Handles local file rename and broadcasts it to other editors.
+     *
+     * 1. Retrieves content from the old file's baseline
+     * 2. Transfers the baseline to the new fileName
+     * 3. Deletes the old fileName's baseline
+     * 4. Sends RENAME message with both old and new names, plus content
+     *
+     * The content is included to ensure all editors have the same final state,
+     * even if they haven't fully synced the file before the rename.
+     *
+     * @param operation - The rename operation with fileName, newFileName, and content
+     * @param target - The sync target (which repository type)
+     * @param auxiliaryId - Optional ID for auxiliary repositories
+     * @private
+     */
+    private handleLocalFileRename(operation: FileRenameOperation, target: ProgrammingExerciseEditorSyncTarget, auxiliaryId?: number) {
+        const baselineKey = this.getBaselineKey(target, operation.fileName, auxiliaryId);
+        const previousContent = this.baselines[baselineKey] ?? '';
+
+        // Keep the current content even if we never registered a baseline for the old path
+        const renameContent = previousContent || operation.content;
+        this.baselines[this.getBaselineKey(target, operation.newFileName, auxiliaryId)] = renameContent;
+        delete this.baselines[baselineKey];
+
+        this.send({
+            target,
+            auxiliaryRepositoryId: auxiliaryId,
+            filePatches: [{ fileName: operation.fileName, changeType: ProgrammingExerciseEditorFileChangeType.RENAME, newFileName: operation.newFileName, patch: renameContent }],
+        });
+    }
+
+    /**
+     * Main entry point for processing incoming WebSocket synchronization messages.
+     * This method is called automatically when a sync message is received from other editors.
+     *
+     * 1. Filters out problem statement messages (handled separately)
+     * 2. Applies the configured targetFilter (e.g., only process template repo)
+     * 3. If message contains file requests, responds with full file content
+     * 4. If message contains patches, applies them to local baselines
+     * 5. If message contains full file content, updates baselines directly
+     *
+     * @param message - The incoming synchronization message from another editor
+     * @private
+     */
+    private handleIncomingMessage(message: ProgrammingExerciseEditorSyncMessage) {
+        if (!message.target || message.target === ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT) {
+            return;
+        }
+        if (!this.targetFilter(message)) {
+            return;
         }
 
-        const operations: RemoteFileOperation[] = [];
-        message.filePatches.forEach((filePatch) => {
-            const op = this.applyRemoteFilePatch(message, filePatch);
+        if (message.fileRequests?.length) {
+            this.respondWithFullFiles(message);
+            return;
+        }
+
+        message.filePatches?.forEach((filePatch) => {
+            const op = this.handleRemoteFilePatch(message, filePatch);
             if (op) {
-                operations.push(op);
+                this.patchOperations.next(op);
             }
         });
 
-        return operations.length ? operations : undefined;
+        this.handleFullFileSync(message);
     }
 
+    /**
+     * Processes full file content received from other editors.
+     * This is used when another editor responds to our file request or sends complete file content.
+     *
+     * For each file:
+     * 1. Updates the baseline with the full content
+     * 2. Records the message timestamp to prevent processing older messages
+     * 3. Emits a CONTENT operation to notify subscribers
+     *
+     * @param message - The sync message containing full file contents
+     * @private
+     */
     private handleFullFileSync(message: ProgrammingExerciseEditorSyncMessage) {
         if (!message.target || !message.fileFulls?.length) {
             return;
@@ -152,28 +379,45 @@ export class RepositoryFileSyncService {
             const baselineKey = this.getBaselineKey(message.target!, fullFile.fileName, auxiliaryId);
             this.lastProcessedTimestamps[baselineKey] = message.timestamp ?? Date.now();
             this.baselines[baselineKey] = fullFile.content;
-            this.remoteOperations$.next({ type: ProgrammingExerciseEditorFileChangeType.CONTENT, fileName: fullFile.fileName, content: fullFile.content });
+            this.patchOperations.next({ type: ProgrammingExerciseEditorFileChangeType.CONTENT, fileName: fullFile.fileName, content: fullFile.content });
         });
     }
 
-    private applyRemoteFilePatch(message: ProgrammingExerciseEditorSyncMessage, filePatch: ProgrammingExerciseEditorFileSync): RemoteFileOperation | undefined {
+    /**
+     * Processes a single file patch received from another editor.
+     * This is the core method for applying remote changes to the local baseline.
+     *
+     * Error handling:
+     * - If patch application fails (content diverged), returns undefined
+     *
+     * @param message - The sync message containing metadata (timestamp, target, etc.)
+     * @param filePatch - The specific file change (patch, create, delete, or rename)
+     * @returns FileOperation to apply to the UI, or undefined if patch failed
+     * @private
+     */
+    private handleRemoteFilePatch(message: ProgrammingExerciseEditorSyncMessage, filePatch: ProgrammingExerciseEditorFileSync): FileOperation | undefined {
         if (!message.target) {
             return undefined;
         }
         const auxiliaryId = message.target === ProgrammingExerciseEditorSyncTarget.AUXILIARY_REPOSITORY ? message.auxiliaryRepositoryId : undefined;
         const baselineKey = this.getBaselineKey(message.target, filePatch.fileName, auxiliaryId);
 
+        // Duplicate prevention:
+        // - Checks message timestamp against lastProcessedTimestamps to skip duplicate/old messages
+        // - This prevents race conditions when multiple editors send updates simultaneously
         const messageTimestamp = message.timestamp ?? Date.now();
         if (this.lastProcessedTimestamps[baselineKey] && messageTimestamp <= this.lastProcessedTimestamps[baselineKey]) {
             return undefined;
         }
         this.lastProcessedTimestamps[baselineKey] = messageTimestamp;
 
+        // **DELETE**: Removes the file's baseline and returns a delete operation
         if (filePatch.changeType === ProgrammingExerciseEditorFileChangeType.DELETE) {
             delete this.baselines[baselineKey];
             return { type: ProgrammingExerciseEditorFileChangeType.DELETE, fileName: filePatch.fileName };
         }
 
+        // **RENAME**: Moves the baseline to the new filename and returns a rename operation
         if (filePatch.changeType === ProgrammingExerciseEditorFileChangeType.RENAME && filePatch.newFileName) {
             const currentContent = this.baselines[baselineKey] ?? filePatch.patch ?? '';
             delete this.baselines[baselineKey];
@@ -183,6 +427,14 @@ export class RepositoryFileSyncService {
             return { type: ProgrammingExerciseEditorFileChangeType.RENAME, fileName: filePatch.fileName, newFileName: filePatch.newFileName, content: currentContent };
         }
 
+        //  **CREATE**: Registers a new baseline with initial content and returns a create operation
+        if (filePatch.changeType === ProgrammingExerciseEditorFileChangeType.CREATE) {
+            const content = filePatch?.patch ?? '';
+            this.baselines[baselineKey] = content;
+            return { type: ProgrammingExerciseEditorFileChangeType.CREATE, fileName: filePatch.fileName, content, fileType: filePatch.fileType };
+        }
+
+        // **CONTENT** (default): Applies diff patch to baseline and returns updated content
         const patches = filePatch.patch ? this.diffMatchPatch.patch_fromText(filePatch.patch) : [];
         const currentContent = this.baselines[baselineKey] ?? '';
 
@@ -194,7 +446,7 @@ export class RepositoryFileSyncService {
                 const hasFailedPatches = results.some((success) => !success);
                 if (hasFailedPatches) {
                     // Patch application failed - request full file sync as fallback
-                    this.requestFullFile(message.target, filePatch.fileName, auxiliaryId);
+                    // TODO: refactor this to use the public API with RepositoryType
                     return undefined;
                 }
                 patchedContent = appliedContent;
@@ -203,41 +455,30 @@ export class RepositoryFileSyncService {
             }
         } catch (error) {
             // If patch parsing or application throws an error, request full file sync as fallback
-            this.requestFullFile(message.target, filePatch.fileName, auxiliaryId);
+            // TODO: refactor this to use the public API with RepositoryType
             return undefined;
         }
 
         this.baselines[baselineKey] = patchedContent;
-
-        if (filePatch.changeType === ProgrammingExerciseEditorFileChangeType.CREATE) {
-            return { type: ProgrammingExerciseEditorFileChangeType.CREATE, fileName: filePatch.fileName, content: patchedContent, fileType: filePatch.fileType };
-        }
-
         return { type: ProgrammingExerciseEditorFileChangeType.CONTENT, fileName: filePatch.fileName, content: patchedContent };
     }
 
-    private handleIncomingMessage(message: ProgrammingExerciseEditorSyncMessage) {
-        if (!message.target || message.target === ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT) {
-            return;
-        }
-        if (!this.targetFilter(message)) {
-            return;
-        }
-        if (message.clientInstanceId && this.clientInstanceId && message.clientInstanceId === this.clientInstanceId) {
-            return;
-        }
-
-        if (message.fileRequests?.length) {
-            this.respondWithFullFiles(message);
-            return;
-        }
-
-        const operations = this.handleRemoteMessage(message);
-        operations?.forEach((operation) => this.remoteOperations$.next(operation));
-        this.handleFullFileSync(message);
-    }
-
-    applyRemoteOperation(operation: RemoteFileOperation, codeEditorContainer: CodeEditorContainerComponent) {
+    /**
+     * Applies a remote file operation to the code editor UI.
+     * This is the main entry point for updating the UI based on changes from other editors.
+     *
+     * Process:
+     * 1. Routes to the appropriate apply handler based on operation type
+     * 2. Updates the code editor container state
+     * 3. Refreshes the repository tree view to reflect changes
+     *
+     * Note: This method modifies the UI but does NOT update baselines - those are already
+     * updated by handleRemoteFilePatch() before this method is called.
+     *
+     * @param operation - The file operation to apply (from handleRemoteFilePatch)
+     * @param codeEditorContainer - The code editor container component to update
+     */
+    applyRemoteOperation(operation: FileOperation, codeEditorContainer: CodeEditorContainerComponent) {
         switch (operation.type) {
             case ProgrammingExerciseEditorFileChangeType.CONTENT:
                 codeEditorContainer.applyRemoteFileContent(operation.fileName, operation.content);
@@ -257,6 +498,20 @@ export class RepositoryFileSyncService {
         this.refreshRepositoryTree(codeEditorContainer);
     }
 
+    /**
+     * Applies a remote file creation to the UI.
+     *
+     * Steps:
+     * 1. Determines file type (FILE vs FOLDER) from provided metadata or filename heuristic
+     * 2. Adds the file to the file browser's repository file list
+     * 3. If it's a regular file (not folder), updates the editor content
+     *
+     * @param fileName - The path of the created file
+     * @param content - The initial content of the file
+     * @param codeEditorContainer - The code editor container to update
+     * @param fileType - Optional file type; inferred from fileName if not provided
+     * @private
+     */
     private applyRemoteCreate(fileName: string, content: string, codeEditorContainer: CodeEditorContainerComponent, fileType?: FileType) {
         const fileBrowser = codeEditorContainer.fileBrowser;
         const resolvedFileType = fileType ?? this.lookupFileType(fileName, codeEditorContainer);
@@ -266,8 +521,22 @@ export class RepositoryFileSyncService {
         if (resolvedFileType === FileType.FILE) {
             codeEditorContainer.applyRemoteFileContent(fileName, content);
         }
+        codeEditorContainer.onFileChanged.emit();
     }
 
+    /**
+     * Applies a remote file deletion to the UI.
+     *
+     * Steps:
+     * 1. Removes the file from the file browser's repository file list
+     * 2. Removes the file from unsaved files tracking
+     * 3. If the deleted file was currently selected, clears the selection
+     * 4. Emits file change event to notify other components
+     *
+     * @param fileName - The path of the deleted file
+     * @param codeEditorContainer - The code editor container to update
+     * @private
+     */
     private applyRemoteDelete(fileName: string, codeEditorContainer: CodeEditorContainerComponent) {
         const fileBrowser = codeEditorContainer.fileBrowser;
         const fileType = this.lookupFileType(fileName, codeEditorContainer);
@@ -281,6 +550,21 @@ export class RepositoryFileSyncService {
         codeEditorContainer.onFileChanged.emit();
     }
 
+    /**
+     * Applies a remote file rename to the UI.
+     *
+     * Steps:
+     * 1. Updates file references in the file browser (old name → new name)
+     * 2. Updates unsaved files tracking with the new name
+     * 3. If the renamed file was selected, updates selection to the new name
+     * 4. Updates the editor content for the renamed file
+     *
+     * @param oldFileName - The previous file path
+     * @param newFileName - The new file path
+     * @param content - The file content (same before/after rename)
+     * @param codeEditorContainer - The code editor container to update
+     * @private
+     */
     private applyRemoteRename(oldFileName: string, newFileName: string, content: string, codeEditorContainer: CodeEditorContainerComponent) {
         const fileBrowser = codeEditorContainer.fileBrowser;
         const deleteChange = new RenameFileChange(this.lookupFileType(oldFileName, codeEditorContainer), oldFileName, newFileName);
@@ -294,12 +578,27 @@ export class RepositoryFileSyncService {
         codeEditorContainer.applyRemoteFileContent(newFileName, content);
     }
 
+    /**
+     * Determines whether a path represents a file or folder.
+     *
+     * @param path - The file path to check
+     * @param codeEditorContainer - The code editor container with file browser state
+     * @returns FileType.FILE or FileType.FOLDER
+     * @private
+     */
     private lookupFileType(path: string, codeEditorContainer: CodeEditorContainerComponent): FileType {
         const fileBrowser = codeEditorContainer.fileBrowser;
         const knownType = fileBrowser?.repositoryFiles?.[path];
         return knownType ?? (path.includes('.') ? FileType.FILE : FileType.FOLDER);
     }
 
+    /**
+     * Refreshes the file browser's tree view to reflect current file state.
+     * Should be called after any file operation (create, delete, rename) to update the UI.
+     *
+     * @param codeEditorContainer - The code editor container with file browser
+     * @private
+     */
     private refreshRepositoryTree(codeEditorContainer: CodeEditorContainerComponent) {
         const fileBrowser = codeEditorContainer.fileBrowser;
         if (fileBrowser) {
@@ -308,8 +607,20 @@ export class RepositoryFileSyncService {
         }
     }
 
+    /**
+     * Responds to file content requests from other editors.
+     * Called when another editor sends a fileRequests message (e.g., after failed patch application).
+     *
+     * Process:
+     * 1. Looks up requested files in our local baselines
+     * 2. Sends back full file content for each file we have
+     * 3. Ignores requests for files we don't have (another editor may respond)
+     *
+     * @param message - The incoming file request message from another editor
+     * @private
+     */
     private respondWithFullFiles(message: ProgrammingExerciseEditorSyncMessage) {
-        if (!message.target || !message.fileRequests?.length || !this.sendFn) {
+        if (!message.target || !message.fileRequests?.length || !this.send) {
             return;
         }
         const auxiliaryId = message.target === ProgrammingExerciseEditorSyncTarget.AUXILIARY_REPOSITORY ? message.auxiliaryRepositoryId : undefined;
@@ -324,15 +635,37 @@ export class RepositoryFileSyncService {
         if (!files.length) {
             return;
         }
-        this.sendFn({
+        this.send({
             target: message.target,
             auxiliaryRepositoryId: message.auxiliaryRepositoryId,
             fileFulls: files,
-            clientInstanceId: this.clientInstanceId,
         });
     }
 
+    /**
+     * Generates a unique key for storing file baselines and timestamps.
+     *
+     * Key format: `{exerciseId}-{target}-{auxiliaryId}::{fileName}`
+     * Examples:
+     * - "123-TEMPLATE_REPOSITORY-none::src/Main.java"
+     * - "456-AUXILIARY_REPOSITORY-789::README.md"
+     *
+     * @param target - The repository sync target
+     * @param fileName - The file path
+     * @param auxiliaryId - Optional auxiliary repository ID
+     * @returns Unique baseline key for the file
+     * @private
+     */
     private getBaselineKey(target: ProgrammingExerciseEditorSyncTarget, fileName: string, auxiliaryId?: number) {
         return `${this.exerciseId ?? 'unknown'}-${target}-${auxiliaryId ?? 'none'}::${fileName}`;
     }
+
+    static readonly REPOSITORY_TYPE_TO_SYNC_TARGET: Readonly<Record<RepositoryType, ProgrammingExerciseEditorSyncTarget | undefined>> = {
+        [RepositoryType.TEMPLATE]: ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY,
+        [RepositoryType.SOLUTION]: ProgrammingExerciseEditorSyncTarget.SOLUTION_REPOSITORY,
+        [RepositoryType.AUXILIARY]: ProgrammingExerciseEditorSyncTarget.AUXILIARY_REPOSITORY,
+        [RepositoryType.TESTS]: ProgrammingExerciseEditorSyncTarget.TESTS_REPOSITORY,
+        [RepositoryType.ASSIGNMENT]: undefined,
+        [RepositoryType.USER]: undefined,
+    };
 }

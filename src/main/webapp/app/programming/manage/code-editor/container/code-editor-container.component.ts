@@ -30,6 +30,7 @@ import { KeysPipe } from 'app/shared/pipes/keys.pipe';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
 import { ProgrammingExerciseEditorFileChangeType } from 'app/programming/manage/services/programming-exercise-editor-sync.service';
+import { FileOperation } from 'app/programming/manage/services/repository-file-sync.service';
 
 export enum CollapsableCodeEditorElement {
     FileBrowser,
@@ -112,9 +113,7 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
     @Input()
     course?: Course;
 
-    readonly fileContentSync = output<{ fileName: string; text: string }>();
-
-    readonly fileChangeSync = output<{ changeType: ProgrammingExerciseEditorFileChangeType; fileName: string; newFileName?: string; fileType?: FileType }>();
+    readonly fileOperationSync = output<FileOperation>();
 
     /** Work in Progress: temporary properties needed to get first prototype working */
 
@@ -238,7 +237,12 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
                 this.selectedFile = fileChange.fileName;
                 this.commitState = CommitState.UNCOMMITTED_CHANGES;
             }
-            this.fileChangeSync.emit({ changeType: ProgrammingExerciseEditorFileChangeType.CREATE, fileName: fileChange.fileName, fileType: fileChange.fileType });
+            this.fileOperationSync.emit({
+                type: ProgrammingExerciseEditorFileChangeType.CREATE,
+                fileName: fileChange.fileName,
+                content: '',
+                fileType: fileChange.fileType,
+            });
         } else if (fileChange instanceof RenameFileChange || fileChange instanceof DeleteFileChange) {
             // Guard against PROBLEM_STATEMENT file operations - only allow FILE and FOLDER
             if (fileChange.fileType !== FileType.FILE && fileChange.fileType !== FileType.FOLDER) {
@@ -249,9 +253,15 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
             this.selectedFile = this.fileService.updateFileReference(this.selectedFile!, fileChange);
 
             if (fileChange instanceof RenameFileChange) {
-                this.fileChangeSync.emit({ changeType: ProgrammingExerciseEditorFileChangeType.RENAME, fileName: fileChange.oldFileName, newFileName: fileChange.newFileName });
+                const content = this.getFileContent(fileChange.newFileName) ?? '';
+                this.fileOperationSync.emit({
+                    type: ProgrammingExerciseEditorFileChangeType.RENAME,
+                    fileName: fileChange.oldFileName,
+                    newFileName: fileChange.newFileName,
+                    content,
+                });
             } else {
-                this.fileChangeSync.emit({ changeType: ProgrammingExerciseEditorFileChangeType.DELETE, fileName: fileChange.fileName });
+                this.fileOperationSync.emit({ type: ProgrammingExerciseEditorFileChangeType.DELETE, fileName: fileChange.fileName });
             }
         }
         // If unsavedFiles are deleted, this can mean that the editorState becomes clean
@@ -297,7 +307,7 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
     onFileContentChange({ fileName, text }: { fileName: string; text: string }) {
         this.unsavedFiles = { ...this.unsavedFiles, [fileName]: text };
         if (!this.isApplyingRemoteFileUpdate) {
-            this.fileContentSync.emit({ fileName, text });
+            this.fileOperationSync.emit({ type: ProgrammingExerciseEditorFileChangeType.CONTENT, fileName, content: text });
         }
         this.onFileChanged.emit();
     }

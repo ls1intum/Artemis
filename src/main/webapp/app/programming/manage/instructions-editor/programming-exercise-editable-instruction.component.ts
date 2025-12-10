@@ -80,7 +80,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
 
     testCaseSubscription: Subscription;
     forceRenderSubscription: Subscription;
-    incomingSyncSubscription?: Subscription;
+    incomingSyncPatchesSubscription?: Subscription;
 
     private isApplyingRemoteUpdate = false;
 
@@ -296,16 +296,15 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
             return;
         }
         this.teardownProblemStatementSync();
-        this.incomingSyncSubscription = this.problemStatementSyncService.patchedContentObserable$.subscribe((updatedContent) =>
-            this.applyRemoteProblemStatementUpdate(updatedContent),
-        );
-        this.problemStatementSyncService.init(exerciseId, initialContent ?? this.exercise()?.problemStatement ?? '');
+        this.incomingSyncPatchesSubscription = this.problemStatementSyncService
+            .init(exerciseId, initialContent ?? this.exercise()?.problemStatement ?? '')
+            .subscribe((updatedContent) => this.applyRemoteProblemStatementUpdate(updatedContent));
     }
 
     private teardownProblemStatementSync() {
-        this.incomingSyncSubscription?.unsubscribe();
-        this.incomingSyncSubscription = undefined;
-        this.problemStatementSyncService.dispose();
+        this.incomingSyncPatchesSubscription?.unsubscribe();
+        this.incomingSyncPatchesSubscription = undefined;
+        this.problemStatementSyncService.reset();
     }
 
     private applyRemoteProblemStatementUpdate(updatedContent: string) {
