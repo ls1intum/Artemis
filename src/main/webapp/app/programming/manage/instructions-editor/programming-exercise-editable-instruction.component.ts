@@ -256,8 +256,21 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         const startLine = selection?.startLine ?? lineNumber;
         const endLine = selection?.endLine ?? lineNumber;
 
+        this.doOpenInlineCommentWidget(startLine, endLine);
+    }
+
+    /**
+     * Shared helper to open an inline comment widget with consistent callbacks.
+     * Used by both gutter button clicks and selection-based widget opening.
+     */
+    private doOpenInlineCommentWidget(startLine: number, endLine: number, existingComment?: InlineComment): void {
+        // Check if there's already a widget at this line range
+        if (this.inlineCommentHostService.hasWidgetAtLine(startLine)) {
+            return;
+        }
+
         // Open the inline comment widget
-        this.inlineCommentHostService.openWidget(this.markdownEditorMonaco!, startLine, endLine, undefined, {
+        this.inlineCommentHostService.openWidget(this.markdownEditorMonaco!, startLine, endLine, existingComment, {
             onSave: (comment: InlineComment) => {
                 this.onCreateInlineComment.emit({ startLine: comment.startLine, endLine: comment.endLine });
                 // Also emit the full comment for the parent to handle
@@ -461,12 +474,11 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
 
     /**
      * Opens the inline comment widget for the current selection.
+     * Uses the shared helper for consistent behavior with gutter button clicks.
      */
     openInlineCommentWidget(): void {
         if (this.currentSelection) {
-            this.onCreateInlineComment.emit(this.currentSelection);
-            // Clear selection after emitting
-            this.currentSelection = null;
+            this.doOpenInlineCommentWidget(this.currentSelection.startLine, this.currentSelection.endLine);
         }
     }
 }

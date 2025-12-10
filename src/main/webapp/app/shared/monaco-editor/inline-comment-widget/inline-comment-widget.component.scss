@@ -9,13 +9,6 @@
     margin-bottom: 4px;
     width: calc(100% - 80px);
     box-sizing: border-box;
-
-    &.collapsed {
-        .widget-header {
-            border-bottom: none;
-            border-radius: 0.25rem;
-        }
-    }
 }
 
 .widget-header {
@@ -26,6 +19,11 @@
     border-bottom: 1px solid var(--border-color);
     background: var(--md-editor-background, var(--bs-gray-800));
     border-radius: 0.25rem 0.25rem 0 0;
+
+    .inline-comment-widget.collapsed & {
+        border-bottom: none;
+        border-radius: 0.25rem;
+    }
 
     &.clickable {
         cursor: pointer;
