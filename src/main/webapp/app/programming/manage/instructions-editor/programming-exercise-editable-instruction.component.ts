@@ -198,6 +198,10 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         }
     }
 
+    /**
+     * Cleanup when component is destroyed.
+     * Closes all active inline comment widgets to prevent stale state.
+     */
     ngOnDestroy(): void {
         if (this.testCaseSubscription) {
             this.testCaseSubscription.unsubscribe();
@@ -205,6 +209,14 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         if (this.forceRenderSubscription) {
             this.forceRenderSubscription.unsubscribe();
         }
+        // Close all active inline comment widgets
+        if (this.markdownEditorMonaco) {
+            this.inlineCommentHostService.closeAllWidgets(this.markdownEditorMonaco);
+        }
+
+        // Clean up subscriptions
+        this.testCaseSubscription?.unsubscribe();
+        this.forceRenderSubscription?.unsubscribe();
     }
 
     ngAfterViewInit() {
