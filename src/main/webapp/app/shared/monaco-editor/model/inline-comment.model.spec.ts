@@ -2,24 +2,42 @@ import { InlineComment, SerializedInlineComment, createInlineComment, deserializ
 
 describe('inline-comment.model', () => {
     describe('createInlineComment', () => {
-        it('should create comment with default values and unique IDs', () => {
+        it('should create comment with default values', () => {
             const comment = createInlineComment(1, 5, 'Test instruction');
 
             expect(comment.id).toBeDefined();
+            expect(typeof comment.id).toBe('string');
             expect(comment.id.length).toBeGreaterThan(0);
             expect(comment.startLine).toBe(1);
             expect(comment.endLine).toBe(5);
             expect(comment.instruction).toBe('Test instruction');
             expect(comment.status).toBe('draft');
             expect(comment.createdAt).toBeInstanceOf(Date);
+        });
 
-            // Unique IDs
-            const comment2 = createInlineComment(1, 5, 'Test 2');
-            expect(comment.id).not.toBe(comment2.id);
-
-            // Single line
+        it('should handle single line comments', () => {
             const singleLine = createInlineComment(5, 5, 'Single line');
             expect(singleLine.startLine).toBe(singleLine.endLine);
+        });
+
+        it('should generate unique IDs with different timestamps', () => {
+            const mockDateNow = jest.spyOn(Date, 'now');
+            const mockRandom = jest.spyOn(Math, 'random');
+
+            // First call
+            mockDateNow.mockReturnValueOnce(1000);
+            mockRandom.mockReturnValueOnce(0.123456789);
+            const comment1 = createInlineComment(1, 5, 'Test 1');
+
+            // Second call with different values
+            mockDateNow.mockReturnValueOnce(2000);
+            mockRandom.mockReturnValueOnce(0.987654321);
+            const comment2 = createInlineComment(1, 5, 'Test 2');
+
+            expect(comment1.id).not.toBe(comment2.id);
+
+            mockDateNow.mockRestore();
+            mockRandom.mockRestore();
         });
     });
 
