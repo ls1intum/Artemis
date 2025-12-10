@@ -12,7 +12,7 @@ export interface CompetencyExerciseLinkDTO {
  */
 export const toCompetencyExerciseLinkDTO = (link: CompetencyExerciseLink): CompetencyExerciseLinkDTO => {
     if (!link.competency) {
-        throw new Error('Cannot map CompetencyExerciseLink: missing competency.');
+        throw new Error('missing competency.');
     }
 
     return {

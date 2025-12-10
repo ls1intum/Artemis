@@ -525,7 +525,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
                 HttpStatus.CREATED);
 
         assertThat(modelingExerciseTestRepository.findById(importedModelingExercise.getId())).isPresent();
-        importedModelingExercise = modelingExerciseTestRepository.findByIdWithExampleSubmissionsAndResultsAndGradingCriteria(importedModelingExercise.getId()).orElseThrow();
+        importedModelingExercise = modelingExerciseTestRepository.findByIdWithExampleSubmissionsAndResultsAndGradingCriteria(modelingExercise.getId()).orElseThrow();
         var importedExampleSubmission = importedModelingExercise.getExampleSubmissions().stream().findFirst().orElseThrow();
         assertThat(importedExampleSubmission.getId()).isEqualTo(exampleSubmission.getId());
         assertThat(importedExampleSubmission.getSubmission().getLatestResult()).isEqualTo(submission.getLatestResult());
