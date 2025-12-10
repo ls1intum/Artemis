@@ -243,7 +243,8 @@
                 "reviewChanges": "Review Changes",
                 "reviewChangesDescription": "Green lines will be added, red lines will be removed.",
                 "acceptChanges": "Accept Changes",
-                "rejectChanges": "Reject Changes"
+                "rejectChanges": "Reject Changes",
+                "changesApplied": "Changes have been applied to the problem statement."
             },
             "inlineComment": {
                 "placeholder": "Describe what should change in these lines...",

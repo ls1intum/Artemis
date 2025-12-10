@@ -169,17 +169,58 @@
                     />
                 }
             </div>
-            <jhi-programming-exercise-editable-instructions
-                editorCenter
-                [(exercise)]="exercise"
-                [(participation)]="selectedParticipation!"
-                [templateParticipation]="exercise.templateParticipation!"
-                [initialEditorHeight]="'external'"
-                [enableResize]="false"
-                [consistencyIssues]="consistencyIssues()"
-                class="instructions-wrapper__content card-body p-0"
-                (instructionChange)="onInstructionChanged($event)"
-            />
+            <!-- Editable instructions or Diff view -->
+            <div editorCenter class="d-flex flex-column h-100 instructions-wrapper__content card-body p-0">
+                @if (showDiff) {
+                    <!-- Diff review banner -->
+                    <div class="alert alert-info d-flex justify-content-between align-items-center mb-2">
+                        <span>
+                            <strong jhiTranslate="artemisApp.programmingExercise.problemStatement.reviewChanges"></strong>
+                            <span class="ms-2" jhiTranslate="artemisApp.programmingExercise.problemStatement.reviewChangesDescription"></span>
+                        </span>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-success btn-sm" type="button" (click)="acceptRefinement()">
+                                <fa-icon [icon]="faSave" class="me-1" />
+                                <span jhiTranslate="artemisApp.programmingExercise.problemStatement.acceptChanges"></span>
+                            </button>
+                            <button class="btn btn-secondary btn-sm" type="button" (click)="rejectRefinement()">
+                                <fa-icon [icon]="faBan" class="me-1" />
+                                <span jhiTranslate="artemisApp.programmingExercise.problemStatement.rejectChanges"></span>
+                            </button>
+                        </div>
+                    </div>
+                    <!-- Markdown Diff Editor -->
+                    <jhi-markdown-diff-editor-monaco
+                        #diffEditor
+                        class="overflow-hidden flex-grow-1"
+                        [allowSplitView]="false"
+                        [domainActions]="domainActions"
+                        [metaActions]="metaActions"
+                    >
+                    </jhi-markdown-diff-editor-monaco>
+                } @else if (exercise.templateParticipation) {
+                    <jhi-programming-exercise-editable-instructions
+                        [(exercise)]="exercise"
+                        [(participation)]="selectedParticipation!"
+                        [templateParticipation]="exercise.templateParticipation"
+                        [initialEditorHeight]="'external'"
+                        [enableResize]="false"
+                        [consistencyIssues]="consistencyIssues()"
+                        [pendingComments]="pendingComments()"
+                        class="h-100"
+                        (instructionChange)="onInstructionChanged($event)"
+                        (onInlineCommentSave)="onSaveInlineComment($event)"
+                        (onInlineCommentApply)="onApplyInlineComment($event)"
+                        (onInlineCommentDelete)="onDeleteInlineComment($event)"
+                    />
+                } @else {
+                    <!-- Loading state while waiting for templateParticipation -->
+                    <div class="d-flex justify-content-center align-items-center h-100">
+                        <fa-icon [icon]="faCircleNotch" animation="spin" class="me-2" />
+                        <span jhiTranslate="artemisApp.editor.fetchingParticipation"></span>
+                    </div>
+                }
+            </div>
             <!-- Preview-only component for right sidebar -->
             <jhi-programming-exercise-instructions
                 editorSidebar
