@@ -79,6 +79,15 @@ describe('IrisCourseSettingsUpdateComponent Component', () => {
         expect(fixture.debugElement.queryAll(By.directive(IrisCommonSubSettingsUpdateComponent))).toHaveLength(8);
     });
 
+    it('should not render settings update component if courseId is not present', () => {
+        routeParamsSubject.next({}); // Simulate route without courseId
+        fixture.detectChanges();
+
+        expect(paramsSpy).toHaveBeenCalledOnce();
+        expect(comp.courseId).toBeNaN();
+        expect(fixture.debugElement.query(By.directive(IrisSettingsUpdateComponent))).toBeNull();
+    });
+
     it('Can deactivate correctly', () => {
         fixture.detectChanges();
         expect(comp.canDeactivate()).toBeTrue();
@@ -86,6 +95,12 @@ describe('IrisCourseSettingsUpdateComponent Component', () => {
         expect(comp.canDeactivate()).toBeFalse();
         comp.settingsUpdateComponent!.canDeactivateWarning = 'Warning';
         expect(comp.canDeactivateWarning).toBe('Warning');
+    });
+
+    it('should allow deactivation if settings component is not defined', () => {
+        comp.settingsUpdateComponent = undefined;
+        expect(comp.canDeactivate()).toBeTrue();
+        expect(comp.canDeactivateWarning).toBeUndefined();
     });
 
     it('Saves settings correctly', () => {
