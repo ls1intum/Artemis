@@ -86,7 +86,9 @@
             </div>
         </div>
     </div>
-    <br />
+
+    <jhi-pdf-drop-zone (filesDropped)="onPdfFilesDropped($event)" />
+
     @if (filteredLectures) {
         <div class="table-responsive">
             <table class="table table-striped">

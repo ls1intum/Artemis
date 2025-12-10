@@ -1,0 +1,23 @@
+<div
+    class="pdf-drop-zone"
+    [ngClass]="{ 'drag-over': isDragOver() }"
+    (dragover)="onDragOver($event)"
+    (dragleave)="onDragLeave($event)"
+    (drop)="onDrop($event)"
+    (click)="onClick()"
+    (keydown.enter)="onClick()"
+    (keydown.space)="onClick()"
+    tabindex="0"
+    role="button"
+    [attr.aria-label]="'artemisApp.lecture.pdfUpload.dropZoneTitle' | artemisTranslate"
+>
+    <input #fileInput type="file" accept=".pdf,application/pdf" multiple class="file-input" (change)="onFileInputChange($event)" />
+    <div class="drop-zone-content">
+        <fa-icon [icon]="faCloudUploadAlt" class="upload-icon" />
+        <div class="drop-zone-text">
+            <span class="drop-zone-title" jhiTranslate="artemisApp.lecture.pdfUpload.dropZoneTitle"></span>
+            <span class="drop-zone-hint" jhiTranslate="artemisApp.lecture.pdfUpload.dropZoneHint"></span>
+        </div>
+        <fa-icon [icon]="faFilePdf" class="pdf-icon" />
+    </div>
+</div>

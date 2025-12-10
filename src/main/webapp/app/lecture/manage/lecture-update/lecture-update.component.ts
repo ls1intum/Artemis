@@ -18,7 +18,7 @@ import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-ti
 import { FormSectionStatus, FormStatusBarComponent } from 'app/shared/form/form-status-bar/form-status-bar.component';
 import { LectureTitleChannelNameComponent } from '../lecture-title-channel-name/lecture-title-channel-name.component';
 import { LectureSeriesCreateComponent } from 'app/lecture/manage/lecture-series-create/lecture-series-create.component';
-import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { MarkdownEditorHeight, MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { LectureUpdatePeriodComponent } from 'app/lecture/manage/lecture-period/lecture-period.component';
 import { LectureUpdateUnitsComponent } from 'app/lecture/manage/lecture-units/lecture-units.component';
 import { DocumentationButtonComponent, DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
@@ -27,6 +27,7 @@ import { CheckboxModule } from 'primeng/checkbox';
 import { TooltipModule } from 'primeng/tooltip';
 import { TranslateService } from '@ngx-translate/core';
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
+import { CourseTitleBarTitleDirective } from 'app/core/course/shared/directives/course-title-bar-title.directive';
 import { LectureService } from '../services/lecture.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
@@ -62,6 +63,7 @@ interface CreateLectureOption {
         LectureSeriesCreateComponent,
         CheckboxModule,
         TooltipModule,
+        CourseTitleBarTitleDirective,
     ],
 })
 export class LectureUpdateComponent implements OnInit, OnDestroy {
@@ -73,6 +75,7 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
     protected readonly faCircleInfo = faCircleInfo;
     protected readonly allowedFileExtensions = ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE;
     protected readonly acceptedFileExtensionsFileBrowser = ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER;
+    protected readonly MarkdownEditorHeight = MarkdownEditorHeight;
 
     private readonly alertService = inject(AlertService);
     private readonly lectureService = inject(LectureService);
@@ -338,6 +341,7 @@ export class LectureUpdateComponent implements OnInit, OnDestroy {
             this.lectureOnInit = cloneDeep(lecture);
             this.lecture.set(lecture);
             this.updateIsChangesMadeToTitleOrPeriodSection();
+
             this.router.navigate(['course-management', lecture.course.id, 'lectures', lecture.id, 'edit']);
             this.shouldDisplayDismissWarning = true;
         }
