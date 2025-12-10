@@ -73,7 +73,7 @@ class IrisChatSessionResourceTest extends AbstractIrisIntegrationTest {
     void initTestCase() throws Exception {
         List<User> users = userUtilService.addUsers(TEST_PREFIX, 3, 1, 0, 1);
         for (User user : users) {
-            user.setSelectedLLMUsageTimestamp(ZonedDateTime.now());
+            user.setSelectedLLMUsageTimestamp(ZonedDateTime.parse("2025-12-11T00:00:00Z"));
             user.setSelectedLLMUsage(AiSelectionDecision.CLOUD_AI);
             userTestRepository.save(user);
         }

@@ -66,7 +66,7 @@ class MemirisIntegrationTest extends AbstractIrisIntegrationTest {
     void initTestCase() {
         List<User> users = userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
         for (User user : users) {
-            user.setSelectedLLMUsageTimestamp(ZonedDateTime.now());
+            user.setSelectedLLMUsageTimestamp(ZonedDateTime.parse("2025-12-11T00:00:00Z"));
             user.setSelectedLLMUsage(AiSelectionDecision.CLOUD_AI);
             userTestRepository.save(user);
         }

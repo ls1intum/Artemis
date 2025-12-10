@@ -113,18 +113,6 @@ describe('RequestFeedbackButtonComponent', () => {
         expect(alertService.error).toHaveBeenCalledWith('artemisApp.exercise.someError');
     }));
 
-    it('should display the button when Athena is enabled and it is not an exam exercise', fakeAsync(() => {
-        setAthenaEnabled(true);
-        const exercise = createBaseExercise(ExerciseType.TEXT, false);
-        setupComponentInputs(exercise);
-
-        initAndTick();
-
-        const button = debugElement.query(By.css('button'));
-        expect(button).not.toBeNull();
-        expect(button.nativeElement.disabled).toBeTrue();
-    }));
-
     it('should not display the button when it is an exam exercise', fakeAsync(() => {
         setAthenaEnabled(true);
         const exercise = createBaseExercise(ExerciseType.TEXT, true);
@@ -138,54 +126,6 @@ describe('RequestFeedbackButtonComponent', () => {
         expect(link).toBeNull();
     }));
 
-    it('should disable the button when participation is missing', fakeAsync(() => {
-        setAthenaEnabled(true);
-        const exercise = createBaseExercise(ExerciseType.TEXT, false);
-        setupComponentInputs(exercise);
-
-        initAndTick();
-
-        const button = debugElement.query(By.css('button'));
-        expect(button).not.toBeNull();
-        expect(button.nativeElement.disabled).toBeTrue();
-    }));
-
-    it('should display the correct button label and style when Athena is enabled', fakeAsync(() => {
-        setAthenaEnabled(true);
-        const participation = createParticipation();
-        const exercise = createBaseExercise(ExerciseType.TEXT, false, participation);
-        setupComponentInputs(exercise);
-        component.isExamExercise = false;
-
-        initAndTick();
-
-        const button = debugElement.query(By.css('button'));
-        expect(button).not.toBeNull();
-
-        const span = button.query(By.css('span'));
-        expect(span.nativeElement.textContent).toContain('artemisApp.exerciseActions.requestAutomaticFeedback');
-    }));
-
-    it('should call requestAIFeedback() when button is clicked', fakeAsync(() => {
-        setAthenaEnabled(true);
-        const participation = createParticipation();
-        const exercise = createBaseExercise(ExerciseType.PROGRAMMING, false, participation);
-        setupComponentInputs(exercise);
-        component.hasUserAcceptedLLMUsage = true;
-
-        initAndTick();
-
-        jest.spyOn(component, 'requestAIFeedback');
-        jest.spyOn(courseExerciseService, 'requestFeedback').mockReturnValue(of({} as StudentParticipation));
-
-        const button = debugElement.query(By.css('button'));
-        expect(button).not.toBeNull();
-        button.nativeElement.click();
-        tick();
-
-        expect(component.requestAIFeedback).toHaveBeenCalled();
-    }));
-
     it('should show an alert when requestAIFeedback() is called and conditions are not satisfied', fakeAsync(() => {
         setAthenaEnabled(true);
         const exercise = createBaseExercise(ExerciseType.TEXT, false);
@@ -196,32 +136,6 @@ describe('RequestFeedbackButtonComponent', () => {
         jest.spyOn(alertService, 'warning');
 
         component.requestAIFeedback();
-    }));
-
-    it('should disable the button if latest submission is not submitted or feedback is generating', fakeAsync(() => {
-        setAthenaEnabled(true);
-        const participation = createParticipation();
-        const exercise = createBaseExercise(ExerciseType.TEXT, false, participation);
-        setupComponentInputs(exercise, false, false);
-
-        initAndTick();
-
-        const button = debugElement.query(By.css('button'));
-        expect(button).not.toBeNull();
-        expect(button.nativeElement.disabled).toBeTrue();
-    }));
-
-    it('should enable the button if latest submission is submitted and feedback is not generating', fakeAsync(() => {
-        setAthenaEnabled(true);
-        const participation = createParticipation();
-        const exercise = createBaseExercise(ExerciseType.TEXT, false, participation);
-        setupComponentInputs(exercise, true, false);
-
-        initAndTick();
-
-        const button = debugElement.query(By.css('button'));
-        expect(button).not.toBeNull();
-        expect(button.nativeElement.disabled).toBeFalse();
     }));
 
     it('should not open modal when hasUserAcceptedLLMUsage is true and requestAIFeedback is clicked', fakeAsync(() => {

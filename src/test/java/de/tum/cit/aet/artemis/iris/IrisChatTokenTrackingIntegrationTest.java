@@ -86,7 +86,7 @@ class IrisChatTokenTrackingIntegrationTest extends AbstractIrisIntegrationTest {
     void initTestCase() throws GitAPIException, IOException, URISyntaxException {
         List<User> users = userUtilService.addUsers(TEST_PREFIX, 2, 0, 0, 0);
         for (User user : users) {
-            user.setSelectedLLMUsageTimestamp(ZonedDateTime.now());
+            user.setSelectedLLMUsageTimestamp(ZonedDateTime.parse("2025-12-11T00:00:00Z"));
             user.setSelectedLLMUsage(AiSelectionDecision.CLOUD_AI);
             userTestRepository.save(user);
         }
