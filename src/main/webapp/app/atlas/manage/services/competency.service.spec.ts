@@ -404,7 +404,7 @@ describe('CompetencyService', () => {
 
     it('should throw if competency is missing', () => {
         const link: any = { weight: 1 };
-        expect(() => toCompetencyExerciseLinkDTO(link)).toThrow('Cannot map CompetencyExerciseLink: missing competency.');
+        expect(() => toCompetencyExerciseLinkDTO(link)).toThrow('missing competency.');
     });
 
     it('should map competency link with undefined courseId', () => {
