@@ -262,15 +262,21 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     /**
      * Shared helper to open an inline comment widget with consistent callbacks.
      * Used by both gutter button clicks and selection-based widget opening.
+     * Returns early if editor is not initialized or Hyperion is not enabled.
      */
     private doOpenInlineCommentWidget(startLine: number, endLine: number, existingComment?: InlineComment): void {
+        // Guard: ensure editor is initialized and Hyperion is enabled
+        if (!this.markdownEditorMonaco || !this.hyperionEnabled) {
+            return;
+        }
+
         // Check if there's already a widget at this line range
         if (this.inlineCommentHostService.hasWidgetAtLine(startLine)) {
             return;
         }
 
         // Open the inline comment widget
-        this.inlineCommentHostService.openWidget(this.markdownEditorMonaco!, startLine, endLine, existingComment, {
+        this.inlineCommentHostService.openWidget(this.markdownEditorMonaco, startLine, endLine, existingComment, {
             onSave: (comment: InlineComment) => {
                 this.onCreateInlineComment.emit({ startLine: comment.startLine, endLine: comment.endLine });
                 // Also emit the full comment for the parent to handle
