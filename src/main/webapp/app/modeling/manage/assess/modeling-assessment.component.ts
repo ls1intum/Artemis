@@ -27,21 +27,21 @@ export interface DropInfo {
 export class ModelingAssessmentComponent extends ModelingComponent implements AfterViewInit, OnDestroy, OnChanges {
     private artemisTranslatePipe = inject(ArtemisTranslatePipe);
 
-    readonly maxScore = input<number | undefined>(undefined);
-    readonly maxBonusPoints = input(0);
-    readonly totalScore = input<number | undefined>(undefined);
+    maxScore = input<number | undefined>(undefined);
+    maxBonusPoints = input(0);
+    totalScore = input<number | undefined>(undefined);
     readonly title = input<string | undefined>(undefined);
     readonly enablePopups = input(true);
     readonly displayPoints = input(true);
-    readonly highlightDifferences = input<boolean | undefined>(undefined);
-    readonly resultFeedbacks = input<Feedback[] | undefined>(undefined);
+    highlightDifferences = input<boolean | undefined>(undefined);
+    resultFeedbacks = input<Feedback[] | undefined>(undefined);
 
     feedbackChanged = output<Feedback[]>();
     selectionChanged = output<Selection>();
 
-    readonly highlightedElements = input<Map<string, string> | undefined>(undefined); // map elementId -> highlight color
-    readonly elementCounts = input<ModelElementCount[]>();
-    readonly course = input<Course>();
+    highlightedElements = input<Map<string, string> | undefined>(undefined); // map elementId -> highlight color
+    elementCounts = input<ModelElementCount[]>();
+    course = input<Course>();
 
     feedbacks: Feedback[];
     elementFeedback: Map<string, Feedback>; // map element.id --> Feedback
@@ -51,6 +51,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
     secondCorrectionRoundColor = '#ffa561';
 
     constructor() {
+        super();
         effect(() => {
             // we register signals for effect by calling the getters
             // anytime the signal changes value, effect is triggered to run this.runHighlightUpdate()
@@ -74,7 +75,6 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
             this.referencedFeedbacks = this.feedbacks.filter((feedbackElement) => feedbackElement.reference != undefined);
             this.updateApollonAssessments(this.referencedFeedbacks);
         });
-        super();
     }
 
     async ngAfterViewInit(): Promise<void> {

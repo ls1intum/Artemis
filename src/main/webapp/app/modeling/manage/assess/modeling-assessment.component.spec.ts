@@ -348,16 +348,14 @@ describe('ModelingAssessmentComponent', () => {
     });
 
     it('should update highlighted assessments', async () => {
-        const changes = { highlightDifferences: { currentValue: true } as SimpleChange };
-        fixture.componentRef.setInput('highlightDifferences', true);
         comp.umlModel = makeMockModel();
-
-        fixture.detectChanges();
         comp.feedbacks = [mockFeedbackWithReferenceCopied];
         comp.referencedFeedbacks = [mockFeedbackWithReferenceCopied];
         jest.spyOn(translatePipe, 'transform').mockReturnValue('First correction round');
 
-        await comp.ngOnChanges(changes);
+        fixture.componentRef.setInput('highlightDifferences', true);
+        fixture.detectChanges();
+
         await fixture.whenStable();
         await comp.apollonEditor!.nextRender;
 
@@ -365,6 +363,7 @@ describe('ModelingAssessmentComponent', () => {
 
         const apollonModel = comp.apollonEditor!.model;
         const assessments: any = Object.values(apollonModel.assessments);
+
         expect(assessments[0].labelColor).toEqual(comp.firstCorrectionRoundColor);
         expect(assessments[0].label).toBe('First correction round');
         expect(assessments[0].score).toBe(35);
