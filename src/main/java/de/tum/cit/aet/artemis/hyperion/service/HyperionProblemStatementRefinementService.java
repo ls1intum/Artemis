@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
@@ -33,15 +34,19 @@ public class HyperionProblemStatementRefinementService {
      */
     private static final int MAX_PROBLEM_STATEMENT_LENGTH = 50_000;
 
+    @Nullable
     private final ChatClient chatClient;
 
     private final HyperionPromptTemplateService templateService;
 
     /**
-     * @param chatClient      the AI chat client (optional)
-     * @param templateService prompt template service
+     * Creates a new HyperionProblemStatementRefinementService.
+     *
+     * @param chatClient      the AI chat client for refining problem statements,
+     *                            may be null if AI is not configured
+     * @param templateService the prompt template service for rendering AI prompts
      */
-    public HyperionProblemStatementRefinementService(ChatClient chatClient, HyperionPromptTemplateService templateService) {
+    public HyperionProblemStatementRefinementService(@Nullable ChatClient chatClient, HyperionPromptTemplateService templateService) {
         this.chatClient = chatClient;
         this.templateService = templateService;
     }
@@ -53,6 +58,7 @@ public class HyperionProblemStatementRefinementService {
      * @param originalProblemStatementText the original problem statement text
      * @param userPrompt                   the user's refinement instructions
      * @return the refinement response
+     * @throws IllegalStateException if the AI chat client is not configured
      */
     public ProblemStatementRefinementResponseDTO refineProblemStatement(Course course, String originalProblemStatementText, String userPrompt) {
         log.debug("Refining problem statement for course [{}]", course.getId());
@@ -60,6 +66,11 @@ public class HyperionProblemStatementRefinementService {
         if (originalProblemStatementText == null || originalProblemStatementText.isBlank()) {
             log.warn("Cannot refine empty problem statement for course [{}]", course.getId());
             return new ProblemStatementRefinementResponseDTO("", java.util.Objects.toString(originalProblemStatementText, ""));
+        }
+
+        if (chatClient == null) {
+            log.error("Cannot refine problem statement: AI chat client is not configured");
+            throw new IllegalStateException("AI chat client is not configured. Please ensure Hyperion AI service is properly configured.");
         }
 
         try {
@@ -93,6 +104,7 @@ public class HyperionProblemStatementRefinementService {
      * @param inlineComments               list of inline comments with line ranges
      *                                         and instructions
      * @return the refinement response
+     * @throws IllegalStateException if the AI chat client is not configured
      */
     public ProblemStatementRefinementResponseDTO refineProblemStatementWithComments(Course course, String originalProblemStatementText, List<InlineCommentDTO> inlineComments) {
         log.debug("Refining problem statement with {} inline comments for course [{}]", inlineComments.size(), course.getId());
@@ -105,6 +117,11 @@ public class HyperionProblemStatementRefinementService {
         if (inlineComments == null || inlineComments.isEmpty()) {
             log.warn("No inline comments provided for refinement for course [{}]", course.getId());
             return new ProblemStatementRefinementResponseDTO("", originalProblemStatementText);
+        }
+
+        if (chatClient == null) {
+            log.error("Cannot refine problem statement with comments: AI chat client is not configured");
+            throw new IllegalStateException("AI chat client is not configured. Please ensure Hyperion AI service is properly configured.");
         }
 
         try {
@@ -169,16 +186,11 @@ public class HyperionProblemStatementRefinementService {
             throw alertException;
         }
 
-        log.error("Error refining problem statement for course [{}]: {}", course.getId(), e.getMessage(), e);
-        // Create exception with original problem statement in params for frontend to
-        // preserve it
-        var exception = new InternalServerErrorAlertException("Failed to refine problem statement: " + e.getMessage(), "ProblemStatement", "problemStatementRefinementFailed");
-        // Add original problem statement to the params map
-        if (exception.getParameters() != null && exception.getParameters().get("params") instanceof Map) {
-            @SuppressWarnings("unchecked")
-            Map<String, Object> params = (Map<String, Object>) exception.getParameters().get("params");
-            params.put("originalProblemStatement", originalProblemStatementText);
-        }
-        throw exception;
+        // Log the error with the original problem statement length for debugging
+        // purposes
+        log.error("Error refining problem statement for course [{}]. Original statement length: {}. Error: {}", course.getId(),
+                originalProblemStatementText != null ? originalProblemStatementText.length() : 0, e.getMessage(), e);
+
+        throw new InternalServerErrorAlertException("Failed to refine problem statement: " + e.getMessage(), "ProblemStatement", "problemStatementRefinementFailed");
     }
 }

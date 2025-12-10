@@ -174,16 +174,43 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy, A
     }
 
     /**
-     * Cancels the ongoing problem statement generation or refinement.
+     * Cancels the ongoing problem statement generation, refinement, or inline comment application.
      * Preserves the user's prompt so they can retry or modify it.
+     * Resets all in-progress states including inline comment statuses.
      */
     cancelGeneration(): void {
         if (this.currentGenerationSubscription) {
             this.currentGenerationSubscription.unsubscribe();
             this.currentGenerationSubscription = undefined;
         }
+
+        // Reset global generation/refinement flags
         this.isGenerating = false;
         this.isRefining = false;
+
+        // Reset inline comment application states
+        const wasApplyingSingle = this.applyingCommentId() !== undefined;
+        const wasApplyingAll = this.isApplyingAll();
+
+        if (wasApplyingSingle) {
+            const commentId = this.applyingCommentId();
+            this.applyingCommentId.set(undefined);
+            if (commentId) {
+                // Revert the comment status from 'applying' back to 'pending'
+                this.inlineCommentService.updateStatus(commentId, 'pending');
+            }
+        }
+
+        if (wasApplyingAll) {
+            this.isApplyingAll.set(false);
+            // Revert all comments that were 'applying' back to 'pending'
+            const comments = this.pendingComments();
+            comments.forEach((c) => {
+                if (c.status === 'applying') {
+                    this.inlineCommentService.updateStatus(c.id, 'pending');
+                }
+            });
+        }
     }
 
     /**

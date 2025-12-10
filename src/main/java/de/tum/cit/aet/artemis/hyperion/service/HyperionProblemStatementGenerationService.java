@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.hyperion.service;
 
 import java.util.Map;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
@@ -30,33 +31,42 @@ public class HyperionProblemStatementGenerationService {
      */
     private static final int MAX_PROBLEM_STATEMENT_LENGTH = 50_000;
 
+    @Nullable
     private final ChatClient chatClient;
 
     private final HyperionPromptTemplateService templateService;
 
     /**
+     * Creates a new HyperionProblemStatementGenerationService.
      *
-     *
-     * @param chatClient      the AI chat client (optional)
-     * @param templateService prompt template service
+     * @param chatClient      the AI chat client for generating problem statements,
+     *                            may be null if AI is not configured
+     * @param templateService the prompt template service for rendering AI prompts
      */
-    public HyperionProblemStatementGenerationService(ChatClient chatClient, HyperionPromptTemplateService templateService) {
+    public HyperionProblemStatementGenerationService(@Nullable ChatClient chatClient, HyperionPromptTemplateService templateService) {
         this.chatClient = chatClient;
         this.templateService = templateService;
     }
 
     /**
-     * Generate a problem statement for an exercise
+     * Generate a problem statement for an exercise.
      *
      * @param course     the course context for the problem statement
      * @param userPrompt the user's requirements and instructions for the problem
      *                       statement
      * @return the generated problem statement response
+     * @throws IllegalStateException             if the AI chat client is not
+     *                                               configured
      * @throws InternalServerErrorAlertException if generation fails or response is
      *                                               too long
      */
     public ProblemStatementGenerationResponseDTO generateProblemStatement(Course course, String userPrompt) {
         log.debug("Generating problem statement for course [{}]", course.getId());
+
+        if (chatClient == null) {
+            log.error("Cannot generate problem statement: AI chat client is not configured");
+            throw new IllegalStateException("AI chat client is not configured. Please ensure Hyperion AI service is properly configured.");
+        }
 
         try {
 
