@@ -5,11 +5,14 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.client.ChatClient.CallResponseSpec;
+import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.LLMRequest;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementRewriteResponseDTO;
 
@@ -23,9 +26,13 @@ public class HyperionProblemStatementRewriteService {
 
     private static final Logger log = LoggerFactory.getLogger(HyperionProblemStatementRewriteService.class);
 
+    private static final String REWRITE_PIPELINE_ID = "HYPERION_PROBLEM_REWRITE";
+
     private final ChatClient chatClient;
 
     private final HyperionPromptTemplateService templateService;
+
+    private final HyperionLlmUsageService llmUsageService;
 
     /**
      * Creates a new ProblemStatementRewriteService.
@@ -33,9 +40,10 @@ public class HyperionProblemStatementRewriteService {
      * @param chatClient      the AI chat client (optional)
      * @param templateService prompt template service
      */
-    public HyperionProblemStatementRewriteService(ChatClient chatClient, HyperionPromptTemplateService templateService) {
+    public HyperionProblemStatementRewriteService(ChatClient chatClient, HyperionPromptTemplateService templateService, HyperionLlmUsageService llmUsageService) {
         this.chatClient = chatClient;
         this.templateService = templateService;
+        this.llmUsageService = llmUsageService;
     }
 
     /**
@@ -53,12 +61,16 @@ public class HyperionProblemStatementRewriteService {
         String renderedPrompt = templateService.render(resourcePath, input);
         try {
             // @formatter:off
-            String responseContent = chatClient
+            CallResponseSpec promptResponse = chatClient
                     .prompt()
                     .system("You are an expert technical writing assistant for programming exercise problem statements. Return only the rewritten statement, no explanations.")
                     .user(renderedPrompt)
-                    .call()
-                    .content();
+                    .call();
+
+            ChatResponse chatResponse = promptResponse.chatResponse();
+            String responseContent = chatResponse.getResult().getOutput().getText();
+            LLMRequest llmRequest = llmUsageService.buildLlmRequest(chatResponse, "rewrite", REWRITE_PIPELINE_ID);
+            llmUsageService.storeTokenUsage(course, llmRequest);
             // @formatter:on
             String result = responseContent.trim();
             boolean improved = !result.equals(problemStatementText.trim());

@@ -1,9 +1,8 @@
 package de.tum.cit.aet.artemis.hyperion.service;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,6 +11,7 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.domain.LLMRequest;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.ArtifactLocationDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ArtifactType;
@@ -21,7 +21,6 @@ import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyIssueDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.Severity;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
@@ -43,6 +42,10 @@ public class HyperionConsistencyCheckService {
 
     private static final Logger log = LoggerFactory.getLogger(HyperionConsistencyCheckService.class);
 
+    private static final String STRUCTURAL_PIPELINE_ID = "HYPERION_CONSISTENCY_STRUCTURAL";
+
+    private static final String SEMANTIC_PIPELINE_ID = "HYPERION_CONSISTENCY_SEMANTIC";
+
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final ChatClient chatClient;
@@ -51,12 +54,15 @@ public class HyperionConsistencyCheckService {
 
     private final HyperionProgrammingExerciseContextRendererService exerciseContextRenderer;
 
+    private final HyperionLlmUsageService llmUsageHelper;
+
     public HyperionConsistencyCheckService(ProgrammingExerciseRepository programmingExerciseRepository, ChatClient chatClient, HyperionPromptTemplateService templates,
-            HyperionProgrammingExerciseContextRendererService exerciseContextRenderer) {
+            HyperionProgrammingExerciseContextRendererService exerciseContextRenderer, HyperionLlmUsageService llmUsageHelper) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.chatClient = chatClient;
         this.templates = templates;
         this.exerciseContextRenderer = exerciseContextRenderer;
+        this.llmUsageHelper = llmUsageHelper;
     }
 
     /**
@@ -74,17 +80,17 @@ public class HyperionConsistencyCheckService {
         String programmingLanguage = exerciseWithParticipations.getProgrammingLanguage() != null ? exerciseWithParticipations.getProgrammingLanguage().name() : "JAVA";
         var input = Map.of("rendered_context", renderedRepositoryContext, "programming_language", programmingLanguage);
 
-        var structuralMono = Mono.fromCallable(() -> runStructuralCheck(input)).subscribeOn(Schedulers.boundedElastic()).onErrorReturn(List.of());
-        var semanticMono = Mono.fromCallable(() -> runSemanticCheck(input)).subscribeOn(Schedulers.boundedElastic()).onErrorReturn(List.of());
+        var structuralMono = Mono.fromCallable(() -> runStructuralCheck(input)).subscribeOn(Schedulers.boundedElastic()).onErrorReturn(new CheckResult(List.of(), null));
+        var semanticMono = Mono.fromCallable(() -> runSemanticCheck(input)).subscribeOn(Schedulers.boundedElastic()).onErrorReturn(new CheckResult(List.of(), null));
 
-        // @formatter:off
-        List<ConsistencyIssue> combinedIssues = Flux.merge(
-            structuralMono.flatMapMany(Flux::fromIterable),
-            semanticMono.flatMapMany(Flux::fromIterable)
-        ).collectList().block();
-        // @formatter:on
+        var results = Mono.zip(structuralMono, semanticMono).block();
+        var structuralResult = results != null ? results.getT1() : new CheckResult(List.of(), null);
+        var semanticResult = results != null ? results.getT2() : new CheckResult(List.of(), null);
 
-        List<ConsistencyIssueDTO> issueDTOs = Objects.requireNonNullElse(combinedIssues, new ArrayList<ConsistencyIssue>()).stream().map(this::mapConsistencyIssueToDto).toList();
+        List<ConsistencyIssue> combinedIssues = Stream.concat(structuralResult.issues().stream(), semanticResult.issues().stream()).toList();
+        llmUsageHelper.storeTokenUsage(exerciseWithParticipations, structuralResult.usage(), semanticResult.usage());
+
+        List<ConsistencyIssueDTO> issueDTOs = combinedIssues.stream().map(this::mapConsistencyIssueToDto).toList();
         if (issueDTOs.isEmpty()) {
             log.info("No consistency issues found for exercise {}", exercise.getId());
         }
@@ -103,7 +109,7 @@ public class HyperionConsistencyCheckService {
      * @param input prompt variables (rendered_context, programming_language)
      * @return structural issues (never null)
      */
-    private List<ConsistencyIssue> runStructuralCheck(Map<String, String> input) {
+    private CheckResult runStructuralCheck(Map<String, String> input) {
         var resourcePath = "/prompts/hyperion/consistency_structural.st";
         String renderedPrompt = templates.render(resourcePath, input);
         try {
@@ -115,26 +121,13 @@ public class HyperionConsistencyCheckService {
                 .call()
                 .responseEntity(StructuredOutputSchema.StructuralConsistencyIssues.class);
 
-            var chatResponse = structuralIssuesResponse.getResponse();
-
-            if (chatResponse != null && chatResponse.getMetadata().getUsage() != null) {
-                var usage = chatResponse.getMetadata().getUsage();
-                log.info(
-                    "Hyperion structural check token usage: prompt={}, completion={}, total={}",
-                    usage.getPromptTokens(),
-                    usage.getCompletionTokens(),
-                    usage.getTotalTokens()
-                );
-            } else {
-                log.info("Hyperion structural check token usage not available for this provider/response");
-            }
-
             // @formatter:on
-            return toGenericConsistencyIssue(structuralIssuesResponse.entity());
+            var llmRequest = llmUsageHelper.buildLlmRequest(structuralIssuesResponse.getResponse(), "structural", STRUCTURAL_PIPELINE_ID);
+            return new CheckResult(toGenericConsistencyIssue(structuralIssuesResponse.entity()), llmRequest);
         }
         catch (RuntimeException e) {
             log.warn("Failed to obtain or parse AI response for {} - returning empty list", resourcePath, e);
-            return new ArrayList<>();
+            return new CheckResult(List.of(), null);
         }
     }
 
@@ -144,7 +137,7 @@ public class HyperionConsistencyCheckService {
      * @param input prompt variables (rendered_context, programming_language)
      * @return semantic issues
      */
-    private List<ConsistencyIssue> runSemanticCheck(Map<String, String> input) {
+    private CheckResult runSemanticCheck(Map<String, String> input) {
         var resourcePath = "/prompts/hyperion/consistency_semantic.st";
         String renderedPrompt = templates.render(resourcePath, input);
         try {
@@ -156,26 +149,13 @@ public class HyperionConsistencyCheckService {
                 .call()
                 .responseEntity(StructuredOutputSchema.SemanticConsistencyIssues.class);
 
-            var chatResponse = semanticIssuesResponse.getResponse();
-
-            if (chatResponse != null && chatResponse.getMetadata().getUsage() != null) {
-                var usage = chatResponse.getMetadata().getUsage();
-                log.info(
-                    "Hyperion semantic check token usage: prompt={}, completion={}, total={}",
-                    usage.getPromptTokens(),
-                    usage.getCompletionTokens(),
-                    usage.getTotalTokens()
-                );
-            } else {
-                log.info("Hyperion semantic check token usage not available for this provider/response");
-            }
-
             // @formatter:on
-            return toGenericConsistencyIssue(semanticIssuesResponse.entity());
+            var llmRequest = llmUsageHelper.buildLlmRequest(semanticIssuesResponse.getResponse(), "semantic", SEMANTIC_PIPELINE_ID);
+            return new CheckResult(toGenericConsistencyIssue(semanticIssuesResponse.entity()), llmRequest);
         }
         catch (RuntimeException e) {
             log.warn("Failed to obtain or parse AI response for {} - returning empty list", resourcePath, e);
-            return new ArrayList<>();
+            return new CheckResult(List.of(), null);
         }
     }
 
@@ -232,6 +212,9 @@ public class HyperionConsistencyCheckService {
     // Unified consistency issue used internally after parsing
     private record ConsistencyIssue(String severity, ConsistencyIssueCategory category, String description, String suggestedFix,
             List<StructuredOutputSchema.ArtifactLocation> relatedLocations) {
+    }
+
+    private record CheckResult(List<ConsistencyIssue> issues, LLMRequest usage) {
     }
 
     // TODO: try to use records instead of static classes

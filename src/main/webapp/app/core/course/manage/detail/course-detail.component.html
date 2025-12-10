@@ -45,7 +45,7 @@
                             [currentAbsolute]="courseDTO?.currentAbsoluteAverageScore"
                             [currentMax]="courseDTO?.currentMaxAverageScore"
                         />
-                        @if (this.irisChatEnabled || this.isAthenaEnabled) {
+                        @if (this.irisChatEnabled || this.isAthenaEnabled || this.isHyperionEnabled) {
                             <jhi-course-detail-doughnut-chart
                                 class="doughnut-container col-sm-6 my-3"
                                 [course]="course"

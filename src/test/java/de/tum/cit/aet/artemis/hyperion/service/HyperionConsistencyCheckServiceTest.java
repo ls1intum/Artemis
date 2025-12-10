@@ -18,7 +18,8 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
 
-import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyCheckResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyIssueCategory;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -40,6 +41,12 @@ class HyperionConsistencyCheckServiceTest {
     @Mock
     private ChatModel chatModel;
 
+    @Mock
+    private LLMTokenUsageService llmTokenUsageService;
+
+    @Mock
+    private UserRepository userRepository;
+
     private HyperionConsistencyCheckService hyperionConsistencyCheckService;
 
     @BeforeEach
@@ -50,7 +57,9 @@ class HyperionConsistencyCheckServiceTest {
         // Wire minimal renderer with mocked dependencies
         HyperionProgrammingExerciseContextRendererService exerciseContextRenderer = new HyperionProgrammingExerciseContextRendererService(repositoryService,
                 new HyperionProgrammingLanguageContextFilterService());
-        this.hyperionConsistencyCheckService = new HyperionConsistencyCheckService(programmingExerciseRepository, chatClient, templateService, exerciseContextRenderer);
+        var llmUsageHelper = new HyperionLlmUsageService(llmTokenUsageService, userRepository);
+        this.hyperionConsistencyCheckService = new HyperionConsistencyCheckService(programmingExerciseRepository, chatClient, templateService, exerciseContextRenderer,
+                llmUsageHelper);
     }
 
     @Test
@@ -81,8 +90,6 @@ class HyperionConsistencyCheckServiceTest {
             return new ChatResponse(List.of(new Generation(msg)));
         });
 
-        var user = new User();
-        user.setLogin("instructor");
         ConsistencyCheckResponseDTO resp = hyperionConsistencyCheckService.checkConsistency(exercise);
 
         assertThat(resp).isNotNull();
