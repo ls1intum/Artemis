@@ -1,0 +1,32 @@
+{
+    "artemisApp": {
+        "llmSelectionPopup": {
+            "header": "Wähle deine KI-Erfahrung",
+            "subtitleOne": "Deine Daten, deine Wahl.",
+            "subtitleTwo": "Nutze Artemis mit modernsten Cloud-Modellen auf Azure, abgesichert durch fortgeschrittene Sicherheitsstandards, oder entscheide dich für unseren Open-Source-Stack im universitären Rechenzentrum für maximalen Datenschutz.",
+            "cloud": "Cloud",
+            "onPremise": "Lokal",
+            "noAI": "Keine KI",
+            "recommended": "Empfohlen",
+            "experimental": "Experimentell",
+            "descriptionCloud": "Schnelle, hochwertige KI basierend auf modernsten Cloud-Modellen",
+            "descriptionLocal": "Ideal für höchsten Datenschutz, aber mit einigen Einschränkungen",
+            "descriptionNo": "Du kannst Artemis weiterhin nutzen, jedoch ohne KI-Unterstützung",
+            "featureCloudOne": "Neueste Modelle wie GPT-5",
+            "featureCloudTwo": "Hohe Antwortqualität",
+            "featureCloudThree": "Schnelle Antwortzeiten",
+            "featureCloudFour": "DSGVO-konforme Verarbeitung in Azures EU-Rechenzentren",
+            "featureCloudFive": "Alle Daten auf universitären Rechenzentren gespeichert",
+            "featureLocalOne": "Neueste Open-Source-Modelle wie GPT-OSS",
+            "featureLocalTwo": "Geringere Antwortqualität",
+            "featureLocalThree": "Langsamere Antwortzeiten",
+            "featureLocalFour": "Verarbeitung nur in universitären Rechenzentren",
+            "featureLocalFive": "Alle Daten auf universitären Servern gespeichert",
+            "featureNoOne": "Keine Iris-Unterstützung",
+            "featureNoTwo": "Kein automatisches KI-Feedback zu Modellierungs- und Textaufgaben",
+            "featureNoThree": "Keine KI-gestützte Anleitung",
+            "disclaimer": "Artemis wird niemals deine persönlichen Daten wie Matrikelnummer oder E-Mail-Adresse an ein großes Sprachmodell senden •",
+            "disclaimerButton": "Erfahre mehr über deine Optionen"
+        }
+    }
+}

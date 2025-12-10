@@ -41,7 +41,7 @@ describe('TutorSuggestionComponent', () => {
         getActiveStatus: jest.fn().mockReturnValue(of({})),
     } as any;
     const mockUserService = {
-        updateExternalLLMUsageConsent: jest.fn(),
+        updateLLMSelectionDecision: jest.fn(),
     } as any;
 
     beforeEach(async () => {
@@ -87,7 +87,7 @@ describe('TutorSuggestionComponent', () => {
         (translateService as any).onTranslationChange = of({ lang: 'en', translations: {} });
         (translateService as any).onDefaultLangChange = of({ lang: 'en', translations: {} });
         chatService.setCourseId(123);
-        accountService.userIdentity.set({ externalLLMUsageAccepted: dayjs() } as User);
+        accountService.userIdentity.set({ selectedLLMUsageTimestamp: dayjs() } as User);
 
         componentRef.setInput('post', { id: 1 } as any);
         componentRef.setInput('course', { id: 1 } as any);

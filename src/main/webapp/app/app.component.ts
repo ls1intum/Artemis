@@ -14,12 +14,23 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
 import { PageRibbonComponent } from 'app/core/layouts/profiles/page-ribbon.component';
 import { FooterComponent } from 'app/core/layouts/footer/footer.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { LLMSelectionModalComponent } from 'app/logos/llm-selection-popup.component';
 
 @Component({
     selector: 'jhi-app',
     templateUrl: './app.component.html',
     styleUrls: ['./app.component.scss'],
-    imports: [AlertOverlayComponent, CdkScrollable, NgClass, NgStyle, PageRibbonComponent, RouterOutlet, FooterComponent, CourseNotificationPopupOverlayComponent],
+    imports: [
+        AlertOverlayComponent,
+        CdkScrollable,
+        NgClass,
+        NgStyle,
+        PageRibbonComponent,
+        RouterOutlet,
+        FooterComponent,
+        CourseNotificationPopupOverlayComponent,
+        LLMSelectionModalComponent,
+    ],
 })
 export class AppComponent implements OnInit, OnDestroy {
     protected readonly FeatureToggle = FeatureToggle;

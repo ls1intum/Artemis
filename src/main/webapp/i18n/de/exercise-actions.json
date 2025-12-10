@@ -70,10 +70,8 @@
             "startExerciseBeforeStartDate": "Du kannst vor dem Startdatum nicht an der Aufgabe teilnehmen.",
             "deleteMultipleExercisesQuestion": "Sollen die ausgewählten Aufgaben wirklich dauerhaft gelöscht werden?",
             "externalLLMUsage": {
-                "popUpLabel": "Bestätigung der externen LLM-Verwendung",
-                "popUpMessage": "Indem du akzeptierst, bestätigst du, dass du mindestens 18 Jahre alt bist und damit einverstanden bist, dass deine Interaktionen mit Artemis sowie die dafür erforderlichen kontextbezogenen Daten, wie etwa dein Code, außerhalb des Rechenzentrums der Universität verarbeitet werden dürfen. Die Verarbeitung erfolgt in der Microsoft Azure Cloud gemäß den EU-Datenschutzstandards. Dabei werden alle Daten innerhalb der EU verarbeitet und nicht gespeichert.",
-                "accept": "Akzeptieren",
-                "decline": "Ablehnen"
+                "popUpLabel": "Bestätigung der LLM-Verwendung",
+                "popUpMessage": "Indem du akzeptierst, bestätigst du, dass du mindestens 18 Jahre alt bist und damit einverstanden bist, dass deine Interaktionen mit Artemis sowie die dafür erforderlichen kontextbezogenen Daten, wie etwa dein Code, verarbeitet werden dürfen. Deine Daten werden nicht gespeichert."
             }
         }
     }
