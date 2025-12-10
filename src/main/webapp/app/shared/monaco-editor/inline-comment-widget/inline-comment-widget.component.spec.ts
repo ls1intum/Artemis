@@ -93,37 +93,37 @@ describe('InlineCommentWidgetComponent', () => {
 
             // Set instruction via textarea
             const textarea = fixture.debugElement.query(By.css('textarea'));
+            expect(textarea).toBeTruthy();
             textarea.nativeElement.value = 'Test instruction';
             textarea.nativeElement.dispatchEvent(new Event('input'));
             fixture.detectChanges();
+            await fixture.whenStable();
+            fixture.detectChanges();
 
-            // Click save button
-            const saveButton = fixture.debugElement.query(By.css('button[title*="save"], button.save-button, button:has(fa-icon[icon="faFloppyDisk"])'));
-            if (saveButton) {
-                saveButton.triggerEventHandler('click', null);
-                fixture.detectChanges();
+            // Find and click save button (btn-primary in action-buttons)
+            const saveButton = fixture.debugElement.query(By.css('.action-buttons .btn-primary'));
+            expect(saveButton).toBeTruthy();
+            expect(saveButton.nativeElement.disabled).toBeFalse();
 
-                expect(saveSpy).toHaveBeenCalledWith(
-                    expect.objectContaining({
-                        startLine: 1,
-                        endLine: 5,
-                        instruction: 'Test instruction',
-                        status: 'pending',
-                    }),
-                );
-            }
+            saveButton.triggerEventHandler('click', mockClickEvent);
+            fixture.detectChanges();
+
+            expect(saveSpy).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    startLine: 1,
+                    endLine: 5,
+                    instruction: 'Test instruction',
+                }),
+            );
         });
 
         it('should disable save button when instruction is empty', () => {
             fixture.detectChanges();
 
-            // Find buttons and check they are disabled when no instruction
-            const buttons = fixture.debugElement.queryAll(By.css('button'));
-            const saveButton = buttons.find((btn) => btn.nativeElement.textContent.includes('Save') || btn.attributes['title']?.includes('save'));
-
-            if (saveButton) {
-                expect(saveButton.nativeElement.disabled).toBeTrue();
-            }
+            // Find save button (btn-primary in action-buttons)
+            const saveButton = fixture.debugElement.query(By.css('.action-buttons .btn-primary'));
+            expect(saveButton).toBeTruthy();
+            expect(saveButton.nativeElement.disabled).toBeTrue();
         });
     });
 
@@ -133,19 +133,22 @@ describe('InlineCommentWidgetComponent', () => {
 
             // Set instruction via textarea
             const textarea = fixture.debugElement.query(By.css('textarea'));
+            expect(textarea).toBeTruthy();
             textarea.nativeElement.value = 'Test instruction';
             textarea.nativeElement.dispatchEvent(new Event('input'));
             fixture.detectChanges();
+            await fixture.whenStable();
+            fixture.detectChanges();
 
-            // Find the apply button (has AI icon, btn-outline-primary)
-            const applyButton = fixture.debugElement.query(By.css('.btn-outline-primary'));
+            // Find the apply button (btn-outline-primary in action-buttons)
+            const applyButton = fixture.debugElement.query(By.css('.action-buttons .btn-outline-primary'));
+            expect(applyButton).toBeTruthy();
+            expect(applyButton.nativeElement.disabled).toBeFalse();
 
-            if (applyButton && !applyButton.nativeElement.disabled) {
-                applyButton.triggerEventHandler('click', mockClickEvent);
-                fixture.detectChanges();
+            applyButton.triggerEventHandler('click', mockClickEvent);
+            fixture.detectChanges();
 
-                expect(applySpy).toHaveBeenCalled();
-            }
+            expect(applySpy).toHaveBeenCalled();
         });
     });
 
@@ -153,14 +156,14 @@ describe('InlineCommentWidgetComponent', () => {
         it('should emit onCancel when cancel button is clicked', () => {
             const cancelSpy = jest.spyOn(component.onCancel, 'emit');
 
-            // Find and click cancel button (usually has X icon)
-            const cancelButton = fixture.debugElement.query(By.css('button.cancel-button, button[title*="cancel"]'));
-            if (cancelButton) {
-                cancelButton.triggerEventHandler('click', null);
-                fixture.detectChanges();
+            // Find cancel button (btn-secondary in action-buttons)
+            const cancelButton = fixture.debugElement.query(By.css('.action-buttons .btn-secondary'));
+            expect(cancelButton).toBeTruthy();
 
-                expect(cancelSpy).toHaveBeenCalled();
-            }
+            cancelButton.triggerEventHandler('click', mockClickEvent);
+            fixture.detectChanges();
+
+            expect(cancelSpy).toHaveBeenCalled();
         });
     });
 
@@ -177,17 +180,18 @@ describe('InlineCommentWidgetComponent', () => {
             fixture.componentRef.setInput('existingComment', existingComment);
             fixture.detectChanges();
             await fixture.whenStable();
+            fixture.detectChanges();
 
             const deleteSpy = jest.spyOn(component.onDelete, 'emit');
 
-            // Find and click delete button
-            const deleteButton = fixture.debugElement.query(By.css('button.delete-button, button[title*="delete"]'));
-            if (deleteButton) {
-                deleteButton.triggerEventHandler('click', null);
-                fixture.detectChanges();
+            // Find delete button (btn-outline-danger in widget-actions)
+            const deleteButton = fixture.debugElement.query(By.css('.widget-actions .btn-outline-danger'));
+            expect(deleteButton).toBeTruthy();
 
-                expect(deleteSpy).toHaveBeenCalledWith('test-id-123');
-            }
+            deleteButton.triggerEventHandler('click', mockClickEvent);
+            fixture.detectChanges();
+
+            expect(deleteSpy).toHaveBeenCalledWith('test-id-123');
         });
     });
 
@@ -225,18 +229,41 @@ describe('InlineCommentWidgetComponent', () => {
             expect(textarea.nativeElement.disabled).toBeTrue();
         });
 
-        it('should still allow toggling collapse when readOnly', () => {
+        it('should still allow toggling collapse when readOnly', async () => {
+            // Set up an existing comment (required for collapse icon to appear)
+            const existingComment: InlineComment = {
+                id: 'test-id',
+                startLine: 1,
+                endLine: 5,
+                instruction: 'Test instruction',
+                status: 'pending',
+                createdAt: new Date(),
+            };
+            fixture.componentRef.setInput('existingComment', existingComment);
             fixture.componentRef.setInput('readOnly', true);
             fixture.componentRef.setInput('collapsed', true);
             fixture.detectChanges();
+            await fixture.whenStable();
+            fixture.detectChanges();
 
+            // Verify initially collapsed - textarea should not be visible
+            let textarea = fixture.debugElement.query(By.css('textarea'));
+            expect(textarea).toBeFalsy();
+
+            // Find header and click to expand
             const header = fixture.debugElement.query(By.css('.widget-header'));
-            if (header) {
-                header.triggerEventHandler('click', null);
-                fixture.detectChanges();
-                // The widget should respond to clicks
-                expect(component.collapsed()).toBeTrue(); // Input is still true, but internal state may differ
-            }
+            expect(header).toBeTruthy();
+
+            header.triggerEventHandler('click', mockClickEvent);
+            fixture.detectChanges();
+            await fixture.whenStable();
+            fixture.detectChanges();
+
+            // After toggle, widget should be expanded - textarea should be visible
+            textarea = fixture.debugElement.query(By.css('textarea'));
+            expect(textarea).toBeTruthy();
+            // Textarea should be disabled since readOnly is true
+            expect(textarea.nativeElement.disabled).toBeTrue();
         });
     });
 
