@@ -1,12 +1,12 @@
 <div #resizeContainer class="modeling-assessment" [class.resizable]="resizeOptions">
-    @if (title || displayPoints) {
+    @if (title() || displayPoints()) {
         <div class="card-header bg-primary text-white">
-            @if (title) {
-                <span>{{ title }}</span>
+            @if (title()) {
+                <span>{{ title() }}</span>
             }
             <span class="flex-fill"></span>
-            @if (displayPoints) {
-                <jhi-score-display [score]="totalScore" [maxPoints]="maxScore" [maxBonusPoints]="maxBonusPoints" [course]="course" />
+            @if (displayPoints()) {
+                <jhi-score-display [score]="totalScore()" [maxPoints]="maxScore()" [maxBonusPoints]="maxBonusPoints()" [course]="course()" />
             }
         </div>
     }

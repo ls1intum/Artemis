@@ -90,8 +90,17 @@ describe('ModelingAssessmentComponent', () => {
         credits: 35,
         copiedFeedbackId: 12,
     };
-    const mockFeedbackWithoutReference: Feedback = { text: 'FeedbackWithoutReference', credits: 30, type: FeedbackType.MANUAL_UNREFERENCED };
-    const mockFeedbackInvalid: Feedback = { text: 'FeedbackInvalid', referenceId: '4', reference: 'reference', correctionStatus: FeedbackCorrectionErrorType.INCORRECT_SCORE };
+    const mockFeedbackWithoutReference: Feedback = {
+        text: 'FeedbackWithoutReference',
+        credits: 30,
+        type: FeedbackType.MANUAL_UNREFERENCED,
+    };
+    const mockFeedbackInvalid: Feedback = {
+        text: 'FeedbackInvalid',
+        referenceId: '4',
+        reference: 'reference',
+        correctionStatus: FeedbackCorrectionErrorType.INCORRECT_SCORE,
+    };
     const mockValidFeedbacks = [mockFeedbackWithReference, mockFeedbackWithoutReference];
     const mockFeedbacks = [...mockValidFeedbacks, mockFeedbackInvalid];
 
@@ -107,7 +116,13 @@ describe('ModelingAssessmentComponent', () => {
         TestBed.configureTestingModule({
             imports: [MockModule(FormsModule)],
             declarations: [ModelingAssessmentComponent, ScoreDisplayComponent, ModelingExplanationEditorComponent, MockPipe(ArtemisTranslatePipe)],
-            providers: [MockProvider(ArtemisTranslatePipe), { provide: TranslateService, useClass: MockTranslateService }],
+            providers: [
+                MockProvider(ArtemisTranslatePipe),
+                {
+                    provide: TranslateService,
+                    useClass: MockTranslateService,
+                },
+            ],
         })
             .compileComponents()
             .then(() => {
@@ -123,7 +138,7 @@ describe('ModelingAssessmentComponent', () => {
 
     it('should show title if any', () => {
         const title = 'Test Title';
-        comp.title = title;
+        fixture.componentRef.setInput('title', title);
         fixture.detectChanges();
         const el = fixture.debugElement.query((de) => de.nativeElement.textContent === title);
         expect(el).not.toBeNull();
@@ -134,12 +149,12 @@ describe('ModelingAssessmentComponent', () => {
         let maxScore: number;
         beforeEach(() => {
             totalScore = 40;
-            comp.totalScore = totalScore;
+            fixture.componentRef.setInput('totalScore', totalScore);
             maxScore = 66;
-            comp.maxScore = maxScore;
+            fixture.componentRef.setInput('maxScore', maxScore);
         });
         it('should display score display with right values', () => {
-            comp.displayPoints = true;
+            fixture.componentRef.setInput('displayPoints', true);
             fixture.detectChanges();
             const scoreDisplay = fixture.debugElement.query(By.directive(ScoreDisplayComponent));
             expect(scoreDisplay).not.toBeNull();
@@ -148,7 +163,7 @@ describe('ModelingAssessmentComponent', () => {
         });
 
         it('should not display score if displayPoints wrong', () => {
-            comp.displayPoints = false;
+            fixture.componentRef.setInput('displayPoints', false);
             fixture.detectChanges();
             const scoreDisplay = fixture.debugElement.query(By.directive(ScoreDisplayComponent));
             expect(scoreDisplay).toBeNull();
@@ -187,8 +202,9 @@ describe('ModelingAssessmentComponent', () => {
         expect(comp.feedbacks).toBeUndefined();
 
         comp.umlModel = makeMockModel();
-        comp.resultFeedbacks = mockFeedbacks;
-
+        fixture.detectChanges();
+        fixture.componentRef.setInput('resultFeedbacks', mockFeedbacks);
+        fixture.detectChanges();
         expect(comp.referencedFeedbacks).toEqual([mockFeedbackWithReference, mockFeedbackInvalid]);
         expect(comp.feedbacks).toEqual(mockFeedbacks);
     });
@@ -197,8 +213,9 @@ describe('ModelingAssessmentComponent', () => {
         const spy = jest.spyOn(translatePipe, 'transform');
         const mockModel = makeMockModel();
         comp.umlModel = mockModel;
-        comp.resultFeedbacks = [mockFeedbackWithGradingInstruction];
-
+        fixture.detectChanges();
+        fixture.componentRef.setInput('resultFeedbacks', [mockFeedbackWithGradingInstruction]);
+        fixture.detectChanges();
         expect(spy).toHaveBeenCalledWith('artemisApp.assessment.messages.removeAssessmentInstructionLink');
         expect(spy).toHaveBeenCalledWith('artemisApp.exercise.assessmentInstruction');
         expect(spy).toHaveBeenCalledWith('artemisApp.assessment.feedbackHint');
@@ -221,7 +238,8 @@ describe('ModelingAssessmentComponent', () => {
         const mockModel = makeMockModel();
         comp.umlModel = mockModel;
         const elementCounts = getElementCounts(mockModel);
-        comp.elementCounts = elementCounts;
+        fixture.componentRef.setInput('elementCounts', elementCounts);
+
         const spy = jest.spyOn(translatePipe, 'transform');
         fixture.detectChanges();
         await fixture.whenStable();
@@ -235,7 +253,7 @@ describe('ModelingAssessmentComponent', () => {
     it('should generate feedback from assessment', () => {
         const mockModel = makeMockModel();
         comp.umlModel = mockModel;
-        comp.resultFeedbacks = [mockFeedbackWithGradingInstruction];
+        fixture.componentRef.setInput('resultFeedbacks', [mockFeedbackWithGradingInstruction]);
 
         fixture.detectChanges();
 
@@ -248,7 +266,7 @@ describe('ModelingAssessmentComponent', () => {
         highlightedElements.set('elementId1', 'red');
         highlightedElements.set('relationshipId', 'blue');
         comp.umlModel = makeMockModel();
-        comp.highlightedElements = highlightedElements;
+        fixture.componentRef.setInput('highlightedElements', highlightedElements);
 
         fixture.detectChanges();
         await fixture.whenStable();
@@ -284,7 +302,7 @@ describe('ModelingAssessmentComponent', () => {
         highlightedElements.set('elementId2', 'green');
         const changes = { highlightedElements: { currentValue: highlightedElements } as SimpleChange };
         comp.umlModel = makeMockModel();
-        comp.highlightedElements = highlightedElements;
+        fixture.componentRef.setInput('highlightedElements', highlightedElements);
 
         fixture.detectChanges();
         await fixture.whenStable();
@@ -309,7 +327,7 @@ describe('ModelingAssessmentComponent', () => {
 
     it('should update highlighted assessments first round', async () => {
         const changes = { highlightDifferences: { currentValue: true } as SimpleChange };
-        comp.highlightDifferences = true;
+        fixture.componentRef.setInput('highlightDifferences', true);
         comp.umlModel = makeMockModel();
         comp.feedbacks = [mockFeedbackWithReference];
         comp.referencedFeedbacks = [mockFeedbackWithReference];
@@ -331,7 +349,7 @@ describe('ModelingAssessmentComponent', () => {
 
     it('should update highlighted assessments', async () => {
         const changes = { highlightDifferences: { currentValue: true } as SimpleChange };
-        comp.highlightDifferences = true;
+        fixture.componentRef.setInput('highlightDifferences', true);
         comp.umlModel = makeMockModel();
 
         fixture.detectChanges();
@@ -353,8 +371,17 @@ describe('ModelingAssessmentComponent', () => {
     });
 
     it('should update feedbacks', () => {
-        const newMockFeedbackWithReference = { text: 'NewFeedbackWithReference', referenceId: 'relationshipId', reference: 'reference', credits: 30 } as Feedback;
-        const newMockFeedbackWithoutReference = { text: 'NewFeedbackWithoutReference', credits: 30, type: FeedbackType.MANUAL_UNREFERENCED } as Feedback;
+        const newMockFeedbackWithReference = {
+            text: 'NewFeedbackWithReference',
+            referenceId: 'relationshipId',
+            reference: 'reference',
+            credits: 30,
+        } as Feedback;
+        const newMockFeedbackWithoutReference = {
+            text: 'NewFeedbackWithoutReference',
+            credits: 30,
+            type: FeedbackType.MANUAL_UNREFERENCED,
+        } as Feedback;
         const newMockFeedbackInvalid = { text: 'NewFeedbackInvalid', referenceId: '4', reference: 'reference' };
         const newMockValidFeedbacks = [newMockFeedbackWithReference, newMockFeedbackWithoutReference];
         const newMockFeedbacks = [...newMockValidFeedbacks, newMockFeedbackInvalid];
