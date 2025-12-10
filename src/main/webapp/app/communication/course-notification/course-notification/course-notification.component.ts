@@ -58,8 +58,9 @@ export class CourseNotificationComponent {
         effect(() => {
             this.faIcon = this.courseNotificationService.getIconFromType(this.courseNotification().notificationType);
             // For translations, we pass all parameters and the course name and id so they can automatically be used.
-            this.notificationParameters = {
-                ...Object.entries(this.courseNotification().parameters!).reduce(
+            this.notificationParameters = Object.assign(
+                {},
+                Object.entries(this.courseNotification().parameters!).reduce(
                     (acc, [key, value]) => {
                         if (!value || !CourseNotificationService.NOTIFICATION_MARKDOWN_PARAMETERS.includes(key)) {
                             acc[key] = value;
@@ -71,9 +72,8 @@ export class CourseNotificationComponent {
                     },
                     {} as Record<string, any>,
                 ),
-                courseName: this.courseNotification().courseName,
-                courseId: this.courseNotification().courseId,
-            };
+                { courseName: this.courseNotification().courseName, courseId: this.courseNotification().courseId },
+            );
             this.notificationType = this.courseNotification().notificationType!;
             this.notificationUrl = this.parseUrlToRouterObject(this.courseNotification().relativeWebAppUrl!);
             this.notificationTimeTranslationKey = this.courseNotificationService.getDateTranslationKey(this.courseNotification());

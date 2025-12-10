@@ -306,7 +306,7 @@ export class CourseNotificationService {
      * Creates a new object to ensure change detection.
      */
     private notifyCountSubscribers(): void {
-        this.notificationCountSubject.next({ ...this.courseNotificationCountMap });
+        this.notificationCountSubject.next(Object.assign({}, this.courseNotificationCountMap));
     }
 
     /**
@@ -330,7 +330,7 @@ export class CourseNotificationService {
      * Creates a new object to ensure change detection.
      */
     private notifyNotificationSubscribers(): void {
-        this.notificationSubject.next({ ...this.courseNotificationMap });
+        this.notificationSubject.next(Object.assign({}, this.courseNotificationMap));
     }
 
     /**

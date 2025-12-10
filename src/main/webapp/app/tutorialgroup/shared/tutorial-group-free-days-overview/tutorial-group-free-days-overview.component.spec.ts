@@ -56,7 +56,7 @@ describe('TutorialGroupFreeDaysOverviewComponent', () => {
 
         component = fixture.componentInstance;
 
-        fixture.componentRef.setInput('tutorialGroupFreeDays', [{ ...firstOfJanuaryPeriod }, { ...thirdOfJanuaryPeriod }]);
+        fixture.componentRef.setInput('tutorialGroupFreeDays', [Object.assign({}, firstOfJanuaryPeriod), Object.assign({}, thirdOfJanuaryPeriod)]);
         fixture.componentRef.setInput('timeZone', 'Europe/Berlin');
         jest.spyOn(component, 'getCurrentDate').mockReturnValue(currentDate);
         fixture.detectChanges();

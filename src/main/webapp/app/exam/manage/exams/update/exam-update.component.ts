@@ -557,7 +557,9 @@ export class ExamUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
 /**
  * Prepares the exam for import by omitting all properties that should not be imported.
  */
-export const prepareExamForImport = (exam: Exam): Exam => ({
-    ...omit(exam, ['id', 'visibleDate', 'startDate', 'endDate', 'publishResultsDate', 'examStudentReviewStart', 'examStudentReviewEnd', 'examUsers', 'studentExams']),
-    workingTime: 0,
-});
+export const prepareExamForImport = (exam: Exam): Exam =>
+    Object.assign(
+        {},
+        omit(exam, ['id', 'visibleDate', 'startDate', 'endDate', 'publishResultsDate', 'examStudentReviewStart', 'examStudentReviewEnd', 'examUsers', 'studentExams']),
+        { workingTime: 0 },
+    );

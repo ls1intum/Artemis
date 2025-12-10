@@ -255,7 +255,7 @@ export class TeamUpdateDialogComponent implements OnInit {
             .subscribe((alreadyTakenResponse) => {
                 const alreadyTaken = alreadyTakenResponse.body;
                 const errors = alreadyTaken
-                    ? { ...this.shortNameControl.errors, [this.SHORT_NAME_ALREADY_TAKEN_ERROR_CODE]: alreadyTaken }
+                    ? Object.assign({}, this.shortNameControl.errors, { [this.SHORT_NAME_ALREADY_TAKEN_ERROR_CODE]: alreadyTaken })
                     : omit(this.shortNameControl.errors, this.SHORT_NAME_ALREADY_TAKEN_ERROR_CODE);
                 this.shortNameControl.setErrors(isEmpty(errors) ? null : errors);
             });

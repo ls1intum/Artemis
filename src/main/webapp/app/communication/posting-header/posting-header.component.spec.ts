@@ -75,10 +75,7 @@ describe('PostingHeaderComponent', () => {
 
     it('should not set today flag for posts not created today', () => {
         runInInjectionContext(injector, () => {
-            const pastDatePost = {
-                ...metisPostLectureUser1,
-                creationDate: dayjs().subtract(1, 'day').toDate(),
-            } as unknown as Post;
+            const pastDatePost = Object.assign({}, metisPostLectureUser1, { creationDate: dayjs().subtract(1, 'day').toDate() }) as unknown as Post;
             component.posting = input<Posting>(pastDatePost);
             component.ngOnInit();
             fixture.detectChanges();
@@ -89,7 +86,7 @@ describe('PostingHeaderComponent', () => {
 
     it('should display resolved icon on resolved post header', () => {
         runInInjectionContext(injector, () => {
-            const resolvedPost = { ...metisPostExerciseUser1, resolved: true } as Post;
+            const resolvedPost = Object.assign({}, metisPostExerciseUser1, { resolved: true }) as Post;
             component.posting = input<Posting>(resolvedPost);
             component.ngOnInit();
             fixture.detectChanges();
@@ -100,7 +97,7 @@ describe('PostingHeaderComponent', () => {
 
     it('should not display resolved icon on unresolved post header', () => {
         runInInjectionContext(injector, () => {
-            const unresolvedPost = { ...metisPostExerciseUser1, resolved: false } as Post;
+            const unresolvedPost = Object.assign({}, metisPostExerciseUser1, { resolved: false }) as Post;
             component.posting = input<Posting>(unresolvedPost);
             component.ngOnInit();
             fixture.detectChanges();
@@ -116,7 +113,7 @@ describe('PostingHeaderComponent', () => {
         ${UserRole.USER}       | ${'post-authority-icon-student'}
     `('should display relevant icon and tooltip for author authority $input', (param: { input: UserRole; expectClass: string }) => {
         runInInjectionContext(injector, () => {
-            const rolePost = { ...metisPostLectureUser1, authorRole: param.input } as Post;
+            const rolePost = Object.assign({}, metisPostLectureUser1, { authorRole: param.input }) as Post;
             component.posting = input<Posting>(rolePost);
             component.ngOnInit();
             fixture.detectChanges();
@@ -134,7 +131,7 @@ describe('PostingHeaderComponent', () => {
         ${UserRole.TUTOR}      | ${faUserCheck}
     `('should set userAuthorityIcon correctly for role $input', (param: { input: UserRole; expectedIcon: IconProp }) => {
         runInInjectionContext(injector, () => {
-            const rolePost = { ...metisPostLectureUser1, authorRole: param.input } as Post;
+            const rolePost = Object.assign({}, metisPostLectureUser1, { authorRole: param.input }) as Post;
             component.posting = input<Posting>(rolePost);
             component.ngOnInit();
             fixture.detectChanges();
@@ -150,7 +147,7 @@ describe('PostingHeaderComponent', () => {
         ${UserRole.TUTOR}      | ${'artemisApp.metis.userAuthorityTooltips.tutor'}
     `('should set userAuthorityTooltip correctly for role $input', (param: { input: UserRole; expectedTooltip: string }) => {
         runInInjectionContext(injector, () => {
-            const rolePost = { ...metisPostLectureUser1, authorRole: param.input } as Post;
+            const rolePost = Object.assign({}, metisPostLectureUser1, { authorRole: param.input }) as Post;
             component.posting = input<Posting>(rolePost);
             component.ngOnInit();
             fixture.detectChanges();
@@ -161,7 +158,7 @@ describe('PostingHeaderComponent', () => {
 
     it('should set isAuthorOfPosting correctly when user is the author', () => {
         runInInjectionContext(injector, () => {
-            const authorPost = { ...metisPostLectureUser1, author: component.currentUser } as Post;
+            const authorPost = Object.assign({}, metisPostLectureUser1, { author: component.currentUser }) as Post;
             component.posting = input<Posting>(authorPost);
             component.ngOnInit();
             fixture.detectChanges();
@@ -185,10 +182,7 @@ describe('PostingHeaderComponent', () => {
         runInInjectionContext(injector, () => {
             const yesterday = dayjs().subtract(1, 'day').toDate();
 
-            const yesterdayPost: Post = {
-                ...metisPostLectureUser1,
-                creationDate: yesterday,
-            } as unknown as Post;
+            const yesterdayPost: Post = Object.assign({}, metisPostLectureUser1, { creationDate: yesterday }) as unknown as Post;
 
             component.posting = input<Posting>(yesterdayPost);
             component.ngOnInit();

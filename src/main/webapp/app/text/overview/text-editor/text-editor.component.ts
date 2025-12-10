@@ -469,7 +469,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     }
 
     private submissionForAnswer(answer: string): TextSubmission {
-        return { ...this.submission, text: answer, language: this.textService.predictLanguage(answer) };
+        return Object.assign({}, this.submission, { text: answer, language: this.textService.predictLanguage(answer) });
     }
 
     onReceiveSubmissionFromTeam(submission: TextSubmission) {

@@ -150,7 +150,7 @@ describe('WebauthnService', () => {
 
         it('should throw InvalidCredentialError when credential type is not public-key', async () => {
             jest.spyOn(console, 'error').mockImplementation(() => {}); // Suppress console errors in the test
-            const invalidCredential = { ...mockPublicKeyCredential, type: 'invalid-type' } as unknown as PublicKeyCredential;
+            const invalidCredential = Object.assign({}, mockPublicKeyCredential, { type: 'invalid-type' }) as unknown as PublicKeyCredential;
             jest.spyOn(navigator.credentials, 'get').mockResolvedValue(invalidCredential);
 
             await expect(service.loginWithPasskey()).rejects.toThrow(InvalidCredentialError);

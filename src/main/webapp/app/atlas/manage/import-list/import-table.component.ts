@@ -97,10 +97,7 @@ export class ImportTableComponent<T extends BaseEntity> {
     private readonly debouncedDataLoad = BaseApiHttpService.debounce(this.loadData.bind(this), 300);
 
     private filterSearchResult(searchResults: SearchResult<T>): SearchResult<T> {
-        return <SearchResult<T>>{
-            ...searchResults,
-            resultsOnPage: searchResults.resultsOnPage?.filter((entity) => !this.disabledIds().includes(entity.id!)),
-        };
+        return <SearchResult<T>>Object.assign({}, searchResults, { resultsOnPage: searchResults.resultsOnPage?.filter((entity) => !this.disabledIds().includes(entity.id!)) });
     }
 
     protected async setSortedColumn(sortedColumn: string): Promise<void> {

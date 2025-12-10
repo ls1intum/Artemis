@@ -64,11 +64,11 @@ export class ExamExerciseGroupCreationPage {
         exerciseTemplate?: any,
     ): Promise<PlaywrightExercise> {
         const response = await this.handleAddGroupWithExercise(exam, 'Exercise ' + generateUUID(), exerciseType, additionalData, isMandatory, exerciseTemplate);
-        let exercise = { ...response!, additionalData };
+        let exercise = Object.assign({}, response!, { additionalData });
         if (exerciseType == ExerciseType.QUIZ) {
             const quiz = response as QuizExercise;
             additionalData!.quizExerciseID = quiz.quizQuestions![0].id;
-            exercise = { ...quiz, additionalData };
+            exercise = Object.assign({}, quiz, { additionalData });
         }
 
         if (exerciseType === ExerciseType.PROGRAMMING) {

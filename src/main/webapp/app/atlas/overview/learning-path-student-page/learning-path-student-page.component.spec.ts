@@ -138,7 +138,7 @@ describe('LearningPathStudentPageComponent', () => {
 
         await component.startLearningPath();
 
-        expect(component.learningPath()).toEqual({ ...learningPath, startedByStudent: true });
+        expect(component.learningPath()).toEqual(Object.assign({}, learningPath, { startedByStudent: true }));
         expect(generateLearningPathSpy).toHaveBeenCalledExactlyOnceWith(courseId);
         expect(startSpy).toHaveBeenCalledExactlyOnceWith(learningPath.id);
     });
@@ -150,7 +150,7 @@ describe('LearningPathStudentPageComponent', () => {
 
         await component.startLearningPath();
 
-        expect(component.learningPath()).toEqual({ ...learningPath, startedByStudent: true });
+        expect(component.learningPath()).toEqual(Object.assign({}, learningPath, { startedByStudent: true }));
         expect(startedSpy).toHaveBeenCalledExactlyOnceWith(learningPath.id);
     });
 

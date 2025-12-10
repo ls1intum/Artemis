@@ -26,7 +26,7 @@ describe('TutorialGroupSessionService', () => {
     });
 
     it('getOneOfTutorialGroup', fakeAsync(() => {
-        const returnedFromService = { ...elemDefault };
+        const returnedFromService = Object.assign({}, elemDefault);
         service
             .getOneOfTutorialGroup(1, 1, 1)
             .pipe(take(1))
@@ -38,8 +38,8 @@ describe('TutorialGroupSessionService', () => {
     }));
 
     it('create', fakeAsync(() => {
-        const returnedFromService = { ...elemDefault, id: 0 };
-        const expected = { ...returnedFromService };
+        const returnedFromService = Object.assign({}, elemDefault, { id: 0 });
+        const expected = Object.assign({}, returnedFromService);
         service
             .create(1, 1, new TutorialGroupSessionDTO())
             .pipe(take(1))
@@ -51,8 +51,8 @@ describe('TutorialGroupSessionService', () => {
     }));
 
     it('update', fakeAsync(() => {
-        const returnedFromService = { ...elemDefault, location: 'Test' };
-        const expected = { ...returnedFromService };
+        const returnedFromService = Object.assign({}, elemDefault, { location: 'Test' });
+        const expected = Object.assign({}, returnedFromService);
 
         service
             .update(1, 1, 1, new TutorialGroupSessionDTO())
@@ -65,8 +65,8 @@ describe('TutorialGroupSessionService', () => {
     }));
 
     it('updateAttendanceCount', fakeAsync(() => {
-        const returnedFromService = { ...elemDefault, attendanceCount: 5 };
-        const expected = { ...returnedFromService };
+        const returnedFromService = Object.assign({}, elemDefault, { attendanceCount: 5 });
+        const expected = Object.assign({}, returnedFromService);
 
         service
             .updateAttendanceCount(1, 1, 1, 5)
@@ -79,8 +79,8 @@ describe('TutorialGroupSessionService', () => {
     }));
 
     it('cancel', fakeAsync(() => {
-        const returnedFromService = { ...elemDefault };
-        const expected = { ...returnedFromService };
+        const returnedFromService = Object.assign({}, elemDefault);
+        const expected = Object.assign({}, returnedFromService);
         service
             .cancel(1, 1, 1, 'test')
             .pipe(take(1))
@@ -92,8 +92,8 @@ describe('TutorialGroupSessionService', () => {
     }));
 
     it('activate', fakeAsync(() => {
-        const returnedFromService = { ...elemDefault };
-        const expected = { ...returnedFromService };
+        const returnedFromService = Object.assign({}, elemDefault);
+        const expected = Object.assign({}, returnedFromService);
         service
             .activate(1, 1, 1)
             .pipe(take(1))

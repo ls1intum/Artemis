@@ -109,14 +109,13 @@ describe('Bonus Service', () => {
             sourceGradingScale: { id: 5 } as GradingScale,
         };
 
-        const bonusToSend: Bonus = {
-            ...filteredBonus,
+        const bonusToSend: Bonus = Object.assign({}, filteredBonus, {
             sourceGradingScale: {
                 id: filteredBonus.sourceGradingScale!.id,
                 gradeSteps: [{} as GradeStep],
             } as GradingScale,
             bonusToGradingScale: { id: 6 } as GradingScale,
-        };
+        });
         service.updateBonus(1, 6, bonusToSend).pipe(take(1)).subscribe();
 
         const httpRequest = httpMock.expectOne({ method: 'PUT' });
@@ -457,10 +456,7 @@ describe('Bonus Service', () => {
             sourceGradingScale,
         };
 
-        const bonusToGradeStepsDTOWithoutPassingGrade = {
-            ...bonusToGradeStepsDTO,
-            gradeSteps: generateGradeSteps([{ interval: 40, gradeName: '5.0' }], true),
-        };
+        const bonusToGradeStepsDTOWithoutPassingGrade = Object.assign({}, bonusToGradeStepsDTO, { gradeSteps: generateGradeSteps([{ interval: 40, gradeName: '5.0' }], true) });
 
         expect(() => service.generateBonusExamples(bonus, bonusToGradeStepsDTOWithoutPassingGrade)).toThrow(Error);
     });

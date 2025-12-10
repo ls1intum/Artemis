@@ -94,12 +94,12 @@ export function sourceToString(source: Source) {
 }
 
 export function convertToStandardizedCompetencyForTree(competencyDTO: StandardizedCompetencyDTO, isVisible: boolean) {
-    const competencyForTree: StandardizedCompetencyForTree = { ...competencyDTO, isVisible: isVisible };
+    const competencyForTree: StandardizedCompetencyForTree = Object.assign({}, competencyDTO, { isVisible: isVisible });
     return competencyForTree;
 }
 
 export function convertToKnowledgeAreaForTree(knowledgeAreaDTO: KnowledgeAreaDTO, isVisible = true, level = 0): KnowledgeAreaForTree {
     const children = knowledgeAreaDTO.children?.map((child) => convertToKnowledgeAreaForTree(child, isVisible, level + 1));
     const competencies = knowledgeAreaDTO.competencies?.map((competency) => convertToStandardizedCompetencyForTree(competency, isVisible));
-    return { ...knowledgeAreaDTO, children: children, competencies: competencies, level: level, isVisible: isVisible };
+    return Object.assign({}, knowledgeAreaDTO, { children: children, competencies: competencies, level: level, isVisible: isVisible });
 }

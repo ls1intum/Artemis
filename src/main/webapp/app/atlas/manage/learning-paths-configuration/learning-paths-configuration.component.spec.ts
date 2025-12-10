@@ -129,10 +129,10 @@ describe('LearningPathsConfigurationComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
 
-        expect(updateLearningPathsConfigurationSpy).toHaveBeenCalledExactlyOnceWith(courseId, {
-            ...learningPathsConfiguration,
-            includeAllGradedExercises: !learningPathsConfiguration.includeAllGradedExercises,
-        });
+        expect(updateLearningPathsConfigurationSpy).toHaveBeenCalledExactlyOnceWith(
+            courseId,
+            Object.assign({}, learningPathsConfiguration, { includeAllGradedExercises: !learningPathsConfiguration.includeAllGradedExercises }),
+        );
         expect(alertServiceSuccessSpy).toHaveBeenCalledOnce();
         expect(component.isEditMode()).toBeFalse();
     });

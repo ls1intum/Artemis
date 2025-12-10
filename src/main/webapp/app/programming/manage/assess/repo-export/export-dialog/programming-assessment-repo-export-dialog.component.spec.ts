@@ -117,7 +117,7 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
         comp.participantIdentifierList = 'ab12cde, cd34efg';
         comp.ngOnInit();
 
-        const copyOfExportOptions = { ...comp.repositoryExportOptions };
+        const copyOfExportOptions = Object.assign({}, comp.repositoryExportOptions);
 
         const httpResponse = createBlobHttpResponse();
         const exportReposStub = jest.spyOn(repoExportService, 'exportReposByParticipantIdentifiers').mockReturnValue(of(httpResponse));

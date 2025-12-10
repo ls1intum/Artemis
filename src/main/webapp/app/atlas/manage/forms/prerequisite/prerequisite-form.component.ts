@@ -55,7 +55,7 @@ export class PrerequisiteFormComponent extends CourseCompetencyFormComponent imp
     }
 
     submitForm() {
-        const competencyFormData: CourseCompetencyFormData = { ...this.form.value };
+        const competencyFormData: CourseCompetencyFormData = Object.assign({}, this.form.value);
         this.formSubmitted.emit(competencyFormData);
     }
 }

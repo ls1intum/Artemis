@@ -113,7 +113,7 @@ describe('AnswerPostCreateEditModalComponent', () => {
             content: newContent,
         });
         component.confirm();
-        expect(metisServiceCreateSpy).toHaveBeenCalledWith({ ...component.posting, content: newContent });
+        expect(metisServiceCreateSpy).toHaveBeenCalledWith(Object.assign({}, component.posting, { content: newContent }));
         tick();
         expect(component.isLoading).toBeFalsy();
         expect(onCreateSpy).toHaveBeenCalledOnce();
@@ -128,7 +128,7 @@ describe('AnswerPostCreateEditModalComponent', () => {
             content: updatedContent,
         });
         component.confirm();
-        expect(metisServiceCreateSpy).toHaveBeenCalledWith({ ...component.posting, content: updatedContent });
+        expect(metisServiceCreateSpy).toHaveBeenCalledWith(Object.assign({}, component.posting, { content: updatedContent }));
         tick();
         expect(component.isLoading).toBeFalsy();
     }));

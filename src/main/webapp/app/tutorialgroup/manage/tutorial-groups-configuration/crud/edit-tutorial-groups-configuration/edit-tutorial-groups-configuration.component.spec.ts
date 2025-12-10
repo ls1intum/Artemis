@@ -82,9 +82,7 @@ describe('EditTutorialGroupsConfigurationComponent', () => {
     });
 
     it('should send PUT request upon form submission and navigate', () => {
-        const changedConfiguration: TutorialGroupsConfiguration = {
-            ...exampleConfiguration,
-        };
+        const changedConfiguration: TutorialGroupsConfiguration = Object.assign({}, exampleConfiguration);
 
         const updateResponse: HttpResponse<TutorialGroupsConfiguration> = new HttpResponse({
             body: changedConfiguration,

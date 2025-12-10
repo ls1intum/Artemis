@@ -38,7 +38,7 @@ describe('TutorialGroupService', () => {
     }));
 
     it('getOneOfCourse', fakeAsync(() => {
-        const returnedFromService = { ...elemDefault };
+        const returnedFromService = Object.assign({}, elemDefault);
         service
             .getOneOfCourse(1, 1)
             .pipe(take(1))
@@ -50,8 +50,8 @@ describe('TutorialGroupService', () => {
     }));
 
     it('create', fakeAsync(() => {
-        const returnedFromService = { ...elemDefault, id: 0 };
-        const expected = { ...returnedFromService };
+        const returnedFromService = Object.assign({}, elemDefault, { id: 0 });
+        const expected = Object.assign({}, returnedFromService);
         service
             .create(new TutorialGroup(), 1)
             .pipe(take(1))
@@ -63,8 +63,8 @@ describe('TutorialGroupService', () => {
     }));
 
     it('update', fakeAsync(() => {
-        const returnedFromService = { ...elemDefault, title: 'Test' };
-        const expected = { ...returnedFromService };
+        const returnedFromService = Object.assign({}, elemDefault, { title: 'Test' });
+        const expected = Object.assign({}, returnedFromService);
 
         service
             .update(1, 1, expected)
@@ -77,8 +77,8 @@ describe('TutorialGroupService', () => {
     }));
 
     it('getAllOfCourse', fakeAsync(() => {
-        const returnedFromService = { ...elemDefault, title: 'Test' };
-        const expected = { ...returnedFromService };
+        const returnedFromService = Object.assign({}, elemDefault, { title: 'Test' });
+        const expected = Object.assign({}, returnedFromService);
 
         service
             .getAllForCourse(1)
@@ -129,7 +129,7 @@ describe('TutorialGroupService', () => {
     it('registerMultipleStudents', fakeAsync(() => {
         const returnedFromService = new StudentDTO();
         returnedFromService.login = 'login';
-        const expected = { ...returnedFromService };
+        const expected = Object.assign({}, returnedFromService);
 
         service
             .registerMultipleStudents(1, 1, [returnedFromService])

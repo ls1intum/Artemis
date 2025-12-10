@@ -106,7 +106,7 @@ test.describe('Exam Checklists', async () => {
             await page.reload();
             await examDetails.checkItemChecked(ExamChecklistItem.POINTS_IN_EXERCISE_GROUPS_EQUAL);
             const maxPointsOfFirstExercise = textExerciseTemplate.maxPoints;
-            const exerciseTemplate = { ...textExerciseTemplate };
+            const exerciseTemplate = Object.assign({}, textExerciseTemplate);
             exerciseTemplate.maxPoints = maxPointsOfFirstExercise - 1;
             await exerciseAPIRequests.createTextExercise({ exerciseGroup }, 'Exercise ' + generateUUID(), exerciseTemplate);
             await page.reload();
@@ -283,12 +283,7 @@ async function createExam(course: Course, page: Page, customConfig?: any) {
     const EXAM_MAX_POINTS = NUMBER_OF_EXERCISES * 10;
 
     await Commands.login(page, admin);
-    const examConfig = {
-        ...customConfig,
-        course,
-        examMaxPoints: EXAM_MAX_POINTS,
-        numberOfExercisesInExam: NUMBER_OF_EXERCISES,
-    };
+    const examConfig = Object.assign({}, customConfig, { course, examMaxPoints: EXAM_MAX_POINTS, numberOfExercisesInExam: NUMBER_OF_EXERCISES });
 
     const examAPIRequests = new ExamAPIRequests(page);
     return await examAPIRequests.createExam(examConfig);

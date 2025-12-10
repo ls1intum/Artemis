@@ -98,12 +98,11 @@ export class TeamParticipationTableComponent implements OnInit {
         this.teamService.findCourseWithExercisesAndParticipationsForTeam(this.course, this.team).subscribe({
             next: (courseResponse) => {
                 this.exercises = this.transformExercisesFromServer(courseResponse.body!.exercises || []).map((exercise) => {
-                    return {
-                        ...exercise,
+                    return Object.assign({}, exercise, {
                         isAtLeastTutor: this.accountService.isAtLeastTutorInCourse(exercise.course),
                         isAtLeastEditor: this.accountService.isAtLeastEditorInCourse(exercise.course),
                         isAtLeastInstructor: this.accountService.isAtLeastInstructorInCourse(exercise.course),
-                    };
+                    });
                 });
                 this.submissions = this.exercises.filter((exercise) => exercise.submission).map((exercise) => exercise.submission!);
                 this.isLoading = false;

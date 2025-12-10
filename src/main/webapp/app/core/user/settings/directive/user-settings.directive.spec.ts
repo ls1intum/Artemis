@@ -228,7 +228,7 @@ describe('User Settings Directive', () => {
             comp.changeEventMessage = 'settings.changed';
 
             const updatedSettings = [...mockSettings, { id: 3, settingKey: 'key3', settingValue: 'value3', user: { id: 1 } }];
-            const updatedUserSettingsStructure = { ...mockUserSettingsStructure, key3: updatedSettings[2] };
+            const updatedUserSettingsStructure = Object.assign({}, mockUserSettingsStructure, { key3: updatedSettings[2] });
 
             // @ts-ignore
             const httpResponse = new HttpResponse<Setting[]>({ body: updatedSettings });

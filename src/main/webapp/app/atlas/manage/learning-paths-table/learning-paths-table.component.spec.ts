@@ -102,7 +102,7 @@ describe('LearningPathsTableComponent', () => {
         await component.setPage(2);
 
         expect(onPageChangeSpy).toHaveBeenLastCalledWith(2);
-        expect(getLearningPathInformationSpy).toHaveBeenLastCalledWith(courseId, { ...pageable, page: 2 });
+        expect(getLearningPathInformationSpy).toHaveBeenLastCalledWith(courseId, Object.assign({}, pageable, { page: 2 }));
         expect(getAverageProgressSpy).toHaveBeenCalledWith(courseId);
     });
 
@@ -112,7 +112,7 @@ describe('LearningPathsTableComponent', () => {
         fixture.detectChanges();
 
         const searchField = fixture.debugElement.query(By.css('#learning-path-search'));
-        const searchPageable = { ...pageable, searchTerm: 'Search Term' };
+        const searchPageable = Object.assign({}, pageable, { searchTerm: 'Search Term' });
         searchField.nativeElement.value = 'Search Term';
         searchField.nativeElement.dispatchEvent(new Event('input'));
 

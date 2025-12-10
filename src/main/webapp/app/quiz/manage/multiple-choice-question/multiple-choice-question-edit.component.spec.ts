@@ -81,7 +81,7 @@ describe('MultipleChoiceQuestionEditComponent', () => {
     });
 
     it('should store scoring type when changed', () => {
-        const newQuestion = { ...question };
+        const newQuestion = Object.assign({}, question);
         newQuestion.scoringType = undefined;
         newQuestion.singleChoice = true;
         fixture.componentRef.setInput('question', newQuestion);
@@ -282,7 +282,7 @@ describe('MultipleChoiceQuestionEditComponent', () => {
     });
 
     it('should reset question title', () => {
-        component.backupQuestion = { ...question, title: 'backup-title' };
+        component.backupQuestion = Object.assign({}, question, { title: 'backup-title' });
         component.question().title = 'current-title';
 
         component.resetQuestionTitle();
@@ -291,7 +291,7 @@ describe('MultipleChoiceQuestionEditComponent', () => {
     });
 
     it('should reset question', () => {
-        const backup = { ...question, title: 'backup-title', text: 'backup-text' };
+        const backup = Object.assign({}, question, { title: 'backup-title', text: 'backup-text' });
         component.backupQuestion = backup;
         component.question().title = 'current-title';
         component.question().text = 'current-text';

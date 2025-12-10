@@ -62,10 +62,7 @@ describe('Plagiarism Cases Student View Component', () => {
         plagiarismCasesServiceSpy.mockImplementation(
             (courseId, plagiarismCaseId) =>
                 of({
-                    body: {
-                        ...plagiarismCase,
-                        id: plagiarismCaseId,
-                    },
+                    body: Object.assign({}, plagiarismCase, { id: plagiarismCaseId }),
                 }) as Observable<HttpResponse<PlagiarismCase>>,
         );
     });

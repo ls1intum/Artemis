@@ -65,7 +65,7 @@ describe('Course Management Detail Component', () => {
         // LLM
         currentTotalLlmCostInEur: 82.3,
     };
-    const courseDataSubject = new BehaviorSubject<Data>({ course: { ...course } });
+    const courseDataSubject = new BehaviorSubject<Data>({ course: Object.assign({}, course) });
     const mockActivatedRoute = {
         data: courseDataSubject.asObservable(),
         params: of({ courseId: course.id }),
@@ -121,7 +121,7 @@ describe('Course Management Detail Component', () => {
 
     it('should make iris settings call when instructor', async () => {
         jest.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeProfiles: ['iris'] } as ProfileInfo);
-        courseDataSubject.next({ course: { ...course, isAtLeastInstructor: true } });
+        courseDataSubject.next({ course: Object.assign({}, course, { isAtLeastInstructor: true }) });
         const irisSpy = jest.spyOn(irisSettingsService, 'getUncombinedCourseSettings').mockReturnValue(of({} as IrisCourseSettings));
         await component.ngOnInit();
         expect(irisSpy).toHaveBeenCalledOnce();
@@ -129,7 +129,7 @@ describe('Course Management Detail Component', () => {
 
     it('should not make iris settings call when not instructor', async () => {
         jest.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeProfiles: ['iris'] } as ProfileInfo);
-        courseDataSubject.next({ course: { ...course, isAtLeastEditor: true } });
+        courseDataSubject.next({ course: Object.assign({}, course, { isAtLeastEditor: true }) });
         const irisSpy = jest.spyOn(irisSettingsService, 'getUncombinedCourseSettings');
         await component.ngOnInit();
         expect(irisSpy).not.toHaveBeenCalled();

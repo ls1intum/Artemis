@@ -219,10 +219,7 @@ describe('Lti13DeepLinkingComponent', () => {
         const lecture1 = { id: 1, title: 'Introduction to LTI' };
         const lecture2 = { id: 2, title: 'Advanced LTI Concepts' };
 
-        const extendedCourse = {
-            ...course,
-            lectures: [lecture1, lecture2],
-        };
+        const extendedCourse = Object.assign({}, course, { lectures: [lecture1, lecture2] });
 
         courseManagementServiceMock.findWithExercisesAndLecturesAndCompetencies.mockReturnValue(of(new HttpResponse({ body: extendedCourse })));
 
@@ -239,10 +236,7 @@ describe('Lti13DeepLinkingComponent', () => {
         const loggedInUser: User = { id: 3, login: 'lti_user' } as User;
         accountServiceMock.identity.mockReturnValue(Promise.resolve(loggedInUser));
 
-        const emptyCourse = {
-            ...course,
-            lectures: [],
-        };
+        const emptyCourse = Object.assign({}, course, { lectures: [] });
 
         courseManagementServiceMock.findWithExercisesAndLecturesAndCompetencies.mockReturnValue(of(new HttpResponse({ body: emptyCourse })));
 

@@ -79,15 +79,7 @@ export class HyperionReviewAndRefineApiService extends BaseService {
         let localVarPath = `/api/hyperion/programming-exercises/${this.configuration.encodeParam({name: "programmingExerciseId", value: programmingExerciseId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/consistency-check`;
         const { basePath, withCredentials } = this.configuration;
         return this.httpClient.request<ConsistencyCheckResponse>('post', `${basePath}${localVarPath}`,
-            {
-                context: localVarHttpContext,
-                responseType: <any>responseType_,
-                ...(withCredentials ? { withCredentials } : {}),
-                headers: localVarHeaders,
-                observe: observe,
-                transferCache: localVarTransferCache,
-                reportProgress: reportProgress
-            }
+            Object.assign({ context: localVarHttpContext, responseType: <any>responseType_ }, (withCredentials ? { withCredentials } : {}), { headers: localVarHeaders, observe: observe, transferCache: localVarTransferCache, reportProgress: reportProgress })
         );
     }
 
@@ -145,16 +137,7 @@ export class HyperionReviewAndRefineApiService extends BaseService {
         let localVarPath = `/api/hyperion/courses/${this.configuration.encodeParam({name: "courseId", value: courseId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/problem-statements/rewrite`;
         const { basePath, withCredentials } = this.configuration;
         return this.httpClient.request<ProblemStatementRewriteResponse>('post', `${basePath}${localVarPath}`,
-            {
-                context: localVarHttpContext,
-                body: problemStatementRewriteRequest,
-                responseType: <any>responseType_,
-                ...(withCredentials ? { withCredentials } : {}),
-                headers: localVarHeaders,
-                observe: observe,
-                transferCache: localVarTransferCache,
-                reportProgress: reportProgress
-            }
+            Object.assign({ context: localVarHttpContext, body: problemStatementRewriteRequest, responseType: <any>responseType_ }, (withCredentials ? { withCredentials } : {}), { headers: localVarHeaders, observe: observe, transferCache: localVarTransferCache, reportProgress: reportProgress })
         );
     }
 

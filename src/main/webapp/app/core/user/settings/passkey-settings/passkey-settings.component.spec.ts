@@ -113,14 +113,14 @@ describe('PasskeySettingsComponent', () => {
     });
 
     it('should edit a passkey label', async () => {
-        const passkey = { ...mockPasskeys[0], isEditingLabel: false };
+        const passkey = Object.assign({}, mockPasskeys[0], { isEditingLabel: false });
         component.editPasskeyLabel(passkey);
         expect(passkey.isEditingLabel).toBeTrue();
         expect(passkey.labelBeforeEdit).toEqual(passkey.label);
     });
 
     it('should save a passkey label', async () => {
-        const passkey = { ...mockPasskeys[0], isEditingLabel: true };
+        const passkey = Object.assign({}, mockPasskeys[0], { isEditingLabel: true });
         jest.spyOn(passkeySettingsApiService, 'updatePasskeyLabel').mockResolvedValue(passkey);
 
         await component.savePasskeyLabel(passkey);
@@ -129,7 +129,7 @@ describe('PasskeySettingsComponent', () => {
     });
 
     it('should handle errors when saving a passkey label', async () => {
-        const passkey = { ...mockPasskeys[0], isEditingLabel: true };
+        const passkey = Object.assign({}, mockPasskeys[0], { isEditingLabel: true });
         passkey.labelBeforeEdit = 'Initial Label - before save';
         jest.spyOn(alertService, 'addErrorAlert');
         jest.spyOn(passkeySettingsApiService, 'updatePasskeyLabel').mockRejectedValue(new Error('Test Error'));

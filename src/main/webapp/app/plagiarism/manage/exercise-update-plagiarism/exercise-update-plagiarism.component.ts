@@ -56,7 +56,7 @@ export class ExerciseUpdatePlagiarismComponent implements OnInit, OnDestroy {
             )
             .subscribe((plagiarismDetectionConfig) => {
                 this.exercise.update((exercise) => {
-                    exercise.plagiarismDetectionConfig = { ...plagiarismDetectionConfig };
+                    exercise.plagiarismDetectionConfig = Object.assign({}, plagiarismDetectionConfig);
                     return exercise;
                 });
             });

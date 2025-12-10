@@ -76,7 +76,7 @@ describe('FileUploadExerciseUpdateComponent', () => {
                 // GIVEN
                 comp.ngOnInit();
 
-                const entity = { ...fileUploadExercise };
+                const entity = Object.assign({}, fileUploadExercise);
                 jest.spyOn(service, 'create').mockReturnValue(of(new HttpResponse({ body: entity })));
 
                 const calendarService = TestBed.inject(CalendarService);
@@ -107,7 +107,7 @@ describe('FileUploadExerciseUpdateComponent', () => {
 
             it('should call update service and refresh calendar on save for existing entity', fakeAsync(() => {
                 // GIVEN
-                const entity = { ...fileUploadExercise };
+                const entity = Object.assign({}, fileUploadExercise);
                 jest.spyOn(service, 'update').mockReturnValue(of(new HttpResponse({ body: entity })));
                 comp.ngOnInit();
 
@@ -204,7 +204,7 @@ describe('FileUploadExerciseUpdateComponent', () => {
             comp.ngOnInit();
             comp.isImport = true;
 
-            const entity = { ...fileUploadExercise };
+            const entity = Object.assign({}, fileUploadExercise);
             jest.spyOn(service, 'import').mockReturnValue(of(new HttpResponse({ body: entity })));
 
             // WHEN

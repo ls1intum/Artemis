@@ -92,7 +92,7 @@ export class ProgrammingExerciseInstructionAnalysisService {
         const reducer = (acc: ProblemStatementAnalysis, [lineNumber, values, issueType]: AnalysisItem): ProblemStatementAnalysis => {
             const lineNumberValues = acc.get(lineNumber);
             const issueValues = lineNumberValues?.[issueType] ?? [];
-            acc.set(lineNumber, { lineNumber, ...lineNumberValues, [issueType]: [...issueValues, ...values] });
+            acc.set(lineNumber, Object.assign({ lineNumber }, lineNumberValues, { [issueType]: [...issueValues, ...values] }));
             return acc;
         };
 

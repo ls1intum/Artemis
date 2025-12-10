@@ -200,7 +200,7 @@ describe('ResultComponent', () => {
             codeIssueCount: codeIssues,
             completionDate: dayjs().subtract(2, 'minutes'),
         };
-        submission = { ...submission, results: [result] };
+        submission = Object.assign({}, submission, { results: [result] });
         const participation = cloneDeep(programmingParticipation);
         participation.submissions = [submission];
         component.short = short;

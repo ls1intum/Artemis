@@ -40,11 +40,7 @@ export class BuildLogEntryArray extends Array<BuildLogEntry> {
                     logType = BuildLogType.WARNING;
                 }
             }
-            return {
-                log,
-                type: logType,
-                ...rest,
-            };
+            return Object.assign({ log, type: logType }, rest);
         });
         return new BuildLogEntryArray(...mappedLogs);
     }

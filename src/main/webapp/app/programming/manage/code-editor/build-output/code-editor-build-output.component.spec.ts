@@ -163,7 +163,7 @@ describe('CodeEditorBuildOutputComponent', () => {
         const participation = { id: 1, submissions: [submission] } as Participation;
         comp.participation = participation;
         subscribeForLatestResultOfParticipationStub.mockReturnValue(of(null));
-        getFeedbackDetailsForResultStub.mockReturnValue(of({ ...result, feedbacks: [] }));
+        getFeedbackDetailsForResultStub.mockReturnValue(of(Object.assign({}, result, { feedbacks: [] })));
         triggerChanges(comp, { property: 'participation', currentValue: participation });
         fixture.detectChanges();
         expect(getFeedbackDetailsForResultStub).toHaveBeenCalledOnce();

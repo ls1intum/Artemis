@@ -25,7 +25,7 @@ export class SubmissionVersionService {
     }
     private convertCreatedDatesFromServer(res: SubmissionVersion[]): SubmissionVersion[] {
         return res.map((version) => {
-            return { ...version, createdDate: convertDateFromServer(version.createdDate)! };
+            return Object.assign({}, version, { createdDate: convertDateFromServer(version.createdDate)! });
         });
     }
 }

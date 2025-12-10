@@ -233,35 +233,17 @@ describe('TeamParticipationTableComponent', () => {
     });
 
     it('Check disabled assessment button for exercises before due date as tutor', () => {
-        const expectedAssessmentActionButtonDisabled = comp.isAssessmentButtonDisabled(
-            {
-                ...exercise4,
-                isAtLeastInstructor: false,
-            },
-            submission4,
-        );
+        const expectedAssessmentActionButtonDisabled = comp.isAssessmentButtonDisabled(Object.assign({}, exercise4, { isAtLeastInstructor: false }), submission4);
         expect(expectedAssessmentActionButtonDisabled).toBeTrue();
     });
 
     it('Check disabled assessment button for programming exercises before due date as instructor', () => {
-        const expectedAssessmentActionButtonDisabled = comp.isAssessmentButtonDisabled(
-            {
-                ...exercise4,
-                isAtLeastInstructor: true,
-            },
-            submission4,
-        );
+        const expectedAssessmentActionButtonDisabled = comp.isAssessmentButtonDisabled(Object.assign({}, exercise4, { isAtLeastInstructor: true }), submission4);
         expect(expectedAssessmentActionButtonDisabled).toBeTrue();
     });
 
     it('Check enabled assessment button for exercises before due date as instructor', () => {
-        const expectedAssessmentActionButtonDisabled = comp.isAssessmentButtonDisabled(
-            {
-                ...exercise5,
-                isAtLeastInstructor: true,
-            },
-            submission5,
-        );
+        const expectedAssessmentActionButtonDisabled = comp.isAssessmentButtonDisabled(Object.assign({}, exercise5, { isAtLeastInstructor: true }), submission5);
         expect(expectedAssessmentActionButtonDisabled).toBeFalse();
     });
 });

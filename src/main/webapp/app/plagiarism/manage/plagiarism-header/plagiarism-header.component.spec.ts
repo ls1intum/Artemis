@@ -68,7 +68,7 @@ describe('Plagiarism Header Component', () => {
     });
 
     it('should disable deny button if plagiarism status is denied or loading', () => {
-        fixture.componentRef.setInput('comparison', { ...comp.comparison(), status: PlagiarismStatus.DENIED });
+        fixture.componentRef.setInput('comparison', Object.assign({}, comp.comparison(), { status: PlagiarismStatus.DENIED }));
         comp.isLoading = true;
 
         fixture.detectChanges();
@@ -84,7 +84,7 @@ describe('Plagiarism Header Component', () => {
         jest.spyOn(comp, 'updatePlagiarismStatus');
         const modalSpy = jest.spyOn(TestBed.inject(NgbModal), 'open');
 
-        fixture.componentRef.setInput('comparison', { ...comp.comparison(), status: PlagiarismStatus.CONFIRMED });
+        fixture.componentRef.setInput('comparison', Object.assign({}, comp.comparison(), { status: PlagiarismStatus.CONFIRMED }));
 
         comp.denyPlagiarism();
 
@@ -146,7 +146,7 @@ describe('Plagiarism Header Component', () => {
     });
 
     it('should display team mode disabled help icon when teamMode is enabled', () => {
-        fixture.componentRef.setInput('exercise', { ...comp.exercise(), teamMode: true });
+        fixture.componentRef.setInput('exercise', Object.assign({}, comp.exercise(), { teamMode: true }));
         fixture.detectChanges();
 
         const nativeElement = fixture.nativeElement;
@@ -159,7 +159,7 @@ describe('Plagiarism Header Component', () => {
     });
 
     it('should hide team mode disabled help icon when teamMode is disabled', () => {
-        fixture.componentRef.setInput('exercise', { ...comp.exercise(), teamMode: false });
+        fixture.componentRef.setInput('exercise', Object.assign({}, comp.exercise(), { teamMode: false }));
         fixture.detectChanges();
 
         const nativeElement = fixture.nativeElement;

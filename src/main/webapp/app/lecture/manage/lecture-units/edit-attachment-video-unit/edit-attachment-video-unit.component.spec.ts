@@ -105,7 +105,7 @@ describe('EditAttachmentVideoUnitComponent', () => {
 
         baseFormData = new FormData();
         baseFormData.append('file', fakeFile, 'updated file');
-        const attachmentVideoUnitForBlob = { ...attachmentVideoUnit, attachment: undefined };
+        const attachmentVideoUnitForBlob = Object.assign({}, attachmentVideoUnit, { attachment: undefined });
         baseFormData.append('attachment', objectToJsonBlob(attachment));
         baseFormData.append('attachmentVideoUnit', objectToJsonBlob(attachmentVideoUnitForBlob));
 
@@ -223,7 +223,7 @@ describe('EditAttachmentVideoUnitComponent', () => {
         };
 
         const formData = new FormData();
-        const attachmentVideoUnitForBlob = { ...attachmentVideoUnit, attachment: undefined };
+        const attachmentVideoUnitForBlob = Object.assign({}, attachmentVideoUnit, { attachment: undefined });
         formData.append('attachment', objectToJsonBlob(attachment));
         formData.append('attachmentVideoUnit', objectToJsonBlob(attachmentVideoUnitForBlob));
 

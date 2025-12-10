@@ -250,14 +250,11 @@ export class UsersImportDialogComponent implements OnDestroy {
             });
         } else if (this.adminUserMode) {
             // convert StudentDTO to User
-            const artemisUsers = this.usersToImport.map((student) => ({ ...student, visibleRegistrationNumber: student.registrationNumber }));
+            const artemisUsers = this.usersToImport.map((student) => Object.assign({}, student, { visibleRegistrationNumber: student.registrationNumber }));
             this.adminUserService.importAll(artemisUsers).subscribe({
                 next: (res) => {
                     const convertedRes = new HttpResponse({
-                        body: res.body?.map((user) => ({
-                            ...user,
-                            registrationNumber: user.visibleRegistrationNumber,
-                        })),
+                        body: res.body?.map((user) => Object.assign({}, user, { registrationNumber: user.visibleRegistrationNumber })),
                     });
                     this.onSaveSuccess(convertedRes);
                 },

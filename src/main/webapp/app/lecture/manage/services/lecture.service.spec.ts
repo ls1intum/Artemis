@@ -45,8 +45,8 @@ describe('Lecture Service', () => {
 
     describe('Service methods', () => {
         it('should create a lecture in the database', async () => {
-            const returnedFromService = { ...elemDefault };
-            const expected = { ...returnedFromService };
+            const returnedFromService = Object.assign({}, elemDefault);
+            const expected = Object.assign({}, returnedFromService);
             service
                 .create(elemDefault)
                 .pipe(take(1))
@@ -60,8 +60,8 @@ describe('Lecture Service', () => {
         });
 
         it('should update a lecture in the database', async () => {
-            const returnedFromService = { ...elemDefault };
-            const expected = { ...returnedFromService };
+            const returnedFromService = Object.assign({}, elemDefault);
+            const expected = Object.assign({}, returnedFromService);
             service
                 .update(elemDefault)
                 .pipe(take(1))
@@ -75,8 +75,8 @@ describe('Lecture Service', () => {
         });
 
         it('should find a lecture with details in the database', async () => {
-            const returnedFromService = { ...elemDefault };
-            const expected = { ...returnedFromService, posts: [] };
+            const returnedFromService = Object.assign({}, elemDefault);
+            const expected = Object.assign({}, returnedFromService, { posts: [] });
             const lectureId = elemDefault.id!;
             service
                 .findWithDetails(lectureId)
@@ -91,8 +91,8 @@ describe('Lecture Service', () => {
         });
 
         it('should find a lecture in the database', async () => {
-            const returnedFromService = { ...elemDefault };
-            const expected = { ...returnedFromService };
+            const returnedFromService = Object.assign({}, elemDefault);
+            const expected = Object.assign({}, returnedFromService);
             const lectureId = elemDefault.id!;
             service
                 .find(lectureId)
@@ -141,8 +141,8 @@ describe('Lecture Service', () => {
         });
 
         it('should import lecture', async () => {
-            const returnedFromService = { ...elemDefault };
-            const expected = { ...returnedFromService };
+            const returnedFromService = Object.assign({}, elemDefault);
+            const expected = Object.assign({}, returnedFromService);
             const lectureId = elemDefault.id!;
             const courseId = 1;
             service
@@ -175,7 +175,7 @@ describe('Lecture Service', () => {
         });
 
         it('should delete a lecture in the database', async () => {
-            const returnedFromService = { ...elemDefault };
+            const returnedFromService = Object.assign({}, elemDefault);
             const lectureId = elemDefault.id!;
             service
                 .delete(lectureId)

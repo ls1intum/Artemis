@@ -102,7 +102,7 @@ describe('ModelingExerciseUpdateComponent', () => {
                 // GIVEN
                 comp.ngOnInit();
 
-                const entity = { ...modelingExercise };
+                const entity = Object.assign({}, modelingExercise);
                 jest.spyOn(service, 'create').mockReturnValue(of(new HttpResponse({ body: entity })));
                 const calendarService = TestBed.inject(CalendarService);
                 const refreshSpy = jest.spyOn(calendarService, 'reloadEvents');
@@ -136,7 +136,7 @@ describe('ModelingExerciseUpdateComponent', () => {
                 // GIVEN
                 comp.ngOnInit();
 
-                const entity = { ...modelingExercise };
+                const entity = Object.assign({}, modelingExercise);
                 jest.spyOn(service, 'update').mockReturnValue(of(new HttpResponse({ body: entity })));
                 const calendarService = TestBed.inject(CalendarService);
                 const refreshSpy = jest.spyOn(calendarService, 'reloadEvents');

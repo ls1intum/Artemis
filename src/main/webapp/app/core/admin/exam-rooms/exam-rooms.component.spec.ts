@@ -107,11 +107,7 @@ describe('ExamRoomsComponentTest', () => {
         expect(component.distinctLayoutStrategyNames()).toBe('default');
         expect(component.hasExamRoomData()).toBeTrue();
         expect(component.examRoomData()).toHaveLength(1);
-        expect(component.examRoomData()![0]).toEqual({
-            ...uploadedRoom,
-            defaultCapacity: 30,
-            maxCapacity: 30,
-        });
+        expect(component.examRoomData()![0]).toEqual(Object.assign({}, uploadedRoom, { defaultCapacity: 30, maxCapacity: 30 }));
     });
 
     it('should show error message on loadExamRoomOverview fail', () => {

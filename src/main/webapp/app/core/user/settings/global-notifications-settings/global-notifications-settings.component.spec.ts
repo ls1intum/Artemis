@@ -63,7 +63,7 @@ describe('GlobalNotificationsSettingsComponent', () => {
 
     it('should update a notification setting', fakeAsync(() => {
         mockService.update.mockReturnValue(of({}));
-        component.notificationSettings = { ...mockSettings };
+        component.notificationSettings = Object.assign({}, mockSettings);
 
         component.updateSetting(GLOBAL_NOTIFICATION_TYPES.NEW_LOGIN, false);
         tick();
@@ -92,7 +92,7 @@ describe('GlobalNotificationsSettingsComponent', () => {
         jest.spyOn(globalUtils, 'onError');
         mockService.update.mockReturnValue(throwError(() => error));
 
-        component.notificationSettings = { ...mockSettings };
+        component.notificationSettings = Object.assign({}, mockSettings);
         component.updateSetting(GLOBAL_NOTIFICATION_TYPES.VCS_TOKEN_EXPIRED, false);
         tick();
 

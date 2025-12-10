@@ -19,61 +19,62 @@ import { DiffInformation, FileStatus, RepositoryDiffInformation } from 'app/prog
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
 
 // Mock the diff.utils module to avoid Monaco Editor issues in tests
-jest.mock('app/programming/shared/utils/diff.utils', () => ({
-    ...jest.requireActual('app/programming/shared/utils/diff.utils'),
-    processRepositoryDiff: jest.fn().mockImplementation((leftFiles, rightFiles) => {
-        // Handle the case where files are undefined (when repository fetch fails)
-        if (!leftFiles || !rightFiles) {
-            return Promise.resolve(undefined);
-        }
-        // Return the mockRepositoryDiffInformation to match test expectations
-        return Promise.resolve({
-            diffInformations: [
-                {
-                    title: 'src/main/java/modified-file.java',
-                    modifiedPath: 'src/main/java/modified-file.java',
-                    originalPath: 'src/main/java/modified-file.java',
-                    modifiedFileContent: 'some\ncontent\nhere',
-                    originalFileContent: 'some\nother\ncontent',
-                    diffReady: false,
-                    fileStatus: 'unchanged',
-                    lineChange: { addedLineCount: 1, removedLineCount: 1 },
-                },
-                {
-                    title: 'src/main/java/new-file.java',
-                    modifiedPath: 'src/main/java/new-file.java',
-                    originalPath: '',
-                    modifiedFileContent: 'new content',
-                    originalFileContent: undefined,
-                    diffReady: false,
-                    fileStatus: 'created',
-                    lineChange: { addedLineCount: 1, removedLineCount: 0 },
-                },
-                {
-                    title: 'src/main/java/new-name.java',
-                    modifiedPath: 'src/main/java/new-name.java',
-                    originalPath: '',
-                    modifiedFileContent: 'Hello\nWorld',
-                    originalFileContent: undefined,
-                    diffReady: false,
-                    fileStatus: 'created',
-                    lineChange: { addedLineCount: 2, removedLineCount: 0 },
-                },
-                {
-                    title: 'src/main/java/old-name.java',
-                    modifiedPath: '',
-                    originalPath: 'src/main/java/old-name.java',
-                    modifiedFileContent: undefined,
-                    originalFileContent: 'Hi\nWorld!',
-                    diffReady: false,
-                    fileStatus: 'deleted',
-                    lineChange: { addedLineCount: 0, removedLineCount: 2 },
-                },
-            ],
-            totalLineChange: { addedLineCount: 4, removedLineCount: 3 },
-        });
+jest.mock('app/programming/shared/utils/diff.utils', () =>
+    Object.assign({}, jest.requireActual('app/programming/shared/utils/diff.utils'), {
+        processRepositoryDiff: jest.fn().mockImplementation((leftFiles, rightFiles) => {
+            // Handle the case where files are undefined (when repository fetch fails)
+            if (!leftFiles || !rightFiles) {
+                return Promise.resolve(undefined);
+            }
+            // Return the mockRepositoryDiffInformation to match test expectations
+            return Promise.resolve({
+                diffInformations: [
+                    {
+                        title: 'src/main/java/modified-file.java',
+                        modifiedPath: 'src/main/java/modified-file.java',
+                        originalPath: 'src/main/java/modified-file.java',
+                        modifiedFileContent: 'some\ncontent\nhere',
+                        originalFileContent: 'some\nother\ncontent',
+                        diffReady: false,
+                        fileStatus: 'unchanged',
+                        lineChange: { addedLineCount: 1, removedLineCount: 1 },
+                    },
+                    {
+                        title: 'src/main/java/new-file.java',
+                        modifiedPath: 'src/main/java/new-file.java',
+                        originalPath: '',
+                        modifiedFileContent: 'new content',
+                        originalFileContent: undefined,
+                        diffReady: false,
+                        fileStatus: 'created',
+                        lineChange: { addedLineCount: 1, removedLineCount: 0 },
+                    },
+                    {
+                        title: 'src/main/java/new-name.java',
+                        modifiedPath: 'src/main/java/new-name.java',
+                        originalPath: '',
+                        modifiedFileContent: 'Hello\nWorld',
+                        originalFileContent: undefined,
+                        diffReady: false,
+                        fileStatus: 'created',
+                        lineChange: { addedLineCount: 2, removedLineCount: 0 },
+                    },
+                    {
+                        title: 'src/main/java/old-name.java',
+                        modifiedPath: '',
+                        originalPath: 'src/main/java/old-name.java',
+                        modifiedFileContent: undefined,
+                        originalFileContent: 'Hi\nWorld!',
+                        diffReady: false,
+                        fileStatus: 'deleted',
+                        lineChange: { addedLineCount: 0, removedLineCount: 2 },
+                    },
+                ],
+                totalLineChange: { addedLineCount: 4, removedLineCount: 3 },
+            });
+        }),
     }),
-}));
+);
 
 describe('CommitDetailsViewComponent', () => {
     let component: CommitDetailsViewComponent;

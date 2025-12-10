@@ -714,7 +714,7 @@ describe('TeamsImportDialogComponent', () => {
 
         it('should return a sample team', () => {
             const team = new Team();
-            team.students = [{ ...new User(1, 'ga12abc', 'John', 'Doe', 'john.doe@tum.de'), name: 'John Doe' }];
+            team.students = [Object.assign({}, new User(1, 'ga12abc', 'John', 'Doe', 'john.doe@tum.de'), { name: 'John Doe' })];
             expect(comp.sampleTeamForLegend).toEqual(team);
         });
     });

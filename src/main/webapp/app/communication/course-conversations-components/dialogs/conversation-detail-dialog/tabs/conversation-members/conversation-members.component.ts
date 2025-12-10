@@ -193,10 +193,7 @@ export class ConversationMembersComponent implements OnInit, OnDestroy {
             // might have changed because of user deletion or addition
             this.activeConversation.update((current) => {
                 if (current) {
-                    return {
-                        ...current,
-                        numberOfMembers: this.totalItems,
-                    };
+                    return Object.assign({}, current, { numberOfMembers: this.totalItems });
                 }
                 return current;
             });

@@ -186,13 +186,13 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         const updateMarkdownStub = jest.spyOn(comp, 'updateMarkdown');
         const loadInitialResult = jest.spyOn(comp, 'loadInitialResult');
         fixture.detectChanges();
-        comp.exercise = { ...exercise, problemStatement: newProblemStatement };
+        comp.exercise = Object.assign({}, exercise, { problemStatement: newProblemStatement });
         comp.participation = participation;
         comp.isInitial = false;
         triggerChanges(comp, {
             property: 'exercise',
-            previousValue: { ...exercise, problemStatement: oldProblemStatement },
-            currentValue: { ...comp.exercise, problemStatement: newProblemStatement },
+            previousValue: Object.assign({}, exercise, { problemStatement: oldProblemStatement }),
+            currentValue: Object.assign({}, comp.exercise, { problemStatement: newProblemStatement }),
             firstChange: false,
         });
         expect(updateMarkdownStub).toHaveBeenCalledOnce();
@@ -212,10 +212,10 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         const updateMarkdownStub = jest.spyOn(comp, 'updateMarkdown');
         const loadInitialResult = jest.spyOn(comp, 'loadInitialResult');
         fixture.detectChanges();
-        comp.exercise = { ...exercise, problemStatement: newProblemStatement };
+        comp.exercise = Object.assign({}, exercise, { problemStatement: newProblemStatement });
         comp.participation = participation;
         comp.isInitial = false;
-        triggerChanges(comp, { property: 'exercise', currentValue: { ...comp.exercise, problemStatement: newProblemStatement }, firstChange: false });
+        triggerChanges(comp, { property: 'exercise', currentValue: Object.assign({}, comp.exercise, { problemStatement: newProblemStatement }), firstChange: false });
         fixture.detectChanges();
         expect(comp.markdownExtensions).toHaveLength(2);
         expect(updateMarkdownStub).toHaveBeenCalledOnce();

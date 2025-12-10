@@ -192,7 +192,7 @@ describe('AnswerPostComponent', () => {
     });
 
     it('should update the posting when onPostingUpdated is called', () => {
-        const updatedPosting = { ...metisResolvingAnswerPostUser1, content: 'Updated content' };
+        const updatedPosting = Object.assign({}, metisResolvingAnswerPostUser1, { content: 'Updated content' });
         component.onPostingUpdated(updatedPosting);
 
         expect(component.posting).toEqual(updatedPosting);
@@ -263,7 +263,7 @@ describe('AnswerPostComponent', () => {
 
     it('should display post-time span when isConsecutive() returns true', () => {
         const fixedDate = dayjs('2024-12-06T23:39:27.080Z');
-        component.posting = { ...metisPostExerciseUser1, creationDate: fixedDate };
+        component.posting = Object.assign({}, metisPostExerciseUser1, { creationDate: fixedDate });
 
         jest.spyOn(component, 'isConsecutive').mockReturnValue(true);
         fixture.detectChanges();
@@ -279,7 +279,7 @@ describe('AnswerPostComponent', () => {
 
     it('should not display post-time span when isConsecutive() returns false', () => {
         const fixedDate = dayjs('2024-12-06T23:39:27.080Z');
-        component.posting = { ...metisPostExerciseUser1, creationDate: fixedDate };
+        component.posting = Object.assign({}, metisPostExerciseUser1, { creationDate: fixedDate });
 
         jest.spyOn(component, 'isConsecutive').mockReturnValue(false);
         fixture.detectChanges();

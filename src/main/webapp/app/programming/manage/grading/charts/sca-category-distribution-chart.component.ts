@@ -119,11 +119,12 @@ export class ScaCategoryDistributionChartComponent extends ProgrammingGradingCha
         // update colors for category table
         const categoryColors: { [key: string]: string } = {};
         const categoryPenalties = this.categories
-            .map((category) => ({
-                ...category,
-                penalty: category.state === StaticCodeAnalysisCategoryState.Graded ? category.penalty : 0,
-                maxPenalty: category.state === StaticCodeAnalysisCategoryState.Graded ? category.maxPenalty : 0,
-            }))
+            .map((category) =>
+                Object.assign({}, category, {
+                    penalty: category.state === StaticCodeAnalysisCategoryState.Graded ? category.penalty : 0,
+                    maxPenalty: category.state === StaticCodeAnalysisCategoryState.Graded ? category.maxPenalty : 0,
+                }),
+            )
             .map((category) => {
                 const issuesMap = this.categoryIssuesMap ? this.categoryIssuesMap[category.name] || {} : {};
 

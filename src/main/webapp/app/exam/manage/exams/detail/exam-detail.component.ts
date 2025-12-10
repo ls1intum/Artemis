@@ -230,8 +230,7 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
                     return {};
                 }
 
-                return {
-                    ...this.getExistingSummaryEntries(),
+                return Object.assign({}, this.getExistingSummaryEntries(), {
                     'artemisApp.examManagement.delete.summary.numberBuilds': summary.numberOfBuilds,
                     'artemisApp.examManagement.delete.summary.numberRegisteredStudents': summary.numberRegisteredStudents,
                     'artemisApp.examManagement.delete.summary.numberNotStartedExams': summary.numberNotStartedExams,
@@ -239,7 +238,7 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
                     'artemisApp.examManagement.delete.summary.numberSubmittedExams': summary.numberSubmittedExams,
                     'artemisApp.examManagement.delete.summary.numberCommunicationPosts': summary.numberOfCommunicationPosts,
                     'artemisApp.examManagement.delete.summary.numberAnswerPosts': summary.numberOfAnswerPosts,
-                };
+                });
             }),
         );
     }

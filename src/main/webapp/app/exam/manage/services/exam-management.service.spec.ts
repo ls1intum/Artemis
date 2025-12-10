@@ -177,7 +177,7 @@ describe('Exam Management Service Tests', () => {
             hasSecondCorrectionAndStarted: false,
             studentResults: [],
         };
-        const expectedExamScore = { ...mockExamScore };
+        const expectedExamScore = Object.assign({}, mockExamScore);
 
         // WHEN
         service.getExamScores(course.id!, mockExam.id!).subscribe((res) => expect(res.body).toEqual(expectedExamScore));
@@ -195,7 +195,7 @@ describe('Exam Management Service Tests', () => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
         const mockStatsForDashboard = new StatsForDashboard();
-        const expectedStatsForDashboard = { ...mockStatsForDashboard };
+        const expectedStatsForDashboard = Object.assign({}, mockStatsForDashboard);
 
         // WHEN
         service.getStatsForExamAssessmentDashboard(course.id!, mockExam.id!).subscribe((res) => expect(res.body).toEqual(expectedStatsForDashboard));
@@ -211,7 +211,7 @@ describe('Exam Management Service Tests', () => {
 
     it('should find all exams for course', fakeAsync(() => {
         // GIVEN
-        const mockExamResponse = [{ ...mockExamPopulated }];
+        const mockExamResponse = [Object.assign({}, mockExamPopulated)];
 
         // WHEN
         service.findAllExamsForCourse(course.id!).subscribe((res) => expect(res.body).toEqual([mockExamPopulated]));
@@ -224,7 +224,7 @@ describe('Exam Management Service Tests', () => {
 
     it('find all exams for which the instructors have access', fakeAsync(() => {
         // GIVEN
-        const mockExamResponse = [{ ...mockExamPopulated }];
+        const mockExamResponse = [Object.assign({}, mockExamPopulated)];
 
         // WHEN
         service.findAllExamsAccessibleToUser(course.id!).subscribe((res) => expect(res.body).toEqual([mockExamPopulated]));
@@ -237,7 +237,7 @@ describe('Exam Management Service Tests', () => {
 
     it('should find all current and upcoming exams', fakeAsync(() => {
         // GIVEN
-        const mockExamResponse = [{ ...mockExamPopulated }];
+        const mockExamResponse = [Object.assign({}, mockExamPopulated)];
 
         // WHEN
         service.findAllCurrentAndUpcomingExams().subscribe((res) => expect(res.body).toEqual([mockExamPopulated]));
@@ -250,7 +250,7 @@ describe('Exam Management Service Tests', () => {
 
     it('should getExamWithInterestingExercisesForAssessmentDashboard with isTestRun=false', fakeAsync(() => {
         // GIVEN
-        const mockExamResponse = [{ ...mockExamPopulated }];
+        const mockExamResponse = [Object.assign({}, mockExamPopulated)];
 
         // WHEN
         service.getExamWithInterestingExercisesForAssessmentDashboard(course.id!, mockExamPopulated.id!, false).subscribe((res) => expect(res.body).toEqual([mockExamPopulated]));
@@ -266,7 +266,7 @@ describe('Exam Management Service Tests', () => {
 
     it('should getExamWithInterestingExercisesForAssessmentDashboard with isTestRun=true', fakeAsync(() => {
         // GIVEN
-        const mockExamResponse = [{ ...mockExamPopulated }];
+        const mockExamResponse = [Object.assign({}, mockExamPopulated)];
 
         // WHEN
         service.getExamWithInterestingExercisesForAssessmentDashboard(course.id!, mockExamPopulated.id!, true).subscribe((res) => expect(res.body).toEqual([mockExamPopulated]));
@@ -284,7 +284,7 @@ describe('Exam Management Service Tests', () => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
         const mockResponse: ExamInformationDTO = { latestIndividualEndDate: dayjs() };
-        const expected = { ...mockResponse };
+        const expected = Object.assign({}, mockResponse);
 
         // WHEN
         service.getLatestIndividualEndDateOfExam(course.id!, mockExam.id!).subscribe((res) => expect(res.body).toEqual(expected));

@@ -122,7 +122,7 @@ export class TextUnitFormComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     submitForm() {
-        const textUnitFormData: TextUnitFormData = { ...this.form.value };
+        const textUnitFormData: TextUnitFormData = Object.assign({}, this.form.value);
         textUnitFormData.content = this.content;
         this.localStorageService.remove(this.router.url);
         this.formSubmitted.emit(textUnitFormData);

@@ -100,7 +100,7 @@ export class AlertService {
                     });
                     if (errorHeader && !this.translateService.instant(errorHeader).startsWith(translationNotFoundMessage)) {
                         const entityName = this.translateService.instant('global.menu.entities.' + entityKey);
-                        this.addErrorAlert(errorHeader, errorHeader, { entityName, ...httpErrorResponse.error?.params });
+                        this.addErrorAlert(errorHeader, errorHeader, Object.assign({ entityName }, httpErrorResponse.error?.params));
                     } else if (httpErrorResponse.error && httpErrorResponse.error.fieldErrors) {
                         const fieldErrors = httpErrorResponse.error.fieldErrors;
                         for (const fieldError of fieldErrors) {

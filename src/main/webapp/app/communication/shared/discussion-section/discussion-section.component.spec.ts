@@ -140,7 +140,7 @@ describe('DiscussionSectionComponent', () => {
     });
 
     it('should set course and messages for lecture with lecture channel on initialization', fakeAsync(() => {
-        fixture.componentRef.setInput('lecture', { ...metisLecture, course: metisCourse });
+        fixture.componentRef.setInput('lecture', Object.assign({}, metisLecture, { course: metisCourse }));
         fixture.detectChanges();
         tick();
         expect(component.course).toEqual(metisCourse);
@@ -151,7 +151,7 @@ describe('DiscussionSectionComponent', () => {
     }));
 
     it('should set course and messages for exercise with exercise channel on initialization', fakeAsync(() => {
-        fixture.componentRef.setInput('exercise', { ...metisExercise, course: metisCourse });
+        fixture.componentRef.setInput('exercise', Object.assign({}, metisExercise, { course: metisCourse }));
         fixture.detectChanges();
         tick();
         expect(component.course).toEqual(metisCourse);
@@ -162,7 +162,7 @@ describe('DiscussionSectionComponent', () => {
     }));
 
     it('should reset current post', fakeAsync(() => {
-        fixture.componentRef.setInput('lecture', { ...metisLecture, course: metisCourse });
+        fixture.componentRef.setInput('lecture', Object.assign({}, metisLecture, { course: metisCourse }));
         fixture.detectChanges();
         component.resetCurrentPost();
         tick();
@@ -171,7 +171,7 @@ describe('DiscussionSectionComponent', () => {
     }));
 
     it('should initialize correctly for exercise posts with default settings', fakeAsync(() => {
-        fixture.componentRef.setInput('exercise', { ...metisExercise, course: metisCourse });
+        fixture.componentRef.setInput('exercise', Object.assign({}, metisExercise, { course: metisCourse }));
         fixture.detectChanges();
         tick();
         expect(component.formGroup.get('filterToUnresolved')?.value).toBeFalse();
@@ -184,7 +184,7 @@ describe('DiscussionSectionComponent', () => {
     }));
 
     it('should display one new message button for more then 3 messages in channel', fakeAsync(() => {
-        fixture.componentRef.setInput('exercise', { ...metisExercise, course: metisCourse });
+        fixture.componentRef.setInput('exercise', Object.assign({}, metisExercise, { course: metisCourse }));
         fixture.detectChanges();
         tick();
         fixture.detectChanges();
@@ -198,7 +198,7 @@ describe('DiscussionSectionComponent', () => {
     }));
 
     it('should display one new message button', fakeAsync(() => {
-        fixture.componentRef.setInput('exercise', { ...metisExercise, course: metisCourse });
+        fixture.componentRef.setInput('exercise', Object.assign({}, metisExercise, { course: metisCourse }));
         fixture.detectChanges();
         tick();
         fixture.detectChanges();
@@ -208,7 +208,7 @@ describe('DiscussionSectionComponent', () => {
     }));
 
     it('should show search-bar and filters if not focused to a post', fakeAsync(() => {
-        fixture.componentRef.setInput('exercise', { ...metisExercise, course: metisCourse });
+        fixture.componentRef.setInput('exercise', Object.assign({}, metisExercise, { course: metisCourse }));
         fixture.detectChanges();
         tick();
         fixture.detectChanges();
@@ -239,7 +239,7 @@ describe('DiscussionSectionComponent', () => {
     }));
 
     it('triggering filters should invoke the metis service', fakeAsync(() => {
-        fixture.componentRef.setInput('exercise', { ...metisExercise, course: metisCourse });
+        fixture.componentRef.setInput('exercise', Object.assign({}, metisExercise, { course: metisCourse }));
         metisServiceGetFilteredPostsSpy.mockReset();
         fixture.detectChanges();
         tick();
@@ -275,7 +275,7 @@ describe('DiscussionSectionComponent', () => {
         component.setChannel(1);
 
         expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith(
-            { ...component.currentPostContextFilter, conversationIds: [metisExerciseChannelDTO.id] } as PostContextFilter,
+            Object.assign({}, component.currentPostContextFilter, { conversationIds: [metisExerciseChannelDTO.id] }) as PostContextFilter,
             true,
             metisExerciseChannelDTO,
         );
@@ -290,7 +290,7 @@ describe('DiscussionSectionComponent', () => {
         component.setChannel(1);
 
         expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith(
-            { ...component.currentPostContextFilter, conversationIds: [metisLectureChannelDTO.id] },
+            Object.assign({}, component.currentPostContextFilter, { conversationIds: [metisLectureChannelDTO.id] }),
             true,
             metisLectureChannelDTO,
         );

@@ -349,8 +349,8 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         comp.updateEditedField(codeAnalysisCategories1[1], EditableField.MAX_PENALTY)(15);
 
         const updatedCategories: StaticCodeAnalysisCategory[] = [
-            { ...codeAnalysisCategories1[0], state: StaticCodeAnalysisCategoryState.Feedback, penalty: 3, maxPenalty: 15 },
-            { ...codeAnalysisCategories1[1], state: StaticCodeAnalysisCategoryState.Feedback, penalty: 4, maxPenalty: 15 },
+            Object.assign({}, codeAnalysisCategories1[0], { state: StaticCodeAnalysisCategoryState.Feedback, penalty: 3, maxPenalty: 15 }),
+            Object.assign({}, codeAnalysisCategories1[1], { state: StaticCodeAnalysisCategoryState.Feedback, penalty: 4, maxPenalty: 15 }),
         ];
         updateCategoriesStub.mockReturnValue(of(updatedCategories));
 
@@ -455,7 +455,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         expect(comp.changedCategoryIds).toEqual([gradedCategories[0].id]);
 
-        const updatedCategory: StaticCodeAnalysisCategory = { ...gradedCategories[0], penalty: 20, maxPenalty: 100 };
+        const updatedCategory: StaticCodeAnalysisCategory = Object.assign({}, gradedCategories[0], { penalty: 20, maxPenalty: 100 });
 
         // Save weight.
         updateCategoriesStub.mockReturnValue(of([updatedCategory]));

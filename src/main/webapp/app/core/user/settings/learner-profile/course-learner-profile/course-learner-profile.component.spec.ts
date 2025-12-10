@@ -119,7 +119,7 @@ describe('CourseLearnerProfileComponent', () => {
 
     async function setupUpdateTest(courseIndex: number, courseId: number, mockUpdate: boolean): Promise<CourseLearnerProfileDTO> {
         const newProfile = new CourseLearnerProfileDTO();
-        Object.assign(newProfile, { ...profiles[courseIndex] });
+        Object.assign(newProfile, Object.assign({}, profiles[courseIndex]));
         newProfile.repetitionIntensity = 1;
         newProfile.aimForGradeOrBonus = 2;
         newProfile.timeInvestment = 3;
@@ -606,7 +606,7 @@ describe('CourseLearnerProfileComponent', () => {
             component.disabled = false;
 
             const newProfile = new CourseLearnerProfileDTO();
-            Object.assign(newProfile, { ...profiles[courseIndex] });
+            Object.assign(newProfile, Object.assign({}, profiles[courseIndex]));
             newProfile.aimForGradeOrBonus = 3;
             newProfile.timeInvestment = 3;
             newProfile.repetitionIntensity = 3;
@@ -1004,7 +1004,7 @@ describe('CourseLearnerProfileComponent', () => {
             component.disabled = false;
 
             const newProfile = new CourseLearnerProfileDTO();
-            Object.assign(newProfile, { ...profiles[courseIndex] });
+            Object.assign(newProfile, Object.assign({}, profiles[courseIndex]));
             newProfile.aimForGradeOrBonus = 3;
             newProfile.timeInvestment = 3;
             newProfile.repetitionIntensity = 3;

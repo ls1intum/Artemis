@@ -272,7 +272,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
 
     public commandMetisToFetchPosts(forceUpdate = false) {
         if (this.currentPostContextFilter) {
-            this.currentPostContextFilter = { ...this.currentPostContextFilter, page: this.page - 1 };
+            this.currentPostContextFilter = Object.assign({}, this.currentPostContextFilter, { page: this.page - 1 });
             this.metisService.getFilteredPosts(this.currentPostContextFilter, forceUpdate, this.channel);
         }
     }

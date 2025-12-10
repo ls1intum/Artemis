@@ -77,6 +77,6 @@ export class ConversationAddUsersFormComponent implements OnInit, OnChanges {
     }
 
     submitForm() {
-        this.formSubmitted.emit({ ...this.form.value });
+        this.formSubmitted.emit(Object.assign({}, this.form.value));
     }
 }

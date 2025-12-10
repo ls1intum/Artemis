@@ -79,7 +79,7 @@ describe('CourseCompetencyService', () => {
 
     it('should import all competencies of a course', fakeAsync(() => {
         const competencyDTO = new CompetencyWithTailRelationDTO();
-        competencyDTO.competency = { ...defaultCompetencies.first(), id: 1 };
+        competencyDTO.competency = Object.assign({}, defaultCompetencies.first(), { id: 1 });
         competencyDTO.tailRelations = [];
         const returnedFromService = [competencyDTO];
         const expected = [...returnedFromService];

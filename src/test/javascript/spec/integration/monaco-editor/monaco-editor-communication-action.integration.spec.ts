@@ -306,11 +306,13 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
                 id: lecture.id!,
                 title: lecture.title!,
                 attachmentVideoUnits: lecture.lectureUnits?.filter((unit) => unit.type === LectureUnitType.ATTACHMENT_VIDEO),
-                attachments: lecture.attachments?.map((attachment) => ({
-                    ...attachment,
-                    link: attachment.link && attachment.name ? fileService.createAttachmentFileUrl(attachment.link, attachment.name, false) : attachment.link,
-                    linkUrl: attachment.link && attachment.name ? 'api/core/files/' + fileService.createAttachmentFileUrl(attachment.link, attachment.name, true) : attachment.link,
-                })),
+                attachments: lecture.attachments?.map((attachment) =>
+                    Object.assign({}, attachment, {
+                        link: attachment.link && attachment.name ? fileService.createAttachmentFileUrl(attachment.link, attachment.name, false) : attachment.link,
+                        linkUrl:
+                            attachment.link && attachment.name ? 'api/core/files/' + fileService.createAttachmentFileUrl(attachment.link, attachment.name, true) : attachment.link,
+                    }),
+                ),
             }));
 
             expect(lectureAttachmentReferenceAction.lecturesWithDetails).toEqual(lecturesWithDetails);

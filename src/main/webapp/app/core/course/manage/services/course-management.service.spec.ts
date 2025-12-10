@@ -119,7 +119,7 @@ describe('Course Management Service', () => {
 
         onlineCourseConfiguration = new OnlineCourseConfiguration();
         onlineCourseConfiguration.id = 234;
-        returnedFromService = { ...course } as Course;
+        returnedFromService = Object.assign({}, course) as Course;
         participations = [new StudentParticipation()];
         convertExercisesDateFromServerSpy = jest.spyOn(ExerciseService, 'convertExercisesDateFromServer').mockReturnValue(exercises);
     });
@@ -152,7 +152,7 @@ describe('Course Management Service', () => {
     it('should update course', fakeAsync(() => {
         const courseImage = new Blob();
         courseManagementService
-            .update(1, { ...course }, courseImage)
+            .update(1, Object.assign({}, course), courseImage)
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual(course));
 
@@ -218,7 +218,7 @@ describe('Course Management Service', () => {
 
     it('should find course with organizations', fakeAsync(() => {
         course.organizations = [new Organization()];
-        returnedFromService = { ...course };
+        returnedFromService = Object.assign({}, course);
         courseManagementService
             .findWithOrganizations(course.id!)
             .pipe(take(1))
@@ -249,7 +249,7 @@ describe('Course Management Service', () => {
     });
 
     it('should find one course for dashboard', fakeAsync(() => {
-        returnedFromService = { ...courseForDashboard };
+        returnedFromService = Object.assign({}, courseForDashboard);
         courseStorageService
             .subscribeToCourseUpdates(course.id!)
             .pipe(take(1))
@@ -307,11 +307,11 @@ describe('Course Management Service', () => {
     }));
 
     it('should find all courses to register', fakeAsync(() => {
-        returnedFromService = [{ ...course }];
+        returnedFromService = [Object.assign({}, course)];
         courseManagementService
             .findAllForRegistration()
             .pipe(take(1))
-            .subscribe((res) => expect(res.body).toEqual([{ ...course }]));
+            .subscribe((res) => expect(res.body).toEqual([Object.assign({}, course)]));
         requestAndExpectDateConversion('GET', `${resourceUrl}/for-enrollment`, returnedFromService, course);
         tick();
     }));
@@ -327,7 +327,7 @@ describe('Course Management Service', () => {
 
     it('should get stats of course', fakeAsync(() => {
         const stats = new StatsForDashboard();
-        returnedFromService = { ...stats };
+        returnedFromService = Object.assign({}, stats);
         courseManagementService
             .getStatsForTutors(course.id!)
             .pipe(take(1))
@@ -373,33 +373,33 @@ describe('Course Management Service', () => {
     }));
 
     it('should get all courses with quiz exercises', fakeAsync(() => {
-        returnedFromService = [{ ...course }];
+        returnedFromService = [Object.assign({}, course)];
         courseManagementService
             .getAllCoursesWithQuizExercises()
             .pipe(take(1))
-            .subscribe((res) => expect(res.body).toEqual([{ ...course }]));
+            .subscribe((res) => expect(res.body).toEqual([Object.assign({}, course)]));
         requestAndExpectDateConversion('GET', `${resourceUrl}/courses-with-quiz`, returnedFromService, course, true);
         tick();
     }));
 
     it('should get all courses together with user stats', fakeAsync(() => {
         const params = { testParam: 'testParamValue' };
-        returnedFromService = [{ ...course }];
+        returnedFromService = [Object.assign({}, course)];
         courseManagementService
             .getWithUserStats(params)
             .pipe(take(1))
-            .subscribe((res) => expect(res.body).toEqual([{ ...course }]));
+            .subscribe((res) => expect(res.body).toEqual([Object.assign({}, course)]));
         requestAndExpectDateConversion('GET', `${resourceUrl}/with-user-stats?testParam=testParamValue`, returnedFromService, course, true);
         tick();
     }));
 
     it('should get all courses for overview', fakeAsync(() => {
         const params = { testParam: 'testParamValue' };
-        returnedFromService = [{ ...course }];
+        returnedFromService = [Object.assign({}, course)];
         courseManagementService
             .getCourseOverview(params)
             .pipe(take(1))
-            .subscribe((res) => expect(res.body).toEqual([{ ...course }]));
+            .subscribe((res) => expect(res.body).toEqual([Object.assign({}, course)]));
         const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/course-management-overview?testParam=testParamValue` });
         req.flush(returnedFromService);
         expectAccessRightsToBeCalled(1, 1, 1);
@@ -407,11 +407,11 @@ describe('Course Management Service', () => {
     }));
 
     it('should get all exercise details', fakeAsync(() => {
-        returnedFromService = [{ ...course }] as Course[];
+        returnedFromService = [Object.assign({}, course)] as Course[];
         courseManagementService
             .getExercisesForManagementOverview(true)
             .pipe(take(1))
-            .subscribe((res) => expect(res.body).toEqual([{ ...course }]));
+            .subscribe((res) => expect(res.body).toEqual([Object.assign({}, course)]));
         requestAndExpectDateConversion('GET', `${resourceUrl}/exercises-for-management-overview?onlyActive=true`, returnedFromService, course);
         tick();
     }));

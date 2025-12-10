@@ -241,7 +241,9 @@ export class CourseOverviewService {
     }
 
     groupConversationsByChannelType(course: Course, conversations: ConversationDTO[], messagingEnabled: boolean): AccordionGroups {
-        const channelGroups = messagingEnabled ? { ...DEFAULT_CHANNEL_GROUPS, groupChats: { entityData: [] }, directMessages: { entityData: [] } } : DEFAULT_CHANNEL_GROUPS;
+        const channelGroups = messagingEnabled
+            ? Object.assign({}, DEFAULT_CHANNEL_GROUPS, { groupChats: { entityData: [] }, directMessages: { entityData: [] } })
+            : DEFAULT_CHANNEL_GROUPS;
         const groupedConversationGroups = cloneDeep(channelGroups) as AccordionGroups;
 
         groupedConversationGroups.savedPosts = {

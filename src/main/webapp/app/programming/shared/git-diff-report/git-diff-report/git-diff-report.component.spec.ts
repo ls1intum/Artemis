@@ -65,20 +65,23 @@ describe('ProgrammingExerciseGitDiffReport Component', () => {
     const createDiffInformationEntry = (
         title: string,
         overrides: Partial<RepositoryDiffInformation['diffInformations'][number]> = {},
-    ): RepositoryDiffInformation['diffInformations'][number] => ({
-        originalFileContent: `${title} original`,
-        modifiedFileContent: `${title} modified`,
-        originalPath: title,
-        modifiedPath: title,
-        diffReady: false,
-        fileStatus: FileStatus.UNCHANGED,
-        lineChange: {
-            addedLineCount: 1,
-            removedLineCount: 0,
-        },
-        title,
-        ...overrides,
-    });
+    ): RepositoryDiffInformation['diffInformations'][number] =>
+        Object.assign(
+            {
+                originalFileContent: `${title} original`,
+                modifiedFileContent: `${title} modified`,
+                originalPath: title,
+                modifiedPath: title,
+                diffReady: false,
+                fileStatus: FileStatus.UNCHANGED,
+                lineChange: {
+                    addedLineCount: 1,
+                    removedLineCount: 0,
+                },
+                title,
+            },
+            overrides,
+        );
 
     const mockDiffInformation = {
         diffInformations: [

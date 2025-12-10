@@ -33,7 +33,7 @@ describe('Exercise Update Plagiarism Component', () => {
             minimumSize: 3,
             continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod: 10,
         };
-        fixture.componentRef.setInput('exercise', { ...comp.exercise(), plagiarismDetectionConfig: cfg });
+        fixture.componentRef.setInput('exercise', Object.assign({}, comp.exercise(), { plagiarismDetectionConfig: cfg }));
 
         comp.ngOnInit();
 
@@ -41,7 +41,7 @@ describe('Exercise Update Plagiarism Component', () => {
     });
 
     it('should use default if exercise does not have plagiarism checks config', () => {
-        fixture.componentRef.setInput('exercise', { ...comp.exercise(), plagiarismDetectionConfig: undefined });
+        fixture.componentRef.setInput('exercise', Object.assign({}, comp.exercise(), { plagiarismDetectionConfig: undefined }));
         comp.ngOnInit();
 
         expect(comp.exercise()?.plagiarismDetectionConfig).toEqual(DEFAULT_PLAGIARISM_DETECTION_CONFIG);

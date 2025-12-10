@@ -361,7 +361,7 @@ describe('BonusComponent', () => {
         const [bonusStrategy, bonusStrategyOption, bonusStrategyDiscreteness] = bonusStrategyToOptionAndDiscretenessMappings[0];
         component.currentBonusStrategyOption = bonusStrategyOption as BonusStrategyOption;
         component.currentBonusStrategyDiscreteness = bonusStrategyDiscreteness as BonusStrategyDiscreteness;
-        component.bonus = { ...bonus };
+        component.bonus = Object.assign({}, bonus);
         component.bonusToGradeStepsDTO = examGradeSteps;
 
         const bonusSpy = jest.spyOn(bonusService, 'generateBonusExamples').mockReturnValue(bonusExamples);
@@ -372,7 +372,7 @@ describe('BonusComponent', () => {
 
         expect(component.bonus.bonusStrategy).toBe(bonusStrategy);
         expect(bonusSpy).toHaveBeenCalledOnce();
-        expect(bonusSpy).toHaveBeenCalledWith({ ...bonus, bonusStrategy }, examGradeSteps);
+        expect(bonusSpy).toHaveBeenCalledWith(Object.assign({}, bonus, { bonusStrategy }), examGradeSteps);
         expect(component.examples).toHaveLength(bonusExamples.length);
     });
 
@@ -380,7 +380,7 @@ describe('BonusComponent', () => {
         jest.spyOn(gradingSystemService, 'getNumericValueForGradeName').mockImplementation((gradeName) => parseFloat(gradeName!));
         jest.spyOn(bonusService, 'doesBonusExceedMax').mockReturnValue(true);
 
-        component.bonus = { ...bonus, bonusStrategy: BonusStrategy.GRADES_CONTINUOUS, weight: 1 };
+        component.bonus = Object.assign({}, bonus, { bonusStrategy: BonusStrategy.GRADES_CONTINUOUS, weight: 1 });
         component.bonusToGradeStepsDTO = { gradeSteps: [] as GradeStep[] } as GradeStepsDTO;
 
         component.generateExamples();
@@ -390,7 +390,7 @@ describe('BonusComponent', () => {
     });
 
     it('should remove examples when all required fields are not set', () => {
-        component.bonus = { ...bonus, bonusStrategy: undefined };
+        component.bonus = Object.assign({}, bonus, { bonusStrategy: undefined });
         component.examples = bonusExamples;
 
         component.onBonusStrategyInputChange();
@@ -404,7 +404,7 @@ describe('BonusComponent', () => {
 
         fixture.detectChanges();
 
-        const newBonus = { ...bonus, id: undefined };
+        const newBonus = Object.assign({}, bonus, { id: undefined });
         component.bonus = newBonus;
         component.save();
 
@@ -489,7 +489,7 @@ describe('BonusComponent', () => {
     it('should not delete if id is empty', () => {
         const bonusSpy = jest.spyOn(bonusService, 'deleteBonus');
 
-        const unsavedBonus = { ...bonus, id: undefined };
+        const unsavedBonus = Object.assign({}, bonus, { id: undefined });
         component.bonus = unsavedBonus;
         component.delete();
 
@@ -548,7 +548,7 @@ describe('BonusComponent', () => {
     it('should forward has points set call to service', () => {
         const gradingSystemSpy = jest.spyOn(gradingSystemService, 'hasPointsSet');
 
-        component.bonus = { ...bonus, sourceGradingScale: {} as GradingScale };
+        component.bonus = Object.assign({}, bonus, { sourceGradingScale: {} as GradingScale });
         component.hasPointsSet();
 
         // Should not call if sourceGradingScale has no gradeSteps.

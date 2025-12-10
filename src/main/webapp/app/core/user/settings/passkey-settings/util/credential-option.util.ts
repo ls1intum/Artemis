@@ -8,17 +8,13 @@ export function createCredentialOptions(options: PublicKeyCredentialCreationOpti
         throw new Error('Invalid credential');
     }
 
-    return {
-        ...options,
+    return Object.assign({}, options, {
         challenge: decodeBase64url(options.challenge),
         user: {
             id: new TextEncoder().encode(user.id.toString()),
             name: username,
             displayName: username,
         },
-        excludeCredentials: options.excludeCredentials?.map((credential) => ({
-            ...credential,
-            id: decodeBase64url(credential.id),
-        })),
-    };
+        excludeCredentials: options.excludeCredentials?.map((credential) => Object.assign({}, credential, { id: decodeBase64url(credential.id) })),
+    });
 }

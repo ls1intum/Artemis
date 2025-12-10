@@ -124,7 +124,7 @@ describe('TextExercise Service', () => {
         });
 
         it('should import a text exercise', () => {
-            const textExerciseReturned = { ...elemDefault };
+            const textExerciseReturned = Object.assign({}, elemDefault);
             textExerciseReturned.id = 123;
             service
                 .import(textExerciseReturned)
@@ -137,7 +137,7 @@ describe('TextExercise Service', () => {
         });
 
         it('should re-evaluate and update a text exercise', () => {
-            const textExerciseReturned = { ...elemDefault };
+            const textExerciseReturned = Object.assign({}, elemDefault);
             textExerciseReturned.id = 123;
             service
                 .reevaluateAndUpdate(textExerciseReturned)
@@ -151,7 +151,7 @@ describe('TextExercise Service', () => {
 
         it('should check plagiarism', () => {
             const options = new PlagiarismOptions(5, 3, 3);
-            const expectedReturn = { ...plagiarismResults };
+            const expectedReturn = Object.assign({}, plagiarismResults);
             service
                 .checkPlagiarism(123, options)
                 .pipe(take(1))
@@ -162,7 +162,7 @@ describe('TextExercise Service', () => {
         });
 
         it('should get plagiarism result', () => {
-            const expectedReturnValue = { ...plagiarismResults };
+            const expectedReturnValue = Object.assign({}, plagiarismResults);
             service
                 .getLatestPlagiarismResult(123)
                 .pipe(take(1))

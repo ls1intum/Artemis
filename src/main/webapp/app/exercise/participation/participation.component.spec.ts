@@ -91,7 +91,7 @@ describe('ParticipationComponent', () => {
     });
 
     it('should initialize for non programming exercise', fakeAsync(() => {
-        const theExercise = { ...exercise, type: ExerciseType.FILE_UPLOAD };
+        const theExercise = Object.assign({}, exercise, { type: ExerciseType.FILE_UPLOAD });
         const exerciseFindStub = jest.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: theExercise })));
 
         const student: User = { id: 2, login: 'student', name: 'Max', internal: true };
@@ -113,7 +113,7 @@ describe('ParticipationComponent', () => {
     }));
 
     it('should initialize for programming exercise', fakeAsync(() => {
-        const theExercise = { ...exercise, type: ExerciseType.PROGRAMMING };
+        const theExercise = Object.assign({}, exercise, { type: ExerciseType.PROGRAMMING });
         const exerciseFindStub = jest.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: theExercise })));
 
         const student: User = { id: 2, login: 'student', name: 'Max', internal: true };

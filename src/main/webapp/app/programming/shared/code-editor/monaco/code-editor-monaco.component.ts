@@ -128,7 +128,7 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
      * @private
      */
     private attachLineAndReferenceToFeedback(feedback: Feedback): FeedbackWithLineAndReference {
-        return { ...feedback, line: Feedback.getReferenceLine(feedback) ?? -1, reference: feedback.reference ?? 'unreferenced' };
+        return Object.assign({}, feedback, { line: Feedback.getReferenceLine(feedback) ?? -1, reference: feedback.reference ?? 'unreferenced' });
     }
 
     annotationsArray: Array<Annotation> = [];
@@ -220,10 +220,9 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
                         this.onError.emit('loadingFailed');
                     }
                 }
-                this.fileSession.set({
-                    ...this.fileSession(),
-                    [fileName]: { code: fileContent, loadingError: loadingError, scrollTop: 0, cursor: { column: 0, lineNumber: 0 } },
-                });
+                this.fileSession.set(
+                    Object.assign({}, this.fileSession(), { [fileName]: { code: fileContent, loadingError: loadingError, scrollTop: 0, cursor: { column: 0, lineNumber: 0 } } }),
+                );
             }
 
             const code = this.fileSession()[fileName].code;
@@ -253,15 +252,16 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
             const previousScrollTop = this.fileSession()[fileName].scrollTop;
 
             if (previousText !== text) {
-                this.fileSession.set({
-                    ...this.fileSession(),
-                    [fileName]: {
-                        code: text,
-                        loadingError: false,
-                        scrollTop: previousScrollTop,
-                        cursor: fileName === this.selectedFile() ? this.editor().getPosition() : this.fileSession()[fileName].cursor,
-                    },
-                });
+                this.fileSession.set(
+                    Object.assign({}, this.fileSession(), {
+                        [fileName]: {
+                            code: text,
+                            loadingError: false,
+                            scrollTop: previousScrollTop,
+                            cursor: fileName === this.selectedFile() ? this.editor().getPosition() : this.fileSession()[fileName].cursor,
+                        },
+                    }),
+                );
 
                 this.onFileContentChange.emit({ fileName, text });
             }
@@ -504,7 +504,9 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
             this.fileSession.set(this.fileService.updateFileReferences(this.fileSession(), fileChange));
             this.storeAnnotations([fileChange.fileName]);
         } else if (fileChange instanceof CreateFileChange && fileChange.fileType === FileType.FILE) {
-            this.fileSession.set({ ...this.fileSession(), [fileChange.fileName]: { code: '', cursor: { lineNumber: 0, column: 0 }, scrollTop: 0, loadingError: false } });
+            this.fileSession.set(
+                Object.assign({}, this.fileSession(), { [fileChange.fileName]: { code: '', cursor: { lineNumber: 0, column: 0 }, scrollTop: 0, loadingError: false } }),
+            );
         }
         this.setBuildAnnotations(this.annotationsArray);
     }
@@ -517,13 +519,7 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
         const toUpdate = fromPairs(this.annotationsArray.filter((a) => savedFiles.includes(a.fileName)).map((a) => [a.hash, a]));
         const toKeep = pickBy(this.loadAnnotations(), (a) => !savedFiles.includes(a.fileName));
 
-        this.localStorageService.store(
-            'annotations-' + this.sessionId(),
-            JSON.stringify({
-                ...toKeep,
-                ...toUpdate,
-            }),
-        );
+        this.localStorageService.store('annotations-' + this.sessionId(), JSON.stringify(Object.assign({}, toKeep, toUpdate)));
     }
 
     /**
@@ -539,7 +535,7 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
             this.annotationsArray = buildAnnotations.map((a) => {
                 const hash = a.fileName + a.row + a.column + a.text;
                 if (sessionAnnotations[hash] == undefined || sessionAnnotations[hash].timestamp < a.timestamp) {
-                    return { ...a, hash };
+                    return Object.assign({}, a, { hash });
                 } else {
                     return sessionAnnotations[hash];
                 }

@@ -89,15 +89,9 @@ describe('Student Exam Timeline Component', () => {
         exercises: [textExercise, programmingExercise, fileUploadExercise],
         user: { login: 'abc' },
     } as unknown as StudentExam;
-    programmingSubmission1 = {
-        ...programmingSubmission1,
-        participation: { exercise: programmingExercise },
-    } as unknown as ProgrammingSubmission;
-    fileUploadSubmission1 = {
-        ...fileUploadSubmission1,
-        participation: { exercise: fileUploadExercise },
-    } as unknown as FileUploadSubmission;
-    textSubmission = { ...textSubmission, participation: { exercise: textExercise } } satisfies TextSubmission;
+    programmingSubmission1 = Object.assign({}, programmingSubmission1, { participation: { exercise: programmingExercise } }) as unknown as ProgrammingSubmission;
+    fileUploadSubmission1 = Object.assign({}, fileUploadSubmission1, { participation: { exercise: fileUploadExercise } }) as unknown as FileUploadSubmission;
+    textSubmission = Object.assign({}, textSubmission, { participation: { exercise: textExercise } }) satisfies TextSubmission;
     const submissionVersion = {
         id: 1,
         createdDate: dayjs('2023-01-07'),

@@ -103,7 +103,7 @@ export class PostingFooterComponent implements OnInit, OnDestroy, AfterContentCh
         const groups: PostGroup[] = [];
         let currentGroup: PostGroup = {
             author: sortedPosts[0].author,
-            posts: [{ ...sortedPosts[0], isConsecutive: false }],
+            posts: [Object.assign({}, sortedPosts[0], { isConsecutive: false })],
         };
 
         for (let i = 1; i < sortedPosts.length; i++) {
@@ -116,12 +116,12 @@ export class PostingFooterComponent implements OnInit, OnDestroy, AfterContentCh
             }
 
             if (currentPost.author?.id === currentGroup.author?.id && timeDiff < 5 && timeDiff >= 0) {
-                currentGroup.posts.push({ ...currentPost, isConsecutive: true }); // consecutive post
+                currentGroup.posts.push(Object.assign({}, currentPost, { isConsecutive: true })); // consecutive post
             } else {
                 groups.push(currentGroup);
                 currentGroup = {
                     author: currentPost.author,
-                    posts: [{ ...currentPost, isConsecutive: false }],
+                    posts: [Object.assign({}, currentPost, { isConsecutive: false })],
                 };
             }
         }

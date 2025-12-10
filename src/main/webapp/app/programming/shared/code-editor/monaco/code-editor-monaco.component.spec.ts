@@ -145,7 +145,7 @@ describe('CodeEditorMonacoComponent', () => {
         comp.onFileTextChanged({ text: newCode, fileName: selectedFile });
         expect(valueCallbackStub).toHaveBeenCalledExactlyOnceWith({ fileName: selectedFile, text: newCode });
         expect(comp.fileSession()).toEqual({
-            [selectedFile]: { ...fileSession[selectedFile], code: newCode, scrollTop: 0 },
+            [selectedFile]: Object.assign({}, fileSession[selectedFile], { code: newCode, scrollTop: 0 }),
         });
     });
 
@@ -166,10 +166,11 @@ describe('CodeEditorMonacoComponent', () => {
         fixture.componentRef.setInput('selectedFile', presentFileName);
         await comp.selectFileInEditor(presentFileName);
         expect(loadFileFromRepositoryStub).toHaveBeenCalledExactlyOnceWith(fileToLoad.fileName);
-        expect(comp.fileSession()).toEqual({
-            ...presentFileSession,
-            [fileToLoad.fileName]: { code: fileToLoad.fileContent, cursor: { column: 0, lineNumber: 0 }, scrollTop: 0, loadingError: false },
-        });
+        expect(comp.fileSession()).toEqual(
+            Object.assign({}, presentFileSession, {
+                [fileToLoad.fileName]: { code: fileToLoad.fileContent, cursor: { column: 0, lineNumber: 0 }, scrollTop: 0, loadingError: false },
+            }),
+        );
         expect(setPositionStub).toHaveBeenCalledTimes(2);
         expect(changeModelStub).toHaveBeenCalledTimes(2);
     });
@@ -428,7 +429,7 @@ describe('CodeEditorMonacoComponent', () => {
     });
 
     it('should update existing feedback and notify', () => {
-        const feedbackToUpdate: Feedback = { ...exampleFeedbacks[0] };
+        const feedbackToUpdate: Feedback = Object.assign({}, exampleFeedbacks[0]);
         const remainingFeedbacks = exampleFeedbacks.slice(1);
         const updateFeedbackCallbackStub = jest.fn();
         comp.onUpdateFeedback.subscribe(updateFeedbackCallbackStub);
@@ -443,7 +444,7 @@ describe('CodeEditorMonacoComponent', () => {
     });
 
     it('should save new feedback and notify', () => {
-        const feedbackToSave: Feedback = { ...exampleFeedbacks[0] };
+        const feedbackToSave: Feedback = Object.assign({}, exampleFeedbacks[0]);
         const remainingFeedbacks = exampleFeedbacks.slice(1);
         const newFeedbackLine = 1;
         const updateFeedbackCallbackStub = jest.fn();
@@ -492,7 +493,7 @@ describe('CodeEditorMonacoComponent', () => {
             [otherFileName]: { code: 'unrelated', cursor: { lineNumber: 0, column: 0 }, loadingError: false, scrollTop: 0 },
         };
         fixture.detectChanges();
-        comp.fileSession.set({ ...fileSession });
+        comp.fileSession.set(Object.assign({}, fileSession));
         const renameFileChange = new RenameFileChange(FileType.FILE, oldFileName, newFileName);
         await comp.onFileChange(renameFileChange);
         expect(comp.fileSession()).toEqual({
@@ -509,7 +510,7 @@ describe('CodeEditorMonacoComponent', () => {
             [otherFileName]: { code: 'unrelated', cursor: { lineNumber: 0, column: 0 }, loadingError: false, scrollTop: 0 },
         };
         fixture.detectChanges();
-        comp.fileSession.set({ ...fileSession });
+        comp.fileSession.set(Object.assign({}, fileSession));
         const deleteFileChange = new DeleteFileChange(FileType.FILE, fileToDeleteName);
         await comp.onFileChange(deleteFileChange);
         expect(comp.fileSession()).toEqual({
@@ -524,7 +525,7 @@ describe('CodeEditorMonacoComponent', () => {
             [otherFileName]: { code: 'unrelated', cursor: { lineNumber: 0, column: 0 }, loadingError: false, scrollTop: 0 },
         };
         fixture.detectChanges();
-        comp.fileSession.set({ ...fileSession });
+        comp.fileSession.set(Object.assign({}, fileSession));
         const createFileChange = new CreateFileChange(FileType.FILE, fileToCreateName);
         await comp.onFileChange(createFileChange);
         expect(comp.fileSession()).toEqual({

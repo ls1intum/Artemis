@@ -75,8 +75,7 @@ export class ExamAPIRequests {
             gracePeriod = 30,
         } = options;
 
-        const exam = {
-            ...examTemplate,
+        const exam = Object.assign({}, examTemplate, {
             course,
             title,
             testExam,
@@ -92,7 +91,7 @@ export class ExamAPIRequests {
             publishResultsDate,
             gracePeriod,
             channelName: titleLowercase(title),
-        } as Exam;
+        }) as Exam;
 
         if (testExam) {
             exam.numberOfCorrectionRoundsInExam = 0;
@@ -202,10 +201,7 @@ export class ExamAPIRequests {
      * @param gradingScale the grading scale to set
      */
     async setExamGradingScale(exam: Exam, gradingScale: any) {
-        const data = {
-            exam,
-            ...gradingScale,
-        };
+        const data = Object.assign({ exam }, gradingScale);
         await this.page.request.post(`api/assessment/courses/${exam.course!.id}/exams/${exam.id}/grading-scale`, { data });
     }
 

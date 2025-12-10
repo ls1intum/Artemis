@@ -315,12 +315,12 @@ describe('PostComponent', () => {
     });
 
     it('should return true if the post is pinned', () => {
-        component.posting = { ...post, displayPriority: DisplayPriority.PINNED };
+        component.posting = Object.assign({}, post, { displayPriority: DisplayPriority.PINNED });
         expect(component.isPinned()).toBeTrue();
     });
 
     it('should return false if the post is not pinned', () => {
-        component.posting = { ...post, displayPriority: DisplayPriority.NONE };
+        component.posting = Object.assign({}, post, { displayPriority: DisplayPriority.NONE });
         expect(component.isPinned()).toBeFalse();
     });
 
@@ -436,7 +436,7 @@ describe('PostComponent', () => {
 
     it('should display post-time span when isConsecutive() returns true', () => {
         const fixedDate = dayjs('2024-12-06T23:39:27.080Z');
-        component.posting = { ...metisPostExerciseUser1, creationDate: fixedDate };
+        component.posting = Object.assign({}, metisPostExerciseUser1, { creationDate: fixedDate });
 
         jest.spyOn(component, 'isConsecutive').mockReturnValue(true);
         fixture.detectChanges();
@@ -452,7 +452,7 @@ describe('PostComponent', () => {
 
     it('should not display post-time span when isConsecutive() returns false', () => {
         const fixedDate = dayjs('2024-12-06T23:39:27.080Z');
-        component.posting = { ...metisPostExerciseUser1, creationDate: fixedDate };
+        component.posting = Object.assign({}, metisPostExerciseUser1, { creationDate: fixedDate });
 
         jest.spyOn(component, 'isConsecutive').mockReturnValue(false);
         fixture.detectChanges();

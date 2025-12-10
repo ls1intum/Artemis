@@ -215,10 +215,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
             return false;
         }
         const umlModel = this.apollonEditor()!.model;
-        const updatedDiagram: ApollonDiagram = {
-            ...this.apollonDiagram(),
-            jsonRepresentation: JSON.stringify(umlModel),
-        };
+        const updatedDiagram: ApollonDiagram = Object.assign({}, this.apollonDiagram(), { jsonRepresentation: JSON.stringify(umlModel) });
 
         const result = await lastValueFrom(this.apollonDiagramService.update(updatedDiagram, this.resolvedCourseId()!));
         if (result?.ok) {

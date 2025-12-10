@@ -73,7 +73,7 @@ describe('PostingSummaryComponent', () => {
 
     describe('PostingType detection', () => {
         it('should detect answer post', () => {
-            const answerPost = { ...mockPost, postingType: PostingType.ANSWER.valueOf() };
+            const answerPost = Object.assign({}, mockPost, { postingType: PostingType.ANSWER.valueOf() });
 
             fixture.componentRef.setInput('post', answerPost);
             fixture.detectChanges();
@@ -91,7 +91,7 @@ describe('PostingSummaryComponent', () => {
 
     describe('Date handling', () => {
         it('should detect post from today', () => {
-            const todayPost = { ...mockPost, creationDate: dayjs() };
+            const todayPost = Object.assign({}, mockPost, { creationDate: dayjs() });
 
             fixture.componentRef.setInput('post', todayPost);
             fixture.detectChanges();
@@ -100,7 +100,7 @@ describe('PostingSummaryComponent', () => {
         });
 
         it('should detect post not from today', () => {
-            const yesterdayPost = { ...mockPost, creationDate: dayjs().subtract(1, 'day') };
+            const yesterdayPost = Object.assign({}, mockPost, { creationDate: dayjs().subtract(1, 'day') });
 
             fixture.componentRef.setInput('post', yesterdayPost);
             fixture.detectChanges();

@@ -49,14 +49,13 @@ export class CourseDashboardService {
             (acc, key) => {
                 const exerciseCategories = categories[key]?.map((category: string) => JSON.parse(category) as ExerciseCategory) || [];
                 const exercise = exerciseInformation[key];
-                acc[key] = {
-                    ...exercise,
+                acc[key] = Object.assign({}, exercise, {
                     startDate: dayjs(exercise.start),
                     dueDate: exercise.due ? dayjs(exercise.due) : undefined,
                     type: this.mapToExerciseType(exercise.type),
                     categories: exerciseCategories,
                     studentAssignedTeamId: teamId ? teamId?.[key] : undefined,
-                };
+                });
                 return acc;
             },
             {} as { [key: string]: ExerciseInformation },
@@ -67,11 +66,7 @@ export class CourseDashboardService {
         return Object.keys(lectureUnitInformation).reduce(
             (acc, key) => {
                 const lectureUnit = lectureUnitInformation[key];
-                acc[key] = {
-                    ...lectureUnit,
-                    releaseDate: dayjs(lectureUnit.releaseDate),
-                    type: this.mapToLectureUnitType(lectureUnit.type),
-                };
+                acc[key] = Object.assign({}, lectureUnit, { releaseDate: dayjs(lectureUnit.releaseDate), type: this.mapToLectureUnitType(lectureUnit.type) });
                 return acc;
             },
             {} as { [key: string]: LectureUnitInformation },
@@ -92,10 +87,7 @@ export class CourseDashboardService {
         return Object.keys(competencyInformation).reduce(
             (acc, key) => {
                 const competency = competencyInformation[key];
-                acc[key] = {
-                    ...competency,
-                    softDueDate: competency.softDueDate ? dayjs(competency.softDueDate) : undefined,
-                };
+                acc[key] = Object.assign({}, competency, { softDueDate: competency.softDueDate ? dayjs(competency.softDueDate) : undefined });
                 return acc;
             },
             {} as { [key: string]: any },

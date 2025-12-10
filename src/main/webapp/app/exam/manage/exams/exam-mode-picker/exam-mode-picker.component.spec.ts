@@ -30,7 +30,7 @@ describe('ExamModePickerComponent', () => {
     });
 
     it('should be in readonly mode', () => {
-        const examCopy = { ...exam };
+        const examCopy = Object.assign({}, exam);
         TestBed.runInInjectionContext(() => {
             component.disableInput = input(true);
         });

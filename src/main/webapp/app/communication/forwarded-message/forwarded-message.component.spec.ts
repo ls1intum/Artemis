@@ -97,7 +97,7 @@ describe('ForwardedMessageComponent', () => {
     it('should set sourceName correctly for a one-to-one chat post when isAnswerPost is true', () => {
         const oneToOneAnswerPost: AnswerPost = {
             id: 4,
-            post: { ...mockPost, conversation: { type: 'oneToOneChat' } as any },
+            post: Object.assign({}, mockPost, { conversation: { type: 'oneToOneChat' } as any }),
         } as AnswerPost;
 
         runInInjectionContext(fixture.debugElement.injector, () => {
@@ -128,7 +128,7 @@ describe('ForwardedMessageComponent', () => {
     it('should set sourceName correctly for a group chat post when isAnswerPost is true', () => {
         const groupChatAnswerPost: AnswerPost = {
             id: 5,
-            post: { ...mockPost, conversation: { type: 'groupChat' } as any },
+            post: Object.assign({}, mockPost, { conversation: { type: 'groupChat' } as any }),
         } as AnswerPost;
 
         runInInjectionContext(fixture.debugElement.injector, () => {
@@ -167,7 +167,7 @@ describe('ForwardedMessageComponent', () => {
     it('should set sourceName correctly for an unknown conversation type when isAnswerPost is true', () => {
         const unknownTypeAnswerPost: AnswerPost = {
             id: 8,
-            post: { ...mockPost, conversation: { type: 'unknownType' } as any },
+            post: Object.assign({}, mockPost, { conversation: { type: 'unknownType' } as any }),
         } as AnswerPost;
 
         runInInjectionContext(fixture.debugElement.injector, () => {

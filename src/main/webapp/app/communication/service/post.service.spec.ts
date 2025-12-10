@@ -21,8 +21,8 @@ describe('Post Service', () => {
 
     describe('Service methods', () => {
         it('should create a Post', fakeAsync(() => {
-            const returnedFromService = { ...metisPostToCreateUser1 };
-            const expected = { ...returnedFromService };
+            const returnedFromService = Object.assign({}, metisPostToCreateUser1);
+            const expected = Object.assign({}, returnedFromService);
             service
                 .create(1, new Post())
                 .pipe(take(1))
@@ -33,8 +33,8 @@ describe('Post Service', () => {
         }));
 
         it('should update a Post', fakeAsync(() => {
-            const returnedFromService = { ...metisPostExerciseUser1, content: 'This is another test post' };
-            const expected = { ...returnedFromService };
+            const returnedFromService = Object.assign({}, metisPostExerciseUser1, { content: 'This is another test post' });
+            const expected = Object.assign({}, returnedFromService);
             service
                 .update(1, expected)
                 .pipe(take(1))
@@ -46,8 +46,8 @@ describe('Post Service', () => {
 
         it('should pin a Post', fakeAsync(() => {
             const newDisplayPriority = DisplayPriority.PINNED;
-            const returnedFromService = { ...metisPostExerciseUser1, displayPriority: newDisplayPriority };
-            const expected = { ...returnedFromService };
+            const returnedFromService = Object.assign({}, metisPostExerciseUser1, { displayPriority: newDisplayPriority });
+            const expected = Object.assign({}, returnedFromService);
             service
                 .updatePostDisplayPriority(1, metisPostExerciseUser1.id!, newDisplayPriority)
                 .pipe(take(1))
@@ -59,8 +59,8 @@ describe('Post Service', () => {
 
         it('should archive a Post', fakeAsync(() => {
             const newDisplayPriority = DisplayPriority.ARCHIVED;
-            const returnedFromService = { ...metisPostExerciseUser1, displayPriority: newDisplayPriority };
-            const expected = { ...returnedFromService };
+            const returnedFromService = Object.assign({}, metisPostExerciseUser1, { displayPriority: newDisplayPriority });
+            const expected = Object.assign({}, returnedFromService);
             service
                 .updatePostDisplayPriority(1, metisPostExerciseUser1.id!, newDisplayPriority)
                 .pipe(take(1))

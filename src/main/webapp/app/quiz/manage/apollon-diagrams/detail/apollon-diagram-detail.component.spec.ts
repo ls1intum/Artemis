@@ -124,7 +124,7 @@ describe('ApollonDiagramDetail Component', () => {
     });
 
     it('validateGeneration', async () => {
-        const nonInteractiveModel = { ...model, interactive: { ...model.interactive, elements: {}, relationships: {} } };
+        const nonInteractiveModel = Object.assign({}, model, { interactive: Object.assign({}, model.interactive, { elements: {}, relationships: {} }) });
 
         // setup
         fixture.componentInstance.apollonDiagram.set(diagram);

@@ -87,7 +87,7 @@ describe('TriggerBuildButtonSpec', () => {
     };
 
     it('should not show the trigger button if there is no pending submission and no build is running', () => {
-        comp.participation = { ...participation, results: [gradedResult1], initializationState: InitializationState.INITIALIZED };
+        comp.participation = Object.assign({}, participation, { results: [gradedResult1], initializationState: InitializationState.INITIALIZED });
         comp.exercise = { id: 4 } as ProgrammingExercise;
 
         triggerChanges(comp, { property: 'participation', currentValue: comp.participation });
@@ -110,7 +110,7 @@ describe('TriggerBuildButtonSpec', () => {
     });
 
     it('should be enabled and trigger the build on click if it is provided with a participation including results', () => {
-        comp.participation = { ...participation, results: [gradedResult1], initializationState: InitializationState.INITIALIZED };
+        comp.participation = Object.assign({}, participation, { results: [gradedResult1], initializationState: InitializationState.INITIALIZED });
         comp.exercise = { id: 5 } as ProgrammingExercise;
 
         triggerChanges(comp, { property: 'participation', currentValue: comp.participation });
@@ -155,7 +155,7 @@ describe('TriggerBuildButtonSpec', () => {
         gradedResult1.assessmentType = AssessmentType.AUTOMATIC;
         gradedResult2.assessmentType = AssessmentType.MANUAL;
 
-        comp.participation = { ...participation, results: [gradedResult1, gradedResult2], initializationState: InitializationState.INITIALIZED };
+        comp.participation = Object.assign({}, participation, { results: [gradedResult1, gradedResult2], initializationState: InitializationState.INITIALIZED });
         comp.exercise = { id: 5, dueDate: dayjs().subtract(1, 'day') } as ProgrammingExercise;
 
         triggerChanges(comp, { property: 'participation', currentValue: comp.participation });

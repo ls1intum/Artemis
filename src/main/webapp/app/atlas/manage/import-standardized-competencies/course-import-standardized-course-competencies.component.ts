@@ -171,11 +171,15 @@ export abstract class CourseImportStandardizedCourseCompetenciesComponent extend
         const competencies = knowledgeAreaDTO.competencies?.map((competency) =>
             this.convertToStandardizedCompetencyForImport(competency, knowledgeAreaDTO.title, isVisible, selected),
         );
-        return { ...knowledgeAreaDTO, children: children, competencies: competencies, level: level, isVisible: isVisible };
+        return Object.assign({}, knowledgeAreaDTO, { children: children, competencies: competencies, level: level, isVisible: isVisible });
     }
 
     private convertToStandardizedCompetencyForImport(competencyDTO: StandardizedCompetencyDTO, knowledgeAreaTitle?: string, isVisible = true, selected = false) {
-        const competencyForTree: StandardizedCompetencyForImport = { ...competencyDTO, isVisible: isVisible, knowledgeAreaTitle: knowledgeAreaTitle, selected: selected };
+        const competencyForTree: StandardizedCompetencyForImport = Object.assign({}, competencyDTO, {
+            isVisible: isVisible,
+            knowledgeAreaTitle: knowledgeAreaTitle,
+            selected: selected,
+        });
         return competencyForTree;
     }
 

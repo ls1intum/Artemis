@@ -66,21 +66,21 @@ describe('Course Group Membership Component', () => {
     describe('courseGroupName', () => {
         it('should return courses studentGroupName if group is students', () => {
             comp.courseGroup = CourseGroup.STUDENTS;
-            comp.course = { ...course };
+            comp.course = Object.assign({}, course);
             comp.course.studentGroupName = 'testStudentGroupName';
             expect(comp.courseGroupName).toBe(comp.course.studentGroupName);
         });
 
         it('should return courses teachingAssistantGroupName if group is tutors', () => {
             comp.courseGroup = CourseGroup.TUTORS;
-            comp.course = { ...course };
+            comp.course = Object.assign({}, course);
             comp.course.teachingAssistantGroupName = 'testTeachingAssistantGroupName';
             expect(comp.courseGroupName).toBe(comp.course.teachingAssistantGroupName);
         });
 
         it('should return courses instructorGroupName if group is instructors', () => {
             comp.courseGroup = CourseGroup.INSTRUCTORS;
-            comp.course = { ...course };
+            comp.course = Object.assign({}, course);
             comp.course.instructorGroupName = 'testInstructorGroupName';
             expect(comp.courseGroupName).toBe(comp.course.instructorGroupName);
         });

@@ -92,22 +92,22 @@ describe('CourseTrainingComponent', () => {
     });
 
     it('should calculate league based on user entry', () => {
-        component.currentUserEntry.set({ ...mockLeaderboardEntry, selectedLeague: 1 });
+        component.currentUserEntry.set(Object.assign({}, mockLeaderboardEntry, { selectedLeague: 1 }));
         expect(component.league()).toBe('Master');
 
-        component.currentUserEntry.set({ ...mockLeaderboardEntry, selectedLeague: 2 });
+        component.currentUserEntry.set(Object.assign({}, mockLeaderboardEntry, { selectedLeague: 2 }));
         expect(component.league()).toBe('Diamond');
 
-        component.currentUserEntry.set({ ...mockLeaderboardEntry, selectedLeague: 3 });
+        component.currentUserEntry.set(Object.assign({}, mockLeaderboardEntry, { selectedLeague: 3 }));
         expect(component.league()).toBe('Gold');
 
-        component.currentUserEntry.set({ ...mockLeaderboardEntry, selectedLeague: 4 });
+        component.currentUserEntry.set(Object.assign({}, mockLeaderboardEntry, { selectedLeague: 4 }));
         expect(component.league()).toBe('Silver');
 
-        component.currentUserEntry.set({ ...mockLeaderboardEntry, selectedLeague: 5 });
+        component.currentUserEntry.set(Object.assign({}, mockLeaderboardEntry, { selectedLeague: 5 }));
         expect(component.league()).toBe('Bronze');
 
-        component.currentUserEntry.set({ ...mockLeaderboardEntry, selectedLeague: 0 });
+        component.currentUserEntry.set(Object.assign({}, mockLeaderboardEntry, { selectedLeague: 0 }));
         expect(component.league()).toBe('No League');
     });
 
@@ -115,10 +115,7 @@ describe('CourseTrainingComponent', () => {
         component.currentTime.set(new Date(Date.now()).toISOString());
         const futureDateString = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000 + 3 * 60 * 60 * 1000).toISOString();
 
-        component.currentUserEntry.set({
-            ...mockLeaderboardEntry,
-            dueDate: futureDateString,
-        });
+        component.currentUserEntry.set(Object.assign({}, mockLeaderboardEntry, { dueDate: futureDateString }));
 
         const dueIn = component.dueIn();
         expect(dueIn.isValid).toBeTrue();
@@ -131,10 +128,7 @@ describe('CourseTrainingComponent', () => {
         component.currentTime.set(new Date(Date.now()).toISOString());
         const pastDateString = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
-        component.currentUserEntry.set({
-            ...mockLeaderboardEntry,
-            dueDate: pastDateString,
-        });
+        component.currentUserEntry.set(Object.assign({}, mockLeaderboardEntry, { dueDate: pastDateString }));
 
         const dueIn = component.dueIn();
         expect(dueIn.isValid).toBeTrue();
@@ -143,10 +137,7 @@ describe('CourseTrainingComponent', () => {
 
     it('should handle undefined due date', () => {
         component.currentTime.set(new Date(Date.now()).toISOString());
-        component.currentUserEntry.set({
-            ...mockLeaderboardEntry,
-            dueDate: undefined,
-        });
+        component.currentUserEntry.set(Object.assign({}, mockLeaderboardEntry, { dueDate: undefined }));
 
         const dueIn = component.dueIn();
         expect(dueIn.isValid).toBeFalse();
@@ -160,10 +151,7 @@ describe('CourseTrainingComponent', () => {
         component.currentTime.set(new Date(Date.now()).toISOString());
         const almostDueDate = dayjs(component.currentTime()).add(30, 'second').toISOString();
 
-        component.currentUserEntry.set({
-            ...mockLeaderboardEntry,
-            dueDate: almostDueDate,
-        });
+        component.currentUserEntry.set(Object.assign({}, mockLeaderboardEntry, { dueDate: almostDueDate }));
 
         const dueIn = component.dueIn();
         expect(dueIn.isValid).toBeTrue();

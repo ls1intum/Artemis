@@ -56,7 +56,7 @@ describe('CompetencyGraphComponent', () => {
     });
 
     it('should have nodes and edges', async () => {
-        const edgesWithUniqueIds = competencyGraph.edges!.map((edge) => ({ ...edge, id: `edge-${edge.id}` }));
+        const edgesWithUniqueIds = competencyGraph.edges!.map((edge) => Object.assign({}, edge, { id: `edge-${edge.id}` }));
 
         fixture.detectChanges();
 

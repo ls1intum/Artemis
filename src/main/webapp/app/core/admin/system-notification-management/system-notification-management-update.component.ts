@@ -68,14 +68,14 @@ export class SystemNotificationManagementUpdateComponent implements OnInit {
 
         if (!notificationDate || !expireDate || expireDate.isAfter(notificationDate)) {
             [notificationDateControl, expireDateControl].forEach((control) => {
-                const errors = { ...(control?.errors ?? {}) };
+                const errors = Object.assign({}, control?.errors ?? {});
                 delete errors.expireMustBeAfterNotification;
                 const isEmpty = Object.keys(errors).length === 0;
                 control?.setErrors(isEmpty ? null : errors);
             });
         } else {
             [notificationDateControl, expireDateControl].forEach((control) => {
-                const errors = { ...(control?.errors ?? {}), expireMustBeAfterNotification: true };
+                const errors = Object.assign({}, control?.errors ?? {}, { expireMustBeAfterNotification: true });
                 control?.setErrors(errors);
             });
         }
@@ -97,10 +97,7 @@ export class SystemNotificationManagementUpdateComponent implements OnInit {
      */
     save() {
         this.isSaving = true;
-        const toSave = {
-            ...this.notification,
-            ...this.form.getRawValue(),
-        };
+        const toSave = Object.assign({}, this.notification, this.form.getRawValue());
         if (this.notification.id) {
             this.systemNotificationService.update(toSave).subscribe({
                 next: () => this.onSaveSuccess(),

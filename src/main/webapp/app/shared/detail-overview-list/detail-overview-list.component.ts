@@ -92,7 +92,7 @@ export class DetailOverviewListComponent implements OnInit {
             };
         });
         this.headlinesRecord = this.headlines.reduce((previousValue, currentValue) => {
-            return { ...previousValue, [currentValue.translationKey]: currentValue.id };
+            return Object.assign({}, previousValue, { [currentValue.translationKey]: currentValue.id });
         }, {});
     }
 

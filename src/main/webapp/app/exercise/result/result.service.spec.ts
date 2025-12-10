@@ -31,10 +31,7 @@ import * as Sentry from '@sentry/angular';
 // Preliminary mock before import to prevent errors
 jest.mock('@sentry/angular', () => {
     const originalModule = jest.requireActual('@sentry/angular');
-    return {
-        ...originalModule,
-        captureException: jest.fn(),
-    };
+    return Object.assign({}, originalModule, { captureException: jest.fn() });
 });
 
 describe('ResultService', () => {

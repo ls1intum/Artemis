@@ -84,7 +84,7 @@ describe('KnowledgeAreaEditComponent', () => {
 
         component.save();
 
-        expect(saveSpy).toHaveBeenCalledWith({ ...defaultKnowledgeArea, ...newValues });
+        expect(saveSpy).toHaveBeenCalledWith(Object.assign({}, defaultKnowledgeArea, newValues));
         expect(component.isEditing).toBeFalse();
     });
 

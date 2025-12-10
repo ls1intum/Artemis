@@ -211,7 +211,7 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
      */
     onHiddenPagesReceived(hiddenPageData: HiddenPage | HiddenPage[]): void {
         const pages = Array.isArray(hiddenPageData) ? hiddenPageData : [hiddenPageData];
-        const updatedHiddenPages = { ...this.hiddenPages() };
+        const updatedHiddenPages = Object.assign({}, this.hiddenPages());
 
         pages.forEach((page) => {
             updatedHiddenPages[page.slideId] = {
@@ -241,7 +241,7 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
      * @param slideId - The ID of the slide to be made visible.
      */
     showPage(slideId: string): void {
-        const updatedHiddenPages = { ...this.hiddenPages() };
+        const updatedHiddenPages = Object.assign({}, this.hiddenPages());
         delete updatedHiddenPages[slideId];
         this.hiddenPagesOutput.emit(updatedHiddenPages);
         this.hideActionButton(slideId);

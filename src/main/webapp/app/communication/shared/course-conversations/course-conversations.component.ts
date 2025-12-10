@@ -443,7 +443,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     initializeSidebarAccordions() {
         this.messagingEnabled = isMessagingEnabled(this.course());
         this.accordionConversationGroups = this.messagingEnabled
-            ? { ...DEFAULT_CHANNEL_GROUPS, groupChats: { entityData: [] }, directMessages: { entityData: [] } }
+            ? Object.assign({}, DEFAULT_CHANNEL_GROUPS, { groupChats: { entityData: [] }, directMessages: { entityData: [] } })
             : DEFAULT_CHANNEL_GROUPS;
     }
 
@@ -710,12 +710,11 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         if (id) {
             try {
                 await firstValueFrom(this.metisService.enable(id, withMessaging));
-                const updatedCourse = {
-                    ...this.course()!,
+                const updatedCourse = Object.assign({}, this.course()!, {
                     courseInformationSharingConfiguration: withMessaging
                         ? CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING
                         : CourseInformationSharingConfiguration.COMMUNICATION_ONLY,
-                };
+                });
                 this.course.set(updatedCourse);
 
                 this.eventManager.broadcast({

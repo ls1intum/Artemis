@@ -388,7 +388,7 @@ describe('CourseScoresComponent', () => {
 
     it('should assign plagiarism grade if there is a PLAGIARISM verdict', () => {
         jest.spyOn(courseManagementService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
-        jest.spyOn(gradingSystemService, 'findGradingScaleForCourse').mockReturnValue(of(new HttpResponse<GradingScale>({ body: { ...gradingScale } })));
+        jest.spyOn(gradingSystemService, 'findGradingScaleForCourse').mockReturnValue(of(new HttpResponse<GradingScale>({ body: Object.assign({}, gradingScale) })));
         jest.spyOn(gradingSystemService, 'sortGradeSteps').mockReturnValue(gradingScale.gradeSteps);
         const matchingGradeStep = gradingScale.gradeSteps[0];
         jest.spyOn(gradingSystemService, 'findMatchingGradeStep').mockReturnValue(matchingGradeStep);

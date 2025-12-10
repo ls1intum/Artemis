@@ -33,7 +33,7 @@ export const expectElementToBeDisabled = (element: null | any) => {
  */
 export const triggerChanges = (comp: OnChanges, ...changes: Array<{ property: string; currentValue: any; previousValue?: any; firstChange?: boolean }>) => {
     const simpleChanges: SimpleChanges = changes.reduce((acc, { property, currentValue, previousValue, firstChange = true }) => {
-        return { ...acc, [property]: new SimpleChange(previousValue, currentValue, firstChange) };
+        return Object.assign({}, acc, { [property]: new SimpleChange(previousValue, currentValue, firstChange) });
     }, {});
     comp.ngOnChanges(simpleChanges);
 };

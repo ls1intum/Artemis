@@ -264,7 +264,7 @@ describe('ProgrammingExerciseTask Service', () => {
         });
 
         // Initialize spy for error alert
-        updateTestCasesStub.mockReturnValue(of(testCases.map((test) => ({ ...test, weight: 0 }))));
+        updateTestCasesStub.mockReturnValue(of(testCases.map((test) => Object.assign({}, test, { weight: 0 }))));
 
         return firstValueFrom(service.saveTestCases()).then(() => {
             expect(alertErrorStub).toHaveBeenCalled();
@@ -277,7 +277,7 @@ describe('ProgrammingExerciseTask Service', () => {
             testCase.changed = true;
         });
 
-        updateTestCasesStub.mockReturnValue(of(testCases.map((test) => ({ ...test, weight: 0 }))));
+        updateTestCasesStub.mockReturnValue(of(testCases.map((test) => Object.assign({}, test, { weight: 0 }))));
 
         return firstValueFrom(service.saveTestCases()).then(() => {
             expect(alertErrorStub).not.toHaveBeenCalled();
@@ -309,7 +309,7 @@ describe('ProgrammingExerciseTask Service', () => {
 
     it('should remove tasks with only duplicated tests cases', () => {
         // Add a second task which uses the same test cases (test1 and test2)
-        const duplicatedTask: ProgrammingExerciseServerSideTask = { ...serverSideTasks[0] };
+        const duplicatedTask: ProgrammingExerciseServerSideTask = Object.assign({}, serverSideTasks[0]);
         duplicatedTask.id = 99;
 
         firstValueFrom(service.configure(exercise as ProgrammingExercise, course, gradingStatistics));
@@ -324,7 +324,7 @@ describe('ProgrammingExerciseTask Service', () => {
 
     it('should remove duplicated tests cases from tasks', () => {
         // Add a second task which uses the same test cases (test1 and test2) but also has unique tests
-        const duplicatedTask: ProgrammingExerciseServerSideTask = { ...serverSideTasks[0] };
+        const duplicatedTask: ProgrammingExerciseServerSideTask = Object.assign({}, serverSideTasks[0]);
         duplicatedTask.id = 99;
         duplicatedTask.testCases = [
             ...duplicatedTask.testCases!,

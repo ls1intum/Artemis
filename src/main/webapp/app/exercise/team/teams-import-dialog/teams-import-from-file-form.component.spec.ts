@@ -71,20 +71,20 @@ describe('TeamsImportFromFileFormComponent', () => {
         let reader: FileReader;
         let getElementStub: jest.SpyInstance;
         const element = document.createElement('input');
-        let control = { ...element, value: 'test' };
+        let control = Object.assign({}, element, { value: 'test' });
 
         beforeEach(() => {
             resetComponent();
             convertTeamsStub = jest.spyOn(comp, 'convertTeams').mockReturnValue(mockFileTeamsConverted);
             comp.teamsChanged.subscribe((value: Team[]) => (teams = value));
-            control = { ...element, value: 'test' };
+            control = Object.assign({}, element, { value: 'test' });
             // @ts-ignore
             getElementStub = jest.spyOn(document, 'getElementById').mockReturnValue(control);
         });
 
         it('should parse json file and send converted teams', () => {
             // @ts-ignore
-            reader = { ...reader, result: JSON.stringify(mockFileStudents), onload: null };
+            reader = Object.assign({}, reader, { result: JSON.stringify(mockFileStudents), onload: null });
             comp.importFile = new File([''], 'file.json', { type: 'application/json' });
             comp.importFileName = 'file.json';
             expect(control.value).toBe('test');
@@ -104,12 +104,11 @@ describe('TeamsImportFromFileFormComponent', () => {
 
         it('should parse csv file and send converted teams', async () => {
             // @ts-ignore
-            reader = {
-                ...reader,
+            reader = Object.assign({}, reader, {
                 result: unparse(mockFileStudents, {
                     columns: ['registrationNumber', 'username', 'firstName', 'lastName', 'teamName'],
                 }),
-            };
+            });
             comp.importFile = new File([''], 'file.csv', { type: 'text/csv' });
             comp.importFileName = 'file.csv';
             expect(control.value).toBe('test');

@@ -76,9 +76,9 @@ examples.forEach((activeConversation) => {
         }));
 
         beforeEach(() => {
-            loggedInUser = { ...currentUserTemplate };
-            conversationMember = { ...memberTemplate };
-            conversationCreator = { ...creatorTemplate };
+            loggedInUser = Object.assign({}, currentUserTemplate);
+            conversationMember = Object.assign({}, memberTemplate);
+            conversationCreator = Object.assign({}, creatorTemplate);
             activeConversation.creator = conversationCreator;
 
             const accountService = TestBed.inject(AccountService);

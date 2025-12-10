@@ -57,7 +57,7 @@ export class LearningPathInstructorPageComponent {
         try {
             this.isLoading.set(true);
             await this.learningPathApiService.enableLearningPaths(this.courseId());
-            this.course.update((course) => ({ ...course!, learningPathsEnabled: true }));
+            this.course.update((course) => Object.assign({}, course!, { learningPathsEnabled: true }));
         } catch (error) {
             onError(this.alertService, error);
         } finally {

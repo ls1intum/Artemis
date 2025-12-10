@@ -242,14 +242,8 @@ describe('ComplaintsStudentViewComponent', () => {
 
         it('should set complaint type COMPLAINT and scroll to complaint form when pressing complaint', fakeAsync(() => {
             testInitWithResultStub(of());
-            const courseWithMaxComplaints: Course = {
-                ...course,
-                maxComplaints: 3,
-            };
-            const exerciseWithMaxComplaints: Exercise = {
-                ...courseExercise,
-                course: courseWithMaxComplaints,
-            };
+            const courseWithMaxComplaints: Course = Object.assign({}, course, { maxComplaints: 3 });
+            const exerciseWithMaxComplaints: Exercise = Object.assign({}, courseExercise, { course: courseWithMaxComplaints });
             component.course = courseWithMaxComplaints;
             fixture.componentRef.setInput('exercise', exerciseWithMaxComplaints);
 
@@ -312,7 +306,7 @@ describe('ComplaintsStudentViewComponent', () => {
 
         it('should not be available if assessment due date not set and completion date is out of period', fakeAsync(() => {
             const exercise: Exercise = { id: 1, teamMode: false, course } as Exercise;
-            const resultDateOutOfLimits: Result = { ...result, completionDate: dayjs().subtract(complaintTimeLimitDays + 1, 'day') } as Result;
+            const resultDateOutOfLimits: Result = Object.assign({}, result, { completionDate: dayjs().subtract(complaintTimeLimitDays + 1, 'day') }) as Result;
             fixture.componentRef.setInput('exercise', exercise);
             fixture.componentRef.setInput('result', resultDateOutOfLimits);
 
@@ -330,7 +324,7 @@ describe('ComplaintsStudentViewComponent', () => {
                 course,
                 assessmentDueDate: dayjs().subtract(complaintTimeLimitDays + 2, 'day'),
             } as Exercise;
-            const resultMatchingDate: Result = { ...result, completionDate: dayjs(exercise.assessmentDueDate!).add(1, 'day') } as Result;
+            const resultMatchingDate: Result = Object.assign({}, result, { completionDate: dayjs(exercise.assessmentDueDate!).add(1, 'day') }) as Result;
             fixture.componentRef.setInput('exercise', exercise);
             fixture.componentRef.setInput('result', resultMatchingDate);
 
@@ -343,7 +337,7 @@ describe('ComplaintsStudentViewComponent', () => {
 
         it('should be available if result was before due date', fakeAsync(() => {
             const exercise: Exercise = { id: 1, teamMode: false, course, dueDate: dayjs().subtract(1, 'minute'), assessmentType: AssessmentType.MANUAL } as Exercise;
-            const resultDateOutOfLimits: Result = { ...result, completionDate: dayjs().subtract(complaintTimeLimitDays + 1, 'days') } as Result;
+            const resultDateOutOfLimits: Result = Object.assign({}, result, { completionDate: dayjs().subtract(complaintTimeLimitDays + 1, 'days') }) as Result;
             fixture.componentRef.setInput('exercise', exercise);
             fixture.componentRef.setInput('result', resultDateOutOfLimits);
 
@@ -363,7 +357,7 @@ describe('ComplaintsStudentViewComponent', () => {
                 assessmentDueDate: dayjs().subtract(1, 'minute'),
                 assessmentType: AssessmentType.MANUAL,
             } as Exercise;
-            const resultDateOutOfLimits: Result = { ...result, completionDate: dayjs().subtract(complaintTimeLimitDays + 2, 'days') } as Result;
+            const resultDateOutOfLimits: Result = Object.assign({}, result, { completionDate: dayjs().subtract(complaintTimeLimitDays + 2, 'days') }) as Result;
             fixture.componentRef.setInput('exercise', exercise);
             fixture.componentRef.setInput('result', resultDateOutOfLimits);
 
@@ -375,11 +369,7 @@ describe('ComplaintsStudentViewComponent', () => {
         }));
 
         it('complaints should be available if feedback requests disabled', fakeAsync(() => {
-            fixture.componentRef.setInput('exercise', {
-                ...courseExercise,
-                course: courseWithoutFeedback,
-                assessmentDueDate: dayjs().subtract(2),
-            } as Exercise);
+            fixture.componentRef.setInput('exercise', Object.assign({}, courseExercise, { course: courseWithoutFeedback, assessmentDueDate: dayjs().subtract(2) }) as Exercise);
             component.course = courseWithoutFeedback;
 
             fixture.detectChanges();
@@ -391,18 +381,13 @@ describe('ComplaintsStudentViewComponent', () => {
         }));
 
         it('feedback requests should be available if complaints are disabled', fakeAsync(() => {
-            const courseWithoutComplaints = {
-                ...course,
+            const courseWithoutComplaints = Object.assign({}, course, {
                 complaintsEnabled: false,
                 maxComplaintTimeDays: undefined,
                 maxComplaints: undefined,
                 maxTeamComplaints: undefined,
-            } as Course;
-            fixture.componentRef.setInput('exercise', {
-                ...courseExercise,
-                course: courseWithoutComplaints,
-                assessmentDueDate: dayjs().subtract(2),
-            } as Exercise);
+            }) as Course;
+            fixture.componentRef.setInput('exercise', Object.assign({}, courseExercise, { course: courseWithoutComplaints, assessmentDueDate: dayjs().subtract(2) }) as Exercise);
             component.course = courseWithoutComplaints;
 
             fixture.detectChanges();
@@ -415,7 +400,7 @@ describe('ComplaintsStudentViewComponent', () => {
 
         it('no action should be allowed if the result is automatic for a non automatic exercise', fakeAsync(() => {
             fixture.componentRef.setInput('exercise', courseExercise);
-            fixture.componentRef.setInput('result', { ...result, assessmentType: AssessmentType.AUTOMATIC, rated: false });
+            fixture.componentRef.setInput('result', Object.assign({}, result, { assessmentType: AssessmentType.AUTOMATIC, rated: false }));
 
             fixture.detectChanges();
             tick(100);
@@ -471,8 +456,8 @@ describe('ComplaintsStudentViewComponent', () => {
     }));
 
     it('complaint should be possible with long assessment periods', fakeAsync(() => {
-        fixture.componentRef.setInput('exercise', { ...courseExercise, assessmentDueDate: dayjs().subtract(3, 'day') });
-        fixture.componentRef.setInput('result', { ...result, completionDate: dayjs().subtract(complaintTimeLimitDays + 2, 'day') });
+        fixture.componentRef.setInput('exercise', Object.assign({}, courseExercise, { assessmentDueDate: dayjs().subtract(3, 'day') }));
+        fixture.componentRef.setInput('result', Object.assign({}, result, { completionDate: dayjs().subtract(complaintTimeLimitDays + 2, 'day') }));
 
         fixture.detectChanges();
         tick(100);

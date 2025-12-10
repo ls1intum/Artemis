@@ -187,7 +187,7 @@ describe('CodeEditorStudentIntegration', () => {
         expect(getStudentParticipationWithLatestResultStub).toHaveBeenNthCalledWith(1, participation.id);
         expect(container.loadingParticipation).toBeFalse();
         expect(container.participationCouldNotBeFetched).toBeFalse();
-        expect(container.participation).toEqual({ ...participation, submissions: [{ ...submission, results: [result] }] });
+        expect(container.participation).toEqual(Object.assign({}, participation, { submissions: [Object.assign({}, submission, { results: [result] })] }));
     });
 
     // TODO re-enable after remove-gitalb issues are resolved

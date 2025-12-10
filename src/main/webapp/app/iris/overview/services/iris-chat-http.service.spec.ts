@@ -21,8 +21,8 @@ describe('IrisChatHttpService', () => {
 
     describe('Service methods', () => {
         it('should create a message', fakeAsync(() => {
-            const returnedFromService = { ...mockClientMessage, id: 0 };
-            const expected = { ...returnedFromService, id: 0 };
+            const returnedFromService = Object.assign({}, mockClientMessage, { id: 0 });
+            const expected = Object.assign({}, returnedFromService, { id: 0 });
             service
                 .createMessage(2, new IrisUserMessage())
                 .pipe(take(1))
@@ -36,7 +36,7 @@ describe('IrisChatHttpService', () => {
         }));
 
         it('should resend a message', fakeAsync(() => {
-            const returnedFromService = { ...mockClientMessage, id: 0 };
+            const returnedFromService = Object.assign({}, mockClientMessage, { id: 0 });
             const expected = returnedFromService;
             service
                 .resendMessage(mockConversation.id, returnedFromService)
@@ -63,7 +63,7 @@ describe('IrisChatHttpService', () => {
         }));
 
         it('should update message helpful field', fakeAsync(() => {
-            const returnedFromService = { ...mockServerMessage, helpful: true };
+            const returnedFromService = Object.assign({}, mockServerMessage, { helpful: true });
             const expected = returnedFromService;
             service
                 .rateMessage(mockConversation.id, mockServerMessage.id, true)
