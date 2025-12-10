@@ -27,6 +27,9 @@ import de.tum.cit.aet.artemis.hyperion.dto.quiz.AiQuizGenerationResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.quiz.GeneratedQuizQuestionDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.quiz.McOptionDTO;
 
+/**
+ * Service for generating quiz questions using Hyperion.
+ */
 @Service
 @Lazy
 @Conditional(HyperionEnabled.class)
@@ -49,6 +52,17 @@ public class AiQuizGenerationService {
         this.validator = Validation.buildDefaultValidatorFactory().getValidator();
     }
 
+    /**
+     * Generates quiz questions for a given course using Hyperion.
+     * <p>
+     * If an unexpected error occurs, a runtime exception is thrown which is
+     * translated by the REST layer into an HTTP 500 response.
+     * </p>
+     *
+     * @param courseId         the id of the course for which questions are generated
+     * @param generationParams the quiz generation request parameters
+     * @return the AI quiz generation response with the generated questions
+     */
     public AiQuizGenerationResponseDTO generate(long courseId, AiQuizGenerationRequestDTO generationParams) {
         log.debug("Generating quiz for course {}", courseId);
 
