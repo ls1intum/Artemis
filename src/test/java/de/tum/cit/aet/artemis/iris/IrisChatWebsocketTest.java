@@ -4,6 +4,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -13,7 +14,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
+import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
@@ -45,7 +48,12 @@ class IrisChatWebsocketTest extends AbstractIrisIntegrationTest {
 
     @BeforeEach
     void initTestCase() {
-        userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
+        List<User> users = userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
+        for (User user : users) {
+            user.setSelectedLLMUsageTimestamp(ZonedDateTime.now());
+            user.setSelectedLLMUsage(AiSelectionDecision.CLOUD_AI);
+            userTestRepository.save(user);
+        }
 
         final Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
         exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);

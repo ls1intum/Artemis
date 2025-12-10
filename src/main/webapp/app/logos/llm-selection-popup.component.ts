@@ -1,8 +1,9 @@
-import { ChangeDetectorRef, Component, EventEmitter, OnInit, Output, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, OnDestroy, OnInit, Output, inject } from '@angular/core';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { Router } from '@angular/router';
+import { Subscription } from 'rxjs';
 
 export type LLMSelectionChoice = 'cloud' | 'local' | 'no_ai' | 'none';
 
@@ -12,7 +13,7 @@ export type LLMSelectionChoice = 'cloud' | 'local' | 'no_ai' | 'none';
     styleUrls: ['./llm-selection-popup.component.scss'],
     imports: [TranslateDirective],
 })
-export class LLMSelectionModalComponent implements OnInit {
+export class LLMSelectionModalComponent implements OnInit, OnDestroy {
     private modalService = inject(LLMSelectionModalService);
     private cdr = inject(ChangeDetectorRef);
     protected themeService = inject(ThemeService);
@@ -21,12 +22,17 @@ export class LLMSelectionModalComponent implements OnInit {
     @Output() choice = new EventEmitter<LLMSelectionChoice>();
 
     isVisible = false;
+    private modalSubscription?: Subscription;
 
     ngOnInit(): void {
-        this.modalService.openModal$.subscribe(() => {
+        this.modalSubscription = this.modalService.openModal$.subscribe(() => {
             this.open();
-            this.cdr.detectChanges(); // Manuell Change Detection triggern
+            this.cdr.detectChanges(); // Manually trigger change detection
         });
+    }
+
+    ngOnDestroy(): void {
+        this.modalSubscription?.unsubscribe();
     }
 
     open(): void {
@@ -56,9 +62,9 @@ export class LLMSelectionModalComponent implements OnInit {
     }
 
     onBackdropClick(event: MouseEvent): void {
-        this.choice.emit('none');
-        this.modalService.emitChoice('none');
         if (event.target === event.currentTarget) {
+            this.choice.emit('none');
+            this.modalService.emitChoice('none');
             this.close();
         }
     }

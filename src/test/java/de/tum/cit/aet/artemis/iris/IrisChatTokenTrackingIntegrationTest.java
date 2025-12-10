@@ -7,6 +7,7 @@ import static org.awaitility.Awaitility.await;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -24,11 +25,13 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.connector.IrisRequestMockProvider;
+import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.LLMRequest;
 import de.tum.cit.aet.artemis.core.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.core.domain.LLMTokenUsageRequest;
 import de.tum.cit.aet.artemis.core.domain.LLMTokenUsageTrace;
+import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.LLMTokenUsageRequestRepository;
 import de.tum.cit.aet.artemis.core.repository.LLMTokenUsageTraceRepository;
 import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
@@ -81,7 +84,12 @@ class IrisChatTokenTrackingIntegrationTest extends AbstractIrisIntegrationTest {
 
     @BeforeEach
     void initTestCase() throws GitAPIException, IOException, URISyntaxException {
-        userUtilService.addUsers(TEST_PREFIX, 2, 0, 0, 0);
+        List<User> users = userUtilService.addUsers(TEST_PREFIX, 2, 0, 0, 0);
+        for (User user : users) {
+            user.setSelectedLLMUsageTimestamp(ZonedDateTime.now());
+            user.setSelectedLLMUsage(AiSelectionDecision.CLOUD_AI);
+            userTestRepository.save(user);
+        }
         course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         String projectKey = exercise.getProjectKey();

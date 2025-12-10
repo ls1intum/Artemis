@@ -21,7 +21,7 @@
             "featureLocalTwo": "Lower response quality",
             "featureLocalThree": "Slower response times",
             "featureLocalFour": "Processing only in university datacenters",
-            "featureLocalFive": "All data stored on university servers",
+            "featureLocalFive": "All data stored on university datacenters",
             "featureNoOne": "No Iris tutoring support",
             "featureNoTwo": "No automated AI feedback on modeling and text exercises",
             "featureNoThree": "No AI-powered guidance",

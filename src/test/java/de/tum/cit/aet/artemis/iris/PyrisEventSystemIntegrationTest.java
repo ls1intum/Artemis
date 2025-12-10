@@ -13,6 +13,7 @@ import static org.mockito.Mockito.verify;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -28,6 +29,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyJol;
+import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
@@ -87,7 +89,12 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
 
     @BeforeEach
     void initTestCase() throws GitAPIException, IOException, URISyntaxException {
-        userUtilService.addUsers(TEST_PREFIX, 2, 0, 0, 1);
+        List<User> users = userUtilService.addUsers(TEST_PREFIX, 2, 0, 0, 1);
+        for (User user : users) {
+            user.setSelectedLLMUsageTimestamp(ZonedDateTime.now());
+            user.setSelectedLLMUsage(AiSelectionDecision.CLOUD_AI);
+            userTestRepository.save(user);
+        }
 
         var student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         student1.setSelectedLLMUsageTimestamp(ZonedDateTime.now().minusDays(1));
