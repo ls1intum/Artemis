@@ -8,8 +8,6 @@
             "vcsAccessTokenSettings": "VCS Token",
             "passkeys": "Passkeys",
             "accountInformation": "Account Informationen",
-            "externalLLMUsage": "Externe LLM-Nutzung",
-            "internalLLMUsage": "Interne LLM-Nutzung",
             "LLMUsage": "LLM Nutzung",
             "learnerProfile": "Lernprofil",
             "notificationSettings": "Benachrichtigungen",

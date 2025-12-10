@@ -7,8 +7,6 @@
             "sshSettings": "SSH",
             "vcsAccessTokenSettings": "VCS Token",
             "passkeys": "Passkeys",
-            "externalLLMUsage": "External LLM Usage",
-            "internalLLMUsage": "Internal LLM Usage",
             "LLMUsage": "LLM Usage",
             "accountInformation": "Account Information",
             "learnerProfile": "Learner Profile",

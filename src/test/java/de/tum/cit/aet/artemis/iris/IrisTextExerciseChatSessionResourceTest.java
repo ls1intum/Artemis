@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.iris;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -10,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
@@ -37,7 +39,12 @@ class IrisTextExerciseChatSessionResourceTest extends AbstractIrisIntegrationTes
 
     @BeforeEach
     void initTestCase() {
-        userUtilService.addUsers(TEST_PREFIX, 3, 1, 0, 1);
+        List<User> users = userUtilService.addUsers(TEST_PREFIX, 3, 1, 0, 1);
+        for (User user : users) {
+            user.setSelectedLLMUsageTimestamp(ZonedDateTime.now());
+            user.setSelectedLLMUsage(AiSelectionDecision.CLOUD_AI);
+            userTestRepository.save(user);
+        }
 
         course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
         textExercise = (TextExercise) course.getExercises().iterator().next();

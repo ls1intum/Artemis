@@ -229,16 +229,35 @@ describe('LLMSelectionModalComponent', () => {
             expect(closeSpy).not.toHaveBeenCalled();
         });
 
-        it('should still emit choice even when target does not equal currentTarget', () => {
+        it('should NOT emit choice when clicking inside modal content (target !== currentTarget)', () => {
             const choiceSpy = jest.spyOn(component.choice, 'emit');
+            const emitChoiceSpy = jest.spyOn(modalService, 'emitChoice');
+            const closeSpy = jest.spyOn(component, 'close');
+
             const target = document.createElement('div');
             const currentTarget = document.createElement('div');
             const event = { target, currentTarget } as any;
 
             component.onBackdropClick(event);
 
+            expect(choiceSpy).not.toHaveBeenCalled();
+            expect(emitChoiceSpy).not.toHaveBeenCalled();
+            expect(closeSpy).not.toHaveBeenCalled();
+        });
+
+        it('should emit choice and close when clicking backdrop (target === currentTarget)', () => {
+            const choiceSpy = jest.spyOn(component.choice, 'emit');
+            const emitChoiceSpy = jest.spyOn(modalService, 'emitChoice');
+            const closeSpy = jest.spyOn(component, 'close');
+
+            const backdrop = document.createElement('div');
+            const event = { target: backdrop, currentTarget: backdrop } as any;
+
+            component.onBackdropClick(event);
+
             expect(choiceSpy).toHaveBeenCalledWith('none');
-            expect(modalService.emitChoice).toHaveBeenCalledWith('none');
+            expect(emitChoiceSpy).toHaveBeenCalledWith('none');
+            expect(closeSpy).toHaveBeenCalled();
         });
     });
 

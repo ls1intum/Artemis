@@ -1,5 +1,5 @@
 @if (!isExamExercise && requestFeedbackEnabled) {
-    @if (athenaEnabled) {
+    @if (athenaEnabled && hasUserAcceptedLLMUsage) {
         @if (exercise().type === ExerciseType.TEXT || exercise().type === ExerciseType.MODELING) {
             <button
                 class="btn btn-primary"

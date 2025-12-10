@@ -8,8 +8,7 @@ import { RouterModule } from '@angular/router';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { tap } from 'rxjs';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { ExternalDataGuard } from 'app/core/user/settings/external-data.guard';
-import { InternalDataGuard } from 'app/core/user/settings/internal-data.guard';
+import { DataGuard } from 'app/core/user/settings/data-guard.service';
 
 /**
  * UserSettingsContainerComponent serves as the common ground for different settings
@@ -25,8 +24,7 @@ export class UserSettingsContainerComponent implements OnInit {
 
     private readonly profileService = inject(ProfileService);
     private readonly accountService = inject(AccountService);
-    private readonly externalDataGuard = inject(ExternalDataGuard);
-    private readonly internalDataGuard = inject(InternalDataGuard);
+    private readonly dataGuard = inject(DataGuard);
 
     currentUser?: User;
 
@@ -38,10 +36,7 @@ export class UserSettingsContainerComponent implements OnInit {
     ngOnInit() {
         this.isPasskeyEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_PASSKEY);
 
-        this.isUsingExternalLLM = this.externalDataGuard.isUsingExternalLLM();
-
-        this.isUsingInternalLLM = this.internalDataGuard.isUsingInternalLLM();
-
+        this.isUsingExternalLLM = this.dataGuard.isUsingLLM();
         this.accountService
             .getAuthenticationState()
             .pipe(

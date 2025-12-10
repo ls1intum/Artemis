@@ -23,7 +23,9 @@ import org.springframework.security.test.context.support.WithMockUser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.iris.AbstractIrisIntegrationTest;
@@ -98,7 +100,12 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
 
     @BeforeEach
     void initTestCase() throws JsonProcessingException {
-        userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 1);
+        List<User> users = userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 1);
+        for (User user : users) {
+            user.setSelectedLLMUsageTimestamp(ZonedDateTime.now());
+            user.setSelectedLLMUsage(AiSelectionDecision.CLOUD_AI);
+            userTestRepository.save(user);
+        }
         course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         var projectKey1 = programmingExercise.getProjectKey();

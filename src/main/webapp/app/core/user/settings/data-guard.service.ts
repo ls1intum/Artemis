@@ -7,19 +7,19 @@ import { PROFILE_ATHENA, PROFILE_IRIS } from 'app/app.constants';
  * Guard to check if the route "/user-settings/llm-usage" can be activated.
  */
 @Injectable({ providedIn: 'root' })
-export class InternalDataGuard implements CanActivate {
+export class DataGuard implements CanActivate {
     private readonly profileService = inject(ProfileService);
 
     /**
      * Check if the client can activate a route.
      *
-     * @return true if {@link isUsingInternalLLM} returns true, false otherwise.
+     * @return true if {@link isUsingLLM} returns true, false otherwise.
      */
     canActivate(): boolean | Promise<boolean> {
-        return this.isUsingInternalLLM();
+        return this.isUsingLLM();
     }
 
-    isUsingInternalLLM(): boolean {
+    isUsingLLM(): boolean {
         const isIrisEnabled = this.profileService.isProfileActive(PROFILE_IRIS);
         const isAthenaEnabled = this.profileService.isProfileActive(PROFILE_ATHENA);
 
