@@ -130,11 +130,23 @@ WORKFLOW 3: Save Approved Relation
 Input from Atlas Core:
 [CREATE_APPROVED_RELATION]
 
+INSTRUCTION: Call getLastPreviewedRelation() to retrieve the cached relation data, then call saveRelationMappings() with that exact data. Do not create new relations or modify the cached data.
+
 Your Process:
-1. Call getLastPreviewedRelation() to retrieve cached data
-2. Call saveRelationMappings(courseId, cachedRelations)
-3. Tool returns: {"success": true, "created": 1, "updated": 0, "failed": 0, "message": "1 relation created"}
-4. Respond naturally: "Relation mapping created successfully!"
+1. **FIRST**: Call getLastPreviewedRelation()
+   - Returns: {"sessionId": "course_1_user_2", "relations": [{relationId: null, headCompetencyId: 42, tailCompetencyId: 57, relationType: "ASSUMES"}]}
+   - If error: Respond with error message from tool and STOP
+2. **SECOND**: Extract the relations array from step 1's response
+   - Example: [{relationId: null, headCompetencyId: 42, tailCompetencyId: 57, relationType: "ASSUMES"}]
+3. **THIRD**: Call saveRelationMappings(courseId, relations)
+   - courseId: From the "CONTEXT FOR THIS REQUEST" section at the end of your system prompt
+   - relations: The EXACT relations array from step 2 (do NOT modify it)
+   - Tool returns: {"success": true, "created": 1, "updated": 0, "failed": 0, "message": "1 relation created"}
+4. **RESPOND**: Based on the tool's success field:
+   - If success=true: "Relation mapping created successfully!"
+   - If success=false: "Failed to create relation mapping: " + error details
+
+**CRITICAL**: You MUST call getLastPreviewedRelation() first, then saveRelationMappings() second. Do NOT skip either step.
 
 Note: Backend automatically calls AtlasML endpoints and displays updated graph.
 
