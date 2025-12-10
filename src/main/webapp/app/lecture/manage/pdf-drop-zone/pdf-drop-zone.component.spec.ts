@@ -1,7 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { PdfDropZoneComponent } from './pdf-drop-zone.component';
-import { MockPipe } from 'ng-mocks';
+import { MockDirective, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 describe('PdfDropZoneComponent', () => {
     let component: PdfDropZoneComponent;
@@ -9,8 +10,13 @@ describe('PdfDropZoneComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [PdfDropZoneComponent, MockPipe(ArtemisTranslatePipe)],
-        }).compileComponents();
+            imports: [PdfDropZoneComponent],
+        })
+            .overrideComponent(PdfDropZoneComponent, {
+                remove: { imports: [TranslateDirective, ArtemisTranslatePipe] },
+                add: { imports: [MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe)] },
+            })
+            .compileComponents();
 
         fixture = TestBed.createComponent(PdfDropZoneComponent);
         component = fixture.componentInstance;
@@ -23,34 +29,45 @@ describe('PdfDropZoneComponent', () => {
 
     describe('drag and drop', () => {
         it('should set isDragOver to true on dragover', () => {
-            const event = new DragEvent('dragover');
-            Object.defineProperty(event, 'preventDefault', { value: jest.fn() });
-            Object.defineProperty(event, 'stopPropagation', { value: jest.fn() });
+            const event = {
+                preventDefault: jest.fn(),
+                stopPropagation: jest.fn(),
+            } as unknown as DragEvent;
 
             component.onDragOver(event);
 
             expect(component.isDragOver()).toBeTrue();
+            expect(event.preventDefault).toHaveBeenCalled();
+            expect(event.stopPropagation).toHaveBeenCalled();
         });
 
         it('should set isDragOver to false on dragleave', () => {
             component.isDragOver.set(true);
-            const event = new DragEvent('dragleave');
-            Object.defineProperty(event, 'preventDefault', { value: jest.fn() });
-            Object.defineProperty(event, 'stopPropagation', { value: jest.fn() });
+            const event = {
+                preventDefault: jest.fn(),
+                stopPropagation: jest.fn(),
+            } as unknown as DragEvent;
 
             component.onDragLeave(event);
 
             expect(component.isDragOver()).toBeFalse();
+            expect(event.preventDefault).toHaveBeenCalled();
+            expect(event.stopPropagation).toHaveBeenCalled();
         });
 
         it('should emit PDF files on drop', () => {
             const pdfFile = new File(['content'], 'test.pdf', { type: 'application/pdf' });
-            const dataTransfer = new DataTransfer();
-            dataTransfer.items.add(pdfFile);
+            const mockFileList = {
+                length: 1,
+                0: pdfFile,
+                item: (index: number) => (index === 0 ? pdfFile : null),
+            } as FileList;
 
-            const event = new DragEvent('drop', { dataTransfer });
-            Object.defineProperty(event, 'preventDefault', { value: jest.fn() });
-            Object.defineProperty(event, 'stopPropagation', { value: jest.fn() });
+            const event = {
+                preventDefault: jest.fn(),
+                stopPropagation: jest.fn(),
+                dataTransfer: { files: mockFileList },
+            } as unknown as DragEvent;
 
             const emitSpy = jest.spyOn(component.filesDropped, 'emit');
 
@@ -63,13 +80,22 @@ describe('PdfDropZoneComponent', () => {
         it('should filter out non-PDF files on drop', () => {
             const pdfFile = new File(['content'], 'test.pdf', { type: 'application/pdf' });
             const txtFile = new File(['content'], 'test.txt', { type: 'text/plain' });
-            const dataTransfer = new DataTransfer();
-            dataTransfer.items.add(pdfFile);
-            dataTransfer.items.add(txtFile);
+            const mockFileList = {
+                length: 2,
+                0: pdfFile,
+                1: txtFile,
+                item: (index: number) => {
+                    if (index === 0) return pdfFile;
+                    if (index === 1) return txtFile;
+                    return null;
+                },
+            } as FileList;
 
-            const event = new DragEvent('drop', { dataTransfer });
-            Object.defineProperty(event, 'preventDefault', { value: jest.fn() });
-            Object.defineProperty(event, 'stopPropagation', { value: jest.fn() });
+            const event = {
+                preventDefault: jest.fn(),
+                stopPropagation: jest.fn(),
+                dataTransfer: { files: mockFileList },
+            } as unknown as DragEvent;
 
             const emitSpy = jest.spyOn(component.filesDropped, 'emit');
 
@@ -80,12 +106,17 @@ describe('PdfDropZoneComponent', () => {
 
         it('should not emit if no PDF files are dropped', () => {
             const txtFile = new File(['content'], 'test.txt', { type: 'text/plain' });
-            const dataTransfer = new DataTransfer();
-            dataTransfer.items.add(txtFile);
+            const mockFileList = {
+                length: 1,
+                0: txtFile,
+                item: (index: number) => (index === 0 ? txtFile : null),
+            } as FileList;
 
-            const event = new DragEvent('drop', { dataTransfer });
-            Object.defineProperty(event, 'preventDefault', { value: jest.fn() });
-            Object.defineProperty(event, 'stopPropagation', { value: jest.fn() });
+            const event = {
+                preventDefault: jest.fn(),
+                stopPropagation: jest.fn(),
+                dataTransfer: { files: mockFileList },
+            } as unknown as DragEvent;
 
             const emitSpy = jest.spyOn(component.filesDropped, 'emit');
 
@@ -96,12 +127,17 @@ describe('PdfDropZoneComponent', () => {
 
         it('should accept files with .pdf extension regardless of mime type', () => {
             const pdfFile = new File(['content'], 'document.PDF', { type: '' });
-            const dataTransfer = new DataTransfer();
-            dataTransfer.items.add(pdfFile);
+            const mockFileList = {
+                length: 1,
+                0: pdfFile,
+                item: (index: number) => (index === 0 ? pdfFile : null),
+            } as FileList;
 
-            const event = new DragEvent('drop', { dataTransfer });
-            Object.defineProperty(event, 'preventDefault', { value: jest.fn() });
-            Object.defineProperty(event, 'stopPropagation', { value: jest.fn() });
+            const event = {
+                preventDefault: jest.fn(),
+                stopPropagation: jest.fn(),
+                dataTransfer: { files: mockFileList },
+            } as unknown as DragEvent;
 
             const emitSpy = jest.spyOn(component.filesDropped, 'emit');
 
@@ -109,17 +145,35 @@ describe('PdfDropZoneComponent', () => {
 
             expect(emitSpy).toHaveBeenCalledWith([pdfFile]);
         });
+
+        it('should handle drop with no dataTransfer', () => {
+            const event = {
+                preventDefault: jest.fn(),
+                stopPropagation: jest.fn(),
+                dataTransfer: null,
+            } as unknown as DragEvent;
+
+            const emitSpy = jest.spyOn(component.filesDropped, 'emit');
+
+            component.onDrop(event);
+
+            expect(emitSpy).not.toHaveBeenCalled();
+        });
     });
 
     describe('file input', () => {
         it('should emit PDF files from file input', () => {
             const pdfFile = new File(['content'], 'test.pdf', { type: 'application/pdf' });
-            const input = document.createElement('input');
-            input.type = 'file';
+            const mockFileList = {
+                length: 1,
+                0: pdfFile,
+                item: (index: number) => (index === 0 ? pdfFile : null),
+            } as FileList;
 
-            const dataTransfer = new DataTransfer();
-            dataTransfer.items.add(pdfFile);
-            input.files = dataTransfer.files;
+            const input = {
+                files: mockFileList,
+                value: 'C:\\fakepath\\test.pdf',
+            };
 
             const event = { target: input } as unknown as Event;
             const emitSpy = jest.spyOn(component.filesDropped, 'emit');
@@ -139,6 +193,20 @@ describe('PdfDropZoneComponent', () => {
 
             expect(clickSpy).toHaveBeenCalled();
         });
+
+        it('should handle file input with no files', () => {
+            const input = {
+                files: null,
+                value: '',
+            };
+
+            const event = { target: input } as unknown as Event;
+            const emitSpy = jest.spyOn(component.filesDropped, 'emit');
+
+            component.onFileInputChange(event);
+
+            expect(emitSpy).not.toHaveBeenCalled();
+        });
     });
 
     describe('multiple files', () => {
@@ -146,14 +214,24 @@ describe('PdfDropZoneComponent', () => {
             const pdfFile1 = new File(['content1'], 'test1.pdf', { type: 'application/pdf' });
             const pdfFile2 = new File(['content2'], 'test2.pdf', { type: 'application/pdf' });
             const pdfFile3 = new File(['content3'], 'test3.pdf', { type: 'application/pdf' });
-            const dataTransfer = new DataTransfer();
-            dataTransfer.items.add(pdfFile1);
-            dataTransfer.items.add(pdfFile2);
-            dataTransfer.items.add(pdfFile3);
+            const mockFileList = {
+                length: 3,
+                0: pdfFile1,
+                1: pdfFile2,
+                2: pdfFile3,
+                item: (index: number) => {
+                    if (index === 0) return pdfFile1;
+                    if (index === 1) return pdfFile2;
+                    if (index === 2) return pdfFile3;
+                    return null;
+                },
+            } as FileList;
 
-            const event = new DragEvent('drop', { dataTransfer });
-            Object.defineProperty(event, 'preventDefault', { value: jest.fn() });
-            Object.defineProperty(event, 'stopPropagation', { value: jest.fn() });
+            const event = {
+                preventDefault: jest.fn(),
+                stopPropagation: jest.fn(),
+                dataTransfer: { files: mockFileList },
+            } as unknown as DragEvent;
 
             const emitSpy = jest.spyOn(component.filesDropped, 'emit');
 
