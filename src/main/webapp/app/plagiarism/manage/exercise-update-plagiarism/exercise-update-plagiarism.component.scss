@@ -17,8 +17,7 @@
     line-height: 1.1;
 }
 
-fa-icon,
-:host ::ng-deep fa-icon {
+.label-row fa-icon {
     display: inline-flex;
     flex: 0 0 auto;
     vertical-align: middle;
