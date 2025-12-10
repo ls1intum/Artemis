@@ -475,17 +475,23 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
         this.assessments.forEach((feedback) => {
             feedback.correctionStatus = 'CORRECT';
         });
-        this.assessmentEditor.resultFeedbacks = this.referencedFeedback;
+        // reassign to trigger change detection
+        this.referencedFeedback = [...this.referencedFeedback];
+        this.unreferencedFeedback = [...this.unreferencedFeedback];
     }
 
     markWrongFeedback(correctionErrors: FeedbackCorrectionError[]) {
         correctionErrors.forEach((correctionError) => {
             const validatedFeedback = this.assessments.find((feedback) => feedback.reference === correctionError.reference);
-            if (validatedFeedback != undefined) {
+            if (validatedFeedback) {
                 validatedFeedback.correctionStatus = correctionError.type;
             }
         });
-        this.assessmentEditor.resultFeedbacks = this.referencedFeedback;
+
+        // we reassign to trigger change detection
+        this.referencedFeedback = [...this.referencedFeedback];
+        this.unreferencedFeedback = [...this.unreferencedFeedback];
+
         this.highlightMissedFeedback();
     }
 

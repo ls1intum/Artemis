@@ -380,14 +380,12 @@ describe('Example Modeling Submission Component', () => {
         // WHEN
         comp.showAssessment();
         fixture.detectChanges();
-        const resultFeedbacksSetterSpy = jest.spyOn(comp.assessmentEditor, 'resultFeedbacks', 'set');
         comp.markAllFeedbackToCorrect();
         fixture.detectChanges();
 
         // THEN
         expect(comp.referencedFeedback.every((feedback) => feedback.correctionStatus === 'CORRECT')).toBeTrue();
-        expect(resultFeedbacksSetterSpy).toHaveBeenCalledOnce();
-        expect(resultFeedbacksSetterSpy).toHaveBeenCalledWith(comp.referencedFeedback);
+        expect(comp.assessmentEditor.resultFeedbacks()).toEqual(comp.referencedFeedback);
     });
 
     it('should mark all feedback wrong', () => {
@@ -400,13 +398,12 @@ describe('Example Modeling Submission Component', () => {
         // WHEN
         comp.showAssessment();
         fixture.detectChanges();
-        const resultFeedbacksSetterSpy = jest.spyOn(comp.assessmentEditor, 'resultFeedbacks', 'set');
+
         comp.markWrongFeedback([mockFeedbackCorrectionError]);
         fixture.detectChanges();
         // THEN
         expect(comp.referencedFeedback[0].correctionStatus).toBe(mockFeedbackCorrectionError.type);
-        expect(resultFeedbacksSetterSpy).toHaveBeenCalledOnce();
-        expect(resultFeedbacksSetterSpy).toHaveBeenCalledWith(comp.referencedFeedback);
+        expect(comp.assessmentEditor.resultFeedbacks()).toEqual(comp.referencedFeedback);
     });
 
     it('should create success alert on example assessment update', () => {
