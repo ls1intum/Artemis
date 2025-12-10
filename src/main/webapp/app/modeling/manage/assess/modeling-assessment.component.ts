@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, EventEmitter, OnChanges, OnDestroy, Output, SimpleChanges, effect, inject, input } from '@angular/core';
+import { AfterViewInit, Component, OnChanges, OnDestroy, SimpleChanges, effect, inject, input, output } from '@angular/core';
 import { ApollonEditor, ApollonMode, Assessment, Selection, UMLDiagramType, UMLElementType, UMLModel, UMLRelationshipType, addOrUpdateAssessment } from '@ls1intum/apollon';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { ModelElementCount } from 'app/modeling/shared/entities/modeling-submission.model';
@@ -36,8 +36,8 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
     readonly highlightDifferences = input<boolean | undefined>(undefined);
     readonly resultFeedbacks = input<Feedback[] | undefined>(undefined);
 
-    @Output() feedbackChanged = new EventEmitter<Feedback[]>();
-    @Output() selectionChanged = new EventEmitter<Selection>();
+    feedbackChanged = output<Feedback[]>();
+    selectionChanged = output<Selection>();
 
     readonly highlightedElements = input<Map<string, string> | undefined>(undefined); // map elementId -> highlight color
     readonly elementCounts = input<ModelElementCount[]>();
