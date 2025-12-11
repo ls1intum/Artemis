@@ -13,7 +13,7 @@ import { Exam } from 'app/exam/shared/entities/exam.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { getExerciseDueDate } from 'app/exercise/util/exercise.utils';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
-import { Exercise, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { AccordionGroups, ChannelGroupCategory, SidebarCardElement, TimeGroupCategory } from 'app/shared/types/sidebar';
@@ -121,6 +121,21 @@ export class CourseOverviewService {
 
     getCorrespondingExerciseGroupByDate(exercise: Exercise): TimeGroupCategory {
         const now = dayjs();
+
+        if (exercise.type === ExerciseType.QUIZ) {
+            const isReleaseDateToday = exercise.releaseDate?.isSame(now, 'day');
+            const isStartDateToday = exercise.startDate?.isSame(now, 'day');
+            const isDueDateToday = exercise.dueDate?.isSame(now, 'day');
+
+            const isBetweenReleaseAndDue = exercise.releaseDate && exercise.dueDate ? now.isBetween(exercise.releaseDate, exercise.dueDate, undefined, '[]') : false;
+
+            const isBetweenStartAndDue = exercise.startDate && exercise.dueDate ? now.isBetween(exercise.startDate, exercise.dueDate, undefined, '[]') : false;
+            const isReleasedWithNoDueDate = exercise.releaseDate && !exercise.dueDate && exercise.releaseDate.isBefore(now);
+
+            if (isReleaseDateToday || isStartDateToday || isDueDateToday || isBetweenReleaseAndDue || isBetweenStartAndDue || isReleasedWithNoDueDate) {
+                return 'current';
+            }
+        }
 
         const startGroup = this.getStartDateGroup(exercise, now);
         const endGroup = this.getEndDateGroup(exercise, now);
@@ -241,7 +256,13 @@ export class CourseOverviewService {
     }
 
     groupConversationsByChannelType(course: Course, conversations: ConversationDTO[], messagingEnabled: boolean): AccordionGroups {
-        const channelGroups = messagingEnabled ? { ...DEFAULT_CHANNEL_GROUPS, groupChats: { entityData: [] }, directMessages: { entityData: [] } } : DEFAULT_CHANNEL_GROUPS;
+        const channelGroups = messagingEnabled
+            ? {
+                  ...DEFAULT_CHANNEL_GROUPS,
+                  groupChats: { entityData: [] },
+                  directMessages: { entityData: [] },
+              }
+            : DEFAULT_CHANNEL_GROUPS;
         const groupedConversationGroups = cloneDeep(channelGroups) as AccordionGroups;
 
         groupedConversationGroups.savedPosts = {
@@ -531,6 +552,7 @@ export class CourseOverviewService {
             return dueDateB - dueDateA !== 0 ? dueDateB - dueDateA : this.sortByTitle(a, b);
         });
     }
+
     studentParticipation(exercise: Exercise): StudentParticipation | undefined {
         return exercise.studentParticipations?.length ? exercise.studentParticipations[0] : undefined;
     }
