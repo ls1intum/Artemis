@@ -14,11 +14,11 @@ import { AssessmentInstructionsComponent } from '../assessment-instructions/asse
     imports: [FaIconComponent, TranslateDirective, AssessmentInstructionsComponent],
 })
 export class CollapsableAssessmentInstructionsComponent implements AfterViewInit {
-    isAssessmentTraining = input(false);
-    showAssessmentInstructions = input(true);
-    exercise = input.required<Exercise>();
-    collapsed = model(false);
-    readOnly = input.required<boolean>();
+    readonly isAssessmentTraining = input(false);
+    readonly showAssessmentInstructions = input(true);
+    readonly exercise = input.required<Exercise>();
+    readonly collapsed = model(false);
+    readonly readOnly = input.required<boolean>();
 
     // Icons
     faChevronRight = faChevronRight;
