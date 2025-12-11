@@ -85,7 +85,7 @@ describe('CourseRequestsComponent', () => {
     });
 
     describe('load', () => {
-        it('should set loading to true while fetching', () => {
+        it('should set loading to false after fetching', () => {
             component.load();
 
             expect(component.loading).toBeFalse();
