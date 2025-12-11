@@ -83,26 +83,39 @@ The output is a markdown table compatible with GitHub PR descriptions:
 ```markdown
 #### Client
 
-| Class/File | Line Coverage | Confirmation (expect) |
-|------------|--------------:|---------------------:|
-| course.service.ts | 95.2% | ✅ ❌ |
-| course.component.ts | 87.3% | ✅ ❌ |
+| Class/File | Line Coverage | Lines | Expects | Ratio |
+|------------|-------------:|------:|--------:|------:|
+| course.service.ts | 95.2% | 120 | 15 | 12.5 |
+| course.component.ts | 87.3% | 85 | 8 | 9.4 |
 
 #### Server
 
-| Class/File | Line Coverage | Confirmation (assert) |
-|------------|--------------:|---------------------:|
-| CourseService.java | 91.5% | ✅ |
-| CourseResource.java | 88.2% | ✅ ❌ |
+| Class/File | Line Coverage | Lines |
+|------------|-------------:|------:|
+| CourseService.java | 91.5% | 200 |
+| CourseResource.java | 88.2% | 150 |
 ```
 
-### Confirmation Column
+### Column Descriptions
 
-- `✅`: Coverage is 100%
-- `✅ ❌`: Coverage is 80-99% (needs manual verification)
-- `❌`: Coverage not found or below 80%
+**Client columns:**
+- **Line Coverage**: Percentage of source lines executed by tests
+- **Lines**: Number of non-empty, non-comment lines in the source file
+- **Expects**: Number of `expect()` calls in the corresponding `.spec.ts` file
+- **Ratio**: Expects per 100 lines of source code (higher = more thorough testing)
 
-**Note**: The confirmation column needs manual adjustment - verify that tests include proper assertions, not just execution coverage.
+**Server columns:**
+- **Line Coverage**: Percentage of source lines executed by tests
+- **Lines**: Number of non-empty, non-comment lines in the source file
+
+### Interpreting Client Ratio
+
+The ratio helps identify under-tested client files:
+- A file with high coverage but low ratio may just be "executed" without proper verification
+- Example: 95% coverage with ratio 2.0 (2 expects per 100 lines) is suspicious
+- Example: 85% coverage with ratio 15.0 (15 expects per 100 lines) indicates thorough testing
+
+**Note**: Server tests often use integration tests that cover multiple classes, making assertion attribution unreliable. Manual review of test quality is recommended for server code.
 
 ## Excluded Files
 

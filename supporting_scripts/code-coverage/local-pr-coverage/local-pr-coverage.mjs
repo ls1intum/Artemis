@@ -57,12 +57,24 @@ function parseArgs() {
     for (let i = 0; i < args.length; i++) {
         switch (args[i]) {
             case '--base-branch':
+                if (i + 1 >= args.length) {
+                    console.error('Error: --base-branch requires a value');
+                    process.exit(1);
+                }
                 options.baseBranch = args[++i];
                 break;
             case '--client-modules':
+                if (i + 1 >= args.length) {
+                    console.error('Error: --client-modules requires a comma-separated list of modules');
+                    process.exit(1);
+                }
                 options.clientModules = args[++i].split(',').map((m) => m.trim());
                 break;
             case '--server-modules':
+                if (i + 1 >= args.length) {
+                    console.error('Error: --server-modules requires a comma-separated list of modules');
+                    process.exit(1);
+                }
                 options.serverModules = args[++i].split(',').map((m) => m.trim());
                 break;
             case '--skip-tests':
@@ -440,6 +452,246 @@ function getServerFileCoverage(filePath, moduleName) {
 }
 
 /**
+ * Get line count of a source file (excluding empty lines and comments)
+ */
+function getSourceFileLineCount(absolutePath) {
+    try {
+        if (!fs.existsSync(absolutePath)) {
+            return null;
+        }
+        const content = fs.readFileSync(absolutePath, 'utf-8');
+        const lines = content.split('\n');
+        // Count non-empty, non-comment lines
+        let count = 0;
+        let inBlockComment = false;
+        for (const line of lines) {
+            const trimmed = line.trim();
+            if (inBlockComment) {
+                if (trimmed.includes('*/')) {
+                    inBlockComment = false;
+                }
+                continue;
+            }
+            if (trimmed.startsWith('/*')) {
+                inBlockComment = true;
+                continue;
+            }
+            if (trimmed === '' || trimmed.startsWith('//') || trimmed.startsWith('*')) {
+                continue;
+            }
+            count++;
+        }
+        return count;
+    } catch {
+        return null;
+    }
+}
+
+/**
+ * Count expect() calls in a client test file
+ */
+function countClientExpects(sourceFilePath) {
+    // Convert source file path to spec file path
+    const specFilePath = sourceFilePath.replace('.ts', '.spec.ts');
+    const absolutePath = path.join(PROJECT_ROOT, 'src/main/webapp/app', specFilePath);
+
+    try {
+        if (!fs.existsSync(absolutePath)) {
+            return null;
+        }
+        const content = fs.readFileSync(absolutePath, 'utf-8');
+        // Count expect( calls - the standard Jest/Jasmine assertion
+        const matches = content.match(/expect\s*\(/g);
+        return matches ? matches.length : 0;
+    } catch {
+        return null;
+    }
+}
+
+/**
+ * Count assertions in a test file content
+ */
+function countAssertionsInContent(content) {
+    const assertThatMatches = content.match(/assertThat\s*\(/g) || [];
+    const assertEqualsMatches = content.match(/assertEquals\s*\(/g) || [];
+    const assertTrueMatches = content.match(/assertTrue\s*\(/g) || [];
+    const assertFalseMatches = content.match(/assertFalse\s*\(/g) || [];
+    const assertNullMatches = content.match(/assertNull\s*\(/g) || [];
+    const assertNotNullMatches = content.match(/assertNotNull\s*\(/g) || [];
+    const assertThrowsMatches = content.match(/assertThrows\s*\(/g) || [];
+    const verifyMatches = content.match(/verify\s*\(/g) || [];
+
+    return (
+        assertThatMatches.length +
+        assertEqualsMatches.length +
+        assertTrueMatches.length +
+        assertFalseMatches.length +
+        assertNullMatches.length +
+        assertNotNullMatches.length +
+        assertThrowsMatches.length +
+        verifyMatches.length
+    );
+}
+
+/**
+ * Count assert calls in server test files for a given source file
+ */
+function countServerAsserts(sourceFilePath) {
+    // e.g., de/tum/cit/aet/artemis/core/web/admin/AdminCourseResource.java
+    const fileName = sourceFilePath.split('/').pop().replace('.java', '');
+
+    // Extract the base name without common suffixes for broader matching
+    // e.g., AdminCourseResource -> Course, CourseRepository -> Course, CourseService -> Course
+    let baseName = fileName
+        .replace(/^Admin/, '') // AdminCourseResource -> CourseResource
+        .replace(/Repository$/, '')
+        .replace(/Service$/, '')
+        .replace(/Resource$/, '')
+        .replace(/DTO$/, '')
+        .replace(/Controller$/, '');
+
+    // Also try the direct class name
+    const directName = fileName;
+
+    // Build search patterns - look for test files that might test this class
+    // 1. Direct match: CourseRequestService -> CourseRequestServiceTest, CourseRequestServiceIntegrationTest
+    // 2. Base name match: CourseRepository -> CourseIntegrationTest, CourseTest
+    // 3. Entity tests: Course.java -> CourseTest, CourseIntegrationTest
+    const testPatterns = new Set([
+        // Direct patterns
+        `${directName}Test.java`,
+        `${directName}IntegrationTest.java`,
+        `${directName}UnitTest.java`,
+        // Base name patterns (for repositories, services tested via integration tests)
+        `${baseName}Test.java`,
+        `${baseName}IntegrationTest.java`,
+        `${baseName}UnitTest.java`,
+    ]);
+
+    let totalAsserts = 0;
+    let foundTestFile = false;
+    const processedFiles = new Set();
+
+    const testDir = path.join(PROJECT_ROOT, 'src/test/java');
+
+    for (const pattern of testPatterns) {
+        const testFiles = findFilesRecursively(testDir, pattern);
+
+        for (const testFile of testFiles) {
+            // Avoid counting the same file twice
+            if (processedFiles.has(testFile)) {
+                continue;
+            }
+            processedFiles.add(testFile);
+
+            try {
+                const content = fs.readFileSync(testFile, 'utf-8');
+
+                // Check if this test file actually references the class we're looking for
+                // This avoids false matches (e.g., CourseTest matching for DiscourseService)
+                const classNamePattern = new RegExp(`\\b${directName}\\b`);
+                if (!classNamePattern.test(content)) {
+                    continue;
+                }
+
+                foundTestFile = true;
+                totalAsserts += countAssertionsInContent(content);
+            } catch {
+                // Continue
+            }
+        }
+    }
+
+    // If no direct test file found, try to find any test file that imports/uses this class
+    if (!foundTestFile) {
+        const allTestFiles = findTestFilesInModule(sourceFilePath);
+        for (const testFile of allTestFiles) {
+            if (processedFiles.has(testFile)) {
+                continue;
+            }
+
+            try {
+                const content = fs.readFileSync(testFile, 'utf-8');
+
+                // Check if this test imports or references our class
+                const importPattern = new RegExp(`import.*\\.${directName};`);
+                const usagePattern = new RegExp(`\\b${directName}\\b`);
+
+                if (importPattern.test(content) || usagePattern.test(content)) {
+                    processedFiles.add(testFile);
+                    foundTestFile = true;
+                    totalAsserts += countAssertionsInContent(content);
+                }
+            } catch {
+                // Continue
+            }
+        }
+    }
+
+    return foundTestFile ? totalAsserts : null;
+}
+
+/**
+ * Find all test files in the same module as the source file
+ */
+function findTestFilesInModule(sourceFilePath) {
+    // e.g., de/tum/cit/aet/artemis/core/repository/CourseRepository.java
+    // -> Look in src/test/java/de/tum/cit/aet/artemis/core/
+    const parts = sourceFilePath.split('/');
+    const artemisIndex = parts.indexOf('artemis');
+    if (artemisIndex === -1 || artemisIndex + 1 >= parts.length) {
+        return [];
+    }
+
+    const moduleName = parts[artemisIndex + 1]; // e.g., 'core'
+    const moduleTestDir = path.join(PROJECT_ROOT, 'src/test/java/de/tum/cit/aet/artemis', moduleName);
+
+    return findAllJavaTestFiles(moduleTestDir);
+}
+
+/**
+ * Find all Java test files in a directory
+ */
+function findAllJavaTestFiles(dir) {
+    const results = [];
+    try {
+        const entries = fs.readdirSync(dir, { withFileTypes: true });
+        for (const entry of entries) {
+            const fullPath = path.join(dir, entry.name);
+            if (entry.isDirectory()) {
+                results.push(...findAllJavaTestFiles(fullPath));
+            } else if (entry.name.endsWith('Test.java') || entry.name.endsWith('IntegrationTest.java')) {
+                results.push(fullPath);
+            }
+        }
+    } catch {
+        // Directory doesn't exist or not accessible
+    }
+    return results;
+}
+
+/**
+ * Recursively find files matching a pattern
+ */
+function findFilesRecursively(dir, fileName) {
+    const results = [];
+    try {
+        const entries = fs.readdirSync(dir, { withFileTypes: true });
+        for (const entry of entries) {
+            const fullPath = path.join(dir, entry.name);
+            if (entry.isDirectory()) {
+                results.push(...findFilesRecursively(fullPath, fileName));
+            } else if (entry.name === fileName) {
+                results.push(fullPath);
+            }
+        }
+    } catch {
+        // Directory doesn't exist or not accessible
+    }
+    return results;
+}
+
+/**
  * Build coverage table for client files
  */
 function buildClientCoverageTable(clientFiles, options) {
@@ -468,23 +720,22 @@ function buildClientCoverageTable(clientFiles, options) {
         }
 
         const coverage = getClientFileCoverage(filePath, coverageSummary);
-        let confirmation = '✅ ❌';
+        const absoluteSourcePath = path.join(PROJECT_ROOT, 'src/main/webapp/app', filePath);
+        const lineCount = getSourceFileLineCount(absoluteSourcePath);
+        const expectCount = countClientExpects(filePath);
 
-        if (coverage) {
-            const pct = parseFloat(coverage);
-            if (pct >= 100) {
-                confirmation = '✅';
-            } else if (pct >= 80) {
-                confirmation = '✅ ❌';
-            }
-        } else {
-            confirmation = '❌';
+        // Calculate ratio: expects per 100 lines of source code
+        let ratio = null;
+        if (lineCount && lineCount > 0 && expectCount !== null) {
+            ratio = (expectCount / lineCount) * 100;
         }
 
         rows.push({
             file: fileName,
             coverage: coverage || `not found (${changeType})`,
-            confirmation,
+            lineCount: lineCount !== null ? lineCount : '?',
+            expectCount: expectCount !== null ? expectCount : '?',
+            ratio: ratio !== null ? ratio.toFixed(1) : '?',
         });
     }
 
@@ -492,10 +743,10 @@ function buildClientCoverageTable(clientFiles, options) {
         return null;
     }
 
-    let table = '| Class/File | Line Coverage | Confirmation (expect) |\n';
-    table += '|------------|--------------:|---------------------:|\n';
+    let table = '| Class/File | Line Coverage | Lines | Expects | Ratio |\n';
+    table += '|------------|-------------:|------:|--------:|------:|\n';
     for (const row of rows) {
-        table += `| ${row.file} | ${row.coverage} | ${row.confirmation} |\n`;
+        table += `| ${row.file} | ${row.coverage} | ${row.lineCount} | ${row.expectCount} | ${row.ratio} |\n`;
     }
 
     return table;
@@ -518,23 +769,13 @@ function buildServerCoverageTable(serverFiles, serverModules, options) {
         const moduleName = afterArtemis.split('/')[0];
 
         const coverage = getServerFileCoverage(filePath, moduleName);
-        let confirmation = '✅ ❌';
-
-        if (coverage) {
-            const pct = parseFloat(coverage);
-            if (pct >= 100) {
-                confirmation = '✅';
-            } else if (pct >= 80) {
-                confirmation = '✅ ❌';
-            }
-        } else {
-            confirmation = '❌';
-        }
+        const absoluteSourcePath = path.join(PROJECT_ROOT, 'src/main/java', filePath);
+        const lineCount = getSourceFileLineCount(absoluteSourcePath);
 
         rows.push({
             file: fileName,
             coverage: coverage || `not found (${changeType})`,
-            confirmation,
+            lineCount: lineCount !== null ? lineCount : '?',
         });
     }
 
@@ -542,10 +783,10 @@ function buildServerCoverageTable(serverFiles, serverModules, options) {
         return null;
     }
 
-    let table = '| Class/File | Line Coverage | Confirmation (assert) |\n';
-    table += '|------------|--------------:|---------------------:|\n';
+    let table = '| Class/File | Line Coverage | Lines |\n';
+    table += '|------------|-------------:|------:|\n';
     for (const row of rows) {
-        table += `| ${row.file} | ${row.coverage} | ${row.confirmation} |\n`;
+        table += `| ${row.file} | ${row.coverage} | ${row.lineCount} |\n`;
     }
 
     return table;
@@ -665,8 +906,6 @@ async function main() {
     console.log('─'.repeat(60));
     console.log(result);
     console.log('─'.repeat(60));
-
-    warn('✅ ❌ in Confirmation (assert/expect) have to be adjusted manually, also delete trivial files!');
 
     if (!options.print) {
         if (copyToClipboard(result)) {
