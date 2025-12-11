@@ -74,19 +74,19 @@
                     <span jhiTranslate="artemisApp.modelingEditor.helpModal.help"></span>
                 </button>
             }
-            @if (savedStatus() && !savedStatus().isChanged && !savedStatus().isSaving) {
+            @if (savedStatus() && !savedStatus()?.isChanged && !savedStatus()?.isSaving) {
                 <div class="status-hint text-success">
                     <fa-icon [icon]="faCheck" />
                     <span jhiTranslate="artemisApp.modelingEditor.allSaved"></span>
                 </div>
             }
-            @if (savedStatus() && savedStatus().isChanged && !savedStatus().isSaving) {
+            @if (savedStatus() && savedStatus()?.isChanged && !savedStatus()?.isSaving) {
                 <div class="status-hint text-warning">
                     <fa-icon [icon]="faTimes" />
                     <span jhiTranslate="artemisApp.modelingEditor.unsavedChanges"></span>
                 </div>
             }
-            @if (savedStatus() && savedStatus().isSaving) {
+            @if (savedStatus() && savedStatus()?.isSaving) {
                 <div class="status-hint text-info">
                     <fa-icon class="spin" [icon]="faCircleNotch" />
                     <span jhiTranslate="artemisApp.modelingEditor.saving"></span>
