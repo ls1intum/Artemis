@@ -95,7 +95,7 @@ class LectureContentProcessingServiceTest {
         @Test
         void shouldCreateProcessingStateForNewUnit() {
             // Given: A new unit with video source, no existing state
-            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.empty());
+            when(processingStateRepository.findByLectureUnitIdWithLock(testUnit.getId())).thenReturn(Optional.empty());
             when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
             when(tumLiveApi.getTumLivePlaylistLink(testUnit.getVideoSource())).thenReturn(Optional.of("https://playlist.m3u8"));
             when(transcriptionApi.startNebulaTranscription(anyLong(), anyLong(), any())).thenReturn("job-123");
@@ -105,16 +105,16 @@ class LectureContentProcessingServiceTest {
 
             // Then: State should be created and saved
             ArgumentCaptor<LectureUnitProcessingState> stateCaptor = ArgumentCaptor.forClass(LectureUnitProcessingState.class);
-            verify(processingStateRepository, times(3)).save(stateCaptor.capture()); // create, checking_playlist, transcribing
+            verify(processingStateRepository, times(4)).save(stateCaptor.capture()); // create, checking_playlist, playlist_url, transcribing
 
-            LectureUnitProcessingState savedState = stateCaptor.getAllValues().get(2);
+            LectureUnitProcessingState savedState = stateCaptor.getAllValues().get(3);
             assertThat(savedState.getPhase()).isEqualTo(ProcessingPhase.TRANSCRIBING);
         }
 
         @Test
         void shouldStartTranscriptionWhenPlaylistFound() {
             // Given
-            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(processingStateRepository.findByLectureUnitIdWithLock(testUnit.getId())).thenReturn(Optional.of(testState));
             when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
             when(tumLiveApi.getTumLivePlaylistLink(testUnit.getVideoSource())).thenReturn(Optional.of("https://playlist.m3u8"));
             when(transcriptionApi.startNebulaTranscription(anyLong(), anyLong(), any())).thenReturn("job-123");
@@ -134,7 +134,7 @@ class LectureContentProcessingServiceTest {
             pdfAttachment.setVersion(1);
             testUnit.setAttachment(pdfAttachment);
 
-            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(processingStateRepository.findByLectureUnitIdWithLock(testUnit.getId())).thenReturn(Optional.of(testState));
             when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
             when(tumLiveApi.getTumLivePlaylistLink(testUnit.getVideoSource())).thenReturn(Optional.empty());
             when(irisLectureApi.addLectureUnitToPyrisDB(any())).thenReturn("ingestion-job");
@@ -156,7 +156,7 @@ class LectureContentProcessingServiceTest {
             pdfAttachment.setVersion(1);
             testUnit.setAttachment(pdfAttachment);
 
-            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(processingStateRepository.findByLectureUnitIdWithLock(testUnit.getId())).thenReturn(Optional.of(testState));
             when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
             when(irisLectureApi.addLectureUnitToPyrisDB(any())).thenReturn("ingestion-job");
 
@@ -207,7 +207,7 @@ class LectureContentProcessingServiceTest {
             testState.setVideoSourceHash("old-hash-12345");
             testState.setPhase(ProcessingPhase.DONE);
 
-            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(processingStateRepository.findByLectureUnitIdWithLock(testUnit.getId())).thenReturn(Optional.of(testState));
             when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
             when(tumLiveApi.getTumLivePlaylistLink(testUnit.getVideoSource())).thenReturn(Optional.of("https://playlist.m3u8"));
             when(transcriptionApi.startNebulaTranscription(anyLong(), anyLong(), any())).thenReturn("new-job");
@@ -225,7 +225,7 @@ class LectureContentProcessingServiceTest {
             testState.setVideoSourceHash("old-hash-12345");
             testState.setPhase(ProcessingPhase.TRANSCRIBING);
 
-            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(processingStateRepository.findByLectureUnitIdWithLock(testUnit.getId())).thenReturn(Optional.of(testState));
             when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
             when(tumLiveApi.getTumLivePlaylistLink(testUnit.getVideoSource())).thenReturn(Optional.of("https://playlist.m3u8"));
             when(transcriptionApi.startNebulaTranscription(anyLong(), anyLong(), any())).thenReturn("new-job");
@@ -245,7 +245,7 @@ class LectureContentProcessingServiceTest {
             testState.setVideoSourceHash("old-hash-12345");
             testState.setPhase(ProcessingPhase.DONE);
 
-            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(processingStateRepository.findByLectureUnitIdWithLock(testUnit.getId())).thenReturn(Optional.of(testState));
             when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
             when(tumLiveApi.getTumLivePlaylistLink(testUnit.getVideoSource())).thenReturn(Optional.of("https://playlist.m3u8"));
             when(transcriptionApi.startNebulaTranscription(anyLong(), anyLong(), any())).thenReturn("new-job");
@@ -266,7 +266,7 @@ class LectureContentProcessingServiceTest {
             testState.setVideoSourceHash(computeTestHash("https://live.rbg.tum.de/w/course/12345"));
             testState.setPhase(ProcessingPhase.DONE);
 
-            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(processingStateRepository.findByLectureUnitIdWithLock(testUnit.getId())).thenReturn(Optional.of(testState));
 
             // When
             service.triggerProcessing(testUnit);
@@ -364,10 +364,12 @@ class LectureContentProcessingServiceTest {
             // Given
             testState.setPhase(ProcessingPhase.TRANSCRIBING);
             LectureTranscription transcription = new LectureTranscription();
+            transcription.setId(42L);
             transcription.setLectureUnit(testUnit);
             transcription.setTranscriptionStatus(TranscriptionStatus.COMPLETED);
 
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(transcription));
             when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
             when(irisLectureApi.addLectureUnitToPyrisDB(any())).thenReturn("ingestion-job");
 
@@ -385,10 +387,12 @@ class LectureContentProcessingServiceTest {
             testState.setPhase(ProcessingPhase.TRANSCRIBING);
             testState.setRetryCount(0);
             LectureTranscription transcription = new LectureTranscription();
+            transcription.setId(42L);
             transcription.setLectureUnit(testUnit);
             transcription.setTranscriptionStatus(TranscriptionStatus.FAILED);
 
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(transcription));
             when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
             // When
@@ -404,10 +408,12 @@ class LectureContentProcessingServiceTest {
             testState.setPhase(ProcessingPhase.TRANSCRIBING);
             testState.setRetryCount(2); // Will become 3 after this failure
             LectureTranscription transcription = new LectureTranscription();
+            transcription.setId(42L);
             transcription.setLectureUnit(testUnit);
             transcription.setTranscriptionStatus(TranscriptionStatus.FAILED);
 
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(transcription));
             when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
             // When
@@ -419,25 +425,27 @@ class LectureContentProcessingServiceTest {
 
         @Test
         void shouldFallbackToPdfIngestionOnTranscriptionFailure() {
-            // Given: Transcription failed but unit has PDF
+            // Given: Transcription failed but unit has PDF, at max retries
             testState.setPhase(ProcessingPhase.TRANSCRIBING);
-            testState.setRetryCount(0);
+            testState.setRetryCount(2); // Will become 3 after this failure, triggering fallback
             Attachment pdfAttachment = new Attachment();
             pdfAttachment.setLink("/path/to/file.pdf");
             testUnit.setAttachment(pdfAttachment);
 
             LectureTranscription transcription = new LectureTranscription();
+            transcription.setId(42L);
             transcription.setLectureUnit(testUnit);
             transcription.setTranscriptionStatus(TranscriptionStatus.FAILED);
 
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(transcription));
             when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
             when(irisLectureApi.addLectureUnitToPyrisDB(any())).thenReturn("ingestion-job");
 
             // When
             service.handleTranscriptionComplete(transcription);
 
-            // Then: Should proceed with PDF-only ingestion
+            // Then: Should proceed with PDF-only ingestion after max retries
             verify(irisLectureApi).addLectureUnitToPyrisDB(any());
         }
     }
@@ -488,6 +496,7 @@ class LectureContentProcessingServiceTest {
             testState.setPhase(ProcessingPhase.FAILED);
             testState.setRetryCount(3);
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(processingStateRepository.findByLectureUnitIdWithLock(testUnit.getId())).thenReturn(Optional.of(testState));
             when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
             when(tumLiveApi.getTumLivePlaylistLink(any())).thenReturn(Optional.of("https://playlist.m3u8"));
             when(transcriptionApi.startNebulaTranscription(anyLong(), anyLong(), any())).thenReturn("new-job");
@@ -530,7 +539,7 @@ class LectureContentProcessingServiceTest {
             pdfAttachment.setVersion(1);
             testUnit.setAttachment(pdfAttachment);
 
-            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(processingStateRepository.findByLectureUnitIdWithLock(testUnit.getId())).thenReturn(Optional.of(testState));
             when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
             when(tumLiveApi.getTumLivePlaylistLink(any())).thenReturn(Optional.of("https://playlist.m3u8"));
             when(irisLectureApi.addLectureUnitToPyrisDB(any())).thenReturn("ingestion-job");
@@ -553,7 +562,7 @@ class LectureContentProcessingServiceTest {
             pdfAttachment.setVersion(1);
             testUnit.setAttachment(pdfAttachment);
 
-            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(processingStateRepository.findByLectureUnitIdWithLock(testUnit.getId())).thenReturn(Optional.of(testState));
             when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
             when(irisLectureApi.addLectureUnitToPyrisDB(any())).thenReturn("ingestion-job");
 
