@@ -17,7 +17,7 @@ export class CollapsableAssessmentInstructionsComponent implements AfterViewInit
     readonly isAssessmentTraining = input(false);
     readonly showAssessmentInstructions = input(true);
     readonly exercise = input.required<Exercise>();
-    readonly collapsed = model(false);
+    collapsed = model(false);
     readonly readOnly = input.required<boolean>();
 
     // Icons
