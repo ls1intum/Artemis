@@ -454,7 +454,8 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.notificationText = undefined;
         this.activatedRoute.data.subscribe(({ programmingExercise }) => {
             this.programmingExercise = programmingExercise;
-            if (getDefaultContainerConfig(this.programmingExercise.buildConfig).buildPlanConfiguration) {
+            // TODO: This is not the nicest logic here...
+            if (this.programmingExercise.buildConfig?.containerConfigs && getDefaultContainerConfig(this.programmingExercise.buildConfig).buildPlanConfiguration) {
                 getDefaultContainerConfig(this.programmingExercise.buildConfig).windfile = this.aeolusService.parseWindFile(
                     getDefaultContainerConfig(this.programmingExercise.buildConfig).buildPlanConfiguration!,
                 );

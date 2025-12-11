@@ -9,9 +9,8 @@
             @if (programmingExercise.buildConfig?.containerConfigs) {
                 <jhi-programming-exercise-build-configuration
                     [programmingExercise]="programmingExercise"
-                    (containerConfigsChange)="onContainerConfigsChange($event)"
+                    [programmingExerciseCreationConfig]="programmingExerciseCreationConfig"
                     [timeout]="programmingExercise.buildConfig!.timeoutSeconds === 0 ? 120 : programmingExercise.buildConfig!.timeoutSeconds!"
-                    (timeoutChange)="setTimeout($event)"
                     [isAeolus]="false"
                 />
                 <!-- TODO: Why is dockerImageChange necessary? Change it! -->
