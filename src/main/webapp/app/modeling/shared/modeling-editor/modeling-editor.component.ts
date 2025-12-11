@@ -103,7 +103,9 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
 
         // Apollon doesn't need assessments in Modeling mode
         const umlModel = this.umlModel();
-        ModelingEditorComponent.removeAssessments(umlModel);
+        if (umlModel) {
+            ModelingEditorComponent.removeAssessments(umlModel);
+        }
 
         if (this.editorContainer) {
             this.apollonEditor = new ApollonEditor(this.editorContainer.nativeElement, {

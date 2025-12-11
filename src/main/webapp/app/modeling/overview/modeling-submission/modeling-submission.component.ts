@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, HostListener, OnDestroy, OnInit, ViewChild, inject, input } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit, ViewChild, computed, inject, input } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Patch, Selection, UMLDiagramType, UMLElementType, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
 import { WebsocketService } from 'app/shared/service/websocket.service';
@@ -53,6 +53,7 @@ import { captureException } from '@sentry/angular';
 import { RatingComponent } from 'app/exercise/rating/rating.component';
 import { TranslateService } from '@ngx-translate/core';
 import { FullscreenComponent } from 'app/modeling/shared/fullscreen/fullscreen.component';
+import { toSignal } from '@angular/core/rxjs-interop';
 
 @Component({
     selector: 'jhi-modeling-submission',
@@ -171,9 +172,13 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     isFeedbackView = false;
     showResultHistory = false;
 
+    private routeParams = toSignal(this.route.params);
+
     // since participationId can come from parent component (readonly signal) or from route, we use an internal writeable
     // variable
-    private effectiveParticipationId?: number;
+    private effectiveParticipationId = computed(() => {
+        return this.participationId() ?? Number(this.routeParams()?.['participationId']);
+    });
 
     ngOnInit(): void {
         if (this.inputValuesArePresent()) {
@@ -182,14 +187,11 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             this.route.params
                 .pipe(
                     switchMap((params) => {
-                        const routeParticipationId = params['participationId'] !== undefined ? Number(params['participationId']) : undefined;
-
-                        this.effectiveParticipationId = routeParticipationId ?? this.participationId();
                         this.submissionId = Number(params['submissionId']) || undefined;
                         this.isFeedbackView = !!this.submissionId;
 
                         // If participationId exists and feedback view is needed, fetch history results first
-                        if (this.effectiveParticipationId && this.isFeedbackView) {
+                        if (this.effectiveParticipationId() && this.isFeedbackView) {
                             return this.fetchSubmissionHistory().pipe(switchMap(() => this.fetchLatestSubmission()));
                         }
                         // Otherwise, directly fetch the latest submission
@@ -222,7 +224,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     }
 
     private fetchLatestSubmission() {
-        return this.modelingSubmissionService.getLatestSubmissionForModelingEditor(this.effectiveParticipationId!).pipe(
+        return this.modelingSubmissionService.getLatestSubmissionForModelingEditor(this.effectiveParticipationId()).pipe(
             catchError((error: HttpErrorResponse) => {
                 onError(this.alertService, error);
                 return of(null); // Return null on error
@@ -233,7 +235,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     // Fetch the results and sort them
     // Fetch the submissions and sort them by the latest result's completionDate in descending order
     private fetchSubmissionHistory() {
-        return this.modelingSubmissionService.getSubmissionsWithResultsForParticipation(this.effectiveParticipationId!).pipe(
+        return this.modelingSubmissionService.getSubmissionsWithResultsForParticipation(this.effectiveParticipationId()).pipe(
             catchError((error: HttpErrorResponse) => {
                 onError(this.alertService, error);
                 return of([]);

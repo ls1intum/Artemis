@@ -119,7 +119,7 @@ export function getNamesForAssessments(result: Result, model: UMLModelCompat): A
  * @param feedbacks the list of feedback to filter
  * @param umlModel the UML model containing the references
  */
-export function filterInvalidFeedback(feedbacks: Feedback[], umlModel: UMLModelCompat): Feedback[] {
+export function filterInvalidFeedback(feedbacks: Feedback[], umlModel: UMLModelCompat | undefined): Feedback[] {
     if (!feedbacks) {
         return feedbacks;
     }

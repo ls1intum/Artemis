@@ -17,9 +17,9 @@ export abstract class ModelingComponent {
         horizontalResize?: boolean;
         verticalResize?: boolean;
     }>(undefined!);
-    umlModel = input<UMLModel>(undefined!);
+    umlModel = input<UMLModel>();
     diagramType = input<UMLDiagramType>();
-    explanation = model<string>(undefined!);
+    explanation = model<string>('');
     readOnly = input(false);
 
     apollonEditor?: ApollonEditor;

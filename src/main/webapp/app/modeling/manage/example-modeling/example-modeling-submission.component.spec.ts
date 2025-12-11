@@ -280,7 +280,7 @@ describe('Example Modeling Submission Component', () => {
         // THEN
         expect(comp.feedbackChanged).toBeTrue();
         expect(comp.assessmentsAreValid).toBeTrue();
-        expect(comp.referencedFeedback).toEqual(feedbacks);
+        expect(comp.referencedFeedback()).toEqual(feedbacks);
     });
 
     it('should handle unreferenced feedback change', () => {
@@ -294,7 +294,7 @@ describe('Example Modeling Submission Component', () => {
         // THEN
         expect(comp.feedbackChanged).toBeTrue();
         expect(comp.assessmentsAreValid).toBeTrue();
-        expect(comp.unreferencedFeedback).toEqual(feedbacks);
+        expect(comp.unreferencedFeedback()).toEqual(feedbacks);
     });
 
     it('should show submission', () => {
@@ -318,7 +318,7 @@ describe('Example Modeling Submission Component', () => {
         const alertSpy = jest.spyOn(alertService, 'error');
         comp.exercise = exercise;
         comp.exampleSubmission = exampleSubmission;
-        comp.referencedFeedback = [mockFeedbackInvalid];
+        comp.referencedFeedback.set([mockFeedbackInvalid]);
 
         // WHEN
         comp.saveExampleAssessment();
@@ -332,8 +332,8 @@ describe('Example Modeling Submission Component', () => {
         // GIVEN
         comp.exercise = exercise;
         comp.exampleSubmission = { ...exampleSubmission, assessmentExplanation: 'Explanation of the assessment' };
-        comp.referencedFeedback = [mockFeedbackWithReference];
-        comp.unreferencedFeedback = [mockFeedbackWithoutReference];
+        comp.referencedFeedback.set([mockFeedbackWithReference]);
+        comp.unreferencedFeedback.set([mockFeedbackWithoutReference]);
 
         const result = { id: 1 } as Result;
         const alertSpy = jest.spyOn(alertService, 'success');
@@ -354,7 +354,7 @@ describe('Example Modeling Submission Component', () => {
         // GIVEN
         comp.exercise = exercise;
         comp.exampleSubmission = { ...exampleSubmission, assessmentExplanation: 'Explanation of the assessment' };
-        comp.referencedFeedback = [mockFeedbackWithReference, mockFeedbackWithoutReference];
+        comp.referencedFeedback.set([mockFeedbackWithReference, mockFeedbackWithoutReference]);
 
         const alertSpy = jest.spyOn(alertService, 'error');
         jest.spyOn(service, 'update').mockImplementation((updatedExampleSubmission) => of(new HttpResponse({ body: updatedExampleSubmission })));
@@ -374,7 +374,7 @@ describe('Example Modeling Submission Component', () => {
         // GIVEN
         comp.exercise = exercise;
         comp.exampleSubmission = exampleSubmission;
-        comp.referencedFeedback = [mockFeedbackInvalid];
+        comp.referencedFeedback.set([mockFeedbackInvalid]);
         comp.assessmentMode = true;
 
         // WHEN
@@ -384,15 +384,15 @@ describe('Example Modeling Submission Component', () => {
         fixture.detectChanges();
 
         // THEN
-        expect(comp.referencedFeedback.every((feedback) => feedback.correctionStatus === 'CORRECT')).toBeTrue();
-        expect(comp.assessmentEditor.resultFeedbacks()).toEqual(comp.referencedFeedback);
+        expect(comp.referencedFeedback().every((feedback) => feedback.correctionStatus === 'CORRECT')).toBeTrue();
+        expect(comp.assessmentEditor.resultFeedbacks()).toEqual(comp.referencedFeedback());
     });
 
     it('should mark all feedback wrong', () => {
         // GIVEN
         comp.exercise = exercise;
         comp.exampleSubmission = exampleSubmission;
-        comp.referencedFeedback = [mockFeedbackInvalid];
+        comp.referencedFeedback.set([mockFeedbackInvalid]);
         comp.assessmentMode = true;
 
         // WHEN
@@ -402,8 +402,8 @@ describe('Example Modeling Submission Component', () => {
         comp.markWrongFeedback([mockFeedbackCorrectionError]);
         fixture.detectChanges();
         // THEN
-        expect(comp.referencedFeedback[0].correctionStatus).toBe(mockFeedbackCorrectionError.type);
-        expect(comp.assessmentEditor.resultFeedbacks()).toEqual(comp.referencedFeedback);
+        expect(comp.referencedFeedback()[0].correctionStatus).toBe(mockFeedbackCorrectionError.type);
+        expect(comp.assessmentEditor.resultFeedbacks()).toEqual(comp.referencedFeedback());
     });
 
     it('should create success alert on example assessment update', () => {
@@ -415,7 +415,7 @@ describe('Example Modeling Submission Component', () => {
 
         comp.exercise = exercise;
         comp.exampleSubmission = exampleSubmission;
-        comp.referencedFeedback = [mockFeedbackWithReference];
+        comp.referencedFeedback.set([mockFeedbackWithReference]);
 
         // WHEN
         comp.saveExampleAssessment();
@@ -434,7 +434,7 @@ describe('Example Modeling Submission Component', () => {
 
         comp.exercise = exercise;
         comp.exampleSubmission = exampleSubmission;
-        comp.referencedFeedback = [mockFeedbackWithReference];
+        comp.referencedFeedback.set([mockFeedbackWithReference]);
 
         // WHEN
         comp.saveExampleAssessment();
@@ -488,7 +488,7 @@ describe('Example Modeling Submission Component', () => {
         // THEN
         expect(assessmentSpy).toHaveBeenCalledOnce();
         expect(comp.assessmentMode).toBeTrue();
-        expect(result.feedbacks).toEqual(comp.assessments);
+        expect(result.feedbacks).toEqual(comp.assessments());
     });
 
     it('should call get exampleAssessment in toComplete mode', () => {
@@ -508,5 +508,49 @@ describe('Example Modeling Submission Component', () => {
 
         expect(assessmentSpy).toHaveBeenCalledOnce();
         expect(comp.referencedExampleFeedback).toEqual([feedbackTwo]);
+    });
+
+    it('should mark assessments as invalid when a feedback has no credits', () => {
+        comp.exercise = exercise;
+        const feedbackWithoutCredits = {
+            text: 'No credits',
+            referenceId: 'id-1',
+        } as Feedback;
+
+        comp.referencedFeedback.set([feedbackWithoutCredits]);
+
+        comp.checkScoreBoundaries();
+
+        expect(comp.assessmentsAreValid).toBeFalse();
+        expect(comp.invalidError).toBeDefined();
+        expect(comp.totalScore).toBeUndefined();
+    });
+
+    it('should highlight missed referenced example feedback', () => {
+        comp.exercise = exercise;
+
+        const referencedExample1: Feedback = {
+            ...mockFeedbackWithReference,
+            referenceId: 'element-1',
+            reference: 'ref-1',
+        };
+        const referencedExample2: Feedback = {
+            ...mockFeedbackWithReference,
+            referenceId: 'element-2',
+            reference: 'ref-2',
+        };
+
+        comp.referencedExampleFeedback = [referencedExample1, referencedExample2];
+
+        comp.referencedFeedback.set([referencedExample1]);
+
+        (comp as any).highlightColor = jest.fn().mockReturnValue('testColor');
+
+        comp.highlightMissedFeedback();
+
+        const highlighted = comp.highlightedElements();
+        expect(highlighted.size).toBe(1);
+        expect(highlighted.get('element-2')).toBe('testColor');
+        expect(highlighted.has('element-1')).toBeFalse();
     });
 });

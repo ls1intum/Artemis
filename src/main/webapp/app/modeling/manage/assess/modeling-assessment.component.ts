@@ -283,7 +283,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
         }
 
         feedbacks.forEach((feedback) => {
-            addOrUpdateAssessment(this.umlModel(), {
+            addOrUpdateAssessment(umlModel, {
                 modelElementId: feedback.referenceId!,
                 elementType: feedback.referenceType! as UMLElementType | UMLRelationshipType,
                 score: feedback.credits!,
