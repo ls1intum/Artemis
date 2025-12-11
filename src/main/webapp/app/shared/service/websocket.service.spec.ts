@@ -236,4 +236,69 @@ describe('WebsocketService', () => {
         websocketService.ngOnDestroy();
         expect(disconnectSpy).toHaveBeenCalled();
     });
+
+    it('delays non-OPEN connection states by 5 seconds', () => {
+        jest.useFakeTimers();
+        websocketService.connect();
+        const rxStomp = constructedRxStompClients[0];
+
+        // First connect
+        rxStomp.connectionState$.next(RxStompState.OPEN);
+
+        const stateChanges: ConnectionState[] = [];
+        websocketService.connectionState.subscribe((state) => stateChanges.push(state));
+
+        // Simulate connection loss
+        stateChanges.length = 0;
+        rxStomp.connectionState$.next(RxStompState.CLOSED);
+
+        // No state change should be emitted immediately for non-OPEN states
+        expect(stateChanges).toHaveLength(0);
+
+        // After 4 seconds, still no change
+        jest.advanceTimersByTime(4000);
+        expect(stateChanges).toHaveLength(0);
+
+        // After 5 seconds total, the CLOSED state should be emitted
+        jest.advanceTimersByTime(1000);
+        expect(stateChanges).toHaveLength(1);
+        expect(stateChanges[0]).toEqual(new ConnectionState(false, true));
+
+        jest.useRealTimers();
+    });
+
+    it('cancels delayed non-OPEN state if connection recovers within 5 seconds', () => {
+        jest.useFakeTimers();
+        websocketService.connect();
+        const rxStomp = constructedRxStompClients[0];
+
+        // First connect
+        rxStomp.connectionState$.next(RxStompState.OPEN);
+
+        const stateChanges: ConnectionState[] = [];
+        websocketService.connectionState.subscribe((state) => stateChanges.push(state));
+
+        // Simulate connection loss
+        stateChanges.length = 0;
+        rxStomp.connectionState$.next(RxStompState.CLOSED);
+
+        // No state change should be emitted immediately
+        expect(stateChanges).toHaveLength(0);
+
+        // After 3 seconds, connection recovers
+        jest.advanceTimersByTime(3000);
+        expect(stateChanges).toHaveLength(0);
+
+        rxStomp.connectionState$.next(RxStompState.OPEN);
+
+        // OPEN state should be emitted immediately
+        expect(stateChanges).toHaveLength(1);
+        expect(stateChanges[0]).toEqual(new ConnectionState(true, true));
+
+        // Even after 5 more seconds, no CLOSED state should have been emitted
+        jest.advanceTimersByTime(5000);
+        expect(stateChanges).toHaveLength(1);
+
+        jest.useRealTimers();
+    });
 });

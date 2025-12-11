@@ -3,8 +3,8 @@ import { captureException } from '@sentry/angular';
 import { IWatchParams, ReconnectionTimeMode, RxStomp, RxStompConfig, RxStompState, TickerStrategy } from '@stomp/rx-stomp';
 import { IMessage, StompHeaders } from '@stomp/stompjs';
 import { gzip, ungzip } from 'pako';
-import { BehaviorSubject, EMPTY, Observable, Subscription } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { BehaviorSubject, EMPTY, Observable, Subscription, of, timer } from 'rxjs';
+import { distinctUntilChanged, map, switchMap } from 'rxjs/operators';
 
 /**
  * Name of the STOMP header that indicates whether a message payload is compressed.
@@ -21,6 +21,12 @@ export const COMPRESSION_HEADER_KEY = 'X-Compressed';
  * the message body as a Base64-encoded, GZIP-compressed JSON payload.
  */
 export const COMPRESSION_HEADER: Record<string, string> = { [COMPRESSION_HEADER_KEY]: 'true' };
+
+/**
+ * Delay in milliseconds before emitting non-OPEN connection states to consumers.
+ * This grace period allows brief disconnections to recover without triggering UI warnings.
+ */
+export const CONNECTION_STATE_DELAY_MS = 5000;
 
 /**
  * Public API for the WebSocket service used in Angular components.
@@ -312,14 +318,60 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
         this.sessionId = this.generateSecureSessionId();
         this.rxStomp = new RxStomp();
         this.rxStomp.configure(config);
-        this.connectionStateSubscription = this.rxStomp.connectionState$.subscribe((state: RxStompState) => {
-            this.connectionStateInternal.next(new ConnectionState(state == RxStompState.OPEN, this.wasConnectedOnce));
-            if (state === RxStompState.OPEN) {
-                this.wasConnectedOnce = true;
-            }
-        });
+        this.handleConnectionChanges(this.rxStomp);
         this.rxStomp.activate();
     }
+
+    /**
+     * Subscribes to the RxStomp connection state and updates {@link connectionStateInternal}.
+     *
+     * This method implements a debounce strategy for non-OPEN states to prevent UI flickering
+     * caused by brief connection interruptions:
+     *
+     * - **OPEN state**: Emitted immediately so consumers can enable features right away.
+     * - **Non-OPEN states** (CLOSED, CONNECTING, etc.): Delayed by {@link CONNECTION_STATE_DELAY_MS} before emission.
+     *   If the connection recovers within this window, the pending emission is cancelled,
+     *   and consumers never see the transient disconnected state.
+     *
+     * This approach avoids showing confusing "connection lost" warnings to users during
+     * normal reconnection scenarios (e.g., brief network hiccups, server restarts).
+     *
+     * @param rxStomp The RxStomp client instance to observe for connection state changes.
+     *
+     * @remarks
+     * This method must be called **before** {@link RxStomp.activate} to ensure all state
+     * transitions are captured, including the initial connection attempt.
+     */
+    private handleConnectionChanges = (rxStomp: RxStomp): void => {
+        this.connectionStateSubscription = rxStomp.connectionState$
+            .pipe(
+                // Prevent duplicate emissions when the state hasn't actually changed
+                distinctUntilChanged(),
+                // Use switchMap to implement the delay with automatic cancellation:
+                // When a new state arrives, any pending timer from the previous state is cancelled
+                switchMap((state: RxStompState) => {
+                    if (state === RxStompState.OPEN) {
+                        // Connection established: emit immediately so the UI can react right away
+                        return of(state);
+                    } else {
+                        // Connection lost or connecting: wait before notifying consumers.
+                        // If the connection recovers (state becomes OPEN) within this window,
+                        // switchMap will cancel this timer and emit the OPEN state instead,
+                        // effectively hiding the transient disconnection from the UI.
+                        return timer(CONNECTION_STATE_DELAY_MS).pipe(map(() => state));
+                    }
+                }),
+            )
+            .subscribe((state: RxStompState) => {
+                // Update the public connection state observable
+                this.connectionStateInternal.next(new ConnectionState(state === RxStompState.OPEN, this.wasConnectedOnce));
+                // Track if we've ever had a successful connection (used to distinguish
+                // "never connected" from "was connected but lost connection")
+                if (state === RxStompState.OPEN) {
+                    this.wasConnectedOnce = true;
+                }
+            });
+    };
 
     /**
      * Generates a cryptographically secure 12-character session ID.
