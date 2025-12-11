@@ -52,4 +52,9 @@ describe('IrisLogoComponent', () => {
             expect(component.classList()).toBe(expectedClass);
         });
     });
+
+    it('should return empty string for custom numeric size', () => {
+        componentRef.setInput('size', 100);
+        expect(component.classList()).toBe('');
+    });
 });
