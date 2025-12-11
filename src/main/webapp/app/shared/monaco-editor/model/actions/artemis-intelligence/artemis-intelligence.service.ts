@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
 import { finalize, map, tap } from 'rxjs/operators';
 import RewritingVariant from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-variant';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -10,6 +10,51 @@ import { HyperionReviewAndRefineApiService } from 'app/openapi/api/hyperionRevie
 import { ProblemStatementRewriteRequest } from 'app/openapi/model/problemStatementRewriteRequest';
 import { ProblemStatementRewriteResponse } from 'app/openapi/model/problemStatementRewriteResponse';
 import { ConsistencyCheckResponse } from 'app/openapi/model/consistencyCheckResponse';
+
+/**
+ * DTO for the Iris rewriting feature.
+ * Pyris sends callback updates back to Artemis during the rewriting of text.
+ * These updates contain the current status of the rewriting process,
+ * which is then forwarded to the user via WebSockets.
+ */
+export interface PyrisRewritingStatusUpdateDTO {
+    /** List of stages of the generation process */
+    stages: PyrisStageDTO[];
+
+    /** The result of the rewriting process so far */
+    result: string;
+
+    /** Optional list of inconsistencies detected during rewriting */
+    inconsistencies?: string[];
+
+    /** Optional list of suggestions for improvement */
+    suggestions?: string[];
+
+    /** Optional overall improvement message */
+    improvement?: string; // undefined preferred over null
+}
+
+/**
+ * One stage of the rewriting pipeline.
+ */
+export interface PyrisStageDTO {
+    name: string;
+    weight: number;
+    state: PyrisStageState;
+    message: string;
+    internal: boolean; // defaultValue = false → still required field
+}
+
+/**
+ * State of a stage in the rewriting pipeline.
+ */
+export enum PyrisStageState {
+    NOT_STARTED = 'NOT_STARTED',
+    IN_PROGRESS = 'IN_PROGRESS',
+    DONE = 'DONE',
+    SKIPPED = 'SKIPPED',
+    ERROR = 'ERROR',
+}
 
 /**
  * Service providing shared functionality for Artemis Intelligence of the markdown editor.
@@ -49,10 +94,8 @@ export class ArtemisIntelligenceService {
                     .subscribe({
                         next: () => {
                             const websocketTopic = `/user/topic/iris/rewriting/${contextId}`;
-                            this.websocketService.subscribe(websocketTopic);
-
-                            this.websocketService.receive(websocketTopic).subscribe({
-                                next: (update: any) => {
+                            const websocketSubscription: Subscription = this.websocketService.subscribe<PyrisRewritingStatusUpdateDTO>(websocketTopic).subscribe({
+                                next: (update: PyrisRewritingStatusUpdateDTO) => {
                                     if (update.result) {
                                         observer.next({
                                             result: update.result || undefined,
@@ -62,14 +105,14 @@ export class ArtemisIntelligenceService {
                                         });
                                         observer.complete();
                                         this.isLoadingRewrite.set(false);
-                                        this.websocketService.unsubscribe(websocketTopic);
+                                        websocketSubscription.unsubscribe();
                                         this.alertService.success('artemisApp.markdownEditor.artemisIntelligence.alerts.rewrite.success');
                                     }
                                 },
-                                error: (error) => {
+                                error: (error: unknown) => {
                                     observer.error(error);
                                     this.isLoadingRewrite.set(false);
-                                    this.websocketService.unsubscribe(websocketTopic);
+                                    websocketSubscription.unsubscribe();
                                 },
                             });
                         },
