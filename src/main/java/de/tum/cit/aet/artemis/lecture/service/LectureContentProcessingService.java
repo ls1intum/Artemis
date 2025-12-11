@@ -146,7 +146,7 @@ public class LectureContentProcessingService {
     /**
      * Cancel any ongoing processing for a lecture unit.
      * Called when the unit is being deleted or when content is changing.
-     * This will cancel any running transcription job on Nebula.
+     * This will cancel any running transcription job on Nebula and ingestion job on Pyris.
      *
      * @param lectureUnitId the ID of the lecture unit
      */
@@ -157,6 +157,11 @@ public class LectureContentProcessingService {
             // If we're in transcription phase, cancel the job on Nebula
             if (state.getPhase() == ProcessingPhase.TRANSCRIBING) {
                 cancelTranscriptionOnNebula(lectureUnitId);
+            }
+
+            // If we're in ingestion phase, cancel the pending Pyris job
+            if (state.getPhase() == ProcessingPhase.INGESTING) {
+                cancelIngestionOnPyris(lectureUnitId);
             }
 
             state.transitionTo(ProcessingPhase.IDLE);
@@ -184,6 +189,31 @@ public class LectureContentProcessingService {
         catch (Exception e) {
             // Log but don't fail - cancellation is best-effort
             log.warn("Failed to cancel transcription on Nebula for unit {}: {}", lectureUnitId, e.getMessage());
+        }
+    }
+
+    /**
+     * Cancel a pending ingestion job on Pyris.
+     * This removes the job from the tracking map, so the webhook callback will be ignored.
+     * Silently handles errors since cancellation is best-effort.
+     *
+     * @param lectureUnitId the ID of the lecture unit
+     */
+    private void cancelIngestionOnPyris(Long lectureUnitId) {
+        if (irisLectureApi.isEmpty()) {
+            log.debug("Iris API not available, cannot cancel on Pyris");
+            return;
+        }
+
+        try {
+            boolean cancelled = irisLectureApi.get().cancelPendingIngestion(lectureUnitId);
+            if (cancelled) {
+                log.info("Cancelled pending ingestion on Pyris for unit {}", lectureUnitId);
+            }
+        }
+        catch (Exception e) {
+            // Log but don't fail - cancellation is best-effort
+            log.warn("Failed to cancel ingestion on Pyris for unit {}: {}", lectureUnitId, e.getMessage());
         }
     }
 
@@ -232,19 +262,30 @@ public class LectureContentProcessingService {
      * @param success       whether ingestion succeeded
      */
     public void handleIngestionComplete(Long lectureUnitId, boolean success) {
-        processingStateRepository.findByLectureUnit_Id(lectureUnitId).ifPresent(state -> {
-            if (state.getPhase() == ProcessingPhase.INGESTING) {
-                if (success) {
-                    log.info("Ingestion completed successfully for unit {}", lectureUnitId);
-                    state.transitionTo(ProcessingPhase.DONE);
-                }
-                else {
-                    log.warn("Ingestion failed for unit {}", lectureUnitId);
-                    handleIngestionFailure(state);
-                }
-                processingStateRepository.save(state);
-            }
-        });
+        Optional<LectureUnitProcessingState> stateOpt = processingStateRepository.findByLectureUnit_Id(lectureUnitId);
+
+        if (stateOpt.isEmpty()) {
+            // Log warning if state not found - unit may have been deleted during processing
+            log.warn("Received ingestion callback for unit {}, but no processing state exists (unit may have been deleted)", lectureUnitId);
+            return;
+        }
+
+        LectureUnitProcessingState state = stateOpt.get();
+        if (state.getPhase() != ProcessingPhase.INGESTING) {
+            // Log warning if phase doesn't match - may indicate a stale callback
+            log.warn("Received ingestion callback for unit {} in phase {} (expected INGESTING), ignoring", lectureUnitId, state.getPhase());
+            return;
+        }
+
+        if (success) {
+            log.info("Ingestion completed successfully for unit {}", lectureUnitId);
+            state.transitionTo(ProcessingPhase.DONE);
+        }
+        else {
+            log.warn("Ingestion failed for unit {}", lectureUnitId);
+            handleIngestionFailure(state);
+        }
+        processingStateRepository.save(state);
     }
 
     /**
@@ -330,7 +371,24 @@ public class LectureContentProcessingService {
         }
 
         String videoUrl = unit.getVideoSource();
-        Optional<String> playlistUrl = tumLiveApi.get().getTumLivePlaylistLink(videoUrl);
+        Optional<String> playlistUrl;
+        try {
+            playlistUrl = tumLiveApi.get().getTumLivePlaylistLink(videoUrl);
+        }
+        catch (Exception e) {
+            log.error("Failed to fetch playlist URL for unit {}: {}", unit.getId(), e.getMessage());
+            // Fall back to PDF-only if available, otherwise reset to IDLE
+            if (hasPdf) {
+                log.info("Playlist check failed, proceeding with PDF-only ingestion for unit {}", unit.getId());
+                startIngestion(state);
+            }
+            else {
+                state.transitionTo(ProcessingPhase.IDLE);
+                state.setErrorMessage("Playlist check failed: " + e.getMessage());
+                processingStateRepository.save(state);
+            }
+            return;
+        }
 
         if (playlistUrl.isPresent()) {
             log.info("Playlist URL found for unit {}, starting transcription", unit.getId());
@@ -499,6 +557,9 @@ public class LectureContentProcessingService {
             // Then try to cancel on Nebula (best-effort, may fail if already completed)
             cancelTranscriptionOnNebula(unit.getId());
         }
+
+        // Cancel any pending ingestion job to free up Pyris resources
+        cancelIngestionOnPyris(unit.getId());
 
         // Delete from Pyris
         if (irisLectureApi.isPresent()) {
