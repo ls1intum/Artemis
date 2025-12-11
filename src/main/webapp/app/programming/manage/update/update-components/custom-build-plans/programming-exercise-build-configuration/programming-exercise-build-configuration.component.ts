@@ -1,21 +1,58 @@
-import { Component, OnChanges, OnInit, SimpleChanges, ViewChild, effect, inject, input, viewChild } from '@angular/core';
+import {
+    Component,
+    effect,
+    inject,
+    input,
+    OnChanges,
+    OnInit,
+    SimpleChanges,
+    ViewChild,
+    viewChild
+} from '@angular/core';
 import { FormsModule, NgModel } from '@angular/forms';
-import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
-import { faAngleDown, faAngleRight, faPencil, faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
+import {
+    ProgrammingExercise,
+    ProgrammingLanguage,
+    ProjectType
+} from 'app/programming/shared/entities/programming-exercise.model';
+import {
+    faAngleDown,
+    faAngleRight,
+    faPencil,
+    faPlus,
+    faQuestionCircle,
+    faTrash
+} from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
+import {
+    HelpIconComponent
+} from 'app/shared/components/help-icon/help-icon.component';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
-import { TableEditableFieldComponent } from 'app/shared/table/editable-field/table-editable-field.component';
+import {
+    TableEditableFieldComponent
+} from 'app/shared/table/editable-field/table-editable-field.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
-import { DockerContainerConfig } from 'app/programming/shared/entities/docker-container.config';
+import {
+    ProfileService
+} from 'app/core/layouts/profiles/shared/profile.service';
+import {
+    MonacoEditorComponent
+} from 'app/shared/monaco-editor/monaco-editor.component';
+import {
+    DockerContainerConfig
+} from 'app/programming/shared/entities/docker-container.config';
 import { WindFile } from 'app/programming/shared/entities/wind.file';
-import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
-import { ASSIGNMENT_REPO_NAME, TEST_REPO_NAME } from 'app/shared/constants/input.constants';
-import { getDefaultContainerConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
+import {
+    ASSIGNMENT_REPO_NAME,
+    TEST_REPO_NAME
+} from 'app/shared/constants/input.constants';
+import {
+    getDefaultContainerConfig
+} from 'app/programming/shared/entities/programming-exercise-build.config';
 import { AeolusService } from 'app/programming/shared/services/aeolus.service';
-import { ProgrammingExerciseCreationConfig } from 'app/programming/manage/update/programming-exercise-creation-config';
+import {
+    ProgrammingExerciseCreationConfig
+} from 'app/programming/manage/update/programming-exercise-creation-config';
 
 const NOT_SUPPORTED_NETWORK_DISABLED_LANGUAGES = [ProgrammingLanguage.EMPTY];
 
@@ -51,6 +88,7 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit, O
     programmingExerciseCreationConfig = input<ProgrammingExerciseCreationConfig>();
     containerConfigsList: DockerContainerConfig[];
     containerConfigsById: { [key: number]: DockerContainerConfig };
+    defaultDockerFlags: DockerFlags;
     dockerFlags: { [key: number]: DockerFlagsFlat };
 
     timeout = input<number>();
@@ -108,8 +146,14 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit, O
 
     onAddContainer() {
         const currentConfigs = this.getContainerConfigs();
-        const nextIndex = Object.keys(currentConfigs).length + 1;
-        const newName = `Container ${nextIndex}`;
+        const configs = Object.values(currentConfigs);
+        let nextIndex = Object.keys(currentConfigs).length + 1;
+        let newName = `Container ${nextIndex}`;
+        const existingNames = configs.map((x) => x.name);
+        while (!existingNames.indexOf(newName)) {
+            nextIndex++;
+            newName = `Container ${nextIndex}`;
+        }
 
         const newContainerConfig: DockerContainerConfig = {
             id: Date.now(),
@@ -120,7 +164,7 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit, O
             windfile: new WindFile(),
         };
 
-        // TODO: Note for later this.defaultDockerFlags.cpuCount = profileInfo.defaultContainerCpuCount;
+        // TODO: Note for later this.defaultDockerFlags.cpuCount =
         // TODO: Note for later this.defaultDockerFlags.memory = profileInfo.defaultContainerMemoryLimitInMB;
         // TODO: Note for later this.defaultDockerFlags.memorySwap = profileInfo.defaultContainerMemorySwapLimitInMB;
 
@@ -155,38 +199,68 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit, O
             if (!this.timeout) {
                 this.setTimeout(this.timeoutDefaultValue);
             }
+
+            this.defaultDockerFlags = {
+                network: undefined,
+                env: undefined,
+                cpuCount: profileInfo.defaultContainerCpuCount,
+                memory: profileInfo.defaultContainerMemoryLimitInMB,
+                memorySwap: profileInfo.defaultContainerMemorySwapLimitInMB,
+            };
         }
     }
 
     initDockerFlags(containerConfig: DockerContainerConfig): DockerFlagsFlat {
-        const dockerFlags = JSON.parse(containerConfig?.dockerFlags ?? '') as DockerFlags;
-        const dockerFlagsFlat: DockerFlagsFlat = {
-            envVars: [],
-            isNetworkDisabled: false,
-            cpuCount: undefined,
-            memory: undefined,
-            memorySwap: undefined,
-            dockerFlags: dockerFlags,
-            open: false,
-        };
+        if (containerConfig.dockerFlags) {
+            const dockerFlags = JSON.parse(containerConfig?.dockerFlags ?? '') as DockerFlags;
+            const dockerFlagsFlat: DockerFlagsFlat = {
+                envVars: [],
+                isNetworkDisabled: false,
+                cpuCount: undefined,
+                memory: undefined,
+                memorySwap: undefined,
+                dockerFlags: dockerFlags,
+                open: false,
+            };
 
-        dockerFlagsFlat.isNetworkDisabled = dockerFlags.network === 'none';
-        if (dockerFlags.cpuCount) {
-            dockerFlagsFlat.cpuCount = dockerFlags.cpuCount;
-        }
-        if (dockerFlags.memory) {
-            dockerFlagsFlat.memory = dockerFlags.memory;
-        }
-        if (dockerFlags.memorySwap) {
-            dockerFlagsFlat.memorySwap = dockerFlags.memorySwap;
-        }
-        if (dockerFlags.env) {
-            for (const key in dockerFlags.env) {
-                dockerFlagsFlat.envVars.push([key, dockerFlags.env?.[key] ?? '']);
+            dockerFlagsFlat.isNetworkDisabled = dockerFlags.network === 'none';
+            if (dockerFlags.cpuCount) {
+                dockerFlagsFlat.cpuCount = dockerFlags.cpuCount;
             }
-        }
+            if (dockerFlags.memory) {
+                dockerFlagsFlat.memory = dockerFlags.memory;
+            }
+            if (dockerFlags.memorySwap) {
+                dockerFlagsFlat.memorySwap = dockerFlags.memorySwap;
+            }
+            if (dockerFlags.env) {
+                for (const key in dockerFlags.env) {
+                    dockerFlagsFlat.envVars.push([key, dockerFlags.env?.[key] ?? '']);
+                }
+            }
 
-        return dockerFlagsFlat;
+            return dockerFlagsFlat;
+        } else {
+            // TODO: Note for later this.defaultDockerFlags.cpuCount = ;
+            // TODO: Note for later this.defaultDockerFlags.memory = ;
+            // TODO: Note for later this.defaultDockerFlags.memorySwap = ;
+
+            return {
+                envVars: [],
+                isNetworkDisabled: false,
+                cpuCount: this.defaultDockerFlags.cpuCount,
+                memory: this.defaultDockerFlags.memory,
+                memorySwap: this.defaultDockerFlags.memorySwap,
+                dockerFlags: {
+                    network: undefined,
+                    env: undefined,
+                    cpuCount: this.defaultDockerFlags.cpuCount,
+                    memory: this.defaultDockerFlags.memory,
+                    memorySwap: this.defaultDockerFlags.memorySwap,
+                },
+                open: false,
+            };
+        }
     }
 
     onDisableNetworkAccessChange(containerId: number, event: any) {

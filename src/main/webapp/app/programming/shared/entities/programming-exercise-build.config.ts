@@ -17,7 +17,10 @@ export class ProgrammingExerciseBuildConfig {
         this.allowBranching = false; // default value
         this.branchRegex = '.*'; // default value
         this.containerConfigs = {
-            'Container 1': new DockerContainerConfig(),
+            'Container 1': {
+                id: 0,
+                name: 'Container 1',
+            },
         };
     }
 }

@@ -152,6 +152,10 @@ public class ProgrammingExerciseCreationUpdateService {
         programmingExercise.setSolutionParticipation(null);
         programmingExercise.setTemplateParticipation(null);
         programmingExercise.getBuildConfig().setId(null);
+        for (var containerConfig: programmingExercise.getBuildConfig().getContainerConfigs().values()) {
+            containerConfig.setId(null);
+            containerConfig.setBuildConfig(programmingExercise.getBuildConfig());
+        }
 
         // We save once in order to generate an id for the programming exercise
         var savedBuildConfig = programmingExerciseBuildConfigRepository.saveAndFlush(programmingExercise.getBuildConfig());
@@ -268,6 +272,10 @@ public class ProgrammingExerciseCreationUpdateService {
 
         String problemStatementWithTestNames = updatedProgrammingExercise.getProblemStatement();
         programmingExerciseTaskService.replaceTestNamesWithIds(updatedProgrammingExercise);
+
+        for (var containerConfig: updatedProgrammingExercise.getBuildConfig().getContainerConfigs().values()) {
+            containerConfig.setBuildConfig(updatedProgrammingExercise.getBuildConfig());
+        }
         programmingExerciseBuildConfigRepository.save(updatedProgrammingExercise.getBuildConfig());
 
         ProgrammingExercise savedProgrammingExercise = exerciseService.saveWithCompetencyLinks(updatedProgrammingExercise, programmingExerciseRepository::save);

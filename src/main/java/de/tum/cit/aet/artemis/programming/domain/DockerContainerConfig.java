@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.programming.domain;
 
+import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -21,14 +22,9 @@ import de.tum.cit.aet.artemis.programming.dto.aeolus.Windfile;
 @Entity
 @Table(name = "docker_container_config")
 @JsonInclude(JsonInclude.Include.NON_DEFAULT)
-public class DockerContainerConfig {
+public class DockerContainerConfig extends DomainObject {
 
     private static final Logger log = LoggerFactory.getLogger(DockerContainerConfig.class);
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")
-    private Long id;
 
     @Column(name = "config_name")
     // TODO: Temp passing through duplicately @JsonIgnore
@@ -58,10 +54,6 @@ public class DockerContainerConfig {
         this.buildScript = originalContainerConfig.getBuildScript();
         this.dockerFlags = originalContainerConfig.getDockerFlags();
         this.buildConfig = buildConfig;
-    }
-
-    public Long getId() {
-        return id;
     }
 
     public String getName() {
@@ -145,7 +137,7 @@ public class DockerContainerConfig {
 
     @Override
     public String toString() {
-        return "DockerContainerConfig{" + "id=" + id + ", buildPlanConfiguration='" + getBuildPlanConfiguration() + '\'' + ", buildScript='" + getBuildScript() + ", dockerFlags='"
+        return "DockerContainerConfig{" + "id=" + getId() + ", buildPlanConfiguration='" + getBuildPlanConfiguration() + '\'' + ", buildScript='" + getBuildScript() + ", dockerFlags='"
                 + getDockerFlags() + '\'' + '}';
     }
 }
