@@ -209,7 +209,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                 });
         }
 
-        const isDisplayedOnExamSummaryPage = !this.displayHeader() && this.effectiveParticipationId !== undefined;
+        const isDisplayedOnExamSummaryPage = !this.displayHeader() && this.effectiveParticipationId() !== undefined;
         if (!isDisplayedOnExamSummaryPage) {
             window.scroll(0, 0);
         }

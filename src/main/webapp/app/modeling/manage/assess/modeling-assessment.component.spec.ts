@@ -289,27 +289,42 @@ describe('ModelingAssessmentComponent', () => {
     });
 
     it('should update model', async () => {
-        const newModel = generateMockModel('newElement1', 'newElement2', 'newRelationship');
-        const changes = { umlModel: { currentValue: newModel } as SimpleChange };
+        // Test refactored to accurately test umlModel updates
+        const initialModel = generateMockModel('element1', 'element2', 'relationship1');
+        fixture.componentRef.setInput('umlModel', initialModel);
         fixture.detectChanges();
-        const apollonSpy = jest.spyOn(comp.apollonEditor!, 'model', 'set');
+        await comp.ngAfterViewInit();
+        await comp.apollonEditor!.nextRender;
+        expect(comp.apollonEditor).not.toBeNull();
+        const newModel = generateMockModel('newElement1', 'newElement2', 'newRelationship');
+        fixture.componentRef.setInput('umlModel', newModel);
+        fixture.detectChanges();
         await fixture.whenStable();
         await comp.apollonEditor!.nextRender;
-        await comp.ngOnChanges(changes);
-        expect(apollonSpy).toHaveBeenCalledWith(newModel);
+        const apollonModel = comp.apollonEditor!.model;
+
+        expect(apollonModel.type).toBe(newModel.type);
+        expect(Object.keys(apollonModel.elements)).toEqual(expect.arrayContaining(['newElement1', 'newElement2']));
+        expect(apollonModel.elements['newElement1'].type).toBe(newModel.elements['newElement1'].type);
+        expect(apollonModel.elements['newElement2'].type).toBe(newModel.elements['newElement2'].type);
+        expect(Object.keys(apollonModel.relationships)).toEqual(expect.arrayContaining(['newRelationship']));
+        const relationship = apollonModel.relationships['newRelationship'];
+        expect(relationship.type).toBe(newModel.relationships['newRelationship'].type);
+        expect(relationship.source.element).toBe('newElement2');
+        expect(relationship.target.element).toBe('newElement1');
     });
 
     it('should update highlighted elements', async () => {
-        const highlightedElements = new Map();
+        const highlightedElements = new Map<string, string>();
         highlightedElements.set('elementId2', 'green');
-        const changes = { highlightedElements: { currentValue: highlightedElements } as SimpleChange };
+
         fixture.componentRef.setInput('umlModel', makeMockModel());
         fixture.componentRef.setInput('highlightedElements', highlightedElements);
 
         fixture.detectChanges();
         await fixture.whenStable();
-        await comp.ngOnChanges(changes);
         await comp.ngAfterViewInit();
+        await comp.apollonEditor!.nextRender;
 
         expect(comp.apollonEditor).not.toBeNull();
         const apollonModel = comp.apollonEditor!.model;
@@ -324,11 +339,9 @@ describe('ModelingAssessmentComponent', () => {
         expect(notHighlightedElement!.highlight).toBeUndefined();
         expect(relationship).not.toBeNull();
         expect(relationship!.highlight).toBeUndefined();
-        expect(relationship!.highlight).toBeUndefined();
     });
 
     it('should update highlighted assessments first round', async () => {
-        const changes = { highlightDifferences: { currentValue: true } as SimpleChange };
         fixture.componentRef.setInput('highlightDifferences', true);
         fixture.componentRef.setInput('umlModel', makeMockModel());
         comp.feedbacks = [mockFeedbackWithReference];
@@ -336,14 +349,14 @@ describe('ModelingAssessmentComponent', () => {
         jest.spyOn(translatePipe, 'transform').mockReturnValue('Second correction round');
 
         fixture.detectChanges();
-        await fixture.whenStable();
-        await comp.ngOnChanges(changes);
-        expect(comp.apollonEditor).toBeDefined();
-
+        await comp.ngAfterViewInit();
         await comp.apollonEditor!.nextRender;
+
+        expect(comp.apollonEditor).toBeDefined();
 
         const apollonModel = comp.apollonEditor!.model;
         const assessments: any = Object.values(apollonModel.assessments);
+
         expect(assessments[0].labelColor).toEqual(comp.secondCorrectionRoundColor);
         expect(assessments[0].label).toBe('Second correction round');
         expect(assessments[0].score).toBe(30);
@@ -383,14 +396,22 @@ describe('ModelingAssessmentComponent', () => {
             credits: 30,
             type: FeedbackType.MANUAL_UNREFERENCED,
         } as Feedback;
-        const newMockFeedbackInvalid = { text: 'NewFeedbackInvalid', referenceId: '4', reference: 'reference' };
+        const newMockFeedbackInvalid = {
+            text: 'NewFeedbackInvalid',
+            referenceId: '4',
+            reference: 'reference',
+        } as Feedback;
+
         const newMockValidFeedbacks = [newMockFeedbackWithReference, newMockFeedbackWithoutReference];
         const newMockFeedbacks = [...newMockValidFeedbacks, newMockFeedbackInvalid];
+
         fixture.componentRef.setInput('umlModel', makeMockModel());
         fixture.componentRef.setInput('readOnly', true);
         fixture.detectChanges();
-        const changes = { feedbacks: { currentValue: newMockFeedbacks } as SimpleChange };
-        comp.ngOnChanges(changes);
+
+        comp.feedbacks = newMockFeedbacks;
+        (comp as any).handleFeedback();
+
         expect(comp.feedbacks).toEqual(newMockFeedbacks);
         expect(comp.referencedFeedbacks).toEqual([newMockFeedbackWithReference]);
     });

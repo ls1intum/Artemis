@@ -62,7 +62,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
                 return;
             }
 
-            void this.runHighlightUpdate();
+            this.runHighlightUpdate();
         });
         effect(() => {
             const incoming = this.resultFeedbacks();
@@ -72,7 +72,9 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
             }
 
             this.feedbacks = incoming;
-            this.handleFeedback();
+            this.referencedFeedbacks = this.feedbacks.filter((feedbackElement) => feedbackElement.reference != undefined);
+            this.updateElementFeedbackMapping(this.referencedFeedbacks);
+            this.updateApollonAssessments(this.referencedFeedbacks);
         });
 
         effect(() => {
