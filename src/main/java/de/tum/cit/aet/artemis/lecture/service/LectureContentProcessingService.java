@@ -141,16 +141,45 @@ public class LectureContentProcessingService {
     /**
      * Cancel any ongoing processing for a lecture unit.
      * Called when the unit is being deleted or when content is changing.
+     * This will cancel any running transcription job on Nebula.
      *
      * @param lectureUnitId the ID of the lecture unit
      */
     public void cancelProcessing(Long lectureUnitId) {
         processingStateRepository.findByLectureUnit_Id(lectureUnitId).ifPresent(state -> {
             log.info("Cancelling processing for unit {}", lectureUnitId);
+
+            // If we're in transcription phase, cancel the job on Nebula
+            if (state.getPhase() == ProcessingPhase.TRANSCRIBING) {
+                cancelTranscriptionOnNebula(lectureUnitId);
+            }
+
             state.transitionTo(ProcessingPhase.IDLE);
             state.setErrorMessage("Cancelled");
             processingStateRepository.save(state);
         });
+    }
+
+    /**
+     * Cancel a running transcription job on Nebula.
+     * Silently handles errors since cancellation is best-effort.
+     *
+     * @param lectureUnitId the ID of the lecture unit
+     */
+    private void cancelTranscriptionOnNebula(Long lectureUnitId) {
+        if (transcriptionApi.isEmpty()) {
+            log.debug("Transcription API not available, cannot cancel on Nebula");
+            return;
+        }
+
+        try {
+            transcriptionApi.get().cancelNebulaTranscription(lectureUnitId);
+            log.info("Cancelled transcription on Nebula for unit {}", lectureUnitId);
+        }
+        catch (Exception e) {
+            // Log but don't fail - cancellation is best-effort
+            log.warn("Failed to cancel transcription on Nebula for unit {}: {}", lectureUnitId, e.getMessage());
+        }
     }
 
     /**
@@ -399,7 +428,12 @@ public class LectureContentProcessingService {
 
     private void cleanupForReprocessing(AttachmentVideoUnit unit, boolean deleteTranscription) {
         if (deleteTranscription) {
-            // Delete existing transcription
+            // First, cancel any running transcription on Nebula
+            // The cancel method also deletes the local transcription record
+            cancelTranscriptionOnNebula(unit.getId());
+
+            // Fallback: delete local transcription if it still exists
+            // (e.g., if cancel failed or transcription was already complete)
             transcriptionRepository.findByLectureUnit_Id(unit.getId()).ifPresent(transcription -> {
                 log.info("Deleting existing transcription for unit {}", unit.getId());
                 transcriptionRepository.delete(transcription);

@@ -38,4 +38,14 @@ public class LectureTranscriptionApi extends AbstractNebulaApi {
     public String startNebulaTranscription(Long lectureId, Long lectureUnitId, NebulaTranscriptionRequestDTO request) {
         return lectureTranscriptionService.startNebulaTranscription(lectureId, lectureUnitId, request);
     }
+
+    /**
+     * Cancels an ongoing transcription job with the Nebula service.
+     * This will stop the transcription on Nebula and delete the local transcription record.
+     *
+     * @param lectureUnitId ID of the lecture unit whose transcription should be cancelled
+     */
+    public void cancelNebulaTranscription(Long lectureUnitId) {
+        lectureTranscriptionService.cancelNebulaTranscription(lectureUnitId);
+    }
 }
