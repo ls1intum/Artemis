@@ -188,6 +188,7 @@ public abstract class AbstractGitService {
         builder.setBare();
         builder.setGitDir(localPath.toFile());
         builder.setInitialBranch(defaultBranch).setMustExist(true).readEnvironment().findGitDir().setup(); // scan environment GIT_* variables
+
         return new Repository(builder, localPath, bareRepositoryUri);
     }
 
