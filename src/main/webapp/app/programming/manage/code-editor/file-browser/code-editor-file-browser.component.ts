@@ -177,7 +177,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     filesTreeViewItem: TreeViewItem<string>[] = [];
     compressFolders = true;
 
-    private readonly changeDetectorRef = inject(ChangeDetectorRef);
+    readonly changeDetectorRef = inject(ChangeDetectorRef);
 
     collapsed = false;
 

@@ -596,6 +596,15 @@ export class RepositoryFileSyncService {
      * Refreshes the file browser's tree view to reflect current file state.
      * Should be called after any file operation (create, delete, rename) to update the UI.
      *
+     * Steps:
+     * 1. Re-initializes the repository files structure
+     * 2. Refreshes the tree view component
+     * 3. Marks the file browser for change detection (required for OnPush strategy)
+     *
+     * Note: The manual change detection trigger is crucial because the parent component
+     * uses ChangeDetectionStrategy.OnPush, which means Angular won't automatically
+     * detect changes unless explicitly notified.
+     *
      * @param codeEditorContainer - The code editor container with file browser
      * @private
      */
@@ -604,6 +613,8 @@ export class RepositoryFileSyncService {
         if (fileBrowser) {
             fileBrowser.initializeRepositoryFiles();
             fileBrowser.refreshTreeview();
+            // Trigger change detection to update the UI immediately
+            fileBrowser.changeDetectorRef.markForCheck();
         }
     }
 
