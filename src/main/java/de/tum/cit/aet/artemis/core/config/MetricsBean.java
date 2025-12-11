@@ -626,10 +626,10 @@ public class MetricsBean {
 
     /**
      * Update artemis public Artemis metrics that are exposed via Prometheus.
-     * The update (and recalculation) is performed every 60 minutes.
+     * The update (and recalculation) is performed every 5 hours.
      * Only executed if the "scheduling"-profile is present.
      */
-    @Scheduled(fixedRate = 60 * 60 * 1000, initialDelay = 5 * 60 * 1000) // Every 60 minutes, starting 5 minutes after application start
+    @Scheduled(fixedRate = 5 * 60 * 60 * 1000, initialDelay = 5 * 60 * 1000) // Every 5 hours, starting 5 minutes after application start
     public void updatePublicArtemisMetrics() {
         if (!scheduledMetricsEnabled) {
             return;

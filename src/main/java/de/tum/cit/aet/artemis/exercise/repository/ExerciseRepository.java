@@ -200,12 +200,12 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
                 JOIN User user ON e.course.studentGroupName MEMBER OF user.groups
             WHERE e.course.testCourse = FALSE
             	AND e.dueDate >= :minDate
-            	AND e.dueDate <= :maxDate
+                AND e.dueDate <= :maxDate
                 AND user.login NOT LIKE '%test%'
                 AND EXISTS (
                     SELECT 1
                     FROM Submission submission
-                        JOIN StudentParticipation participation ON participation.id = submission.participation.id
+                        JOIN submission.participation participation
                     WHERE submission.submissionDate >= :activeSince
                         AND participation.student.id = user.id
                 )
@@ -276,12 +276,12 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
                 JOIN User user ON e.course.studentGroupName MEMBER OF user.groups
             WHERE e.course.testCourse = FALSE
             	AND e.releaseDate >= :minDate
-            	AND e.releaseDate <= :maxDate
+                AND e.releaseDate <= :maxDate
                 AND user.login NOT LIKE '%test%'
                 AND EXISTS (
                     SELECT 1
                     FROM Submission submission
-                        JOIN StudentParticipation participation ON participation.id = submission.participation.id
+                        JOIN submission.participation participation
                     WHERE submission.submissionDate >= :activeSince
                         AND participation.student.id = user.id
                 )
