@@ -83,14 +83,14 @@ The output is a markdown table compatible with GitHub PR descriptions:
 ```markdown
 #### Client
 
-| Class/File | Line Coverage | Confirmation (assert/expect) |
+| Class/File | Line Coverage | Confirmation (expect) |
 |------------|--------------:|---------------------:|
 | course.service.ts | 95.2% | ✅ ❌ |
 | course.component.ts | 87.3% | ✅ ❌ |
 
 #### Server
 
-| Class/File | Line Coverage | Confirmation (assert/expect) |
+| Class/File | Line Coverage | Confirmation (assert) |
 |------------|--------------:|---------------------:|
 | CourseService.java | 91.5% | ✅ |
 | CourseResource.java | 88.2% | ✅ ❌ |

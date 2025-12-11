@@ -405,30 +405,28 @@ function getServerFileCoverage(filePath, moduleName) {
 
             let match = xmlContent.match(sourceFileRegex);
             if (match) {
-                // Find the LINE counter within this class
+                // Find the class-level LINE counter (the LAST one in the class block, not method-level)
                 for (const classMatch of match) {
-                    const lineCounterRegex = /<counter type="LINE"[^>]*missed="(\d+)"[^>]*covered="(\d+)"[^>]*\/?>/i;
-                    const altLineCounterRegex = /<counter[^>]*type="LINE"[^>]*covered="(\d+)"[^>]*missed="(\d+)"[^>]*\/?>/i;
+                    // Get ALL LINE counters in this class block
+                    const lineCounterRegex = /<counter[^>]*type="LINE"[^>]*\/?>/gi;
+                    const allLineCounters = classMatch.match(lineCounterRegex);
 
-                    let lineMatch = classMatch.match(lineCounterRegex);
-                    if (lineMatch) {
-                        const missed = parseInt(lineMatch[1], 10);
-                        const covered = parseInt(lineMatch[2], 10);
-                        const total = missed + covered;
-                        if (total > 0) {
-                            const percentage = (covered / total) * 100;
-                            return `${percentage.toFixed(2)}%`;
-                        }
-                    }
+                    if (allLineCounters && allLineCounters.length > 0) {
+                        // The class-level counter is the LAST one (after all method counters)
+                        const classLevelCounter = allLineCounters[allLineCounters.length - 1];
 
-                    lineMatch = classMatch.match(altLineCounterRegex);
-                    if (lineMatch) {
-                        const covered = parseInt(lineMatch[1], 10);
-                        const missed = parseInt(lineMatch[2], 10);
-                        const total = missed + covered;
-                        if (total > 0) {
-                            const percentage = (covered / total) * 100;
-                            return `${percentage.toFixed(2)}%`;
+                        // Extract missed and covered values
+                        const missedMatch = classLevelCounter.match(/missed="(\d+)"/);
+                        const coveredMatch = classLevelCounter.match(/covered="(\d+)"/);
+
+                        if (missedMatch && coveredMatch) {
+                            const missed = parseInt(missedMatch[1], 10);
+                            const covered = parseInt(coveredMatch[1], 10);
+                            const total = missed + covered;
+                            if (total > 0) {
+                                const percentage = (covered / total) * 100;
+                                return `${percentage.toFixed(2)}%`;
+                            }
                         }
                     }
                 }
@@ -494,7 +492,7 @@ function buildClientCoverageTable(clientFiles, options) {
         return null;
     }
 
-    let table = '| Class/File | Line Coverage | Confirmation (assert/expect) |\n';
+    let table = '| Class/File | Line Coverage | Confirmation (expect) |\n';
     table += '|------------|--------------:|---------------------:|\n';
     for (const row of rows) {
         table += `| ${row.file} | ${row.coverage} | ${row.confirmation} |\n`;
@@ -544,7 +542,7 @@ function buildServerCoverageTable(serverFiles, serverModules, options) {
         return null;
     }
 
-    let table = '| Class/File | Line Coverage | Confirmation (assert/expect) |\n';
+    let table = '| Class/File | Line Coverage | Confirmation (assert) |\n';
     table += '|------------|--------------:|---------------------:|\n';
     for (const row of rows) {
         table += `| ${row.file} | ${row.coverage} | ${row.confirmation} |\n`;

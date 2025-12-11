@@ -31,10 +31,10 @@ import de.tum.cit.aet.artemis.core.domain.CourseRequest;
 import de.tum.cit.aet.artemis.core.domain.CourseRequestStatus;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.CourseRequestDTO;
-import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.CourseRequestRepository;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
+import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
+import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 
 @ExtendWith(MockitoExtension.class)
 class CourseRequestServiceTest {
@@ -43,10 +43,10 @@ class CourseRequestServiceTest {
     private CourseRequestRepository courseRequestRepository;
 
     @Mock
-    private CourseRepository courseRepository;
+    private CourseTestRepository courseRepository;
 
     @Mock
-    private UserRepository userRepository;
+    private UserTestRepository userRepository;
 
     @Mock
     private CourseAccessService courseAccessService;

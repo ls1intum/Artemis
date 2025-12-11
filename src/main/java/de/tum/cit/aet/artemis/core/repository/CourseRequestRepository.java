@@ -6,13 +6,12 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 import java.util.List;
 import java.util.Optional;
 
-import jakarta.transaction.Transactional;
-
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.core.domain.CourseRequest;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
