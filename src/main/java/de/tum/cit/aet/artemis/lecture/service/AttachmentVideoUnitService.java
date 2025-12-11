@@ -23,7 +23,6 @@ import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
-import de.tum.cit.aet.artemis.iris.api.IrisLectureApi;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.dto.HiddenPageInfoDTO;
@@ -44,22 +43,22 @@ public class AttachmentVideoUnitService {
 
     private final SlideSplitterService slideSplitterService;
 
-    private final Optional<IrisLectureApi> irisLectureApi;
-
     private final Optional<CompetencyProgressApi> competencyProgressApi;
 
     private final LectureUnitService lectureUnitService;
 
+    private final LectureContentProcessingService contentProcessingService;
+
     public AttachmentVideoUnitService(SlideSplitterService slideSplitterService, AttachmentVideoUnitRepository attachmentVideoUnitRepository,
-            AttachmentRepository attachmentRepository, FileService fileService, Optional<IrisLectureApi> irisLectureApi, Optional<CompetencyProgressApi> competencyProgressApi,
-            LectureUnitService lectureUnitService) {
+            AttachmentRepository attachmentRepository, FileService fileService, Optional<CompetencyProgressApi> competencyProgressApi, LectureUnitService lectureUnitService,
+            LectureContentProcessingService contentProcessingService) {
         this.attachmentVideoUnitRepository = attachmentVideoUnitRepository;
         this.attachmentRepository = attachmentRepository;
         this.fileService = fileService;
         this.slideSplitterService = slideSplitterService;
-        this.irisLectureApi = irisLectureApi;
         this.competencyProgressApi = competencyProgressApi;
         this.lectureUnitService = lectureUnitService;
+        this.contentProcessingService = contentProcessingService;
     }
 
     /**
@@ -77,8 +76,10 @@ public class AttachmentVideoUnitService {
 
         if (attachment != null && file != null) {
             createAttachment(attachment, savedAttachmentVideoUnit, file, keepFilename);
-            irisLectureApi.ifPresent(api -> api.autoUpdateAttachmentVideoUnitsInPyris(List.of(savedAttachmentVideoUnit)));
         }
+
+        // Trigger automated content processing (transcription and ingestion)
+        contentProcessingService.triggerProcessing(savedAttachmentVideoUnit);
 
         return savedAttachmentVideoUnit;
     }
@@ -106,9 +107,11 @@ public class AttachmentVideoUnitService {
         existingAttachmentVideoUnit.setVideoSource(updateUnit.getVideoSource());
 
         Attachment existingAttachment = existingAttachmentVideoUnit.getAttachment();
+        boolean createdNewAttachment = false;
 
         if (existingAttachment == null && updateAttachment != null) {
             createAttachment(updateAttachment, existingAttachmentVideoUnit, updateFile, keepFilename);
+            createdNewAttachment = true;
         }
 
         // TODO: switch to the new mechanism of lectureUnitService.updateCompetencyLinks
@@ -119,11 +122,17 @@ public class AttachmentVideoUnitService {
         competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsync(existingAttachmentVideoUnit, Optional.of(updateUnit)));
 
         if (updateAttachment == null) {
+            // Trigger processing for video-only updates (video source change detection is done inside the service)
+            contentProcessingService.triggerProcessing(savedAttachmentVideoUnit);
             prepareAttachmentVideoUnitForClient(existingAttachmentVideoUnit);
             return existingAttachmentVideoUnit;
         }
 
-        if (existingAttachment != null) {
+        if (createdNewAttachment) {
+            // Trigger processing for newly added attachment
+            contentProcessingService.triggerProcessing(savedAttachmentVideoUnit);
+        }
+        else if (existingAttachment != null) {
             updateAttachment(existingAttachment, updateAttachment, savedAttachmentVideoUnit, hiddenPages);
             handleFile(updateFile, existingAttachment, keepFilename, savedAttachmentVideoUnit.getId());
             final int revision = existingAttachment.getVersion() == null ? 1 : existingAttachment.getVersion() + 1;
@@ -144,7 +153,8 @@ public class AttachmentVideoUnitService {
                 }
             }
 
-            irisLectureApi.ifPresent(api -> api.autoUpdateAttachmentVideoUnitsInPyris(List.of(savedAttachmentVideoUnit)));
+            // Trigger automated content processing (transcription and ingestion)
+            contentProcessingService.triggerProcessing(savedAttachmentVideoUnit);
         }
 
         prepareAttachmentVideoUnitForClient(savedAttachmentVideoUnit);

@@ -48,6 +48,7 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureUnitCompletion;
 import de.tum.cit.aet.artemis.lecture.dto.LectureUnitDTO;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitCompletionRepository;
+import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 
 @Profile(PROFILE_CORE)
@@ -63,6 +64,8 @@ public class LectureUnitService {
 
     private final LectureUnitCompletionRepository lectureUnitCompletionRepository;
 
+    private final LectureUnitProcessingStateRepository processingStateRepository;
+
     private final FileService fileService;
 
     private final Optional<IrisLectureApi> irisLectureApi;
@@ -76,11 +79,13 @@ public class LectureUnitService {
     private final Optional<CompetencyRepositoryApi> competencyRepositoryApi;
 
     public LectureUnitService(LectureUnitRepository lectureUnitRepository, LectureRepository lectureRepository, LectureUnitCompletionRepository lectureUnitCompletionRepository,
-            FileService fileService, Optional<IrisLectureApi> irisLectureApi, Optional<CompetencyProgressApi> competencyProgressApi,
-            Optional<CourseCompetencyApi> courseCompetencyApi, Optional<CompetencyRelationApi> competencyRelationApi, Optional<CompetencyRepositoryApi> competencyRepositoryApi) {
+            LectureUnitProcessingStateRepository processingStateRepository, FileService fileService, Optional<IrisLectureApi> irisLectureApi,
+            Optional<CompetencyProgressApi> competencyProgressApi, Optional<CourseCompetencyApi> courseCompetencyApi, Optional<CompetencyRelationApi> competencyRelationApi,
+            Optional<CompetencyRepositoryApi> competencyRepositoryApi) {
         this.lectureUnitRepository = lectureUnitRepository;
         this.lectureRepository = lectureRepository;
         this.lectureUnitCompletionRepository = lectureUnitCompletionRepository;
+        this.processingStateRepository = processingStateRepository;
         this.fileService = fileService;
         this.irisLectureApi = irisLectureApi;
         this.courseCompetencyApi = courseCompetencyApi;
@@ -163,12 +168,16 @@ public class LectureUnitService {
     }
 
     /**
-     * Deletes a lecture unit correctly in the database
+     * Deletes a lecture unit correctly in the database.
+     * Also cancels any ongoing content processing and cleans up the processing state.
      *
      * @param lectureUnit lecture unit to delete
      */
     public void removeLectureUnit(@NonNull LectureUnit lectureUnit) {
         LectureUnit lectureUnitToDelete = lectureUnitRepository.findByIdWithCompetenciesAndSlidesElseThrow(lectureUnit.getId());
+
+        // Delete processing state first (cancels any ongoing processing)
+        processingStateRepository.deleteByLectureUnit_Id(lectureUnit.getId());
 
         if (lectureUnitToDelete instanceof AttachmentVideoUnit attachmentVideoUnit) {
             if (attachmentVideoUnit.getAttachment() != null && attachmentVideoUnit.getAttachment().getLink() != null) {

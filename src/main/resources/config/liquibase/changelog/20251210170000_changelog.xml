@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- Create lecture_unit_processing_state table for tracking automated content processing -->
+    <changeSet id="20251210170000-processing-state" author="automated">
+        <createTable tableName="lecture_unit_processing_state">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="lecture_unit_id" type="BIGINT">
+                <constraints unique="true" nullable="true"/>
+            </column>
+            <column name="phase" type="VARCHAR(50)" defaultValue="IDLE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="retry_count" type="INT" defaultValue="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="video_source_hash" type="VARCHAR(64)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="attachment_version" type="INT">
+                <constraints nullable="true"/>
+            </column>
+            <column name="error_message" type="VARCHAR(2000)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="started_at" type="DATETIME">
+                <constraints nullable="true"/>
+            </column>
+            <column name="last_updated" type="DATETIME">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint baseTableName="lecture_unit_processing_state"
+                                 baseColumnNames="lecture_unit_id"
+                                 referencedTableName="lecture_unit"
+                                 referencedColumnNames="id"
+                                 onDelete="CASCADE"
+                                 constraintName="fk_processing_state_lecture_unit"/>
+
+        <createIndex tableName="lecture_unit_processing_state" indexName="idx_processing_state_phase">
+            <column name="phase"/>
+        </createIndex>
+
+        <createIndex tableName="lecture_unit_processing_state" indexName="idx_processing_state_started_at">
+            <column name="started_at"/>
+        </createIndex>
+
+        <rollback>
+            <dropTable tableName="lecture_unit_processing_state"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

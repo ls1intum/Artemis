@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
 
+import de.tum.cit.aet.artemis.lecture.api.LectureContentProcessingApi;
 import de.tum.cit.aet.artemis.lecture.api.LectureTranscriptionsRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
@@ -55,16 +56,19 @@ public class LectureTranscriptionService {
 
     private final String nebulaSecretToken;
 
+    private final LectureContentProcessingApi contentProcessingApi;
+
     private final ConcurrentHashMap<String, Integer> failureCountMap = new ConcurrentHashMap<>();
 
     public LectureTranscriptionService(LectureTranscriptionsRepositoryApi lectureTranscriptionsRepositoryApi, LectureUnitRepositoryApi lectureUnitRepositoryApi,
             @Qualifier("nebulaRestTemplate") RestTemplate restTemplate, @Value("${artemis.nebula.url}") String nebulaBaseUrl,
-            @Value("${artemis.nebula.secret-token}") String nebulaSecretToken) {
+            @Value("${artemis.nebula.secret-token}") String nebulaSecretToken, @Lazy LectureContentProcessingApi contentProcessingApi) {
         this.lectureTranscriptionsRepositoryApi = lectureTranscriptionsRepositoryApi;
         this.lectureUnitRepositoryApi = lectureUnitRepositoryApi;
         this.restTemplate = restTemplate;
         this.nebulaBaseUrl = nebulaBaseUrl;
         this.nebulaSecretToken = nebulaSecretToken;
+        this.contentProcessingApi = contentProcessingApi;
     }
 
     /**
@@ -128,6 +132,7 @@ public class LectureTranscriptionService {
 
     /**
      * Saves the final transcription result in the database once it has been marked as completed by Nebula.
+     * Also notifies the content processing service to continue with ingestion.
      *
      * @param jobId The Nebula job ID
      * @param dto   The completed transcription result returned from Nebula
@@ -140,19 +145,26 @@ public class LectureTranscriptionService {
         transcription.setSegments(dto.segments());
         transcription.setTranscriptionStatus(TranscriptionStatus.COMPLETED);
 
-        lectureTranscriptionsRepositoryApi.save(transcription);
+        LectureTranscription savedTranscription = lectureTranscriptionsRepositoryApi.save(transcription);
+
+        // Notify processing service to continue with ingestion
+        contentProcessingApi.handleTranscriptionComplete(savedTranscription);
     }
 
     /**
      * Marks a transcription job as failed in the database with a given error message.
+     * Also notifies the content processing service to handle the failure.
      *
      * @param transcription The transcription entity to update
      * @param errorMessage  The error message returned by Nebula
      */
     void markTranscriptionAsFailed(LectureTranscription transcription, String errorMessage) {
         transcription.setTranscriptionStatus(TranscriptionStatus.FAILED);
-        lectureTranscriptionsRepositoryApi.save(transcription);
+        LectureTranscription savedTranscription = lectureTranscriptionsRepositoryApi.save(transcription);
         log.warn("Transcription failed for jobId={}, reason: {}", transcription.getJobId(), errorMessage);
+
+        // Notify processing service to handle failure
+        contentProcessingApi.handleTranscriptionComplete(savedTranscription);
     }
 
     /**

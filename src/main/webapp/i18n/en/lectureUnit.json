@@ -2,6 +2,8 @@
     "artemisApp": {
         "lectureUnit": {
             "deleted": "Lecture unit deleted",
+            "retryProcessing": "Retry processing",
+            "processingRetryStarted": "Processing retry started",
             "home": {
                 "title": "Lecture Units"
             },

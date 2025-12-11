@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.iris.service.pyris;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -36,6 +37,7 @@ import de.tum.cit.aet.artemis.iris.service.session.IrisExerciseChatSessionServic
 import de.tum.cit.aet.artemis.iris.service.session.IrisLectureChatSessionService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisTextExerciseChatSessionService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisTutorSuggestionSessionService;
+import de.tum.cit.aet.artemis.lecture.api.LectureContentProcessingApi;
 
 @Lazy
 @Service
@@ -58,10 +60,12 @@ public class PyrisStatusUpdateService {
 
     private final IrisTutorSuggestionSessionService irisTutorSuggestionSessionService;
 
+    private final Optional<LectureContentProcessingApi> lectureContentProcessingApi;
+
     public PyrisStatusUpdateService(PyrisJobService pyrisJobService, IrisExerciseChatSessionService irisExerciseChatSessionService,
             IrisTextExerciseChatSessionService irisTextExerciseChatSessionService, IrisCourseChatSessionService courseChatSessionService,
             IrisCompetencyGenerationService competencyGenerationService, IrisLectureChatSessionService irisLectureChatSessionService, IrisRewritingService rewritingService,
-            IrisTutorSuggestionSessionService irisTutorSuggestionSessionService) {
+            IrisTutorSuggestionSessionService irisTutorSuggestionSessionService, Optional<LectureContentProcessingApi> lectureContentProcessingApi) {
         this.pyrisJobService = pyrisJobService;
         this.irisExerciseChatSessionService = irisExerciseChatSessionService;
         this.irisTextExerciseChatSessionService = irisTextExerciseChatSessionService;
@@ -70,6 +74,7 @@ public class PyrisStatusUpdateService {
         this.irisLectureChatSessionService = irisLectureChatSessionService;
         this.rewritingService = rewritingService;
         this.irisTutorSuggestionSessionService = irisTutorSuggestionSessionService;
+        this.lectureContentProcessingApi = lectureContentProcessingApi;
     }
 
     /**
@@ -158,12 +163,24 @@ public class PyrisStatusUpdateService {
 
     /**
      * Handles the status update of a lecture ingestion job.
+     * Also notifies the lecture content processing service when ingestion completes.
      *
      * @param job          the job that is updated
      * @param statusUpdate the status update
      */
     public void handleStatusUpdate(LectureIngestionWebhookJob job, PyrisLectureIngestionStatusUpdateDTO statusUpdate) {
-        removeJobIfTerminatedElseUpdate(statusUpdate.stages(), job);
+        var isDone = statusUpdate.stages().stream().map(PyrisStageDTO::state).allMatch(PyrisStageState::isTerminal);
+
+        if (isDone) {
+            pyrisJobService.removeJob(job);
+
+            // Notify the lecture content processing service
+            boolean success = statusUpdate.stages().stream().map(PyrisStageDTO::state).noneMatch(state -> state == PyrisStageState.ERROR);
+            lectureContentProcessingApi.ifPresent(api -> api.handleIngestionComplete(job.lectureUnitId(), success));
+        }
+        else {
+            pyrisJobService.updateJob(job);
+        }
     }
 
     /**

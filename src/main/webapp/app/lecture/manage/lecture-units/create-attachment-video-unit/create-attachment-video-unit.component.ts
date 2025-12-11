@@ -46,10 +46,9 @@ export class CreateAttachmentVideoUnitComponent implements OnInit {
     }
 
     createAttachmentVideoUnit(attachmentVideoUnitFormData: AttachmentVideoUnitFormData): void {
-        const { name, videoSource, description, releaseDate, competencyLinks, generateTranscript } = attachmentVideoUnitFormData?.formProperties || {};
+        const { name, videoSource, description, releaseDate, competencyLinks } = attachmentVideoUnitFormData?.formProperties || {};
         const { file, fileName } = attachmentVideoUnitFormData?.fileProperties || {};
         const { videoTranscription } = attachmentVideoUnitFormData?.transcriptionProperties || {};
-        const { playlistUrl } = attachmentVideoUnitFormData || {};
 
         if (!name || (!(file && fileName) && !videoSource)) {
             return;
@@ -89,41 +88,23 @@ export class CreateAttachmentVideoUnitComponent implements OnInit {
                     }
                     const lectureUnitId = lectureUnit.id;
 
-                    // Handle automatic transcription generation if requested
-                    let transcriptionObservable = of(lectureUnit);
-                    if (generateTranscript && lectureUnitId) {
-                        const transcriptionUrl = playlistUrl ?? lectureUnit.videoSource;
-                        if (transcriptionUrl) {
-                            transcriptionObservable = this.attachmentVideoUnitService.startTranscription(this.lectureId, lectureUnitId, transcriptionUrl).pipe(
-                                map(() => lectureUnit),
-                                catchError((err) => {
-                                    onError(this.alertService, err);
-                                    return of(lectureUnit);
-                                }),
-                            );
-                        }
+                    // Handle admin-provided transcription (manual JSON input)
+                    if (!videoTranscription || !lectureUnitId) {
+                        return of(lectureUnit);
                     }
-
-                    return transcriptionObservable.pipe(
-                        switchMap(() => {
-                            if (!videoTranscription || !lectureUnitId) {
-                                return of(lectureUnit);
-                            }
-                            let transcription: LectureTranscriptionDTO;
-                            try {
-                                transcription = JSON.parse(videoTranscription) as LectureTranscriptionDTO;
-                            } catch {
-                                this.alertService.error('artemisApp.lectureUnit.attachmentVideoUnit.transcriptionInvalidJson');
-                                return of(lectureUnit);
-                            }
-                            transcription.lectureUnitId = lectureUnitId;
-                            return this.lectureTranscriptionService.createTranscription(this.lectureId, lectureUnitId, transcription).pipe(
-                                map(() => lectureUnit),
-                                catchError((err) => {
-                                    onError(this.alertService, err);
-                                    return of(lectureUnit);
-                                }),
-                            );
+                    let transcription: LectureTranscriptionDTO;
+                    try {
+                        transcription = JSON.parse(videoTranscription) as LectureTranscriptionDTO;
+                    } catch {
+                        this.alertService.error('artemisApp.lectureUnit.attachmentVideoUnit.transcriptionInvalidJson');
+                        return of(lectureUnit);
+                    }
+                    transcription.lectureUnitId = lectureUnitId;
+                    return this.lectureTranscriptionService.createTranscription(this.lectureId, lectureUnitId, transcription).pipe(
+                        map(() => lectureUnit),
+                        catchError((err) => {
+                            onError(this.alertService, err);
+                            return of(lectureUnit);
                         }),
                     );
                 }),

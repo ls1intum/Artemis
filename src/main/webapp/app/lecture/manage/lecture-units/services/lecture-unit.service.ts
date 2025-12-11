@@ -7,7 +7,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Injectable, inject } from '@angular/core';
-import { AttachmentVideoUnit, IngestionState } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
+import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { AttachmentService } from 'app/lecture/manage/services/attachment.service';
 import { ExerciseUnit } from 'app/lecture/shared/entities/lecture-unit/exerciseUnit.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
@@ -165,28 +165,47 @@ export class LectureUnitService {
     getLectureUnitById(lectureUnitId: number): Observable<LectureUnit> {
         return this.httpClient.get<LectureUnit>(`${this.resourceURL}/lecture-units/${lectureUnitId}`);
     }
+
     /**
-     * Fetch the actual ingestion state for all lecture units from an external service (e.g., Pyris).
-     * @param courseId
-     * @param lectureId ID of the lecture
-     * @returns Observable with the ingestion state
+     * Get the processing status of a lecture unit.
+     * @param lectureId the ID of the lecture
+     * @param lectureUnitId the ID of the lecture unit
+     * @returns Observable with the processing status
      */
-    getIngestionState(courseId: number, lectureId: number): Observable<HttpResponse<Record<number, IngestionState>>> {
-        return this.httpClient.get<Record<number, IngestionState>>(`api/iris/courses/${courseId}/lectures/${lectureId}/lecture-units/ingestion-state`, {
-            observe: 'response',
-        });
+    getProcessingStatus(lectureId: number, lectureUnitId: number): Observable<LectureUnitProcessingStatus> {
+        return this.httpClient.get<LectureUnitProcessingStatus>(`${this.resourceURL}/lectures/${lectureId}/lecture-units/${lectureUnitId}/processing-status`);
     }
 
     /**
-     * Triggers the ingestion of one lecture unit.
-     *
-     * @param lectureUnitId - The ID of the lecture unit to be ingested.
-     * @param lectureId - The ID of the lecture to which the unit belongs.
-     * @returns An Observable with an HttpResponse 200 if the request was successful .
+     * Retry processing for a failed lecture unit.
+     * @param lectureId the ID of the lecture
+     * @param lectureUnitId the ID of the lecture unit
+     * @returns Observable with the response
      */
-    ingestLectureUnitInPyris(lectureUnitId: number, lectureId: number): Observable<HttpResponse<void>> {
-        return this.httpClient.post<void>(`${this.resourceURL}/lectures/${lectureId}/lecture-units/${lectureUnitId}/ingest`, null, {
-            observe: 'response',
-        });
+    retryProcessing(lectureId: number, lectureUnitId: number): Observable<HttpResponse<void>> {
+        return this.httpClient.post<void>(`${this.resourceURL}/lectures/${lectureId}/lecture-units/${lectureUnitId}/retry-processing`, null, { observe: 'response' });
     }
+}
+
+/**
+ * DTO representing the processing status of a lecture unit.
+ */
+export interface LectureUnitProcessingStatus {
+    lectureUnitId: number;
+    phase: ProcessingPhase;
+    retryCount: number;
+    startedAt?: string;
+    errorMessage?: string;
+}
+
+/**
+ * Enum for processing phases.
+ */
+export enum ProcessingPhase {
+    IDLE = 'IDLE',
+    CHECKING_PLAYLIST = 'CHECKING_PLAYLIST',
+    TRANSCRIBING = 'TRANSCRIBING',
+    INGESTING = 'INGESTING',
+    DONE = 'DONE',
+    FAILED = 'FAILED',
 }

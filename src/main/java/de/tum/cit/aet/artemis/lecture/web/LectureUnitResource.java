@@ -26,20 +26,23 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLecture.EnforceAtLeastEditorInLecture;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastInstructorInLectureUnit;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastStudentInLectureUnit;
-import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
+import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
 import de.tum.cit.aet.artemis.lecture.dto.LectureUnitForLearningPathNodeDetailsDTO;
+import de.tum.cit.aet.artemis.lecture.dto.LectureUnitProcessingStatusDTO;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
+import de.tum.cit.aet.artemis.lecture.service.LectureContentProcessingService;
 import de.tum.cit.aet.artemis.lecture.service.LectureUnitService;
 
 @Profile(PROFILE_CORE)
@@ -65,16 +68,17 @@ public class LectureUnitResource {
 
     private final Optional<CompetencyProgressApi> competencyProgressApi;
 
-    private final InstanceMessageSendService instanceMessageSendService;
+    private final Optional<LectureContentProcessingService> lectureContentProcessingService;
 
     public LectureUnitResource(UserRepository userRepository, LectureRepository lectureRepository, LectureUnitRepository lectureUnitRepository,
-            LectureUnitService lectureUnitService, Optional<CompetencyProgressApi> competencyProgressApi, InstanceMessageSendService instanceMessageSendService) {
+            LectureUnitService lectureUnitService, Optional<CompetencyProgressApi> competencyProgressApi,
+            Optional<LectureContentProcessingService> lectureContentProcessingService) {
         this.userRepository = userRepository;
         this.lectureUnitRepository = lectureUnitRepository;
         this.lectureRepository = lectureRepository;
         this.lectureUnitService = lectureUnitService;
         this.competencyProgressApi = competencyProgressApi;
-        this.instanceMessageSendService = instanceMessageSendService;
+        this.lectureContentProcessingService = lectureContentProcessingService;
     }
 
     /**
@@ -204,32 +208,66 @@ public class LectureUnitResource {
     }
 
     /**
-     * This endpoint triggers the ingestion process for a specified lecture unit into Pyris.
-     * The authorization check is done on the chain lecture unit --> lecture --> course based on the lecture unit id
-     * In case the call includes a mismatched lectureId and lectureUnitId, a BAD_REQUEST is returned.
+     * GET /lectures/:lectureId/lecture-units/:lectureUnitId/processing-status
+     * Gets the processing status of a lecture unit.
      *
-     * @param lectureId     the ID of the lecture to which the lecture unit belongs
-     * @param lectureUnitId the ID of the lecture unit to be ingested
-     * @return ResponseEntity<Void> with the status of the ingestion operation.
-     *         Returns 200 OK if the ingestion is successfully started.
-     *         Returns 400 BAD_REQUEST if the lecture unit cannot be ingested.
-     *         Returns SERVICE_UNAVAILABLE if the Pyris service is unavailable or
-     *         ingestion fails for another reason.
+     * @param lectureId     the id of the lecture to which the unit belongs
+     * @param lectureUnitId the id of the lecture unit
+     * @return the ResponseEntity with status 200 (OK) and the processing status
      */
-    @PostMapping("lectures/{lectureId}/lecture-units/{lectureUnitId}/ingest")
-    @EnforceAtLeastInstructorInLectureUnit
-    public ResponseEntity<Void> ingestLectureUnit(@PathVariable long lectureId, @PathVariable long lectureUnitId) {
+    @GetMapping("lectures/{lectureId}/lecture-units/{lectureUnitId}/processing-status")
+    @EnforceAtLeastEditorInLecture
+    public ResponseEntity<LectureUnitProcessingStatusDTO> getProcessingStatus(@PathVariable Long lectureId, @PathVariable Long lectureUnitId) {
+        log.debug("REST request to get processing status of lecture unit: {}", lectureUnitId);
         LectureUnit lectureUnit = lectureUnitRepository.findByIdElseThrow(lectureUnitId);
-        if (lectureUnit.getLecture().getId() != lectureId) {
+
+        if (lectureUnit.getLecture() == null || !lectureUnit.getLecture().getId().equals(lectureId)) {
             throw new BadRequestAlertException("Requested lecture unit is not part of the specified lecture", ENTITY_NAME, "lectureIdMismatch");
         }
-        if (lectureUnit.getLecture().isTutorialLecture()) {
-            throw new BadRequestAlertException("Units of tutorial lectures can not be ingested", ENTITY_NAME, "tutorialLectureIngestion");
+
+        if (lectureContentProcessingService.isEmpty()) {
+            throw new AccessForbiddenException("Lecture content processing is not enabled");
         }
-        if (!(lectureUnit instanceof AttachmentVideoUnit)) {
-            throw new BadRequestAlertException("Only attachment video units can be ingested into Pyris", ENTITY_NAME, "invalidLectureUnitType");
-        }
-        instanceMessageSendService.sendLectureUnitAutoIngestionScheduleCancel(lectureUnitId);
-        return lectureUnitService.ingestLectureUnitInPyris(lectureUnit);
+
+        var status = lectureContentProcessingService.get().getProcessingState(lectureUnitId).map(LectureUnitProcessingStatusDTO::of)
+                .orElse(LectureUnitProcessingStatusDTO.idle(lectureUnitId));
+        return ResponseEntity.ok(status);
     }
+
+    /**
+     * POST /lectures/:lectureId/lecture-units/:lectureUnitId/retry-processing
+     * Retries processing for a failed lecture unit.
+     *
+     * @param lectureId     the id of the lecture to which the unit belongs
+     * @param lectureUnitId the id of the lecture unit to retry processing for
+     * @return the ResponseEntity with status 200 (OK)
+     */
+    @PostMapping("lectures/{lectureId}/lecture-units/{lectureUnitId}/retry-processing")
+    @EnforceAtLeastInstructorInLectureUnit
+    public ResponseEntity<Void> retryProcessing(@PathVariable Long lectureId, @PathVariable Long lectureUnitId) {
+        log.info("REST request to retry processing of lecture unit: {}", lectureUnitId);
+        LectureUnit lectureUnit = lectureUnitRepository.findByIdElseThrow(lectureUnitId);
+
+        if (lectureUnit.getLecture() == null || !lectureUnit.getLecture().getId().equals(lectureId)) {
+            throw new BadRequestAlertException("Requested lecture unit is not part of the specified lecture", ENTITY_NAME, "lectureIdMismatch");
+        }
+
+        if (!(lectureUnit instanceof AttachmentVideoUnit attachmentVideoUnit)) {
+            throw new BadRequestAlertException("Only attachment video units can have processing retried", ENTITY_NAME, "wrongUnitType");
+        }
+
+        if (lectureContentProcessingService.isEmpty()) {
+            throw new AccessForbiddenException("Lecture content processing is not enabled");
+        }
+
+        // Check that the unit is in a failed state
+        var currentState = lectureContentProcessingService.get().getProcessingState(lectureUnitId);
+        if (currentState.isPresent() && currentState.get().getPhase() != ProcessingPhase.FAILED) {
+            throw new BadRequestAlertException("Cannot retry processing for a unit that is not in failed state", ENTITY_NAME, "notInFailedState");
+        }
+
+        lectureContentProcessingService.get().retryProcessing(attachmentVideoUnit);
+        return ResponseEntity.ok().build();
+    }
+
 }

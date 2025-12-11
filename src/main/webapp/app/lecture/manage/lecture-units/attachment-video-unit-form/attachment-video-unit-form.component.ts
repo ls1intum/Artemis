@@ -35,7 +35,6 @@ export interface FormProperties {
     videoSource?: string;
     urlHelper?: string;
     competencyLinks?: CompetencyLectureUnitLink[];
-    generateTranscript?: boolean;
     videoTranscription?: string;
 }
 
@@ -122,7 +121,6 @@ export class AttachmentVideoUnitFormComponent {
     protected readonly acceptedFileExtensionsFileBrowser = ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER;
 
     private readonly attachmentVideoUnitService = inject(AttachmentVideoUnitService);
-    canGenerateTranscript = signal(false);
     playlistUrl = signal<string | undefined>(undefined);
     transcriptionStatus = signal<TranscriptionStatus | undefined>(undefined);
 
@@ -164,7 +162,6 @@ export class AttachmentVideoUnitFormComponent {
                 // Set playlist URL if available from formData (for existing videos)
                 if (formData.playlistUrl) {
                     this.playlistUrl.set(formData.playlistUrl);
-                    this.canGenerateTranscript.set(true);
                 }
             } else {
                 this.transcriptionStatus.set(undefined);
@@ -182,43 +179,14 @@ export class AttachmentVideoUnitFormComponent {
         updateNotificationText: [undefined as string | undefined, [Validators.maxLength(1000)]],
         competencyLinks: [undefined as CompetencyLectureUnitLink[] | undefined],
         videoTranscription: [undefined as string | undefined, [validJsonOrEmpty]],
-        generateTranscript: [false],
     });
     private readonly statusChanges = toSignal(this.form.statusChanges ?? 'INVALID');
 
     readonly videoSourceSignal = toSignal(this.videoSourceControl!.valueChanges, { initialValue: this.videoSourceControl!.value });
 
-    readonly shouldShowTranscriptCheckbox = computed(() => {
-        const status = this.transcriptionStatus();
-        const hasPlaylist = !!this.playlistUrl();
-
-        // Don't show checkbox if no playlist URL
-        if (!hasPlaylist) {
-            return false;
-        }
-
-        // Don't show checkbox if transcription is pending/processing
-        if (status === TranscriptionStatus.PENDING || status === TranscriptionStatus.PROCESSING) {
-            return false;
-        }
-
-        // Show checkbox if:
-        // 1. No transcription exists yet (status is undefined) OR
-        // 2. Transcription is COMPLETED or FAILED (allow regeneration/overwrite)
-        return true;
-    });
-
     readonly showTranscriptionPendingWarning = computed(() => {
         const status = this.transcriptionStatus();
         return status === TranscriptionStatus.PENDING || status === TranscriptionStatus.PROCESSING;
-    });
-
-    readonly showTranscriptionOverwriteWarning = computed(() => {
-        const status = this.transcriptionStatus();
-        const hasPlaylist = !!this.playlistUrl();
-
-        // Show overwrite warning when user can generate but a transcription already exists
-        return hasPlaylist && (status === TranscriptionStatus.COMPLETED || status === TranscriptionStatus.FAILED);
     });
 
     readonly showTranscriptionStatusBadge = computed(() => {
@@ -282,19 +250,10 @@ export class AttachmentVideoUnitFormComponent {
     checkPlaylistAvailability(originalUrl: string): void {
         this.attachmentVideoUnitService.getPlaylistUrl(originalUrl).subscribe({
             next: (playlist) => {
-                if (playlist) {
-                    this.canGenerateTranscript.set(true);
-                    this.playlistUrl.set(playlist);
-                } else {
-                    this.canGenerateTranscript.set(false);
-                    this.playlistUrl.set(undefined);
-                    this.form.get('generateTranscript')?.setValue(false);
-                }
+                this.playlistUrl.set(playlist ?? undefined);
             },
             error: () => {
-                this.canGenerateTranscript.set(false);
                 this.playlistUrl.set(undefined);
-                this.form.get('generateTranscript')?.setValue(false);
             },
         });
     }

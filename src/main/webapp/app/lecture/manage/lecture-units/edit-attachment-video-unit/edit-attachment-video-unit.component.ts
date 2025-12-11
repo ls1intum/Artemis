@@ -99,10 +99,9 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
     }
 
     updateAttachmentVideoUnit(attachmentVideoUnitFormData: AttachmentVideoUnitFormData) {
-        const { description, name, releaseDate, updateNotificationText, videoSource, competencyLinks, generateTranscript } = attachmentVideoUnitFormData.formProperties;
+        const { description, name, releaseDate, updateNotificationText, videoSource, competencyLinks } = attachmentVideoUnitFormData.formProperties;
         const { file, fileName } = attachmentVideoUnitFormData.fileProperties;
         const { videoTranscription } = attachmentVideoUnitFormData.transcriptionProperties || {};
-        const { playlistUrl } = attachmentVideoUnitFormData || {};
 
         // optional update notification text for students
         if (updateNotificationText) {
@@ -136,26 +135,6 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
             .pipe(
                 switchMap((response) => {
                     const lectureUnit = response.body!;
-                    const lectureUnitId = lectureUnit.id!;
-
-                    // First: Handle automatic transcription generation if requested
-                    let transcriptionObservable = of(lectureUnit);
-                    if (generateTranscript && lectureUnitId) {
-                        const transcriptionUrl = playlistUrl ?? this.attachmentVideoUnit.videoSource;
-                        if (transcriptionUrl) {
-                            transcriptionObservable = this.attachmentVideoUnitService.startTranscription(this.lectureId, lectureUnitId, transcriptionUrl).pipe(
-                                map(() => lectureUnit),
-                                catchError((err) => {
-                                    onError(this.alertService, err);
-                                    return of(lectureUnit);
-                                }),
-                            );
-                        }
-                    }
-
-                    return transcriptionObservable;
-                }),
-                switchMap((lectureUnit) => {
                     // Second: Handle manual transcription save if provided
                     if (!videoTranscription || !lectureUnit.id) {
                         return of(lectureUnit);
