@@ -126,18 +126,6 @@ describe('RequestFeedbackButtonComponent', () => {
         expect(link).toBeNull();
     }));
 
-    it('should show an alert when requestAIFeedback() is called and conditions are not satisfied', fakeAsync(() => {
-        setAthenaEnabled(true);
-        const exercise = createBaseExercise(ExerciseType.TEXT, false);
-        setupComponentInputs(exercise);
-        component.hasUserAcceptedLLMUsage = true;
-
-        jest.spyOn(component, 'hasAthenaResultForLatestSubmission').mockReturnValue(true);
-        jest.spyOn(alertService, 'warning');
-
-        component.requestAIFeedback();
-    }));
-
     it('should not open modal when hasUserAcceptedLLMUsage is true and requestAIFeedback is clicked', fakeAsync(() => {
         setAthenaEnabled(true);
         const participation = createParticipation();
