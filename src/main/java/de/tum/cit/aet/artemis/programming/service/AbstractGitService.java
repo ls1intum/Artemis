@@ -70,11 +70,11 @@ public abstract class AbstractGitService {
      * <li><a href="https://www.eclipse.org/lists/jgit-dev/msg03734.html">How to completely disable auto GC in JGit</a></li>
      * </ul>
      *
-     * @param localPath           The path to the local repository directory, not null.
-     * @param remoteRepositoryUri The URI of the remote repository, not null.
-     * @param defaultBranch       The name of the default branch to be checked out, not null.
+     * @param localPath           The path to the local repository directory,  null.
+     * @param remoteRepositoryUri The URI of the remote repository,  null.
+     * @param defaultBranch       The name of the default branch to be checked out,  null.
      * @param isBare              Whether the repository is a bare repository (without working directory)
-     * @param writeAccess         Whether we write to the repository or not. If true, the method sets the git Repo config for better performance.
+     * @param writeAccess         Whether we write to the repository or . If true, the method sets the git Repo config for better performance.
      * @return The configured Repository instance.
      * @throws IOException             If an I/O error occurs during repository initialization or configuration.
      * @throws InvalidRefNameException If the provided default branch name is invalid.
@@ -96,14 +96,11 @@ public abstract class AbstractGitService {
         }
 
         builder.setInitialBranch(defaultBranch) // used when initializing / linking branches
-                .setMustExist(true)              // fail fast if the repository does not exist
+                .setMustExist(true)              // fail fast if the repository does  exist
                 .readEnvironment()               // honor standard GIT_* environment variables
                 .findGitDir()                    // keep builder behavior consistent if GIT_DIR is set
                 .setup();                        // finalize builder configuration
 
-        // Note: Do NOT use try-with-resources here. The caller is responsible for closing
-        // the repository when done. Using try-with-resources would close the repository
-        // immediately after return, leaving the caller with a closed/unusable repository.
         Repository repository = new Repository(builder, localPath, remoteRepositoryUri);
         // Apply safe default Git configuration (GC, symlinks, commit signing, HEAD, etc.)
         // Only modify config if write access to the repository is needed
@@ -191,9 +188,6 @@ public abstract class AbstractGitService {
         builder.setBare();
         builder.setGitDir(localPath.toFile());
         builder.setInitialBranch(defaultBranch).setMustExist(true).readEnvironment().findGitDir().setup(); // scan environment GIT_* variables
-
-        // Note: Do NOT use try-with-resources here. The caller is responsible for closing
-        // the repository when done.
         return new Repository(builder, localPath, bareRepositoryUri);
     }
 
