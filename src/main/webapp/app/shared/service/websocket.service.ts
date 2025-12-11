@@ -411,7 +411,7 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
                 try {
                     payload = WebsocketService.decodeAndDecompress(payload);
                 } catch (error) {
-                    captureException('Failed to decompress message', error);
+                    captureException(error, { mechanism: { handled: true, type: 'websocket-decompression', data: { message: 'Failed to decompress message' } } });
                     throw error;
                 }
             }
@@ -533,7 +533,7 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
                     const base64StringPayload = WebsocketService.compressAndEncode(jsonPayload);
                     this.rxStomp!.publish({ destination: path, body: base64StringPayload, headers: COMPRESSION_HEADER });
                 } catch (error) {
-                    captureException('Failed to compress websocket message', error);
+                    captureException(error, { mechanism: { handled: true, type: 'websocket-compression', data: { message: 'Failed to compress message' } } });
                     // Send uncompressed payload if an error occurs
                     this.rxStomp!.publish({ destination: path, body: jsonPayload, headers: {} });
                 }
