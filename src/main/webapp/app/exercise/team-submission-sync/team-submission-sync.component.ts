@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, inject } from '@angular/core';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { throttleTime } from 'rxjs/operators';
@@ -7,7 +7,7 @@ import { SubmissionSyncPayload, isSubmissionSyncPayload } from 'app/exercise/sha
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
-import { Observable } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { SubmissionPatch } from 'app/exercise/shared/entities/submission/submission-patch.model';
 import { SubmissionPatchPayload, isSubmissionPatchPayload } from 'app/exercise/shared/entities/submission/submission-patch-payload.model';
@@ -16,10 +16,11 @@ import { SubmissionPatchPayload, isSubmissionPatchPayload } from 'app/exercise/s
     selector: 'jhi-team-submission-sync',
     template: '',
 })
-export class TeamSubmissionSyncComponent implements OnInit {
+export class TeamSubmissionSyncComponent implements OnInit, OnDestroy {
     private accountService = inject(AccountService);
     private teamSubmissionWebsocketService = inject(WebsocketService);
     private alertService = inject(AlertService);
+    private websocketSubscription?: Subscription;
 
     // Sync settings
     readonly THROTTLE_TIME = 2000; // ms
@@ -44,16 +45,19 @@ export class TeamSubmissionSyncComponent implements OnInit {
      */
     ngOnInit(): void {
         this.websocketTopic = this.buildWebsocketTopic('');
-        this.teamSubmissionWebsocketService.subscribe(this.websocketTopic);
         this.setupReceiver();
         this.setupSender();
+    }
+
+    ngOnDestroy(): void {
+        this.websocketSubscription?.unsubscribe();
     }
 
     /**
      * Receives updated submissions or submission patches from other team members and emits them
      */
     private setupReceiver() {
-        this.teamSubmissionWebsocketService.receive(this.websocketTopic).subscribe({
+        this.websocketSubscription = this.teamSubmissionWebsocketService.subscribe<SubmissionSyncPayload | SubmissionPatchPayload>(this.websocketTopic).subscribe({
             next: (payload: SubmissionSyncPayload | SubmissionPatchPayload) => {
                 if (isSubmissionSyncPayload(payload) && !this.isSelf(payload.sender)) {
                     this.receiveSubmission.emit(payload.submission);
@@ -61,7 +65,7 @@ export class TeamSubmissionSyncComponent implements OnInit {
                     this.receiveSubmissionPatch.emit(payload.submissionPatch);
                 }
             },
-            error: (error) => this.onError(error),
+            error: (error: unknown) => this.onError(error),
         });
     }
 
@@ -78,14 +82,14 @@ export class TeamSubmissionSyncComponent implements OnInit {
                 }
                 this.teamSubmissionWebsocketService.send<Submission>(this.buildWebsocketTopic('/update'), submission);
             },
-            error: (error) => this.onError(error),
+            error: (error: unknown) => this.onError(error),
         });
 
         this.submissionPatchObservable?.subscribe({
             next: (submissionPatch: SubmissionPatch) => {
                 this.teamSubmissionWebsocketService.send<SubmissionPatch>(this.buildWebsocketTopic('/patch'), submissionPatch);
             },
-            error: (error) => this.onError(error),
+            error: (error: unknown) => this.onError(error),
         });
     }
 
@@ -97,7 +101,8 @@ export class TeamSubmissionSyncComponent implements OnInit {
         return `/topic/participations/${this.participation.id}/team/${this.exerciseType}-submissions${path}`;
     }
 
-    private onError(error: string) {
-        this.alertService.error(error);
+    private onError(error: unknown) {
+        const message = error instanceof Error ? error.message : String(error);
+        this.alertService.error(message);
     }
 }
