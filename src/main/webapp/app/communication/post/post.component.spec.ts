@@ -464,67 +464,57 @@ describe('PostComponent', () => {
     });
 
     it('should do nothing if both forwardedPosts and forwardedAnswerPosts are empty', () => {
-        runInInjectionContext(fixture.debugElement.injector, () => {
-            component.forwardedPosts = input<Post[]>([]);
-            component.forwardedAnswerPosts = input<AnswerPost[]>([]);
-            component.fetchForwardedMessages();
+        fixture.componentRef.setInput('forwardedPosts', []);
+        fixture.componentRef.setInput('forwardedAnswerPosts', []);
+        component.fetchForwardedMessages();
 
-            expect(component.originalPostDetails).toBeUndefined();
-        });
+        expect(component.originalPostDetails).toBeUndefined();
     });
 
     it('should set originalPostDetails from first forwarded post if forwardedPosts is non-empty', () => {
         const forwardedPost1 = { id: 11, content: 'Forwarded Post 1' } as Post;
         const forwardedPost2 = { id: 22, content: 'Forwarded Post 2' } as Post;
 
-        runInInjectionContext(fixture.debugElement.injector, () => {
-            component.forwardedPosts = input<Post[]>([forwardedPost1, forwardedPost2]);
-            component.forwardedAnswerPosts = input<AnswerPost[]>([]);
-            component.fetchForwardedMessages();
+        fixture.componentRef.setInput('forwardedPosts', [forwardedPost1, forwardedPost2]);
+        fixture.componentRef.setInput('forwardedAnswerPosts', []);
+        component.fetchForwardedMessages();
 
-            expect(component.originalPostDetails).toEqual(forwardedPost1);
-        });
+        expect(component.originalPostDetails).toEqual(forwardedPost1);
     });
 
     it('should set originalPostDetails from first forwarded answer if forwardedAnswerPosts is non-empty and forwardedPosts is empty', () => {
         const forwardedAnswer1 = { id: 33, content: 'Forwarded Answer 1' } as AnswerPost;
         const forwardedAnswer2 = { id: 44, content: 'Forwarded Answer 2' } as AnswerPost;
 
-        runInInjectionContext(fixture.debugElement.injector, () => {
-            component.forwardedPosts = input<Post[]>([]);
-            component.forwardedAnswerPosts = input<AnswerPost[]>([forwardedAnswer1, forwardedAnswer2]);
-            component.fetchForwardedMessages();
+        fixture.componentRef.setInput('forwardedPosts', []);
+        fixture.componentRef.setInput('forwardedAnswerPosts', [forwardedAnswer1, forwardedAnswer2]);
+        component.fetchForwardedMessages();
 
-            expect(component.originalPostDetails).toEqual(forwardedAnswer1);
-        });
+        expect(component.originalPostDetails).toEqual(forwardedAnswer1);
     });
 
     it('should call markForCheck if a forwarded post is set', () => {
         const markForCheckSpy = jest.spyOn(component['changeDetector'], 'markForCheck');
         const forwardedPost = { id: 77, content: 'Forwarded Post MarkCheck' } as Post;
 
-        runInInjectionContext(fixture.debugElement.injector, () => {
-            component.forwardedPosts = input<Post[]>([forwardedPost]);
-            component.forwardedAnswerPosts = input<AnswerPost[]>([]);
-            component.fetchForwardedMessages();
+        fixture.componentRef.setInput('forwardedPosts', [forwardedPost]);
+        fixture.componentRef.setInput('forwardedAnswerPosts', []);
+        component.fetchForwardedMessages();
 
-            expect(markForCheckSpy).toHaveBeenCalled();
-            expect(component.originalPostDetails).toBe(forwardedPost);
-        });
+        expect(markForCheckSpy).toHaveBeenCalled();
+        expect(component.originalPostDetails).toBe(forwardedPost);
     });
 
     it('should call markForCheck if a forwarded answer is set', () => {
         const markForCheckSpy = jest.spyOn(component['changeDetector'], 'markForCheck');
         const forwardedAnswer = { id: 88, content: 'Forwarded Answer MarkCheck' } as AnswerPost;
 
-        runInInjectionContext(fixture.debugElement.injector, () => {
-            component.forwardedPosts = input<Post[]>([]);
-            component.forwardedAnswerPosts = input<AnswerPost[]>([forwardedAnswer]);
-            component.fetchForwardedMessages();
+        fixture.componentRef.setInput('forwardedPosts', []);
+        fixture.componentRef.setInput('forwardedAnswerPosts', [forwardedAnswer]);
+        component.fetchForwardedMessages();
 
-            expect(markForCheckSpy).toHaveBeenCalled();
-            expect(component.originalPostDetails).toBe(forwardedAnswer);
-        });
+        expect(markForCheckSpy).toHaveBeenCalled();
+        expect(component.originalPostDetails).toBe(forwardedAnswer);
     });
 
     it('should emit onNavigateToPost event when onTriggerNavigateToPost is called', () => {
@@ -540,63 +530,55 @@ describe('PostComponent', () => {
     it('should update showSearchResultInAnswersHint to true for search query matching answer content', () => {
         const testPost = { id: 123, content: 'Base Post', answers: [{ content: 'Answer' }] };
 
-        runInInjectionContext(fixture.debugElement.injector, () => {
-            component.posting = testPost;
-            component.searchConfig = input<CourseWideSearchConfig>({
-                searchTerm: 'answer',
-                selectedConversations: [],
-                selectedAuthors: [],
-                filterToCourseWide: false,
-                filterToUnresolved: false,
-                filterToAnsweredOrReacted: false,
-                sortingOrder: SortDirection.ASCENDING,
-            });
-            component.showSearchResultInAnswersHint = false;
-            component.ngOnChanges();
-
-            expect(component.showSearchResultInAnswersHint).toBeTrue();
+        component.posting = testPost;
+        fixture.componentRef.setInput('searchConfig', {
+            searchTerm: 'answer',
+            selectedConversations: [],
+            selectedAuthors: [],
+            filterToCourseWide: false,
+            filterToUnresolved: false,
+            filterToAnsweredOrReacted: false,
+            sortingOrder: SortDirection.ASCENDING,
         });
+        component.showSearchResultInAnswersHint = false;
+        component.ngOnChanges();
+
+        expect(component.showSearchResultInAnswersHint).toBeTrue();
     });
 
     it('should update showSearchResultInAnswersHint to true for search query matching answer content and base post content', () => {
         const testPost = { id: 123, content: 'Base Post with answer', answers: [{ content: 'Answer' }] };
 
-        runInInjectionContext(fixture.debugElement.injector, () => {
-            component.posting = testPost;
-            searchConfig.searchTerm = 'answer';
-            component.searchConfig = input<CourseWideSearchConfig>(searchConfig);
-            component.showSearchResultInAnswersHint = false;
-            component.ngOnChanges();
+        component.posting = testPost;
+        searchConfig.searchTerm = 'answer';
+        fixture.componentRef.setInput('searchConfig', searchConfig);
+        component.showSearchResultInAnswersHint = false;
+        component.ngOnChanges();
 
-            expect(component.showSearchResultInAnswersHint).toBeTrue();
-        });
+        expect(component.showSearchResultInAnswersHint).toBeTrue();
     });
 
     it('should update showSearchResultInAnswersHint to false for search query matching only base post content', () => {
         const testPost = { id: 123, content: 'Base Post', answers: [{ content: 'Answer' }] };
 
-        runInInjectionContext(fixture.debugElement.injector, () => {
-            component.posting = testPost;
-            searchConfig.searchTerm = 'base';
-            component.searchConfig = input<CourseWideSearchConfig>(searchConfig);
-            component.showSearchResultInAnswersHint = true;
-            component.ngOnChanges();
+        component.posting = testPost;
+        searchConfig.searchTerm = 'base';
+        fixture.componentRef.setInput('searchConfig', searchConfig);
+        component.showSearchResultInAnswersHint = true;
+        component.ngOnChanges();
 
-            expect(component.showSearchResultInAnswersHint).toBeFalse();
-        });
+        expect(component.showSearchResultInAnswersHint).toBeFalse();
     });
 
     it('should update showSearchResultInAnswersHint to false for empty search query', () => {
         const testPost = { id: 123, content: 'Base Post', answers: [{ content: 'Answer' }] };
 
-        runInInjectionContext(fixture.debugElement.injector, () => {
-            component.posting = testPost;
-            component.searchConfig = input<CourseWideSearchConfig>(searchConfig);
-            component.showSearchResultInAnswersHint = true;
-            component.ngOnChanges();
+        component.posting = testPost;
+        fixture.componentRef.setInput('searchConfig', searchConfig);
+        component.showSearchResultInAnswersHint = true;
+        component.ngOnChanges();
 
-            expect(component.showSearchResultInAnswersHint).toBeFalse();
-        });
+        expect(component.showSearchResultInAnswersHint).toBeFalse();
     });
 
     // update to true when selected author is in answers
