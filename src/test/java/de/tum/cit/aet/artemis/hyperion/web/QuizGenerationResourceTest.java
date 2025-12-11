@@ -1,18 +1,26 @@
 package de.tum.cit.aet.artemis.hyperion.web;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.doReturn;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
+import de.tum.cit.aet.artemis.hyperion.dto.quiz.AiQuizGenerationResponseDTO;
+import de.tum.cit.aet.artemis.hyperion.service.AiQuizGenerationService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 
 class QuizGenerationResourceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
@@ -27,6 +35,9 @@ class QuizGenerationResourceTest extends AbstractSpringIntegrationLocalCILocalVC
 
     @Autowired
     private UserUtilService userUtilService;
+
+    @MockitoSpyBean
+    private AiQuizGenerationService aiQuizGenerationService;
 
     private long courseId;
 
@@ -59,9 +70,17 @@ class QuizGenerationResourceTest extends AbstractSpringIntegrationLocalCILocalVC
         userTestRepository.save(instructor);
     }
 
+    private void stubSuccessfulGeneration() {
+        // We don’t care about actual questions here – just that the endpoint can return 200.
+        var response = new AiQuizGenerationResponseDTO(List.of());
+        doReturn(response).when(aiQuizGenerationService).generate(anyLong(), any());
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
     void shouldGenerateQuizForInstructor() throws Exception {
+        stubSuccessfulGeneration();
+
         String requestBody = """
                 {
                   "topic": "Java Programming",
@@ -80,6 +99,7 @@ class QuizGenerationResourceTest extends AbstractSpringIntegrationLocalCILocalVC
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = { "USER", "EDITOR" })
     void shouldGenerateQuizForEditor() throws Exception {
+        stubSuccessfulGeneration();
 
         String requestBody = """
                 {
@@ -135,6 +155,7 @@ class QuizGenerationResourceTest extends AbstractSpringIntegrationLocalCILocalVC
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
     void shouldReturnBadRequestForInvalidInput() throws Exception {
+        // Bean validation should reject this before calling the service
         String body = """
                 {
                   "topic": "Java Programming",
@@ -152,7 +173,7 @@ class QuizGenerationResourceTest extends AbstractSpringIntegrationLocalCILocalVC
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
-    void shouldReturnNotFoundForNonexistentCourse() throws Exception {
+    void shouldReturnForbiddenForNonexistentCourse() throws Exception {
         long invalid = 9999L;
 
         String body = """
