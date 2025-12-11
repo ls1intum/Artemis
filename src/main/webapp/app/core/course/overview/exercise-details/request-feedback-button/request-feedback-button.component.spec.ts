@@ -19,6 +19,8 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { NgbModal, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { LLMSelectionDecision } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
+import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
+import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
 
 describe('RequestFeedbackButtonComponent', () => {
     let component: RequestFeedbackButtonComponent;
@@ -36,6 +38,7 @@ describe('RequestFeedbackButtonComponent', () => {
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
+                { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 provideHttpClient(),
             ],
         })
