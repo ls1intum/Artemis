@@ -37,7 +37,7 @@ describe('AiQuizGenerationService (HTTP integration)', () => {
         };
     }
 
-    it('POSTs to the Hyperion endpoint with the given courseId', () => {
+    it('POSTs to the Hyperion endpoint with the given courseId and returns the response body', () => {
         const courseId = 42;
         const payload = samplePayload();
 
@@ -48,43 +48,47 @@ describe('AiQuizGenerationService (HTTP integration)', () => {
         expect(req.request.method).toBe('POST');
         expect(req.request.body).toEqual(payload);
 
-        const mockRes: AiQuizGenerationResponse = { questions: [], warnings: [] };
+        const mockRes: AiQuizGenerationResponse = { questions: [] };
         req.flush(mockRes);
 
         expect(resp).toEqual(mockRes);
     });
 
-    it('maps 404 (Hyperion disabled) to a warnings[] message and empty questions', () => {
+    it('propagates 404 (Hyperion disabled) as an HTTP error', () => {
         const courseId = 99;
         const payload = samplePayload();
 
-        let resp: AiQuizGenerationResponse | undefined;
-        service.generate(courseId, payload).subscribe((r) => (resp = r));
+        let errorStatus: number | undefined;
+
+        service.generate(courseId, payload).subscribe({
+            next: () => fail('expected an error, but got a response'),
+            error: (err) => (errorStatus = err.status),
+        });
 
         const req = httpMock.expectOne(`api/hyperion/quizzes/courses/${courseId}/generate`);
         expect(req.request.method).toBe('POST');
 
         req.flush({ title: 'Not Found' }, { status: 404, statusText: 'Not Found' });
 
-        expect(resp).toBeDefined();
-        expect(resp!.questions).toEqual([]);
-        expect(resp!.warnings && resp!.warnings.length).toBeGreaterThan(0);
-        expect(resp!.warnings![0]).toContain('not available');
+        expect(errorStatus).toBe(404);
     });
 
-    it('returns a generic warning on other HTTP errors', () => {
+    it('propagates other HTTP errors (e.g. 500) as HTTP errors', () => {
         const courseId = 7;
         const payload = samplePayload();
 
-        let resp: AiQuizGenerationResponse | undefined;
-        service.generate(courseId, payload).subscribe((r) => (resp = r));
+        let errorStatus: number | undefined;
+
+        service.generate(courseId, payload).subscribe({
+            next: () => fail('expected an error, but got a response'),
+            error: (err) => (errorStatus = err.status),
+        });
 
         const req = httpMock.expectOne(`api/hyperion/quizzes/courses/${courseId}/generate`);
+        expect(req.request.method).toBe('POST');
+
         req.flush({ message: 'Boom' }, { status: 500, statusText: 'Server Error' });
 
-        expect(resp).toBeDefined();
-        expect(resp!.questions).toEqual([]);
-        expect(resp!.warnings && resp!.warnings.length).toBeGreaterThan(0);
-        expect(resp!.warnings![0]).toContain('HTTP 500');
+        expect(errorStatus).toBe(500);
     });
 });

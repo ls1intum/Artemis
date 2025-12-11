@@ -1,19 +1,4 @@
-export enum AiLanguage {
-    ENGLISH = 'ENGLISH',
-    GERMAN = 'GERMAN',
-}
-
-export enum AiDifficultyLevel {
-    EASY = 'EASY',
-    MEDIUM = 'MEDIUM',
-    HARD = 'HARD',
-}
-
-export enum AiRequestedSubtype {
-    SINGLE_CORRECT = 'SINGLE_CORRECT',
-    MULTI_CORRECT = 'MULTI_CORRECT',
-    TRUE_FALSE = 'TRUE_FALSE',
-}
+import { AiDifficultyLevel, AiLanguage, AiRequestedSubtype } from './ai-quiz-generation.enums';
 
 export interface AiQuizGenerationRequest {
     numberOfQuestions: number;
@@ -44,5 +29,4 @@ export interface AiGeneratedQuestionDTO {
 
 export interface AiQuizGenerationResponse {
     questions: AiGeneratedQuestionDTO[];
-    warnings?: string[];
 }

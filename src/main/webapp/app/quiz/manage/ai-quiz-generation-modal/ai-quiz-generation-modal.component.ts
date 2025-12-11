@@ -42,7 +42,6 @@ export class AiQuizGenerationModalComponent {
     };
 
     loading = signal(false);
-    warnings = signal<string[]>([]);
     generated = signal<AiGeneratedQuestionDTO[]>([]);
 
     selected: Record<number, boolean> = {};

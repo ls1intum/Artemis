@@ -2,10 +2,16 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { AiQuizGenerationModalComponent } from 'app/quiz/manage/ai-quiz-generation-modal/ai-quiz-generation-modal.component';
-import { AiDifficultyLevel, AiGeneratedQuestionDTO, AiQuizGenerationService, AiRequestedSubtype } from 'app/quiz/manage/service/ai-quiz-generation.service';
+import {
+    AiDifficultyLevel,
+    AiGeneratedQuestionDTO,
+    AiQuizGenerationResponse,
+    AiQuizGenerationService,
+    AiRequestedSubtype,
+} from 'app/quiz/manage/service/ai-quiz-generation.service';
 import { TranslateModule } from '@ngx-translate/core';
 
-describe('AiQuizGenerationModalComponent', () => {
+describe('AiQuizGenerationModalComponent (integration)', () => {
     let fixture: ComponentFixture<AiQuizGenerationModalComponent>;
     let comp: AiQuizGenerationModalComponent;
     let service: jest.Mocked<AiQuizGenerationService>;
@@ -34,8 +40,8 @@ describe('AiQuizGenerationModalComponent', () => {
         comp.courseId = 42;
     });
 
-    it('should call service.generate() and populate generated/warnings', () => {
-        const mockResponse = {
+    it('should call service.generate() and populate generated questions', () => {
+        const mockResponse: AiQuizGenerationResponse = {
             questions: [
                 {
                     title: 'Q1',
@@ -44,9 +50,11 @@ describe('AiQuizGenerationModalComponent', () => {
                     options: [{ text: 'A', correct: true }],
                     tags: [],
                     competencyIds: [],
+                    explanation: null,
+                    hint: null,
+                    difficulty: null,
                 } as AiGeneratedQuestionDTO,
             ],
-            warnings: ['warn'],
         };
 
         (service.generate as jest.Mock).mockReturnValue(of(mockResponse));
@@ -63,10 +71,9 @@ describe('AiQuizGenerationModalComponent', () => {
 
         comp.generate(mockForm as any);
 
-        // More specific than just "called once": expect courseId + some request object
         expect(service.generate).toHaveBeenCalledExactlyOnceWith(42, expect.any(Object));
         expect(comp.generated().length).toBe(1);
-        expect(comp.warnings()).toContain('warn');
+        expect(comp.anySelected).toBeTrue();
     });
 
     it('should not call service.generate when form is invalid', () => {
@@ -83,6 +90,9 @@ describe('AiQuizGenerationModalComponent', () => {
                 options: [{ text: 'A', correct: true }],
                 tags: [],
                 competencyIds: [],
+                explanation: null,
+                hint: null,
+                difficulty: null,
             } as AiGeneratedQuestionDTO,
         ]);
         comp.selected = { 0: true };
@@ -118,7 +128,10 @@ describe('AiQuizGenerationModalComponent', () => {
                 options: [{ text: 'A', correct: true }],
                 tags: [],
                 competencyIds: [],
-            },
+                explanation: null,
+                hint: null,
+                difficulty: null,
+            } as AiGeneratedQuestionDTO,
         ]);
         comp.selected = { 0: false };
 
@@ -142,19 +155,17 @@ describe('AiQuizGenerationModalComponent', () => {
         expect(comp.sliderToDifficulty(2)).toBe(AiDifficultyLevel.HARD);
     });
 
-    it('should show warnings even when no questions are returned', () => {
-        const mockResponse = {
+    it('should handle responses with no questions by leaving anySelected false', () => {
+        const mockResponse: AiQuizGenerationResponse = {
             questions: [],
-            warnings: ['No questions were generated'],
         };
 
         (service.generate as jest.Mock).mockReturnValue(of(mockResponse));
 
         comp.generate({ valid: true } as any);
 
-        // Argument-symmetric to the first test
         expect(service.generate).toHaveBeenCalledExactlyOnceWith(42, expect.any(Object));
         expect(comp.generated().length).toBe(0);
-        expect(comp.warnings()).toContain('No questions were generated');
+        expect(comp.anySelected).toBeFalse();
     });
 });

@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { of } from 'rxjs';
 import { TranslateService, TranslateStore } from '@ngx-translate/core';
+
 import { AiQuizGenerationModalComponent } from './ai-quiz-generation-modal.component';
 import { AiDifficultyLevel, AiLanguage, AiQuizGenerationResponse, AiQuizGenerationService, AiRequestedSubtype } from '../service/ai-quiz-generation.service';
 
@@ -55,7 +56,7 @@ describe('AiQuizGenerationModalComponent', () => {
         expect(mockService.generate).not.toHaveBeenCalled();
     });
 
-    it('should call service.generate and set questions/warnings', () => {
+    it('should call service.generate and set generated questions and selections', () => {
         const mockResponse: AiQuizGenerationResponse = {
             questions: [
                 {
@@ -65,9 +66,11 @@ describe('AiQuizGenerationModalComponent', () => {
                     tags: [],
                     competencyIds: [],
                     options: [],
+                    explanation: null,
+                    hint: null,
+                    difficulty: null,
                 },
             ],
-            warnings: ['Be careful!'],
         };
         mockService.generate.mockReturnValue(of(mockResponse));
 
@@ -75,7 +78,6 @@ describe('AiQuizGenerationModalComponent', () => {
 
         expect(mockService.generate).toHaveBeenCalledWith(99, comp.formData);
         expect(comp.generated()).toHaveLength(1);
-        expect(comp.warnings()[0]).toContain('Be careful');
         // preselected
         expect(comp.anySelected).toBeTrue();
     });
@@ -94,6 +96,9 @@ describe('AiQuizGenerationModalComponent', () => {
                 tags: [],
                 competencyIds: [],
                 options: [],
+                explanation: null,
+                hint: null,
+                difficulty: null,
             },
         ]);
         comp.selected[0] = true;
@@ -116,6 +121,9 @@ describe('AiQuizGenerationModalComponent', () => {
                 tags: [],
                 competencyIds: [],
                 options: [],
+                explanation: null,
+                hint: null,
+                difficulty: null,
             },
         ]);
         comp.selected[0] = false;
