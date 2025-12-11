@@ -186,9 +186,9 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
      * Return the number of active students that are part of an exercise that will end between minDate and maxDate, grouped by exercise type
      * If for one exercise type no exercise will end, the result WILL NOT contain an entry for that exercise type.
      *
-     * @param minDate          the minimum due date
-     * @param maxDate          the maximum due date
-     * @param activeUserLogins a list of users that should be treated as active
+     * @param minDate     the minimum due date
+     * @param maxDate     the maximum due date
+     * @param activeSince timestamp defining when a user is considered active
      * @return a list of ExerciseTypeMetricsEntries, one for each exercise type
      */
     @Query("""
@@ -201,11 +201,18 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
             WHERE e.course.testCourse = FALSE
             	AND e.dueDate >= :minDate
             	AND e.dueDate <= :maxDate
-                AND user.login IN :activeUserLogins
+                AND user.login NOT LIKE '%test%'
+                AND EXISTS (
+                    SELECT 1
+                    FROM Submission submission
+                        JOIN StudentParticipation participation ON participation.id = submission.participation.id
+                    WHERE submission.submissionDate >= :activeSince
+                        AND participation.student.id = user.id
+                )
             GROUP BY TYPE(e)
             """)
     List<ExerciseTypeMetricsEntry> countActiveStudentsInExercisesWithDueDateBetweenGroupByExerciseType(@Param("minDate") ZonedDateTime minDate,
-            @Param("maxDate") ZonedDateTime maxDate, @Param("activeUserLogins") List<String> activeUserLogins);
+            @Param("maxDate") ZonedDateTime maxDate, @Param("activeSince") ZonedDateTime activeSince);
 
     /**
      * Return the number of exercises that will be released between minDate and maxDate, grouped by exercise type
@@ -255,9 +262,9 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
      * Return the number of active students that are part of an exercise that will be release between minDate and maxDate, grouped by exercise type
      * If for one exercise type no exercise will be released, the result WILL NOT contain an entry for that exercise type.
      *
-     * @param minDate          the minimum release date
-     * @param maxDate          the maximum release date
-     * @param activeUserLogins a list of users that should be treated as active
+     * @param minDate     the minimum release date
+     * @param maxDate     the maximum release date
+     * @param activeSince timestamp defining when a user is considered active
      * @return a list of ExerciseTypeMetricsEntries, one for each exercise type
      */
     @Query("""
@@ -270,11 +277,18 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
             WHERE e.course.testCourse = FALSE
             	AND e.releaseDate >= :minDate
             	AND e.releaseDate <= :maxDate
-                AND user.login IN :activeUserLogins
+                AND user.login NOT LIKE '%test%'
+                AND EXISTS (
+                    SELECT 1
+                    FROM Submission submission
+                        JOIN StudentParticipation participation ON participation.id = submission.participation.id
+                    WHERE submission.submissionDate >= :activeSince
+                        AND participation.student.id = user.id
+                )
             GROUP BY TYPE(e)
             """)
     List<ExerciseTypeMetricsEntry> countActiveStudentsInExercisesWithReleaseDateBetweenGroupByExerciseType(@Param("minDate") ZonedDateTime minDate,
-            @Param("maxDate") ZonedDateTime maxDate, @Param("activeUserLogins") List<String> activeUserLogins);
+            @Param("maxDate") ZonedDateTime maxDate, @Param("activeSince") ZonedDateTime activeSince);
 
     @Query("""
             SELECT e

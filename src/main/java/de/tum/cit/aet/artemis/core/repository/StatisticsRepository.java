@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.core.domain.GraphType;
 import de.tum.cit.aet.artemis.core.domain.SpanType;
 import de.tum.cit.aet.artemis.core.domain.StatisticsView;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.dto.ActiveUserWindowCounts;
 import de.tum.cit.aet.artemis.core.dto.CourseStatisticsAverageScore;
 import de.tum.cit.aet.artemis.core.dto.StatisticsEntry;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
@@ -102,37 +103,34 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
             """)
     List<StatisticsEntry> getActiveUsers(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
 
-    @Query("""
-            SELECT DISTINCT p.student.login
-            FROM StudentParticipation p
-                LEFT JOIN p.submissions submission
-            WHERE submission.submissionDate >= :startDate
-                AND submission.submissionDate <= :endDate
-                AND p.student.login NOT LIKE '%test%'
-            """)
-    List<String> getActiveUserNames(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
-
     /**
-     * Count users that were active within the given date range.
-     * Users are considered as active if they created a submission within the given date range
+     * Return active user counts for multiple rolling windows in a single pass.
      *
-     * @param startDate the minimum submission date
-     * @param endDate   the maximum submission date
-     * @return a count of active users
+     * @param now            upper bound for submissions considered active
+     * @param nowMinus1Day   lower bound for 1-day window
+     * @param nowMinus7Days  lower bound for 7-day window
+     * @param nowMinus14Days lower bound for 14-day window
+     * @param nowMinus30Days lower bound for 30-day window
+     * @return aggregated active user counts for multiple windows
      */
     @Query("""
-            SELECT COUNT(DISTINCT p.student.id)
-            FROM StudentParticipation p
-                LEFT JOIN p.submissions submission
-            WHERE submission.submissionDate >= :startDate
-                AND submission.submissionDate <= :endDate
-                AND p.student.login NOT LIKE '%test%'
-                AND (
-                    p.exercise.exerciseGroup IS NOT NULL
-                    OR p.exercise.course.testCourse = FALSE
-                )
+            SELECT new de.tum.cit.aet.artemis.core.dto.ActiveUserWindowCounts(
+                COUNT(DISTINCT CASE WHEN s.submissionDate >= :nowMinus1Day THEN student.id END),
+                COUNT(DISTINCT CASE WHEN s.submissionDate >= :nowMinus7Days THEN student.id END),
+                COUNT(DISTINCT CASE WHEN s.submissionDate >= :nowMinus14Days THEN student.id END),
+                COUNT(DISTINCT CASE WHEN s.submissionDate >= :nowMinus30Days THEN student.id END)
+            )
+            FROM Submission s
+                JOIN StudentParticipation p ON p.id = s.participation.id
+                JOIN p.student student
+                JOIN p.exercise exercise
+                JOIN exercise.course course
+            WHERE s.submissionDate BETWEEN :nowMinus30Days AND :now
+                AND student.login NOT LIKE '%test%'
+                AND (exercise.exerciseGroup IS NOT NULL OR course.testCourse = FALSE)
             """)
-    Long countActiveUsers(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
+    ActiveUserWindowCounts countActiveUsersByWindows(@Param("now") ZonedDateTime now, @Param("nowMinus1Day") ZonedDateTime nowMinus1Day,
+            @Param("nowMinus7Days") ZonedDateTime nowMinus7Days, @Param("nowMinus14Days") ZonedDateTime nowMinus14Days, @Param("nowMinus30Days") ZonedDateTime nowMinus30Days);
 
     @Query("""
             SELECT new de.tum.cit.aet.artemis.core.dto.StatisticsEntry(

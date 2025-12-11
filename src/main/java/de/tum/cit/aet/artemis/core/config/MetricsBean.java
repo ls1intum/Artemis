@@ -114,12 +114,6 @@ public class MetricsBean {
 
     private final BuildJobRepository buildJobRepository;
 
-    /**
-     * List that stores active usernames (users with a submission within the last 14 days) which is refreshed every 60 minutes.
-     * NOTE: only active on scheduling node
-     */
-    private List<String> cachedActiveUserNames;
-
     // Public metrics
     private final AtomicInteger activeCoursesGauge = new AtomicInteger(0);
 
@@ -219,7 +213,6 @@ public class MetricsBean {
      * <li>If the scheduling profile is active:
      * <ul>
      * <li>Enables scheduled metrics.</li>
-     * <li>Calculates cached active user names.</li>
      * <li>Registers exercise and exam metrics.</li>
      * <li>Registers public Artemis metrics.</li>
      * </ul>
@@ -249,7 +242,7 @@ public class MetricsBean {
             registerStudentExamMetrics();
             registerPublicArtemisMetrics();
 
-            // Initial calculation is done in constructor to ensure the values are present before the first metrics are calculated
+            // Initial calculation to ensure gauges are populated before the first scheduled run
             calculateActiveUserMetrics();
 
             if (profileService.isLocalCIActive()) {
@@ -437,10 +430,7 @@ public class MetricsBean {
     }
 
     /**
-     * Calculate active users (active within the last 14 days) and store them in a List.
-     * The calculation is performed every 60 minutes and should only be done on the scheduling node
-     * The initial calculation is done in the constructor to ensure it is done BEFORE {@link #recalculateMetrics()} is called.
-     * Only executed if the "scheduling"-profile is present.
+     * Refresh metrics that rely on user activity. Only executed if the "scheduling"-profile is present.
      */
     @Scheduled(fixedRate = 60 * 60 * 1000, initialDelay = 60 * 60 * 1000) // Every 60 minutes
     public void calculateActiveUserMetrics() {
@@ -452,11 +442,9 @@ public class MetricsBean {
         // The authorization object has to be set because this method is not called by a user but by the scheduler
         SecurityUtils.setAuthorizationObject();
 
-        cachedActiveUserNames = statisticsRepository.getActiveUserNames(ZonedDateTime.now().minusDays(14), ZonedDateTime.now());
-
         updateActiveAdminsMetrics();
 
-        log.debug("calculateCachedActiveUserLogins took {}ms", System.currentTimeMillis() - startDate);
+        log.debug("calculateActiveUserMetrics took {}ms", System.currentTimeMillis() - startDate);
     }
 
     /**
@@ -474,22 +462,22 @@ public class MetricsBean {
         // The authorization object has to be set because this method is not called by a user but by the scheduler
         SecurityUtils.setAuthorizationObject();
 
-        // The active users are cached and updated every 60 minutes to reduce the database load
+        var activeSince = ZonedDateTime.now().minusDays(14);
 
         // Exercise metrics
-        updateMultiGaugeMetricsEntryForMinuteRanges(dueExerciseGauge, cachedActiveUserNames,
+        updateMultiGaugeMetricsEntryForMinuteRanges(dueExerciseGauge, activeSince,
                 (now, endDate, _) -> exerciseRepository.countExercisesWithEndDateBetweenGroupByExerciseType(now, endDate));
-        updateMultiGaugeMetricsEntryForMinuteRanges(dueExerciseStudentMultiplierGauge, cachedActiveUserNames,
+        updateMultiGaugeMetricsEntryForMinuteRanges(dueExerciseStudentMultiplierGauge, activeSince,
                 (now, endDate, _) -> exerciseRepository.countStudentsInExercisesWithDueDateBetweenGroupByExerciseType(now, endDate));
-        updateMultiGaugeMetricsEntryForMinuteRanges(dueExerciseStudentMultiplierActive14DaysGauge, cachedActiveUserNames,
-                exerciseRepository::countActiveStudentsInExercisesWithDueDateBetweenGroupByExerciseType);
+        updateMultiGaugeMetricsEntryForMinuteRanges(dueExerciseStudentMultiplierActive14DaysGauge, activeSince,
+                (now, endDate, activeSinceParam) -> exerciseRepository.countActiveStudentsInExercisesWithDueDateBetweenGroupByExerciseType(now, endDate, activeSinceParam));
 
-        updateMultiGaugeMetricsEntryForMinuteRanges(releaseExerciseGauge, cachedActiveUserNames,
+        updateMultiGaugeMetricsEntryForMinuteRanges(releaseExerciseGauge, activeSince,
                 (now, endDate, _) -> exerciseRepository.countExercisesWithReleaseDateBetweenGroupByExerciseType(now, endDate));
-        updateMultiGaugeMetricsEntryForMinuteRanges(releaseExerciseStudentMultiplierGauge, cachedActiveUserNames,
+        updateMultiGaugeMetricsEntryForMinuteRanges(releaseExerciseStudentMultiplierGauge, activeSince,
                 (now, endDate, _) -> exerciseRepository.countStudentsInExercisesWithReleaseDateBetweenGroupByExerciseType(now, endDate));
-        updateMultiGaugeMetricsEntryForMinuteRanges(releaseExerciseStudentMultiplierActive14DaysGauge, cachedActiveUserNames,
-                exerciseRepository::countActiveStudentsInExercisesWithReleaseDateBetweenGroupByExerciseType);
+        updateMultiGaugeMetricsEntryForMinuteRanges(releaseExerciseStudentMultiplierActive14DaysGauge, activeSince,
+                (now, endDate, activeSinceParam) -> exerciseRepository.countActiveStudentsInExercisesWithReleaseDateBetweenGroupByExerciseType(now, endDate, activeSinceParam));
 
         // Exam metrics
         if (examMetricsApi.isPresent()) {
@@ -533,23 +521,23 @@ public class MetricsBean {
     }
 
     @FunctionalInterface
-    interface NowEndDateActiveUserNamesMetricsEntryFunction {
+    interface NowEndDateActiveSinceMetricsEntryFunction {
 
         /**
          * This interface is used to calculate and expose metrics that are based on
          * - the current date
          * - an end date (which is the current date + one of the values of MINUTE_RANGES_LOOKAHEAD), and
-         * - a list of active users (that is, users that created a submission within the last 14 days).
+         * - a timestamp that defines when a user is considered active.
          * <p>
          * The implementing method may decide to ignore certain arguments.
          * The method returns a list of ExerciseTypeMetricsEntries, that each correspond to an exercise type and a value.
          *
-         * @param now             the current time
-         * @param endDate         the end date that should be taken into consideration
-         * @param activeUserNames a list of users that was active within the last 14 days
+         * @param now         the current time
+         * @param endDate     the end date that should be taken into consideration
+         * @param activeSince a timestamp that represents the start of the active window
          * @return a list of ExerciseTypeMetricsEntry (one for each exercise type) - if for one exercise type no value is returned, 0 will be assumed
          */
-        List<ExerciseTypeMetricsEntry> apply(ZonedDateTime now, ZonedDateTime endDate, List<String> activeUserNames);
+        List<ExerciseTypeMetricsEntry> apply(ZonedDateTime now, ZonedDateTime endDate, ZonedDateTime activeSince);
     }
 
     @FunctionalInterface
@@ -574,17 +562,16 @@ public class MetricsBean {
      * Update the given multiGauge for each of the values of MINUTE_RANGES_LOOKAHEAD and the given function
      *
      * @param multiGauge               the gauge that should be updated
-     * @param activeUserNames          a list of active users that the databaseRetrieveFunction may use
+     * @param activeSince              timestamp indicating when a user is considered active
      * @param databaseRetrieveFunction a function that returns a list of ExerciseTypeMetricsEntries, one for each exercise type (if one exercise type is missing, 0 will be assumed)
      */
-    private void updateMultiGaugeMetricsEntryForMinuteRanges(MultiGauge multiGauge, List<String> activeUserNames,
-            NowEndDateActiveUserNamesMetricsEntryFunction databaseRetrieveFunction) {
+    private void updateMultiGaugeMetricsEntryForMinuteRanges(MultiGauge multiGauge, ZonedDateTime activeSince, NowEndDateActiveSinceMetricsEntryFunction databaseRetrieveFunction) {
         var now = ZonedDateTime.now();
         var results = new ArrayList<MultiGauge.Row<?>>();
 
         for (var minutes : MINUTE_RANGES_LOOKAHEAD) {
             var endDate = ZonedDateTime.now().plusMinutes(minutes);
-            var result = databaseRetrieveFunction.apply(now, endDate, activeUserNames);
+            var result = databaseRetrieveFunction.apply(now, endDate, activeSince);
             extractExerciseTypeMetricsAndAddToMetricsResults(result, results, Tags.of("range", String.valueOf(minutes)));
         }
 
@@ -685,10 +672,18 @@ public class MetricsBean {
     private void updateActiveUserMultiGauge(ZonedDateTime now) {
         final Integer[] activeUserPeriodsInDays = new Integer[] { 1, 7, 14, 30 };
 
+        final var counts = statisticsRepository.countActiveUsersByWindows(now, now.minusDays(1), now.minusDays(7), now.minusDays(14), now.minusDays(30));
+
         // A mutable list is required here because otherwise the values can not be updated correctly
         final List<MultiGauge.Row<?>> gauges = Stream.of(activeUserPeriodsInDays).map(periodInDays -> {
             final Tags tags = Tags.of("period", periodInDays.toString());
-            final long activeUsers = statisticsRepository.countActiveUsers(now.minusDays(periodInDays), now);
+            final long activeUsers = switch (periodInDays) {
+                case 1 -> counts.activeUsers1Day();
+                case 7 -> counts.activeUsers7Days();
+                case 14 -> counts.activeUsers14Days();
+                case 30 -> counts.activeUsers30Days();
+                default -> 0L;
+            };
             return MultiGauge.Row.of(tags, activeUsers);
         }).collect(Collectors.toCollection(ArrayList::new));
 
