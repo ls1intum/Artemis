@@ -1,6 +1,8 @@
 import { TestBed } from '@angular/core/testing';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateModule } from '@ngx-translate/core';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { CourseRequest } from 'app/core/shared/entities/course-request.model';
 import dayjs from 'dayjs/esm';
 import { of } from 'rxjs';
@@ -8,6 +10,10 @@ import { of } from 'rxjs';
 import { CourseRequestComponent } from 'app/core/course/request/course-request.component';
 import { CourseRequestService } from 'app/core/course/request/course-request.service';
 import { AlertService } from 'app/shared/service/alert.service';
+import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
+import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 describe('CourseRequestComponent', () => {
     let component: CourseRequestComponent;
@@ -28,8 +34,17 @@ describe('CourseRequestComponent', () => {
         } as unknown as jest.Mocked<AlertService>;
 
         await TestBed.configureTestingModule({
-            imports: [CourseRequestComponent, HttpClientTestingModule, TranslateModule.forRoot()],
+            imports: [
+                CourseRequestComponent,
+                TranslateModule.forRoot(),
+                MockComponent(FormDateTimePickerComponent),
+                MockComponent(ButtonComponent),
+                MockDirective(TranslateDirective),
+                MockPipe(ArtemisTranslatePipe),
+            ],
             providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
                 { provide: CourseRequestService, useValue: courseRequestService },
                 { provide: AlertService, useValue: alertService },
             ],
