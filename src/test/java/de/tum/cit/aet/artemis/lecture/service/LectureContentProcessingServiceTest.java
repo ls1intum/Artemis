@@ -194,6 +194,44 @@ class LectureContentProcessingServiceTest {
             // Then
             verify(processingStateRepository, never()).save(any());
         }
+
+        @Test
+        void shouldHandlePlaylistCheckExceptionGracefully() {
+            // Given: Unit with video AND PDF, playlist check throws exception
+            Attachment pdfAttachment = new Attachment();
+            pdfAttachment.setLink("/path/to/file.pdf");
+            pdfAttachment.setVersion(1);
+            testUnit.setAttachment(pdfAttachment);
+
+            when(processingStateRepository.findByLectureUnitIdWithLock(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            when(tumLiveApi.getTumLivePlaylistLink(any())).thenThrow(new RuntimeException("TUM Live unavailable"));
+            when(irisLectureApi.addLectureUnitToPyrisDB(any())).thenReturn("ingestion-job");
+
+            // When
+            service.triggerProcessing(testUnit);
+
+            // Then: Should fall back to PDF-only ingestion
+            verify(irisLectureApi).addLectureUnitToPyrisDB(testUnit);
+            verify(transcriptionApi, never()).startNebulaTranscription(anyLong(), anyLong(), any());
+        }
+
+        @Test
+        void shouldSetErrorMessageWhenPlaylistCheckFailsWithoutPdf() {
+            // Given: Unit with video but NO PDF, playlist check throws exception
+            testUnit.setAttachment(null);
+
+            when(processingStateRepository.findByLectureUnitIdWithLock(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            when(tumLiveApi.getTumLivePlaylistLink(any())).thenThrow(new RuntimeException("TUM Live unavailable"));
+
+            // When
+            service.triggerProcessing(testUnit);
+
+            // Then: Should set error message and return to IDLE
+            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.IDLE);
+            assertThat(testState.getErrorMessage()).contains("Playlist check failed");
+        }
     }
 
     // ==================== FLOW 2: Video URL Changed ====================
@@ -311,8 +349,8 @@ class LectureContentProcessingServiceTest {
 
         @Test
         void shouldNotCallNebulaWhenNotTranscribing() {
-            // Given: Unit is ingesting (not transcribing)
-            testState.setPhase(ProcessingPhase.INGESTING);
+            // Given: Unit is idle (not transcribing)
+            testState.setPhase(ProcessingPhase.IDLE);
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
             when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
@@ -322,6 +360,24 @@ class LectureContentProcessingServiceTest {
             // Then: Should NOT call Nebula cancel
             verify(transcriptionApi, never()).cancelNebulaTranscription(anyLong());
             assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.IDLE);
+        }
+
+        @Test
+        void shouldCancelPyrisIngestionWhenIngesting() {
+            // Given: Unit is currently ingesting
+            testState.setPhase(ProcessingPhase.INGESTING);
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            when(irisLectureApi.cancelPendingIngestion(anyLong())).thenReturn(true);
+
+            // When
+            service.cancelProcessing(testUnit.getId());
+
+            // Then: Should call Pyris cancel, NOT Nebula cancel
+            verify(irisLectureApi).cancelPendingIngestion(testUnit.getId());
+            verify(transcriptionApi, never()).cancelNebulaTranscription(anyLong());
+            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.IDLE);
+            assertThat(testState.getErrorMessage()).isEqualTo("Cancelled");
         }
 
         @Test
@@ -466,6 +522,32 @@ class LectureContentProcessingServiceTest {
             service.handleIngestionComplete(testUnit.getId(), true);
 
             // Then
+            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.DONE);
+        }
+
+        @Test
+        void shouldHandleCallbackWhenStateNotFound() {
+            // Given: State was deleted (unit may have been removed during ingestion)
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.empty());
+
+            // When: Callback arrives for deleted unit
+            service.handleIngestionComplete(testUnit.getId(), true);
+
+            // Then: Should handle gracefully without exception
+            verify(processingStateRepository, never()).save(any());
+        }
+
+        @Test
+        void shouldIgnoreStaleCallbackWhenNotIngesting() {
+            // Given: State is in a different phase (callback may be stale)
+            testState.setPhase(ProcessingPhase.DONE);
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+
+            // When: Stale callback arrives
+            service.handleIngestionComplete(testUnit.getId(), true);
+
+            // Then: Should ignore and not modify state
+            verify(processingStateRepository, never()).save(any());
             assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.DONE);
         }
 
