@@ -5,11 +5,10 @@ import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
 import { NavigationStart, Router } from '@angular/router';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, Subject } from 'rxjs';
 import { By } from '@angular/platform-browser';
 import { IrisBaseChatbotComponent } from 'app/iris/overview/base-chatbot/iris-base-chatbot.component';
 import interact from 'interactjs';
-import { Subject } from 'rxjs';
 
 jest.mock('interactjs', () => {
     const interact = jest.fn(() => {
@@ -190,7 +189,7 @@ describe('IrisChatbotWidgetComponent', () => {
             bottom: 1000,
             left: 0,
             toJSON: () => {},
-        })) as DOMRect;
+        }));
         document.body.appendChild(overlay);
 
         const widget = document.createElement('div');
