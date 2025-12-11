@@ -205,7 +205,8 @@ function getChangedFiles(baseBranch, options) {
         const changes = {};
         for (const line of diffOutput.split('\n').filter(Boolean)) {
             const [status, ...fileParts] = line.split('\t');
-            const filePath = fileParts.join('\t'); // Handle filenames with tabs
+            // For renames (R), git outputs "R100\told_path\tnew_path" - take only the new path
+            const filePath = status.charAt(0) === 'R' ? fileParts[fileParts.length - 1] : fileParts.join('\t');
             if (filePath) {
                 changes[filePath] =
                     {
