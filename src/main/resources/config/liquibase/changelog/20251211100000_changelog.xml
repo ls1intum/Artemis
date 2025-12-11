@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- Add playlist_url column for transcription retry support -->
+    <changeSet id="20251211100000-add-playlist-url" author="automated">
+        <addColumn tableName="lecture_unit_processing_state">
+            <column name="playlist_url" type="VARCHAR(2000)">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+
+        <rollback>
+            <dropColumn tableName="lecture_unit_processing_state" columnName="playlist_url"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

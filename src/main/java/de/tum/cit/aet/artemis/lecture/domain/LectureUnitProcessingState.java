@@ -75,6 +75,13 @@ public class LectureUnitProcessingState extends DomainObject {
     private String errorMessage;
 
     /**
+     * The playlist URL for transcription.
+     * Stored to enable retry of transcription without re-fetching from TUM Live.
+     */
+    @Column(name = "playlist_url", length = 2000)
+    private String playlistUrl;
+
+    /**
      * Timestamp when the current phase started.
      * Used for timeout detection and recovery.
      */
@@ -144,6 +151,14 @@ public class LectureUnitProcessingState extends DomainObject {
 
     public void setErrorMessage(String errorMessage) {
         this.errorMessage = errorMessage;
+    }
+
+    public String getPlaylistUrl() {
+        return playlistUrl;
+    }
+
+    public void setPlaylistUrl(String playlistUrl) {
+        this.playlistUrl = playlistUrl;
     }
 
     public ZonedDateTime getStartedAt() {

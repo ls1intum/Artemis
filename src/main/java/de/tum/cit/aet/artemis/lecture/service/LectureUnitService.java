@@ -45,11 +45,14 @@ import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitCompletion;
+import de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState;
+import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
 import de.tum.cit.aet.artemis.lecture.dto.LectureUnitDTO;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitCompletionRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
+import de.tum.cit.aet.artemis.nebula.api.LectureTranscriptionApi;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -78,10 +81,12 @@ public class LectureUnitService {
 
     private final Optional<CompetencyRepositoryApi> competencyRepositoryApi;
 
+    private final Optional<LectureTranscriptionApi> lectureTranscriptionApi;
+
     public LectureUnitService(LectureUnitRepository lectureUnitRepository, LectureRepository lectureRepository, LectureUnitCompletionRepository lectureUnitCompletionRepository,
             LectureUnitProcessingStateRepository processingStateRepository, FileService fileService, Optional<IrisLectureApi> irisLectureApi,
             Optional<CompetencyProgressApi> competencyProgressApi, Optional<CourseCompetencyApi> courseCompetencyApi, Optional<CompetencyRelationApi> competencyRelationApi,
-            Optional<CompetencyRepositoryApi> competencyRepositoryApi) {
+            Optional<CompetencyRepositoryApi> competencyRepositoryApi, Optional<LectureTranscriptionApi> lectureTranscriptionApi) {
         this.lectureUnitRepository = lectureUnitRepository;
         this.lectureRepository = lectureRepository;
         this.lectureUnitCompletionRepository = lectureUnitCompletionRepository;
@@ -92,6 +97,7 @@ public class LectureUnitService {
         this.competencyProgressApi = competencyProgressApi;
         this.competencyRelationApi = competencyRelationApi;
         this.competencyRepositoryApi = competencyRepositoryApi;
+        this.lectureTranscriptionApi = lectureTranscriptionApi;
     }
 
     /**
@@ -176,7 +182,10 @@ public class LectureUnitService {
     public void removeLectureUnit(@NonNull LectureUnit lectureUnit) {
         LectureUnit lectureUnitToDelete = lectureUnitRepository.findByIdWithCompetenciesAndSlidesElseThrow(lectureUnit.getId());
 
-        // Delete processing state first (cancels any ongoing processing)
+        // Cancel any ongoing transcription on Nebula before deleting state
+        cancelTranscriptionIfActive(lectureUnit.getId());
+
+        // Delete processing state
         processingStateRepository.deleteByLectureUnit_Id(lectureUnit.getId());
 
         if (lectureUnitToDelete instanceof AttachmentVideoUnit attachmentVideoUnit) {
@@ -348,6 +357,28 @@ public class LectureUnitService {
             var managedSet = existingLectureUnit.getCompetencyLinks();
             managedSet.clear();
             managedSet.addAll(updatedLinks);
+        }
+    }
+
+    /**
+     * Cancels any active transcription job on Nebula for the given lecture unit.
+     * Only cancels if the processing state exists and is in TRANSCRIBING phase.
+     *
+     * @param lectureUnitId the ID of the lecture unit
+     */
+    private void cancelTranscriptionIfActive(Long lectureUnitId) {
+        Optional<LectureUnitProcessingState> processingState = processingStateRepository.findByLectureUnit_Id(lectureUnitId);
+        if (processingState.isPresent() && processingState.get().getPhase() == ProcessingPhase.TRANSCRIBING) {
+            lectureTranscriptionApi.ifPresent(api -> {
+                try {
+                    api.cancelNebulaTranscription(lectureUnitId);
+                    log.info("Cancelled transcription on Nebula for unit {} before deletion", lectureUnitId);
+                }
+                catch (Exception e) {
+                    // Log but don't fail deletion - cancellation is best-effort
+                    log.warn("Failed to cancel transcription on Nebula for unit {}: {}", lectureUnitId, e.getMessage());
+                }
+            });
         }
     }
 }

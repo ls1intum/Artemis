@@ -2,6 +2,8 @@
     "artemisApp": {
         "lectureUnit": {
             "deleted": "Vorlesungseinheit gelöscht",
+            "retryProcessing": "Verarbeitung wiederholen",
+            "processingRetryStarted": "Verarbeitungswiederholung gestartet",
             "home": {
                 "title": "Vorlesungseinheiten"
             },

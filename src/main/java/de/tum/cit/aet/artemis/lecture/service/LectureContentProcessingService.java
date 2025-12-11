@@ -313,6 +313,9 @@ public class LectureContentProcessingService {
 
         if (playlistUrl.isPresent()) {
             log.info("Playlist URL found for unit {}, starting transcription", unit.getId());
+            // Store playlist URL for retry purposes
+            state.setPlaylistUrl(playlistUrl.get());
+            processingStateRepository.save(state);
             startTranscription(unit, state, playlistUrl.get());
         }
         else {
@@ -331,9 +334,17 @@ public class LectureContentProcessingService {
 
     private void startTranscription(AttachmentVideoUnit unit, LectureUnitProcessingState state, String playlistUrl) {
         if (transcriptionApi.isEmpty()) {
-            log.warn("Transcription service not available");
-            state.markFailed("Transcription service not available");
-            processingStateRepository.save(state);
+            log.warn("Transcription service not available, falling back to PDF-only processing");
+            // Graceful degradation: if transcription service isn't available but we have a PDF,
+            // proceed with ingestion of just the PDF
+            if (unit.getAttachment() != null && unit.getAttachment().getLink() != null) {
+                startIngestion(state);
+            }
+            else {
+                state.transitionTo(ProcessingPhase.IDLE);
+                state.setErrorMessage("Transcription service not available and no PDF");
+                processingStateRepository.save(state);
+            }
             return;
         }
 
@@ -357,21 +368,48 @@ public class LectureContentProcessingService {
         state.incrementRetryCount();
 
         if (state.getRetryCount() >= MAX_RETRIES) {
-            log.warn("Max retries reached for transcription, marking as failed");
-            state.markFailed("Transcription failed after " + MAX_RETRIES + " attempts");
-        }
-        else {
-            // Try ingestion without transcription if we have PDF
+            // After max retries, fall back to PDF-only if available, otherwise fail
             LectureUnit unit = state.getLectureUnit();
-            if (unit instanceof AttachmentVideoUnit attachmentUnit && attachmentUnit.getAttachment() != null) {
-                log.info("Transcription failed, proceeding with PDF-only ingestion");
+            if (unit instanceof AttachmentVideoUnit attachmentUnit && attachmentUnit.getAttachment() != null && attachmentUnit.getAttachment().getLink() != null
+                    && attachmentUnit.getAttachment().getLink().endsWith(".pdf")) {
+                log.info("Max retries reached for transcription, falling back to PDF-only ingestion for unit {}", unit.getId());
+                state.resetRetryCount(); // Reset for ingestion retries
                 startIngestion(state);
             }
             else {
-                state.markFailed("Transcription failed and no PDF available");
+                log.warn("Max retries reached for transcription, marking as failed");
+                state.markFailed("Transcription failed after " + MAX_RETRIES + " attempts");
+                processingStateRepository.save(state);
             }
         }
-        processingStateRepository.save(state);
+        else {
+            // Retry transcription using stored playlist URL
+            String playlistUrl = state.getPlaylistUrl();
+            if (playlistUrl != null && !playlistUrl.isBlank()) {
+                log.info("Retrying transcription for unit {} (attempt {})", state.getLectureUnit().getId(), state.getRetryCount());
+                LectureUnit unit = state.getLectureUnit();
+                if (unit instanceof AttachmentVideoUnit attachmentUnit) {
+                    processingStateRepository.save(state);
+                    startTranscription(attachmentUnit, state, playlistUrl);
+                }
+                else {
+                    state.markFailed("Invalid unit type for transcription retry");
+                    processingStateRepository.save(state);
+                }
+            }
+            else {
+                // No playlist URL stored, fall back to PDF-only if available
+                LectureUnit unit = state.getLectureUnit();
+                if (unit instanceof AttachmentVideoUnit attachmentUnit && attachmentUnit.getAttachment() != null) {
+                    log.info("No playlist URL for retry, falling back to PDF-only ingestion");
+                    startIngestion(state);
+                }
+                else {
+                    state.markFailed("Transcription failed and no PDF available");
+                    processingStateRepository.save(state);
+                }
+            }
+        }
     }
 
     private void startIngestion(LectureUnitProcessingState state) {
@@ -417,13 +455,14 @@ public class LectureContentProcessingService {
         if (state.getRetryCount() >= MAX_RETRIES) {
             log.warn("Max retries reached for ingestion, marking as failed");
             state.markFailed("Ingestion failed after " + MAX_RETRIES + " attempts");
+            processingStateRepository.save(state);
         }
         else {
-            log.info("Ingestion failed, will retry (attempt {})", state.getRetryCount());
-            // Schedule retry - for now, just reset to allow re-trigger
-            state.transitionTo(ProcessingPhase.IDLE);
+            log.info("Retrying ingestion for unit {} (attempt {})", state.getLectureUnit().getId(), state.getRetryCount());
+            // Immediately retry ingestion
+            processingStateRepository.save(state);
+            startIngestion(state);
         }
-        processingStateRepository.save(state);
     }
 
     private void cleanupForReprocessing(AttachmentVideoUnit unit, boolean deleteTranscription) {
