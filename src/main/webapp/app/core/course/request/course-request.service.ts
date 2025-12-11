@@ -2,10 +2,29 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 
-import dayjs from 'dayjs/esm';
+import { BaseCourseRequest, CourseRequest, CourseRequestStatus } from 'app/core/shared/entities/course-request.model';
+import { User } from 'app/core/user/user.model';
+import { convertDateFromClient, convertDateStringFromServer } from 'app/shared/util/date.utils';
 
-import { BaseCourseRequest, CourseRequest } from 'app/core/shared/entities/course-request.model';
-import { convertDateFromClient } from 'app/shared/util/date.utils';
+interface BaseCourseRequestDTO {
+    title: string;
+    shortName: string;
+    semester?: string;
+    startDate?: string;
+    endDate?: string;
+    testCourse: boolean;
+    reason: string;
+}
+
+interface CourseRequestDTO extends BaseCourseRequestDTO {
+    id?: number;
+    status?: CourseRequestStatus;
+    createdDate?: string;
+    processedDate?: string;
+    decisionReason?: string;
+    requester?: User;
+    createdCourseId?: number;
+}
 
 @Injectable({ providedIn: 'root' })
 export class CourseRequestService {
@@ -15,45 +34,52 @@ export class CourseRequestService {
     private readonly adminResourceUrl = 'api/core/admin/course-requests';
 
     create(courseRequest: BaseCourseRequest): Observable<CourseRequest> {
-        const copy = this.convertDateFromClient(courseRequest);
-        return this.http.post<BaseCourseRequest>(this.resourceUrl, copy).pipe(map((res) => this.convertResponseFromServer(res)));
+        const dto = this.convertRequestToDTO(courseRequest);
+        return this.http.post<CourseRequestDTO>(this.resourceUrl, dto).pipe(map((res) => this.convertDTOToResponse(res)));
     }
 
     findAllForAdmin(): Observable<CourseRequest[]> {
-        return this.http.get<BaseCourseRequest[]>(this.adminResourceUrl).pipe(map((res) => this.convertResponseArrayFromServer(res)));
+        return this.http.get<CourseRequestDTO[]>(this.adminResourceUrl).pipe(map((res) => res.map((dto) => this.convertDTOToResponse(dto))));
     }
 
-    acceptRequest(id: number): Observable<CourseRequest> {
-        return this.http.post<BaseCourseRequest>(`${this.adminResourceUrl}/${id}/accept`, {}).pipe(map((res) => this.convertResponseFromServer(res)));
+    acceptRequest(courseRequestId: number): Observable<CourseRequest> {
+        return this.http.post<CourseRequestDTO>(`${this.adminResourceUrl}/${courseRequestId}/accept`, {}).pipe(map((res) => this.convertDTOToResponse(res)));
     }
 
-    rejectRequest(id: number, reason: string): Observable<CourseRequest> {
-        return this.http.post<BaseCourseRequest>(`${this.adminResourceUrl}/${id}/reject`, { reason }).pipe(map((res) => this.convertResponseFromServer(res)));
+    rejectRequest(courseRequestId: number, reason: string): Observable<CourseRequest> {
+        return this.http.post<CourseRequestDTO>(`${this.adminResourceUrl}/${courseRequestId}/reject`, { reason }).pipe(map((res) => this.convertDTOToResponse(res)));
     }
 
-    private convertDateFromClient(courseRequest: BaseCourseRequest): BaseCourseRequest {
-        return {
-            ...courseRequest,
-            startDate: convertDateFromClient(courseRequest.startDate) ?? undefined,
-            endDate: convertDateFromClient(courseRequest.endDate) ?? undefined,
+    private convertRequestToDTO(courseRequest: BaseCourseRequest): BaseCourseRequestDTO {
+        const dto: BaseCourseRequestDTO = {
+            title: courseRequest.title,
+            shortName: courseRequest.shortName,
+            testCourse: courseRequest.testCourse,
+            reason: courseRequest.reason,
         };
+        dto.semester = courseRequest.semester;
+        dto.startDate = convertDateFromClient(courseRequest.startDate);
+        dto.endDate = convertDateFromClient(courseRequest.endDate);
+        return dto;
     }
 
-    private convertResponseFromServer(BaseCourseRequest: BaseCourseRequest): CourseRequest {
-        return {
-            ...BaseCourseRequest,
-            startDate: this.convertDate(BaseCourseRequest.startDate),
-            endDate: this.convertDate(BaseCourseRequest.endDate),
-            createdDate: this.convertDate(BaseCourseRequest.createdDate),
-            processedDate: this.convertDate(BaseCourseRequest.processedDate),
+    private convertDTOToResponse(dto: CourseRequestDTO): CourseRequest {
+        const response: CourseRequest = {
+            title: dto.title,
+            shortName: dto.shortName,
+            testCourse: dto.testCourse,
+            reason: dto.reason,
         };
-    }
-
-    private convertResponseArrayFromServer(BaseCourseRequests: BaseCourseRequest[]): CourseRequest[] {
-        return BaseCourseRequests.map((request) => this.convertResponseFromServer(request));
-    }
-
-    private convertDate(value?: string): dayjs.Dayjs | undefined {
-        return value ? dayjs(value) : undefined;
+        response.id = dto.id;
+        response.semester = dto.semester;
+        response.startDate = convertDateStringFromServer(dto.startDate);
+        response.endDate = convertDateStringFromServer(dto.endDate);
+        response.status = dto.status;
+        response.createdDate = convertDateStringFromServer(dto.createdDate);
+        response.processedDate = convertDateStringFromServer(dto.processedDate);
+        response.decisionReason = dto.decisionReason;
+        response.requester = dto.requester;
+        response.createdCourseId = dto.createdCourseId;
+        return response;
     }
 }

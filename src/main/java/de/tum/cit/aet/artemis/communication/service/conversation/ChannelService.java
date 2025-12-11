@@ -481,7 +481,7 @@ public class ChannelService {
     }
 
     /**
-     * Creates a default channel with the given name and adds all students, tutors and instructors as participants.
+     * Creates a default channel with the given name. The channel is course-wide so all course members are automatically participants.
      *
      * @param course      the course, where the channel should be created
      * @param channelType the default channel type
