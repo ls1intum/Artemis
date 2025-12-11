@@ -17,4 +17,17 @@
         </rollback>
     </changeSet>
 
+    <!-- Add processing_version column to prevent race conditions during content changes -->
+    <changeSet id="20251211100001-add-processing-version" author="automated">
+        <addColumn tableName="lecture_unit_processing_state">
+            <column name="processing_version" type="BIGINT" defaultValue="0">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+
+        <rollback>
+            <dropColumn tableName="lecture_unit_processing_state" columnName="processing_version"/>
+        </rollback>
+    </changeSet>
+
 </databaseChangeLog>

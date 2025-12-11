@@ -8,6 +8,7 @@ import java.util.Optional;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -34,6 +35,20 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
      * @return the processing state if it exists
      */
     Optional<LectureUnitProcessingState> findByLectureUnit_Id(Long lectureUnitId);
+
+    /**
+     * Find the processing state for a specific lecture unit with pessimistic write lock.
+     * Use this when you need to prevent concurrent modifications to the same state.
+     *
+     * @param lectureUnitId the ID of the lecture unit
+     * @return the processing state if it exists
+     */
+    @Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            SELECT ps FROM LectureUnitProcessingState ps
+            WHERE ps.lectureUnit.id = :lectureUnitId
+            """)
+    Optional<LectureUnitProcessingState> findByLectureUnitIdWithLock(@Param("lectureUnitId") Long lectureUnitId);
 
     /**
      * Find all processing states in a specific phase.

@@ -82,6 +82,14 @@ public class LectureUnitProcessingState extends DomainObject {
     private String playlistUrl;
 
     /**
+     * Version counter incremented when content changes.
+     * Used to detect race conditions where old job callbacks arrive after content has changed.
+     * Callbacks should check this version matches the expected value.
+     */
+    @Column(name = "processing_version", nullable = false)
+    private long processingVersion = 0;
+
+    /**
      * Timestamp when the current phase started.
      * Used for timeout detection and recovery.
      */
@@ -159,6 +167,26 @@ public class LectureUnitProcessingState extends DomainObject {
 
     public void setPlaylistUrl(String playlistUrl) {
         this.playlistUrl = playlistUrl;
+    }
+
+    public long getProcessingVersion() {
+        return processingVersion;
+    }
+
+    public void setProcessingVersion(long processingVersion) {
+        this.processingVersion = processingVersion;
+    }
+
+    /**
+     * Increment the processing version to invalidate old callbacks.
+     * Should be called when content changes during processing.
+     *
+     * @return the new version number
+     */
+    public long incrementProcessingVersion() {
+        this.processingVersion++;
+        this.lastUpdated = ZonedDateTime.now();
+        return this.processingVersion;
     }
 
     public ZonedDateTime getStartedAt() {

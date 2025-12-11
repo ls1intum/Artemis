@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.iris.api.IrisLectureApi;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
@@ -72,9 +73,13 @@ public class LectureContentProcessingService {
      * <p>
      * The method detects content changes (video URL or attachment version) and
      * restarts processing from the appropriate phase.
+     * <p>
+     * Uses database locking to prevent concurrent calls for the same unit from
+     * causing duplicate processing jobs.
      *
      * @param unit the attachment video unit to process
      */
+    @Transactional
     public void triggerProcessing(AttachmentVideoUnit unit) {
         if (unit == null || unit.getId() == null) {
             log.warn("Cannot process null or unsaved lecture unit");
@@ -185,6 +190,9 @@ public class LectureContentProcessingService {
     /**
      * Called when a transcription completes (from the polling scheduler).
      * This advances the processing to the ingestion phase.
+     * <p>
+     * Includes race condition protection: if the content changed since this transcription
+     * started, it may be stale and should be ignored.
      *
      * @param transcription the completed transcription
      */
@@ -197,6 +205,14 @@ public class LectureContentProcessingService {
         Long unitId = transcription.getLectureUnit().getId();
         processingStateRepository.findByLectureUnit_Id(unitId).ifPresent(state -> {
             if (state.getPhase() == ProcessingPhase.TRANSCRIBING) {
+                // Race condition check: verify this is still the current transcription
+                // If video was changed, a new transcription may have been started
+                Optional<LectureTranscription> currentTranscription = transcriptionRepository.findByLectureUnit_Id(unitId);
+                if (currentTranscription.isEmpty() || !currentTranscription.get().getId().equals(transcription.getId())) {
+                    log.warn("Ignoring stale transcription callback for unit {} (transcription ID {} is no longer current)", unitId, transcription.getId());
+                    return;
+                }
+
                 if (transcription.getTranscriptionStatus() == TranscriptionStatus.COMPLETED) {
                     log.info("Transcription completed for unit {}, moving to ingestion", unitId);
                     startIngestion(state);
@@ -271,8 +287,13 @@ public class LectureContentProcessingService {
 
     // -------------------- Private Helper Methods --------------------
 
+    /**
+     * Get or create processing state with pessimistic lock to prevent concurrent modifications.
+     * Must be called within a transaction.
+     */
     private LectureUnitProcessingState getOrCreateProcessingState(LectureUnit unit) {
-        return processingStateRepository.findByLectureUnit_Id(unit.getId()).orElseGet(() -> {
+        // Use locking query to prevent concurrent modifications
+        return processingStateRepository.findByLectureUnitIdWithLock(unit.getId()).orElseGet(() -> {
             LectureUnitProcessingState state = new LectureUnitProcessingState(unit);
             return processingStateRepository.save(state);
         });
@@ -467,16 +488,16 @@ public class LectureContentProcessingService {
 
     private void cleanupForReprocessing(AttachmentVideoUnit unit, boolean deleteTranscription) {
         if (deleteTranscription) {
-            // First, cancel any running transcription on Nebula
-            // The cancel method also deletes the local transcription record
-            cancelTranscriptionOnNebula(unit.getId());
-
-            // Fallback: delete local transcription if it still exists
-            // (e.g., if cancel failed or transcription was already complete)
+            // IMPORTANT: Delete local transcription FIRST to prevent race conditions
+            // If we cancel on Nebula first, there's a window where the scheduler could
+            // pick up the old job's completion before we delete the local record
             transcriptionRepository.findByLectureUnit_Id(unit.getId()).ifPresent(transcription -> {
                 log.info("Deleting existing transcription for unit {}", unit.getId());
                 transcriptionRepository.delete(transcription);
             });
+
+            // Then try to cancel on Nebula (best-effort, may fail if already completed)
+            cancelTranscriptionOnNebula(unit.getId());
         }
 
         // Delete from Pyris
