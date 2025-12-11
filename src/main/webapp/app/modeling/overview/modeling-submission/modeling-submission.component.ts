@@ -15,7 +15,7 @@ import { ModelingSubmissionService } from 'app/modeling/overview/modeling-submis
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
 import { HeaderParticipationPageComponent } from 'app/exercise/exercise-headers/participation-page/header-participation-page.component';
 import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercise/util/exercise.utils';
-import { addParticipationToResult, getUnreferencedFeedback } from 'app/exercise/result/result.utils';
+import { getUnreferencedFeedback } from 'app/exercise/result/result.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import { TeamSubmissionSyncComponent } from 'app/exercise/team-submission-sync/team-submission-sync.component';
 import { TeamParticipateInfoBoxComponent } from 'app/exercise/team/team-participate/team-participate-info-box.component';
@@ -92,9 +92,9 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     private accountService = inject(AccountService);
     private translateService = inject(TranslateService);
 
-    addParticipationToResult = addParticipationToResult;
-    buildFeedbackTextForReview = buildFeedbackTextForReview;
-    ButtonType = ButtonType;
+
+    readonly buildFeedbackTextForReview = buildFeedbackTextForReview;
+    readonly ButtonType = ButtonType;
 
     @ViewChild(ModelingEditorComponent, { static: false }) modelingEditor: ModelingEditorComponent;
 
@@ -109,8 +109,8 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     expandProblemStatement = input(false);
 
     private subscription: Subscription;
-    private manualResultUpdateListener: Subscription;
-    private athenaResultUpdateListener: Subscription;
+    private manualResultUpdateListener?: Subscription;
+    private athenaResultUpdateListener?: Subscription;
 
     participation: StudentParticipation;
     isOwnerOfParticipation: boolean;
@@ -144,7 +144,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
 
     explanation: string; // current explanation on text editor
 
-    automaticSubmissionWebsocketChannel: string;
+    automaticSubmissionSubscription?: Subscription;
 
     // indicates if the assessment due date is in the past. the assessment will not be loaded and displayed to the student if it is not.
     isAfterAssessmentDueDate: boolean;
@@ -418,25 +418,26 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         if (!this.submission || !this.submission.id) {
             return;
         }
-        this.automaticSubmissionWebsocketChannel = '/user/topic/modelingSubmission/' + this.submission.id;
-        this.websocketService.subscribe(this.automaticSubmissionWebsocketChannel);
-        this.websocketService.receive(this.automaticSubmissionWebsocketChannel).subscribe((submission: ModelingSubmission) => {
-            if (submission.submitted) {
-                this.submission = submission;
-                if (this.submission.model) {
-                    this.umlModel = JSON.parse(this.submission.model);
-                    this.hasElements = this.umlModel.elements && Object.values(this.umlModel.elements).length !== 0;
+        this.automaticSubmissionSubscription?.unsubscribe();
+        this.automaticSubmissionSubscription = this.websocketService
+            .subscribe<ModelingSubmission>('/user/topic/modelingSubmission/' + this.submission.id)
+            .subscribe((submission: ModelingSubmission) => {
+                if (submission.submitted) {
+                    this.submission = submission;
+                    if (this.submission.model) {
+                        this.umlModel = JSON.parse(this.submission.model);
+                        this.hasElements = this.umlModel.elements && Object.values(this.umlModel.elements).length !== 0;
+                    }
+                    const latestResult = getLatestSubmissionResult(this.submission);
+                    if (latestResult && latestResult.completionDate && (this.isAfterAssessmentDueDate || latestResult.assessmentType === AssessmentType.AUTOMATIC_ATHENA)) {
+                        this.modelingAssessmentService.getAssessment(this.submission.id!).subscribe((assessmentResult: Result) => {
+                            this.assessmentResult = assessmentResult;
+                            this.prepareAssessmentData();
+                        });
+                    }
+                    this.alertService.info('artemisApp.modelingEditor.autoSubmit');
                 }
-                const latestResult = getLatestSubmissionResult(this.submission);
-                if (latestResult && latestResult.completionDate && (this.isAfterAssessmentDueDate || latestResult.assessmentType === AssessmentType.AUTOMATIC_ATHENA)) {
-                    this.modelingAssessmentService.getAssessment(this.submission.id!).subscribe((assessmentResult: Result) => {
-                        this.assessmentResult = assessmentResult;
-                        this.prepareAssessmentData();
-                    });
-                }
-                this.alertService.info('artemisApp.modelingEditor.autoSubmit');
-            }
-        });
+            });
     }
 
     /**
@@ -634,9 +635,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                     }
 
                     this.subscribeToWebsockets();
-                    if (this.automaticSubmissionWebsocketChannel) {
-                        this.websocketService.unsubscribe(this.automaticSubmissionWebsocketChannel);
-                    }
+                    this.automaticSubmissionSubscription?.unsubscribe();
                     this.onSaveSuccess();
                 },
                 error: () => this.onSaveError(),
@@ -697,15 +696,9 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         this.subscription?.unsubscribe();
         clearInterval(this.autoSaveInterval);
 
-        if (this.automaticSubmissionWebsocketChannel) {
-            this.websocketService.unsubscribe(this.automaticSubmissionWebsocketChannel);
-        }
-        if (this.manualResultUpdateListener) {
-            this.manualResultUpdateListener.unsubscribe();
-        }
-        if (this.athenaResultUpdateListener) {
-            this.athenaResultUpdateListener.unsubscribe();
-        }
+        this.automaticSubmissionSubscription?.unsubscribe();
+        this.manualResultUpdateListener?.unsubscribe();
+        this.athenaResultUpdateListener?.unsubscribe();
     }
 
     /**
