@@ -1,6 +1,9 @@
 package de.tum.cit.aet.artemis.programming.domain;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
@@ -221,7 +224,6 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
 
     /**
      * TODO
-     *
      */
     @JsonIgnore
     public Windfile getDefaultWindfile() {
@@ -235,6 +237,27 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
             log.error("Could not parse build plan configuration for programming exercise {}", this.getId(), e);
         }
         return null;
+    }
+
+    /**
+     * TODO
+     */
+    @JsonIgnore
+    public List<Windfile> getWindfiles() {
+        List<Windfile> windfiles = new ArrayList<>();
+        for (DockerContainerConfig containerConfig: getContainerConfigs().values().stream().sorted(Comparator.comparing(DomainObject::getId)).toList()) {
+            // TODO: Sorting here is obviously very ugly.
+            if (containerConfig.getBuildPlanConfiguration() == null) {
+                windfiles.add(null); // TODO: IDK if this is a good idea, let's see...
+            }
+            try {
+                windfiles.add(Windfile.deserialize(containerConfig.getBuildPlanConfiguration()));
+            } catch (JsonProcessingException e) {
+                log.error("Could not parse build plan configuration for programming exercise {}", this.getId(), e);
+                windfiles.add(null); // TODO: IDK if this is a good idea, let's see...
+            }
+        }
+        return windfiles;
     }
 
     public void filterSensitiveInformation() {

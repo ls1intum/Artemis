@@ -35,7 +35,7 @@ public record BuildJobQueueItem(@NonNull String id, @NonNull String name, @NonNu
         this(queueItem.id(), queueItem.name(), queueItem.buildAgent(), queueItem.participationId(), queueItem.courseId(), queueItem.exerciseId(), queueItem.retryCount(),
                 queueItem.priority(), status, queueItem.repositoryInfo(), new JobTimingInfo(queueItem.jobTimingInfo.submissionDate(), queueItem.jobTimingInfo.buildStartDate(),
                         buildCompletionDate, queueItem.jobTimingInfo.estimatedCompletionDate(), queueItem.jobTimingInfo.estimatedDuration()),
-                queueItem.buildConfig(), null);
+                queueItem.buildConfig(), null, queueItem.containerId());
     }
 
     /**
@@ -48,19 +48,19 @@ public record BuildJobQueueItem(@NonNull String id, @NonNull String name, @NonNu
         this(queueItem.id(), queueItem.name(), buildAgent, queueItem.participationId(), queueItem.courseId(), queueItem.exerciseId(), queueItem.retryCount(), queueItem.priority(),
                 null, queueItem.repositoryInfo(),
                 new JobTimingInfo(queueItem.jobTimingInfo.submissionDate(), ZonedDateTime.now(), null, estimatedCompletionDate, queueItem.jobTimingInfo.estimatedDuration()),
-                queueItem.buildConfig(), null);
+                queueItem.buildConfig(), null, queueItem.containerId());
     }
 
     public BuildJobQueueItem(BuildJobQueueItem queueItem, ResultDTO submissionResult) {
         this(queueItem.id(), queueItem.name(), queueItem.buildAgent(), queueItem.participationId(), queueItem.courseId(), queueItem.exerciseId(), queueItem.retryCount(),
-                queueItem.priority(), queueItem.status(), queueItem.repositoryInfo(), queueItem.jobTimingInfo(), queueItem.buildConfig(), submissionResult);
+                queueItem.priority(), queueItem.status(), queueItem.repositoryInfo(), queueItem.jobTimingInfo(), queueItem.buildConfig(), submissionResult, queueItem.containerId());
     }
 
     public BuildJobQueueItem(BuildJobQueueItem queueItem, BuildAgentDTO buildAgent, int newRetryCount) {
         this(queueItem.id(), queueItem.name(), buildAgent, queueItem.participationId(), queueItem.courseId(), queueItem.exerciseId(), newRetryCount, queueItem.priority(), null,
                 queueItem.repositoryInfo(),
                 new JobTimingInfo(queueItem.jobTimingInfo.submissionDate(), ZonedDateTime.now(), null, null, queueItem.jobTimingInfo().estimatedDuration()),
-                queueItem.buildConfig(), null);
+                queueItem.buildConfig(), null, queueItem.containerId());
     }
 
     @Override

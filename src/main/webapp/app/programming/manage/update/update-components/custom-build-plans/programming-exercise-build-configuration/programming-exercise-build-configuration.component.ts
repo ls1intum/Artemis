@@ -41,7 +41,6 @@ import {
 import {
     DockerContainerConfig
 } from 'app/programming/shared/entities/docker-container.config';
-import { WindFile } from 'app/programming/shared/entities/wind.file';
 import {
     ASSIGNMENT_REPO_NAME,
     TEST_REPO_NAME
@@ -155,13 +154,14 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit, O
             newName = `Container ${nextIndex}`;
         }
 
+        const lastContainer = getDefaultContainerConfig(this.programmingExercise()!.buildConfig!); // TODO: Hack
         const newContainerConfig: DockerContainerConfig = {
             id: Date.now(),
             name: newName,
-            buildPlanConfiguration: '',
-            buildScript: '',
-            dockerFlags: '',
-            windfile: new WindFile(),
+            buildPlanConfiguration: lastContainer.buildPlanConfiguration,
+            buildScript: lastContainer.buildScript,
+            dockerFlags: lastContainer.dockerFlags,
+            windfile: lastContainer.windfile,
         };
 
         // TODO: Note for later this.defaultDockerFlags.cpuCount =
@@ -178,6 +178,7 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit, O
         this.editingContainerId = newContainerConfig.id;
 
         // Update the local caches.
+        this.containerConfigsList.push(newContainerConfig);
         this.containerConfigsById[newContainerConfig.id] = newContainerConfig;
         this.dockerFlags[newContainerConfig.id] = this.initDockerFlags(newContainerConfig);
     }
