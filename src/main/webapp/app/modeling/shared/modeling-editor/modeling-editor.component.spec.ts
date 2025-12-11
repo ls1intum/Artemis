@@ -9,7 +9,6 @@ import { ApollonEditor, Patch, UMLDiagramType, UMLModel } from '@ls1intum/apollo
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
 import * as testClassDiagram from 'test/helpers/sample/modeling/test-models/class-diagram.json';
 import { cloneDeep } from 'lodash-es';
-import { SimpleChange } from '@angular/core';
 import { MockComponent } from 'ng-mocks';
 import { ModelingExplanationEditorComponent } from 'app/modeling/shared/modeling-explanation-editor/modeling-explanation-editor.component';
 import { provideHttpClient } from '@angular/common/http';

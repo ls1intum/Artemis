@@ -92,7 +92,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     private accountService = inject(AccountService);
     private translateService = inject(TranslateService);
 
-
     readonly buildFeedbackTextForReview = buildFeedbackTextForReview;
     readonly ButtonType = ButtonType;
 
