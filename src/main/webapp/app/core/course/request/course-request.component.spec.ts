@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { TranslateModule } from '@ngx-translate/core';
+import { CourseRequest } from 'app/core/shared/entities/course-request.model';
 import dayjs from 'dayjs/esm';
 import { of } from 'rxjs';
 
