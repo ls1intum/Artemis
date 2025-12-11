@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnChanges, OnDestroy, SimpleChanges, effect, inject, input, output } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, effect, inject, input, output } from '@angular/core';
 import { ApollonEditor, ApollonMode, Assessment, Selection, UMLDiagramType, UMLElementType, UMLModel, UMLRelationshipType, addOrUpdateAssessment } from '@ls1intum/apollon';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { ModelElementCount } from 'app/modeling/shared/entities/modeling-submission.model';
@@ -24,7 +24,7 @@ export interface DropInfo {
     styleUrls: ['./modeling-assessment.component.scss'],
     imports: [ScoreDisplayComponent, FaIconComponent, ModelingExplanationEditorComponent],
 })
-export class ModelingAssessmentComponent extends ModelingComponent implements AfterViewInit, OnDestroy, OnChanges {
+export class ModelingAssessmentComponent extends ModelingComponent implements AfterViewInit, OnDestroy {
     private artemisTranslatePipe = inject(ArtemisTranslatePipe);
 
     maxScore = input<number>(0);
@@ -72,8 +72,18 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
             }
 
             this.feedbacks = incoming;
-            this.referencedFeedbacks = this.feedbacks.filter((feedbackElement) => feedbackElement.reference != undefined);
-            this.updateApollonAssessments(this.referencedFeedbacks);
+            this.handleFeedback();
+        });
+
+        effect(() => {
+            const model = this.umlModel();
+
+            if (!model || !this.apollonEditor) {
+                return;
+            }
+
+            this.apollonEditor.model = model;
+            this.handleFeedback();
         });
     }
 
@@ -100,18 +110,6 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
     ngOnDestroy() {
         if (this.apollonEditor) {
             this.apollonEditor.destroy();
-        }
-    }
-
-    async ngOnChanges(changes: SimpleChanges): Promise<void> {
-        if (changes.umlModel && changes.umlModel.currentValue && this.apollonEditor) {
-            this.apollonEditor!.model = changes.umlModel.currentValue;
-            this.handleFeedback();
-        }
-
-        if (changes.feedbacks && changes.feedbacks.currentValue && this.umlModel()) {
-            this.feedbacks = changes.feedbacks.currentValue;
-            this.handleFeedback();
         }
     }
 
