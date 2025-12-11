@@ -50,9 +50,9 @@ export function chatModeToUrlComponent(mode: ChatServiceMode): string | undefine
  */
 @Injectable({ providedIn: 'root' })
 export class IrisChatService implements OnDestroy {
-    private readonly http = inject(IrisChatHttpService);
-    private readonly ws = inject(IrisWebsocketService);
-    private readonly status = inject(IrisStatusService);
+    private readonly irisChatHttpService = inject(IrisChatHttpService);
+    private readonly irisWebsocketService = inject(IrisWebsocketService);
+    private readonly irisStatusService = inject(IrisStatusService);
     private readonly userService = inject(UserService);
     private readonly accountService = inject(AccountService);
     private readonly router = inject(Router);
@@ -109,7 +109,7 @@ export class IrisChatService implements OnDestroy {
     latestStartedSession?: IrisSessionDTO;
 
     protected constructor() {
-        this.rateLimitSubscription = this.status.currentRatelimitInfo().subscribe((info) => (this.rateLimitInfo = info));
+        this.rateLimitSubscription = this.irisStatusService.currentRatelimitInfo().subscribe((info) => (this.rateLimitInfo = info));
         this.updateCourseId();
     }
 
@@ -195,7 +195,7 @@ export class IrisChatService implements OnDestroy {
 
         const newMessage = new IrisUserMessage();
         newMessage.content = [new IrisTextMessageContent(message)];
-        return this.http.createMessage(this.sessionId, newMessage).pipe(
+        return this.irisChatHttpService.createMessage(this.sessionId, newMessage).pipe(
             tap((m) => {
                 this.replaceOrAddMessage(m.body!);
             }),
@@ -214,7 +214,7 @@ export class IrisChatService implements OnDestroy {
         if (!this.sessionId) {
             return throwError(() => new Error('Not initialized'));
         }
-        return this.http.createTutorSuggestion(this.sessionId).pipe(
+        return this.irisChatHttpService.createTutorSuggestion(this.sessionId).pipe(
             map(() => undefined),
             catchError((error: HttpErrorResponse) => {
                 this.handleSendHttpError(error);
@@ -242,7 +242,7 @@ export class IrisChatService implements OnDestroy {
             return throwError(() => new Error('Not initialized'));
         }
 
-        return this.http.resendMessage(this.sessionId, message).pipe(
+        return this.irisChatHttpService.resendMessage(this.sessionId, message).pipe(
             map((r: HttpResponse<IrisUserMessage>) => r.body!),
             tap((m) => this.replaceMessage(m)),
             map(() => undefined),
@@ -270,7 +270,7 @@ export class IrisChatService implements OnDestroy {
             return throwError(() => new Error('Not initialized'));
         }
 
-        return this.http.rateMessage(this.sessionId, message.id!, !!helpful).pipe(
+        return this.irisChatHttpService.rateMessage(this.sessionId, message.id!, !!helpful).pipe(
             map((r: HttpResponse<IrisAssistantMessage>) => r.body!),
             tap((m) => this.replaceMessage(m)),
             map(() => undefined),
@@ -378,10 +378,10 @@ export class IrisChatService implements OnDestroy {
                 this.sessionId = newIrisSession.id;
                 this.messages.next(newIrisSession.messages || []);
                 this.parseLatestSuggestions(newIrisSession.latestSuggestions);
-                this.ws.subscribeToSession(this.sessionId).subscribe((m) => this.handleWebsocketMessage(m));
+                this.irisWebsocketService.subscribeToSession(this.sessionId).subscribe((message) => this.handleWebsocketMessage(message));
             },
-            error: (e: IrisErrorMessageKey) => {
-                this.error.next(e as IrisErrorMessageKey);
+            error: (error: IrisErrorMessageKey) => {
+                this.error.next(error);
             },
         };
     }
@@ -411,7 +411,7 @@ export class IrisChatService implements OnDestroy {
 
     private handleWebsocketMessage(payload: IrisChatWebsocketDTO) {
         if (payload.rateLimitInfo) {
-            this.status.handleRateLimitInfo(payload.rateLimitInfo);
+            this.irisStatusService.handleRateLimitInfo(payload.rateLimitInfo);
         }
         if (payload.sessionTitle && this.sessionId) {
             if (this.latestStartedSession?.id === this.sessionId) {
@@ -449,7 +449,7 @@ export class IrisChatService implements OnDestroy {
 
     protected close(): void {
         if (this.sessionId) {
-            this.ws.unsubscribeFromSession(this.sessionId);
+            this.irisWebsocketService.unsubscribeFromSession(this.sessionId);
             this.sessionId = undefined;
             this.currentRelatedEntityIdSubject.next(undefined);
             this.currentChatModeSubject.next(undefined);
@@ -470,7 +470,7 @@ export class IrisChatService implements OnDestroy {
             throw new Error('Session creation identifier not set');
         }
 
-        return this.http.getCurrentSessionOrCreateIfNotExists(this.sessionCreationIdentifier).pipe(
+        return this.irisChatHttpService.getCurrentSessionOrCreateIfNotExists(this.sessionCreationIdentifier).pipe(
             map((response: HttpResponse<IrisExerciseChatSession>) => {
                 if (response.body) {
                     return response.body;
@@ -487,7 +487,7 @@ export class IrisChatService implements OnDestroy {
         const latestStartedSession = this.latestStartedSession;
         if (courseId) {
             this.chatSessionSubscription?.unsubscribe();
-            this.chatSessionSubscription = this.http.getChatSessions(courseId).subscribe((sessions: IrisSessionDTO[]) => {
+            this.chatSessionSubscription = this.irisChatHttpService.getChatSessions(courseId).subscribe((sessions: IrisSessionDTO[]) => {
                 const sessionsWithMessages = sessions ?? [];
                 if (latestStartedSession && !this.isLatestSessionIncludedInHistory(latestStartedSession, sessionsWithMessages)) {
                     this.updateChatSessions(sessionsWithMessages, true);
@@ -517,7 +517,7 @@ export class IrisChatService implements OnDestroy {
         if (!this.sessionCreationIdentifier) {
             throw new Error('Session creation identifier not set');
         }
-        return this.http.createSession(this.sessionCreationIdentifier).pipe(
+        return this.irisChatHttpService.createSession(this.sessionCreationIdentifier).pipe(
             map((response: HttpResponse<IrisExerciseChatSession>) => {
                 if (response.body) {
                     return response.body;
@@ -551,7 +551,7 @@ export class IrisChatService implements OnDestroy {
         const chatMode = session.chatMode;
         if (courseId) {
             this.chatSessionByIdSubscription?.unsubscribe();
-            this.chatSessionByIdSubscription = this.http.getChatSessionById(courseId, session.id).subscribe((session) => {
+            this.chatSessionByIdSubscription = this.irisChatHttpService.getChatSessionById(courseId, session.id).subscribe((session) => {
                 this.currentChatModeSubject.next(chatMode);
                 this.currentRelatedEntityIdSubject.next(entityId);
                 this.handleNewSession().next(session);
