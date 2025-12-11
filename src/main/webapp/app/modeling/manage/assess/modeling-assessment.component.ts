@@ -31,8 +31,8 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
     maxBonusPoints = input(0);
     totalScore = input<number>(undefined!);
     readonly title = input<string | undefined>(undefined);
-    readonly enablePopups = input(true);
-    readonly displayPoints = input(true);
+    enablePopups = input(true);
+    displayPoints = input(true);
     highlightDifferences = input<boolean | undefined>(undefined);
     resultFeedbacks = input<Feedback[] | undefined>(undefined);
 
@@ -109,7 +109,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
             this.handleFeedback();
         }
 
-        if (changes.feedbacks && changes.feedbacks.currentValue && this.umlModel) {
+        if (changes.feedbacks && changes.feedbacks.currentValue && this.umlModel()) {
             this.feedbacks = changes.feedbacks.currentValue;
             this.handleFeedback();
         }
@@ -137,17 +137,17 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
 
         this.apollonEditor = new ApollonEditor(this.editorContainer.nativeElement, {
             mode: ApollonMode.Assessment,
-            readonly: this.readOnly,
-            model: this.umlModel,
-            type: this.diagramType || UMLDiagramType.ClassDiagram,
+            readonly: this.readOnly(),
+            model: this.umlModel(),
+            type: this.diagramType() || UMLDiagramType.ClassDiagram,
             enablePopups: this.enablePopups(),
         });
         this.apollonEditor!.subscribeToSelectionChange((selection: Selection) => {
-            if (this.readOnly) {
+            if (this.readOnly()) {
                 this.selectionChanged.emit(selection);
             }
         });
-        if (!this.readOnly) {
+        if (!this.readOnly()) {
             this.apollonEditor!.subscribeToAssessmentChange((assessments: Assessment[]) => {
                 this.referencedFeedbacks = this.generateFeedbackFromAssessment(assessments);
                 this.feedbackChanged.emit(this.referencedFeedbacks);
@@ -199,7 +199,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
      * This method is called before initializing Apollon and when the feedback or model is updated.
      */
     private handleFeedback(): void {
-        this.referencedFeedbacks = filterInvalidFeedback(this.feedbacks, this.umlModel);
+        this.referencedFeedbacks = filterInvalidFeedback(this.feedbacks, this.umlModel());
         this.updateElementFeedbackMapping(this.referencedFeedbacks);
         this.updateApollonAssessments(this.referencedFeedbacks);
     }
@@ -277,12 +277,13 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
      * @param feedbacks the feedback list to convert and pass on to Apollon
      */
     private async updateApollonAssessments(feedbacks: Feedback[]) {
-        if (!feedbacks || !this.umlModel) {
+        const umlModel = this.umlModel();
+        if (!feedbacks || !umlModel) {
             return;
         }
 
         feedbacks.forEach((feedback) => {
-            addOrUpdateAssessment(this.umlModel, {
+            addOrUpdateAssessment(this.umlModel(), {
                 modelElementId: feedback.referenceId!,
                 elementType: feedback.referenceType! as UMLElementType | UMLRelationshipType,
                 score: feedback.credits!,
@@ -296,7 +297,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
 
         if (this.apollonEditor) {
             await this.apollonEditor.nextRender;
-            this.apollonEditor.model = this.umlModel;
+            this.apollonEditor.model = umlModel;
         }
     }
 

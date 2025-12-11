@@ -66,27 +66,27 @@
             <button type="button" class="btn btn-outline" (click)="close()" jhiTranslate="entity.action.close"></button>
         </div>
     </ng-template>
-    @if (!readOnly && !isFullScreen) {
+    @if (!readOnly() && !isFullScreen) {
         <div class="help-and-status">
-            @if (!readOnly && showHelpButton) {
+            @if (!readOnly() && showHelpButton()) {
                 <button type="button" class="btn btn-warning" (click)="open(help)">
                     <fa-icon [icon]="farQuestionCircle" />&nbsp;
                     <span jhiTranslate="artemisApp.modelingEditor.helpModal.help"></span>
                 </button>
             }
-            @if (savedStatus && !savedStatus.isChanged && !savedStatus.isSaving) {
+            @if (savedStatus() && !savedStatus().isChanged && !savedStatus().isSaving) {
                 <div class="status-hint text-success">
                     <fa-icon [icon]="faCheck" />
                     <span jhiTranslate="artemisApp.modelingEditor.allSaved"></span>
                 </div>
             }
-            @if (savedStatus && savedStatus.isChanged && !savedStatus.isSaving) {
+            @if (savedStatus() && savedStatus().isChanged && !savedStatus().isSaving) {
                 <div class="status-hint text-warning">
                     <fa-icon [icon]="faTimes" />
                     <span jhiTranslate="artemisApp.modelingEditor.unsavedChanges"></span>
                 </div>
             }
-            @if (savedStatus && savedStatus.isSaving) {
+            @if (savedStatus() && savedStatus().isSaving) {
                 <div class="status-hint text-info">
                     <fa-icon class="spin" [icon]="faCircleNotch" />
                     <span jhiTranslate="artemisApp.modelingEditor.saving"></span>
@@ -94,20 +94,20 @@
             }
         </div>
     }
-    <div #resizeContainer [hidden]="readOnly" class="modeling-editor" [class.resizable]="resizeOptions" [ngStyle]="{ marginTop: isFullScreen ? '30px' : '' }">
+    <div #resizeContainer [hidden]="readOnly()" class="modeling-editor" [class.resizable]="resizeOptions()" [ngStyle]="{ marginTop: isFullScreen ? '30px' : '' }">
         <div #editorContainer class="apollon-container"></div>
-        @if (resizeOptions && resizeOptions.horizontalResize) {
+        @if (resizeOptions() && resizeOptions().horizontalResize) {
             <div class="draggable-right">
                 <fa-icon [icon]="faGripLinesVertical" />
             </div>
         }
-        @if (resizeOptions && resizeOptions.verticalResize) {
+        @if (resizeOptions() && resizeOptions().verticalResize) {
             <div class="draggable-bottom">
                 <fa-icon [icon]="faGripLines" />
             </div>
         }
     </div>
-    @if (readOnly) {
+    @if (readOnly()) {
         <div
             class="d-flex align-items-center justify-content-center readonly-diagram scroll-container"
             [innerHtml]="readOnlySVG"
@@ -115,7 +115,7 @@
         ></div>
     }
 
-    @if (withExplanation) {
-        <jhi-modeling-explanation-editor [explanation]="explanation" (explanationChange)="onExplanationInput($event)" [readOnly]="readOnly" />
+    @if (withExplanation()) {
+        <jhi-modeling-explanation-editor [(explanation)]="explanation" [readOnly]="readOnly()" />
     }
 </div>

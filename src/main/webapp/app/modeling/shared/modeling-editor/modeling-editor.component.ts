@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewEncapsulation, inject } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, ViewEncapsulation, effect, inject, input, output } from '@angular/core';
 import { ApollonEditor, ApollonMode, SVG, UMLDiagramType, UMLElementType, UMLModel } from '@ls1intum/apollon';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { isFullScreen } from 'app/shared/util/fullscreen.util';
@@ -20,7 +20,7 @@ import { captureException } from '@sentry/angular';
     encapsulation: ViewEncapsulation.None,
     imports: [TranslateDirective, FaIconComponent, NgStyle, NgClass, ModelingExplanationEditorComponent],
 })
-export class ModelingEditorComponent extends ModelingComponent implements AfterViewInit, OnDestroy, OnChanges {
+export class ModelingEditorComponent extends ModelingComponent implements AfterViewInit, OnDestroy {
     protected readonly faCheck = faCheck;
     protected readonly faTimes = faTimes;
     protected readonly faCircleNotch = faCircleNotch;
@@ -29,14 +29,15 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
     private readonly modalService = inject(NgbModal);
     private readonly sanitizer = inject(DomSanitizer);
 
-    @Input() showHelpButton = true;
-    @Input() withExplanation = false;
-    @Input() savedStatus?: { isChanged?: boolean; isSaving?: boolean };
+    showHelpButton = input(true);
+    withExplanation = input(false);
+    savedStatus = input<{
+        isChanged?: boolean;
+        isSaving?: boolean;
+    }>();
 
-    @Output() private onModelChanged: EventEmitter<UMLModel> = new EventEmitter<UMLModel>();
-    @Output() onModelPatch = new EventEmitter<Patch>();
-
-    @Output() explanationChange = new EventEmitter();
+    onModelChanged = output<UMLModel>();
+    onModelPatch = output<Patch>();
 
     private modelSubscription: number;
     private modelPatchSubscription: number;
@@ -46,6 +47,28 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
 
     constructor() {
         super();
+        effect(() => {
+            const diagramType = this.diagramType();
+
+            if (!diagramType || !this.editorContainer) {
+                return;
+            }
+
+            this.initializeApollonEditor();
+        });
+
+        effect(() => {
+            const model = this.umlModel();
+
+            if (!model || !this.apollonEditor) {
+                return;
+            }
+
+            // work on a copy if removeAssessments mutates
+            const umlModel = { ...model } as UMLModel;
+            ModelingEditorComponent.removeAssessments(umlModel);
+            this.apollonEditor.model = umlModel;
+        });
     }
 
     /**
@@ -54,7 +77,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
      */
     async ngAfterViewInit(): Promise<void> {
         this.initializeApollonEditor();
-        if (this.readOnly) {
+        if (this.readOnly()) {
             await this.apollonEditor?.nextRender;
             this.readonlyApollonDiagram = await this.apollonEditor?.exportAsSVG();
             if (this.readonlyApollonDiagram?.svg) {
@@ -79,14 +102,15 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
         }
 
         // Apollon doesn't need assessments in Modeling mode
-        ModelingEditorComponent.removeAssessments(this.umlModel);
+        const umlModel = this.umlModel();
+        ModelingEditorComponent.removeAssessments(umlModel);
 
         if (this.editorContainer) {
             this.apollonEditor = new ApollonEditor(this.editorContainer.nativeElement, {
-                model: this.umlModel,
+                model: umlModel,
                 mode: ApollonMode.Modelling,
-                readonly: this.readOnly,
-                type: this.diagramType || UMLDiagramType.ClassDiagram,
+                readonly: this.readOnly(),
+                type: this.diagramType() || UMLDiagramType.ClassDiagram,
                 scale: 0.8,
             });
 
@@ -150,24 +174,6 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
     }
 
     /**
-     * If changes are made to the uml model, update the model and remove assessments
-     * @param {SimpleChanges} changes - Changes made
-     */
-    ngOnChanges(changes: SimpleChanges): void {
-        if (changes.diagramType) {
-            // if the diagram type changed -> recreate the editor
-            this.initializeApollonEditor();
-        }
-
-        if (changes.umlModel && changes.umlModel.currentValue && this.apollonEditor) {
-            this.umlModel = changes.umlModel.currentValue;
-            // Apollon doesn't need assessments in Modeling mode
-            ModelingEditorComponent.removeAssessments(this.umlModel);
-            this.apollonEditor.model = this.umlModel;
-        }
-    }
-
-    /**
      * If the apollon editor is not null, destroy it and set it to null, on component destruction
      */
     ngOnDestroy(): void {
@@ -210,12 +216,6 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
      */
     get isFullScreen() {
         return isFullScreen();
-    }
-
-    // Emit explanation change when textarea input changes
-    onExplanationInput(newValue: string) {
-        this.explanationChange.emit(newValue);
-        this.explanation = newValue;
     }
 
     /**

@@ -50,7 +50,7 @@ describe('ModelingEditorComponent', () => {
 
     it('ngAfterViewInit', async () => {
         jest.spyOn(console, 'error').mockImplementation(); // prevent: findDOMNode is deprecated and will be removed in the next major release
-        component.umlModel = classDiagram;
+        fixture.componentRef.setInput('umlModel', classDiagram);
         fixture.detectChanges();
 
         // test
@@ -64,7 +64,7 @@ describe('ModelingEditorComponent', () => {
     });
 
     it('ngOnDestroy', () => {
-        component.umlModel = classDiagram;
+        fixture.componentRef.setInput('umlModel', classDiagram);
         fixture.detectChanges();
         component.ngAfterViewInit();
 
@@ -76,7 +76,7 @@ describe('ModelingEditorComponent', () => {
     it('ngOnChanges', async () => {
         // @ts-ignore
         const model = classDiagram;
-        component.umlModel = model;
+        fixture.componentRef.setInput('umlModel', classDiagram);
         fixture.detectChanges();
         await component.ngAfterViewInit();
 
@@ -89,12 +89,8 @@ describe('ModelingEditorComponent', () => {
         changedModel.default = undefined;
         // test
         await component.apollonEditor?.nextRender;
-        component.ngOnChanges({
-            umlModel: {
-                currentValue: changedModel,
-                previousValue: model,
-            } as SimpleChange,
-        });
+        fixture.componentRef.setInput('umlModel', changedModel);
+        fixture.detectChanges();
         await component.apollonEditor?.nextRender;
         const componentModel = component['apollonEditor']!.model as UMLModel;
         expect(componentModel).toEqual(changedModel);
@@ -107,7 +103,7 @@ describe('ModelingEditorComponent', () => {
     });
 
     it('getCurrentModel', () => {
-        component.umlModel = classDiagram;
+        fixture.componentRef.setInput('umlModel', classDiagram);
         fixture.detectChanges();
         component.ngAfterViewInit();
 
@@ -119,7 +115,7 @@ describe('ModelingEditorComponent', () => {
 
     it('elementWithClass', () => {
         const model = classDiagram;
-        component.umlModel = model;
+        fixture.componentRef.setInput('umlModel', classDiagram);
         fixture.detectChanges();
         component.ngAfterViewInit();
 
@@ -130,7 +126,7 @@ describe('ModelingEditorComponent', () => {
 
     it('elementWithAttribute', () => {
         const model = classDiagram;
-        component.umlModel = model;
+        fixture.componentRef.setInput('umlModel', classDiagram);
         fixture.detectChanges();
         component.ngAfterViewInit();
 
@@ -141,7 +137,7 @@ describe('ModelingEditorComponent', () => {
 
     it('elementWithMethod', () => {
         const model = classDiagram;
-        component.umlModel = model;
+        fixture.componentRef.setInput('umlModel', classDiagram);
         fixture.detectChanges();
         component.ngAfterViewInit();
 
@@ -151,8 +147,10 @@ describe('ModelingEditorComponent', () => {
     });
 
     it('should not show save indicator without savedStatus set', () => {
-        component.savedStatus = undefined;
-        component.readOnly = true;
+        fixture.componentRef.setInput('savedStatus', undefined);
+        fixture.componentRef.setInput('readOnly', true);
+
+        fixture.componentRef.setInput('umlModel', classDiagram);
         fixture.detectChanges();
         component.ngAfterViewInit();
 
@@ -161,8 +159,8 @@ describe('ModelingEditorComponent', () => {
     });
 
     it('should not show save indicator in read only mode', () => {
-        component.savedStatus = { isSaving: false, isChanged: false };
-        component.readOnly = true;
+        fixture.componentRef.setInput('savedStatus', { isSaving: false, isChanged: false });
+        fixture.componentRef.setInput('readOnly', true);
         fixture.detectChanges();
         component.ngAfterViewInit();
 
@@ -171,7 +169,7 @@ describe('ModelingEditorComponent', () => {
     });
 
     it('should not show save indicator in fullscreen mode', () => {
-        component.savedStatus = { isSaving: false, isChanged: false };
+        fixture.componentRef.setInput('savedStatus', { isSaving: false, isChanged: false });
         jest.spyOn(component, 'isFullScreen', 'get').mockReturnValue(true);
         fixture.detectChanges();
         component.ngAfterViewInit();
@@ -181,7 +179,7 @@ describe('ModelingEditorComponent', () => {
     });
 
     it('should show green checkmark save indicator if everything is saved', () => {
-        component.savedStatus = { isSaving: false, isChanged: false };
+        fixture.componentRef.setInput('savedStatus', { isSaving: false, isChanged: false });
         fixture.detectChanges();
         component.ngAfterViewInit();
 
@@ -196,7 +194,7 @@ describe('ModelingEditorComponent', () => {
     });
 
     it('should show yellow times save indicator if something is unsaved', () => {
-        component.savedStatus = { isSaving: false, isChanged: true };
+        fixture.componentRef.setInput('savedStatus', { isSaving: false, isChanged: true });
         fixture.detectChanges();
         component.ngAfterViewInit();
 
@@ -211,7 +209,7 @@ describe('ModelingEditorComponent', () => {
     });
 
     it('should show saving indicator if it is currently saving', () => {
-        component.savedStatus = { isSaving: true, isChanged: true };
+        fixture.componentRef.setInput('savedStatus', { isSaving: true, isChanged: true });
         fixture.detectChanges();
         component.ngAfterViewInit();
 
@@ -226,14 +224,14 @@ describe('ModelingEditorComponent', () => {
     });
 
     it('should handle explanation input change', () => {
-        const spy = jest.spyOn(component.explanationChange, 'emit');
+        const spy = jest.spyOn(component.explanation, 'set');
 
         const newExplanation = 'New Explanation';
-        component.onExplanationInput(newExplanation);
+        component.explanation.set(newExplanation);
 
         expect(spy).toHaveBeenCalledOnce();
         expect(spy).toHaveBeenCalledWith(newExplanation);
-        expect(component.explanation).toBe(newExplanation);
+        expect(component.explanation()).toBe(newExplanation);
     });
 
     it('should subscribe to model change patches and emit them.', () => {

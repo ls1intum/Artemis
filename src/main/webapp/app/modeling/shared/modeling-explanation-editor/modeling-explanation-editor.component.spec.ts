@@ -29,7 +29,7 @@ describe('ModelingExplanationEditorComponent', () => {
     });
 
     it('should change explanation value bidirectionally between component and template', () => {
-        comp.explanation = 'Initial Explanation';
+        fixture.componentRef.setInput('explanation', 'Initial Explanation');
         fixture.detectChanges();
         return fixture.whenStable().then(() => {
             const textareaDebugElement = fixture.debugElement.query(By.css('textarea'));
@@ -38,7 +38,7 @@ describe('ModelingExplanationEditorComponent', () => {
             expect(textarea.value).toBe('Initial Explanation');
             textarea.value = 'Test';
             textarea.dispatchEvent(new Event('input'));
-            expect(comp.explanation).toBe('Test');
+            expect(comp.explanation()).toBe('Test');
             expect(textarea.value).toBe('Test');
 
             // Test tab event
@@ -46,7 +46,7 @@ describe('ModelingExplanationEditorComponent', () => {
             textarea.dispatchEvent(new Event('input'));
             fixture.detectChanges();
             expect(textarea.value).toBe('Test\t');
-            expect(comp.explanation).toBe('Test\t');
+            expect(comp.explanation()).toBe('Test\t');
         });
     });
 });
