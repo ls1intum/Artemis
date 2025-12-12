@@ -4,7 +4,7 @@
 - `src/main/java`: Spring Boot Server Application (domain, repositories, REST) organized by feature (exercise, exam, communication, etc.).
 - `src/main/webapp`: Angular client; feature modules in `app/`, shared utilities in `app/shared`, assets/translations in `content/`.
 - `src/main/resources`: Application `*.yml`, Liquibase changelogs, and static files bundled for production.
-- Tests live in `src/test/java` (server), `src/main/webapp` (Jest, co-located to TS components), and `src/test/playwright` (e2e). Docs are in `documentation/`; deployment helpers sit in `docker/`, API spec in `openapi/`.
+- Tests live in `src/test/java` (server), `src/main/webapp` (Jest, co-located to TS components), and `src/test/playwright` (e2e). Docs are in `documentation/`; deployment helpers sit in `docker/`. API spec is generated at runtime by springdoc (served at `/v3/api-docs` and `/swagger-ui`); `src/main/webapp/app/openapi/` contains generated TypeScript client code.
 
 ## Build, Test, Development Commands
 - Application Server dev: `./gradlew bootRun` (default task); add `-x webapp` when the Angular dev server serves assets.
@@ -16,8 +16,11 @@
 ## Coding Style & Naming
 - EditorConfig: spaces, indent 4 (YAML 2), LF, final newline; TS/JS prefer single quotes.
 - Angular files kebab-case (`course-detail.component.ts`); classes/services PascalCase; members camelCase; keep module barrel exports tidy.
-- Use latest Angular/TypeScript features; avoid `null` and use `undefined` where possible, avoid spread operator for objects, prefer 100% type safety. Use signals and inject() instead of deprecated APIs.
+- Use latest Angular/TypeScript features; avoid `null` and use `undefined` where possible, avoid spread operator for objects, prefer 100% type safety. 
+- Use Angular Signals for component state and obtain dependencies via inject(); the legacy decorator-based state patterns and constructor-based dependency injection are prohibited.
+- In Angular templates, always use the built-in control-flow syntax (@if, @for, @switch) and never use legacy structural directives (*ngIf, *ngFor, *ngSwitch).
 - Java classes PascalCase, fields camelCase; keep package-by-feature structure; no wildcard imports (Spotless enforces).
+- Avoid @Transactional scope, use DTOs (Java records) for REST endpoints, prefer constructor injection, use Java 25 features (records, sealed classes, pattern matching).
 - Lint/format: ESLint, Stylelint, Prettier for webapp; Checkstyle, Spotless, Modernizer in Gradle. Run `npm run lint` + `prettier:check` before PRs.
 
 ## Testing Guidelines
@@ -30,4 +33,4 @@
 ## Commit & Pull Request Guidelines
 - Commits: concise, imperative, scoped where useful (e.g., `Exam mode: adjust live updates`, `build: bump version`); wrap bodies near 72 chars.
 - PRs: include problem/solution summary, linked issue, commands/tests run, screenshots for UI, and doc updates if relevant. Target the active dev branch (`develop`), rebase to reduce noise.
-- Follow `CONTRIBUTING.md`: real name/profile photo, forks for externals, professional tone in descriptions.
+- Follow `CONTRIBUTING.md`: in particulare make sure to follow the guidelines referenced in docs/dev/guidelines.rst.
