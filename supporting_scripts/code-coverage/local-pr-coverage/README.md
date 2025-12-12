@@ -69,7 +69,7 @@ npm run coverage:pr -- --verbose
 1. **Detect changed files**: Uses `git diff` to find files changed compared to the base branch
 2. **Identify affected modules**: Extracts module names from file paths (e.g., `core`, `exam`, `programming`)
 3. **Run module tests**:
-   - Client: Runs `npm test` with `--test-path-pattern` for affected modules
+   - Client: Runs `npm run prebuild && npx ng test --coverage --test-path-pattern=...` for affected modules
    - Server: Runs `./gradlew test -DincludeModules=<modules> jacocoTestReport`
 4. **Parse coverage reports**:
    - Client: Reads `build/test-results/coverage-summary.json` (Jest output)
@@ -154,7 +154,7 @@ Use this script for quick local feedback. Use `generate_code_cov_table.py` when 
 
 - Run with `--verbose` to see test output
 - Try running tests manually to diagnose issues:
-  - Client: `npm test -- --test-path-pattern="src/main/webapp/app/<module>/"`
+  - Client: `npm run prebuild && npx ng test --coverage --test-path-pattern="src/main/webapp/app/<module>/"`
   - Server: `./gradlew test -DincludeModules=<module>`
 
 ### Clipboard not working

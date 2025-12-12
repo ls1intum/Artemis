@@ -24,7 +24,7 @@
  *   --help                       Show help
  */
 
-import { execSync } from 'child_process';
+import { execSync, execFileSync, spawnSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -58,6 +58,45 @@ function validateModuleNames(modules, optionName) {
     return validModules;
 }
 
+/**
+ * Validate branch name to prevent shell injection and invalid refs
+ * Allows: alphanumeric, dash, underscore, dot, forward slash (for origin/branch)
+ * Disallows: empty, leading dash, shell metacharacters, path traversal, control chars
+ */
+function validateBranchName(branch) {
+    if (!branch || branch.length === 0) {
+        console.error('Error: Branch name cannot be empty.');
+        process.exit(1);
+    }
+
+    if (branch.startsWith('-')) {
+        console.error(`Error: Invalid branch name "${branch}". Branch names cannot start with a dash.`);
+        process.exit(1);
+    }
+
+    // Check for path traversal
+    if (branch.includes('..')) {
+        console.error(`Error: Invalid branch name "${branch}". Path traversal sequences are not allowed.`);
+        process.exit(1);
+    }
+
+    // Allow only safe characters: alphanumeric, dash, underscore, dot, forward slash
+    const safeBranchPattern = /^[a-zA-Z0-9_.\/-]+$/;
+    if (!safeBranchPattern.test(branch)) {
+        console.error(`Error: Invalid branch name "${branch}". Branch names can only contain letters, numbers, dashes, underscores, dots, and forward slashes.`);
+        process.exit(1);
+    }
+
+    // Check for shell metacharacters (extra safety)
+    const shellMetaChars = /[;|&<>*?()[\]{}\\!'"` \t\n\r]/;
+    if (shellMetaChars.test(branch)) {
+        console.error(`Error: Invalid branch name "${branch}". Shell metacharacters are not allowed.`);
+        process.exit(1);
+    }
+
+    return branch;
+}
+
 // Parse command line arguments
 function parseArgs() {
     const args = process.argv.slice(2);
@@ -80,7 +119,7 @@ function parseArgs() {
                     console.error('Error: --base-branch requires a value');
                     process.exit(1);
                 }
-                options.baseBranch = args[++i];
+                options.baseBranch = validateBranchName(args[++i]);
                 break;
             case '--client-modules':
                 if (i + 1 >= args.length) {
@@ -119,6 +158,14 @@ function parseArgs() {
                 break;
             case '--help':
                 options.help = true;
+                break;
+            default:
+                // Only error on unknown options (starting with '-'), not positional values
+                if (args[i].startsWith('-')) {
+                    console.error(`Error: Unknown option '${args[i]}'`);
+                    console.error('Run with --help to see available options.');
+                    process.exit(1);
+                }
                 break;
         }
     }
@@ -204,8 +251,10 @@ function error(message) {
 function getChangedFiles(baseBranch, options) {
     try {
         // Fetch the base branch to ensure we have the latest
+        // Strip a single leading 'origin/' if present for the fetch command
+        const fetchBranch = baseBranch.startsWith('origin/') ? baseBranch.substring(7) : baseBranch;
         try {
-            execSync(`git fetch origin ${baseBranch.replace('origin/', '')}`, {
+            execFileSync('git', ['fetch', 'origin', fetchBranch], {
                 cwd: PROJECT_ROOT,
                 stdio: 'pipe',
             });
@@ -213,16 +262,16 @@ function getChangedFiles(baseBranch, options) {
             log(`Could not fetch ${baseBranch}, using local version`, options);
         }
 
-        // Get the merge base
-        const mergeBase = execSync(`git merge-base HEAD ${baseBranch}`, {
+        // Get the merge base using argument array (no shell interpolation)
+        const mergeBase = execFileSync('git', ['merge-base', 'HEAD', baseBranch], {
             cwd: PROJECT_ROOT,
             encoding: 'utf-8',
         }).trim();
 
         log(`Merge base: ${mergeBase}`, options);
 
-        // Get changed files
-        const diffOutput = execSync(`git diff --name-status ${mergeBase}...HEAD`, {
+        // Get changed files using argument array
+        const diffOutput = execFileSync('git', ['diff', '--name-status', `${mergeBase}...HEAD`], {
             cwd: PROJECT_ROOT,
             encoding: 'utf-8',
         });
@@ -319,6 +368,13 @@ function categorizeChangedFiles(changedFiles, options) {
 }
 
 /**
+ * Escape special regex characters in a string
+ */
+function escapeRegex(str) {
+    return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/**
  * Run client tests for specific modules
  */
 async function runClientTests(modules, options) {
@@ -330,30 +386,64 @@ async function runClientTests(modules, options) {
     info(`Running client tests for modules: ${modules.join(', ')}`);
 
     // Build test pattern to match files in the specified modules
-    // Jest needs absolute paths with --test-path-pattern
-    const testPattern = modules.map((m) => `^${PROJECT_ROOT}/src/main/webapp/app/${m}/`).join('|');
+    // Escape module names for regex safety (modules are already validated)
+    const testPattern = modules.map((m) => `^${escapeRegex(PROJECT_ROOT)}/src/main/webapp/app/${escapeRegex(m)}/`).join('|');
 
-    // Run prebuild first, then ng test with the pattern
-    const command = `npm run prebuild && npx ng test --coverage --log-heap-usage -w=4 --test-path-pattern="${testPattern}"`;
+    log(`Running prebuild...`, options);
 
-    log(`Running: ${command}`, options);
-
+    // Run prebuild first (separate command, no shell interpolation)
     try {
-        execSync(command, {
+        const npmCmd = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+        const prebuildResult = spawnSync(npmCmd, ['run', 'prebuild'], {
             cwd: PROJECT_ROOT,
             stdio: options.verbose ? 'inherit' : 'pipe',
             encoding: 'utf-8',
         });
+        if (prebuildResult.status !== 0) {
+            warn('Prebuild failed');
+            if (!options.verbose && prebuildResult.stdout) {
+                console.log(prebuildResult.stdout);
+            }
+            if (!options.verbose && prebuildResult.stderr) {
+                console.error(prebuildResult.stderr);
+            }
+            return false;
+        }
+    } catch (err) {
+        warn(`Prebuild failed: ${err.message}`);
+        return false;
+    }
+
+    log(`Running ng test with pattern: ${testPattern}`, options);
+
+    // Run ng test with arguments array (no shell interpolation)
+    try {
+        const npxCmd = process.platform === 'win32' ? 'npx.cmd' : 'npx';
+        const testResult = spawnSync(npxCmd, [
+            'ng', 'test',
+            '--coverage',
+            '--log-heap-usage',
+            '-w=4',
+            `--test-path-pattern=${testPattern}`
+        ], {
+            cwd: PROJECT_ROOT,
+            stdio: options.verbose ? 'inherit' : 'pipe',
+            encoding: 'utf-8',
+        });
+        if (testResult.status !== 0) {
+            warn(`Client tests exited with code ${testResult.status || 1}`);
+            if (!options.verbose && testResult.stdout) {
+                console.log(testResult.stdout);
+            }
+            if (!options.verbose && testResult.stderr) {
+                console.error(testResult.stderr);
+            }
+            return false;
+        }
         success('Client tests completed');
         return true;
     } catch (err) {
-        warn(`Client tests exited with code ${err.status || 1}`);
-        if (!options.verbose && err.stdout) {
-            console.log(err.stdout);
-        }
-        if (!options.verbose && err.stderr) {
-            console.error(err.stderr);
-        }
+        warn(`Client tests failed: ${err.message}`);
         return false;
     }
 }
@@ -369,27 +459,39 @@ async function runServerTests(modules, options) {
 
     info(`Running server tests for modules: ${modules.join(', ')}`);
 
+    // Select Gradle wrapper based on platform
+    const gradleWrapper = process.platform === 'win32' ? 'gradlew.bat' : './gradlew';
     const modulesArg = modules.join(',');
-    const command = `./gradlew test -DincludeModules=${modulesArg} jacocoTestReport -x webapp`;
 
-    log(`Running: ${command}`, options);
+    log(`Running: ${gradleWrapper} test -DincludeModules=${modulesArg} jacocoTestReport -x webapp`, options);
 
     try {
-        execSync(command, {
+        // Use spawnSync with argument array for safety
+        const gradleResult = spawnSync(gradleWrapper, [
+            'test',
+            `-DincludeModules=${modulesArg}`,
+            'jacocoTestReport',
+            '-x', 'webapp'
+        ], {
             cwd: PROJECT_ROOT,
             stdio: options.verbose ? 'inherit' : 'pipe',
             encoding: 'utf-8',
+            shell: process.platform === 'win32', // Windows needs shell for .bat files
         });
+        if (gradleResult.status !== 0) {
+            warn(`Server tests exited with code ${gradleResult.status || 1}`);
+            if (!options.verbose && gradleResult.stdout) {
+                console.log(gradleResult.stdout);
+            }
+            if (!options.verbose && gradleResult.stderr) {
+                console.error(gradleResult.stderr);
+            }
+            return false;
+        }
         success('Server tests completed');
         return true;
     } catch (err) {
-        warn(`Server tests exited with code ${err.status || 1}`);
-        if (!options.verbose && err.stdout) {
-            console.log(err.stdout);
-        }
-        if (!options.verbose && err.stderr) {
-            console.error(err.stderr);
-        }
+        warn(`Server tests failed: ${err.message}`);
         return false;
     }
 }
@@ -473,6 +575,20 @@ function getServerFileCoverage(filePath, moduleName) {
 }
 
 /**
+ * Strip inline block comments from a line (handles multiple inline comment segments)
+ */
+function stripInlineBlockComments(line) {
+    // Iteratively remove all /* ... */ segments on the same line
+    let result = line;
+    let prevResult;
+    do {
+        prevResult = result;
+        result = result.replace(/\/\*[^*]*\*+(?:[^/*][^*]*\*+)*\//g, '');
+    } while (result !== prevResult);
+    return result;
+}
+
+/**
  * Get line count of a source file (excluding empty lines and comments)
  */
 function getSourceFileLineCount(absolutePath) {
@@ -486,21 +602,44 @@ function getSourceFileLineCount(absolutePath) {
         let count = 0;
         let inBlockComment = false;
         for (const line of lines) {
-            const trimmed = line.trim();
+            let processedLine = line;
+
+            // Handle multi-line block comments
             if (inBlockComment) {
-                if (trimmed.includes('*/')) {
+                const endIndex = processedLine.indexOf('*/');
+                if (endIndex !== -1) {
+                    // Block comment ends on this line, keep content after */
                     inBlockComment = false;
+                    processedLine = processedLine.substring(endIndex + 2);
+                } else {
+                    // Still inside block comment, skip entire line
+                    continue;
                 }
-                continue;
             }
-            if (trimmed.startsWith('/*')) {
-                // Check if the block comment ends on the same line (inline block comment)
-                if (!trimmed.includes('*/')) {
+
+            // Check if a multi-line block comment starts on this line
+            const startIndex = processedLine.indexOf('/*');
+            if (startIndex !== -1) {
+                const endIndex = processedLine.indexOf('*/', startIndex + 2);
+                if (endIndex === -1) {
+                    // Block comment starts but doesn't end on this line
                     inBlockComment = true;
+                    processedLine = processedLine.substring(0, startIndex);
+                } else {
+                    // Inline block comment(s) - strip them all
+                    processedLine = stripInlineBlockComments(processedLine);
                 }
-                continue;
             }
-            if (trimmed === '' || trimmed.startsWith('//') || trimmed.startsWith('*')) {
+
+            // Strip single-line comments
+            const singleLineCommentIndex = processedLine.indexOf('//');
+            if (singleLineCommentIndex !== -1) {
+                processedLine = processedLine.substring(0, singleLineCommentIndex);
+            }
+
+            // Check if there's any code remaining
+            const trimmed = processedLine.trim();
+            if (trimmed === '' || trimmed === '*') {
                 continue;
             }
             count++;
