@@ -74,11 +74,11 @@ npm run coverage:pr -- --verbose
 4. **Parse coverage reports**:
    - Client: Reads `build/test-results/coverage-summary.json` (Jest output)
    - Server: Reads JaCoCo XML reports from `build/reports/jacoco/<module>/jacocoTestReport.xml`
-5. **Generate report**: Creates a markdown table with coverage percentages
+5. **Generate report**: Creates a Markdown table with coverage percentages
 
 ## Output Format
 
-The output is a markdown table compatible with GitHub PR descriptions:
+The output is a Markdown table compatible with GitHub PR descriptions:
 
 ```markdown
 #### Client

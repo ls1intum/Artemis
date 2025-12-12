@@ -39,6 +39,25 @@ const SERVER_SRC_PREFIX = 'src/main/java/de/tum/cit/aet/artemis/';
 const CLIENT_COVERAGE_SUMMARY = path.join(PROJECT_ROOT, 'build/test-results/coverage-summary.json');
 const SERVER_COVERAGE_DIR = path.join(PROJECT_ROOT, 'build/reports/jacoco');
 
+// Module name validation pattern - only allow safe characters (alphanumeric, dash, underscore)
+const SAFE_MODULE_NAME_PATTERN = /^[a-zA-Z0-9_-]+$/;
+
+/**
+ * Validate and filter module names to prevent shell injection
+ */
+function validateModuleNames(modules, optionName) {
+    const validModules = [];
+    for (const module of modules) {
+        if (SAFE_MODULE_NAME_PATTERN.test(module)) {
+            validModules.push(module);
+        } else {
+            console.error(`Error: Invalid module name "${module}" in ${optionName}. Module names can only contain letters, numbers, dashes, and underscores.`);
+            process.exit(1);
+        }
+    }
+    return validModules;
+}
+
 // Parse command line arguments
 function parseArgs() {
     const args = process.argv.slice(2);
@@ -68,14 +87,20 @@ function parseArgs() {
                     console.error('Error: --client-modules requires a comma-separated list of modules');
                     process.exit(1);
                 }
-                options.clientModules = args[++i].split(',').map((m) => m.trim());
+                options.clientModules = validateModuleNames(
+                    args[++i].split(',').map((m) => m.trim()).filter(Boolean),
+                    '--client-modules'
+                );
                 break;
             case '--server-modules':
                 if (i + 1 >= args.length) {
                     console.error('Error: --server-modules requires a comma-separated list of modules');
                     process.exit(1);
                 }
-                options.serverModules = args[++i].split(',').map((m) => m.trim());
+                options.serverModules = validateModuleNames(
+                    args[++i].split(',').map((m) => m.trim()).filter(Boolean),
+                    '--server-modules'
+                );
                 break;
             case '--skip-tests':
                 options.skipTests = true;
@@ -408,12 +433,7 @@ function getServerFileCoverage(filePath, moduleName) {
         try {
             const xmlContent = fs.readFileSync(reportPath, 'utf-8');
 
-            // Simple regex-based parsing for the specific class
-            // Looking for: <class name="de/tum/cit/aet/artemis/module/ClassName" ...>
-            const classPathPattern = filePath.replace('.java', '').replace(/\//g, '\\/');
-            const classRegex = new RegExp(`<class[^>]*name="${classPathPattern.replace('de/tum/cit/aet/artemis/', 'de/tum/cit/aet/artemis/')}"[^>]*>([\\s\\S]*?)</class>`, 'i');
-
-            // Alternative: search by sourcefilename
+            // Search by sourcefilename to find the class in JaCoCo XML
             const sourceFileRegex = new RegExp(`<class[^>]*sourcefilename="${className}\\.java"[^>]*>([\\s\\S]*?)</class>`, 'gi');
 
             let match = xmlContent.match(sourceFileRegex);
@@ -474,7 +494,10 @@ function getSourceFileLineCount(absolutePath) {
                 continue;
             }
             if (trimmed.startsWith('/*')) {
-                inBlockComment = true;
+                // Check if the block comment ends on the same line (inline block comment)
+                if (!trimmed.includes('*/')) {
+                    inBlockComment = true;
+                }
                 continue;
             }
             if (trimmed === '' || trimmed.startsWith('//') || trimmed.startsWith('*')) {
