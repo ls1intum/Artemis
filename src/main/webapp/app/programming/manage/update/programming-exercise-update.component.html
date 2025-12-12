@@ -46,10 +46,11 @@
                 <hr class="mb-5" />
             }
             <jhi-programming-exercise-problem
-                [(exercise)]="programmingExercise"
+                [programmingExercise]="programmingExercise"
                 [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
                 [isEditFieldDisplayedRecord]="isEditFieldDisplayedRecord()"
                 (problemStatementChange)="calculateFormStatusSections()"
+                (programmingExerciseChange)="programmingExercise = $event"
             />
             <hr class="mb-5" />
             <jhi-programming-exercise-grading

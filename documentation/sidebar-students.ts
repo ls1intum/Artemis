@@ -11,6 +11,7 @@ const sidebars: SidebarsConfig = {
         'faq',
         'tutorial-groups',
         'plagiarism-check',
+        'notifications',
     ],
 };
 
