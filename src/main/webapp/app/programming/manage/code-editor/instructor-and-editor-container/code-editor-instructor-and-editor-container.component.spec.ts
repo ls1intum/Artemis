@@ -45,7 +45,6 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Code Generation', ()
     let ws: jest.Mocked<Pick<HyperionWebsocketService, 'subscribeToJob' | 'unsubscribeFromJob'>>;
     let alertService: AlertService;
     let repoService: CodeEditorRepositoryService;
-    let repoFileService: CodeEditorRepositoryFileService;
     let profileService: ProfileService;
 
     beforeAll(() => {
