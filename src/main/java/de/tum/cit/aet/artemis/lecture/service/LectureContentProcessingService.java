@@ -13,7 +13,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.iris.api.IrisLectureApi;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
@@ -87,7 +86,6 @@ public class LectureContentProcessingService {
      *
      * @param unit the attachment video unit to process
      */
-    @Transactional
     public void triggerProcessing(AttachmentVideoUnit unit) {
         if (unit == null || unit.getId() == null) {
             log.warn("Cannot process null or unsaved lecture unit");
@@ -118,7 +116,10 @@ public class LectureContentProcessingService {
             return;
         }
 
-        LectureUnitProcessingState state = getOrCreateProcessingState(unit);
+        LectureUnitProcessingState state = processingStateRepository.findByLectureUnit_Id(unit.getId()).orElseGet(() -> {
+            LectureUnitProcessingState newState = new LectureUnitProcessingState(unit);
+            return processingStateRepository.save(newState);
+        });
 
         // Detect content changes
         String currentVideoHash = computeHash(unit.getVideoSource());
@@ -352,18 +353,6 @@ public class LectureContentProcessingService {
     }
 
     // -------------------- Private Helper Methods --------------------
-
-    /**
-     * Get or create processing state with pessimistic lock to prevent concurrent modifications.
-     * Must be called within a transaction.
-     */
-    private LectureUnitProcessingState getOrCreateProcessingState(LectureUnit unit) {
-        // Use locking query to prevent concurrent modifications
-        return processingStateRepository.findByLectureUnitIdWithLock(unit.getId()).orElseGet(() -> {
-            LectureUnitProcessingState state = new LectureUnitProcessingState(unit);
-            return processingStateRepository.save(state);
-        });
-    }
 
     private void startProcessing(AttachmentVideoUnit unit, LectureUnitProcessingState state, boolean hasVideo, boolean hasPdf) {
         log.info("Starting processing for unit {}", unit.getId());

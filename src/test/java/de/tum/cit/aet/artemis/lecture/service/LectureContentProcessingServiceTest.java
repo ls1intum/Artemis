@@ -95,7 +95,7 @@ class LectureContentProcessingServiceTest {
         @Test
         void shouldCreateProcessingStateForNewUnit() {
             // Given: A new unit with video source, no existing state
-            when(processingStateRepository.findByLectureUnitIdWithLock(testUnit.getId())).thenReturn(Optional.empty());
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
             when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
             when(tumLiveApi.getTumLivePlaylistLink(testUnit.getVideoSource())).thenReturn(Optional.of("https://playlist.m3u8"));
             when(transcriptionApi.startNebulaTranscription(anyLong(), anyLong(), any())).thenReturn("job-123");
@@ -103,18 +103,18 @@ class LectureContentProcessingServiceTest {
             // When
             service.triggerProcessing(testUnit);
 
-            // Then: State should be created and saved
+            // Then: State should be saved (checking_playlist, playlist_url, transcribing)
             ArgumentCaptor<LectureUnitProcessingState> stateCaptor = ArgumentCaptor.forClass(LectureUnitProcessingState.class);
-            verify(processingStateRepository, times(4)).save(stateCaptor.capture()); // create, checking_playlist, playlist_url, transcribing
+            verify(processingStateRepository, times(3)).save(stateCaptor.capture());
 
-            LectureUnitProcessingState savedState = stateCaptor.getAllValues().get(3);
+            LectureUnitProcessingState savedState = stateCaptor.getAllValues().getLast();
             assertThat(savedState.getPhase()).isEqualTo(ProcessingPhase.TRANSCRIBING);
         }
 
         @Test
         void shouldStartTranscriptionWhenPlaylistFound() {
             // Given
-            when(processingStateRepository.findByLectureUnitIdWithLock(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
             when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
             when(tumLiveApi.getTumLivePlaylistLink(testUnit.getVideoSource())).thenReturn(Optional.of("https://playlist.m3u8"));
             when(transcriptionApi.startNebulaTranscription(anyLong(), anyLong(), any())).thenReturn("job-123");
@@ -134,7 +134,7 @@ class LectureContentProcessingServiceTest {
             pdfAttachment.setVersion(1);
             testUnit.setAttachment(pdfAttachment);
 
-            when(processingStateRepository.findByLectureUnitIdWithLock(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
             when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
             when(tumLiveApi.getTumLivePlaylistLink(testUnit.getVideoSource())).thenReturn(Optional.empty());
             when(irisLectureApi.addLectureUnitToPyrisDB(any())).thenReturn("ingestion-job");
@@ -156,7 +156,7 @@ class LectureContentProcessingServiceTest {
             pdfAttachment.setVersion(1);
             testUnit.setAttachment(pdfAttachment);
 
-            when(processingStateRepository.findByLectureUnitIdWithLock(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
             when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
             when(irisLectureApi.addLectureUnitToPyrisDB(any())).thenReturn("ingestion-job");
 
@@ -203,7 +203,7 @@ class LectureContentProcessingServiceTest {
             pdfAttachment.setVersion(1);
             testUnit.setAttachment(pdfAttachment);
 
-            when(processingStateRepository.findByLectureUnitIdWithLock(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
             when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
             when(tumLiveApi.getTumLivePlaylistLink(any())).thenThrow(new RuntimeException("TUM Live unavailable"));
             when(irisLectureApi.addLectureUnitToPyrisDB(any())).thenReturn("ingestion-job");
@@ -221,7 +221,7 @@ class LectureContentProcessingServiceTest {
             // Given: Unit with video but NO PDF, playlist check throws exception
             testUnit.setAttachment(null);
 
-            when(processingStateRepository.findByLectureUnitIdWithLock(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
             when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
             when(tumLiveApi.getTumLivePlaylistLink(any())).thenThrow(new RuntimeException("TUM Live unavailable"));
 
@@ -245,7 +245,7 @@ class LectureContentProcessingServiceTest {
             testState.setVideoSourceHash("old-hash-12345");
             testState.setPhase(ProcessingPhase.DONE);
 
-            when(processingStateRepository.findByLectureUnitIdWithLock(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
             when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
             when(tumLiveApi.getTumLivePlaylistLink(testUnit.getVideoSource())).thenReturn(Optional.of("https://playlist.m3u8"));
             when(transcriptionApi.startNebulaTranscription(anyLong(), anyLong(), any())).thenReturn("new-job");
@@ -263,7 +263,7 @@ class LectureContentProcessingServiceTest {
             testState.setVideoSourceHash("old-hash-12345");
             testState.setPhase(ProcessingPhase.TRANSCRIBING);
 
-            when(processingStateRepository.findByLectureUnitIdWithLock(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
             when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
             when(tumLiveApi.getTumLivePlaylistLink(testUnit.getVideoSource())).thenReturn(Optional.of("https://playlist.m3u8"));
             when(transcriptionApi.startNebulaTranscription(anyLong(), anyLong(), any())).thenReturn("new-job");
@@ -283,7 +283,7 @@ class LectureContentProcessingServiceTest {
             testState.setVideoSourceHash("old-hash-12345");
             testState.setPhase(ProcessingPhase.DONE);
 
-            when(processingStateRepository.findByLectureUnitIdWithLock(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
             when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
             when(tumLiveApi.getTumLivePlaylistLink(testUnit.getVideoSource())).thenReturn(Optional.of("https://playlist.m3u8"));
             when(transcriptionApi.startNebulaTranscription(anyLong(), anyLong(), any())).thenReturn("new-job");
@@ -304,7 +304,7 @@ class LectureContentProcessingServiceTest {
             testState.setVideoSourceHash(computeTestHash("https://live.rbg.tum.de/w/course/12345"));
             testState.setPhase(ProcessingPhase.DONE);
 
-            when(processingStateRepository.findByLectureUnitIdWithLock(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
 
             // When
             service.triggerProcessing(testUnit);
@@ -578,7 +578,7 @@ class LectureContentProcessingServiceTest {
             testState.setPhase(ProcessingPhase.FAILED);
             testState.setRetryCount(3);
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
-            when(processingStateRepository.findByLectureUnitIdWithLock(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
             when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
             when(tumLiveApi.getTumLivePlaylistLink(any())).thenReturn(Optional.of("https://playlist.m3u8"));
             when(transcriptionApi.startNebulaTranscription(anyLong(), anyLong(), any())).thenReturn("new-job");
@@ -621,7 +621,7 @@ class LectureContentProcessingServiceTest {
             pdfAttachment.setVersion(1);
             testUnit.setAttachment(pdfAttachment);
 
-            when(processingStateRepository.findByLectureUnitIdWithLock(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
             when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
             when(tumLiveApi.getTumLivePlaylistLink(any())).thenReturn(Optional.of("https://playlist.m3u8"));
             when(irisLectureApi.addLectureUnitToPyrisDB(any())).thenReturn("ingestion-job");
@@ -644,7 +644,7 @@ class LectureContentProcessingServiceTest {
             pdfAttachment.setVersion(1);
             testUnit.setAttachment(pdfAttachment);
 
-            when(processingStateRepository.findByLectureUnitIdWithLock(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
             when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
             when(irisLectureApi.addLectureUnitToPyrisDB(any())).thenReturn("ingestion-job");
 
@@ -680,7 +680,7 @@ class LectureContentProcessingServiceTest {
                     Optional.empty()); // No Iris API
 
             // Unit has video (can transcribe) - transcription should still happen
-            when(processingStateRepository.findByLectureUnitIdWithLock(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
             when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
             when(tumLiveApi.getTumLivePlaylistLink(any())).thenReturn(Optional.of("https://playlist.m3u8"));
             when(transcriptionApi.startNebulaTranscription(anyLong(), anyLong(), any())).thenReturn("job-123");
@@ -707,7 +707,7 @@ class LectureContentProcessingServiceTest {
             service.triggerProcessing(testUnit);
 
             // Then: Should skip entirely - no state created, no APIs called
-            verify(processingStateRepository, never()).findByLectureUnitIdWithLock(anyLong());
+            verify(processingStateRepository, never()).save(any());
             verify(processingStateRepository, never()).save(any());
         }
 
@@ -727,7 +727,7 @@ class LectureContentProcessingServiceTest {
             service.triggerProcessing(testUnit);
 
             // Then: Should skip - PDF-only needs Iris for ingestion
-            verify(processingStateRepository, never()).findByLectureUnitIdWithLock(anyLong());
+            verify(processingStateRepository, never()).save(any());
             verify(processingStateRepository, never()).save(any());
         }
 
@@ -739,7 +739,7 @@ class LectureContentProcessingServiceTest {
 
             testUnit.setAttachment(null); // No PDF
 
-            when(processingStateRepository.findByLectureUnitIdWithLock(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
             when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
             when(tumLiveApi.getTumLivePlaylistLink(any())).thenReturn(Optional.of("https://playlist.m3u8"));
 
