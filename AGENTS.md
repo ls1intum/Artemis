@@ -18,7 +18,7 @@
 - Angular files kebab-case (`course-detail.component.ts`); classes/services PascalCase; members camelCase; keep module barrel exports tidy.
 - Use latest Angular/TypeScript features; avoid `null` and use `undefined` where possible, avoid spread operator for objects, prefer 100% type safety. 
 - Use Angular Signals for component state and obtain dependencies via inject(); the legacy decorator-based state patterns and constructor-based dependency injection are prohibited.
-- In Angular templates, always use the built-in control-flow syntax (@if, @for, @switch) and never use legacy structural directives (*ngIf, *ngFor, *ngSwitch).
+- In Angular templates, always use the built-in control-flow syntax (`@if`, `@for`, `@switch`) and never use legacy structural directives (`*ngIf`, `*ngFor`, `*ngSwitch`).
 - Java classes PascalCase, fields camelCase; keep package-by-feature structure; no wildcard imports (Spotless enforces).
 - Avoid @Transactional scope, use DTOs (Java records) for REST endpoints, prefer constructor injection, use Java 25 features (records, sealed classes, pattern matching).
 - Lint/format: ESLint, Stylelint, Prettier for webapp; Checkstyle, Spotless, Modernizer via Gradle. Run `npm run lint` + `prettier:check` before PRs.
