@@ -1,7 +1,7 @@
 import 'zone.js';
 import 'zone.js/testing';
 import { TestBed } from '@angular/core/testing';
-import { Subject } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 import { HyperionEvent, HyperionWebsocketService } from 'app/hyperion/services/hyperion-websocket.service';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 
@@ -10,23 +10,20 @@ class MockWebsocketService {
     subscribeCalls: string[] = [];
     unsubscribeCalls: string[] = [];
 
-    subscribe(channel: string) {
+    subscribe(channel: string): Observable<any> {
         this.subscribeCalls.push(channel);
-        return this; // method chaining
-    }
-
-    receive(channel: string) {
         let subj = this.subjects.get(channel);
         if (!subj) {
             subj = new Subject<any>();
             this.subjects.set(channel, subj);
         }
-        return subj.asObservable();
-    }
-
-    unsubscribe(channel: string) {
-        this.unsubscribeCalls.push(channel);
-        // Do not complete here; the Hyperion service completes its own Subject
+        return new Observable((subscriber) => {
+            const subscription = subj!.subscribe(subscriber);
+            return () => {
+                this.unsubscribeCalls.push(channel);
+                subscription.unsubscribe();
+            };
+        });
     }
 }
 

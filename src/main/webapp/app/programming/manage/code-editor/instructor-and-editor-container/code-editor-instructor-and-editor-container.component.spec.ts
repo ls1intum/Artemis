@@ -5,7 +5,7 @@ import { BrowserTestingModule, platformBrowserTesting } from '@angular/platform-
 import { Subject, of, throwError } from 'rxjs';
 
 import { CodeEditorInstructorAndEditorContainerComponent } from 'app/programming/manage/code-editor/instructor-and-editor-container/code-editor-instructor-and-editor-container.component';
-import { EditorState, RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
+import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { HyperionWebsocketService } from 'app/hyperion/services/hyperion-websocket.service';
@@ -247,17 +247,15 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Code Generation', ()
         expect(pullSpy).toHaveBeenCalledTimes(2);
     });
 
-    it('should set editor state, refresh files and cleanup on DONE', async () => {
+    it('should call executeRefresh and cleanup on DONE', async () => {
         comp.selectedRepository = RepositoryType.SOLUTION;
         (codeGenerationApi.generateCode as jest.Mock).mockReturnValue(of({ jobId: 'job-4' }));
         const job$ = new Subject<any>();
         (ws.subscribeToJob as jest.Mock).mockReturnValue(job$.asObservable());
 
-        // Fake a minimal code editor container to observe state changes
-        (comp as any).codeEditorContainer = { editorState: undefined };
-
-        const pullSpy = jest.spyOn(repoService, 'pull');
-        const getContentSpy = jest.spyOn(repoFileService, 'getRepositoryContent');
+        // Fake a minimal code editor container to invoke refresh
+        const executeRefresh = jest.fn();
+        (comp as any).codeEditorContainer = { actions: { executeRefresh } };
 
         comp.generateCode();
         await Promise.resolve();
@@ -265,11 +263,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Code Generation', ()
         job$.next({ type: 'DONE', success: true });
         await Promise.resolve();
 
-        expect(pullSpy).toHaveBeenCalled();
-        expect(getContentSpy).toHaveBeenCalled();
-        // Editor state should end in CLEAN after refresh pipeline
-        expect((comp as any).codeEditorContainer.editorState).toBeDefined();
-        expect((comp as any).codeEditorContainer.editorState).toBe(EditorState.CLEAN);
+        expect(executeRefresh).toHaveBeenCalled();
         expect(comp.isGeneratingCode()).toBeFalse();
         expect(ws.unsubscribeFromJob).toHaveBeenCalledWith('job-4');
     });

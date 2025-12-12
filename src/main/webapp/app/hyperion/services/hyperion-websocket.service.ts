@@ -27,22 +27,20 @@ export class HyperionWebsocketService implements OnDestroy {
         }
         const subject = new Subject<HyperionEvent>();
         const channel = this.channel(jobId);
-        const wsSub = this.websocketService
-            .subscribe(channel)
-            .receive(channel)
-            .subscribe({
-                next: (msg: any) => {
-                    subject.next(msg as HyperionEvent);
-                },
-                error: (err) => {
-                    subject.error(err);
-                    this.subscribedJobs.delete(jobId);
-                },
-                complete: () => {
-                    subject.complete();
-                    this.subscribedJobs.delete(jobId);
-                },
-            });
+        const ws$ = this.websocketService.subscribe<HyperionEvent>(channel);
+        const wsSub = ws$.subscribe({
+            next: (msg) => {
+                subject.next(msg);
+            },
+            error: (err: unknown) => {
+                subject.error(err);
+                this.subscribedJobs.delete(jobId);
+            },
+            complete: () => {
+                subject.complete();
+                this.subscribedJobs.delete(jobId);
+            },
+        });
         this.subscribedJobs.set(jobId, { wsSubscription: wsSub, subject });
         return subject.asObservable();
     }
@@ -55,7 +53,6 @@ export class HyperionWebsocketService implements OnDestroy {
         const s = this.subscribedJobs.get(jobId);
         if (!s) return;
         s.wsSubscription.unsubscribe();
-        this.websocketService.unsubscribe(this.channel(jobId));
         s.subject.complete();
         this.subscribedJobs.delete(jobId);
     }
@@ -66,7 +63,6 @@ export class HyperionWebsocketService implements OnDestroy {
     ngOnDestroy(): void {
         this.subscribedJobs.forEach((s, jobId) => {
             s.wsSubscription.unsubscribe();
-            this.websocketService.unsubscribe(this.channel(jobId));
             s.subject.complete();
         });
     }

@@ -13,7 +13,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ProgrammingExerciseInstructorExerciseStatusComponent } from '../../status/programming-exercise-instructor-exercise-status.component';
 import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { EditorState, RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
+import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CodeGenerationRequestDTO } from 'app/openapi/model/codeGenerationRequestDTO';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
@@ -23,8 +23,8 @@ import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal/confirm-autofocus-modal.component';
 import { HyperionWebsocketService } from 'app/hyperion/services/hyperion-websocket.service';
-import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
-import { Subscription, catchError, of, switchMap, take } from 'rxjs';
+import { CodeEditorRepositoryService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
+import { Subscription, catchError, of, take } from 'rxjs';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { faCheckDouble } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -88,7 +88,6 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     private modalService = inject(NgbModal);
     private hyperionWs = inject(HyperionWebsocketService);
     private repoService = inject(CodeEditorRepositoryService);
-    private repoFileService = inject(CodeEditorRepositoryFileService);
     private hyperionCodeGenerationApi = inject(HyperionCodeGenerationApiService);
     isGeneratingCode = signal(false);
     private jobSubscription?: Subscription;
@@ -182,38 +181,15 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                         break;
 
                     case 'DONE':
-                        if (this.codeEditorContainer) {
-                            this.codeEditorContainer.editorState = EditorState.REFRESHING;
-                        }
-                        this.repoService
-                            .pull()
-                            .pipe(
-                                take(1),
-                                catchError(() => {
-                                    return of(void 0);
-                                }),
-                                switchMap(() =>
-                                    this.repoFileService.getRepositoryContent().pipe(
-                                        take(1),
-                                        catchError(() => {
-                                            return of({});
-                                        }),
-                                    ),
-                                ),
-                            )
-                            .subscribe(() => {
-                                if (this.codeEditorContainer) {
-                                    this.codeEditorContainer.editorState = EditorState.CLEAN;
-                                }
-                                cleanup();
-                                this.codeGenAlertService.addAlert({
-                                    type: event.success ? AlertType.SUCCESS : AlertType.WARNING,
-                                    translationKey: event.success
-                                        ? 'artemisApp.programmingExercise.codeGeneration.success'
-                                        : 'artemisApp.programmingExercise.codeGeneration.partialSuccess',
-                                    translationParams: { repositoryType: this.selectedRepository },
-                                });
-                            });
+                        this.codeEditorContainer?.actions?.executeRefresh();
+                        cleanup();
+                        this.codeGenAlertService.addAlert({
+                            type: event.success ? AlertType.SUCCESS : AlertType.WARNING,
+                            translationKey: event.success
+                                ? 'artemisApp.programmingExercise.codeGeneration.success'
+                                : 'artemisApp.programmingExercise.codeGeneration.partialSuccess',
+                            translationParams: { repositoryType: this.selectedRepository },
+                        });
                         break;
 
                     case 'ERROR':
