@@ -8,6 +8,7 @@ import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/ex
 import { Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { TeamAssignmentPayload } from 'app/exercise/shared/entities/team/team.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { ProgrammingSubmissionService } from 'app/programming/shared/services/programming-submission.service';
@@ -394,8 +395,8 @@ describe('CourseExerciseDetailsComponent', () => {
 
     it('should handle participation update', fakeAsync(() => {
         const submissionId = 55;
-        const submission = { id: submissionId };
-        const participation = { submissions: [submission] };
+        const submission: Submission = { id: submissionId } satisfies Submission;
+        const participation: Participation = { submissions: [submission] } satisfies Participation;
         comp.gradedStudentParticipation = participation;
         comp.sortedHistoryResults = [{ id: 2 }];
         comp.exercise = { ...programmingExercise };
@@ -405,7 +406,7 @@ describe('CourseExerciseDetailsComponent', () => {
         comp.handleNewExercise({ exercise: programmingExercise });
         tick();
 
-        const newParticipation = { ...participation, submissions: [submission, { id: submissionId + 1 }] };
+        const newParticipation = { ...participation, submissions: [submission, { id: submissionId + 1 } satisfies Submission] } satisfies Participation;
 
         mergeStudentParticipationMock.mockReturnValue([newParticipation]);
 
