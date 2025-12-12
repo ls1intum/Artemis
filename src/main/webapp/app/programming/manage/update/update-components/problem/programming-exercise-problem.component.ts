@@ -68,6 +68,95 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy, A
     isEditFieldDisplayedRecord = input<Record<ProgrammingExerciseInputField, boolean>>();
     programmingExercise = input<ProgrammingExercise>();
     @Output() problemStatementChange = new EventEmitter<string>();
+    programmingExerciseChange = output<ProgrammingExercise>();
+    // Problem statement generation properties
+    userPrompt = '';
+    isGenerating = false;
+    private currentGenerationSubscription: Subscription | undefined = undefined;
+    private profileService = inject(ProfileService);
+    hyperionEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
+
+    // icons
+    facArtemisIntelligence = facArtemisIntelligence;
+    faSpinner = faSpinner;
+    faBan = faBan;
+    faSave = faSave;
+
+    // Injected services
+    private hyperionApiService = inject(HyperionProblemStatementApiService);
+    private translateService = inject(TranslateService);
+    private alertService = inject(AlertService);
+
+    /**
+     * Lifecycle hook that is called when the component is destroyed.
+     * Cleans up the subscription to prevent memory leaks.
+     */
+    ngOnDestroy(): void {
+        if (this.currentGenerationSubscription) {
+            this.currentGenerationSubscription.unsubscribe();
+            this.currentGenerationSubscription = undefined;
+        }
+    }
+
+    /**
+     * Cancels the ongoing problem statement generation.
+     * Preserves the user's prompt so they can retry or modify it.
+     */
+    cancelGeneration(): void {
+        if (this.currentGenerationSubscription) {
+            this.currentGenerationSubscription.unsubscribe();
+            this.currentGenerationSubscription = undefined;
+        }
+        this.isGenerating = false;
+    }
+    /**
+     * Generates a draft problem statement using the user's prompt
+     */
+    generateProblemStatement(): void {
+        const exercise = this.programmingExercise();
+        const courseId = exercise?.course?.id ?? exercise?.exerciseGroup?.exam?.course?.id;
+        if (!this.userPrompt?.trim() || !courseId) {
+            return;
+        }
+
+        this.isGenerating = true;
+
+        const request: ProblemStatementGenerationRequest = {
+            userPrompt: this.userPrompt.trim(),
+        };
+
+        this.currentGenerationSubscription = this.hyperionApiService
+            .generateProblemStatement(courseId, request)
+            .pipe(
+                finalize(() => {
+                    this.isGenerating = false;
+                    this.currentGenerationSubscription = undefined;
+                }),
+            )
+            .subscribe({
+                next: (response) => {
+                    // Check if the response contains an empty or invalid problem statement
+                    if (!response.draftProblemStatement || response.draftProblemStatement.trim() === '') {
+                        this.alertService.error('artemisApp.programmingExercise.problemStatement.generationError');
+                        return;
+                    }
+
+                    if (response.draftProblemStatement && exercise) {
+                        exercise.problemStatement = response.draftProblemStatement;
+                        this.programmingExerciseCreationConfig.hasUnsavedChanges = true;
+                        this.problemStatementChange.emit(response.draftProblemStatement);
+                        this.programmingExerciseChange.emit(exercise);
+                    }
+                    this.userPrompt = '';
+
+                    // Show success alert
+                    this.alertService.success('artemisApp.programmingExercise.problemStatement.generationSuccess');
+                },
+                error: (error) => {
+                    this.alertService.error('artemisApp.programmingExercise.problemStatement.generationError');
+                },
+            });
+    }
 
     /**
      * Handles problem statement changes from the editor

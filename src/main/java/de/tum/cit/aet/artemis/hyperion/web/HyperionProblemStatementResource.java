@@ -33,7 +33,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 
 /**
- * REST controller for Hyperion problem statement features (generation, rewrite,
+ * REST controller for Hyperion problem statement features (generation, refinement, rewrite,
  * and consistency check).
  */
 @Conditional(HyperionEnabled.class)
