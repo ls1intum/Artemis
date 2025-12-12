@@ -417,6 +417,7 @@ async function runClientTests(modules, options) {
     log(`Running ng test with pattern: ${testPattern}`, options);
 
     // Run ng test with arguments array (no shell interpolation)
+    // Disable coverage threshold since we're only running a subset of tests
     try {
         const npxCmd = process.platform === 'win32' ? 'npx.cmd' : 'npx';
         const testResult = spawnSync(npxCmd, [
@@ -424,7 +425,8 @@ async function runClientTests(modules, options) {
             '--coverage',
             '--log-heap-usage',
             '-w=4',
-            `--test-path-pattern=${testPattern}`
+            `--test-path-pattern=${testPattern}`,
+            '--coverage-threshold={}'
         ], {
             cwd: PROJECT_ROOT,
             stdio: options.verbose ? 'inherit' : 'pipe',
