@@ -729,12 +729,16 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
             size: 'lg',
             backdrop: 'static',
         });
-        (modalRef.componentInstance as AiQuizGenerationModalComponent).courseId = courseId;
 
         const modal = modalRef.componentInstance as AiQuizGenerationModalComponent;
-        modal.courseId = courseId;
+
+        modal.courseId.set(courseId);
+
         if (this.quizExercise?.title) {
-            modal.formData.topic = this.quizExercise.title;
+            modal.formData = {
+                ...modal.formData,
+                topic: this.quizExercise.title,
+            };
         }
         modalRef.result
             .then((result?: { questions: AiGeneratedQuestionDTO[]; requestedDifficulty?: AiDifficultyLevel; requestedSubtype?: AiRequestedSubtype }) => {
