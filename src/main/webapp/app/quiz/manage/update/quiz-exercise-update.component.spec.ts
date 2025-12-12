@@ -1,6 +1,6 @@
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { ChangeDetectorRef, SimpleChange } from '@angular/core';
+import { ChangeDetectorRef, SimpleChange, signal } from '@angular/core';
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { NgbDate, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
@@ -1607,7 +1607,15 @@ describe('QuizExerciseUpdateComponent', () => {
 
         it('generateQuizWithHyperion should open modal and add returned questions', async () => {
             const mockModalRef: Partial<NgbModalRef> = {
-                componentInstance: {},
+                componentInstance: {
+                    courseId: signal<number | undefined>(undefined),
+                    formData: {
+                        topic: '',
+                        numberOfQuestions: 1,
+                        difficulty: AiDifficultyLevel.MEDIUM,
+                        subtype: AiRequestedSubtype.SINGLE_CORRECT,
+                    },
+                },
                 result: Promise.resolve({
                     requestedDifficulty: AiDifficultyLevel.HARD,
                     requestedSubtype: AiRequestedSubtype.SINGLE_CORRECT,
@@ -1623,6 +1631,7 @@ describe('QuizExerciseUpdateComponent', () => {
                     ],
                 }),
             };
+
             const openSpy = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef as NgbModalRef);
 
             comp.generateQuizWithHyperion();
