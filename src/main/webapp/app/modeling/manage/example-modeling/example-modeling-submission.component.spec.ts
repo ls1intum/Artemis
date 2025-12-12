@@ -553,4 +553,13 @@ describe('Example Modeling Submission Component', () => {
         expect(highlighted.get('element-2')).toBe('testColor');
         expect(highlighted.has('element-1')).toBeFalse();
     });
+
+    it('should treat empty assessments as valid with totalScore 0', () => {
+        comp.exercise = exercise;
+        comp.checkScoreBoundaries();
+        expect(comp.assessments).toHaveLength(0);
+        expect(comp.totalScore).toBe(0);
+        expect(comp.assessmentsAreValid).toBeTrue();
+        expect(comp.invalidError).toBeUndefined();
+    });
 });

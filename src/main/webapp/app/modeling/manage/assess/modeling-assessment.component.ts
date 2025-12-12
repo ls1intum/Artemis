@@ -43,7 +43,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
     elementCounts = input<ModelElementCount[]>();
     course = input<Course>();
 
-    elementFeedback: Map<string, Feedback>; // map element.id --> Feedback
+    elementFeedback: Map<string, Feedback> = new Map<string, Feedback>(); // map element.id --> Feedback
     referencedFeedbacks: Feedback[] = [];
     unreferencedFeedbacks: Feedback[] = [];
     firstCorrectionRoundColor = '#3e8acc';
