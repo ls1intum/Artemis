@@ -239,7 +239,8 @@ public class CourseRequestService {
         recipient.setEmail(contactEmail);
         recipient.setLangKey(request.getRequester() != null && request.getRequester().getLangKey() != null ? request.getRequester().getLangKey() : "en");
         recipient.setLogin("course-request-contact");
-        mailSendingService.buildAndSendAsync(recipient, "email.courseRequest.contact.title", "mail/courseRequestContactEmail", Map.of("courseRequest", request));
+        mailSendingService.buildAndSendAsync(recipient, "email.courseRequest.contact.title", List.of(request.getTitle()), "mail/courseRequestContactEmail",
+                Map.of("courseRequest", request));
     }
 
     private void sendAcceptedEmail(CourseRequest request, Course course) {
