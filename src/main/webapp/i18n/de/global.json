@@ -139,7 +139,7 @@
                 "sidebar": {
                     "organizations": "Organisationen",
                     "users": "Benutzer",
-                    "iris": "IRIS",
+                    "iris": "Iris",
                     "lti": "LTI",
                     "competencies": "Kompetenzen",
                     "upcoming": "Anstehend",
@@ -149,7 +149,7 @@
                     "logs": "Protokoll",
                     "metrics": "Metriken",
                     "statistics": "Statistiken",
-                    "websocket": "WebSocket",
+                    "websocket": "Websocket",
                     "buildAgents": "Build-Agenten",
                     "buildQueue": "Build-Warteschlange",
                     "cleanup": "Aufräumen",
