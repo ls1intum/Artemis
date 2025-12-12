@@ -83,7 +83,7 @@ const moduleThresholds = {
     iris: {
         statements: 87.80,
         branches:   73.00,
-        functions:  85.00,
+        functions:  84.00,
         lines:      88.30,
     },
     lecture: {

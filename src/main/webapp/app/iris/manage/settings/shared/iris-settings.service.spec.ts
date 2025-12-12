@@ -170,22 +170,6 @@ describe('Iris Settings Service', () => {
         }));
     });
 
-    describe('getVariants', () => {
-        it('should return static variant list', fakeAsync(() => {
-            service
-                .getVariants()
-                .pipe(take(1))
-                .subscribe((variants) => {
-                    expect(variants).toHaveLength(2);
-                    expect(variants[0]).toBe('default');
-                    expect(variants[1]).toBe('advanced');
-                });
-            tick();
-            // No HTTP request should be made
-            httpMock.expectNone({ method: 'GET' });
-        }));
-    });
-
     describe('invalidateCacheForCourse', () => {
         it('should invalidate cache for specific course', fakeAsync(() => {
             // Populate cache for course 1

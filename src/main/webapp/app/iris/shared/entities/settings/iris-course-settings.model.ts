@@ -7,7 +7,8 @@
  * Pipeline variant selection for Iris (admin-only configuration).
  * Matches the backend enum serialization as lowercase strings via @JsonValue.
  */
-export type IrisPipelineVariant = 'default' | 'advanced';
+export const IRIS_PIPELINE_VARIANTS = ['default', 'advanced'] as const;
+export type IrisPipelineVariant = (typeof IRIS_PIPELINE_VARIANTS)[number];
 
 /**
  * Rate limit configuration with optional per-course overrides.

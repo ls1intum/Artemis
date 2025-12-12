@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { finalize, map, shareReplay, tap } from 'rxjs/operators';
-import { CourseIrisSettingsDTO, IrisCourseSettingsDTO, IrisPipelineVariant } from 'app/iris/shared/entities/settings/iris-course-settings.model';
+import { CourseIrisSettingsDTO, IrisCourseSettingsDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
 
 /**
  * Service for managing Iris course-level settings.
@@ -72,14 +72,6 @@ export class IrisSettingsService {
                 this.courseCacheTimestamps.delete(courseId);
             }),
         );
-    }
-
-    /**
-     * Get the available pipeline variants.
-     * Returns static list matching backend enum serialization (lowercase).
-     */
-    getVariants(): Observable<IrisPipelineVariant[]> {
-        return of(['default', 'advanced']);
     }
 
     /**

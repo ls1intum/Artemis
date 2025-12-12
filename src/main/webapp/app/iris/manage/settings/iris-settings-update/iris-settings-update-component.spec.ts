@@ -40,8 +40,6 @@ describe('IrisSettingsUpdateComponent', () => {
         applicationRateLimitDefaults: { requests: 50, timeframeHours: 12 },
     };
 
-    const mockVariants = ['default', 'advanced'];
-
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [MockJhiTranslateDirective, IrisSettingsUpdateComponent, FaIconComponent],
@@ -51,7 +49,6 @@ describe('IrisSettingsUpdateComponent', () => {
                     provide: IrisSettingsService,
                     useValue: {
                         getCourseSettings: jest.fn().mockReturnValue(of(mockResponse)),
-                        getVariants: jest.fn().mockReturnValue(of(mockVariants)),
                         updateCourseSettings: jest.fn().mockReturnValue(of(new HttpResponse({ body: mockResponse }))),
                     },
                 },
@@ -78,7 +75,6 @@ describe('IrisSettingsUpdateComponent', () => {
     afterEach(() => {
         // Clear call counts but not implementations
         (irisSettingsService.getCourseSettings as jest.Mock).mockClear();
-        (irisSettingsService.getVariants as jest.Mock).mockClear();
         (irisSettingsService.updateCourseSettings as jest.Mock).mockClear();
     });
 
@@ -87,10 +83,9 @@ describe('IrisSettingsUpdateComponent', () => {
     });
 
     describe('ngOnInit', () => {
-        it('should load settings and variants from route params', fakeAsync(() => {
+        it('should load settings from route params', fakeAsync(() => {
             routeParamsSubject.next({ courseId: '1' });
             const getCourseSettingsSpy = jest.spyOn(irisSettingsService, 'getCourseSettings');
-            const getVariantsSpy = jest.spyOn(irisSettingsService, 'getVariants');
 
             component.ngOnInit();
             tick();
@@ -98,13 +93,11 @@ describe('IrisSettingsUpdateComponent', () => {
             expect(component.courseId).toBe(1);
             expect(getCourseSettingsSpy).toHaveBeenCalledOnce();
             expect(getCourseSettingsSpy).toHaveBeenCalledWith(1);
-            expect(getVariantsSpy).toHaveBeenCalledOnce();
             expect(component.settings).toEqual(mockSettings);
             expect(component.rateLimitRequests).toBe(100);
             expect(component.rateLimitTimeframeHours).toBe(24);
             expect(component.effectiveRateLimit).toEqual({ requests: 100, timeframeHours: 24 });
             expect(component.applicationDefaults).toEqual({ requests: 50, timeframeHours: 12 });
-            expect(component.availableVariants).toEqual(mockVariants);
             expect(component.isDirty).toBeFalse();
         }));
 
@@ -167,25 +160,6 @@ describe('IrisSettingsUpdateComponent', () => {
             component.ngOnInit();
             tick();
             expect(component.isLoading).toBeFalse();
-        }));
-    });
-
-    describe('loadVariants', () => {
-        it('should load variants successfully', fakeAsync(() => {
-            component.loadVariants();
-            tick();
-
-            expect(component.availableVariants).toEqual(mockVariants);
-        }));
-
-        it('should handle variant load error silently', fakeAsync(() => {
-            jest.spyOn(irisSettingsService, 'getVariants').mockReturnValue(throwError(() => new Error('Variants failed')));
-
-            component.loadVariants();
-            tick();
-
-            // Should not crash or show alert
-            expect(component.availableVariants).toEqual([]);
         }));
     });
 

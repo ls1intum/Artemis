@@ -12,7 +12,13 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FormsModule } from '@angular/forms';
 import { captureException } from '@sentry/angular';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
-import { CourseIrisSettingsDTO, IrisCourseSettingsDTO, IrisPipelineVariant, IrisRateLimitConfiguration } from 'app/iris/shared/entities/settings/iris-course-settings.model';
+import {
+    CourseIrisSettingsDTO,
+    IRIS_PIPELINE_VARIANTS,
+    IrisCourseSettingsDTO,
+    IrisPipelineVariant,
+    IrisRateLimitConfiguration,
+} from 'app/iris/shared/entities/settings/iris-course-settings.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CourseTitleBarTitleComponent } from 'app/core/course/shared/course-title-bar-title/course-title-bar-title.component';
 import { CourseTitleBarTitleDirective } from 'app/core/course/shared/directives/course-title-bar-title.directive';
@@ -43,7 +49,7 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
     private originalSettings?: IrisCourseSettingsDTO;
 
     // Available variants
-    public availableVariants: IrisPipelineVariant[] = [];
+    public availableVariants: ReadonlyArray<IrisPipelineVariant> = IRIS_PIPELINE_VARIANTS;
 
     // Local form fields for rate limit (separate from settings to preserve null semantics)
     // These are always safe to bind in the template, and we reconstruct rateLimit on save
@@ -83,7 +89,6 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
             this.courseId = Number(params['courseId']);
             this.loadSettings();
         });
-        this.loadVariants();
     }
 
     ngDoCheck(): void {
@@ -163,20 +168,6 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
                 this.isLoading = false;
                 captureException('Error loading Iris settings', error);
                 this.alertService.error('artemisApp.iris.settings.error.load');
-            },
-        });
-    }
-
-    /**
-     * Load available pipeline variants
-     */
-    loadVariants(): void {
-        this.irisSettingsService.getVariants().subscribe({
-            next: (variants) => {
-                this.availableVariants = variants;
-            },
-            error: (error) => {
-                captureException('Error loading Iris variants', error);
             },
         });
     }
