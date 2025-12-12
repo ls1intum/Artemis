@@ -55,7 +55,7 @@
             <div
                 class="double-arrow px-2"
                 [ngClass]="{ 'menu-closed': isNavbarCollapsed() }"
-                [ngbTooltip]="'Collapse Menu (Ctrl + M)'"
+                [ngbTooltip]="'global.menu.admin.sidebar.collapseMenu' | artemisTranslate"
                 tooltipClass="double-arrow-tooltip"
                 [container]="'body'"
                 (click)="toggleCollapseState.emit()"
@@ -72,7 +72,7 @@
                 class="double-arrow mb-2"
                 [ngClass]="{ 'menu-closed': isNavbarCollapsed() }"
                 tooltipClass="double-arrow-tooltip-collapsed"
-                [ngbTooltip]="'Expand Menu (Ctrl + M)'"
+                [ngbTooltip]="'global.menu.admin.sidebar.expandMenu' | artemisTranslate"
                 (click)="toggleCollapseState.emit()"
             >
                 <div class="double-arrow-icon" [attr.aria-expanded]="!isNavbarCollapsed()" aria-controls="collapseBasic">
