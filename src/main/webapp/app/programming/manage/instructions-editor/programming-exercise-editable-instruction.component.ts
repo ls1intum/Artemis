@@ -79,6 +79,9 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     /** Flag to track if the editor is ready for widgets */
     private editorReady = false;
 
+    /** Map of comment IDs to widget IDs for tracking and updating widgets */
+    private commentWidgetMap = new Map<string, string>();
+
     constructor() {
         // Effect to watch pendingComments and render widgets when they change
         effect(() => {
@@ -206,17 +209,11 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         if (this.testCaseSubscription) {
             this.testCaseSubscription.unsubscribe();
         }
-        if (this.forceRenderSubscription) {
-            this.forceRenderSubscription.unsubscribe();
-        }
-        // Close all active inline comment widgets
+        // Close all active inline comment widgets and clear tracking map
         if (this.markdownEditorMonaco) {
             this.inlineCommentHostService.closeAllWidgets(this.markdownEditorMonaco);
         }
-
-        // Clean up subscriptions
-        this.testCaseSubscription?.unsubscribe();
-        this.forceRenderSubscription?.unsubscribe();
+        this.commentWidgetMap.clear();
     }
 
     ngAfterViewInit() {
@@ -304,12 +301,27 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      * Also handles cleanup when comments are cleared.
      */
     private renderPendingCommentsAsWidgets(): void {
+        if (!this.markdownEditorMonaco || !this.hyperionEnabled) {
+            return;
+        }
         const comments = this.pendingComments();
 
         // If no pending comments (e.g., after Clear All), close all widgets
         if (comments.length === 0) {
-            this.inlineCommentHostService.closeAllWidgets(this.markdownEditorMonaco!);
+            this.inlineCommentHostService.closeAllWidgets(this.markdownEditorMonaco);
+            this.commentWidgetMap.clear();
             return;
+        }
+
+        // Build set of current comment IDs for cleanup
+        const currentCommentIds = new Set(comments.map((c) => c.id));
+
+        // Close widgets for comments that no longer exist
+        for (const [commentId, widgetId] of this.commentWidgetMap.entries()) {
+            if (!currentCommentIds.has(commentId)) {
+                this.inlineCommentHostService.closeWidget(widgetId, this.markdownEditorMonaco);
+                this.commentWidgetMap.delete(commentId);
+            }
         }
 
         for (const comment of comments) {
@@ -319,13 +331,16 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
                 continue;
             }
 
-            // Skip if widget already exists for this comment's line
-            if (this.inlineCommentHostService.hasWidgetAtLine(comment.startLine)) {
-                continue;
+            // Check if widget exists for this comment
+            const existingWidgetId = this.commentWidgetMap.get(comment.id);
+            if (existingWidgetId) {
+                // Close the existing widget to refresh with updated data
+                this.inlineCommentHostService.closeWidget(existingWidgetId, this.markdownEditorMonaco);
+                this.commentWidgetMap.delete(comment.id);
             }
 
-            this.inlineCommentHostService.openWidget(
-                this.markdownEditorMonaco!,
+            const widgetId = this.inlineCommentHostService.openWidget(
+                this.markdownEditorMonaco,
                 comment.startLine,
                 comment.endLine,
                 comment,
@@ -345,6 +360,9 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
                 },
                 { collapsed: true },
             );
+
+            // Track the widget ID for this comment
+            this.commentWidgetMap.set(comment.id, widgetId);
         }
     }
 
