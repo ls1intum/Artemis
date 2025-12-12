@@ -59,7 +59,7 @@ class AtlasAgentServiceTest {
     void setUp() {
         ChatClient chatClient = ChatClient.create(chatModel);
         // Pass null for ToolCallbackProvider and AtlasAgentToolsService in basic tests
-        atlasAgentService = new AtlasAgentService(chatClient, templateService, null, chatMemory);
+        atlasAgentService = new AtlasAgentService(chatClient, templateService, null, chatMemory, null, .2);
     }
 
     @Test
@@ -159,7 +159,7 @@ class AtlasAgentServiceTest {
 
     @Test
     void testIsAvailable_WithNullChatClient() {
-        AtlasAgentService serviceWithNullClient = new AtlasAgentService(null, templateService, null, chatMemory);
+        AtlasAgentService serviceWithNullClient = new AtlasAgentService(null, templateService, null, chatMemory, null, .2);
 
         boolean available = serviceWithNullClient.isAvailable();
 
@@ -169,7 +169,7 @@ class AtlasAgentServiceTest {
     @Test
     void testIsAvailable_WithNullChatMemory() {
         ChatClient chatClient = ChatClient.create(chatModel);
-        AtlasAgentService serviceWithNullMemory = new AtlasAgentService(chatClient, templateService, null, null);
+        AtlasAgentService serviceWithNullMemory = new AtlasAgentService(chatClient, templateService, null, null, null, .2);
 
         boolean available = serviceWithNullMemory.isAvailable();
 
@@ -209,7 +209,7 @@ class AtlasAgentServiceTest {
     @Test
     void testProcessChatMessage_WithCompetencyCreated() throws ExecutionException, InterruptedException {
         ChatClient chatClient = ChatClient.create(chatModel);
-        AtlasAgentService service = new AtlasAgentService(chatClient, templateService, null, null);
+        AtlasAgentService service = new AtlasAgentService(chatClient, templateService, null, null, null, .2);
 
         String testMessage = "Create a competency";
         Long courseId = 123L;
@@ -234,7 +234,7 @@ class AtlasAgentServiceTest {
     @Test
     void testProcessChatMessage_WithCompetencyNotCreated() throws ExecutionException, InterruptedException {
         ChatClient chatClient = ChatClient.create(chatModel);
-        AtlasAgentService service = new AtlasAgentService(chatClient, templateService, null, null);
+        AtlasAgentService service = new AtlasAgentService(chatClient, templateService, null, null, null, .2);
 
         String testMessage = "Show me competencies";
         Long courseId = 123L;
@@ -289,7 +289,7 @@ class AtlasAgentServiceTest {
     @Test
     void testGetConversationHistoryAsDTO_NullChatMemory() {
         String sessionId = "course_456_user_789";
-        AtlasAgentService serviceWithNullMemory = new AtlasAgentService(ChatClient.create(chatModel), templateService, null, null);
+        AtlasAgentService serviceWithNullMemory = new AtlasAgentService(ChatClient.create(chatModel), templateService, null, null, null, .2);
 
         List<AtlasAgentHistoryMessageDTO> result = serviceWithNullMemory.getConversationHistoryAsDTO(sessionId);
 
