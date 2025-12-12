@@ -229,7 +229,13 @@
                 "title": "Aufgabenstellung",
                 "taskCommand": "Aufgabe",
                 "testCaseCommand": "Testfall einfügen",
-                "tasksOfExercise": "Teilaufgaben:"
+                "tasksOfExercise": "Teilaufgaben:",
+                "generationAssistance": "Entwurf der Problemstellung erstellen",
+                "generateDraftDescription": "Verwende dieses Feld, um die Aufgabenbeschreibung zu entwerfen oder die aktuelle Formulierung zu verfeinern. Deine Eingaben steuern sowohl die Problemstellung als auch die Lernziele. Sei konkret zu Anforderungen, Konzepten und Randbedingungen.",
+                "yourRequirements": "Deine Anforderungen",
+                "examplePlaceholder": "Beispiel: Erstelle eine Java-Übung zur Implementierung eines binären Suchbaums mit Insert-, Delete- und Search-Operationen. Studierende sollen Verständnis für Baumtraversal und rekursive Algorithmen demonstrieren.",
+                "generationSuccess": "Aufgabenstellung wurde erfolgreich generiert.",
+                "generationError": "Fehler beim Generieren der Aufgabenstellung. Bitte versuche es erneut."
             },
             "codeGeneration": {
                 "creationAssistance": "Erstellungsassistenz",
