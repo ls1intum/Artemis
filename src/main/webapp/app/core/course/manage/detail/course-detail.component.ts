@@ -17,7 +17,6 @@ import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settin
 import { AccountService } from 'app/core/auth/account.service';
 import { DetailOverviewListComponent, DetailOverviewSection, DetailType } from 'app/shared/detail-overview-list/detail-overview-list.component';
 import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
-import { IrisSubSettingsType } from 'app/iris/shared/entities/settings/iris-sub-settings.model';
 import { Detail } from 'app/shared/detail-overview-list/detail.model';
 import { CourseDetailDoughnutChartComponent } from './course-detail-doughnut-chart.component';
 import { CourseDetailLineChartComponent } from './course-detail-line-chart.component';
@@ -44,7 +43,6 @@ export enum DoughnutChartType {
 export class CourseDetailComponent implements OnInit, OnDestroy {
     protected readonly DoughnutChartType = DoughnutChartType;
     protected readonly FeatureToggle = FeatureToggle;
-    protected readonly IrisSubSettingsType = IrisSubSettingsType;
 
     protected readonly faTimes = faTimes;
     protected readonly faEye = faEye;
