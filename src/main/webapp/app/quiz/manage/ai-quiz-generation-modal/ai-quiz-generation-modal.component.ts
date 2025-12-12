@@ -1,4 +1,4 @@
-import { Component, Input, inject, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
 import { NgbActiveModal, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
@@ -24,7 +24,7 @@ import { finalize } from 'rxjs';
     imports: [CommonModule, FormsModule, NgbTooltipModule, TranslateDirective, ArtemisTranslatePipe, FaIconComponent],
 })
 export class AiQuizGenerationModalComponent {
-    @Input() courseId!: number;
+    courseId = signal<number | undefined>(undefined);
 
     // expose enums to template
     AiLanguage = AiLanguage;
@@ -64,7 +64,8 @@ export class AiQuizGenerationModalComponent {
     }
 
     generate(f: NgForm): void {
-        if (!f.valid || !this.courseId) {
+        const courseId = this.courseId();
+        if (!f.valid || courseId === undefined) {
             return;
         }
 
@@ -73,7 +74,7 @@ export class AiQuizGenerationModalComponent {
         this.selected = {};
 
         this.service
-            .generate(this.courseId, this.formData)
+            .generate(courseId, this.formData)
             .pipe(finalize(() => this.loading.set(false)))
             .subscribe((res: AiQuizGenerationResponse) => {
                 const questions = res.questions ?? [];

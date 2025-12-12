@@ -731,6 +731,11 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         });
         (modalRef.componentInstance as AiQuizGenerationModalComponent).courseId = courseId;
 
+        const modal = modalRef.componentInstance as AiQuizGenerationModalComponent;
+        modal.courseId = courseId;
+        if (this.quizExercise?.title) {
+            modal.formData.topic = this.quizExercise.title;
+        }
         modalRef.result
             .then((result?: { questions: AiGeneratedQuestionDTO[]; requestedDifficulty?: AiDifficultyLevel; requestedSubtype?: AiRequestedSubtype }) => {
                 const picked = result?.questions ?? [];
