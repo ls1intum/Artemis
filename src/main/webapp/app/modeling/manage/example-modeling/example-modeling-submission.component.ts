@@ -469,11 +469,7 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
     }
 
     markAllFeedbackToCorrect() {
-        this.assessments().forEach((feedback) => {
-            feedback.correctionStatus = 'CORRECT';
-        });
         this.referencedFeedback.update((list) => list.map((feedback) => ({ ...feedback, correctionStatus: 'CORRECT' })));
-
         this.unreferencedFeedback.update((list) => list.map((feedback) => ({ ...feedback, correctionStatus: 'CORRECT' })));
     }
 

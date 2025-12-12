@@ -34,7 +34,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
     enablePopups = input(true);
     displayPoints = input(true);
     highlightDifferences = input<boolean>();
-    resultFeedbacks = input<Feedback[] | undefined>(undefined);
+    resultFeedbacks = input<Feedback[]>();
 
     feedbackChanged = output<Feedback[]>();
     selectionChanged = output<Selection>();
@@ -43,7 +43,6 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
     elementCounts = input<ModelElementCount[]>();
     course = input<Course>();
 
-    feedbacks: Feedback[];
     elementFeedback: Map<string, Feedback>; // map element.id --> Feedback
     referencedFeedbacks: Feedback[] = [];
     unreferencedFeedbacks: Feedback[] = [];
@@ -71,8 +70,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
                 return;
             }
 
-            this.feedbacks = incoming;
-            this.referencedFeedbacks = this.feedbacks.filter((feedbackElement) => feedbackElement.reference != undefined);
+            this.referencedFeedbacks = incoming.filter((feedbackElement) => feedbackElement.reference != undefined);
             this.updateElementFeedbackMapping(this.referencedFeedbacks);
             this.updateApollonAssessments(this.referencedFeedbacks);
         });
@@ -90,9 +88,10 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
     }
 
     async ngAfterViewInit(): Promise<void> {
-        if (this.feedbacks) {
-            this.referencedFeedbacks = this.feedbacks.filter((feedbackElement) => feedbackElement.reference != undefined);
-            this.unreferencedFeedbacks = this.feedbacks.filter(
+        const resultFeedbacks = this.resultFeedbacks();
+        if (resultFeedbacks !== undefined) {
+            this.referencedFeedbacks = resultFeedbacks.filter((feedbackElement) => feedbackElement.reference != undefined);
+            this.unreferencedFeedbacks = resultFeedbacks.filter(
                 (feedbackElement) => feedbackElement.reference == undefined && feedbackElement.type === FeedbackType.MANUAL_UNREFERENCED,
             );
         }
@@ -199,9 +198,12 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
      * This method is called before initializing Apollon and when the feedback or model is updated.
      */
     private handleFeedback(): void {
-        this.referencedFeedbacks = filterInvalidFeedback(this.feedbacks, this.umlModel());
-        this.updateElementFeedbackMapping(this.referencedFeedbacks);
-        this.updateApollonAssessments(this.referencedFeedbacks);
+        const feedbacks = this.resultFeedbacks();
+        if (feedbacks !== undefined) {
+            this.referencedFeedbacks = filterInvalidFeedback(feedbacks, this.umlModel());
+            this.updateElementFeedbackMapping(this.referencedFeedbacks);
+            this.updateApollonAssessments(this.referencedFeedbacks);
+        }
     }
 
     /**

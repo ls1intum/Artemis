@@ -191,23 +191,23 @@ describe('ModelingAssessmentComponent', () => {
         fixture.componentRef.setInput('umlModel', makeMockModel());
         fixture.componentRef.setInput('readOnly', true);
 
-        comp.feedbacks = mockFeedbacks;
+        fixture.componentRef.setInput('resultFeedbacks', mockFeedbacks);
         fixture.detectChanges();
         expect(comp.referencedFeedbacks).toEqual([mockFeedbackWithReference]);
         expect(comp.unreferencedFeedbacks).toEqual([mockFeedbackWithoutReference]);
-        expect(comp.feedbacks).toEqual(mockFeedbacks);
+        expect(comp.resultFeedbacks()).toEqual(mockFeedbacks);
     });
 
     it('should filter references by result feedbacks', () => {
         expect(comp.referencedFeedbacks).toBeEmpty();
-        expect(comp.feedbacks).toBeUndefined();
+        expect(comp.resultFeedbacks()).toBeUndefined();
 
         fixture.componentRef.setInput('umlModel', makeMockModel());
         fixture.detectChanges();
         fixture.componentRef.setInput('resultFeedbacks', mockFeedbacks);
         fixture.detectChanges();
         expect(comp.referencedFeedbacks).toEqual([mockFeedbackWithReference, mockFeedbackInvalid]);
-        expect(comp.feedbacks).toEqual(mockFeedbacks);
+        expect(comp.resultFeedbacks()).toEqual(mockFeedbacks);
     });
 
     it('should calculate drop info', () => {
@@ -343,7 +343,7 @@ describe('ModelingAssessmentComponent', () => {
     it('should update highlighted assessments first round', async () => {
         fixture.componentRef.setInput('highlightDifferences', true);
         fixture.componentRef.setInput('umlModel', makeMockModel());
-        comp.feedbacks = [mockFeedbackWithReference];
+        fixture.componentRef.setInput('resultFeedbacks', [mockFeedbackWithReference]);
         comp.referencedFeedbacks = [mockFeedbackWithReference];
         jest.spyOn(translatePipe, 'transform').mockReturnValue('Second correction round');
 
@@ -363,7 +363,7 @@ describe('ModelingAssessmentComponent', () => {
 
     it('should update highlighted assessments', async () => {
         fixture.componentRef.setInput('umlModel', makeMockModel());
-        comp.feedbacks = [mockFeedbackWithReferenceCopied];
+        fixture.componentRef.setInput('resultFeedbacks', [mockFeedbackWithReferenceCopied]);
         comp.referencedFeedbacks = [mockFeedbackWithReferenceCopied];
         jest.spyOn(translatePipe, 'transform').mockReturnValue('First correction round');
 
@@ -406,12 +406,12 @@ describe('ModelingAssessmentComponent', () => {
 
         fixture.componentRef.setInput('umlModel', makeMockModel());
         fixture.componentRef.setInput('readOnly', true);
+        fixture.componentRef.setInput('resultFeedbacks', newMockFeedbacks);
         fixture.detectChanges();
 
-        comp.feedbacks = newMockFeedbacks;
         (comp as any).handleFeedback();
 
-        expect(comp.feedbacks).toEqual(newMockFeedbacks);
+        expect(comp.resultFeedbacks()).toEqual(newMockFeedbacks);
         expect(comp.referencedFeedbacks).toEqual([newMockFeedbackWithReference]);
     });
 });
