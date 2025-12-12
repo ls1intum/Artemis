@@ -301,10 +301,24 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     /**
      * Renders pending comments as collapsed widgets in the editor.
      * Called on component init and when pending comments change.
+     * Also handles cleanup when comments are cleared.
      */
     private renderPendingCommentsAsWidgets(): void {
         const comments = this.pendingComments();
+
+        // If no pending comments (e.g., after Clear All), close all widgets
+        if (comments.length === 0) {
+            this.inlineCommentHostService.closeAllWidgets(this.markdownEditorMonaco!);
+            return;
+        }
+
         for (const comment of comments) {
+            // Skip comments that are currently being applied to avoid re-creating widgets
+            // that would fire duplicate apply events
+            if (comment.status === 'applying') {
+                continue;
+            }
+
             // Skip if widget already exists for this comment's line
             if (this.inlineCommentHostService.hasWidgetAtLine(comment.startLine)) {
                 continue;

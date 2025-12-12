@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.hyperion.dto;
 import java.util.List;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
@@ -27,18 +28,16 @@ public record ProblemStatementRefinementRequestDTO(@NotBlank @Schema(description
         @Nullable @Valid @Size(max = 10) @Schema(description = "Inline comments for targeted refinement of specific lines") List<InlineCommentDTO> inlineComments) {
 
     /**
-     * Validates that at least one of userPrompt or inlineComments is provided.
+     * Bean validation method that ensures exactly one of userPrompt or
+     * inlineComments is provided.
+     *
+     * @return true if exactly one of userPrompt or inlineComments is present
      */
-    public ProblemStatementRefinementRequestDTO {
+    @AssertTrue(message = "Either userPrompt or inlineComments must be provided exclusively")
+    public boolean isExactlyOneRefinementModeProvided() {
         boolean hasUserPrompt = userPrompt != null && !userPrompt.isBlank();
         boolean hasInlineComments = inlineComments != null && !inlineComments.isEmpty();
-
-        if (!hasUserPrompt && !hasInlineComments) {
-            throw new IllegalArgumentException("Either userPrompt or inlineComments must be provided");
-        }
-        if (hasUserPrompt && hasInlineComments) {
-            throw new IllegalArgumentException("Provide either userPrompt or inlineComments (exclusively)");
-        }
+        return hasUserPrompt ^ hasInlineComments;
     }
 
     /**
