@@ -5,7 +5,6 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 
 import org.jspecify.annotations.Nullable;
 import org.springframework.ai.azure.openai.AzureOpenAiChatOptions;
@@ -170,10 +169,9 @@ public class AtlasAgentService {
      * @param sessionId The session ID for chat memory and agent tracking
      * @return Result containing the AI response and competency modification flag
      */
-    public CompletableFuture<AtlasAgentChatResponseDTO> processChatMessage(String message, Long courseId, String sessionId) {
+    public AtlasAgentChatResponseDTO processChatMessage(String message, Long courseId, String sessionId) {
         if (chatClient == null) {
-            return CompletableFuture
-                    .completedFuture(new AtlasAgentChatResponseDTO("Atlas Agent is not available. Please contact your administrator.", ZonedDateTime.now(), false, null));
+            return new AtlasAgentChatResponseDTO("Atlas Agent is not available. Please contact your administrator.", ZonedDateTime.now(), false, null);
         }
 
         try {
@@ -207,8 +205,7 @@ public class AtlasAgentService {
                 }
 
                 sessionAgentMap.put(sessionId, AgentType.MAIN_AGENT);
-                return CompletableFuture
-                        .completedFuture(new AtlasAgentChatResponseDTO(delegationResponse, ZonedDateTime.now(), competencyModifiedInCurrentRequest.get(), previews));
+                return new AtlasAgentChatResponseDTO(delegationResponse, ZonedDateTime.now(), competencyModifiedInCurrentRequest.get(), previews);
             }
             else if (response.contains(CREATE_APPROVED_COMPETENCY)) {
                 sessionAgentMap.put(sessionId, AgentType.COMPETENCY_EXPERT);
@@ -237,7 +234,7 @@ public class AtlasAgentService {
                 }
 
                 sessionAgentMap.put(sessionId, AgentType.MAIN_AGENT);
-                return CompletableFuture.completedFuture(new AtlasAgentChatResponseDTO(creationResponse, ZonedDateTime.now(), competencyModifiedInCurrentRequest.get(), previews));
+                return new AtlasAgentChatResponseDTO(creationResponse, ZonedDateTime.now(), competencyModifiedInCurrentRequest.get(), previews);
             }
             else if (response.contains(RETURN_TO_MAIN_AGENT)) {
                 sessionAgentMap.put(sessionId, AgentType.MAIN_AGENT);
@@ -265,12 +262,12 @@ public class AtlasAgentService {
                 }
             }
 
-            return CompletableFuture.completedFuture(new AtlasAgentChatResponseDTO(finalResponse, ZonedDateTime.now(), competenciesModified, previews));
+            return new AtlasAgentChatResponseDTO(finalResponse, ZonedDateTime.now(), competenciesModified, previews);
 
         }
         catch (Exception e) {
-            return CompletableFuture.completedFuture(new AtlasAgentChatResponseDTO("I apologize, but I'm having trouble processing your request right now. Please try again later.",
-                    ZonedDateTime.now(), false, null));
+            return new AtlasAgentChatResponseDTO("I apologize, but I'm having trouble processing your request right now. Please try again later.", ZonedDateTime.now(), false,
+                    null);
         }
         finally {
             competencyModifiedInCurrentRequest.remove();

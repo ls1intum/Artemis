@@ -1,10 +1,6 @@
 package de.tum.cit.aet.artemis.atlas.web;
 
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import jakarta.validation.Valid;
 
@@ -24,7 +20,6 @@ import de.tum.cit.aet.artemis.atlas.dto.AtlasAgentChatResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.AtlasAgentHistoryMessageDTO;
 import de.tum.cit.aet.artemis.atlas.service.AtlasAgentService;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 
@@ -36,8 +31,6 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.Enfo
 @RestController
 @RequestMapping("api/atlas/agent/")
 public class AtlasAgentResource {
-
-    private static final int CHAT_TIMEOUT_SECONDS = 30;
 
     private final AtlasAgentService atlasAgentService;
 
@@ -55,7 +48,6 @@ public class AtlasAgentResource {
      * @param courseId the course ID for context
      * @param request  the chat request containing the message
      * @return the agent response
-     * @throws InternalServerErrorException if the agent fails to process the request
      */
     @PostMapping("courses/{courseId}/chat")
     @EnforceAtLeastInstructorInCourse
@@ -63,18 +55,8 @@ public class AtlasAgentResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         String sessionId = atlasAgentService.generateSessionId(courseId, user.getId());
 
-        try {
-            final CompletableFuture<AtlasAgentChatResponseDTO> future = atlasAgentService.processChatMessage(request.message(), courseId, sessionId);
-            final AtlasAgentChatResponseDTO result = future.get(CHAT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-            return ResponseEntity.ok(result);
-        }
-        catch (TimeoutException | ExecutionException e) {
-            throw new InternalServerErrorException("Failed to process agent chat request");
-        }
-        catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new InternalServerErrorException("Agent chat request was interrupted");
-        }
+        AtlasAgentChatResponseDTO result = atlasAgentService.processChatMessage(request.message(), courseId, sessionId);
+        return ResponseEntity.ok(result);
     }
 
     /**
