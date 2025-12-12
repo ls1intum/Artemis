@@ -127,10 +127,18 @@ export class CourseRequestsComponent implements OnInit {
         }
     }
 
+    /**
+     * Formats the instructor course count for display.
+     * This is only used for pending requests where the count is always computed.
+     * Due to @JsonInclude(NON_EMPTY), a count of 0 is omitted and received as undefined.
+     *
+     * @param count the instructor course count (undefined means 0 due to JSON serialization)
+     * @return "No" if count is 0/undefined, "Yes (count)" if count > 0
+     */
     formatInstructorCount(count?: number): string {
-        if (count === undefined || count === null) {
-            return '-';
+        if (!count) {
+            return 'No';
         }
-        return count > 0 ? `Yes (${count})` : 'No';
+        return `Yes (${count})`;
     }
 }

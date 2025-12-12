@@ -39,9 +39,11 @@ public interface CourseRequestRepository extends ArtemisJpaRepository<CourseRequ
     void deleteAllByCreatedCourseId(long courseId);
 
     /**
-     * Finds all pending course requests ordered by creation date descending.
+     * Finds all course requests with the given status, ordered by creation date descending.
+     * The requester is eagerly loaded.
      *
-     * @return list of pending course requests with requester eagerly loaded
+     * @param status the status to filter by
+     * @return list of course requests with the given status
      */
     @EntityGraph(type = LOAD, attributePaths = { "requester" })
     List<CourseRequest> findAllByStatusOrderByCreatedDateDesc(CourseRequestStatus status);

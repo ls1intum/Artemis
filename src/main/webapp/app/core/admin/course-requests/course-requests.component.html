@@ -190,7 +190,7 @@
             rows="4"
             [(ngModel)]="decisionReason"
             [class.is-invalid]="reasonInvalid"
-            placeholder="Provide a reason for rejecting the request"
+            [placeholder]="'artemisApp.courseRequest.admin.rejectReasonPlaceholder' | artemisTranslate"
         ></textarea>
         @if (reasonInvalid) {
             <div class="invalid-feedback d-block" jhiTranslate="entity.validation.required"></div>

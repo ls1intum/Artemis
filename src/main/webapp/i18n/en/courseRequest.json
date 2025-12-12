@@ -42,6 +42,7 @@
                 "accept": "Accept",
                 "reject": "Reject",
                 "rejectReasonLabel": "Rejection reason",
+                "rejectReasonPlaceholder": "Provide a reason for rejecting the request",
                 "rejectConfirm": "Send rejection",
                 "noRequests": "No course requests available yet.",
                 "noPendingRequests": "No pending requests.",

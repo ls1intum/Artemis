@@ -42,6 +42,7 @@
                 "accept": "Akzeptieren",
                 "reject": "Ablehnen",
                 "rejectReasonLabel": "Ablehnungsgrund",
+                "rejectReasonPlaceholder": "Geben Sie einen Grund für die Ablehnung an",
                 "rejectConfirm": "Ablehnung senden",
                 "noRequests": "Aktuell liegen keine Kursanfragen vor.",
                 "noPendingRequests": "Keine offenen Anfragen.",
