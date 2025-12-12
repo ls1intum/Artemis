@@ -75,6 +75,7 @@ class FaqIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createFaq_correctRequestBody_shouldCreateFaq() throws Exception {
+        irisRequestMockProvider.mockFaqIngestionWebhookRunResponse(dto -> assertThat(dto.settings().authenticationToken()).isNotNull());
         Set<String> categories = Set.of("catA", "catB");
         CreateFaqDTO dto = new CreateFaqDTO(course1.getId(), "title", "answer", categories, FaqState.ACCEPTED);
         FaqDTO returnedFaq = request.postWithResponseBody("/api/communication/courses/" + course1.getId() + "/faqs", dto, FaqDTO.class, HttpStatus.CREATED);
@@ -139,6 +140,7 @@ class FaqIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateFaq_Instructor_canAcceptFaq() throws Exception {
+        irisRequestMockProvider.mockFaqIngestionWebhookRunResponse(dto -> assertThat(dto.settings().authenticationToken()).isNotNull());
         Faq faq = faqRepository.findById(this.faq.getId()).orElseThrow();
         faq.setQuestionTitle("Updated");
         faq.setFaqState(FaqState.ACCEPTED);

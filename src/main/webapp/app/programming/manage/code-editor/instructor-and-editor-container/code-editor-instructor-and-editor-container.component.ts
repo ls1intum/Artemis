@@ -8,7 +8,6 @@ import { ProgrammingExerciseEditableInstructionComponent } from 'app/programming
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { faCircleNotch, faPlus, faTimes, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
-import { IrisSettings } from 'app/iris/shared/entities/settings/iris-settings.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ProgrammingExerciseInstructorExerciseStatusComponent } from '../../status/programming-exercise-instructor-exercise-status.component';
@@ -65,7 +64,6 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     faTimes = faTimes;
     faCircleNotch = faCircleNotch;
     faTimesCircle = faTimesCircle;
-    irisSettings?: IrisSettings;
     hyperionEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
 
     protected readonly RepositoryType = RepositoryType;

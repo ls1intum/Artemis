@@ -14,7 +14,6 @@ import { ProgrammingExerciseLifecycleComponent } from 'app/programming/shared/li
 import { NgStyle, NgTemplateOutlet } from '@angular/common';
 import { StructuredGradingInstructionsAssessmentLayoutComponent } from 'app/assessment/manage/structured-grading-instructions-assessment-layout/structured-grading-instructions-assessment-layout.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { IrisEnabledComponent } from 'app/iris/manage/settings/shared/iris-enabled/iris-enabled.component';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
 import { ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent } from 'app/programming/shared/build-details/programming-exercise-repository-and-build-plan-details/programming-exercise-repository-and-build-plan-details.component';
 import { ExerciseDetailDirective } from './exercise-detail.directive';
@@ -36,7 +35,6 @@ export enum DetailType {
     Markdown = 'detail-markdown',
     GradingCriteria = 'detail-grading-criteria',
     ModelingEditor = 'detail-modeling-editor',
-    ProgrammingIrisEnabled = 'detail-iris',
     ProgrammingRepositoryButtons = 'detail-repository-buttons',
     ProgrammingAuxiliaryRepositoryButtons = 'detail-auxiliary-repository-buttons',
     ProgrammingTestStatus = 'detail-test-status',
@@ -59,7 +57,6 @@ export enum DetailType {
         NgTemplateOutlet,
         StructuredGradingInstructionsAssessmentLayoutComponent,
         TranslateDirective,
-        IrisEnabledComponent,
         ModelingEditorComponent,
         ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent,
         NgStyle,

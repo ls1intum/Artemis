@@ -67,7 +67,7 @@ public class IrisCompetencyGenerationService {
      * @param currentCompetencies the current competencies of the course (to avoid re-extraction)
      */
     public void executeCompetencyExtractionPipeline(User user, Course course, String courseDescription, PyrisCompetencyRecommendationDTO[] currentCompetencies) {
-        var settings = irisSettingsService.getCombinedIrisSettingsFor(course, false).irisCompetencyGenerationSettings();
+        var settings = irisSettingsService.getSettingsForCourse(course);
         if (!settings.enabled()) {
             throw new ConflictException("Competency extraction is disabled for this course", "Iris", "irisDisabled");
         }
@@ -75,7 +75,7 @@ public class IrisCompetencyGenerationService {
         // @formatter:off
         pyrisPipelineService.executePipeline(
                 "competency-extraction",
-                settings.selectedVariant(),
+                settings.variant().jsonValue(),
                 Optional.empty(),
                 pyrisJobService.createTokenForJob(token -> new CompetencyExtractionJob(token, course.getId(), user.getId())),
                 executionDto -> new PyrisCompetencyExtractionPipelineExecutionDTO(executionDto, courseDescription, currentCompetencies, CompetencyTaxonomy.values(), 5),

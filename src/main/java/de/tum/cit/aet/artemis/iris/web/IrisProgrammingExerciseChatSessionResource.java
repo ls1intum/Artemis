@@ -19,7 +19,6 @@ import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastStudentInExercise;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisProgrammingExerciseChatSession;
-import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettingsType;
 import de.tum.cit.aet.artemis.iris.repository.IrisExerciseChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
 import de.tum.cit.aet.artemis.iris.service.IrisSessionService;
@@ -79,7 +78,7 @@ public class IrisProgrammingExerciseChatSessionResource {
         var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         ProgrammingExercise programmingExercise = validateExercise(exercise);
 
-        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.PROGRAMMING_EXERCISE_CHAT, exercise);
+        irisSettingsService.ensureEnabledForCourseOrElseThrow(programmingExercise.getCourseViaExerciseGroupOrCourseMember());
         var user = userRepository.getUserWithGroupsAndAuthorities();
 
         var session = irisExerciseChatSessionService.getCurrentSessionOrCreateIfNotExists(programmingExercise, user, false);
@@ -98,7 +97,7 @@ public class IrisProgrammingExerciseChatSessionResource {
         var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         ProgrammingExercise programmingExercise = validateExercise(exercise);
 
-        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.PROGRAMMING_EXERCISE_CHAT, programmingExercise);
+        irisSettingsService.ensureEnabledForCourseOrElseThrow(programmingExercise.getCourseViaExerciseGroupOrCourseMember());
         var user = userRepository.getUserWithGroupsAndAuthorities();
 
         var sessions = irisExerciseChatSessionRepository.findByExerciseIdAndUserIdElseThrow(exercise.getId(), user.getId());
@@ -120,7 +119,7 @@ public class IrisProgrammingExerciseChatSessionResource {
         var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         ProgrammingExercise programmingExercise = validateExercise(exercise);
 
-        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.PROGRAMMING_EXERCISE_CHAT, programmingExercise);
+        irisSettingsService.ensureEnabledForCourseOrElseThrow(programmingExercise.getCourseViaExerciseGroupOrCourseMember());
         var user = userRepository.getUserWithGroupsAndAuthorities();
 
         var session = irisExerciseChatSessionService.createSession(programmingExercise, user, false);

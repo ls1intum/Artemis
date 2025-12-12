@@ -32,11 +32,9 @@ import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettingsType;
 import de.tum.cit.aet.artemis.iris.dto.IngestionState;
 import de.tum.cit.aet.artemis.iris.dto.IngestionStateResponseDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisHealthStatusDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisVariantDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.course.PyrisCourseChatPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.exercise.PyrisExerciseChatPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.lecture.PyrisLectureChatPipelineExecutionDTO;
@@ -217,16 +215,6 @@ public class IrisRequestMockProvider {
         mockPostError(webhooksApiURL.toString(), "/lectures/delete", httpStatus);
     }
 
-    public void mockVariantsResponse(IrisSubSettingsType feature) throws JsonProcessingException {
-        var irisModelDTO = new PyrisVariantDTO("TEST_MODEL", "Test model", "Test description");
-        var irisModelDTOArray = new PyrisVariantDTO[] { irisModelDTO };
-        // @formatter:off
-        mockServer.expect(ExpectedCount.once(), requestTo(variantsApiBaseURL + feature.name() + "/variants"))
-            .andExpect(method(HttpMethod.GET))
-            .andRespond(withSuccess(mapper.writeValueAsString(irisModelDTOArray), MediaType.APPLICATION_JSON));
-        // @formatter:on
-    }
-
     public void mockStatusResponses() throws JsonProcessingException {
         // @formatter:off
         PyrisHealthStatusDTO activeIrisStatusDTO = new PyrisHealthStatusDTO(
@@ -276,17 +264,6 @@ public class IrisRequestMockProvider {
             responseConsumer.accept(dto);
             return MockRestResponseCreators.withRawStatus(HttpStatus.ACCEPTED.value()).createResponse(request);
         });
-    }
-
-    /**
-     * Mocks a get model error from the Pyris models endpoint
-     */
-    public void mockVariantsError(IrisSubSettingsType feature) {
-        // @formatter:off
-        mockServer.expect(ExpectedCount.once(), requestTo(variantsApiBaseURL + feature.name() + "/variants"))
-            .andExpect(method(HttpMethod.GET))
-            .andRespond(withRawStatus(418));
-        // @formatter:on
     }
 
     /** Healthy response with configurable module statuses. */

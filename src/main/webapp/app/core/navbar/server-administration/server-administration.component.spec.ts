@@ -70,7 +70,6 @@ describe('ServerAdministrationComponent', () => {
         fixture.componentRef.setInput('isExamActive', true);
         fixture.componentRef.setInput('isExamStarted', true);
         fixture.componentRef.setInput('localCIActive', true);
-        fixture.componentRef.setInput('irisEnabled', true);
         fixture.componentRef.setInput('ltiEnabled', true);
         fixture.componentRef.setInput('standardizedCompetenciesEnabled', true);
         fixture.componentRef.setInput('atlasEnabled', true);
@@ -81,7 +80,6 @@ describe('ServerAdministrationComponent', () => {
         expect(component.isExamActive()).toBeTrue();
         expect(component.isExamStarted()).toBeTrue();
         expect(component.localCIActive()).toBeTrue();
-        expect(component.irisEnabled()).toBeTrue();
         expect(component.ltiEnabled()).toBeTrue();
         expect(component.standardizedCompetenciesEnabled()).toBeTrue();
         expect(component.atlasEnabled()).toBeTrue();
@@ -94,7 +92,6 @@ describe('ServerAdministrationComponent', () => {
         expect(component.isExamActive()).toBeFalse();
         expect(component.isExamStarted()).toBeFalse();
         expect(component.localCIActive()).toBeFalse();
-        expect(component.irisEnabled()).toBeFalse();
         expect(component.ltiEnabled()).toBeFalse();
         expect(component.standardizedCompetenciesEnabled()).toBeFalse();
         expect(component.atlasEnabled()).toBeFalse();

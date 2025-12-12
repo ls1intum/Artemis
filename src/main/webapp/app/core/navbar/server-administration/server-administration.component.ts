@@ -14,7 +14,6 @@ import {
     faLock,
     faPlug,
     faPuzzlePiece,
-    faRobot,
     faStamp,
     faTachometerAlt,
     faTasks,
@@ -61,7 +60,6 @@ export class ServerAdministrationComponent {
     protected readonly faThLarge = faThLarge;
     protected readonly faFlag = faFlag;
     protected readonly faPuzzlePiece = faPuzzlePiece;
-    protected readonly faRobot = faRobot;
     protected readonly faList = faList;
     protected readonly faBell = faBell;
     protected readonly faLock = faLock;
@@ -79,7 +77,6 @@ export class ServerAdministrationComponent {
     isExamActive = input<boolean>(false);
     isExamStarted = input<boolean>(false);
     localCIActive = input<boolean>(false);
-    irisEnabled = input<boolean>(false);
     ltiEnabled = input<boolean>(false);
     standardizedCompetenciesEnabled = input<boolean>(false);
     atlasEnabled = input<boolean>(false);

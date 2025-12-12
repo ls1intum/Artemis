@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.iris.repository;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
-import java.util.Collection;
 import java.util.List;
 
 import org.springframework.context.annotation.Lazy;
@@ -25,7 +24,6 @@ public interface IrisChatSessionRepository extends ArtemisJpaRepository<IrisChat
      *
      * @param courseId The ID of the course.
      * @param userId   The ID of the user.
-     * @param types    A collection of chat session types to filter by.
      * @return A list of chat sessions sorted by creation date in descending order.
      */
     @Query("""
@@ -44,13 +42,17 @@ public interface IrisChatSessionRepository extends ArtemisJpaRepository<IrisChat
                     LEFT JOIN Exercise e2 ON e2.id = pecs.exerciseId
                     LEFT JOIN s.messages m
                     LEFT JOIN m.content c
-                WHERE s.userId = :userId AND TYPE(s) IN (:types)
+                WHERE s.userId = :userId AND TYPE(s) IN (
+                        de.tum.cit.aet.artemis.iris.domain.session.IrisTextExerciseChatSession,
+                        de.tum.cit.aet.artemis.iris.domain.session.IrisProgrammingExerciseChatSession,
+                        de.tum.cit.aet.artemis.iris.domain.session.IrisCourseChatSession,
+                        de.tum.cit.aet.artemis.iris.domain.session.IrisLectureChatSession
+                    )
                     AND (ccs.courseId = :courseId OR l.course.id = :courseId OR e1.course.id = :courseId OR e2.course.id = :courseId)
                     AND m.sender = de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender.USER
                 GROUP BY s, ccs.courseId, e1.id, e2.id, l.id
                 HAVING COUNT(m) > 0
                 ORDER BY s.creationDate DESC
             """)
-    List<IrisChatSessionDAO> findByCourseIdAndUserId(@Param("courseId") long courseId, @Param("userId") long userId,
-            @Param("types") Collection<Class<? extends IrisChatSession>> types);
+    List<IrisChatSessionDAO> findByCourseIdAndUserId(@Param("courseId") long courseId, @Param("userId") long userId);
 }
