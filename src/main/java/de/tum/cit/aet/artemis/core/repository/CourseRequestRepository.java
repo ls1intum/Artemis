@@ -45,7 +45,7 @@ public interface CourseRequestRepository extends ArtemisJpaRepository<CourseRequ
      * @param status the status to filter by
      * @return list of course requests with the given status
      */
-    @EntityGraph(type = LOAD, attributePaths = { "requester" })
+    @EntityGraph(type = LOAD, attributePaths = { "requester", "requester.groups" })
     List<CourseRequest> findAllByStatusOrderByCreatedDateDesc(CourseRequestStatus status);
 
     /**

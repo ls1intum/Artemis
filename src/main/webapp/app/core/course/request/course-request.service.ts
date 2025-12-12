@@ -52,9 +52,9 @@ export class CourseRequestService {
             })
             .pipe(
                 map((res) => ({
-                    pendingRequests: res.pendingRequests.map((dto) => this.convertDTOToResponse(dto)),
-                    decidedRequests: res.decidedRequests.map((dto) => this.convertDTOToResponse(dto)),
-                    totalDecidedCount: res.totalDecidedCount,
+                    pendingRequests: (res.pendingRequests ?? []).map((dto) => this.convertDTOToResponse(dto)),
+                    decidedRequests: (res.decidedRequests ?? []).map((dto) => this.convertDTOToResponse(dto)),
+                    totalDecidedCount: res.totalDecidedCount ?? 0,
                 })),
             );
     }

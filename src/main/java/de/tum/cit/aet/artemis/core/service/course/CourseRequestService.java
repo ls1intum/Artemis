@@ -180,8 +180,6 @@ public class CourseRequestService {
     private Course createCourseFromRequest(CourseRequest request) {
         Course course = new Course();
 
-        // TODO: set a few default values that are currently missing
-
         course.setTitle(request.getTitle());
         course.setShortName(request.getShortName());
         course.setSemester(request.getSemester());
