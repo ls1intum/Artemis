@@ -4,7 +4,6 @@ import java.util.List;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 import org.jspecify.annotations.Nullable;
@@ -21,7 +20,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @Schema(description = "Request to refine a problem statement")
-public record ProblemStatementRefinementRequestDTO(@NotNull @NotBlank @Schema(description = "Original problem statement text to be refined") String problemStatementText,
+public record ProblemStatementRefinementRequestDTO(@NotBlank @Schema(description = "Original problem statement text to be refined") String problemStatementText,
 
         @Nullable @Size(max = 1000) @Schema(description = "User prompt for global refinement (optional if inlineComments provided)") String userPrompt,
 
