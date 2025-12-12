@@ -5,10 +5,10 @@ import { AccountService } from 'app/core/auth/account.service';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
-import { Authority } from 'app/shared/constants/authority.constants';
 import { AbstractQuizStatisticComponent } from 'app/quiz/manage/statistics/quiz-statistics';
 import { faSync } from '@fortawesome/free-solid-svg-icons';
 import { calculateMaxScore } from 'app/quiz/manage/statistics/quiz-statistic/quiz-statistics.utils';
+import { Subscription } from 'rxjs';
 import { round } from 'app/shared/util/utils';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { BarChartModule } from '@swimlane/ngx-charts';
@@ -38,6 +38,7 @@ export class QuizStatisticComponent extends AbstractQuizStatisticComponent imple
 
     maxScore: number;
     websocketChannelForData: string;
+    private websocketSubscription?: Subscription;
 
     // Icons
     faSync = faSync;
@@ -50,7 +51,7 @@ export class QuizStatisticComponent extends AbstractQuizStatisticComponent imple
         });
         this.route.params.subscribe((params) => {
             // use different REST-call if the User is a Student
-            if (this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA])) {
+            if (this.accountService.isAtLeastTutor()) {
                 this.quizExerciseService.find(params['exerciseId']).subscribe((res: HttpResponse<QuizExercise>) => {
                     this.loadQuizSuccess(res.body!);
                 });
@@ -58,11 +59,10 @@ export class QuizStatisticComponent extends AbstractQuizStatisticComponent imple
 
             // subscribe websocket for new statistical data
             this.websocketChannelForData = '/topic/statistic/' + params['exerciseId'];
-            this.websocketService.subscribe(this.websocketChannelForData);
 
             // ask for new Data if the websocket for new statistical data was notified
-            this.websocketService.receive(this.websocketChannelForData).subscribe(() => {
-                if (this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA])) {
+            this.websocketSubscription = this.websocketService.subscribe<QuizExercise>(this.websocketChannelForData).subscribe(() => {
+                if (this.accountService.isAtLeastTutor()) {
                     this.quizExerciseService.find(params['exerciseId']).subscribe((res) => {
                         this.loadQuizSuccess(res.body!);
                     });
@@ -73,7 +73,7 @@ export class QuizStatisticComponent extends AbstractQuizStatisticComponent imple
     }
 
     ngOnDestroy() {
-        this.websocketService.unsubscribe(this.websocketChannelForData);
+        this.websocketSubscription?.unsubscribe();
     }
 
     /**
@@ -84,7 +84,7 @@ export class QuizStatisticComponent extends AbstractQuizStatisticComponent imple
      */
     loadQuizSuccess(quiz: QuizExercise) {
         // if the Student finds a way to the Website -> the Student will be sent back to Courses
-        if (!this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA])) {
+        if (!this.accountService.isAtLeastTutor()) {
             this.router.navigate(['/courses']);
         }
         this.quizExercise = quiz;

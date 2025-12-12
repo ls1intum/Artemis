@@ -20,7 +20,7 @@ plugins {
     id "com.github.ben-manes.versions" version "0.53.0"
     id "com.github.node-gradle.node" version "${gradle_node_plugin_version}"
     id "com.google.cloud.tools.jib" version "3.5.1"
-    id "com.gorylenko.gradle-git-properties" version "2.5.3"
+    id "com.gorylenko.gradle-git-properties" version "2.5.4"
     id "io.spring.dependency-management" version "1.1.7"
     id "nebula.lint" version "21.1.3"
     id "org.liquibase.gradle" version "${liquibase_plugin_version}"
@@ -32,7 +32,7 @@ plugins {
 }
 
 group = "de.tum.cit.aet.artemis"
-version = "8.6.1"
+version = "8.6.4"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -81,6 +81,21 @@ modernizer {
     includeTestClasses = true
     // Copy the rule name as defined in https://github.com/gaul/modernizer-maven-plugin/blob/master/modernizer-maven-plugin/src/main/resources/modernizer.xml to exclude it
     exclusions = ["java/util/Optional.get:()Ljava/lang/Object;"]
+}
+
+gitProperties {
+    // Only override branch when CI (= env variable present)
+    def ciBranch = System.getenv('GIT_BRANCH')
+    if (ciBranch) {
+        branch = ciBranch
+    }
+
+    // Optional: if you ever want to override commit from CI as well:
+    def ciCommit = System.getenv('GIT_COMMIT')
+    if (ciCommit) {
+        customProperty 'git.commit.id', ciCommit
+        customProperty 'git.commit.id.abbrev', ciCommit.take(7)
+    }
 }
 
 configurations {
@@ -246,23 +261,6 @@ dependencies {
     // needed by e.g. spring security saml2, we explicitly use the newest version to avoid security vulnerabilities
     implementation "commons-codec:commons-codec:1.20.0"
 
-    // use the latest version to avoid security vulnerabilities
-    implementation "org.springframework:spring-aop:${spring_framework_version}"
-    implementation "org.springframework:spring-aspects:${spring_framework_version}"
-    implementation "org.springframework:spring-beans:${spring_framework_version}"
-    implementation "org.springframework:spring-context:${spring_framework_version}"
-    implementation "org.springframework:spring-context-support:${spring_framework_version}"
-    implementation "org.springframework:spring-core:${spring_framework_version}"
-    implementation "org.springframework:spring-expression:${spring_framework_version}"
-    implementation "org.springframework:spring-jcl:${spring_framework_version}"
-    implementation "org.springframework:spring-jdbc:${spring_framework_version}"
-    implementation "org.springframework:spring-messaging:${spring_framework_version}"
-    implementation "org.springframework:spring-orm:${spring_framework_version}"
-    implementation "org.springframework:spring-tx:${spring_framework_version}"
-    implementation "org.springframework:spring-webmvc:${spring_framework_version}"
-    implementation "org.springframework:spring-web:${spring_framework_version}"
-    implementation "org.springframework:spring-websocket:${spring_framework_version}"
-
     implementation "com.vdurmont:semver4j:3.1.0"
 
     implementation "com.github.docker-java:docker-java-core:${docker_java_version}"
@@ -278,6 +276,12 @@ dependencies {
     implementation "io.micrometer:micrometer-commons:${micrometer_version}"
     implementation "io.micrometer:micrometer-observation:${micrometer_version}"
     implementation "io.micrometer:micrometer-jakarta9:${micrometer_version}"
+
+    // required for exposing LLM traces to Langfuse
+    implementation "io.micrometer:micrometer-tracing-bridge-otel:${micrometer_tracing_version}"
+    // no need to specify version for opentelemetry as above micrometer tracing already brings in a compatible OpenTelemetry version
+    // Gradle will align the exporter to that version automatically
+    implementation "io.opentelemetry:opentelemetry-exporter-otlp"
 
     // Prometheus requires the protobuf-java dependency, but we explicitly use the latest version to avoid security vulnerabilities
     implementation "com.google.protobuf:protobuf-java:4.33.1"
@@ -299,28 +303,6 @@ dependencies {
     implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-xml:${fasterxml_version}"
     // Support YML serialization and deserialization
     implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${fasterxml_version}"
-
-    // Avoid outdated version of netty to prevent security issues
-    implementation("io.netty:netty-buffer") { version { 				strictly netty_version } }
-    implementation("io.netty:netty-codec") { version { 					strictly netty_version } }
-    implementation("io.netty:netty-codec-dns") { version { 				strictly netty_version } }
-    implementation("io.netty:netty-codec-http") { version { 			strictly netty_version } }
-    implementation("io.netty:netty-codec-http2") { version { 			strictly netty_version } }
-    implementation("io.netty:netty-codec-socks") { version { 			strictly netty_version } }
-    implementation("io.netty:netty-common") { version { 				strictly netty_version } }
-    implementation("io.netty:netty-resolver") { version { 	    		strictly netty_version } }
-    implementation("io.netty:netty-resolver-dns") { version { 			strictly netty_version } }
-    implementation("io.netty:netty-transport") { version { 				strictly netty_version } }
-    implementation("io.netty:netty-transport-classes-epoll") { version {strictly netty_version } }
-    implementation("io.netty:netty-transport-native-epoll") { version {	strictly netty_version } }
-    implementation("io.netty:netty-handler") { version { 				strictly netty_version } }
-    implementation("io.netty:netty-handler-proxy") { version { 			strictly netty_version } }
-
-    // only load netty-resolver-dns-native-macos on macos systems
-    if (osdetector.os == 'osx') {
-        def classifier = (osdetector.arch == 'aarch_64') ? 'osx-aarch_64' : 'osx-x86_64'
-        runtimeOnly("io.netty:netty-resolver-dns-native-macos:${netty_version}:${classifier}") { version { strictly netty_version } }
-    }
 
     // Avoid outdated version of netty to prevent security issues
     implementation("net.minidev:json-smart") { version {strictly "2.6.0" } }
@@ -355,26 +337,20 @@ dependencies {
         exclude group: "com.opencsv", module: "opencsv"
     }
 
-    implementation "org.springframework.boot:spring-boot-starter-validation:${spring_boot_version}"
-    implementation "org.springframework.boot:spring-boot-loader-tools:${spring_boot_version}"
-    implementation "org.springframework.boot:spring-boot-starter-mail:${spring_boot_version}"
-    implementation "org.springframework.boot:spring-boot-starter-logging:${spring_boot_version}"
-    implementation "org.springframework.boot:spring-boot-starter-actuator:${spring_boot_version}"
-    implementation "org.springframework.boot:spring-boot-starter-aop:${spring_boot_version}"
-    implementation "org.springframework.boot:spring-boot-starter-data-jpa:${spring_boot_version}"
-    implementation "org.springframework.boot:spring-boot-starter-security:${spring_boot_version}"
-    implementation "org.springframework.boot:spring-boot-starter-web:${spring_boot_version}"
-    implementation "org.springframework.boot:spring-boot-starter-tomcat:${spring_boot_version}"
-
-    implementation "org.apache.tomcat.embed:tomcat-embed-core:${tomcat_version}"
-    implementation "org.apache.tomcat.embed:tomcat-embed-el:${tomcat_version}"
-    implementation "org.apache.tomcat.embed:tomcat-embed-websocket:${tomcat_version}"
-    implementation "org.apache.tomcat:tomcat-annotations-api:${tomcat_version}"
-
-    implementation "org.springframework.boot:spring-boot-starter-websocket:${spring_boot_version}"
-    implementation "org.springframework.boot:spring-boot-starter-thymeleaf:${spring_boot_version}"
-    implementation "org.springframework.boot:spring-boot-starter-oauth2-resource-server:${spring_boot_version}"
-    implementation "org.springframework.boot:spring-boot-starter-oauth2-client:${spring_boot_version}"
+    implementation "org.springframework.boot:spring-boot-starter-validation"
+    implementation "org.springframework.boot:spring-boot-loader-tools"
+    implementation "org.springframework.boot:spring-boot-starter-mail"
+    implementation "org.springframework.boot:spring-boot-starter-logging"
+    implementation "org.springframework.boot:spring-boot-starter-actuator"
+    implementation "org.springframework.boot:spring-boot-starter-aop"
+    implementation "org.springframework.boot:spring-boot-starter-data-jpa"
+    implementation "org.springframework.boot:spring-boot-starter-security"
+    implementation "org.springframework.boot:spring-boot-starter-web"
+    implementation "org.springframework.boot:spring-boot-starter-tomcat"
+    implementation "org.springframework.boot:spring-boot-starter-websocket"
+    implementation "org.springframework.boot:spring-boot-starter-thymeleaf"
+    implementation "org.springframework.boot:spring-boot-starter-oauth2-resource-server"
+    implementation "org.springframework.boot:spring-boot-starter-oauth2-client"
 
     implementation "org.springframework.data:spring-data-jpa:3.5.6"
     implementation "org.springframework.data:spring-data-ldap:3.5.6"
@@ -428,8 +404,8 @@ dependencies {
     runtimeOnly "io.jsonwebtoken:jjwt-jackson:${jwt_version}"
 
     // required by sshd-git
-    implementation "org.bouncycastle:bcpkix-jdk18on:1.82"
-    implementation "org.bouncycastle:bcprov-jdk18on:1.82"
+    implementation "org.bouncycastle:bcpkix-jdk18on:1.83"
+    implementation "org.bouncycastle:bcprov-jdk18on:1.83"
 
     implementation "com.mysql:mysql-connector-j:${mysql_version}"
     implementation "org.postgresql:postgresql:42.7.8"
@@ -466,7 +442,7 @@ dependencies {
     checkstyle "org.apache.commons:commons-lang3:${commons_lang3_version}"
     checkstyle "org.apache.commons:commons-text:${commons_text_version}"
 
-    implementation "com.google.errorprone:error_prone_annotations:2.44.0"
+    implementation "com.google.errorprone:error_prone_annotations:2.45.0"
     // needed for OpenAPI generation
     implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.14"
 

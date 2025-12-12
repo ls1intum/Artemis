@@ -1,6 +1,8 @@
 package de.tum.cit.aet.artemis.core.config;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.dto.ActiveCourseDTO.NO_SEMESTER_TAG;
+import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
@@ -9,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
@@ -39,16 +42,14 @@ import com.zaxxer.hikari.HikariDataSource;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentStatus;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobsStatisticsDTO;
-import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.dto.ActiveCourseDTO;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.StatisticsRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.exam.api.ExamMetricsApi;
-import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
-import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
-import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.dto.ExamStudentCountDTO;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeMetricsEntry;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
@@ -73,9 +74,7 @@ public class MetricsBean {
 
     private static final String ARTEMIS_HEALTH_TAG = "healthindicator";
 
-    private static final String NO_SEMESTER_TAG = "No semester";
-
-    private static final int LOGGING_DELAY_SECONDS = 10;
+    private static final int WEBSOCKET_LOGGING_DELAY_SECONDS = 20;
 
     /**
      * Some metrics (e.g. the number of upcoming exercises) are calculated for multiple lookahead periods.
@@ -97,8 +96,6 @@ public class MetricsBean {
     private final ExerciseRepository exerciseRepository;
 
     private final Optional<ExamMetricsApi> examMetricsApi;
-
-    private final Optional<StudentExamApi> studentExamApi;
 
     private final CourseRepository courseRepository;
 
@@ -189,9 +186,8 @@ public class MetricsBean {
 
     public MetricsBean(MeterRegistry meterRegistry, @Qualifier("taskScheduler") TaskScheduler scheduler, WebSocketMessageBrokerStats webSocketStats, SimpUserRegistry userRegistry,
             WebSocketHandler websocketHandler, List<HealthContributor> healthContributors, Optional<HikariDataSource> hikariDataSource, ExerciseRepository exerciseRepository,
-            Optional<StudentExamApi> studentExamApi, Optional<ExamMetricsApi> examMetricsApi, CourseRepository courseRepository, UserRepository userRepository,
-            StatisticsRepository statisticsRepository, ProfileService profileService, Optional<DistributedDataAccessService> localCIBuildJobQueueService,
-            BuildJobRepository buildJobRepository) {
+            Optional<ExamMetricsApi> examMetricsApi, CourseRepository courseRepository, UserRepository userRepository, StatisticsRepository statisticsRepository,
+            ProfileService profileService, Optional<DistributedDataAccessService> localCIBuildJobQueueService, BuildJobRepository buildJobRepository) {
         this.meterRegistry = meterRegistry;
         this.scheduler = scheduler;
         this.webSocketStats = webSocketStats;
@@ -201,7 +197,6 @@ public class MetricsBean {
         this.hikariDataSource = hikariDataSource;
         this.exerciseRepository = exerciseRepository;
         this.examMetricsApi = examMetricsApi;
-        this.studentExamApi = studentExamApi;
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
         this.statisticsRepository = statisticsRepository;
@@ -273,14 +268,14 @@ public class MetricsBean {
         // using Autowired leads to a weird bug, because the order of the method execution is changed. This somehow prevents messages send to single clients
         // later one, e.g. in the code editor. Therefore, we call this method here directly to get a reference and adapt the logging period!
         // Note: this mechanism prevents that this is logged during testing
-        if (profileService.isProfileActive("websocketLog")) {
-            webSocketStats.setLoggingPeriod(LOGGING_DELAY_SECONDS * 1000L);
+        if (!profileService.isProfileActive(SPRING_PROFILE_TEST)) {
+            webSocketStats.setLoggingPeriod(WEBSOCKET_LOGGING_DELAY_SECONDS * 1000L);
             scheduler.scheduleAtFixedRate(() -> {
                 final var connectedUsers = userRegistry.getUsers();
                 final var subscriptionCount = connectedUsers.stream().flatMap(simpUser -> simpUser.getSessions().stream()).map(simpSession -> simpSession.getSubscriptions().size())
                         .reduce(0, Integer::sum);
                 log.info("Currently connect users {} with active websocket subscriptions: {}", connectedUsers.size(), subscriptionCount);
-            }, Duration.of(LOGGING_DELAY_SECONDS, ChronoUnit.SECONDS));
+            }, Duration.of(WEBSOCKET_LOGGING_DELAY_SECONDS, ChronoUnit.SECONDS));
         }
     }
 
@@ -647,11 +642,12 @@ public class MetricsBean {
      * The update (and recalculation) is performed every 60 minutes.
      * Only executed if the "scheduling"-profile is present.
      */
-    @Scheduled(fixedRate = 60 * 60 * 1000, initialDelay = 0) // Every 60 minutes
+    @Scheduled(fixedRate = 60 * 60 * 1000, initialDelay = 5 * 60 * 1000) // Every 60 minutes, starting 5 minutes after application start
     public void updatePublicArtemisMetrics() {
         if (!scheduledMetricsEnabled) {
             return;
         }
+        log.debug("start updatePublicArtemisMetrics");
 
         final long startDate = System.currentTimeMillis();
 
@@ -660,12 +656,9 @@ public class MetricsBean {
 
         final ZonedDateTime now = ZonedDateTime.now();
 
-        final List<Course> courses = courseRepository.findAllActiveWithoutTestCourses(now);
-        // We set the number of students once to prevent multiple queries for the same date
-        courses.forEach(course -> course.setNumberOfStudents(userRepository.countByDeletedIsFalseAndGroupsContains(course.getStudentGroupName())));
-        ensureCourseInformationIsSet(courses);
+        final Set<ActiveCourseDTO> courses = courseRepository.findAllActiveWithoutTestCourses(now);
 
-        final List<Long> courseIds = courses.stream().mapToLong(Course::getId).boxed().toList();
+        final List<Long> courseIds = courses.stream().mapToLong(ActiveCourseDTO::id).boxed().toList();
 
         // Update multi gauges
         updateStudentsCourseMultiGauge(courses);
@@ -680,8 +673,8 @@ public class MetricsBean {
         // Exam metrics
         if (examMetricsApi.isPresent()) {
             ExamMetricsApi api = examMetricsApi.get();
-            final List<Exam> examsInActiveCourses = api.findExamsInCourses(courseIds);
-            updateStudentsExamMultiGauge(examsInActiveCourses, courses);
+            final Set<ExamStudentCountDTO> examStudentCountDtos = api.findExamStudentCountsByCourseIds(courseIds);
+            updateStudentsExamMultiGauge(examStudentCountDtos, courses);
             activeExamsGauge.set(api.countAllActiveExams(now));
             examsGauge.set((int) api.count());
         }
@@ -702,46 +695,41 @@ public class MetricsBean {
         activeUserMultiGauge.register(gauges, true);
     }
 
-    private void updateStudentsCourseMultiGauge(List<Course> activeCourses) {
-        // A mutable list is required here because otherwise the values can not be updated correctly
-        final List<MultiGauge.Row<?>> gauges = activeCourses.stream().map(course -> {
-            final Tags tags = Tags.of("courseId", Long.toString(course.getId()), "courseName", course.getTitle(), "semester", course.getSemester());
-            final long studentCount = course.getNumberOfStudents();
+    private void updateStudentsCourseMultiGauge(Set<ActiveCourseDTO> activeCourses) {
+        // A mutable collection is required here because otherwise the values can not be updated correctly
+        final Set<MultiGauge.Row<?>> gauges = activeCourses.stream().map(course -> {
+            final String semesterTag = course.semester() != null ? course.semester() : NO_SEMESTER_TAG;
+            final Tags tags = Tags.of("courseId", Long.toString(course.id()), "courseName", course.title(), "semester", semesterTag);
+            final long studentCount = course.numberOfStudents();
             return MultiGauge.Row.of(tags, studentCount);
-        }).collect(Collectors.toCollection(ArrayList::new));
+        }).collect(Collectors.toSet());
 
         studentsCourseGauge.register(gauges, true);
     }
 
-    private void updateStudentsExamMultiGauge(List<Exam> examsInActiveCourses, List<Course> courses) {
-        StudentExamApi api = studentExamApi.orElseThrow(() -> new ExamApiNotPresentException(StudentExamApi.class));
+    private void updateStudentsExamMultiGauge(Set<ExamStudentCountDTO> examStudentCountDtos, Set<ActiveCourseDTO> courses) {
         // A mutable list is required here because otherwise the values can not be updated correctly
-        final List<MultiGauge.Row<?>> gauges = examsInActiveCourses.stream().map(exam -> {
+        final List<MultiGauge.Row<?>> gauges = examStudentCountDtos.stream().map(exam -> {
             final Tags tags = getExamMetricTags(courses, exam);
-            final long studentCount = api.countByExamId(exam.getId());
-            return MultiGauge.Row.of(tags, studentCount);
+            return MultiGauge.Row.of(tags, exam.studentCount());
         }).collect(Collectors.toCollection(ArrayList::new));
 
         studentsExamGauge.register(gauges, true);
     }
 
-    private Tags getExamMetricTags(final List<Course> courses, final Exam exam) {
-        final Optional<Course> examCourse = findExamCourse(courses, exam);
+    private Tags getExamMetricTags(final Set<ActiveCourseDTO> courses, final ExamStudentCountDTO exam) {
+        final Optional<ActiveCourseDTO> examCourse = courses.stream().filter(course -> Objects.equals(course.id(), exam.courseId())).findAny();
 
         final List<Tag> tags = new ArrayList<>();
         examCourse.ifPresent(course -> {
-            tags.add(Tag.of("courseId", Long.toString(course.getId())));
-            tags.add(Tag.of("courseName", course.getTitle()));
+            tags.add(Tag.of("courseId", Long.toString(course.id())));
+            tags.add(Tag.of("courseName", course.title()));
         });
-        tags.add(Tag.of("examId", Long.toString(exam.getId())));
-        tags.add(Tag.of("examName", exam.getTitle()));
-        tags.add(Tag.of("semester", examCourse.map(Course::getSemester).orElse(NO_SEMESTER_TAG)));
+        tags.add(Tag.of("examId", Long.toString(exam.id())));
+        tags.add(Tag.of("examName", exam.title()));
+        tags.add(Tag.of("semester", examCourse.map(ActiveCourseDTO::semester).orElse(NO_SEMESTER_TAG)));
 
         return Tags.of(tags);
-    }
-
-    private Optional<Course> findExamCourse(final List<Course> courses, final Exam exam) {
-        return courses.stream().filter(course -> Objects.equals(course.getId(), exam.getCourse().getId())).findAny();
     }
 
     private void updateActiveExerciseMultiGauge() {
@@ -770,22 +758,6 @@ public class MetricsBean {
 
             resultForMetrics.add(MultiGauge.Row.of(existingTags.and("exerciseType", exerciseType.toString()), value));
         }
-    }
-
-    private void ensureCourseInformationIsSet(List<Course> courses) {
-        courses.forEach(course -> {
-            if (course.getSemester() == null) {
-                course.setSemester(NO_SEMESTER_TAG);
-            }
-            if (course.getTitle() == null) {
-                if (course.getShortName() != null) {
-                    course.setTitle("Course" + course.getShortName());
-                }
-                else {
-                    course.setTitle("Course" + course.getId().toString());
-                }
-            }
-        });
     }
 
     private void registerDatasourceMetrics(HikariDataSource dataSource) {

@@ -4,7 +4,6 @@ import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
 import { WebsocketService } from 'app/shared/service/websocket.service';
-import { Authority } from 'app/shared/constants/authority.constants';
 import { Subscription } from 'rxjs';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -47,6 +46,7 @@ export abstract class QuestionStatisticComponent extends AbstractQuizStatisticCo
     maxScore: number;
     showSolution = false;
     websocketChannelForData: string;
+    private statisticSubscription?: Subscription;
 
     questionTextRendered?: SafeHtml;
 
@@ -60,7 +60,7 @@ export abstract class QuestionStatisticComponent extends AbstractQuizStatisticCo
         this.sub = this.route.params.subscribe((params) => {
             this.questionIdParam = +params['questionId'];
             // use different REST-call if the User is a Student
-            if (this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA])) {
+            if (this.accountService.isAtLeastTutor()) {
                 this.quizExerciseService.find(params['exerciseId']).subscribe((res) => {
                     this.loadQuiz(res.body!, false);
                 });
@@ -68,17 +68,15 @@ export abstract class QuestionStatisticComponent extends AbstractQuizStatisticCo
 
             // subscribe websocket for new statistical data
             this.websocketChannelForData = '/topic/statistic/' + params['exerciseId'];
-            this.websocketService.subscribe(this.websocketChannelForData);
-
             // ask for new Data if the websocket for new statistical data was notified
-            this.websocketService.receive(this.websocketChannelForData).subscribe((quiz) => {
+            this.statisticSubscription = this.websocketService.subscribe<QuizExercise>(this.websocketChannelForData).subscribe((quiz: QuizExercise) => {
                 this.loadQuiz(quiz, true);
             });
         });
     }
 
     ngOnDestroy() {
-        this.websocketService.unsubscribe(this.websocketChannelForData);
+        this.statisticSubscription?.unsubscribe();
     }
 
     /**
@@ -139,7 +137,7 @@ export abstract class QuestionStatisticComponent extends AbstractQuizStatisticCo
     loadQuizCommon(quiz: QuizExercise) {
         // if the Student finds a way to the Website
         //      -> the Student will be sent back to Courses
-        if (!this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA])) {
+        if (!this.accountService.isAtLeastTutor()) {
             this.router.navigateByUrl('courses');
         }
         // search selected question in quizExercise based on questionId

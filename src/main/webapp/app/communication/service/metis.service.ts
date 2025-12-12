@@ -23,6 +23,7 @@ import { ChannelDTO, ChannelSubType, getAsChannelDTO } from 'app/communication/s
 import { Conversation, ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { getAsGroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
 import { getAsOneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
+import { Faq } from 'app/communication/shared/entities/faq.model';
 import { ForwardedMessage, ForwardedMessagesGroupDTO } from 'app/communication/shared/entities/forwarded-message.model';
 import { MetisPostDTO } from 'app/communication/shared/entities/metis-post-dto.model';
 import { Post } from 'app/communication/shared/entities/post.model';
@@ -51,7 +52,6 @@ export class MetisService implements OnDestroy {
     private metisConversationService = inject(MetisConversationService);
     private http = inject(HttpClient);
     private posts$: ReplaySubject<Post[]> = new ReplaySubject<Post[]>(1);
-    private tags$: BehaviorSubject<string[]> = new BehaviorSubject<string[]>([]);
     private totalNumberOfPosts$: ReplaySubject<number> = new ReplaySubject<number>(1);
     private pinnedPosts$: BehaviorSubject<Post[]> = new BehaviorSubject<Post[]>([]);
 
@@ -65,16 +65,18 @@ export class MetisService implements OnDestroy {
     private subscriptionChannel?: string;
     private courseWideTopicSubscription: Subscription;
     private activeConversationSubscription: Subscription;
+    private subscriptionChannelSubscription?: Subscription;
 
-    course: Course;
+    private course: Course;
+    // Expose FAQs as observable so consumers react once async loading finishes (setupMetis fetches from REST)
+    private faqs$: BehaviorSubject<Faq[]> = new BehaviorSubject<Faq[]>([]);
 
     constructor() {
         this.accountService.identity().then((user: User) => {
             this.user = user!;
 
             const conversationTopic = `/topic/user/${this.user.id}/notifications/conversations`;
-            this.websocketService.subscribe(conversationTopic);
-            this.activeConversationSubscription = this.websocketService.receive(conversationTopic).subscribe((postDTO: MetisPostDTO) => {
+            this.activeConversationSubscription = this.websocketService.subscribe<MetisPostDTO>(conversationTopic).subscribe((postDTO: MetisPostDTO) => {
                 this.handleNewOrUpdatedMessage(postDTO);
             });
         });
@@ -82,10 +84,6 @@ export class MetisService implements OnDestroy {
 
     get posts(): Observable<Post[]> {
         return this.posts$.asObservable();
-    }
-
-    get tags(): Observable<string[]> {
-        return this.tags$.asObservable();
     }
 
     get totalNumberOfPosts(): Observable<number> {
@@ -129,9 +127,7 @@ export class MetisService implements OnDestroy {
     }
 
     ngOnDestroy(): void {
-        if (this.subscriptionChannel) {
-            this.websocketService.unsubscribe(this.subscriptionChannel);
-        }
+        this.subscriptionChannelSubscription?.unsubscribe();
         if (this.courseWideTopicSubscription) {
             this.courseWideTopicSubscription.unsubscribe();
         }
@@ -156,6 +152,14 @@ export class MetisService implements OnDestroy {
         return this.course;
     }
 
+    getFaqs(): Observable<Faq[]> {
+        return this.faqs$.asObservable();
+    }
+
+    setFaqs(faqs: Faq[]): void {
+        this.faqs$.next(faqs);
+    }
+
     /**
      * set course property before using metis service
      * @param {Course} course in which the metis service is used
@@ -170,8 +174,7 @@ export class MetisService implements OnDestroy {
             }
 
             const coursewideTopic = `/topic/metis/courses/${this.courseId}`;
-            this.websocketService.subscribe(coursewideTopic);
-            this.courseWideTopicSubscription = this.websocketService.receive(coursewideTopic).subscribe((postDTO: MetisPostDTO) => {
+            this.courseWideTopicSubscription = this.websocketService.subscribe<MetisPostDTO>(coursewideTopic).subscribe((postDTO: MetisPostDTO) => {
                 this.handleNewOrUpdatedMessage(postDTO);
             });
         }
@@ -218,7 +221,7 @@ export class MetisService implements OnDestroy {
                 this.createSubscriptionFromPostContextFilter();
             });
         } else {
-            // if we do not require force update, e.g. because only the post title, tag or content changed,
+            // if we do not require force update, e.g. because only the post title or content changed,
             // we can emit the previously cached posts
             this.posts$.next(this.cachedPosts);
             this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPosts);
@@ -636,14 +639,14 @@ export class MetisService implements OnDestroy {
         }
         // unsubscribe from existing channel subscription
         if (this.subscriptionChannel) {
-            this.websocketService.unsubscribe(this.subscriptionChannel);
+            this.subscriptionChannelSubscription?.unsubscribe();
             this.subscriptionChannel = undefined;
+            this.subscriptionChannelSubscription = undefined;
         }
 
         // create new subscription
         this.subscriptionChannel = channel;
-        this.websocketService.subscribe(this.subscriptionChannel);
-        this.websocketService.receive(this.subscriptionChannel).subscribe(this.handleNewOrUpdatedMessage);
+        this.subscriptionChannelSubscription = this.websocketService.subscribe<MetisPostDTO>(this.subscriptionChannel).subscribe(this.handleNewOrUpdatedMessage);
     }
 
     public savePost(post: Posting) {
@@ -745,7 +748,6 @@ export class MetisService implements OnDestroy {
                     }, 1000);
                 }
 
-                this.addTags(postDTO.post.tags);
                 break;
             case MetisPostAction.UPDATE:
                 const indexToUpdate = this.cachedPosts.findIndex((post) => post.id === postDTO.post.id);
@@ -783,7 +785,6 @@ export class MetisService implements OnDestroy {
                     // If post is no longer pinned, remove it from the pinned list
                     this.removeFromPinnedPosts(postDTO.post.id!);
                 }
-                this.addTags(postDTO.post.tags);
                 break;
             case MetisPostAction.DELETE:
                 const indexToDelete = this.cachedPosts.findIndex((post) => post.id === postDTO.post.id);
@@ -829,8 +830,9 @@ export class MetisService implements OnDestroy {
         } else {
             // No need for extra subscription since messaging topics are covered by other services
             if (this.subscriptionChannel) {
-                this.websocketService.unsubscribe(this.subscriptionChannel);
+                this.subscriptionChannelSubscription?.unsubscribe();
                 this.subscriptionChannel = undefined;
+                this.subscriptionChannelSubscription = undefined;
             }
             return;
         }
@@ -970,16 +972,6 @@ export class MetisService implements OnDestroy {
                 return throwError(() => error);
             }),
         );
-    }
-
-    /**
-     * Helper method to add tags to currently stored course tags
-     */
-    private addTags(tags: string[] | undefined) {
-        if (tags && tags.length > 0) {
-            const updatedTags = Array.from(new Set([...this.tags$.getValue(), ...tags]));
-            this.tags$.next(updatedTags);
-        }
     }
 
     private hasDifferentContexts(other: PostContextFilter): boolean {
