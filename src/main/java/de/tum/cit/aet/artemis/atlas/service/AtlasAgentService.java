@@ -13,7 +13,6 @@ import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.MessageType;
 import org.springframework.ai.tool.ToolCallbackProvider;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -38,20 +37,14 @@ public class AtlasAgentService {
 
     private final ChatMemory chatMemory;
 
-    private final String deploymentName;
-
-    private final double temperature;
-
     private static final ThreadLocal<Boolean> competencyCreatedInCurrentRequest = ThreadLocal.withInitial(() -> false);
 
     public AtlasAgentService(@Nullable ChatClient chatClient, AtlasPromptTemplateService templateService, @Nullable ToolCallbackProvider toolCallbackProvider,
-            @Nullable ChatMemory chatMemory, @Value("${atlas.chat-model:gpt-4o}") String deploymentName, @Value("${atlas.chat-temperature:0.2}") double temperature) {
+            @Nullable ChatMemory chatMemory) {
         this.chatClient = chatClient;
         this.templateService = templateService;
         this.toolCallbackProvider = toolCallbackProvider;
         this.chatMemory = chatMemory;
-        this.deploymentName = deploymentName;
-        this.temperature = temperature;
     }
 
     /**
@@ -88,7 +81,7 @@ public class AtlasAgentService {
             // Add course ID to system prompt instead of user message to avoid storing it in chat history
             String enhancedSystemPrompt = String.format("%s\n\nContext: You are assisting with Course ID: %d", systemPrompt, courseId);
 
-            AzureOpenAiChatOptions options = AzureOpenAiChatOptions.builder().deploymentName(deploymentName).temperature(temperature).build();
+            AzureOpenAiChatOptions options = AzureOpenAiChatOptions.builder().deploymentName("gpt-4o").temperature(1.0).build();
             ChatClientRequestSpec promptSpec = atlasClient.prompt().system(enhancedSystemPrompt).user(message).options(options);
             // Add tools
             if (toolCallbackProvider != null) {
