@@ -21,7 +21,7 @@
 - In Angular templates, always use the built-in control-flow syntax (@if, @for, @switch) and never use legacy structural directives (*ngIf, *ngFor, *ngSwitch).
 - Java classes PascalCase, fields camelCase; keep package-by-feature structure; no wildcard imports (Spotless enforces).
 - Avoid @Transactional scope, use DTOs (Java records) for REST endpoints, prefer constructor injection, use Java 25 features (records, sealed classes, pattern matching).
-- Lint/format: ESLint, Stylelint, Prettier for webapp; Checkstyle, Spotless, Modernizer in Gradle. Run `npm run lint` + `prettier:check` before PRs.
+- Lint/format: ESLint, Stylelint, Prettier for webapp; Checkstyle, Spotless, Modernizer via Gradle. Run `npm run lint` + `prettier:check` before PRs.
 
 ## Testing Guidelines
 - Keep tests deterministic; mock external services/WebSockets. Co-locate client specs; name server tests `*Test.java` and reuse module base classes when present.
@@ -33,4 +33,4 @@
 ## Commit & Pull Request Guidelines
 - Commits: concise, imperative, scoped where useful (e.g., `Exam mode: adjust live updates`, `build: bump version`); wrap bodies near 72 chars.
 - PRs: include problem/solution summary, linked issue, commands/tests run, screenshots for UI, and doc updates if relevant. Target the active dev branch (`develop`), rebase to reduce noise.
-- Follow `CONTRIBUTING.md`: in particulare make sure to follow the guidelines referenced in docs/dev/guidelines.rst.
+- Follow `CONTRIBUTING.md`: in particular, make sure to follow the guidelines referenced in `docs/dev/guidelines.rst`.
