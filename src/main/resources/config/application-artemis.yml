@@ -153,3 +153,31 @@ spring:
       # password: # password
       # client-name *must* be unique for each Artemis instance and *must* start with `artemis`
       # client-name: # artemis-...
+
+management:
+  # Set true to display contextual name in @Observed on Langfuse
+  observations:
+    annotations:
+      enabled: true
+
+  # Configuration for exporting LLM traces to Langfuse (set to true to enable Artemis' custom exporter)
+#  langfuse:
+#    enabled: true
+  tracing:
+    sampling:
+      probability: 1.0
+  otlp:
+    tracing:
+      # LangFuse accepts OTLP over HTTP at the traces path only
+      # (example: https://langfuse.aet.cit.tum.de/api/public/otel/v1/traces)
+#     endpoint: https://example.com
+#     transport: http
+#     headers:
+        # Provide "Basic <base64(public_key:secret_key)>" via env var to avoid committing secrets
+#        Authorization: "Basic <base64(public_key:secret_key)>"
+
+     # Important: Set export.enabled: false to disable the *default* OTLP exporter.
+     # Hyperion uses its own custom exporter to send LLM traces to Langfuse,
+     # so disabling the default exporter will NOT stop LLM trace export.
+     export:
+       enabled: false
