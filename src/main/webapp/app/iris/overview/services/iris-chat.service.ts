@@ -611,7 +611,7 @@ export class IrisChatService implements OnDestroy {
         // eslint-disable-next-line @typescript-eslint/no-deprecated -- usage in setter is okay
         this.courseId = courseId;
         if (courseId) {
-            this.status.setCurrentCourse(courseId);
+            this.irisStatusService.setCurrentCourse(courseId);
         }
     }
 
