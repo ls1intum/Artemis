@@ -869,11 +869,19 @@ async function main() {
         console.log('');
 
         if (!options.serverOnly && clientModulesToTest.length > 0) {
-            await runClientTests(clientModulesToTest, options);
+            const clientSuccess = await runClientTests(clientModulesToTest, options);
+            if (!clientSuccess) {
+                error('Client tests failed');
+                process.exit(1);
+            }
         }
 
         if (!options.clientOnly && serverModulesToTest.length > 0) {
-            await runServerTests(serverModulesToTest, options);
+            const serverSuccess = await runServerTests(serverModulesToTest, options);
+            if (!serverSuccess) {
+                error('Server tests failed');
+                process.exit(1);
+            }
         }
     } else {
         info('Skipping tests, using existing coverage data');
