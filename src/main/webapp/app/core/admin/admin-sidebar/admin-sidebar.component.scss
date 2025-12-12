@@ -133,8 +133,8 @@ $transition-color-length: 0.2s;
     color: var(--link-item-color);
 }
 
-// We have to override this style from globals.scss here as we only want to target the span with the text inside
-.sidebar-container a:not(.btn):not(.tab-link):hover {
+// Override global anchor hover styles for sidebar nav links only
+.sidebar-container a.nav-link-sidebar:hover {
     text-decoration: none !important;
 }
 
