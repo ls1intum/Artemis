@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AnswerPostComponent } from 'app/communication/answer-post/answer-post.component';
-import { DebugElement, input, runInInjectionContext } from '@angular/core';
+import { DebugElement } from '@angular/core';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { MockComponent, MockDirective, MockModule, MockPipe, ngMocks } from 'ng-mocks';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
@@ -29,7 +29,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
-import { AccountService } from '../../core/auth/account.service';
+import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 
 describe('AnswerPostComponent', () => {
@@ -80,10 +80,8 @@ describe('AnswerPostComponent', () => {
     });
 
     it('should contain the posting header when isConsecutive is false', () => {
-        runInInjectionContext(fixture.debugElement.injector, () => {
-            component.isConsecutive = input<boolean>(false);
-            component.posting = metisResolvingAnswerPostUser1;
-        });
+        fixture.componentRef.setInput('isConsecutive', false);
+        component.posting = metisResolvingAnswerPostUser1;
 
         fixture.detectChanges();
         const header = debugElement.query(By.css('jhi-posting-header'));
@@ -91,10 +89,8 @@ describe('AnswerPostComponent', () => {
     });
 
     it('should not contain the posting header when isConsecutive is true', () => {
-        runInInjectionContext(fixture.debugElement.injector, () => {
-            component.isConsecutive = input<boolean>(true);
-            component.posting = metisResolvingAnswerPostUser1;
-        });
+        fixture.componentRef.setInput('isConsecutive', true);
+        component.posting = metisResolvingAnswerPostUser1;
 
         fixture.detectChanges();
         const header = debugElement.query(By.css('jhi-posting-header'));
