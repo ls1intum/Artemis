@@ -510,6 +510,27 @@ describe('Example Modeling Submission Component', () => {
         expect(comp.referencedExampleFeedback).toEqual([feedbackTwo]);
     });
 
+    it('should mark only matching feedback as wrong', () => {
+        const matchingFeedback = { ...mockFeedbackWithReference, reference: 'ref-1' } as Feedback;
+        const otherFeedback = { ...mockFeedbackWithReference, reference: 'ref-2' } as Feedback;
+
+        comp.referencedFeedback.set([matchingFeedback, otherFeedback]);
+
+        const correctionError: FeedbackCorrectionError = {
+            reference: 'ref-1',
+            type: 'INCORRECT_SCORE',
+        } as any;
+
+        comp.markWrongFeedback([correctionError]);
+
+        const [updated, untouched] = comp.referencedFeedback();
+        expect(updated.reference).toBe('ref-1');
+        expect(updated.correctionStatus).toBe('INCORRECT_SCORE');
+
+        expect(untouched.reference).toBe('ref-2');
+        expect(untouched.correctionStatus).toBe('CORRECT');
+    });
+
     it('should mark assessments as invalid when a feedback has no credits', () => {
         comp.exercise = exercise;
         const feedbackWithoutCredits = {
