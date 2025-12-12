@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { WebsocketService } from 'app/shared/service/websocket.service';
-import { MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { DebugElement, input, runInInjectionContext } from '@angular/core';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { PostComponent } from 'app/communication/post/post.component';
@@ -36,7 +36,6 @@ import { OneToOneChatDTO } from 'app/communication/shared/entities/conversation/
 import { HttpResponse } from '@angular/common/http';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { AnswerPostCreateEditModalComponent } from 'app/communication/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { DOCUMENT } from '@angular/common';
 import { Posting, PostingType } from 'app/communication/shared/entities/posting.model';
 import { Post } from 'app/communication/shared/entities/post.model';
@@ -84,7 +83,7 @@ describe('PostComponent', () => {
         };
 
         return TestBed.configureTestingModule({
-            imports: [NgbTooltip, OverlayModule, MockModule(BrowserAnimationsModule)],
+            imports: [NgbTooltip, OverlayModule],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),

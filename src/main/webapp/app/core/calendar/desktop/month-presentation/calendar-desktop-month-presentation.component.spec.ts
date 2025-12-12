@@ -10,7 +10,7 @@ import { CalendarEvent, CalendarEventType } from 'app/core/calendar/shared/entit
 import { CalendarDesktopMonthPresentationComponent } from './calendar-desktop-month-presentation.component';
 import { CalendarDayBadgeComponent } from 'app/core/calendar/shared/calendar-day-badge/calendar-day-badge.component';
 import { CalendarEventDetailPopoverComponent } from 'app/core/calendar/shared/calendar-event-detail-popover-component/calendar-event-detail-popover.component';
-import { provideNoopAnimations } from '@angular/platform-browser/animations';
+import { provideNoopAnimationsForTests } from 'test/helpers/animations';
 
 describe('CalendarDesktopMonthPresentationComponent', () => {
     let fixture: ComponentFixture<CalendarDesktopMonthPresentationComponent>;
@@ -62,7 +62,7 @@ describe('CalendarDesktopMonthPresentationComponent', () => {
                     provide: CalendarService,
                     useFactory: () => new MockCalendarService(mockMap),
                 },
-                provideNoopAnimations(),
+                provideNoopAnimationsForTests(),
             ],
         }).compileComponents();
 

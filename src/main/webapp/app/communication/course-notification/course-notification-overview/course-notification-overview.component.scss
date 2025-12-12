@@ -3,6 +3,26 @@ $overlay-container-height: 30rem;
 $padding: 1.4rem;
 $overlay-offset-top: 2.8rem;
 
+// CSS animations to replace @angular/animations
+@keyframes fade-in {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.fade-animation-delayed-enter {
+    animation: fade-in 200ms 400ms ease-in-out forwards;
+    opacity: 0;
+}
+
+.notification-wrap-animation-enter {
+    animation: fade-in 200ms ease-in-out forwards;
+}
+
 .course-notification-overview-bubble {
     position: absolute;
     top: 0;

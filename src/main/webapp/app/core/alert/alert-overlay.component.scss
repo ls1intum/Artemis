@@ -1,3 +1,28 @@
+// CSS animations to replace @angular/animations
+@keyframes alert-slide-in {
+    0% {
+        height: 0;
+        margin-bottom: 0;
+        transform: translateX(120%);
+    }
+
+    50% {
+        height: auto;
+        margin-bottom: 15px;
+        transform: translateX(120%);
+    }
+
+    100% {
+        height: auto;
+        margin-bottom: 15px;
+        transform: translateX(0);
+    }
+}
+
+.alert-animation-enter {
+    animation: alert-slide-in 0.4s cubic-bezier(0.2, 1.22, 0.64, 1) forwards;
+}
+
 :host {
     width: 100vw;
     height: 100vh;

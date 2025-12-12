@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
@@ -11,7 +11,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { FaqUpdateComponent } from 'app/communication/faq/faq-update.component';
 import { FaqService } from 'app/communication/faq/faq.service';
 import { Faq } from 'app/communication/shared/entities/faq.model';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
@@ -46,7 +45,7 @@ describe('FaqUpdateComponent', () => {
         courseId = 1;
         const mockProfileInfo = { activeProfiles: ['iris'] } as ProfileInfo;
         TestBed.configureTestingModule({
-            imports: [MockModule(BrowserAnimationsModule), FaIconComponent],
+            imports: [FaIconComponent],
             declarations: [
                 FaqUpdateComponent,
                 MockComponent(MarkdownEditorMonacoComponent),
