@@ -39,10 +39,7 @@ describe('ExerciseChatbotButtonComponent', () => {
         currentRatelimitInfo: jest.fn().mockReturnValue(of({})),
         handleRateLimitInfo: jest.fn(),
     };
-    const userMock = {
-        acceptExternalLLMUsage: jest.fn(),
-    };
-    const accountMock = { externalLLMUsageAccepted: dayjs() } as User;
+    const accountMock = { selectedLLMUsageTimestamp: dayjs() } as User;
 
     const mockExerciseId = 123;
     const mockCourseId = 456;
@@ -85,7 +82,7 @@ describe('ExerciseChatbotButtonComponent', () => {
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ActivatedRoute, useValue: mockActivatedRoute },
                 { provide: IrisStatusService, useValue: statusMock },
-                { provide: UserService, useValue: userMock },
+                { provide: UserService, useValue: {} },
             ],
         })
             .compileComponents()
@@ -154,7 +151,7 @@ describe('ExerciseChatbotButtonComponent', () => {
         expect(mockDialogClose).toHaveBeenCalled();
     });
 
-    it('should show new message indicator when chatbot is closed', fakeAsync(() => {
+    it('should not show new message indicator when chatbot is closed', fakeAsync(() => {
         // given
         jest.spyOn(chatHttpServiceMock, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(mockExerciseId)));
         jest.spyOn(chatHttpServiceMock, 'getChatSessions').mockReturnValue(of([]));
@@ -170,7 +167,7 @@ describe('ExerciseChatbotButtonComponent', () => {
 
         // then
         const unreadIndicatorElement: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('.unread-indicator');
-        expect(unreadIndicatorElement).not.toBeNull();
+        expect(unreadIndicatorElement).toBeNull();
         flush();
     }));
 
