@@ -6,7 +6,6 @@
     box-sizing: border-box;
     align-items: center;
 
-    // Stack vertically on smaller screens
     @media (max-width: 992px) {
         flex-direction: column;
         gap: 1rem;
@@ -20,7 +19,6 @@
     background: #000;
     min-width: 300px;
 
-    // Take full width on smaller screens
     @media (max-width: 992px) {
         flex: none;
         width: 100%;
@@ -48,7 +46,6 @@
         color: var(--primary);
     }
 
-    // Hide on smaller screens where layout is stacked
     @media (max-width: 992px) {
         display: none;
     }
