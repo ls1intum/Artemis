@@ -8,6 +8,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import jakarta.servlet.http.HttpServletRequest;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -50,11 +51,14 @@ class RateLimitServiceTest {
     @Mock
     private RequestAttributes requestAttributes;
 
+    @Mock
+    private FeatureToggleService featureToggleService;
+
     private RateLimitService rateLimitService;
 
     @BeforeEach
     void setUp() {
-        rateLimitService = new RateLimitService(proxyManager, configurationService);
+        rateLimitService = new RateLimitService(proxyManager, configurationService, featureToggleService);
     }
 
     @Test
@@ -70,6 +74,7 @@ class RateLimitServiceTest {
     @Test
     void testEnforcePerMinute_WhenWithinLimit_ShouldSucceed() throws AddressStringException {
         when(configurationService.isRateLimitingEnabled()).thenReturn(true);
+        when(featureToggleService.isFeatureEnabled(any())).thenReturn(true);
         when(configurationService.getEffectiveRpm(RateLimitType.ACCOUNT_MANAGEMENT)).thenReturn(5);
         when(proxyManager.getProxy(anyString(), any())).thenReturn(bucketProxy);
         when(bucketProxy.tryConsumeAndReturnRemaining(1)).thenReturn(consumptionProbe);
@@ -84,6 +89,7 @@ class RateLimitServiceTest {
     @Test
     void testEnforcePerMinute_WhenExceedsLimit_ShouldThrowException() {
         when(configurationService.isRateLimitingEnabled()).thenReturn(true);
+        when(featureToggleService.isFeatureEnabled(any())).thenReturn(true);
         when(configurationService.getEffectiveRpm(RateLimitType.ACCOUNT_MANAGEMENT)).thenReturn(5);
         when(proxyManager.getProxy(anyString(), any())).thenReturn(bucketProxy);
         when(bucketProxy.tryConsumeAndReturnRemaining(1)).thenReturn(consumptionProbe);
@@ -97,6 +103,7 @@ class RateLimitServiceTest {
     @Test
     void testEnforcePerMinute_EvenIfSpringTestProfile_ShouldStillEnforce() throws AddressStringException {
         when(configurationService.isRateLimitingEnabled()).thenReturn(true);
+        when(featureToggleService.isFeatureEnabled(any())).thenReturn(true);
         when(configurationService.getEffectiveRpm(RateLimitType.ACCOUNT_MANAGEMENT)).thenReturn(5);
         when(proxyManager.getProxy(anyString(), any())).thenReturn(bucketProxy);
         when(bucketProxy.tryConsumeAndReturnRemaining(1)).thenReturn(consumptionProbe);
