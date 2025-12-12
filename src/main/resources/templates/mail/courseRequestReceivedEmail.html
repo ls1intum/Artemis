@@ -1,16 +1,19 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title th:text="#{email.courseRequest.contact.title(${courseRequest.title})}">New course request</title>
+    <title th:text="#{email.courseRequest.received.title}">Course request received</title>
     <th:block th:replace="~{mail/notification/fragments :: headMetaDataAndIconLink}"/>
     <th:block th:replace="~{mail/notification/fragments :: css}"/>
 </head>
 <body>
 <th:block th:replace="~{mail/notification/fragments :: header}"/>
 <div id="message-body">
+    <th:block th:replace="~{mail/notification/fragments :: greetingsFullName}"/>
     <div class="notification-content">
-        <p th:text="#{email.courseRequest.contact.intro}">A new course request was submitted.</p>
-        <p th:text="#{email.courseRequest.contact.review}">Please review the details and accept or reject it in the server administration.</p>
+        <p th:text="#{email.courseRequest.received.text(${courseRequest.title})}">Your course request has been received.</p>
+        <p th:text="#{email.courseRequest.received.processing}">Your request will be evaluated and processed within the next few working days.</p>
+        <p th:text="#{email.courseRequest.received.notification}">You will receive another email once a decision has been made.</p>
+        <p class="bold-text" th:text="#{email.courseRequest.received.summary}">Summary of your request:</p>
         <ul>
             <li>
                 <span class="bold-text" th:text="#{email.courseRequest.label.title}">Title</span>:
@@ -20,7 +23,7 @@
                 <span class="bold-text" th:text="#{email.courseRequest.label.shortName}">Short name</span>:
                 <span th:text="${courseRequest.shortName}">short-name</span>
             </li>
-            <li>
+            <li th:if="${courseRequest.semester != null}">
                 <span class="bold-text" th:text="#{email.courseRequest.label.semester}">Semester</span>:
                 <span th:text="${courseRequest.semester}">Semester</span>
             </li>
@@ -36,24 +39,12 @@
                 <span class="bold-text" th:text="#{email.courseRequest.label.testCourse}">Test course</span>:
                 <span th:text="${courseRequest.testCourse} ? 'Yes' : 'No'">No</span>
             </li>
-            <li th:if="${courseRequest.requester != null}">
-                <span class="bold-text" th:text="#{email.courseRequest.label.requester}">Requester</span>:
-                <span th:text="${courseRequest.requester.name}">Full Name</span>
-                (<span th:text="${courseRequest.requester.email}">email</span>)
-            </li>
         </ul>
         <p>
             <span class="bold-text" th:text="#{email.courseRequest.label.reason}">Reason</span>
         </p>
         <div class="bordered-content">
             <span th:text="${courseRequest.reason}">Reason text</span>
-        </div>
-        <div class="button-wrapper">
-            <a class="button" th:href="@{|${baseUrl}/admin/course-requests|}" th:text="#{email.courseRequest.contact.linkText}">Review course requests</a>
-        </div>
-        <div class="emergency-link">
-            <p th:text="#{email.notification.aux.emergency.link.text}">Emergency Link if button is not working</p>
-            <a th:with="url=(@{|${baseUrl}/admin/course-requests|})" th:href="${url}" th:text="${url}">Link</a>
         </div>
     </div>
     <th:block th:replace="~{mail/notification/fragments :: farewell}"/>

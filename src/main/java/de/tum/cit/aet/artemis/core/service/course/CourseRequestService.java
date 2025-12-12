@@ -107,6 +107,7 @@ public class CourseRequestService {
 
         courseRequest = courseRequestRepository.save(courseRequest);
         notifyContact(courseRequest);
+        sendReceivedEmail(courseRequest);
 
         return toDto(courseRequest);
     }
@@ -254,6 +255,13 @@ public class CourseRequestService {
             return;
         }
         mailSendingService.buildAndSendAsync(request.getRequester(), "email.courseRequest.rejected.title", "mail/courseRequestRejectedEmail", Map.of("courseRequest", request));
+    }
+
+    private void sendReceivedEmail(CourseRequest request) {
+        if (request.getRequester() == null) {
+            return;
+        }
+        mailSendingService.buildAndSendAsync(request.getRequester(), "email.courseRequest.received.title", "mail/courseRequestReceivedEmail", Map.of("courseRequest", request));
     }
 
     private CourseRequestDTO toDto(CourseRequest courseRequest) {
