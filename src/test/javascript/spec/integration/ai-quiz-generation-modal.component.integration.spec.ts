@@ -37,7 +37,8 @@ describe('AiQuizGenerationModalComponent (integration)', () => {
 
         fixture = TestBed.createComponent(AiQuizGenerationModalComponent);
         comp = fixture.componentInstance;
-        comp.courseId = 42;
+
+        comp.courseId.set(42);
     });
 
     it('should call service.generate() and populate generated questions', () => {

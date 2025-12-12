@@ -40,8 +40,7 @@ describe('AiQuizGenerationModalComponent', () => {
 
         fixture = TestBed.createComponent(AiQuizGenerationModalComponent);
         comp = fixture.componentInstance;
-        // the dialog always needs a courseId
-        comp.courseId = 99;
+        comp.courseId.set(99);
     });
 
     it('should initialize with default form values', () => {
