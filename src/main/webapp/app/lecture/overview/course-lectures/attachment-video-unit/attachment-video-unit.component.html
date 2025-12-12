@@ -42,31 +42,6 @@
         <hr />
     }
 
-    @if (shouldShowTranscriptionStatus()) {
-        <div class="mt-3 mb-3">
-            @if (transcriptionStatus() === TranscriptionStatus.PENDING || transcriptionStatus() === TranscriptionStatus.PROCESSING) {
-                <div class="alert alert-info d-flex align-items-center justify-content-between" role="alert">
-                    <div class="d-flex align-items-center">
-                        <fa-icon [icon]="faSpinner" animation="spin" class="me-2" />
-                        <span jhiTranslate="artemisApp.attachmentVideoUnit.transcription.statusProcessing"></span>
-                    </div>
-                    @if (accountService.isAtLeastEditorInCourse(lectureUnit().lecture?.course)) {
-                        <button class="btn btn-danger btn-sm" (click)="cancelTranscription()" [disabled]="isCancelling()">
-                            <fa-icon [icon]="faTimes" class="me-1" />
-                            <span jhiTranslate="artemisApp.attachmentVideoUnit.transcription.cancelButton"></span>
-                        </button>
-                    }
-                </div>
-            }
-            @if (transcriptionStatus() === TranscriptionStatus.FAILED) {
-                <div class="alert alert-danger d-flex align-items-center" role="alert">
-                    <fa-icon [icon]="faExclamationTriangle" class="me-2" />
-                    <span jhiTranslate="artemisApp.attachmentVideoUnit.transcription.statusFailed"></span>
-                </div>
-            }
-        </div>
-    }
-
     @if (!!videoUrl()) {
         @if (isLoading()) {
             <div class="d-flex justify-content-center p-3">

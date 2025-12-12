@@ -1,7 +1,7 @@
 import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { LectureUnitDirective } from 'app/lecture/overview/course-lectures/lecture-unit/lecture-unit.directive';
-import { AttachmentVideoUnit, TranscriptionStatus } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
+import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { LectureUnitComponent } from 'app/lecture/overview/course-lectures/lecture-unit/lecture-unit.component';
 import urlParser from 'js-video-url-parser';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
@@ -10,7 +10,6 @@ import { LectureTranscriptionService } from 'app/lecture/manage/services/lecture
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
 import {
     faDownload,
-    faExclamationTriangle,
     faFile,
     faFileArchive,
     faFileCode,
@@ -23,8 +22,6 @@ import {
     faFilePowerpoint,
     faFileVideo,
     faFileWord,
-    faSpinner,
-    faTimes,
 } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -34,11 +31,7 @@ import { FileService } from 'app/shared/service/file.service';
 import { ScienceService } from 'app/shared/science/science.service';
 import { ScienceEventType } from 'app/shared/science/science.model';
 import { TranscriptSegment } from 'app/lecture/shared/models/transcript-segment.model';
-import { finalize, map } from 'rxjs/operators';
-import { AccountService } from 'app/core/auth/account.service';
-import { AlertService } from 'app/shared/service/alert.service';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal/confirm-autofocus-modal.component';
+import { map } from 'rxjs/operators';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({
@@ -50,31 +43,18 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 export class AttachmentVideoUnitComponent extends LectureUnitDirective<AttachmentVideoUnit> {
     protected readonly faDownload = faDownload;
     protected readonly faFileLines = faFileLines;
-    protected readonly faSpinner = faSpinner;
-    protected readonly faExclamationTriangle = faExclamationTriangle;
-    protected readonly faTimes = faTimes;
-    protected readonly TranscriptionStatus = TranscriptionStatus;
 
     private readonly destroyRef = inject(DestroyRef);
     private readonly fileService = inject(FileService);
     private readonly scienceService = inject(ScienceService);
     private readonly attachmentVideoUnitService = inject(AttachmentVideoUnitService);
     private readonly lectureTranscriptionService = inject(LectureTranscriptionService);
-    readonly accountService = inject(AccountService);
-    private readonly alertService = inject(AlertService);
-    private readonly modalService = inject(NgbModal);
 
     readonly transcriptSegments = signal<TranscriptSegment[]>([]);
     readonly playlistUrl = signal<string | undefined>(undefined);
     readonly isLoading = signal<boolean>(false);
-    readonly transcriptionStatus = signal<TranscriptionStatus | undefined>(undefined);
-    readonly isCancelling = signal<boolean>(false);
 
     readonly hasTranscript = computed(() => this.transcriptSegments().length > 0);
-    readonly shouldShowTranscriptionStatus = computed(() => {
-        const status = this.transcriptionStatus();
-        return status === TranscriptionStatus.PENDING || status === TranscriptionStatus.PROCESSING || status === TranscriptionStatus.FAILED;
-    });
 
     // TODO: This must use a server configuration to make it compatible with deployments other than TUM
     private readonly videoUrlAllowList = [RegExp('^https://(?:live\\.rbg\\.tum\\.de|tum\\.live)/w/\\w+/\\d+(/(CAM|COMB|PRES))?\\?video_only=1')];
@@ -124,19 +104,6 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
                 this.isLoading.set(false);
                 return;
             }
-
-            // Fetch transcription status
-            this.lectureTranscriptionService
-                .getTranscriptionStatus(this.lectureUnit().id!)
-                .pipe(takeUntilDestroyed(this.destroyRef))
-                .subscribe({
-                    next: (status) => {
-                        this.transcriptionStatus.set(status);
-                    },
-                    error: () => {
-                        this.transcriptionStatus.set(undefined);
-                    },
-                });
 
             // Try to resolve a .m3u8 playlist URL from the server
             this.attachmentVideoUnitService
@@ -290,38 +257,5 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             }
         }
         return faFile;
-    }
-
-    cancelTranscription() {
-        const modalRef = this.modalService.open(ConfirmAutofocusModalComponent, { size: 'md', backdrop: 'static' });
-        modalRef.componentInstance.title = 'artemisApp.attachmentVideoUnit.transcription.cancelButton';
-        modalRef.componentInstance.text = 'artemisApp.attachmentVideoUnit.transcription.cancelConfirm';
-        modalRef.componentInstance.translateText = true;
-        modalRef.componentInstance.textIsMarkdown = false;
-
-        modalRef.result.then(
-            () => {
-                this.isCancelling.set(true);
-                this.lectureTranscriptionService
-                    .cancelTranscription(this.lectureUnit().id!)
-                    .pipe(finalize(() => this.isCancelling.set(false)))
-                    .subscribe({
-                        next: (success) => {
-                            if (success) {
-                                this.alertService.success('artemisApp.attachmentVideoUnit.transcription.cancelSuccess');
-                                this.transcriptionStatus.set(undefined);
-                            } else {
-                                this.alertService.error('artemisApp.attachmentVideoUnit.transcription.cancelError');
-                            }
-                        },
-                        error: () => {
-                            this.alertService.error('artemisApp.attachmentVideoUnit.transcription.cancelError');
-                        },
-                    });
-            },
-            () => {
-                // User dismissed the modal
-            },
-        );
     }
 }

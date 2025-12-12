@@ -203,7 +203,6 @@ export interface LectureUnitProcessingStatus {
  */
 export enum ProcessingPhase {
     IDLE = 'IDLE',
-    CHECKING_PLAYLIST = 'CHECKING_PLAYLIST',
     TRANSCRIBING = 'TRANSCRIBING',
     INGESTING = 'INGESTING',
     DONE = 'DONE',

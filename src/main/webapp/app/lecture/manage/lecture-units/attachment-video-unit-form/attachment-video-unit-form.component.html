@@ -180,20 +180,6 @@
                     </div>
                 }
             </div>
-            @if (shouldShowTranscriptionCreation()) {
-                <div class="row" id="video-transcription-row">
-                    <div class="form-group">
-                        <label for="videoTranscription" jhiTranslate="artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.videoTranscription"></label>
-                        <textarea
-                            class="form-control"
-                            id="videoTranscription"
-                            rows="3"
-                            formControlName="videoTranscription"
-                            [placeholder]="'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.videoTranscriptionPlaceholder' | artemisTranslate"
-                        ></textarea>
-                    </div>
-                </div>
-            }
             @if (showTranscriptionPendingWarning()) {
                 <div class="alert alert-warning mt-3 mb-3" role="alert">
                     <fa-icon [icon]="faQuestionCircle" />

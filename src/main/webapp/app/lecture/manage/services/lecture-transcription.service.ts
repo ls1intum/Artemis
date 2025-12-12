@@ -24,17 +24,6 @@ export class LectureTranscriptionService {
             );
     }
 
-    createTranscription(lectureId: number, lectureUnitId: number, transcription: LectureTranscriptionDTO): Observable<boolean> {
-        return this.httpClient
-            .post(`api/lecture/${lectureId}/lecture-unit/${lectureUnitId}/transcription`, transcription, {
-                observe: 'response',
-            })
-            .pipe(
-                map((response) => response.status == 201),
-                catchError(() => of(false)),
-            );
-    }
-
     getTranscription(lectureUnitId: number): Observable<LectureTranscriptionDTO | undefined> {
         return this.httpClient
             .get<LectureTranscriptionDTO>(`api/lecture/lecture-unit/${lectureUnitId}/transcript`, {
@@ -60,17 +49,6 @@ export class LectureTranscriptionService {
                     return undefined;
                 }),
                 catchError(() => of(undefined)),
-            );
-    }
-
-    cancelTranscription(lectureUnitId: number): Observable<boolean> {
-        return this.httpClient
-            .delete(`api/nebula/lecture-unit/${lectureUnitId}/transcriber/cancel`, {
-                observe: 'response',
-            })
-            .pipe(
-                map((response) => response.status === 200),
-                catchError(() => of(false)),
             );
     }
 }

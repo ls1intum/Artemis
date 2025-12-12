@@ -544,6 +544,12 @@ public final class Constants {
 
     public static final String LOCAL = "Local";
 
+    /**
+     * Maximum number of retry attempts for lecture content processing
+     * (transcription and ingestion) before marking as failed.
+     */
+    public static final int MAX_PROCESSING_RETRIES = 3;
+
     private Constants() {
     }
 }

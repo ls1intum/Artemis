@@ -96,21 +96,7 @@
                             }
                         </div>
                         @if (lectureUnit.type === LectureUnitType.ATTACHMENT_VIDEO) {
-                            @if (isTranscriptionPending(lectureUnit)) {
-                                <button
-                                    type="button"
-                                    class="btn btn-danger btn-sm flex-grow-1"
-                                    [disabled]="isCancellationLoading[lectureUnit.id!]"
-                                    (click)="cancelTranscription(lectureUnit)"
-                                    [ngbTooltip]="'artemisApp.attachmentVideoUnit.transcription.cancelButton' | artemisTranslate"
-                                >
-                                    @if (isCancellationLoading[lectureUnit.id!]) {
-                                        <fa-icon [icon]="faSpinner" animation="spin" />
-                                    } @else {
-                                        <fa-icon [icon]="faBan" />
-                                    }
-                                </button>
-                            } @else if (isTranscriptionFailed(lectureUnit)) {
+                            @if (isTranscriptionFailed(lectureUnit)) {
                                 <button
                                     type="button"
                                     class="btn btn-warning btn-sm flex-grow-1"

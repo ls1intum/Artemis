@@ -68,18 +68,11 @@ public class LectureUnitProcessingState extends DomainObject {
     private Integer attachmentVersion;
 
     /**
-     * Error message if processing failed.
-     * Provides details for display in the UI and for debugging.
+     * Translation key for error message if processing failed.
+     * Use i18n keys like "artemisApp.processing.error.transcriptionFailed".
      */
-    @Column(name = "error_message", length = 2000)
-    private String errorMessage;
-
-    /**
-     * The playlist URL for transcription.
-     * Stored to enable retry of transcription without re-fetching from TUM Live.
-     */
-    @Column(name = "playlist_url", length = 2000)
-    private String playlistUrl;
+    @Column(name = "error_key", length = 500)
+    private String errorKey;
 
     /**
      * Version counter incremented when content changes.
@@ -153,20 +146,12 @@ public class LectureUnitProcessingState extends DomainObject {
         this.attachmentVersion = attachmentVersion;
     }
 
-    public String getErrorMessage() {
-        return errorMessage;
+    public String getErrorKey() {
+        return errorKey;
     }
 
-    public void setErrorMessage(String errorMessage) {
-        this.errorMessage = errorMessage;
-    }
-
-    public String getPlaylistUrl() {
-        return playlistUrl;
-    }
-
-    public void setPlaylistUrl(String playlistUrl) {
-        this.playlistUrl = playlistUrl;
+    public void setErrorKey(String errorKey) {
+        this.errorKey = errorKey;
     }
 
     public long getProcessingVersion() {
@@ -229,17 +214,17 @@ public class LectureUnitProcessingState extends DomainObject {
         this.phase = newPhase;
         this.startedAt = ZonedDateTime.now();
         this.lastUpdated = ZonedDateTime.now();
-        this.errorMessage = null; // Clear error on phase transition
+        this.errorKey = null; // Clear error on phase transition
     }
 
     /**
-     * Mark as failed with an error message.
+     * Mark as failed with an error translation key.
      *
-     * @param message the error message
+     * @param key the i18n key for the error message
      */
-    public void markFailed(String message) {
+    public void markFailed(String key) {
         this.phase = ProcessingPhase.FAILED;
-        this.errorMessage = message;
+        this.errorKey = key;
         this.lastUpdated = ZonedDateTime.now();
     }
 
@@ -249,7 +234,7 @@ public class LectureUnitProcessingState extends DomainObject {
      * @return true if processing is active
      */
     public boolean isProcessing() {
-        return phase == ProcessingPhase.CHECKING_PLAYLIST || phase == ProcessingPhase.TRANSCRIBING || phase == ProcessingPhase.INGESTING;
+        return phase == ProcessingPhase.TRANSCRIBING || phase == ProcessingPhase.INGESTING;
     }
 
     /**

@@ -43,27 +43,6 @@ describe('LectureTranscriptionService', () => {
         expect(result).toBeFalse();
     });
 
-    it('should create transcription', () => {
-        const transcription = { lectureUnitId: 1, language: 'en', segments: [] };
-        const lectureId = 1;
-        const lectureUnitId = 1;
-        service.createTranscription(lectureId, lectureUnitId, transcription).subscribe(() => {});
-
-        const req = httpMock.expectOne({ method: 'POST', url: `api/lecture/${lectureId}/lecture-unit/${lectureUnitId}/transcription` });
-
-        expect(req.request.body).toBe(transcription);
-        req.flush({});
-    });
-
-    it('should return false on create transcription error', () => {
-        const transcription = { lectureUnitId: 1, language: 'en', segments: [] };
-        let result: boolean | undefined;
-        service.createTranscription(1, 1, transcription).subscribe((r) => (result = r));
-        const req = httpMock.expectOne(`api/lecture/1/lecture-unit/1/transcription`);
-        req.flush('error', { status: 500, statusText: 'Server Error' });
-        expect(result).toBeFalse();
-    });
-
     it('should get transcriptions', () => {
         const dto: LectureTranscriptionDTO = { lectureUnitId: 1, language: 'en', segments: [] };
         let result: LectureTranscriptionDTO | undefined;
@@ -79,25 +58,5 @@ describe('LectureTranscriptionService', () => {
         const req = httpMock.expectOne(`api/lecture/lecture-unit/1/transcript`);
         req.flush('error', { status: 404, statusText: 'Not Found' });
         expect(result).toBeUndefined();
-    });
-
-    it('should cancel transcription', () => {
-        const lectureUnitId = 1;
-        let result: boolean | undefined;
-        service.cancelTranscription(lectureUnitId).subscribe((r) => (result = r));
-
-        const req = httpMock.expectOne({ method: 'DELETE', url: `api/nebula/lecture-unit/${lectureUnitId}/transcriber/cancel` });
-        req.flush({}, { status: 200, statusText: 'OK' });
-        expect(result).toBeTrue();
-    });
-
-    it('should return false on cancel transcription error', () => {
-        const lectureUnitId = 1;
-        let result: boolean | undefined;
-        service.cancelTranscription(lectureUnitId).subscribe((r) => (result = r));
-
-        const req = httpMock.expectOne(`api/nebula/lecture-unit/${lectureUnitId}/transcriber/cancel`);
-        req.flush('error', { status: 500, statusText: 'Server Error' });
-        expect(result).toBeFalse();
     });
 });

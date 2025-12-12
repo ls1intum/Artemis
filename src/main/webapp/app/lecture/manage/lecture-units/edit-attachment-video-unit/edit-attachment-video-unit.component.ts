@@ -1,14 +1,14 @@
 import { Component, OnInit, ViewChild, inject } from '@angular/core';
 import { onError } from 'app/shared/util/global.utils';
 import { ActivatedRoute, Router } from '@angular/router';
-import { catchError, finalize, map, switchMap, take } from 'rxjs/operators';
+import { finalize, map, switchMap, take } from 'rxjs/operators';
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
-import { AttachmentVideoUnit, LectureTranscriptionDTO } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
+import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/shared/service/alert.service';
 import { AttachmentVideoUnitFormComponent, AttachmentVideoUnitFormData } from 'app/lecture/manage/lecture-units/attachment-video-unit-form/attachment-video-unit-form.component';
 import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachment.model';
-import { combineLatest, of } from 'rxjs';
+import { combineLatest } from 'rxjs';
 import { objectToJsonBlob } from 'app/shared/util/blob-util';
 import { LectureUnitLayoutComponent } from '../lecture-unit-layout/lecture-unit-layout.component';
 import { LectureTranscriptionService } from 'app/lecture/manage/services/lecture-transcription.service';
@@ -47,13 +47,10 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
                 }),
                 switchMap((attachmentVideoUnitResponse: HttpResponse<AttachmentVideoUnit>) => {
                     const attachmentVideoUnit = attachmentVideoUnitResponse.body!;
-                    return combineLatest({
-                        transcription: this.lectureTranscriptionService.getTranscription(attachmentVideoUnit.id!),
-                        transcriptionStatus: this.lectureTranscriptionService.getTranscriptionStatus(attachmentVideoUnit.id!),
-                    }).pipe(
-                        map(({ transcription, transcriptionStatus }) => ({
+                    // Fetch transcription status for display
+                    return this.lectureTranscriptionService.getTranscriptionStatus(attachmentVideoUnit.id!).pipe(
+                        map((transcriptionStatus) => ({
                             attachmentVideoUnit,
-                            transcription,
                             transcriptionStatus,
                         })),
                     );
@@ -63,7 +60,7 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
                 }),
             )
             .subscribe({
-                next: ({ attachmentVideoUnit, transcription, transcriptionStatus }) => {
+                next: ({ attachmentVideoUnit, transcriptionStatus }) => {
                     this.attachmentVideoUnit = attachmentVideoUnit;
                     this.attachment = this.attachmentVideoUnit.attachment || {};
                     // breaking the connection to prevent errors in deserialization. will be reconnected on the server side
@@ -82,9 +79,6 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
                         fileProperties: {
                             fileName: this.attachment.link,
                         },
-                        transcriptionProperties: {
-                            videoTranscription: transcription ? JSON.stringify(transcription) : undefined,
-                        },
                         transcriptionStatus: transcriptionStatus,
                     };
                     // Check if playlist URL is available for existing video to enable transcription generation
@@ -101,7 +95,6 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
     updateAttachmentVideoUnit(attachmentVideoUnitFormData: AttachmentVideoUnitFormData) {
         const { description, name, releaseDate, updateNotificationText, videoSource, competencyLinks } = attachmentVideoUnitFormData.formProperties;
         const { file, fileName } = attachmentVideoUnitFormData.fileProperties;
-        const { videoTranscription } = attachmentVideoUnitFormData.transcriptionProperties || {};
 
         // optional update notification text for students
         if (updateNotificationText) {
@@ -132,35 +125,7 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
 
         this.attachmentVideoUnitService
             .update(this.lectureId, this.attachmentVideoUnit.id!, formData, this.notificationText)
-            .pipe(
-                switchMap((response) => {
-                    const lectureUnit = response.body!;
-                    // Second: Handle manual transcription save if provided
-                    if (!videoTranscription || !lectureUnit.id) {
-                        return of(lectureUnit);
-                    }
-
-                    let transcription: LectureTranscriptionDTO;
-                    try {
-                        transcription = JSON.parse(videoTranscription) as LectureTranscriptionDTO;
-                    } catch (e) {
-                        this.alertService.error('artemisApp.lectureUnit.attachmentVideoUnit.transcriptionInvalidJson');
-                        return of(lectureUnit);
-                    }
-
-                    transcription.lectureUnitId = lectureUnit.id;
-
-                    return this.lectureTranscriptionService.createTranscription(this.lectureId, lectureUnit.id, transcription).pipe(
-                        map(() => lectureUnit),
-                        // Swallow transcription errors so the primary save still counts as success
-                        catchError((err) => {
-                            onError(this.alertService, err);
-                            return of(lectureUnit);
-                        }),
-                    );
-                }),
-                finalize(() => (this.isLoading = false)),
-            )
+            .pipe(finalize(() => (this.isLoading = false)))
             .subscribe({
                 next: () => this.router.navigate(['../../../'], { relativeTo: this.activatedRoute }),
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),

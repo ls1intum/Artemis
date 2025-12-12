@@ -13,12 +13,6 @@ public enum ProcessingPhase {
     IDLE,
 
     /**
-     * Checking if a TUM Live playlist URL is available for transcription.
-     * This is a brief state before either moving to TRANSCRIBING or directly to INGESTING.
-     */
-    CHECKING_PLAYLIST,
-
-    /**
      * Transcription is in progress with Nebula.
      * The system polls Nebula for completion status.
      */

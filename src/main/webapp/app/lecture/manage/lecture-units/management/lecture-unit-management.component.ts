@@ -12,7 +12,7 @@ import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/le
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { AttachmentVideoUnit, TranscriptionStatus } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { ExerciseUnit } from 'app/lecture/shared/entities/lecture-unit/exerciseUnit.model';
-import { faBan, faExclamationTriangle, faEye, faFileLines, faPencilAlt, faRepeat, faSpinner, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faExclamationTriangle, faEye, faFileLines, faPencilAlt, faRepeat, faSpinner, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { CdkDrag, CdkDragDrop, CdkDropList, moveItemInArray } from '@angular/cdk/drag-drop';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { LectureTranscriptionService } from 'app/lecture/manage/services/lecture-transcription.service';
@@ -57,7 +57,6 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     protected readonly faSpinner = faSpinner;
     protected readonly faFileLines = faFileLines;
     protected readonly faExclamationTriangle = faExclamationTriangle;
-    protected readonly faBan = faBan;
     protected readonly faRepeat = faRepeat;
 
     protected readonly LectureUnitType = LectureUnitType;
@@ -82,7 +81,6 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     isLoading = false;
     viewButtonAvailable: Record<number, boolean> = {};
     transcriptionStatus: Record<number, TranscriptionStatus> = {};
-    isCancellationLoading: Record<number, boolean> = {};
     isRetryingProcessing: Record<number, boolean> = {};
 
     private dialogErrorSource = new Subject<string>();
@@ -265,31 +263,6 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
                 }
             },
         });
-    }
-
-    cancelTranscription(lectureUnit: AttachmentVideoUnit) {
-        const lectureUnitId = lectureUnit.id;
-        if (!lectureUnitId || this.isCancellationLoading[lectureUnitId]) {
-            return;
-        }
-
-        this.isCancellationLoading[lectureUnitId] = true;
-        this.lectureTranscriptionService
-            .cancelTranscription(lectureUnitId)
-            .pipe(finalize(() => (this.isCancellationLoading[lectureUnitId] = false)))
-            .subscribe({
-                next: (success) => {
-                    if (success) {
-                        this.alertService.success('artemisApp.attachmentVideoUnit.transcription.cancelSuccess');
-                        delete this.transcriptionStatus[lectureUnitId];
-                    } else {
-                        this.alertService.error('artemisApp.attachmentVideoUnit.transcription.cancelError');
-                    }
-                },
-                error: () => {
-                    this.alertService.error('artemisApp.attachmentVideoUnit.transcription.cancelError');
-                },
-            });
     }
 
     hasTranscription(lectureUnit: AttachmentVideoUnit): boolean {

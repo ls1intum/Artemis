@@ -76,6 +76,11 @@ public class AttachmentVideoUnitService {
 
         if (attachment != null && file != null) {
             createAttachment(attachment, savedAttachmentVideoUnit, file, keepFilename);
+
+            // Split the new file into single slides if it is a PDF
+            if ("pdf".equalsIgnoreCase(FilenameUtils.getExtension(file.getOriginalFilename()))) {
+                slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(savedAttachmentVideoUnit);
+            }
         }
 
         // Trigger automated content processing (transcription and ingestion)
@@ -129,6 +134,10 @@ public class AttachmentVideoUnitService {
         }
 
         if (createdNewAttachment) {
+            // Split the new file into single slides if it is a PDF
+            if (updateFile != null && "pdf".equalsIgnoreCase(FilenameUtils.getExtension(updateFile.getOriginalFilename()))) {
+                slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(savedAttachmentVideoUnit);
+            }
             // Trigger processing for newly added attachment
             contentProcessingService.triggerProcessing(savedAttachmentVideoUnit);
         }

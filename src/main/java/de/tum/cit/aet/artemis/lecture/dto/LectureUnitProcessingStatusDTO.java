@@ -12,7 +12,7 @@ import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
  * Used to show processing progress and errors in the UI.
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public record LectureUnitProcessingStatusDTO(Long lectureUnitId, ProcessingPhase phase, int retryCount, ZonedDateTime startedAt, String errorMessage) {
+public record LectureUnitProcessingStatusDTO(Long lectureUnitId, ProcessingPhase phase, int retryCount, ZonedDateTime startedAt, String errorKey) {
 
     /**
      * Create a DTO from a processing state entity.
@@ -21,7 +21,7 @@ public record LectureUnitProcessingStatusDTO(Long lectureUnitId, ProcessingPhase
      * @return the DTO
      */
     public static LectureUnitProcessingStatusDTO of(LectureUnitProcessingState state) {
-        return new LectureUnitProcessingStatusDTO(state.getLectureUnit().getId(), state.getPhase(), state.getRetryCount(), state.getStartedAt(), state.getErrorMessage());
+        return new LectureUnitProcessingStatusDTO(state.getLectureUnit().getId(), state.getPhase(), state.getRetryCount(), state.getStartedAt(), state.getErrorKey());
     }
 
     /**

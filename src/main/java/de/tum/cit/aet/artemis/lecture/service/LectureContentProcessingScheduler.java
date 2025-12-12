@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.MAX_PROCESSING_RETRIES;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE_AND_SCHEDULING;
 
 import java.time.ZonedDateTime;
@@ -19,12 +20,13 @@ import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRepos
 
 /**
  * Scheduler for managing lecture content processing jobs.
- * Handles:
- * <ul>
- * <li>Recovery after node restart (detecting stuck states)</li>
- * <li>Timeout detection for hung processes</li>
- * <li>Periodic cleanup of stale states</li>
- * </ul>
+ * <p>
+ * Handles recovery of stuck processing states after node restart or timeout.
+ * States that are stuck longer than their phase-specific timeout are reset
+ * and re-triggered for processing.
+ * <p>
+ * Note: Cleanup of orphaned states (where lecture unit was deleted) is handled
+ * automatically by database CASCADE DELETE on the foreign key constraint.
  */
 @Component
 @Lazy
@@ -34,13 +36,15 @@ public class LectureContentProcessingScheduler {
     private static final Logger log = LoggerFactory.getLogger(LectureContentProcessingScheduler.class);
 
     /**
-     * Time in minutes after which a processing state is considered stuck.
-     * Different phases have different timeout thresholds.
+     * Timeout in minutes for transcription phase.
+     * Transcription can take a while for long videos.
      */
-    private static final int CHECKING_PLAYLIST_TIMEOUT_MINUTES = 5;
+    private static final int TRANSCRIPTION_TIMEOUT_MINUTES = 120; // 2 hours
 
-    private static final int TRANSCRIPTION_TIMEOUT_MINUTES = 120; // 2 hours - transcription can take a while
-
+    /**
+     * Timeout in minutes for ingestion phase.
+     * Ingestion is generally faster than transcription.
+     */
     private static final int INGESTION_TIMEOUT_MINUTES = 60; // 1 hour
 
     private final LectureUnitProcessingStateRepository processingStateRepository;
@@ -54,41 +58,35 @@ public class LectureContentProcessingScheduler {
 
     /**
      * Periodically check for stuck processing states and recover them.
-     * Runs every 5 minutes.
+     * <p>
+     * A state is considered stuck if it has been in a processing phase
+     * longer than the phase-specific timeout without completing.
+     * This can happen if:
+     * <ul>
+     * <li>The processing node crashed or restarted</li>
+     * <li>A callback from Nebula or Pyris was lost</li>
+     * <li>The external service is unresponsive</li>
+     * </ul>
+     * <p>
+     * Stuck states are reset to IDLE and re-triggered, up to MAX_PROCESSING_RETRIES times.
      */
     @Scheduled(fixedRate = 300000) // 5 minutes
     public void recoverStuckProcessingStates() {
         log.debug("Checking for stuck processing states...");
 
-        recoverPhase(ProcessingPhase.CHECKING_PLAYLIST, CHECKING_PLAYLIST_TIMEOUT_MINUTES);
         recoverPhase(ProcessingPhase.TRANSCRIBING, TRANSCRIPTION_TIMEOUT_MINUTES);
         recoverPhase(ProcessingPhase.INGESTING, INGESTION_TIMEOUT_MINUTES);
     }
 
     /**
-     * Clean up orphaned processing states where the lecture unit no longer exists.
-     * Runs every hour.
+     * Find and recover all states stuck in a specific phase.
+     * <p>
+     * Queries for states that have been in the given phase longer than
+     * the timeout threshold and attempts to recover each one.
+     *
+     * @param phase          the processing phase to check
+     * @param timeoutMinutes the timeout threshold in minutes
      */
-    @Scheduled(fixedRate = 3600000) // 1 hour
-    public void cleanupOrphanedStates() {
-        log.debug("Cleaning up orphaned processing states...");
-
-        List<LectureUnitProcessingState> allStates = processingStateRepository.findAll();
-        int cleaned = 0;
-
-        for (LectureUnitProcessingState state : allStates) {
-            if (state.getLectureUnit() == null) {
-                log.info("Deleting orphaned processing state {}", state.getId());
-                processingStateRepository.delete(state);
-                cleaned++;
-            }
-        }
-
-        if (cleaned > 0) {
-            log.info("Cleaned up {} orphaned processing states", cleaned);
-        }
-    }
-
     private void recoverPhase(ProcessingPhase phase, int timeoutMinutes) {
         ZonedDateTime cutoff = ZonedDateTime.now().minusMinutes(timeoutMinutes);
 
@@ -103,8 +101,20 @@ public class LectureContentProcessingScheduler {
         }
     }
 
+    /**
+     * Attempt to recover a single stuck processing state.
+     * <p>
+     * The state is reset to IDLE and re-triggered for processing.
+     * If the retry count exceeds MAX_PROCESSING_RETRIES, the state is marked as failed.
+     * <p>
+     * Only AttachmentVideoUnit instances can be re-triggered since only they
+     * support the automated processing pipeline.
+     *
+     * @param state the stuck processing state to recover
+     */
     private void recoverStuckState(LectureUnitProcessingState state) {
         if (state.getLectureUnit() == null) {
+            // This shouldn't happen with CASCADE DELETE, but handle defensively
             log.warn("Cannot recover state {} - no associated lecture unit", state.getId());
             processingStateRepository.delete(state);
             return;
@@ -114,9 +124,9 @@ public class LectureContentProcessingScheduler {
 
         state.incrementRetryCount();
 
-        if (state.getRetryCount() >= 3) {
+        if (state.getRetryCount() >= MAX_PROCESSING_RETRIES) {
             log.warn("Max recovery attempts reached for unit {}, marking as failed", state.getLectureUnit().getId());
-            state.markFailed("Processing timed out after multiple recovery attempts");
+            state.markFailed("artemisApp.lectureUnit.processing.error.timeout");
             processingStateRepository.save(state);
             return;
         }
@@ -125,7 +135,7 @@ public class LectureContentProcessingScheduler {
         state.transitionTo(ProcessingPhase.IDLE);
         processingStateRepository.save(state);
 
-        // Trigger re-processing
+        // Trigger re-processing (only AttachmentVideoUnits support automated processing)
         if (state.getLectureUnit() instanceof AttachmentVideoUnit attachmentUnit) {
             try {
                 processingService.triggerProcessing(attachmentUnit);

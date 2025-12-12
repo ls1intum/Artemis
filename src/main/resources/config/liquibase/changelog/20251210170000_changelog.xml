@@ -5,7 +5,7 @@
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
 
     <!-- Create lecture_unit_processing_state table for tracking automated content processing -->
-    <changeSet id="20251210170000-processing-state" author="automated">
+    <changeSet id="20251210170000-processing-state" author="bassner">
         <createTable tableName="lecture_unit_processing_state">
             <column name="id" type="BIGINT" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
@@ -25,8 +25,11 @@
             <column name="attachment_version" type="INT">
                 <constraints nullable="true"/>
             </column>
-            <column name="error_message" type="VARCHAR(2000)">
+            <column name="error_key" type="VARCHAR(500)">
                 <constraints nullable="true"/>
+            </column>
+            <column name="processing_version" type="BIGINT" defaultValue="0">
+                <constraints nullable="false"/>
             </column>
             <column name="started_at" type="DATETIME">
                 <constraints nullable="true"/>
