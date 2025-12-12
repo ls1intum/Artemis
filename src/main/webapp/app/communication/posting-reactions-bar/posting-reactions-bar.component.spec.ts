@@ -3,7 +3,9 @@ import { MetisService } from 'app/communication/service/metis.service';
 import { DebugElement, input, runInInjectionContext } from '@angular/core';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { WebsocketService } from 'app/shared/service/websocket.service';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { getElement } from 'test/helpers/utils/general-test.utils';
 import { Reaction } from 'app/communication/shared/entities/reaction.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -88,6 +90,7 @@ describe('PostingReactionsBarComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: Router, useClass: MockRouter },
                 { provide: MetisConversationService, useClass: MockMetisConversationService },
+                { provide: WebsocketService, useClass: MockWebsocketService },
             ],
         })
             .compileComponents()

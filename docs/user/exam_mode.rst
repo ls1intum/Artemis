@@ -3,10 +3,8 @@
 Exams
 =====
 
-Artemis now includes an online exam mode:
+.. warning::
+   This documentation has been migrated to the new documentation.
 
-.. toctree::
-
-   exams/students_guide
-   exams/instructors_guide
-   exams/exam_participation_checker
+- **Student Guide:** https://ls1intum.github.io/Artemis/student/exams
+- **Instructor Guide:** https://ls1intum.github.io/Artemis/instructor/exams/intro

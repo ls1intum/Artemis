@@ -63,6 +63,97 @@ spring:
             deployment-name: <azure-deployment> # gpt-5-mini deployment recommended
             temperature: 1.0 # Required to be 1.0 for gpt-5
 ```
+### Observability (Optional)
+
+Enabling observability during development helps you understand how LLM-based features behave, why they produce certain outputs, and how to optimize them. Since LLMs are non-deterministic and sensitive to prompts, parameters, and context, traditional logging is often not enough.
+
+Key benefits of adding observability:
+
+- Full visibility into prompts, responses, parameters, and token usage
+- Reproducible debugging through stored traces
+- Faster prompt iteration with comparison and tracking
+- Early cost and token monitoring
+- Insight into multi-step pipelines and performance bottlenecks
+- Primarily used in development, but can also be enabled in production environments if deeper analysis or incident debugging is required
+
+#### Langfuse
+
+Langfuse is a platform for observability and tracing of LLM applications and agents. It captures everything happening during an LLM interaction: inputs, outputs, tool usage, retries, latencies and costs.
+
+#### Setup Guide
+1. See how to create and setup a Langfuse account (See only "Get API keys") [here](https://langfuse.com/docs/observability/get-started).
+
+2. Request to join a Organization from an Edutelligence maintainer.
+
+3. You will be added to the Project as **Member**.
+> ℹ️ **Note**
+> Project Members can *use* Langfuse and access existing API keys.
+> Only **Project Admins** can create new API keys.
+> If you cannot view API keys, ask the maintainer to generate them for you.
+
+4. Once the Project Admin provides the **Public Key** and **Secret Key**, store them securely.
+These keys authenticate your application when sending observability data to Langfuse.
+
+5. Identify your Langfuse host URL.
+It appears in the Langfuse UI as: **https://\<host\>**.
+
+Your **OTLP HTTP ingestion endpoint** follows the standard OTLP HTTP spec and is constructed as:
+**https://\<host\>/api/public/otel/v1/traces**
+- `/api/public/otel` → Langfuse OTLP receiver root
+- `/v1/traces` → Standard OTLP HTTP route
+> For more info: See how Langfuse can receive traces on the OLTP endpoint [here](https://langfuse.com/integrations/native/opentelemetry)
+
+6. Generate the Basic Authentication token for Langfuse.
+Use Base64 encoding with the format: base64(public_key:secret_key)
+
+Example generation command:
+```bash
+echo -n "<public_key>:<secret_key>" | base64
+```
+
+7. Add the OTLP endpoint and authorization header to your Spring configuration.
+
+Use the OTLP endpoint constructed in Step 5 and the Base64 token generated in Step 6.
+These values can be provided through **active Spring profile YAML** (e.g. `application-local.yaml`, `application-dev.yaml`) or via **environment variables**.
+
+You will need to set the following properties:
+
+- `management.otlp.tracing.endpoint` → `https://<host>/api/public/otel/v1/traces`
+- `management.otlp.tracing.headers.Authorization` → `Basic <base64(public_key:secret_key)>`
+
+To avoid committing secrets, prefer supplying these values via environment variables and referencing them in YAML.
+
+#### Configure Langfuse
+
+> Below is the current configuration used in development profile to view the LLM traces of Hyperion services on Langfuse.
+
+```yaml
+management:
+  # Set true to display contextual name in @Observed on Langfuse
+  observations:
+    annotations:
+      enabled: true
+  # Configuration for exporting LLM traces to Langfuse (set to true to enable Artemis' custom exporter)
+  langfuse:
+    enabled: true
+  tracing:
+    sampling:
+      probability: 1.0
+  otlp:
+    tracing:
+      # LangFuse accepts OTLP over HTTP at the traces path only
+      # (example: https://langfuse.aet.cit.tum.de/api/public/otel/v1/traces)
+      endpoint: https://example.com
+      transport: http
+      headers:
+        # Provide "Basic <base64(public_key:secret_key)>" via env var to avoid committing secrets
+        Authorization: "Basic <base64(public_key:secret_key)>"
+      # Important: Set export.enabled: false to disable the *default* OTLP exporter.
+      # Artemis uses its own custom exporter to send Spring AI LLM traces to Langfuse.
+      # so disabling the default exporter will NOT stop LLM trace export.
+      export:
+        enabled: false
+```
 
 ## Verifying the integration
 

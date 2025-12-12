@@ -1,5 +1,6 @@
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { WebsocketService } from 'app/shared/service/websocket.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -21,6 +22,7 @@ import { ChangeDetectorRef } from '@angular/core';
 import { QuizQuestionStatistic } from 'app/quiz/shared/entities/quiz-question-statistic.model';
 import { greenColor, greyColor, redColor } from 'app/quiz/manage/statistics/question-statistic.component';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 
 const route = { params: of({ courseId: 3, exerciseId: 22, questionId: 1 }) };
 const answerOption1 = { id: 5 } as AnswerOption;
@@ -47,6 +49,7 @@ describe('QuizExercise Multiple Choice Question Statistic Component', () => {
                 SessionStorageService,
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
+                { provide: WebsocketService, useClass: MockWebsocketService },
                 MockProvider(ChangeDetectorRef),
                 MockProvider(Router),
                 provideHttpClient(),

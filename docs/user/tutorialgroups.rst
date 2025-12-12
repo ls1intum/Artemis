@@ -6,9 +6,9 @@ Tutorial Groups
 Student Guide
 =============
 .. note::
-    This section has been moved to our `new student documentation <https://ls1intum.github.io/Artemis/student/tutorialgroups/>`_.
+    This section has been moved to our `new student documentation <https://ls1intum.github.io/Artemis/student/tutorial-groups/>`_.
 
 Instructor Guide
 ================
 .. note::
-    This section has been moved to our `new instructor documentation <https://ls1intum.github.io/Artemis/instructor/tutorialgroups/>`_.
+    This section has been moved to our `new instructor documentation <https://ls1intum.github.io/Artemis/instructor/tutorial-groups/>`_.

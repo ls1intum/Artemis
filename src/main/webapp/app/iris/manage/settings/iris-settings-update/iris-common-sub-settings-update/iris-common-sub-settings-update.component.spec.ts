@@ -1,6 +1,6 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
-import { IrisProgrammingExerciseChatSubSettings } from 'app/iris/shared/entities/settings/iris-sub-settings.model';
+import { IrisEventType, IrisProgrammingExerciseChatSubSettings } from 'app/iris/shared/entities/settings/iris-sub-settings.model';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { SimpleChange, SimpleChanges } from '@angular/core';
@@ -9,10 +9,11 @@ import { mockVariants } from 'test/helpers/mocks/iris/mock-settings';
 import { IrisSettingsType } from 'app/iris/shared/entities/settings/iris-settings.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import * as globalUtils from 'app/shared/util/global.utils';
+import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { MockJhiTranslateDirective } from 'test/helpers/mocks/directive/mock-jhi-translate-directive.directive';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -208,6 +209,104 @@ describe('IrisCommonSubSettingsUpdateComponent Component', () => {
 
         expect(comp.enabled).toBeFalse();
         expect(comp.allowedVariants).toEqual(newModels);
+    });
+
+    it('should not call getVariants if subSettings type is missing', () => {
+        const subSettings = baseSettings();
+        (subSettings as any).type = undefined;
+        comp.subSettings = subSettings;
+        fixture.detectChanges();
+        expect(getVariantsSpy).not.toHaveBeenCalled();
+    });
+
+    it('should handle error when loading categories', fakeAsync(() => {
+        const error = new HttpErrorResponse({ status: 500 });
+        const onErrorSpy = jest.spyOn(globalUtils, 'onError').mockImplementation();
+        getCategoriesSpy.mockReturnValue(throwError(() => error));
+
+        comp.settingsType = IrisSettingsType.COURSE;
+        comp.courseId = 1;
+        comp.loadCategories();
+        tick();
+
+        expect(getCategoriesSpy).toHaveBeenCalledOnce();
+        expect(onErrorSpy).toHaveBeenCalledOnce();
+    }));
+
+    it('should get selected variant name', () => {
+        comp.subSettings = baseSettings();
+        comp.availableVariants = mockVariants();
+        fixture.detectChanges();
+
+        expect(comp.getSelectedVariantName()).toBe(mockVariants()[0].name);
+
+        comp.subSettings.selectedVariant = 'non-existent';
+        expect(comp.getSelectedVariantName()).toBe('non-existent');
+    });
+
+    it('should get selected variant name from parent', () => {
+        comp.parentSubSettings = baseSettings();
+        comp.availableVariants = mockVariants();
+        fixture.detectChanges();
+
+        expect(comp.getSelectedVariantNameParent()).toBe(mockVariants()[0].name);
+
+        comp.parentSubSettings.selectedVariant = 'non-existent';
+        expect(comp.getSelectedVariantNameParent()).toBe('non-existent');
+    });
+
+    it('should toggle proactive events', () => {
+        comp.subSettings = baseSettings();
+        comp.subSettings.disabledProactiveEvents = [];
+        fixture.detectChanges();
+
+        comp.onEventToggleChange(IrisEventType.BUILD_FAILED);
+        expect(comp.subSettings.disabledProactiveEvents).toEqual([IrisEventType.BUILD_FAILED]);
+
+        comp.onEventToggleChange(IrisEventType.BUILD_FAILED);
+        expect(comp.subSettings.disabledProactiveEvents).toEqual([]);
+
+        comp.subSettings = undefined;
+        comp.onEventToggleChange(IrisEventType.BUILD_FAILED);
+        expect(comp.subSettings).toBeUndefined();
+    });
+
+    it('should update custom instructions', () => {
+        comp.subSettings = baseSettings();
+        fixture.detectChanges();
+
+        const instructions = 'New custom instructions';
+        comp.onCustomInstructionsChange(instructions);
+        expect(comp.subSettings.customInstructions).toBe(instructions);
+
+        comp.subSettings = undefined;
+        comp.onCustomInstructionsChange(instructions);
+        expect(comp.subSettings).toBeUndefined();
+    });
+
+    it('ngOnChanges should update event disabled status', () => {
+        const subSettings = baseSettings();
+        const parentSubSettings = baseSettings();
+        parentSubSettings.enabled = false;
+        comp.subSettings = subSettings;
+        comp.parentSubSettings = parentSubSettings;
+        comp.exerciseChatEvents = [IrisEventType.BUILD_FAILED];
+        const updateEventDisabledStatusSpy = jest.spyOn(comp as any, 'updateEventDisabledStatus');
+
+        const changes: SimpleChanges = {
+            parentSubSettings: new SimpleChange(undefined, parentSubSettings, true),
+        };
+        comp.ngOnChanges(changes);
+
+        expect(updateEventDisabledStatusSpy).toHaveBeenCalledOnce();
+        expect(comp.eventInParentDisabledStatusMap.get(IrisEventType.BUILD_FAILED)).toBeTrue();
+
+        parentSubSettings.enabled = true;
+        const changes2: SimpleChanges = {
+            parentSubSettings: new SimpleChange(parentSubSettings, parentSubSettings, false),
+        };
+        comp.ngOnChanges(changes2);
+        expect(comp.eventInParentDisabledStatusMap.get(IrisEventType.BUILD_FAILED)).toBeFalse();
     });
 
     it('enable categories', () => {

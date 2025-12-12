@@ -34,8 +34,8 @@ export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
     buildCapacity = 0;
     currentBuilds = 0;
     channel: string = '/topic/admin/build-agents';
-    websocketSubscription: Subscription;
-    restSubscription: Subscription;
+    websocketSubscription?: Subscription;
+    restSubscription?: Subscription;
     routerLink: string;
 
     //icons
@@ -54,7 +54,6 @@ export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
      * This method is used to unsubscribe from the websocket channels when the component is destroyed.
      */
     ngOnDestroy() {
-        this.websocketService.unsubscribe(this.channel);
         this.websocketSubscription?.unsubscribe();
         this.restSubscription?.unsubscribe();
     }
@@ -63,8 +62,7 @@ export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
      * This method is used to initialize the websocket subscription for the build agents. It subscribes to the channel for the build agents.
      */
     initWebsocketSubscription() {
-        this.websocketService.subscribe(this.channel);
-        this.websocketSubscription = this.websocketService.receive(this.channel).subscribe((buildAgents) => {
+        this.websocketSubscription = this.websocketService.subscribe<BuildAgentInformation[]>(this.channel).subscribe((buildAgents) => {
             this.updateBuildAgents(buildAgents);
         });
     }

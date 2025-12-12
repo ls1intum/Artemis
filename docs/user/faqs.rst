@@ -1,6 +1,6 @@
 .. _faqs:
 
-<Title>
+FAQs
 ==========
 
 Student Guide

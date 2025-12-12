@@ -1,5 +1,5 @@
 import { Injectable, OnDestroy, inject } from '@angular/core';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject, Observable, Subscription } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 
@@ -29,6 +29,7 @@ export class ProgrammingBuildRunService implements OnDestroy {
     // Boolean subject: true == build is running, false == build is not running.
     private buildRunSubjects: { [programmingExerciseId: number]: BehaviorSubject<BuildRunState | undefined> } = {};
     private buildRunTopics: { [programmingExerciseId: number]: string } = {};
+    private buildRunSubscriptions: { [programmingExerciseId: number]: Subscription } = {};
 
     private BUILD_RUN_TEMPLATE_TOPIC = '/topic/programming-exercises/%programmingExerciseId%/all-builds-triggered';
 
@@ -37,6 +38,7 @@ export class ProgrammingBuildRunService implements OnDestroy {
      */
     ngOnDestroy(): void {
         Object.values(this.buildRunSubjects).forEach((subject) => subject.unsubscribe());
+        Object.values(this.buildRunSubscriptions).forEach((subscription) => subscription.unsubscribe());
     }
 
     private notifySubscribers(programmingExerciseId: number, buildRunState: BuildRunState) {
@@ -52,9 +54,8 @@ export class ProgrammingBuildRunService implements OnDestroy {
         if (!this.buildRunTopics[programmingExerciseId]) {
             const newSubmissionTopic = this.BUILD_RUN_TEMPLATE_TOPIC.replace('%programmingExerciseId%', programmingExerciseId.toString());
             this.buildRunTopics[programmingExerciseId] = newSubmissionTopic;
-            this.websocketService.subscribe(newSubmissionTopic);
-            this.websocketService
-                .receive(newSubmissionTopic)
+            this.buildRunSubscriptions[programmingExerciseId] = this.websocketService
+                .subscribe<BuildRunState>(newSubmissionTopic)
                 // Atm we only get the message about completed builds from the server.
                 .pipe(tap((buildRunState: BuildRunState) => this.notifySubscribers(programmingExerciseId, buildRunState)))
                 .subscribe();

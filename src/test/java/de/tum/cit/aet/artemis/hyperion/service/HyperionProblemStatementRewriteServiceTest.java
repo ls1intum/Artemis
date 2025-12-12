@@ -20,6 +20,7 @@ import org.springframework.ai.chat.prompt.Prompt;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementRewriteResponseDTO;
+import io.micrometer.observation.ObservationRegistry;
 
 class HyperionProblemStatementRewriteServiceTest {
 
@@ -33,7 +34,8 @@ class HyperionProblemStatementRewriteServiceTest {
         MockitoAnnotations.openMocks(this);
         ChatClient chatClient = ChatClient.create(chatModel);
         var templateService = new HyperionPromptTemplateService();
-        this.hyperionProblemStatementRewriteService = new HyperionProblemStatementRewriteService(chatClient, templateService);
+        var observationRegistry = ObservationRegistry.create();
+        this.hyperionProblemStatementRewriteService = new HyperionProblemStatementRewriteService(chatClient, templateService, observationRegistry);
     }
 
     @Test

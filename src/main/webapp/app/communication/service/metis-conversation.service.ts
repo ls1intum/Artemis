@@ -54,6 +54,7 @@ export class MetisConversationService implements OnDestroy {
 
     private subscribedConversationMembershipTopic?: string;
     private activeConversationSubscription?: Subscription;
+    private conversationMembershipSubscription?: Subscription;
 
     private userId: number;
     private _courseId: number;
@@ -64,8 +65,7 @@ export class MetisConversationService implements OnDestroy {
         this.accountService.identity().then((user: User) => {
             this.userId = user.id!;
             const conversationTopic = `/topic/user/${this.userId}/notifications/conversations`;
-            this.websocketService.subscribe(conversationTopic);
-            this.activeConversationSubscription = this.websocketService.receive(conversationTopic)?.subscribe((postDTO: MetisPostDTO) => {
+            this.activeConversationSubscription = this.websocketService.subscribe<MetisPostDTO>(conversationTopic).subscribe((postDTO: MetisPostDTO) => {
                 if (postDTO.action === MetisPostAction.CREATE && postDTO.post.author?.id !== this.userId) {
                     this.handleNewMessage(postDTO.post.conversation?.id, postDTO.post.conversation?.lastMessageDate);
                 }
@@ -79,7 +79,7 @@ export class MetisConversationService implements OnDestroy {
 
     private cleanupSubscriptions() {
         if (this.subscribedConversationMembershipTopic) {
-            this.websocketService.unsubscribe(this.subscribedConversationMembershipTopic);
+            this.conversationMembershipSubscription?.unsubscribe();
             this.subscribedConversationMembershipTopic = undefined;
         }
 
@@ -401,12 +401,13 @@ export class MetisConversationService implements OnDestroy {
         }
 
         const conversationMembershipTopic = this.getConversationMembershipTopic(courseId, userId);
-        this.websocketService.subscribe(conversationMembershipTopic);
         this.subscribedConversationMembershipTopic = conversationMembershipTopic;
 
-        this.websocketService.receive(conversationMembershipTopic).subscribe((websocketDTO: ConversationWebsocketDTO) => {
-            this.onConversationMembershipMessageReceived(websocketDTO);
-        });
+        this.conversationMembershipSubscription = this.websocketService
+            .subscribe<ConversationWebsocketDTO>(conversationMembershipTopic)
+            .subscribe((websocketDTO: ConversationWebsocketDTO) => {
+                this.onConversationMembershipMessageReceived(websocketDTO);
+            });
     }
 
     private onConversationMembershipMessageReceived(websocketDTO: ConversationWebsocketDTO) {

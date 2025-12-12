@@ -277,6 +277,12 @@ dependencies {
     implementation "io.micrometer:micrometer-observation:${micrometer_version}"
     implementation "io.micrometer:micrometer-jakarta9:${micrometer_version}"
 
+    // required for exposing LLM traces to Langfuse
+    implementation "io.micrometer:micrometer-tracing-bridge-otel:${micrometer_tracing_version}"
+    // no need to specify version for opentelemetry as above micrometer tracing already brings in a compatible OpenTelemetry version
+    // Gradle will align the exporter to that version automatically
+    implementation "io.opentelemetry:opentelemetry-exporter-otlp"
+
     // Prometheus requires the protobuf-java dependency, but we explicitly use the latest version to avoid security vulnerabilities
     implementation "com.google.protobuf:protobuf-java:4.33.1"
 
