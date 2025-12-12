@@ -124,7 +124,7 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
                 JOIN StudentParticipation p ON p.id = s.participation.id
                 JOIN p.student student
             WHERE s.submissionDate BETWEEN :nowMinus30Days AND :now
-                AND student.login NOT LIKE '%test%'
+                AND LOWER(student.login) NOT LIKE '%test%'
             """)
     ActiveUserWindowCounts countActiveUsersByWindows(@Param("now") ZonedDateTime now, @Param("nowMinus1Day") ZonedDateTime nowMinus1Day,
             @Param("nowMinus7Days") ZonedDateTime nowMinus7Days, @Param("nowMinus14Days") ZonedDateTime nowMinus14Days, @Param("nowMinus30Days") ZonedDateTime nowMinus30Days);

@@ -201,7 +201,7 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
             WHERE e.course.testCourse = FALSE
             	AND e.dueDate >= :minDate
                 AND e.dueDate <= :maxDate
-                AND user.login NOT LIKE '%test%'
+                AND LOWER(user.login) NOT LIKE '%test%'
                 AND EXISTS (
                     SELECT 1
                     FROM Submission submission
@@ -277,7 +277,7 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
             WHERE e.course.testCourse = FALSE
             	AND e.releaseDate >= :minDate
                 AND e.releaseDate <= :maxDate
-                AND user.login NOT LIKE '%test%'
+                AND LOWER(user.login) NOT LIKE '%test%'
                 AND EXISTS (
                     SELECT 1
                     FROM Submission submission
