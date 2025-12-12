@@ -36,6 +36,9 @@ public record ProblemStatementRefinementRequestDTO(@NotNull @NotBlank @Schema(de
         if (!hasUserPrompt && !hasInlineComments) {
             throw new IllegalArgumentException("Either userPrompt or inlineComments must be provided");
         }
+        if (hasUserPrompt && hasInlineComments) {
+            throw new IllegalArgumentException("Provide either userPrompt or inlineComments (exclusively)");
+        }
     }
 
     /**
