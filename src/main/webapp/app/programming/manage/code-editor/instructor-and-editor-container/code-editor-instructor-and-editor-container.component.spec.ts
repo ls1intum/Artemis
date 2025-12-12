@@ -89,7 +89,6 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Code Generation', ()
         ws = TestBed.inject(HyperionWebsocketService) as any;
         profileService = TestBed.inject(ProfileService);
         repoService = TestBed.inject(CodeEditorRepositoryService) as any;
-        repoFileService = TestBed.inject(CodeEditorRepositoryFileService) as any;
 
         // Enable Hyperion by default so property initialization is deterministic
         jest.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
