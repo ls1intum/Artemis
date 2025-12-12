@@ -1,5 +1,6 @@
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { WebsocketService } from 'app/shared/service/websocket.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
@@ -16,6 +17,7 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { QuizStatisticComponent } from 'app/quiz/manage/statistics/quiz-statistic/quiz-statistic.component';
 import { MockProvider } from 'ng-mocks';
 import { ChangeDetectorRef } from '@angular/core';
+import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 
 const question = { id: 1 } as QuizQuestion;
 const course = { id: 2 } as Course;
@@ -44,6 +46,7 @@ describe('QuizStatisticComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: Router, useClass: MockRouter },
                 { provide: AccountService, useClass: MockAccountService },
+                { provide: WebsocketService, useClass: MockWebsocketService },
                 MockProvider(ChangeDetectorRef),
                 provideHttpClient(),
             ],

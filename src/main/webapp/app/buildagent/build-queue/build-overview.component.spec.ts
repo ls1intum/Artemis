@@ -18,6 +18,8 @@ import * as DownloadUtil from '../../shared/util/download.util';
 import { FinishedBuildJobFilter } from 'app/buildagent/build-queue/finished-builds-filter-modal/finished-builds-filter-modal.component';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
+import { WebsocketService } from 'app/shared/service/websocket.service';
+import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 
 class ActivatedRouteStub {
     private params$ = new BehaviorSubject<{ [key: string]: any }>({});
@@ -277,6 +279,7 @@ describe('BuildQueueComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(AlertService),
                 { provide: NgbModal, useClass: MockNgbModalService },
+                { provide: WebsocketService, useClass: MockWebsocketService },
             ],
         }).compileComponents();
 

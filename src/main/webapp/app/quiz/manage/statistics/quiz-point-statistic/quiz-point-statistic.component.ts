@@ -18,6 +18,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { BarChartModule } from '@swimlane/ngx-charts';
 import { QuizStatisticsFooterComponent } from '../quiz-statistics-footer/quiz-statistics-footer.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'jhi-quiz-point-statistic',
@@ -47,6 +48,8 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
     maxScore: number;
     websocketChannelForData: string;
     quizExerciseChannel: string;
+    private quizExerciseSubscription?: Subscription;
+    private quizDataSubscription?: Subscription;
 
     // variables for ngx-charts
     legend = false;
@@ -82,14 +85,12 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
 
             // subscribe websocket for new statistical data
             this.websocketChannelForData = '/topic/statistic/' + params['exerciseId'];
-            this.websocketService.subscribe(this.websocketChannelForData);
 
             if (!this.quizExerciseChannel) {
                 this.quizExerciseChannel = '/topic/courses/' + params['courseId'] + '/quizExercises';
 
                 // quizExercise channel => react to changes made to quizExercise (e.g. start date)
-                this.websocketService.subscribe(this.quizExerciseChannel);
-                this.websocketService.receive(this.quizExerciseChannel).subscribe((quiz) => {
+                this.quizExerciseSubscription = this.websocketService.subscribe<QuizExercise>(this.quizExerciseChannel).subscribe((quiz: QuizExercise) => {
                     if (this.waitingForQuizStart && params['exerciseId'] === quiz.id) {
                         this.loadQuizSuccess(quiz);
                     }
@@ -97,8 +98,10 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
             }
 
             // ask for new Data if the websocket for new statistical data was notified
-            this.websocketService.receive(this.websocketChannelForData).subscribe((quiz) => {
-                this.loadNewData(quiz.quizPointStatistic);
+            this.quizDataSubscription = this.websocketService.subscribe<QuizExercise>(this.websocketChannelForData).subscribe((quiz: QuizExercise) => {
+                if (quiz.quizPointStatistic) {
+                    this.loadNewData(quiz.quizPointStatistic);
+                }
             });
         });
 
@@ -151,7 +154,8 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
 
     ngOnDestroy() {
         clearInterval(this.interval);
-        this.websocketService.unsubscribe(this.websocketChannelForData);
+        this.quizExerciseSubscription?.unsubscribe();
+        this.quizDataSubscription?.unsubscribe();
     }
 
     /**

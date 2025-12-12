@@ -5,8 +5,13 @@ const sidebars: SidebarsConfig = {
         'intro',
         'general',
         'assessment',
+        'exams',
         'quiz-training',
         'calendar',
+        'faq',
+        'tutorial-groups',
+        'plagiarism-check',
+        'notifications',
     ],
 };
 
