@@ -21,6 +21,7 @@ import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.errors.CheckoutConflictException;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.WrongRepositoryStateException;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -36,12 +37,15 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.programming.domain.File;
 import de.tum.cit.aet.artemis.programming.domain.FileType;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseEditorSyncTarget;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.dto.FileMove;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseEditorFileSyncDTO;
 import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTO;
 import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTOType;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.GitService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseEditorSyncService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryAccessService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
@@ -68,16 +72,20 @@ public abstract class RepositoryResource {
 
     protected final RepositoryAccessService repositoryAccessService;
 
+    protected final ProgrammingExerciseEditorSyncService programmingExerciseEditorSyncService;
+
     private final Optional<LocalVCServletService> localVCServletService;
 
     public RepositoryResource(UserRepository userRepository, AuthorizationCheckService authCheckService, GitService gitService, RepositoryService repositoryService,
-            ProgrammingExerciseRepository programmingExerciseRepository, RepositoryAccessService repositoryAccessService, Optional<LocalVCServletService> localVCServletService) {
+            ProgrammingExerciseRepository programmingExerciseRepository, RepositoryAccessService repositoryAccessService,
+            ProgrammingExerciseEditorSyncService programmingExerciseEditorSyncService, Optional<LocalVCServletService> localVCServletService) {
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
         this.gitService = gitService;
         this.repositoryService = repositoryService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.repositoryAccessService = repositoryAccessService;
+        this.programmingExerciseEditorSyncService = programmingExerciseEditorSyncService;
         this.localVCServletService = localVCServletService;
     }
 
@@ -398,6 +406,40 @@ public abstract class RepositoryResource {
 
         try (var inputStream = new ByteArrayInputStream(submission.getFileContent().getBytes(StandardCharsets.UTF_8))) {
             FileUtils.copyToFile(inputStream, file.get());
+        }
+    }
+
+    /**
+     * Calls programmingExerciseEditorSyncService to send websocket messages to clients with active instructor code editors to notify them of changes to the repository.
+     *
+     * @param exerciseId            the id of the exercise
+     * @param target                the target for the synchronization messages to reach
+     * @param auxiliaryRepositoryId optional, the id of the auxiliary repository associated with this change, only needed when target is AUXILIARY_REPOSITORY
+     */
+    protected void broadcastRepositoryUpdates(Long exerciseId, ProgrammingExerciseEditorSyncTarget target, Long auxiliaryRepositoryId) {
+        try {
+            programmingExerciseEditorSyncService.broadcastChange(exerciseId, target, auxiliaryRepositoryId);
+        }
+        catch (Exception e) {
+            log.error("Could not broadcast repository change for synchronization of exercise {}: {}", exerciseId, e.getMessage());
+        }
+    }
+
+    /**
+     * Broadcast repository updates that include file-level operations (create/rename/delete/content).
+     *
+     * @param exerciseId            the id of the exercise
+     * @param target                the target for the synchronization messages to reach
+     * @param auxiliaryRepositoryId optional, the id of the auxiliary repository associated with this change, only needed when target is AUXILIARY_REPOSITORY
+     * @param filePatch             the file operation to broadcast
+     */
+    protected void broadcastRepositoryUpdates(Long exerciseId, ProgrammingExerciseEditorSyncTarget target, Long auxiliaryRepositoryId,
+            @Nullable ProgrammingExerciseEditorFileSyncDTO filePatch) {
+        try {
+            programmingExerciseEditorSyncService.broadcastFileChanges(exerciseId, target, auxiliaryRepositoryId, filePatch);
+        }
+        catch (Exception e) {
+            log.error("Could not broadcast repository change for synchronization of exercise {}: {}", exerciseId, e.getMessage());
         }
     }
 }

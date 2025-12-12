@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, HostListener, Input, OnChanges, Output, SimpleChanges, ViewChild, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, HostListener, Input, OnChanges, Output, SimpleChanges, ViewChild, inject, input, output } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { isEmpty as _isEmpty, fromPairs, toPairs, uniq } from 'lodash-es';
 import { CodeEditorFileService } from 'app/programming/shared/code-editor/services/code-editor-file.service';
@@ -29,6 +29,8 @@ import { Annotation, CodeEditorMonacoComponent } from 'app/programming/shared/co
 import { KeysPipe } from 'app/shared/pipes/keys.pipe';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
+import { ProgrammingExerciseEditorFileChangeType } from 'app/programming/manage/services/programming-exercise-editor-sync.service';
+import { FileOperation } from 'app/programming/manage/services/repository-file-sync.service';
 
 export enum CollapsableCodeEditorElement {
     FileBrowser,
@@ -111,6 +113,8 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
     @Input()
     course?: Course;
 
+    readonly fileOperationSync = output<FileOperation>();
+
     /** Work in Progress: temporary properties needed to get first prototype working */
 
     @Input()
@@ -122,6 +126,7 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
     private selectedFileValue?: string;
     unsavedFilesValue: { [fileName: string]: string }; // {[fileName]: fileContent}
     fileBadges: { [fileName: string]: FileBadge[] };
+    private isApplyingRemoteFileUpdate = false;
     get selectedFile(): string | undefined {
         return this.selectedFileValue;
     }
@@ -232,6 +237,12 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
                 this.selectedFile = fileChange.fileName;
                 this.commitState = CommitState.UNCOMMITTED_CHANGES;
             }
+            this.fileOperationSync.emit({
+                type: ProgrammingExerciseEditorFileChangeType.CREATE,
+                fileName: fileChange.fileName,
+                content: '',
+                fileType: fileChange.fileType,
+            });
         } else if (fileChange instanceof RenameFileChange || fileChange instanceof DeleteFileChange) {
             // Guard against PROBLEM_STATEMENT file operations - only allow FILE and FOLDER
             if (fileChange.fileType !== FileType.FILE && fileChange.fileType !== FileType.FOLDER) {
@@ -240,6 +251,18 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
             this.commitState = CommitState.UNCOMMITTED_CHANGES;
             this.unsavedFiles = this.fileService.updateFileReferences(this.unsavedFiles, fileChange);
             this.selectedFile = this.fileService.updateFileReference(this.selectedFile!, fileChange);
+
+            if (fileChange instanceof RenameFileChange) {
+                const content = this.getFileContent(fileChange.newFileName) ?? '';
+                this.fileOperationSync.emit({
+                    type: ProgrammingExerciseEditorFileChangeType.RENAME,
+                    fileName: fileChange.oldFileName,
+                    newFileName: fileChange.newFileName,
+                    content,
+                });
+            } else {
+                this.fileOperationSync.emit({ type: ProgrammingExerciseEditorFileChangeType.DELETE, fileName: fileChange.fileName });
+            }
         }
         // If unsavedFiles are deleted, this can mean that the editorState becomes clean
         if (_isEmpty(this.unsavedFiles) && this.editorState === EditorState.UNSAVED_CHANGES) {
@@ -283,7 +306,22 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
      */
     onFileContentChange({ fileName, text }: { fileName: string; text: string }) {
         this.unsavedFiles = { ...this.unsavedFiles, [fileName]: text };
+        if (!this.isApplyingRemoteFileUpdate) {
+            this.fileOperationSync.emit({ type: ProgrammingExerciseEditorFileChangeType.CONTENT, fileName, content: text });
+        }
         this.onFileChanged.emit();
+    }
+
+    applyRemoteFileContent(fileName: string, text: string) {
+        this.isApplyingRemoteFileUpdate = true;
+        this.monacoEditor?.applyRemoteFileContent(fileName, text);
+        this.unsavedFiles = { ...this.unsavedFiles, [fileName]: text };
+        this.onFileChanged.emit();
+        this.isApplyingRemoteFileUpdate = false;
+    }
+
+    getFileContent(fileName: string): string | undefined {
+        return this.monacoEditor?.getFileContent(fileName);
     }
 
     fileLoad(selectedFile: string) {

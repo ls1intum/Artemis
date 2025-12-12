@@ -3,14 +3,18 @@ package de.tum.cit.aet.artemis.programming;
 import static de.tum.cit.aet.artemis.core.util.RequestUtilService.parameters;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.verify;
 
 import java.io.File;
 import java.io.IOException;
@@ -41,6 +45,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.MockedStatic;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -71,11 +76,13 @@ import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismComparisonRepository;
 import de.tum.cit.aet.artemis.programming.domain.FileType;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseEditorSyncTarget;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
 import de.tum.cit.aet.artemis.programming.dto.FileMove;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseEditorSyncEventDTO;
 import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTO;
 import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
 import de.tum.cit.aet.artemis.programming.service.GitService;
@@ -133,6 +140,8 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     private final LocalRepository studentRepository = new LocalRepository(defaultBranch);
 
     private LocalRepository templateRepository;
+
+    private LocalRepository solutionRepository;
 
     private LocalRepository tempRepository;
 
@@ -208,11 +217,23 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         Path templateFolderPath = Path.of(templateRepository.workingCopyGitRepoFile + "/" + currentLocalFolderName);
         Files.createDirectory(templateFolderPath);
 
+        // Create solution repo
+        solutionRepository = new LocalRepository(defaultBranch);
+        solutionRepository.configureRepos(localVCBasePath, "solutionLocalRepo", "solutionOriginRepo");
+        var solutionFilePath = Path.of(solutionRepository.workingCopyGitRepoFile + "/" + currentLocalFileName);
+        Files.createFile(solutionFilePath).toFile();
+        Path solutionFolderPath = Path.of(solutionRepository.workingCopyGitRepoFile + "/" + currentLocalFolderName);
+        Files.createDirectory(solutionFolderPath);
+
         programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
         programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExercise.getId());
 
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(templateRepository.workingCopyGitRepoFile.toPath(), null)).when(gitService)
                 .getOrCheckoutRepository(eq(programmingExercise.getTemplateParticipation().getVcsRepositoryUri()), eq(true), anyString(), anyBoolean());
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepository.workingCopyGitRepoFile.toPath(), null)).when(gitService)
+                .getOrCheckoutRepository(eq(programmingExercise.getSolutionParticipation().getVcsRepositoryUri()), eq(true), anyString(), anyBoolean());
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepository.workingCopyGitRepoFile.toPath(), null)).when(gitService)
+                .getOrCheckoutRepository(eq(programmingExercise.getSolutionParticipation().getVcsRepositoryUri()), eq(false), anyString(), anyBoolean());
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepository.workingCopyGitRepoFile.toPath(), null)).when(gitService)
                 .getOrCheckoutRepository(eq(participation.getVcsRepositoryUri()), eq(true), anyString(), anyBoolean());
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepository.workingCopyGitRepoFile.toPath(), null)).when(gitService)
@@ -747,6 +768,61 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testTemplateCreateFolderBroadcastsSynchronizationUpdate() throws Exception {
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("folder", "templateFolder");
+
+        request.postWithoutResponseBody(studentRepoBaseUrl + programmingExercise.getTemplateParticipation().getId() + "/folder", HttpStatus.OK, params);
+
+        var captor = ArgumentCaptor.forClass(ProgrammingExerciseEditorSyncEventDTO.class);
+        verify(websocketMessagingService).sendMessage(eq("/topic/programming-exercises/" + programmingExercise.getId() + "/synchronization"), captor.capture());
+        assertThat(captor.getValue().target()).isEqualTo(ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testSolutionCreateFileBroadcastsSynchronizationUpdate() throws Exception {
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("file", "solutionFile");
+
+        request.postWithoutResponseBody(studentRepoBaseUrl + programmingExercise.getSolutionParticipation().getId() + "/file", HttpStatus.OK, params);
+
+        var captor = ArgumentCaptor.forClass(ProgrammingExerciseEditorSyncEventDTO.class);
+        verify(websocketMessagingService).sendMessage(eq("/topic/programming-exercises/" + programmingExercise.getId() + "/synchronization"), captor.capture());
+        assertThat(captor.getValue().target()).isEqualTo(ProgrammingExerciseEditorSyncTarget.SOLUTION_REPOSITORY);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testSolutionCreateFolderBroadcastsSynchronizationUpdate() throws Exception {
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("folder", "solutionFolder");
+
+        request.postWithoutResponseBody(studentRepoBaseUrl + programmingExercise.getSolutionParticipation().getId() + "/folder", HttpStatus.OK, params);
+
+        var captor = ArgumentCaptor.forClass(ProgrammingExerciseEditorSyncEventDTO.class);
+        verify(websocketMessagingService).sendMessage(eq("/topic/programming-exercises/" + programmingExercise.getId() + "/synchronization"), captor.capture());
+        assertThat(captor.getValue().target()).isEqualTo(ProgrammingExerciseEditorSyncTarget.SOLUTION_REPOSITORY);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testTemplateRepositoryChangeBroadcastsSynchronizationUpdate() throws Exception {
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("file", "templateSyncFile");
+
+        request.postWithoutResponseBody(studentRepoBaseUrl + programmingExercise.getTemplateParticipation().getId() + "/file", HttpStatus.OK, params);
+
+        var captor = ArgumentCaptor.forClass(ProgrammingExerciseEditorSyncEventDTO.class);
+        verify(websocketMessagingService).sendMessage(eq("/topic/programming-exercises/" + programmingExercise.getId() + "/synchronization"), captor.capture());
+
+        var synchronizationMessage = captor.getValue();
+        assertThat(synchronizationMessage.target()).isEqualTo(ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY);
+        assertThat(synchronizationMessage.auxiliaryRepositoryId()).isNull();
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCreateFolder() throws Exception {
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
@@ -766,6 +842,30 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         request.postWithoutLocation(studentRepoBaseUrl + participation.getId() + "/rename-file", fileMove, HttpStatus.OK, null);
         assertThat(Path.of(studentRepository.workingCopyGitRepoFile + "/" + currentLocalFileName)).doesNotExist();
         assertThat(Path.of(studentRepository.workingCopyGitRepoFile + "/" + newLocalFileName)).exists();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testTemplateRenameFileBroadcastsSynchronizationUpdate() throws Exception {
+        FileMove fileMove = new FileMove(currentLocalFileName, "templateRenamed");
+
+        request.postWithoutLocation(studentRepoBaseUrl + programmingExercise.getTemplateParticipation().getId() + "/rename-file", fileMove, HttpStatus.OK, null);
+
+        var captor = ArgumentCaptor.forClass(ProgrammingExerciseEditorSyncEventDTO.class);
+        verify(websocketMessagingService).sendMessage(eq("/topic/programming-exercises/" + programmingExercise.getId() + "/synchronization"), captor.capture());
+        assertThat(captor.getValue().target()).isEqualTo(ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testSolutionRenameFileBroadcastsSynchronizationUpdate() throws Exception {
+        FileMove fileMove = new FileMove(currentLocalFileName, "solutionRenamed");
+
+        request.postWithoutLocation(studentRepoBaseUrl + programmingExercise.getSolutionParticipation().getId() + "/rename-file", fileMove, HttpStatus.OK, null);
+
+        var captor = ArgumentCaptor.forClass(ProgrammingExerciseEditorSyncEventDTO.class);
+        verify(websocketMessagingService).sendMessage(eq("/topic/programming-exercises/" + programmingExercise.getId() + "/synchronization"), captor.capture());
+        assertThat(captor.getValue().target()).isEqualTo(ProgrammingExerciseEditorSyncTarget.SOLUTION_REPOSITORY);
     }
 
     @Test
@@ -790,6 +890,32 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         assertThat(Path.of(studentRepository.workingCopyGitRepoFile + "/" + currentLocalFileName)).doesNotExist();
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testTemplateDeleteFileBroadcastsSynchronizationUpdate() throws Exception {
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("file", currentLocalFileName);
+
+        request.delete(studentRepoBaseUrl + programmingExercise.getTemplateParticipation().getId() + "/file", HttpStatus.OK, params);
+
+        var captor = ArgumentCaptor.forClass(ProgrammingExerciseEditorSyncEventDTO.class);
+        verify(websocketMessagingService).sendMessage(eq("/topic/programming-exercises/" + programmingExercise.getId() + "/synchronization"), captor.capture());
+        assertThat(captor.getValue().target()).isEqualTo(ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testSolutionDeleteFileBroadcastsSynchronizationUpdate() throws Exception {
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("file", currentLocalFileName);
+
+        request.delete(studentRepoBaseUrl + programmingExercise.getSolutionParticipation().getId() + "/file", HttpStatus.OK, params);
+
+        var captor = ArgumentCaptor.forClass(ProgrammingExerciseEditorSyncEventDTO.class);
+        verify(websocketMessagingService).sendMessage(eq("/topic/programming-exercises/" + programmingExercise.getId() + "/synchronization"), captor.capture());
+        assertThat(captor.getValue().target()).isEqualTo(ProgrammingExerciseEditorSyncTarget.SOLUTION_REPOSITORY);
+    }
+
     @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
@@ -810,6 +936,56 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         assertThat(Path.of(studentRepository.workingCopyGitRepoFile + "/" + currentLocalFileName)).exists();
         request.put(studentRepoBaseUrl + participation.getId() + "/files?commit=false", getFileSubmissions("updatedFileContent"), HttpStatus.OK);
         assertThat(studentFilePath).hasContent("updatedFileContent");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testTemplateSaveFilesBroadcastsSynchronizationUpdate() throws Exception {
+        request.put(studentRepoBaseUrl + programmingExercise.getTemplateParticipation().getId() + "/files?commit=false", getFileSubmissions("updatedFileContent"), HttpStatus.OK);
+
+        var captor = ArgumentCaptor.forClass(ProgrammingExerciseEditorSyncEventDTO.class);
+        verify(websocketMessagingService).sendMessage(eq("/topic/programming-exercises/" + programmingExercise.getId() + "/synchronization"), captor.capture());
+        assertThat(captor.getValue().target()).isEqualTo(ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testTemplateSaveFilesWithEmptySubmissionsDoesNotBroadcast() throws Exception {
+        reset(websocketMessagingService);
+
+        request.put(studentRepoBaseUrl + programmingExercise.getTemplateParticipation().getId() + "/files?commit=false", List.of(), HttpStatus.OK);
+
+        verify(websocketMessagingService, never()).sendMessage(eq("/topic/programming-exercises/" + programmingExercise.getId() + "/synchronization"), any());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testSolutionSaveFilesBroadcastsSynchronizationUpdate() throws Exception {
+        request.put(studentRepoBaseUrl + programmingExercise.getSolutionParticipation().getId() + "/files?commit=false", getFileSubmissions("updatedFileContent"), HttpStatus.OK);
+
+        var captor = ArgumentCaptor.forClass(ProgrammingExerciseEditorSyncEventDTO.class);
+        verify(websocketMessagingService).sendMessage(eq("/topic/programming-exercises/" + programmingExercise.getId() + "/synchronization"), captor.capture());
+        assertThat(captor.getValue().target()).isEqualTo(ProgrammingExerciseEditorSyncTarget.SOLUTION_REPOSITORY);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testSolutionSaveFilesWithEmptySubmissionsDoesNotBroadcast() throws Exception {
+        reset(websocketMessagingService);
+
+        request.put(studentRepoBaseUrl + programmingExercise.getSolutionParticipation().getId() + "/files?commit=false", List.of(), HttpStatus.OK);
+
+        verify(websocketMessagingService, never()).sendMessage(eq("/topic/programming-exercises/" + programmingExercise.getId() + "/synchronization"), any());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testStudentSaveFilesDoesNotBroadcastSynchronizationUpdate() throws Exception {
+        reset(websocketMessagingService);
+
+        request.put(studentRepoBaseUrl + participation.getId() + "/files?commit=false", getFileSubmissions("updatedFileContent"), HttpStatus.OK);
+
+        verify(websocketMessagingService, never()).sendMessage(eq("/topic/programming-exercises/" + programmingExercise.getId() + "/synchronization"), any());
     }
 
     @Disabled
@@ -1144,6 +1320,16 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         programmingExercise = createProgrammingExerciseForExam();
         // A tutor is not allowed to reset the repository during the exam time
         assertUnchangedRepositoryStatusForForbiddenReset();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testSolutionResetBroadcastsSynchronizationUpdate() throws Exception {
+        request.postWithoutLocation(studentRepoBaseUrl + programmingExercise.getSolutionParticipation().getId() + "/reset", null, HttpStatus.OK, null);
+
+        var captor = ArgumentCaptor.forClass(ProgrammingExerciseEditorSyncEventDTO.class);
+        verify(websocketMessagingService).sendMessage(eq("/topic/programming-exercises/" + programmingExercise.getId() + "/synchronization"), captor.capture());
+        assertThat(captor.getValue().target()).isEqualTo(ProgrammingExerciseEditorSyncTarget.SOLUTION_REPOSITORY);
     }
 
     private ProgrammingExercise createProgrammingExerciseForExam() {

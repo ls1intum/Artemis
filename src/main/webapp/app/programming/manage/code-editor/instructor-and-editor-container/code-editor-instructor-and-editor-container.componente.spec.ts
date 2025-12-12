@@ -1,7 +1,7 @@
 import { AlertService } from 'app/shared/service/alert.service';
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { MockProvider } from 'ng-mocks';
-import { of } from 'rxjs';
+import { BehaviorSubject, of } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -18,6 +18,13 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
+import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
+import { BrowserFingerprintService } from 'app/core/account/fingerprint/browser-fingerprint.service';
+import {
+    ProgrammingExerciseEditorSyncMessage,
+    ProgrammingExerciseEditorSyncService,
+    ProgrammingExerciseEditorSyncTarget,
+} from 'app/programming/manage/services/programming-exercise-editor-sync.service';
 
 describe('CodeEditorInstructorAndEditorContainerComponent', () => {
     let fixture: ComponentFixture<CodeEditorInstructorAndEditorContainerComponent>;
@@ -25,6 +32,8 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
     let artemisIntelligenceService: ArtemisIntelligenceService;
     let consistencyCheckService: ConsistencyCheckService;
     let alertService: AlertService;
+    let browserFingerprintService: BrowserFingerprintService;
+    let synchronizationService: ProgrammingExerciseEditorSyncService;
 
     const course = { id: 123, exercises: [] } as Course;
     const programmingExercise = new ProgrammingExercise(course, undefined);
@@ -43,6 +52,11 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
                 MockProvider(ParticipationService),
                 MockProvider(ProgrammingExerciseService),
                 MockProvider(CourseExerciseService),
+                MockProvider(ProgrammingExerciseEditorSyncService),
+                {
+                    provide: BrowserFingerprintService,
+                    useValue: { instanceIdentifier: new BehaviorSubject<string | undefined>(undefined) },
+                },
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 provideRouter([]),
@@ -57,6 +71,9 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
         artemisIntelligenceService = TestBed.inject(ArtemisIntelligenceService);
         consistencyCheckService = TestBed.inject(ConsistencyCheckService);
         alertService = TestBed.inject(AlertService);
+        browserFingerprintService = TestBed.inject(BrowserFingerprintService);
+        synchronizationService = TestBed.inject(ProgrammingExerciseEditorSyncService);
+        jest.spyOn(synchronizationService, 'getSynchronizationUpdates').mockReturnValue(of());
     }));
 
     afterEach(() => {
@@ -108,5 +125,49 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
 
         (artemisIntelligenceService as any).isLoading = () => false;
         expect(comp.isCheckingConsistency()).toBeFalse();
+    });
+
+    it('ignores synchronization updates from same browser instance', () => {
+        const alertSpy = jest.spyOn(alertService, 'addAlert');
+        browserFingerprintService.instanceIdentifier.next('client-1');
+
+        (comp as any).handleSynchronizationUpdate({
+            target: ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT,
+            clientInstanceId: 'client-1',
+        } as ProgrammingExerciseEditorSyncMessage);
+
+        expect(alertSpy).not.toHaveBeenCalled();
+    });
+
+    it('shows warning when relevant repository changes in another session', () => {
+        const alertSpy = jest.spyOn(alertService, 'addAlert');
+        comp.selectedRepository = RepositoryType.TEMPLATE;
+
+        (comp as any).handleSynchronizationUpdate({
+            target: ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY,
+            clientInstanceId: 'other-client',
+        } as ProgrammingExerciseEditorSyncMessage);
+
+        expect(alertSpy).toHaveBeenCalledWith(
+            expect.objectContaining({
+                message: 'artemisApp.editor.synchronization.repositoryChanged',
+            }),
+        );
+    });
+
+    it('shows problem statement warning when change is relevant', () => {
+        const alertSpy = jest.spyOn(alertService, 'addAlert');
+        comp.selectedRepository = RepositoryType.TEMPLATE;
+
+        (comp as any).handleSynchronizationUpdate({
+            target: ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT,
+            clientInstanceId: 'another-client',
+        } as ProgrammingExerciseEditorSyncMessage);
+
+        expect(alertSpy).toHaveBeenCalledWith(
+            expect.objectContaining({
+                message: 'artemisApp.editor.synchronization.problemStatementChanged',
+            }),
+        );
     });
 });
