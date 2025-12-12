@@ -37,7 +37,7 @@
             </li>
             <li>
                 <span class="bold-text" th:text="#{email.courseRequest.label.testCourse}">Test course</span>:
-                <span th:text="${courseRequest.testCourse} ? 'Yes' : 'No'">No</span>
+                <span th:text="${courseRequest.testCourse} ? #{email.courseRequest.label.yes} : #{email.courseRequest.label.no}">No</span>
             </li>
         </ul>
         <p>

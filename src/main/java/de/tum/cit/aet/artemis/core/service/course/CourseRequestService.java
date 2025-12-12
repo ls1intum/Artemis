@@ -155,7 +155,7 @@ public class CourseRequestService {
             throw new BadRequestAlertException("The course request has already been processed", CourseRequest.ENTITY_NAME, "courseRequestProcessed");
         }
         courseRequest.setStatus(CourseRequestStatus.REJECTED);
-        courseRequest.setDecisionReason(decisionReason.trim());
+        courseRequest.setDecisionReason(decisionReason != null ? decisionReason.trim() : null);
         courseRequest.setProcessedDate(ZonedDateTime.now());
         courseRequest.setAdmin(SecurityUtils.getCurrentUserLogin().orElse(null));
         courseRequestRepository.save(courseRequest);

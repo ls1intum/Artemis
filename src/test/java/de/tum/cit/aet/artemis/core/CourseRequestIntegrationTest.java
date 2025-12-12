@@ -84,7 +84,7 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void getAllCourseRequests_asAdmin_shouldSucceed() throws Exception {
         // Create a course request first
-        CourseRequest courseRequest = createTestCourseRequest("Admin Test", "ADMTST");
+        createTestCourseRequest("Admin Test", "ADMTST");
 
         List<CourseRequestDTO> result = request.getList("/api/core/admin/course-requests", HttpStatus.OK, CourseRequestDTO.class);
 
