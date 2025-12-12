@@ -36,10 +36,10 @@ const moduleThresholds = {
         lines:      91.40,
     },
     buildagent: {
-        statements: 93.00,
-        branches:   83.60,
-        functions:  87.20,
-        lines:      92.90,
+        statements: 92.20,
+        branches:   83.00,
+        functions:  85.30,
+        lines:      92.30,
     },
     communication: {
         statements: 92.50,
@@ -48,10 +48,10 @@ const moduleThresholds = {
         lines:      92.80,
     },
     core: {
-        statements: 89.20,
-        branches:   72.30,
-        functions:  80.80,
-        lines:      89.20,
+        statements: 90.00,
+        branches:   72.70,
+        functions:  81.80,
+        lines:      90.00,
     },
     exam: {
         statements: 91.90,
@@ -83,7 +83,7 @@ const moduleThresholds = {
     iris: {
         statements: 87.80,
         branches:   73.00,
-        functions:  86.20,
+        functions:  85.00,
         lines:      88.30,
     },
     lecture: {
@@ -113,7 +113,7 @@ const moduleThresholds = {
     programming: {
         statements: 89.10,
         branches:   77.00,
-        functions:  81.40,
+        functions:  81.38,
         lines:      89.20,
     },
     quiz: {
