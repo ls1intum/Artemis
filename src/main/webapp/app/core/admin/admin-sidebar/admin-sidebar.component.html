@@ -31,7 +31,7 @@
                         <li class="nav-item">
                             <a
                                 class="nav-link nav-link-sidebar px-3 py-2"
-                                [id]="item.testId ?? ''"
+                                [attr.id]="item.testId"
                                 [ngClass]="{ collapsed: isNavbarCollapsed() }"
                                 [routerLink]="item.routerLink"
                                 routerLinkActive="active"
@@ -52,34 +52,40 @@
     <!-- Bottom section with collapse toggle -->
     <div class="navbar-nav mb-2 collapse-toggle-container">
         @if (!isNavbarCollapsed() && canExpand()) {
-            <div
+            <button
+                type="button"
                 class="double-arrow px-2"
                 [ngClass]="{ 'menu-closed': isNavbarCollapsed() }"
                 [ngbTooltip]="'global.menu.admin.sidebar.collapseMenu' | artemisTranslate"
                 tooltipClass="double-arrow-tooltip"
                 [container]="'body'"
                 (click)="toggleCollapseState.emit()"
+                [attr.aria-expanded]="!isNavbarCollapsed()"
+                aria-controls="collapseBasic"
             >
-                <div class="double-arrow-icon" [attr.aria-expanded]="!isNavbarCollapsed()" aria-controls="collapseBasic">
+                <span class="double-arrow-icon">
                     <fa-icon class="me-negative fa-xs" [icon]="faChevronRight" />
                     <fa-icon class="fa-xs" [icon]="faChevronRight" />
-                </div>
-            </div>
+                </span>
+            </button>
         }
 
         @if (isNavbarCollapsed() && canExpand()) {
-            <div
+            <button
+                type="button"
                 class="double-arrow mb-2"
                 [ngClass]="{ 'menu-closed': isNavbarCollapsed() }"
                 tooltipClass="double-arrow-tooltip-collapsed"
                 [ngbTooltip]="'global.menu.admin.sidebar.expandMenu' | artemisTranslate"
                 (click)="toggleCollapseState.emit()"
+                [attr.aria-expanded]="!isNavbarCollapsed()"
+                aria-controls="collapseBasic"
             >
-                <div class="double-arrow-icon" [attr.aria-expanded]="!isNavbarCollapsed()" aria-controls="collapseBasic">
+                <span class="double-arrow-icon">
                     <fa-icon class="me-negative fa-xs" [icon]="faChevronRight" />
                     <fa-icon class="fa-xs" [icon]="faChevronRight" />
-                </div>
-            </div>
+                </span>
+            </button>
         }
     </div>
 </div>

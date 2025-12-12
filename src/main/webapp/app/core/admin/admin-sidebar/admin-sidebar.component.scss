@@ -79,6 +79,11 @@ $transition-color-length: 0.2s;
     justify-content: flex-end;
     cursor: pointer;
     padding-right: 10px;
+    // Reset button styles
+    background: none;
+    border: none;
+    color: inherit;
+    font: inherit;
 }
 
 .menu-closed.double-arrow {
@@ -129,7 +134,7 @@ $transition-color-length: 0.2s;
 }
 
 // We have to override this style from globals.scss here as we only want to target the span with the text inside
-a:not(.btn):not(.tab-link):hover {
+.sidebar-container a:not(.btn):not(.tab-link):hover {
     text-decoration: none !important;
 }
 

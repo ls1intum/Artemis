@@ -36,9 +36,9 @@
         },
         "menu": {
             "home": "Home",
-            "overview": "Course Overview",
+            "overview": "Overview",
             "courses": "Courses",
-            "course": "Course Management",
+            "course": "Management",
             "entities": {
                 "main": "Entities",
                 "course": "Course",
@@ -118,7 +118,7 @@
                 "register": "Register"
             },
             "admin": {
-                "main": "Server Administration",
+                "main": "Administration",
                 "loginWithPasskeyToUseAdminFeatures": "Sign in with a passkey to use admin features",
                 "setupPasskey": "Setup passkey",
                 "passkeyRestrictionExplanation": "To protect student data and ensure platform reliability, administrator actions require strong authentication with a passkey.",
@@ -149,7 +149,7 @@
                     "logs": "Logs",
                     "metrics": "Metrics",
                     "statistics": "Statistics",
-                    "websocket": "Websocket",
+                    "websocket": "WebSocket",
                     "buildAgents": "Build Agents",
                     "buildQueue": "Build Queue",
                     "cleanup": "Cleanup",
@@ -159,6 +159,8 @@
                     "notifications": "Notifications",
                     "examRooms": "Exam Rooms"
                 },
+                "collapseMenu": "Collapse Menu (Ctrl + M)",
+                "expandMenu": "Expand Menu (Ctrl + M)",
                 "upcomingExamsAndExercises": "Upcoming exams & exercises",
                 "userManagement": "User management",
                 "organizationManagement": "Organization management",

@@ -36,9 +36,9 @@
         },
         "menu": {
             "home": "Startseite",
-            "overview": "Kursübersicht",
+            "overview": "Übersicht",
             "courses": "Kurse",
-            "course": "Kursverwaltung",
+            "course": "Verwaltung",
             "entities": {
                 "main": "Entitäten",
                 "course": "Kurse",
@@ -118,7 +118,7 @@
                 "register": "Registrierung"
             },
             "admin": {
-                "main": "Server-Administration",
+                "main": "Administration",
                 "loginWithPasskeyToUseAdminFeatures": "Mit Passkey anmelden um Admin-Funktionen zu nutzen",
                 "setupPasskey": "Passkey registrieren",
                 "passkeyRestrictionExplanation": "Zum Schutz der Studierendendaten und zur Sicherstellung der Zuverlässigkeit von Artemis sind Administratoraktionen nur nach Passkey-Login verfügbar.",
@@ -149,9 +149,9 @@
                     "logs": "Protokoll",
                     "metrics": "Metriken",
                     "statistics": "Statistiken",
-                    "websocket": "Websocket",
-                    "buildAgents": "Build Agents",
-                    "buildQueue": "Build Queue",
+                    "websocket": "WebSocket",
+                    "buildAgents": "Build-Agenten",
+                    "buildQueue": "Build-Warteschlange",
                     "cleanup": "Aufräumen",
                     "features": "Features",
                     "imprint": "Impressum",
@@ -159,6 +159,8 @@
                     "notifications": "Mitteilungen",
                     "examRooms": "Prüfungsräume"
                 },
+                "collapseMenu": "Menü einklappen (Strg + M)",
+                "expandMenu": "Menü ausklappen (Strg + M)",
                 "upcomingExamsAndExercises": "Kommende Prüfungen & Übungen",
                 "userManagement": "Verwaltung von Nutzer:innen",
                 "organizationManagement": "Organisationsverwaltung",

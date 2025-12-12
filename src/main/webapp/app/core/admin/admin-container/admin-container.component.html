@@ -6,7 +6,7 @@
                 'container-closed': isNavbarCollapsed(),
             }"
         >
-            <mat-sidenav disableClose class="module-bg rounded-3" opened="true" mode="side">
+            <mat-sidenav disableClose class="module-bg rounded-3" [opened]="true" mode="side">
                 <jhi-admin-sidebar
                     [isNavbarCollapsed]="isNavbarCollapsed()"
                     [localCIActive]="localCIActive"

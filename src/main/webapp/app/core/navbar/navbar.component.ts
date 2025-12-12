@@ -238,6 +238,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     }
 
     breadcrumbTranslation: { [key: string]: string } = {
+        admin: 'global.menu.admin.main',
         new: 'global.generic.create',
         process: 'artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.pageTitle',
         verify_attendance: 'artemisApp.examManagement.examStudents.verifyChecks',
@@ -398,6 +399,12 @@ export class NavbarComponent implements OnInit, OnDestroy {
         // Temporarily restrict routes
         if (!fullURI.startsWith('/admin') && !fullURI.startsWith('/course-management') && !fullURI.startsWith('/courses')) {
             return;
+        }
+
+        // Handle the admin default redirect - when navigating to /admin, it redirects to /admin/user-management
+        // Ensure breadcrumbs reflect the actual destination
+        if (fullURI === '/admin' || fullURI === '/admin/') {
+            fullURI = '/admin/user-management';
         }
 
         // try catch for extra safety measures
@@ -583,7 +590,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
             case 'groups':
             case 'code-editor':
             case 'repository':
-            case 'admin':
             case 'ide':
             case 'text-units':
             case 'exercise-units':

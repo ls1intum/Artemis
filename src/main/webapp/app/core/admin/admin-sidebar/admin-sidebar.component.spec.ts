@@ -6,7 +6,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { Component } from '@angular/core';
 
-@Component({ template: '' })
+@Component({ template: '', standalone: true })
 class MockEmptyComponent {}
 
 describe('AdminSidebarComponent', () => {

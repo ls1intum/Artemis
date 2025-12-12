@@ -11,7 +11,7 @@ import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.s
 import { LayoutService } from 'app/shared/breakpoints/layout.service';
 import { of } from 'rxjs';
 
-@Component({ template: '' })
+@Component({ template: '', standalone: true })
 class MockEmptyComponent {}
 
 describe('AdminContainerComponent', () => {
@@ -19,29 +19,28 @@ describe('AdminContainerComponent', () => {
     let fixture: ComponentFixture<AdminContainerComponent>;
     let profileService: ProfileService;
 
-    const mockProfileInfo: ProfileInfo = {
+    const mockProfileInfo = {
         activeProfiles: [],
         activeModuleFeatures: [],
-        ribbonEnv: '',
-        inProduction: false,
-        openIdConnectLogin: false,
         sshCloneURLTemplate: '',
-        sshKeysURL: '',
         buildPlanURLTemplate: '',
-        commitHashURLTemplate: '',
         registrationEnabled: false,
         needsToAcceptTerms: false,
         externalPasswordResetLinkMap: {},
-        imprint: '',
-        allowedMinimumOrionVersion: '',
-        git: { branch: '', commitId: { abbrev: '' } },
+        git: {
+            branch: '',
+            commit: {
+                id: { abbrev: '' },
+                user: { name: '', email: '' },
+                time: '',
+            },
+        },
         theiaPortalURL: '',
         contact: '',
         studentExamStoreSessionData: false,
         testServer: false,
-        aeolus: undefined,
         accountName: '',
-    };
+    } as ProfileInfo;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
