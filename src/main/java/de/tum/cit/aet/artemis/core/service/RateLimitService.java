@@ -19,6 +19,8 @@ import org.springframework.web.context.request.RequestContextHolder;
 import de.tum.cit.aet.artemis.core.config.RateLimitConfig;
 import de.tum.cit.aet.artemis.core.exception.RateLimitExceededException;
 import de.tum.cit.aet.artemis.core.security.RateLimitType;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import inet.ipaddr.IPAddress;
 import inet.ipaddr.IPAddressString;
 import io.github.bucket4j.Bucket;
@@ -40,9 +42,12 @@ public class RateLimitService {
 
     private final RateLimitConfigurationService configurationService;
 
-    public RateLimitService(HazelcastProxyManager<String> proxyManager, RateLimitConfigurationService configurationService) {
+    private final FeatureToggleService featureToggleService;
+
+    public RateLimitService(HazelcastProxyManager<String> proxyManager, RateLimitConfigurationService configurationService, FeatureToggleService featureToggleService) {
         this.proxyManager = proxyManager;
         this.configurationService = configurationService;
+        this.featureToggleService = featureToggleService;
     }
 
     /**
@@ -54,8 +59,8 @@ public class RateLimitService {
      * @throws RateLimitExceededException if the rate limit is exceeded
      */
     public void enforcePerMinute(IPAddress clientId, RateLimitType rpmType) {
-        // Skip rate limiting if disabled globally
-        if (!configurationService.isRateLimitingEnabled()) {
+        // Skip rate limiting if disabled globally or disabled via feature toggle
+        if (!configurationService.isRateLimitingEnabled() || !featureToggleService.isFeatureEnabled(Feature.RateLimit)) {
             log.debug("Rate limiting is disabled globally, skipping enforcement for client {} at {}", clientId, rpmType.name());
             return;
         }
