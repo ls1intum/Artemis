@@ -52,6 +52,9 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
     /** Interact.js instance for cleanup */
     private interactInstance: ReturnType<typeof interact> | undefined = undefined;
 
+    /** Store reference to window resize handler for cleanup */
+    private resizeHandler: (() => void) | undefined = undefined;
+
     ngAfterViewInit(): void {
         const elRef = this.videoRef();
         const videoElement = elRef ? elRef.nativeElement : undefined;
@@ -132,6 +135,13 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
             },
             cursorChecker: () => 'col-resize',
         });
+
+        // Reset to default flex layout on window resize to prevent overflow
+        this.resizeHandler = () => {
+            videoColumnEl.style.flex = '';
+            videoColumnEl.style.width = '';
+        };
+        window.addEventListener('resize', this.resizeHandler);
     }
 
     /** Seek the video to the given time and resume playback. */
@@ -187,6 +197,12 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
         if (this.interactInstance) {
             this.interactInstance.unset();
             this.interactInstance = undefined;
+        }
+
+        // Clean up window resize listener
+        if (this.resizeHandler) {
+            window.removeEventListener('resize', this.resizeHandler);
+            this.resizeHandler = undefined;
         }
     }
 }
