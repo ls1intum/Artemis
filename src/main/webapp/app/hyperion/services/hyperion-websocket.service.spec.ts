@@ -1,5 +1,3 @@
-import 'zone.js';
-import 'zone.js/testing';
 import { TestBed } from '@angular/core/testing';
 import { Observable, Subject } from 'rxjs';
 import { HyperionEvent, HyperionWebsocketService } from 'app/hyperion/services/hyperion-websocket.service';
