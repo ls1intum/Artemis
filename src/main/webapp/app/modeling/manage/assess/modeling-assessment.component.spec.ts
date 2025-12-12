@@ -414,4 +414,9 @@ describe('ModelingAssessmentComponent', () => {
         expect(comp.resultFeedbacks()).toEqual(newMockFeedbacks);
         expect(comp.referencedFeedbacks).toEqual([newMockFeedbackWithReference]);
     });
+
+    it('should ignore handleFeedback when resultFeedbacks is undefined', () => {
+        (comp as any).handleFeedback();
+        expect(comp.referencedFeedbacks).toEqual([]);
+    });
 });
