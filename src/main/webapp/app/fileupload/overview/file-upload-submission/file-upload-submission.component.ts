@@ -38,8 +38,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { FileService } from 'app/shared/service/file.service';
-import { map } from 'rxjs/operators';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, map } from 'rxjs';
 
 @Component({
     selector: 'jhi-file-upload-submission',
@@ -219,8 +218,7 @@ export class FileUploadSubmissionComponent implements ComponentCanDeactivate {
         if (this.submission()?.submitted && this.result()?.completionDate) {
             const submissionId = this.submission()?.id;
             if (submissionId) {
-                // Nested subscribe - acceptable for dependent data fetch
-                this.fileUploadAssessmentService.getAssessment(submissionId).subscribe((assessmentResult: Result) => {
+                firstValueFrom(this.fileUploadAssessmentService.getAssessment(submissionId)).then((assessmentResult: Result) => {
                     this.result.set(assessmentResult);
                 });
             }

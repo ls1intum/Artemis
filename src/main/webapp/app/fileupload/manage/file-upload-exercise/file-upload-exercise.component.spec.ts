@@ -113,8 +113,8 @@ describe('FileUploadExercise Management Component', () => {
         it('should show all exercises', () => {
             // WHEN
             comp.exerciseFilter = new ExerciseFilter('pdf', '', 'file-upload');
-            // Assuming applyFilter is not automatically triggered by setting property
-            (comp as any).applyFilter();
+            // @ts-expect-error accessing protected method for testing
+            comp.applyFilter();
 
             // THEN
             expect(comp.fileUploadExercises()).toHaveLength(1);
@@ -124,7 +124,8 @@ describe('FileUploadExercise Management Component', () => {
         it('should show no exercises', () => {
             // WHEN
             comp.exerciseFilter = new ExerciseFilter('Prog', '', 'all');
-            (comp as any).applyFilter();
+            // @ts-expect-error accessing protected method for testing
+            comp.applyFilter();
 
             // THEN
             expect(comp.fileUploadExercises()).toHaveLength(1);

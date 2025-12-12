@@ -172,7 +172,6 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnInit 
     ngOnInit() {
         scrollToTopOfPage();
         this.isSaving.set(false);
-        // data/url/params handled by effects
     }
 
     ngAfterViewInit() {
@@ -187,8 +186,6 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnInit 
             .formValidChanges.pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe(() => this.calculateFormSectionStatus());
     }
-
-    // ngOnDestroy removed (handled by destroyRef)
 
     calculateFormSectionStatus() {
         const exercise = this.fileUploadExercise();

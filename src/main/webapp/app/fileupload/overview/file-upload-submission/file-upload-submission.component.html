@@ -24,7 +24,7 @@
         <!--region Left Panel-->
         <div left-body class="px-2 pb-2 w-100">
             <div class="row">
-                @if ((isActive() || isLate()) && fileUploadExercise() && submission() && isOwnerOfParticipation()) {
+                @if ((isActive() || isLate()) && !result() && fileUploadExercise() && submission() && isOwnerOfParticipation()) {
                     <div class="col-12 col-md-6">
                         <div class="form-group">
                             <label for="fileUploadInput" class="form-control-label" jhiTranslate="artemisApp.fileUploadSubmission.selectFile"></label>
@@ -73,12 +73,12 @@
                     </div>
                 </div>
             }
-            @if (result() && result()?.feedbacks && result()!.feedbacks!.length > 0) {
+            @if (result()?.feedbacks?.length) {
                 <div>
                     <br />
                     <h5><span jhiTranslate="artemisApp.fileUploadExercise.assessedSubmission"></span>:</h5>
                     <div class="row">
-                        @if (unreferencedFeedback()?.length && unreferencedFeedback()!.length > 0) {
+                        @if (unreferencedFeedback()?.length) {
                             <jhi-additional-feedback class="col-xl-8 alert unreferencedFeedback" [feedback]="unreferencedFeedback()!" [additional]="false" [course]="course()" />
                         }
                     </div>

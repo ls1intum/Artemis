@@ -8,7 +8,7 @@ import { FileUploadAssessmentService } from 'app/fileupload/manage/assess/file-u
 import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 
-describe('Modeling Assessment Service', () => {
+describe('FileUpload Assessment Service', () => {
     let httpMock: HttpTestingController;
     let service: FileUploadAssessmentService;
     let expectedResult: any;
