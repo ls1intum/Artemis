@@ -58,9 +58,7 @@ describe('GenerateCompetenciesComponent', () => {
                 {
                     provide: WebsocketService,
                     useValue: {
-                        subscribe: jest.fn(),
-                        receive: jest.fn(() => mockWebSocketSubject.asObservable()),
-                        unsubscribe: jest.fn(),
+                        subscribe: jest.fn(() => mockWebSocketSubject.asObservable()),
                     },
                 },
                 CourseDescriptionFormComponent,
