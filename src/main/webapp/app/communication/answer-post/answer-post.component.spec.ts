@@ -43,7 +43,7 @@ describe('AnswerPostComponent', () => {
         document.body.appendChild(mainContainer);
 
         return TestBed.configureTestingModule({
-            imports: [OverlayModule, MockDirective(NgbTooltip)],
+            imports: [OverlayModule],
             declarations: [
                 AnswerPostComponent,
                 FaIconComponent,
@@ -54,6 +54,7 @@ describe('AnswerPostComponent', () => {
                 ArtemisDatePipe,
                 ArtemisTranslatePipe,
                 MockDirective(TranslateDirective),
+                MockDirective(NgbTooltip),
             ],
             providers: [
                 provideHttpClient(),
