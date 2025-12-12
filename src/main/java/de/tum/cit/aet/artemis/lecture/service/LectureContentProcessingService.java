@@ -76,6 +76,14 @@ public class LectureContentProcessingService {
      * <p>
      * Uses database locking to prevent concurrent calls for the same unit from
      * causing duplicate processing jobs.
+     * <p>
+     * Processing behavior depends on available services:
+     * <ul>
+     * <li>Nebula ON, Iris ON: Full pipeline (transcription + ingestion)</li>
+     * <li>Nebula ON, Iris OFF: Transcription only (transcripts are still useful)</li>
+     * <li>Nebula OFF, Iris ON: Ingestion only (PDF ingestion)</li>
+     * <li>Neither available: Skip processing entirely</li>
+     * </ul>
      *
      * @param unit the attachment video unit to process
      */
@@ -86,7 +94,7 @@ public class LectureContentProcessingService {
             return;
         }
 
-        // Skip tutorial lectures - they're not meant for Iris
+        // Skip tutorial lectures - they're not meant for processing
         if (unit.getLecture() != null && unit.getLecture().isTutorialLecture()) {
             log.debug("Skipping processing for tutorial lecture unit: {}", unit.getId());
             return;
@@ -98,6 +106,15 @@ public class LectureContentProcessingService {
 
         if (!hasVideo && !hasPdf) {
             log.debug("Unit {} has no video or PDF to process", unit.getId());
+            return;
+        }
+
+        // Check if we have any services to do processing
+        boolean canTranscribe = hasVideo && transcriptionApi.isPresent() && tumLiveApi.isPresent();
+        boolean canIngest = irisLectureApi.isPresent() && (hasPdf || canTranscribe);
+
+        if (!canTranscribe && !canIngest) {
+            log.debug("No processing services available for unit {} (Nebula: {}, Iris: {})", unit.getId(), transcriptionApi.isPresent(), irisLectureApi.isPresent());
             return;
         }
 
@@ -244,8 +261,16 @@ public class LectureContentProcessingService {
                 }
 
                 if (transcription.getTranscriptionStatus() == TranscriptionStatus.COMPLETED) {
-                    log.info("Transcription completed for unit {}, moving to ingestion", unitId);
-                    startIngestion(state);
+                    log.info("Transcription completed for unit {}", unitId);
+                    // If Iris is available, proceed to ingestion; otherwise we're done
+                    if (irisLectureApi.isPresent()) {
+                        startIngestion(state);
+                    }
+                    else {
+                        log.info("Iris not available, marking unit {} as done after transcription", unitId);
+                        state.transitionTo(ProcessingPhase.DONE);
+                        processingStateRepository.save(state);
+                    }
                 }
                 else if (transcription.getTranscriptionStatus() == TranscriptionStatus.FAILED) {
                     log.warn("Transcription failed for unit {}", unitId);
@@ -413,15 +438,17 @@ public class LectureContentProcessingService {
 
     private void startTranscription(AttachmentVideoUnit unit, LectureUnitProcessingState state, String playlistUrl) {
         if (transcriptionApi.isEmpty()) {
-            log.warn("Transcription service not available, falling back to PDF-only processing");
+            // Nebula (transcription service) is not available - this is not an error, just skip transcription
+            log.debug("Transcription service (Nebula) not available, falling back to PDF-only processing for unit {}", unit.getId());
             // Graceful degradation: if transcription service isn't available but we have a PDF,
             // proceed with ingestion of just the PDF
             if (unit.getAttachment() != null && unit.getAttachment().getLink() != null) {
                 startIngestion(state);
             }
             else {
+                // No transcription possible and no PDF - nothing to ingest
                 state.transitionTo(ProcessingPhase.IDLE);
-                state.setErrorMessage("Transcription service not available and no PDF");
+                state.setErrorMessage(null); // Not a failure, just nothing to do
                 processingStateRepository.save(state);
             }
             return;
@@ -447,16 +474,18 @@ public class LectureContentProcessingService {
         state.incrementRetryCount();
 
         if (state.getRetryCount() >= MAX_RETRIES) {
-            // After max retries, fall back to PDF-only if available, otherwise fail
+            // After max retries, fall back to PDF-only if available AND Iris is available, otherwise fail
             LectureUnit unit = state.getLectureUnit();
-            if (unit instanceof AttachmentVideoUnit attachmentUnit && attachmentUnit.getAttachment() != null && attachmentUnit.getAttachment().getLink() != null
-                    && attachmentUnit.getAttachment().getLink().endsWith(".pdf")) {
+            boolean hasPdf = unit instanceof AttachmentVideoUnit attachmentUnit && attachmentUnit.getAttachment() != null && attachmentUnit.getAttachment().getLink() != null
+                    && attachmentUnit.getAttachment().getLink().endsWith(".pdf");
+
+            if (hasPdf && irisLectureApi.isPresent()) {
                 log.info("Max retries reached for transcription, falling back to PDF-only ingestion for unit {}", unit.getId());
                 state.resetRetryCount(); // Reset for ingestion retries
                 startIngestion(state);
             }
             else {
-                log.warn("Max retries reached for transcription, marking as failed");
+                log.warn("Max retries reached for transcription, marking as failed for unit {}", unit.getId());
                 state.markFailed("Transcription failed after " + MAX_RETRIES + " attempts");
                 processingStateRepository.save(state);
             }
@@ -477,14 +506,14 @@ public class LectureContentProcessingService {
                 }
             }
             else {
-                // No playlist URL stored, fall back to PDF-only if available
+                // No playlist URL stored, fall back to PDF-only if available AND Iris is available
                 LectureUnit unit = state.getLectureUnit();
-                if (unit instanceof AttachmentVideoUnit attachmentUnit && attachmentUnit.getAttachment() != null) {
+                if (unit instanceof AttachmentVideoUnit attachmentUnit && attachmentUnit.getAttachment() != null && irisLectureApi.isPresent()) {
                     log.info("No playlist URL for retry, falling back to PDF-only ingestion");
                     startIngestion(state);
                 }
                 else {
-                    state.markFailed("Transcription failed and no PDF available");
+                    state.markFailed("Transcription failed and no fallback available");
                     processingStateRepository.save(state);
                 }
             }
@@ -493,8 +522,11 @@ public class LectureContentProcessingService {
 
     private void startIngestion(LectureUnitProcessingState state) {
         if (irisLectureApi.isEmpty()) {
-            log.debug("Iris API not available, cannot ingest");
-            state.markFailed("Iris API not available");
+            // Iris is intentionally disabled - don't mark as failed, just return to idle
+            // This can happen if Iris was disabled mid-processing (unlikely but possible)
+            log.debug("Iris API not available, skipping ingestion for unit {}", state.getLectureUnit().getId());
+            state.transitionTo(ProcessingPhase.IDLE);
+            state.setErrorMessage(null); // Clear any previous error - this is not a failure
             processingStateRepository.save(state);
             return;
         }

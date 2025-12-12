@@ -672,5 +672,83 @@ class LectureContentProcessingServiceTest {
             assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.IDLE);
             // No exception thrown, gracefully handled
         }
+
+        @Test
+        void shouldStillTranscribeWhenIrisNotAvailable() {
+            // Given: Service created WITHOUT Iris API but WITH Nebula (transcription only deployment)
+            service = new LectureContentProcessingService(processingStateRepository, transcriptionRepository, Optional.of(transcriptionApi), Optional.of(tumLiveApi),
+                    Optional.empty()); // No Iris API
+
+            // Unit has video (can transcribe) - transcription should still happen
+            when(processingStateRepository.findByLectureUnitIdWithLock(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            when(tumLiveApi.getTumLivePlaylistLink(any())).thenReturn(Optional.of("https://playlist.m3u8"));
+            when(transcriptionApi.startNebulaTranscription(anyLong(), anyLong(), any())).thenReturn("job-123");
+
+            // When
+            service.triggerProcessing(testUnit);
+
+            // Then: Should transcribe (transcriptions are useful even without Iris)
+            verify(transcriptionApi).startNebulaTranscription(anyLong(), anyLong(), any());
+        }
+
+        @Test
+        void shouldSkipProcessingWhenNeitherNebulaNorIrisAvailable() {
+            // Given: Service with NO Iris and NO Nebula (no processing possible)
+            service = new LectureContentProcessingService(processingStateRepository, transcriptionRepository, Optional.empty(), // No Nebula
+                    Optional.of(tumLiveApi), Optional.empty()); // No Iris
+
+            Attachment pdfAttachment = new Attachment();
+            pdfAttachment.setLink("/path/to/file.pdf");
+            pdfAttachment.setVersion(1);
+            testUnit.setAttachment(pdfAttachment);
+
+            // When
+            service.triggerProcessing(testUnit);
+
+            // Then: Should skip entirely - no state created, no APIs called
+            verify(processingStateRepository, never()).findByLectureUnitIdWithLock(anyLong());
+            verify(processingStateRepository, never()).save(any());
+        }
+
+        @Test
+        void shouldSkipPdfOnlyUnitWhenIrisNotAvailable() {
+            // Given: Service WITHOUT Iris, unit has only PDF (no video)
+            service = new LectureContentProcessingService(processingStateRepository, transcriptionRepository, Optional.of(transcriptionApi), Optional.of(tumLiveApi),
+                    Optional.empty()); // No Iris API
+
+            testUnit.setVideoSource(null); // No video
+            Attachment pdfAttachment = new Attachment();
+            pdfAttachment.setLink("/path/to/file.pdf");
+            pdfAttachment.setVersion(1);
+            testUnit.setAttachment(pdfAttachment);
+
+            // When
+            service.triggerProcessing(testUnit);
+
+            // Then: Should skip - PDF-only needs Iris for ingestion
+            verify(processingStateRepository, never()).findByLectureUnitIdWithLock(anyLong());
+            verify(processingStateRepository, never()).save(any());
+        }
+
+        @Test
+        void shouldGoToIdleWhenNebulaUnavailableAndNoPdf() {
+            // Given: Service without Nebula, unit has video but no PDF
+            service = new LectureContentProcessingService(processingStateRepository, transcriptionRepository, Optional.empty(), // No transcription API
+                    Optional.of(tumLiveApi), Optional.of(irisLectureApi));
+
+            testUnit.setAttachment(null); // No PDF
+
+            when(processingStateRepository.findByLectureUnitIdWithLock(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            when(tumLiveApi.getTumLivePlaylistLink(any())).thenReturn(Optional.of("https://playlist.m3u8"));
+
+            // When
+            service.triggerProcessing(testUnit);
+
+            // Then: Should go to IDLE (not FAILED) since Nebula is intentionally unavailable
+            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.IDLE);
+            assertThat(testState.getErrorMessage()).isNull(); // Not an error, just nothing to do
+        }
     }
 }
