@@ -17,11 +17,11 @@ import de.tum.cit.aet.artemis.atlas.service.CompetencyExpertToolsService;
 public class AtlasAgentToolConfig {
 
     /**
-     * Registers the tools for the Main Atlas Agent (Requirements Engineer/Orchestrator).
+     * Registers the tools for the Main Agent (Requirements Engineer/Orchestrator).
      * This agent has access to information retrieval tools only.
      *
-     * @param toolsService the service containing @Tool-annotated methods for main agent
-     * @return ToolCallbackProvider that exposes the main agent tools to Spring AI
+     * @param toolsService the service containing @Tool-annotated methods for the Main Agent
+     * @return ToolCallbackProvider that exposes the Main Agent tools to Spring AI
      */
     @Bean
     @Lazy
@@ -31,11 +31,11 @@ public class AtlasAgentToolConfig {
     }
 
     /**
-     * Registers the tools for the Competency Expert sub-agent.
-     * This agent has access to both previewCompetency and createCompetency tools.
+     * Registers the tools for the Competency Expert Sub-Agent.
+     * This agent has access to both previewCompetency and create/update Competency tools.
      *
-     * @param expertToolsService the service containing @Tool-annotated methods for competency expert
-     * @return ToolCallbackProvider that exposes the competency expert tools to Spring AI
+     * @param expertToolsService the service containing @Tool-annotated methods for the Competency Expert Sub-Agent
+     * @return ToolCallbackProvider that exposes the Competency Expert Sub-Agent tools to Spring AI
      */
     @Bean
     @Lazy

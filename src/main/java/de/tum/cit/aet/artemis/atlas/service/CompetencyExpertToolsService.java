@@ -30,13 +30,13 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 
 /**
- * Service providing LLM-callable tools for the Atlas Agent using Spring AI's function calling API.
+ * Service providing LLM-callable tools for the Competency Expert Sub-Agent using Spring AI's function calling API.
  * Methods annotated with {@link Tool} are automatically exposed as AI functions that can be invoked
  * by large language models during conversations. When the LLM determines it needs data or wants to
  * perform an action, it calls these methods, receives structured JSON responses, and uses that
  * information to generate natural language answers.
  *
- * Rationale: This service allows the Atlas Agent to autonomously retrieve course information and create
+ * Rationale: This service allows the Competency Expert Sub-Agent to autonomously retrieve course information and create
  * competencies based on user conversations, enabling an interactive AI assistant for instructors.
  *
  * Main Responsibilities:
@@ -244,12 +244,12 @@ public class CompetencyExpertToolsService {
      * Supports both single and batch operations.
      *
      * IMPORTANT: This method stores preview data in ThreadLocal for deterministic extraction.
-     * The LLM can respond naturally while the backend extracts structured data separately.
+     * The LLM can respond naturally while the service extracts structured data separately.
      *
      * @param courseID     the ID of the course
      * @param competencies list of competency operations (single or multiple)
      * @param viewOnly     optional flag for view-only mode
-     * @return Simple confirmation message for the LLM to use in its response
+     * @return simple confirmation message for the LLM to use in its response
      */
     @Tool(description = "Preview one or multiple competencies before creating/updating. SINGLE: pass [{comp}]. BATCH: pass [{comp1}, {comp2}, {comp3}]. CRITICAL: For batch operations, pass ALL competencies in ONE call, not multiple separate calls.")
     public String previewCompetencies(@ToolParam(description = "the Course ID from the CONTEXT section") Long courseID,
@@ -406,7 +406,7 @@ public class CompetencyExpertToolsService {
             }
         }
 
-        // Store preview data in ThreadLocal so client can display cards for what was just saved
+        // Store preview data in ThreadLocal so the interface can display cards for what was just saved
         // This ensures the cards appear in the response showing what was created/updated
         if (!successfulOperations.isEmpty()) {
             List<CompetencyPreviewDTO> previewResponses = successfulOperations.stream().map(comp -> new CompetencyPreviewDTO(comp.getTitle(), comp.getDescription(),

@@ -35,7 +35,7 @@ import de.tum.cit.aet.artemis.atlas.dto.CompetencyPreviewDTO;
 /**
  * Service for Atlas Agent functionality with Azure OpenAI integration.
  * Handles chat interactions and competency-related AI assistance.
- * Manages multi-agent orchestration between Main Agent and sub-agents (Competency Expert).
+ * Manages multi-agent orchestration between Main Agent and Sub-agents (Competency Expert Sub-agent).
  */
 @Lazy
 @Service
@@ -63,30 +63,20 @@ public class AtlasAgentService {
     private static final int MAX_SESSIONS = 5000;
 
     /**
-     * <p>
      * Track which agent is active for each session.
-     * </p>
-     *
      * Uses Guava Cache with automatic eviction to prevent memory leaks:
-     * <ul>
-     * <li>Entries expire after 2 hours of inactivity (<code>expireAfterAccess</code>).</li>
-     * <li>Maximum 5000 sessions cached (<code>maximumSize</code>).</li>
-     * <li>Automatic cleanup on access and during garbage collection.</li>
-     * </ul>
+     * Entries expire after 2 hours of inactivity
+     * Maximum 5000 sessions cached
+     * Automatic cleanup on access and during garbage collection.
      */
     private final Cache<String, AgentType> sessionAgentMap = CacheBuilder.newBuilder().expireAfterAccess(SESSION_EXPIRY_DURATION).maximumSize(MAX_SESSIONS).build();
 
     /**
-     * <p>
      * Track pending competency operations for each session.
-     * </p>
-     *
      * Uses Guava Cache with automatic eviction to prevent memory leaks:
-     * <ul>
-     * <li>Entries expire after 2 hours of inactivity (<code>expireAfterAccess</code>).</li>
-     * <li>Maximum 5000 sessions cached (<code>maximumSize</code>).</li>
-     * <li>Automatic cleanup on access and during garbage collection.</li>
-     * </ul>
+     * Entries expire after 2 hours of inactivity
+     * Maximum 5000 sessions cached
+     * Automatic cleanup on access and during garbage collection.
      *
      * @see <a href="https://guava.dev/releases/33.0.0-jre/api/docs/com/google/common/cache/Cache.html">Guava Cache Documentation</a>
      */
@@ -164,10 +154,10 @@ public class AtlasAgentService {
      * Routes to the appropriate agent based on session state and delegation markers.
      * Uses ThreadLocal state tracking to detect competency modifications.
      *
-     * @param message   The user's message
-     * @param courseId  The course ID for context
-     * @param sessionId The session ID for chat memory and agent tracking
-     * @return Result containing the AI response and competency modification flag
+     * @param message   the user's message
+     * @param courseId  the course ID for context
+     * @param sessionId the session ID for chat memory and agent tracking
+     * @return result containing the AI response and competency modification flag
      */
     public AtlasAgentChatResponseDTO processChatMessage(String message, Long courseId, String sessionId) {
         if (chatClient == null) {
@@ -280,10 +270,10 @@ public class AtlasAgentService {
     /**
      * Process message with the Main Agent (Requirements Engineer/Orchestrator).
      *
-     * @param message   The user's message
-     * @param courseId  The course ID for context
-     * @param sessionId The session ID for chat memory
-     * @return The agent's response
+     * @param message   the user's message
+     * @param courseId  the course ID for context
+     * @param sessionId the session ID for chat memory
+     * @return the agent's response
      */
     private String delegateTheRightAgent(String message, Long courseId, String sessionId) {
         AgentType agentType = sessionAgentMap.getIfPresent(sessionId);
@@ -301,7 +291,7 @@ public class AtlasAgentService {
         Map<String, String> variables = Map.of();
         String systemPrompt = templateService.render(resourcePath, variables);
 
-        // Append courseId to system prompt in order for the sub-companions to have course context (invisible to conversation history)
+        // Append courseId to system prompt so that the Sub-Agents have course context (invisible to conversation history)
         String systemPromptWithContext = systemPrompt + "\n\nCONTEXT FOR THIS REQUEST:\nCourse ID: " + courseId;
 
         ToolCallingChatOptions options = AzureOpenAiChatOptions.builder().deploymentName(deploymentName).temperature(temperature).build();
@@ -332,8 +322,8 @@ public class AtlasAgentService {
      * Expected format:
      * %%ARTEMIS_DELEGATE_TO_COMPETENCY_EXPERT%%:TOPIC/TOPICS: ...\\nREQUIREMENTS: ...\\nCONSTRAINTS: ...\\nCONTEXT: ...
      *
-     * @param response The response containing the delegation marker
-     * @return The extracted brief content
+     * @param response the response containing the delegation marker
+     * @return the extracted brief content
      */
     private String extractBriefFromDelegationMarker(String response) {
         int startIndex = response.indexOf(DELEGATE_TO_COMPETENCY_EXPERT);
@@ -351,7 +341,7 @@ public class AtlasAgentService {
     }
 
     /**
-     * Marks that a competency was created during the current request.
+     * Marks that a competency was modified during the current request.
      * This method is called by tool methods (e.g., createCompetency) to signal
      * that a competency modification occurred during tool execution.
      */
@@ -360,7 +350,7 @@ public class AtlasAgentService {
     }
 
     /**
-     * Check if a competency was created during the current request.
+     * Check if a competency was modified during the current request.
      * Used primarily for testing purposes.
      *
      * @return true if a competency was created/modified during the current request
@@ -370,7 +360,7 @@ public class AtlasAgentService {
     }
 
     /**
-     * Resets the competency created flag.
+     * Resets the competency modified flag.
      * Used primarily for testing purposes to reset state between tests.
      */
     public static void resetCompetencyModifiedFlag() {
@@ -381,8 +371,8 @@ public class AtlasAgentService {
      * Retrieves the conversation history for a given session as DTOs.
      * Filters out internal system messages (delegation markers and briefings) and extracts preview data from messages.
      *
-     * @param sessionId The session/conversation ID
-     * @return List of conversation history messages as DTOs with preview data
+     * @param sessionId the session/conversation ID
+     * @return list of conversation history messages as DTOs with preview data
      */
     public List<AtlasAgentHistoryMessageDTO> getConversationHistoryAsDTO(String sessionId) {
         try {
@@ -434,9 +424,9 @@ public class AtlasAgentService {
      * Embed preview data as a JSON marker in the response text.
      * This allows preview data to persist in chat memory and be reconstructed when loading history.
      *
-     * @param response The agent's response text
-     * @param previews Optional list of competency previews
-     * @return The response text with embedded preview data marker
+     * @param response the agent's response text
+     * @param previews optional list of competency previews
+     * @return the response text with embedded preview data marker
      */
     private String embedPreviewDataInResponse(String response, @Nullable List<CompetencyPreviewDTO> previews) {
         if (previews == null || previews.isEmpty()) {
@@ -458,7 +448,7 @@ public class AtlasAgentService {
     /**
      * Extract preview data from a message text that contains embedded preview markers.
      *
-     * @param messageText The message text potentially containing preview data markers
+     * @param messageText the message text potentially containing preview data markers
      * @return PreviewDataResult containing the cleaned text and extracted preview data
      */
     private PreviewDataResult extractPreviewDataFromMessage(String messageText) {
@@ -503,12 +493,12 @@ public class AtlasAgentService {
     /**
      * Container for embedding preview data in message text.
      */
-    record PreviewDataContainer(@Nullable List<CompetencyPreviewDTO> previews) {
+    private record PreviewDataContainer(@Nullable List<CompetencyPreviewDTO> previews) {
     }
 
     /**
      * Result of extracting preview data from a message.
      */
-    record PreviewDataResult(String cleanedText, @Nullable List<CompetencyPreviewDTO> previews) {
+    private record PreviewDataResult(String cleanedText, @Nullable List<CompetencyPreviewDTO> previews) {
     }
 }
