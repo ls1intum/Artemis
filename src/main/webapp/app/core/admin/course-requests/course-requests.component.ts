@@ -1,6 +1,6 @@
 import { NgClass } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbModalRef, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { faCheck, faExternalLinkAlt, faSync, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { RouterLink } from '@angular/router';
@@ -18,7 +18,7 @@ import { onError } from 'app/shared/util/global.utils';
 @Component({
     selector: 'jhi-course-requests-admin',
     templateUrl: './course-requests.component.html',
-    imports: [NgClass, TranslateDirective, ArtemisTranslatePipe, ArtemisDatePipe, ButtonComponent, FormsModule, RouterLink, FaIconComponent],
+    imports: [NgClass, TranslateDirective, ArtemisTranslatePipe, ArtemisDatePipe, ButtonComponent, FormsModule, RouterLink, FaIconComponent, NgbPagination],
 })
 export class CourseRequestsComponent implements OnInit {
     private courseRequestService = inject(CourseRequestService);
@@ -33,7 +33,12 @@ export class CourseRequestsComponent implements OnInit {
     protected readonly faExternalLinkAlt = faExternalLinkAlt;
     protected readonly faSync = faSync;
 
-    requests: CourseRequest[] = [];
+    pendingRequests: CourseRequest[] = [];
+    decidedRequests: CourseRequest[] = [];
+    totalDecidedCount = 0;
+    decidedPage = 1; // NgbPagination uses 1-indexed pages
+    decidedPageSize = 20;
+
     loading = false;
     selectedRequest?: CourseRequest;
     decisionReason = '';
@@ -46,9 +51,12 @@ export class CourseRequestsComponent implements OnInit {
 
     load() {
         this.loading = true;
-        this.courseRequestService.findAllForAdmin().subscribe({
-            next: (requests) => {
-                this.requests = requests;
+        // NgbPagination is 1-indexed, but API is 0-indexed
+        this.courseRequestService.findAdminOverview(this.decidedPage - 1, this.decidedPageSize).subscribe({
+            next: (overview) => {
+                this.pendingRequests = overview.pendingRequests;
+                this.decidedRequests = overview.decidedRequests;
+                this.totalDecidedCount = overview.totalDecidedCount;
                 this.loading = false;
             },
             error: (error) => {
@@ -58,13 +66,20 @@ export class CourseRequestsComponent implements OnInit {
         });
     }
 
+    onDecidedPageChange() {
+        this.load();
+    }
+
     accept(request: CourseRequest) {
         if (!request.id) {
             return;
         }
         this.courseRequestService.acceptRequest(request.id).subscribe({
             next: (updated) => {
-                this.updateRequestInList(updated);
+                // Move from pending to decided
+                this.pendingRequests = this.pendingRequests.filter((req) => req.id !== updated.id);
+                this.decidedRequests = [updated, ...this.decidedRequests];
+                this.totalDecidedCount++;
                 this.alertService.success('artemisApp.courseRequest.admin.acceptSuccess', { title: updated.title, shortName: updated.shortName });
             },
             error: (error) => onError(this.alertService, error),
@@ -88,7 +103,10 @@ export class CourseRequestsComponent implements OnInit {
         }
         this.courseRequestService.rejectRequest(this.selectedRequest.id, this.decisionReason).subscribe({
             next: (updated) => {
-                this.updateRequestInList(updated);
+                // Move from pending to decided
+                this.pendingRequests = this.pendingRequests.filter((req) => req.id !== updated.id);
+                this.decidedRequests = [updated, ...this.decidedRequests];
+                this.totalDecidedCount++;
                 this.alertService.success('artemisApp.courseRequest.admin.rejectSuccess', { title: updated.title });
                 this.modalRef?.close();
                 this.reasonInvalid = false;
@@ -109,10 +127,10 @@ export class CourseRequestsComponent implements OnInit {
         }
     }
 
-    private updateRequestInList(updated: CourseRequest) {
-        const index = this.requests.findIndex((req) => req.id === updated.id);
-        if (index !== -1) {
-            this.requests[index] = updated;
+    formatInstructorCount(count?: number): string {
+        if (count === undefined || count === null) {
+            return '-';
         }
+        return count > 0 ? `Yes (${count})` : 'No';
     }
 }

@@ -8,12 +8,17 @@ import java.util.Optional;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.core.domain.CourseRequest;
+import de.tum.cit.aet.artemis.core.domain.CourseRequestStatus;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 
 @Profile(PROFILE_CORE)
@@ -32,4 +37,27 @@ public interface CourseRequestRepository extends ArtemisJpaRepository<CourseRequ
     @Transactional // ok because of delete
     @Modifying
     void deleteAllByCreatedCourseId(long courseId);
+
+    /**
+     * Finds all pending course requests ordered by creation date descending.
+     *
+     * @return list of pending course requests with requester eagerly loaded
+     */
+    @EntityGraph(type = LOAD, attributePaths = { "requester" })
+    List<CourseRequest> findAllByStatusOrderByCreatedDateDesc(CourseRequestStatus status);
+
+    /**
+     * Finds all decided (non-pending) course requests with pagination, ordered by processed date descending.
+     *
+     * @param status   the status to exclude (PENDING)
+     * @param pageable pagination information
+     * @return page of decided course requests with requester eagerly loaded
+     */
+    @Query("""
+            SELECT cr FROM CourseRequest cr
+            LEFT JOIN FETCH cr.requester
+            WHERE cr.status <> :status
+            ORDER BY cr.processedDate DESC
+            """)
+    Page<CourseRequest> findAllByStatusNotOrderByProcessedDateDesc(@Param("status") CourseRequestStatus status, Pageable pageable);
 }

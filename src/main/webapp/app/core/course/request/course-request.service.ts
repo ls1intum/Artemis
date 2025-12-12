@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 
-import { BaseCourseRequest, CourseRequest, CourseRequestStatus } from 'app/core/shared/entities/course-request.model';
+import { BaseCourseRequest, CourseRequest, CourseRequestStatus, CourseRequestsAdminOverview } from 'app/core/shared/entities/course-request.model';
 import { User } from 'app/core/user/user.model';
 import { convertDateFromClient, convertDateStringFromServer } from 'app/shared/util/date.utils';
 
@@ -24,6 +24,13 @@ interface CourseRequestDTO extends BaseCourseRequestDTO {
     decisionReason?: string;
     requester?: User;
     createdCourseId?: number;
+    instructorCourseCount?: number;
+}
+
+interface CourseRequestsAdminOverviewDTO {
+    pendingRequests: CourseRequestDTO[];
+    decidedRequests: CourseRequestDTO[];
+    totalDecidedCount: number;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -38,8 +45,18 @@ export class CourseRequestService {
         return this.http.post<CourseRequestDTO>(this.resourceUrl, dto).pipe(map((res) => this.convertDTOToResponse(res)));
     }
 
-    findAllForAdmin(): Observable<CourseRequest[]> {
-        return this.http.get<CourseRequestDTO[]>(this.adminResourceUrl).pipe(map((res) => res.map((dto) => this.convertDTOToResponse(dto))));
+    findAdminOverview(decidedPage = 0, decidedPageSize = 20): Observable<CourseRequestsAdminOverview> {
+        return this.http
+            .get<CourseRequestsAdminOverviewDTO>(`${this.adminResourceUrl}/overview`, {
+                params: { decidedPage: decidedPage.toString(), decidedPageSize: decidedPageSize.toString() },
+            })
+            .pipe(
+                map((res) => ({
+                    pendingRequests: res.pendingRequests.map((dto) => this.convertDTOToResponse(dto)),
+                    decidedRequests: res.decidedRequests.map((dto) => this.convertDTOToResponse(dto)),
+                    totalDecidedCount: res.totalDecidedCount,
+                })),
+            );
     }
 
     acceptRequest(courseRequestId: number): Observable<CourseRequest> {
@@ -80,6 +97,7 @@ export class CourseRequestService {
         response.decisionReason = dto.decisionReason;
         response.requester = dto.requester;
         response.createdCourseId = dto.createdCourseId;
+        response.instructorCourseCount = dto.instructorCourseCount;
         return response;
     }
 }

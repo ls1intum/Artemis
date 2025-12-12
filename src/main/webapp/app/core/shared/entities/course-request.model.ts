@@ -26,4 +26,11 @@ export interface CourseRequest extends BaseCourseRequest {
     decisionReason?: string;
     requester?: User;
     createdCourseId?: number;
+    instructorCourseCount?: number;
+}
+
+export interface CourseRequestsAdminOverview {
+    pendingRequests: CourseRequest[];
+    decidedRequests: CourseRequest[];
+    totalDecidedCount: number;
 }

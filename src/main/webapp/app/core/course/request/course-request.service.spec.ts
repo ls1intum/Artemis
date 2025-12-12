@@ -107,55 +107,85 @@ describe('CourseRequestService', () => {
         });
     });
 
-    describe('findAllForAdmin', () => {
-        it('should retrieve all course requests for admin', () => {
-            const mockResponse = [
-                {
-                    id: 1,
-                    title: 'Course 1',
-                    shortName: 'C1',
-                    testCourse: false,
-                    reason: 'Reason 1',
-                    status: CourseRequestStatus.PENDING,
-                    createdDate: '2025-01-10T08:00:00Z',
-                    requester: { id: 1, login: 'user1' },
-                },
-                {
-                    id: 2,
-                    title: 'Course 2',
-                    shortName: 'C2',
-                    testCourse: true,
-                    reason: 'Reason 2',
-                    status: CourseRequestStatus.ACCEPTED,
-                    createdDate: '2025-01-11T09:00:00Z',
-                    processedDate: '2025-01-12T10:00:00Z',
-                    createdCourseId: 100,
-                    requester: { id: 2, login: 'user2' },
-                },
-            ];
+    describe('findAdminOverview', () => {
+        it('should retrieve admin overview with pending and decided requests', () => {
+            const mockResponse = {
+                pendingRequests: [
+                    {
+                        id: 1,
+                        title: 'Course 1',
+                        shortName: 'C1',
+                        testCourse: false,
+                        reason: 'Reason 1',
+                        status: CourseRequestStatus.PENDING,
+                        createdDate: '2025-01-10T08:00:00Z',
+                        requester: { id: 1, login: 'user1' },
+                        instructorCourseCount: 2,
+                    },
+                ],
+                decidedRequests: [
+                    {
+                        id: 2,
+                        title: 'Course 2',
+                        shortName: 'C2',
+                        testCourse: true,
+                        reason: 'Reason 2',
+                        status: CourseRequestStatus.ACCEPTED,
+                        createdDate: '2025-01-11T09:00:00Z',
+                        processedDate: '2025-01-12T10:00:00Z',
+                        createdCourseId: 100,
+                        requester: { id: 2, login: 'user2' },
+                    },
+                ],
+                totalDecidedCount: 1,
+            };
 
-            service.findAllForAdmin().subscribe((result) => {
-                expect(result).toHaveLength(2);
-                expect(result[0].id).toBe(1);
-                expect(result[0].status).toBe(CourseRequestStatus.PENDING);
-                expect(result[0].createdDate).toBeDefined();
-                expect(result[1].id).toBe(2);
-                expect(result[1].status).toBe(CourseRequestStatus.ACCEPTED);
-                expect(result[1].createdCourseId).toBe(100);
-                expect(result[1].processedDate).toBeDefined();
+            service.findAdminOverview().subscribe((result) => {
+                expect(result.pendingRequests).toHaveLength(1);
+                expect(result.pendingRequests[0].id).toBe(1);
+                expect(result.pendingRequests[0].status).toBe(CourseRequestStatus.PENDING);
+                expect(result.pendingRequests[0].instructorCourseCount).toBe(2);
+                expect(result.decidedRequests).toHaveLength(1);
+                expect(result.decidedRequests[0].id).toBe(2);
+                expect(result.decidedRequests[0].status).toBe(CourseRequestStatus.ACCEPTED);
+                expect(result.decidedRequests[0].createdCourseId).toBe(100);
+                expect(result.totalDecidedCount).toBe(1);
             });
 
-            const req = httpMock.expectOne({ method: 'GET', url: adminResourceUrl });
+            const req = httpMock.expectOne({ method: 'GET', url: `${adminResourceUrl}/overview?decidedPage=0&decidedPageSize=20` });
             req.flush(mockResponse);
         });
 
-        it('should return empty array when no requests exist', () => {
-            service.findAllForAdmin().subscribe((result) => {
-                expect(result).toHaveLength(0);
+        it('should return empty arrays when no requests exist', () => {
+            const mockResponse = {
+                pendingRequests: [],
+                decidedRequests: [],
+                totalDecidedCount: 0,
+            };
+
+            service.findAdminOverview().subscribe((result) => {
+                expect(result.pendingRequests).toHaveLength(0);
+                expect(result.decidedRequests).toHaveLength(0);
+                expect(result.totalDecidedCount).toBe(0);
             });
 
-            const req = httpMock.expectOne({ method: 'GET', url: adminResourceUrl });
-            req.flush([]);
+            const req = httpMock.expectOne({ method: 'GET', url: `${adminResourceUrl}/overview?decidedPage=0&decidedPageSize=20` });
+            req.flush(mockResponse);
+        });
+
+        it('should support pagination parameters', () => {
+            const mockResponse = {
+                pendingRequests: [],
+                decidedRequests: [],
+                totalDecidedCount: 50,
+            };
+
+            service.findAdminOverview(2, 10).subscribe((result) => {
+                expect(result.totalDecidedCount).toBe(50);
+            });
+
+            const req = httpMock.expectOne({ method: 'GET', url: `${adminResourceUrl}/overview?decidedPage=2&decidedPageSize=10` });
+            req.flush(mockResponse);
         });
     });
 
@@ -222,47 +252,59 @@ describe('CourseRequestService', () => {
     describe('date conversion', () => {
         it('should properly convert dates from server response', () => {
             const mockResponse = {
-                id: 1,
-                title: 'Date Test Course',
-                shortName: 'DTC',
-                testCourse: false,
-                reason: 'Testing dates',
-                status: CourseRequestStatus.PENDING,
-                startDate: '2025-02-01T00:00:00Z',
-                endDate: '2025-07-31T23:59:59Z',
-                createdDate: '2025-01-20T15:30:00Z',
+                pendingRequests: [
+                    {
+                        id: 1,
+                        title: 'Date Test Course',
+                        shortName: 'DTC',
+                        testCourse: false,
+                        reason: 'Testing dates',
+                        status: CourseRequestStatus.PENDING,
+                        startDate: '2025-02-01T00:00:00Z',
+                        endDate: '2025-07-31T23:59:59Z',
+                        createdDate: '2025-01-20T15:30:00Z',
+                    },
+                ],
+                decidedRequests: [],
+                totalDecidedCount: 0,
             };
 
-            service.findAllForAdmin().subscribe((result) => {
-                const request = result[0];
+            service.findAdminOverview().subscribe((result) => {
+                const request = result.pendingRequests[0];
                 expect(request.startDate?.isValid()).toBeTrue();
                 expect(request.endDate?.isValid()).toBeTrue();
                 expect(request.createdDate?.isValid()).toBeTrue();
             });
 
-            const req = httpMock.expectOne({ method: 'GET', url: adminResourceUrl });
-            req.flush([mockResponse]);
+            const req = httpMock.expectOne({ method: 'GET', url: `${adminResourceUrl}/overview?decidedPage=0&decidedPageSize=20` });
+            req.flush(mockResponse);
         });
 
         it('should handle null/undefined dates gracefully', () => {
             const mockResponse = {
-                id: 1,
-                title: 'No Dates Course',
-                shortName: 'NDC',
-                testCourse: false,
-                reason: 'No dates provided',
-                status: CourseRequestStatus.PENDING,
+                pendingRequests: [
+                    {
+                        id: 1,
+                        title: 'No Dates Course',
+                        shortName: 'NDC',
+                        testCourse: false,
+                        reason: 'No dates provided',
+                        status: CourseRequestStatus.PENDING,
+                    },
+                ],
+                decidedRequests: [],
+                totalDecidedCount: 0,
             };
 
-            service.findAllForAdmin().subscribe((result) => {
-                const request = result[0];
+            service.findAdminOverview().subscribe((result) => {
+                const request = result.pendingRequests[0];
                 expect(request.startDate).toBeUndefined();
                 expect(request.endDate).toBeUndefined();
                 expect(request.processedDate).toBeUndefined();
             });
 
-            const req = httpMock.expectOne({ method: 'GET', url: adminResourceUrl });
-            req.flush([mockResponse]);
+            const req = httpMock.expectOne({ method: 'GET', url: `${adminResourceUrl}/overview?decidedPage=0&decidedPageSize=20` });
+            req.flush(mockResponse);
         });
     });
 });

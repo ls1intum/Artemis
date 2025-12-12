@@ -2,8 +2,6 @@ package de.tum.cit.aet.artemis.core.web.admin;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.util.List;
-
 import jakarta.validation.Valid;
 
 import org.slf4j.Logger;
@@ -16,10 +14,12 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.dto.CourseRequestDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseRequestDecisionDTO;
+import de.tum.cit.aet.artemis.core.dto.CourseRequestsAdminOverviewDTO;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.service.course.CourseRequestService;
 
@@ -39,14 +39,17 @@ public class AdminCourseRequestResource {
     }
 
     /**
-     * GET /course-requests : get all course requests.
+     * GET /course-requests/overview : get admin overview of course requests.
+     * Returns pending requests with instructor course count and decided requests with pagination.
      *
-     * @return list of course requests ordered by creation date
+     * @param decidedPage     the page number for decided requests (0-indexed, default 0)
+     * @param decidedPageSize the page size for decided requests (default 20)
+     * @return the admin overview containing pending and decided requests
      */
-    @GetMapping("course-requests")
-    // TODO: consider pagination if the number of requests becomes too large
-    public ResponseEntity<List<CourseRequestDTO>> getAll() {
-        return ResponseEntity.ok(courseRequestService.findAll());
+    @GetMapping("course-requests/overview")
+    public ResponseEntity<CourseRequestsAdminOverviewDTO> getAdminOverview(@RequestParam(defaultValue = "0") int decidedPage,
+            @RequestParam(defaultValue = "20") int decidedPageSize) {
+        return ResponseEntity.ok(courseRequestService.getAdminOverview(decidedPage, decidedPageSize));
     }
 
     /**

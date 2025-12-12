@@ -23,7 +23,7 @@ describe('CourseRequestComponent', () => {
     beforeEach(async () => {
         courseRequestService = {
             create: jest.fn(),
-            findAllForAdmin: jest.fn(),
+            findAdminOverview: jest.fn(),
             acceptRequest: jest.fn(),
             rejectRequest: jest.fn(),
         } as unknown as jest.Mocked<CourseRequestService>;

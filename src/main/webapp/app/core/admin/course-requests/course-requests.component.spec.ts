@@ -7,7 +7,7 @@ import { of, throwError } from 'rxjs';
 import { CourseRequestsComponent } from 'app/core/admin/course-requests/course-requests.component';
 import { CourseRequestService } from 'app/core/course/request/course-request.service';
 import { AlertService } from 'app/shared/service/alert.service';
-import { CourseRequest, CourseRequestStatus } from 'app/core/shared/entities/course-request.model';
+import { CourseRequest, CourseRequestStatus, CourseRequestsAdminOverview } from 'app/core/shared/entities/course-request.model';
 import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 
 describe('CourseRequestsComponent', () => {
@@ -48,7 +48,7 @@ describe('CourseRequestsComponent', () => {
     beforeEach(async () => {
         courseRequestService = {
             create: jest.fn(),
-            findAllForAdmin: jest.fn(),
+            findAdminOverview: jest.fn(),
             acceptRequest: jest.fn(),
             rejectRequest: jest.fn(),
         } as unknown as jest.Mocked<CourseRequestService>;
@@ -68,7 +68,12 @@ describe('CourseRequestsComponent', () => {
         }).compileComponents();
 
         modalService = TestBed.inject(NgbModal);
-        courseRequestService.findAllForAdmin.mockReturnValue(of([mockRequest]));
+        const mockOverview: CourseRequestsAdminOverview = {
+            pendingRequests: [mockRequest],
+            decidedRequests: [],
+            totalDecidedCount: 0,
+        };
+        courseRequestService.findAdminOverview.mockReturnValue(of(mockOverview));
 
         const fixture = TestBed.createComponent(CourseRequestsComponent);
         component = fixture.componentInstance;
@@ -78,8 +83,9 @@ describe('CourseRequestsComponent', () => {
         it('should load requests on init', () => {
             component.ngOnInit();
 
-            expect(courseRequestService.findAllForAdmin).toHaveBeenCalled();
-            expect(component.requests).toEqual([mockRequest]);
+            expect(courseRequestService.findAdminOverview).toHaveBeenCalled();
+            expect(component.pendingRequests).toEqual([mockRequest]);
+            expect(component.decidedRequests).toEqual([]);
             expect(component.loading).toBeFalse();
         });
     });
@@ -89,12 +95,12 @@ describe('CourseRequestsComponent', () => {
             component.load();
 
             expect(component.loading).toBeFalse();
-            expect(courseRequestService.findAllForAdmin).toHaveBeenCalled();
+            expect(courseRequestService.findAdminOverview).toHaveBeenCalled();
         });
 
         it('should handle error when loading fails', () => {
             const error = { status: 500, message: 'Server error' };
-            courseRequestService.findAllForAdmin.mockReturnValue(throwError(() => error));
+            courseRequestService.findAdminOverview.mockReturnValue(throwError(() => error));
 
             component.load();
 
@@ -103,14 +109,18 @@ describe('CourseRequestsComponent', () => {
     });
 
     describe('accept', () => {
-        it('should accept a request and update the list', () => {
+        it('should accept a request and move it to decided list', () => {
             courseRequestService.acceptRequest.mockReturnValue(of(mockAcceptedRequest));
-            component.requests = [mockRequest];
+            component.pendingRequests = [mockRequest];
+            component.decidedRequests = [];
+            component.totalDecidedCount = 0;
 
             component.accept(mockRequest);
 
             expect(courseRequestService.acceptRequest).toHaveBeenCalledWith(1);
-            expect(component.requests[0].status).toBe(CourseRequestStatus.ACCEPTED);
+            expect(component.pendingRequests).toHaveLength(0);
+            expect(component.decidedRequests[0].status).toBe(CourseRequestStatus.ACCEPTED);
+            expect(component.totalDecidedCount).toBe(1);
             expect(alertService.success).toHaveBeenCalledWith('artemisApp.courseRequest.admin.acceptSuccess', { title: 'Test Course', shortName: 'TC' });
         });
 
@@ -152,15 +162,19 @@ describe('CourseRequestsComponent', () => {
             component.modalRef = { close: jest.fn() } as unknown as NgbModalRef;
         });
 
-        it('should reject a request with a reason', () => {
+        it('should reject a request with a reason and move it to decided list', () => {
             courseRequestService.rejectRequest.mockReturnValue(of(mockRejectedRequest));
-            component.requests = [mockRequest];
+            component.pendingRequests = [mockRequest];
+            component.decidedRequests = [];
+            component.totalDecidedCount = 0;
             component.decisionReason = 'Not approved';
 
             component.reject();
 
             expect(courseRequestService.rejectRequest).toHaveBeenCalledWith(1, 'Not approved');
-            expect(component.requests[0].status).toBe(CourseRequestStatus.REJECTED);
+            expect(component.pendingRequests).toHaveLength(0);
+            expect(component.decidedRequests[0].status).toBe(CourseRequestStatus.REJECTED);
+            expect(component.totalDecidedCount).toBe(1);
             expect(alertService.success).toHaveBeenCalledWith('artemisApp.courseRequest.admin.rejectSuccess', { title: 'Test Course' });
             expect(component.modalRef?.close).toHaveBeenCalled();
             expect(component.reasonInvalid).toBeFalse();

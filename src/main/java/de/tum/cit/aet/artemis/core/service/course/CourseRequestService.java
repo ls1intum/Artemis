@@ -8,12 +8,14 @@ import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -26,6 +28,7 @@ import de.tum.cit.aet.artemis.core.domain.CourseRequestStatus;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.CourseRequestCreateDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseRequestDTO;
+import de.tum.cit.aet.artemis.core.dto.CourseRequestsAdminOverviewDTO;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
@@ -110,10 +113,6 @@ public class CourseRequestService {
         sendReceivedEmail(courseRequest);
 
         return toDto(courseRequest);
-    }
-
-    public List<CourseRequestDTO> findAll() {
-        return courseRequestRepository.findAllByOrderByCreatedDateDesc().stream().map(this::toDto).toList();
     }
 
     /**
@@ -202,8 +201,10 @@ public class CourseRequestService {
             var templatePath = Path.of("templates", "codeofconduct", "README.md");
             log.debug("REST request to get template : {}", templatePath);
             var resource = resourceLoaderService.getResource(templatePath);
-            var informationSharingMessageCodeOfConduct = new String(resource.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
-            course.setCourseInformationSharingMessagingCodeOfConduct(informationSharingMessageCodeOfConduct);
+            try (var inputStream = resource.getInputStream()) {
+                var informationSharingMessageCodeOfConduct = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+                course.setCourseInformationSharingMessagingCodeOfConduct(informationSharingMessageCodeOfConduct);
+            }
         }
         catch (IOException e) {
             log.warn("Could not load code of conduct template from path: {}", "templates/codeofconduct/README.md", e);
@@ -266,10 +267,49 @@ public class CourseRequestService {
     }
 
     private CourseRequestDTO toDto(CourseRequest courseRequest) {
+        return toDto(courseRequest, null);
+    }
+
+    private CourseRequestDTO toDto(CourseRequest courseRequest, Integer instructorCourseCount) {
         UserDTO requesterDto = courseRequest.getRequester() != null ? new UserDTO(courseRequest.getRequester()) : null;
         Long createdCourseId = courseRequest.getCreatedCourseId();
         return new CourseRequestDTO(courseRequest.getId(), courseRequest.getTitle(), courseRequest.getShortName(), courseRequest.getSemester(), courseRequest.getStartDate(),
                 courseRequest.getEndDate(), courseRequest.isTestCourse(), courseRequest.getReason(), courseRequest.getStatus(), courseRequest.getCreatedDate(),
-                courseRequest.getProcessedDate(), courseRequest.getDecisionReason(), requesterDto, createdCourseId);
+                courseRequest.getProcessedDate(), courseRequest.getDecisionReason(), requesterDto, createdCourseId, instructorCourseCount);
+    }
+
+    /**
+     * Retrieves the admin overview of course requests with pending requests (including instructor course count)
+     * and decided requests with pagination.
+     *
+     * @param decidedPage     the page number for decided requests (0-indexed)
+     * @param decidedPageSize the page size for decided requests
+     * @return the admin overview DTO containing pending and decided requests
+     */
+    public CourseRequestsAdminOverviewDTO getAdminOverview(int decidedPage, int decidedPageSize) {
+        // Get pending requests with instructor course count
+        List<CourseRequest> pendingRequests = courseRequestRepository.findAllByStatusOrderByCreatedDateDesc(CourseRequestStatus.PENDING);
+        List<CourseRequestDTO> pendingDtos = pendingRequests.stream().map(request -> {
+            Integer instructorCount = computeInstructorCourseCount(request.getRequester());
+            return toDto(request, instructorCount);
+        }).toList();
+
+        // Get decided requests with pagination (without instructor course count)
+        var pageable = PageRequest.of(decidedPage, decidedPageSize);
+        var decidedPageResult = courseRequestRepository.findAllByStatusNotOrderByProcessedDateDesc(CourseRequestStatus.PENDING, pageable);
+        List<CourseRequestDTO> decidedDtos = decidedPageResult.getContent().stream().map(this::toDto).toList();
+
+        return new CourseRequestsAdminOverviewDTO(pendingDtos, decidedDtos, decidedPageResult.getTotalElements());
+    }
+
+    private Integer computeInstructorCourseCount(User requester) {
+        if (requester == null) {
+            return null;
+        }
+        Set<String> groups = requester.getGroups();
+        if (groups == null || groups.isEmpty()) {
+            return 0;
+        }
+        return (int) courseRepository.countCoursesForInstructorWithGroups(groups);
     }
 }

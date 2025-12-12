@@ -20,7 +20,7 @@
                 <span class="bold-text" th:text="#{email.courseRequest.label.shortName}">Short name</span>:
                 <span th:text="${courseRequest.shortName}">short-name</span>
             </li>
-            <li>
+            <li th:if="${courseRequest.semester != null}">
                 <span class="bold-text" th:text="#{email.courseRequest.label.semester}">Semester</span>:
                 <span th:text="${courseRequest.semester}">Semester</span>
             </li>
