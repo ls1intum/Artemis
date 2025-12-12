@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { BehaviorSubject, Observable, of, pipe } from 'rxjs';
+import { BehaviorSubject, Observable, Subscription, of, pipe } from 'rxjs';
 import { switchMap, tap } from 'rxjs/operators';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
@@ -87,25 +87,25 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
     private participationService = inject(ParticipationService);
 
     /**
-     * Cache of student participations by participation ID.
+     * Cache of student participations by participationId.
      */
-    cachedParticipations: Map<number /* ID of participation */, StudentParticipation> = new Map<number, StudentParticipation>();
+    cachedParticipations: Map<number, StudentParticipation> = new Map<number, StudentParticipation>();
 
     /**
-     * Tracks open non-personal result websocket subscriptions by exercise ID.
-     * Value is the subscribed topic URL.
+     * Tracks open non-personal result websocket subscriptions by exerciseId.
+     * Value is the websocket subscription.
      */
-    openResultWebsocketSubscriptions: Map<number /*ID of participation */, string /* url of websocket connection */> = new Map<number, string>();
+    openResultWebsocketSubscriptions: Map<number, Subscription> = new Map<number, Subscription>();
 
     /**
-     * Topic URL of an open personal websocket subscription if any.
+     * Subscription of one open personal websocket subscription if any.
      */
-    openPersonalWebsocketSubscription?: string; /* url of websocket connection */
+    openPersonalWebsocketSubscription?: Subscription;
 
     /**
-     * BehaviorSubjects that emit the latest result per participation ID.
+     * BehaviorSubjects that emit the latest result per participationId.
      */
-    resultObservables: Map<number /* ID of participation */, BehaviorSubject<Result | undefined>> = new Map<number, BehaviorSubject<Result>>();
+    resultObservables: Map<number, BehaviorSubject<Result | undefined>> = new Map<number, BehaviorSubject<Result>>();
 
     /**
      * BehaviorSubject that emits the latest updated participation.
@@ -262,7 +262,7 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
                 // The subscription was a personal subscription, so it should only be removed if it was the last of it kind
                 const openPersonalSubscriptions = [...this.participationSubscriptionTypes.values()].filter((personal: boolean) => personal).length;
                 if (openPersonalSubscriptions === 0) {
-                    this.websocketService.unsubscribe(PERSONAL_PARTICIPATION_TOPIC);
+                    this.openPersonalWebsocketSubscription?.unsubscribe();
                     this.openPersonalWebsocketSubscription = undefined;
                 }
             } else {
@@ -272,9 +272,9 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
                     openSubscriptionsForExercise.delete(participationId);
                     if (openSubscriptionsForExercise.size === 0) {
                         this.subscribedExercises.delete(exerciseId!);
-                        const subscribedTopic = this.openResultWebsocketSubscriptions.get(exerciseId!);
-                        if (subscribedTopic) {
-                            this.websocketService.unsubscribe(subscribedTopic);
+                        const subscription = this.openResultWebsocketSubscriptions.get(exerciseId!);
+                        if (subscription) {
+                            subscription.unsubscribe();
                             this.openResultWebsocketSubscriptions.delete(exerciseId!);
                         }
                     }
@@ -297,10 +297,8 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
             let participationResultTopic: string;
             if (personal) {
                 participationResultTopic = PERSONAL_PARTICIPATION_TOPIC;
-                this.openPersonalWebsocketSubscription = participationResultTopic;
             } else {
                 participationResultTopic = EXERCISE_PARTICIPATION_TOPIC(exerciseId!);
-                this.openResultWebsocketSubscriptions.set(exerciseId!, participationResultTopic);
             }
             this.participationSubscriptionTypes.set(participationId, personal);
             if (!this.subscribedExercises.has(exerciseId!)) {
@@ -309,8 +307,12 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
             const subscribedParticipations = this.subscribedExercises.get(exerciseId!);
             subscribedParticipations!.add(participationId);
 
-            this.websocketService.subscribe(participationResultTopic);
-            this.websocketService.receive(participationResultTopic).pipe(this.getNotifyAllSubscribersPipe()).subscribe();
+            const subscription = this.websocketService.subscribe<Result>(participationResultTopic).pipe(this.getNotifyAllSubscribersPipe()).subscribe();
+            if (personal) {
+                this.openPersonalWebsocketSubscription = subscription;
+            } else {
+                this.openResultWebsocketSubscriptions.set(exerciseId!, subscription);
+            }
         }
     }
 

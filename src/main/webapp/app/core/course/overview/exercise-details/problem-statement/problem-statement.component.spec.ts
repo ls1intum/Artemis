@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
+import { WebsocketService } from 'app/shared/service/websocket.service';
 import { of } from 'rxjs';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
@@ -18,6 +19,7 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { MockThemeService } from 'test/helpers/mocks/service/mock-theme.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 
 describe('ProblemStatementComponent', () => {
     let component: ProblemStatementComponent;
@@ -47,6 +49,7 @@ describe('ProblemStatementComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ThemeService, useClass: MockThemeService },
+                { provide: WebsocketService, useClass: MockWebsocketService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
