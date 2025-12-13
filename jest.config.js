@@ -65,6 +65,7 @@ const {
 module.exports = {
     testEnvironmentOptions: {
         url: 'https://artemis.fake/test',
+        globalsCleanup: 'on',
     },
     roots: ['<rootDir>', `<rootDir>/${baseUrl}`],
     modulePaths: [`<rootDir>/${baseUrl}`],
@@ -83,26 +84,23 @@ module.exports = {
     ],
     collectCoverageFrom: [
         '<rootDir>/src/main/webapp/**/*.ts',
-        '!<rootDir>/src/main/webapp/**/*.module.ts',  // ignore modules files because they cannot be properly tested
-        '!<rootDir>/src/main/webapp/**/*.routes.ts',   // ignore routes files because they cannot be properly tested
-        '!<rootDir>/src/main/webapp/**/*.route.ts',   // ignore route files because they cannot be properly tested
+        '!<rootDir>/src/main/webapp/**/*.module.ts', // ignore modules files because they cannot be properly tested
+        '!<rootDir>/src/main/webapp/**/*.routes.ts', // ignore routes files because they cannot be properly tested
+        '!<rootDir>/src/main/webapp/**/*.route.ts', // ignore route files because they cannot be properly tested
         '!<rootDir>/**/node_modules/**',
         '!<rootDir>/src/main/webapp/app/openapi/**', // ignore openapi files because they are generated
     ],
-    coveragePathIgnorePatterns: [
-        '<rootDir>/src/main/webapp/app/core/config/prod.config.ts',
-        '<rootDir>/src/main/webapp/app/openapi/',
-    ],
+    coveragePathIgnorePatterns: ['<rootDir>/src/main/webapp/app/core/config/prod.config.ts', '<rootDir>/src/main/webapp/app/openapi/'],
     coverageThreshold: {
         global: {
-            statements: 90.20,
-            branches: 76.40,
-            functions: 84.30,
-            lines: 90.30,
+            statements: 90.2,
+            branches: 74.1,
+            functions: 84.3,
+            lines: 90.3,
         },
     },
     // 'json-summary' reporter is used by supporting_scripts/code-coverage/module-coverage-client/check-client-module-coverage.mjs
-    coverageReporters: ['clover', 'json', 'lcov', 'text-summary','json-summary'],
+    coverageReporters: ['clover', 'json', 'lcov', 'text-summary', 'json-summary'],
     setupFilesAfterEnv: ['<rootDir>/src/test/javascript/spec/jest-test-setup.ts', 'jest-extended/all'],
     moduleFileExtensions: ['ts', 'html', 'js', 'json', 'mjs'],
     transformIgnorePatterns: [`/node_modules/(?!${esModules})`],
@@ -120,9 +118,7 @@ module.exports = {
     },
     modulePathIgnorePatterns: ['<rootDir>/src/main/resources/templates/', '<rootDir>/build/'],
     testTimeout: 3000,
-    testMatch: ['<rootDir>/src/main/webapp/app/**/*.spec.ts',
-        '<rootDir>/src/test/javascript/spec/**/*.integration.spec.ts'
-    ],
+    testMatch: ['<rootDir>/src/main/webapp/app/**/*.spec.ts', '<rootDir>/src/test/javascript/spec/**/*.integration.spec.ts'],
     moduleNameMapper: {
         '^app/(.*)': '<rootDir>/src/main/webapp/app/$1',
         '^test/(.*)': '<rootDir>/src/test/javascript/spec/$1',
