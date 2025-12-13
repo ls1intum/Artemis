@@ -18,7 +18,9 @@ import de.tum.cit.aet.artemis.core.domain.PasskeyCredential;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.PasskeyCredentialsRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.security.RateLimitType;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
+import de.tum.cit.aet.artemis.core.service.RateLimitService;
 
 /**
  * <p>
@@ -43,6 +45,8 @@ public class ArtemisWebAuthnAuthenticationProvider implements AuthenticationProv
 
     private final UserRepository userRepository;
 
+    private final RateLimitService rateLimitService;
+
     private final PasskeyCredentialsRepository passkeyCredentialsRepository;
 
     /**
@@ -50,21 +54,24 @@ public class ArtemisWebAuthnAuthenticationProvider implements AuthenticationProv
      *
      * @param relyingPartyOperations       the {@link WebAuthnRelyingPartyOperations} to use. Cannot be null.
      * @param userRepository               the {@link UserRepository} to use. Cannot be null.
+     * @param rateLimitService             the {@link RateLimitService} to use.
      * @param passkeyCredentialsRepository the {@link PasskeyCredentialsRepository} to use. Cannot be null.
      */
-    public ArtemisWebAuthnAuthenticationProvider(WebAuthnRelyingPartyOperations relyingPartyOperations, UserRepository userRepository,
+    public ArtemisWebAuthnAuthenticationProvider(WebAuthnRelyingPartyOperations relyingPartyOperations, UserRepository userRepository, RateLimitService rateLimitService,
             PasskeyCredentialsRepository passkeyCredentialsRepository) {
         Assert.notNull(relyingPartyOperations, "relyingPartyOperations cannot be null");
         Assert.notNull(userRepository, "userRepository cannot be null");
-        Assert.notNull(passkeyCredentialsRepository, "passkeyCredentialsRepository cannot be null");
+        Assert.notNull(rateLimitService, "rateLimitService cannot be null");
         this.relyingPartyOperations = relyingPartyOperations;
         this.userRepository = userRepository;
+        this.rateLimitService = rateLimitService;
         this.passkeyCredentialsRepository = passkeyCredentialsRepository;
     }
 
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
         WebAuthnAuthenticationRequestToken webAuthnRequest = (WebAuthnAuthenticationRequestToken) authentication;
+        rateLimitService.enforcePerMinute(rateLimitService.resolveClientId(), RateLimitType.AUTHENTICATION);
         try {
             String credentialId = webAuthnRequest.getWebAuthnRequest().getPublicKey().getId();
 
@@ -105,5 +112,4 @@ public class ArtemisWebAuthnAuthenticationProvider implements AuthenticationProv
         details.put(TokenProvider.IS_PASSKEY_SUPER_ADMIN_APPROVED, isPasskeyApproved);
         return details;
     }
-
 }

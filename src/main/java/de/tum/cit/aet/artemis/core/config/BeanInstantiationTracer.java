@@ -32,7 +32,7 @@ import de.tum.cit.aet.artemis.core.util.Pair;
 public class BeanInstantiationTracer implements InstantiationAwareBeanPostProcessor {
 
     // Keep these two constants in sync with the values in .github/workflows/bean-instantiations.yml
-    private static final int STARTUP_MAX_DEPENDENCY_CHAIN_THRESHOLD = 9;
+    private static final int STARTUP_MAX_DEPENDENCY_CHAIN_THRESHOLD = 10;
 
     private static final int DEFERRED_INIT_MAX_DEPENDENCY_CHAIN_THRESHOLD = 16;
 

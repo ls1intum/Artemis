@@ -22,6 +22,7 @@ export enum FeatureToggle {
     AtlasML = 'AtlasML',
     AtlasAgent = 'AtlasAgent',
     Memiris = 'Memiris',
+    RateLimit = 'RateLimit',
 }
 export type ActiveFeatureToggles = Array<FeatureToggle>;
 
