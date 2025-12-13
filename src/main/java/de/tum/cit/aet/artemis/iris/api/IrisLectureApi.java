@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
 
+import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisWebhookService;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 
@@ -18,8 +19,11 @@ public class IrisLectureApi extends AbstractIrisApi {
 
     private final PyrisWebhookService pyrisWebhookService;
 
-    public IrisLectureApi(PyrisWebhookService pyrisWebhookService) {
+    private final PyrisJobService pyrisJobService;
+
+    public IrisLectureApi(PyrisWebhookService pyrisWebhookService, PyrisJobService pyrisJobService) {
         this.pyrisWebhookService = pyrisWebhookService;
+        this.pyrisJobService = pyrisJobService;
     }
 
     /**
@@ -55,5 +59,19 @@ public class IrisLectureApi extends AbstractIrisApi {
      */
     public void autoUpdateAttachmentVideoUnitsInPyris(List<AttachmentVideoUnit> newAttachmentVideoUnits) {
         pyrisWebhookService.autoUpdateAttachmentVideoUnitsInPyris(newAttachmentVideoUnits);
+    }
+
+    /**
+     * Cancel any pending ingestion jobs for a lecture unit.
+     * Used when a unit is deleted or content changes during ingestion.
+     * <p>
+     * Note: This only removes the local job tracking. If Pyris has already started
+     * processing, it will complete but the webhook callback will be ignored.
+     *
+     * @param lectureUnitId the ID of the lecture unit
+     * @return true if a job was cancelled, false otherwise
+     */
+    public boolean cancelPendingIngestion(long lectureUnitId) {
+        return pyrisJobService.removeLectureIngestionJobByUnitId(lectureUnitId);
     }
 }

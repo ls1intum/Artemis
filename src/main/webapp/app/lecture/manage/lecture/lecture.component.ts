@@ -1,5 +1,3 @@
-import { PROFILE_IRIS } from 'app/app.constants';
-import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import dayjs from 'dayjs/esm';
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -10,13 +8,11 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/shared/service/alert.service';
-import { faFile, faFileExport, faFileImport, faFilter, faPencilAlt, faPlus, faPuzzlePiece, faSort, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faFile, faFileImport, faFilter, faPencilAlt, faPlus, faPuzzlePiece, faSort, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { LectureImportComponent } from 'app/lecture/manage/lecture-import/lecture-import.component';
 import { Subject } from 'rxjs';
 import { DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
 import { SortService } from 'app/shared/service/sort.service';
-import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
-import { IngestionState } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { DocumentationButtonComponent } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
 import { NgClass } from '@angular/common';
@@ -66,8 +62,6 @@ export class LectureComponent implements OnInit, OnDestroy {
     private alertService = inject(AlertService);
     private modalService = inject(NgbModal);
     private sortService = inject(SortService);
-    private profileService = inject(ProfileService);
-    private irisSettingsService = inject(IrisSettingsService);
 
     lectures: Lecture[];
     filteredLectures: Lecture[];
@@ -80,38 +74,21 @@ export class LectureComponent implements OnInit, OnDestroy {
     predicate = 'id';
     ascending = true;
 
-    irisEnabled = false;
-
     readonly filterType = LectureDateFilter;
     readonly documentationType: DocumentationType = 'Lecture';
-    readonly ingestionState: IngestionState;
 
     // Icons
     faPlus = faPlus;
     faFileImport = faFileImport;
-    faFileExport = faFileExport;
     faTrash = faTrash;
     faPencilAlt = faPencilAlt;
     faFile = faFile;
     faPuzzlePiece = faPuzzlePiece;
     faFilter = faFilter;
     faSort = faSort;
-    lectureIngestionEnabled = false;
-
-    protected readonly IngestionState = IngestionState;
 
     ngOnInit() {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
-        this.irisEnabled = this.profileService.isProfileActive(PROFILE_IRIS);
-        if (this.irisEnabled) {
-            this.irisSettingsService.getCombinedCourseSettings(this.courseId).subscribe((settings) => {
-                this.lectureIngestionEnabled = settings?.irisLectureIngestionSettings?.enabled || false;
-                if (this.lectureIngestionEnabled && this.lectures?.length) {
-                    this.updateIngestionStates();
-                }
-            });
-        }
-
         this.loadAll();
     }
 
@@ -194,9 +171,6 @@ export class LectureComponent implements OnInit, OnDestroy {
                         Object.assign(lecture, lectureData);
                         return lecture;
                     });
-                    if (this.lectureIngestionEnabled) {
-                        this.updateIngestionStates();
-                    }
                     this.applyFilters();
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
@@ -239,44 +213,6 @@ export class LectureComponent implements OnInit, OnDestroy {
         }
 
         this.sortRows();
-    }
-
-    /**
-     * Trigger the Ingestion of all Lectures in the course.
-     */
-    ingestLecturesInPyris() {
-        if (this.lectures.first()) {
-            this.lectureService.ingestLecturesInPyris(this.lectures.first()!.course!.id!).subscribe({
-                next: () => this.alertService.success('artemisApp.iris.ingestionAlert.allLecturesSuccess'),
-                error: () => {
-                    this.alertService.error('artemisApp.iris.ingestionAlert.allLecturesError');
-                },
-            });
-        }
-    }
-
-    /**
-     * Fetches the ingestion state for all lecture asynchronously and updates all the lectures ingestion state.
-     */
-    updateIngestionStates() {
-        this.lectureService.getIngestionState(this.courseId).subscribe({
-            next: (res: HttpResponse<Record<number, IngestionState>>) => {
-                if (res.body) {
-                    const ingestionStatesMap = res.body;
-                    this.lectures.forEach((lecture) => {
-                        if (lecture.id) {
-                            const ingestionState = ingestionStatesMap[lecture.id];
-                            if (ingestionState !== undefined) {
-                                lecture.ingested = ingestionState;
-                            }
-                        }
-                    });
-                }
-            },
-            error: () => {
-                this.alertService.error('artemisApp.iris.ingestionAlert.pyrisError');
-            },
-        });
     }
 
     navigateToLectureCreationPage(): void {

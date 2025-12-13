@@ -24,17 +24,6 @@ export class LectureTranscriptionService {
             );
     }
 
-    createTranscription(lectureId: number, lectureUnitId: number, transcription: LectureTranscriptionDTO): Observable<boolean> {
-        return this.httpClient
-            .post(`api/lecture/${lectureId}/lecture-unit/${lectureUnitId}/transcription`, transcription, {
-                observe: 'response',
-            })
-            .pipe(
-                map((response) => response.status == 201),
-                catchError(() => of(false)),
-            );
-    }
-
     getTranscription(lectureUnitId: number): Observable<LectureTranscriptionDTO | undefined> {
         return this.httpClient
             .get<LectureTranscriptionDTO>(`api/lecture/lecture-unit/${lectureUnitId}/transcript`, {

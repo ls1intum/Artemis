@@ -40,6 +40,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.iris.api.IrisLectureApi;
+import de.tum.cit.aet.artemis.lecture.api.LectureContentProcessingApi;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
@@ -75,9 +76,12 @@ public class LectureUnitService {
 
     private final Optional<CompetencyRepositoryApi> competencyRepositoryApi;
 
+    private final LectureContentProcessingApi contentProcessingApi;
+
     public LectureUnitService(LectureUnitRepository lectureUnitRepository, LectureRepository lectureRepository, LectureUnitCompletionRepository lectureUnitCompletionRepository,
             FileService fileService, Optional<IrisLectureApi> irisLectureApi, Optional<CompetencyProgressApi> competencyProgressApi,
-            Optional<CourseCompetencyApi> courseCompetencyApi, Optional<CompetencyRelationApi> competencyRelationApi, Optional<CompetencyRepositoryApi> competencyRepositoryApi) {
+            Optional<CourseCompetencyApi> courseCompetencyApi, Optional<CompetencyRelationApi> competencyRelationApi, Optional<CompetencyRepositoryApi> competencyRepositoryApi,
+            LectureContentProcessingApi contentProcessingApi) {
         this.lectureUnitRepository = lectureUnitRepository;
         this.lectureRepository = lectureRepository;
         this.lectureUnitCompletionRepository = lectureUnitCompletionRepository;
@@ -87,6 +91,7 @@ public class LectureUnitService {
         this.competencyProgressApi = competencyProgressApi;
         this.competencyRelationApi = competencyRelationApi;
         this.competencyRepositoryApi = competencyRepositoryApi;
+        this.contentProcessingApi = contentProcessingApi;
     }
 
     /**
@@ -163,12 +168,20 @@ public class LectureUnitService {
     }
 
     /**
-     * Deletes a lecture unit correctly in the database
+     * Deletes a lecture unit correctly in the database.
+     * Also cancels any ongoing content processing jobs (Nebula transcription, Pyris ingestion).
+     * <p>
+     * Note: The processing state is automatically deleted by database CASCADE DELETE
+     * when the lecture unit is deleted.
      *
      * @param lectureUnit lecture unit to delete
      */
     public void removeLectureUnit(@NonNull LectureUnit lectureUnit) {
         LectureUnit lectureUnitToDelete = lectureUnitRepository.findByIdWithCompetenciesAndSlidesElseThrow(lectureUnit.getId());
+
+        // Cancel any ongoing processing jobs (transcription, ingestion) on external services
+        // Processing state deletion is handled by DB cascade when lecture unit is deleted
+        contentProcessingApi.cancelProcessingIfActive(lectureUnit.getId());
 
         if (lectureUnitToDelete instanceof AttachmentVideoUnit attachmentVideoUnit) {
             if (attachmentVideoUnit.getAttachment() != null && attachmentVideoUnit.getAttachment().getLink() != null) {
@@ -341,4 +354,5 @@ public class LectureUnitService {
             managedSet.addAll(updatedLinks);
         }
     }
+
 }

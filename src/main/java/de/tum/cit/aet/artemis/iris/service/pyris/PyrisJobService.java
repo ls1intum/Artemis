@@ -184,6 +184,28 @@ public class PyrisJobService {
     }
 
     /**
+     * Remove any pending lecture ingestion jobs for a specific lecture unit.
+     * Used when a unit is deleted or content changes during ingestion.
+     *
+     * @param lectureUnitId the ID of the lecture unit
+     * @return true if a job was removed, false otherwise
+     */
+    public boolean removeLectureIngestionJobByUnitId(long lectureUnitId) {
+        var removedAny = false;
+        for (var job : getPyrisJobMap().values()) {
+            if (job instanceof LectureIngestionWebhookJob ingestionJob && ingestionJob.lectureUnitId() == lectureUnitId) {
+                getPyrisJobMap().remove(job.jobId());
+                removedAny = true;
+            }
+            else if (job instanceof TranscriptionIngestionWebhookJob transcriptionJob && transcriptionJob.lectureUnitId() == lectureUnitId) {
+                getPyrisJobMap().remove(job.jobId());
+                removedAny = true;
+            }
+        }
+        return removedAny;
+    }
+
+    /**
      * Store a job in the job map.
      *
      * @param job the job to store

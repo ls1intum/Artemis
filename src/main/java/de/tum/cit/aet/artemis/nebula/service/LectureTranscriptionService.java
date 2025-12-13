@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
 
+import de.tum.cit.aet.artemis.lecture.api.LectureContentProcessingApi;
 import de.tum.cit.aet.artemis.lecture.api.LectureTranscriptionsRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
@@ -55,16 +56,19 @@ public class LectureTranscriptionService {
 
     private final String nebulaSecretToken;
 
+    private final LectureContentProcessingApi contentProcessingApi;
+
     private final ConcurrentHashMap<String, Integer> failureCountMap = new ConcurrentHashMap<>();
 
     public LectureTranscriptionService(LectureTranscriptionsRepositoryApi lectureTranscriptionsRepositoryApi, LectureUnitRepositoryApi lectureUnitRepositoryApi,
             @Qualifier("nebulaRestTemplate") RestTemplate restTemplate, @Value("${artemis.nebula.url}") String nebulaBaseUrl,
-            @Value("${artemis.nebula.secret-token}") String nebulaSecretToken) {
+            @Value("${artemis.nebula.secret-token}") String nebulaSecretToken, @Lazy LectureContentProcessingApi contentProcessingApi) {
         this.lectureTranscriptionsRepositoryApi = lectureTranscriptionsRepositoryApi;
         this.lectureUnitRepositoryApi = lectureUnitRepositoryApi;
         this.restTemplate = restTemplate;
         this.nebulaBaseUrl = nebulaBaseUrl;
         this.nebulaSecretToken = nebulaSecretToken;
+        this.contentProcessingApi = contentProcessingApi;
     }
 
     /**
@@ -128,6 +132,7 @@ public class LectureTranscriptionService {
 
     /**
      * Saves the final transcription result in the database once it has been marked as completed by Nebula.
+     * Also notifies the content processing service to continue with ingestion.
      *
      * @param jobId The Nebula job ID
      * @param dto   The completed transcription result returned from Nebula
@@ -140,19 +145,26 @@ public class LectureTranscriptionService {
         transcription.setSegments(dto.segments());
         transcription.setTranscriptionStatus(TranscriptionStatus.COMPLETED);
 
-        lectureTranscriptionsRepositoryApi.save(transcription);
+        LectureTranscription savedTranscription = lectureTranscriptionsRepositoryApi.save(transcription);
+
+        // Notify processing service to continue with ingestion
+        contentProcessingApi.handleTranscriptionComplete(savedTranscription);
     }
 
     /**
      * Marks a transcription job as failed in the database with a given error message.
+     * Also notifies the content processing service to handle the failure.
      *
      * @param transcription The transcription entity to update
      * @param errorMessage  The error message returned by Nebula
      */
     void markTranscriptionAsFailed(LectureTranscription transcription, String errorMessage) {
         transcription.setTranscriptionStatus(TranscriptionStatus.FAILED);
-        lectureTranscriptionsRepositoryApi.save(transcription);
+        LectureTranscription savedTranscription = lectureTranscriptionsRepositoryApi.save(transcription);
         log.warn("Transcription failed for jobId={}, reason: {}", transcription.getJobId(), errorMessage);
+
+        // Notify processing service to handle failure
+        contentProcessingApi.handleTranscriptionComplete(savedTranscription);
     }
 
     /**
@@ -243,6 +255,56 @@ public class LectureTranscriptionService {
         catch (Exception e) {
             log.error("Error initiating transcription for Lecture ID: {}, Unit ID: {} → {}", lectureId, lectureUnitId, e.getMessage(), e);
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to start transcription: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Cancels a transcription job with the Nebula service and permanently deletes the transcription record.
+     *
+     * @param lectureUnitId The lecture unit ID to cancel transcription for
+     * @throws ResponseStatusException if the job is not found, cancellation fails, or Nebula returns an invalid response
+     */
+    public void cancelNebulaTranscription(Long lectureUnitId) {
+        LectureTranscription transcription = lectureTranscriptionsRepositoryApi.findByLectureUnit_Id(lectureUnitId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No transcription found for lectureUnitId: " + lectureUnitId));
+
+        String jobId = transcription.getJobId();
+        if (jobId == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Transcription has no job ID");
+        }
+
+        // Only cancel if transcription is still pending or processing
+        if (transcription.getTranscriptionStatus() == TranscriptionStatus.COMPLETED) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot cancel a completed transcription");
+        }
+
+        if (transcription.getTranscriptionStatus() == TranscriptionStatus.FAILED) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot cancel a failed transcription");
+        }
+
+        try {
+            log.info("Cancelling transcription for lectureUnitId={}, jobId={}", lectureUnitId, jobId);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("Authorization", nebulaSecretToken);
+            HttpEntity<?> entity = new HttpEntity<>(headers);
+
+            String url = nebulaBaseUrl + "/transcribe/cancel/" + jobId;
+            ResponseEntity<Void> response = restTemplate.exchange(url, HttpMethod.POST, entity, Void.class);
+
+            // Only delete if cancellation was successful
+            if (response.getStatusCode().is2xxSuccessful()) {
+                lectureTranscriptionsRepositoryApi.deleteById(transcription.getId());
+                lectureTranscriptionsRepositoryApi.flush();
+                log.info("Transcription cancelled and deleted successfully for lectureUnitId={}, jobId={}", lectureUnitId, jobId);
+            }
+            else {
+                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Nebula cancellation returned status: " + response.getStatusCode());
+            }
+        }
+        catch (Exception e) {
+            log.error("Error cancelling transcription for lectureUnitId: {}, jobId: {} → {}", lectureUnitId, jobId, e.getMessage(), e);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to cancel transcription: " + e.getMessage(), e);
         }
     }
 }

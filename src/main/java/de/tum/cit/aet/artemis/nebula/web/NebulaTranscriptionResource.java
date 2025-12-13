@@ -5,7 +5,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.net.URI;
 import java.util.Optional;
 
-import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 
 import org.slf4j.Logger;
@@ -14,17 +13,15 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastEditorInLectureUnit;
-import de.tum.cit.aet.artemis.lecture.dto.NebulaTranscriptionRequestDTO;
 import de.tum.cit.aet.artemis.nebula.config.NebulaEnabled;
 import de.tum.cit.aet.artemis.nebula.service.LectureTranscriptionService;
 import de.tum.cit.aet.artemis.nebula.service.TumLiveService;
@@ -41,30 +38,27 @@ public class NebulaTranscriptionResource {
 
     private static final Logger log = LoggerFactory.getLogger(NebulaTranscriptionResource.class);
 
-    private final LectureTranscriptionService lectureTranscriptionService;
-
     private final TumLiveService tumLiveService;
 
-    public NebulaTranscriptionResource(LectureTranscriptionService lectureTranscriptionService, TumLiveService tumLiveService) {
-        this.lectureTranscriptionService = lectureTranscriptionService;
+    private final LectureTranscriptionService lectureTranscriptionService;
+
+    public NebulaTranscriptionResource(TumLiveService tumLiveService, LectureTranscriptionService lectureTranscriptionService) {
         this.tumLiveService = tumLiveService;
+        this.lectureTranscriptionService = lectureTranscriptionService;
     }
 
     /**
-     * POST /lecture/{lectureId}/lecture-unit/{lectureUnitId}/transcriber :
-     * Start a transcription job with Nebula and create a placeholder transcription entry.
+     * DELETE /lecture-unit/{lectureUnitId}/transcriber/cancel :
+     * Cancel an ongoing transcription job and delete the transcription record.
      *
-     * @param lectureId     the ID of the lecture
      * @param lectureUnitId the ID of the lecture unit
-     * @param request       the request containing the video URL and any additional options
-     * @return the ResponseEntity with status 200 (OK) if transcription started successfully
+     * @return the ResponseEntity with status 200 (OK) if transcription cancelled successfully
      */
-    @PostMapping("{lectureId}/lecture-unit/{lectureUnitId}/transcriber")
+    @DeleteMapping("lecture-unit/{lectureUnitId}/transcriber/cancel")
     @EnforceAtLeastEditorInLectureUnit
-    public ResponseEntity<Void> startNebulaTranscription(@PathVariable Long lectureId, @PathVariable Long lectureUnitId,
-            @RequestBody @Valid NebulaTranscriptionRequestDTO request) {
-
-        lectureTranscriptionService.startNebulaTranscription(lectureId, lectureUnitId, request);
+    public ResponseEntity<Void> cancelNebulaTranscription(@PathVariable Long lectureUnitId) {
+        log.info("Received request to cancel transcription for lectureUnitId={}", lectureUnitId);
+        lectureTranscriptionService.cancelNebulaTranscription(lectureUnitId);
         return ResponseEntity.ok().build();
     }
 

@@ -23,8 +23,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 
-type StartTxReturn = ReturnType<AttachmentVideoUnitService['startTranscription']>;
-
 describe('CreateAttachmentVideoUnitComponent', () => {
     let createAttachmentVideoUnitComponentFixture: ComponentFixture<CreateAttachmentVideoUnitComponent>;
     let lectureTranscriptionService: LectureTranscriptionService;
@@ -193,117 +191,5 @@ describe('CreateAttachmentVideoUnitComponent', () => {
                 );
             });
         }));
-
-        describe('transcript generation', () => {
-            it('should start transcription when generateTranscript is true and playlistUrl is provided', fakeAsync(() => {
-                const attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
-                const createSpy = jest.spyOn(attachmentVideoUnitService, 'create');
-                const startTranscriptionSpy = jest.spyOn(attachmentVideoUnitService, 'startTranscription').mockReturnValue(of(undefined) as StartTxReturn);
-
-                const attachmentVideoUnit = new AttachmentVideoUnit();
-                attachmentVideoUnit.id = 1;
-                attachmentVideoUnit.name = 'test';
-                attachmentVideoUnit.videoSource = 'https://example.com/video.mp4';
-
-                createSpy.mockReturnValue(of(new HttpResponse({ body: attachmentVideoUnit, status: 201 })));
-
-                createAttachmentVideoUnitComponentFixture.detectChanges();
-
-                const attachmentVideoUnitFormComponent: AttachmentVideoUnitFormComponent = createAttachmentVideoUnitComponentFixture.debugElement.query(
-                    By.directive(AttachmentVideoUnitFormComponent),
-                ).componentInstance;
-
-                const playlistUrl = 'https://example.com/playlist.m3u8';
-                const attachmentVideoUnitFormData: AttachmentVideoUnitFormData = {
-                    formProperties: {
-                        name: 'test',
-                        description: 'test description',
-                        releaseDate: dayjs(),
-                        videoSource: 'https://example.com/video.mp4',
-                        generateTranscript: true,
-                    },
-                    fileProperties: {},
-                    playlistUrl: playlistUrl,
-                };
-
-                attachmentVideoUnitFormComponent.formSubmitted.emit(attachmentVideoUnitFormData);
-                createAttachmentVideoUnitComponentFixture.detectChanges();
-                tick();
-
-                expect(startTranscriptionSpy).toHaveBeenCalledWith(1, attachmentVideoUnit.id, playlistUrl);
-            }));
-
-            it('should start transcription with videoSource when generateTranscript is true and no playlistUrl', fakeAsync(() => {
-                const attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
-                const createSpy = jest.spyOn(attachmentVideoUnitService, 'create');
-                const startTranscriptionSpy = jest.spyOn(attachmentVideoUnitService, 'startTranscription').mockReturnValue(of(undefined) as StartTxReturn);
-
-                const attachmentVideoUnit = new AttachmentVideoUnit();
-                attachmentVideoUnit.id = 1;
-                attachmentVideoUnit.name = 'test';
-                attachmentVideoUnit.videoSource = 'https://example.com/video.mp4';
-
-                createSpy.mockReturnValue(of(new HttpResponse({ body: attachmentVideoUnit, status: 201 })));
-
-                createAttachmentVideoUnitComponentFixture.detectChanges();
-
-                const attachmentVideoUnitFormComponent: AttachmentVideoUnitFormComponent = createAttachmentVideoUnitComponentFixture.debugElement.query(
-                    By.directive(AttachmentVideoUnitFormComponent),
-                ).componentInstance;
-
-                const attachmentVideoUnitFormData: AttachmentVideoUnitFormData = {
-                    formProperties: {
-                        name: 'test',
-                        description: 'test description',
-                        releaseDate: dayjs(),
-                        videoSource: 'https://example.com/video.mp4',
-                        generateTranscript: true,
-                    },
-                    fileProperties: {},
-                };
-
-                attachmentVideoUnitFormComponent.formSubmitted.emit(attachmentVideoUnitFormData);
-                createAttachmentVideoUnitComponentFixture.detectChanges();
-                tick();
-
-                expect(startTranscriptionSpy).toHaveBeenCalledWith(1, attachmentVideoUnit.id, 'https://example.com/video.mp4');
-            }));
-
-            it('should not trigger transcript generation when generateTranscript is false', fakeAsync(() => {
-                const attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
-                const createSpy = jest.spyOn(attachmentVideoUnitService, 'create');
-                const startTranscriptionSpy = jest.spyOn(attachmentVideoUnitService, 'startTranscription').mockReturnValue(of(undefined) as StartTxReturn);
-
-                const attachmentVideoUnit = new AttachmentVideoUnit();
-                attachmentVideoUnit.id = 1;
-                attachmentVideoUnit.name = 'test';
-                attachmentVideoUnit.videoSource = 'https://example.com/video.mp4';
-
-                createSpy.mockReturnValue(of(new HttpResponse({ body: attachmentVideoUnit, status: 201 })));
-
-                createAttachmentVideoUnitComponentFixture.detectChanges();
-
-                const attachmentVideoUnitFormComponent: AttachmentVideoUnitFormComponent = createAttachmentVideoUnitComponentFixture.debugElement.query(
-                    By.directive(AttachmentVideoUnitFormComponent),
-                ).componentInstance;
-
-                const attachmentVideoUnitFormData: AttachmentVideoUnitFormData = {
-                    formProperties: {
-                        name: 'test',
-                        description: 'test description',
-                        releaseDate: dayjs(),
-                        videoSource: 'https://example.com/video.mp4',
-                        generateTranscript: false,
-                    },
-                    fileProperties: {},
-                };
-
-                attachmentVideoUnitFormComponent.formSubmitted.emit(attachmentVideoUnitFormData);
-                createAttachmentVideoUnitComponentFixture.detectChanges();
-                tick();
-
-                expect(startTranscriptionSpy).not.toHaveBeenCalled();
-            }));
-        });
     });
 });

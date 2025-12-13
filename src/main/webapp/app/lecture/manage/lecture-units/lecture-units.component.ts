@@ -167,7 +167,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
     }
 
     createEditAttachmentVideoUnit(attachmentVideoUnitFormData: AttachmentVideoUnitFormData): void {
-        const { description, name, releaseDate, videoSource, updateNotificationText, competencyLinks, generateTranscript } = attachmentVideoUnitFormData.formProperties;
+        const { description, name, releaseDate, videoSource, updateNotificationText, competencyLinks } = attachmentVideoUnitFormData.formProperties;
 
         const { file, fileName } = attachmentVideoUnitFormData.fileProperties;
         const { videoTranscription } = attachmentVideoUnitFormData.transcriptionProperties || {};
@@ -229,26 +229,6 @@ export class LectureUpdateUnitsComponent implements OnInit {
             .pipe(
                 switchMap((response) => {
                     const lectureUnit = response.body!;
-                    const lectureUnitId = lectureUnit.id!;
-
-                    // First: Handle automatic transcription generation if requested
-                    let transcriptionObservable = of(lectureUnit);
-                    if (generateTranscript && lectureUnitId) {
-                        const transcriptionUrl = attachmentVideoUnitFormData.playlistUrl ?? lectureUnit.videoSource;
-                        if (transcriptionUrl) {
-                            transcriptionObservable = this.attachmentVideoUnitService.startTranscription(this.lecture.id!, lectureUnitId, transcriptionUrl).pipe(
-                                map(() => lectureUnit),
-                                catchError((err) => {
-                                    onError(this.alertService, err);
-                                    return of(lectureUnit);
-                                }),
-                            );
-                        }
-                    }
-
-                    return transcriptionObservable;
-                }),
-                switchMap((lectureUnit) => {
                     // Second: Handle manual transcription save if provided
                     if (!videoTranscription || !lectureUnit.id) {
                         return of(lectureUnit);
