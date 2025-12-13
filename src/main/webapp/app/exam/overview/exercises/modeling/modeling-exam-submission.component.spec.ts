@@ -122,10 +122,10 @@ describe('ModelingExamSubmissionComponent', () => {
             fixture.detectChanges();
             const modelingEditor = fixture.debugElement.query(By.directive(ModelingEditorComponent));
             expect(modelingEditor).not.toBeNull();
-            expect(modelingEditor.componentInstance.umlModel).toEqual({ version: '2.0.0', model: true, assessments: {} });
-            expect(modelingEditor.componentInstance.withExplanation).toBeTrue();
-            expect(modelingEditor.componentInstance.explanation).toEqual(mockSubmission.explanationText);
-            expect(modelingEditor.componentInstance.diagramType).toEqual(UMLDiagramType.ClassDiagram);
+            expect(modelingEditor.componentInstance.umlModel()).toEqual({ version: '2.0.0', model: true, assessments: {} });
+            expect(modelingEditor.componentInstance.withExplanation()).toBeTrue();
+            expect(modelingEditor.componentInstance.explanation()).toEqual(mockSubmission.explanationText);
+            expect(modelingEditor.componentInstance.diagramType()).toEqual(UMLDiagramType.ClassDiagram);
         });
 
         it('should show problem statement if there is any', () => {

@@ -1,29 +1,29 @@
-<div #resizeContainer class="modeling-assessment" [class.resizable]="resizeOptions">
-    @if (title || displayPoints) {
+<div #resizeContainer class="modeling-assessment" [class.resizable]="resizeOptions()">
+    @if (title() || displayPoints()) {
         <div class="card-header bg-primary text-white">
-            @if (title) {
-                <span>{{ title }}</span>
+            @if (title()) {
+                <span>{{ title() }}</span>
             }
             <span class="flex-fill"></span>
-            @if (displayPoints) {
-                <jhi-score-display [score]="totalScore" [maxPoints]="maxScore" [maxBonusPoints]="maxBonusPoints" [course]="course" />
+            @if (displayPoints()) {
+                <jhi-score-display [score]="totalScore()" [maxPoints]="maxScore()" [maxBonusPoints]="maxBonusPoints()" [course]="course()" />
             }
         </div>
     }
     <div class="apollon-row" id="apollon-assessment-row">
         <div #editorContainer class="apollon-container"></div>
-        @if (resizeOptions && resizeOptions.horizontalResize) {
+        @if (resizeOptions() && resizeOptions().horizontalResize) {
             <div class="draggable-right">
                 <fa-icon [icon]="faGripLinesVertical" />
             </div>
         }
     </div>
-    @if (resizeOptions && resizeOptions.verticalResize) {
+    @if (resizeOptions() && resizeOptions().verticalResize) {
         <div class="draggable-bottom">
             <fa-icon [icon]="faGripLines" />
         </div>
     }
-    @if (explanation) {
-        <jhi-modeling-explanation-editor [explanation]="explanation" [readOnly]="true" />
+    @if (explanation()) {
+        <jhi-modeling-explanation-editor [explanation]="explanation()" [readOnly]="true" />
     }
 </div>
