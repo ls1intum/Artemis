@@ -1,4 +1,4 @@
-import { TestBed } from '@angular/core/testing';
+import { TestBed, fakeAsync } from '@angular/core/testing';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { ProgrammingExerciseBuildConfigurationComponent } from 'app/programming/manage/update/update-components/custom-build-plans/programming-exercise-build-configuration/programming-exercise-build-configuration.component';
 import { FormsModule } from '@angular/forms';
@@ -14,6 +14,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('ProgrammingExercise Docker Image', () => {
     let comp: ProgrammingExerciseBuildConfigurationComponent;
+    let fixture: any;
     const course = { id: 123 } as Course;
     const programmingExercise = new ProgrammingExercise(course, undefined);
     programmingExercise.buildConfig = new ProgrammingExerciseBuildConfig();
@@ -30,7 +31,7 @@ describe('ProgrammingExercise Docker Image', () => {
             ],
         });
 
-        const fixture = TestBed.createComponent(ProgrammingExerciseBuildConfigurationComponent);
+        fixture = TestBed.createComponent(ProgrammingExerciseBuildConfigurationComponent);
         comp = fixture.componentInstance;
 
         profileService = TestBed.inject(ProfileService);
@@ -38,6 +39,7 @@ describe('ProgrammingExercise Docker Image', () => {
         fixture.componentRef.setInput('dockerImage', 'testImage');
         fixture.componentRef.setInput('timeout', 10);
         fixture.componentRef.setInput('programmingExercise', programmingExercise);
+        fixture.componentRef.setInput('isAeolus', false);
     });
 
     afterEach(() => {
@@ -100,27 +102,18 @@ describe('ProgrammingExercise Docker Image', () => {
         expect(comp.timeoutDefaultValue).toBe(120);
     });
 
-    it('should update network flag value', () => {
-        comp.onDisableNetworkAccessChange({ target: { checked: true } });
-        expect(comp.isNetworkDisabled).toBeTrue();
-        expect(comp.programmingExercise()?.buildConfig?.dockerFlags).toBe('{"network":"none","env":{}}');
-
-        comp.onDisableNetworkAccessChange({ target: { checked: false } });
-        expect(comp.isNetworkDisabled).toBeFalse();
-        expect(comp.programmingExercise()?.buildConfig?.dockerFlags).toBe('{"env":{}}');
-    });
-
     it('should parse docker flags correctly', () => {
         comp.envVars = [['key', 'value']];
         comp.parseDockerFlagsToString();
         expect(comp.programmingExercise()?.buildConfig?.dockerFlags).toBe('{"env":{"key":"value"}}');
 
-        comp.isNetworkDisabled = true;
+        // selecting a custom network stores it and serializes correctly
+        comp.onNetworkChange('custom');
         comp.parseDockerFlagsToString();
-        expect(comp.programmingExercise()?.buildConfig?.dockerFlags).toBe('{"network":"none","env":{"key":"value"}}');
+        expect(comp.programmingExercise()?.buildConfig?.dockerFlags).toBe('{"env":{"key":"value"},"network":"custom"}');
 
         comp.removeEnvVar(0);
-        expect(comp.programmingExercise()?.buildConfig?.dockerFlags).toBe('{"network":"none","env":{}}');
+        expect(comp.programmingExercise()?.buildConfig?.dockerFlags).toBe('{"env":{},"network":"custom"}');
 
         comp.addEnvVar();
         const mockEventMemory = { target: { value: 1024 } };
@@ -130,21 +123,50 @@ describe('ProgrammingExercise Docker Image', () => {
         comp.onCpuCountChange(mockEventCpu);
         comp.onMemorySwapChange(mockEventMemorySwap);
         comp.parseDockerFlagsToString();
-        expect(comp.programmingExercise()?.buildConfig?.dockerFlags).toBe('{"network":"none","env":{},"cpuCount":1,"memory":1024,"memorySwap":2048}');
+        expect(comp.programmingExercise()?.buildConfig?.dockerFlags).toBe('{"env":{},"network":"custom","cpuCount":1,"memory":1024,"memorySwap":2048}');
+    });
+
+    it('should omit network when default is selected', () => {
+        // set custom first, then switch back to default (undefined)
+        comp.onNetworkChange('someNet');
+        comp.parseDockerFlagsToString();
+        expect(comp.programmingExercise()?.buildConfig?.dockerFlags).toContain('"network":"someNet"');
+
+        comp.onNetworkChange('');
+        comp.envVars = [];
+        comp.cpuCount = undefined;
+        comp.memory = undefined;
+        comp.memorySwap = undefined;
+        comp.parseDockerFlagsToString();
+        expect(comp.programmingExercise()?.buildConfig?.dockerFlags).toBe('{"env":{}}');
     });
 
     it('should parse existing docker flags', () => {
-        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue({
-            buildTimeoutMin: undefined,
-            buildTimeoutMax: undefined,
-            buildTimeoutDefault: undefined,
-        } as unknown as ProfileInfo);
-
-        programmingExercise.buildConfig!.dockerFlags = '{"network":"none","env":{"key":"value"}}';
+        programmingExercise.buildConfig!.dockerFlags = '{"env":{"key":"value"}, "network":"none"}';
         comp.ngOnInit();
-        expect(comp.isNetworkDisabled).toBeTrue();
+        expect(comp.network()).toBe('none');
         expect(comp.envVars).toEqual([['key', 'value']]);
     });
+
+    it('should show warning when network none is selected', fakeAsync(() => {
+        programmingExercise.programmingLanguage = ProgrammingLanguage.SWIFT;
+        comp.setIsLanguageSupported();
+        comp.onNetworkChange('none');
+        fixture.detectChanges();
+
+        const warning = fixture.nativeElement.querySelector('.alert-warning');
+        expect(warning).not.toBeNull();
+    }));
+
+    it('should show no warning when a network other than none is selected', fakeAsync(() => {
+        programmingExercise.programmingLanguage = ProgrammingLanguage.SWIFT;
+        comp.setIsLanguageSupported();
+        comp.onNetworkChange('default');
+        fixture.detectChanges();
+
+        const warning = fixture.nativeElement.querySelector('.alert-warning');
+        expect(warning).toBeNull();
+    }));
 
     it('should set supported languages', () => {
         programmingExercise.programmingLanguage = ProgrammingLanguage.EMPTY;

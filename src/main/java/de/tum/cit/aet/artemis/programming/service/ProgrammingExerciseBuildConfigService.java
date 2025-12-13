@@ -10,9 +10,12 @@ import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -33,6 +36,9 @@ public class ProgrammingExerciseBuildConfigService {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     private final LicenseService licenseService;
+
+    @Value("${artemis.continuous-integration.container-flags-limit.allowed-custom-networks:none}")
+    private List<String> allowedNetworks;
 
     public ProgrammingExerciseBuildConfigService(LicenseService licenseService) {
         this.licenseService = licenseService;
@@ -63,7 +69,7 @@ public class ProgrammingExerciseBuildConfigService {
         int memory = 0;
         int memorySwap = 0;
         if (dockerFlagsDTO != null) {
-            network = dockerFlagsDTO.network();
+            network = StringUtils.trimToNull(dockerFlagsDTO.network());
             exerciseEnvironment = dockerFlagsDTO.env();
             cpuCount = dockerFlagsDTO.cpuCount();
             memory = dockerFlagsDTO.memory();
@@ -102,7 +108,6 @@ public class ProgrammingExerciseBuildConfigService {
             return null;
         }
         List<String> environmentStrings = new ArrayList<>();
-        boolean isNetworkDisabled = network != null && network.equals("none");
 
         if (environmentMap != null) {
             for (Map.Entry<String, String> entry : environmentMap.entrySet()) {
@@ -112,14 +117,15 @@ public class ProgrammingExerciseBuildConfigService {
             }
         }
 
-        return new DockerRunConfig(isNetworkDisabled, environmentStrings, cpuCount, memory, memorySwap);
+        return new DockerRunConfig(environmentStrings, network, cpuCount, memory, memorySwap);
     }
 
     /**
      * Parses the JSON string representing Docker flags into DockerFlagsDTO. (see {@link DockerFlagsDTO})
      *
-     * @return a list of key-value pairs, or {@code null} if the JSON string is empty
+     * @return the parsed docker flags object
      * @throws IllegalArgumentException if the JSON string is invalid
+     * @throws ResponseStatusException  if the network is not allowed
      */
     @Nullable
     DockerFlagsDTO parseDockerFlags(ProgrammingExerciseBuildConfig buildConfig) {
@@ -127,12 +133,20 @@ public class ProgrammingExerciseBuildConfigService {
             return null;
         }
 
+        DockerFlagsDTO dockerFlagsDTO;
         try {
-            return objectMapper.readValue(buildConfig.getDockerFlags(), DockerFlagsDTO.class);
+            dockerFlagsDTO = objectMapper.readValue(buildConfig.getDockerFlags(), DockerFlagsDTO.class);
         }
         catch (Exception e) {
             log.error("Failed to parse DockerRunConfig from JSON string: {}. Using default settings.", buildConfig.getDockerFlags());
             throw new IllegalArgumentException("Failed to parse DockerRunConfig from JSON string: " + buildConfig.getDockerFlags(), e);
         }
+
+        boolean customDockerNetwork = dockerFlagsDTO.network() != null && !dockerFlagsDTO.network().isBlank();
+        if (customDockerNetwork && !allowedNetworks.contains(dockerFlagsDTO.network())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid network: " + dockerFlagsDTO.network());
+        }
+
+        return dockerFlagsDTO;
     }
 }
