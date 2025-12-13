@@ -31,8 +31,8 @@ import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizAction;
-import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
+import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseDatesDTO;
 import de.tum.cit.aet.artemis.quiz.repository.QuizBatchRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizBatchService;
@@ -132,7 +132,7 @@ public class QuizExerciseResource {
      */
     @PutMapping("quiz-exercises/{quizExerciseId}/{action}")
     @EnforceAtLeastEditorInExercise(resourceIdFieldName = "quizExerciseId")
-    public ResponseEntity<QuizExercise> performActionForQuizExercise(@PathVariable Long quizExerciseId, @PathVariable QuizAction action) {
+    public ResponseEntity<QuizExerciseDatesDTO> performActionForQuizExercise(@PathVariable Long quizExerciseId, @PathVariable QuizAction action) {
         log.debug("REST request to perform action {} on quiz exercise {}", action, quizExerciseId);
         var quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExerciseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
@@ -232,6 +232,11 @@ public class QuizExerciseResource {
         // notify websocket channel of changes to the quiz exercise
         quizMessagingService.sendQuizExerciseToSubscribedClients(quizExercise, quizBatch, action);
         exerciseVersionService.createExerciseVersion(quizExercise, user);
-        return new ResponseEntity<>(quizExercise, HttpStatus.OK);
+        if (quizBatch != null && quizBatch.getStartTime() != null) {
+            // Set the start date from the batch to the quiz exercise DTO
+            quizExercise.setStartDate(quizBatch.getStartTime());
+        }
+        QuizExerciseDatesDTO quizExerciseDatesDTO = QuizExerciseDatesDTO.of(quizExercise);
+        return new ResponseEntity<>(quizExerciseDatesDTO, HttpStatus.OK);
     }
 }
