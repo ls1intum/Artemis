@@ -95,7 +95,7 @@ describe('ImportTableComponent', () => {
     it('should load and display data correctly in table', async () => {
         fixture.detectChanges();
         await fixture.whenStable();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const tableRows = fixture.debugElement.nativeElement.querySelectorAll('tbody tr');
         const tableColumns = tableRows[0].querySelectorAll('td');
@@ -130,7 +130,7 @@ describe('ImportTableComponent', () => {
         searchField.value = 'Object 01';
         searchField.dispatchEvent(new Event('input'));
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
 
         expect(component.searchTerm()).toBe('Object 01');
@@ -148,7 +148,7 @@ describe('ImportTableComponent', () => {
 
         fixture.detectChanges();
         await fixture.whenStable();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const selectButton = fixture.debugElement.nativeElement.querySelectorAll('tbody tr:nth-child(1) button')[0];
 
@@ -160,7 +160,7 @@ describe('ImportTableComponent', () => {
     it('should set page size', async () => {
         fixture.detectChanges();
         await fixture.whenStable();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(component.page()).toBe(1);
 
@@ -168,9 +168,9 @@ describe('ImportTableComponent', () => {
 
         pageSizeSelect.click();
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(component.page()).toBe(2);
         expect(searchSpy).toHaveBeenLastCalledWith({
@@ -213,7 +213,7 @@ describe('ImportTableComponent', () => {
     async function loadDataAndClickColumn(columnIndex: number, timesClicking: number, compareSortedColumn: string, compareSortingOrder: SortingOrder, compareCellContent: string) {
         fixture.detectChanges();
         await fixture.whenStable();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const titleColumnHeader = fixture.debugElement.nativeElement.querySelector('thead th:nth-child(' + columnIndex + ') div');
 

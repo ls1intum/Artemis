@@ -154,12 +154,12 @@ describe('LectureUnitManagementComponent', () => {
     it('should emit edit button event', () => {
         const editButtonClickedSpy = jest.spyOn(lectureUnitManagementComponent, 'onEditButtonClicked');
         lectureUnitManagementComponent.emitEditEvents = true;
-        lectureUnitManagementComponentFixture.detectChanges();
+        lectureUnitManagementComponentFixture.changeDetectorRef.detectChanges();
         const buttons = lectureUnitManagementComponentFixture.debugElement.queryAll(By.css(`.edit`));
         for (const button of buttons) {
             button.nativeElement.click();
         }
-        lectureUnitManagementComponentFixture.detectChanges();
+        lectureUnitManagementComponentFixture.changeDetectorRef.detectChanges();
         expect(editButtonClickedSpy).toHaveBeenCalledTimes(buttons.length);
     });
 

@@ -178,7 +178,7 @@ describe('FileUploadExerciseUpdateComponent', () => {
             comp.ngAfterViewInit();
 
             comp.exerciseTitleChannelNameComponent().titleChannelNameComponent().isValid.set(true);
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             expect(calculateValidSpy).toHaveBeenCalledOnce();
             expect(comp.formStatusSections).toBeDefined();
             expect(comp.formStatusSections[0].valid).toBeTrue();

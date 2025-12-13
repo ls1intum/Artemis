@@ -107,7 +107,7 @@ describe('ExamStudentsComponent', () => {
         fixture.detectChanges();
 
         component.onAutocompleteSelect(user1, callbackSpy);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(callbackSpy).toHaveBeenCalledWith(user1);
     });
@@ -122,7 +122,7 @@ describe('ExamStudentsComponent', () => {
         fixture.detectChanges();
 
         component.onAutocompleteSelect(user3, callbackSpy);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(examServiceStub).toHaveBeenCalledWith(course.id, examWithCourse.id, user3.login);
         expect(examServiceStub).toHaveBeenCalledOnce();
@@ -137,7 +137,7 @@ describe('ExamStudentsComponent', () => {
         fixture.detectChanges();
 
         const search = component.searchAllUsers(of({ text: user2.login!, entities: [user2] }));
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         // Check if the observable output matches our expectancies
         search.subscribe((a) => {
@@ -160,7 +160,7 @@ describe('ExamStudentsComponent', () => {
         fixture.detectChanges();
 
         component.reloadExamWithRegisteredUsers();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(examServiceStub).toHaveBeenCalledWith(course.id, examWithCourse.id, true);
         expect(component.exam).toEqual(examWithOneUser);
@@ -181,7 +181,7 @@ describe('ExamStudentsComponent', () => {
             { didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user2, user: user2 },
             { deleteParticipationsAndSubmission: false },
         );
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(examServiceStub).toHaveBeenCalledWith(course.id, examWithCourse.id, user2.login, false);
         expect(component.allRegisteredUsers).toEqual([
@@ -218,7 +218,7 @@ describe('ExamStudentsComponent', () => {
         ] as ExamUser[];
 
         component.removeAllStudents({ deleteParticipationsAndSubmission: false });
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(examServiceStub).toHaveBeenCalledWith(course.id, examWithCourse.id, false);
         expect(component.allRegisteredUsers).toEqual([]);
@@ -233,7 +233,7 @@ describe('ExamStudentsComponent', () => {
         ] as ExamUser[];
 
         component.removeAllStudents({ deleteParticipationsAndSubmission: true });
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(examServiceStub).toHaveBeenCalledWith(course.id, examWithCourse.id, true);
         expect(component.allRegisteredUsers).toEqual([]);

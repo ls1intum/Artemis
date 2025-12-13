@@ -4,7 +4,7 @@ import '@angular/localize/init';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { input, signal } from '@angular/core';
+import { signal } from '@angular/core';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ConversationUserDTO } from 'app/communication/shared/entities/conversation/conversation-user-dto.model';
@@ -41,8 +41,15 @@ examples.forEach((activeConversation) => {
 
         beforeEach(waitForAsync(() => {
             TestBed.configureTestingModule({
-                imports: [FormsModule, ReactiveFormsModule, FaIconComponent],
-                declarations: [ConversationMembersComponent, MockPipe(ArtemisTranslatePipe), MockComponent(ItemCountComponent), MockDirective(TranslateDirective)],
+                imports: [
+                    ConversationMembersComponent,
+                    FormsModule,
+                    ReactiveFormsModule,
+                    FaIconComponent,
+                    MockPipe(ArtemisTranslatePipe),
+                    MockComponent(ItemCountComponent),
+                    MockDirective(TranslateDirective),
+                ],
                 providers: [
                     MockProvider(ConversationService),
                     MockProvider(AlertService),
@@ -72,12 +79,10 @@ examples.forEach((activeConversation) => {
             canAddUsersToConversation.mockReturnValue(true);
 
             fixture = TestBed.createComponent(ConversationMembersComponent);
-            TestBed.runInInjectionContext(() => {
-                component = fixture.componentInstance;
-                component.activeConversationInput = input<ConversationDTO>(activeConversation);
-                component.course = input<Course>(course);
-                component.activeConversation = signal<ConversationDTO>(activeConversation);
-            });
+            component = fixture.componentInstance;
+            fixture.componentRef.setInput('activeConversationInput', activeConversation);
+            fixture.componentRef.setInput('course', course);
+            component.activeConversation = signal<ConversationDTO>(activeConversation);
             component.canAddUsersToConversation = canAddUsersToConversation;
         });
 
@@ -137,11 +142,11 @@ examples.forEach((activeConversation) => {
             searchMembersOfConversationSpy.mockClear();
 
             canAddUsersToConversation.mockReturnValue(false);
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             expect(fixture.debugElement.nativeElement.querySelector('.addUsers')).toBeFalsy();
 
             canAddUsersToConversation.mockReturnValue(true);
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             const addUsersButton = fixture.debugElement.nativeElement.querySelector('.addUsers');
             expect(addUsersButton).toBeTruthy();
 
@@ -151,7 +156,7 @@ examples.forEach((activeConversation) => {
                 result: Promise.resolve(),
             };
             const openDialogSpy = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef as unknown as NgbModalRef);
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
 
             addUsersButton.click();
             tick(301);

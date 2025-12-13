@@ -231,7 +231,7 @@ describe('CommitDetailsViewComponent', () => {
             throwErrorWhenRetrievingCommitHistory ? errorObservable : of(mockTemplateCommits),
         );
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
     }
 
     it('should create', () => {
@@ -276,20 +276,27 @@ describe('CommitDetailsViewComponent', () => {
     });
 
     it('should handle new repository files for commit with template', async () => {
-        setupComponent();
+        fixture = TestBed.createComponent(CommitDetailsViewComponent);
+        component = fixture.componentInstance;
+        activatedRoute = TestBed.inject(ActivatedRoute) as MockActivatedRoute;
+        programmingExerciseParticipationService = TestBed.inject(ProgrammingExerciseParticipationService);
 
-        // Set up fresh mocks for this specific test
-        jest.spyOn(programmingExerciseParticipationService, 'getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView')
+        jest.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithAllResults').mockReturnValue(of(mockParticipation));
+        jest.spyOn(programmingExerciseParticipationService, 'getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView' as any)
             .mockReturnValueOnce(of(mockLeftCommitFileContentByPath))
             .mockReturnValueOnce(of(mockRightCommitFileContentByPath));
 
+        jest.spyOn(programmingExerciseParticipationService, 'retrieveCommitHistoryForParticipation').mockReturnValue(of(mockCommits));
+        jest.spyOn(programmingExerciseParticipationService, 'retrieveCommitHistoryForTemplateSolutionOrTests').mockReturnValue(of(mockTemplateCommits));
+
         activatedRoute.setParameters({ repositoryId: 2, commitHash: 'commit2', exerciseId: 1 });
 
-        // Trigger ngOnInit
-        component.ngOnInit();
+        fixture.detectChanges();
 
         // Wait for async operations to complete
         await new Promise((resolve) => setTimeout(resolve, 0));
+
+        fixture.changeDetectorRef.detectChanges();
 
         expect(component.repositoryDiffInformation).toEqual(mockRepositoryDiffInformation);
 
@@ -397,7 +404,7 @@ describe('CommitDetailsViewComponent', () => {
             }),
         );
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         // Trigger ngOnInit
         component.ngOnInit();
@@ -433,7 +440,7 @@ describe('CommitDetailsViewComponent', () => {
             }
         });
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         // Trigger ngOnInit
         component.ngOnInit();

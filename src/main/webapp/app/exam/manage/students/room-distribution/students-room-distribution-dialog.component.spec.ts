@@ -98,7 +98,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
     it('should show finish button after selecting a room', () => {
         fixture.detectChanges();
         component.pickSelectedRoom({ item: rooms[0] });
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const button = fixture.debugElement.nativeElement.querySelector('#finish-button');
         expect(component.hasSelectedRooms()).toBeTrue();
@@ -108,11 +108,11 @@ describe('StudentsRoomDistributionDialogComponent', () => {
     it('should remove selected room and hide finish button again', () => {
         fixture.detectChanges();
         component.pickSelectedRoom({ item: rooms[0] });
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(component.hasSelectedRooms()).toBeTrue();
 
         component.removeSelectedRoom(rooms[0]);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(component.hasSelectedRooms()).toBeFalse();
         const button = fixture.debugElement.nativeElement.querySelector('#finish-button');
@@ -129,7 +129,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
         const distributeSpy = jest.spyOn(service, 'distributeStudentsAcrossRooms');
 
         component.pickSelectedRoom({ item: rooms[0] });
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         component.attemptDistributeAndCloseDialog();
 
@@ -169,11 +169,11 @@ describe('StudentsRoomDistributionDialogComponent', () => {
         const input: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#reserveFactor');
 
         dispatchInputEvent(input, '25');
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(input.value).toBe('25');
 
         input.dispatchEvent(new FocusEvent('focusout'));
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(input.value).toBe('25');
     });
 
@@ -182,22 +182,22 @@ describe('StudentsRoomDistributionDialogComponent', () => {
         const input: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#reserveFactor');
 
         dispatchInputEvent(input, '25');
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         dispatchInputEvent(input, '259');
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(input.value).toBe('25');
 
         input.dispatchEvent(new FocusEvent('focusout'));
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(input.value).toBe('25');
 
         dispatchInputEvent(input, '2 5');
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(input.value).toBe('25');
 
         dispatchInputEvent(input, '25a');
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(input.value).toBe('25');
     });
 
@@ -208,7 +208,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
         const selectSpy = jest.spyOn(input, 'select');
 
         input.dispatchEvent(new FocusEvent('focusin'));
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
 
         expect(selectSpy).toHaveBeenCalledOnce();
@@ -221,11 +221,11 @@ describe('StudentsRoomDistributionDialogComponent', () => {
         expect(component.allowNarrowLayouts()).toBeFalse();
 
         checkbox.click();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(component.allowNarrowLayouts()).toBeTrue();
 
         checkbox.click();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(component.allowNarrowLayouts()).toBeFalse();
     });
 });

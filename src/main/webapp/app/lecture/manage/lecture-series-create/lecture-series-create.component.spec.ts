@@ -12,6 +12,12 @@ import { of, throwError } from 'rxjs';
 import { Lecture, LectureSeriesCreateLectureDTO } from 'app/lecture/shared/entities/lecture.model';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 
+// Mock PrimeNG's motion library to avoid matchMedia errors
+jest.mock('@primeuix/motion', () => ({
+    __esModule: true,
+    useMotion: jest.fn(() => ({})),
+}));
+
 describe('LectureSeriesCreateComponent', () => {
     let fixture: ComponentFixture<LectureSeriesCreateComponent>;
     let component: LectureSeriesCreateComponent;
@@ -49,7 +55,7 @@ describe('LectureSeriesCreateComponent', () => {
         component = fixture.componentInstance;
 
         fixture.componentRef.setInput('existingLectures', []);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
     });
 
@@ -68,12 +74,12 @@ describe('LectureSeriesCreateComponent', () => {
         component.seriesEndDate.set(seriesEndDate);
         const initialLecture = component.initialLectures()[0];
         initialLecture.endDate.set(initialLectureEndDate);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
         expect(component.isSeriesEndDateInvalid()).toBeTrue();
 
         initialLecture.endDate.set(seriesEndDate);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
         expect(component.isSeriesEndDateInvalid()).toBeTrue();
     });
@@ -85,12 +91,12 @@ describe('LectureSeriesCreateComponent', () => {
         component.seriesEndDate.set(seriesEndDate);
         const initialLecture = component.initialLectures()[0];
         initialLecture.startDate.set(initialLectureStartDate);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
         expect(component.isSeriesEndDateInvalid()).toBeTrue();
 
         initialLecture.startDate.set(seriesEndDate);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
         expect(component.isSeriesEndDateInvalid()).toBeTrue();
     });
@@ -102,12 +108,12 @@ describe('LectureSeriesCreateComponent', () => {
         component.seriesEndDate.set(seriesEndDate);
         const initialLecture = component.initialLectures()[0];
         initialLecture.startDate.set(initialLectureStartDate);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
         expect(initialLecture.isStartDateInvalid()).toBeTrue();
 
         initialLecture.startDate.set(seriesEndDate);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
         expect(initialLecture.isStartDateInvalid()).toBeTrue();
     });
@@ -119,12 +125,12 @@ describe('LectureSeriesCreateComponent', () => {
         const initialLecture = component.initialLectures()[0];
         initialLecture.startDate.set(initialLectureStartDate);
         initialLecture.endDate.set(initialLectureEndDate);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
         expect(initialLecture.isStartDateInvalid()).toBeTrue();
 
         initialLecture.startDate.set(initialLectureEndDate);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
         expect(initialLecture.isStartDateInvalid()).toBeTrue();
     });
@@ -136,12 +142,12 @@ describe('LectureSeriesCreateComponent', () => {
         const initialLecture = component.initialLectures()[0];
         initialLecture.startDate.set(initialLectureStartDate);
         initialLecture.endDate.set(initialLectureEndDate);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
         expect(initialLecture.isEndDateInvalid()).toBeTrue();
 
         initialLecture.endDate.set(initialLectureStartDate);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
         expect(initialLecture.isEndDateInvalid()).toBeTrue();
     });
@@ -153,12 +159,12 @@ describe('LectureSeriesCreateComponent', () => {
         component.seriesEndDate.set(seriesEndDate);
         const initialLecture = component.initialLectures()[0];
         initialLecture.endDate.set(initialLectureEndDate);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
         expect(initialLecture.isEndDateInvalid()).toBeTrue();
 
         initialLecture.endDate.set(seriesEndDate);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
         expect(initialLecture.isEndDateInvalid()).toBeTrue();
     });
@@ -172,7 +178,7 @@ describe('LectureSeriesCreateComponent', () => {
         const initialLecture = component.initialLectures()[0];
         initialLecture.startDate.set(initialLectureStartDate);
         initialLecture.endDate.set(initialLectureEndDate);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
         expect(component.isSeriesEndDateInvalid()).toBeFalse();
         expect(initialLecture.isStartDateInvalid()).toBeFalse();
@@ -188,7 +194,7 @@ describe('LectureSeriesCreateComponent', () => {
         component.seriesEndDate.set(seriesEndDate);
         const initialLecture = component.initialLectures()[0];
         initialLecture.startDate.set(initialLectureStartDate);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
 
         expect(component.noDraftsGenerated()).toBeFalse();
@@ -206,7 +212,7 @@ describe('LectureSeriesCreateComponent', () => {
 
     it('should add initialLecture', async () => {
         component.addInitialLecture();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
 
         const initialLectures = component.initialLectures();
@@ -225,7 +231,7 @@ describe('LectureSeriesCreateComponent', () => {
 
     it('should remove initialLecture', async () => {
         component.addInitialLecture();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
 
         let initialLectures = component.initialLectures();
@@ -233,7 +239,7 @@ describe('LectureSeriesCreateComponent', () => {
         const firstInitialLectureId = initialLectures[0].id;
 
         component.removeInitialLecture(initialLectures[1]);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
 
         initialLectures = component.initialLectures();
@@ -249,7 +255,7 @@ describe('LectureSeriesCreateComponent', () => {
         component.seriesEndDate.set(seriesEndDate);
         const initialLecture = component.initialLectures()[0];
         initialLecture.startDate.set(initialLectureStartDate);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
 
         let lectureDrafts = component.lectureDrafts();
@@ -257,7 +263,7 @@ describe('LectureSeriesCreateComponent', () => {
         const firstDraftId = lectureDrafts[0].id;
 
         component.deleteLectureDraft(lectureDrafts[1]);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
 
         lectureDrafts = component.lectureDrafts();
@@ -269,7 +275,7 @@ describe('LectureSeriesCreateComponent', () => {
     it('should navigate back on cancel', async () => {
         const spy = jest.spyOn(navigationUtilServiceMock, 'navigateBack');
         fixture.componentRef.setInput('courseId', testCourseId);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
 
         component.cancel();
@@ -286,7 +292,7 @@ describe('LectureSeriesCreateComponent', () => {
         const firstInitialLecture = initialLectures[0];
         firstInitialLecture.startDate.set(now.toDate());
         component.seriesEndDate.set(inThreeWeeks.toDate());
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
 
         expect(component.lectureDrafts()).toHaveLength(3);
@@ -301,7 +307,7 @@ describe('LectureSeriesCreateComponent', () => {
         const firstInitialLecture = initialLectures[0];
         firstInitialLecture.endDate.set(now.toDate());
         component.seriesEndDate.set(inThreeWeeks.toDate());
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
 
         expect(component.lectureDrafts()).toHaveLength(3);
@@ -345,7 +351,7 @@ describe('LectureSeriesCreateComponent', () => {
             isLoadingSpy = jest.spyOn(component.isLoading, 'set');
             fixture.componentRef.setInput('courseId', testCourseId);
             component.addInitialLecture();
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             await fixture.whenStable();
 
             component.seriesEndDate.set(seriesEndDate);
@@ -356,7 +362,7 @@ describe('LectureSeriesCreateComponent', () => {
             const secondInitialLecture = initialLectures[1];
             secondInitialLecture.startDate.set(secondInitialLectureStartDate);
             secondInitialLecture.endDate.set(secondInitialLectureEndDate);
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             await fixture.whenStable();
         });
 
@@ -364,7 +370,7 @@ describe('LectureSeriesCreateComponent', () => {
             lectureServiceMock.createSeries.mockReturnValue(of(void 0));
 
             component.save();
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             await fixture.whenStable();
 
             expect(lectureServiceMock.createSeries).toHaveBeenCalledOnce();
@@ -379,13 +385,13 @@ describe('LectureSeriesCreateComponent', () => {
 
         it('should add correct alert if creating lectures fails', async () => {
             fixture.componentRef.setInput('existingLectures', existingLectures);
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             await fixture.whenStable();
 
             lectureServiceMock.createSeries.mockReturnValue(throwError(() => new Error('Creation failed')));
 
             component.save();
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             await fixture.whenStable();
 
             expect(lectureServiceMock.createSeries).toHaveBeenCalledOnce();

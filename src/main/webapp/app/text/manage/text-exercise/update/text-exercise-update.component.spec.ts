@@ -236,7 +236,7 @@ describe('TextExercise Management Update Component', () => {
 
             comp.exerciseTitleChannelNameComponent().titleChannelNameComponent().isValid.set(true);
 
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
 
             expect(calculateValidSpy).toHaveBeenCalledTimes(2);
             expect(comp.formSectionStatus).toBeDefined();

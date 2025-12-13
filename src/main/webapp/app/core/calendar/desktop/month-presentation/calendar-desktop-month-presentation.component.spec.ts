@@ -113,7 +113,7 @@ describe('CalendarDesktopMonthPresentationComponent', () => {
 
         const eventCell = fixture.debugElement.query(By.css('[data-testid="Exam"]'));
         eventCell.nativeElement.click();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
 
         expect(popoverComponent.isOpen()).toBeTrue();
@@ -127,26 +127,26 @@ describe('CalendarDesktopMonthPresentationComponent', () => {
         const examEventCell = fixture.debugElement.query(By.css('[data-testid="Exam"]'));
         expect(examEventCell).toBeTruthy();
         examEventCell.nativeElement.click();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
         expect(popoverComponent.isOpen()).toBeTrue();
 
         const emptyDayCell = fixture.debugElement.queryAll(By.css('.day-cell')).find((cell) => cell.queryAll(By.css('.event-cell')).length === 0);
         expect(emptyDayCell).toBeTruthy();
         emptyDayCell!.nativeElement.click();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
         expect(popoverComponent.isOpen()).toBeFalse();
 
         examEventCell.nativeElement.click();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
         expect(popoverComponent.isOpen()).toBeTrue();
 
         const closeButton = document.querySelector('.close-button') as HTMLElement;
         expect(closeButton).toBeTruthy();
         closeButton.click();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
         expect(closeSpy).toHaveBeenCalledOnce();
     });

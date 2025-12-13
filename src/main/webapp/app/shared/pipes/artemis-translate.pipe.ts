@@ -1,5 +1,5 @@
-import { Injectable, OnDestroy, Pipe, PipeTransform, inject } from '@angular/core';
-import { TranslatePipe } from '@ngx-translate/core';
+import { Injectable, Pipe, PipeTransform, inject } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
 
 @Pipe({
     name: 'artemisTranslate',
@@ -10,15 +10,16 @@ import { TranslatePipe } from '@ngx-translate/core';
 
 /**
  * a simple wrapper to prevent compile errors in IntelliJ
+ * Uses TranslateService.instant() for synchronous translation
  */
-export class ArtemisTranslatePipe implements PipeTransform, OnDestroy {
-    private translatePipe = inject(TranslatePipe);
+export class ArtemisTranslatePipe implements PipeTransform {
+    private translateService = inject(TranslateService);
 
-    transform(query: any, args?: any): any {
-        return this.translatePipe.transform(query, args);
-    }
-
-    ngOnDestroy() {
-        this.translatePipe.ngOnDestroy();
+    transform(query: string | undefined | null, args?: any): string {
+        if (!query || query.length === 0) {
+            return query ?? '';
+        }
+        const translation = this.translateService.instant(query, args);
+        return translation !== undefined ? translation : query;
     }
 }

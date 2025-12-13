@@ -301,7 +301,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
     it('should show the updatedTests badge when the exercise is released and has student results', () => {
         initGradingComponent();
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(getNoUnsavedChangesBadge()).not.toBeNull();
         expect(getNoUpdatedTestCaseBadge()).not.toBeNull();
@@ -310,7 +310,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
     it('should not show the updatedTests badge when the exercise is released and has no student results', () => {
         initGradingComponent({ released: true, hasStudentResult: false });
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(getNoUnsavedChangesBadge()).not.toBeNull();
         expect(getNoUpdatedTestCaseBadge()).toBeNull();
@@ -319,7 +319,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
     it('should not show the updatedTests badge when the exercise is not released and has student results (edge case)', () => {
         initGradingComponent({ released: false, hasStudentResult: true });
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(getNoUnsavedChangesBadge()).not.toBeNull();
         expect(getNoUpdatedTestCaseBadge()).toBeNull();
@@ -328,7 +328,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
     it('should show that there are updated test cases if the testCasesChanged flat is set', () => {
         initGradingComponent({ testCasesChanged: true });
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(getUpdatedTestCaseBadge()).not.toBeNull();
         expect(getNoUpdatedTestCaseBadge()).toBeNull();
@@ -337,7 +337,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
     it('should reset all categories when the reset button is clicked', () => {
         initGradingComponent({ tab: 'code-analysis' });
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         comp.updateEditedField(codeAnalysisCategories1[0], EditableField.STATE)(StaticCodeAnalysisCategoryState.Feedback);
         comp.updateEditedField(codeAnalysisCategories1[1], EditableField.STATE)(StaticCodeAnalysisCategoryState.Feedback);
@@ -357,7 +357,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         // Save tests.
         comp.saveCategories();
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(updateCategoriesStub).toHaveBeenCalledOnce();
         expect(comp.changedCategoryIds).toHaveLength(0);
@@ -367,7 +367,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         // Reset button is now enabled because the categories were saved.
         expect(comp.hasUpdatedGradingConfig).toBeTrue();
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         resetCategoriesStub.mockReturnValue(of(codeAnalysisCategories1));
 
@@ -378,7 +378,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         expectElementToBeEnabled(resetButton);
         resetButton.click();
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(resetCategoriesStub).toHaveBeenCalledOnce();
         expect(resetCategoriesStub).toHaveBeenCalledWith(exerciseId);
@@ -396,7 +396,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         jest.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
 
         initGradingComponent({ tab: 'code-analysis' });
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const button = debugElement.query(By.css('#import-configuration-button'));
 
@@ -425,7 +425,8 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
     it('should update sca category when an input field is updated', () => {
         initGradingComponent({ tab: 'code-analysis' });
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const table = debugElement.query(By.css(codeAnalysisTableId));
 
@@ -451,7 +452,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         maxPenaltyInput.value = '100';
         maxPenaltyInput.dispatchEvent(new Event('blur'));
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(comp.changedCategoryIds).toEqual([gradedCategories[0].id]);
 
@@ -463,7 +464,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         expectElementToBeEnabled(saveButton);
         saveButton.click();
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(updateCategoriesStub).toHaveBeenCalledOnce();
         expect(updateCategoriesStub).toHaveBeenCalledWith(exerciseId, [StaticCodeAnalysisCategoryUpdate.from(updatedCategory)]);
@@ -481,7 +482,8 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
     it('should load the grading statistics correctly', () => {
         initGradingComponent({ tab: 'code-analysis' });
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(loadStatisticsStub).toHaveBeenCalledTimes(3);
         expect(loadStatisticsStub).toHaveBeenCalledWith(exerciseId);
@@ -489,7 +491,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         expect(comp.maxIssuesPerCategory).toBe(5);
         expect(comp.gradingStatistics).toEqual(gradingStatistics);
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const categoryIssuesCharts = debugElement.queryAll(By.directive(CategoryIssuesChartComponent)).map((d) => d.componentInstance);
         expect(categoryIssuesCharts).toHaveLength(2);
@@ -507,7 +509,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
     const sortAndTestTable = (table: Table) => (headerElement: DebugElement, prop: string, dir: string) => {
         headerElement.nativeElement.click();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(comp.tableSorts[table]).toEqual([{ prop, dir }]);
     };
@@ -515,7 +517,8 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
     it('should sort code-analysis table', () => {
         initGradingComponent({ tab: 'code-analysis' });
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const table = debugElement.query(By.css(codeAnalysisTableId));
         const headerColumns = table.queryAll(By.css('.datatable-header-cell-wrapper'));
@@ -554,7 +557,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
     describe('test chart interaction', () => {
         it('should filter sca table correctly', () => {
             initGradingComponent({ tab: 'code-analysis' });
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             const scaCategoriesDisplayedByChart = comp.staticCodeAnalysisCategoriesForCharts;
             const expectedCategory = {
                 id: 1,
@@ -573,9 +576,10 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         it('should update category accordingly if modified while chart filtering', () => {
             initGradingComponent({ tab: 'code-analysis' });
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             comp.filterByChart(1, ChartFilterType.CATEGORIES);
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             const table = debugElement.query(By.css(codeAnalysisTableId));
 
             // get inputs
@@ -598,7 +602,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
             maxPenaltyInput.value = '50';
             maxPenaltyInput.dispatchEvent(new Event('blur'));
 
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             const currentlyDisplayedCategory = {
                 id: 1,
                 name: 'Bad Practice',

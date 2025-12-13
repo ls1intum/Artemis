@@ -1,3 +1,4 @@
+import { Provider } from '@angular/core';
 import { MissingTranslationHandler, MissingTranslationHandlerParams } from '@ngx-translate/core';
 import { provideTranslateHttpLoader } from '@ngx-translate/http-loader';
 import { I18N_HASH } from 'app/core/environments/environment';
@@ -11,7 +12,7 @@ export class MissingTranslationHandlerImpl implements MissingTranslationHandler 
     }
 }
 
-export const translateHttpLoaderProviders = provideTranslateHttpLoader({
+export const translateHttpLoaderProviders: Provider[] = provideTranslateHttpLoader({
     prefix: 'i18n/',
     suffix: `.json?_=${I18N_HASH}`,
 });

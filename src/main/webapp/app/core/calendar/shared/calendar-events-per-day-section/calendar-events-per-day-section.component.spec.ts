@@ -55,7 +55,7 @@ describe('CalendarEventsPerDaySectionComponent', () => {
         component = fixture.componentInstance;
 
         fixture.componentRef.setInput('dates', week);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
     });
 
     it('should create', () => {
@@ -120,7 +120,7 @@ describe('CalendarEventsPerDaySectionComponent', () => {
         const popoverComponent = popoverDebugElement.componentInstance as CalendarEventDetailPopoverComponent;
 
         examEventCell.nativeElement.click();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
         expect(popoverComponent.isOpen()).toBeTrue();
     });
@@ -132,20 +132,20 @@ describe('CalendarEventsPerDaySectionComponent', () => {
 
         const examEventCell = fixture.debugElement.query(By.css('[data-testid="Exam"]'));
         examEventCell.nativeElement.click();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const infoColumn = fixture.debugElement.query(By.css('.info-column'));
         infoColumn.nativeElement.click();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(popoverComponent.isOpen()).toBeFalse();
 
         examEventCell.nativeElement.click();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const closeButton = document.querySelector('.close-button') as HTMLElement;
         expect(closeButton).toBeTruthy();
         closeButton.click();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(closeSpy).toHaveBeenCalledOnce();
     });
 });

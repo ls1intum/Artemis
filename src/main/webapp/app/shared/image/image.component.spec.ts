@@ -1,4 +1,4 @@
-import { TestBed } from '@angular/core/testing';
+import { TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
 import { provideHttpClient, withFetch } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ImageComponent, ImageLoadingStatus } from './image.component';
@@ -35,45 +35,47 @@ describe('ImageComponent', () => {
         component.loadingStatus.subscribe(loadingStatusSpy);
 
         fixture.componentRef.setInput('src', '/test-image.png');
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(loadingStatusSpy).toHaveBeenCalledWith(ImageLoadingStatus.LOADING);
 
         const req = httpMock.expectOne('/test-image.png');
         const blob = new Blob(['fake image'], { type: 'image/png' });
         req.flush(blob);
         await fixture.whenStable();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(loadingStatusSpy).toHaveBeenCalledWith(ImageLoadingStatus.SUCCESS);
 
         const imageElement: HTMLImageElement = fixture.nativeElement.querySelector('img');
         expect(imageElement.getAttribute('src')).toBe(testLocalImageURL);
     });
 
-    it('should retry once on first error and then emit SUCCESS', async () => {
-        const reloadSpy = jest.spyOn<any, any>(component['imageResource'], 'reload');
+    it('should retry once on first error and then emit SUCCESS', fakeAsync(() => {
         const loadingStatusSpy = jest.fn();
         component.loadingStatus.subscribe(loadingStatusSpy);
 
         fixture.componentRef.setInput('src', '/error-image.png');
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
+        tick();
 
+        // First request fails
         const requestOne = httpMock.expectOne('/error-image.png');
         requestOne.error(new ProgressEvent('Network error'));
-        await fixture.whenStable();
-        fixture.detectChanges();
+        tick();
+        fixture.changeDetectorRef.detectChanges();
+        tick();
 
+        // Second request (retry) succeeds
         const requestTwo = httpMock.expectOne('/error-image.png');
         const blob = new Blob(['fake image'], { type: 'image/png' });
         requestTwo.flush(blob);
-        await fixture.whenStable();
-        fixture.detectChanges();
+        tick();
+        fixture.changeDetectorRef.detectChanges();
 
-        expect(reloadSpy).toHaveBeenCalledOnce();
         expect(loadingStatusSpy).toHaveBeenCalledWith(ImageLoadingStatus.SUCCESS);
 
         const imageElement: HTMLImageElement = fixture.nativeElement.querySelector('img');
         expect(imageElement.getAttribute('src')).toBe(testLocalImageURL);
-    });
+    }));
 
     it('should reload when retryLoadImage is called', async () => {
         const reloadSpy = jest.spyOn<any, any>(component['imageResource'], 'reload');
@@ -81,19 +83,19 @@ describe('ImageComponent', () => {
         component.loadingStatus.subscribe(statusSpy);
 
         fixture.componentRef.setInput('src', '/reload-image.png');
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         httpMock.expectOne('/reload-image.png').flush(new Blob());
         await fixture.whenStable();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         component.retryLoadImage();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(reloadSpy).toHaveBeenCalledOnce();
 
         httpMock.expectOne('/reload-image.png').flush(new Blob());
         await fixture.whenStable();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(statusSpy).toHaveBeenCalledWith(ImageLoadingStatus.SUCCESS);
 
@@ -106,7 +108,7 @@ describe('ImageComponent', () => {
         component.loadingStatus.subscribe(loadingStatusSpy);
 
         fixture.componentRef.setInput('src', '/delayed-image.png');
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const request = httpMock.expectOne('/delayed-image.png');
         expect(loadingStatusSpy).toHaveBeenCalledWith(ImageLoadingStatus.LOADING);

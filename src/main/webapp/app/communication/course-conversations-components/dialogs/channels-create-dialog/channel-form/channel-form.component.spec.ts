@@ -89,7 +89,7 @@ describe('ChannelFormComponent', () => {
 
     it('should submit valid form', fakeAsync(() => {
         setValidFormValues();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(component.form.valid).toBeTrue();
         expect(component.isSubmitPossible).toBeTrue();
 
@@ -127,14 +127,14 @@ describe('ChannelFormComponent', () => {
     };
 
     function checkFormIsInvalid() {
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(component.form.invalid).toBeTrue();
         expect(component.isSubmitPossible).toBeFalse();
         clickSubmitButton(false);
     }
     function setFormValid() {
         setValidFormValues();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(component.form.valid).toBeTrue();
         expect(component.isSubmitPossible).toBeTrue();
     }

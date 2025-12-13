@@ -91,11 +91,11 @@ describe('ProgrammingExerciseGradingComponent', () => {
     }));
 
     it('should create a grading summary for a bonus exercise with semiautomatic assessment', fakeAsync(() => {
-        fixture.detectChanges();
-
         comp.programmingExercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_AS_BONUS;
         comp.programmingExercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
         comp.programmingExercise.bonusPoints = undefined;
+
+        fixture.detectChanges();
 
         fixture.whenStable().then(() => {
             const result = comp.getGradingSummary();
@@ -104,14 +104,14 @@ describe('ProgrammingExerciseGradingComponent', () => {
     }));
 
     it('should create a grading summary with exceeding penalty', fakeAsync(() => {
-        fixture.detectChanges();
-
         comp.programmingExercise.submissionPolicy = {
             type: SubmissionPolicyType.SUBMISSION_PENALTY,
             exceedingPenalty: 10,
             submissionLimit: 5,
         };
         comp.programmingExercise.maxStaticCodeAnalysisPenalty = 5;
+
+        fixture.detectChanges();
 
         fixture.whenStable().then(() => {
             const result = comp.getGradingSummary();
@@ -120,10 +120,10 @@ describe('ProgrammingExerciseGradingComponent', () => {
     }));
 
     it('should create a grading summary with locked repositories and disabled code analysis', fakeAsync(() => {
-        fixture.detectChanges();
-
         comp.programmingExercise.submissionPolicy = { type: SubmissionPolicyType.LOCK_REPOSITORY, submissionLimit: 5 };
         comp.programmingExercise.staticCodeAnalysisEnabled = false;
+
+        fixture.detectChanges();
 
         fixture.whenStable().then(() => {
             const result = comp.getGradingSummary();
@@ -132,9 +132,9 @@ describe('ProgrammingExerciseGradingComponent', () => {
     }));
 
     it('should not create a grading summary when there are no points', fakeAsync(() => {
-        fixture.detectChanges();
-
         comp.programmingExercise.maxPoints = undefined;
+
+        fixture.detectChanges();
 
         fixture.whenStable().then(() => {
             const result = comp.getGradingSummary();
@@ -188,8 +188,12 @@ describe('ProgrammingExerciseGradingComponent', () => {
             extraCondition?: () => void;
         }[],
     ) => {
-        const checkFieldVisibility = (selector: string, isVisible: boolean) => {
-            fixture.detectChanges();
+        const checkFieldVisibility = (selector: string, isVisible: boolean, afterModification = false) => {
+            if (afterModification) {
+                fixture.changeDetectorRef.detectChanges();
+            } else {
+                fixture.detectChanges();
+            }
             const field = fixture.debugElement.nativeElement.querySelector(selector);
             if (isVisible) {
                 expect(field).not.toBeNull();
@@ -210,7 +214,7 @@ describe('ProgrammingExerciseGradingComponent', () => {
                     fixture.detectChanges();
                     extraCondition?.();
                     comp.isEditFieldDisplayedRecord()[field] = false;
-                    checkFieldVisibility(selector, false);
+                    checkFieldVisibility(selector, false, true);
                 });
             });
         });
