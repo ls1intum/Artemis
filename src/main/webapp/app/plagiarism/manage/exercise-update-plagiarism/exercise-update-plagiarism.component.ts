@@ -11,6 +11,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 @Component({
     selector: 'jhi-exercise-update-plagiarism',
     templateUrl: './exercise-update-plagiarism.component.html',
+    styleUrls: ['./exercise-update-plagiarism.component.scss'],
     standalone: true,
     imports: [ReactiveFormsModule, TranslateDirective, FaIconComponent, NgbTooltip, ArtemisTranslatePipe],
 })
