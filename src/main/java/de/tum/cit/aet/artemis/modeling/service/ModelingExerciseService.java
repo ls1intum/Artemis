@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.modeling.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-import static de.tum.cit.aet.artemis.core.config.Constants.SHORT_NAME_PATTERN;
 import static de.tum.cit.aet.artemis.core.config.Constants.TITLE_NAME_PATTERN;
 
 import java.util.Collections;
@@ -77,7 +76,7 @@ public class ModelingExerciseService {
      * This method follows PUT semantics:
      * <ul>
      * <li>All fields in the DTO represent the new state.</li>
-     * <li>Required attributes (e.g. title, shortName) are validated here and must not be {@code null} or blank.</li>
+     * <li>Required attributes (e.g. title) are validated here and must not be {@code null} or blank.</li>
      * <li>Nullable attributes are explicitly overwritten, i.e. {@code null} means "clear existing value".</li>
      * <li>Collections (grading criteria, competency links) are fully replaced; {@code null} or empty means "remove all".</li>
      * </ul>
@@ -92,7 +91,7 @@ public class ModelingExerciseService {
         if (updateModelingExerciseDTO == null) {
             throw new BadRequestAlertException("No modeling exercise was provided.", ENTITY_NAME, "isNull");
         }
-        // validates general title and shortname settings
+
         if (updateModelingExerciseDTO.title() == null || updateModelingExerciseDTO.title().isBlank() || updateModelingExerciseDTO.title().length() < 3) {
             throw new BadRequestAlertException("The title is not set or is too short.", ENTITY_NAME, "modelingExerciseTitleInvalid");
         }
@@ -102,15 +101,7 @@ public class ModelingExerciseService {
         }
         exercise.setTitle(updateModelingExerciseDTO.title());
 
-        if (updateModelingExerciseDTO.shortName() == null || updateModelingExerciseDTO.shortName().length() < 3) {
-            throw new BadRequestAlertException("The short name is not set or is too short.", ENTITY_NAME, "modelingExerciseShortNameInvalid");
-        }
-        Matcher shortNameMatcher = SHORT_NAME_PATTERN.matcher(updateModelingExerciseDTO.shortName());
-        if (!shortNameMatcher.matches()) {
-            throw new BadRequestAlertException("The shortname is invalid.", ENTITY_NAME, "shortnameInvalid");
-        }
         exercise.setShortName(updateModelingExerciseDTO.shortName());
-
         // problemStatement: null → empty string
         String newProblemStatement = updateModelingExerciseDTO.problemStatement() == null ? "" : updateModelingExerciseDTO.problemStatement();
         exercise.setProblemStatement(newProblemStatement);
