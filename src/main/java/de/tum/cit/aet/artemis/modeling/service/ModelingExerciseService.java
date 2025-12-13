@@ -89,6 +89,9 @@ public class ModelingExerciseService {
      *                                      does not belong to the exercise's course or otherwise violates domain constraints
      */
     public ModelingExercise updateModelingExercise(UpdateModelingExerciseDTO updateModelingExerciseDTO, ModelingExercise exercise) {
+        if (updateModelingExerciseDTO == null) {
+            throw new BadRequestAlertException("No modeling exercise was provided.", ENTITY_NAME, "isNull");
+        }
         // validates general title and shortname settings
         if (updateModelingExerciseDTO.title() == null || updateModelingExerciseDTO.title().isBlank() || updateModelingExerciseDTO.title().length() < 3) {
             throw new BadRequestAlertException("The title is not set or is too short.", ENTITY_NAME, "modelingExerciseTitleInvalid");
