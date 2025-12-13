@@ -37,7 +37,6 @@ import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.attributes.AttributesNodeProvider;
 import org.eclipse.jgit.lib.BaseRepositoryBuilder;
 import org.eclipse.jgit.lib.ObjectDatabase;
-import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.RefDatabase;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.lib.StoredConfig;
@@ -568,9 +567,6 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testIOExceptionWhenParsingTestResults() {
-        String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
-        doReturn(ObjectId.fromString(dummyHash)).when(gitService).getLastCommitHash(any());
-
         ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
         // Return an InputStream from dockerClient.copyArchiveFromContainerCmd().exec() such that repositoryTarInputStream.getNextTarEntry() throws an IOException.

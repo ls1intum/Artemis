@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.assessment;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.doReturn;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -12,14 +11,12 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.eclipse.jgit.lib.ObjectId;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.mockito.ArgumentMatchers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -186,8 +183,6 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         result2.setFeedbacks(feedbacks2);
         result2.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
 
-        String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
-        doReturn(ObjectId.fromString(dummyHash)).when(gitService).getLastCommitHash(ArgumentMatchers.any());
     }
 
     @Test

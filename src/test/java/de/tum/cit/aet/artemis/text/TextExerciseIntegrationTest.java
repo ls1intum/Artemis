@@ -331,6 +331,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void atlasML_isCalledOnCreateUpdateAndDelete() throws Exception {
+        atlasMLRequestMockProvider.reset();
         atlasMLRequestMockProvider.enableMockingOfRequests();
         atlasMLRequestMockProvider.mockSaveCompetenciesAny();
         // Create

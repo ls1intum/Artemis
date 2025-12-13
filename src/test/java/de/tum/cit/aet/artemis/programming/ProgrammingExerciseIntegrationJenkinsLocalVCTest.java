@@ -410,6 +410,8 @@ class ProgrammingExerciseIntegrationJenkinsLocalVCTest extends AbstractProgrammi
         programmingExercise.setId(null);
         programmingExercise.setTitle("unique-title");
         programmingExercise.setShortName("testuniqueshortname");
+        // Ensure LocalVC does not already have a project folder with this key from previous tests
+        programmingExerciseIntegrationTestService.cleanupLocalVcProjectForKey(programmingExercise.getProjectKey());
         jenkinsRequestMockProvider.mockCheckIfProjectExistsJobIsNull(programmingExercise);
 
         assertThatNoException().isThrownBy(() -> programmingExerciseValidationService.checkIfProjectExists(programmingExercise));

@@ -430,6 +430,8 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testPauseBuildAgent() throws Exception {
+        // Re-initialize to register pause/resume topic listeners (they are removed in @BeforeEach)
+        sharedQueueProcessingService.init();
         // We need to clear the processing jobs to avoid the agent being set to ACTIVE again
         processingJobs.clear();
 
@@ -453,6 +455,8 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testPauseAllBuildAgents() throws Exception {
+        // Re-initialize to register pause/resume topic listeners (they are removed in @BeforeEach)
+        sharedQueueProcessingService.init();
         // We need to clear the processing jobs to avoid the agent being set to ACTIVE again
         processingJobs.clear();
 

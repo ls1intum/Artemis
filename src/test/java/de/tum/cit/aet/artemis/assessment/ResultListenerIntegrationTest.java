@@ -454,21 +454,19 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         participantScoreScheduleService.executeScheduledTasks();
         await().until(() -> participantScoreScheduleService.isIdle());
 
-        List<ParticipantScore> savedParticipantScore = participantScoreRepository.findAllByExercise(exercise);
-        assertThat(savedParticipantScore).isNotEmpty();
-        assertThat(savedParticipantScore).hasSize(1);
-        ParticipantScore updatedParticipantScore = savedParticipantScore.getFirst();
-        Double lastPoints = null;
-        Double lastRatedPoints = null;
-        if (expectedLastScore != null) {
-            lastPoints = round(expectedLastScore * 0.01 * 10.0);
-        }
-        if (expectedLastRatedScore != null) {
-            lastRatedPoints = round(expectedLastRatedScore * 0.01 * 10.0);
-        }
+        Double lastPoints = expectedLastScore != null ? round(expectedLastScore * 0.01 * 10.0) : null;
+        Double lastRatedPoints = expectedLastRatedScore != null ? round(expectedLastRatedScore * 0.01 * 10.0) : null;
 
-        assertParticipantScoreStructure(updatedParticipantScore, idOfExercise, participant.getId(), expectedLastResultId, expectedLastScore, expectedLastRatedResultId,
-                expectedLastRatedScore, lastPoints, lastRatedPoints);
+        // Use await().untilAsserted() to handle timing issues with asynchronous participant score updates
+        await().untilAsserted(() -> {
+            List<ParticipantScore> savedParticipantScore = participantScoreRepository.findAllByExercise(exercise);
+            assertThat(savedParticipantScore).isNotEmpty();
+            assertThat(savedParticipantScore).hasSize(1);
+            ParticipantScore updatedParticipantScore = savedParticipantScore.getFirst();
+
+            assertParticipantScoreStructure(updatedParticipantScore, idOfExercise, participant.getId(), expectedLastResultId, expectedLastScore, expectedLastRatedResultId,
+                    expectedLastRatedScore, lastPoints, lastRatedPoints);
+        });
     }
 
 }

@@ -14,6 +14,8 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_THEIA;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
+import java.io.IOException;
+import java.net.ServerSocket;
 import java.net.URI;
 import java.nio.file.Path;
 import java.util.Set;
@@ -30,6 +32,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.ldap.SpringSecurityLdapTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
@@ -58,7 +62,7 @@ import de.tum.cit.aet.artemis.programming.icl.TestBuildAgentConfiguration;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildStatisticsRepository;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
-import de.tum.cit.aet.artemis.programming.service.GitRepositoryExportService;
+import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
 import de.tum.cit.aet.artemis.programming.service.localci.LocalCIService;
 import de.tum.cit.aet.artemis.programming.service.localci.LocalCITriggerService;
@@ -79,16 +83,50 @@ import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 @ActiveProfiles({ SPRING_PROFILE_TEST, PROFILE_ARTEMIS, PROFILE_BUILDAGENT, PROFILE_CORE, PROFILE_SCHEDULING, PROFILE_LOCALCI, PROFILE_LOCALVC, PROFILE_LDAP, PROFILE_LTI,
         PROFILE_AEOLUS, PROFILE_THEIA, PROFILE_IRIS, PROFILE_ATHENA, "local" })
 // Note: the server.port property must correspond to the port used in the artemis.version-control.url property.
-@TestPropertySource(properties = { "server.port=49152", "artemis.version-control.url=http://localhost:49152", "artemis.user-management.use-external=false",
-        "artemis.sharing.enabled=true", "artemis.continuous-integration.specify-concurrent-builds=true", "artemis.continuous-integration.concurrent-build-size=1",
-        "artemis.continuous-integration.asynchronous=false", "artemis.continuous-integration.build.images.java.default=dummy-docker-image",
-        "artemis.continuous-integration.image-cleanup.enabled=true", "artemis.continuous-integration.image-cleanup.disk-space-threshold-mb=1000000000",
-        "spring.liquibase.enabled=true", "artemis.iris.health-ttl=500", "info.contact=test@localhost", "artemis.version-control.ssh-port=1236",
-        "artemis.version-control.ssh-template-clone-url=ssh://git@localhost:1236/", "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_localci_localvc",
-        "artemis.version-control.build-agent-use-ssh=true", "artemis.version-control.ssh-private-key-folder-path=local/server-integration-test/ssh-keys",
-        "artemis.hyperion.enabled=true", "artemis.nebula.enabled=false" })
+@TestPropertySource(properties = { "artemis.user-management.use-external=false", "artemis.sharing.enabled=true", "artemis.continuous-integration.specify-concurrent-builds=true",
+        "artemis.continuous-integration.concurrent-build-size=1", "artemis.continuous-integration.asynchronous=false",
+        "artemis.continuous-integration.build.images.java.default=dummy-docker-image", "artemis.continuous-integration.image-cleanup.enabled=true",
+        "artemis.continuous-integration.image-cleanup.disk-space-threshold-mb=1000000000", "spring.liquibase.enabled=true", "artemis.iris.health-ttl=500",
+        "info.contact=test@localhost", "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_localci_localvc", "artemis.version-control.build-agent-use-ssh=true",
+        "artemis.version-control.ssh-private-key-folder-path=local/server-integration-test/ssh-keys", "artemis.hyperion.enabled=true", "artemis.nebula.enabled=false" })
 @ContextConfiguration(classes = TestBuildAgentConfiguration.class)
 public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends AbstractArtemisIntegrationTest {
+
+    private static final int serverPort;
+
+    private static final int sshPort;
+
+    private static final int hazelcastPort;
+
+    // Static initializer runs before @DynamicPropertySource, ensuring ports are available when Spring context starts
+    static {
+        serverPort = findAvailableTcpPort();
+        sshPort = findAvailableTcpPort();
+        hazelcastPort = findAvailableTcpPort();
+    }
+
+    @DynamicPropertySource
+    static void registerDynamicProperties(DynamicPropertyRegistry registry) {
+        registry.add("server.port", () -> serverPort);
+        registry.add("artemis.version-control.url", () -> "http://localhost:" + serverPort);
+        registry.add("artemis.version-control.ssh-port", () -> sshPort);
+        registry.add("artemis.version-control.ssh-template-clone-url", () -> "ssh://git@localhost:" + sshPort + "/");
+        registry.add("spring.hazelcast.port", () -> hazelcastPort);
+    }
+
+    private static int findAvailableTcpPort() {
+        try (ServerSocket socket = new ServerSocket(0)) {
+            socket.setReuseAddress(true);
+            return socket.getLocalPort();
+        }
+        catch (IOException e) {
+            throw new IllegalStateException("Could not find an available TCP port", e);
+        }
+    }
+
+    // Spy is only used for simulating non-feasible failure scenarios. Please use the real bean otherwise.
+    @MockitoSpyBean
+    protected GitService gitServiceSpy;
 
     @Autowired
     protected LocalVCLocalCITestService localVCLocalCITestService;
@@ -126,8 +164,7 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     @MockitoSpyBean
     protected SpringSecurityLdapTemplate ldapTemplate;
 
-    // TODO: we should remove @MockitoSpyBean here and use @Autowired instead
-    @MockitoSpyBean
+    @Autowired
     protected LocalVCService versionControlService;
 
     @MockitoSpyBean
@@ -168,9 +205,6 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
 
     @MockitoSpyBean
     protected CompetencyProgressApi competencyProgressApi;
-
-    @MockitoSpyBean
-    protected GitRepositoryExportService gitRepositoryExportService;
 
     // we explicitly want a mock here, as we don't want to test the actual chat model calls and avoid any autoconfiguration or instantiation of Spring AI internals
     @MockitoBean
@@ -225,8 +259,8 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     @AfterEach
     @Override
     protected void resetSpyBeans() {
-        Mockito.reset(versionControlService, continuousIntegrationService, localCITriggerService, resourceLoaderService, programmingMessagingService, competencyProgressService,
-                competencyProgressApi, gitRepositoryExportService);
+        Mockito.reset(gitServiceSpy, continuousIntegrationService, localCITriggerService, buildAgentConfiguration, resourceLoaderService, programmingMessagingService,
+                competencyProgressService, competencyProgressApi);
         super.resetSpyBeans();
     }
 
