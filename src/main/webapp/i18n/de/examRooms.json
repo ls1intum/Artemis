@@ -1,5 +1,24 @@
 {
     "artemisApp": {
+        "exam": {
+            "examUsers": {
+                "changeLocationButton": "Sitzplatz ändern",
+                "rooms": {
+                    "reseating": {
+                        "dialogTitle": "Student Umsetzen",
+                        "introText": "Dieser Dialog kann benutzt werden um einem Studenten einen anderen Platz zuzuweisen.",
+                        "isLocationKnown": "Platz hinterlegt",
+                        "isLocationKnownTooltip": "Zeigt an ob der zugewiesene Raum oder Sitz im System hinterlegt ist, d.h. ob er in der Anwesenheitskontrollen-iPad-App in der Raum-Ansicht angezeigt werden kann",
+                        "selectedStudent": "Ausgewählter Student: {{ studentLogin }} ({{ studentName }}); Raum: '{{ plannedRoom }}', Sitz: '{{ plannedSeat }}'",
+                        "selectRoom": "Neuer Raum:",
+                        "selectSeat": "Neuer Sitz:",
+                        "examRoomSearchPlaceholder": "Suche nach Raumnummer, -name und/oder Gebäude. Alternativ gib einen ungespeicherten Raum an",
+                        "examSeatSearchPlaceholder": "Frei lassen um automatisch einen Sitz zu bestimmen",
+                        "reseat": "Umsetzen"
+                    }
+                }
+            }
+        },
         "examRooms": {
             "adminOverview": {
                 "pageTitle": "Admin Prüfungsraum Management",
