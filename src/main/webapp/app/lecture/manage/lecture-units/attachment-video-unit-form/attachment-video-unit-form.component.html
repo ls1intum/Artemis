@@ -216,6 +216,25 @@
                     ></label>
                 </div>
             }
+            <!-- TUM Live Upload Section -->
+            @if (isTumLiveUploadAvailable()) {
+                <div class="row mt-3 mb-3">
+                    <div class="col-12">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h6 class="card-title" jhiTranslate="artemisApp.tumLiveUpload.sectionTitle">Upload to TUM Live</h6>
+                                <p class="card-text text-muted small" jhiTranslate="artemisApp.tumLiveUpload.sectionDescription">
+                                    Upload your video directly to TUM Live for streaming.
+                                </p>
+                                <button type="button" class="btn btn-outline-primary" (click)="openTumLiveUploadDialog()">
+                                    <fa-icon [icon]="faCloudUploadAlt" class="me-1" />
+                                    <span jhiTranslate="artemisApp.tumLiveUpload.openDialog">Upload to TUM Live</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
             <div class="row">
                 <div class="col-12">
                     <button id="submitButton" class="btn btn-primary" type="submit" [disabled]="!isFormValid()">
