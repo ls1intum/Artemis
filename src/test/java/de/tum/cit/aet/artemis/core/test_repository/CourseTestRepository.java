@@ -22,7 +22,7 @@ import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 @Primary
 public interface CourseTestRepository extends CourseRepository {
 
-    @Transactional
+    @Transactional // ok because of modifying query
     @Modifying
     @Query("UPDATE Course c SET c.semester = NULL WHERE c.semester IS NOT NULL")
     void clearSemester();

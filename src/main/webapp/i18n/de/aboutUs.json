@@ -72,6 +72,7 @@
                 "text": "<a href={{ openSourceUrl }}>Open-source:</a> Kostenlos zu verwenden mit einer großen Gemeinschaft und vielen aktiven Entwicklern."
             },
             "getInTouch": "Kontakt",
+            "courseRequests": "Neuen Kurs anfragen",
             "contributors": "Mitwirkende",
             "website": "Webseite",
             "roles": {

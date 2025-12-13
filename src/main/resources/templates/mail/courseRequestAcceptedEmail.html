@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title th:text="#{email.courseRequest.accepted.title}">Course request accepted</title>
+    <th:block th:replace="~{mail/notification/fragments :: headMetaDataAndIconLink}"/>
+    <th:block th:replace="~{mail/notification/fragments :: css}"/>
+</head>
+<body>
+<th:block th:replace="~{mail/notification/fragments :: header}"/>
+<div id="message-body">
+    <th:block th:replace="~{mail/notification/fragments :: greetingsFullName}"/>
+    <div class="notification-content">
+        <p th:text="#{email.courseRequest.accepted.text(${courseRequest.title})}">Welcome to your new course.</p>
+        <p th:text="#{email.courseRequest.accepted.followUp}">You can adjust the course after opening it.</p>
+        <div class="button-wrapper">
+            <a class="button" th:href="@{|${baseUrl}/course-management/${course.id}|}" th:text="#{email.courseRequest.accepted.linkText}">Open course</a>
+        </div>
+        <div class="emergency-link">
+            <p th:text="#{email.notification.aux.emergency.link.text}">Emergency Link if button is not working</p>
+            <a th:with="url=(@{|${baseUrl}/course-management/${course.id}|})" th:href="${url}" th:text="${url}">Link</a>
+        </div>
+    </div>
+    <th:block th:replace="~{mail/notification/fragments :: farewell}"/>
+</div>
+<th:block th:replace="~{mail/notification/fragments :: footer}"/>
+</body>
+</html>

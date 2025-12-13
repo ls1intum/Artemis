@@ -9,7 +9,7 @@ Example:
 
     artemis:
         user-management:
-            use-external: false
+            use-external: false #false disables ldap authentication
             registration:
                 enabled: true
                 allowed-email-pattern: '[a-zA-Z0-9_\-\.\+]+@(tum\.de|in\.tum\.de|mytum\.de)'

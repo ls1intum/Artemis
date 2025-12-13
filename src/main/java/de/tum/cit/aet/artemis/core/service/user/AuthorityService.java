@@ -8,10 +8,8 @@ import static de.tum.cit.aet.artemis.core.security.Role.STUDENT;
 import static de.tum.cit.aet.artemis.core.security.Role.TEACHING_ASSISTANT;
 
 import java.util.HashSet;
-import java.util.Optional;
 import java.util.Set;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -24,9 +22,6 @@ import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 @Lazy
 @Service
 public class AuthorityService {
-
-    @Value("${artemis.user-management.external.admin-group-name:#{null}}")
-    private Optional<String> adminGroupName;
 
     private final CourseRepository courseRepository;
 
@@ -51,11 +46,6 @@ public class AuthorityService {
         if (groups == null) {
             // prevent null pointer exceptions
             groups = new HashSet<>();
-        }
-
-        // Check if the user is admin in case the admin group is defined
-        if (adminGroupName.isPresent() && groups.contains(adminGroupName.get())) {
-            authorities.add(ADMIN_AUTHORITY);
         }
 
         // Users who already have admin access, keep admin access.

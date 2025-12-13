@@ -191,6 +191,8 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
 
     List<Course> findAllByShortName(String shortName);
 
+    boolean existsByShortNameIgnoreCase(String shortName);
+
     /**
      * Returns the title of the course with the given id.
      *
@@ -548,4 +550,17 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
                 WHERE course.id = :courseId
             """)
     Optional<String> getTimeZoneOfCourseById(@Param("courseId") long courseId);
+
+    /**
+     * Counts the number of courses where the user is an instructor based on their group memberships.
+     *
+     * @param userGroups the groups the user belongs to
+     * @return the count of courses where the user is an instructor
+     */
+    @Query("""
+            SELECT COUNT(c)
+            FROM Course c
+            WHERE c.instructorGroupName IN :userGroups
+            """)
+    long countCoursesForInstructorWithGroups(@Param("userGroups") Set<String> userGroups);
 }

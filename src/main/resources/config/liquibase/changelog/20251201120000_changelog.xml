@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="20251201120000-course-requests" author="krusche">
+        <createTable tableName="course_request">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="title" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="short_name" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="semester" type="varchar(25)"/>
+            <column name="start_date" type="datetime(3)"/>
+            <column name="end_date" type="datetime(3)"/>
+            <column name="test_course" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="reason" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="varchar(20)" defaultValue="PENDING">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_date" type="datetime(3)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="admin" type="varchar(255)"/>
+            <column name="processed_date" type="datetime(3)"/>
+            <column name="decision_reason" type="text"/>
+            <column name="requester_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_course_id" type="bigint"/>
+        </createTable>
+
+        <addUniqueConstraint columnNames="short_name" tableName="course_request" constraintName="uk_course_request_short_name"/>
+
+        <addForeignKeyConstraint baseTableName="course_request"
+                                 baseColumnNames="requester_id"
+                                 constraintName="fk_course_request_user"
+                                 referencedTableName="jhi_user"
+                                 referencedColumnNames="id"/>
+
+        <addForeignKeyConstraint baseTableName="course_request"
+                                 baseColumnNames="created_course_id"
+                                 constraintName="fk_course_request_course"
+                                 referencedTableName="course"
+                                 referencedColumnNames="id"/>
+
+        <createIndex tableName="course_request" indexName="idx_course_request_status">
+            <column name="status"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>
