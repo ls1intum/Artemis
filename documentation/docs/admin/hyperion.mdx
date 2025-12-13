@@ -47,6 +47,16 @@ spring:
           options:
             deployment-name: gpt-5-mini # Or another (reasonably capable) model
             temperature: 1.0 # Required to be 1.0 for gpt-5
+    # Retry/response handling tuning for AI providers
+    retry:
+      # Treat HTTP 429 as transient to allow auto-retry by Spring AI
+      on-http-codes: [429]
+      # Conservative defaults; adjust if needed
+      max-attempts: 5
+      backoff:
+        initial-interval: 1000ms
+        multiplier: 2.0
+        max-interval: 30000ms
 ```
 
 ### Azure OpenAI
@@ -62,6 +72,16 @@ spring:
           options:
             deployment-name: <azure-deployment> # gpt-5-mini deployment recommended
             temperature: 1.0 # Required to be 1.0 for gpt-5
+    # Retry/response handling tuning for AI providers
+    retry:
+      # Treat HTTP 429 as transient to allow auto-retry by Spring AI
+      on-http-codes: [429]
+      # Conservative defaults; adjust if needed
+      max-attempts: 5
+      backoff:
+        initial-interval: 1000ms
+        multiplier: 2.0
+        max-interval: 30000ms
 ```
 ### Observability (Optional)
 
