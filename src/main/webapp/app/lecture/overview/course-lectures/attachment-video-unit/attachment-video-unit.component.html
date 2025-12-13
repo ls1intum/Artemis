@@ -1,7 +1,7 @@
 <jhi-lecture-unit-card
     [courseId]="courseId()"
     [lectureUnit]="lectureUnit()"
-    [icon]="getAttachmentIcon()"
+    [icon]="attachmentIcon()"
     [showViewIsolatedButton]="hasAttachment()"
     [showOriginalVersionButton]="!!lectureUnit().attachment?.studentVersion"
     [viewIsolatedButtonLabel]="'artemisApp.attachmentVideoUnit.download'"
@@ -51,6 +51,15 @@
             </div>
         } @else if (playlistUrl() && hasTranscript()) {
             <jhi-video-player [videoUrl]="playlistUrl()!" [transcriptSegments]="transcriptSegments()" />
+        } @else if (isUploadedVideoFile()) {
+            <div class="video-player-container">
+                <div class="ratio ratio-16x9">
+                    <video id="uploadedVideo" class="rounded" controls preload="auto" playsinline>
+                        <source [src]="videoUrl() | safeResourceUrl" />
+                        <span jhiTranslate="artemisApp.attachmentVideoUnit.videoPlayer.notSupported"></span>
+                    </video>
+                </div>
+            </div>
         } @else {
             <div class="video-player-container">
                 <div class="ratio ratio-16x9">

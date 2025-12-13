@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync, flushMicrotasks } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, flushMicrotasks, tick } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 import { AttachmentVideoUnitFormComponent, AttachmentVideoUnitFormData } from 'app/lecture/manage/lecture-units/attachment-video-unit-form/attachment-video-unit-form.component';
@@ -8,13 +8,15 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
+import { MAX_FILE_SIZE, MAX_VIDEO_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { HttpClient } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
@@ -41,6 +43,7 @@ describe('AttachmentVideoUnitFormComponent', () => {
                 provideHttpClientTesting(),
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
+                { provide: ProfileService, useClass: MockProfileService },
             ],
         }).compileComponents();
 
@@ -280,7 +283,7 @@ describe('AttachmentVideoUnitFormComponent', () => {
         expect(onFileChangeStub).toHaveBeenCalledOnce();
     });
 
-    it('should disable submit button for too big file', () => {
+    it('should disable submit button for too big file', fakeAsync(() => {
         const fakeFile = new File([''], 'Test-File.pdf', {
             type: 'application/pdf',
             lastModified: Date.now(),
@@ -292,12 +295,15 @@ describe('AttachmentVideoUnitFormComponent', () => {
         attachmentVideoUnitFormComponent.onFileChange({
             target: { files: [fakeFile] } as unknown as EventTarget,
         } as Event);
+
+        // Wait for the setTimeout in onFileChange to complete (1000ms for file processing + 1000ms for reset)
+        tick(1100);
         attachmentVideoUnitFormComponentFixture.detectChanges();
 
         const submitButton = attachmentVideoUnitFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
         expect(attachmentVideoUnitFormComponent.isFileTooBig()).toBeTrue();
         expect(submitButton.disabled).toBeTrue();
-    });
+    }));
 
     it('should not submit a form when file and videoSource is missing', () => {
         attachmentVideoUnitFormComponentFixture.detectChanges();
@@ -638,24 +644,28 @@ describe('AttachmentVideoUnitFormComponent', () => {
         expect(attachmentVideoUnitFormComponent.form.get('generateTranscript')!.value).toBeFalse();
     }));
 
-    it('onFileChange: auto-fills name when empty and marks large files', () => {
+    it('onFileChange: auto-fills name when empty and marks large files', fakeAsync(() => {
         attachmentVideoUnitFormComponentFixture.detectChanges();
 
         // Name initially empty -> should be auto-filled without extension
         expect(attachmentVideoUnitFormComponent.nameControl!.value).toBeFalsy();
 
         const bigFile = new File(['a'.repeat(10)], 'Lecture-01.mp4', { type: 'video/mp4', lastModified: Date.now() });
-        Object.defineProperty(bigFile, 'size', { value: MAX_FILE_SIZE + 10 });
+        // Video files use MAX_VIDEO_FILE_SIZE (200MB), not MAX_FILE_SIZE (20MB)
+        Object.defineProperty(bigFile, 'size', { value: MAX_VIDEO_FILE_SIZE + 10 });
 
         const input = document.createElement('input');
         Object.defineProperty(input, 'files', { value: [bigFile] });
 
         attachmentVideoUnitFormComponent.onFileChange({ target: input } as any);
 
+        // Wait for the setTimeout in onFileChange to complete (1000ms for file processing + 1000ms for reset)
+        tick(1100);
+
         expect(attachmentVideoUnitFormComponent.fileName()).toBe('Lecture-01.mp4');
         expect(attachmentVideoUnitFormComponent.nameControl!.value).toBe('Lecture-01');
         expect(attachmentVideoUnitFormComponent.isFileTooBig()).toBeTrue();
-    });
+    }));
 
     it('isTransformable reflects urlHelper validity', () => {
         attachmentVideoUnitFormComponentFixture.detectChanges();
@@ -744,5 +754,92 @@ describe('AttachmentVideoUnitFormComponent', () => {
         // Effect should have updated the playlist URL
         expect(attachmentVideoUnitFormComponent.playlistUrl()).toBe(playlistUrl);
         expect(attachmentVideoUnitFormComponent.canGenerateTranscript()).toBeTrue();
+    });
+
+    describe('Video Upload Feature Flag', () => {
+        it('should detect video file correctly', () => {
+            const videoFile = new File(['test'], 'test-video.mp4', { type: 'video/mp4' });
+            attachmentVideoUnitFormComponent.file = videoFile;
+
+            const isVideo = attachmentVideoUnitFormComponent['isVideoFile'](videoFile);
+            expect(isVideo).toBeTrue();
+        });
+
+        it('should not detect non-video file as video', () => {
+            const pdfFile = new File(['test'], 'test.pdf', { type: 'application/pdf' });
+            attachmentVideoUnitFormComponent.file = pdfFile;
+
+            const isVideo = attachmentVideoUnitFormComponent['isVideoFile'](pdfFile);
+            expect(isVideo).toBeFalse();
+        });
+
+        it('should invalidate form when video upload is disabled and video file is selected', () => {
+            // Mock ProfileService to return false for video upload
+            const profileService = TestBed.inject(ProfileService);
+            jest.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(false);
+
+            // Create a new component instance to pick up the mock
+            attachmentVideoUnitFormComponentFixture = TestBed.createComponent(AttachmentVideoUnitFormComponent);
+            attachmentVideoUnitFormComponent = attachmentVideoUnitFormComponentFixture.componentInstance;
+            attachmentVideoUnitFormComponentFixture.detectChanges();
+
+            // Set a video file
+            const videoFile = new File(['test'], 'test-video.mp4', { type: 'video/mp4' });
+            attachmentVideoUnitFormComponent.file = videoFile;
+            attachmentVideoUnitFormComponent.fileName.set('test-video.mp4');
+
+            // Form should be invalid
+            expect(attachmentVideoUnitFormComponent.isFormValid()).toBeFalse();
+        });
+
+        it('should allow PDF upload when video upload is disabled', () => {
+            // Mock ProfileService to return false for video upload
+            const profileService = TestBed.inject(ProfileService);
+            jest.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(false);
+
+            // Create a new component instance
+            attachmentVideoUnitFormComponentFixture = TestBed.createComponent(AttachmentVideoUnitFormComponent);
+            attachmentVideoUnitFormComponent = attachmentVideoUnitFormComponentFixture.componentInstance;
+            attachmentVideoUnitFormComponentFixture.detectChanges();
+
+            // Set a PDF file
+            const pdfFile = new File(['test'], 'test.pdf', { type: 'application/pdf' });
+            attachmentVideoUnitFormComponent.file = pdfFile;
+            attachmentVideoUnitFormComponent.fileName.set('test.pdf');
+            attachmentVideoUnitFormComponent.form.patchValue({ name: 'Test Unit' });
+
+            // Form should be valid (assuming other validations pass)
+            expect(attachmentVideoUnitFormComponent.isFormValid()).toBeTrue();
+        });
+
+        it('should allow video upload when feature is enabled', () => {
+            // Mock ProfileService to return true for video upload
+            const profileService = TestBed.inject(ProfileService);
+            jest.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
+
+            // Create a new component instance
+            attachmentVideoUnitFormComponentFixture = TestBed.createComponent(AttachmentVideoUnitFormComponent);
+            attachmentVideoUnitFormComponent = attachmentVideoUnitFormComponentFixture.componentInstance;
+            attachmentVideoUnitFormComponentFixture.detectChanges();
+
+            // Set a video file
+            const videoFile = new File(['test'], 'test-video.mp4', { type: 'video/mp4' });
+            attachmentVideoUnitFormComponent.file = videoFile;
+            attachmentVideoUnitFormComponent.fileName.set('test-video.mp4');
+            attachmentVideoUnitFormComponent.form.patchValue({ name: 'Test Video Unit' });
+
+            // Form should be valid
+            expect(attachmentVideoUnitFormComponent.isFormValid()).toBeTrue();
+        });
+
+        it('should detect various video file formats', () => {
+            const videoFormats = ['mp4', 'webm', 'ogg', 'mov', 'avi', 'mkv', 'flv', 'wmv', 'm4v'];
+
+            videoFormats.forEach((format) => {
+                const videoFile = new File(['test'], `test-video.${format}`, { type: `video/${format}` });
+                const isVideo = attachmentVideoUnitFormComponent['isVideoFile'](videoFile);
+                expect(isVideo).toBeTrue();
+            });
+        });
     });
 });

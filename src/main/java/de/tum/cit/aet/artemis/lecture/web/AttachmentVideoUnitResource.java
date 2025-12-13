@@ -34,6 +34,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationService;
+import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
@@ -43,6 +44,8 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLecture.Enf
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastEditorInLectureUnit;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.FileService;
+import de.tum.cit.aet.artemis.core.service.ModuleFeatureService;
+import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
@@ -86,10 +89,12 @@ public class AttachmentVideoUnitResource {
 
     private final LectureUnitRepository lectureUnitRepository;
 
+    private final ModuleFeatureService moduleFeatureService;
+
     public AttachmentVideoUnitResource(AttachmentVideoUnitRepository attachmentVideoUnitRepository, LectureRepository lectureRepository,
             LectureUnitProcessingService lectureUnitProcessingService, AuthorizationCheckService authorizationCheckService, GroupNotificationService groupNotificationService,
             AttachmentVideoUnitService attachmentVideoUnitService, Optional<CompetencyProgressApi> competencyProgressApi, SlideSplitterService slideSplitterService,
-            FileService fileService, LectureUnitRepository lectureUnitRepository) {
+            FileService fileService, LectureUnitRepository lectureUnitRepository, ModuleFeatureService moduleFeatureService) {
         this.attachmentVideoUnitRepository = attachmentVideoUnitRepository;
         this.lectureUnitProcessingService = lectureUnitProcessingService;
         this.lectureRepository = lectureRepository;
@@ -100,6 +105,7 @@ public class AttachmentVideoUnitResource {
         this.slideSplitterService = slideSplitterService;
         this.fileService = fileService;
         this.lectureUnitRepository = lectureUnitRepository;
+        this.moduleFeatureService = moduleFeatureService;
     }
 
     /**
@@ -146,6 +152,15 @@ public class AttachmentVideoUnitResource {
         if (!validateHiddenSlidesDates(hiddenPages)) {
             throw new BadRequestAlertException("Hidden slide dates cannot be in the past", ENTITY_NAME, "invalidHiddenDates");
         }
+
+        // Validate file size (videos up to 200MB, other files up to 20MB)
+        FileUtil.validateFileSize(file);
+
+        // Check if video upload is enabled when a video file is being uploaded
+        if (file != null && file.getOriginalFilename() != null && FileUtil.isVideoFile(file.getOriginalFilename()) && !moduleFeatureService.isVideoUploadEnabled()) {
+            throw new BadRequestAlertException("Video file upload is not enabled on this server", ENTITY_NAME, "videoUploadDisabled");
+        }
+
         AttachmentVideoUnit savedAttachmentVideoUnit = attachmentVideoUnitService.updateAttachmentVideoUnit(existingAttachmentVideoUnit, attachmentVideoUnit, attachment, file,
                 keepFilename, hiddenPages, pageOrder);
 
@@ -187,6 +202,14 @@ public class AttachmentVideoUnitResource {
             throw new BadRequestAlertException("A attachment must have a an attachment or a video source", ENTITY_NAME, "videosourceAndAttachment");
         }
 
+        // Validate file size (videos up to 200MB, other files up to 20MB)
+        FileUtil.validateFileSize(file);
+
+        // Check if video upload is enabled when a video file is being uploaded
+        if (file != null && file.getOriginalFilename() != null && FileUtil.isVideoFile(file.getOriginalFilename()) && !moduleFeatureService.isVideoUploadEnabled()) {
+            throw new BadRequestAlertException("Video file upload is not enabled on this server", ENTITY_NAME, "videoUploadDisabled");
+        }
+
         Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lectureId);
         if (lecture.getCourse() == null) {
             throw new BadRequestAlertException("Specified lecture is not part of a course", ENTITY_NAME, "courseMissing");
@@ -223,6 +246,10 @@ public class AttachmentVideoUnitResource {
         int minutesUntilDeletion = 30;
         String originalFilename = file.getOriginalFilename();
         log.debug("REST request to upload file: {}", originalFilename);
+
+        // Validate file size (PDF files, not videos)
+        FileUtil.validateFileSize(file, Constants.MAX_FILE_SIZE);
+
         checkLectureElseThrow(lectureId);
         if (!Objects.equals(FilenameUtils.getExtension(originalFilename), "pdf")) {
             throw new BadRequestAlertException("The file must be a pdf", ENTITY_NAME, "wrongFileType");
@@ -335,6 +362,9 @@ public class AttachmentVideoUnitResource {
     @EnforceAtLeastEditorInLectureUnit(resourceIdFieldName = "attachmentVideoUnitId")
     public ResponseEntity<AttachmentVideoUnit> updateAttachmentVideoUnitStudentVersion(@PathVariable Long lectureId, @PathVariable Long attachmentVideoUnitId,
             @RequestParam("studentVersion") MultipartFile studentVersionFile) {
+
+        // Validate file size (PDF files, not videos)
+        FileUtil.validateFileSize(studentVersionFile, Constants.MAX_FILE_SIZE);
 
         AttachmentVideoUnit existingAttachmentUnit = attachmentVideoUnitRepository.findWithSlidesAndCompetenciesByIdElseThrow(attachmentVideoUnitId);
         checkAttachmentVideoUnitCourseAndLecture(existingAttachmentUnit, lectureId);
