@@ -8,6 +8,7 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.ai.azure.openai.AzureOpenAiChatOptions;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.ChatClient.ChatClientRequestSpec;
+import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.MessageType;
@@ -64,6 +65,14 @@ public class AtlasAgentService {
             // Reset the ThreadLocal flag at the start of each request
             competencyCreatedInCurrentRequest.set(false);
 
+            ChatClient.Builder clientBuilder = chatClient.mutate();
+            // Add memory advisor only for Atlas with conversation-specific session ID
+            if (chatMemory != null) {
+                clientBuilder.defaultAdvisors(MessageChatMemoryAdvisor.builder(chatMemory).conversationId(sessionId).build());
+            }
+
+            ChatClient atlasClient = clientBuilder.build();
+
             // Load system prompt from external template
             String resourcePath = "/prompts/atlas/agent_system_prompt.st";
             Map<String, String> variables = Map.of();
@@ -73,14 +82,7 @@ public class AtlasAgentService {
             String enhancedSystemPrompt = String.format("%s\n\nContext: You are assisting with Course ID: %d", systemPrompt, courseId);
 
             AzureOpenAiChatOptions options = AzureOpenAiChatOptions.builder().deploymentName("gpt-4o").temperature(1.0).build();
-
-            ChatClientRequestSpec promptSpec = chatClient.prompt().system(enhancedSystemPrompt).user(message).options(options);
-
-            // Add chat memory advisor using persistent JDBC-based memory
-            if (chatMemory != null) {
-                promptSpec = promptSpec.advisors(advisor -> advisor.param(ChatMemory.CONVERSATION_ID, sessionId));
-            }
-
+            ChatClientRequestSpec promptSpec = atlasClient.prompt().system(enhancedSystemPrompt).user(message).options(options);
             // Add tools
             if (toolCallbackProvider != null) {
                 promptSpec = promptSpec.toolCallbacks(toolCallbackProvider);
