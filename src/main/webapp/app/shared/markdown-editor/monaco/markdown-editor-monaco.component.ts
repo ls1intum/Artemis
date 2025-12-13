@@ -284,12 +284,17 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     @Output()
     onLeaveVisualTab = new EventEmitter<void>();
 
+    /** Emits when user selects lines in the editor */
+    readonly onSelectionChange = output<{ startLine: number; endLine: number } | null>();
+
     defaultPreviewHtml: SafeHtml | undefined;
     inPreviewMode = false;
     inVisualMode = false;
     inEditMode = true;
     uniqueMarkdownEditorId: string;
     resizeObserver?: ResizeObserver;
+    /** Disposable for the selection change listener */
+    private selectionChangeDisposable?: { dispose: () => void };
     targetWrapperHeight?: number;
     minWrapperHeight?: number;
     constrainDragPositionFn?: (pointerPosition: Point) => Point;
@@ -450,6 +455,18 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
             this.monacoEditor.applyOptionPreset(DEFAULT_MARKDOWN_EDITOR_OPTIONS);
         }
         this.renderConsistencyIssues();
+
+        // Set up selection change listener for inline comments
+        this.selectionChangeDisposable = this.monacoEditor.onSelectionChange((selection) => {
+            if (selection) {
+                this.onSelectionChange.emit({
+                    startLine: selection.startLineNumber,
+                    endLine: selection.endLineNumber,
+                });
+            } else {
+                this.onSelectionChange.emit(null);
+            }
+        });
     }
 
     /**
@@ -469,6 +486,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
     ngOnDestroy(): void {
         this.resizeObserver?.disconnect();
+        this.selectionChangeDisposable?.dispose();
     }
 
     onTextChanged(event: { text: string; fileName: string }): void {
@@ -701,5 +719,38 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
      */
     onCloseButtonClick(): void {
         this.closeEditor.emit();
+    }
+
+    /**
+     * Adds a line widget (e.g., inline comment) after the specified line.
+     * @param lineNumber The line after which to add the widget.
+     * @param id Unique ID for this widget.
+     * @param domNode The HTML element to display.
+     */
+    addLineWidget(lineNumber: number, id: string, domNode: HTMLElement): void {
+        this.monacoEditor.addLineWidget(lineNumber, id, domNode);
+    }
+
+    /**
+     * Removes a line widget by its ID.
+     * @param id The ID of the widget to remove.
+     */
+    removeLineWidget(id: string): void {
+        this.monacoEditor.removeLineWidget(id);
+    }
+
+    /**
+     * Gets the current selection in the editor.
+     * @returns The current selection or null.
+     */
+    getSelection(): { startLine: number; endLine: number } | null {
+        const sel = this.monacoEditor.getSelection();
+        if (!sel) {
+            return null;
+        }
+        return {
+            startLine: sel.startLineNumber,
+            endLine: sel.endLineNumber,
+        };
     }
 }

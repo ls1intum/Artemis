@@ -2,7 +2,7 @@
     <h3 jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepTitle" id="artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepTitle"></h3>
     <p jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepMessage"></p>
     <!-- User Prompt Input -->
-    @if (!programmingExercise()?.id && hyperionEnabled) {
+    @if (hyperionEnabled) {
         <div class="mb-4">
             <label for="userPrompt" class="form-label" jhiTranslate="artemisApp.programmingExercise.problemStatement.yourRequirements"></label>
             <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.problemStatement.generateDraftDescription" />
@@ -11,29 +11,71 @@
                 [(ngModel)]="userPrompt"
                 class="form-control"
                 rows="4"
-                [placeholder]="isGenerating ? userPrompt : getTranslatedPlaceholder()"
-                [disabled]="isGenerating"
+                [placeholder]="isGenerating || isRefining ? userPrompt : getTranslatedPlaceholder()"
+                [disabled]="isGenerating || isRefining"
             >
             </textarea>
         </div>
         <div class="d-flex justify-content-start gap-2">
-            <button class="btn btn-outline-primary" type="button" [disabled]="!userPrompt?.trim() || isGenerating" (click)="generateProblemStatement()">
-                @if (isGenerating) {
+            <button class="btn btn-outline-primary" type="button" [disabled]="!userPrompt?.trim() || isGenerating || isRefining" (click)="handleProblemStatementAction()">
+                @if (isGenerating || isRefining) {
                     <fa-icon [icon]="faSpinner" animation="spin" />
                 } @else {
                     <fa-icon [icon]="facArtemisIntelligence" />
                 }
-                <span class="ms-2" jhiTranslate="artemisApp.programmingExercise.problemStatement.generationAssistance"></span>
+                @if (shouldShowGenerateButton()) {
+                    <span class="ms-2" jhiTranslate="artemisApp.programmingExercise.problemStatement.generationAssistance"></span>
+                } @else {
+                    <span class="ms-2" jhiTranslate="artemisApp.programmingExercise.problemStatement.refinementAssistance"></span>
+                }
             </button>
             <button type="button" id="cancel-generation" class="btn btn-sm btn-secondary" (click)="cancelGeneration()">
                 <fa-icon [fixedWidth]="true" [icon]="faBan" class="sm" />
                 <span class="d-none d-sm-inline" jhiTranslate="entity.action.cancel"></span>
             </button>
         </div>
+
+        <!-- Pending Inline Comments Bar -->
+        @if (hasPendingComments()) {
+            <div class="pending-comments-bar d-flex justify-content-between align-items-center mt-3 mb-0 p-2 border rounded bg-light">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="fw-medium">{{ 'artemisApp.programmingExercise.inlineComment.pendingComments' | artemisTranslate: { count: pendingCount() } }}</span>
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" (click)="clearAllComments()" [disabled]="isApplyingAll()">
+                        <span jhiTranslate="entity.action.clear"></span>
+                    </button>
+                    <button type="button" class="btn btn-outline-primary btn-sm" (click)="applyAllComments()" [disabled]="isApplyingAll()">
+                        @if (isApplyingAll()) {
+                            <fa-icon [icon]="faSpinner" animation="spin" class="me-1" />
+                        }
+                        <span>{{ 'artemisApp.programmingExercise.inlineComment.applyAll' | artemisTranslate }} ({{ pendingCount() }})</span>
+                    </button>
+                </div>
+            </div>
+        }
     }
     @if (isEditFieldDisplayedRecord()?.problemStatement) {
         <div class="form-group" id="field_problemStatement" name="problemStatement">
             <label class="form-control-label" for="field_problemStatement" jhiTranslate="artemisApp.programmingExercise.problemStatement.title"></label>
+            @if (showDiff) {
+                <div class="alert alert-info d-flex justify-content-between align-items-center mb-2">
+                    <span>
+                        <strong jhiTranslate="artemisApp.programmingExercise.problemStatement.reviewChanges"></strong>
+                        <span class="ms-2" jhiTranslate="artemisApp.programmingExercise.problemStatement.reviewChangesDescription"></span>
+                    </span>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-success btn-sm" type="button" (click)="acceptRefinement()">
+                            <fa-icon [icon]="faSave" class="me-1" />
+                            <span jhiTranslate="artemisApp.programmingExercise.problemStatement.acceptChanges"></span>
+                        </button>
+                        <button class="btn btn-secondary btn-sm" type="button" (click)="rejectRefinement()">
+                            <fa-icon [icon]="faBan" class="me-1" />
+                            <span jhiTranslate="artemisApp.programmingExercise.problemStatement.rejectChanges"></span>
+                        </button>
+                    </div>
+                </div>
+            }
             @if (programmingExerciseCreationConfig.isImportFromExistingExercise || programmingExerciseCreationConfig.isImportFromFile) {
                 <ngb-alert [dismissible]="false">
                     <span class="font-weight-bold">
@@ -51,7 +93,7 @@
             @if (programmingExerciseCreationConfig.isImportFromExistingExercise) {
                 <jhi-programming-exercise-instructions
                     [exercise]="programmingExercise()!"
-                    [participation]="programmingExercise()?.templateParticipation!"
+                    [participation]="programmingExercise()!.templateParticipation!"
                     [personalParticipation]="false"
                 />
             }
@@ -60,18 +102,35 @@
                 programmingExerciseCreationConfig.templateParticipationResultLoaded &&
                 !programmingExerciseCreationConfig.isImportFromExistingExercise
             ) {
-                <jhi-programming-exercise-editable-instructions
-                    [participation]="programmingExercise()?.templateParticipation!"
-                    [exercise]="programmingExercise()!"
-                    [initialEditorHeight]="MarkdownEditorHeight.MEDIUM"
-                    [showStatus]="!!programmingExercise()?.id"
-                    [editMode]="!!programmingExercise()?.id"
-                    (hasUnsavedChanges)="programmingExerciseCreationConfig.hasUnsavedChanges = $event"
-                    (instructionChange)="problemStatementChange.emit($event)"
-                    (exerciseChange)="programmingExerciseChange.emit($event)"
-                    [forceRender]="programmingExerciseCreationConfig.rerenderSubject"
-                    class="form__editable-instructions"
-                />
+                @if (showDiff) {
+                    <!-- Markdown Diff Editor with formatting toolbar -->
+                    <jhi-markdown-diff-editor-monaco
+                        #diffEditor
+                        class="overflow-hidden flex-grow-1"
+                        [allowSplitView]="false"
+                        [domainActions]="domainActions"
+                        [metaActions]="metaActions"
+                    >
+                    </jhi-markdown-diff-editor-monaco>
+                } @else {
+                    <!-- Regular Editable Instructions -->
+                    <jhi-programming-exercise-editable-instructions
+                        [participation]="programmingExercise()!.templateParticipation!"
+                        [exercise]="programmingExercise()!"
+                        [initialEditorHeight]="MarkdownEditorHeight.MEDIUM"
+                        [showStatus]="!!programmingExercise()?.id"
+                        [editMode]="!!programmingExercise()?.id"
+                        [pendingComments]="pendingComments()"
+                        (hasUnsavedChanges)="programmingExerciseCreationConfig.hasUnsavedChanges = $event"
+                        (instructionChange)="onProblemStatementChange($event)"
+                        (exerciseChange)="programmingExerciseChange.emit($event)"
+                        (onInlineCommentSave)="onSaveInlineComment($event)"
+                        (onInlineCommentApply)="onApplyInlineComment($event)"
+                        (onInlineCommentDelete)="onDeleteInlineComment($event)"
+                        [forceRender]="programmingExerciseCreationConfig.rerenderSubject"
+                        class="form__editable-instructions"
+                    />
+                }
             }
         </div>
     }

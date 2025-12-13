@@ -1,0 +1,68 @@
+<div class="inline-comment-widget" [class.collapsed]="isCollapsed()">
+    <!-- Header (clickable to toggle when collapsed) -->
+    <div class="widget-header" (click)="isCollapsed() ? toggleCollapse() : null" [class.clickable]="isCollapsed()">
+        <div class="header-left">
+            @if (existingComment()) {
+                <fa-icon [icon]="isCollapsed() ? faChevronRight : faChevronDown" class="collapse-icon me-2" (click)="toggleCollapse(); $event.stopPropagation()" />
+            }
+            <span class="line-label">{{ lineLabel() }}</span>
+            @if (isCollapsed() && instruction()) {
+                <span class="instruction-preview ms-2">{{ instruction() | slice: 0 : 50 }}{{ instruction().length > 50 ? '...' : '' }}</span>
+            }
+        </div>
+        <button
+            type="button"
+            class="btn-close"
+            [attr.aria-label]="'entity.action.cancel' | artemisTranslate"
+            (click)="handleCancel(); $event.stopPropagation()"
+            [disabled]="isApplying()"
+        ></button>
+    </div>
+
+    @if (!isCollapsed()) {
+        <!-- Instruction Input -->
+        <div class="widget-body">
+            <textarea
+                class="form-control instruction-input"
+                [ngModel]="instruction()"
+                (ngModelChange)="instruction.set($event)"
+                [placeholder]="'artemisApp.programmingExercise.inlineComment.placeholder' | artemisTranslate"
+                [disabled]="isApplying() || readOnly()"
+                rows="3"
+                maxlength="500"
+            ></textarea>
+            <div class="char-count">{{ instruction().length }}/500</div>
+        </div>
+
+        <!-- Actions -->
+        <div class="widget-actions">
+            @if (isEditing()) {
+                <button type="button" class="btn btn-outline-danger btn-sm" (click)="handleDelete()" [disabled]="isApplying()">
+                    <fa-icon [icon]="faBan" />
+                    <span jhiTranslate="entity.action.delete"></span>
+                </button>
+            }
+
+            <div class="action-buttons">
+                <button type="button" class="btn btn-secondary btn-sm" (click)="handleCancel()" [disabled]="isApplying()">
+                    <fa-icon [icon]="faBan" />
+                    <span jhiTranslate="entity.action.cancel"></span>
+                </button>
+
+                <button type="button" class="btn btn-primary btn-sm" [disabled]="!canSubmit()" (click)="handleSave()">
+                    <fa-icon [icon]="faFloppyDisk" />
+                    <span jhiTranslate="artemisApp.programmingExercise.inlineComment.save"></span>
+                </button>
+
+                <button type="button" class="btn btn-outline-primary btn-sm" [disabled]="!canSubmit()" (click)="handleApply()">
+                    @if (isApplying()) {
+                        <fa-icon [icon]="faSpinner" animation="spin" />
+                    } @else {
+                        <fa-icon [icon]="facArtemisIntelligence" />
+                    }
+                    <span jhiTranslate="artemisApp.programmingExercise.inlineComment.applyWithAI"></span>
+                </button>
+            </div>
+        </div>
+    }
+</div>

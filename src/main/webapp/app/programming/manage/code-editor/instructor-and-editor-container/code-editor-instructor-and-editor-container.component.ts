@@ -1,4 +1,4 @@
-import { Component, ViewChild, inject, signal } from '@angular/core';
+import { AfterViewChecked, Component, OnDestroy, ViewChild, inject, signal } from '@angular/core';
 import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/programming/shared/actions/trigger-build-button/student/programming-exercise-student-trigger-build-button.component';
 import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor/container/code-editor-container.component';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
@@ -7,7 +7,7 @@ import { CodeEditorInstructorBaseContainerComponent } from 'app/programming/mana
 import { ProgrammingExerciseEditableInstructionComponent } from 'app/programming/manage/instructions-editor/programming-exercise-editable-instruction.component';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { faCircleNotch, faPlus, faTimes, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faCircleNotch, faPlus, faSave, faTimes, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { IrisSettings } from 'app/iris/shared/entities/settings/iris-settings.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -25,6 +25,19 @@ import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ConsistencyCheckError } from 'app/programming/shared/entities/consistency-check-result.model';
 import { ConsistencyCheckResponse } from 'app/openapi/model/consistencyCheckResponse';
+import { InlineCommentService } from 'app/shared/monaco-editor/service/inline-comment.service';
+import { InlineComment } from 'app/shared/monaco-editor/model/inline-comment.model';
+import { HyperionProblemStatementApiService } from 'app/openapi/api/hyperionProblemStatementApi.service';
+import { ProblemStatementRefinementRequest } from 'app/openapi/model/problemStatementRefinementRequest';
+import { InlineComment as ApiInlineComment } from 'app/openapi/model/inlineComment';
+import { Subscription, finalize } from 'rxjs';
+import { MarkdownDiffEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-diff-editor-monaco.component';
+import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
+import { TextEditorDomainAction } from 'app/shared/monaco-editor/model/actions/text-editor-domain-action.model';
+import { FullscreenAction } from 'app/shared/monaco-editor/model/actions/fullscreen.action';
+import { FormulaAction } from 'app/shared/monaco-editor/model/actions/formula.action';
+import { TaskAction } from 'app/shared/monaco-editor/model/actions/task.action';
+import { TestCaseAction } from 'app/shared/monaco-editor/model/actions/test-case.action';
 
 @Component({
     selector: 'jhi-code-editor-instructor',
@@ -47,11 +60,13 @@ import { ConsistencyCheckResponse } from 'app/openapi/model/consistencyCheckResp
         ProgrammingExerciseInstructionComponent,
         NgbTooltip,
         ArtemisTranslatePipe,
+        MarkdownDiffEditorMonacoComponent,
     ],
 })
-export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorInstructorBaseContainerComponent {
+export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorInstructorBaseContainerComponent implements OnDestroy, AfterViewChecked {
     @ViewChild(UpdatingResultComponent, { static: false }) resultComp: UpdatingResultComponent;
     @ViewChild(ProgrammingExerciseEditableInstructionComponent, { static: false }) editableInstructions: ProgrammingExerciseEditableInstructionComponent;
+    @ViewChild('diffEditor') diffEditor?: MarkdownDiffEditorMonacoComponent;
 
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly consistencyIssues = signal<ConsistencyIssue[]>([]);
@@ -59,18 +74,70 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     private consistencyCheckService = inject(ConsistencyCheckService);
     private artemisIntelligenceService = inject(ArtemisIntelligenceService);
     private profileService = inject(ProfileService);
+    private inlineCommentService = inject(InlineCommentService);
+    private hyperionApiService = inject(HyperionProblemStatementApiService);
 
     // Icons
     faPlus = faPlus;
     faTimes = faTimes;
     faCircleNotch = faCircleNotch;
     faTimesCircle = faTimesCircle;
+    faSave = faSave;
+    faBan = faBan;
     irisSettings?: IrisSettings;
     hyperionEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
 
     protected readonly RepositoryType = RepositoryType;
     protected readonly FeatureToggle = FeatureToggle;
     protected readonly faCheckDouble = faCheckDouble;
+
+    // Inline comment state
+    protected pendingComments = this.inlineCommentService.getPendingComments();
+    protected applyingCommentId = signal<string | undefined>(undefined);
+    private currentRefinementSubscription: Subscription | undefined;
+    private exerciseContextInitialized = false;
+
+    // Diff mode properties
+    showDiff = false;
+    originalProblemStatement = '';
+    refinedProblemStatement = '';
+    private diffContentSet = false;
+
+    // Domain actions for diff editor toolbar
+    private readonly testCaseAction: TextEditorDomainAction = new TestCaseAction();
+    domainActions: TextEditorDomainAction[] = [new FormulaAction(), new TaskAction(), this.testCaseAction];
+    metaActions: TextEditorAction[] = [new FullscreenAction()];
+
+    /**
+     * Lifecycle hook called after every check of the component's view.
+     * Used to set diff editor content when it becomes available.
+     */
+    ngAfterViewChecked(): void {
+        if (this.showDiff && this.diffEditor && !this.diffContentSet) {
+            this.diffEditor.setFileContents(this.originalProblemStatement, this.refinedProblemStatement, 'original.md', 'refined.md');
+            this.diffContentSet = true;
+        }
+    }
+
+    /**
+     * Override applyDomainChange to initialize inline comment service after exercise is loaded.
+     */
+    protected override applyDomainChange(domainType: any, domainValue: any): void {
+        super.applyDomainChange(domainType, domainValue);
+
+        // Initialize inline comment service with exercise context (only once)
+        if (!this.exerciseContextInitialized && this.exercise?.id) {
+            this.inlineCommentService.setExerciseContext(this.exercise.id);
+            this.exerciseContextInitialized = true;
+        }
+    }
+
+    override ngOnDestroy(): void {
+        super.ngOnDestroy();
+        this.currentRefinementSubscription?.unsubscribe();
+        // Clear inline comment context when leaving the page
+        this.inlineCommentService.clearContext();
+    }
 
     /**
      * Checks whether a consistency check operation is currently running.
@@ -126,9 +193,124 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                     },
                 });
             },
-            error: (err) => {
+            error: () => {
                 this.alertService.error(this.translateService.instant('artemisApp.consistencyCheck.checkFailedAlert'));
             },
         });
+    }
+
+    // Diff Editor Methods
+
+    /**
+     * Accepts the refined problem statement and applies the changes.
+     */
+    acceptRefinement(): void {
+        if (this.refinedProblemStatement) {
+            this.exercise.problemStatement = this.refinedProblemStatement;
+            this.editableInstructions?.updateProblemStatement(this.refinedProblemStatement);
+            this.closeDiff();
+            this.alertService.success('artemisApp.programmingExercise.problemStatement.changesApplied');
+        }
+    }
+
+    /**
+     * Rejects the refined problem statement and keeps the original.
+     */
+    rejectRefinement(): void {
+        this.closeDiff();
+    }
+
+    /**
+     * Closes the diff view and resets diff state.
+     */
+    closeDiff(): void {
+        this.showDiff = false;
+        this.originalProblemStatement = '';
+        this.refinedProblemStatement = '';
+        this.diffContentSet = false;
+    }
+
+    // Inline Comment Methods
+
+    /**
+     * Handles saving an inline comment (adds to pending list).
+     */
+    onSaveInlineComment(comment: InlineComment): void {
+        this.inlineCommentService.addExistingComment({ ...comment, status: 'pending' });
+    }
+
+    /**
+     * Handles applying an inline comment immediately with AI.
+     */
+    onApplyInlineComment(comment: InlineComment): void {
+        // First add to service if not already there
+        if (!this.inlineCommentService.getComment(comment.id)) {
+            this.inlineCommentService.addExistingComment(comment);
+        }
+        this.applySingleComment(comment);
+    }
+
+    /**
+     * Handles deleting an inline comment.
+     */
+    onDeleteInlineComment(commentId: string): void {
+        this.inlineCommentService.removeComment(commentId);
+    }
+
+    /**
+     * Applies a single inline comment using AI refinement.
+     */
+    private applySingleComment(comment: InlineComment): void {
+        const courseId = this.exercise?.course?.id ?? this.exercise?.exerciseGroup?.exam?.course?.id;
+
+        if (!courseId || !this.exercise?.problemStatement) {
+            this.alertService.error('artemisApp.programmingExercise.inlineComment.applyError');
+            return;
+        }
+
+        this.applyingCommentId.set(comment.id);
+        this.inlineCommentService.updateStatus(comment.id, 'applying');
+
+        const apiComment: ApiInlineComment = {
+            startLine: comment.startLine,
+            endLine: comment.endLine,
+            instruction: comment.instruction,
+        };
+
+        const request: ProblemStatementRefinementRequest = {
+            problemStatementText: this.exercise.problemStatement,
+            inlineComments: [apiComment],
+        };
+
+        this.currentRefinementSubscription = this.hyperionApiService
+            .refineProblemStatement(courseId, request)
+            .pipe(
+                finalize(() => {
+                    this.applyingCommentId.set(undefined);
+                    this.currentRefinementSubscription = undefined;
+                }),
+            )
+            .subscribe({
+                next: (response) => {
+                    if (response.refinedProblemStatement && response.refinedProblemStatement.trim() !== '') {
+                        // Store original and refined content for diff view
+                        this.originalProblemStatement = this.exercise.problemStatement || '';
+                        this.refinedProblemStatement = response.refinedProblemStatement;
+                        this.diffContentSet = false;
+                        this.showDiff = true;
+
+                        // Mark comment as applied and remove from pending
+                        this.inlineCommentService.markApplied(comment.id);
+                        this.alertService.success('artemisApp.programmingExercise.inlineComment.applySuccess');
+                    } else {
+                        this.inlineCommentService.updateStatus(comment.id, 'error');
+                        this.alertService.error('artemisApp.programmingExercise.inlineComment.applyError');
+                    }
+                },
+                error: () => {
+                    this.inlineCommentService.updateStatus(comment.id, 'error');
+                    this.alertService.error('artemisApp.programmingExercise.inlineComment.applyError');
+                },
+            });
     }
 }
