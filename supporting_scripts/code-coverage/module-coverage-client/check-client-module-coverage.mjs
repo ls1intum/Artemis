@@ -5,20 +5,40 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const summaryPath = path.resolve(
-    __dirname,
-    '../../../build/test-results/coverage-summary.json'
-);
-if (!fs.existsSync(summaryPath)) {
-    console.error('❌ coverage-summary.json not found at', summaryPath);
+// Coverage file paths
+const jestSummaryPath = path.resolve(__dirname, '../../../build/test-results/coverage-summary.json');
+const vitestSummaryPath = path.resolve(__dirname, '../../../build/test-results/vitest/coverage/coverage-summary.json');
+
+// Modules using Vitest instead of Jest
+const vitestModules = new Set(['fileupload']);
+
+// Load coverage files
+let jestSummary = {};
+let vitestSummary = {};
+
+if (fs.existsSync(jestSummaryPath)) {
+    try {
+        jestSummary = JSON.parse(fs.readFileSync(jestSummaryPath, 'utf-8'));
+    } catch (error) {
+        console.error('❌ Failed to parse Jest coverage-summary.json:', error);
+        process.exit(1);
+    }
+} else {
+    console.error('❌ Jest coverage-summary.json not found at', jestSummaryPath);
     process.exit(1);
 }
 
-let summary;
-try {
- summary = JSON.parse(fs.readFileSync(summaryPath, 'utf-8'));
-} catch (error) {
-    console.error('❌ Failed to parse coverage-summary.json:', error);
+if (fs.existsSync(vitestSummaryPath)) {
+    try {
+        vitestSummary = JSON.parse(fs.readFileSync(vitestSummaryPath, 'utf-8'));
+        console.log('✅ Vitest coverage loaded for modules:', [...vitestModules].join(', '));
+    } catch (error) {
+        console.error('❌ Failed to parse Vitest coverage-summary.json:', error);
+        process.exit(1);
+    }
+} else if (vitestModules.size > 0) {
+    console.error('❌ Vitest coverage-summary.json not found at', vitestSummaryPath);
+    console.error('   Vitest modules require coverage. Run "npm run vitest:coverage" first.');
     process.exit(1);
 }
 
@@ -66,15 +86,12 @@ const moduleThresholds = {
         lines:      88.60,
     },
     fileupload: {
-        statements: 92.50,
-        branches:   78.40,
-        functions:  84.70,
-        lines:      93.20,
+        statements: 95.70,
+        branches:   84.30,
+        functions:  96.40,
+        lines:      95.70,
     },
     hyperion: {
-        // Currently, there are no files under src/main/webapp/app/hyperion/ in this branch,
-        // so thresholds mirror the current effective coverage (no files found → skipped by checker).
-        // Once client-side Hyperion code exists, update these to the measured coverage.
         statements: 0,
         branches:   0,
         functions:  0,
@@ -143,11 +160,7 @@ const moduleThresholds = {
 };
 
 const metrics = ['statements', 'branches', 'functions', 'lines'];
-
 const AIMED_FOR_COVERAGE = 90;
-/**
- * If the coverage is >= this value higher than the threshold, an upward arrow is shown to indicate the threshold should be bumped up.
- */
 const SHOULD_BUMP_COVERAGE_DELTA = 0.1;
 
 const roundToTwoDigits = (value) => Math.round(value * 100) / 100;
@@ -182,13 +195,16 @@ for (const [module, thresholds] of Object.entries(moduleThresholds)) {
         lines:      { total: 0, covered: 0 },
     };
 
+    // Use Vitest coverage for Vitest modules, Jest for everything else
+    const summary = vitestModules.has(module) ? vitestSummary : jestSummary;
+
     for (const [filePath, metricsData] of Object.entries(summary)) {
         if (filePath === 'total') continue;
         if (!filePath.includes(prefix)) continue;
         if (!metricsData || typeof metricsData !== 'object') {
             console.warn(`⚠️  Invalid coverage data for file: ${filePath}`);
             continue;
-            }
+        }
         for (const metric of metrics) {
             if (!metricsData[metric] || typeof metricsData[metric].total !== 'number' || typeof metricsData[metric].covered !== 'number') {
                 console.error(`❌  Missing or invalid ${metric} data for file: ${filePath}`);
@@ -204,11 +220,11 @@ for (const [module, thresholds] of Object.entries(moduleThresholds)) {
         continue;
     }
 
-    const moduleFailed = evaluateAndPrintMetrics(module, aggregatedMetrics, thresholds);
+    const testFramework = vitestModules.has(module) ? '[vitest]' : '[jest]';
+    const moduleFailed = evaluateAndPrintMetrics(`${module} ${testFramework}`, aggregatedMetrics, thresholds);
     if (moduleFailed) {
         anyModuleFailed = true;
     }
-
 }
-process.exit(anyModuleFailed ? 1 : 0);
 
+process.exit(anyModuleFailed ? 1 : 0);

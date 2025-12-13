@@ -88,19 +88,16 @@ module.exports = {
         '!<rootDir>/src/main/webapp/**/*.route.ts',   // ignore route files because they cannot be properly tested
         '!<rootDir>/**/node_modules/**',
         '!<rootDir>/src/main/webapp/app/openapi/**', // ignore openapi files because they are generated
+        '!<rootDir>/src/main/webapp/app/fileupload/**', // fileupload module uses Vitest (see vitest.config.ts)
     ],
     coveragePathIgnorePatterns: [
         '<rootDir>/src/main/webapp/app/core/config/prod.config.ts',
         '<rootDir>/src/main/webapp/app/openapi/',
+        '<rootDir>/src/main/webapp/app/fileupload/', // fileupload module uses Vitest
     ],
-    coverageThreshold: {
-        global: {
-            statements: 90.20,
-            branches: 76.40,
-            functions: 84.30,
-            lines: 90.30,
-        },
-    },
+    // Global coverage thresholds removed - per-module thresholds are enforced by
+    // supporting_scripts/code-coverage/module-coverage-client/check-client-module-coverage.mjs
+    // which supports both Jest and Vitest coverage reports
     // 'json-summary' reporter is used by supporting_scripts/code-coverage/module-coverage-client/check-client-module-coverage.mjs
     coverageReporters: ['clover', 'json', 'lcov', 'text-summary','json-summary'],
     setupFilesAfterEnv: ['<rootDir>/src/test/javascript/spec/jest-test-setup.ts', 'jest-extended/all'],
@@ -119,6 +116,8 @@ module.exports = {
         ],
     },
     modulePathIgnorePatterns: ['<rootDir>/src/main/resources/templates/', '<rootDir>/build/'],
+    // Exclude modules migrated to Vitest (see vitest.config.ts)
+    testPathIgnorePatterns: ['<rootDir>/src/main/webapp/app/fileupload/'],
     testTimeout: 3000,
     testMatch: ['<rootDir>/src/main/webapp/app/**/*.spec.ts',
         '<rootDir>/src/test/javascript/spec/**/*.integration.spec.ts'

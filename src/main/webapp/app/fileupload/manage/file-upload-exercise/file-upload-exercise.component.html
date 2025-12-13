@@ -1,11 +1,11 @@
-@if (fileUploadExercises && filteredFileUploadExercises.length > 0) {
+@if (fileUploadExercises().length > 0 && filteredFileUploadExercises().length > 0) {
     <div class="table-responsive">
         <table class="table table-striped">
             <thead>
                 <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows()">
                     @if (course.isAtLeastInstructor) {
                         <th class="d-md-table-cell">
-                            <input class="form-check-input" type="checkbox" (change)="toggleMultipleExercises(fileUploadExercises)" [ngModel]="allChecked" />
+                            <input class="form-check-input" type="checkbox" (change)="toggleMultipleExercises(fileUploadExercises())" [ngModel]="allChecked" />
                         </th>
                     }
                     <th jhiSortBy="id"><span jhiTranslate="global.field.id"></span>&nbsp;<fa-icon [icon]="faSort" /></th>
@@ -27,7 +27,7 @@
                 </tr>
             </thead>
             <tbody class="markdown-preview">
-                @for (fileUploadExercise of filteredFileUploadExercises; track trackId($index, fileUploadExercise)) {
+                @for (fileUploadExercise of filteredFileUploadExercises(); track trackId($index, fileUploadExercise)) {
                     <tr id="exercise-card-{{ fileUploadExercise.id }}">
                         @if (course.isAtLeastInstructor) {
                             <td class="d-md-table-cell">
@@ -92,14 +92,14 @@
                                         <span class="d-none d-md-inline" jhiTranslate="entity.action.edit"></span>
                                     </a>
                                 }
-                                @if (fileUploadExercise.isAtLeastInstructor) {
+                                @if (fileUploadExercise.isAtLeastInstructor && fileUploadExercise.title && fileUploadExercise.id) {
                                     <button
                                         id="delete-exercise"
                                         jhiDeleteButton
-                                        [entityTitle]="fileUploadExercise.title!"
+                                        [entityTitle]="fileUploadExercise.title"
                                         deleteQuestion="artemisApp.exercise.delete.question"
                                         deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
-                                        (delete)="deleteFileUploadExercise(fileUploadExercise.id!)"
+                                        (delete)="deleteFileUploadExercise(fileUploadExercise.id)"
                                         [dialogError]="dialogError$"
                                     >
                                         <fa-icon [icon]="faTrash" />
