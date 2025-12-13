@@ -4,12 +4,12 @@
     max-height: 500px;
 
     overflow: hidden;
-    padding-left: 1rem;
-    border-left: 1px solid var(--border-color);
+    padding-left: 0.5rem;
 
     display: flex;
     flex-direction: column;
     min-height: 0;
+    min-width: 200px;
 }
 
 .transcript-header {
