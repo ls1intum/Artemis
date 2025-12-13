@@ -10,7 +10,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { MockNgbActiveModalService } from 'test/helpers/mocks/service/mock-ngb-active-modal.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { provideNoopAnimationsForTests } from 'test/helpers/animations';
 
 describe('CourseCompetenciesRelationModalComponent', () => {
     let component: CourseCompetenciesRelationModalComponent;
@@ -35,7 +35,6 @@ describe('CourseCompetenciesRelationModalComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [NoopAnimationsModule],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -57,6 +56,7 @@ describe('CourseCompetenciesRelationModalComponent', () => {
                         getCourseCompetencyRelationsByCourseId: jest.fn(),
                     },
                 },
+                provideNoopAnimationsForTests(),
             ],
         }).compileComponents();
 

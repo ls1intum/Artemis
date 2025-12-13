@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AnswerPostComponent } from 'app/communication/answer-post/answer-post.component';
 import { DebugElement } from '@angular/core';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
-import { MockComponent, MockDirective, MockModule, MockPipe, ngMocks } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, ngMocks } from 'ng-mocks';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { By } from '@angular/platform-browser';
 import { PostingContentComponent } from 'app/communication/posting-content/posting-content.components';
@@ -11,7 +11,6 @@ import { OverlayModule } from '@angular/cdk/overlay';
 import { AnswerPostCreateEditModalComponent } from 'app/communication/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
 import { DOCUMENT } from '@angular/common';
 import { Reaction } from 'app/communication/shared/entities/reaction.model';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MetisService } from 'app/communication/service/metis.service';
 import { MockMetisService } from 'test/helpers/mocks/service/mock-metis-service.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -44,7 +43,7 @@ describe('AnswerPostComponent', () => {
         document.body.appendChild(mainContainer);
 
         return TestBed.configureTestingModule({
-            imports: [OverlayModule, MockModule(BrowserAnimationsModule), MockDirective(NgbTooltip)],
+            imports: [OverlayModule],
             declarations: [
                 AnswerPostComponent,
                 FaIconComponent,
@@ -55,6 +54,7 @@ describe('AnswerPostComponent', () => {
                 ArtemisDatePipe,
                 ArtemisTranslatePipe,
                 MockDirective(TranslateDirective),
+                MockDirective(NgbTooltip),
             ],
             providers: [
                 provideHttpClient(),

@@ -27,7 +27,6 @@ import { IrisRateLimitInformation } from 'app/iris/shared/entities/iris-ratelimi
 import { IrisStatusService } from 'app/iris/overview/services/iris-status.service';
 import { IrisMessageContentType, IrisTextMessageContent } from 'app/iris/shared/entities/iris-content-type.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { animate, group, style, transition, trigger } from '@angular/animations';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import * as _ from 'lodash-es';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -49,56 +48,6 @@ import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.co
     selector: 'jhi-iris-base-chatbot',
     templateUrl: './iris-base-chatbot.component.html',
     styleUrls: ['./iris-base-chatbot.component.scss'],
-    animations: [
-        trigger('messageAnimation', [
-            transition(':enter', [
-                style({
-                    height: '0',
-                    transform: 'scale(0)',
-                }),
-                group([
-                    animate(
-                        '0.3s ease-in-out',
-                        style({
-                            height: '*',
-                        }),
-                    ),
-                    animate(
-                        '0.3s 0.1s cubic-bezier(.2,1.22,.64,1)',
-                        style({
-                            transform: 'scale(1)',
-                        }),
-                    ),
-                ]),
-            ]),
-        ]),
-        trigger('suggestionAnimation', [
-            transition(':enter', [
-                style({ height: 0, opacity: 0 }),
-                group([
-                    animate(
-                        '0.3s 0.5s ease-in-out',
-                        style({
-                            height: '*',
-                            opacity: 1,
-                        }),
-                    ),
-                ]),
-            ]),
-            transition(':leave', [
-                style({ height: '*', opacity: 1 }),
-                group([
-                    animate(
-                        '0.3s ease-in-out',
-                        style({
-                            height: 0,
-                            opacity: 0,
-                        }),
-                    ),
-                ]),
-            ]),
-        ]),
-    ],
     imports: [
         IrisLogoComponent,
         RouterLink,

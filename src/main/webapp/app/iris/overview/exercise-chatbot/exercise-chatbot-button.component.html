@@ -3,8 +3,7 @@
         #chatBubble
         class="message-bubble"
         (click)="handleButtonClick()"
-        [ngClass]="{ 'content-overflow': this.isOverflowing }"
-        [@expandAnimation]="newIrisMessage ? 'visible' : 'hidden'"
+        [ngClass]="{ 'content-overflow': this.isOverflowing, 'bubble-visible': newIrisMessage, 'bubble-hidden': !newIrisMessage }"
     >
         @if (newIrisMessage) {
             <span [innerHTML]="newIrisMessage | htmlForMarkdown"></span>

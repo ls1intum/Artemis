@@ -5,7 +5,7 @@ import { MockDirective } from 'ng-mocks';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CalendarEvent, CalendarEventType } from 'app/core/calendar/shared/entities/calendar-event.model';
 import { CalendarEventDetailPopoverComponent } from './calendar-event-detail-popover.component';
-import { provideNoopAnimations } from '@angular/platform-browser/animations';
+import { provideNoopAnimationsForTests } from 'test/helpers/animations';
 
 describe('CalendarEventDetailPopoverComponent', () => {
     let fixture: ComponentFixture<CalendarEventDetailPopoverComponent>;
@@ -15,7 +15,7 @@ describe('CalendarEventDetailPopoverComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [CalendarEventDetailPopoverComponent, MockDirective(TranslateDirective)],
-            providers: [provideNoopAnimations()],
+            providers: [provideNoopAnimationsForTests()],
         }).compileComponents();
 
         fixture = TestBed.createComponent(CalendarEventDetailPopoverComponent);

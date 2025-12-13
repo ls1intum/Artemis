@@ -32,6 +32,43 @@
     }
 }
 
+// CSS animations to replace @angular/animations
+@keyframes message-enter {
+    0% {
+        height: 0;
+        transform: scale(0);
+    }
+
+    100% {
+        height: auto;
+        transform: scale(1);
+    }
+}
+
+@keyframes suggestion-enter {
+    0% {
+        height: 0;
+        opacity: 0;
+    }
+
+    100% {
+        height: auto;
+        opacity: 1;
+    }
+}
+
+.message-animation-enter {
+    animation:
+        message-enter 0.3s ease-in-out forwards,
+        message-enter 0.3s 0.1s cubic-bezier(0.2, 1.22, 0.64, 1) forwards;
+}
+
+.suggestion-animation-enter {
+    animation: suggestion-enter 0.3s 0.5s ease-in-out forwards;
+    opacity: 0;
+    height: 0;
+}
+
 .suggestions-container {
     display: flex;
     flex-wrap: wrap;

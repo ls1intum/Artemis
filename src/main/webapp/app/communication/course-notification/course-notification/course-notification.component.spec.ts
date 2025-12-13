@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { CommonModule } from '@angular/common';
 import { CourseNotificationComponent } from 'app/communication/course-notification/course-notification/course-notification.component';
 import { CourseNotificationService } from 'app/communication/course-notification/course-notification.service';
@@ -45,7 +44,7 @@ describe('CourseNotificationComponent', () => {
         } as unknown as CourseNotificationService;
 
         await TestBed.configureTestingModule({
-            imports: [NoopAnimationsModule, CommonModule, FaIconComponent],
+            imports: [CommonModule, FaIconComponent],
             declarations: [CourseNotificationComponent, MockComponent(ProfilePictureComponent), MockDirective(TranslateDirective)],
             providers: [{ provide: CourseNotificationService, useValue: courseNotificationService }],
         }).compileComponents();

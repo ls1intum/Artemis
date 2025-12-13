@@ -3,6 +3,21 @@
 @import 'bootstrap/scss/mixins';
 @import '../metis.component';
 
+// CSS animations to replace @angular/animations
+@keyframes fade-in {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.fade-animation-enter {
+    animation: fade-in 300ms ease-in forwards;
+}
+
 .answer-post {
     border-radius: 7px;
 }

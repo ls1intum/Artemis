@@ -22,7 +22,7 @@ import { StudentsRoomDistributionService } from 'app/exam/manage/services/studen
 import { MockStudentsRoomDistributionService } from 'test/helpers/mocks/service/mock-students-room-distribution.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
-import { provideNoopAnimations } from '@angular/platform-browser/animations';
+import { provideNoopAnimationsForTests } from 'test/helpers/animations';
 
 function dispatchInputEvent(inputElement: HTMLInputElement, value: string) {
     inputElement.value = value;
@@ -55,7 +55,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AlertService, useClass: MockAlertService },
                 { provide: StudentsRoomDistributionService, useClass: MockStudentsRoomDistributionService },
-                provideNoopAnimations(),
+                provideNoopAnimationsForTests(),
             ],
         }).compileComponents();
         fixture = TestBed.createComponent(StudentsRoomDistributionDialogComponent);

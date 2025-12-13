@@ -32,7 +32,6 @@ import {
     mockWebsocketServerMessage,
     mockWebsocketServerMessageWithMemories,
 } from 'test/helpers/sample/iris-sample-data';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { By } from '@angular/platform-browser';
 import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
@@ -74,7 +73,7 @@ describe('IrisBaseChatbotComponent', () => {
                 MockComponent(IrisLogoComponent),
                 MockComponent(ButtonComponent),
             ],
-            imports: [FontAwesomeModule, RouterModule, NoopAnimationsModule],
+            imports: [FontAwesomeModule, RouterModule],
             providers: [
                 MockProvider(NgbModal),
                 LocalStorageService,

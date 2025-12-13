@@ -3,7 +3,6 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MockProvider } from 'ng-mocks';
 import { ActivatedRoute } from '@angular/router';
 import { Subject, of } from 'rxjs';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
 import { ProgrammingExerciseInformationComponent } from 'app/programming/manage/update/update-components/information/programming-exercise-information.component';
 import { NgModel } from '@angular/forms';
@@ -28,7 +27,6 @@ describe('ProgrammingExerciseInformationComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [BrowserAnimationsModule],
             providers: [
                 MockProvider(AlertService),
                 { provide: ActivatedRoute, useValue: { queryParams: of({}) } },
