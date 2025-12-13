@@ -8,8 +8,8 @@ We use `Jest <https://jestjs.io>`__ as the primary client testing framework.
 We use `NgMocks <https://www.npmjs.com/package/ng-mocks/>`_ for mocking the dependencies of an angular component.
 
 .. note::
-   **Migration to Vitest**: Some modules are being migrated to `Vitest <https://vitest.dev/>`__ for improved
-   performance with Angular's zoneless change detection and signals.
+   **Vitest for Zoneless Modules**: Some modules use `Vitest <https://vitest.dev/>`__ for better
+   support of Angular's zoneless change detection and signals.
 
    Currently migrated modules: ``fileupload``
 
@@ -417,11 +417,21 @@ Migration Steps
 
 2. **Exclude from Jest**
 
-   Add the module to ``testPathIgnorePatterns`` in ``jest.config.js``:
+   Add the module to ``testPathIgnorePatterns`` and ``collectCoverageFrom`` in ``jest.config.js``:
 
    .. code:: js
 
        testPathIgnorePatterns: [
+           '<rootDir>/src/main/webapp/app/fileupload/',
+           '<rootDir>/src/main/webapp/app/YOUR_MODULE/',  // Add your module
+       ],
+       collectCoverageFrom: [
+           // ...existing patterns...
+           '!<rootDir>/src/main/webapp/app/fileupload/**',
+           '!<rootDir>/src/main/webapp/app/YOUR_MODULE/**',  // Add your module
+       ],
+       coveragePathIgnorePatterns: [
+           // ...existing patterns...
            '<rootDir>/src/main/webapp/app/fileupload/',
            '<rootDir>/src/main/webapp/app/YOUR_MODULE/',  // Add your module
        ],
@@ -530,8 +540,8 @@ Migration Steps
        # Run with coverage
        npm run vitest:coverage
 
-       # Verify module coverage check
-       node supporting_scripts/code-coverage/module-coverage-client/check-client-module-coverage.mjs
+       # Verify all module coverage (requires both Jest and Vitest coverage)
+       npm run coverage:check-module
 
 7. **Update coverage thresholds**
 

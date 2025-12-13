@@ -210,34 +210,18 @@ jobs:
           with:
               name: Coverage Report Client Tests
               path: build/test-results/lcov-report/
+        - name: Upload Vitest Coverage Report
+          if: success() || failure()
+          uses: actions/upload-artifact@v5
+          with:
+              name: Vitest Coverage Report
+              path: build/test-results/vitest/coverage/
         - name: Upload JUnit Test Results
           if: success() || failure()
           uses: actions/upload-artifact@v5
           with:
             name: Client JUnit Test Results
             path: junit.xml
-
-  # Vitest tests for modules migrated from Jest
-  client-tests-vitest:
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-        - uses: actions/checkout@v6
-        - name: Setup Node.js
-          uses: actions/setup-node@v6
-          with:
-              node-version: '${{ env.node }}'
-              cache: 'npm'
-        - name: Install Dependencies
-          run: npm install
-        - name: Run Vitest Tests with Coverage
-          run: npm run vitest:coverage
-        - name: Upload Vitest Coverage Report
-          if: success() || failure()
-          uses: actions/upload-artifact@v5
-          with:
-            name: Vitest Coverage Report
-            path: build/test-results/vitest/coverage/
         - name: Upload Vitest JUnit Test Results
           if: success() || failure()
           uses: actions/upload-artifact@v5
