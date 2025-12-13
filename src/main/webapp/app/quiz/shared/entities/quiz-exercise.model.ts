@@ -1,7 +1,7 @@
 import dayjs from 'dayjs/esm';
 import { Exercise, ExerciseType, resetForImport } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { QuizPointStatistic } from 'app/quiz/shared/entities/quiz-point-statistic.model';
-import { QuizQuestion } from 'app/quiz/shared/entities/quiz-question.model';
+import { QuizQuestion, resetQuizQuestionForImport } from 'app/quiz/shared/entities/quiz-question.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { QuizConfiguration } from 'app/quiz/shared/entities/quiz-configuration.model';
@@ -66,9 +66,19 @@ export class QuizExercise extends Exercise implements QuizConfiguration, QuizPar
     }
 }
 
-export function resetQuizForImport(exercise: QuizExercise) {
+export function resetQuizForExam(exercise: QuizExercise) {
     resetForImport(exercise);
 
     exercise.quizBatches = [];
     exercise.isEditable = true;
+}
+
+export function resetQuizForImport(exercise: QuizExercise) {
+    resetQuizForExam(exercise);
+    exercise.course = undefined;
+    exercise.exerciseGroup = undefined;
+    exercise.id = undefined;
+    for (const question of exercise.quizQuestions || []) {
+        resetQuizQuestionForImport(question);
+    }
 }
