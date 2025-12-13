@@ -192,9 +192,9 @@
         "test:one": "npm run prebuild && ng test",
         "vitest": "vitest",
         "vitest:run": "vitest run",
+        "vitest:ci": "vitest run --reporter=default --reporter=junit --outputFile=build/test-results/vitest/junit.xml",
         "vitest:coverage": "vitest run --coverage",
         "vitest:ui": "vitest --ui",
-        "vitest:fileupload": "vitest run --config vitest.config.ts",
         "update": "ncu -i --format group",
         "webapp:build": "npm run clean-www && npm run prebuild -- --develop && ng build --configuration development",
         "webapp:prod": "npm run clean-www && npm run prebuild && cross-env NG_BUILD_OPTIMIZE_CHUNKS=1 ng build --configuration production"

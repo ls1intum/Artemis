@@ -119,6 +119,8 @@ module.exports = {
         ],
     },
     modulePathIgnorePatterns: ['<rootDir>/src/main/resources/templates/', '<rootDir>/build/'],
+    // Exclude modules migrated to Vitest (see vitest.config.ts)
+    testPathIgnorePatterns: ['<rootDir>/src/main/webapp/app/fileupload/'],
     testTimeout: 3000,
     testMatch: ['<rootDir>/src/main/webapp/app/**/*.spec.ts',
         '<rootDir>/src/test/javascript/spec/**/*.integration.spec.ts'

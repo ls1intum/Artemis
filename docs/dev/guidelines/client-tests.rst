@@ -4,8 +4,14 @@ Client Tests
 
 **If you are new to client testing, it is highly recommended that you work through the** `testing part <https://angular.dev/guide/testing>`_ **of the angular tutorial.**
 
-We use `Jest <https://jestjs.io>`__ as client testing framework.
+We use `Jest <https://jestjs.io>`__ as the primary client testing framework.
 We use `NgMocks <https://www.npmjs.com/package/ng-mocks/>`_ for mocking the dependencies of an angular component.
+
+.. note::
+   **Migration to Vitest**: Some modules are being migrated to `Vitest <https://vitest.dev/>`__ for improved
+   performance with Angular's zoneless change detection and signals.
+
+   Currently migrated modules: ``fileupload``
 
 You can run all tests by invoking ``npm run testw8`` in the root directory of the Artemis project.
 If you want to run individual tests, you can use the following commands:
@@ -369,3 +375,246 @@ Example:
   |                                                        |     expect(spy).toHaveBeenNthCalledWith(2, value1);             |
   |                                                        |     expect(spy).toHaveBeenNthCalledWith(3, value2);             |
   +--------------------------------------------------------+-----------------------------------------------------------------+
+
+Migrating a Module to Vitest
+============================
+
+Vitest provides better performance for Angular's zoneless change detection and signal-based components.
+This section describes how to migrate a module from Jest to Vitest.
+
+Why Vitest?
+-----------
+
+* **Zoneless support**: Native support for ``provideZonelessChangeDetection()`` via ``@analogjs/vitest-angular``
+* **Faster execution**: ES modules and Vite's dev server provide faster test execution
+* **Better signal testing**: Works seamlessly with Angular signals without Zone.js overhead
+* **Modern API**: Compatible with Jest's API but with better TypeScript support
+
+Migration Steps
+---------------
+
+1. **Update vitest.config.ts**
+
+   Add your module to the ``include`` pattern in ``vitest.config.ts``:
+
+   .. code:: ts
+
+       include: [
+           'src/main/webapp/app/fileupload/**/*.spec.ts',
+           'src/main/webapp/app/YOUR_MODULE/**/*.spec.ts',  // Add your module
+       ],
+
+   Also update the coverage ``include``:
+
+   .. code:: ts
+
+       coverage: {
+           include: [
+               'src/main/webapp/app/fileupload/**/*.ts',
+               'src/main/webapp/app/YOUR_MODULE/**/*.ts',  // Add your module
+           ],
+       },
+
+2. **Exclude from Jest**
+
+   Add the module to ``testPathIgnorePatterns`` in ``jest.config.js``:
+
+   .. code:: js
+
+       testPathIgnorePatterns: [
+           '<rootDir>/src/main/webapp/app/fileupload/',
+           '<rootDir>/src/main/webapp/app/YOUR_MODULE/',  // Add your module
+       ],
+
+3. **Register for Vitest coverage**
+
+   Update ``supporting_scripts/code-coverage/module-coverage-client/check-client-module-coverage.mjs``:
+
+   .. code:: js
+
+       // Add to the vitestModules set at the top of the file
+       const vitestModules = new Set(['fileupload', 'YOUR_MODULE']);
+
+4. **Convert test files**
+
+   For each ``.spec.ts`` file in your module:
+
+   a. **Replace Jest imports with Vitest**:
+
+      .. code:: ts
+
+          // Before (Jest)
+          import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+
+          // After (Vitest)
+          import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+          import { ComponentFixture, TestBed } from '@angular/core/testing';
+          import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+
+   b. **Add setupTestBed at the start of each describe block**:
+
+      .. code:: ts
+
+          describe('MyComponent', () => {
+              setupTestBed({ zoneless: true });  // Add this line
+
+              let component: MyComponent;
+              // ...
+          });
+
+   c. **Replace Jest mocking with Vitest**:
+
+      .. code:: ts
+
+          // Before (Jest)
+          jest.spyOn(service, 'method').mockReturnValue(of(data));
+          jest.restoreAllMocks();
+
+          // After (Vitest)
+          vi.spyOn(service, 'method').mockReturnValue(of(data));
+          vi.clearAllMocks();
+
+   d. **Replace fakeAsync/tick with async/await**:
+
+      .. code:: ts
+
+          // Before (Jest with fakeAsync)
+          it('should do something', fakeAsync(() => {
+              component.doSomething();
+              tick();
+              expect(component.result).toBe('expected');
+          }));
+
+          // After (Vitest with async/await)
+          it('should do something', async () => {
+              component.doSomething();
+              await fixture.whenStable();
+              expect(component.result).toBe('expected');
+          });
+
+   e. **Update flush() calls**:
+
+      .. code:: ts
+
+          // Before (Jest)
+          flush();
+
+          // After (Vitest) - usually not needed, use:
+          await fixture.whenStable();
+
+5. **Handle Monaco Editor (if applicable)**
+
+   If your module uses Monaco Editor, add ``vi.mock('monaco-editor')`` at the top of the spec file
+   (before any imports that might load Monaco):
+
+   .. code:: ts
+
+       import { vi } from 'vitest';
+
+       vi.mock('monaco-editor', () => ({
+           editor: { create: () => ({}), createModel: () => ({}) },
+           languages: { register: () => {} },
+           KeyCode: { Enter: 3, Escape: 9 },
+           // Add other mocks as needed
+       }));
+
+       // Then your normal imports...
+
+6. **Run and verify tests**
+
+   .. code:: bash
+
+       # Run Vitest tests
+       npm run vitest
+
+       # Run with coverage
+       npm run vitest:coverage
+
+       # Verify module coverage check
+       node supporting_scripts/code-coverage/module-coverage-client/check-client-module-coverage.mjs
+
+7. **Update coverage thresholds**
+
+   After running ``npm run vitest:coverage``, update the thresholds in
+   ``check-client-module-coverage.mjs`` with your actual coverage values:
+
+   .. code:: js
+
+       YOUR_MODULE: {
+           statements: XX.XX,
+           branches:   XX.XX,
+           functions:  XX.XX,
+           lines:      XX.XX,
+       },
+
+Vitest Test Pattern
+-------------------
+
+A Vitest test looks like this:
+
+.. code:: ts
+
+    import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+    import { ComponentFixture, TestBed } from '@angular/core/testing';
+    import { provideHttpClient } from '@angular/common/http';
+    import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
+    import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+    import { MockComponent, MockPipe } from 'ng-mocks';
+
+    import { MyComponent } from './my.component';
+    import { MyService } from './my.service';
+
+    describe('MyComponent', () => {
+        setupTestBed({ zoneless: true });
+
+        let component: MyComponent;
+        let fixture: ComponentFixture<MyComponent>;
+        let myService: MyService;
+
+        beforeEach(async () => {
+            await TestBed.configureTestingModule({
+                imports: [
+                    MyComponent,
+                    MockComponent(ChildComponent),
+                    MockPipe(SomePipe),
+                ],
+                providers: [
+                    provideHttpClient(),
+                    provideHttpClientTesting(),
+                    {
+                        provide: MyService,
+                        useValue: {
+                            getData: vi.fn().mockReturnValue(of(mockData)),
+                        },
+                    },
+                ],
+            }).compileComponents();
+
+            fixture = TestBed.createComponent(MyComponent);
+            component = fixture.componentInstance;
+            myService = TestBed.inject(MyService);
+        });
+
+        afterEach(() => {
+            vi.clearAllMocks();
+        });
+
+        it('should create', () => {
+            fixture.detectChanges();
+            expect(component).toBeTruthy();
+        });
+
+        it('should load data', async () => {
+            fixture.detectChanges();
+            await fixture.whenStable();
+            expect(myService.getData).toHaveBeenCalled();
+        });
+    });
+
+Available Vitest Commands
+-------------------------
+
+* ``npm run vitest`` - Watch mode (re-runs on file changes)
+* ``npm run vitest:run`` - Single run
+* ``npm run vitest:coverage`` - Run with coverage report
+* ``npm run vitest:ui`` - Interactive UI mode

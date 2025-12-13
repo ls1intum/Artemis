@@ -32,8 +32,8 @@ export default defineConfig({
         },
         coverage: {
             provider: 'v8',
-            reporter: ['text', 'lcov', 'html'],
-            reportsDirectory: 'build/test-results/vitest/lcov-report',
+            reporter: ['text', 'lcov', 'html', 'json-summary'],
+            reportsDirectory: 'build/test-results/vitest/coverage',
             include: ['src/main/webapp/app/fileupload/**/*.ts'],
             exclude: ['**/node_modules/**', '**/*.spec.ts', '**/*.routes.ts', '**/*.model.ts'],
         },
