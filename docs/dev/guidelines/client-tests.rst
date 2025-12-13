@@ -627,4 +627,5 @@ Available Vitest Commands
 * ``npm run vitest`` - Watch mode (re-runs on file changes)
 * ``npm run vitest:run`` - Single run
 * ``npm run vitest:coverage`` - Run with coverage report
+* ``npm run vitest:diff`` - Run only changed tests (vs origin/develop)
 * ``npm run vitest:ui`` - Interactive UI mode
