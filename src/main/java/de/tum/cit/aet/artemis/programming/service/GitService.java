@@ -48,6 +48,7 @@ import org.eclipse.jgit.api.errors.InvalidRefNameException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.api.errors.NoHeadException;
 import org.eclipse.jgit.api.errors.TransportException;
+import org.eclipse.jgit.api.errors.WrongRepositoryStateException;
 import org.eclipse.jgit.lib.CommitBuilder;
 import org.eclipse.jgit.lib.ConfigConstants;
 import org.eclipse.jgit.lib.Constants;
@@ -574,7 +575,49 @@ public class GitService extends AbstractGitService {
         try (Git git = new Git(repo)) {
             log.info("Pull {}", repo.getLocalPath());
             setRemoteUrl(repo);
+
+            if (areLocalAndRemoteBranchesDivergent(repo, git)) {
+                throw new WrongRepositoryStateException("Working tree contains uncommited changes that conflict with remote HEAD.");
+            }
+
             return pullCommand(git).call();
+        }
+    }
+
+    /**
+     * Assesses whether the remote branch and the local branch are divergent, i.e. a pull would try to merge different
+     * histories while the local working tree still has uncommitted changes.
+     * Divergence is detected only when uncommitted changes exist locally and the remote HEAD points to a different
+     * commit than the local HEAD. If the remote branch has no commits yet, the branches are treated as non-divergent.
+     *
+     * @param repo Local Repository Object.
+     * @param git  The Git Object associated with the Local Repository Object.
+     * @return Whether the remote and local branches should not be mergeable.
+     * @throws GitException    if the git repository state cannot be fetched.
+     * @throws GitAPIException if either git status or git fetch failed.
+     */
+    protected boolean areLocalAndRemoteBranchesDivergent(Repository repo, Git git) throws GitException, GitAPIException {
+        Status status = git.status().call();
+        if (!status.hasUncommittedChanges()) {
+            return false;
+        }
+
+        git.fetch().setRemote(REMOTE_NAME).call();
+
+        try {
+            String remoteRefName = Constants.R_REMOTES + REMOTE_NAME + "/" + repo.getBranch();
+            Ref remoteRef = repo.findRef(remoteRefName);
+            ObjectId remoteHead = remoteRef != null ? remoteRef.getObjectId() : null;
+
+            if (remoteHead == null) {
+                return false;
+            }
+
+            ObjectId localHead = repo.resolve(Constants.HEAD);
+            return !remoteHead.equals(localHead);
+        }
+        catch (IOException e) {
+            throw new GitException("Failed to fetch state from git repository.", e);
         }
     }
 
