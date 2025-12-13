@@ -57,6 +57,22 @@ public interface ModelingExerciseRepository extends ArtemisJpaRepository<Modelin
             """)
     Optional<ModelingExercise> findByIdWithExampleSubmissionsAndResultsAndGradingCriteria(@Param("exerciseId") Long exerciseId);
 
+    @Query("""
+            SELECT DISTINCT modelingExercise
+            FROM ModelingExercise modelingExercise
+                LEFT JOIN FETCH modelingExercise.exampleSubmissions exampleSubmissions
+                LEFT JOIN FETCH exampleSubmissions.submission submission
+                LEFT JOIN FETCH submission.results results
+                LEFT JOIN FETCH results.feedbacks
+                LEFT JOIN FETCH results.assessor
+                LEFT JOIN FETCH modelingExercise.teamAssignmentConfig
+                LEFT JOIN FETCH modelingExercise.gradingCriteria
+                LEFT JOIN FETCH modelingExercise.competencyLinks cl
+                LEFT JOIN FETCH cl.competency
+            WHERE modelingExercise.id = :exerciseId
+            """)
+    Optional<ModelingExercise> findByIdWithExampleSubmissionsAndResultsAndCompetenciesAndGradingCriteria(@Param("exerciseId") Long exerciseId);
+
     @EntityGraph(type = LOAD, attributePaths = { "studentParticipations", "studentParticipations.submissions", "studentParticipations.submissions.results" })
     Optional<ModelingExercise> findWithStudentParticipationsSubmissionsResultsById(Long exerciseId);
 
@@ -115,5 +131,10 @@ public interface ModelingExerciseRepository extends ArtemisJpaRepository<Modelin
     @NonNull
     default ModelingExercise findWithEagerCompetenciesByIdElseThrow(long exerciseId) {
         return getValueElseThrow(findWithEagerCompetenciesById(exerciseId), exerciseId);
+    }
+
+    @NonNull
+    default ModelingExercise findByIdWithExampleSubmissionsResultsCompetenciesAndGradingCriteriaElseThrow(long exerciseId) {
+        return getValueElseThrow(findByIdWithExampleSubmissionsAndResultsAndCompetenciesAndGradingCriteria(exerciseId), exerciseId);
     }
 }
