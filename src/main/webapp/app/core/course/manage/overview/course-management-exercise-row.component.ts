@@ -52,7 +52,6 @@ export class CourseManagementExerciseRowComponent implements OnChanges {
     exerciseType = ExerciseType;
     exerciseRowType = ExerciseRowType;
     quizStatus = {
-        CLOSED: 'CLOSED',
         OPEN_FOR_PRACTICE: 'OPEN_FOR_PRACTICE',
         ACTIVE: 'ACTIVE',
         VISIBLE: 'VISIBLE',

@@ -60,7 +60,6 @@
                 "applyFilter": "Apply Filter"
             },
             "quizStatus": {
-                "closed": "Closed",
                 "invisible": "Invisible",
                 "openForPractice": "Open for practice",
                 "active": "Active",

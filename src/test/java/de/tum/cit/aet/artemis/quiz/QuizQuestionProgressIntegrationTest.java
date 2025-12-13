@@ -143,7 +143,7 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
 
         QuizExercise quizExercise = new QuizExercise();
         quizExercise.setCourse(course);
-        quizExercise.setIsOpenForPractice(true);
+        quizExercise.setDueDate(ZonedDateTime.now().minusDays(1));
         quizExerciseTestRepository.save(quizExercise);
 
         List<QuizQuestion> questions = new ArrayList<>();
@@ -184,7 +184,7 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
 
         QuizExercise quizExercise = new QuizExercise();
         quizExercise.setCourse(course);
-        quizExercise.setIsOpenForPractice(true);
+        quizExercise.setDueDate(ZonedDateTime.now().minusDays(1));
         quizExerciseTestRepository.save(quizExercise);
 
         List<QuizQuestion> questions = new ArrayList<>();
@@ -335,7 +335,10 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
 
         Course course = quizExerciseUtilService.addCourseWithOneQuizExercise();
         QuizExercise quizExercise = (QuizExercise) course.getExercises().stream().findFirst().get();
-        quizExercise.setIsOpenForPractice(true);
+        quizExercise.setReleaseDate(ZonedDateTime.now().minusDays(2));
+        quizExercise.setDueDate(ZonedDateTime.now().minusDays(1));
+        quizExercise.setDuration(0);
+        quizExercise.getQuizBatches().forEach(quizBatch -> quizBatch.setStartTime(ZonedDateTime.now().minusDays(1)));
         quizExerciseService.save(quizExercise);
 
         List<QuizQuestionTrainingDTO> quizQuestions = Arrays.asList(
@@ -439,7 +442,7 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
 
         QuizExercise quizExercise = new QuizExercise();
         quizExercise.setCourse(course);
-        quizExercise.setIsOpenForPractice(true);
+        quizExercise.setDueDate(ZonedDateTime.now().minusDays(1));
         quizExerciseTestRepository.save(quizExercise);
 
         QuizQuestion question = new MultipleChoiceQuestion();
