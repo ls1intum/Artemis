@@ -128,4 +128,197 @@ describe('Exercise Update Plagiarism Component', () => {
 
         expect(comp.isFormValid()).toBeTrue();
     });
+
+    it('should mark form invalid for out-of-range similarityThreshold', () => {
+        comp.ngOnInit();
+
+        // below range
+        comp.form.patchValue({
+            continuousPlagiarismControlEnabled: true,
+            similarityThreshold: -1,
+            minimumScore: 0,
+            minimumSize: 0,
+            continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod: 7,
+        });
+
+        expect(comp.form.valid).toBeFalse();
+        expect(comp.isFormValid()).toBeFalse();
+
+        // above range
+        comp.form.patchValue({
+            similarityThreshold: 101,
+        });
+
+        expect(comp.form.valid).toBeFalse();
+        expect(comp.isFormValid()).toBeFalse();
+    });
+
+    it('should mark form invalid for out-of-range minimumScore', () => {
+        comp.ngOnInit();
+
+        comp.form.patchValue({
+            continuousPlagiarismControlEnabled: true,
+            similarityThreshold: 0,
+            minimumScore: -1,
+            minimumSize: 0,
+            continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod: 7,
+        });
+
+        expect(comp.form.valid).toBeFalse();
+        expect(comp.isFormValid()).toBeFalse();
+
+        comp.form.patchValue({
+            minimumScore: 101,
+        });
+
+        expect(comp.form.valid).toBeFalse();
+        expect(comp.isFormValid()).toBeFalse();
+    });
+
+    it('should allow minimumSize to be large and disallow negative values', () => {
+        comp.ngOnInit();
+
+        comp.form.patchValue({ continuousPlagiarismControlEnabled: true });
+        fixture.detectChanges();
+
+        // negative not allowed
+        comp.form.patchValue({
+            similarityThreshold: 0,
+            minimumScore: 0,
+            minimumSize: -1,
+            continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod: 7,
+        });
+        fixture.detectChanges();
+
+        expect(comp.form.valid).toBeFalse();
+        expect(comp.isFormValid()).toBeFalse();
+
+        // large value (e.g. > 100) is allowed
+        comp.form.patchValue({
+            minimumSize: 101,
+        });
+        fixture.detectChanges();
+
+        expect(comp.form.valid).toBeTrue();
+        expect(comp.isFormValid()).toBeTrue();
+    });
+
+    it('should mark form invalid for out-of-range response period', () => {
+        comp.ngOnInit();
+
+        comp.form.patchValue({
+            continuousPlagiarismControlEnabled: true,
+            similarityThreshold: 0,
+            minimumScore: 0,
+            minimumSize: 0,
+            continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod: 6, // below min 7
+        });
+
+        expect(comp.form.valid).toBeFalse();
+        expect(comp.isFormValid()).toBeFalse();
+
+        comp.form.patchValue({
+            continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod: 32, // above max 31
+        });
+
+        expect(comp.form.valid).toBeFalse();
+        expect(comp.isFormValid()).toBeFalse();
+    });
+
+    it('should propagate form values into exercise.plagiarismDetectionConfig', () => {
+        const initialExercise: Exercise = {
+            ...comp.exercise(),
+            plagiarismDetectionConfig: { ...DEFAULT_PLAGIARISM_DETECTION_CONFIG },
+        } as Exercise;
+        fixture.componentRef.setInput('exercise', initialExercise);
+
+        comp.ngOnInit();
+
+        comp.form.patchValue({
+            continuousPlagiarismControlEnabled: true,
+        });
+
+        expect(comp.exercise()?.plagiarismDetectionConfig?.continuousPlagiarismControlEnabled).toBeTrue();
+
+        comp.form.patchValue({
+            similarityThreshold: 42,
+        });
+
+        expect(comp.exercise()?.plagiarismDetectionConfig?.similarityThreshold).toBe(42);
+
+        comp.form.patchValue({
+            minimumScore: 13,
+        });
+
+        expect(comp.exercise()?.plagiarismDetectionConfig?.minimumScore).toBe(13);
+    });
+
+    it('should disable CPC-related controls when CPC is disabled', () => {
+        comp.ngOnInit();
+
+        comp.form.patchValue({ continuousPlagiarismControlEnabled: true });
+        comp.form.patchValue({
+            continuousPlagiarismControlPostDueDateChecksEnabled: true,
+            similarityThreshold: 10,
+            minimumScore: 10,
+            minimumSize: 10,
+            continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod: 10,
+        });
+
+        comp.form.patchValue({ continuousPlagiarismControlEnabled: false });
+
+        expect(comp.form.get('continuousPlagiarismControlPostDueDateChecksEnabled')?.disabled).toBeTrue();
+        expect(comp.form.get('similarityThreshold')?.disabled).toBeTrue();
+        expect(comp.form.get('minimumScore')?.disabled).toBeTrue();
+        expect(comp.form.get('minimumSize')?.disabled).toBeTrue();
+        expect(comp.form.get('continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod')?.disabled).toBeTrue();
+    });
+
+    it('should accept boundary values for all fields', () => {
+        comp.ngOnInit();
+
+        comp.form.patchValue({ continuousPlagiarismControlEnabled: true });
+
+        comp.form.patchValue({
+            similarityThreshold: 0,
+            minimumScore: 0,
+            minimumSize: 0,
+            continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod: 7,
+        });
+
+        expect(comp.form.valid).toBeTrue();
+
+        fixture.detectChanges();
+        expect(comp.isFormValid()).toBeTrue();
+
+        comp.form.patchValue({
+            similarityThreshold: 100,
+            minimumScore: 100,
+            minimumSize: 1000, // large value allowed
+            continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod: 31,
+        });
+
+        expect(comp.form.valid).toBeTrue();
+        fixture.detectChanges();
+        expect(comp.isFormValid()).toBeTrue();
+    });
+
+    it('should require all fields when CPC is enabled', () => {
+        comp.ngOnInit();
+
+        comp.form.patchValue({
+            continuousPlagiarismControlEnabled: true,
+            similarityThreshold: null,
+            minimumScore: null,
+            minimumSize: null,
+            continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod: null,
+        });
+
+        expect(comp.form.valid).toBeFalse();
+        expect(comp.isFormValid()).toBeFalse();
+        expect(comp.form.get('similarityThreshold')?.hasError('required')).toBeTrue();
+        expect(comp.form.get('minimumScore')?.hasError('required')).toBeTrue();
+        expect(comp.form.get('minimumSize')?.hasError('required')).toBeTrue();
+        expect(comp.form.get('continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod')?.hasError('required')).toBeTrue();
+    });
 });

@@ -647,6 +647,18 @@ class ProgrammingExerciseLocalVCJenkinsIntegrationTest extends AbstractProgrammi
         programmingExerciseTestService.updateBuildPlanURL();
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createProgrammingExercise_invalidPlagiarismDetectionConfig_badRequest() throws Exception {
+        programmingExerciseTestService.createProgrammingExercise_invalidPlagiarismDetectionConfig_badRequest();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateProgrammingExercise_invalidPlagiarismDetectionConfig_badRequest() throws Exception {
+        programmingExerciseTestService.updateProgrammingExercise_invalidPlagiarismDetectionConfig_badRequest();
+    }
+
     private void forceDefaultBuildPlanCreation() {
         aeolusRequestMockProvider.mockFailedPublishBuildPlan(AeolusTarget.JENKINS);
         aeolusRequestMockProvider.mockFailedPublishBuildPlan(AeolusTarget.JENKINS);
