@@ -1,19 +1,19 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { ExamRoomAdminOverviewDTO, ExamRoomDeletionSummaryDTO, ExamRoomUploadInformationDTO } from 'app/core/admin/exam-rooms/exam-rooms.model';
+import { ExamRoomDeletionSummaryDTO, ExamRoomOverviewDTO, ExamRoomUploadInformationDTO } from 'app/exam/manage/students/room-distribution/exam-rooms.model';
 
 @Injectable({ providedIn: 'root' })
 export class ExamRoomsService {
     private http = inject(HttpClient);
 
-    readonly baseUrl = 'api/exam/admin/exam-rooms';
+    readonly baseUrl = 'api/exam/exam-rooms';
 
     /**
      * Send a GET request to retrieve an overview over the stored exam rooms
      */
-    getAdminOverview(): Observable<HttpResponse<ExamRoomAdminOverviewDTO>> {
-        return this.http.get<ExamRoomAdminOverviewDTO>(`${this.baseUrl}/admin-overview`, { observe: 'response' });
+    getRoomOverview(): Observable<HttpResponse<ExamRoomOverviewDTO>> {
+        return this.http.get<ExamRoomOverviewDTO>(`${this.baseUrl}/overview`, { observe: 'response' });
     }
 
     /**

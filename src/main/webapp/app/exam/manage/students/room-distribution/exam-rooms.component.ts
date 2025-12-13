@@ -1,12 +1,12 @@
 import { Component, OnInit, Signal, WritableSignal, computed, inject, signal } from '@angular/core';
 import {
-    ExamRoomAdminOverviewDTO,
     ExamRoomDTO,
     ExamRoomDTOExtended,
     ExamRoomDeletionSummaryDTO,
+    ExamRoomOverviewDTO,
     ExamRoomUploadInformationDTO,
     NumberOfStored,
-} from 'app/core/admin/exam-rooms/exam-rooms.model';
+} from 'app/exam/manage/students/room-distribution/exam-rooms.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { SortService } from 'app/shared/service/sort.service';
@@ -14,7 +14,7 @@ import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faSort } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ExamRoomsService } from 'app/core/admin/exam-rooms/exam-rooms.service';
+import { ExamRoomsService } from 'app/exam/manage/students/room-distribution/exam-rooms.service';
 import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -26,7 +26,7 @@ import { AlertService } from 'app/shared/service/alert.service';
     imports: [TranslateDirective, SortDirective, SortByDirective, FaIconComponent, ArtemisTranslatePipe],
 })
 export class ExamRoomsComponent implements OnInit {
-    private readonly baseTranslationPath = 'artemisApp.examRooms.adminOverview';
+    private readonly baseTranslationPath = 'artemisApp.examRooms.management';
 
     protected readonly faSort = faSort;
 
@@ -38,7 +38,7 @@ export class ExamRoomsComponent implements OnInit {
     private selectedFile: WritableSignal<File | undefined> = signal(undefined);
     private actionStatus: WritableSignal<'uploading' | 'uploadSuccess' | 'deleting' | 'deletionSuccess' | undefined> = signal(undefined);
     private actionInformation: WritableSignal<ExamRoomUploadInformationDTO | ExamRoomDeletionSummaryDTO | undefined> = signal(undefined);
-    private overview: WritableSignal<ExamRoomAdminOverviewDTO | undefined> = signal(undefined);
+    private overview: WritableSignal<ExamRoomOverviewDTO | undefined> = signal(undefined);
 
     hasSelectedFile: Signal<boolean> = computed(() => !!this.selectedFile());
     selectedFileName: Signal<string | undefined> = computed(() => this.selectedFile()?.name?.trim());
@@ -101,9 +101,9 @@ export class ExamRoomsComponent implements OnInit {
      * Makes a REST request to fetch a new exam room overview and displays it
      */
     loadExamRoomOverview(): void {
-        this.examRoomsService.getAdminOverview().subscribe({
-            next: (examRoomAdminOverviewResponse: HttpResponse<ExamRoomAdminOverviewDTO>) => {
-                this.overview.set(examRoomAdminOverviewResponse.body as ExamRoomAdminOverviewDTO);
+        this.examRoomsService.getRoomOverview().subscribe({
+            next: (examRoomOverviewResponse: HttpResponse<ExamRoomOverviewDTO>) => {
+                this.overview.set(examRoomOverviewResponse.body as ExamRoomOverviewDTO);
                 this.sortRows();
             },
             error: (errorResponse: HttpErrorResponse) => {

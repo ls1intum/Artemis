@@ -4,16 +4,16 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { of, throwError } from 'rxjs';
 
-import { ExamRoomsComponent } from 'app/core/admin/exam-rooms/exam-rooms.component';
-import { ExamRoomsService } from 'app/core/admin/exam-rooms/exam-rooms.service';
+import { ExamRoomsComponent } from 'app/exam/manage/students/room-distribution/exam-rooms.component';
+import { ExamRoomsService } from 'app/exam/manage/students/room-distribution/exam-rooms.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import {
-    ExamRoomAdminOverviewDTO,
     ExamRoomDTO,
     ExamRoomDeletionSummaryDTO,
     ExamRoomLayoutStrategyDTO,
+    ExamRoomOverviewDTO,
     ExamRoomUploadInformationDTO,
-} from 'app/core/admin/exam-rooms/exam-rooms.model';
+} from 'app/exam/manage/students/room-distribution/exam-rooms.model';
 import { AlertService } from 'app/shared/service/alert.service';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
 import { DeleteDialogService } from 'app/shared/delete-dialog/service/delete-dialog.service';
@@ -42,15 +42,15 @@ describe('ExamRoomsComponentTest', () => {
         component = fixture.componentInstance;
         service = TestBed.inject(ExamRoomsService);
 
-        // getAdminOverview gets implicitly called each time the page is opened
-        jest.spyOn(service, 'getAdminOverview').mockReturnValue(
+        // getRoomOverview gets implicitly called each time the page is opened
+        jest.spyOn(service, 'getRoomOverview').mockReturnValue(
             of(
                 convertBodyToHttpResponse({
                     numberOfStoredExamRooms: 0,
                     numberOfStoredExamSeats: 0,
                     numberOfStoredLayoutStrategies: 0,
                     newestUniqueExamRooms: [],
-                } as ExamRoomAdminOverviewDTO),
+                } as ExamRoomOverviewDTO),
             ),
         );
     });
@@ -73,7 +73,7 @@ describe('ExamRoomsComponentTest', () => {
         fixture.detectChanges();
 
         // THEN
-        expect(service.getAdminOverview).toHaveBeenCalledOnce();
+        expect(service.getRoomOverview).toHaveBeenCalledOnce();
         expect(component.hasOverview()).toBeTrue();
         expect(component.numberOf()!.examRooms).toBe(0);
         expect(component.numberOf()!.examSeats).toBe(0);
@@ -86,16 +86,16 @@ describe('ExamRoomsComponentTest', () => {
         expect(component.hasExamRoomData()).toBeFalse();
     });
 
-    it('should properly extract values from admin overview', () => {
+    it('should properly extract values from room overview', () => {
         // GIVEN
-        const uploadedRoom: ExamRoomDTO = mockServiceGetAdminOverviewSingleRoom();
+        const uploadedRoom: ExamRoomDTO = mockServiceGetRoomOverviewSingleRoom();
 
         // WHEN
         fixture.detectChanges();
 
         // THEN
         expect(component.hasOverview()).toBeTrue();
-        expect(service.getAdminOverview).toHaveBeenCalledOnce();
+        expect(service.getRoomOverview).toHaveBeenCalledOnce();
 
         expect(component.numberOf()!.examRooms).toBe(1);
         expect(component.numberOf()!.examSeats).toBe(50);
@@ -116,13 +116,13 @@ describe('ExamRoomsComponentTest', () => {
 
     it('should show error message on loadExamRoomOverview fail', () => {
         // GIVEN
-        jest.spyOn(service, 'getAdminOverview').mockReturnValue(throwError(() => new Error()));
+        jest.spyOn(service, 'getRoomOverview').mockReturnValue(throwError(() => new Error()));
 
         // WHEN
         fixture.detectChanges();
 
         // THEN
-        expect(service.getAdminOverview).toHaveBeenCalledOnce();
+        expect(service.getRoomOverview).toHaveBeenCalledOnce();
         expect(component.hasOverview()).toBeFalse();
     });
 
@@ -224,7 +224,7 @@ describe('ExamRoomsComponentTest', () => {
         expect(service.uploadRoomDataZipFile).toHaveBeenCalledWith(zipFile);
         expect(component.hasSelectedFile()).toBeFalse();
         // once from the initial page load, and once from clicking the upload button
-        expect(service.getAdminOverview).toHaveBeenCalledTimes(2);
+        expect(service.getRoomOverview).toHaveBeenCalledTimes(2);
     });
 
     it('should not show upload information on failure', () => {
@@ -244,7 +244,7 @@ describe('ExamRoomsComponentTest', () => {
         // THEN
         expect(service.uploadRoomDataZipFile).toHaveBeenCalledOnce();
         expect(service.uploadRoomDataZipFile).toHaveBeenCalledWith(zipFile);
-        expect(service.getAdminOverview).toHaveBeenCalledOnce();
+        expect(service.getRoomOverview).toHaveBeenCalledOnce();
         expect(component.hasUploadInformation()).toBeFalse();
     });
 
@@ -284,7 +284,7 @@ describe('ExamRoomsComponentTest', () => {
     }
 
     /// Returns the exam room it uses
-    function mockServiceGetAdminOverviewSingleRoom(): ExamRoomDTO {
+    function mockServiceGetRoomOverviewSingleRoom(): ExamRoomDTO {
         const examRoom: ExamRoomDTO = {
             roomNumber: '123.456.789',
             name: 'Audimax',
@@ -299,14 +299,14 @@ describe('ExamRoomsComponentTest', () => {
             ],
         } as ExamRoomDTO;
 
-        jest.spyOn(service, 'getAdminOverview').mockReturnValue(
+        jest.spyOn(service, 'getRoomOverview').mockReturnValue(
             of(
                 convertBodyToHttpResponse({
                     numberOfStoredExamRooms: 1,
                     numberOfStoredExamSeats: 50,
                     numberOfStoredLayoutStrategies: 1,
                     newestUniqueExamRooms: [examRoom],
-                } as ExamRoomAdminOverviewDTO),
+                } as ExamRoomOverviewDTO),
             ),
         );
 
@@ -332,7 +332,7 @@ describe('ExamRoomsComponentTest', () => {
         // THEN
         expect(service.deleteOutdatedAndUnusedExamRooms).toHaveBeenCalledOnce();
         // once from the initial load, once from the button click
-        expect(service.getAdminOverview).toHaveBeenCalledTimes(2);
+        expect(service.getRoomOverview).toHaveBeenCalledTimes(2);
     });
 
     it('should not reload overview if deletion fails on delete outdated and unused button click', () => {
@@ -348,7 +348,7 @@ describe('ExamRoomsComponentTest', () => {
         // THEN
         expect(service.deleteOutdatedAndUnusedExamRooms).toHaveBeenCalledOnce();
         // once from the initial load
-        expect(service.getAdminOverview).toHaveBeenCalledOnce();
+        expect(service.getRoomOverview).toHaveBeenCalledOnce();
     });
 
     it('should show deletion summary on successful outdated and unused deletion', () => {
