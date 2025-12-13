@@ -188,20 +188,24 @@ describe('NavbarComponent', () => {
 
         fixture.detectChanges();
 
-        expect(component.breadcrumbs).toHaveLength(3);
+        expect(component.breadcrumbs).toHaveLength(4);
 
-        const systemBreadcrumb = {
+        expect(component.breadcrumbs[0]).toEqual({
+            label: 'global.menu.admin.main',
+            translate: true,
+            uri: '/admin/',
+        } as MockBreadcrumb);
+        expect(component.breadcrumbs[1]).toEqual({
             label: 'artemisApp.systemNotification.systemNotifications',
             translate: true,
             uri: '/admin/system-notification-management/',
-        } as MockBreadcrumb;
-        expect(component.breadcrumbs[0]).toEqual(systemBreadcrumb);
-        expect(component.breadcrumbs[1]).toEqual({
+        } as MockBreadcrumb);
+        expect(component.breadcrumbs[2]).toEqual({
             label: '1',
             translate: false,
             uri: '/admin/system-notification-management/1/',
         } as MockBreadcrumb);
-        expect(component.breadcrumbs[2]).toEqual({
+        expect(component.breadcrumbs[3]).toEqual({
             label: 'global.generic.edit',
             translate: true,
             uri: '/admin/system-notification-management/1/edit/',
@@ -214,14 +218,19 @@ describe('NavbarComponent', () => {
 
         fixture.detectChanges();
 
-        expect(component.breadcrumbs).toHaveLength(2);
+        expect(component.breadcrumbs).toHaveLength(3);
 
         expect(component.breadcrumbs[0]).toEqual({
+            label: 'global.menu.admin.main',
+            translate: true,
+            uri: '/admin/',
+        } as MockBreadcrumb);
+        expect(component.breadcrumbs[1]).toEqual({
             label: 'artemisApp.userManagement.home.title',
             translate: true,
             uri: '/admin/user-management/',
         } as MockBreadcrumb);
-        expect(component.breadcrumbs[1]).toEqual({
+        expect(component.breadcrumbs[2]).toEqual({
             label: 'test_user',
             translate: false,
             uri: '/admin/user-management/test_user/',
@@ -236,14 +245,19 @@ describe('NavbarComponent', () => {
 
         expect(entityTitleServiceStub).toHaveBeenCalledOnce();
         expect(entityTitleServiceStub).toHaveBeenCalledWith(EntityType.ORGANIZATION, [1]);
-        expect(component.breadcrumbs).toHaveLength(2);
+        expect(component.breadcrumbs).toHaveLength(3);
 
         expect(component.breadcrumbs[0]).toEqual({
+            label: 'global.menu.admin.main',
+            translate: true,
+            uri: '/admin/',
+        } as MockBreadcrumb);
+        expect(component.breadcrumbs[1]).toEqual({
             label: 'artemisApp.organizationManagement.title',
             translate: true,
             uri: '/admin/organization-management/',
         } as MockBreadcrumb);
-        expect(component.breadcrumbs[1]).toEqual({
+        expect(component.breadcrumbs[2]).toEqual({
             label: 'Test Organization',
             translate: false,
             uri: '/admin/organization-management/1/',
@@ -256,9 +270,14 @@ describe('NavbarComponent', () => {
 
         fixture.detectChanges();
 
-        expect(component.breadcrumbs).toHaveLength(1);
+        expect(component.breadcrumbs).toHaveLength(2);
 
         expect(component.breadcrumbs[0]).toEqual({
+            label: 'global.menu.admin.main',
+            translate: true,
+            uri: '/admin/',
+        } as MockBreadcrumb);
+        expect(component.breadcrumbs[1]).toEqual({
             label: 'route-without-translation',
             translate: false,
             uri: '/admin/route-without-translation/',

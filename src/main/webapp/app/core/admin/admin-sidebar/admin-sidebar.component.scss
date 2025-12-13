@@ -1,0 +1,161 @@
+$menu-width-closed: 64px;
+$menu-width-open: 220px;
+
+// Sidebar Button Transition Variables
+$transition-delay: 0.3s;
+$transition-in-between-delay: 0.2s;
+$transition-chevron-rotate-length: 0.2s;
+$transition-chevron-max-width-length: 0.2s;
+$transition-color-length: 0.2s;
+
+:host {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background-color: var(--module-bg);
+}
+
+.sidebar-container {
+    width: $menu-width-open;
+    min-height: 100%;
+    background-color: var(--module-bg);
+    display: flex;
+    flex-direction: column;
+
+    &.collapsed {
+        width: $menu-width-closed !important;
+    }
+}
+
+.sidebar-content {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.collapse-toggle-container {
+    flex-shrink: 0;
+    background-color: var(--module-bg);
+}
+
+.admin-icon {
+    height: 36px;
+    min-width: 36px;
+    background-color: var(--course-image-bg);
+    border-radius: 50%;
+    display: inline-block;
+    color: var(--bs-body-color);
+}
+
+.admin-title {
+    margin-left: 0.75rem;
+}
+
+.nav-group-header {
+    padding: 0.5rem 0 0.25rem 0;
+
+    .group-label {
+        font-size: 0.7rem;
+        font-weight: 600;
+        letter-spacing: 0.05em;
+    }
+}
+
+.nav-group-separator {
+    hr {
+        border-color: var(--border-color);
+        opacity: 0.5;
+    }
+}
+
+.double-arrow.menu-closed {
+    transform: translate(16px);
+}
+
+.double-arrow {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    cursor: pointer;
+    padding-right: 10px;
+    // Reset button styles
+    background: none;
+    border: none;
+    color: inherit;
+    font: inherit;
+}
+
+.menu-closed.double-arrow {
+    justify-content: center;
+}
+
+.double-arrow-icon {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 40px;
+    transition: transform 0.3s ease;
+    transform: rotate(180deg);
+}
+
+.menu-closed .double-arrow-icon {
+    transform: rotate(0deg);
+}
+
+.me-negative {
+    margin-right: -10px;
+}
+
+@media screen and (max-width: 960px) {
+    .sidebar-container {
+        width: $menu-width-closed !important;
+    }
+
+    .auto-collapse {
+        display: none;
+    }
+
+    .nav-group-header {
+        display: none;
+    }
+}
+
+.nav-link {
+    white-space: nowrap;
+    color: var(--bs-body-color);
+}
+
+.nav-link-sidebar:hover,
+.nav-link-sidebar.active {
+    width: 100%;
+    background-color: var(--link-item-bg);
+    color: var(--link-item-color);
+}
+
+// Override global anchor hover styles for sidebar nav links only
+.sidebar-container a.nav-link-sidebar:hover {
+    text-decoration: none !important;
+}
+
+.nav-link-sidebar:hover span {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-thickness: 1px;
+}
+
+@media print {
+    :host {
+        display: none; /* Hide the sidebar when printing */
+    }
+}
+
+// Without ng-deep we fail to override the styles from the tooltip
+::ng-deep .double-arrow-tooltip {
+    left: 2rem !important;
+    margin-bottom: 0.25rem !important;
+}
+
+::ng-deep .double-arrow-tooltip-collapsed {
+    left: -2.25rem !important;
+}
