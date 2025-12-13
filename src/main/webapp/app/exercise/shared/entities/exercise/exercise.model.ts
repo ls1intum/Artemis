@@ -149,6 +149,7 @@ export abstract class Exercise implements BaseEntity {
     protected constructor(type: ExerciseType) {
         this.type = type;
         this.bonusPoints = 0; // default value
+        this.maxPoints = 1; // default value
         this.isAtLeastTutor = false; // default value
         this.isAtLeastEditor = false; // default value
         this.isAtLeastInstructor = false; // default value
