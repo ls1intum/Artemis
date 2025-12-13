@@ -94,12 +94,12 @@ export class FileUploadSubmissionComponent implements ComponentCanDeactivate {
 
     submittedFileName = computed(() => {
         const filePath = this.submission()?.filePath;
-        return filePath ? filePath.split('/').pop()! : '';
+        return filePath ? (filePath.split('/').pop() ?? '') : '';
     });
 
     submittedFileExtension = computed(() => {
         const fileName = this.submittedFileName();
-        return fileName ? fileName.split('.').pop()! : '';
+        return fileName ? (fileName.split('.').pop() ?? '') : '';
     });
 
     isAfterAssessmentDueDate = computed(() => {
@@ -232,14 +232,17 @@ export class FileUploadSubmissionComponent implements ComponentCanDeactivate {
     }
 
     private setupComponentWithInputValues() {
-        if (this.inputExercise()) {
-            this.fileUploadExercise.set(this.inputExercise()!);
+        const exercise = this.inputExercise();
+        if (exercise) {
+            this.fileUploadExercise.set(exercise);
         }
-        if (this.inputSubmission()) {
-            this.submission.set(this.inputSubmission()!);
+        const submission = this.inputSubmission();
+        if (submission) {
+            this.submission.set(submission);
         }
-        if (this.inputParticipation()) {
-            this.participation.set(this.inputParticipation()!);
+        const participation = this.inputParticipation();
+        if (participation) {
+            this.participation.set(participation);
         }
 
         if (this.submission()?.submitted) {
@@ -272,7 +275,7 @@ export class FileUploadSubmissionComponent implements ComponentCanDeactivate {
                 this.submission.set(newSubmission);
                 const participation = newSubmission.participation as StudentParticipation;
                 if (participation) {
-                    newSubmission.participation!.submissions = [newSubmission];
+                    participation.submissions = [newSubmission];
                     this.participationWebsocketService.addParticipation(participation, currentExercise);
                     this.participation.set(participation);
                     this.fileUploadExercise.update((exercise) => {

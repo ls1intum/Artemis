@@ -99,8 +99,9 @@ export class FileUploadExerciseComponent extends ExerciseComponent {
                 content: 'Deleted an fileUploadExercise',
             });
             this.dialogErrorSource.next('');
-        } catch (error: any) {
-            this.dialogErrorSource.next(error.message);
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : 'Unknown error occurred';
+            this.dialogErrorSource.next(message);
         }
     }
 

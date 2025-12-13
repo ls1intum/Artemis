@@ -1,5 +1,5 @@
-@if (displayHeader()) {
-    <jhi-header-participation-page class="d-block mb-4" [exercise]="fileUploadExercise()!" [participation]="participation()!">
+@if (displayHeader() && fileUploadExercise() && participation()) {
+    <jhi-header-participation-page class="d-block mb-4" [exercise]="$any(fileUploadExercise())" [participation]="$any(participation())">
         <span pagetitle>
             {{ 'artemisApp.fileUploadSubmission.fileUpload' | artemisTranslate }}:
             <span class="font-weight-normal">{{ examMode() ? fileUploadExercise()?.exerciseGroup?.title : fileUploadExercise()?.title }}</span>
@@ -34,12 +34,14 @@
                                 </div>
                             </div>
                             <p class="d-inline-block" jhiTranslate="artemisApp.fileUploadExercise.supportedFileExtensions"></p>
-                            @for (extension of fileUploadExercise()?.filePattern!.split(','); track extension) {
-                                <div class="d-inline-block">
-                                    <span class="ms-1 badge bg-info">
-                                        {{ extension | uppercase }}
-                                    </span>
-                                </div>
+                            @if (fileUploadExercise()?.filePattern; as filePattern) {
+                                @for (extension of filePattern.split(','); track extension) {
+                                    <div class="d-inline-block">
+                                        <span class="ms-1 badge bg-info">
+                                            {{ extension | uppercase }}
+                                        </span>
+                                    </div>
+                                }
                             }
                         </div>
                     </div>
@@ -50,7 +52,9 @@
                     @if (!displayedInExamSummary()) {
                         <h6>
                             {{ 'artemisApp.fileUploadSubmission.submittedFile' | artemisTranslate: { filename: submittedFileName() } }}
-                            <span> {{ submission()!.submissionDate! | artemisTimeAgo }}</span>
+                            @if (submission()?.submissionDate) {
+                                <span> {{ submission()?.submissionDate | artemisTimeAgo }}</span>
+                            }
                         </h6>
                     } @else {
                         <h5 jhiTranslate="artemisApp.exam.examSummary.yourSubmission"></h5>
@@ -58,13 +62,15 @@
                     }
                     <br />
                     <div class="mt-2">
-                        <button
-                            jhi-exercise-action-button
-                            [smallButton]="true"
-                            [buttonIcon]="faDownload"
-                            [buttonLabel]="'artemisApp.fileUploadSubmission.download' | artemisTranslate"
-                            (click)="downloadFile(submission()!.filePathUrl!)"
-                        ></button>
+                        @if (submission()?.filePathUrl; as filePathUrl) {
+                            <button
+                                jhi-exercise-action-button
+                                [smallButton]="true"
+                                [buttonIcon]="faDownload"
+                                [buttonLabel]="'artemisApp.fileUploadSubmission.download' | artemisTranslate"
+                                (click)="downloadFile(filePathUrl)"
+                            ></button>
+                        }
                         @if (submittedFileExtension()) {
                             <span class="ms-2 badge bg-info">
                                 {{ submittedFileExtension() | uppercase }}
@@ -78,23 +84,21 @@
                     <br />
                     <h5><span jhiTranslate="artemisApp.fileUploadExercise.assessedSubmission"></span>:</h5>
                     <div class="row">
-                        @if (unreferencedFeedback()?.length) {
-                            <jhi-additional-feedback class="col-xl-8 alert unreferencedFeedback" [feedback]="unreferencedFeedback()!" [additional]="false" [course]="course()" />
+                        @if (unreferencedFeedback(); as feedback) {
+                            @if (feedback.length) {
+                                <jhi-additional-feedback class="col-xl-8 alert unreferencedFeedback" [feedback]="feedback" [additional]="false" [course]="course()" />
+                            }
                         }
                     </div>
                     <div class="row">
-                        @if (isOwnerOfParticipation()) {
-                            <jhi-rating class="mt-2 alert alert-info" [result]="result()!" [participation]="participation()!" />
+                        @if (isOwnerOfParticipation() && result() && participation()) {
+                            <jhi-rating class="mt-2 alert alert-info" [result]="$any(result())" [participation]="$any(participation())" />
                         }
                     </div>
                 </div>
             }
             @if (fileUploadExercise() && result() && participation() && isAfterAssessmentDueDate() && !examMode()) {
-                <jhi-complaint-student-view
-                    [result]="resultWithComplaint() ? resultWithComplaint()! : result()!"
-                    [participation]="participation()!"
-                    [exercise]="fileUploadExercise()!"
-                />
+                <jhi-complaint-student-view [result]="$any(resultWithComplaint() ?? result())" [participation]="$any(participation())" [exercise]="$any(fileUploadExercise())" />
             }
         </div>
         <!--endregion-->
@@ -102,8 +106,8 @@
         <fa-icon right-header [icon]="farListAlt" />&nbsp;
         <span id="problem-statement" right-header jhiTranslate="artemisApp.exercise.problemStatement"></span>
         <p right-body class="mb-3 markdown-preview">
-            @if (fileUploadExercise()!.problemStatement) {
-                <span [innerHTML]="fileUploadExercise()!.problemStatement! | htmlForMarkdown"></span>
+            @if (fileUploadExercise()?.problemStatement; as problemStatement) {
+                <span [innerHTML]="problemStatement | htmlForMarkdown"></span>
             }
         </p>
         <!--endregion-->

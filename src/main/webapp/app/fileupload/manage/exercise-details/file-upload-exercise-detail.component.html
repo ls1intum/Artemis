@@ -8,18 +8,20 @@
                 </div>
                 <hr />
                 <div class="text-start">
-                    @if (course()) {
-                        <jhi-non-programming-exercise-detail-common-actions [isExamExercise]="isExamExercise()" [course]="course()!" [exercise]="exercise" />
+                    @if (course(); as courseValue) {
+                        <jhi-non-programming-exercise-detail-common-actions [isExamExercise]="isExamExercise()" [course]="courseValue" [exercise]="exercise" />
                     }
                 </div>
                 @if (!exercise.releaseDate || dayjs(exercise.releaseDate).isBefore(dayjs())) {
                     <div class="mt-3">
-                        <jhi-exercise-detail-statistics
-                            [exercise]="exercise"
-                            [doughnutStats]="doughnutStats()!"
-                            [exerciseType]="ExerciseType.FILE_UPLOAD"
-                            class="d-flex justify-content-around"
-                        />
+                        @if (doughnutStats(); as stats) {
+                            <jhi-exercise-detail-statistics
+                                [exercise]="exercise"
+                                [doughnutStats]="stats"
+                                [exerciseType]="ExerciseType.FILE_UPLOAD"
+                                class="d-flex justify-content-around"
+                            />
+                        }
                     </div>
                 }
                 @if (exerciseDetailSections()) {

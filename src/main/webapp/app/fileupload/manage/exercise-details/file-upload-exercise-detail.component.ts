@@ -103,7 +103,11 @@ export class FileUploadExerciseDetailComponent {
             if (!id) return;
 
             const exerciseSub = this.fileUploadExerciseService.find(id).subscribe({
-                next: (res) => this.fileUploadExercise.set(res.body!),
+                next: (res) => {
+                    if (res.body) {
+                        this.fileUploadExercise.set(res.body);
+                    }
+                },
                 error: (error) => {
                     onError(this.alertService, error);
                     this.fileUploadExercise.set(undefined);

@@ -78,7 +78,7 @@
                     name="exampleSolutionPublicationDate"
                     labelName="{{ 'artemisApp.exercise.exampleSolutionPublicationDate' | artemisTranslate }}"
                     [(ngModel)]="fileUploadExercise().exampleSolutionPublicationDate"
-                    [error]="fileUploadExercise().exampleSolutionPublicationDateError!"
+                    [error]="!!fileUploadExercise().exampleSolutionPublicationDateError"
                     (valueChange)="validateDate()"
                 />
                 @if (fileUploadExercise().exampleSolutionPublicationDateError) {

@@ -92,14 +92,14 @@
                                         <span class="d-none d-md-inline" jhiTranslate="entity.action.edit"></span>
                                     </a>
                                 }
-                                @if (fileUploadExercise.isAtLeastInstructor) {
+                                @if (fileUploadExercise.isAtLeastInstructor && fileUploadExercise.title && fileUploadExercise.id) {
                                     <button
                                         id="delete-exercise"
                                         jhiDeleteButton
-                                        [entityTitle]="fileUploadExercise.title!"
+                                        [entityTitle]="fileUploadExercise.title"
                                         deleteQuestion="artemisApp.exercise.delete.question"
                                         deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
-                                        (delete)="deleteFileUploadExercise(fileUploadExercise.id!)"
+                                        (delete)="deleteFileUploadExercise(fileUploadExercise.id)"
                                         [dialogError]="dialogError$"
                                     >
                                         <fa-icon [icon]="faTrash" />
