@@ -61,7 +61,7 @@ export function toUpdateModelingExerciseDTO(modelingExercise: ModelingExercise):
         allowComplaintsForAutomaticAssessments: modelingExercise.allowComplaintsForAutomaticAssessments ?? false,
         allowFeedbackRequests: modelingExercise.allowFeedbackRequests ?? false,
         presentationScoreEnabled: modelingExercise.presentationScoreEnabled ?? false,
-        secondCorrectionEnabled: modelingExercise.presentationScoreEnabled ?? false,
+        secondCorrectionEnabled: modelingExercise.secondCorrectionEnabled ?? false,
         releaseDate: convertDateFromClient(modelingExercise.releaseDate),
         startDate: convertDateFromClient(modelingExercise.startDate),
         dueDate: convertDateFromClient(modelingExercise.dueDate),
