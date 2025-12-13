@@ -18,7 +18,7 @@ describe('IrisStatusService', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 IrisStatusService,
-                { provide: WebsocketService, useValue: { connectionState: of({ connected: true, intendedDisconnect: false, wasEverConnectedBefore: true }) } },
+                { provide: WebsocketService, useValue: { connectionState: of({ connected: true, wasEverConnectedBefore: true }) } },
                 LocalStorageService,
                 { provide: ProfileService, useValue: { isProfileActive: jest.fn().mockReturnValue(true) } },
             ],
