@@ -1,14 +1,17 @@
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, inject } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, inject, signal } from '@angular/core';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
-import { finalize, map } from 'rxjs/operators';
+import { concatMap, finalize, map } from 'rxjs/operators';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { LectureUnit, LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import { AlertService } from 'app/shared/service/alert.service';
 import { onError } from 'app/shared/util/global.utils';
-import { Subject } from 'rxjs';
+import { Subject, from } from 'rxjs';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
+import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachment.model';
+import { objectToJsonBlob } from 'app/shared/util/blob-util';
+import dayjs from 'dayjs/esm';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { AttachmentVideoUnit, IngestionState, TranscriptionStatus } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { ExerciseUnit } from 'app/lecture/shared/entities/lecture-unit/exerciseUnit.model';
@@ -44,6 +47,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { PdfDropZoneComponent } from '../../pdf-drop-zone/pdf-drop-zone.component';
 
 @Component({
     selector: 'jhi-lecture-unit-management',
@@ -66,6 +70,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
         DeleteButtonDirective,
         ArtemisDatePipe,
         ArtemisTranslatePipe,
+        PdfDropZoneComponent,
     ],
 })
 export class LectureUnitManagementComponent implements OnInit, OnDestroy {
@@ -85,6 +90,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     protected readonly TranscriptionStatus = TranscriptionStatus;
 
     private readonly activatedRoute = inject(ActivatedRoute);
+    private readonly router = inject(Router);
     private readonly lectureService = inject(LectureService);
     private readonly alertService = inject(AlertService);
     private readonly profileService = inject(ProfileService);
@@ -95,6 +101,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
 
     @Input() showCreationCard = true;
     @Input() showCompetencies = true;
+    @Input() showDropZone = true;
     @Input() emitEditEvents = false;
     @Input() lectureId: number | undefined;
 
@@ -107,6 +114,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     transcriptionStatus: Record<number, TranscriptionStatus> = {};
     playlistUrls: Record<number, string> = {};
     isTranscriptionLoading: Record<number, boolean> = {};
+    isUploadingPdfs = signal<boolean>(false);
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -432,11 +440,86 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
             const hasAttachment = this.hasAttachment(<AttachmentVideoUnit>lectureUnit);
             const hasTranscriptionBadge = this.hasTranscriptionBadge(<AttachmentVideoUnit>lectureUnit);
             if (hasAttachment && hasTranscriptionBadge) {
-                offset = -60;
+                offset = -30;
             } else if (hasTranscriptionBadge || hasAttachment) {
-                offset = -40;
+                offset = -20;
             }
         }
         return offset === 0 ? null : `${offset}px`;
+    }
+
+    /**
+     * Handles PDF files dropped on the drop zone
+     * Creates attachment units for each file with name from filename and release date 15 min in future
+     * Navigates to edit page for the last created unit
+     */
+    onPdfFilesDropped(files: File[]): void {
+        if (files.length === 0 || !this.lectureId) {
+            return;
+        }
+
+        this.isUploadingPdfs.set(true);
+        let lastCreatedUnit: AttachmentVideoUnit | undefined;
+
+        from(files)
+            .pipe(
+                concatMap((file) => this.createAttachmentUnitFromFile(file)),
+                map((response) => response.body as AttachmentVideoUnit),
+            )
+            .subscribe({
+                next: (unit) => {
+                    lastCreatedUnit = unit;
+                },
+                error: (error: HttpErrorResponse) => {
+                    this.isUploadingPdfs.set(false);
+                    onError(this.alertService, error);
+                },
+                complete: () => {
+                    this.isUploadingPdfs.set(false);
+                    this.alertService.success('artemisApp.lecture.pdfUpload.success');
+                    // Navigate to edit page for the last created unit
+                    if (lastCreatedUnit?.id && this.lecture?.course?.id) {
+                        this.router.navigate([
+                            '/course-management',
+                            this.lecture.course.id,
+                            'lectures',
+                            this.lectureId,
+                            'unit-management',
+                            'attachment-video-units',
+                            lastCreatedUnit.id,
+                            'edit',
+                        ]);
+                    } else {
+                        this.loadData();
+                    }
+                },
+            });
+    }
+
+    /**
+     * Creates a single attachment unit from a file
+     */
+    private createAttachmentUnitFromFile(file: File) {
+        const unitName = file.name
+            .replace(/\.pdf$/i, '')
+            .replace(/[_-]/g, ' ')
+            .trim();
+        const releaseDate = dayjs().add(15, 'minutes');
+
+        const attachmentVideoUnit = new AttachmentVideoUnit();
+        attachmentVideoUnit.name = unitName;
+        attachmentVideoUnit.releaseDate = releaseDate;
+
+        const attachment = new Attachment();
+        attachment.name = unitName;
+        attachment.releaseDate = releaseDate;
+        attachment.attachmentType = AttachmentType.FILE;
+
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('attachmentVideoUnit', objectToJsonBlob(attachmentVideoUnit));
+        formData.append('attachment', objectToJsonBlob(attachment));
+
+        return this.attachmentVideoUnitService.create(formData, this.lectureId!);
     }
 }

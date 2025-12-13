@@ -1,0 +1,61 @@
+.pdf-drop-zone {
+    border: 2px dashed var(--bs-secondary);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    cursor: pointer;
+    transition:
+        border-color 0.2s ease,
+        background-color 0.2s ease;
+    background-color: var(--bs-tertiary-bg);
+
+    &:hover,
+    &:focus {
+        border-color: var(--bs-primary);
+        background-color: color-mix(in srgb, var(--bs-primary) 5%, transparent);
+        outline: none;
+    }
+
+    &.drag-over {
+        border-color: var(--bs-primary);
+        border-style: solid;
+        background-color: color-mix(in srgb, var(--bs-primary) 10%, transparent);
+    }
+
+    .file-input {
+        display: none;
+    }
+
+    .drop-zone-content {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+    }
+
+    .upload-icon {
+        font-size: 2rem;
+        color: var(--bs-primary);
+    }
+
+    .pdf-icon {
+        font-size: 1.5rem;
+        color: var(--bs-danger);
+    }
+
+    .drop-zone-text {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .drop-zone-title {
+        font-weight: 500;
+        color: var(--bs-body-color);
+    }
+
+    .drop-zone-hint {
+        font-size: 0.875rem;
+        color: var(--bs-secondary-color);
+    }
+}

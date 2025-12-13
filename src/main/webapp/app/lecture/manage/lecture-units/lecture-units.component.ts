@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, ViewChild, computed, inject, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, Input, OnInit, computed, inject, signal, viewChild } from '@angular/core';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';
 import { OnlineUnit } from 'app/lecture/shared/entities/lecture-unit/onlineUnit.model';
@@ -21,10 +21,11 @@ import { ActivatedRoute } from '@angular/router';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { UnitCreationCardComponent } from 'app/lecture/manage/lecture-units/unit-creation-card/unit-creation-card.component';
 import { CreateExerciseUnitComponent } from 'app/lecture/manage/lecture-units/create-exercise-unit/create-exercise-unit.component';
-import { catchError, map, switchMap } from 'rxjs/operators';
-import { combineLatest, of } from 'rxjs';
+import { catchError, concatMap, map, switchMap } from 'rxjs/operators';
+import { combineLatest, from, of } from 'rxjs';
 import { LectureTranscriptionService } from '../services/lecture-transcription.service';
 import { AccountService } from 'app/core/auth/account.service';
+import { PdfDropZoneComponent } from '../pdf-drop-zone/pdf-drop-zone.component';
 
 @Component({
     selector: 'jhi-lecture-update-units',
@@ -37,6 +38,7 @@ import { AccountService } from 'app/core/auth/account.service';
         OnlineUnitFormComponent,
         AttachmentVideoUnitFormComponent,
         CreateExerciseUnitComponent,
+        PdfDropZoneComponent,
     ],
 })
 export class LectureUpdateUnitsComponent implements OnInit {
@@ -50,7 +52,8 @@ export class LectureUpdateUnitsComponent implements OnInit {
 
     @Input() lecture: Lecture;
 
-    @ViewChild(LectureUnitManagementComponent, { static: false }) unitManagementComponent: LectureUnitManagementComponent;
+    unitManagementComponent = viewChild(LectureUnitManagementComponent);
+    editFormContainer = viewChild<ElementRef<HTMLElement>>('editFormContainer');
 
     textUnitForm = viewChild(TextUnitFormComponent);
     onlineUnitForm = viewChild(OnlineUnitFormComponent);
@@ -68,6 +71,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
     isExerciseUnitFormOpen = signal<boolean>(false);
     isOnlineUnitFormOpen = signal<boolean>(false);
     isAttachmentVideoUnitFormOpen = signal<boolean>(false);
+    isUploadingPdfs = signal<boolean>(false);
 
     currentlyProcessedTextUnit: TextUnit;
     currentlyProcessedOnlineUnit: OnlineUnit;
@@ -113,6 +117,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
         this.isOnlineUnitFormOpen.set(false);
         this.isAttachmentVideoUnitFormOpen.set(false);
         this.isExerciseUnitFormOpen.set(false);
+        this.isEditingLectureUnit = false;
     }
 
     createEditTextUnit(formData: TextUnitFormData) {
@@ -134,7 +139,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
         ).subscribe({
             next: () => {
                 this.onCloseLectureUnitForms();
-                this.unitManagementComponent.loadData();
+                this.unitManagementComponent()?.loadData();
             },
             error: (res: HttpErrorResponse) => onError(this.alertService, res),
         });
@@ -160,7 +165,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
         ).subscribe({
             next: () => {
                 this.onCloseLectureUnitForms();
-                this.unitManagementComponent.loadData();
+                this.unitManagementComponent()?.loadData();
             },
             error: (res: HttpErrorResponse) => onError(this.alertService, res),
         });
@@ -277,7 +282,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
             .subscribe({
                 next: () => {
                     this.onCloseLectureUnitForms();
-                    this.unitManagementComponent.loadData();
+                    this.unitManagementComponent()?.loadData();
                 },
                 error: (res: HttpErrorResponse | Error) => {
                     if (res instanceof Error) {
@@ -298,7 +303,17 @@ export class LectureUpdateUnitsComponent implements OnInit {
      */
     onExerciseUnitCreated() {
         this.onCloseLectureUnitForms();
-        this.unitManagementComponent.loadData();
+        this.unitManagementComponent()?.loadData();
+    }
+
+    /**
+     * Scrolls to the edit form container
+     */
+    private scrollToEditForm(): void {
+        const container = this.editFormContainer();
+        if (container?.nativeElement) {
+            container.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
     }
 
     startEditLectureUnit(lectureUnit: LectureUnit) {
@@ -316,6 +331,9 @@ export class LectureUpdateUnitsComponent implements OnInit {
         this.isExerciseUnitFormOpen.set(lectureUnit.type === LectureUnitType.EXERCISE);
         this.isOnlineUnitFormOpen.set(lectureUnit.type === LectureUnitType.ONLINE);
         this.isAttachmentVideoUnitFormOpen.set(lectureUnit.type === LectureUnitType.ATTACHMENT_VIDEO);
+
+        // Scroll to the edit form after a brief delay to allow the form to render
+        setTimeout(() => this.scrollToEditForm(), 100);
 
         of(lectureUnit)
             .pipe(
@@ -374,5 +392,70 @@ export class LectureUpdateUnitsComponent implements OnInit {
                         break;
                 }
             });
+    }
+
+    /**
+     * Handles PDF files dropped on the drop zone
+     * Creates attachment units for each file with name from filename and release date 15 min in future
+     * Opens the edit form for the last created unit
+     */
+    onPdfFilesDropped(files: File[]): void {
+        if (files.length === 0 || !this.lecture.id) {
+            return;
+        }
+
+        this.isUploadingPdfs.set(true);
+        let lastCreatedUnit: AttachmentVideoUnit | undefined;
+
+        from(files)
+            .pipe(
+                concatMap((file) => this.createAttachmentUnitFromFile(file)),
+                map((response) => response.body as AttachmentVideoUnit),
+            )
+            .subscribe({
+                next: (unit) => {
+                    lastCreatedUnit = unit;
+                },
+                error: (error: HttpErrorResponse) => {
+                    this.isUploadingPdfs.set(false);
+                    onError(this.alertService, error);
+                },
+                complete: () => {
+                    this.isUploadingPdfs.set(false);
+                    this.alertService.success('artemisApp.lecture.pdfUpload.success');
+                    this.unitManagementComponent()?.loadData();
+                    // Open edit form for the last created unit
+                    if (lastCreatedUnit) {
+                        this.startEditLectureUnit(lastCreatedUnit);
+                    }
+                },
+            });
+    }
+
+    /**
+     * Creates a single attachment unit from a file
+     */
+    private createAttachmentUnitFromFile(file: File) {
+        const unitName = file.name
+            .replace(/\.pdf$/i, '')
+            .replace(/[_-]/g, ' ')
+            .trim();
+        const releaseDate = dayjs().add(15, 'minutes');
+
+        const attachmentVideoUnit = new AttachmentVideoUnit();
+        attachmentVideoUnit.name = unitName;
+        attachmentVideoUnit.releaseDate = releaseDate;
+
+        const attachment = new Attachment();
+        attachment.name = unitName;
+        attachment.releaseDate = releaseDate;
+        attachment.attachmentType = AttachmentType.FILE;
+
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('attachmentVideoUnit', objectToJsonBlob(attachmentVideoUnit));
+        formData.append('attachment', objectToJsonBlob(attachment));
+
+        return this.attachmentVideoUnitService.create(formData, this.lecture.id!);
     }
 }

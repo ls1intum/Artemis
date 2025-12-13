@@ -29,6 +29,17 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { LectureTranscriptionService } from 'app/lecture/manage/services/lecture-transcription.service';
 import { AccountService } from 'app/core/auth/account.service';
+import { PdfDropZoneComponent } from 'app/lecture/manage/pdf-drop-zone/pdf-drop-zone.component';
+import { Component, ElementRef, Signal, computed, output } from '@angular/core';
+import { ngMocks } from 'ng-mocks';
+
+// Tell ng-mocks to skip auto-mocking PdfDropZoneComponent
+ngMocks.globalKeep(PdfDropZoneComponent);
+
+@Component({ selector: 'jhi-pdf-drop-zone', standalone: true, template: '' })
+class PdfDropZoneStubComponent {
+    filesDropped = output<File[]>();
+}
 
 // Helper type so CI uses the exact method return type
 type StartTxReturn = ReturnType<AttachmentVideoUnitService['startTranscription']>;
@@ -38,6 +49,18 @@ describe('LectureUpdateUnitsComponent', () => {
     let wizardUnitComponent: LectureUpdateUnitsComponent;
     let lectureTranscriptionService: LectureTranscriptionService;
     let accountService: AccountService;
+    let attachmentVideoUnitService: AttachmentVideoUnitService;
+    let unitManagementComponentMock: Pick<LectureUnitManagementComponent, 'loadData'>;
+
+    const mockUnitManagementComponent = () => {
+        unitManagementComponentMock = {
+            loadData: jest.fn(),
+        } as Pick<LectureUnitManagementComponent, 'loadData'>;
+
+        wizardUnitComponent.unitManagementComponent = computed(() => unitManagementComponentMock as LectureUnitManagementComponent) as Signal<
+            LectureUnitManagementComponent | undefined
+        >;
+    };
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -46,6 +69,7 @@ describe('LectureUpdateUnitsComponent', () => {
                 LectureUpdateUnitsComponent,
                 MockComponent(CreateExerciseUnitComponent),
                 MockComponent(LectureUnitManagementComponent),
+                PdfDropZoneStubComponent,
             ],
             providers: [
                 MockProvider(AlertService),
@@ -59,7 +83,12 @@ describe('LectureUpdateUnitsComponent', () => {
                 { provide: ActivatedRoute, useValue: { queryParams: of({}) } },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
-        }).compileComponents();
+        })
+            .overrideComponent(LectureUpdateUnitsComponent, {
+                remove: { imports: [PdfDropZoneComponent] },
+                add: { imports: [PdfDropZoneStubComponent] },
+            })
+            .compileComponents();
 
         wizardUnitComponentFixture = TestBed.createComponent(LectureUpdateUnitsComponent);
         wizardUnitComponent = wizardUnitComponentFixture.componentInstance;
@@ -67,6 +96,12 @@ describe('LectureUpdateUnitsComponent', () => {
         wizardUnitComponent.lecture.id = 1;
         lectureTranscriptionService = TestBed.inject(LectureTranscriptionService);
         accountService = TestBed.inject(AccountService);
+        attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
+        attachmentVideoUnitService.fetchAndUpdatePlaylistUrl = jest.fn((_, formData) => of(formData)) as any;
+        wizardUnitComponent.editFormContainer = computed(() => ({ nativeElement: { scrollIntoView: jest.fn() } }) as unknown as ElementRef<HTMLElement>) as Signal<
+            ElementRef<HTMLElement> | undefined
+        >;
+        mockUnitManagementComponent();
     });
 
     afterEach(() => {
@@ -161,8 +196,7 @@ describe('LectureUpdateUnitsComponent', () => {
         wizardUnitComponentFixture.detectChanges();
         tick();
 
-        wizardUnitComponent.unitManagementComponent = TestBed.inject(LectureUnitManagementComponent);
-        const updateSpy = jest.spyOn(wizardUnitComponent.unitManagementComponent, 'loadData');
+        const updateSpy = jest.spyOn(unitManagementComponentMock, 'loadData');
 
         wizardUnitComponent.isTextUnitFormOpen.set(true);
         wizardUnitComponent.createEditTextUnit(formData);
@@ -267,8 +301,7 @@ describe('LectureUpdateUnitsComponent', () => {
         wizardUnitComponentFixture.detectChanges();
         tick();
 
-        wizardUnitComponent.unitManagementComponent = TestBed.inject(LectureUnitManagementComponent);
-        const updateSpy = jest.spyOn(wizardUnitComponent.unitManagementComponent, 'loadData');
+        const updateSpy = jest.spyOn(unitManagementComponentMock, 'loadData');
 
         wizardUnitComponent.isOnlineUnitFormOpen.set(true);
         wizardUnitComponent.createEditOnlineUnit(formDate);
@@ -351,8 +384,7 @@ describe('LectureUpdateUnitsComponent', () => {
         wizardUnitComponentFixture.detectChanges();
         tick();
 
-        wizardUnitComponent.unitManagementComponent = TestBed.inject(LectureUnitManagementComponent);
-        const updateSpy = jest.spyOn(wizardUnitComponent.unitManagementComponent, 'loadData');
+        const updateSpy = jest.spyOn(unitManagementComponentMock, 'loadData');
 
         wizardUnitComponent.isAttachmentVideoUnitFormOpen.set(true);
         wizardUnitComponent.createEditAttachmentVideoUnit(attachmentVideoUnitFormData);
@@ -410,8 +442,7 @@ describe('LectureUpdateUnitsComponent', () => {
         wizardUnitComponentFixture.detectChanges();
         tick();
 
-        wizardUnitComponent.unitManagementComponent = TestBed.inject(LectureUnitManagementComponent);
-        const updateSpy = jest.spyOn(wizardUnitComponent.unitManagementComponent, 'loadData');
+        const updateSpy = jest.spyOn(unitManagementComponentMock, 'loadData');
 
         wizardUnitComponent.isEditingLectureUnit = true;
         wizardUnitComponent.currentlyProcessedAttachmentVideoUnit = new AttachmentVideoUnit();
@@ -557,8 +588,7 @@ describe('LectureUpdateUnitsComponent', () => {
         wizardUnitComponentFixture.detectChanges();
         tick();
 
-        wizardUnitComponent.unitManagementComponent = TestBed.inject(LectureUnitManagementComponent);
-        const updateSpy = jest.spyOn(wizardUnitComponent.unitManagementComponent, 'loadData');
+        const updateSpy = jest.spyOn(unitManagementComponentMock, 'loadData');
 
         wizardUnitComponent.onExerciseUnitCreated();
         tick();
@@ -907,9 +937,6 @@ describe('LectureUpdateUnitsComponent', () => {
         wizardUnitComponentFixture.detectChanges();
         tick();
 
-        wizardUnitComponent.unitManagementComponent = TestBed.inject(LectureUnitManagementComponent);
-        jest.spyOn(wizardUnitComponent.unitManagementComponent, 'loadData');
-
         wizardUnitComponent.isAttachmentVideoUnitFormOpen.set(true);
 
         wizardUnitComponent.createEditAttachmentVideoUnit(attachmentVideoUnitFormData);
@@ -951,8 +978,6 @@ describe('LectureUpdateUnitsComponent', () => {
 
         wizardUnitComponentFixture.detectChanges();
         tick();
-        wizardUnitComponent.unitManagementComponent = TestBed.inject(LectureUnitManagementComponent);
-        jest.spyOn(wizardUnitComponent.unitManagementComponent, 'loadData');
 
         wizardUnitComponent.isAttachmentVideoUnitFormOpen.set(true);
         wizardUnitComponent.createEditAttachmentVideoUnit(formData);
@@ -986,8 +1011,6 @@ describe('LectureUpdateUnitsComponent', () => {
 
         wizardUnitComponentFixture.detectChanges();
         tick();
-        wizardUnitComponent.unitManagementComponent = TestBed.inject(LectureUnitManagementComponent);
-        jest.spyOn(wizardUnitComponent.unitManagementComponent, 'loadData');
 
         wizardUnitComponent.createEditAttachmentVideoUnit(formData);
 
@@ -1017,8 +1040,6 @@ describe('LectureUpdateUnitsComponent', () => {
 
         wizardUnitComponentFixture.detectChanges();
         tick();
-        wizardUnitComponent.unitManagementComponent = TestBed.inject(LectureUnitManagementComponent);
-        jest.spyOn(wizardUnitComponent.unitManagementComponent, 'loadData');
 
         wizardUnitComponent.createEditAttachmentVideoUnit(formData);
 
@@ -1048,8 +1069,6 @@ describe('LectureUpdateUnitsComponent', () => {
 
         wizardUnitComponentFixture.detectChanges();
         tick();
-        wizardUnitComponent.unitManagementComponent = TestBed.inject(LectureUnitManagementComponent);
-        jest.spyOn(wizardUnitComponent.unitManagementComponent, 'loadData');
 
         wizardUnitComponent.isEditingLectureUnit = true;
         wizardUnitComponent.currentlyProcessedAttachmentVideoUnit = new AttachmentVideoUnit();
@@ -1074,8 +1093,6 @@ describe('LectureUpdateUnitsComponent', () => {
 
         wizardUnitComponentFixture.detectChanges();
         tick();
-        wizardUnitComponent.unitManagementComponent = TestBed.inject(LectureUnitManagementComponent);
-        jest.spyOn(wizardUnitComponent.unitManagementComponent, 'loadData');
 
         // generateTranscript undefined
         wizardUnitComponent.createEditAttachmentVideoUnit({
@@ -1105,8 +1122,6 @@ describe('LectureUpdateUnitsComponent', () => {
 
         wizardUnitComponentFixture.detectChanges();
         tick();
-        wizardUnitComponent.unitManagementComponent = TestBed.inject(LectureUnitManagementComponent);
-        jest.spyOn(wizardUnitComponent.unitManagementComponent, 'loadData');
 
         wizardUnitComponent.createEditAttachmentVideoUnit({
             formProperties: { name: 'No URLs', releaseDate: dayjs(), generateTranscript: true },
@@ -1130,8 +1145,6 @@ describe('LectureUpdateUnitsComponent', () => {
 
         wizardUnitComponentFixture.detectChanges();
         tick();
-        wizardUnitComponent.unitManagementComponent = TestBed.inject(LectureUnitManagementComponent);
-        jest.spyOn(wizardUnitComponent.unitManagementComponent, 'loadData');
 
         wizardUnitComponent.createEditAttachmentVideoUnit({
             formProperties: { name: 'Test Unit', releaseDate: dayjs(), generateTranscript: true },
@@ -1174,8 +1187,6 @@ describe('LectureUpdateUnitsComponent', () => {
 
         wizardUnitComponentFixture.detectChanges();
         tick();
-        wizardUnitComponent.unitManagementComponent = TestBed.inject(LectureUnitManagementComponent);
-        jest.spyOn(wizardUnitComponent.unitManagementComponent, 'loadData');
 
         wizardUnitComponent.createEditAttachmentVideoUnit(formData);
 
@@ -1247,4 +1258,212 @@ describe('LectureUpdateUnitsComponent', () => {
             expect(wizardUnitComponent.attachmentVideoUnitFormData?.transcriptionStatus).toEqual(transcriptionStatus);
         });
     }));
+
+    describe('PDF drop zone', () => {
+        it('should create attachment units from dropped PDF files', fakeAsync(() => {
+            const attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
+            const alertService = TestBed.inject(AlertService);
+
+            const createdUnit = new AttachmentVideoUnit();
+            createdUnit.id = 42;
+            createdUnit.name = 'Test File';
+
+            const createSpy = jest.spyOn(attachmentVideoUnitService, 'create').mockReturnValue(of(new HttpResponse({ body: createdUnit, status: 201 })));
+            const successSpy = jest.spyOn(alertService, 'success');
+
+            wizardUnitComponentFixture.detectChanges();
+            tick();
+
+            const loadDataSpy = jest.spyOn(unitManagementComponentMock, 'loadData');
+
+            const pdfFile = new File(['content'], 'Test_File.pdf', { type: 'application/pdf' });
+            wizardUnitComponent.onPdfFilesDropped([pdfFile]);
+            tick();
+
+            expect(createSpy).toHaveBeenCalledOnce();
+            expect(successSpy).toHaveBeenCalledWith('artemisApp.lecture.pdfUpload.success');
+            expect(loadDataSpy).toHaveBeenCalledOnce();
+
+            loadDataSpy.mockRestore();
+        }));
+
+        it('should derive unit name from PDF filename', fakeAsync(() => {
+            const attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
+
+            const createdUnit = new AttachmentVideoUnit();
+            createdUnit.id = 1;
+
+            const createSpy = jest.spyOn(attachmentVideoUnitService, 'create').mockReturnValue(of(new HttpResponse({ body: createdUnit, status: 201 })));
+
+            wizardUnitComponentFixture.detectChanges();
+            tick();
+
+            const pdfFile = new File(['content'], 'Chapter_01_Introduction.pdf', { type: 'application/pdf' });
+            wizardUnitComponent.onPdfFilesDropped([pdfFile]);
+            tick();
+
+            const formData = createSpy.mock.calls[0][0] as FormData;
+            const unitBlob = formData.get('attachmentVideoUnit') as Blob;
+
+            // Read the blob content to verify the name
+            const reader = new FileReader();
+            reader.onload = () => {
+                const unitData = JSON.parse(reader.result as string);
+                expect(unitData.name).toBe('Chapter 01 Introduction');
+            };
+            reader.readAsText(unitBlob);
+            tick();
+        }));
+
+        it('should set release date to 15 minutes in future', fakeAsync(() => {
+            const attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
+
+            const createdUnit = new AttachmentVideoUnit();
+            createdUnit.id = 1;
+
+            const createSpy = jest.spyOn(attachmentVideoUnitService, 'create').mockReturnValue(of(new HttpResponse({ body: createdUnit, status: 201 })));
+
+            wizardUnitComponentFixture.detectChanges();
+            tick();
+
+            const beforeTime = dayjs();
+            const pdfFile = new File(['content'], 'test.pdf', { type: 'application/pdf' });
+            wizardUnitComponent.onPdfFilesDropped([pdfFile]);
+            tick();
+            const afterTime = dayjs();
+
+            const formData = createSpy.mock.calls[0][0] as FormData;
+            const unitBlob = formData.get('attachmentVideoUnit') as Blob;
+
+            const reader = new FileReader();
+            reader.onload = () => {
+                const unitData = JSON.parse(reader.result as string);
+                const releaseDate = dayjs(unitData.releaseDate);
+                // Release date should be ~15 minutes from now
+                expect(releaseDate.isAfter(beforeTime.add(14, 'minutes'))).toBeTrue();
+                expect(releaseDate.isBefore(afterTime.add(16, 'minutes'))).toBeTrue();
+            };
+            reader.readAsText(unitBlob);
+            tick();
+        }));
+
+        it('should handle multiple PDF files sequentially', fakeAsync(() => {
+            const attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
+            const alertService = TestBed.inject(AlertService);
+
+            let callCount = 0;
+            const createSpy = jest.spyOn(attachmentVideoUnitService, 'create').mockImplementation(() => {
+                callCount++;
+                const unit = new AttachmentVideoUnit();
+                unit.id = callCount;
+                return of(new HttpResponse({ body: unit, status: 201 }));
+            });
+            const successSpy = jest.spyOn(alertService, 'success');
+
+            wizardUnitComponentFixture.detectChanges();
+            tick();
+
+            const pdfFiles = [
+                new File(['content1'], 'file1.pdf', { type: 'application/pdf' }),
+                new File(['content2'], 'file2.pdf', { type: 'application/pdf' }),
+                new File(['content3'], 'file3.pdf', { type: 'application/pdf' }),
+            ];
+
+            wizardUnitComponent.onPdfFilesDropped(pdfFiles);
+            tick();
+
+            expect(createSpy).toHaveBeenCalledTimes(3);
+            expect(successSpy).toHaveBeenCalledOnce();
+        }));
+
+        it('should open edit form for last created unit after upload', fakeAsync(() => {
+            const attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
+
+            const createdUnit = new AttachmentVideoUnit();
+            createdUnit.id = 99;
+            createdUnit.name = 'Created Unit';
+
+            jest.spyOn(attachmentVideoUnitService, 'create').mockReturnValue(of(new HttpResponse({ body: createdUnit, status: 201 })));
+            jest.spyOn(attachmentVideoUnitService, 'fetchAndUpdatePlaylistUrl').mockImplementation((_, formData) => of(formData));
+
+            wizardUnitComponentFixture.detectChanges();
+            tick();
+
+            const startEditSpy = jest.spyOn(wizardUnitComponent, 'startEditLectureUnit');
+
+            const pdfFile = new File(['content'], 'test.pdf', { type: 'application/pdf' });
+            wizardUnitComponent.onPdfFilesDropped([pdfFile]);
+            tick();
+
+            expect(startEditSpy).toHaveBeenCalledWith(createdUnit);
+        }));
+
+        it('should show error alert on upload failure', fakeAsync(() => {
+            const attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
+            const alertService = TestBed.inject(AlertService);
+
+            jest.spyOn(attachmentVideoUnitService, 'create').mockReturnValue(throwError(() => ({ status: 400 })));
+            const errorSpy = jest.spyOn(alertService, 'error');
+
+            wizardUnitComponentFixture.detectChanges();
+            tick();
+
+            const pdfFile = new File(['content'], 'test.pdf', { type: 'application/pdf' });
+            wizardUnitComponent.onPdfFilesDropped([pdfFile]);
+            tick();
+
+            expect(errorSpy).toHaveBeenCalled();
+            expect(wizardUnitComponent.isUploadingPdfs()).toBeFalse();
+        }));
+
+        it('should not process if no files are provided', fakeAsync(() => {
+            const attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
+            const createSpy = jest.spyOn(attachmentVideoUnitService, 'create');
+
+            wizardUnitComponentFixture.detectChanges();
+            tick();
+
+            wizardUnitComponent.onPdfFilesDropped([]);
+            tick();
+
+            expect(createSpy).not.toHaveBeenCalled();
+        }));
+
+        it('should not process if lecture has no id', fakeAsync(() => {
+            const attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
+            const createSpy = jest.spyOn(attachmentVideoUnitService, 'create');
+
+            wizardUnitComponent.lecture = new Lecture();
+            wizardUnitComponent.lecture.id = undefined;
+            wizardUnitComponentFixture.detectChanges();
+            tick();
+
+            const pdfFile = new File(['content'], 'test.pdf', { type: 'application/pdf' });
+            wizardUnitComponent.onPdfFilesDropped([pdfFile]);
+            tick();
+
+            expect(createSpy).not.toHaveBeenCalled();
+        }));
+
+        it('should set isUploadingPdfs during upload', fakeAsync(() => {
+            const attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
+
+            const createdUnit = new AttachmentVideoUnit();
+            createdUnit.id = 1;
+
+            jest.spyOn(attachmentVideoUnitService, 'create').mockReturnValue(of(new HttpResponse({ body: createdUnit, status: 201 })));
+
+            wizardUnitComponentFixture.detectChanges();
+            tick();
+
+            expect(wizardUnitComponent.isUploadingPdfs()).toBeFalse();
+
+            const pdfFile = new File(['content'], 'test.pdf', { type: 'application/pdf' });
+            wizardUnitComponent.onPdfFilesDropped([pdfFile]);
+
+            // After completion
+            tick();
+            expect(wizardUnitComponent.isUploadingPdfs()).toBeFalse();
+        }));
+    });
 });
