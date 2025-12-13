@@ -122,6 +122,9 @@ public class ModelingExerciseService {
 
         exercise.setAllowComplaintsForAutomaticAssessments(updateModelingExerciseDTO.allowComplaintsForAutomaticAssessments());
         exercise.setAllowFeedbackRequests(updateModelingExerciseDTO.allowFeedbackRequests());
+        exercise.setPresentationScoreEnabled(updateModelingExerciseDTO.presentationScoreEnabled());
+        exercise.setSecondCorrectionEnabled(updateModelingExerciseDTO.secondCorrectionEnabled());
+        exercise.setFeedbackSuggestionModule(updateModelingExerciseDTO.feedbackSuggestionModule());
         exercise.setGradingInstructions(updateModelingExerciseDTO.gradingInstructions());
 
         exercise.setExampleSolutionModel(updateModelingExerciseDTO.exampleSolutionModel());

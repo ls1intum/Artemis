@@ -20,6 +20,8 @@ export interface UpdateModelingExerciseDTO {
     includedInOverallScore?: IncludedInOverallScore;
     allowComplaintsForAutomaticAssessments?: boolean;
     allowFeedbackRequests?: boolean;
+    presentationScoreEnabled?: boolean;
+    secondCorrectionEnabled?: boolean;
 
     releaseDate?: string;
     startDate?: string;
@@ -35,6 +37,7 @@ export interface UpdateModelingExerciseDTO {
 
     gradingCriteria?: GradingCriterion[];
     gradingInstructions?: string;
+    feedbackSuggestionModule?: string;
     competencyLinks?: CompetencyExerciseLinkDTO[];
 }
 
@@ -57,6 +60,8 @@ export function toUpdateModelingExerciseDTO(modelingExercise: ModelingExercise):
         includedInOverallScore: modelingExercise.includedInOverallScore,
         allowComplaintsForAutomaticAssessments: modelingExercise.allowComplaintsForAutomaticAssessments ?? false,
         allowFeedbackRequests: modelingExercise.allowFeedbackRequests ?? false,
+        presentationScoreEnabled: modelingExercise.presentationScoreEnabled ?? false,
+        secondCorrectionEnabled: modelingExercise.presentationScoreEnabled ?? false,
         releaseDate: convertDateFromClient(modelingExercise.releaseDate),
         startDate: convertDateFromClient(modelingExercise.startDate),
         dueDate: convertDateFromClient(modelingExercise.dueDate),
@@ -68,6 +73,7 @@ export function toUpdateModelingExerciseDTO(modelingExercise: ModelingExercise):
         exerciseGroupId: modelingExercise.exerciseGroup?.id,
         gradingCriteria: modelingExercise.gradingCriteria ?? [],
         gradingInstructions: modelingExercise.gradingInstructions,
+        feedbackSuggestionModule: modelingExercise.feedbackSuggestionModule,
         competencyLinks: mapCompetencyLinks(modelingExercise.competencyLinks),
     };
 }

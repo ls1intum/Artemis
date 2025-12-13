@@ -22,9 +22,9 @@ import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record UpdateModelingExerciseDTO(long id, String title, String channelName, String shortName, String problemStatement, Set<String> categories, DifficultyLevel difficulty,
         Double maxPoints, Double bonusPoints, IncludedInOverallScore includedInOverallScore, Boolean allowComplaintsForAutomaticAssessments, Boolean allowFeedbackRequests,
-        String gradingInstructions, ZonedDateTime releaseDate, ZonedDateTime startDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate,
-        ZonedDateTime exampleSolutionPublicationDate, String exampleSolutionModel, String exampleSolutionExplanation, Long courseId, Long exerciseGroupId,
-        Set<GradingCriterionDTO> gradingCriteria, Set<CompetencyExerciseLinkDTO> competencyLinks) {
+        Boolean presentationScoreEnabled, Boolean secondCorrectionEnabled, String feedbackSuggestionModule, String gradingInstructions, ZonedDateTime releaseDate,
+        ZonedDateTime startDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, ZonedDateTime exampleSolutionPublicationDate, String exampleSolutionModel,
+        String exampleSolutionExplanation, Long courseId, Long exerciseGroupId, Set<GradingCriterionDTO> gradingCriteria, Set<CompetencyExerciseLinkDTO> competencyLinks) {
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record CompetencyExerciseLinkDTO(@NotNull CourseCompetencyDTO courseCompetencyDTO, Double weight, Long courseId) {
@@ -85,7 +85,8 @@ public record UpdateModelingExerciseDTO(long id, String title, String channelNam
         }
         return new UpdateModelingExerciseDTO(exercise.getId(), exercise.getTitle(), exercise.getChannelName(), exercise.getShortName(), exercise.getProblemStatement(),
                 exercise.getCategories(), exercise.getDifficulty(), exercise.getMaxPoints(), exercise.getBonusPoints(), exercise.getIncludedInOverallScore(),
-                exercise.getAllowComplaintsForAutomaticAssessments(), exercise.getAllowFeedbackRequests(), exercise.getGradingInstructions(), exercise.getReleaseDate(),
+                exercise.getAllowComplaintsForAutomaticAssessments(), exercise.getAllowFeedbackRequests(), exercise.getPresentationScoreEnabled(),
+                exercise.getSecondCorrectionEnabled(), exercise.getFeedbackSuggestionModule(), exercise.getGradingInstructions(), exercise.getReleaseDate(),
                 exercise.getStartDate(), exercise.getDueDate(), exercise.getAssessmentDueDate(), exercise.getExampleSolutionPublicationDate(), exercise.getExampleSolutionModel(),
                 exercise.getExampleSolutionExplanation(), courseId, exerciseGroupId, gradingCriterionDTOs, competencyLinkDTOs);
     }

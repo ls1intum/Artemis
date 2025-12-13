@@ -938,8 +938,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         ModelingExercise modelingExerciseToBeConflicted = modelingExerciseTestRepository.findByIdElseThrow(classExercise.getId());
         modelingExerciseToBeConflicted.setId(123456789L);
 
-        UpdateModelingExerciseDTO dto = new UpdateModelingExerciseDTO(modelingExerciseToBeConflicted.getId(), null, null, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null, null, null);
+        UpdateModelingExerciseDTO dto = UpdateModelingExerciseDTO.of(modelingExerciseToBeConflicted);
         request.put("/api/modeling/modeling-exercises/" + classExercise.getId() + "/re-evaluate", dto, HttpStatus.CONFLICT);
     }
 
