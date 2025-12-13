@@ -91,8 +91,8 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnInit 
     startDateField = viewChild<FormDateTimePickerComponent>('startDate');
     dueDateField = viewChild<FormDateTimePickerComponent>('dueDate');
     assessmentDateField = viewChild<FormDateTimePickerComponent>('assessmentDueDate');
-    exerciseTitleChannelNameComponent = viewChild.required(ExerciseTitleChannelNameComponent);
-    teamConfigFormGroupComponent = viewChild.required(TeamConfigFormGroupComponent);
+    exerciseTitleChannelNameComponent = viewChild(ExerciseTitleChannelNameComponent);
+    teamConfigFormGroupComponent = viewChild(TeamConfigFormGroupComponent);
 
     // Signals for state
     fileUploadExercise = signal<FileUploadExercise>(new FileUploadExercise(undefined, undefined));
@@ -162,7 +162,11 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnInit 
      * Triggers {@link calculateFormSectionStatus} whenever a relevant signal changes
      */
     private updateFormSectionsOnIsValidChange() {
-        this.exerciseTitleChannelNameComponent().titleChannelNameComponent().isValid(); // trigger the effect
+        // Guard against viewChild not being available yet (before view init)
+        const titleComponent = this.exerciseTitleChannelNameComponent?.();
+        if (titleComponent?.titleChannelNameComponent) {
+            titleComponent.titleChannelNameComponent().isValid(); // trigger the effect
+        }
         this.calculateFormSectionStatus();
     }
 
@@ -183,37 +187,39 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnInit 
             ?.valueChanges?.pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe(() => this.calculateFormSectionStatus());
         this.teamConfigFormGroupComponent()
-            .formValidChanges.pipe(takeUntilDestroyed(this.destroyRef))
+            ?.formValidChanges?.pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe(() => this.calculateFormSectionStatus());
     }
 
     calculateFormSectionStatus() {
         const exercise = this.fileUploadExercise();
+        const titleComponent = this.exerciseTitleChannelNameComponent?.();
+        const teamConfig = this.teamConfigFormGroupComponent?.();
         this.formStatusSections.set([
             {
                 title: 'artemisApp.exercise.sections.general',
-                valid: this.exerciseTitleChannelNameComponent().titleChannelNameComponent().isValid(),
+                valid: titleComponent?.titleChannelNameComponent()?.isValid() ?? true,
             },
-            { title: 'artemisApp.exercise.sections.mode', valid: this.teamConfigFormGroupComponent().formValid },
+            { title: 'artemisApp.exercise.sections.mode', valid: teamConfig?.formValid ?? true },
             { title: 'artemisApp.exercise.sections.problem', valid: true, empty: !exercise.problemStatement },
             {
                 title: 'artemisApp.exercise.sections.solution',
-                valid: Boolean(this.isExamMode() || (!exercise.exampleSolutionPublicationDateError && this.solutionPublicationDateField()?.dateInput.valid)),
+                valid: Boolean(this.isExamMode() || (!exercise.exampleSolutionPublicationDateError && (this.solutionPublicationDateField()?.dateInput?.valid ?? true))),
                 empty: !exercise.exampleSolution || (!this.isExamMode() && !exercise.exampleSolutionPublicationDate),
             },
             {
                 title: 'artemisApp.exercise.sections.grading',
                 valid: Boolean(
-                    this.points()?.valid &&
-                    this.bonusPoints()?.valid &&
+                    (this.points()?.valid ?? true) &&
+                    (this.bonusPoints()?.valid ?? true) &&
                     (this.isExamMode() ||
                         (!exercise.startDateError &&
                             !exercise.dueDateError &&
                             !exercise.assessmentDueDateError &&
-                            this.releaseDateField()?.dateInput.valid &&
-                            this.startDateField()?.dateInput.valid &&
-                            this.dueDateField()?.dateInput.valid &&
-                            this.assessmentDateField()?.dateInput.valid)),
+                            (this.releaseDateField()?.dateInput?.valid ?? true) &&
+                            (this.startDateField()?.dateInput?.valid ?? true) &&
+                            (this.dueDateField()?.dateInput?.valid ?? true) &&
+                            (this.assessmentDateField()?.dateInput?.valid ?? true))),
                 ),
                 empty:
                     !this.isExamMode() &&

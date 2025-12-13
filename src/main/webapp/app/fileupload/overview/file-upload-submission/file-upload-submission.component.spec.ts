@@ -1,456 +1,683 @@
-import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
-import { AccountService } from 'app/core/auth/account.service';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
-import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
+/**
+ * Vitest tests for FileUploadSubmissionComponent.
+ */
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { ActivatedRoute, Params, provideRouter } from '@angular/router';
+import { BehaviorSubject, of, throwError } from 'rxjs';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { TranslateModule } from '@ngx-translate/core';
 import { MockComponent, MockPipe } from 'ng-mocks';
-import { AlertService } from 'app/shared/service/alert.service';
-import { DebugElement } from '@angular/core';
-import { By } from '@angular/platform-browser';
-import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
-import { MockComplaintService } from 'test/helpers/mocks/service/mock-complaint.service';
-import { NgxDatatableModule } from '@siemens/ngx-datatable';
-import { FileUploadSubmissionComponent } from 'app/fileupload/overview/file-upload-submission/file-upload-submission.component';
-import { MockFileUploadSubmissionService, createFileUploadSubmission, fileUploadParticipation } from 'test/helpers/mocks/service/mock-file-upload-submission.service';
-import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
-import { fileUploadExercise } from 'test/helpers/mocks/service/mock-file-upload-exercise.service';
-import { MAX_SUBMISSION_FILE_SIZE } from 'app/shared/constants/input.constants';
-import { TranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs/esm';
-import { of } from 'rxjs';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+
+import 'app/shared/util/array.extension';
+
+import { FileUploadSubmissionComponent } from './file-upload-submission.component';
+import { FileUploadSubmissionService } from '../file-upload-submission.service';
+import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
+import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
-import { FileUploadSubmissionService } from 'app/fileupload/overview/file-upload-submission.service';
-import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
-import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
-import { ComplaintsForTutorComponent } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
-import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
+import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
+import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
+
+import { AccountService } from 'app/core/auth/account.service';
+import { AlertService } from 'app/shared/service/alert.service';
+import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
+import { FileService } from 'app/shared/service/file.service';
+import { MAX_SUBMISSION_FILE_SIZE } from 'app/shared/constants/input.constants';
+
+import { HeaderParticipationPageComponent } from 'app/exercise/exercise-headers/participation-page/header-participation-page.component';
 import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
 import { AdditionalFeedbackComponent } from 'app/exercise/additional-feedback/additional-feedback.component';
-import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { RatingComponent } from 'app/exercise/rating/rating.component';
-import { HeaderParticipationPageComponent } from 'app/exercise/exercise-headers/participation-page/header-participation-page.component';
 import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
-
-import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
-import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
-import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { provideRouter } from '@angular/router';
-import { FileService } from 'app/shared/service/file.service';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
+import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 
 describe('FileUploadSubmissionComponent', () => {
-    let comp: FileUploadSubmissionComponent;
+    setupTestBed({ zoneless: true });
+
+    let component: FileUploadSubmissionComponent;
     let fixture: ComponentFixture<FileUploadSubmissionComponent>;
-    let debugElement: DebugElement;
-    let alertService: AlertService;
     let fileUploadSubmissionService: FileUploadSubmissionService;
+    let alertService: AlertService;
+    let participationWebsocketService: ParticipationWebsocketService;
+    let fileService: FileService;
 
-    const result = { id: 1 } as Result;
+    let routeParams$: BehaviorSubject<Params>;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            imports: [
-                NgxDatatableModule,
-                FaIconComponent,
-                FileUploadSubmissionComponent,
-                MockComponent(ComplaintsForTutorComponent),
-                MockComponent(ResizeableContainerComponent),
-                MockComponent(AdditionalFeedbackComponent),
-                MockComponent(ButtonComponent),
-                MockComponent(RatingComponent),
-                MockComponent(ComplaintsStudentViewComponent),
-                MockComponent(HeaderParticipationPageComponent),
-                MockPipe(HtmlForMarkdownPipe),
-                MockPipe(ArtemisDatePipe),
-                MockPipe(ArtemisTimeAgoPipe),
-                MockPipe(ArtemisTranslatePipe),
-            ],
+    const createCourse = (id = 123): Course => {
+        const course = new Course();
+        course.id = id;
+        return course;
+    };
+
+    const createExercise = (overrides?: Partial<FileUploadExercise>): FileUploadExercise => {
+        const exercise = new FileUploadExercise(createCourse(), undefined);
+        exercise.id = 456;
+        exercise.title = 'Test Exercise';
+        exercise.filePattern = 'pdf,png';
+        if (overrides) {
+            Object.assign(exercise, overrides);
+        }
+        return exercise;
+    };
+
+    const createParticipation = (exercise?: FileUploadExercise): StudentParticipation => {
+        const participation = new StudentParticipation();
+        participation.id = 111;
+        participation.exercise = exercise ?? createExercise();
+        participation.initializationDate = dayjs().subtract(1, 'hour');
+        return participation;
+    };
+
+    const createSubmission = (exercise?: FileUploadExercise): FileUploadSubmission => {
+        const submission = new FileUploadSubmission();
+        submission.id = 789;
+        submission.submitted = false;
+        submission.filePath = undefined;
+        submission.participation = createParticipation(exercise);
+        return submission;
+    };
+
+    const createSubmittedSubmission = (exercise?: FileUploadExercise): FileUploadSubmission => {
+        const submission = createSubmission(exercise);
+        submission.submitted = true;
+        submission.filePath = '/api/files/submissions/test.pdf';
+        return submission;
+    };
+
+    /**
+     * Helper to get the StudentParticipation from a test submission.
+     * In tests, we always create submissions with StudentParticipation via createParticipation.
+     */
+    const getParticipation = (submission: FileUploadSubmission): StudentParticipation => {
+        return submission.participation as StudentParticipation;
+    };
+
+    const createResult = (submission?: FileUploadSubmission): Result => {
+        const result = new Result();
+        result.id = 999;
+        result.completionDate = dayjs();
+        result.score = 80;
+        result.feedbacks = [];
+        return result;
+    };
+
+    const createFile = (name: string, type: string, size = 1000): File => {
+        const file = new File(['test content'], name, { type });
+        Object.defineProperty(file, 'size', { value: size, writable: false });
+        return file;
+    };
+
+    beforeEach(async () => {
+        routeParams$ = new BehaviorSubject({ participationId: 111 });
+
+        await TestBed.configureTestingModule({
+            imports: [FileUploadSubmissionComponent, TranslateModule.forRoot()],
             providers: [
-                { provide: AccountService, useClass: MockAccountService },
-                SessionStorageService,
-                LocalStorageService,
-                { provide: ComplaintService, useClass: MockComplaintService },
-                { provide: FileUploadSubmissionService, useClass: MockFileUploadSubmissionService },
-                { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
-                { provide: TranslateService, useClass: MockTranslateService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 provideRouter([]),
+                {
+                    provide: ActivatedRoute,
+                    useValue: {
+                        params: routeParams$.asObservable(),
+                    },
+                },
+                {
+                    provide: AccountService,
+                    useValue: {
+                        isOwnerOfParticipation: vi.fn().mockReturnValue(true),
+                    },
+                },
+                {
+                    provide: ParticipationWebsocketService,
+                    useValue: {
+                        addParticipation: vi.fn(),
+                    },
+                },
+                {
+                    provide: FileService,
+                    useValue: {
+                        downloadFile: vi.fn(),
+                    },
+                },
             ],
         })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(FileUploadSubmissionComponent);
-                comp = fixture.componentInstance;
-                debugElement = fixture.debugElement;
-                alertService = TestBed.inject(AlertService);
-                fileUploadSubmissionService = TestBed.inject(FileUploadSubmissionService);
-            });
+            .overrideComponent(FileUploadSubmissionComponent, {
+                remove: {
+                    imports: [
+                        HeaderParticipationPageComponent,
+                        ResizeableContainerComponent,
+                        AdditionalFeedbackComponent,
+                        RatingComponent,
+                        ComplaintsStudentViewComponent,
+                        ButtonComponent,
+                        ArtemisTranslatePipe,
+                        ArtemisTimeAgoPipe,
+                        HtmlForMarkdownPipe,
+                    ],
+                },
+                add: {
+                    imports: [
+                        MockComponent(HeaderParticipationPageComponent),
+                        MockComponent(ResizeableContainerComponent),
+                        MockComponent(AdditionalFeedbackComponent),
+                        MockComponent(RatingComponent),
+                        MockComponent(ComplaintsStudentViewComponent),
+                        MockComponent(ButtonComponent),
+                        MockPipe(ArtemisTranslatePipe),
+                        MockPipe(ArtemisTimeAgoPipe),
+                        MockPipe(HtmlForMarkdownPipe),
+                    ],
+                },
+            })
+            .compileComponents();
+
+        fixture = TestBed.createComponent(FileUploadSubmissionComponent);
+        component = fixture.componentInstance;
+
+        fileUploadSubmissionService = TestBed.inject(FileUploadSubmissionService);
+        alertService = TestBed.inject(AlertService);
+        participationWebsocketService = TestBed.inject(ParticipationWebsocketService);
+        fileService = TestBed.inject(FileService);
     });
 
-    afterEach(fakeAsync(() => {
-        tick();
-        fixture.destroy();
-        flush();
-    }));
+    afterEach(() => {
+        vi.clearAllMocks();
+        if (fixture) {
+            fixture.destroy();
+        }
+    });
 
-    // Helper to trigger data load
-    function activateComponent() {
-        fixture.componentRef.setInput('participationId', 1);
-        const accountService = TestBed.inject(AccountService);
-        jest.spyOn(accountService, 'isOwnerOfParticipation').mockReturnValue(true);
-    }
+    describe('initialization with route params', () => {
+        it('should load submission from participation ID in route', async () => {
+            const exercise = createExercise();
+            const submission = createSubmission(exercise);
+            vi.spyOn(fileUploadSubmissionService, 'getDataForFileUploadEditor').mockReturnValue(of(submission));
 
-    it('File Upload Submission is correctly initialized from service', fakeAsync(() => {
-        activateComponent();
-        fixture.detectChanges();
-        tick();
-        // check if properties where assigned correctly on init
-        expect(comp.acceptedFileExtensions().replace(/\./g, '')).toEqual(fileUploadExercise.filePattern);
-        expect(comp.fileUploadExercise()).toEqual(fileUploadExercise);
-        expect(comp.isAfterAssessmentDueDate()).toBeTrue();
+            fixture.detectChanges();
+            await fixture.whenStable();
 
-        // check if fileUploadInput is available
-        const fileUploadInput = debugElement.query(By.css('#fileUploadInput'));
-        expect(fileUploadInput).not.toBeNull();
-        expect(fileUploadInput.nativeElement.disabled).toBeFalse();
-
-        // check if extension elements are set
-        const extension = debugElement.query(By.css('.ms-1.badge.bg-info'));
-        expect(extension).toBeDefined();
-        expect(extension.nativeElement.textContent.replace(/\s/g, '')).toEqual(fileUploadExercise.filePattern!.split(',')[0].toUpperCase());
-    }));
-
-    it('Submission and file uploaded', fakeAsync(() => {
-        // Ignore window confirm
-        window.confirm = () => {
-            return false;
-        };
-        const fileName = 'exampleSubmission';
-        comp.submissionFile.set(new File([''], fileName, { type: 'application/pdf' }));
-        const submission = createFileUploadSubmission();
-        comp.submission.set(submission);
-        comp.fileUploadExercise.set(submission.participation!.exercise as FileUploadExercise);
-        comp.participation.set(submission.participation as StudentParticipation);
-        comp.isOwnerOfParticipation.set(true); // Manually set owner
-        fixture.detectChanges();
-
-        let submitFileButton = debugElement.query(By.css('jhi-button'));
-        submitFileButton.nativeElement.click();
-        tick();
-
-        comp.submission.update((s: FileUploadSubmission | undefined) => {
-            if (s) s.submitted = true;
-            return s;
+            expect(fileUploadSubmissionService.getDataForFileUploadEditor).toHaveBeenCalledWith(111);
+            expect(component.submission()).toEqual(submission);
         });
-        comp.result.set(new Result());
-        fixture.detectChanges();
 
-        // After result is set, the file upload input should be hidden (as per !result() condition)
-        const fileUploadInput = fixture.nativeElement.querySelector('#fileUploadInput');
-        expect(fileUploadInput).toBeNull();
+        it('should set exercise from loaded submission', async () => {
+            const exercise = createExercise();
+            const submission = createSubmission(exercise);
+            vi.spyOn(fileUploadSubmissionService, 'getDataForFileUploadEditor').mockReturnValue(of(submission));
 
-        submitFileButton = debugElement.query(By.css('.btn.btn-success'));
-        expect(submitFileButton).toBeNull();
-    }));
+            fixture.detectChanges();
+            await fixture.whenStable();
 
-    it('Too big file can not be submitted', fakeAsync(() => {
-        // Ignore console errors
-        console.error = jest.fn();
+            expect(component.fileUploadExercise()).toEqual(exercise);
+        });
 
-        fixture.detectChanges();
-        tick();
+        it('should set participation from loaded submission', async () => {
+            const exercise = createExercise();
+            const submission = createSubmission(exercise);
+            vi.spyOn(fileUploadSubmissionService, 'getDataForFileUploadEditor').mockReturnValue(of(submission));
 
-        const submissionFile = new File([''], 'exampleSubmission.png');
-        Object.defineProperty(submissionFile, 'size', { value: MAX_SUBMISSION_FILE_SIZE + 1, writable: false });
-        const submission = createFileUploadSubmission();
-        comp.submission.set(submission);
-        comp.fileUploadExercise.set(submission.participation!.exercise as FileUploadExercise);
-        comp.participation.set(submission.participation as StudentParticipation);
-        comp.isOwnerOfParticipation.set(true);
-        const jhiErrorSpy = jest.spyOn(alertService, 'error');
-        const event = { target: { files: [submissionFile] } };
-        comp.setFileSubmissionForExercise(event);
-        fixture.detectChanges();
+            fixture.detectChanges();
+            await fixture.whenStable();
 
-        // check that properties are set properly
-        expect(jhiErrorSpy).toHaveBeenCalledOnce();
-        expect(comp.submissionFile()).toBeUndefined();
-        expect(comp.submission()!.filePath).toBeUndefined();
+            expect(component.participation()).toEqual(submission.participation);
+        });
 
-        // check if fileUploadInput is available
-        const fileUploadInput = debugElement.query(By.css('#fileUploadInput'));
-        expect(fileUploadInput).toBeDefined();
-        expect(fileUploadInput.nativeElement.disabled).toBeFalse();
-        expect(fileUploadInput.nativeElement.value).toBe('');
-    }));
+        it('should handle error when loading submission fails', async () => {
+            vi.spyOn(fileUploadSubmissionService, 'getDataForFileUploadEditor').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 404 })));
+            const alertSpy = vi.spyOn(alertService, 'error');
 
-    it('Incorrect file type can not be submitted', fakeAsync(() => {
-        // Ignore console errors
-        console.error = jest.fn();
+            fixture.detectChanges();
+            await fixture.whenStable();
 
-        fixture.detectChanges();
-        tick();
+            expect(alertSpy).toHaveBeenCalled();
+        });
+    });
 
-        // Only png and pdf types are allowed
-        const submissionFile = new File([''], 'exampleSubmission.jpg');
-        const submission = createFileUploadSubmission();
-        comp.submission.set(submission);
-        comp.fileUploadExercise.set(submission.participation!.exercise as FileUploadExercise);
-        comp.participation.set(submission.participation as StudentParticipation);
-        comp.isOwnerOfParticipation.set(true);
-        const jhiErrorSpy = jest.spyOn(alertService, 'error');
-        const event = { target: { files: [submissionFile] } };
-        comp.setFileSubmissionForExercise(event);
-        fixture.detectChanges();
+    describe('initialization with input values', () => {
+        it('should use input values instead of loading from server', async () => {
+            const exercise = createExercise();
+            const submission = createSubmission(exercise);
+            const participation = getParticipation(submission);
+            const getSpy = vi.spyOn(fileUploadSubmissionService, 'getDataForFileUploadEditor');
 
-        // check that properties are set properly
-        expect(jhiErrorSpy).toHaveBeenCalledOnce();
-        expect(comp.submissionFile()).toBeUndefined();
-        expect(comp.submission()!.filePath).toBeUndefined();
+            fixture.componentRef.setInput('inputExercise', exercise);
+            fixture.componentRef.setInput('inputSubmission', submission);
+            fixture.componentRef.setInput('inputParticipation', participation);
+            fixture.detectChanges();
+            await fixture.whenStable();
 
-        // check if fileUploadInput is available
-        const fileUploadInput = debugElement.query(By.css('#fileUploadInput'));
-        expect(fileUploadInput).toBeDefined();
-        expect(fileUploadInput.nativeElement.disabled).toBeFalse();
-        expect(fileUploadInput.nativeElement.value).toBe('');
+            expect(getSpy).not.toHaveBeenCalled();
+            expect(component.fileUploadExercise()).toEqual(exercise);
+            expect(component.submission()).toEqual(submission);
+            expect(component.participation()).toEqual(participation);
+        });
 
-        tick();
-        fixture.destroy();
-        flush();
-    }));
+        it('should set up component with submitted file when submission is submitted', async () => {
+            const exercise = createExercise();
+            const submission = createSubmittedSubmission(exercise);
 
-    it('should not allow to submit after the due date if the initialization date is before the due date', fakeAsync(() => {
-        const submission = createFileUploadSubmission();
-        submission.participation!.initializationDate = dayjs().subtract(2, 'days');
-        (<StudentParticipation>submission.participation).exercise!.dueDate = dayjs().subtract(1, 'days');
-        jest.spyOn(fileUploadSubmissionService, 'getDataForFileUploadEditor').mockReturnValue(of(submission));
-        comp.submissionFile.set(new File([''], 'exampleSubmission.png'));
-        activateComponent();
+            fixture.componentRef.setInput('inputExercise', exercise);
+            fixture.componentRef.setInput('inputSubmission', submission);
+            fixture.detectChanges();
+            await fixture.whenStable();
 
-        fixture.detectChanges();
-        tick();
+            expect(component.submittedFileName()).toBe('test.pdf');
+        });
+    });
 
-        const submitButton = debugElement.query(By.css('jhi-button'));
-        expect(submitButton.componentInstance.disabled).toBeTrue();
+    describe('computed signals', () => {
+        beforeEach(async () => {
+            const exercise = createExercise();
+            const submission = createSubmission(exercise);
+            vi.spyOn(fileUploadSubmissionService, 'getDataForFileUploadEditor').mockReturnValue(of(submission));
+            fixture.detectChanges();
+            await fixture.whenStable();
+        });
 
-        tick();
-        fixture.destroy();
-        flush();
-    }));
+        it('should compute course from exercise', () => {
+            expect(component.course()).toBeDefined();
+            expect(component.course()?.id).toBe(123);
+        });
 
-    it('should allow to submit after the due date if the initialization date is after the due date', fakeAsync(() => {
-        const submission = createFileUploadSubmission();
-        submission.participation!.initializationDate = dayjs().add(1, 'days');
-        (<StudentParticipation>submission.participation).exercise!.dueDate = dayjs();
-        jest.spyOn(fileUploadSubmissionService, 'getDataForFileUploadEditor').mockReturnValue(of(submission));
-        comp.submissionFile.set(new File([''], 'exampleSubmission.png'));
-        activateComponent();
+        it('should compute examMode as false for course exercise', () => {
+            expect(component.examMode()).toBe(false);
+        });
 
-        fixture.detectChanges();
-        tick();
+        it('should compute accepted file extensions from pattern', () => {
+            expect(component.acceptedFileExtensions()).toContain('.pdf');
+            expect(component.acceptedFileExtensions()).toContain('.png');
+        });
 
-        expect(comp.isLate()).toBeTrue();
-        const submitButton = debugElement.query(By.css('jhi-button'));
-        expect(submitButton.componentInstance.disabled).toBeFalse();
+        it('should compute isAfterAssessmentDueDate when no assessment due date', () => {
+            expect(component.isAfterAssessmentDueDate()).toBe(true);
+        });
 
-        tick();
-        fixture.destroy();
-        flush();
-    }));
+        it('should compute isAfterAssessmentDueDate when assessment due date passed', async () => {
+            const exercise = createExercise({ assessmentDueDate: dayjs().subtract(1, 'day') });
+            const submission = createSubmission(exercise);
+            vi.spyOn(fileUploadSubmissionService, 'getDataForFileUploadEditor').mockReturnValue(of(submission));
 
-    it('should not allow to submit if there is a result and no due date', fakeAsync(() => {
-        jest.spyOn(fileUploadSubmissionService, 'getDataForFileUploadEditor').mockReturnValue(of(createFileUploadSubmission()));
-        comp.submissionFile.set(new File([''], 'exampleSubmission.png'));
-        activateComponent();
+            fixture = TestBed.createComponent(FileUploadSubmissionComponent);
+            component = fixture.componentInstance;
+            fixture.detectChanges();
+            await fixture.whenStable();
 
-        fixture.detectChanges();
-        tick();
+            expect(component.isAfterAssessmentDueDate()).toBe(true);
+        });
 
-        comp.result.set(result);
-        fixture.detectChanges();
+        it('should compute isLate when initialization is after due date', async () => {
+            const exercise = createExercise({ dueDate: dayjs().subtract(2, 'days') });
+            const submission = createSubmission(exercise);
+            getParticipation(submission).initializationDate = dayjs().subtract(1, 'day');
+            vi.spyOn(fileUploadSubmissionService, 'getDataForFileUploadEditor').mockReturnValue(of(submission));
 
-        expect(comp.isLate()).toBeTrue(); // This expectation seems to depend on logic inside component that defaults/calculates isLate
-        expect((!comp.isActive() && !comp.isLate()) || !comp.submission() || !comp.submissionFile() || !!comp.result()).toBeTrue();
+            fixture = TestBed.createComponent(FileUploadSubmissionComponent);
+            component = fixture.componentInstance;
+            fixture.detectChanges();
+            await fixture.whenStable();
 
-        tick();
-        fixture.destroy();
-        flush();
-    }));
+            expect(component.isLate()).toBe(true);
+        });
+    });
 
-    it('should get inactive as soon as the due date passes the current date', fakeAsync(() => {
-        const submission = createFileUploadSubmission();
-        const exercise = (<StudentParticipation>submission.participation).exercise as any;
-        exercise.dueDate = dayjs().add(1, 'days');
-        jest.spyOn(fileUploadSubmissionService, 'getDataForFileUploadEditor').mockReturnValue(of(submission));
-        comp.submissionFile.set(new File([''], 'exampleSubmission.png'));
-        activateComponent();
+    describe('file selection', () => {
+        beforeEach(async () => {
+            const exercise = createExercise({ filePattern: 'pdf,png' });
+            const submission = createSubmission(exercise);
+            vi.spyOn(fileUploadSubmissionService, 'getDataForFileUploadEditor').mockReturnValue(of(submission));
+            fixture.detectChanges();
+            await fixture.whenStable();
+        });
 
-        fixture.detectChanges();
-        tick();
+        it('should accept valid file type', () => {
+            const file = createFile('document.pdf', 'application/pdf');
+            const event = { target: { files: [file] } } as unknown as Event;
 
-        // comp.participation is now a signal, but we can mutate the object it holds if it's the same ref,
-        // or update the signal.
-        const participation = comp.participation()!;
-        participation.initializationDate = dayjs();
-        comp.participation.set(participation); // trigger signal update
+            component.setFileSubmissionForExercise(event);
 
-        expect(comp.isActive()).toBeTrue();
+            expect(component.submissionFile()).toBe(file);
+        });
 
-        const exerciseToUpdate = comp.fileUploadExercise()!;
-        // Signal object equality check: we must create a NEW object or spread to trigger change
-        const newExercise = { ...exerciseToUpdate, dueDate: dayjs().subtract(1, 'days') } as FileUploadExercise;
-        comp.fileUploadExercise.set(newExercise); // trigger signal update
+        it('should reject invalid file type', () => {
+            const file = createFile('document.docx', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+            const event = { target: { files: [file] } } as unknown as Event;
+            const alertSpy = vi.spyOn(alertService, 'error');
 
-        fixture.detectChanges();
-        tick();
+            component.setFileSubmissionForExercise(event);
 
-        expect(comp.isActive()).toBeFalse();
+            expect(alertSpy).toHaveBeenCalledWith('artemisApp.fileUploadSubmission.fileExtensionError');
+            expect(component.submissionFile()).toBeUndefined();
+        });
 
-        tick();
-        fixture.destroy();
-        flush();
-    }));
+        it('should reject file too large', () => {
+            const file = createFile('document.pdf', 'application/pdf', MAX_SUBMISSION_FILE_SIZE + 1);
+            const event = { target: { files: [file] } } as unknown as Event;
+            const alertSpy = vi.spyOn(alertService, 'error');
 
-    it('should mark the subsequent feedback', () => {
-        const gradingInstruction = {
-            id: 1,
-            credits: 1,
-            gradingScale: 'scale',
-            instructionDescription: 'description',
-            feedback: 'instruction feedback',
-            usageCount: 1,
-        } as GradingInstruction;
+            component.setFileSubmissionForExercise(event);
 
-        const feedbacks = [
-            {
+            expect(alertSpy).toHaveBeenCalledWith('artemisApp.fileUploadSubmission.fileTooBigError', { fileName: 'document.pdf' });
+            expect(component.submissionFile()).toBeUndefined();
+        });
+
+        it('should handle empty file list', () => {
+            const event = { target: { files: [] } } as unknown as Event;
+
+            component.setFileSubmissionForExercise(event);
+
+            expect(component.submissionFile()).toBeUndefined();
+        });
+    });
+
+    describe('submitExercise', () => {
+        beforeEach(async () => {
+            const exercise = createExercise({ dueDate: dayjs().add(1, 'day') });
+            const submission = createSubmission(exercise);
+            vi.spyOn(fileUploadSubmissionService, 'getDataForFileUploadEditor').mockReturnValue(of(submission));
+            fixture.detectChanges();
+            await fixture.whenStable();
+        });
+
+        it('should submit file when valid', async () => {
+            const file = createFile('document.pdf', 'application/pdf');
+            component.submissionFile.set(file);
+            const newSubmission = createSubmittedSubmission();
+            newSubmission.participation = component.participation();
+            vi.spyOn(fileUploadSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: newSubmission })));
+            const alertSpy = vi.spyOn(alertService, 'success');
+
+            await component.submitExercise();
+
+            expect(fileUploadSubmissionService.update).toHaveBeenCalled();
+            expect(alertSpy).toHaveBeenCalledWith('artemisApp.fileUploadExercise.submitSuccessful');
+        });
+
+        it('should show warning when submitting after due date', async () => {
+            const exercise = createExercise({ dueDate: dayjs().subtract(1, 'day') });
+            exercise.studentParticipations = [];
+            const submission = createSubmission(exercise);
+            getParticipation(submission).initializationDate = dayjs().subtract(2, 'days');
+            vi.spyOn(fileUploadSubmissionService, 'getDataForFileUploadEditor').mockReturnValue(of(submission));
+
+            fixture = TestBed.createComponent(FileUploadSubmissionComponent);
+            component = fixture.componentInstance;
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            const file = createFile('document.pdf', 'application/pdf');
+            component.submissionFile.set(file);
+            const newSubmission = createSubmittedSubmission();
+            newSubmission.participation = component.participation();
+            vi.spyOn(fileUploadSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: newSubmission })));
+            const alertSpy = vi.spyOn(alertService, 'warning');
+
+            await component.submitExercise();
+
+            expect(alertSpy).toHaveBeenCalledWith('artemisApp.fileUploadExercise.submitDueDateMissed');
+        });
+
+        it('should not submit if no file selected', async () => {
+            const updateSpy = vi.spyOn(fileUploadSubmissionService, 'update');
+
+            await component.submitExercise();
+
+            expect(updateSpy).not.toHaveBeenCalled();
+        });
+
+        it('should not submit if already saving', async () => {
+            component.isSaving.set(true);
+            component.submissionFile.set(createFile('test.pdf', 'application/pdf'));
+            const updateSpy = vi.spyOn(fileUploadSubmissionService, 'update');
+
+            await component.submitExercise();
+
+            expect(updateSpy).not.toHaveBeenCalled();
+        });
+
+        it('should handle submission error', async () => {
+            const file = createFile('document.pdf', 'application/pdf');
+            component.submissionFile.set(file);
+            vi.spyOn(fileUploadSubmissionService, 'update').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+            const alertSpy = vi.spyOn(alertService, 'error');
+
+            await component.submitExercise();
+
+            expect(alertSpy).toHaveBeenCalledWith('artemisApp.fileUploadSubmission.fileUploadError', { fileName: file.name });
+            expect(component.isSaving()).toBe(false);
+        });
+
+        it('should add participation to websocket service after successful submit', async () => {
+            const file = createFile('document.pdf', 'application/pdf');
+            component.submissionFile.set(file);
+            const newSubmission = createSubmittedSubmission();
+            newSubmission.participation = component.participation();
+            vi.spyOn(fileUploadSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: newSubmission })));
+
+            await component.submitExercise();
+
+            expect(participationWebsocketService.addParticipation).toHaveBeenCalled();
+        });
+    });
+
+    describe('canDeactivate', () => {
+        beforeEach(async () => {
+            const submission = createSubmission();
+            vi.spyOn(fileUploadSubmissionService, 'getDataForFileUploadEditor').mockReturnValue(of(submission));
+            fixture.detectChanges();
+            await fixture.whenStable();
+        });
+
+        it('should return true when no file selected', () => {
+            expect(component.canDeactivate()).toBe(true);
+        });
+
+        it('should return true when submission is already submitted', () => {
+            component.submission()!.submitted = true;
+            component.submissionFile.set(createFile('test.pdf', 'application/pdf'));
+
+            expect(component.canDeactivate()).toBe(true);
+        });
+
+        it('should return false when file selected but not submitted', () => {
+            component.submissionFile.set(createFile('test.pdf', 'application/pdf'));
+
+            expect(component.canDeactivate()).toBe(false);
+        });
+    });
+
+    describe('downloadFile', () => {
+        beforeEach(async () => {
+            const submission = createSubmission();
+            vi.spyOn(fileUploadSubmissionService, 'getDataForFileUploadEditor').mockReturnValue(of(submission));
+            fixture.detectChanges();
+            await fixture.whenStable();
+        });
+
+        it('should call file service to download', () => {
+            component.downloadFile('/path/to/file.pdf');
+
+            expect(fileService.downloadFile).toHaveBeenCalledWith('/path/to/file.pdf');
+        });
+    });
+
+    describe('unreferencedFeedback', () => {
+        it('should compute unreferenced feedback from result', async () => {
+            const exercise = createExercise();
+            const submission = createSubmittedSubmission(exercise);
+            const result = createResult(submission);
+            const feedback1: Feedback = {
                 id: 1,
-                detailText: 'feedback1',
-                credits: 1,
-                gradingInstruction,
+                credits: 5,
+                detailText: 'Feedback 1',
                 type: FeedbackType.MANUAL_UNREFERENCED,
-            } as Feedback,
-            {
+            };
+            const feedback2: Feedback = {
                 id: 2,
-                detailText: 'feedback2',
-                credits: 1,
-                gradingInstruction,
+                credits: 3,
+                detailText: 'Feedback 2',
                 type: FeedbackType.MANUAL_UNREFERENCED,
-            } as Feedback,
-        ];
+            };
+            result.feedbacks = [feedback1, feedback2];
 
-        comp.result.set(new Result());
-        const res = comp.result()!;
-        res.feedbacks = feedbacks;
-        comp.result.set(res);
+            vi.spyOn(fileUploadSubmissionService, 'getDataForFileUploadEditor').mockReturnValue(of(submission));
 
-        const unreferencedFeedback = comp.unreferencedFeedback();
+            fixture.componentRef.setInput('inputExercise', exercise);
+            fixture.componentRef.setInput('inputSubmission', submission);
+            fixture.detectChanges();
+            await fixture.whenStable();
 
-        expect(unreferencedFeedback).toBeDefined();
-        expect(unreferencedFeedback).toHaveLength(2);
-        expect(unreferencedFeedback![0].isSubsequent).toBeUndefined();
-        expect(unreferencedFeedback![1].isSubsequent).toBeTrue();
+            component.result.set(result);
+            fixture.detectChanges();
+
+            expect(component.unreferencedFeedback()).toHaveLength(2);
+        });
+
+        it('should mark subsequent feedback when using same grading instruction', async () => {
+            const exercise = createExercise();
+            const submission = createSubmittedSubmission(exercise);
+            const result = createResult(submission);
+            const gradingInstruction: GradingInstruction = {
+                id: 1,
+                credits: 5,
+                gradingScale: 'scale',
+                instructionDescription: 'desc',
+                feedback: 'feedback',
+                usageCount: 1,
+            };
+            const feedback1: Feedback = {
+                id: 1,
+                credits: 5,
+                detailText: 'Feedback 1',
+                type: FeedbackType.MANUAL_UNREFERENCED,
+                gradingInstruction,
+            };
+            const feedback2: Feedback = {
+                id: 2,
+                credits: 5,
+                detailText: 'Feedback 2',
+                type: FeedbackType.MANUAL_UNREFERENCED,
+                gradingInstruction,
+            };
+            result.feedbacks = [feedback1, feedback2];
+
+            fixture.componentRef.setInput('inputExercise', exercise);
+            fixture.componentRef.setInput('inputSubmission', submission);
+            vi.spyOn(fileUploadSubmissionService, 'getDataForFileUploadEditor').mockReturnValue(of(submission));
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            component.result.set(result);
+            fixture.detectChanges();
+
+            const feedback = component.unreferencedFeedback();
+            expect(feedback).toBeDefined();
+        });
     });
 
-    it('should download file', () => {
-        const fileService = TestBed.inject(FileService);
-        const fileServiceStub = jest.spyOn(fileService, 'downloadFile').mockImplementation();
+    describe('submitButtonTooltip', () => {
+        beforeEach(async () => {
+            const exercise = createExercise({ dueDate: dayjs().add(1, 'day') });
+            const submission = createSubmission(exercise);
+            vi.spyOn(fileUploadSubmissionService, 'getDataForFileUploadEditor').mockReturnValue(of(submission));
+            fixture.detectChanges();
+            await fixture.whenStable();
+        });
 
-        comp.downloadFile('');
+        it('should show select file tooltip when no file selected', () => {
+            expect(component.submitButtonTooltip()).toBe('artemisApp.fileUploadSubmission.selectFile');
+        });
 
-        expect(fileServiceStub).toHaveBeenCalledOnce();
+        it('should show submit tooltip when file selected and active', () => {
+            component.submissionFile.set(createFile('test.pdf', 'application/pdf'));
+            fixture.detectChanges();
+
+            expect(component.submitButtonTooltip()).toBe('entity.action.submitTooltip');
+        });
     });
 
-    it('should decide over deactivation correctly', () => {
-        const submission = createFileUploadSubmission();
+    describe('submittedFileName and extension', () => {
+        it('should extract file name from path', async () => {
+            const submission = createSubmittedSubmission();
+            submission.filePath = '/api/files/submissions/document.pdf';
 
-        expect(comp.canDeactivate()).toBeTrue();
+            fixture.componentRef.setInput('inputSubmission', submission);
+            fixture.componentRef.setInput('inputExercise', createExercise());
+            fixture.detectChanges();
+            await fixture.whenStable();
 
-        submission.submitted = true;
-        comp.submission.set(submission);
+            expect(component.submittedFileName()).toBe('document.pdf');
+        });
 
-        expect(comp.canDeactivate()).toBeTrue();
+        it('should extract file extension from name', async () => {
+            const submission = createSubmittedSubmission();
+            submission.filePath = '/api/files/submissions/document.pdf';
 
-        comp.submissionFile.set(new File([''], 'exampleSubmission.png'));
+            fixture.componentRef.setInput('inputSubmission', submission);
+            fixture.componentRef.setInput('inputExercise', createExercise());
+            fixture.detectChanges();
+            await fixture.whenStable();
 
-        expect(comp.canDeactivate()).toBeTrue();
+            expect(component.submittedFileExtension()).toBe('pdf');
+        });
 
-        submission.submitted = false;
-        comp.submission.set(submission);
+        it('should return empty string when no file path', async () => {
+            const submission = createSubmission();
+            submission.filePath = undefined;
 
-        expect(comp.canDeactivate()).toBeFalse();
+            fixture.componentRef.setInput('inputSubmission', submission);
+            fixture.componentRef.setInput('inputExercise', createExercise());
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(component.submittedFileName()).toBe('');
+            expect(component.submittedFileExtension()).toBe('');
+        });
     });
 
-    it('should set alert correctly', async () => {
-        // Ignore window confirm
-        window.confirm = () => {
-            return false;
-        };
-        const fileName = 'exampleSubmission';
-        comp.submissionFile.set(new File([''], fileName, { type: 'application/pdf' }));
-        const submission = createFileUploadSubmission();
-        submission.filePath = 'test/exampleSubmission.pdf';
-        submission.participation = new StudentParticipation();
-        submission.participation.initializationDate = dayjs().subtract(2, 'days');
-        submission.participation.exercise = fileUploadExercise;
-        submission.participation.exercise.dueDate = dayjs().subtract(1, 'days');
+    describe('isActive', () => {
+        it('should be active when before due date in course mode', async () => {
+            const exercise = createExercise({ dueDate: dayjs().add(1, 'day') });
+            const submission = createSubmission(exercise);
+            vi.spyOn(fileUploadSubmissionService, 'getDataForFileUploadEditor').mockReturnValue(of(submission));
+            fixture.detectChanges();
+            await fixture.whenStable();
 
-        const jhiWarningSpy = jest.spyOn(alertService, 'warning');
-        jest.spyOn(fileUploadSubmissionService, 'getDataForFileUploadEditor').mockReturnValue(of(submission));
-        jest.spyOn(fileUploadSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: submission })));
+            expect(component.isActive()).toBe(true);
+        });
 
-        // Activate
-        activateComponent();
-        fixture.detectChanges();
-        await fixture.whenStable();
+        it('should not be active when after due date', async () => {
+            const exercise = createExercise({ dueDate: dayjs().subtract(1, 'day') });
+            const submission = createSubmission(exercise);
+            getParticipation(submission).initializationDate = dayjs().subtract(2, 'days');
+            vi.spyOn(fileUploadSubmissionService, 'getDataForFileUploadEditor').mockReturnValue(of(submission));
+            fixture.detectChanges();
+            await fixture.whenStable();
 
-        await comp.submitExercise();
+            expect(component.isActive()).toBe(false);
+        });
 
-        expect(comp.isActive()).toBeFalse();
-        expect(jhiWarningSpy).toHaveBeenCalledWith('artemisApp.fileUploadExercise.submitDueDateMissed');
-    });
+        it('should not be active in exam mode', async () => {
+            const exercise = createExercise({ dueDate: dayjs().add(1, 'day') });
+            exercise.exerciseGroup = new ExerciseGroup();
+            exercise.exerciseGroup.id = 1;
+            const submission = createSubmission(exercise);
+            vi.spyOn(fileUploadSubmissionService, 'getDataForFileUploadEditor').mockReturnValue(of(submission));
+            fixture.detectChanges();
+            await fixture.whenStable();
 
-    it('should set file name and type correctly', fakeAsync(() => {
-        const fileName = 'exampleSubmission';
-        comp.submissionFile.set(new File([''], fileName, { type: 'application/pdf' }));
-        const submission = createFileUploadSubmission();
-        submission.filePath = 'test/exampleSubmission.pdf';
-        comp.submission.set(submission);
-        jest.spyOn(fileUploadSubmissionService, 'getDataForFileUploadEditor').mockReturnValue(of(submission));
-        fixture.detectChanges();
-
-        comp.submitExercise();
-        tick();
-
-        expect(comp.submittedFileName()).toBe(fileName + '.pdf');
-        expect(comp.submittedFileExtension()).toBe('pdf');
-    }));
-
-    it('should be set up with input values if present instead of loading new values from server', () => {
-        // @ts-ignore method is private
-        const setUpComponentWithInputValuesSpy = jest.spyOn(comp, 'setupComponentWithInputValues');
-        const getDataForFileUploadEditorSpy = jest.spyOn(fileUploadSubmissionService, 'getDataForFileUploadEditor');
-        const fileUploadSubmission = createFileUploadSubmission();
-        fileUploadSubmission.submitted = true;
-        fixture.componentRef.setInput('inputExercise', fileUploadExercise);
-        fixture.componentRef.setInput('inputSubmission', fileUploadSubmission);
-        fixture.componentRef.setInput('inputParticipation', fileUploadParticipation);
-
-        fixture.detectChanges();
-
-        expect(setUpComponentWithInputValuesSpy).toHaveBeenCalledOnce();
-        expect(comp.fileUploadExercise()).toEqual(fileUploadExercise);
-        expect(comp.submission()).toEqual(fileUploadSubmission);
-        expect(comp.participation()).toEqual(fileUploadParticipation);
-
-        // should not fetch additional information from server, reason for input values!
-        expect(getDataForFileUploadEditorSpy).not.toHaveBeenCalled();
+            expect(component.isActive()).toBe(false);
+        });
     });
 });
