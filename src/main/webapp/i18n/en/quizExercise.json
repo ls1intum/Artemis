@@ -308,7 +308,40 @@
             "addBatch": "Add Batch",
             "join": "Join",
             "joinFailed": "Unable to join the quiz.",
-            "submitSuccess": "Your answers have been successfully submitted!<br><br>The results will be available after the due date"
+            "submitSuccess": "Your answers have been successfully submitted!<br><br>The results will be available after the due date",
+            "aiGeneration": {
+                "button": "Generate with AI",
+                "title": "Generate quiz questions with AI",
+                "topic": "Topic",
+                "count": "# Questions",
+                "language": "Language",
+                "languages": {
+                    "english": "English",
+                    "german": "German"
+                },
+                "difficulty": "Difficulty",
+                "difficulties": {
+                    "easy": "Easy",
+                    "medium": "Medium",
+                    "hard": "Hard"
+                },
+                "subtype": "Question Type",
+                "subtypes": {
+                    "single": "Single Choice",
+                    "multi": "Multiple Choice",
+                    "trueFalse": "True/False"
+                },
+                "promptHint": "Optional prompt",
+                "promptHintLabel": "Additional Hint (optional)",
+                "promptHintTooltip": "Optional: give the AI extra context or style guidance (e.g. 'focus on basic concepts').",
+                "generate": "Generate",
+                "close": "Close",
+                "preview": "Preview (select items to insert)",
+                "useInEditor": "Use in editor",
+                "untitled": "Untitled",
+                "explanation": "Explanation",
+                "noCourseContext": "No course context found."
+            }
         }
     }
 }

@@ -168,6 +168,13 @@
             "notAuthenticatedWithPasskey": "You are not authenticated with a passkey. Please authenticate using a passkey to access this resource.",
             "notSuperAdminApproved": "Your passkey is not approved by a super admin. Double check in the user settings whether your passkey was super admin approved and re-login in with the respective passkey.",
             "loginRequiredButFeatureNotEnabled": "Passkey login is required but the feature is not enabled on this Artemis instance. Please enable the passkey feature on this Artemis instance."
+        },
+        "aiQuizGeneration": {
+            "noQuestionsGenerated": "The language model could not generate any quiz questions. Please check your inputs and try again.",
+            "invalidQuestion": "The language model produced an invalidly formatted quiz question. Please try again.",
+            "invalidQuestionRules": "The language model did not follow the requested quiz settings. Please try again, possibly with different parameters.",
+            "invalidModelResponse": "The response from the language model could not be processed. Please try again, possibly with different parameters.",
+            "unexpectedError": "An unexpected error occurred during quiz generation."
         }
     }
 }
