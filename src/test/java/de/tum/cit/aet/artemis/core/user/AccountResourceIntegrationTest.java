@@ -17,9 +17,10 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.dto.AcceptExternalLLMUsageDTO;
 import de.tum.cit.aet.artemis.core.dto.PasswordChangeDTO;
+import de.tum.cit.aet.artemis.core.dto.SelectedLLMUsageDTO;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
 import de.tum.cit.aet.artemis.core.dto.vm.KeyAndPasswordVM;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
@@ -496,30 +497,30 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
     @WithMockUser(username = AUTHENTICATEDUSER)
     void acceptExternalLLMUsageSuccessful() throws Exception {
         User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
-        user.setExternalLLMUsageAcceptedTimestamp(null);
+        user.setSelectedLLMUsageTimestamp(null);
         userTestRepository.save(user);
 
-        AcceptExternalLLMUsageDTO acceptExternalLLMUsageDTO = new AcceptExternalLLMUsageDTO(true);
-        request.put("/api/core/users/accept-external-llm-usage", acceptExternalLLMUsageDTO, HttpStatus.OK);
+        SelectedLLMUsageDTO selectedLLMUsageDTO = new SelectedLLMUsageDTO(AiSelectionDecision.CLOUD_AI);
+        request.put("/api/core/users/select-llm-usage", selectedLLMUsageDTO, HttpStatus.OK);
 
         Optional<User> updatedUser = userTestRepository.findOneByLogin(AUTHENTICATEDUSER);
         assertThat(updatedUser).isPresent();
-        assertThat(updatedUser.get().getExternalLLMUsageAcceptedTimestamp()).isNotNull();
+        assertThat(updatedUser.get().getSelectedLLMUsageTimestamp()).isNotNull();
     }
 
     @Test
     @WithMockUser(username = AUTHENTICATEDUSER)
     void declineExternalLLMUsageSuccessful() throws Exception {
         User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
-        user.setExternalLLMUsageAcceptedTimestamp(null);
+        user.setSelectedLLMUsageTimestamp(null);
         userTestRepository.save(user);
 
-        AcceptExternalLLMUsageDTO acceptExternalLLMUsageDTO = new AcceptExternalLLMUsageDTO(false);
-        request.put("/api/core/users/accept-external-llm-usage", acceptExternalLLMUsageDTO, HttpStatus.OK);
+        SelectedLLMUsageDTO selectedLLMUsageDTO = new SelectedLLMUsageDTO(AiSelectionDecision.LOCAL_AI);
+        request.put("/api/core/users/select-llm-usage", selectedLLMUsageDTO, HttpStatus.OK);
 
         Optional<User> updatedUser = userTestRepository.findOneByLogin(AUTHENTICATEDUSER);
         assertThat(updatedUser).isPresent();
-        assertThat(updatedUser.get().getExternalLLMUsageAcceptedTimestamp()).isNull();
+        assertThat(updatedUser.get().getSelectedLLMUsageTimestamp()).isNotNull();
     }
 
     @Test
@@ -528,16 +529,16 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         // Create user in repo with existing timestamp
         User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
         ZonedDateTime originalTimestamp = ZonedDateTime.now().truncatedTo(ChronoUnit.MILLIS);
-        user.setExternalLLMUsageAcceptedTimestamp(originalTimestamp);
+        user.setSelectedLLMUsageTimestamp(originalTimestamp);
         userTestRepository.save(user);
 
-        request.put("/api/core/users/accept-external-llm-usage", null, HttpStatus.BAD_REQUEST);
+        request.put("/api/core/users/select-llm-usage", null, HttpStatus.BAD_REQUEST);
 
         // Verify timestamp wasn't changed
         Optional<User> unchangedUser = userTestRepository.findOneByLogin(AUTHENTICATEDUSER);
         assertThat(unchangedUser).isPresent();
 
-        ZonedDateTime actualTimestamp = unchangedUser.get().getExternalLLMUsageAcceptedTimestamp();
+        ZonedDateTime actualTimestamp = unchangedUser.get().getSelectedLLMUsageTimestamp();
         assertThat(actualTimestamp).isNotNull();
         assertThat(actualTimestamp.truncatedTo(ChronoUnit.MILLIS)).isEqualTo(originalTimestamp);
     }

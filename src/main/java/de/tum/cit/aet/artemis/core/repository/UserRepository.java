@@ -39,6 +39,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import de.tum.cit.aet.artemis.communication.domain.ConversationNotificationRecipientSummary;
+import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.domain.Organization;
@@ -172,8 +173,8 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities", "organizations" })
     Optional<User> findOneWithGroupsAndAuthoritiesAndOrganizationsByLogin(String userLogin);
 
-    @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities", "externalLLMUsageAccepted" })
-    Optional<User> findOneWithGroupsAndAuthoritiesAndExternalLLMUsageAcceptedTimestampByLogin(String login);
+    @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities", "aiSelectionDecisionDate" })
+    Optional<User> findOneWithGroupsAndAuthoritiesAndSelectedLLMUsageTimestampByLogin(String login);
 
     Long countByDeletedIsFalseAndGroupsContains(String groupName);
 
@@ -733,13 +734,14 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             @Param("vcsAccessTokenExpiryDate") ZonedDateTime vcsAccessTokenExpiryDate);
 
     @Modifying
-    @Transactional // ok because of modifying query
+    @Transactional
     @Query("""
             UPDATE User user
-            SET user.externalLLMUsageAccepted = :acceptDatetime
+            SET user.aiSelectionDecision = :decision,
+                user.aiSelectionDecisionDate = :timestamp
             WHERE user.id = :userId
             """)
-    void updateExternalLLMUsageAcceptedToDate(@Param("userId") long userId, @Param("acceptDatetime") ZonedDateTime acceptDatetime);
+    void updateSelectedLLMUsage(@Param("userId") long userId, @Param("decision") AiSelectionDecision decision, @Param("timestamp") ZonedDateTime timestamp);
 
     @Modifying
     @Transactional // ok because of modifying query

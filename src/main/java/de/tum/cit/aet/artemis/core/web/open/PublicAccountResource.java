@@ -176,7 +176,7 @@ public class PublicAccountResource {
 
         Optional<String> loginOptional = SecurityUtils.getCurrentUserLogin();
         if (loginOptional.isPresent()) {
-            userOptional = userRepository.findOneWithGroupsAndAuthoritiesAndExternalLLMUsageAcceptedTimestampByLogin(loginOptional.get());
+            userOptional = userRepository.findOneWithGroupsAndAuthoritiesAndSelectedLLMUsageTimestampByLogin(loginOptional.get());
         }
 
         if (userOptional.isEmpty()) {

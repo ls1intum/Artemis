@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.atlas.config.AtlasNotPresentException;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyJol;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyJolDTO;
 import de.tum.cit.aet.artemis.communication.dto.PostDTO;
+import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.course.CourseLoadService;
@@ -112,14 +113,15 @@ public class PyrisPipelineService {
      * <p>
      *
      * @param name          the name of the pipeline to be executed
+     * @param AISelection   the current AI selection of the user
      * @param variant       the variant of the pipeline
      * @param event         an optional event variant that can be used to trigger specific event of the given pipeline
      * @param jobToken      a unique job token for tracking the pipeline execution
      * @param dtoMapper     a function to create the concrete DTO type for this pipeline from the base DTO
      * @param statusUpdater a consumer to update the status of the pipeline execution
      */
-    public void executePipeline(String name, String variant, Optional<String> event, String jobToken, Function<PyrisPipelineExecutionDTO, Object> dtoMapper,
-            Consumer<List<PyrisStageDTO>> statusUpdater) {
+    public void executePipeline(String name, AiSelectionDecision AISelection, String variant, Optional<String> event, String jobToken,
+            Function<PyrisPipelineExecutionDTO, Object> dtoMapper, Consumer<List<PyrisStageDTO>> statusUpdater) {
         // Define the preparation stages of pipeline execution with their initial states
         // There will be more stages added in Pyris later
         var preparing = new PyrisStageDTO("Preparing", 10, null, null, false);
@@ -128,7 +130,7 @@ public class PyrisPipelineService {
         // Send initial status update indicating that the preparation stage is in progress
         statusUpdater.accept(List.of(preparing.inProgress(), executing.notStarted()));
 
-        var baseDto = new PyrisPipelineExecutionDTO(new PyrisPipelineExecutionSettingsDTO(jobToken, artemisBaseUrl, variant), List.of(preparing.done()));
+        var baseDto = new PyrisPipelineExecutionDTO(new PyrisPipelineExecutionSettingsDTO(jobToken, AISelection, artemisBaseUrl, variant), List.of(preparing.done()));
         var pipelineDto = dtoMapper.apply(baseDto);
 
         try {
@@ -169,14 +171,15 @@ public class PyrisPipelineService {
     public void executeExerciseChatPipeline(String variant, String customInstructions, Optional<ProgrammingSubmission> latestSubmission, ProgrammingExercise exercise,
             IrisProgrammingExerciseChatSession session, Optional<String> eventVariant) {
         // @formatter:off
+        var user = userRepository.findByIdElseThrow(session.getUserId());
         executePipeline(
                 "programming-exercise-chat",
+                user.getAiSelectionDecision(),
                 variant,
                 eventVariant,
                 pyrisJobService.addExerciseChatJob(exercise.getCourseViaExerciseGroupOrCourseMember().getId(), exercise.getId(), session.getId()),
                 executionDto -> {
                     var course = exercise.getCourseViaExerciseGroupOrCourseMember();
-                    var user = userRepository.findByIdElseThrow(session.getUserId());
                     return new PyrisExerciseChatPipelineExecutionDTO(
                             latestSubmission.map(pyrisDTOService::toPyrisSubmissionDTO).orElse(null),
                             pyrisDTOService.toPyrisProgrammingExerciseDTO(exercise),
@@ -215,15 +218,16 @@ public class PyrisPipelineService {
         var studentId = session.getUserId();
         var api = learningMetricsApi.orElseThrow(() -> new AtlasNotPresentException(LearningMetricsApi.class));
 
+        var user = userRepository.findByIdElseThrow(studentId);
         // @formatter:off
         var lastMessageId = !session.getMessages().isEmpty() ? session.getMessages().getLast().getId() : null;
         executePipeline(
             "course-chat",
+            user.getAiSelectionDecision(),
             variant,
             eventVariant,
             pyrisJobService.addCourseChatJob(courseId, session.getId(), lastMessageId), executionDto -> {
                 var fullCourse = loadCourseWithParticipationOfStudent(courseId, studentId);
-                var user = userRepository.findByIdElseThrow(studentId);
                 if (!featureToggleService.isFeatureEnabled(Feature.Memiris)) {
                     user.setMemirisEnabled(false);
                 }
@@ -268,14 +272,15 @@ public class PyrisPipelineService {
         if (course == null) {
             throw new IllegalStateException("Course not found for post " + post.getId());
         }
+        var user = userRepository.findByIdElseThrow(session.getUserId());
         // @formatter:off
         executePipeline(
             "tutor-suggestion",
+            user.getAiSelectionDecision(),
             variant,
             eventVariant,
             pyrisJobService.addTutorSuggestionJob(post.getId(), course.getId(), session.getId()),
             executionDto -> {
-                var user = userRepository.findByIdElseThrow(session.getUserId());
                 return new PyrisTutorSuggestionPipelineExecutionDTO(
                     new PyrisCourseDTO(course),
                     new PyrisPostDTO(post),
