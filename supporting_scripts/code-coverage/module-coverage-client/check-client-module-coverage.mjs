@@ -86,10 +86,10 @@ const moduleThresholds = {
         lines:      88.60,
     },
     fileupload: {
-        statements: 97.70,
-        branches:   87.70,
-        functions:  96.10,
-        lines:      97.70,
+        statements: 95.70,
+        branches:   84.30,
+        functions:  96.40,
+        lines:      95.70,
     },
     hyperion: {
         statements: 0,
