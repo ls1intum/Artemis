@@ -3,6 +3,7 @@ import angularPlugin from '@angular-eslint/eslint-plugin';
 import prettierPlugin from 'eslint-plugin-prettier';
 import jestPlugin from 'eslint-plugin-jest';
 import jestExtendedPlugin from 'eslint-plugin-jest-extended';
+import unicornPlugin from 'eslint-plugin-unicorn';
 import typescriptParser from '@typescript-eslint/parser';
 import angularTemplateParser from '@angular-eslint/template-parser';
 import angular from 'angular-eslint';
@@ -89,13 +90,28 @@ export default tseslint.config(
             '@typescript-eslint': tsPlugin,
             '@angular-eslint': angularPlugin,
             prettier: prettierPlugin,
-            localRules: localRulesPlugin
+            localRules: localRulesPlugin,
+            unicorn: unicornPlugin,
         },
         // TODO: adapt the rules of the newest jhipster version, e.g. no-inferrable-types, restrict-plus-operands, etc.
         rules: {
             ...prettierPlugin.configs.recommended.rules,
             ...tsPlugin.configs.recommended.rules,
             ...angularPlugin.configs.recommended.rules,
+
+            // Prefer undefined over null (runtime)
+            'unicorn/no-null': 'error',
+            // Prefer undefined over null (types)
+            '@typescript-eslint/no-restricted-types': [
+                'error',
+                {
+                    types: {
+                        null: {
+                            message: 'Use `undefined` instead of `null`.',
+                        },
+                    },
+                },
+            ],
             '@typescript-eslint/no-non-null-assertion': 'off',
             '@typescript-eslint/no-unsafe-return': 'off',
             '@typescript-eslint/no-unsafe-member-access': 'off',
