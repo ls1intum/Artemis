@@ -24,10 +24,11 @@ import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { StringCountService } from 'app/text/overview/service/string-count.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { getFirstResultWithComplaint, getLatestSubmissionResult, setLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
-import { getUnreferencedFeedback, isAthenaAIResult } from 'app/exercise/result/result.utils';
+import { getUnreferencedFeedback, isAthenaAIResult, isStudentParticipation } from 'app/exercise/result/result.utils';
 import { onError } from 'app/shared/util/global.utils';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { faChevronDown, faCircleNotch, faEye, faTimeline } from '@fortawesome/free-solid-svg-icons';
 import { MAX_SUBMISSION_TEXT_LENGTH } from 'app/shared/constants/input.constants';
@@ -318,8 +319,9 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                     this.submission = response.body!;
                     setLatestSubmissionResult(this.submission, getLatestSubmissionResult(this.submission));
                     // reconnect so that the submission status is displayed correctly in the result.component
-                    this.submission.participation!.submissions = [this.submission];
-                    this.participationWebsocketService.addParticipation(this.submission.participation as StudentParticipation, this.textExercise);
+                    const participation = this.requireStudentParticipation(this.submission.participation);
+                    participation.submissions = [this.submission];
+                    this.participationWebsocketService.addParticipation(participation, this.textExercise);
                 });
             }
         }
@@ -427,14 +429,15 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                 this.submission = response.body!;
                 if (this.participation.team) {
                     // Make sure the team is not lost during update
-                    const studentParticipation = this.submission.participation as StudentParticipation;
+                    const studentParticipation = this.requireStudentParticipation(this.submission.participation);
                     studentParticipation.team = this.participation.team;
                 }
                 setLatestSubmissionResult(this.submission, getLatestSubmissionResult(this.submission));
                 this.submissionChange.next(this.submission);
                 // reconnect so that the submission status is displayed correctly in the result.component
-                this.submission.participation!.submissions = [this.submission];
-                this.participation = this.submission.participation as StudentParticipation;
+                const updatedParticipation = this.requireStudentParticipation(this.submission.participation);
+                updatedParticipation.submissions = [this.submission];
+                this.participation = updatedParticipation;
                 this.participation.exercise = this.textExercise;
                 this.participationWebsocketService.addParticipation(this.participation, this.textExercise);
                 this.textExercise.studentParticipations = [this.participation];
@@ -476,12 +479,19 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         submission.participation!.exercise = this.textExercise;
         submission.participation!.submissions = [submission];
         // Keep the existing team on the participation
-        const studentParticipation = submission.participation as StudentParticipation;
+        const studentParticipation = this.requireStudentParticipation(submission.participation);
         studentParticipation.team = this.participation.team;
         this.updateParticipation(studentParticipation);
     }
 
     onTextEditorInput(event: Event) {
         this.textEditorInput.next((<HTMLTextAreaElement>event.target).value);
+    }
+
+    private requireStudentParticipation(participation?: Participation): StudentParticipation {
+        if (isStudentParticipation(participation)) {
+            return participation;
+        }
+        throw new Error('Expected student participation for text editor');
     }
 }

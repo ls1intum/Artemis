@@ -1,6 +1,9 @@
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import dayjs from 'dayjs/esm';
 import { Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
+import { SolutionProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/solution-programming-exercise-participation.model';
+import { TemplateProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/template-programming-exercise-participation.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { isPracticeMode } from 'app/exercise/shared/entities/participation/student-participation.model';
@@ -67,8 +70,16 @@ export const isResultPreliminary = (latestResult: Result, participation: Partici
     return false;
 };
 
-export const isProgrammingExerciseStudentParticipation = (participation: Participation) => {
-    return participation && participation.type === ParticipationType.PROGRAMMING;
+export const isProgrammingExerciseStudentParticipation = (participation: Participation | undefined): participation is ProgrammingExerciseStudentParticipation => {
+    return !!participation && participation.type === ParticipationType.PROGRAMMING;
+};
+
+export const isSolutionProgrammingExerciseParticipation = (participation: Participation | undefined): participation is SolutionProgrammingExerciseParticipation => {
+    return !!participation && participation.type === ParticipationType.SOLUTION;
+};
+
+export const isTemplateProgrammingExerciseParticipation = (participation: Participation | undefined): participation is TemplateProgrammingExerciseParticipation => {
+    return !!participation && participation.type === ParticipationType.TEMPLATE;
 };
 
 export const isProgrammingExerciseParticipation = (participation: Participation | undefined): boolean => {

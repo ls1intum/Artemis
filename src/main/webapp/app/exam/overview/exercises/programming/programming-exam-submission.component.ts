@@ -118,7 +118,7 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
      * Updates the domain to set the active student participation
      */
     updateDomain() {
-        const participation = { ...this.studentParticipation(), exercise: this.exercise() } as StudentParticipation;
+        const participation = { ...this.studentParticipation(), exercise: this.exercise() } satisfies StudentParticipation;
         this.domainService.setDomain([DomainType.PARTICIPATION, participation]);
     }
 

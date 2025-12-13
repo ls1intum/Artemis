@@ -132,7 +132,7 @@ export class LectureAttachmentsComponent implements OnDestroy {
         }
 
         if (this.attachmentToBeUpdatedOrCreated()!.id) {
-            const requestOptions = {} as any;
+            const requestOptions: Record<string, unknown> = {};
             if (this.notificationText) {
                 requestOptions.notificationText = this.notificationText;
             }

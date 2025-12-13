@@ -1,11 +1,10 @@
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { roundValueSpecifiedByCourseSettings, scrollToTopOfPage } from 'app/shared/util/utils';
 import { AlertService } from 'app/shared/service/alert.service';
-import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Component, Input, OnInit, inject } from '@angular/core';
 import { ResultService } from 'app/exercise/result/result.service';
-import { getTestCaseNamesFromResults, getTestCaseResults } from 'app/exercise/result/result.utils';
+import { getTestCaseNamesFromResults, getTestCaseResults, isStudentParticipation } from 'app/exercise/result/result.utils';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { ResultWithPointsPerGradingCriterion } from 'app/exercise/shared/entities/result/result-with-points-per-grading-criterion.model';
@@ -16,6 +15,7 @@ import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, N
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { isProgrammingExerciseStudentParticipation } from 'app/programming/shared/utils/programming-exercise.utils';
 
 @Component({
     selector: 'jhi-exercise-scores-export-button',
@@ -65,25 +65,42 @@ export class ExerciseScoresExportButtonComponent implements OnInit {
                 scrollToTopOfPage();
                 return;
             }
-            const isTeamExercise = !!(results[0].result!.submission!.participation! as StudentParticipation).team;
+
+            const studentParticipations = results.map((r) => r.result.submission?.participation).filter((p): p is StudentParticipation => isStudentParticipation(p));
+
+            if (studentParticipations.length === 0) {
+                return;
+            }
+
+            const isTeamExercise = !!studentParticipations[0].team;
             const gradingCriteria: GradingCriterion[] = ExerciseScoresExportButtonComponent.sortedGradingCriteria(exercise);
 
             let keys;
-            let rows;
+            let rows: ExerciseScoresRow[];
             if (withTestCases) {
                 const testCasesNames = getTestCaseNamesFromResults(results);
                 keys = ExerciseScoresRowBuilder.keys(exercise, isTeamExercise, gradingCriteria, testCasesNames);
-                rows = results.map((resultWithPoints) => {
-                    const studentParticipation = resultWithPoints.result.submission!.participation! as StudentParticipation;
-                    const testCaseResults = getTestCaseResults(resultWithPoints, testCasesNames, withFeedback);
-                    return new ExerciseScoresRowBuilder(exercise, gradingCriteria, studentParticipation, resultWithPoints, testCaseResults).build();
-                });
+                rows = results
+                    .map((resultWithPoints) => {
+                        const participation = resultWithPoints.result.submission?.participation;
+                        if (!isStudentParticipation(participation)) {
+                            return null;
+                        }
+                        const testCaseResults = getTestCaseResults(resultWithPoints, testCasesNames, withFeedback);
+                        return new ExerciseScoresRowBuilder(exercise, gradingCriteria, participation, resultWithPoints, testCaseResults).build();
+                    })
+                    .filter((row): row is ExerciseScoresRow => row !== null);
             } else {
                 keys = ExerciseScoresRowBuilder.keys(exercise, isTeamExercise, gradingCriteria);
-                rows = results.map((resultWithPoints) => {
-                    const studentParticipation = resultWithPoints.result.submission!.participation! as StudentParticipation;
-                    return new ExerciseScoresRowBuilder(exercise, gradingCriteria, studentParticipation, resultWithPoints).build();
-                });
+                rows = results
+                    .map((resultWithPoints) => {
+                        const participation = resultWithPoints.result.submission?.participation;
+                        if (!isStudentParticipation(participation)) {
+                            return null;
+                        }
+                        return new ExerciseScoresRowBuilder(exercise, gradingCriteria, participation, resultWithPoints).build();
+                    })
+                    .filter((row): row is ExerciseScoresRow => row !== null);
             }
             const fileNamePrefix = exercise.shortName ?? exercise.title?.split(/\s+/).join('_');
 
@@ -145,7 +162,7 @@ export class ExerciseScoresExportButtonComponent implements OnInit {
  *
  * For a list of all possible keys see {@link ExerciseScoresRowBuilder.keys}.
  */
-type ExerciseScoresRow = any;
+type ExerciseScoresRow = Record<string, string | number | boolean | undefined>;
 
 class ExerciseScoresRowBuilder {
     private readonly exercise: Exercise;
@@ -196,7 +213,7 @@ class ExerciseScoresRowBuilder {
      * @param key Which should be associated with the given value.
      * @param value That should be placed in the row. Replaced by the empty string if undefined.
      */
-    private set<T>(key: string, value: T) {
+    private set(key: string, value: string | number | boolean | undefined | null) {
         this.csvRow[key] = value ?? '';
     }
 
@@ -235,7 +252,7 @@ class ExerciseScoresRowBuilder {
      */
     private setProgrammingExerciseInformation() {
         if (this.exercise.type === ExerciseType.PROGRAMMING) {
-            const repoLink = (this.participation as ProgrammingExerciseStudentParticipation).repositoryUri;
+            const repoLink = isProgrammingExerciseStudentParticipation(this.participation) ? this.participation.repositoryUri : undefined;
             this.set('Repo Link', repoLink);
         }
     }

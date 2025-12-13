@@ -384,8 +384,8 @@ export const resultIsPreliminary = (result: Result, participation: Participation
  * Returns true if the specified result is a student Participation
  * @param participation the participation
  */
-export const isStudentParticipation = (participation: Participation) => {
-    return Boolean(participation.type !== ParticipationType.TEMPLATE && participation.type !== ParticipationType.SOLUTION);
+export const isStudentParticipation = (participation: Participation | undefined): participation is StudentParticipation => {
+    return Boolean(participation && participation.type !== ParticipationType.TEMPLATE && participation.type !== ParticipationType.SOLUTION);
 };
 
 /**

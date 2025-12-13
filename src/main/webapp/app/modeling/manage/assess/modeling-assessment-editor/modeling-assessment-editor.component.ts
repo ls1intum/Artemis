@@ -13,7 +13,7 @@ import dayjs from 'dayjs/esm';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
-import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { isStudentParticipation } from 'app/exercise/result/result.utils';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { ModelingSubmissionService } from 'app/modeling/overview/modeling-submission/modeling-submission.service';
 import { Feedback, FeedbackHighlightColor, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
@@ -225,7 +225,11 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     private async handleReceivedSubmission(submission: ModelingSubmission): Promise<void> {
         this.loadingInitialSubmission = false;
         this.submission = submission;
-        const studentParticipation = this.submission.participation as StudentParticipation;
+        const participation = this.submission.participation;
+        if (!isStudentParticipation(participation) || !participation.exercise) {
+            throw new Error('Expected modeling submission with student participation and exercise');
+        }
+        const studentParticipation = participation;
         this.modelingExercise = studentParticipation.exercise as ModelingExercise;
         this.course = getCourseFromExercise(this.modelingExercise);
         if (this.resultId > 0) {

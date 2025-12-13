@@ -508,7 +508,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
                     error: (error) => this.onSaveError(error),
                 });
             } else {
-                const requestOptions = {} as any;
+                const requestOptions: Record<string, unknown> = {};
                 if (this.notificationText) {
                     requestOptions.notificationText = this.notificationText;
                 }

@@ -149,9 +149,9 @@ export class ScaCategoryDistributionChartComponent extends ProgrammingGradingCha
         // sum of all penalty points
         const totalPenaltyPoints = categoryPenalties.reduce((sum, { penaltyPoints }) => sum + penaltyPoints, 0);
 
-        const penalty = { name: this.translateService.instant('artemisApp.programmingAssessment.penalty'), series: [] as any[] };
-        const issue = { name: this.translateService.instant('artemisApp.programmingAssessment.issues'), series: [] as any[] };
-        const deductions = { name: this.translateService.instant('artemisApp.programmingAssessment.deductions'), series: [] as any[] };
+        const penalty: NgxChartsMultiSeriesDataEntry = { name: this.translateService.instant('artemisApp.programmingAssessment.penalty'), series: [] };
+        const issue: NgxChartsMultiSeriesDataEntry = { name: this.translateService.instant('artemisApp.programmingAssessment.issues'), series: [] };
+        const deductions: NgxChartsMultiSeriesDataEntry = { name: this.translateService.instant('artemisApp.programmingAssessment.deductions'), series: [] };
 
         categoryPenalties.forEach((element, index) => {
             const penaltyScore = totalPenalty > 0 ? Math.max((Math.min(element.category.penalty, element.category.maxPenalty) / totalPenalty) * 100, 0) : 0;

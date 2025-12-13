@@ -125,9 +125,11 @@ export class ForwardedMessageComponent implements AfterViewInit {
             this.sourceName = '';
         } else if (this.conversation?.type?.valueOf() === 'channel') {
             if (this.isAnswerPost) {
-                this.sourceName = (this.conversation as any)?.name ? `a thread in #${(this.conversation as any)?.name} |` : 'a thread in #unknown |';
+                const channelName = typeof this.conversation === 'object' ? (this.conversation as { name?: string }).name : undefined;
+                this.sourceName = channelName ? `a thread in #${channelName} |` : 'a thread in #unknown |';
             } else {
-                this.sourceName = (this.conversation as any)?.name ? `#${(this.conversation as any)?.name} |` : '#unknown |';
+                const channelName = typeof this.conversation === 'object' ? (this.conversation as { name?: string }).name : undefined;
+                this.sourceName = channelName ? `#${channelName} |` : '#unknown |';
             }
         } else if (this.conversation?.type?.valueOf() === 'oneToOneChat') {
             this.sourceName = this.isAnswerPost ? 'a thread in a direct message ' : 'a direct message ';

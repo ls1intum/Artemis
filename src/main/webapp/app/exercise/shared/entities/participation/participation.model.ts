@@ -1,11 +1,10 @@
 import { BaseEntity } from 'app/shared/model/base-entity';
 import dayjs from 'dayjs/esm';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
-import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { SolutionProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/solution-programming-exercise-participation.model';
 import { TemplateProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/template-programming-exercise-participation.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
+import { isProgrammingExerciseStudentParticipation } from 'app/programming/shared/utils/programming-exercise.utils';
 
 export enum InitializationState {
     /**
@@ -63,9 +62,9 @@ export const getExercise = (participation: Participation): Exercise | undefined 
     if (participation) {
         switch (participation.type) {
             case ParticipationType.PROGRAMMING:
-                return (participation as ProgrammingExerciseStudentParticipation).exercise;
+                return isProgrammingExerciseStudentParticipation(participation) ? participation.exercise : undefined;
             case ParticipationType.STUDENT:
-                return (participation as StudentParticipation).exercise;
+                return participation.exercise;
             case ParticipationType.SOLUTION: // it could be stored in both programmingExercise or exercise
                 return (participation as SolutionProgrammingExerciseParticipation).programmingExercise ?? (participation as SolutionProgrammingExerciseParticipation).exercise;
             case ParticipationType.TEMPLATE: // it could be stored in both programmingExercise or exercise
