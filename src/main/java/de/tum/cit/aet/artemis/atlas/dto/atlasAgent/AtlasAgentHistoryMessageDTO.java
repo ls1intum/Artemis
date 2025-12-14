@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.atlas.dto.atlasAgent;
 
 import java.util.List;
 
+import org.jspecify.annotations.Nullable;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
@@ -12,6 +14,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param competencyPreviews optional list of competency preview data
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record AtlasAgentHistoryMessageDTO(String content, boolean isUser, List<CompetencyPreviewDTO> competencyPreviews) {
+public record AtlasAgentHistoryMessageDTO(String content, boolean isUser, @Nullable List<CompetencyPreviewDTO> competencyPreviews) {
 
 }
