@@ -631,7 +631,6 @@ class AtlasAgentServiceTest {
 
             assertThat(result).hasSize(6);
 
-            // First assistant message with single preview
             assertThat(result.get(1).content()).isEqualTo("First response");
             assertThat(result.get(1).competencyPreviews()).isNotNull();
             assertThat(result.get(1).competencyPreviews()).hasSize(1);

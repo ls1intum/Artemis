@@ -189,13 +189,8 @@ public class CompetencyExpertToolsService {
 
     /**
      * Retrieves the last previewed competency data for refinement operations.
-     * This tool enables deterministic refinements by providing access to the exact competency data
-     * that was last previewed in this session.
-     *
-     * Use this when:
-     * - User requests changes to a previewed competency (e.g., "change taxonomy to UNDERSTAND")
-     * - You need to modify only specific fields while preserving others
-     * - You want to ensure you're working with the exact data from the last preview
+     * If cached competencies have null IDs, searches the database to find matching competencies
+     * by title and updates the cache with their IDs.
      *
      * @return JSON response with the cached competency data or error if none exists
      */
@@ -215,9 +210,46 @@ public class CompetencyExpertToolsService {
             return toJson(new ErrorResponse("No previewed competency data found for this session"));
         }
 
+        boolean needsSync = cachedData.stream().anyMatch(comp -> comp.getCompetencyId() == null);
+
+        if (needsSync) {
+            Long courseId = extractCourseIdFromContext();
+            if (courseId != null) {
+                Set<Competency> existingCompetencies = competencyRepository.findAllByCourseId(courseId);
+
+                for (CompetencyOperation cachedComp : cachedData) {
+                    if (cachedComp.getCompetencyId() == null) {
+                        existingCompetencies.stream().filter(dbComp -> dbComp.getTitle() != null && dbComp.getTitle().equalsIgnoreCase(cachedComp.getTitle())).findFirst()
+                                .ifPresent(match -> cachedComp.setCompetencyId(match.getId()));
+                    }
+                }
+
+                atlasAgentService.cachePendingCompetencyOperations(sessionId, cachedData);
+            }
+        }
+
         record Response(String sessionId, List<CompetencyOperation> competencies) {
         }
         return toJson(new Response(sessionId, cachedData));
+    }
+
+    /**
+     * Extracts course ID from the session ID format.
+     *
+     * @return the course ID, or null if not available
+     */
+    private Long extractCourseIdFromContext() {
+        String sessionId = currentSessionId.get();
+        if (sessionId != null && sessionId.startsWith("course_")) {
+            try {
+                String courseIdPart = sessionId.substring(7, sessionId.indexOf("_user_"));
+                return Long.parseLong(courseIdPart);
+            }
+            catch (Exception e) {
+                return null;
+            }
+        }
+        return null;
     }
 
     /**
@@ -306,6 +338,7 @@ public class CompetencyExpertToolsService {
                     competency.setTaxonomy(comp.getTaxonomy());
                     competency.setCourse(course);
                     competencyRepository.save(competency);
+                    comp.setCompetencyId(competency.getId());
                     createCount++;
                     AtlasAgentService.markCompetencyModified();
                     successfulOperations.add(comp);
