@@ -116,6 +116,17 @@ public class ArtemisConfigHelper {
         return getPropertyOrExitArtemis(Constants.VIDEO_UPLOAD_ENABLED_PROPERTY_NAME, environment);
     }
 
+    /**
+     * Get the maximum video file size for lecture unit uploads.
+     *
+     * @param environment the Spring environment
+     * @return the maximum video file size in bytes
+     */
+    public long getVideoUploadMaxFileSize(Environment environment) {
+        Integer maxFileSizeMB = environment.getProperty(Constants.VIDEO_UPLOAD_MAX_FILE_SIZE_PROPERTY_NAME, Integer.class, 200);
+        return maxFileSizeMB * 1024L * 1024L; // Convert MB to bytes
+    }
+
     private boolean getPropertyOrExitArtemis(String key, Environment environment) {
         Boolean value = environment.getProperty(key, Boolean.class);
         if (value == null) {

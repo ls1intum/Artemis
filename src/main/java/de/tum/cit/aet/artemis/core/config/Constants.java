@@ -499,6 +499,16 @@ public final class Constants {
     public static final String VIDEO_UPLOAD_ENABLED_PROPERTY_NAME = "artemis.lecture.video-upload.enabled";
 
     /**
+     * The name of the property used to set the maximum video file size for lecture unit uploads.
+     */
+    public static final String VIDEO_UPLOAD_MAX_FILE_SIZE_PROPERTY_NAME = "artemis.lecture.video-upload.max-file-size";
+
+    /**
+     * The key used to report the max video file size to the client.
+     */
+    public static final String MAX_VIDEO_FILE_SIZE_INFO_KEY = "maxVideoFileSize";
+
+    /**
      * The name of the property used to define the directories for file uploads.
      */
     public static final String UPLOADS_FILE_PATH_PROPERTY_NAME = "artemis.file-upload-path";

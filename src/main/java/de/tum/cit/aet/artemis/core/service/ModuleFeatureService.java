@@ -114,4 +114,13 @@ public class ModuleFeatureService {
     public boolean isVideoUploadEnabled() {
         return artemisConfigHelper.isVideoUploadEnabled(environment);
     }
+
+    /**
+     * Get the maximum video file size for lecture unit uploads.
+     *
+     * @return the maximum video file size in bytes
+     */
+    public long getVideoUploadMaxFileSize() {
+        return artemisConfigHelper.getVideoUploadMaxFileSize(environment);
+    }
 }

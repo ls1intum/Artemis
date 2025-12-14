@@ -113,6 +113,7 @@ artemis:
   lecture:
     video-upload:
       enabled: false  # Set this to true to enable video file uploads for lecture units. When enabled, instructors can upload video files (mp4, webm, etc.) directly to lecture units.
+      max-file-size: 200  # Maximum video file size in MB (default: 200 MB)
 
 # Configure Spring AI, if you want to use Hyperion or Atlas
 spring:

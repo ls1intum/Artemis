@@ -154,9 +154,10 @@ public class AttachmentVideoUnitResource {
             throw new BadRequestAlertException("Hidden slide dates cannot be in the past", ENTITY_NAME, "invalidHiddenDates");
         }
 
-        // Validate file sizes
-        FileUtil.validateFileSize(file);
-        FileUtil.validateFileSize(videoFile);
+        // Validate file sizes - use configurable max size for video files
+        long maxVideoFileSize = moduleFeatureService.getVideoUploadMaxFileSize();
+        FileUtil.validateFileSizeWithVideoLimit(file, maxVideoFileSize);
+        FileUtil.validateFileSizeWithVideoLimit(videoFile, maxVideoFileSize);
 
         // Check if video upload is enabled when a video file is being uploaded
         if (videoFile != null && videoFile.getOriginalFilename() != null && FileUtil.isVideoFile(videoFile.getOriginalFilename()) && !moduleFeatureService.isVideoUploadEnabled()) {
@@ -205,9 +206,10 @@ public class AttachmentVideoUnitResource {
             throw new BadRequestAlertException("A attachment video unit must have an attachment, a video file, or a video source", ENTITY_NAME, "videosourceAndAttachment");
         }
 
-        // Validate file sizes
-        FileUtil.validateFileSize(file);
-        FileUtil.validateFileSize(videoFile);
+        // Validate file sizes - use configurable max size for video files
+        long maxVideoFileSize = moduleFeatureService.getVideoUploadMaxFileSize();
+        FileUtil.validateFileSizeWithVideoLimit(file, maxVideoFileSize);
+        FileUtil.validateFileSizeWithVideoLimit(videoFile, maxVideoFileSize);
 
         // Check if video upload is enabled when a video file is being uploaded
         if (videoFile != null && videoFile.getOriginalFilename() != null && FileUtil.isVideoFile(videoFile.getOriginalFilename()) && !moduleFeatureService.isVideoUploadEnabled()) {

@@ -266,10 +266,22 @@ public class FileUtil {
      * @throws ResponseStatusException if the file size exceeds the maximum allowed size
      */
     public static void validateFileSize(MultipartFile file) {
+        validateFileSizeWithVideoLimit(file, Constants.MAX_VIDEO_FILE_SIZE);
+    }
+
+    /**
+     * Validates the file size based on whether it's a video file or not.
+     * Video files are allowed up to the specified maxVideoFileSize, other files up to MAX_FILE_SIZE.
+     *
+     * @param file             the file to validate
+     * @param maxVideoFileSize the maximum allowed video file size in bytes
+     * @throws ResponseStatusException if the file size exceeds the maximum allowed size
+     */
+    public static void validateFileSizeWithVideoLimit(MultipartFile file, long maxVideoFileSize) {
         if (file == null || file.getOriginalFilename() == null) {
             return;
         }
-        long maxSize = isVideoFile(file.getOriginalFilename()) ? Constants.MAX_VIDEO_FILE_SIZE : Constants.MAX_FILE_SIZE;
+        long maxSize = isVideoFile(file.getOriginalFilename()) ? maxVideoFileSize : Constants.MAX_FILE_SIZE;
         validateFileSize(file, maxSize);
     }
 

@@ -117,6 +117,7 @@ artemis:
     lecture:
         video-upload:
             enabled: false  # Set to true to enable video file uploads for lecture units in tests
+            max-file-size: 200  # Maximum video file size in MB
 spring:
     application:
         name: Artemis

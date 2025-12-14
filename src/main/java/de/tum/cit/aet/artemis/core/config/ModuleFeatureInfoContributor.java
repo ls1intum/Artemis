@@ -74,6 +74,8 @@ public class ModuleFeatureInfoContributor implements InfoContributor {
         }
         if (artemisConfigHelper.isVideoUploadEnabled(environment)) {
             enabledArtemisFeatures.add(Constants.MODULE_FEATURE_VIDEO_UPLOAD);
+            // Also report the max video file size when video upload is enabled
+            builder.withDetail(Constants.MAX_VIDEO_FILE_SIZE_INFO_KEY, artemisConfigHelper.getVideoUploadMaxFileSize(environment));
         }
         builder.withDetail(ACTIVE_MODULE_FEATURES, enabledArtemisFeatures);
     }
