@@ -22,7 +22,7 @@ import { MODULE_FEATURE_VIDEO_UPLOAD } from 'app/app.constants';
 export interface AttachmentVideoUnitFormData {
     formProperties: FormProperties;
     fileProperties: FileProperties;
-    videoFileProperties: VideoFileProperties;
+    videoFileProperties?: VideoFileProperties;
     playlistUrl?: string;
     transcriptionProperties?: TranscriptionProperties;
     transcriptionStatus?: string;

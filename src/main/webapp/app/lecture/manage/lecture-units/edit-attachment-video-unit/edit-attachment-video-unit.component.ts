@@ -104,7 +104,7 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
     updateAttachmentVideoUnit(attachmentVideoUnitFormData: AttachmentVideoUnitFormData) {
         const { description, name, releaseDate, updateNotificationText, videoSource, competencyLinks, generateTranscript } = attachmentVideoUnitFormData.formProperties;
         const { file, fileName } = attachmentVideoUnitFormData.fileProperties;
-        const { videoFile, videoFileName } = attachmentVideoUnitFormData.videoFileProperties;
+        const { videoFile, videoFileName } = attachmentVideoUnitFormData.videoFileProperties ?? {};
         const { videoTranscription } = attachmentVideoUnitFormData.transcriptionProperties || {};
         const { playlistUrl, uploadProgressCallback } = attachmentVideoUnitFormData || {};
 
