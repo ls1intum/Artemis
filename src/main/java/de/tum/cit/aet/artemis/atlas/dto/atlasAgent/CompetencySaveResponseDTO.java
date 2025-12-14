@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.atlas.dto;
+package de.tum.cit.aet.artemis.atlas.dto.atlasAgent;
 
 import java.util.List;
 

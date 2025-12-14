@@ -5,26 +5,22 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
-import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
-import de.tum.cit.aet.artemis.atlas.dto.AtlasAgentCompetencyDTO;
-import de.tum.cit.aet.artemis.atlas.dto.CompetencyErrorDTO;
-import de.tum.cit.aet.artemis.atlas.dto.CompetencyPreviewDTO;
-import de.tum.cit.aet.artemis.atlas.dto.CompetencySaveResponseDTO;
+import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.AtlasAgentCompetencyDTO;
+import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.CompetencyErrorDTO;
+import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.CompetencyOperationDTO;
+import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.CompetencyPreviewDTO;
+import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.CompetencySaveResponseDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
@@ -51,70 +47,6 @@ import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 @Conditional(AtlasEnabled.class)
 public class CompetencyExpertToolsService {
 
-    /**
-     * Wrapper class for competency operations.
-     * Used by tools to accept single or multiple competency operations.
-     */
-    public static class CompetencyOperation {
-
-        @JsonProperty
-        private Long competencyId; // null for create, set for update
-
-        @JsonProperty
-        @NotBlank(message = "Title is required for all competencies")
-        private String title;
-
-        @JsonProperty
-        private String description;
-
-        @JsonProperty
-        @NotNull(message = "Taxonomy is required for all competencies")
-        private CompetencyTaxonomy taxonomy;
-
-        // Default constructor for Jackson
-        public CompetencyOperation() {
-        }
-
-        public CompetencyOperation(Long competencyId, String title, String description, CompetencyTaxonomy taxonomy) {
-            this.competencyId = competencyId;
-            this.title = title;
-            this.description = description;
-            this.taxonomy = taxonomy;
-        }
-
-        public Long getCompetencyId() {
-            return competencyId;
-        }
-
-        public void setCompetencyId(Long competencyId) {
-            this.competencyId = competencyId;
-        }
-
-        public String getTitle() {
-            return title;
-        }
-
-        public void setTitle(String title) {
-            this.title = title;
-        }
-
-        public String getDescription() {
-            return description;
-        }
-
-        public void setDescription(String description) {
-            this.description = description;
-        }
-
-        public CompetencyTaxonomy getTaxonomy() {
-            return taxonomy;
-        }
-
-        public void setTaxonomy(CompetencyTaxonomy taxonomy) {
-            this.taxonomy = taxonomy;
-        }
-    }
-
     private final ObjectMapper objectMapper;
 
     private final CompetencyRepository competencyRepository;
@@ -123,10 +55,8 @@ public class CompetencyExpertToolsService {
 
     private final AtlasAgentService atlasAgentService;
 
-    // ThreadLocal storage for preview data - enables deterministic extraction without parsing LLM output
     private static final ThreadLocal<List<CompetencyPreviewDTO>> currentPreviews = ThreadLocal.withInitial(() -> null);
 
-    // ThreadLocal to store the current sessionId for tool calls
     private static final ThreadLocal<String> currentSessionId = ThreadLocal.withInitial(() -> null);
 
     public CompetencyExpertToolsService(ObjectMapper objectMapper, CompetencyRepository competencyRepository, CourseRepository courseRepository,
@@ -157,7 +87,7 @@ public class CompetencyExpertToolsService {
     /**
      * Retrieves all competencies for a given course.
      * The LLM can call this method when asked questions such as:
-     * “Show me the competencies for course 123” or “What are the learning goals for this course?”
+     * “Show me the competencies” or “What are the learning goals for this course?”
      *
      * @param courseId ID of the course
      * @return JSON response containing the list of competencies or an error message
@@ -172,7 +102,8 @@ public class CompetencyExpertToolsService {
         }
 
         Set<Competency> competencies = competencyRepository.findAllByCourseId(courseId);
-        List<AtlasAgentCompetencyDTO> competencyList = competencies.stream().map(AtlasAgentCompetencyDTO::of).toList();
+        List<AtlasAgentCompetencyDTO> competencyList = competencies.stream().map(competency -> new AtlasAgentCompetencyDTO(competency.getId(), competency.getTitle(),
+                competency.getDescription(), competency.getTaxonomy() != null ? competency.getTaxonomy().toString() : null, null)).toList();
         record Response(Long courseId, List<AtlasAgentCompetencyDTO> competencies) {
         }
         return toJson(new Response(courseId, competencyList));
@@ -210,33 +141,16 @@ public class CompetencyExpertToolsService {
             return toJson(new ErrorResponse("No active session"));
         }
 
-        List<CompetencyOperation> cachedData = atlasAgentService.getCachedPendingCompetencyOperations(sessionId);
+        List<CompetencyOperationDTO> cachedData = atlasAgentService.getCachedPendingCompetencyOperations(sessionId);
         if (cachedData == null || cachedData.isEmpty()) {
             record ErrorResponse(String error) {
             }
             return toJson(new ErrorResponse("No previewed competency data found for this session"));
         }
 
-        record Response(String sessionId, List<CompetencyOperation> competencies) {
+        record Response(String sessionId, List<CompetencyOperationDTO> competencies) {
         }
         return toJson(new Response(sessionId, cachedData));
-    }
-
-    /**
-     * Validates a competency operation for required fields.
-     *
-     * @param comp the competency operation to validate
-     * @return error message if validation fails, null if valid
-     */
-    private String validateCompetencyOperation(CompetencyOperation comp) {
-        if (comp.getTaxonomy() == null) {
-            String titleInfo = comp.getTitle() != null ? " for competency '" + comp.getTitle() + "'" : "";
-            return "Missing taxonomy" + titleInfo;
-        }
-        if (comp.getTitle() == null || comp.getTitle().isBlank()) {
-            return "Missing or empty title for competency";
-        }
-        return null;
     }
 
     /**
@@ -253,28 +167,18 @@ public class CompetencyExpertToolsService {
      */
     @Tool(description = "Preview one or multiple competencies before creating/updating. SINGLE: pass [{comp}]. BATCH: pass [{comp1}, {comp2}, {comp3}]. CRITICAL: For batch operations, pass ALL competencies in ONE call, not multiple separate calls.")
     public String previewCompetencies(@ToolParam(description = "the Course ID from the CONTEXT section") Long courseID,
-            @ToolParam(description = "list of competency operations to preview") List<CompetencyOperation> competencies,
+            @ToolParam(description = "list of competency operations to preview ") List<CompetencyOperationDTO> competencies,
             @ToolParam(description = "optional: set to true for view-only mode (no action buttons)", required = false) Boolean viewOnly) {
         if (competencies == null || competencies.isEmpty()) {
             return "Error: No competencies provided for preview.";
         }
 
-        // Validate all competencies before processing
-        for (CompetencyOperation comp : competencies) {
-            String validationError = validateCompetencyOperation(comp);
-            if (validationError != null) {
-                return "Error: " + validationError;
-            }
-        }
-
-        // Store preview data in ThreadLocal for deterministic extraction by AtlasAgentService
-        List<CompetencyPreviewDTO> previewResponses = competencies.stream().map(comp -> new CompetencyPreviewDTO(comp.getTitle(), comp.getDescription(),
-                comp.getTaxonomy().toString(), getTaxonomyIcon(comp.getTaxonomy()), comp.getCompetencyId(), viewOnly)).toList();
+        List<CompetencyPreviewDTO> previewResponses = competencies.stream().map(competency -> new CompetencyPreviewDTO(competency.title(), competency.description(),
+                competency.taxonomy().toString(), competency.taxonomy().getIcon(), competency.competencyId(), viewOnly)).toList();
 
         currentPreviews.set(previewResponses);
 
         // Cache the competency operation data for refinement operations
-        // This enables deterministic modifications (e.g., changing taxonomy while preserving title/description)
         String sessionId = currentSessionId.get();
         if (sessionId != null && !Boolean.TRUE.equals(viewOnly)) {
             // Only cache if not in view-only mode (view-only is for browsing, not editing)
@@ -292,24 +196,6 @@ public class CompetencyExpertToolsService {
     }
 
     /**
-     * Maps a CompetencyTaxonomy to its corresponding icon name.
-     * This mapping is critical for client-side display and must remain stable.
-     *
-     * @param taxonomy the competency taxonomy
-     * @return the corresponding icon name for FontAwesome
-     */
-    private String getTaxonomyIcon(CompetencyTaxonomy taxonomy) {
-        return switch (taxonomy) {
-            case REMEMBER -> "brain";
-            case UNDERSTAND -> "comments";
-            case APPLY -> "pen-fancy";
-            case ANALYZE -> "magnifying-glass";
-            case EVALUATE -> "plus-minus";
-            case CREATE -> "cubes-stacked";
-        };
-    }
-
-    /**
      * Unified tool for creating/updating one or multiple competencies for a given course.
      * Supports both single and batch operations. Continues on partial failures.
      * The LLM typically calls this method when users request to create a new competency
@@ -321,7 +207,7 @@ public class CompetencyExpertToolsService {
      */
     @Tool(description = "Create or update one or multiple competencies. Automatically detects create vs update based on competencyId presence.")
     public String saveCompetencies(@ToolParam(description = "the ID of the course") Long courseId,
-            @ToolParam(description = "list of competency operations to save") List<CompetencyOperation> competencies) {
+            @ToolParam(description = "list of competency operations to save") List<CompetencyOperationDTO> competencies) {
 
         if (competencies == null || competencies.isEmpty()) {
             record ErrorResponse(String error) {
@@ -338,70 +224,52 @@ public class CompetencyExpertToolsService {
 
         Course course = courseOptional.get();
         List<CompetencyErrorDTO> errors = new ArrayList<>();
-        List<CompetencyOperation> successfulOperations = new ArrayList<>();
+        List<CompetencyOperationDTO> successfulOperations = new ArrayList<>();
         int createCount = 0;
         int updateCount = 0;
 
-        for (CompetencyOperation comp : competencies) {
+        for (CompetencyOperationDTO competencyOperation : competencies) {
             try {
-                // Validate and normalize title once before using it
-                String rawTitle = comp.getTitle();
-                if (rawTitle == null) {
-                    errors.add(new CompetencyErrorDTO(null, "MISSING_TITLE", null));
-                    continue;
-                }
-
-                String sanitizedTitle = rawTitle.trim();
-                if (sanitizedTitle.isBlank()) {
-                    errors.add(new CompetencyErrorDTO(null, "EMPTY_TITLE", null));
-                    continue;
-                }
-
-                // Validate taxonomy to prevent NPE during preview generation
-                if (comp.getTaxonomy() == null) {
-                    errors.add(new CompetencyErrorDTO(sanitizedTitle, "MISSING_TAXONOMY", null));
-                    continue;
-                }
-
-                if (comp.getCompetencyId() == null) {
-                    // Create new competency
+                if (competencyOperation.competencyId() == null) {
+                    // Create Operation as the id is null
                     Competency competency = new Competency();
-                    competency.setTitle(sanitizedTitle);
-                    competency.setDescription(comp.getDescription());
-                    competency.setTaxonomy(comp.getTaxonomy());
+                    competency.setTitle(competencyOperation.title());
+                    competency.setDescription(competencyOperation.description());
+                    competency.setTaxonomy(competencyOperation.taxonomy());
                     competency.setCourse(course);
                     competencyRepository.save(competency);
                     createCount++;
                     AtlasAgentService.markCompetencyModified();
-                    successfulOperations.add(comp);
+                    successfulOperations.add(competencyOperation);
                 }
                 else {
-                    // Update existing competency
-                    Optional<Competency> existing = competencyRepository.findById(comp.getCompetencyId());
+                    // Update Operation
+                    Optional<Competency> existing = competencyRepository.findById(competencyOperation.competencyId());
+                    CompetencyErrorDTO notFound = new CompetencyErrorDTO(competencyOperation.title(), "NOT_FOUND", "ID: " + competencyOperation.competencyId());
                     if (existing.isEmpty()) {
-                        errors.add(new CompetencyErrorDTO(sanitizedTitle, "NOT_FOUND", "ID: " + comp.getCompetencyId()));
+                        errors.add(notFound);
                         continue;
                     }
 
                     Competency competency = existing.get();
                     if (!competency.getCourse().getId().equals(course.getId())) {
-                        errors.add(new CompetencyErrorDTO(sanitizedTitle, "NOT_FOUND", "ID: " + comp.getCompetencyId()));
+                        errors.add(notFound);
                         continue;
                     }
 
-                    competency.setTitle(sanitizedTitle);
-                    competency.setDescription(comp.getDescription());
-                    competency.setTaxonomy(comp.getTaxonomy());
+                    competency.setTitle(competencyOperation.title());
+                    competency.setDescription(competencyOperation.description());
+                    competency.setTaxonomy(competencyOperation.taxonomy());
                     competencyRepository.save(competency);
-                    comp.setCompetencyId(competency.getId());
+                    CompetencyOperationDTO competencyOperationwithID = new CompetencyOperationDTO(competency.getId(), competencyOperation.title(),
+                            competencyOperation.description(), competencyOperation.taxonomy());
                     updateCount++;
                     AtlasAgentService.markCompetencyModified();
-                    successfulOperations.add(comp);
+                    successfulOperations.add(competencyOperationwithID);
                 }
             }
             catch (Exception e) {
-                // Use sanitized title if available, otherwise use a placeholder for error message
-                String titleForError = comp.getTitle() != null ? comp.getTitle().trim() : null;
+                String titleForError = competencyOperation.title() != null ? competencyOperation.title().trim() : null;
                 errors.add(new CompetencyErrorDTO(titleForError, "SAVE_FAILED", e.getMessage()));
             }
         }
@@ -409,8 +277,10 @@ public class CompetencyExpertToolsService {
         // Store preview data in ThreadLocal so the interface can display cards for what was just saved
         // This ensures the cards appear in the response showing what was created/updated
         if (!successfulOperations.isEmpty()) {
-            List<CompetencyPreviewDTO> previewResponses = successfulOperations.stream().map(comp -> new CompetencyPreviewDTO(comp.getTitle(), comp.getDescription(),
-                    comp.getTaxonomy().toString(), getTaxonomyIcon(comp.getTaxonomy()), comp.getCompetencyId(), false)).toList();
+            List<CompetencyPreviewDTO> previewResponses = successfulOperations.stream()
+                    .map(competencyOperation -> new CompetencyPreviewDTO(competencyOperation.title(), competencyOperation.description(), competencyOperation.taxonomy().toString(),
+                            competencyOperation.taxonomy().getIcon(), competencyOperation.competencyId(), false))
+                    .toList();
 
             currentPreviews.set(previewResponses);
         }

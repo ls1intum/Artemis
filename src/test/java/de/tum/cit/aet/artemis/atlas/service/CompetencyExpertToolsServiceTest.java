@@ -25,8 +25,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
+import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.CompetencyOperationDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
-import de.tum.cit.aet.artemis.atlas.service.CompetencyExpertToolsService.CompetencyOperation;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 
@@ -188,7 +188,7 @@ class CompetencyExpertToolsServiceTest {
 
         @Test
         void shouldPreviewSingleCompetencyInCorrectFormat() {
-            CompetencyOperation operation = new CompetencyOperation(null, "Data Structures", "Understanding arrays, lists, trees, and graphs", CompetencyTaxonomy.UNDERSTAND);
+            CompetencyOperationDTO operation = new CompetencyOperationDTO(null, "Data Structures", "Understanding arrays, lists, trees, and graphs", CompetencyTaxonomy.UNDERSTAND);
 
             String actualResult = competencyExpertToolsService.previewCompetencies(testCourse.getId(), List.of(operation), null);
 
@@ -198,8 +198,8 @@ class CompetencyExpertToolsServiceTest {
 
         @Test
         void shouldPreviewMultipleCompetenciesInBatchFormat() {
-            CompetencyOperation op1 = new CompetencyOperation(null, "Algorithms", "Sorting and searching algorithms", CompetencyTaxonomy.APPLY);
-            CompetencyOperation op2 = new CompetencyOperation(null, "Testing", "Unit and integration testing", CompetencyTaxonomy.EVALUATE);
+            CompetencyOperationDTO op1 = new CompetencyOperationDTO(null, "Algorithms", "Sorting and searching algorithms", CompetencyTaxonomy.APPLY);
+            CompetencyOperationDTO op2 = new CompetencyOperationDTO(null, "Testing", "Unit and integration testing", CompetencyTaxonomy.EVALUATE);
 
             String actualResult = competencyExpertToolsService.previewCompetencies(testCourse.getId(), List.of(op1, op2), false);
 
@@ -229,7 +229,7 @@ class CompetencyExpertToolsServiceTest {
 
         @Test
         void shouldCreateNewCompetencySuccessfully() throws JsonProcessingException {
-            CompetencyOperation createOperation = new CompetencyOperation(null, "New Competency", "A brand new competency", CompetencyTaxonomy.APPLY);
+            CompetencyOperationDTO createOperation = new CompetencyOperationDTO(null, "New Competency", "A brand new competency", CompetencyTaxonomy.APPLY);
 
             when(courseRepository.findById(123L)).thenReturn(Optional.of(testCourse));
             when(competencyRepository.save(any(Competency.class))).thenAnswer(invocation -> {
@@ -252,7 +252,7 @@ class CompetencyExpertToolsServiceTest {
 
         @Test
         void shouldUpdateExistingCompetencySuccessfully() throws JsonProcessingException {
-            CompetencyOperation updateOperation = new CompetencyOperation(1L, "Updated Title", "Updated description", CompetencyTaxonomy.ANALYZE);
+            CompetencyOperationDTO updateOperation = new CompetencyOperationDTO(1L, "Updated Title", "Updated description", CompetencyTaxonomy.ANALYZE);
 
             when(courseRepository.findById(123L)).thenReturn(Optional.of(testCourse));
             when(competencyRepository.findById(1L)).thenReturn(Optional.of(testCompetency));
@@ -277,8 +277,8 @@ class CompetencyExpertToolsServiceTest {
 
         @Test
         void shouldHandleBatchOperationsWithMixedCreateAndUpdate() throws JsonProcessingException {
-            CompetencyOperation createOp = new CompetencyOperation(null, "New Competency", "Description", CompetencyTaxonomy.REMEMBER);
-            CompetencyOperation updateOp = new CompetencyOperation(1L, "Updated", "Updated desc", CompetencyTaxonomy.CREATE);
+            CompetencyOperationDTO createOp = new CompetencyOperationDTO(null, "New Competency", "Description", CompetencyTaxonomy.REMEMBER);
+            CompetencyOperationDTO updateOp = new CompetencyOperationDTO(1L, "Updated", "Updated desc", CompetencyTaxonomy.CREATE);
 
             when(courseRepository.findById(123L)).thenReturn(Optional.of(testCourse));
             when(competencyRepository.findById(1L)).thenReturn(Optional.of(testCompetency));
@@ -297,8 +297,8 @@ class CompetencyExpertToolsServiceTest {
 
         @Test
         void shouldContinueOnPartialFailuresAndReportErrors() throws JsonProcessingException {
-            CompetencyOperation validOp = new CompetencyOperation(null, "Valid", "Valid description", CompetencyTaxonomy.APPLY);
-            CompetencyOperation invalidOp = new CompetencyOperation(999L, "Invalid", "Non-existent ID", CompetencyTaxonomy.UNDERSTAND);
+            CompetencyOperationDTO validOp = new CompetencyOperationDTO(null, "Valid", "Valid description", CompetencyTaxonomy.APPLY);
+            CompetencyOperationDTO invalidOp = new CompetencyOperationDTO(999L, "Invalid", "Non-existent ID", CompetencyTaxonomy.UNDERSTAND);
 
             when(courseRepository.findById(123L)).thenReturn(Optional.of(testCourse));
             when(competencyRepository.findById(999L)).thenReturn(Optional.empty());
@@ -323,7 +323,7 @@ class CompetencyExpertToolsServiceTest {
 
         @Test
         void shouldReturnErrorWhenCourseNotFound() throws JsonProcessingException {
-            CompetencyOperation operation = new CompetencyOperation(null, "Test", "Test description", CompetencyTaxonomy.APPLY);
+            CompetencyOperationDTO operation = new CompetencyOperationDTO(null, "Test", "Test description", CompetencyTaxonomy.APPLY);
 
             when(courseRepository.findById(999L)).thenReturn(Optional.empty());
 
@@ -351,7 +351,7 @@ class CompetencyExpertToolsServiceTest {
 
         @Test
         void shouldTrimTitleWhitespaceDuringUpdate() {
-            CompetencyOperation updateOperation = new CompetencyOperation(1L, "  Title with spaces  ", "Description", CompetencyTaxonomy.APPLY);
+            CompetencyOperationDTO updateOperation = new CompetencyOperationDTO(1L, "  Title with spaces  ", "Description", CompetencyTaxonomy.APPLY);
 
             when(courseRepository.findById(123L)).thenReturn(Optional.of(testCourse));
             when(competencyRepository.findById(1L)).thenReturn(Optional.of(testCompetency));
@@ -367,7 +367,7 @@ class CompetencyExpertToolsServiceTest {
 
         @Test
         void shouldHandleExceptionDuringSaveGracefully() throws JsonProcessingException {
-            CompetencyOperation operation = new CompetencyOperation(null, "Test", "Test description", CompetencyTaxonomy.APPLY);
+            CompetencyOperationDTO operation = new CompetencyOperationDTO(null, "Test", "Test description", CompetencyTaxonomy.APPLY);
 
             when(courseRepository.findById(123L)).thenReturn(Optional.of(testCourse));
             when(competencyRepository.save(any(Competency.class))).thenThrow(new RuntimeException("Database error"));
@@ -389,7 +389,7 @@ class CompetencyExpertToolsServiceTest {
             assertThat(AtlasAgentService.wasCompetencyModified()).as("Initially, no competency should be created").isFalse();
             assertThat(AtlasAgentService.wasCompetencyModified()).as("Initially, no competency should be modified").isFalse();
 
-            CompetencyOperation createOperation = new CompetencyOperation(null, "New", "Description", CompetencyTaxonomy.APPLY);
+            CompetencyOperationDTO createOperation = new CompetencyOperationDTO(null, "New", "Description", CompetencyTaxonomy.APPLY);
             when(courseRepository.findById(123L)).thenReturn(Optional.of(testCourse));
             when(competencyRepository.save(any(Competency.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -404,7 +404,7 @@ class CompetencyExpertToolsServiceTest {
 
             assertThat(AtlasAgentService.wasCompetencyModified()).as("Initially, no competency should be updated").isFalse();
 
-            CompetencyOperation updateOperation = new CompetencyOperation(1L, "Updated", "Description", CompetencyTaxonomy.APPLY);
+            CompetencyOperationDTO updateOperation = new CompetencyOperationDTO(1L, "Updated", "Description", CompetencyTaxonomy.APPLY);
             when(courseRepository.findById(123L)).thenReturn(Optional.of(testCourse));
             when(competencyRepository.findById(1L)).thenReturn(Optional.of(testCompetency));
             when(competencyRepository.save(any(Competency.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -445,7 +445,7 @@ class CompetencyExpertToolsServiceTest {
         @Test
         void shouldClearAllPreviewsSuccessfully() {
             // Create and set some previews
-            CompetencyOperation op = new CompetencyOperation(null, "Test", "Description", CompetencyTaxonomy.APPLY);
+            CompetencyOperationDTO op = new CompetencyOperationDTO(null, "Test", "Description", CompetencyTaxonomy.APPLY);
             competencyExpertToolsService.previewCompetencies(testCourse.getId(), List.of(op), null);
 
             // Clear all previews
@@ -515,7 +515,7 @@ class CompetencyExpertToolsServiceTest {
             String sessionId = "test_session";
             CompetencyExpertToolsService.setCurrentSessionId(sessionId);
 
-            List<CompetencyOperation> cachedData = List.of(new CompetencyOperation(null, "Cached Competency", "Description", CompetencyTaxonomy.APPLY));
+            List<CompetencyOperationDTO> cachedData = List.of(new CompetencyOperationDTO(null, "Cached Competency", "Description", CompetencyTaxonomy.APPLY));
 
             when(mockAtlasAgentService.getCachedPendingCompetencyOperations(sessionId)).thenReturn(cachedData);
 
@@ -540,7 +540,7 @@ class CompetencyExpertToolsServiceTest {
             String sessionId = "view_only_session";
             CompetencyExpertToolsService.setCurrentSessionId(sessionId);
 
-            CompetencyOperation op = new CompetencyOperation(null, "View Only", "Description", CompetencyTaxonomy.APPLY);
+            CompetencyOperationDTO op = new CompetencyOperationDTO(null, "View Only", "Description", CompetencyTaxonomy.APPLY);
 
             String result = competencyExpertToolsService.previewCompetencies(testCourse.getId(), List.of(op), true);
 
@@ -556,7 +556,7 @@ class CompetencyExpertToolsServiceTest {
             String sessionId = "editable_session";
             CompetencyExpertToolsService.setCurrentSessionId(sessionId);
 
-            CompetencyOperation op = new CompetencyOperation(null, "Editable", "Description", CompetencyTaxonomy.APPLY);
+            CompetencyOperationDTO op = new CompetencyOperationDTO(null, "Editable", "Description", CompetencyTaxonomy.APPLY);
 
             String result = competencyExpertToolsService.previewCompetencies(testCourse.getId(), List.of(op), false);
 
@@ -574,7 +574,7 @@ class CompetencyExpertToolsServiceTest {
             CompetencyTaxonomy[] allTaxonomies = CompetencyTaxonomy.values();
 
             for (CompetencyTaxonomy taxonomy : allTaxonomies) {
-                CompetencyOperation op = new CompetencyOperation(null, "Test " + taxonomy, "Description", taxonomy);
+                CompetencyOperationDTO op = new CompetencyOperationDTO(null, "Test " + taxonomy, "Description", taxonomy);
 
                 String result = competencyExpertToolsService.previewCompetencies(testCourse.getId(), List.of(op), null);
 

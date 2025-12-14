@@ -86,7 +86,7 @@ describe('AgentChatModalComponent', () => {
 
         mockTranslateService = TestBed.inject(TranslateService);
 
-        component.courseId = 123;
+        component.courseId.set(123);
 
         const messageInputSignal = () => mockMessageInput;
         const messagesContainerSignal = () => mockMessagesContainer;
@@ -389,7 +389,7 @@ describe('AgentChatModalComponent', () => {
         beforeEach(() => {
             component.currentMessage.set('Test message');
             component.isAgentTyping.set(false);
-            component.courseId = 123;
+            component.courseId.set(123);
         });
 
         it('should send message when Enter key is pressed', () => {

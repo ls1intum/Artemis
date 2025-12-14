@@ -15,7 +15,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
-import de.tum.cit.aet.artemis.atlas.dto.AtlasAgentExerciseDTO;
+import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.AtlasAgentExerciseDTO;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -81,7 +81,8 @@ public class AtlasAgentToolsService {
         }
 
         Set<Exercise> exercises = exerciseRepository.findByCourseIds(Set.of(courseId));
-        List<AtlasAgentExerciseDTO> exerciseList = exercises.stream().map(AtlasAgentExerciseDTO::of).toList();
+        List<AtlasAgentExerciseDTO> exerciseList = exercises.stream().map(exercise -> new AtlasAgentExerciseDTO(exercise.getId(), exercise.getTitle(), exercise.getType(),
+                exercise.getMaxPoints(), exercise.getReleaseDate().toString(), exercise.getDueDate().toString())).toList();
 
         record Response(Long courseId, List<AtlasAgentExerciseDTO> exercises) {
         }
