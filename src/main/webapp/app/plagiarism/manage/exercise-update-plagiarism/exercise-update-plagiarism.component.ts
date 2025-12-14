@@ -59,7 +59,6 @@ export class ExerciseUpdatePlagiarismComponent implements OnInit, OnDestroy {
             )
             .subscribe(() => {
                 this.exercise.update((exercise) => {
-                    // Use getRawValue() to include disabled fields (they are excluded from valueChanges)
                     exercise.plagiarismDetectionConfig = { ...this.form.getRawValue() };
                     return exercise;
                 });
