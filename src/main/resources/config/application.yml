@@ -347,6 +347,7 @@ info:
     # default value set to false
     textAssessmentAnalyticsEnabled: false
     studentExamStoreSessionData: true
+    localLLMDeploymentEnabled: false # Defines whether local on-premise LLMs are available or not
 
 # ===================================================================
 # JHipster specific properties

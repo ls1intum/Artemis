@@ -163,4 +163,5 @@ export class ProfileInfo {
     public useExternal: boolean;
     public versionControlName: string;
     public versionControlUrl: string;
+    public localLLMDeploymentEnabled: boolean;
 }

@@ -4,6 +4,7 @@ import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
 export type LLMSelectionChoice = 'cloud' | 'local' | 'no_ai' | 'none';
 
@@ -17,6 +18,7 @@ export class LLMSelectionModalComponent implements OnInit, OnDestroy {
     private modalService = inject(LLMSelectionModalService);
     private cdr = inject(ChangeDetectorRef);
     protected themeService = inject(ThemeService);
+    private profileService = inject(ProfileService);
     private router = inject(Router);
 
     @Output() choice = new EventEmitter<LLMSelectionChoice>();
@@ -24,11 +26,14 @@ export class LLMSelectionModalComponent implements OnInit, OnDestroy {
     isVisible = false;
     private modalSubscription?: Subscription;
 
+    isOnPremiseEnabled: boolean;
+
     ngOnInit(): void {
         this.modalSubscription = this.modalService.openModal$.subscribe(() => {
             this.open();
             this.cdr.detectChanges(); // Manually trigger change detection
         });
+        this.isOnPremiseEnabled = this.profileService.isLLMDeploymentEnabled();
     }
 
     ngOnDestroy(): void {

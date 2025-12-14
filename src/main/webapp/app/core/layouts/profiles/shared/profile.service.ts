@@ -40,6 +40,10 @@ export class ProfileService {
         return this.isProfileActive(PROFILE_DEV) ?? false;
     }
 
+    public isLLMDeploymentEnabled(): boolean {
+        return this.profileInfo.localLLMDeploymentEnabled;
+    }
+
     public isProduction(): boolean {
         return this.isProfileActive(PROFILE_PROD) ?? false;
     }
