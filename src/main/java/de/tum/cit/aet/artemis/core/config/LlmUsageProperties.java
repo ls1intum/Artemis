@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.core.config;
 
 import java.util.Map;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Component;
 @Component
 @Lazy
 @ConfigurationProperties(prefix = "spring.ai.llm")
+@ConditionalOnProperty(name = Constants.HYPERION_ENABLED_PROPERTY_NAME, havingValue = "true", matchIfMissing = false)
 public class LlmUsageProperties {
 
     /**

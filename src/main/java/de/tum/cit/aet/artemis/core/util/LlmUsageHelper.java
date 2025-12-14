@@ -7,9 +7,11 @@ import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
+import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.config.LlmUsageProperties;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.LLMRequest;
@@ -24,6 +26,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
  */
 @Component
 @Lazy
+@ConditionalOnProperty(name = Constants.HYPERION_ENABLED_PROPERTY_NAME, havingValue = "true", matchIfMissing = false)
 public class LlmUsageHelper {
 
     private static final Logger log = LoggerFactory.getLogger(LlmUsageHelper.class);
