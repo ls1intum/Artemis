@@ -227,9 +227,9 @@ data-exports/
 startupBeans.dot
 deferredEagerBeanInstantiationViolations.dot
 /junit.xml
+
 ######################
 # Claude Code
 ######################
 CLAUDE.md
 .claude
-/sync-competencies-to-atlasml.sh
