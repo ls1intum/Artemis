@@ -30,7 +30,7 @@ public record AtlasAgentCompetencyDTO(@NotNull Long id, @NotNull String title, @
      * Creates an AtlasAgentCompetencyDTO from a Competency entity with courseId.
      *
      * @param competency the competency to convert
-     * @param courseId   the course ID
+     * @param courseId   the course ID to include
      * @return the DTO representation
      */
     public static AtlasAgentCompetencyDTO of(@NotNull Competency competency, @NotNull Long courseId) {
