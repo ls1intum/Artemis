@@ -172,7 +172,7 @@ describe('EditAttachmentVideoUnitComponent', () => {
         attachmentVideoUnitFormComponent.formSubmitted.emit(attachmentVideoUnitFormData);
         fixture.detectChanges();
 
-        expect(updateAttachmentVideoUnitSpy).toHaveBeenCalledWith(1, 1, expect.any(FormData), undefined);
+        expect(updateAttachmentVideoUnitSpy).toHaveBeenCalledWith(1, 1, expect.any(FormData), undefined, undefined);
         expect(navigateSpy).toHaveBeenCalledOnce();
     });
 
@@ -202,7 +202,7 @@ describe('EditAttachmentVideoUnitComponent', () => {
         attachmentVideoUnitFormComponent.formSubmitted.emit(attachmentVideoUnitFormData);
         fixture.detectChanges();
 
-        expect(updateAttachmentVideoUnitSpy).toHaveBeenCalledWith(1, 1, expect.any(FormData), notification);
+        expect(updateAttachmentVideoUnitSpy).toHaveBeenCalledWith(1, 1, expect.any(FormData), notification, undefined);
         expect(navigateSpy).toHaveBeenCalledOnce();
     });
 
@@ -231,7 +231,7 @@ describe('EditAttachmentVideoUnitComponent', () => {
         attachmentVideoUnitFormComponent.formSubmitted.emit(attachmentVideoUnitFormData);
         fixture.detectChanges();
 
-        expect(updateAttachmentVideoUnitSpy).toHaveBeenCalledWith(1, 1, expect.any(FormData), undefined);
+        expect(updateAttachmentVideoUnitSpy).toHaveBeenCalledWith(1, 1, expect.any(FormData), undefined, undefined);
         expect(navigateSpy).toHaveBeenCalledOnce();
     });
 
@@ -386,7 +386,7 @@ describe('EditAttachmentVideoUnitComponent', () => {
         attachmentVideoUnitFormComponent.formSubmitted.emit(attachmentVideoUnitFormData);
         fixture.detectChanges();
 
-        expect(updateAttachmentVideoUnitSpy).toHaveBeenCalledWith(1, 1, expect.any(FormData), undefined);
+        expect(updateAttachmentVideoUnitSpy).toHaveBeenCalledWith(1, 1, expect.any(FormData), undefined, undefined);
         expect(navigateSpy).toHaveBeenCalledOnce();
     });
     it('should fetch playlist URL when editing existing video with videoSource', () => {

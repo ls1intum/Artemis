@@ -230,15 +230,21 @@ describe('AttachmentVideoUnitFormComponent', () => {
                 videoSource: exampleVideoUrl,
                 urlHelper: null,
                 generateTranscript: false,
+                videoTranscription: undefined,
             },
             fileProperties: {
                 file: fakeFile,
                 fileName: exampleFileName,
             },
-            playlistUrl: undefined,
+            videoFileProperties: {
+                videoFile: undefined,
+                videoFileName: undefined,
+            },
             transcriptionProperties: {
                 videoTranscription: null,
             },
+            playlistUrl: undefined,
+            uploadProgressCallback: expect.any(Function),
         });
 
         submitFormSpy.mockRestore();
@@ -376,15 +382,21 @@ describe('AttachmentVideoUnitFormComponent', () => {
                 videoSource: exampleVideoUrl,
                 urlHelper: null,
                 generateTranscript: false,
+                videoTranscription: undefined,
             },
             fileProperties: {
                 file: undefined,
                 fileName: undefined,
             },
+            videoFileProperties: {
+                videoFile: undefined,
+                videoFileName: undefined,
+            },
             transcriptionProperties: {
                 videoTranscription: null,
             },
             playlistUrl: undefined,
+            uploadProgressCallback: expect.any(Function),
         });
 
         submitFormSpy.mockRestore();
@@ -436,15 +448,21 @@ describe('AttachmentVideoUnitFormComponent', () => {
                 videoSource: '',
                 urlHelper: null,
                 generateTranscript: false,
+                videoTranscription: undefined,
             },
             fileProperties: {
                 file: fakeFile,
                 fileName: exampleFileName,
             },
+            videoFileProperties: {
+                videoFile: undefined,
+                videoFileName: undefined,
+            },
             transcriptionProperties: {
                 videoTranscription: null,
             },
             playlistUrl: undefined,
+            uploadProgressCallback: expect.any(Function),
         });
 
         submitFormSpy.mockRestore();
@@ -771,6 +789,8 @@ describe('AttachmentVideoUnitFormComponent', () => {
             const videoFile = new File(['test'], 'test-video.mp4', { type: 'video/mp4' });
             attachmentVideoUnitFormComponent.videoFile = videoFile;
             attachmentVideoUnitFormComponent.videoFileName.set('test-video.mp4');
+            // Mark as user-touched to simulate actual file selection (not pre-populated edit mode data)
+            attachmentVideoUnitFormComponent.videoFileInputTouched = true;
             attachmentVideoUnitFormComponent.form.patchValue({ name: 'Test Video Unit' });
 
             // Form should be invalid because video upload is disabled
@@ -811,6 +831,8 @@ describe('AttachmentVideoUnitFormComponent', () => {
             const videoFile = new File(['test'], 'test-video.mp4', { type: 'video/mp4' });
             attachmentVideoUnitFormComponent.videoFile = videoFile;
             attachmentVideoUnitFormComponent.videoFileName.set('test-video.mp4');
+            // Mark as user-touched to simulate actual file selection
+            attachmentVideoUnitFormComponent.videoFileInputTouched = true;
             attachmentVideoUnitFormComponent.form.patchValue({ name: 'Test Video Unit' });
 
             // Form should be valid

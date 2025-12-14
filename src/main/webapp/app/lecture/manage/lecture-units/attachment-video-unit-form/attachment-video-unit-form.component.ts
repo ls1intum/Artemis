@@ -1,4 +1,4 @@
-import { Component, ElementRef, ViewChild, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, OnDestroy, ViewChild, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { AbstractControl, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import urlParser from 'js-video-url-parser';
@@ -123,7 +123,7 @@ function validJsonOrEmpty(control: AbstractControl): ValidationErrors | null {
     styleUrl: './attachment-video-unit-form.component.scss',
     imports: [FormsModule, ReactiveFormsModule, TranslateDirective, FaIconComponent, NgbTooltip, FormDateTimePickerComponent, CompetencySelectionComponent, ArtemisTranslatePipe],
 })
-export class AttachmentVideoUnitFormComponent {
+export class AttachmentVideoUnitFormComponent implements OnDestroy {
     protected readonly faQuestionCircle = faQuestionCircle;
     protected readonly faTimes = faTimes;
     protected readonly faArrowLeft = faArrowLeft;
@@ -144,6 +144,7 @@ export class AttachmentVideoUnitFormComponent {
     isUploading = signal(false);
     uploadProgress = signal(0);
     uploadStatus = signal('');
+    private uploadResetTimeoutId?: number;
 
     formData = input<AttachmentVideoUnitFormData>();
     isEditMode = input<boolean>(false);
@@ -200,6 +201,12 @@ export class AttachmentVideoUnitFormComponent {
                 this.transcriptionStatus.set(undefined);
             }
         });
+    }
+
+    ngOnDestroy(): void {
+        if (this.uploadResetTimeoutId) {
+            clearTimeout(this.uploadResetTimeoutId);
+        }
     }
 
     form: FormGroup = this.formBuilder.group({
@@ -261,8 +268,9 @@ export class AttachmentVideoUnitFormComponent {
         const hasValidVideoFile = !!this.videoFileName();
         const hasVideoSource = !!this.videoSourceSignal();
 
-        // If video upload is disabled and user tries to upload a video file, form is invalid
-        if (hasValidVideoFile && !this.isVideoUploadEnabled()) {
+        // If video upload is disabled and user tries to upload a NEW video file, form is invalid
+        // Allow pre-populated data (from edit mode) without invalidating the form
+        if (this.videoFileInputTouched && hasValidVideoFile && !this.isVideoUploadEnabled()) {
             return false;
         }
 
@@ -386,11 +394,15 @@ export class AttachmentVideoUnitFormComponent {
             this.uploadStatus.set(status);
 
             if (progress === 100) {
+                if (this.uploadResetTimeoutId) {
+                    clearTimeout(this.uploadResetTimeoutId);
+                }
                 // Reset upload state after completion
-                setTimeout(() => {
+                this.uploadResetTimeoutId = window.setTimeout(() => {
                     this.isUploading.set(false);
                     this.uploadProgress.set(0);
                     this.uploadStatus.set('');
+                    this.uploadResetTimeoutId = undefined;
                 }, 1000);
             }
         };

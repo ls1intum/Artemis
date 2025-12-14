@@ -138,7 +138,7 @@ describe('CreateAttachmentVideoUnitComponent', () => {
         attachmentVideoUnitFormComponent.formSubmitted.emit(attachmentVideoUnitFormData);
 
         createAttachmentVideoUnitComponentFixture.whenStable().then(() => {
-            expect(createAttachmentVideoUnitStub).toHaveBeenCalledWith(expect.any(FormData), 1);
+            expect(createAttachmentVideoUnitStub).toHaveBeenCalledWith(expect.any(FormData), 1, undefined);
             expect(navigateSpy).toHaveBeenCalledOnce();
         });
     }));

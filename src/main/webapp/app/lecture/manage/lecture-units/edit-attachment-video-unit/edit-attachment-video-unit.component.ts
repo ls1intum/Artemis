@@ -134,7 +134,7 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
             formData.append('file', file, fileName);
         }
         // Add video file if provided
-        if (videoFile) {
+        if (videoFile && videoFileName) {
             formData.append('videoFile', videoFile, videoFileName);
         }
         formData.append('attachment', objectToJsonBlob(this.attachment));
