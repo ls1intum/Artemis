@@ -636,8 +636,8 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
     }
 
     tableSorts: Record<string, SortPropDir[]> = {
-        testCases: [],
-        codeAnalysis: [],
+        testCases: [{ prop: 'testName', dir: 'asc' }],
+        codeAnalysis: [{ prop: 'name', dir: 'asc' }],
     };
     onSort(table: Table, config: any) {
         this.tableSorts[table] = config.sorts;

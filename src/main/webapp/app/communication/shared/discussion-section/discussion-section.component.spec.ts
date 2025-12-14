@@ -150,7 +150,8 @@ describe('DiscussionSectionComponent', () => {
         expect(component.createdPost).toBeDefined();
         expect(component.channel).toEqual(metisLectureChannelDTO);
         expect(getChannelOfLectureSpy).toHaveBeenCalled();
-        expect(component.posts).toEqual(messagesBetweenUser1User2.reverse());
+        // Use spread operator to avoid mutating the shared test data array
+        expect(component.posts).toEqual([...messagesBetweenUser1User2].reverse());
     }));
 
     it('should set course and messages for exercise with exercise channel on initialization', fakeAsync(() => {
@@ -161,7 +162,8 @@ describe('DiscussionSectionComponent', () => {
         expect(component.createdPost).toBeDefined();
         expect(component.channel).toEqual(metisExerciseChannelDTO);
         expect(getChannelOfExerciseSpy).toHaveBeenCalled();
-        expect(component.posts).toEqual(messagesBetweenUser1User2.reverse());
+        // Use spread operator to avoid mutating the shared test data array
+        expect(component.posts).toEqual([...messagesBetweenUser1User2].reverse());
     }));
 
     it('should reset current post', fakeAsync(() => {
@@ -192,7 +194,13 @@ describe('DiscussionSectionComponent', () => {
         tick();
         fixture.changeDetectorRef.detectChanges();
         tick();
-        component.posts = metisExercisePosts;
+        // Create posts with unique IDs to avoid duplicate key errors with track by post.id
+        component.posts = [
+            { ...metisExercisePosts[0], id: 101 },
+            { ...metisExercisePosts[1], id: 102 },
+            { ...metisExercisePosts[0], id: 103 },
+            { ...metisExercisePosts[1], id: 104 },
+        ];
         fixture.changeDetectorRef.detectChanges();
         tick();
         const newPostButtons = getElements(fixture.debugElement, '#new-post');
@@ -351,6 +359,10 @@ describe('DiscussionSectionComponent', () => {
     });
 
     it('fetches new messages on scroll up if more messages are available', fakeAsync(() => {
+        // Use unique post IDs to avoid duplicate key warnings from Angular's @for track
+        metisServiceGetFilteredPostsSpy.mockImplementation(() => {
+            component.posts = [{ id: 1001 } as any, { id: 1002 } as any];
+        });
         const course = { id: 1, courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_ONLY } as Course;
         fixture.componentRef.setInput('lecture', { id: 2, course: course } as Lecture);
         fixture.detectChanges();

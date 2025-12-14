@@ -126,7 +126,7 @@
                                 </form>
                                 <div class="bold-line row mt-1 mb-2"></div>
                                 <div #itemsContainer class="items-container" infinite-scroll [scrollWindow]="false" (scrolledUp)="fetchNextPage()">
-                                    @for (post of posts; track $index) {
+                                    @for (post of posts; track post.id) {
                                         <jhi-posting-thread
                                             #postingThread
                                             [id]="'item-' + post.id"
