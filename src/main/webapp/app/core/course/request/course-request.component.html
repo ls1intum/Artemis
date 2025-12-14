@@ -30,8 +30,14 @@
                         [pattern]="SHORT_NAME_PATTERN.source"
                         [class.is-invalid]="form.get('shortName')?.invalid && form.get('shortName')?.touched"
                     />
-                    @if (form.get('shortName')?.invalid && form.get('shortName')?.touched) {
-                        <div class="invalid-feedback" jhiTranslate="entity.validation.required"></div>
+                    @if (form.get('shortName')?.touched) {
+                        @if (form.get('shortName')?.hasError('required')) {
+                            <div class="invalid-feedback" jhiTranslate="entity.validation.required"></div>
+                        } @else if (form.get('shortName')?.hasError('minlength')) {
+                            <div class="invalid-feedback" jhiTranslate="artemisApp.courseRequest.form.shortNameTooShort"></div>
+                        } @else if (form.get('shortName')?.hasError('regexInvalid') || form.get('shortName')?.hasError('pattern')) {
+                            <div class="invalid-feedback" jhiTranslate="artemisApp.courseRequest.form.shortNameInvalid"></div>
+                        }
                     }
                 </div>
 

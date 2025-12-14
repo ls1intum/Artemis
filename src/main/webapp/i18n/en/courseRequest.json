@@ -6,6 +6,8 @@
             "form": {
                 "title": "Course title",
                 "shortName": "Short name",
+                "shortNameTooShort": "The short name must be at least 3 characters long.",
+                "shortNameInvalid": "The short name must only contain letters and numbers, without spaces.",
                 "semester": "Semester",
                 "startDate": "Start date",
                 "endDate": "End date",

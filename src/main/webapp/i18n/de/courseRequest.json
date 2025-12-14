@@ -6,6 +6,8 @@
             "form": {
                 "title": "Kurstitel",
                 "shortName": "Kürzel",
+                "shortNameTooShort": "Das Kürzel muss mindestens 3 Zeichen lang sein.",
+                "shortNameInvalid": "Das Kürzel darf nur Buchstaben und Zahlen enthalten, ohne Leerzeichen.",
                 "semester": "Semester",
                 "startDate": "Startdatum",
                 "endDate": "Enddatum",

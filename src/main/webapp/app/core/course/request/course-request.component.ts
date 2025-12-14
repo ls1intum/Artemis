@@ -41,7 +41,7 @@ export class CourseRequestComponent {
         startDate: [undefined as dayjs.Dayjs | undefined],
         endDate: [undefined as dayjs.Dayjs | undefined],
         testCourse: [false],
-        reason: ['', [Validators.required, Validators.minLength(10)]],
+        reason: ['', [Validators.required]],
     });
 
     submit() {
