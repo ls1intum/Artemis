@@ -39,7 +39,7 @@ Create a file ``src/main/resources/config/application-local.yml`` with the follo
 
        artemis:
            user-management:
-               use-external: false # set to true if you want to use an external user management system. For development, this should be false for easy setup.
+               use-external: false # set to true if you want to use ldap as external user management system. For development, this should be false for easy setup.
            version-control:
                url: http://localhost:8080
                # order and supported authentication mechanisms:
