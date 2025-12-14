@@ -41,7 +41,7 @@ export class ProfileService {
     }
 
     public isLLMDeploymentEnabled(): boolean {
-        return this.profileInfo.localLLMDeploymentEnabled;
+        return this.profileInfo.localLLMDeploymentEnabled ?? false;
     }
 
     public isProduction(): boolean {
