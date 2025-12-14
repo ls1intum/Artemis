@@ -128,7 +128,7 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
         this.acceptSubscription?.unsubscribe();
 
         this.acceptSubscription = this.userService.updateLLMSelectionDecision(decision).subscribe(() => {
-            const hasAccepted = decision === LLMSelectionDecision.CLOUD_AI || decision === LLMSelectionDecision.LOCAL_AI;
+            const hasAccepted = decision === LLMSelectionDecision.CLOUD_AI;
 
             this.hasUserAcceptedLLMUsage = hasAccepted;
             this.accountService.setUserLLMSelectionDecision(decision);
