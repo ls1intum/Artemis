@@ -3,18 +3,17 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TranslateModule } from '@ngx-translate/core';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective } from 'ng-mocks';
 import { CourseRequest } from 'app/core/shared/entities/course-request.model';
 import dayjs from 'dayjs/esm';
 import { of, throwError } from 'rxjs';
 
 import { CourseRequestComponent } from 'app/core/course/request/course-request.component';
 import { CourseRequestService } from 'app/core/course/request/course-request.service';
+import { CourseRequestFormComponent } from 'app/core/course/request/course-request-form.component';
 import { AlertService } from 'app/shared/service/alert.service';
-import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 describe('CourseRequestComponent', () => {
     let component: CourseRequestComponent;
@@ -39,10 +38,9 @@ describe('CourseRequestComponent', () => {
             imports: [
                 CourseRequestComponent,
                 TranslateModule.forRoot(),
-                MockComponent(FormDateTimePickerComponent),
+                MockComponent(CourseRequestFormComponent),
                 MockComponent(ButtonComponent),
                 MockDirective(TranslateDirective),
-                MockPipe(ArtemisTranslatePipe),
             ],
             providers: [
                 provideHttpClient(),
@@ -139,31 +137,6 @@ describe('CourseRequestComponent', () => {
         expect(component.form.get('shortName')?.value).toBe(suggestedShortName);
     });
 
-    it('should generate short name from title and semester', () => {
-        component.form.patchValue({
-            title: 'Introduction To Programming',
-            semester: 'WS25/26',
-        });
-
-        component.generateShortName();
-
-        // "ITP" from title + "2526" from "WS25/26"
-        expect(component.form.get('shortName')?.value).toBe('ITP2526');
-    });
-
-    it('should generate short name with minimum length padding', () => {
-        component.form.patchValue({
-            title: 'AI',
-            semester: '',
-        });
-
-        component.generateShortName();
-
-        // 'AI' as a single word contributes only 'A' (first letter of each word)
-        // Then padding: 'A' + 'CRS'.substring(0, 3-1) = 'A' + 'CR' = 'ACR'
-        expect(component.form.get('shortName')?.value).toBe('ACR');
-    });
-
     it('should not submit when semester is empty', () => {
         component.form.patchValue({
             title: 'New Course',
@@ -182,5 +155,34 @@ describe('CourseRequestComponent', () => {
         // The semester should be pre-filled based on the default semester logic
         expect(component.form.get('semester')?.value).toBeTruthy();
         expect(component.form.get('semester')?.value).toMatch(/^(WS|SS)\d+/);
+    });
+
+    it('should reset form after successful submission', () => {
+        courseRequestService.create.mockReturnValue(of({} as CourseRequest));
+        component.form.patchValue({
+            title: 'New Course',
+            shortName: 'ABC',
+            reason: 'A valid reason for the request',
+        });
+
+        component.submit();
+
+        expect(component.form.get('title')?.value).toBe('');
+        expect(component.form.get('shortName')?.value).toBe('');
+        expect(component.form.get('reason')?.value).toBe('');
+        expect(component.isSubmitting).toBeFalse();
+    });
+
+    it('should not submit when form is invalid', () => {
+        component.form.patchValue({
+            title: '', // Invalid - required
+            shortName: 'ABC',
+            reason: 'A valid reason',
+        });
+
+        component.submit();
+
+        expect(courseRequestService.create).not.toHaveBeenCalled();
+        expect(component.form.get('title')?.touched).toBeTrue();
     });
 });

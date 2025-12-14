@@ -301,7 +301,7 @@ public class CourseRequestService {
 
         try {
             var templatePath = Path.of("templates", "codeofconduct", "README.md");
-            log.debug("REST request to get template : {}", templatePath);
+            log.debug("Loading template: {}", templatePath);
             var resource = resourceLoaderService.getResource(templatePath);
             try (var inputStream = resource.getInputStream()) {
                 var informationSharingMessageCodeOfConduct = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
@@ -309,7 +309,7 @@ public class CourseRequestService {
             }
         }
         catch (IOException e) {
-            log.warn("Could not load code of conduct template from path: {}", "templates/codeofconduct/README.md", e);
+            log.warn("Could not load code of conduct template from path: {}", templatePath, e);
         }
 
         courseAccessService.setDefaultGroupsIfNotSet(course);
@@ -338,12 +338,30 @@ public class CourseRequestService {
             log.warn("Contact email is not configured, skipping course request notification");
             return;
         }
+
+        // Extract scalar values from entity before async call to avoid LazyInitializationException
+        User requester = request.getRequester();
+        String requesterName = requester != null ? requester.getName() : null;
+        String requesterEmail = requester != null ? requester.getEmail() : null;
+        String requesterLangKey = requester != null && requester.getLangKey() != null ? requester.getLangKey() : "en";
+
+        var emailData = new ContactEmailData(request.getTitle(), request.getShortName(), request.getSemester(), request.getStartDate(), request.getEndDate(),
+                request.isTestCourse(), request.getReason(), requesterName, requesterEmail);
+
         User recipient = new User();
         recipient.setEmail(contactEmail);
-        recipient.setLangKey(request.getRequester() != null && request.getRequester().getLangKey() != null ? request.getRequester().getLangKey() : "en");
+        recipient.setLangKey(requesterLangKey);
         recipient.setLogin("course-request-contact");
         mailSendingService.buildAndSendAsync(recipient, "email.courseRequest.contact.title", List.of(request.getTitle()), "mail/courseRequestContactEmail",
-                Map.of("courseRequest", request));
+                Map.of("courseRequest", emailData));
+    }
+
+    /**
+     * DTO for contact email template to avoid lazy loading issues in async context.
+     * Contains only scalar values needed by the email template.
+     */
+    private record ContactEmailData(String title, String shortName, String semester, ZonedDateTime startDate, ZonedDateTime endDate, boolean testCourse, String reason,
+            String requesterName, String requesterEmail) {
     }
 
     private void sendAcceptedEmail(CourseRequest request, Course course) {

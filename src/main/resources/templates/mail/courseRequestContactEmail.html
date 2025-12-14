@@ -36,10 +36,10 @@
                 <span class="bold-text" th:text="#{email.courseRequest.label.testCourse}">Test course</span>:
                 <span th:text="${courseRequest.testCourse} ? #{email.courseRequest.label.yes} : #{email.courseRequest.label.no}">No</span>
             </li>
-            <li th:if="${courseRequest.requester != null}">
+            <li th:if="${courseRequest.requesterName != null}">
                 <span class="bold-text" th:text="#{email.courseRequest.label.requester}">Requester</span>:
-                <span th:text="${courseRequest.requester.name}">Full Name</span>
-                (<span th:text="${courseRequest.requester.email}">email</span>)
+                <span th:text="${courseRequest.requesterName}">Full Name</span>
+                (<span th:text="${courseRequest.requesterEmail}">email</span>)
             </li>
         </ul>
         <p>

@@ -13,7 +13,7 @@
                         [btnType]="ButtonType.PRIMARY"
                         [btnSize]="ButtonSize.MEDIUM"
                         type="submit"
-                        [disabled]="isSubmitting"
+                        [disabled]="isSubmitting || form.invalid"
                         [icon]="faPaperPlane"
                         [title]="'artemisApp.courseRequest.form.submit'"
                     />
