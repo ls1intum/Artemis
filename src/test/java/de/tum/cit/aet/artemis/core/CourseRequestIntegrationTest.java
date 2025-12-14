@@ -337,12 +337,11 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void getAdminOverview_withMultiplePendingRequests_shouldReturnAll() throws Exception {
-        // Create multiple pending requests
-        createTestCourseRequest("First Request", "FIRST1");
-        Thread.sleep(10); // Small delay to ensure different timestamps
-        createTestCourseRequest("Second Request", "SECOND1");
-        Thread.sleep(10);
-        createTestCourseRequest("Third Request", "THIRD1");
+        // Create multiple pending requests with different timestamps
+        ZonedDateTime baseTime = ZonedDateTime.now();
+        createTestCourseRequest("First Request", "FIRST1", baseTime);
+        createTestCourseRequest("Second Request", "SECOND1", baseTime.plusSeconds(1));
+        createTestCourseRequest("Third Request", "THIRD1", baseTime.plusSeconds(2));
 
         CourseRequestsAdminOverviewDTO result = request.get("/api/core/admin/course-requests/overview", HttpStatus.OK, CourseRequestsAdminOverviewDTO.class);
 
@@ -373,12 +372,16 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
     }
 
     private CourseRequest createTestCourseRequest(String title, String shortName) {
+        return createTestCourseRequest(title, shortName, ZonedDateTime.now());
+    }
+
+    private CourseRequest createTestCourseRequest(String title, String shortName, ZonedDateTime createdDate) {
         CourseRequest courseRequest = new CourseRequest();
         courseRequest.setTitle(title);
         courseRequest.setShortName(shortName);
         courseRequest.setReason("Test reason for the course request");
         courseRequest.setStatus(CourseRequestStatus.PENDING);
-        courseRequest.setCreatedDate(ZonedDateTime.now());
+        courseRequest.setCreatedDate(createdDate);
         courseRequest.setRequester(student);
         return courseRequestRepository.save(courseRequest);
     }
