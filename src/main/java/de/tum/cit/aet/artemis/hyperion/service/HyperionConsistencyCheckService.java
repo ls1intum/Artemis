@@ -139,7 +139,6 @@ public class HyperionConsistencyCheckService {
         long totalPromptTokens = 0;
         long totalCompletionTokens = 0;
         for (var usage : combinedUsages) {
-            // Assuming the usage object has these methods (based on your previous code)
             totalPromptTokens += usage.getPromptTokens();
             totalCompletionTokens += usage.getCompletionTokens();
         }
