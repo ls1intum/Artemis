@@ -6,7 +6,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { Component } from '@angular/core';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
+import { Build, CompatibleVersions, Git, Java, ProfileInfo, SentryConfig } from 'app/core/layouts/profiles/profile-info.model';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { LayoutService } from 'app/shared/breakpoints/layout.service';
 import { of } from 'rxjs';
@@ -19,28 +19,46 @@ describe('AdminContainerComponent', () => {
     let fixture: ComponentFixture<AdminContainerComponent>;
     let profileService: ProfileService;
 
-    const mockProfileInfo = {
+    const mockGit: Git = {
+        branch: '',
+        commit: {
+            id: { abbrev: '' },
+            user: { name: '', email: '' },
+            time: '',
+        },
+    };
+
+    const mockProfileInfo: ProfileInfo = {
         activeProfiles: [],
         activeModuleFeatures: [],
-        sshCloneURLTemplate: '',
-        buildPlanURLTemplate: '',
-        registrationEnabled: false,
-        needsToAcceptTerms: false,
-        externalPasswordResetLinkMap: {},
-        git: {
-            branch: '',
-            commit: {
-                id: { abbrev: '' },
-                user: { name: '', email: '' },
-                time: '',
-            },
-        },
-        theiaPortalURL: '',
+        programmingLanguageFeatures: [],
+        build: new Build(),
+        buildTimeoutDefault: 0,
+        buildTimeoutMax: 0,
+        buildTimeoutMin: 0,
+        compatibleVersions: new CompatibleVersions(),
         contact: '',
+        continuousIntegrationName: '',
+        defaultContainerCpuCount: 0,
+        defaultContainerMemoryLimitInMB: 0,
+        defaultContainerMemorySwapLimitInMB: 0,
+        externalCredentialProvider: '',
+        externalPasswordResetLinkMap: {},
+        features: [],
+        git: mockGit,
+        java: new Java(),
+        operatorAdminName: '',
+        operatorName: '',
+        repositoryAuthenticationMechanisms: [],
+        sentry: new SentryConfig(),
+        sshCloneURLTemplate: '',
         studentExamStoreSessionData: false,
         testServer: false,
-        accountName: '',
-    } as ProfileInfo;
+        textAssessmentAnalyticsEnabled: false,
+        useExternal: false,
+        versionControlName: '',
+        versionControlUrl: '',
+    };
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({

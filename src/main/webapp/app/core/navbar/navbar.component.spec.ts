@@ -196,7 +196,7 @@ describe('NavbarComponent', () => {
             uri: '/admin/',
         } as MockBreadcrumb);
         expect(component.breadcrumbs[1]).toEqual({
-            label: 'artemisApp.systemNotification.systemNotifications',
+            label: 'global.menu.admin.sidebar.notifications',
             translate: true,
             uri: '/admin/system-notification-management/',
         } as MockBreadcrumb);
@@ -226,7 +226,7 @@ describe('NavbarComponent', () => {
             uri: '/admin/',
         } as MockBreadcrumb);
         expect(component.breadcrumbs[1]).toEqual({
-            label: 'artemisApp.userManagement.home.title',
+            label: 'global.menu.admin.sidebar.users',
             translate: true,
             uri: '/admin/user-management/',
         } as MockBreadcrumb);
@@ -253,7 +253,7 @@ describe('NavbarComponent', () => {
             uri: '/admin/',
         } as MockBreadcrumb);
         expect(component.breadcrumbs[1]).toEqual({
-            label: 'artemisApp.organizationManagement.title',
+            label: 'global.menu.admin.sidebar.organizations',
             translate: true,
             uri: '/admin/organization-management/',
         } as MockBreadcrumb);
