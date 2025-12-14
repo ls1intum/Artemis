@@ -27,7 +27,6 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationRegistry;
 import io.micrometer.observation.annotation.Observed;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
@@ -50,7 +49,7 @@ public class HyperionConsistencyCheckService {
     private static final Logger log = LoggerFactory.getLogger(HyperionConsistencyCheckService.class);
 
     private static final String CONSISTENCY_PIPELINE_ID = "HYPERION_CONSISTENCY";
-  
+
     private static final String AI_SPAN_KEY = "ai.span";
 
     private static final String AI_SPAN_VALUE = "true";
@@ -98,12 +97,9 @@ public class HyperionConsistencyCheckService {
         // Collect usage from parallel checks without threading concerns
         List<LLMRequest> usageCollector = new CopyOnWriteArrayList<>();
 
-        var structuralMono = Mono.fromCallable(() -> runStructuralCheck(input, usageCollector::add)).subscribeOn(Schedulers.boundedElastic()).onErrorReturn(List.of());
-        var semanticMono = Mono.fromCallable(() -> runSemanticCheck(input, usageCollector::add)).subscribeOn(Schedulers.boundedElastic()).onErrorReturn(List.of());
-      
         Observation parentObs = observationRegistry.getCurrentObservation();
-        var structuralMono = Mono.fromCallable(() -> runStructuralCheck(input, parentObs)).subscribeOn(Schedulers.boundedElastic()).onErrorReturn(List.of());
-        var semanticMono = Mono.fromCallable(() -> runSemanticCheck(input, parentObs)).subscribeOn(Schedulers.boundedElastic()).onErrorReturn(List.of());
+        var structuralMono = Mono.fromCallable(() -> runStructuralCheck(input, parentObs, usageCollector::add)).subscribeOn(Schedulers.boundedElastic()).onErrorReturn(List.of());
+        var semanticMono = Mono.fromCallable(() -> runSemanticCheck(input, parentObs, usageCollector::add)).subscribeOn(Schedulers.boundedElastic()).onErrorReturn(List.of());
 
         var results = Mono.zip(structuralMono, semanticMono).block();
         var structuralIssues = results != null ? results.getT1() : List.<ConsistencyIssue>of();
