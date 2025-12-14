@@ -93,10 +93,10 @@ module.exports = {
     coveragePathIgnorePatterns: ['<rootDir>/src/main/webapp/app/core/config/prod.config.ts', '<rootDir>/src/main/webapp/app/openapi/'],
     coverageThreshold: {
         global: {
-            statements: 90.2,
-            branches: 74.1,
-            functions: 84.2,
-            lines: 90.3,
+            statements: 90.20,
+            branches: 74.10,
+            functions: 84.20,
+            lines: 90.20,
         },
     },
     // 'json-summary' reporter is used by supporting_scripts/code-coverage/module-coverage-client/check-client-module-coverage.mjs
