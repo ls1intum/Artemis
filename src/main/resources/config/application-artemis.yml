@@ -132,8 +132,12 @@ spring:
         options:
           model: openai/gpt-oss-20b    # or whatever name your local server expects
           temperature: 0.7
-
-## Alternative configuration for Azure OpenAI
+    llm:
+      costs:
+        gpt-5-mini:
+          cost-per-million-input: 0.23
+          cost-per-million-output: 1.84
+    ## Alternative configuration for Azure OpenAI
     # Use Azure OpenAI chat model auto-config
 #    model:
 #      chat: azure-openai

@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.LLMRequest;
+import de.tum.cit.aet.artemis.core.util.LlmUsageHelper;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementRewriteResponseDTO;
 
@@ -32,7 +33,7 @@ public class HyperionProblemStatementRewriteService {
 
     private final HyperionPromptTemplateService templateService;
 
-    private final HyperionLlmUsageService llmUsageService;
+    private final LlmUsageHelper llmUsageService;
 
     /**
      * Creates a new ProblemStatementRewriteService.
@@ -40,7 +41,7 @@ public class HyperionProblemStatementRewriteService {
      * @param chatClient      the AI chat client (optional)
      * @param templateService prompt template service
      */
-    public HyperionProblemStatementRewriteService(ChatClient chatClient, HyperionPromptTemplateService templateService, HyperionLlmUsageService llmUsageService) {
+    public HyperionProblemStatementRewriteService(ChatClient chatClient, HyperionPromptTemplateService templateService, LlmUsageHelper llmUsageService) {
         this.chatClient = chatClient;
         this.templateService = templateService;
         this.llmUsageService = llmUsageService;
