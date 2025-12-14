@@ -66,7 +66,7 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
         assertThat(result.shortName()).isEqualTo("TSTCRS");
         assertThat(result.status()).isEqualTo(CourseRequestStatus.PENDING);
         assertThat(result.requester()).isNotNull();
-        assertThat(result.requester().getLogin()).isEqualTo(TEST_PREFIX + "student1");
+        assertThat(result.requester().login()).isEqualTo(TEST_PREFIX + "student1");
     }
 
     @Test

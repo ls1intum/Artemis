@@ -28,8 +28,8 @@ import de.tum.cit.aet.artemis.core.domain.CourseRequestStatus;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.CourseRequestCreateDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseRequestDTO;
+import de.tum.cit.aet.artemis.core.dto.CourseRequestRequesterDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseRequestsAdminOverviewDTO;
-import de.tum.cit.aet.artemis.core.dto.UserDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
@@ -398,7 +398,7 @@ public class CourseRequestService {
     }
 
     private CourseRequestDTO toDto(CourseRequest courseRequest, Integer instructorCourseCount) {
-        UserDTO requesterDto = courseRequest.getRequester() != null ? new UserDTO(courseRequest.getRequester()) : null;
+        CourseRequestRequesterDTO requesterDto = courseRequest.getRequester() != null ? new CourseRequestRequesterDTO(courseRequest.getRequester()) : null;
         Long createdCourseId = courseRequest.getCreatedCourseId();
         return new CourseRequestDTO(courseRequest.getId(), courseRequest.getTitle(), courseRequest.getShortName(), courseRequest.getSemester(), courseRequest.getStartDate(),
                 courseRequest.getEndDate(), courseRequest.isTestCourse(), courseRequest.getReason(), courseRequest.getStatus(), courseRequest.getCreatedDate(),

@@ -55,8 +55,15 @@
                             </div>
                         </td>
                         <td>
-                            <div class="fw-semibold">{{ request.requester?.name || request.requester?.login }}</div>
-                            <div class="text-muted">{{ request.requester?.email }}</div>
+                            @let requester = request.requester;
+                            @if (requester?.login) {
+                                <a [routerLink]="['/admin/user-management', requester?.login]" class="fw-semibold text-decoration-none">
+                                    {{ requester?.name || requester?.login }}
+                                </a>
+                            } @else {
+                                <div class="fw-semibold">{{ requester?.name || requester?.login }}</div>
+                            }
+                            <div class="text-muted">{{ requester?.email }}</div>
                         </td>
                         <td>
                             <span [ngClass]="{ 'text-success fw-semibold': request.instructorCourseCount && request.instructorCourseCount > 0 }">
@@ -145,8 +152,15 @@
                             </div>
                         </td>
                         <td>
-                            <div class="fw-semibold">{{ request.requester?.name || request.requester?.login }}</div>
-                            <div class="text-muted">{{ request.requester?.email }}</div>
+                            @let requester = request.requester;
+                            @if (requester?.login) {
+                                <a [routerLink]="['/admin/user-management', requester?.login]" class="fw-semibold text-decoration-none">
+                                    {{ requester?.name || requester?.login }}
+                                </a>
+                            } @else {
+                                <div class="fw-semibold">{{ requester?.name || requester?.login }}</div>
+                            }
+                            <div class="text-muted">{{ requester?.email }}</div>
                         </td>
                         <td class="text-break">{{ request.reason }}</td>
                         <td class="text-break">

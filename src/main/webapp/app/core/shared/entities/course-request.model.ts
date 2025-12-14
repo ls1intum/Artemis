@@ -1,11 +1,19 @@
 import dayjs from 'dayjs/esm';
 
-import { User } from 'app/core/user/user.model';
-
 export enum CourseRequestStatus {
     PENDING = 'PENDING',
     ACCEPTED = 'ACCEPTED',
     REJECTED = 'REJECTED',
+}
+
+/**
+ * Lightweight requester information for course request display.
+ */
+export interface CourseRequestRequester {
+    id?: number;
+    login?: string;
+    name?: string;
+    email?: string;
 }
 
 export interface BaseCourseRequest {
@@ -24,7 +32,7 @@ export interface CourseRequest extends BaseCourseRequest {
     createdDate?: dayjs.Dayjs;
     processedDate?: dayjs.Dayjs;
     decisionReason?: string;
-    requester?: User;
+    requester?: CourseRequestRequester;
     createdCourseId?: number;
     instructorCourseCount?: number;
 }
