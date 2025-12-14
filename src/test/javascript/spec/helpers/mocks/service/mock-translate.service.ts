@@ -17,7 +17,7 @@ export class MockTranslateService {
     onDefaultLangChange: Observable<string> = this.onDefaultLangChangeSubject.asObservable();
     isLoaded: Observable<boolean> = this.isLoadedSubject.asObservable();
 
-    currentLang: string;
+    private currentLang: string;
 
     languages: string[] = ['de'];
 
@@ -28,6 +28,10 @@ export class MockTranslateService {
     use(lang: string): void {
         this.currentLang = lang;
         this.onLangChangeSubject.next({ lang } as LangChangeEvent);
+    }
+
+    getCurrentLang(): string {
+        return this.currentLang;
     }
 
     addLangs(langs: string[]): void {
