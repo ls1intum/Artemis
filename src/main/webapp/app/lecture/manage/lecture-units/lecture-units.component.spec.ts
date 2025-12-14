@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { MockComponent, MockProvider } from 'ng-mocks';
+import { MockComponent, MockInstance, MockProvider } from 'ng-mocks';
+import { signal } from '@angular/core';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
@@ -29,9 +30,17 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { LectureTranscriptionService } from 'app/lecture/manage/services/lecture-transcription.service';
 import { AccountService } from 'app/core/auth/account.service';
+import { TextUnitFormComponent } from 'app/lecture/manage/lecture-units/text-unit-form/text-unit-form.component';
+import { OnlineUnitFormComponent } from 'app/lecture/manage/lecture-units/online-unit-form/online-unit-form.component';
+import { AttachmentVideoUnitFormComponent } from 'app/lecture/manage/lecture-units/attachment-video-unit-form/attachment-video-unit-form.component';
 
 // Helper type so CI uses the exact method return type
 type StartTxReturn = ReturnType<AttachmentVideoUnitService['startTranscription']>;
+
+// Mock viewChild signals for form components to avoid signal binding errors
+MockInstance(TextUnitFormComponent, 'datePickerComponent', signal(undefined));
+MockInstance(OnlineUnitFormComponent, 'datePickerComponent', signal(undefined));
+MockInstance(AttachmentVideoUnitFormComponent, 'datePickerComponent', signal(undefined));
 
 describe('LectureUpdateUnitsComponent', () => {
     let wizardUnitComponentFixture: ComponentFixture<LectureUpdateUnitsComponent>;
@@ -46,6 +55,9 @@ describe('LectureUpdateUnitsComponent', () => {
                 LectureUpdateUnitsComponent,
                 MockComponent(CreateExerciseUnitComponent),
                 MockComponent(LectureUnitManagementComponent),
+                MockComponent(TextUnitFormComponent),
+                MockComponent(OnlineUnitFormComponent),
+                MockComponent(AttachmentVideoUnitFormComponent),
             ],
             providers: [
                 MockProvider(AlertService),
@@ -639,6 +651,7 @@ describe('LectureUpdateUnitsComponent', () => {
 
         const attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
         jest.spyOn(attachmentVideoUnitService, 'fetchAndUpdatePlaylistUrl').mockImplementation((_, formData) => of(formData));
+        jest.spyOn(accountService, 'isAdmin').mockReturnValue(true);
 
         const attachment = new Attachment();
         attachment.id = 1;
@@ -662,13 +675,12 @@ describe('LectureUpdateUnitsComponent', () => {
         const getTranscriptionStatusSpy = jest.spyOn(lectureTranscriptionService, 'getTranscriptionStatus').mockReturnValue(of(undefined));
 
         wizardUnitComponent.startEditLectureUnit(attachmentVideoUnit);
+        tick();
 
-        wizardUnitComponentFixture.whenStable().then(() => {
-            expect(wizardUnitComponent.isAttachmentVideoUnitFormOpen()).toBeTrue();
-            expect(getTranscriptionSpy).toHaveBeenCalledWith(attachmentVideoUnit.id);
-            expect(getTranscriptionStatusSpy).toHaveBeenCalledWith(attachmentVideoUnit.id);
-            expect(wizardUnitComponent.currentlyProcessedAttachmentVideoUnit?.transcriptionProperties).toBe(transcript);
-        });
+        expect(wizardUnitComponent.isAttachmentVideoUnitFormOpen()).toBeTrue();
+        expect(getTranscriptionSpy).toHaveBeenCalledWith(attachmentVideoUnit.id);
+        expect(getTranscriptionStatusSpy).toHaveBeenCalledWith(attachmentVideoUnit.id);
+        expect(wizardUnitComponent.currentlyProcessedAttachmentVideoUnit?.transcriptionProperties).toBe(transcript);
     }));
 
     it('should not fetch transcription when starting to edit a video unit as non-admin', fakeAsync(() => {

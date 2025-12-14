@@ -1,6 +1,6 @@
 import { BreakpointObserver, BreakpointState, Breakpoints } from '@angular/cdk/layout';
 import { CourseConversationsComponent } from 'app/communication/shared/course-conversations/course-conversations.component';
-import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
 import { Conversation, ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { OneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from 'test/helpers/sample/conversationExampleModels';
@@ -47,6 +47,8 @@ import { ConversationGlobalSearchComponent } from 'app/communication/shared/conv
 import { AlertService } from 'app/shared/service/alert.service';
 import { FaqService } from 'app/communication/faq/faq.service';
 import { TranslateModule } from '@ngx-translate/core';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 const examples: (ConversationDTO | undefined)[] = [
     undefined,
@@ -140,6 +142,8 @@ examples.forEach((activeConversation) => {
                     MockProvider(ProfileService),
                     MockProvider(AlertService),
                     MockProvider(FaqService),
+                    provideHttpClient(),
+                    provideHttpClientTesting(),
                 ],
                 imports: [FormsModule, ReactiveFormsModule, FontAwesomeModule, NgbModule, TranslateModule.forRoot()],
             }).compileComponents();
@@ -170,6 +174,8 @@ examples.forEach((activeConversation) => {
             metisConversationService.acceptCodeOfConduct = jest.fn();
             metisConversationService.createGroupChat = jest.fn().mockReturnValue(EMPTY);
             metisConversationService.createOneToOneChat = jest.fn().mockReturnValue(EMPTY);
+            metisConversationService.createChannel = jest.fn().mockReturnValue(EMPTY);
+            metisConversationService.markAllChannelsAsRead = jest.fn().mockReturnValue(of());
 
             fixture = TestBed.createComponent(CourseConversationsComponent);
             component = fixture.componentInstance;
@@ -648,6 +654,7 @@ examples.forEach((activeConversation) => {
             fixture.detectChanges();
             const markAllChannelsAsRead = jest.spyOn(metisConversationService, 'markAllChannelsAsRead').mockReturnValue(of());
             const forceRefresh = jest.spyOn(metisConversationService, 'forceRefresh');
+            forceRefresh.mockClear();
             component.markAllChannelAsRead();
             expect(markAllChannelsAsRead).toHaveBeenCalledOnce();
             expect(forceRefresh).toHaveBeenCalledTimes(2);
@@ -671,13 +678,16 @@ examples.forEach((activeConversation) => {
                 expect(component.activeConversation).toBeUndefined();
             });
 
-            it('should ignore invalid string conversationId', () => {
+            it('should ignore invalid string conversationId', fakeAsync(() => {
                 fixture.detectChanges();
                 const invalidStatus = 'invalidStatus';
+                setActiveConversationSpy.mockClear();
                 component.onConversationSelected(invalidStatus);
+                tick();
                 expect(component.selectedSavedPostStatus).toBeUndefined();
-                expect(metisConversationService.setActiveConversation).not.toHaveBeenCalled();
-            });
+                expect(setActiveConversationSpy).not.toHaveBeenCalled();
+                discardPeriodicTasks();
+            }));
 
             it('should toggle the value of showOnlyPinned', () => {
                 expect(component.showOnlyPinned).toBeFalse();
