@@ -131,8 +131,8 @@
                     "end": " whether the passkey has been approved. If the passkey is approved, please log in again with your passkey."
                 },
                 "groups": {
-                    "usersAndOrganizations": "Users & Organizations",
-                    "contentAndLearning": "Content & Learning",
+                    "usersAndOrganizations": "Account",
+                    "contentAndLearning": "Content",
                     "monitoringAndDiagnostics": "Monitoring",
                     "buildSystem": "Build System",
                     "systemConfiguration": "Configuration"
@@ -140,6 +140,7 @@
                 "sidebar": {
                     "organizations": "Organizations",
                     "users": "Users",
+                    "courseRequests": "Course Requests",
                     "iris": "Iris",
                     "lti": "LTI",
                     "competencies": "Competencies",
@@ -152,7 +153,7 @@
                     "statistics": "Statistics",
                     "websocket": "Websocket",
                     "buildAgents": "Build Agents",
-                    "buildQueue": "Build Queue",
+                    "buildQueue": "Build Overview",
                     "cleanup": "Cleanup",
                     "features": "Features",
                     "imprint": "Imprint",

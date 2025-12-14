@@ -131,15 +131,16 @@
                     "end": " ob dein Passkey freigegeben wurde. Wenn dein Passkey freigegeben ist, melde dich bitte erneut mit deinem Passkey an."
                 },
                 "groups": {
-                    "usersAndOrganizations": "Benutzer & Organisationen",
-                    "contentAndLearning": "Inhalte & Lernen",
+                    "usersAndOrganizations": "Konto",
+                    "contentAndLearning": "Inhalte",
                     "monitoringAndDiagnostics": "Monitoring",
-                    "buildSystem": "Build-System",
+                    "buildSystem": "Build System",
                     "systemConfiguration": "Konfiguration"
                 },
                 "sidebar": {
                     "organizations": "Organisationen",
                     "users": "Benutzer",
+                    "courseRequests": "Kursanfragen",
                     "iris": "Iris",
                     "lti": "LTI",
                     "competencies": "Kompetenzen",
@@ -151,8 +152,8 @@
                     "metrics": "Metriken",
                     "statistics": "Statistiken",
                     "websocket": "Websocket",
-                    "buildAgents": "Build-Agenten",
-                    "buildQueue": "Build-Warteschlange",
+                    "buildAgents": "Build Agenten",
+                    "buildQueue": "Build Übersicht",
                     "cleanup": "Aufräumen",
                     "features": "Features",
                     "imprint": "Impressum",

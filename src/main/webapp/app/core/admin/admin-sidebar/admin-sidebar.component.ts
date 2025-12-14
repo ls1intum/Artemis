@@ -81,13 +81,6 @@ export class AdminSidebarComponent {
             translation: 'global.menu.admin.groups.usersAndOrganizations',
             items: [
                 {
-                    routerLink: '/admin/course-requests',
-                    icon: faClipboardList,
-                    title: 'Course Requests',
-                    translation: 'global.menu.admin.sidebar.courseRequests',
-                    testId: 'admin-course-requests',
-                },
-                {
                     routerLink: '/admin/organization-management',
                     icon: faUniversity,
                     title: 'Organizations',
@@ -133,6 +126,13 @@ export class AdminSidebarComponent {
                 testId: 'admin-standardized-competencies',
             });
         }
+        contentItems.push({
+            routerLink: '/admin/course-requests',
+            icon: faClipboardList,
+            title: 'Course Requests',
+            translation: 'global.menu.admin.sidebar.courseRequests',
+            testId: 'admin-course-requests',
+        });
         contentItems.push({
             routerLink: '/admin/upcoming-exams-and-exercises',
             icon: faBookOpen,
@@ -220,7 +220,7 @@ export class AdminSidebarComponent {
                     {
                         routerLink: '/admin/build-queue',
                         icon: faList,
-                        title: 'Build Queue',
+                        title: 'Build Overview',
                         translation: 'global.menu.admin.sidebar.buildQueue',
                         testId: 'admin-build-queue',
                     },
