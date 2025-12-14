@@ -17,7 +17,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
@@ -171,7 +170,6 @@ public class CourseRequestService {
      * @param updateDTO the updated course request data
      * @return the updated course request DTO
      */
-    @Transactional
     public CourseRequestDTO updateCourseRequest(long requestId, CourseRequestCreateDTO updateDTO) {
         CourseRequest courseRequest = getRequestWithRequesterElseThrow(requestId);
         if (courseRequest.getStatus() != CourseRequestStatus.PENDING) {
@@ -299,8 +297,9 @@ public class CourseRequestService {
         course.setFaqEnabled(true);
         course.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
 
+        var templatePath = Path.of("templates", "codeofconduct", "README.md");
+
         try {
-            var templatePath = Path.of("templates", "codeofconduct", "README.md");
             log.debug("Loading template: {}", templatePath);
             var resource = resourceLoaderService.getResource(templatePath);
             try (var inputStream = resource.getInputStream()) {
