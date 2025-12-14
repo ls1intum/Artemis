@@ -175,6 +175,13 @@ const childRoutes: Routes = [
             pageTitle: 'global.menu.admin.examRooms',
         },
     },
+    {
+        path: 'course-requests',
+        loadComponent: () => import('app/core/admin/course-requests/course-requests.component').then((m) => m.CourseRequestsComponent),
+        data: {
+            pageTitle: 'artemisApp.courseRequest.admin.title',
+        },
+    },
     ...organizationMgmtRoute,
     ...userManagementRoute,
     ...systemNotificationManagementRoute,

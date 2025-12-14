@@ -39,6 +39,7 @@
             "overview": "Übersicht",
             "courses": "Kurse",
             "course": "Verwaltung",
+            "courseRequests": "Neuen Kurs anfragen",
             "entities": {
                 "main": "Entitäten",
                 "course": "Kurse",
@@ -165,6 +166,7 @@
                 "userManagement": "Verwaltung von Nutzer:innen",
                 "organizationManagement": "Organisationsverwaltung",
                 "systemNotifications": "Systemmitteilungen",
+                "courseRequests": "Kursanfragen",
                 "passkey-required": "Passkey Erforderlich",
                 "featureToggles": "Feature Toggles",
                 "statistics": "Statistiken der Nutzer:innen",
