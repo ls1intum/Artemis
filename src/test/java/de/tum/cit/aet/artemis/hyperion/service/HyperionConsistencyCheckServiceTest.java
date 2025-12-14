@@ -63,7 +63,7 @@ class HyperionConsistencyCheckServiceTest {
         var llmUsageHelper = new LlmUsageHelper(llmTokenUsageService, userRepository, new LlmUsageProperties());
         var observationRegistry = ObservationRegistry.create();
         this.hyperionConsistencyCheckService = new HyperionConsistencyCheckService(programmingExerciseRepository, chatClient, templateService, exerciseContextRenderer,
-                observationRegistry,llmUsageHelper);
+                observationRegistry, llmUsageHelper);
     }
 
     @Test

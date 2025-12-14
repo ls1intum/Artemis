@@ -36,7 +36,7 @@ public class HyperionProblemStatementRewriteService {
     private final HyperionPromptTemplateService templateService;
 
     private final LlmUsageHelper llmUsageService;
-  
+
     private final ObservationRegistry observationRegistry;
 
     /**
@@ -45,7 +45,8 @@ public class HyperionProblemStatementRewriteService {
      * @param chatClient      the AI chat client (optional)
      * @param templateService prompt template service
      */
-    public HyperionProblemStatementRewriteService(ChatClient chatClient, HyperionPromptTemplateService templateService, ObservationRegistry observationRegistry, LlmUsageHelper llmUsageService) {
+    public HyperionProblemStatementRewriteService(ChatClient chatClient, HyperionPromptTemplateService templateService, ObservationRegistry observationRegistry,
+            LlmUsageHelper llmUsageService) {
         this.chatClient = chatClient;
         this.templateService = templateService;
         this.observationRegistry = observationRegistry;

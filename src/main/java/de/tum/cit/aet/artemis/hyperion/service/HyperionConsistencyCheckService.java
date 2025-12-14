@@ -268,9 +268,6 @@ public class HyperionConsistencyCheckService {
             List<StructuredOutputSchema.ArtifactLocation> relatedLocations) {
     }
 
-    private record CheckResult(List<ConsistencyIssue> issues, LLMRequest usage) {
-    }
-
     // TODO: try to use records instead of static classes
     // Grouped structured output schema for parsing AI responses
     private static class StructuredOutputSchema {
