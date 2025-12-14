@@ -42,8 +42,8 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseEditorSyncTarget;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.dto.FileMove;
-import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseEditorFileSyncDTO;
 import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTO;
+import de.tum.cit.aet.artemis.programming.dto.synchronization.ProgrammingExerciseEditorFileSyncDTO;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.GitService;
@@ -124,7 +124,7 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> createFile(@PathVariable Long auxiliaryRepositoryId, @RequestParam("file") String filePath, HttpServletRequest request) {
         ResponseEntity<Void> response = super.createFile(auxiliaryRepositoryId, filePath, request);
-        broadcastAuxiliaryRepositoryChange(auxiliaryRepositoryId, new ProgrammingExerciseEditorFileSyncDTO(filePath, null, "CREATE", null, "FILE"));
+        broadcastAuxiliaryRepositoryChange(auxiliaryRepositoryId, ProgrammingExerciseEditorFileSyncDTO.forFileCreate(filePath));
         return response;
     }
 
@@ -134,7 +134,7 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> createFolder(@PathVariable Long auxiliaryRepositoryId, @RequestParam("folder") String folderPath, HttpServletRequest request) {
         ResponseEntity<Void> response = super.createFolder(auxiliaryRepositoryId, folderPath, request);
-        broadcastAuxiliaryRepositoryChange(auxiliaryRepositoryId, new ProgrammingExerciseEditorFileSyncDTO(folderPath, null, "CREATE", null, "FOLDER"));
+        broadcastAuxiliaryRepositoryChange(auxiliaryRepositoryId, ProgrammingExerciseEditorFileSyncDTO.forFolderCreate(folderPath));
         return response;
     }
 
@@ -144,8 +144,7 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> renameFile(@PathVariable Long auxiliaryRepositoryId, @RequestBody FileMove fileMove) {
         ResponseEntity<Void> response = super.renameFile(auxiliaryRepositoryId, fileMove);
-        broadcastAuxiliaryRepositoryChange(auxiliaryRepositoryId,
-                new ProgrammingExerciseEditorFileSyncDTO(fileMove.currentFilePath(), null, "RENAME", fileMove.newFilename(), null));
+        broadcastAuxiliaryRepositoryChange(auxiliaryRepositoryId, ProgrammingExerciseEditorFileSyncDTO.forRename(fileMove.currentFilePath(), fileMove.newFilename()));
         return response;
     }
 
@@ -155,7 +154,7 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> deleteFile(@PathVariable Long auxiliaryRepositoryId, @RequestParam("file") String filename) {
         ResponseEntity<Void> response = super.deleteFile(auxiliaryRepositoryId, filename);
-        broadcastAuxiliaryRepositoryChange(auxiliaryRepositoryId, new ProgrammingExerciseEditorFileSyncDTO(filename, null, "DELETE", null, null));
+        broadcastAuxiliaryRepositoryChange(auxiliaryRepositoryId, ProgrammingExerciseEditorFileSyncDTO.forDelete(filename));
         return response;
     }
 
@@ -179,9 +178,7 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
     @EnforceAtLeastTutor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> resetToLastCommit(@PathVariable Long auxiliaryRepositoryId) {
-        ResponseEntity<Void> response = super.resetToLastCommit(auxiliaryRepositoryId);
-        broadcastAuxiliaryRepositoryChange(auxiliaryRepositoryId, null);
-        return response;
+        return super.resetToLastCommit(auxiliaryRepositoryId);
     }
 
     @Override
@@ -225,11 +222,7 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
             FileSubmissionError error = new FileSubmissionError(auxiliaryRepositoryId, "checkoutFailed");
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, error.getMessage(), error);
         }
-        ResponseEntity<Map<String, String>> response = saveFilesAndCommitChanges(auxiliaryRepositoryId, submissions, commit, repository);
-        if (!commit && !submissions.isEmpty()) {
-            this.broadcastAuxiliaryRepositoryChange(auxiliaryRepositoryId, null);
-        }
-        return response;
+        return saveFilesAndCommitChanges(auxiliaryRepositoryId, submissions, commit, repository);
     }
 
     private void broadcastAuxiliaryRepositoryChange(Long auxiliaryRepositoryId, @Nullable ProgrammingExerciseEditorFileSyncDTO filePatch) {

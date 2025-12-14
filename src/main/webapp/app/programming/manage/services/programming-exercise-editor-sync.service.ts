@@ -29,6 +29,7 @@ export interface ProgrammingExerciseEditorSyncMessage {
     fileRequests?: string[];
     fileFulls?: ProgrammingExerciseEditorFileFull[];
     timestamp?: number;
+    newCommitAlert?: boolean;
 }
 
 export enum ProgrammingExerciseEditorFileChangeType {

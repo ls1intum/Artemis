@@ -16,8 +16,8 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseEditorSyncTarget;
-import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseEditorFileSyncDTO;
-import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseEditorSyncEventDTO;
+import de.tum.cit.aet.artemis.programming.dto.synchronization.ProgrammingExerciseEditorFileSyncDTO;
+import de.tum.cit.aet.artemis.programming.dto.synchronization.ProgrammingExerciseEditorSyncEventDTO;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -52,16 +52,18 @@ public class ProgrammingExerciseEditorSyncService {
     }
 
     /**
-     * Broadcast a general change notification to all active editors.
+     * Broadcast a new commit alert to all active editors.
+     * This notifies users that a new commit has been made (potentially from an offline IDE)
+     * and they should refresh their editor to get the latest changes.
      *
      * @param exerciseId            the exercise id
-     * @param target                the target data type associated with this change (e.g. template repository, solution repository, auxiliary repository, problem statement)
-     * @param auxiliaryRepositoryId (optional) the id of the auxiliary repository associated with this change
+     * @param target                the target repository type associated with this commit (e.g. template repository, solution repository, tests repository)
+     * @param auxiliaryRepositoryId (optional) the id of the auxiliary repository associated with this commit
      */
-    public void broadcastChange(long exerciseId, ProgrammingExerciseEditorSyncTarget target, @Nullable Long auxiliaryRepositoryId) {
-        ProgrammingExerciseEditorSyncEventDTO payload = ProgrammingExerciseEditorSyncEventDTO.forGeneralUpdate(target, auxiliaryRepositoryId, getClientInstanceId());
+    public void broadcastNewCommitAlert(long exerciseId, ProgrammingExerciseEditorSyncTarget target, @Nullable Long auxiliaryRepositoryId) {
+        ProgrammingExerciseEditorSyncEventDTO payload = ProgrammingExerciseEditorSyncEventDTO.forNewCommitAlert(target, auxiliaryRepositoryId, getClientInstanceId());
         websocketMessagingService.sendMessage(getSynchronizationTopic(exerciseId), payload).exceptionally(exception -> {
-            log.warn("Cannot send synchronization message for exercise {}", exerciseId, exception);
+            log.warn("Cannot send new commit alert for exercise {}", exerciseId, exception);
             return null;
         });
     }
@@ -72,7 +74,6 @@ public class ProgrammingExerciseEditorSyncService {
      * @param exerciseId            the exercise id
      * @param target                the target data type associated with this change (e.g. template repository, solution repository, auxiliary repository, problem statement)
      * @param auxiliaryRepositoryId (optional) the id of the auxiliary repository associated with this change
-     * @param filePatches           the file operations to broadcast
      */
     public void broadcastFileChanges(long exerciseId, ProgrammingExerciseEditorSyncTarget target, @Nullable Long auxiliaryRepositoryId,
             @Nullable ProgrammingExerciseEditorFileSyncDTO filePatch) {

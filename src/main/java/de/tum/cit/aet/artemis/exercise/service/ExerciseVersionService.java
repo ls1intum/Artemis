@@ -164,8 +164,9 @@ public class ExerciseVersionService {
     }
 
     /**
-     * Compare two exercise snapshots and return the change that should be broadcast to clients.
-     * TODO: on new commit, client should be able to apply new commit to active online editors. Either send diff information via this method, other use alternatice methods.
+     * Compare two exercise snapshots and broadcast synchronization messages to active editors.
+     * For repository commits (template, solution, tests, auxiliary), broadcasts a new commit alert
+     * so clients can display a notification prompting users to refresh.
      *
      * @param exerciseId       the exercise id
      * @param newSnapshot      the new snapshot
@@ -203,12 +204,11 @@ public class ExerciseVersionService {
             }
         }
 
-        if (target == null && !Objects.equals(previousSnapshot.problemStatement(), newSnapshot.problemStatement())) {
-            target = ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT;
-        }
-
         if (target != null) {
-            programmingExerciseEditorSyncService.broadcastChange(exerciseId, target, auxiliaryRepositoryId);
+            // For repository commits, send a new commit alert so clients can notify users to refresh
+            // For problem statement changes, send a general change notification, since there are only
+            // online editors making changes, content should be synced already
+            programmingExerciseEditorSyncService.broadcastNewCommitAlert(exerciseId, target, auxiliaryRepositoryId);
         }
     }
 

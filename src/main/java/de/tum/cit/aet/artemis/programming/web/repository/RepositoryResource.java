@@ -40,9 +40,9 @@ import de.tum.cit.aet.artemis.programming.domain.FileType;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseEditorSyncTarget;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.dto.FileMove;
-import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseEditorFileSyncDTO;
 import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTO;
 import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTOType;
+import de.tum.cit.aet.artemis.programming.dto.synchronization.ProgrammingExerciseEditorFileSyncDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseEditorSyncService;
@@ -406,22 +406,6 @@ public abstract class RepositoryResource {
 
         try (var inputStream = new ByteArrayInputStream(submission.getFileContent().getBytes(StandardCharsets.UTF_8))) {
             FileUtils.copyToFile(inputStream, file.get());
-        }
-    }
-
-    /**
-     * Calls programmingExerciseEditorSyncService to send websocket messages to clients with active instructor code editors to notify them of changes to the repository.
-     *
-     * @param exerciseId            the id of the exercise
-     * @param target                the target for the synchronization messages to reach
-     * @param auxiliaryRepositoryId optional, the id of the auxiliary repository associated with this change, only needed when target is AUXILIARY_REPOSITORY
-     */
-    protected void broadcastRepositoryUpdates(Long exerciseId, ProgrammingExerciseEditorSyncTarget target, Long auxiliaryRepositoryId) {
-        try {
-            programmingExerciseEditorSyncService.broadcastChange(exerciseId, target, auxiliaryRepositoryId);
-        }
-        catch (Exception e) {
-            log.error("Could not broadcast repository change for synchronization of exercise {}: {}", exerciseId, e.getMessage());
         }
     }
 

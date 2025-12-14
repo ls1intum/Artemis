@@ -41,8 +41,8 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseEditorSyncTarget;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.dto.FileMove;
-import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseEditorFileSyncDTO;
 import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTO;
+import de.tum.cit.aet.artemis.programming.dto.synchronization.ProgrammingExerciseEditorFileSyncDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseEditorSyncService;
@@ -119,7 +119,7 @@ public class TestRepositoryResource extends RepositoryResource {
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> createFile(@PathVariable Long exerciseId, @RequestParam("file") String filePath, HttpServletRequest request) {
         ResponseEntity<Void> response = super.createFile(exerciseId, filePath, request);
-        broadcastTestRepositoryChange(exerciseId, new ProgrammingExerciseEditorFileSyncDTO(filePath, null, "CREATE", null, "FILE"));
+        broadcastTestRepositoryChange(exerciseId, ProgrammingExerciseEditorFileSyncDTO.forFileCreate(filePath));
         return response;
     }
 
@@ -129,7 +129,7 @@ public class TestRepositoryResource extends RepositoryResource {
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> createFolder(@PathVariable Long exerciseId, @RequestParam("folder") String folderPath, HttpServletRequest request) {
         ResponseEntity<Void> response = super.createFolder(exerciseId, folderPath, request);
-        broadcastTestRepositoryChange(exerciseId, new ProgrammingExerciseEditorFileSyncDTO(folderPath, null, "CREATE", null, "FOLDER"));
+        broadcastTestRepositoryChange(exerciseId, ProgrammingExerciseEditorFileSyncDTO.forFolderCreate(folderPath));
         return response;
     }
 
@@ -139,7 +139,7 @@ public class TestRepositoryResource extends RepositoryResource {
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> renameFile(@PathVariable Long exerciseId, @RequestBody FileMove fileMove) {
         ResponseEntity<Void> response = super.renameFile(exerciseId, fileMove);
-        broadcastTestRepositoryChange(exerciseId, new ProgrammingExerciseEditorFileSyncDTO(fileMove.currentFilePath(), null, "RENAME", fileMove.newFilename(), null));
+        broadcastTestRepositoryChange(exerciseId, ProgrammingExerciseEditorFileSyncDTO.forRename(fileMove.currentFilePath(), fileMove.newFilename()));
         return response;
     }
 
@@ -149,7 +149,7 @@ public class TestRepositoryResource extends RepositoryResource {
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> deleteFile(@PathVariable Long exerciseId, @RequestParam("file") String filename) {
         ResponseEntity<Void> response = super.deleteFile(exerciseId, filename);
-        broadcastTestRepositoryChange(exerciseId, new ProgrammingExerciseEditorFileSyncDTO(filename, null, "DELETE", null, null));
+        broadcastTestRepositoryChange(exerciseId, ProgrammingExerciseEditorFileSyncDTO.forDelete(filename));
         return response;
     }
 
@@ -173,9 +173,7 @@ public class TestRepositoryResource extends RepositoryResource {
     @EnforceAtLeastTutor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> resetToLastCommit(@PathVariable Long exerciseId) {
-        ResponseEntity<Void> response = super.resetToLastCommit(exerciseId);
-        broadcastTestRepositoryChange(exerciseId, null);
-        return response;
+        return super.resetToLastCommit(exerciseId);
     }
 
     @Override
@@ -218,11 +216,7 @@ public class TestRepositoryResource extends RepositoryResource {
             FileSubmissionError error = new FileSubmissionError(exerciseId, "checkoutFailed");
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, error.getMessage(), error);
         }
-        ResponseEntity<Map<String, String>> response = saveFilesAndCommitChanges(exerciseId, submissions, commit, repository);
-        if (!commit && !submissions.isEmpty()) {
-            broadcastTestRepositoryChange(exerciseId, null);
-        }
-        return response;
+        return saveFilesAndCommitChanges(exerciseId, submissions, commit, repository);
     }
 
     private void broadcastTestRepositoryChange(Long exerciseId, @Nullable ProgrammingExerciseEditorFileSyncDTO filePatch) {

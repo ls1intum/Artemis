@@ -52,8 +52,8 @@ import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExercisePart
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
 import de.tum.cit.aet.artemis.programming.dto.FileMove;
-import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseEditorFileSyncDTO;
 import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTO;
+import de.tum.cit.aet.artemis.programming.dto.synchronization.ProgrammingExerciseEditorFileSyncDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
 import de.tum.cit.aet.artemis.programming.repository.SubmissionPolicyRepository;
@@ -159,10 +159,6 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             throw new IllegalArgumentException();
         }
         return (ProgrammingExerciseParticipation) participation;
-    }
-
-    private void broadcastChangesForNonStudentRepository(Long participationId) {
-        broadcastChangesForNonStudentRepository(participationId, null);
     }
 
     private void broadcastChangesForNonStudentRepository(Long participationId, @Nullable ProgrammingExerciseEditorFileSyncDTO filePatch) {
@@ -328,7 +324,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     @EnforceAtLeastStudent
     public ResponseEntity<Void> createFile(@PathVariable Long participationId, @RequestParam("file") String filePath, HttpServletRequest request) {
         ResponseEntity<Void> response = super.createFile(participationId, filePath, request);
-        broadcastChangesForNonStudentRepository(participationId, new ProgrammingExerciseEditorFileSyncDTO(filePath, null, "CREATE", null, "FILE"));
+        broadcastChangesForNonStudentRepository(participationId, ProgrammingExerciseEditorFileSyncDTO.forFileCreate(filePath));
         return response;
     }
 
@@ -338,7 +334,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     @EnforceAtLeastStudent
     public ResponseEntity<Void> createFolder(@PathVariable Long participationId, @RequestParam("folder") String folderPath, HttpServletRequest request) {
         ResponseEntity<Void> response = super.createFolder(participationId, folderPath, request);
-        broadcastChangesForNonStudentRepository(participationId);
+        broadcastChangesForNonStudentRepository(participationId, ProgrammingExerciseEditorFileSyncDTO.forFolderCreate(folderPath));
         return response;
     }
 
@@ -348,8 +344,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     @EnforceAtLeastStudent
     public ResponseEntity<Void> renameFile(@PathVariable Long participationId, @RequestBody FileMove fileMove) {
         ResponseEntity<Void> response = super.renameFile(participationId, fileMove);
-        broadcastChangesForNonStudentRepository(participationId,
-                new ProgrammingExerciseEditorFileSyncDTO(fileMove.currentFilePath(), null, "RENAME", fileMove.newFilename(), null));
+        broadcastChangesForNonStudentRepository(participationId, ProgrammingExerciseEditorFileSyncDTO.forRename(fileMove.currentFilePath(), fileMove.newFilename()));
         return response;
     }
 
@@ -358,7 +353,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     @EnforceAtLeastStudent
     public ResponseEntity<Void> deleteFile(@PathVariable Long participationId, @RequestParam("file") String filename) {
         ResponseEntity<Void> response = super.deleteFile(participationId, filename);
-        broadcastChangesForNonStudentRepository(participationId, new ProgrammingExerciseEditorFileSyncDTO(filename, null, "DELETE", null, null));
+        broadcastChangesForNonStudentRepository(participationId, ProgrammingExerciseEditorFileSyncDTO.forDelete(filename));
         return response;
     }
 
@@ -411,13 +406,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, error.getMessage(), error);
         }
 
-        ResponseEntity<Map<String, String>> response = saveFilesAndCommitChanges(participationId, submissions, commit, repository);
-
-        if (!commit && !submissions.isEmpty()) {
-            broadcastChangesForNonStudentRepository(participationId);
-        }
-
-        return response;
+        return saveFilesAndCommitChanges(participationId, submissions, commit, repository);
     }
 
     /**
@@ -441,9 +430,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     @FeatureToggle(Feature.ProgrammingExercises)
     @EnforceAtLeastStudent
     public ResponseEntity<Void> resetToLastCommit(@PathVariable Long participationId) {
-        ResponseEntity<Void> response = super.resetToLastCommit(participationId);
-        broadcastChangesForNonStudentRepository(participationId);
-        return response;
+        return super.resetToLastCommit(participationId);
     }
 
     @Override

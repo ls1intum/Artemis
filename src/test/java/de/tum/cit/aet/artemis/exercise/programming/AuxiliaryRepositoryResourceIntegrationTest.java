@@ -49,9 +49,10 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseEditorSyncTarget;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.dto.FileMove;
-import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseEditorSyncEventDTO;
 import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTO;
 import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTOType;
+import de.tum.cit.aet.artemis.programming.dto.synchronization.ProgrammingExerciseEditorFileType;
+import de.tum.cit.aet.artemis.programming.dto.synchronization.ProgrammingExerciseEditorSyncEventDTO;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.service.GitService;
@@ -326,7 +327,7 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
         var filePatch = syncEvent.filePatches().get(0);
         assertThat(filePatch.fileName()).isEqualTo("newFile");
         assertThat(filePatch.changeType()).isEqualTo("CREATE");
-        assertThat(filePatch.fileType()).isEqualTo("FILE");
+        assertThat(filePatch.fileType()).isEqualTo(ProgrammingExerciseEditorFileType.FILE);
     }
 
     @Test

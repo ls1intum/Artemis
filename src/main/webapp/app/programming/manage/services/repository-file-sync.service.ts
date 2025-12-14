@@ -19,8 +19,9 @@ export type FileContentEditOperation = { type: ProgrammingExerciseEditorFileChan
 export type FileCreateOperation = { type: ProgrammingExerciseEditorFileChangeType.CREATE; fileName: string; content: string; fileType?: FileType };
 export type FileDeleteOperation = { type: ProgrammingExerciseEditorFileChangeType.DELETE; fileName: string };
 export type FileRenameOperation = { type: ProgrammingExerciseEditorFileChangeType.RENAME; fileName: string; newFileName: string; content: string };
+export type NewCommitAlertOperation = { type: 'NEW_COMMIT_ALERT' };
 
-export type FileOperation = FileContentEditOperation | FileCreateOperation | FileDeleteOperation | FileRenameOperation;
+export type FileOperation = FileContentEditOperation | FileCreateOperation | FileDeleteOperation | FileRenameOperation | NewCommitAlertOperation;
 
 /**
  * Service responsible for synchronizing file changes across multiple code editors in real-time.
@@ -326,11 +327,13 @@ export class RepositoryFileSyncService {
      * Main entry point for processing incoming WebSocket synchronization messages.
      * This method is called automatically when a sync message is received from other editors.
      *
+     * Message processing flow:
      * 1. Filters out problem statement messages (handled separately)
      * 2. Applies the configured targetFilter (e.g., only process template repo)
-     * 3. If message contains file requests, responds with full file content
-     * 4. If message contains patches, applies them to local baselines
-     * 5. If message contains full file content, updates baselines directly
+     * 3. If message contains newCommitAlert, emits a special commit alert operation
+     * 4. If message contains file requests, responds with full file content
+     * 5. If message contains patches, applies them to local baselines
+     * 6. If message contains full file content, updates baselines directly
      *
      * @param message - The incoming synchronization message from another editor
      * @private
@@ -340,6 +343,13 @@ export class RepositoryFileSyncService {
             return;
         }
         if (!this.targetFilter(message)) {
+            return;
+        }
+
+        // Handle new commit alerts - these indicate a commit was made (potentially from an offline IDE)
+        // and the user should refresh to get the latest changes
+        if (message.newCommitAlert) {
+            this.patchOperations.next({ type: 'NEW_COMMIT_ALERT' });
             return;
         }
 
@@ -475,10 +485,18 @@ export class RepositoryFileSyncService {
      * Note: This method modifies the UI but does NOT update baselines - those are already
      * updated by handleRemoteFilePatch() before this method is called.
      *
+     * NEW_COMMIT_ALERT operations are handled by the calling component and should not
+     * be passed to this method.
+     *
      * @param operation - The file operation to apply (from handleRemoteFilePatch)
      * @param codeEditorContainer - The code editor container component to update
      */
     applyRemoteOperation(operation: FileOperation, codeEditorContainer: CodeEditorContainerComponent) {
+        // NEW_COMMIT_ALERT is handled by the calling component, skip it here
+        if (operation.type === 'NEW_COMMIT_ALERT') {
+            return;
+        }
+
         switch (operation.type) {
             case ProgrammingExerciseEditorFileChangeType.CONTENT:
                 codeEditorContainer.applyRemoteFileContent(operation.fileName, operation.content);
