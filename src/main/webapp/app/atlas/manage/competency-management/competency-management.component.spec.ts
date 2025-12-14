@@ -258,6 +258,6 @@ describe('CompetencyManagementComponent', () => {
             size: 'lg',
             backdrop: true,
         });
-        expect(modalRef.componentInstance.courseId).toBe(1);
+        expect(modalRef.componentInstance.courseId()).toBe(1);
     });
 });
