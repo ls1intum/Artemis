@@ -7,14 +7,18 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 /**
- * Configuration holder for LLM cost estimates (per million tokens).
+ * Configuration holder for LLM cost estimates in EUR (per million tokens) pulled from configuration.
  */
 @Component
 @Lazy
 @ConfigurationProperties(prefix = "spring.ai.llm")
 public class LlmUsageProperties {
 
-    private Map<String, ModelCost> costs = Map.of("gpt-5-mini", new ModelCost(0.23f, 1.84f));
+    /**
+     * Populated via {@code spring.ai.llm.costs} (application-artemis.yml).
+     * Defaults to empty so missing entries fall back to zero cost at usage time.
+     */
+    private Map<String, ModelCost> costs = Map.of();
 
     public Map<String, ModelCost> getCosts() {
         return costs;
