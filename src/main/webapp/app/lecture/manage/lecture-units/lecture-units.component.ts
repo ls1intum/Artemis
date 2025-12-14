@@ -358,6 +358,9 @@ export class LectureUpdateUnitsComponent implements OnInit {
                             fileProperties: {
                                 fileName: this.currentlyProcessedAttachmentVideoUnit.attachment?.link,
                             },
+                            videoFileProperties: {
+                                videoFileName: undefined,
+                            },
                             transcriptionProperties: {
                                 videoTranscription: transcription ? JSON.stringify(transcription) : undefined,
                             },

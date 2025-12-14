@@ -82,6 +82,9 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
                         fileProperties: {
                             fileName: this.attachment.link,
                         },
+                        videoFileProperties: {
+                            videoFileName: undefined,
+                        },
                         transcriptionProperties: {
                             videoTranscription: transcription ? JSON.stringify(transcription) : undefined,
                         },
@@ -101,15 +104,16 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
     updateAttachmentVideoUnit(attachmentVideoUnitFormData: AttachmentVideoUnitFormData) {
         const { description, name, releaseDate, updateNotificationText, videoSource, competencyLinks, generateTranscript } = attachmentVideoUnitFormData.formProperties;
         const { file, fileName } = attachmentVideoUnitFormData.fileProperties;
+        const { videoFile, videoFileName } = attachmentVideoUnitFormData.videoFileProperties;
         const { videoTranscription } = attachmentVideoUnitFormData.transcriptionProperties || {};
-        const { playlistUrl } = attachmentVideoUnitFormData || {};
+        const { playlistUrl, uploadProgressCallback } = attachmentVideoUnitFormData || {};
 
         // optional update notification text for students
         if (updateNotificationText) {
             this.notificationText = updateNotificationText;
         }
 
-        // === Setting attachment ===
+        // === Setting attachment (PDF only) ===
         this.attachment.name = name;
         this.attachment.releaseDate = releaseDate;
         this.attachment.attachmentType = AttachmentType.FILE;
@@ -125,14 +129,19 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
         this.isLoading = true;
 
         const formData = new FormData();
+        // Add PDF file if provided
         if (file) {
             formData.append('file', file, fileName);
+        }
+        // Add video file if provided
+        if (videoFile) {
+            formData.append('videoFile', videoFile, videoFileName);
         }
         formData.append('attachment', objectToJsonBlob(this.attachment));
         formData.append('attachmentVideoUnit', objectToJsonBlob(this.attachmentVideoUnit));
 
         this.attachmentVideoUnitService
-            .update(this.lectureId, this.attachmentVideoUnit.id!, formData, this.notificationText)
+            .update(this.lectureId, this.attachmentVideoUnit.id!, formData, this.notificationText, uploadProgressCallback)
             .pipe(
                 switchMap((response) => {
                     const lectureUnit = response.body!;

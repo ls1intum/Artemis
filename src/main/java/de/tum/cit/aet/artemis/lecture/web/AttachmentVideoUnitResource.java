@@ -143,8 +143,9 @@ public class AttachmentVideoUnitResource {
     @EnforceAtLeastEditorInLectureUnit(resourceIdFieldName = "attachmentVideoUnitId")
     public ResponseEntity<AttachmentVideoUnit> updateAttachmentVideoUnit(@PathVariable Long lectureId, @PathVariable Long attachmentVideoUnitId,
             @RequestPart AttachmentVideoUnit attachmentVideoUnit, @RequestPart(required = false) Attachment attachment, @RequestPart(required = false) MultipartFile file,
-            @RequestPart(required = false) List<HiddenPageInfoDTO> hiddenPages, @RequestPart(required = false) List<SlideOrderDTO> pageOrder,
-            @RequestParam(defaultValue = "false") boolean keepFilename, @RequestParam(value = "notificationText", required = false) String notificationText) {
+            @RequestPart(required = false) MultipartFile videoFile, @RequestPart(required = false) List<HiddenPageInfoDTO> hiddenPages,
+            @RequestPart(required = false) List<SlideOrderDTO> pageOrder, @RequestParam(defaultValue = "false") boolean keepFilename,
+            @RequestParam(value = "notificationText", required = false) String notificationText) {
         log.debug("REST request to update an attachment video unit : {}", attachmentVideoUnit);
         AttachmentVideoUnit existingAttachmentVideoUnit = attachmentVideoUnitRepository.findWithSlidesAndCompetenciesByIdElseThrow(attachmentVideoUnitId);
         checkAttachmentVideoUnitCourseAndLecture(existingAttachmentVideoUnit, lectureId);
@@ -153,16 +154,17 @@ public class AttachmentVideoUnitResource {
             throw new BadRequestAlertException("Hidden slide dates cannot be in the past", ENTITY_NAME, "invalidHiddenDates");
         }
 
-        // Validate file size (videos up to 200MB, other files up to 20MB)
+        // Validate file sizes
         FileUtil.validateFileSize(file);
+        FileUtil.validateFileSize(videoFile);
 
         // Check if video upload is enabled when a video file is being uploaded
-        if (file != null && file.getOriginalFilename() != null && FileUtil.isVideoFile(file.getOriginalFilename()) && !moduleFeatureService.isVideoUploadEnabled()) {
+        if (videoFile != null && videoFile.getOriginalFilename() != null && FileUtil.isVideoFile(videoFile.getOriginalFilename()) && !moduleFeatureService.isVideoUploadEnabled()) {
             throw new BadRequestAlertException("Video file upload is not enabled on this server", ENTITY_NAME, "videoUploadDisabled");
         }
 
         AttachmentVideoUnit savedAttachmentVideoUnit = attachmentVideoUnitService.updateAttachmentVideoUnit(existingAttachmentVideoUnit, attachmentVideoUnit, attachment, file,
-                keepFilename, hiddenPages, pageOrder);
+                videoFile, keepFilename, hiddenPages, pageOrder);
 
         if (notificationText != null && attachment != null) {
             groupNotificationService.notifyStudentGroupAboutAttachmentChange(savedAttachmentVideoUnit.getAttachment());
@@ -179,7 +181,8 @@ public class AttachmentVideoUnitResource {
      * @param lectureId           the id of the lecture to which the attachment video unit should be added
      * @param attachmentVideoUnit the attachment video unit that should be created
      * @param attachment          the attachment that should be created
-     * @param file                the file to upload
+     * @param file                the file to upload (PDF)
+     * @param videoFile           the video file to upload
      * @param keepFilename        specifies if the original filename should be kept or not
      * @return the ResponseEntity with status 201 (Created) and with body the new attachment video unit
      * @throws URISyntaxException if the Location URI syntax is incorrect
@@ -187,8 +190,8 @@ public class AttachmentVideoUnitResource {
     @PostMapping(value = "lectures/{lectureId}/attachment-video-units", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @EnforceAtLeastEditorInLecture
     public ResponseEntity<AttachmentVideoUnit> createAttachmentVideoUnit(@PathVariable Long lectureId, @RequestPart AttachmentVideoUnit attachmentVideoUnit,
-            @RequestPart(required = false) Attachment attachment, @RequestPart(required = false) MultipartFile file, @RequestParam(defaultValue = "false") boolean keepFilename)
-            throws URISyntaxException {
+            @RequestPart(required = false) Attachment attachment, @RequestPart(required = false) MultipartFile file, @RequestPart(required = false) MultipartFile videoFile,
+            @RequestParam(defaultValue = "false") boolean keepFilename) throws URISyntaxException {
         log.debug("REST request to create AttachmentVideoUnit {} with Attachment {}", attachmentVideoUnit, attachment);
         if (attachmentVideoUnit.getId() != null) {
             throw new BadRequestAlertException("A new attachment video unit cannot already have an ID", ENTITY_NAME, "idexists");
@@ -198,15 +201,16 @@ public class AttachmentVideoUnitResource {
             throw new BadRequestAlertException("A new attachment cannot already have an ID", ENTITY_NAME, "idexists");
         }
 
-        if (attachment == null && attachmentVideoUnit.getVideoSource() == null) {
-            throw new BadRequestAlertException("A attachment must have a an attachment or a video source", ENTITY_NAME, "videosourceAndAttachment");
+        if (attachment == null && videoFile == null && attachmentVideoUnit.getVideoSource() == null) {
+            throw new BadRequestAlertException("A attachment video unit must have an attachment, a video file, or a video source", ENTITY_NAME, "videosourceAndAttachment");
         }
 
-        // Validate file size (videos up to 200MB, other files up to 20MB)
+        // Validate file sizes
         FileUtil.validateFileSize(file);
+        FileUtil.validateFileSize(videoFile);
 
         // Check if video upload is enabled when a video file is being uploaded
-        if (file != null && file.getOriginalFilename() != null && FileUtil.isVideoFile(file.getOriginalFilename()) && !moduleFeatureService.isVideoUploadEnabled()) {
+        if (videoFile != null && videoFile.getOriginalFilename() != null && FileUtil.isVideoFile(videoFile.getOriginalFilename()) && !moduleFeatureService.isVideoUploadEnabled()) {
             throw new BadRequestAlertException("Video file upload is not enabled on this server", ENTITY_NAME, "videoUploadDisabled");
         }
 
@@ -221,7 +225,7 @@ public class AttachmentVideoUnitResource {
         Lecture updatedLecture = lectureRepository.saveAndFlush(lecture);
 
         AttachmentVideoUnit persistedUnit = attachmentVideoUnitService.saveAttachmentVideoUnit((AttachmentVideoUnit) updatedLecture.getLectureUnits().getLast(), attachment, file,
-                keepFilename);
+                videoFile, keepFilename);
         // From now on, only use persistedUnit
         if (attachment != null && file != null && Objects.equals(FilenameUtils.getExtension(file.getOriginalFilename()), "pdf")) {
             slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(persistedUnit);

@@ -3,7 +3,7 @@ import dayjs from 'dayjs/esm';
 import { AbstractControl, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import urlParser from 'js-video-url-parser';
 import { faArrowLeft, faCheck, faExclamationTriangle, faQuestionCircle, faTimes, faVideo } from '@fortawesome/free-solid-svg-icons';
-import { ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER, ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE, VIDEO_FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants';
+import { ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER, ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE } from 'app/shared/constants/file-extensions.constants';
 import { CompetencyLectureUnitLink } from 'app/atlas/shared/entities/competency.model';
 import { MAX_FILE_SIZE, MAX_VIDEO_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -22,9 +22,11 @@ import { MODULE_FEATURE_VIDEO_UPLOAD } from 'app/app.constants';
 export interface AttachmentVideoUnitFormData {
     formProperties: FormProperties;
     fileProperties: FileProperties;
+    videoFileProperties: VideoFileProperties;
     playlistUrl?: string;
     transcriptionProperties?: TranscriptionProperties;
     transcriptionStatus?: string;
+    uploadProgressCallback?: (progress: number, status: string) => void;
 }
 
 // matches structure of the reactive form
@@ -45,6 +47,12 @@ export interface FormProperties {
 export interface FileProperties {
     file?: File;
     fileName?: string;
+}
+
+// video file input is also a special case
+export interface VideoFileProperties {
+    videoFile?: File;
+    videoFileName?: string;
 }
 
 export interface TranscriptionProperties {
@@ -156,6 +164,15 @@ export class AttachmentVideoUnitFormComponent {
     fileName = signal<string | undefined>(undefined);
     isFileTooBig = signal<boolean>(false);
 
+    // video file input handling
+    @ViewChild('videoFileInput', { static: false })
+    videoFileInput: ElementRef;
+    videoFile: File;
+    videoFileInputTouched = false;
+
+    videoFileName = signal<string | undefined>(undefined);
+    isVideoFileTooBig = signal<boolean>(false);
+
     videoSourceUrlValidator = videoSourceUrlValidator;
     videoSourceTransformUrlValidator = videoSourceTransformUrlValidator;
 
@@ -241,26 +258,19 @@ export class AttachmentVideoUnitFormComponent {
 
     isFormValid = computed(() => {
         const hasValidFile = !!this.fileName();
+        const hasValidVideoFile = !!this.videoFileName();
         const hasVideoSource = !!this.videoSourceSignal();
 
         // If video upload is disabled and user tries to upload a video file, form is invalid
-        if (hasValidFile && this.isVideoFile(this.file) && !this.isVideoUploadEnabled()) {
+        if (hasValidVideoFile && !this.isVideoUploadEnabled()) {
             return false;
         }
 
-        return this.statusChanges() === 'VALID' && !this.isFileTooBig() && this.datePickerComponent()?.isValid() && (hasValidFile || hasVideoSource);
+        // Must have at least one of: PDF file, video file, or video source URL
+        const hasContent = hasValidFile || hasValidVideoFile || hasVideoSource;
+
+        return this.statusChanges() === 'VALID' && !this.isFileTooBig() && !this.isVideoFileTooBig() && this.datePickerComponent()?.isValid() && hasContent;
     });
-
-    /**
-     * Checks if a file is a video file based on its extension
-     */
-    private isVideoFile(file: File | undefined): boolean {
-        if (!file || !file.name) {
-            return false;
-        }
-        const extension = file.name.split('.').pop()?.toLowerCase();
-        return VIDEO_FILE_EXTENSIONS.includes(extension || '');
-    }
 
     onFileChange(event: Event): void {
         const input = event.target as HTMLInputElement;
@@ -269,53 +279,39 @@ export class AttachmentVideoUnitFormComponent {
         }
 
         this.fileInputTouched = true;
-        this.isUploading.set(true);
-        this.uploadProgress.set(0);
-        this.uploadStatus.set('Preparing upload...');
+        this.file = input.files[0];
+        this.fileName.set(this.file.name);
 
-        // Simulate upload progress for better UX
-        const progressInterval = setInterval(() => {
-            const currentProgress = this.uploadProgress();
-            if (currentProgress < 90) {
-                this.uploadProgress.set(currentProgress + 10);
-                if (currentProgress < 30) {
-                    this.uploadStatus.set('Reading file...');
-                } else if (currentProgress < 60) {
-                    this.uploadStatus.set('Processing...');
-                } else {
-                    this.uploadStatus.set('Almost done...');
-                }
-            }
-        }, 100);
+        // Validate file size for PDF files
+        this.isFileTooBig.set(this.file.size > MAX_FILE_SIZE);
 
-        // Process the file
-        setTimeout(() => {
-            clearInterval(progressInterval);
-            this.file = input.files![0];
-            this.fileName.set(this.file.name);
+        // Automatically set the name if not yet specified
+        if (this.form && (this.nameControl?.value == undefined || this.nameControl?.value == '')) {
+            this.form.patchValue({
+                name: this.file.name.replace(/\.[^/.]+$/, ''),
+            });
+        }
+    }
 
-            // Validate file size - use larger limit for video files
-            const maxSize = this.isVideoFile(this.file) ? MAX_VIDEO_FILE_SIZE : MAX_FILE_SIZE;
-            this.isFileTooBig.set(this.file.size > maxSize);
+    onVideoFileChange(event: Event): void {
+        const input = event.target as HTMLInputElement;
+        if (!input.files?.length) {
+            return;
+        }
 
-            // Complete upload
-            this.uploadProgress.set(100);
-            this.uploadStatus.set('Upload complete!');
+        this.videoFileInputTouched = true;
+        this.videoFile = input.files[0];
+        this.videoFileName.set(this.videoFile.name);
 
-            // Reset upload state after a brief delay
-            setTimeout(() => {
-                this.isUploading.set(false);
-                this.uploadProgress.set(0);
-                this.uploadStatus.set('');
-            }, 1000);
+        // Validate file size for video files
+        this.isVideoFileTooBig.set(this.videoFile.size > MAX_VIDEO_FILE_SIZE);
 
-            // Automatically set the name if not yet specified
-            if (this.form && (this.nameControl?.value == undefined || this.nameControl?.value == '')) {
-                this.form.patchValue({
-                    name: this.file.name.replace(/\.[^/.]+$/, ''),
-                });
-            }
-        }, 1000);
+        // Automatically set the name if not yet specified
+        if (this.form && (this.nameControl?.value == undefined || this.nameControl?.value == '')) {
+            this.form.patchValue({
+                name: this.videoFile.name.replace(/\.[^/.]+$/, ''),
+            });
+        }
     }
 
     get nameControl() {
@@ -383,11 +379,34 @@ export class AttachmentVideoUnitFormComponent {
             videoTranscription: formValue.videoTranscription,
         };
 
+        // Create upload progress callback
+        const uploadProgressCallback = (progress: number, status: string) => {
+            this.isUploading.set(true);
+            this.uploadProgress.set(progress);
+            this.uploadStatus.set(status);
+
+            if (progress === 100) {
+                // Reset upload state after completion
+                setTimeout(() => {
+                    this.isUploading.set(false);
+                    this.uploadProgress.set(0);
+                    this.uploadStatus.set('');
+                }, 1000);
+            }
+        };
+
+        const videoFileProperties: VideoFileProperties = {
+            videoFile: this.videoFile,
+            videoFileName: this.videoFileName(),
+        };
+
         this.formSubmitted.emit({
             formProperties,
             fileProperties,
+            videoFileProperties,
             transcriptionProperties,
             playlistUrl: this.playlistUrl(),
+            uploadProgressCallback,
         });
     }
 
@@ -400,6 +419,12 @@ export class AttachmentVideoUnitFormComponent {
         }
         if (formData?.fileProperties?.fileName) {
             this.fileName.set(formData?.fileProperties?.fileName);
+        }
+        if (formData?.videoFileProperties?.videoFile) {
+            this.videoFile = formData?.videoFileProperties?.videoFile;
+        }
+        if (formData?.videoFileProperties?.videoFileName) {
+            this.videoFileName.set(formData?.videoFileProperties?.videoFileName);
         }
         if (formData?.transcriptionProperties) {
             this.form.patchValue(formData.transcriptionProperties);

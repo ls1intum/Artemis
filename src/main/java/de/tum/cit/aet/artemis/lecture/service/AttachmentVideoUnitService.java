@@ -67,16 +67,25 @@ public class AttachmentVideoUnitService {
      *
      * @param attachmentVideoUnit The attachmentVideoUnit to create
      * @param attachment          The attachment to create the attachmentVideoUnit for
-     * @param file                The file to upload
+     * @param file                The file to upload (PDF)
+     * @param videoFile           The video file to upload
      * @param keepFilename        Whether to keep the original filename or not.
      * @return The created attachment video unit
      */
-    public AttachmentVideoUnit saveAttachmentVideoUnit(AttachmentVideoUnit attachmentVideoUnit, Attachment attachment, MultipartFile file, boolean keepFilename) {
+    public AttachmentVideoUnit saveAttachmentVideoUnit(AttachmentVideoUnit attachmentVideoUnit, Attachment attachment, MultipartFile file, MultipartFile videoFile,
+            boolean keepFilename) {
         // TODO: switch to the new mechanism of lectureUnitService.updateCompetencyLinks
         AttachmentVideoUnit savedAttachmentVideoUnit = lectureUnitService.saveWithCompetencyLinks(attachmentVideoUnit, attachmentVideoUnitRepository::saveAndFlush);
 
         if (attachment != null && file != null) {
             createAttachment(attachment, savedAttachmentVideoUnit, file, keepFilename);
+        }
+
+        if (videoFile != null) {
+            handleVideoFile(videoFile, savedAttachmentVideoUnit, keepFilename);
+        }
+
+        if ((attachment != null && file != null) || videoFile != null) {
             irisLectureApi.ifPresent(api -> api.autoUpdateAttachmentVideoUnitsInPyris(List.of(savedAttachmentVideoUnit)));
         }
 
@@ -89,21 +98,30 @@ public class AttachmentVideoUnitService {
      * @param existingAttachmentVideoUnit The attachment video unit to update.
      * @param updateUnit                  The new attachment video unit data.
      * @param updateAttachment            The new attachment data.
-     * @param updateFile                  The optional file.
+     * @param updateFile                  The optional file (PDF).
+     * @param updateVideoFile             The optional video file.
      * @param keepFilename                Whether to keep the original filename or not.
      * @param hiddenPages                 The hidden pages of attachment video unit.
      * @param pageOrder                   The new order of the edited attachment video unit
      * @return The updated attachment video unit.
      */
     public AttachmentVideoUnit updateAttachmentVideoUnit(AttachmentVideoUnit existingAttachmentVideoUnit, AttachmentVideoUnit updateUnit, Attachment updateAttachment,
-            MultipartFile updateFile, boolean keepFilename, List<HiddenPageInfoDTO> hiddenPages, List<SlideOrderDTO> pageOrder) {
+            MultipartFile updateFile, MultipartFile updateVideoFile, boolean keepFilename, List<HiddenPageInfoDTO> hiddenPages, List<SlideOrderDTO> pageOrder) {
         Set<CompetencyLectureUnitLink> existingCompetencyLinks = new HashSet<>(existingAttachmentVideoUnit.getCompetencyLinks());
 
         existingAttachmentVideoUnit.setDescription(updateUnit.getDescription());
         existingAttachmentVideoUnit.setName(updateUnit.getName());
         existingAttachmentVideoUnit.setReleaseDate(updateUnit.getReleaseDate());
         existingAttachmentVideoUnit.setCompetencyLinks(updateUnit.getCompetencyLinks());
-        existingAttachmentVideoUnit.setVideoSource(updateUnit.getVideoSource());
+
+        // Handle video file update first - if a video file is uploaded, it takes precedence
+        if (updateVideoFile != null) {
+            handleVideoFile(updateVideoFile, existingAttachmentVideoUnit, keepFilename);
+        }
+        else {
+            // Only update videoSource from form if no video file is being uploaded
+            existingAttachmentVideoUnit.setVideoSource(updateUnit.getVideoSource());
+        }
 
         Attachment existingAttachment = existingAttachmentVideoUnit.getAttachment();
 
@@ -195,6 +213,33 @@ public class AttachmentVideoUnitService {
             Path savePath = FileUtil.saveFile(file, basePath, FilePathType.ATTACHMENT_UNIT, keepFilename);
             attachment.setLink(FilePathConverter.externalUriForFileSystemPath(savePath, FilePathType.ATTACHMENT_UNIT, attachmentVideoUnitId).toString());
             attachment.setUploadDate(ZonedDateTime.now());
+        }
+    }
+
+    /**
+     * Handles the video file after upload if provided.
+     * Stores the video file path in the videoSource field.
+     *
+     * @param videoFile           Video file to handle
+     * @param attachmentVideoUnit Attachment video unit to update
+     * @param keepFilename        Whether to keep the original filename or not.
+     */
+    private void handleVideoFile(MultipartFile videoFile, AttachmentVideoUnit attachmentVideoUnit, boolean keepFilename) {
+        if (videoFile != null && !videoFile.isEmpty()) {
+            // Delete old video file if it exists and is a file path (not a URL)
+            String existingVideoSource = attachmentVideoUnit.getVideoSource();
+            if (existingVideoSource != null && existingVideoSource.startsWith("/api/files/")) {
+                URI oldVideoPath = URI.create(existingVideoSource);
+                Path localPath = FilePathConverter.fileSystemPathForExternalUri(oldVideoPath, FilePathType.ATTACHMENT_UNIT);
+                fileService.schedulePathForDeletion(localPath, 0);
+                fileService.evictCacheForPath(localPath);
+            }
+
+            Path basePath = FilePathConverter.getAttachmentVideoUnitFileSystemPath().resolve(attachmentVideoUnit.getId().toString()).resolve("video");
+            Path savePath = FileUtil.saveFile(videoFile, basePath, FilePathType.ATTACHMENT_UNIT, keepFilename);
+            String videoFilePath = FilePathConverter.externalUriForFileSystemPath(savePath, FilePathType.ATTACHMENT_UNIT, attachmentVideoUnit.getId()).toString();
+            attachmentVideoUnit.setVideoSource(videoFilePath);
+            attachmentVideoUnitRepository.saveAndFlush(attachmentVideoUnit);
         }
     }
 

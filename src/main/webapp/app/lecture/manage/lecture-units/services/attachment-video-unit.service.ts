@@ -3,7 +3,7 @@ import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/le
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { catchError, filter, map, tap } from 'rxjs/operators';
 import { LectureUnitInformationDTO } from 'app/lecture/manage/lecture-units/attachment-video-units/attachment-video-units.component';
 import { AlertService } from 'app/shared/service/alert.service';
 import { of } from 'rxjs';
@@ -26,7 +26,7 @@ export class AttachmentVideoUnitService {
             .pipe(map((res: EntityResponseType) => this.lectureUnitService.convertLectureUnitResponseDatesFromServer(res)));
     }
 
-    create(formData: FormData, lectureId: number): Observable<EntityResponseType> {
+    create(formData: FormData, lectureId: number, progressCallback?: (progress: number, status: string) => void): Observable<EntityResponseType> {
         /** Ngsw-worker is bypassed temporarily to fix Chromium file upload issue
          * See: https://issues.chromium.org/issues/374550348
          **/
@@ -34,11 +34,28 @@ export class AttachmentVideoUnitService {
             .post<AttachmentVideoUnit>(`${this.resourceURL}/lectures/${lectureId}/attachment-video-units?keepFilename=true`, formData, {
                 headers: { 'ngsw-bypass': 'true' },
                 observe: 'response',
+                reportProgress: true,
             })
-            .pipe(map((res: EntityResponseType) => this.lectureUnitService.convertLectureUnitResponseDatesFromServer(res)));
+            .pipe(
+                tap((event: any) => {
+                    if (progressCallback && event.type === 1 && event.total) {
+                        // HttpEventType.UploadProgress = 1
+                        const percentDone = Math.round((100 * event.loaded) / event.total);
+                        progressCallback(percentDone, `Uploading... ${percentDone}%`);
+                    }
+                }),
+                filter((event: any) => event.type === 4), // HttpEventType.Response = 4
+                map((res: EntityResponseType) => this.lectureUnitService.convertLectureUnitResponseDatesFromServer(res)),
+            );
     }
 
-    update(lectureId: number, attachmentVideoUnitId: number, formData: FormData, notificationText?: string): Observable<EntityResponseType> {
+    update(
+        lectureId: number,
+        attachmentVideoUnitId: number,
+        formData: FormData,
+        notificationText?: string,
+        progressCallback?: (progress: number, status: string) => void,
+    ): Observable<EntityResponseType> {
         /** Ngsw-worker is bypassed temporarily to fix Chromium file upload issue
          * See: https://issues.chromium.org/issues/374550348
          **/
@@ -47,9 +64,19 @@ export class AttachmentVideoUnitService {
                 `${this.resourceURL}/lectures/${lectureId}/attachment-video-units/${attachmentVideoUnitId}?keepFilename=true` +
                     (notificationText ? `&notificationText=${notificationText}` : ''),
                 formData,
-                { headers: { 'ngsw-bypass': 'true' }, observe: 'response' },
+                { headers: { 'ngsw-bypass': 'true' }, observe: 'response', reportProgress: true },
             )
-            .pipe(map((res: EntityResponseType) => this.lectureUnitService.convertLectureUnitResponseDatesFromServer(res)));
+            .pipe(
+                tap((event: any) => {
+                    if (progressCallback && event.type === 1 && event.total) {
+                        // HttpEventType.UploadProgress = 1
+                        const percentDone = Math.round((100 * event.loaded) / event.total);
+                        progressCallback(percentDone, `Uploading... ${percentDone}%`);
+                    }
+                }),
+                filter((event: any) => event.type === 4), // HttpEventType.Response = 4
+                map((res: EntityResponseType) => this.lectureUnitService.convertLectureUnitResponseDatesFromServer(res)),
+            );
     }
 
     getSplitUnitsData(lectureId: number, filename: string) {

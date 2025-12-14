@@ -85,7 +85,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
      * Returns undefined if neither a valid source nor an uploaded video file exists.
      */
     private computeVideoUrl(): string | undefined {
-        // First, check if there's an uploaded video file
+        // First, check if there's an uploaded video file in the attachment field (legacy)
         const attachment = this.lectureUnit().attachment;
         if (attachment?.link) {
             const fileExtension = attachment.link.split('.').pop()?.toLowerCase();
@@ -95,23 +95,33 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             }
         }
 
-        // If no uploaded video file, check for embedded video source
+        // Check video source field - could be either an uploaded file path or an embedded URL
         const source = this.lectureUnit().videoSource;
         if (!source) {
             return undefined;
         }
-        // Check if it matches the allow list (e.g., TUM Live URLs)
-        if (this.videoUrlAllowList.some((r) => r.test(source))) {
-            return source;
-        }
-        // Check if urlParser can parse it (e.g., YouTube, Vimeo, etc.)
-        if (urlParser) {
-            const parsed = urlParser.parse(source);
-            if (parsed) {
+
+        // Check if it's an external URL (starts with http:// or https://)
+        const isExternalUrl = source.startsWith('http://') || source.startsWith('https://');
+
+        if (isExternalUrl) {
+            // Check if it matches the allow list (e.g., TUM Live URLs)
+            if (this.videoUrlAllowList.some((r) => r.test(source))) {
                 return source;
             }
+            // Check if urlParser can parse it (e.g., YouTube, Vimeo, etc.)
+            if (urlParser) {
+                const parsed = urlParser.parse(source);
+                if (parsed) {
+                    return source;
+                }
+            }
+            // Unknown external URL - don't play it for security
+            return undefined;
         }
-        return undefined;
+
+        // It's an internal file path - add the public file prefix to make it accessible
+        return addPublicFilePrefix(source);
     }
 
     override toggleCollapse(isCollapsed: boolean): void {
