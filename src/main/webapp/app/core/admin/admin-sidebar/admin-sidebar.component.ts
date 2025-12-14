@@ -4,6 +4,7 @@ import {
     faBell,
     faBookOpen,
     faBroom,
+    faClipboardList,
     faEye,
     faFlag,
     faGears,
@@ -79,6 +80,13 @@ export class AdminSidebarComponent {
         groups.push({
             translation: 'global.menu.admin.groups.usersAndOrganizations',
             items: [
+                {
+                    routerLink: '/admin/course-requests',
+                    icon: faClipboardList,
+                    title: 'Course Requests',
+                    translation: 'global.menu.admin.sidebar.courseRequests',
+                    testId: 'admin-course-requests',
+                },
                 {
                     routerLink: '/admin/organization-management',
                     icon: faUniversity,
