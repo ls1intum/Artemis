@@ -30,8 +30,8 @@ import com.google.common.cache.CacheBuilder;
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.AtlasAgentChatResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.AtlasAgentHistoryMessageDTO;
-import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.CompetencyOperationDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.CompetencyPreviewDTO;
+import de.tum.cit.aet.artemis.atlas.service.CompetencyExpertToolsService.CompetencyOperation;
 
 /**
  * Service for Atlas Agent functionality with Azure OpenAI integration.
@@ -80,7 +80,7 @@ public class AtlasAgentService {
      *
      * @see <a href="https://guava.dev/releases/33.0.0-jre/api/docs/com/google/common/cache/Cache.html">Guava Cache Documentation</a>
      */
-    private final Cache<String, List<CompetencyOperationDTO>> sessionPendingCompetencyOperationsCache = CacheBuilder.newBuilder().expireAfterAccess(SESSION_EXPIRY_DURATION)
+    private final Cache<String, List<CompetencyOperation>> sessionPendingCompetencyOperationsCache = CacheBuilder.newBuilder().expireAfterAccess(SESSION_EXPIRY_DURATION)
             .maximumSize(MAX_SESSIONS).build();
 
     private final ChatClient chatClient;
@@ -112,7 +112,7 @@ public class AtlasAgentService {
      * @param sessionId the session ID
      * @return the cached pending competency operations, or null if none exist
      */
-    public List<CompetencyOperationDTO> getCachedPendingCompetencyOperations(String sessionId) {
+    public List<CompetencyOperation> getCachedPendingCompetencyOperations(String sessionId) {
         return sessionPendingCompetencyOperationsCache.getIfPresent(sessionId);
     }
 
@@ -123,7 +123,7 @@ public class AtlasAgentService {
      * @param sessionId  the session ID
      * @param operations the competency operations to cache
      */
-    public void cachePendingCompetencyOperations(String sessionId, List<CompetencyOperationDTO> operations) {
+    public void cachePendingCompetencyOperations(String sessionId, List<CompetencyOperation> operations) {
         sessionPendingCompetencyOperationsCache.put(sessionId, operations);
     }
 
@@ -190,7 +190,7 @@ public class AtlasAgentService {
             }
             else if (response.contains(CREATE_APPROVED_COMPETENCY)) {
                 sessionAgentMap.put(sessionId, AgentType.COMPETENCY_EXPERT);
-                List<CompetencyOperationDTO> cachedData = getCachedPendingCompetencyOperations(sessionId);
+                List<CompetencyOperation> cachedData = getCachedPendingCompetencyOperations(sessionId);
 
                 String creationResponse = delegateTheRightAgent(CREATE_APPROVED_COMPETENCY, courseId, sessionId);
                 List<CompetencyPreviewDTO> previews = CompetencyExpertToolsService.getPreviews();

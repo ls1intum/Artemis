@@ -16,9 +16,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.cit.aet.artemis.atlas.AbstractAtlasIntegrationTest;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
-import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.CompetencyOperationDTO;
 import de.tum.cit.aet.artemis.atlas.service.AtlasAgentService;
 import de.tum.cit.aet.artemis.atlas.service.CompetencyExpertToolsService;
+import de.tum.cit.aet.artemis.atlas.service.CompetencyExpertToolsService.CompetencyOperation;
 import de.tum.cit.aet.artemis.core.domain.Course;
 
 /**
@@ -133,8 +133,7 @@ class CompetencyExpertToolsServiceIntegrationTest extends AbstractAtlasIntegrati
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void shouldPreviewSingleNewCompetency() {
-            CompetencyOperationDTO operation = new CompetencyOperationDTO(null, "Software Testing", "Understanding testing methodologies and practices",
-                    CompetencyTaxonomy.UNDERSTAND);
+            CompetencyOperation operation = new CompetencyOperation(null, "Software Testing", "Understanding testing methodologies and practices", CompetencyTaxonomy.UNDERSTAND);
 
             String actualResult = competencyExpertToolsService.previewCompetencies(course.getId(), List.of(operation), null);
 
@@ -149,9 +148,9 @@ class CompetencyExpertToolsServiceIntegrationTest extends AbstractAtlasIntegrati
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void shouldPreviewMultipleCompetenciesInBatchMode() {
-            CompetencyOperationDTO op1 = new CompetencyOperationDTO(null, "Algorithms", "Algorithm design and analysis", CompetencyTaxonomy.ANALYZE);
-            CompetencyOperationDTO op2 = new CompetencyOperationDTO(null, "Data Structures", "Common data structures and their usage", CompetencyTaxonomy.APPLY);
-            CompetencyOperationDTO op3 = new CompetencyOperationDTO(null, "Complexity Theory", "Understanding computational complexity", CompetencyTaxonomy.EVALUATE);
+            CompetencyOperation op1 = new CompetencyOperation(null, "Algorithms", "Algorithm design and analysis", CompetencyTaxonomy.ANALYZE);
+            CompetencyOperation op2 = new CompetencyOperation(null, "Data Structures", "Common data structures and their usage", CompetencyTaxonomy.APPLY);
+            CompetencyOperation op3 = new CompetencyOperation(null, "Complexity Theory", "Understanding computational complexity", CompetencyTaxonomy.EVALUATE);
 
             String actualResult = competencyExpertToolsService.previewCompetencies(course.getId(), List.of(op1, op2, op3), false);
 
@@ -165,7 +164,7 @@ class CompetencyExpertToolsServiceIntegrationTest extends AbstractAtlasIntegrati
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void shouldPreviewExistingCompetencyUpdate() {
-            CompetencyOperationDTO updateOperation = new CompetencyOperationDTO(existingCompetency.getId(), "Updated Title", "Updated description", CompetencyTaxonomy.CREATE);
+            CompetencyOperation updateOperation = new CompetencyOperation(existingCompetency.getId(), "Updated Title", "Updated description", CompetencyTaxonomy.CREATE);
 
             String actualResult = competencyExpertToolsService.previewCompetencies(course.getId(), List.of(updateOperation), null);
 
@@ -176,7 +175,7 @@ class CompetencyExpertToolsServiceIntegrationTest extends AbstractAtlasIntegrati
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void shouldIncludeViewOnlyFlagWhenRequested() {
-            CompetencyOperationDTO operation = new CompetencyOperationDTO(null, "Read Only Test", "Testing view-only mode", CompetencyTaxonomy.REMEMBER);
+            CompetencyOperation operation = new CompetencyOperation(null, "Read Only Test", "Testing view-only mode", CompetencyTaxonomy.REMEMBER);
 
             String actualResult = competencyExpertToolsService.previewCompetencies(course.getId(), List.of(operation), true);
 
@@ -211,8 +210,7 @@ class CompetencyExpertToolsServiceIntegrationTest extends AbstractAtlasIntegrati
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void shouldCreateNewCompetencyAndPersistToDatabase() throws Exception {
-            CompetencyOperationDTO createOperation = new CompetencyOperationDTO(null, "Design Patterns", "Understanding common software design patterns",
-                    CompetencyTaxonomy.ANALYZE);
+            CompetencyOperation createOperation = new CompetencyOperation(null, "Design Patterns", "Understanding common software design patterns", CompetencyTaxonomy.ANALYZE);
 
             int expectedInitialCount = competencyRepository.findAllByCourseId(course.getId()).size();
 
@@ -241,7 +239,7 @@ class CompetencyExpertToolsServiceIntegrationTest extends AbstractAtlasIntegrati
             String expectedNewDescription = "Advanced object-oriented programming concepts";
             CompetencyTaxonomy expectedNewTaxonomy = CompetencyTaxonomy.CREATE;
 
-            CompetencyOperationDTO updateOperation = new CompetencyOperationDTO(existingCompetency.getId(), expectedNewTitle, expectedNewDescription, expectedNewTaxonomy);
+            CompetencyOperation updateOperation = new CompetencyOperation(existingCompetency.getId(), expectedNewTitle, expectedNewDescription, expectedNewTaxonomy);
 
             String actualResult = competencyExpertToolsService.saveCompetencies(course.getId(), List.of(updateOperation));
 
@@ -259,9 +257,9 @@ class CompetencyExpertToolsServiceIntegrationTest extends AbstractAtlasIntegrati
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void shouldHandleBatchCreateOperations() throws Exception {
-            CompetencyOperationDTO op1 = new CompetencyOperationDTO(null, "Competency 1", "Description 1", CompetencyTaxonomy.REMEMBER);
-            CompetencyOperationDTO op2 = new CompetencyOperationDTO(null, "Competency 2", "Description 2", CompetencyTaxonomy.UNDERSTAND);
-            CompetencyOperationDTO op3 = new CompetencyOperationDTO(null, "Competency 3", "Description 3", CompetencyTaxonomy.APPLY);
+            CompetencyOperation op1 = new CompetencyOperation(null, "Competency 1", "Description 1", CompetencyTaxonomy.REMEMBER);
+            CompetencyOperation op2 = new CompetencyOperation(null, "Competency 2", "Description 2", CompetencyTaxonomy.UNDERSTAND);
+            CompetencyOperation op3 = new CompetencyOperation(null, "Competency 3", "Description 3", CompetencyTaxonomy.APPLY);
 
             int expectedInitialCount = competencyRepository.findAllByCourseId(course.getId()).size();
 
@@ -279,8 +277,8 @@ class CompetencyExpertToolsServiceIntegrationTest extends AbstractAtlasIntegrati
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void shouldHandleMixedCreateAndUpdateOperations() throws Exception {
-            CompetencyOperationDTO createOp = new CompetencyOperationDTO(null, "New Competency", "New description", CompetencyTaxonomy.ANALYZE);
-            CompetencyOperationDTO updateOp = new CompetencyOperationDTO(existingCompetency.getId(), "Updated Existing", "Updated description", CompetencyTaxonomy.EVALUATE);
+            CompetencyOperation createOp = new CompetencyOperation(null, "New Competency", "New description", CompetencyTaxonomy.ANALYZE);
+            CompetencyOperation updateOp = new CompetencyOperation(existingCompetency.getId(), "Updated Existing", "Updated description", CompetencyTaxonomy.EVALUATE);
 
             int expectedInitialCount = competencyRepository.findAllByCourseId(course.getId()).size();
 
@@ -299,8 +297,8 @@ class CompetencyExpertToolsServiceIntegrationTest extends AbstractAtlasIntegrati
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void shouldContinueOnPartialFailureAndReportErrors() throws Exception {
-            CompetencyOperationDTO validOp = new CompetencyOperationDTO(null, "Valid Competency", "Valid description", CompetencyTaxonomy.APPLY);
-            CompetencyOperationDTO invalidOp = new CompetencyOperationDTO(999999L, "Invalid Update", "Non-existent ID", CompetencyTaxonomy.UNDERSTAND);
+            CompetencyOperation validOp = new CompetencyOperation(null, "Valid Competency", "Valid description", CompetencyTaxonomy.APPLY);
+            CompetencyOperation invalidOp = new CompetencyOperation(999999L, "Invalid Update", "Non-existent ID", CompetencyTaxonomy.UNDERSTAND);
 
             String actualResult = competencyExpertToolsService.saveCompetencies(course.getId(), List.of(validOp, invalidOp));
 
@@ -317,7 +315,7 @@ class CompetencyExpertToolsServiceIntegrationTest extends AbstractAtlasIntegrati
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void shouldTrimTitleWhitespaceWhenUpdating() {
             String titleWithSpaces = "  Title With Spaces  ";
-            CompetencyOperationDTO updateOperation = new CompetencyOperationDTO(existingCompetency.getId(), titleWithSpaces, "Description", CompetencyTaxonomy.APPLY);
+            CompetencyOperation updateOperation = new CompetencyOperation(existingCompetency.getId(), titleWithSpaces, "Description", CompetencyTaxonomy.APPLY);
 
             competencyExpertToolsService.saveCompetencies(course.getId(), List.of(updateOperation));
 
@@ -336,7 +334,7 @@ class CompetencyExpertToolsServiceIntegrationTest extends AbstractAtlasIntegrati
             assertThat(atlasAgentService.getCompetencyModifiedInCurrentRequest()).isFalse();
 
             // Perform creation
-            CompetencyOperationDTO createOp = new CompetencyOperationDTO(null, "Track Create", "Test tracking", CompetencyTaxonomy.REMEMBER);
+            CompetencyOperation createOp = new CompetencyOperation(null, "Track Create", "Test tracking", CompetencyTaxonomy.REMEMBER);
             competencyExpertToolsService.saveCompetencies(course.getId(), List.of(createOp));
 
             // State should be tracked
@@ -350,7 +348,7 @@ class CompetencyExpertToolsServiceIntegrationTest extends AbstractAtlasIntegrati
             assertThat(atlasAgentService.getCompetencyModifiedInCurrentRequest()).isFalse();
 
             // Perform update
-            CompetencyOperationDTO updateOp = new CompetencyOperationDTO(existingCompetency.getId(), "Track Update", "Test tracking", CompetencyTaxonomy.ANALYZE);
+            CompetencyOperation updateOp = new CompetencyOperation(existingCompetency.getId(), "Track Update", "Test tracking", CompetencyTaxonomy.ANALYZE);
             competencyExpertToolsService.saveCompetencies(course.getId(), List.of(updateOp));
 
             // State should be tracked
@@ -363,7 +361,7 @@ class CompetencyExpertToolsServiceIntegrationTest extends AbstractAtlasIntegrati
             // Perform read-only operations
             competencyExpertToolsService.getCourseCompetencies(course.getId());
             competencyExpertToolsService.getCourseDescription(course.getId());
-            competencyExpertToolsService.previewCompetencies(course.getId(), List.of(new CompetencyOperationDTO(null, "Preview", "Test", CompetencyTaxonomy.REMEMBER)), null);
+            competencyExpertToolsService.previewCompetencies(course.getId(), List.of(new CompetencyOperation(null, "Preview", "Test", CompetencyTaxonomy.REMEMBER)), null);
 
             // State should not be tracked for read-only operations
             assertThat(atlasAgentService.getCompetencyModifiedInCurrentRequest()).isFalse();
