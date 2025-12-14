@@ -82,11 +82,10 @@ export class ProgrammingExerciseEditorSyncService {
     subscribeToUpdates(exerciseId: number): Observable<ProgrammingExerciseEditorSyncMessage> {
         if (!this.subject) {
             const topic = this.getTopic(exerciseId);
-            this.websocketService.subscribe(topic);
             this.exerciseId = exerciseId;
             this.subject = new Subject<ProgrammingExerciseEditorSyncMessage>();
             this.subscription = this.websocketService
-                .receive(topic)
+                .subscribe(topic)
                 .pipe(filter((message: ProgrammingExerciseEditorSyncMessage) => message.clientInstanceId !== this.clientInstanceId))
                 .subscribe((message: ProgrammingExerciseEditorSyncMessage) => this.subject!.next(message));
         }
@@ -98,11 +97,6 @@ export class ProgrammingExerciseEditorSyncService {
      * Should be called when leaving the code editor for an exercise.
      */
     unsubscribe(): void {
-        // Unsubscribe from websocket connection
-        if (this.exerciseId) {
-            this.websocketService.unsubscribe(this.getTopic(this.exerciseId));
-        }
-
         // Complete the Subject to notify all observers that the stream has ended
         if (this.subject) {
             this.subject.complete();
