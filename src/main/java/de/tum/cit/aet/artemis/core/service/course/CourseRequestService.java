@@ -17,6 +17,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
@@ -83,7 +84,7 @@ public class CourseRequestService {
      */
     public CourseRequestDTO createCourseRequest(CourseRequestCreateDTO createDTO) {
         var requester = userRepository.getUserWithGroupsAndAuthorities();
-        validateShortNameUniqueness(createDTO.shortName(), null);
+        validateShortNameUniqueness(createDTO.shortName(), createDTO.title(), createDTO.semester(), null);
 
         if (createDTO.title().length() > MAX_TITLE_LENGTH) {
             throw new BadRequestAlertException("The course title is too long", CourseRequest.ENTITY_NAME, "courseRequestTitleTooLong");
@@ -127,7 +128,7 @@ public class CourseRequestService {
             throw new BadRequestAlertException("The course request has already been processed", CourseRequest.ENTITY_NAME, "courseRequestProcessed");
         }
 
-        validateShortNameUniqueness(courseRequest.getShortName(), courseRequest.getId());
+        validateShortNameUniqueness(courseRequest.getShortName(), courseRequest.getTitle(), courseRequest.getSemester(), courseRequest.getId());
 
         Course createdCourse = createCourseFromRequest(courseRequest);
         courseRequest.setCreatedCourseId(createdCourse.getId());
@@ -163,18 +164,121 @@ public class CourseRequestService {
         return toDto(courseRequest);
     }
 
+    /**
+     * Updates a pending course request. Only admins can update requests.
+     *
+     * @param requestId the request id
+     * @param updateDTO the updated course request data
+     * @return the updated course request DTO
+     */
+    @Transactional
+    public CourseRequestDTO updateCourseRequest(long requestId, CourseRequestCreateDTO updateDTO) {
+        CourseRequest courseRequest = getRequestWithRequesterElseThrow(requestId);
+        if (courseRequest.getStatus() != CourseRequestStatus.PENDING) {
+            throw new BadRequestAlertException("The course request has already been processed", CourseRequest.ENTITY_NAME, "courseRequestProcessed");
+        }
+
+        validateShortNameUniqueness(updateDTO.shortName(), updateDTO.title(), updateDTO.semester(), requestId);
+
+        if (updateDTO.title().length() > MAX_TITLE_LENGTH) {
+            throw new BadRequestAlertException("The course title is too long", CourseRequest.ENTITY_NAME, "courseRequestTitleTooLong");
+        }
+
+        // Validate date range if both dates are provided
+        if (updateDTO.startDate() != null && updateDTO.endDate() != null) {
+            Course validationCourse = new Course();
+            validationCourse.setStartDate(updateDTO.startDate());
+            validationCourse.setEndDate(updateDTO.endDate());
+            validationCourse.validateStartAndEndDate();
+        }
+
+        courseRequest.setTitle(updateDTO.title());
+        courseRequest.setShortName(updateDTO.shortName());
+        courseRequest.setSemester(updateDTO.semester());
+        courseRequest.setStartDate(updateDTO.startDate());
+        courseRequest.setEndDate(updateDTO.endDate());
+        courseRequest.setTestCourse(updateDTO.testCourse());
+        courseRequest.setReason(updateDTO.reason());
+
+        courseRequest = courseRequestRepository.save(courseRequest);
+        return toDto(courseRequest);
+    }
+
     private CourseRequest getRequestWithRequesterElseThrow(long requestId) {
         return courseRequestRepository.findOneWithEagerRelationshipsById(requestId).orElseThrow(() -> new EntityNotFoundException(CourseRequest.ENTITY_NAME, requestId));
     }
 
-    private void validateShortNameUniqueness(String shortName, Long currentRequestId) {
-        if (courseRepository.existsByShortNameIgnoreCase(shortName)) {
-            throw new BadRequestAlertException("A course with the same short name already exists", CourseRequest.ENTITY_NAME, "courseShortNameExists");
-        }
+    private void validateShortNameUniqueness(String shortName, String title, String semester, Long currentRequestId) {
+        boolean existsInCourse = courseRepository.existsByShortNameIgnoreCase(shortName);
         var existingRequest = courseRequestRepository.findOneByShortNameIgnoreCase(shortName);
-        if (existingRequest.isPresent() && (currentRequestId == null || !existingRequest.get().getId().equals(currentRequestId))) {
-            throw new BadRequestAlertException("A course request with the same short name already exists", CourseRequest.ENTITY_NAME, "courseRequestShortNameExists");
+        boolean existsInRequest = existingRequest.isPresent() && (currentRequestId == null || !existingRequest.get().getId().equals(currentRequestId));
+
+        if (existsInCourse || existsInRequest) {
+            String suggestedShortName = generateUniqueShortName(title, semester);
+            String errorKey = existsInCourse ? "courseShortNameExists" : "courseRequestShortNameExists";
+            throw new BadRequestAlertException("A course or request with the same short name already exists", CourseRequest.ENTITY_NAME, errorKey,
+                    Map.of("suggestedShortName", suggestedShortName));
         }
+    }
+
+    /**
+     * Generates a unique short name based on the first letters of the title words and the semester number.
+     * If the generated short name already exists, appends an incrementing number until a unique one is found.
+     *
+     * @param title    the course title
+     * @param semester the semester (e.g., "WS25/26", "SS24")
+     * @return a unique short name suggestion
+     */
+    private String generateUniqueShortName(String title, String semester) {
+        // Extract first letters from title words (only alphanumeric characters)
+        StringBuilder baseShortName = new StringBuilder();
+        if (title != null && !title.isBlank()) {
+            String[] words = title.split("\\s+");
+            for (String word : words) {
+                if (!word.isEmpty()) {
+                    char firstChar = Character.toUpperCase(word.charAt(0));
+                    if (Character.isLetterOrDigit(firstChar)) {
+                        baseShortName.append(firstChar);
+                    }
+                }
+            }
+        }
+
+        // Extract semester number (digits only)
+        if (semester != null && !semester.isBlank()) {
+            String semesterDigits = semester.replaceAll("[^0-9]", "");
+            if (!semesterDigits.isEmpty()) {
+                baseShortName.append(semesterDigits);
+            }
+        }
+
+        // Ensure minimum length of 3 characters by appending random uppercase letters
+        String base = baseShortName.toString();
+        if (base.length() < 3) {
+            base = base + generateRandomLetters(3 - base.length());
+        }
+
+        // Find a unique short name by appending a number if necessary
+        String candidate = base;
+        int counter = 1;
+        while (isShortNameTaken(candidate)) {
+            candidate = base + counter;
+            counter++;
+        }
+
+        return candidate;
+    }
+
+    private boolean isShortNameTaken(String shortName) {
+        return courseRepository.existsByShortNameIgnoreCase(shortName) || courseRequestRepository.findOneByShortNameIgnoreCase(shortName).isPresent();
+    }
+
+    private String generateRandomLetters(int length) {
+        StringBuilder sb = new StringBuilder(length);
+        for (int i = 0; i < length; i++) {
+            sb.append((char) ('A' + (int) (Math.random() * 26)));
+        }
+        return sb.toString();
     }
 
     private Course createCourseFromRequest(CourseRequest request) {

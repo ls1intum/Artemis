@@ -12,11 +12,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.core.dto.CourseRequestCreateDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseRequestDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseRequestDecisionDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseRequestsAdminOverviewDTO;
@@ -75,5 +77,19 @@ public class AdminCourseRequestResource {
     public ResponseEntity<CourseRequestDTO> reject(@PathVariable long requestId, @Valid @RequestBody CourseRequestDecisionDTO decision) {
         log.debug("REST request to reject course request {}", requestId);
         return ResponseEntity.ok(courseRequestService.rejectRequest(requestId, decision.reason()));
+    }
+
+    /**
+     * PUT /course-requests/{requestId} : update a pending course request.
+     * Allows admins to edit the course request before accepting it.
+     *
+     * @param requestId the request id
+     * @param updateDTO the updated course request data
+     * @return the updated course request DTO
+     */
+    @PutMapping("course-requests/{requestId}")
+    public ResponseEntity<CourseRequestDTO> update(@PathVariable long requestId, @Valid @RequestBody CourseRequestCreateDTO updateDTO) {
+        log.debug("REST request to update course request {}", requestId);
+        return ResponseEntity.ok(courseRequestService.updateCourseRequest(requestId, updateDTO));
     }
 }

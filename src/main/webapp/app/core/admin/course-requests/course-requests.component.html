@@ -67,6 +67,13 @@
                         <td class="text-end">
                             <div class="d-flex justify-content-end gap-2">
                                 <jhi-button
+                                    [btnType]="ButtonType.SECONDARY"
+                                    [btnSize]="ButtonSize.SMALL"
+                                    [icon]="faEdit"
+                                    (click)="openEditModal(editModal, request)"
+                                    [title]="'artemisApp.courseRequest.admin.edit'"
+                                />
+                                <jhi-button
                                     [btnType]="ButtonType.SUCCESS"
                                     [btnSize]="ButtonSize.SMALL"
                                     [icon]="faCheck"
@@ -199,5 +206,21 @@
     <div class="modal-footer">
         <jhi-button [btnType]="ButtonType.SECONDARY" (click)="modal.dismiss()" [title]="'entity.action.cancel'" />
         <jhi-button [btnType]="ButtonType.ERROR" [icon]="faTimes" (click)="reject()" [title]="'artemisApp.courseRequest.admin.rejectConfirm'" />
+    </div>
+</ng-template>
+
+<ng-template #editModal let-modal>
+    <div class="modal-header">
+        <h5 class="modal-title" jhiTranslate="artemisApp.courseRequest.admin.editTitle"></h5>
+        <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
+    </div>
+    <div class="modal-body">
+        <form [formGroup]="editForm" novalidate>
+            <jhi-course-request-form [form]="editForm" [semesters]="semesters" [dateRangeInvalid]="editDateRangeInvalid" [showReasonPlaceholder]="false" idPrefix="edit" />
+        </form>
+    </div>
+    <div class="modal-footer">
+        <jhi-button [btnType]="ButtonType.SECONDARY" (click)="modal.dismiss()" [title]="'entity.action.cancel'" />
+        <jhi-button [btnType]="ButtonType.PRIMARY" [icon]="faCheck" (click)="saveEdit()" [disabled]="isSubmittingEdit" [title]="'entity.action.save'" />
     </div>
 </ng-template>

@@ -67,6 +67,11 @@ export class CourseRequestService {
         return this.http.post<CourseRequestDTO>(`${this.adminResourceUrl}/${courseRequestId}/reject`, { reason }).pipe(map((res) => this.convertDTOToResponse(res)));
     }
 
+    updateRequest(courseRequestId: number, courseRequest: BaseCourseRequest): Observable<CourseRequest> {
+        const dto = this.convertRequestToDTO(courseRequest);
+        return this.http.put<CourseRequestDTO>(`${this.adminResourceUrl}/${courseRequestId}`, dto).pipe(map((res) => this.convertDTOToResponse(res)));
+    }
+
     private convertRequestToDTO(courseRequest: BaseCourseRequest): BaseCourseRequestDTO {
         const dto: BaseCourseRequestDTO = {
             title: courseRequest.title,

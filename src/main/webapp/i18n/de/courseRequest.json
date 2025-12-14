@@ -6,8 +6,11 @@
             "form": {
                 "title": "Kurstitel",
                 "shortName": "Kürzel",
+                "shortNameHint": "Muss eindeutig sein, 3-7 Zeichen empfohlen, nur Buchstaben und Zahlen.",
                 "shortNameTooShort": "Das Kürzel muss mindestens 3 Zeichen lang sein.",
                 "shortNameInvalid": "Das Kürzel darf nur Buchstaben und Zahlen enthalten, ohne Leerzeichen.",
+                "shortNameNotUnique": "Dieses Kürzel wird bereits verwendet. Wir haben \"{{ suggestedShortName }}\" als Alternative vorgeschlagen.",
+                "generate": "Generieren",
                 "semester": "Semester",
                 "startDate": "Startdatum",
                 "endDate": "Enddatum",
@@ -51,7 +54,11 @@
                 "noDecidedRequests": "Keine bearbeiteten Anfragen.",
                 "acceptSuccess": "Kursanfrage \"{{ title }}\" akzeptiert. Kurs {{ shortName }} erstellt.",
                 "rejectSuccess": "Kursanfrage \"{{ title }}\" abgelehnt.",
-                "link": "Kurs öffnen"
+                "link": "Kurs öffnen",
+                "edit": "Bearbeiten",
+                "editTitle": "Kursanfrage bearbeiten",
+                "editSuccess": "Kursanfrage erfolgreich aktualisiert.",
+                "shortNameConflict": "Das Kürzel \"{{ shortName }}\" wird bereits verwendet. Bitte bearbeite die Anfrage und verwende ein eindeutiges Kürzel wie z.B. \"{{ suggestedShortName }}\"."
             }
         }
     }
