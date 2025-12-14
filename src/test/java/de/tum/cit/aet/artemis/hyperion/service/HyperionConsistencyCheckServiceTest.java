@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExercisePart
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
+import io.micrometer.observation.ObservationRegistry;
 
 class HyperionConsistencyCheckServiceTest {
 
@@ -60,8 +61,9 @@ class HyperionConsistencyCheckServiceTest {
         HyperionProgrammingExerciseContextRendererService exerciseContextRenderer = new HyperionProgrammingExerciseContextRendererService(repositoryService,
                 new HyperionProgrammingLanguageContextFilterService());
         var llmUsageHelper = new LlmUsageHelper(llmTokenUsageService, userRepository, new LlmUsageProperties());
+        var observationRegistry = ObservationRegistry.create();
         this.hyperionConsistencyCheckService = new HyperionConsistencyCheckService(programmingExerciseRepository, chatClient, templateService, exerciseContextRenderer,
-                llmUsageHelper);
+                observationRegistry,llmUsageHelper);
     }
 
     @Test

@@ -23,6 +23,7 @@ import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.util.LlmUsageHelper;
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementRewriteResponseDTO;
+import io.micrometer.observation.ObservationRegistry;
 
 class HyperionProblemStatementRewriteServiceTest {
 
@@ -43,7 +44,8 @@ class HyperionProblemStatementRewriteServiceTest {
         ChatClient chatClient = ChatClient.create(chatModel);
         var templateService = new HyperionPromptTemplateService();
         var llmUsageHelper = new LlmUsageHelper(llmTokenUsageService, userRepository, new LlmUsageProperties());
-        this.hyperionProblemStatementRewriteService = new HyperionProblemStatementRewriteService(chatClient, templateService, llmUsageHelper);
+        var observationRegistry = ObservationRegistry.create();
+        this.hyperionProblemStatementRewriteService = new HyperionProblemStatementRewriteService(chatClient, templateService, observationRegistry, llmUsageHelper);
     }
 
     @Test

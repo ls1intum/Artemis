@@ -46,6 +46,7 @@ export abstract class QuestionStatisticComponent extends AbstractQuizStatisticCo
     maxScore: number;
     showSolution = false;
     websocketChannelForData: string;
+    private statisticSubscription?: Subscription;
 
     questionTextRendered?: SafeHtml;
 
@@ -67,17 +68,15 @@ export abstract class QuestionStatisticComponent extends AbstractQuizStatisticCo
 
             // subscribe websocket for new statistical data
             this.websocketChannelForData = '/topic/statistic/' + params['exerciseId'];
-            this.websocketService.subscribe(this.websocketChannelForData);
-
             // ask for new Data if the websocket for new statistical data was notified
-            this.websocketService.receive(this.websocketChannelForData).subscribe((quiz) => {
+            this.statisticSubscription = this.websocketService.subscribe<QuizExercise>(this.websocketChannelForData).subscribe((quiz: QuizExercise) => {
                 this.loadQuiz(quiz, true);
             });
         });
     }
 
     ngOnDestroy() {
-        this.websocketService.unsubscribe(this.websocketChannelForData);
+        this.statisticSubscription?.unsubscribe();
     }
 
     /**

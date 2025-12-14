@@ -16,6 +16,8 @@ import de.tum.cit.aet.artemis.core.domain.LLMRequest;
 import de.tum.cit.aet.artemis.core.util.LlmUsageHelper;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementRewriteResponseDTO;
+import io.micrometer.observation.ObservationRegistry;
+import io.micrometer.observation.annotation.Observed;
 
 /**
  * Service for rewriting problem statements using Spring AI.
@@ -34,6 +36,8 @@ public class HyperionProblemStatementRewriteService {
     private final HyperionPromptTemplateService templateService;
 
     private final LlmUsageHelper llmUsageService;
+  
+    private final ObservationRegistry observationRegistry;
 
     /**
      * Creates a new ProblemStatementRewriteService.
@@ -41,9 +45,10 @@ public class HyperionProblemStatementRewriteService {
      * @param chatClient      the AI chat client (optional)
      * @param templateService prompt template service
      */
-    public HyperionProblemStatementRewriteService(ChatClient chatClient, HyperionPromptTemplateService templateService, LlmUsageHelper llmUsageService) {
+    public HyperionProblemStatementRewriteService(ChatClient chatClient, HyperionPromptTemplateService templateService, ObservationRegistry observationRegistry, LlmUsageHelper llmUsageService) {
         this.chatClient = chatClient;
         this.templateService = templateService;
+        this.observationRegistry = observationRegistry;
         this.llmUsageService = llmUsageService;
     }
 
@@ -54,8 +59,16 @@ public class HyperionProblemStatementRewriteService {
      * @param problemStatementText the original problem statement
      * @return the rewrite result including whether it was improved
      */
+    @Observed(name = "hyperion.rewrite", contextualName = "problem statement rewrite", lowCardinalityKeyValues = { "ai.span", "true" })
     public ProblemStatementRewriteResponseDTO rewriteProblemStatement(Course course, String problemStatementText) {
         log.debug("Rewriting problem statement for course {}", course.getId());
+
+        var current = observationRegistry.getCurrentObservation();
+        if (current != null) {
+            String ctx = "rewrite problem statement for course id: " + course.getId();
+            current.contextualName(ctx);
+            current.highCardinalityKeyValue(io.micrometer.common.KeyValue.of("lf.trace.name", ctx));
+        }
 
         String resourcePath = "/prompts/hyperion/rewrite_problem_statement.st";
         Map<String, String> input = Map.of("text", problemStatementText.trim());
