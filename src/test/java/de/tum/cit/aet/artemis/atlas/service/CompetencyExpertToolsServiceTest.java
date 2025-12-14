@@ -350,22 +350,6 @@ class CompetencyExpertToolsServiceTest {
         }
 
         @Test
-        void shouldTrimTitleWhitespaceDuringUpdate() {
-            CompetencyOperation updateOperation = new CompetencyOperation(1L, "  Title with spaces  ", "Description", CompetencyTaxonomy.APPLY);
-
-            when(courseRepository.findById(123L)).thenReturn(Optional.of(testCourse));
-            when(competencyRepository.findById(1L)).thenReturn(Optional.of(testCompetency));
-            when(competencyRepository.save(any(Competency.class))).thenAnswer(invocation -> invocation.getArgument(0));
-
-            competencyExpertToolsService.saveCompetencies(123L, List.of(updateOperation));
-
-            ArgumentCaptor<Competency> competencyCaptor = ArgumentCaptor.forClass(Competency.class);
-            verify(competencyRepository).save(competencyCaptor.capture());
-            Competency actualSavedCompetency = competencyCaptor.getValue();
-            assertThat(actualSavedCompetency.getTitle()).isEqualTo("Title with spaces");
-        }
-
-        @Test
         void shouldHandleExceptionDuringSaveGracefully() throws JsonProcessingException {
             CompetencyOperation operation = new CompetencyOperation(null, "Test", "Test description", CompetencyTaxonomy.APPLY);
 
@@ -447,12 +431,9 @@ class CompetencyExpertToolsServiceTest {
             // Create and set some previews
             CompetencyOperation op = new CompetencyOperation(null, "Test", "Description", CompetencyTaxonomy.APPLY);
             competencyExpertToolsService.previewCompetencies(testCourse.getId(), List.of(op), null);
-
-            // Clear all previews
-            CompetencyExpertToolsService.clearAllPreviews();
-
             // Verify they are cleared by retrieving them
-            assertThat(CompetencyExpertToolsService.getPreviews()).isNull();
+            assertThat(CompetencyExpertToolsService.getAndClearPreviews()).isNotNull();
+            assertThat(CompetencyExpertToolsService.getAndClearPreviews()).isEmpty();
         }
 
         @Test

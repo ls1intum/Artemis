@@ -167,7 +167,6 @@ public class AtlasAgentService {
         try {
             CompetencyExpertToolsService.setCurrentSessionId(sessionId);
             resetCompetencyModifiedFlag();
-            CompetencyExpertToolsService.clearAllPreviews();
 
             String response = delegateTheRightAgent(message, courseId, sessionId);
 
@@ -177,7 +176,7 @@ public class AtlasAgentService {
                 sessionAgentMap.put(sessionId, AgentType.COMPETENCY_EXPERT);
                 String delegationResponse = delegateTheRightAgent(brief, courseId, sessionId);
 
-                List<CompetencyPreviewDTO> previews = CompetencyExpertToolsService.getPreviews();
+                List<CompetencyPreviewDTO> previews = CompetencyExpertToolsService.getAndClearPreviews();
 
                 String responseWithEmbeddedData = embedPreviewDataInResponse(delegationResponse, previews);
 
@@ -193,7 +192,7 @@ public class AtlasAgentService {
                 List<CompetencyOperation> cachedData = getCachedPendingCompetencyOperations(sessionId);
 
                 String creationResponse = delegateTheRightAgent(CREATE_APPROVED_COMPETENCY, courseId, sessionId);
-                List<CompetencyPreviewDTO> previews = CompetencyExpertToolsService.getPreviews();
+                List<CompetencyPreviewDTO> previews = CompetencyExpertToolsService.getAndClearPreviews();
                 String responseWithEmbeddedData = embedPreviewDataInResponse(creationResponse, previews);
 
                 if (cachedData != null && !cachedData.isEmpty()) {
@@ -212,7 +211,7 @@ public class AtlasAgentService {
 
             boolean competenciesModified = competencyModifiedInCurrentRequest.get();
 
-            List<CompetencyPreviewDTO> previews = CompetencyExpertToolsService.getPreviews();
+            List<CompetencyPreviewDTO> previews = CompetencyExpertToolsService.getAndClearPreviews();
 
             String finalResponse = (!response.trim().isEmpty()) ? response : "I apologize, but I couldn't generate a response.";
 
@@ -232,7 +231,6 @@ public class AtlasAgentService {
         finally {
             competencyModifiedInCurrentRequest.remove();
             CompetencyExpertToolsService.clearCurrentSessionId();
-            CompetencyExpertToolsService.clearAllPreviews();
         }
 
     }

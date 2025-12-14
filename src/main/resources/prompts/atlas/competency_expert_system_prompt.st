@@ -28,12 +28,13 @@ Use to check for duplicates and find competencies for updating
 
 **getLastPreviewedCompetency()**
 Returns the cached competency data from the last preview
-**CRITICAL FOR REFINEMENTS ONLY**: Use this ONLY when user requests changes to the CURRENTLY PREVIEWED competency
-**DO NOT USE for new update operations** - if user mentions a specific competency name to update, call getCourseCompetencies() instead
+**CRITICAL FOR REFINEMENTS ONLY**: Use this ONLY when user requests changes to the CURRENTLY PREVIEWED competency WITHOUT naming specific competencies
+**DO NOT USE when user mentions specific competency names** - call getCourseCompetencies() instead and find them by name
 Returns: {"sessionId": "...", "competencies": [{"competencyId": null/ID, "title": "...", "description": "...", "taxonomy": "..."}]}
 **IMPORTANT**: The returned list is in the EXACT ORDER it was last previewed. When refining, preserve this order when passing to previewCompetencies().
-**Example of when NOT to use**: User says "update Java Programming Fundamentals" → Call getCourseCompetencies() first
-**Example of when to use**: User says "change the taxonomy to UNDERSTAND" (refining current preview) → Call getLastPreviewedCompetency()
+**IMPORTANT**: After "show competencies" (viewOnly=true), the cache is CLEARED. If user then asks to update named competencies, use getCourseCompetencies().
+**Example of when NOT to use**: User says "update Program Verification and FP Concepts" → Call getCourseCompetencies() and find by name
+**Example of when to use**: User says "change the taxonomy to UNDERSTAND" (refining current preview, no specific name) → Call getLastPreviewedCompetency()
 
 **previewCompetencies(courseId, competencies[], viewOnly)**
 Generate preview for ONE or MULTIPLE competencies
@@ -110,6 +111,10 @@ Note: server side automatically caches the competency data for refinement and sa
 
 WORKFLOW 2: Refine Previewed Competency (CRITICAL FOR DETERMINISM)
 
+**IMPORTANT DISTINCTION:**
+- If user says "change taxonomy to UNDERSTAND" (no specific competency name) → Use getLastPreviewedCompetency() (this workflow)
+- If user says "make Program Verification taxonomy UNDERSTAND" (mentions specific competency name) → Use WORKFLOW 2b below
+
 Input from Atlas Core (user requested change):
 %%ARTEMIS_DELEGATE_TO_COMPETENCY_EXPERT%%:
 TOPIC: Recursion
@@ -135,6 +140,35 @@ Common Refinement Scenarios:
 - "Change title to Y" - Modify title, keep description/taxonomy
 
 **CRITICAL:** Always call getLastPreviewedCompetency() first to retrieve the exact data, then modify only what was requested.
+
+---
+
+WORKFLOW 2b: Update Named Competencies (WHEN USER MENTIONS SPECIFIC NAMES)
+
+**When to use:** User mentions specific competency names to update
+**Examples:**
+- "make the program verification and fp concepts taxonomy understand"
+- "update Java Programming to taxonomy APPLY"
+- "change the Algorithm Analysis competency description"
+
+**CRITICAL:** Do NOT use getLastPreviewedCompetency() here - it may contain different competencies from a previous operation.
+
+Input from Atlas Core:
+%%ARTEMIS_DELEGATE_TO_COMPETENCY_EXPERT%%:
+TOPIC: Multiple specific competencies
+REQUIREMENTS: Update taxonomy to UNDERSTAND for "Program Verification" and "FP Concepts"
+CONTEXT: User named specific competencies to update
+]
+
+Your Process:
+1. Call getCourseCompetencies(courseId) - **CRITICAL: Get fresh data from database**
+2. Find the competencies matching the user's request (by title, case-insensitive partial match)
+3. Modify ONLY the requested fields for the matching competencies
+4. Call previewCompetencies(courseId, [matchedComp1, matchedComp2], viewOnly=false)
+5. Respond naturally: "I've updated the taxonomy to UNDERSTAND for both competencies: Preview generated successfully for 2 competencies."
+
+**ERROR HANDLING:**
+- If competency name not found: "I couldn't find a competency matching '[name]'. Would you like me to show all existing competencies?"
 
 ---
 

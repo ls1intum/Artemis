@@ -243,7 +243,7 @@ describe('CompetencyManagementComponent', () => {
         localStorageService.store<boolean>('alreadyVisitedCompetencyManagement', true);
         const modalRef = {
             componentInstance: {
-                courseId: signal<number | null>(null),
+                courseId: signal<number | null>(1),
                 competencyChanged: {
                     subscribe: jest.fn(),
                 },

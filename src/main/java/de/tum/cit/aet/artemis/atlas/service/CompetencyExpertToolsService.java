@@ -280,9 +280,13 @@ public class CompetencyExpertToolsService {
         // Cache the competency operation data for refinement operations
         // IMPORTANT: This enables the AI to refine previews by calling getLastPreviewedCompetency()
         String sessionId = currentSessionId.get();
-        if (sessionId != null && !Boolean.TRUE.equals(viewOnly)) {
-            // Only cache if not in view-only mode (view-only is for browsing, not editing)
-            atlasAgentService.cachePendingCompetencyOperations(sessionId, new ArrayList<>(competencies));
+        if (sessionId != null) {
+            if (viewOnly) {
+                atlasAgentService.clearCachedPendingCompetencyOperations(sessionId);
+            }
+            else {
+                atlasAgentService.cachePendingCompetencyOperations(sessionId, new ArrayList<>(competencies));
+            }
         }
 
         // Return simple confirmation message that the LLM can use naturally in its response
@@ -412,15 +416,10 @@ public class CompetencyExpertToolsService {
      *
      * @return The stored list of previews, or null if none exists
      */
-    public static List<CompetencyPreviewDTO> getPreviews() {
-        return currentPreviews.get();
+    public static List<CompetencyPreviewDTO> getAndClearPreviews() {
+        List<CompetencyPreviewDTO> previews = currentPreviews.get();
+        currentPreviews.remove();
+        return previews != null ? previews : List.of();
     }
 
-    /**
-     * Clears all preview data from ThreadLocal.
-     * Should be called at the start of each request to ensure clean state.
-     */
-    public static void clearAllPreviews() {
-        currentPreviews.remove();
-    }
 }
