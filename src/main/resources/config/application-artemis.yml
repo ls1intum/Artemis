@@ -137,6 +137,10 @@ spring:
         gpt-5-mini:
           cost-per-million-input: 0.23
           cost-per-million-output: 1.84
+      costs_usd:
+        gpt-5-mini:
+          cost-per-million-input_usd: 0.25
+          cost-per-million-output_usd: 2.00
     ## Alternative configuration for Azure OpenAI
     # Use Azure OpenAI chat model auto-config
 #    model:

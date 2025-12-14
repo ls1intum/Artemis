@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 /**
- * Configuration holder for LLM cost estimates in EUR (per million tokens) pulled from configuration.
+ * Configuration holder for LLM cost estimates in EUR and USD (per million tokens) pulled from configuration.
  */
 @Component
 @Lazy
@@ -23,8 +23,18 @@ public class LlmUsageProperties {
      */
     private Map<String, ModelCost> costs = new HashMap<>();
 
+    private Map<String, ModelCostUsd> costsUsd = new HashMap<>();
+
     public Map<String, ModelCost> getCosts() {
         return costs;
+    }
+
+    public Map<String, ModelCostUsd> getCostsUsd() {
+        return costsUsd;
+    }
+
+    public void setCostsUsd(Map<String, ModelCostUsd> costsUsd) {
+        this.costsUsd = costsUsd;
     }
 
     public void setCosts(Map<String, ModelCost> costs) {
@@ -32,5 +42,8 @@ public class LlmUsageProperties {
     }
 
     public record ModelCost(float costPerMillionInput, float costPerMillionOutput) {
+    }
+
+    public record ModelCostUsd(float costPerMillionInputUsd, float costPerMillionOutputUsd) {
     }
 }

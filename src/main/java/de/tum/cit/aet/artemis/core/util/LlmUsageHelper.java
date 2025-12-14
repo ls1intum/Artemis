@@ -40,10 +40,13 @@ public class LlmUsageHelper {
 
     private final Map<String, LlmUsageProperties.ModelCost> costs;
 
+    private final Map<String, LlmUsageProperties.ModelCostUsd> costsUsd;
+
     public LlmUsageHelper(LLMTokenUsageService llmTokenUsageService, UserRepository userRepository, LlmUsageProperties llmUsageProperties) {
         this.llmTokenUsageService = llmTokenUsageService;
         this.userRepository = userRepository;
         this.costs = llmUsageProperties.getCosts();
+        this.costsUsd = llmUsageProperties.getCostsUsd();
     }
 
     /**
@@ -116,12 +119,20 @@ public class LlmUsageHelper {
         llmTokenUsageService.saveLLMTokenUsage(requests, LLMServiceType.HYPERION, builder -> builder.withCourse(courseId).withUser(userId));
     }
 
-    private String normalizeModelName(String rawModel) {
+    public String normalizeModelName(String rawModel) {
         if (rawModel == null) {
             return "";
         }
         // Strip trailing date or version suffix like "-2025-08-07"
         int dateIndex = rawModel.indexOf("-20");
         return dateIndex > 0 ? rawModel.substring(0, dateIndex) : rawModel;
+    }
+
+    public Map<String, LlmUsageProperties.ModelCost> getCosts() {
+        return costs;
+    }
+
+    public Map<String, LlmUsageProperties.ModelCostUsd> getCostsUsd() {
+        return costsUsd;
     }
 }
