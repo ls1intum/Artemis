@@ -68,11 +68,11 @@ public class LlmUsageHelper {
         String normalizedModel = normalizeModelName(model);
         LlmUsageProperties.ModelCost modelCost = costs.getOrDefault(normalizedModel, ZERO_COST);
 
-        double estimatedCost = (promptTokens * modelCost.getCostPerMillionInput() / 1_000_000.0) + (completionTokens * modelCost.getCostPerMillionOutput() / 1_000_000.0);
+        double estimatedCost = (promptTokens * modelCost.costPerMillionInput() / 1_000_000.0) + (completionTokens * modelCost.costPerMillionOutput() / 1_000_000.0);
         log.info("LLM {} estimated cost for model {}: {} € (input {} @ {}/M, output {} @ {}/M)", checkType, normalizedModel, String.format("%.4f", estimatedCost), promptTokens,
-                modelCost.getCostPerMillionInput(), completionTokens, modelCost.getCostPerMillionOutput());
+                modelCost.costPerMillionInput(), completionTokens, modelCost.costPerMillionOutput());
 
-        return new LLMRequest(model, promptTokens, modelCost.getCostPerMillionInput(), completionTokens, modelCost.getCostPerMillionOutput(), pipelineId);
+        return new LLMRequest(model, promptTokens, modelCost.costPerMillionInput(), completionTokens, modelCost.costPerMillionOutput(), pipelineId);
     }
 
     /**

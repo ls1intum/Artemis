@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.core.config;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -20,7 +21,7 @@ public class LlmUsageProperties {
      * Populated via {@code spring.ai.llm.costs} (application-artemis.yml).
      * Defaults to empty so missing entries fall back to zero cost at usage time.
      */
-    private Map<String, ModelCost> costs = Map.of();
+    private Map<String, ModelCost> costs = new HashMap<>();
 
     public Map<String, ModelCost> getCosts() {
         return costs;
@@ -30,34 +31,6 @@ public class LlmUsageProperties {
         this.costs = costs;
     }
 
-    public static class ModelCost {
-
-        private float costPerMillionInput;
-
-        private float costPerMillionOutput;
-
-        public ModelCost() {
-        }
-
-        public ModelCost(float costPerMillionInput, float costPerMillionOutput) {
-            this.costPerMillionInput = costPerMillionInput;
-            this.costPerMillionOutput = costPerMillionOutput;
-        }
-
-        public float getCostPerMillionInput() {
-            return costPerMillionInput;
-        }
-
-        public void setCostPerMillionInput(float costPerMillionInput) {
-            this.costPerMillionInput = costPerMillionInput;
-        }
-
-        public float getCostPerMillionOutput() {
-            return costPerMillionOutput;
-        }
-
-        public void setCostPerMillionOutput(float costPerMillionOutput) {
-            this.costPerMillionOutput = costPerMillionOutput;
-        }
+    public record ModelCost(float costPerMillionInput, float costPerMillionOutput) {
     }
 }
