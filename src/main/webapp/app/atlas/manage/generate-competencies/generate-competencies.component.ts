@@ -1,4 +1,4 @@
-import { Component, HostListener, OnInit, inject, viewChild } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit, inject, viewChild } from '@angular/core';
 import { CompetencyService } from 'app/atlas/manage/services/competency.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { onError } from 'app/shared/util/global.utils';
@@ -11,7 +11,7 @@ import { ButtonComponent, ButtonType } from 'app/shared/components/buttons/butto
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal/confirm-autofocus-modal.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { Observable, firstValueFrom, map } from 'rxjs';
+import { Observable, Subscription, firstValueFrom, map } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateService } from '@ngx-translate/core';
 import { DocumentationButtonComponent, DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
@@ -58,7 +58,7 @@ type CompetencyGenerationStatusUpdate = {
         CompetencyRecommendationDetailComponent,
     ],
 })
-export class GenerateCompetenciesComponent implements OnInit, ComponentCanDeactivate {
+export class GenerateCompetenciesComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
     private courseManagementService = inject(CourseManagementService);
     private courseCompetencyService = inject(CourseCompetencyService);
     private competencyService = inject(CompetencyService);
@@ -86,6 +86,7 @@ export class GenerateCompetenciesComponent implements OnInit, ComponentCanDeacti
     //Other constants
     protected readonly ButtonType = ButtonType;
     readonly documentationType: DocumentationType = 'GenerateCompetencies';
+    private websocketSubscription?: Subscription;
 
     ngOnInit(): void {
         this.activatedRoute.params.subscribe((params) => {
@@ -94,6 +95,10 @@ export class GenerateCompetenciesComponent implements OnInit, ComponentCanDeacti
                 .then((course) => this.courseDescriptionForm().setCourseDescription(course.body?.description ?? ''))
                 .catch((res: HttpErrorResponse) => onError(this.alertService, res));
         });
+    }
+
+    ngOnDestroy(): void {
+        this.websocketSubscription?.unsubscribe();
     }
 
     /**
@@ -106,8 +111,7 @@ export class GenerateCompetenciesComponent implements OnInit, ComponentCanDeacti
             this.courseCompetencyService.generateCompetenciesFromCourseDescription(this.courseId, courseDescription, currentCompetencies).subscribe({
                 next: () => {
                     const websocketTopic = `/user/topic/iris/competencies/${this.courseId}`;
-                    this.websocketService.subscribe(websocketTopic);
-                    this.websocketService.receive(websocketTopic).subscribe({
+                    this.websocketSubscription = this.websocketService.subscribe<CompetencyGenerationStatusUpdate>(websocketTopic).subscribe({
                         next: (update: CompetencyGenerationStatusUpdate) => {
                             if (update.result) {
                                 for (const competency of update.result) {
@@ -120,13 +124,13 @@ export class GenerateCompetenciesComponent implements OnInit, ComponentCanDeacti
                                 this.alertService.warning('artemisApp.competency.generate.courseDescription.warning');
                             }
                             if (update.stages.every((stage) => stage.state !== IrisStageStateDTO.NOT_STARTED && stage.state !== IrisStageStateDTO.IN_PROGRESS)) {
-                                this.websocketService.unsubscribe(websocketTopic);
+                                this.websocketSubscription?.unsubscribe();
                                 this.isLoading = false;
                             }
                         },
                         error: (res: HttpErrorResponse) => {
                             onError(this.alertService, res);
-                            this.websocketService.unsubscribe(websocketTopic);
+                            this.websocketSubscription?.unsubscribe();
                             this.isLoading = false;
                         },
                     });
