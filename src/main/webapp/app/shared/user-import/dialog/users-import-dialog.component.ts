@@ -286,6 +286,7 @@ export class UsersImportDialogComponent implements OnDestroy {
                 });
             }
         }
+        // TODO: we should not create a new HttpResponse here, but convert the content of the existing one, the component does not necessarily need to access the actual response
         return new HttpResponse<Partial<StudentDTO>[]>({
             body: nonGeneratedDtos,
             headers: response.headers,

@@ -9,14 +9,12 @@ import { MockAnswerPostService } from 'test/helpers/mocks/service/mock-answer-po
 import { PostComponent } from 'app/communication/post/post.component';
 import { AnswerPostComponent } from 'app/communication/answer-post/answer-post.component';
 import { AnswerPostCreateEditModalComponent } from 'app/communication/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
-import { TranslatePipeMock } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockMetisService } from 'test/helpers/mocks/service/mock-metis-service.service';
 import { metisPostExerciseUser1, post, unApprovedAnswerPost1, unApprovedAnswerPost2, unsortedAnswerArray } from 'test/helpers/sample/metis-sample-data';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { User } from 'app/core/user/user.model';
 import dayjs from 'dayjs/esm';
-import { Injector, signal } from '@angular/core';
-import { Posting } from 'app/communication/shared/entities/posting.model';
+import { signal } from '@angular/core';
 import { PostingFooterComponent } from 'app/communication/posting-footer/posting-footer.component';
 import { Post } from 'app/communication/shared/entities/post.model';
 
@@ -30,7 +28,6 @@ describe('PostingFooterComponent', () => {
     let fixture: ComponentFixture<PostingFooterComponent>;
     let metisService: MetisService;
     let metisServiceUserAuthorityStub: jest.SpyInstance;
-    let injector: Injector;
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
@@ -53,7 +50,6 @@ describe('PostingFooterComponent', () => {
                 component = fixture.componentInstance;
                 metisService = TestBed.inject(MetisService);
                 metisServiceUserAuthorityStub = jest.spyOn(metisService, 'metisUserIsAtLeastTutorInCourse');
-                injector = fixture.debugElement.injector;
             });
     });
 

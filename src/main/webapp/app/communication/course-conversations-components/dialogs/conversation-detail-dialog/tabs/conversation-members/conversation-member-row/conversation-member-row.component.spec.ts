@@ -21,7 +21,6 @@ import { of } from 'rxjs';
 import { isGroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
 import { By } from '@angular/platform-browser';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
-import { runInInjectionContext } from '@angular/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { faUser, faUserCheck, faUserGraduate } from '@fortawesome/free-solid-svg-icons';
 import { ConversationMemberRowComponent } from 'app/communication/course-conversations-components/dialogs/conversation-detail-dialog/tabs/conversation-members/conversation-member-row/conversation-member-row.component';

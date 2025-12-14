@@ -17,6 +17,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { GitDiffReportComponent } from 'app/programming/shared/git-diff-report/git-diff-report/git-diff-report.component';
 import { DiffInformation, FileStatus, RepositoryDiffInformation } from 'app/programming/shared/utils/diff.utils';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
+import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 
 // Mock the diff.utils module to avoid Monaco Editor issues in tests
 jest.mock('app/programming/shared/utils/diff.utils', () => ({
@@ -286,7 +287,7 @@ describe('CommitDetailsViewComponent', () => {
 
         component.exerciseId = 1;
         component.repositoryId = 2;
-        component.repositoryType = 'USER';
+        component.repositoryType = RepositoryType.USER;
         component.previousCommit = commit1;
         component.currentCommit = commit2;
 

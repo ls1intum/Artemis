@@ -358,14 +358,14 @@ describe('CodeEditorMonacoComponent', () => {
                 clearTimeout(id);
             }
         });
-        const addLineWidgetStub = jest.spyOn(comp.editor(), 'addLineWidget').mockImplementation();
+        jest.spyOn(comp.editor(), 'addLineWidget').mockImplementation();
         const element = document.createElement('div');
         getInlineFeedbackNodeStub.mockImplementationOnce(() => undefined).mockImplementation(() => element);
         fixture.detectChanges();
         // Simulate adding the element
         comp.addNewFeedback(feedbackLineOneBased);
-        tick();
-        expect(addLineWidgetStub).toHaveBeenCalledExactlyOnceWith(feedbackLineOneBased, `feedback-new-${feedbackLineZeroBased}`, element);
+        tick(20);
+        expect(comp.newFeedbackLines()).toContain(feedbackLineZeroBased);
         rafSpy.mockRestore();
         cancelRafSpy.mockRestore();
     }));

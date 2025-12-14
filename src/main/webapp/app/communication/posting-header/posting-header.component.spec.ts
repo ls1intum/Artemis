@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MetisService } from 'app/communication/service/metis.service';
-import { DebugElement, Injector } from '@angular/core';
+import { DebugElement } from '@angular/core';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockModule, MockPipe } from 'ng-mocks';
 import { getElement } from 'test/helpers/utils/general-test.utils';
@@ -18,7 +18,6 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
-import { Posting } from 'app/communication/shared/entities/posting.model';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { faUser, faUserCheck, faUserGraduate } from '@fortawesome/free-solid-svg-icons';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
@@ -30,7 +29,6 @@ describe('PostingHeaderComponent', () => {
     let component: PostingHeaderComponent;
     let fixture: ComponentFixture<PostingHeaderComponent>;
     let debugElement: DebugElement;
-    let injector: Injector;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -56,7 +54,6 @@ describe('PostingHeaderComponent', () => {
         fixture = TestBed.createComponent(PostingHeaderComponent);
         component = fixture.componentInstance;
         debugElement = fixture.debugElement;
-        injector = fixture.debugElement.injector;
     });
 
     afterEach(() => {

@@ -13,7 +13,6 @@ import { CompetencyContributionCardDTO } from 'app/atlas/shared/entities/compete
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
 describe('CompetencyContributionComponent', () => {
-    let component: CompetencyContributionComponent;
     let fixture: ComponentFixture<CompetencyContributionComponent>;
     let courseCompetencyService: CourseCompetencyService;
     let getCompetencyContributionsForExerciseStub: jest.SpyInstance;
@@ -27,7 +26,6 @@ describe('CompetencyContributionComponent', () => {
         }).compileComponents();
 
         fixture = TestBed.createComponent(CompetencyContributionComponent);
-        component = fixture.componentInstance;
 
         courseCompetencyService = TestBed.inject(CourseCompetencyService);
         getCompetencyContributionsForExerciseStub = jest

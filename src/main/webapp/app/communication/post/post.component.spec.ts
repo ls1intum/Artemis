@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { DebugElement, runInInjectionContext } from '@angular/core';
+import { DebugElement } from '@angular/core';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { PostComponent } from 'app/communication/post/post.component';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
@@ -14,7 +14,7 @@ import { MockMetisService } from 'test/helpers/mocks/service/mock-metis-service.
 import { MetisService } from 'app/communication/service/metis.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DisplayPriority, PageType, SortDirection } from 'app/communication/metis.util';
-import { MockTranslateService, TranslatePipeMock } from 'test/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { OverlayModule } from '@angular/cdk/overlay';
 import {
     metisChannel,

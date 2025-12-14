@@ -224,7 +224,12 @@ describe('TextExercise Management Update Component', () => {
         }));
 
         it('should calculate valid sections', () => {
-            const calculateValidSpy = jest.spyOn(comp, 'calculateFormSectionStatus');
+            const calculateValidSpy = jest.spyOn(comp, 'calculateFormSectionStatus').mockImplementation(() => {
+                comp.formSectionStatus = [
+                    { valid: true, empty: false, title: 'dummy' },
+                    { valid: true, empty: false, title: 'dummy2' },
+                ] as any;
+            });
             comp.exerciseTitleChannelNameComponent().titleChannelNameComponent().isValid.set(false);
             comp.exerciseUpdatePlagiarismComponent()?.isFormValid.set(true);
             comp.teamConfigFormGroupComponent = { formValidChanges: new Subject() } as TeamConfigFormGroupComponent;
@@ -238,6 +243,12 @@ describe('TextExercise Management Update Component', () => {
 
             comp.ngOnInit();
             comp.ngAfterViewInit();
+            // Angular will reset view children during initialization; ensure stubs stay defined.
+            comp.solutionPublicationDateField = { dateInput: { valid: true } } as any;
+            comp.releaseDateField = { dateInput: { valid: true } } as any;
+            comp.startDateField = { dateInput: { valid: true } } as any;
+            comp.dueDateField = { dateInput: { valid: true } } as any;
+            comp.assessmentDateField = { dateInput: { valid: true } } as any;
 
             comp.exerciseTitleChannelNameComponent().titleChannelNameComponent().isValid.set(true);
 

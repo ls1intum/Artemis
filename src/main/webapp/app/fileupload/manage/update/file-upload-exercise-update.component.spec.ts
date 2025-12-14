@@ -173,6 +173,11 @@ describe('FileUploadExerciseUpdateComponent', () => {
             comp.teamConfigFormGroupComponent = { formValidChanges: new Subject() } as TeamConfigFormGroupComponent;
             comp.bonusPoints = { valueChanges: new Subject(), valid: true } as unknown as NgModel;
             comp.points = { valueChanges: new Subject(), valid: true } as unknown as NgModel;
+            comp.solutionPublicationDateField = { dateInput: { valid: true } } as any;
+            comp.releaseDateField = { dateInput: { valid: true } } as any;
+            comp.startDateField = { dateInput: { valid: true } } as any;
+            comp.dueDateField = { dateInput: { valid: true } } as any;
+            comp.assessmentDateField = { dateInput: { valid: true } } as any;
 
             comp.ngOnInit();
             comp.ngAfterViewInit();
@@ -183,6 +188,7 @@ describe('FileUploadExerciseUpdateComponent', () => {
             expect(comp.formStatusSections).toBeDefined();
             expect(comp.formStatusSections[0].valid).toBeTrue();
 
+            comp.solutionPublicationDateField = { dateInput: { valid: true } } as any;
             comp.validateDate();
             expect(calculateValidSpy).toHaveBeenCalledTimes(2);
 

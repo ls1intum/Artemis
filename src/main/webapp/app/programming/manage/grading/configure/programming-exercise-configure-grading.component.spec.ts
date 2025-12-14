@@ -21,7 +21,6 @@ import {
     ChartFilterType,
     EditableField,
     ProgrammingExerciseConfigureGradingComponent,
-    Table,
 } from 'app/programming/manage/grading/configure/programming-exercise-configure-grading.component';
 import { ProgrammingExerciseGradingSubmissionPolicyConfigurationActionsComponent } from 'app/programming/manage/grading/configure-submission-policy/programming-exercise-grading-submission-policy-configuration-actions.component';
 import { ProgrammingExerciseGradingTableActionsComponent } from 'app/programming/manage/grading/table-actions/programming-exercise-grading-table-actions.component';
@@ -81,13 +80,10 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
     let testCasesChangedSubject: Subject<boolean>;
     let getExerciseTestCaseStateSubject: Subject<{ body: ProgrammingExerciseTestCaseStateDTO }>;
 
-    const tableEditingInput = '.table-editable-field__input';
-    const saveTableButton = '#save-table-button';
     const resetTableButton = '#reset-table-button';
     const testCasesNoUnsavedChanges = '#test-case-status-no-unsaved-changes';
     const testCasesUpdated = '#test-case-status-updated';
     const testCasesNoUpdated = '#test-case-status-no-updated';
-    const codeAnalysisTableId = '#codeAnalysisTable';
 
     const exerciseId = 1;
     const exercise = {
@@ -171,10 +167,6 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
             buildAndTestStudentSubmissionsAfterDueDate,
         },
     });
-
-    const getSaveButton = () => {
-        return getElement(debugElement, saveTableButton);
-    };
 
     const getResetButton = () => {
         return getElement(debugElement, resetTableButton);
@@ -466,13 +458,6 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         expect(comp.staticCodeAnalysisCategoriesForCharts).toEqual(codeAnalysisCategories1);
     });
-
-    const sortAndTestTable = (table: Table) => (headerElement: DebugElement, prop: string, dir: string) => {
-        headerElement.nativeElement.click();
-        fixture.changeDetectorRef.detectChanges();
-
-        expect(comp.tableSorts[table]).toEqual([{ prop, dir }]);
-    };
 
     it('should sort code-analysis table', () => {
         initGradingComponent({ tab: 'code-analysis' });
