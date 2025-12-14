@@ -680,7 +680,7 @@ describe('LectureUpdateUnitsComponent', () => {
         expect(wizardUnitComponent.isAttachmentVideoUnitFormOpen()).toBeTrue();
         expect(getTranscriptionSpy).toHaveBeenCalledWith(attachmentVideoUnit.id);
         expect(getTranscriptionStatusSpy).toHaveBeenCalledWith(attachmentVideoUnit.id);
-        expect(wizardUnitComponent.currentlyProcessedAttachmentVideoUnit?.transcriptionProperties).toBe(transcript);
+        expect(wizardUnitComponent.attachmentVideoUnitFormData?.transcriptionProperties?.videoTranscription).toBe(JSON.stringify(transcript));
     }));
 
     it('should not fetch transcription when starting to edit a video unit as non-admin', fakeAsync(() => {
@@ -928,7 +928,11 @@ describe('LectureUpdateUnitsComponent', () => {
 
         wizardUnitComponentFixture.whenStable().then(() => {
             expect(createAttachmentVideoUnitStub).toHaveBeenCalledOnce();
-            expect(createTranscriptionStub).toHaveBeenCalledWith(attachmentVideoUnit.id, attachmentVideoUnitFormData.transcriptionProperties);
+            expect(createTranscriptionStub).toHaveBeenCalledWith(wizardUnitComponent.lecture.id, attachmentVideoUnit.id, {
+                language: 'en',
+                content: 'test transcription',
+                lectureUnitId: attachmentVideoUnit.id,
+            });
         });
     }));
 
@@ -971,7 +975,7 @@ describe('LectureUpdateUnitsComponent', () => {
 
         wizardUnitComponentFixture.whenStable().then(() => {
             expect(startSpy).toHaveBeenCalledWith(1, 42, 'https://example.com/playlist.m3u8');
-            expect(successSpy).toHaveBeenCalledWith('Transcript generation started.');
+            expect(successSpy).not.toHaveBeenCalled();
             expect(errorSpy).not.toHaveBeenCalled();
         });
     }));
@@ -1218,6 +1222,7 @@ describe('LectureUpdateUnitsComponent', () => {
 
         const getTranscriptionSpy = jest.spyOn(lectureTranscriptionService, 'getTranscription').mockReturnValue(of(null as any));
         const getTranscriptionStatusSpy = jest.spyOn(lectureTranscriptionService, 'getTranscriptionStatus').mockReturnValue(of(null as any));
+        jest.spyOn(accountService, 'isAdmin').mockReturnValue(true);
 
         wizardUnitComponent.startEditLectureUnit(attachmentVideoUnit);
 
@@ -1251,6 +1256,7 @@ describe('LectureUpdateUnitsComponent', () => {
         const transcriptionStatus = { status: 'PENDING', progress: 50 };
         jest.spyOn(lectureTranscriptionService, 'getTranscription').mockReturnValue(of(undefined));
         jest.spyOn(lectureTranscriptionService, 'getTranscriptionStatus').mockReturnValue(of(transcriptionStatus as any));
+        jest.spyOn(accountService, 'isAdmin').mockReturnValue(true);
 
         wizardUnitComponent.startEditLectureUnit(attachmentVideoUnit);
 

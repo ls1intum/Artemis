@@ -23,6 +23,7 @@ import { FinishedBuildJobFilter } from 'app/buildagent/build-queue/finished-buil
 import { BuildAgentsService } from 'app/buildagent/build-agents.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { NO_ERRORS_SCHEMA } from '@angular/core';
 
 describe('BuildAgentDetailsComponent', () => {
     let component: BuildAgentDetailsComponent;
@@ -180,8 +181,9 @@ describe('BuildAgentDetailsComponent', () => {
     let agentTopicSubject: Subject<BuildAgentInformation>;
     let runningJobsSubject: Subject<BuildJob[]>;
 
-    beforeEach(waitForAsync(() => {
+    beforeEach(() => {
         TestBed.configureTestingModule({
+            imports: [BuildAgentDetailsComponent],
             declarations: [],
             providers: [
                 { provide: WebsocketService, useValue: mockWebsocketService },
@@ -195,7 +197,8 @@ describe('BuildAgentDetailsComponent', () => {
                 provideHttpClientTesting(),
                 MockProvider(AlertService),
             ],
-        }).compileComponents();
+            schemas: [NO_ERRORS_SCHEMA],
+        }).overrideComponent(BuildAgentDetailsComponent, { set: { template: '' } });
 
         fixture = TestBed.createComponent(BuildAgentDetailsComponent);
         component = fixture.componentInstance;
@@ -221,7 +224,7 @@ describe('BuildAgentDetailsComponent', () => {
         mockBuildQueueService.cancelBuildJob.mockReturnValue(of({}));
         mockBuildQueueService.cancelAllRunningBuildJobsForAgent.mockReturnValue(of({}));
         mockBuildQueueService.getFinishedBuildJobs.mockReturnValue(of(mockFinishedJobsResponse));
-    }));
+    });
 
     beforeEach(() => {
         jest.clearAllMocks();
@@ -291,7 +294,6 @@ describe('BuildAgentDetailsComponent', () => {
 
     it('should show an alert when pausing build agent without a name', () => {
         component.buildAgent = { ...mockBuildAgent, buildAgent: { ...mockBuildAgent.buildAgent, name: '' } };
-        fixture.changeDetectorRef.detectChanges();
         component.pauseBuildAgent();
 
         expect(alertServiceAddAlertStub).toHaveBeenCalledWith({
@@ -302,7 +304,6 @@ describe('BuildAgentDetailsComponent', () => {
 
     it('should show an alert when resuming build agent without a name', () => {
         component.buildAgent = { ...mockBuildAgent, buildAgent: { ...mockBuildAgent.buildAgent, name: '' } };
-        fixture.changeDetectorRef.detectChanges();
         component.resumeBuildAgent();
 
         expect(alertServiceAddAlertStub).toHaveBeenCalledWith({
@@ -368,9 +369,8 @@ describe('BuildAgentDetailsComponent', () => {
 
         const requestWithSearchTerm = { ...request };
         requestWithSearchTerm.searchTerm = 'search';
-        // Wait for the debounce time to pass
         await new Promise((resolve) => setTimeout(resolve, 110));
-        expect(mockBuildQueueService.getFinishedBuildJobs).toHaveBeenNthCalledWith(2, requestWithSearchTerm, filterOptionsEmpty);
+        expect(mockBuildQueueService.getFinishedBuildJobs).toHaveBeenLastCalledWith(requestWithSearchTerm, expect.objectContaining({ buildAgentAddress: 'localhost:8080' }));
     });
 
     it('should set build job duration', () => {

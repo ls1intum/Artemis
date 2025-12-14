@@ -149,8 +149,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
     });
 
     it('should find correct rooms', fakeAsync(() => {
-        fixture.detectChanges();
-        tick();
+        (service as MockStudentsRoomDistributionService).availableRooms.set(rooms);
 
         let searchResult: RoomForDistributionDTO[] = [];
         component.search(of('t')).subscribe((rooms) => {
@@ -201,17 +200,17 @@ describe('StudentsRoomDistributionDialogComponent', () => {
         expect(input.value).toBe('25');
     });
 
-    it('should select all text when the input gains focus', async () => {
-        fixture.detectChanges();
-        const input: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#reserveFactor');
+    it('should select all text when the input gains focus', () => {
+        jest.useFakeTimers();
+        const input = document.createElement('input');
         input.value = '42';
         const selectSpy = jest.spyOn(input, 'select');
 
-        input.dispatchEvent(new FocusEvent('focusin'));
-        fixture.changeDetectorRef.detectChanges();
-        await fixture.whenStable();
+        component.selectAllTextAndOpenDropdown({ target: input } as unknown as FocusEvent);
+        jest.runAllTimers();
 
-        expect(selectSpy).toHaveBeenCalledOnce();
+        expect(selectSpy).toHaveBeenCalled();
+        jest.useRealTimers();
     });
 
     it('should toggle use narrow layouts when switch is pressed', () => {

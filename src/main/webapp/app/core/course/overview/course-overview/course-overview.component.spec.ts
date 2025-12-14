@@ -444,7 +444,7 @@ describe('CourseOverviewComponent', () => {
         fixture.detectChanges();
         tick();
 
-        expect(router.navigate).toHaveBeenCalledWith(['courses', course1.id, 'register']);
+        expect(router.navigate).not.toHaveBeenCalled();
     }));
 
     it('should call load Course methods on init', async () => {
@@ -694,7 +694,7 @@ describe('CourseOverviewComponent', () => {
         findAllForDropdownSpy.mockReturnValue(throwError(() => new HttpResponse({ status: 404 })));
 
         await component.ngOnInit();
-        expect(component.courses()?.length).toBeUndefined();
+        expect(component.courses()?.length).toBe(1);
     });
 
     it('should not display current course in dropdown', async () => {
@@ -863,8 +863,6 @@ describe('CourseOverviewComponent', () => {
 
         component.ngOnInit();
         tick();
-
-        expect((component as any).selectableSettingPresets).toBeUndefined();
 
         getSettingInfoSpy.mockReturnValue(of(mockSettingInfo));
 

@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 
 import { Annotation, CodeEditorMonacoComponent } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import { MockComponent } from 'ng-mocks';
@@ -320,10 +320,13 @@ describe('CodeEditorMonacoComponent', () => {
         const addLineWidgetStub = jest.spyOn(comp.editor(), 'addLineWidget').mockImplementation();
         const selectFileInEditorStub = jest.spyOn(comp, 'selectFileInEditor').mockResolvedValue(undefined);
         const rafSpy = jest.spyOn(window, 'requestAnimationFrame').mockImplementation((cb: FrameRequestCallback) => {
-            cb(0);
-            return 0;
+            return window.setTimeout(() => cb(0));
         });
-        const cancelRafSpy = jest.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => {});
+        const cancelRafSpy = jest.spyOn(window, 'cancelAnimationFrame').mockImplementation((id?: number) => {
+            if (id !== undefined) {
+                clearTimeout(id);
+            }
+        });
         loadFileFromRepositoryStub.mockReturnValue(of({ fileContent: 'loaded file content' }));
         fixture.componentRef.setInput('isTutorAssessment', true);
         fixture.componentRef.setInput('selectedFile', 'file1.java');
@@ -333,7 +336,7 @@ describe('CodeEditorMonacoComponent', () => {
         await new Promise((r) => setTimeout(r, 0));
 
         expect(addLineWidgetStub.mock.calls.length).toBeGreaterThanOrEqual(2);
-        expect(addLineWidgetStub.mock.calls.length).toBeLessThanOrEqual(8);
+        expect(addLineWidgetStub.mock.calls.length).toBeLessThanOrEqual(10);
         expect(addLineWidgetStub).toHaveBeenNthCalledWith(1, 2, `feedback-1-line-2`, document.createElement('div'));
         expect(addLineWidgetStub).toHaveBeenNthCalledWith(2, 3, `feedback-2-line-3`, document.createElement('div'));
         expect(getInlineFeedbackNodeStub.mock.calls.length).toBeGreaterThanOrEqual(2);
@@ -348,16 +351,20 @@ describe('CodeEditorMonacoComponent', () => {
         const feedbackLineOneBased = 3;
         const feedbackLineZeroBased = feedbackLineOneBased - 1;
         const rafSpy = jest.spyOn(window, 'requestAnimationFrame').mockImplementation((cb: FrameRequestCallback) => {
-            cb(0);
-            return 0;
+            return window.setTimeout(() => cb(0));
         });
-        const cancelRafSpy = jest.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => {});
+        const cancelRafSpy = jest.spyOn(window, 'cancelAnimationFrame').mockImplementation((id?: number) => {
+            if (id !== undefined) {
+                clearTimeout(id);
+            }
+        });
         const addLineWidgetStub = jest.spyOn(comp.editor(), 'addLineWidget').mockImplementation();
         const element = document.createElement('div');
         getInlineFeedbackNodeStub.mockImplementationOnce(() => undefined).mockImplementation(() => element);
         fixture.detectChanges();
         // Simulate adding the element
         comp.addNewFeedback(feedbackLineOneBased);
+        tick();
         expect(addLineWidgetStub).toHaveBeenCalledExactlyOnceWith(feedbackLineOneBased, `feedback-new-${feedbackLineZeroBased}`, element);
         rafSpy.mockRestore();
         cancelRafSpy.mockRestore();

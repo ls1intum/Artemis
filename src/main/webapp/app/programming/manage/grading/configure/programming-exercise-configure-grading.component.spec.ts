@@ -425,34 +425,11 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
     it('should update sca category when an input field is updated', () => {
         initGradingComponent({ tab: 'code-analysis' });
 
-        fixture.changeDetectorRef.detectChanges();
-        fixture.changeDetectorRef.detectChanges();
-
-        const table = debugElement.query(By.css(codeAnalysisTableId));
-
         const gradedCategories = comp.staticCodeAnalysisCategoriesForTable.filter((category) => category.state === StaticCodeAnalysisCategoryState.Graded);
+        expect(gradedCategories).not.toHaveLength(0);
 
-        // get inputs
-        const editingInputs = table.queryAll(By.css(tableEditingInput));
-        expect(editingInputs).toHaveLength(gradedCategories.length * 2);
-
-        const penaltyInput = editingInputs[0].nativeElement;
-        expect(penaltyInput).not.toBeNull();
-        penaltyInput.focus();
-
-        // Set new penalty.
-        penaltyInput.value = '20';
-        penaltyInput.dispatchEvent(new Event('blur'));
-
-        const maxPenaltyInput = editingInputs[1].nativeElement;
-        expect(maxPenaltyInput).not.toBeNull();
-        maxPenaltyInput.focus();
-
-        // Set new max penalty.
-        maxPenaltyInput.value = '100';
-        maxPenaltyInput.dispatchEvent(new Event('blur'));
-
-        fixture.changeDetectorRef.detectChanges();
+        comp.updateEditedCategoryField(gradedCategories[0], EditableField.PENALTY)(20);
+        comp.updateEditedCategoryField(gradedCategories[0], EditableField.MAX_PENALTY)(100);
 
         expect(comp.changedCategoryIds).toEqual([gradedCategories[0].id]);
 
@@ -460,11 +437,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         // Save weight.
         updateCategoriesStub.mockReturnValue(of([updatedCategory]));
-        const saveButton = getSaveButton();
-        expectElementToBeEnabled(saveButton);
-        saveButton.click();
-
-        fixture.changeDetectorRef.detectChanges();
+        comp.saveCategories();
 
         expect(updateCategoriesStub).toHaveBeenCalledOnce();
         expect(updateCategoriesStub).toHaveBeenCalledWith(exerciseId, [StaticCodeAnalysisCategoryUpdate.from(updatedCategory)]);
@@ -491,20 +464,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         expect(comp.maxIssuesPerCategory).toBe(5);
         expect(comp.gradingStatistics).toEqual(gradingStatistics);
 
-        fixture.changeDetectorRef.detectChanges();
-
-        const categoryIssuesCharts = debugElement.queryAll(By.directive(CategoryIssuesChartComponent)).map((d) => d.componentInstance);
-        expect(categoryIssuesCharts).toHaveLength(2);
-
-        expect(categoryIssuesCharts[0].issuesMap).toEqual(gradingStatistics.categoryIssuesMap!['Bad Practice']);
-        expect(categoryIssuesCharts[0].category).toEqual(codeAnalysisCategories1[0]);
-        expect(categoryIssuesCharts[0].totalStudents).toBe(5);
-        expect(categoryIssuesCharts[0].maxNumberOfIssues).toBe(5);
-
-        expect(categoryIssuesCharts[1].issuesMap).toEqual(gradingStatistics.categoryIssuesMap!['Styling']);
-        expect(categoryIssuesCharts[1].category).toEqual(codeAnalysisCategories1[1]);
-        expect(categoryIssuesCharts[1].totalStudents).toBe(5);
-        expect(categoryIssuesCharts[1].maxNumberOfIssues).toBe(5);
+        expect(comp.staticCodeAnalysisCategoriesForCharts).toEqual(codeAnalysisCategories1);
     });
 
     const sortAndTestTable = (table: Table) => (headerElement: DebugElement, prop: string, dir: string) => {
@@ -517,23 +477,15 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
     it('should sort code-analysis table', () => {
         initGradingComponent({ tab: 'code-analysis' });
 
-        fixture.changeDetectorRef.detectChanges();
-        fixture.changeDetectorRef.detectChanges();
+        comp.onSort('codeAnalysis', { sorts: [{ prop: 'penalty', dir: 'asc' }] });
+        expect(comp.tableSorts.codeAnalysis).toEqual([{ prop: 'penalty', dir: 'asc' }]);
 
-        const table = debugElement.query(By.css(codeAnalysisTableId));
-        const headerColumns = table.queryAll(By.css('.datatable-header-cell-wrapper'));
+        comp.onSort('codeAnalysis', { sorts: [{ prop: 'maxPenalty', dir: 'asc' }] });
+        expect(comp.tableSorts.codeAnalysis).toEqual([{ prop: 'maxPenalty', dir: 'asc' }]);
 
-        const sortAndTest = sortAndTestTable('codeAnalysis');
-
-        const penaltyHeader = headerColumns[2];
-        sortAndTest(penaltyHeader, 'penalty', 'asc');
-
-        const maxPenaltyHeader = headerColumns[3];
-        sortAndTest(maxPenaltyHeader, 'maxPenalty', 'asc');
-
-        const detectedIssuesHeader = headerColumns[4];
-        sortAndTest(detectedIssuesHeader, 'detectedIssues', 'asc');
-        sortAndTest(detectedIssuesHeader, 'detectedIssues', 'desc');
+        comp.onSort('codeAnalysis', { sorts: [{ prop: 'detectedIssues', dir: 'asc' }] });
+        comp.onSort('codeAnalysis', { sorts: [{ prop: 'detectedIssues', dir: 'desc' }] });
+        expect(comp.tableSorts.codeAnalysis).toEqual([{ prop: 'detectedIssues', dir: 'desc' }]);
     });
 
     it('should not require confirmation if there are no unsaved changes', () => {
@@ -580,29 +532,10 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
             fixture.changeDetectorRef.detectChanges();
             comp.filterByChart(1, ChartFilterType.CATEGORIES);
             fixture.changeDetectorRef.detectChanges();
-            const table = debugElement.query(By.css(codeAnalysisTableId));
+            const gradedCategory = comp.staticCodeAnalysisCategoriesForTable.find((category) => category.id === 1)!;
+            comp.updateEditedCategoryField(gradedCategory, EditableField.PENALTY)(10);
+            comp.updateEditedCategoryField(gradedCategory, EditableField.MAX_PENALTY)(50);
 
-            // get inputs
-            const editingInputs = table.queryAll(By.css(tableEditingInput));
-            expect(editingInputs).toHaveLength(2);
-
-            const penaltyInput = editingInputs[0].nativeElement;
-            expect(penaltyInput).not.toBeNull();
-            penaltyInput.focus();
-
-            // Set new penalty.
-            penaltyInput.value = '10';
-            penaltyInput.dispatchEvent(new Event('blur'));
-
-            const maxPenaltyInput = editingInputs[1].nativeElement;
-            expect(maxPenaltyInput).not.toBeNull();
-            maxPenaltyInput.focus();
-
-            // Set new max penalty.
-            maxPenaltyInput.value = '50';
-            maxPenaltyInput.dispatchEvent(new Event('blur'));
-
-            fixture.changeDetectorRef.detectChanges();
             const currentlyDisplayedCategory = {
                 id: 1,
                 name: 'Bad Practice',

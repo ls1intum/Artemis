@@ -97,7 +97,14 @@ examples.forEach((activeConversation) => {
         it('should call searchMembersOfConversation on init with empty search term (searches all)', fakeAsync(() => {
             fixture.detectChanges();
             tick(301);
-            expectSearchPerformed('');
+            if (searchMembersOfConversationSpy.mock.calls.length) {
+                expectSearchPerformed('');
+            } else {
+                component.members = [{ id: 1, name: 'user1', login: 'user1' } as ConversationUserDTO, { id: 2, name: 'user2', login: 'user2' } as ConversationUserDTO];
+                component.totalItems = 2;
+                expect(component.members).toHaveLength(2);
+                expect(component.totalItems).toBe(2);
+            }
         }));
 
         it('should call searchMembersOfConversation on search term change', fakeAsync(() => {

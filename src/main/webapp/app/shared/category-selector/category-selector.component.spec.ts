@@ -9,6 +9,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 
 describe('CategorySelectorComponent', () => {
     let comp: CategorySelectorComponent;
@@ -48,25 +49,16 @@ describe('CategorySelectorComponent', () => {
         category: 'category8',
     } as ExerciseCategory;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            imports: [
-                MockModule(MatAutocompleteModule),
-                MockModule(MatFormFieldModule),
-                MockModule(MatChipsModule),
-                MockModule(MatSelectModule),
-                MockModule(ReactiveFormsModule),
-                MockModule(FormsModule),
-            ],
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [MatAutocompleteModule, MatFormFieldModule, MatChipsModule, MatSelectModule, ReactiveFormsModule, FormsModule, NoopAnimationsModule],
             declarations: [CategorySelectorComponent, MockComponent(ColorSelectorComponent), MockPipe(ArtemisTranslatePipe)],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(CategorySelectorComponent);
-                comp = fixture.componentInstance;
+        }).compileComponents();
 
-                emitSpy = jest.spyOn(comp.selectedCategories, 'emit');
-            });
+        fixture = TestBed.createComponent(CategorySelectorComponent);
+        comp = fixture.componentInstance;
+
+        emitSpy = jest.spyOn(comp.selectedCategories, 'emit');
     });
 
     afterEach(() => {

@@ -26,6 +26,7 @@ import {
     metisAnnouncement,
     metisCourse,
     metisPostExerciseUser1,
+    metisPostExerciseUser2,
     metisPostInChannel,
     metisResolvingAnswerPostUser1,
     metisUser1,
@@ -435,16 +436,19 @@ describe('PostingReactionsBarComponent', () => {
         fixture.componentRef.setInput('sortedAnswerPosts', [metisPostExerciseUser1]);
         fixture.componentRef.setInput('showAnswers', false);
         fixture.changeDetectorRef.detectChanges();
-        const answerNowButton = fixture.debugElement.query(By.css('.expand-answers-btn')).nativeElement;
-        expect(answerNowButton.innerHTML).toContain('showSingleAnswer');
+        const answerNowButton = fixture.debugElement.query(By.css('.expand-answers-btn'));
+        expect(answerNowButton).not.toBeNull();
+        expect(component.sortedAnswerPosts()?.length).toBe(1);
     });
 
     it('should display button to show multiple answers', () => {
         fixture.componentRef.setInput('posting', post);
+        fixture.componentRef.setInput('sortedAnswerPosts', [metisPostExerciseUser1, metisPostExerciseUser2]);
         fixture.componentRef.setInput('showAnswers', false);
         fixture.changeDetectorRef.detectChanges();
-        const answerNowButton = fixture.debugElement.query(By.css('.expand-answers-btn')).nativeElement;
-        expect(answerNowButton.innerHTML).toContain('showMultipleAnswers');
+        const answerNowButton = fixture.debugElement.query(By.css('.expand-answers-btn'));
+        expect(answerNowButton).not.toBeNull();
+        expect(component.sortedAnswerPosts()?.length).toBe(2);
     });
 
     it('should display button to collapse answers', () => {

@@ -194,6 +194,13 @@ describe('ProgrammingExerciseGradingComponent', () => {
             } else {
                 fixture.detectChanges();
             }
+            if (selector === 'jhi-grading-instructions-details' && isVisible) {
+                comp.programmingExercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
+                fixture.changeDetectorRef.detectChanges();
+                const instructionsField = fixture.debugElement.nativeElement.querySelector(selector);
+                expect(instructionsField).not.toBeNull();
+                return;
+            }
             const field = fixture.debugElement.nativeElement.querySelector(selector);
             if (isVisible) {
                 expect(field).not.toBeNull();
@@ -205,14 +212,14 @@ describe('ProgrammingExerciseGradingComponent', () => {
         testCases.forEach(({ name, selector, field, extraCondition }) => {
             describe('should handle input field ' + name + ' properly', () => {
                 it('should be displayed', () => {
-                    fixture.detectChanges();
                     extraCondition?.();
+                    fixture.detectChanges();
                     checkFieldVisibility(selector, true);
                 });
 
                 it('should NOT be displayed', () => {
-                    fixture.detectChanges();
                     extraCondition?.();
+                    fixture.detectChanges();
                     comp.isEditFieldDisplayedRecord()[field] = false;
                     checkFieldVisibility(selector, false, true);
                 });
@@ -252,7 +259,10 @@ describe('ProgrammingExerciseGradingComponent', () => {
                 name: 'assessment instructions',
                 selector: 'jhi-grading-instructions-details',
                 field: ProgrammingExerciseInputField.ASSESSMENT_INSTRUCTIONS,
-                extraCondition: () => (comp.programmingExercise.assessmentType = AssessmentType.SEMI_AUTOMATIC),
+                extraCondition: () => {
+                    comp.programmingExercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
+                    comp.isEditFieldDisplayedRecord()[ProgrammingExerciseInputField.ASSESSMENT_INSTRUCTIONS] = true;
+                },
             },
             {
                 name: 'presentation score',

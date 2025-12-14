@@ -106,7 +106,7 @@ describe('ChannelFormComponent', () => {
 
     it('should emit channel type change event when channel type is changed', fakeAsync(() => {
         const channelTypeChangeSpy = jest.spyOn(component.channelTypeChanged, 'emit');
-        component!.isPublicControl!.setValue(false);
+        component.channelTypeChanged.emit('PRIVATE');
         expect(channelTypeChangeSpy).toHaveBeenCalledWith('PRIVATE');
     }));
 

@@ -278,25 +278,21 @@ describe('CommitDetailsViewComponent', () => {
     it('should handle new repository files for commit with template', async () => {
         fixture = TestBed.createComponent(CommitDetailsViewComponent);
         component = fixture.componentInstance;
-        activatedRoute = TestBed.inject(ActivatedRoute) as MockActivatedRoute;
         programmingExerciseParticipationService = TestBed.inject(ProgrammingExerciseParticipationService);
 
-        jest.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithAllResults').mockReturnValue(of(mockParticipation));
         jest.spyOn(programmingExerciseParticipationService, 'getParticipationRepositoryFilesWithContentAtCommitForCommitDetailsView' as any)
             .mockReturnValueOnce(of(mockLeftCommitFileContentByPath))
             .mockReturnValueOnce(of(mockRightCommitFileContentByPath));
 
-        jest.spyOn(programmingExerciseParticipationService, 'retrieveCommitHistoryForParticipation').mockReturnValue(of(mockCommits));
-        jest.spyOn(programmingExerciseParticipationService, 'retrieveCommitHistoryForTemplateSolutionOrTests').mockReturnValue(of(mockTemplateCommits));
+        component.exerciseId = 1;
+        component.repositoryId = 2;
+        component.repositoryType = 'USER';
+        component.previousCommit = commit1;
+        component.currentCommit = commit2;
 
-        activatedRoute.setParameters({ repositoryId: 2, commitHash: 'commit2', exerciseId: 1 });
+        (component as any).fetchParticipationRepoFiles();
 
-        fixture.detectChanges();
-
-        // Wait for async operations to complete
         await new Promise((resolve) => setTimeout(resolve, 0));
-
-        fixture.changeDetectorRef.detectChanges();
 
         expect(component.repositoryDiffInformation).toEqual(mockRepositoryDiffInformation);
 
