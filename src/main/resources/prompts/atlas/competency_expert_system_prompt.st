@@ -93,7 +93,6 @@ TOPIC: Recursion
 REQUIREMENTS: Students should apply recursion to solve problems
 CONSTRAINTS: None
 CONTEXT: Algorithms course
-]
 
 Your Process:
 1. Call getCourseDescription(courseId) - validate alignment

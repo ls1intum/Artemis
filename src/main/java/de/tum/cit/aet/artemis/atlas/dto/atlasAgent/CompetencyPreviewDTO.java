@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.atlas.dto.atlasAgent;
 
+import jakarta.validation.constraints.NotNull;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
@@ -10,10 +12,11 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param title        the competency title
  * @param description  the competency description
  * @param taxonomy     the competency taxonomy level (e.g., "REMEMBER", "UNDERSTAND", "APPLY")
+ *                         not null to ensure proper preview with icon
  * @param icon         Font Awesome icon name for the taxonomy level
  * @param competencyId the competency ID (null for create operations, set for update operations)
  * @param viewOnly     indicates whether this preview is read-only (true) or can be approved/saved (false/null)
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record CompetencyPreviewDTO(String title, String description, String taxonomy, String icon, Long competencyId, Boolean viewOnly) {
+public record CompetencyPreviewDTO(String title, String description, @NotNull String taxonomy, String icon, Long competencyId, Boolean viewOnly) {
 }
