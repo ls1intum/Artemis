@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { signal } from '@angular/core';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
@@ -242,7 +243,7 @@ describe('CompetencyManagementComponent', () => {
         localStorageService.store<boolean>('alreadyVisitedCompetencyManagement', true);
         const modalRef = {
             componentInstance: {
-                courseId: undefined,
+                courseId: signal<number | null>(null),
                 competencyChanged: {
                     subscribe: jest.fn(),
                 },
