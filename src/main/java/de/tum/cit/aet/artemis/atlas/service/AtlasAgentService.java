@@ -28,9 +28,10 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
-import de.tum.cit.aet.artemis.atlas.dto.AtlasAgentChatResponseDTO;
-import de.tum.cit.aet.artemis.atlas.dto.AtlasAgentHistoryMessageDTO;
-import de.tum.cit.aet.artemis.atlas.dto.CompetencyPreviewDTO;
+import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.AtlasAgentChatResponseDTO;
+import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.AtlasAgentHistoryMessageDTO;
+import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.CompetencyOperationDTO;
+import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.CompetencyPreviewDTO;
 
 /**
  * Service for Atlas Agent functionality with Azure OpenAI integration.
@@ -56,7 +57,6 @@ public class AtlasAgentService {
 
     private static final String PREVIEW_DATA_END_MARKER = "%%PREVIEW_DATA_END%%";
 
-    // Session timeout duration: 2 hours of inactivity
     private static final Duration SESSION_EXPIRY_DURATION = Duration.ofHours(2);
 
     // Maximum number of concurrent sessions to prevent unbounded memory growth
@@ -80,8 +80,8 @@ public class AtlasAgentService {
      *
      * @see <a href="https://guava.dev/releases/33.0.0-jre/api/docs/com/google/common/cache/Cache.html">Guava Cache Documentation</a>
      */
-    private final Cache<String, List<CompetencyExpertToolsService.CompetencyOperation>> sessionPendingCompetencyOperationsCache = CacheBuilder.newBuilder()
-            .expireAfterAccess(SESSION_EXPIRY_DURATION).maximumSize(MAX_SESSIONS).build();
+    private final Cache<String, List<CompetencyOperationDTO>> sessionPendingCompetencyOperationsCache = CacheBuilder.newBuilder().expireAfterAccess(SESSION_EXPIRY_DURATION)
+            .maximumSize(MAX_SESSIONS).build();
 
     private final ChatClient chatClient;
 
@@ -112,7 +112,7 @@ public class AtlasAgentService {
      * @param sessionId the session ID
      * @return the cached pending competency operations, or null if none exist
      */
-    public List<CompetencyExpertToolsService.CompetencyOperation> getCachedPendingCompetencyOperations(String sessionId) {
+    public List<CompetencyOperationDTO> getCachedPendingCompetencyOperations(String sessionId) {
         return sessionPendingCompetencyOperationsCache.getIfPresent(sessionId);
     }
 
@@ -123,7 +123,7 @@ public class AtlasAgentService {
      * @param sessionId  the session ID
      * @param operations the competency operations to cache
      */
-    public void cachePendingCompetencyOperations(String sessionId, List<CompetencyExpertToolsService.CompetencyOperation> operations) {
+    public void cachePendingCompetencyOperations(String sessionId, List<CompetencyOperationDTO> operations) {
         sessionPendingCompetencyOperationsCache.put(sessionId, operations);
     }
 
@@ -183,45 +183,24 @@ public class AtlasAgentService {
 
                 // Replace the last assistant message with the version containing embedded preview data
                 // The MessageChatMemoryAdvisor already added the response, but without preview data
-                if (chatMemory != null && !responseWithEmbeddedData.equals(delegationResponse)) {
-                    List<Message> messages = chatMemory.get(sessionId);
-                    if (!messages.isEmpty() && messages.getLast().getMessageType() == MessageType.ASSISTANT) {
-                        List<Message> updatedMessages = new ArrayList<>(messages.subList(0, messages.size() - 1));
-                        updatedMessages.add(new AssistantMessage(responseWithEmbeddedData));
-
-                        chatMemory.clear(sessionId);
-                        updatedMessages.forEach(msg -> chatMemory.add(sessionId, msg));
-                    }
-                }
+                updateChatMemoryWithEmbeddedData(sessionId, responseWithEmbeddedData, delegationResponse);
 
                 sessionAgentMap.put(sessionId, AgentType.MAIN_AGENT);
                 return new AtlasAgentChatResponseDTO(delegationResponse, ZonedDateTime.now(), competencyModifiedInCurrentRequest.get(), previews);
             }
             else if (response.contains(CREATE_APPROVED_COMPETENCY)) {
                 sessionAgentMap.put(sessionId, AgentType.COMPETENCY_EXPERT);
-                List<CompetencyExpertToolsService.CompetencyOperation> cachedData = getCachedPendingCompetencyOperations(sessionId);
+                List<CompetencyOperationDTO> cachedData = getCachedPendingCompetencyOperations(sessionId);
 
                 String creationResponse = delegateTheRightAgent(CREATE_APPROVED_COMPETENCY, courseId, sessionId);
-
                 List<CompetencyPreviewDTO> previews = CompetencyExpertToolsService.getPreviews();
-
                 String responseWithEmbeddedData = embedPreviewDataInResponse(creationResponse, previews);
 
                 if (cachedData != null && !cachedData.isEmpty()) {
                     clearCachedPendingCompetencyOperations(sessionId);
                 }
 
-                // Update chat memory with embedded preview data
-                if (chatMemory != null && !responseWithEmbeddedData.equals(creationResponse)) {
-                    List<Message> messages = chatMemory.get(sessionId);
-                    if (!messages.isEmpty() && messages.getLast().getMessageType() == MessageType.ASSISTANT) {
-                        List<Message> updatedMessages = new ArrayList<>(messages.subList(0, messages.size() - 1));
-                        updatedMessages.add(new AssistantMessage(responseWithEmbeddedData));
-
-                        chatMemory.clear(sessionId);
-                        updatedMessages.forEach(msg -> chatMemory.add(sessionId, msg));
-                    }
-                }
+                updateChatMemoryWithEmbeddedData(sessionId, responseWithEmbeddedData, creationResponse);
 
                 sessionAgentMap.put(sessionId, AgentType.MAIN_AGENT);
                 return new AtlasAgentChatResponseDTO(creationResponse, ZonedDateTime.now(), competencyModifiedInCurrentRequest.get(), previews);
@@ -241,16 +220,7 @@ public class AtlasAgentService {
             String responseWithEmbeddedData = embedPreviewDataInResponse(finalResponse, previews);
 
             // Update chat memory with embedded preview data if previews exist
-            if (chatMemory != null && !responseWithEmbeddedData.equals(finalResponse)) {
-                List<Message> messages = chatMemory.get(sessionId);
-                if (!messages.isEmpty() && messages.getLast().getMessageType() == MessageType.ASSISTANT) {
-                    List<Message> updatedMessages = new ArrayList<>(messages.subList(0, messages.size() - 1));
-                    updatedMessages.add(new AssistantMessage(responseWithEmbeddedData));
-
-                    chatMemory.clear(sessionId);
-                    updatedMessages.forEach(msg -> chatMemory.add(sessionId, msg));
-                }
-            }
+            updateChatMemoryWithEmbeddedData(sessionId, responseWithEmbeddedData, finalResponse);
 
             return new AtlasAgentChatResponseDTO(finalResponse, ZonedDateTime.now(), competenciesModified, previews);
 
@@ -315,6 +285,27 @@ public class AtlasAgentService {
 
         // Execute the chat
         return promptSpec.call().content();
+    }
+
+    /**
+     * Updates the last assistant message in chat memory with embedded preview data.
+     * This ensures preview data persists in conversation history.
+     *
+     * @param sessionId                the session ID
+     * @param responseWithEmbeddedData the response text with embedded preview data
+     * @param originalResponse         the original response text without embedded data
+     */
+    private void updateChatMemoryWithEmbeddedData(String sessionId, String responseWithEmbeddedData, String originalResponse) {
+        if (chatMemory != null && !responseWithEmbeddedData.equals(originalResponse)) {
+            List<Message> messages = chatMemory.get(sessionId);
+            if (!messages.isEmpty() && messages.getLast().getMessageType() == MessageType.ASSISTANT) {
+                List<Message> updatedMessages = new ArrayList<>(messages.subList(0, messages.size() - 1));
+                updatedMessages.add(new AssistantMessage(responseWithEmbeddedData));
+
+                chatMemory.clear(sessionId);
+                updatedMessages.forEach(msg -> chatMemory.add(sessionId, msg));
+            }
+        }
     }
 
     /**

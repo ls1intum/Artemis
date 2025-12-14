@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.atlas.dto;
+package de.tum.cit.aet.artemis.atlas.dto.atlasAgent;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
