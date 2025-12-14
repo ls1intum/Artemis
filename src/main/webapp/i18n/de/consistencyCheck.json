@@ -17,10 +17,7 @@
                 "programmingExerciseImportFailed": "Importieren der Programmieraufgabe fehlgeschlagen, da die Quellaufgabe inkonsistent ist. Bitte öffne die Konsistenzprüfung der Quellaufgabe für Details."
             },
             "noInconsistencies": "Keine Inkonsistenzen gefunden",
-            "inconsistenciesFound": "Es wurden folgende Inkonsistenzen gefunden",
-            "inconsistenciesFoundAlert": "Es wurden Inkonsistenzen in der Programmieraufgabe gefunden. Bitte öffne die Konsistenzprüfung für Details.",
-            "checkFailedAlert": "Es gab einen Fehler bei der Konsistenzprüfung",
-            "issueHeading": "Konsistenzfehler Gefunden"
+            "inconsistenciesFound": "Es wurden folgende Inkonsistenzen gefunden"
         }
     }
 }
