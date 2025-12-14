@@ -112,6 +112,8 @@ public class CourseRequestService {
         notifyContact(courseRequest);
         sendReceivedEmail(courseRequest);
 
+        // Re-fetch with eager loading to avoid LazyInitializationException when converting to DTO
+        courseRequest = getRequestWithRequesterElseThrow(courseRequest.getId());
         return toDto(courseRequest);
     }
 
@@ -135,9 +137,11 @@ public class CourseRequestService {
         courseRequest.setDecisionReason(null);
         courseRequest.setAdmin(SecurityUtils.getCurrentUserLogin().orElse(null));
         courseRequest.setProcessedDate(ZonedDateTime.now());
-        courseRequestRepository.save(courseRequest);
+        courseRequest = courseRequestRepository.save(courseRequest);
 
         sendAcceptedEmail(courseRequest, createdCourse);
+        // Re-fetch with eager loading to avoid LazyInitializationException when converting to DTO
+        courseRequest = getRequestWithRequesterElseThrow(courseRequest.getId());
         return toDto(courseRequest);
     }
 
@@ -157,9 +161,11 @@ public class CourseRequestService {
         courseRequest.setDecisionReason(decisionReason != null ? decisionReason.trim() : null);
         courseRequest.setProcessedDate(ZonedDateTime.now());
         courseRequest.setAdmin(SecurityUtils.getCurrentUserLogin().orElse(null));
-        courseRequestRepository.save(courseRequest);
+        courseRequest = courseRequestRepository.save(courseRequest);
         sendRejectedEmail(courseRequest);
 
+        // Re-fetch with eager loading to avoid LazyInitializationException when converting to DTO
+        courseRequest = getRequestWithRequesterElseThrow(courseRequest.getId());
         return toDto(courseRequest);
     }
 
@@ -199,6 +205,8 @@ public class CourseRequestService {
         courseRequest.setReason(updateDTO.reason());
 
         courseRequest = courseRequestRepository.save(courseRequest);
+        // Re-fetch with eager loading to avoid LazyInitializationException when converting to DTO
+        courseRequest = getRequestWithRequesterElseThrow(courseRequest.getId());
         return toDto(courseRequest);
     }
 
