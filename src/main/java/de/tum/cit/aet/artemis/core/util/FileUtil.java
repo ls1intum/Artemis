@@ -78,8 +78,7 @@ public class FileUtil {
      * NOTE: Has to be kept in sync with the client-side definitions in file-extensions.constants.ts
      */
     private static final Set<String> allowedFileExtensions = Set.of("png", "jpg", "jpeg", "gif", "svg", "pdf", "zip", "tar", "txt", "rtf", "md", "htm", "html", "json", "doc",
-            "docx", "csv", "xls", "xlsx", "ppt", "pptx", "pages", "pages-tef", "numbers", "key", "odt", "ods", "odp", "odg", "odc", "odi", "odf", "mp4", "webm", "ogg", "mov",
-            "avi", "mkv", "flv", "wmv", "m4v");
+            "docx", "csv", "xls", "xlsx", "ppt", "pptx", "pages", "pages-tef", "numbers", "key", "odt", "ods", "odp", "odg", "odc", "odi", "odf");
 
     /**
      * The list of video file extensions that are allowed to be uploaded.
@@ -278,10 +277,12 @@ public class FileUtil {
      * @throws ResponseStatusException if the file size exceeds the maximum allowed size
      */
     public static void validateFileSizeWithVideoLimit(MultipartFile file, long maxVideoFileSize) {
-        if (file == null || file.getOriginalFilename() == null) {
+        if (file == null) {
             return;
         }
-        long maxSize = isVideoFile(file.getOriginalFilename()) ? maxVideoFileSize : Constants.MAX_FILE_SIZE;
+        var originalFilename = file.getOriginalFilename();
+        // If filename is missing, default to the stricter non-video limit.
+        long maxSize = (originalFilename != null && isVideoFile(originalFilename)) ? maxVideoFileSize : Constants.MAX_FILE_SIZE;
         validateFileSize(file, maxSize);
     }
 
