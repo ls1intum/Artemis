@@ -53,7 +53,6 @@ public class CompetencyExpertToolsService {
 
     /**
      * Mutable wrapper class for competency operations.
-     * Used by AI tools - NOT a DTO for REST/WebSocket.
      */
     public static class CompetencyOperation {
 
