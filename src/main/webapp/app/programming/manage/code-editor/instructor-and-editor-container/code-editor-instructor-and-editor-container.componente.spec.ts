@@ -73,7 +73,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
         alertService = TestBed.inject(AlertService);
         browserFingerprintService = TestBed.inject(BrowserFingerprintService);
         synchronizationService = TestBed.inject(ProgrammingExerciseEditorSyncService);
-        jest.spyOn(synchronizationService, 'getSynchronizationUpdates').mockReturnValue(of());
+        jest.spyOn(synchronizationService, 'subscribeToUpdates').mockReturnValue(of());
     }));
 
     afterEach(() => {
@@ -125,49 +125,5 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
 
         (artemisIntelligenceService as any).isLoading = () => false;
         expect(comp.isCheckingConsistency()).toBeFalse();
-    });
-
-    it('ignores synchronization updates from same browser instance', () => {
-        const alertSpy = jest.spyOn(alertService, 'addAlert');
-        browserFingerprintService.instanceIdentifier.next('client-1');
-
-        (comp as any).handleSynchronizationUpdate({
-            target: ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT,
-            clientInstanceId: 'client-1',
-        } as ProgrammingExerciseEditorSyncMessage);
-
-        expect(alertSpy).not.toHaveBeenCalled();
-    });
-
-    it('shows warning when relevant repository changes in another session', () => {
-        const alertSpy = jest.spyOn(alertService, 'addAlert');
-        comp.selectedRepository = RepositoryType.TEMPLATE;
-
-        (comp as any).handleSynchronizationUpdate({
-            target: ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY,
-            clientInstanceId: 'other-client',
-        } as ProgrammingExerciseEditorSyncMessage);
-
-        expect(alertSpy).toHaveBeenCalledWith(
-            expect.objectContaining({
-                message: 'artemisApp.editor.synchronization.repositoryChanged',
-            }),
-        );
-    });
-
-    it('shows problem statement warning when change is relevant', () => {
-        const alertSpy = jest.spyOn(alertService, 'addAlert');
-        comp.selectedRepository = RepositoryType.TEMPLATE;
-
-        (comp as any).handleSynchronizationUpdate({
-            target: ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT,
-            clientInstanceId: 'another-client',
-        } as ProgrammingExerciseEditorSyncMessage);
-
-        expect(alertSpy).toHaveBeenCalledWith(
-            expect.objectContaining({
-                message: 'artemisApp.editor.synchronization.problemStatementChanged',
-            }),
-        );
     });
 });

@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { Subject } from 'rxjs';
 import { DiffMatchPatch } from 'diff-match-patch-typescript';
 
-import { RemoteFileOperation, RepositoryFileSyncService } from 'app/programming/manage/services/repository-file-sync.service';
+import { FileOperation, RepositoryFileSyncService } from 'app/programming/manage/services/repository-file-sync.service';
 import {
     ProgrammingExerciseEditorFileChangeType,
     ProgrammingExerciseEditorSyncMessage,
@@ -10,7 +10,7 @@ import {
     ProgrammingExerciseEditorSyncTarget,
 } from 'app/programming/manage/services/programming-exercise-editor-sync.service';
 import { CodeEditorFileService } from 'app/programming/shared/code-editor/services/code-editor-file.service';
-import { FileType } from 'app/programming/shared/code-editor/model/code-editor.model';
+import { DeleteFileChange, FileType, RenameFileChange, RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor/container/code-editor-container.component';
 
 describe('RepositoryFileSyncService', () => {
@@ -29,15 +29,15 @@ describe('RepositoryFileSyncService', () => {
                 {
                     provide: ProgrammingExerciseEditorSyncService,
                     useValue: {
-                        getSynchronizationUpdates: jest.fn().mockReturnValue(incomingMessages$.asObservable()),
-                        sendSynchronization: jest.fn(),
-                        unsubscribeFromExercise: jest.fn(),
+                        subscribeToUpdates: jest.fn().mockReturnValue(incomingMessages$.asObservable()),
+                        sendSynchronizationUpdate: jest.fn(),
+                        unsubscribe: jest.fn(),
                     },
                 },
                 {
                     provide: CodeEditorFileService,
                     useValue: {
-                        updateFileReferences: jest.fn((files) => files),
+                        updateFileReferences: jest.fn((files, _change) => files),
                     },
                 },
             ],
@@ -49,105 +49,43 @@ describe('RepositoryFileSyncService', () => {
     });
 
     afterEach(() => {
-        service.dispose();
+        service.reset();
+        jest.clearAllMocks();
     });
 
-    describe('Initialization and Cleanup', () => {
-        it('should initialize with exercise ID and subscribe to updates', () => {
-            const targetFilter = jest.fn().mockReturnValue(true);
-            service.init(42, 'client-a', targetFilter);
+    describe('Initialization and cleanup', () => {
+        it('subscribes to synchronization updates for an exercise', () => {
+            const updates$ = service.init(42, () => true);
 
-            expect(syncService.getSynchronizationUpdates).toHaveBeenCalledWith(42);
+            expect(syncService.subscribeToUpdates).toHaveBeenCalledWith(42);
+            expect(updates$).toBeDefined();
         });
 
-        it('should dispose and cleanup subscriptions', () => {
-            service.init(42, 'client-a', () => true);
-            service.dispose();
+        it('completes listeners and unsubscribes on reset', () => {
+            let completed = false;
+            service.init(42, () => true).subscribe({ complete: () => (completed = true) });
 
-            expect(syncService.unsubscribeFromExercise).toHaveBeenCalledWith(42);
-        });
+            service.reset();
 
-        it('should reset state on dispose', () => {
-            service.init(42, 'client-a', () => true);
-            service.registerBaseline(ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY, 'file.txt', 'content', undefined);
-
-            service.dispose();
-
-            // Re-initialize and verify baselines were cleared
-            const operations: RemoteFileOperation[] = [];
-            service.init(99, 'client-b', () => true).subscribe((op) => operations.push(op));
-
-            // Should not have old baseline - new patch should work from empty baseline
-            incomingMessages$.next({
-                target: ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY,
-                filePatches: [
-                    {
-                        fileName: 'file.txt',
-                        patch: dmp.patch_toText(dmp.patch_make('', 'new content')),
-                        changeType: ProgrammingExerciseEditorFileChangeType.CONTENT,
-                    },
-                ],
-                clientInstanceId: 'client-c',
-                timestamp: Date.now(),
-            });
-
-            expect(operations).toHaveLength(1);
-            expect(operations[0].content).toBe('new content');
+            expect(syncService.unsubscribe).toHaveBeenCalled();
+            expect(completed).toBeTrue();
         });
     });
 
-    describe('Baseline Management', () => {
+    describe('Local file operations', () => {
         beforeEach(() => {
-            service.init(42, 'client-a', () => true);
+            service.init(42, () => true);
         });
 
-        it('should register baseline for file', () => {
-            service.registerBaseline(ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY, 'main.java', 'public class Main {}', undefined);
+        it('sends patches for content changes using existing baseline', () => {
+            service.registerBaseline(RepositoryType.TEMPLATE, 'file.txt', 'old content');
 
-            // Verify baseline by sending a patch
-            service.handleLocalChange('main.java', 'public class Main { }', ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY, undefined);
+            service.handleLocalFileOperation({ type: ProgrammingExerciseEditorFileChangeType.CONTENT, fileName: 'file.txt', content: 'new content' }, RepositoryType.TEMPLATE);
 
-            expect(syncService.sendSynchronization).toHaveBeenCalledWith(
+            expect(syncService.sendSynchronizationUpdate).toHaveBeenCalledWith(
                 42,
                 expect.objectContaining({
                     target: ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY,
-                    filePatches: expect.arrayContaining([
-                        expect.objectContaining({
-                            fileName: 'main.java',
-                            patch: expect.any(String),
-                        }),
-                    ]),
-                }),
-            );
-        });
-
-        it('should handle baseline for auxiliary repository with ID', () => {
-            service.registerBaseline(ProgrammingExerciseEditorSyncTarget.AUXILIARY_REPOSITORY, 'config.yml', 'port: 8080', 123);
-
-            service.handleLocalChange('config.yml', 'port: 9090', ProgrammingExerciseEditorSyncTarget.AUXILIARY_REPOSITORY, 123);
-
-            expect(syncService.sendSynchronization).toHaveBeenCalledWith(
-                42,
-                expect.objectContaining({
-                    target: ProgrammingExerciseEditorSyncTarget.AUXILIARY_REPOSITORY,
-                    auxiliaryRepositoryId: 123,
-                }),
-            );
-        });
-    });
-
-    describe('Local Change Handling', () => {
-        beforeEach(() => {
-            service.init(42, 'client-a', () => true);
-        });
-
-        it('should send patch for content changes', () => {
-            service.registerBaseline(ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY, 'file.txt', 'old content', undefined);
-            service.handleLocalChange('file.txt', 'new content', ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY);
-
-            expect(syncService.sendSynchronization).toHaveBeenCalledWith(
-                42,
-                expect.objectContaining({
                     filePatches: expect.arrayContaining([
                         expect.objectContaining({
                             fileName: 'file.txt',
@@ -159,109 +97,84 @@ describe('RepositoryFileSyncService', () => {
             );
         });
 
-        it('should send full content for CREATE change', () => {
-            service.handleLocalChange(
-                'new.txt',
-                'file content',
-                ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY,
-                undefined,
-                ProgrammingExerciseEditorFileChangeType.CREATE,
+        it('sends create operation with full content', () => {
+            service.handleLocalFileOperation(
+                { type: ProgrammingExerciseEditorFileChangeType.CREATE, fileName: 'new.txt', content: 'hello', fileType: FileType.FILE },
+                RepositoryType.TEMPLATE,
             );
 
-            expect(syncService.sendSynchronization).toHaveBeenCalledWith(
+            expect(syncService.sendSynchronizationUpdate).toHaveBeenCalledWith(
                 42,
                 expect.objectContaining({
-                    filePatches: expect.arrayContaining([
+                    target: ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY,
+                    filePatches: [
                         expect.objectContaining({
                             fileName: 'new.txt',
                             changeType: ProgrammingExerciseEditorFileChangeType.CREATE,
-                            patch: 'file content',
+                            patch: 'hello',
+                            fileType: FileType.FILE,
                         }),
-                    ]),
+                    ],
                 }),
             );
         });
 
-        it('should handle DELETE changes and remove baseline', () => {
-            service.registerBaseline(ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY, 'deleted.txt', 'content', undefined);
-            service.handleLocalChange('deleted.txt', '', ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY, undefined, ProgrammingExerciseEditorFileChangeType.DELETE);
+        it('sends delete operations and removes baseline', () => {
+            service.registerBaseline(RepositoryType.TEMPLATE, 'old.txt', 'content');
 
-            expect(syncService.sendSynchronization).toHaveBeenCalledWith(
+            service.handleLocalFileOperation({ type: ProgrammingExerciseEditorFileChangeType.DELETE, fileName: 'old.txt' }, RepositoryType.TEMPLATE);
+
+            expect(syncService.sendSynchronizationUpdate).toHaveBeenCalledWith(
                 42,
                 expect.objectContaining({
-                    filePatches: expect.arrayContaining([
+                    filePatches: [
                         expect.objectContaining({
-                            fileName: 'deleted.txt',
+                            fileName: 'old.txt',
                             changeType: ProgrammingExerciseEditorFileChangeType.DELETE,
                         }),
-                    ]),
+                    ],
                 }),
             );
+            const baselineKey = '42-TEMPLATE_REPOSITORY-none::old.txt';
+            expect((service as any).baselines[baselineKey]).toBeUndefined();
         });
 
-        it('should handle RENAME changes and update baseline', () => {
-            service.registerBaseline(ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY, 'old.txt', 'content', undefined);
-            service.handleLocalChange(
-                'old.txt',
-                'content',
-                ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY,
-                undefined,
-                ProgrammingExerciseEditorFileChangeType.RENAME,
-                'new.txt',
+        it('moves baseline on rename operations and sends rename payload', () => {
+            service.registerBaseline(RepositoryType.TEMPLATE, 'old.txt', 'content');
+
+            service.handleLocalFileOperation(
+                { type: ProgrammingExerciseEditorFileChangeType.RENAME, fileName: 'old.txt', newFileName: 'new.txt', content: 'content' },
+                RepositoryType.TEMPLATE,
             );
 
-            expect(syncService.sendSynchronization).toHaveBeenCalledWith(
+            expect(syncService.sendSynchronizationUpdate).toHaveBeenCalledWith(
                 42,
                 expect.objectContaining({
-                    filePatches: expect.arrayContaining([
+                    filePatches: [
                         expect.objectContaining({
                             fileName: 'old.txt',
                             newFileName: 'new.txt',
                             changeType: ProgrammingExerciseEditorFileChangeType.RENAME,
                         }),
-                    ]),
+                    ],
                 }),
             );
-        });
 
-        it('should not send message if no change detected', () => {
-            service.registerBaseline(ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY, 'file.txt', 'same content', undefined);
-            service.handleLocalChange('file.txt', 'same content', ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY);
-
-            expect(syncService.sendSynchronization).not.toHaveBeenCalled();
+            const baselines = (service as any).baselines;
+            expect(baselines['42-TEMPLATE_REPOSITORY-none::old.txt']).toBeUndefined();
+            expect(baselines['42-TEMPLATE_REPOSITORY-none::new.txt']).toBe('content');
         });
     });
 
-    describe('Remote Message Handling', () => {
+    describe('Remote synchronization handling', () => {
         beforeEach(() => {
-            service.init(42, 'client-a', () => true);
+            service.init(42, () => true);
         });
 
-        it('should ignore messages from same client instance', () => {
-            const operations: RemoteFileOperation[] = [];
-            service.init(42, 'client-a', () => true).subscribe((op) => operations.push(op));
-
-            incomingMessages$.next({
-                target: ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY,
-                filePatches: [
-                    {
-                        fileName: 'test.txt',
-                        patch: 'content',
-                        changeType: ProgrammingExerciseEditorFileChangeType.CREATE,
-                    },
-                ],
-                clientInstanceId: 'client-a',
-                timestamp: Date.now(),
-            });
-
-            expect(operations).toHaveLength(0);
-        });
-
-        it('should apply remote CONTENT patches', () => {
-            const operations: RemoteFileOperation[] = [];
-            service.init(42, 'client-a', () => true).subscribe((op) => operations.push(op));
-
-            service.registerBaseline(ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY, 'file.txt', 'old', undefined);
+        it('emits applied content patches from remote changes', () => {
+            const operations: FileOperation[] = [];
+            service.init(42, () => true).subscribe((op) => operations.push(op));
+            service.registerBaseline(RepositoryType.TEMPLATE, 'file.txt', 'old');
 
             const patch = dmp.patch_toText(dmp.patch_make('old', 'new'));
             incomingMessages$.next({
@@ -273,216 +186,135 @@ describe('RepositoryFileSyncService', () => {
                         changeType: ProgrammingExerciseEditorFileChangeType.CONTENT,
                     },
                 ],
-                clientInstanceId: 'client-b',
-                timestamp: Date.now(),
+                timestamp: 1,
             });
 
-            expect(operations).toHaveLength(1);
-            expect(operations[0]).toEqual({
-                type: ProgrammingExerciseEditorFileChangeType.CONTENT,
-                fileName: 'file.txt',
-                content: 'new',
-            });
+            expect(operations).toEqual([{ type: ProgrammingExerciseEditorFileChangeType.CONTENT, fileName: 'file.txt', content: 'new' }]);
         });
 
-        it('should apply remote CREATE operations', () => {
-            const operations: RemoteFileOperation[] = [];
-            service.init(42, 'client-a', () => true).subscribe((op) => operations.push(op));
+        it('emits create, delete, and rename operations', () => {
+            const operations: FileOperation[] = [];
+            service.init(42, () => true).subscribe((op) => operations.push(op));
 
             incomingMessages$.next({
                 target: ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY,
                 filePatches: [
-                    {
-                        fileName: 'new.txt',
-                        patch: 'new file content',
-                        changeType: ProgrammingExerciseEditorFileChangeType.CREATE,
-                        fileType: FileType.FILE,
-                    },
+                    { fileName: 'new.txt', patch: 'content', changeType: ProgrammingExerciseEditorFileChangeType.CREATE, fileType: FileType.FILE },
+                    { fileName: 'delete.txt', changeType: ProgrammingExerciseEditorFileChangeType.DELETE },
+                    { fileName: 'old.txt', newFileName: 'renamed.txt', patch: 'content', changeType: ProgrammingExerciseEditorFileChangeType.RENAME },
                 ],
-                clientInstanceId: 'client-b',
-                timestamp: Date.now(),
+                timestamp: 1,
             });
 
-            expect(operations).toHaveLength(1);
-            expect(operations[0]).toEqual({
-                type: ProgrammingExerciseEditorFileChangeType.CREATE,
-                fileName: 'new.txt',
-                content: 'new file content',
-                fileType: FileType.FILE,
-            });
+            expect(operations).toEqual([
+                { type: ProgrammingExerciseEditorFileChangeType.CREATE, fileName: 'new.txt', content: 'content', fileType: FileType.FILE },
+                { type: ProgrammingExerciseEditorFileChangeType.DELETE, fileName: 'delete.txt' },
+                { type: ProgrammingExerciseEditorFileChangeType.RENAME, fileName: 'old.txt', newFileName: 'renamed.txt', content: 'content' },
+            ]);
         });
 
-        it('should apply remote DELETE operations', () => {
-            const operations: RemoteFileOperation[] = [];
-            service.init(42, 'client-a', () => true).subscribe((op) => operations.push(op));
+        it('skips outdated messages based on timestamp', () => {
+            const operations: FileOperation[] = [];
+            service.init(42, () => true).subscribe((op) => operations.push(op));
+            service.registerBaseline(RepositoryType.TEMPLATE, 'file.txt', 'initial');
+
+            const newPatch = dmp.patch_toText(dmp.patch_make('initial', 'new'));
+            const oldPatch = dmp.patch_toText(dmp.patch_make('initial', 'old'));
 
             incomingMessages$.next({
                 target: ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY,
-                filePatches: [
-                    {
-                        fileName: 'deleted.txt',
-                        changeType: ProgrammingExerciseEditorFileChangeType.DELETE,
-                    },
-                ],
-                clientInstanceId: 'client-b',
-                timestamp: Date.now(),
+                filePatches: [{ fileName: 'file.txt', patch: newPatch, changeType: ProgrammingExerciseEditorFileChangeType.CONTENT }],
+                timestamp: 5,
             });
 
-            expect(operations).toHaveLength(1);
-            expect(operations[0]).toEqual({
-                type: ProgrammingExerciseEditorFileChangeType.DELETE,
-                fileName: 'deleted.txt',
-            });
-        });
-
-        it('should filter messages based on target filter', () => {
-            const operations: RemoteFileOperation[] = [];
-            const targetFilter = (message: ProgrammingExerciseEditorSyncMessage) => message.target === ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY;
-
-            service.init(42, 'client-a', targetFilter).subscribe((op) => operations.push(op));
-
-            // This should be filtered out
-            incomingMessages$.next({
-                target: ProgrammingExerciseEditorSyncTarget.SOLUTION_REPOSITORY,
-                filePatches: [
-                    {
-                        fileName: 'solution.txt',
-                        patch: 'content',
-                        changeType: ProgrammingExerciseEditorFileChangeType.CREATE,
-                    },
-                ],
-                clientInstanceId: 'client-b',
-                timestamp: Date.now(),
-            });
-
-            // This should pass through
             incomingMessages$.next({
                 target: ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY,
-                filePatches: [
-                    {
-                        fileName: 'template.txt',
-                        patch: 'content',
-                        changeType: ProgrammingExerciseEditorFileChangeType.CREATE,
-                    },
-                ],
-                clientInstanceId: 'client-b',
-                timestamp: Date.now(),
+                filePatches: [{ fileName: 'file.txt', patch: oldPatch, changeType: ProgrammingExerciseEditorFileChangeType.CONTENT }],
+                timestamp: 1,
             });
 
-            expect(operations).toHaveLength(1);
-            expect(operations[0].fileName).toBe('template.txt');
-        });
-    });
-
-    describe('Error Handling - Patch Failure Recovery', () => {
-        beforeEach(() => {
-            service.init(42, 'client-a', () => true);
+            expect(operations).toEqual([{ type: ProgrammingExerciseEditorFileChangeType.CONTENT, fileName: 'file.txt', content: 'new' }]);
         });
 
-        it('should request full file when patch application fails', () => {
-            const operations: RemoteFileOperation[] = [];
-            service.init(42, 'client-a', () => true).subscribe((op) => operations.push(op));
+        it('filters messages via provided target filter', () => {
+            const operations: FileOperation[] = [];
+            service.init(42, (message) => message.target === ProgrammingExerciseEditorSyncTarget.SOLUTION_REPOSITORY).subscribe((op) => operations.push(op));
 
-            // Register a baseline
-            service.registerBaseline(ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY, 'file.txt', 'base content', undefined);
-
-            // Send a patch that will fail (incompatible with baseline)
-            const incompatiblePatch = dmp.patch_toText(dmp.patch_make('completely different base', 'new content'));
             incomingMessages$.next({
                 target: ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY,
-                filePatches: [
-                    {
-                        fileName: 'file.txt',
-                        patch: incompatiblePatch,
-                        changeType: ProgrammingExerciseEditorFileChangeType.CONTENT,
-                    },
-                ],
-                clientInstanceId: 'client-b',
-                timestamp: Date.now(),
+                filePatches: [{ fileName: 'file.txt', patch: 'content', changeType: ProgrammingExerciseEditorFileChangeType.CREATE }],
+                timestamp: 1,
             });
 
-            // Should have requested full file
-            expect(syncService.sendSynchronization).toHaveBeenCalledWith(
-                42,
-                expect.objectContaining({
-                    target: ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY,
-                    fileRequests: ['file.txt'],
-                }),
-            );
-        });
-    });
-
-    describe('Full File Sync', () => {
-        beforeEach(() => {
-            service.init(42, 'client-a', () => true);
+            expect(operations).toHaveLength(0);
         });
 
-        it('should request full file from other clients', () => {
-            service.requestFullFile(ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY, 'file.txt', undefined);
+        it('emits new commit alert operations', () => {
+            const operations: FileOperation[] = [];
+            service.init(42, () => true).subscribe((op) => operations.push(op));
 
-            expect(syncService.sendSynchronization).toHaveBeenCalledWith(
-                42,
-                expect.objectContaining({
-                    target: ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY,
-                    fileRequests: ['file.txt'],
-                }),
-            );
+            incomingMessages$.next({
+                target: ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY,
+                newCommitAlert: true,
+            });
+
+            expect(operations).toEqual([{ type: 'NEW_COMMIT_ALERT' }]);
         });
 
-        it('should respond to file requests with baseline content', () => {
-            service.registerBaseline(ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY, 'file.txt', 'my content', undefined);
+        it('responds to file requests with available baselines', () => {
+            service.registerBaseline(RepositoryType.TEMPLATE, 'file.txt', 'baseline');
 
             incomingMessages$.next({
                 target: ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY,
                 fileRequests: ['file.txt'],
-                clientInstanceId: 'client-b',
-                timestamp: Date.now(),
             });
 
-            expect(syncService.sendSynchronization).toHaveBeenCalledWith(
+            expect(syncService.sendSynchronizationUpdate).toHaveBeenCalledWith(
                 42,
                 expect.objectContaining({
                     target: ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY,
-                    fileFulls: [
-                        {
-                            fileName: 'file.txt',
-                            content: 'my content',
-                        },
-                    ],
+                    fileFulls: [{ fileName: 'file.txt', content: 'baseline' }],
                 }),
             );
         });
 
-        it('should update baseline when receiving full file', () => {
-            const operations: RemoteFileOperation[] = [];
-            service.init(42, 'client-a', () => true).subscribe((op) => operations.push(op));
+        it('applies full file sync messages to baselines', () => {
+            const operations: FileOperation[] = [];
+            service.init(42, () => true).subscribe((op) => operations.push(op));
 
             incomingMessages$.next({
                 target: ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY,
-                fileFulls: [
-                    {
-                        fileName: 'file.txt',
-                        content: 'full content from remote',
-                    },
-                ],
-                clientInstanceId: 'client-b',
-                timestamp: Date.now(),
+                fileFulls: [{ fileName: 'file.txt', content: 'complete content' }],
+                timestamp: 2,
             });
 
-            expect(operations).toHaveLength(1);
-            expect(operations[0]).toEqual({
-                type: ProgrammingExerciseEditorFileChangeType.CONTENT,
-                fileName: 'file.txt',
-                content: 'full content from remote',
-            });
+            expect(operations).toEqual([{ type: ProgrammingExerciseEditorFileChangeType.CONTENT, fileName: 'file.txt', content: 'complete content' }]);
         });
     });
 
-    describe('Code Editor Integration', () => {
+    describe('Full file requests', () => {
+        beforeEach(() => {
+            service.init(42, () => true);
+        });
+
+        it('requests full file content for a repository type', () => {
+            service.requestFullFile(RepositoryType.TEMPLATE, 'file.txt');
+
+            expect(syncService.sendSynchronizationUpdate).toHaveBeenCalledWith(
+                42,
+                expect.objectContaining({
+                    target: ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY,
+                    fileRequests: ['file.txt'],
+                }),
+            );
+        });
+    });
+
+    describe('Code editor integration', () => {
         let mockCodeEditor: Partial<CodeEditorContainerComponent>;
 
         beforeEach(() => {
-            service.init(42, 'client-a', () => true);
+            service.init(42, () => true);
 
             mockCodeEditor = {
                 applyRemoteFileContent: jest.fn(),
@@ -490,17 +322,16 @@ describe('RepositoryFileSyncService', () => {
                     repositoryFiles: { 'existing.txt': FileType.FILE },
                     initializeRepositoryFiles: jest.fn(),
                     refreshTreeview: jest.fn(),
+                    changeDetectorRef: { markForCheck: jest.fn() },
                 } as any,
                 unsavedFiles: {},
                 selectedFile: undefined,
-                onFileChanged: {
-                    emit: jest.fn(),
-                } as any,
+                onFileChanged: { emit: jest.fn() } as any,
             };
         });
 
-        it('should apply remote content operation to code editor', () => {
-            const operation: RemoteFileOperation = {
+        it('applies remote content updates to the editor', () => {
+            const operation: FileOperation = {
                 type: ProgrammingExerciseEditorFileChangeType.CONTENT,
                 fileName: 'file.txt',
                 content: 'new content',
@@ -512,8 +343,8 @@ describe('RepositoryFileSyncService', () => {
             expect(mockCodeEditor.fileBrowser!.refreshTreeview).toHaveBeenCalled();
         });
 
-        it('should apply remote create operation to code editor', () => {
-            const operation: RemoteFileOperation = {
+        it('adds created files to repository listing', () => {
+            const operation: FileOperation = {
                 type: ProgrammingExerciseEditorFileChangeType.CREATE,
                 fileName: 'new.txt',
                 content: 'content',
@@ -522,22 +353,37 @@ describe('RepositoryFileSyncService', () => {
 
             service.applyRemoteOperation(operation, mockCodeEditor as CodeEditorContainerComponent);
 
-            expect(mockCodeEditor.fileBrowser!.repositoryFiles).toHaveProperty('new.txt');
+            expect(mockCodeEditor.fileBrowser!.repositoryFiles?.['new.txt']).toBe(FileType.FILE);
             expect(mockCodeEditor.applyRemoteFileContent).toHaveBeenCalledWith('new.txt', 'content');
         });
 
-        it('should apply remote delete operation and update selection', () => {
+        it('removes files on delete operations and updates selection', () => {
             mockCodeEditor.selectedFile = 'deleted.txt';
-            const operation: RemoteFileOperation = {
+            const operation: FileOperation = {
                 type: ProgrammingExerciseEditorFileChangeType.DELETE,
                 fileName: 'deleted.txt',
             };
 
             service.applyRemoteOperation(operation, mockCodeEditor as CodeEditorContainerComponent);
 
-            expect(fileService.updateFileReferences).toHaveBeenCalled();
+            expect(fileService.updateFileReferences).toHaveBeenCalledWith(expect.anything(), expect.any(DeleteFileChange));
             expect(mockCodeEditor.selectedFile).toBeUndefined();
             expect(mockCodeEditor.onFileChanged!.emit).toHaveBeenCalled();
+        });
+
+        it('renames files and updates unsaved files and selection', () => {
+            mockCodeEditor.selectedFile = 'old.txt';
+            const operation: FileOperation = {
+                type: ProgrammingExerciseEditorFileChangeType.RENAME,
+                fileName: 'old.txt',
+                newFileName: 'new.txt',
+                content: 'content',
+            };
+
+            service.applyRemoteOperation(operation, mockCodeEditor as CodeEditorContainerComponent);
+
+            expect(fileService.updateFileReferences).toHaveBeenCalledWith(expect.anything(), expect.any(RenameFileChange));
+            expect(mockCodeEditor.selectedFile).toBe('new.txt');
         });
     });
 });

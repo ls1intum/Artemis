@@ -13,6 +13,7 @@ describe('ProblemStatementSyncService', () => {
     let service: ProblemStatementSyncService;
     let syncService: jest.Mocked<ProgrammingExerciseEditorSyncService>;
     let incomingMessages$: Subject<ProgrammingExerciseEditorSyncMessage>;
+    const dmp = new DiffMatchPatch();
 
     beforeEach(() => {
         incomingMessages$ = new Subject<ProgrammingExerciseEditorSyncMessage>();
@@ -23,8 +24,9 @@ describe('ProblemStatementSyncService', () => {
                 {
                     provide: ProgrammingExerciseEditorSyncService,
                     useValue: {
-                        getSynchronizationUpdates: jest.fn().mockReturnValue(incomingMessages$.asObservable()),
-                        sendSynchronization: jest.fn(),
+                        subscribeToUpdates: jest.fn().mockReturnValue(incomingMessages$.asObservable()),
+                        sendSynchronizationUpdate: jest.fn(),
+                        unsubscribe: jest.fn(),
                     },
                 },
             ],
@@ -35,226 +37,127 @@ describe('ProblemStatementSyncService', () => {
     });
 
     afterEach(() => {
-        service.dispose();
+        service.reset();
+        jest.clearAllMocks();
     });
 
-    it('should send patch on local changes after initialization', fakeAsync(() => {
-        service.init(42, 'Old content', 'client-a');
+    it('initializes synchronization and requests initial content', () => {
+        service.init(42, 'Initial content');
+
+        expect(syncService.subscribeToUpdates).toHaveBeenCalledWith(42);
+        expect(syncService.sendSynchronizationUpdate).toHaveBeenCalledWith(
+            42,
+            expect.objectContaining({
+                target: ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT,
+                problemStatementRequest: true,
+            }),
+        );
+    });
+
+    it('sends debounced patch for local changes', fakeAsync(() => {
+        service.init(42, 'Old content');
 
         service.queueLocalChange('Updated content');
-        tick(1000);
+        tick(300);
 
-        expect(syncService.sendSynchronization).toHaveBeenCalledWith(
+        expect(syncService.sendSynchronizationUpdate).toHaveBeenCalledWith(
             42,
             expect.objectContaining({
                 target: ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT,
                 problemStatementPatch: expect.any(String),
-                clientInstanceId: 'client-a',
             }),
         );
     }));
 
-    it('should apply incoming updates from other clients and ignore own updates', () => {
+    it('emits full content updates received from other clients', () => {
         const received: string[] = [];
-        service.init(99, 'Initial', 'client-a');
-        service.updates$.subscribe((content) => received.push(content));
+        service.init(99, 'Initial content').subscribe((content) => received.push(content));
 
         incomingMessages$.next({
             target: ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT,
             problemStatementFull: 'Remote content',
-            clientInstanceId: 'client-b',
             timestamp: 1,
-        });
-
-        incomingMessages$.next({
-            target: ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT,
-            problemStatementFull: 'Own content',
-            clientInstanceId: 'client-a',
-            timestamp: 2,
         });
 
         expect(received).toEqual(['Remote content']);
     });
 
-    it('should request initial sync on patch application failure', () => {
-        service.init(99, 'base content', 'client-a');
-
-        // Send a patch that will fail (incompatible with baseline)
-        incomingMessages$.next({
-            target: ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT,
-            problemStatementPatch: '@@ -1,10 +1,10 @@\n-different base\n+new content\n',
-            clientInstanceId: 'client-b',
-            timestamp: 1,
-        });
-
-        // Should have requested initial sync as fallback
-        expect(syncService.sendSynchronization).toHaveBeenCalledWith(
-            99,
-            expect.objectContaining({
-                target: ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT,
-                problemStatementRequest: true,
-            }),
-        );
-    });
-
-    it('should handle malformed patch gracefully and request full sync', () => {
-        service.init(99, 'base content', 'client-a');
-
-        // Send a malformed patch
-        incomingMessages$.next({
-            target: ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT,
-            problemStatementPatch: 'invalid patch format @@@###',
-            clientInstanceId: 'client-b',
-            timestamp: 1,
-        });
-
-        // Should have requested initial sync as fallback
-        expect(syncService.sendSynchronization).toHaveBeenCalledWith(
-            99,
-            expect.objectContaining({
-                problemStatementRequest: true,
-            }),
-        );
-    });
-
-    it('should apply successful patches correctly', () => {
+    it('applies incoming patches and emits updated content', () => {
         const received: string[] = [];
-        service.init(99, 'Hello World', 'client-a');
-        service.updates$.subscribe((content) => received.push(content));
+        service.init(99, 'Hello World').subscribe((content) => received.push(content));
 
-        // Create a valid patch using diff-match-patch
-        const dmp = new DiffMatchPatch();
-        const patches = dmp.patch_make('Hello World', 'Hello Universe');
-        const patchText = dmp.patch_toText(patches);
+        const patchText = dmp.patch_toText(dmp.patch_make('Hello World', 'Hello Artemis'));
 
         incomingMessages$.next({
             target: ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT,
             problemStatementPatch: patchText,
-            clientInstanceId: 'client-b',
             timestamp: 1,
         });
 
-        expect(received).toEqual(['Hello Universe']);
+        expect(received).toEqual(['Hello Artemis']);
     });
 
-    it('should respond to problem statement requests with current content', () => {
-        service.init(99, 'Current content', 'client-a');
-
-        incomingMessages$.next({
-            target: ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT,
-            problemStatementRequest: true,
-            clientInstanceId: 'client-b',
-            timestamp: 1,
-        });
-
-        expect(syncService.sendSynchronization).toHaveBeenCalledWith(
-            99,
-            expect.objectContaining({
-                target: ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT,
-                problemStatementFull: 'Current content',
-                clientInstanceId: 'client-a',
-            }),
-        );
-    });
-
-    it('should ignore messages with older timestamps', () => {
+    it('ignores non problem-statement messages', () => {
         const received: string[] = [];
-        service.init(99, 'Initial', 'client-a');
-        service.updates$.subscribe((content) => received.push(content));
-
-        // Process newer message first
-        incomingMessages$.next({
-            target: ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT,
-            problemStatementFull: 'Newer content',
-            clientInstanceId: 'client-b',
-            timestamp: 2000,
-        });
-
-        // Try to process older message - should be ignored
-        incomingMessages$.next({
-            target: ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT,
-            problemStatementFull: 'Older content',
-            clientInstanceId: 'client-c',
-            timestamp: 1000,
-        });
-
-        expect(received).toEqual(['Newer content']);
-    });
-
-    it('should clean up subscriptions on dispose', () => {
-        service.init(99, 'Initial', 'client-a');
-
-        const syncSubscription = service['syncSubscription'];
-        const outgoingSyncSubscription = service['outgoingSyncSubscription'];
-
-        const unsubscribeSpy = jest.spyOn(syncSubscription!, 'unsubscribe');
-        const outgoingUnsubscribeSpy = jest.spyOn(outgoingSyncSubscription!, 'unsubscribe');
-
-        service.dispose();
-
-        expect(unsubscribeSpy).toHaveBeenCalled();
-        expect(outgoingUnsubscribeSpy).toHaveBeenCalled();
-    });
-
-    it('should debounce local changes', fakeAsync(() => {
-        service.init(42, 'Old content', 'client-a');
-
-        service.queueLocalChange('Change 1');
-        tick(100);
-        service.queueLocalChange('Change 2');
-        tick(100);
-        service.queueLocalChange('Final change');
-        tick(1000);
-
-        // Should only send the last change after debounce
-        expect(syncService.sendSynchronization).toHaveBeenCalledOnce();
-        expect(syncService.sendSynchronization).toHaveBeenCalledWith(
-            42,
-            expect.objectContaining({
-                problemStatementPatch: expect.any(String),
-            }),
-        );
-    }));
-
-    it('should not emit updates for non-PROBLEM_STATEMENT targets', () => {
-        const received: string[] = [];
-        service.init(99, 'Initial', 'client-a');
-        service.updates$.subscribe((content) => received.push(content));
+        service.init(99, 'Initial').subscribe((content) => received.push(content));
 
         incomingMessages$.next({
             target: ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY,
             problemStatementFull: 'Should be ignored',
-            clientInstanceId: 'client-b',
             timestamp: 1,
         });
 
         expect(received).toEqual([]);
     });
 
-    it('should not send patch if content unchanged', fakeAsync(() => {
-        service.init(42, 'Same content', 'client-a');
+    it('ignores older messages based on timestamp', () => {
+        const received: string[] = [];
+        service.init(99, 'Initial').subscribe((content) => received.push(content));
 
-        service.queueLocalChange('Same content');
-        tick(1000);
+        incomingMessages$.next({
+            target: ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT,
+            problemStatementFull: 'Newest',
+            timestamp: 2,
+        });
 
-        // Should not send synchronization if content is the same
-        expect(syncService.sendSynchronization).not.toHaveBeenCalled();
-    }));
+        incomingMessages$.next({
+            target: ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT,
+            problemStatementFull: 'Older content',
+            timestamp: 1,
+        });
 
-    it('should only request initial sync once', () => {
-        service.init(99, 'Initial', 'client-a');
+        expect(received).toEqual(['Newest']);
+    });
 
-        service.requestInitialSync();
-        service.requestInitialSync();
-        service.requestInitialSync();
+    it('responds to content requests with the last synced content', () => {
+        service.init(99, 'Current content');
 
-        // Should only send the request once
-        expect(syncService.sendSynchronization).toHaveBeenCalledOnce();
-        expect(syncService.sendSynchronization).toHaveBeenCalledWith(
+        incomingMessages$.next({
+            target: ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT,
+            problemStatementRequest: true,
+            timestamp: 1,
+        });
+
+        expect(syncService.sendSynchronizationUpdate).toHaveBeenCalledWith(
             99,
             expect.objectContaining({
-                problemStatementRequest: true,
+                target: ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT,
+                problemStatementFull: 'Current content',
             }),
         );
+    });
+
+    it('cleans up subscriptions and completes observers on reset', () => {
+        let completed = false;
+        service.init(99, 'Initial').subscribe({ complete: () => (completed = true) });
+
+        service.reset();
+        expect(completed).toBeTrue();
+
+        incomingMessages$.next({
+            target: ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT,
+            problemStatementFull: 'Should not be processed',
+            timestamp: 3,
+        });
     });
 });

@@ -7,112 +7,149 @@ import {
     ProgrammingExerciseEditorSyncTarget,
 } from 'app/programming/manage/services/programming-exercise-editor-sync.service';
 import { WebsocketService } from 'app/shared/service/websocket.service';
+import { BrowserFingerprintService } from 'app/core/account/fingerprint/browser-fingerprint.service';
 
 describe('ProgrammingExerciseEditorSyncService', () => {
     let service: ProgrammingExerciseEditorSyncService;
-    let websocketService: WebsocketService;
-    let receiveSubjects: Subject<ProgrammingExerciseEditorSyncMessage>[];
+    let websocketService: jest.Mocked<WebsocketService>;
+    let receiveSubject: Subject<ProgrammingExerciseEditorSyncMessage>;
 
     beforeEach(() => {
-        receiveSubjects = [];
+        receiveSubject = new Subject<ProgrammingExerciseEditorSyncMessage>();
+
         TestBed.configureTestingModule({
             providers: [
                 ProgrammingExerciseEditorSyncService,
                 {
                     provide: WebsocketService,
                     useValue: {
-                        subscribe: jest.fn(),
+                        subscribe: jest.fn().mockReturnValue(receiveSubject.asObservable()),
                         send: jest.fn(),
-                        receive: jest.fn().mockImplementation(() => {
-                            const subject = new Subject<ProgrammingExerciseEditorSyncMessage>();
-                            receiveSubjects.push(subject);
-                            return subject.asObservable();
-                        }),
                         unsubscribe: jest.fn(),
+                    },
+                },
+                {
+                    provide: BrowserFingerprintService,
+                    useValue: {
+                        instanceIdentifier: { value: 'test-client-instance-123' },
                     },
                 },
             ],
         });
 
         service = TestBed.inject(ProgrammingExerciseEditorSyncService);
-        websocketService = TestBed.inject(WebsocketService);
+        websocketService = TestBed.inject(WebsocketService) as jest.Mocked<WebsocketService>;
     });
 
     it('subscribes to websocket topic and forwards updates', () => {
         const received: ProgrammingExerciseEditorSyncMessage[] = [];
-        service.getSynchronizationUpdates(5).subscribe((message) => received.push(message));
+        service.subscribeToUpdates(5).subscribe((message: ProgrammingExerciseEditorSyncMessage) => received.push(message));
 
         expect(websocketService.subscribe).toHaveBeenCalledWith('/topic/programming-exercises/5/synchronization');
 
-        const synchronizationMessage = { target: ProgrammingExerciseEditorSyncTarget.TESTS_REPOSITORY };
-        receiveSubjects[0].next(synchronizationMessage);
+        const synchronizationMessage: ProgrammingExerciseEditorSyncMessage = {
+            target: ProgrammingExerciseEditorSyncTarget.TESTS_REPOSITORY,
+            clientInstanceId: 'other-client',
+        };
+        receiveSubject.next(synchronizationMessage);
 
         expect(received).toContain(synchronizationMessage);
     });
 
-    it('unsubscribes from all topics on destroy', () => {
-        service.getSynchronizationUpdates(3);
-        service.getSynchronizationUpdates(4);
+    it('filters out messages from same client instance', () => {
+        const received: ProgrammingExerciseEditorSyncMessage[] = [];
+        service.subscribeToUpdates(5).subscribe((message: ProgrammingExerciseEditorSyncMessage) => received.push(message));
 
-        service.ngOnDestroy();
+        const ownMessage: ProgrammingExerciseEditorSyncMessage = {
+            target: ProgrammingExerciseEditorSyncTarget.TESTS_REPOSITORY,
+            clientInstanceId: 'test-client-instance-123', // Same as our instance
+        };
+        receiveSubject.next(ownMessage);
 
-        expect(websocketService.unsubscribe).toHaveBeenCalledTimes(2);
+        expect(received).toHaveLength(0);
     });
 
-    it('unsubscribes from specific exercise', () => {
-        service.getSynchronizationUpdates(5);
+    it('sends synchronization update with timestamp and client instance ID', () => {
+        service.subscribeToUpdates(5);
 
-        service.unsubscribeFromExercise(5);
+        const message: ProgrammingExerciseEditorSyncMessage = {
+            target: ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY,
+        };
 
-        expect(websocketService.unsubscribe).toHaveBeenCalledWith('/topic/programming-exercises/5/synchronization');
+        service.sendSynchronizationUpdate(5, message);
+
+        expect(websocketService.send).toHaveBeenCalledWith(
+            '/topic/programming-exercises/5/synchronization',
+            expect.objectContaining({
+                target: ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY,
+                clientInstanceId: 'test-client-instance-123',
+                timestamp: expect.any(Number),
+            }),
+        );
     });
 
-    it('completes Subject when unsubscribing from exercise', () => {
+    it('throws error when sending without subscription', () => {
+        const message: ProgrammingExerciseEditorSyncMessage = {
+            target: ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY,
+        };
+
+        expect(() => service.sendSynchronizationUpdate(5, message)).toThrow('Cannot send synchronization message: not subscribed to websocket topic');
+    });
+
+    it('completes Subject when unsubscribing', () => {
         const received: ProgrammingExerciseEditorSyncMessage[] = [];
         let completed = false;
 
-        service.getSynchronizationUpdates(5).subscribe({
+        service.subscribeToUpdates(5).subscribe({
             next: (message) => received.push(message),
             complete: () => (completed = true),
         });
 
-        service.unsubscribeFromExercise(5);
+        service.unsubscribe();
 
         expect(completed).toBeTrue();
     });
 
-    it('stops receiving messages after unsubscribing from exercise', () => {
+    it('stops receiving messages after unsubscribing', () => {
         const received: ProgrammingExerciseEditorSyncMessage[] = [];
-        service.getSynchronizationUpdates(5).subscribe((message) => received.push(message));
+        service.subscribeToUpdates(5).subscribe((message: ProgrammingExerciseEditorSyncMessage) => received.push(message));
 
-        const message1 = { target: ProgrammingExerciseEditorSyncTarget.TESTS_REPOSITORY };
-        receiveSubjects[0].next(message1);
+        const message1: ProgrammingExerciseEditorSyncMessage = {
+            target: ProgrammingExerciseEditorSyncTarget.TESTS_REPOSITORY,
+            clientInstanceId: 'other-client',
+        };
+        receiveSubject.next(message1);
         expect(received).toHaveLength(1);
 
-        service.unsubscribeFromExercise(5);
+        service.unsubscribe();
 
-        // After unsubscribing, internal subscription should be cleaned up
-        // so pushing more messages should not affect the subscriber
-        const message2 = { target: ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY };
-        receiveSubjects[0].next(message2);
+        const message2: ProgrammingExerciseEditorSyncMessage = {
+            target: ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY,
+            clientInstanceId: 'other-client',
+        };
+        receiveSubject.next(message2);
 
         expect(received).toHaveLength(1); // Still only has the first message
     });
 
-    it('cleans up multiple exercises independently', () => {
-        service.getSynchronizationUpdates(3);
-        service.getSynchronizationUpdates(4);
-        service.getSynchronizationUpdates(5);
+    it('reuses same observable for multiple subscribers', () => {
+        const received1: ProgrammingExerciseEditorSyncMessage[] = [];
+        const received2: ProgrammingExerciseEditorSyncMessage[] = [];
 
-        service.unsubscribeFromExercise(4);
+        service.subscribeToUpdates(5).subscribe((message: ProgrammingExerciseEditorSyncMessage) => received1.push(message));
+        service.subscribeToUpdates(5).subscribe((message: ProgrammingExerciseEditorSyncMessage) => received2.push(message));
 
-        expect(websocketService.unsubscribe).toHaveBeenCalledWith('/topic/programming-exercises/4/synchronization');
-        expect(websocketService.unsubscribe).toHaveBeenCalledOnce();
-    });
+        // Should only subscribe to websocket once
+        expect(websocketService.subscribe).toHaveBeenCalledOnce();
 
-    it('does nothing when unsubscribing from non-existent exercise', () => {
-        service.unsubscribeFromExercise(999);
+        const message: ProgrammingExerciseEditorSyncMessage = {
+            target: ProgrammingExerciseEditorSyncTarget.TESTS_REPOSITORY,
+            clientInstanceId: 'other-client',
+        };
+        receiveSubject.next(message);
 
-        expect(websocketService.unsubscribe).not.toHaveBeenCalled();
+        // Both subscribers should receive the message
+        expect(received1).toEqual([message]);
+        expect(received2).toEqual([message]);
     });
 });

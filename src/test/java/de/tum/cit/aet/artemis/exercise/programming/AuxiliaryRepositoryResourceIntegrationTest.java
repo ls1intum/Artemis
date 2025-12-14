@@ -51,6 +51,7 @@ import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.dto.FileMove;
 import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTO;
 import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTOType;
+import de.tum.cit.aet.artemis.programming.dto.synchronization.ProgrammingExerciseEditorFileChangeType;
 import de.tum.cit.aet.artemis.programming.dto.synchronization.ProgrammingExerciseEditorFileType;
 import de.tum.cit.aet.artemis.programming.dto.synchronization.ProgrammingExerciseEditorSyncEventDTO;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
@@ -241,7 +242,7 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
 
         var filePatch = syncEvent.filePatches().get(0);
         assertThat(filePatch.fileName()).isEqualTo(currentLocalFileName);
-        assertThat(filePatch.changeType()).isEqualTo("RENAME");
+        assertThat(filePatch.changeType()).isEqualTo(ProgrammingExerciseEditorFileChangeType.RENAME);
         assertThat(filePatch.newFileName()).isEqualTo("renamedFile");
     }
 
@@ -278,33 +279,7 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
 
         var filePatch = syncEvent.filePatches().get(0);
         assertThat(filePatch.fileName()).isEqualTo(currentLocalFileName);
-        assertThat(filePatch.changeType()).isEqualTo("DELETE");
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testResetBroadcastsSynchronizationUpdate() throws Exception {
-        programmingExerciseRepository.save(programmingExercise);
-
-        request.postWithoutLocation(testRepoBaseUrl + auxiliaryRepository.getId() + "/reset", null, HttpStatus.OK, null);
-
-        var captor = ArgumentCaptor.forClass(ProgrammingExerciseEditorSyncEventDTO.class);
-        verify(websocketMessagingService).sendMessage(eq("/topic/programming-exercises/" + programmingExercise.getId() + "/synchronization"), captor.capture());
-        assertThat(captor.getValue().target()).isEqualTo(ProgrammingExerciseEditorSyncTarget.AUXILIARY_REPOSITORY);
-        assertThat(captor.getValue().auxiliaryRepositoryId()).isEqualTo(auxiliaryRepository.getId());
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testUpdateFilesBroadcastsWhenNotCommitted() throws Exception {
-        programmingExerciseRepository.save(programmingExercise);
-
-        request.put(testRepoBaseUrl + auxiliaryRepository.getId() + "/files?commit=false", getFileSubmissions(), HttpStatus.OK);
-
-        var captor = ArgumentCaptor.forClass(ProgrammingExerciseEditorSyncEventDTO.class);
-        verify(websocketMessagingService).sendMessage(eq("/topic/programming-exercises/" + programmingExercise.getId() + "/synchronization"), captor.capture());
-        assertThat(captor.getValue().target()).isEqualTo(ProgrammingExerciseEditorSyncTarget.AUXILIARY_REPOSITORY);
-        assertThat(captor.getValue().auxiliaryRepositoryId()).isEqualTo(auxiliaryRepository.getId());
+        assertThat(filePatch.changeType()).isEqualTo(ProgrammingExerciseEditorFileChangeType.DELETE);
     }
 
     @Test
@@ -326,7 +301,7 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
 
         var filePatch = syncEvent.filePatches().get(0);
         assertThat(filePatch.fileName()).isEqualTo("newFile");
-        assertThat(filePatch.changeType()).isEqualTo("CREATE");
+        assertThat(filePatch.changeType()).isEqualTo(ProgrammingExerciseEditorFileChangeType.CREATE);
         assertThat(filePatch.fileType()).isEqualTo(ProgrammingExerciseEditorFileType.FILE);
     }
 

@@ -97,4 +97,53 @@ class ProgrammingExerciseEditorSyncServiceTest {
         assertThat(sentMessage.target()).isEqualTo(ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY);
         assertThat(sentMessage.filePatches()).isNull();
     }
+
+    @Test
+    void broadcastFileChangesWithFolderCreate() {
+        ProgrammingExerciseEditorFileSyncDTO filePatch = ProgrammingExerciseEditorFileSyncDTO.forFolderCreate("src/main/java");
+        synchronizationService.broadcastFileChanges(80L, ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY, null, filePatch);
+
+        var captor = ArgumentCaptor.forClass(ProgrammingExerciseEditorSyncEventDTO.class);
+        verify(websocketMessagingService).sendMessage(eq("/topic/programming-exercises/80/synchronization"), captor.capture());
+        var sentMessage = captor.getValue();
+
+        assertThat(sentMessage.filePatches()).hasSize(1);
+        ProgrammingExerciseEditorFileSyncDTO patch = sentMessage.filePatches().get(0);
+        assertThat(patch.fileName()).isEqualTo("src/main/java");
+        assertThat(patch.changeType()).isEqualTo(ProgrammingExerciseEditorFileChangeType.CREATE);
+        assertThat(patch.fileType()).isEqualTo(ProgrammingExerciseEditorFileType.FOLDER);
+    }
+
+    @Test
+    void broadcastNewCommitAlert() {
+        synchronizationService.broadcastNewCommitAlert(90L, ProgrammingExerciseEditorSyncTarget.TESTS_REPOSITORY, null);
+
+        var captor = ArgumentCaptor.forClass(ProgrammingExerciseEditorSyncEventDTO.class);
+        verify(websocketMessagingService).sendMessage(eq("/topic/programming-exercises/90/synchronization"), captor.capture());
+        var sentMessage = captor.getValue();
+
+        assertThat(sentMessage.target()).isEqualTo(ProgrammingExerciseEditorSyncTarget.TESTS_REPOSITORY);
+        assertThat(sentMessage.newCommitAlert()).isTrue();
+        assertThat(sentMessage.auxiliaryRepositoryId()).isNull();
+        assertThat(sentMessage.filePatches()).isNull();
+    }
+
+    @Test
+    void broadcastNewCommitAlertForAuxiliaryRepository() {
+        synchronizationService.broadcastNewCommitAlert(100L, ProgrammingExerciseEditorSyncTarget.AUXILIARY_REPOSITORY, 25L);
+
+        var captor = ArgumentCaptor.forClass(ProgrammingExerciseEditorSyncEventDTO.class);
+        verify(websocketMessagingService).sendMessage(eq("/topic/programming-exercises/100/synchronization"), captor.capture());
+        var sentMessage = captor.getValue();
+
+        assertThat(sentMessage.target()).isEqualTo(ProgrammingExerciseEditorSyncTarget.AUXILIARY_REPOSITORY);
+        assertThat(sentMessage.newCommitAlert()).isTrue();
+        assertThat(sentMessage.auxiliaryRepositoryId()).isEqualTo(25L);
+    }
+
+    @Test
+    void getSynchronizationTopicGeneratesCorrectTopic() {
+        String topic = ProgrammingExerciseEditorSyncService.getSynchronizationTopic(123L);
+        assertThat(topic).isEqualTo("/topic/programming-exercises/123/synchronization");
+    }
 }

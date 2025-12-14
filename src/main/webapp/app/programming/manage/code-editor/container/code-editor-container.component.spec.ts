@@ -56,6 +56,7 @@ describe('CodeEditorContainerComponent', () => {
             getText: jest.fn().mockReturnValue('content'),
             getNumberOfLines: jest.fn().mockReturnValue(3),
             highlightLines: jest.fn(),
+            getFileContent: jest.fn(),
         } as any;
         component.grid = { toggleCollapse: jest.fn() } as any;
     });

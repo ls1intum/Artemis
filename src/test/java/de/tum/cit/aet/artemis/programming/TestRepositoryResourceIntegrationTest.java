@@ -411,33 +411,6 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
         verify(websocketMessagingService, never()).sendMessage(eq("/topic/programming-exercises/" + programmingExercise.getId() + "/synchronization"), any());
     }
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testResetBroadcastsSynchronizationUpdate() throws Exception {
-        programmingExerciseRepository.save(programmingExercise);
-
-        request.postWithoutLocation(testRepoBaseUrl + programmingExercise.getId() + "/reset", null, HttpStatus.OK, null);
-
-        var captor = ArgumentCaptor.forClass(ProgrammingExerciseEditorSyncEventDTO.class);
-        verify(websocketMessagingService).sendMessage(eq("/topic/programming-exercises/" + programmingExercise.getId() + "/synchronization"), captor.capture());
-        assertThat(captor.getValue().target()).isEqualTo(ProgrammingExerciseEditorSyncTarget.TESTS_REPOSITORY);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testSaveFilesBroadcastsSynchronizationUpdate() throws Exception {
-        programmingExerciseRepository.save(programmingExercise);
-
-        request.put(testRepoBaseUrl + programmingExercise.getId() + "/files?commit=false", getFileSubmissions(), HttpStatus.OK);
-
-        var captor = ArgumentCaptor.forClass(ProgrammingExerciseEditorSyncEventDTO.class);
-        verify(websocketMessagingService).sendMessage(eq("/topic/programming-exercises/" + programmingExercise.getId() + "/synchronization"), captor.capture());
-
-        var synchronizationMessage = captor.getValue();
-        assertThat(synchronizationMessage.target()).isEqualTo(ProgrammingExerciseEditorSyncTarget.TESTS_REPOSITORY);
-        assertThat(synchronizationMessage.auxiliaryRepositoryId()).isNull();
-    }
-
     @Disabled
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")

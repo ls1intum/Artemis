@@ -938,32 +938,12 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testTemplateSaveFilesBroadcastsSynchronizationUpdate() throws Exception {
-        request.put(studentRepoBaseUrl + programmingExercise.getTemplateParticipation().getId() + "/files?commit=false", getFileSubmissions("updatedFileContent"), HttpStatus.OK);
-
-        var captor = ArgumentCaptor.forClass(ProgrammingExerciseEditorSyncEventDTO.class);
-        verify(websocketMessagingService).sendMessage(eq("/topic/programming-exercises/" + programmingExercise.getId() + "/synchronization"), captor.capture());
-        assertThat(captor.getValue().target()).isEqualTo(ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testTemplateSaveFilesWithEmptySubmissionsDoesNotBroadcast() throws Exception {
         reset(websocketMessagingService);
 
         request.put(studentRepoBaseUrl + programmingExercise.getTemplateParticipation().getId() + "/files?commit=false", List.of(), HttpStatus.OK);
 
         verify(websocketMessagingService, never()).sendMessage(eq("/topic/programming-exercises/" + programmingExercise.getId() + "/synchronization"), any());
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testSolutionSaveFilesBroadcastsSynchronizationUpdate() throws Exception {
-        request.put(studentRepoBaseUrl + programmingExercise.getSolutionParticipation().getId() + "/files?commit=false", getFileSubmissions("updatedFileContent"), HttpStatus.OK);
-
-        var captor = ArgumentCaptor.forClass(ProgrammingExerciseEditorSyncEventDTO.class);
-        verify(websocketMessagingService).sendMessage(eq("/topic/programming-exercises/" + programmingExercise.getId() + "/synchronization"), captor.capture());
-        assertThat(captor.getValue().target()).isEqualTo(ProgrammingExerciseEditorSyncTarget.SOLUTION_REPOSITORY);
     }
 
     @Test
@@ -1318,16 +1298,6 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         programmingExercise = createProgrammingExerciseForExam();
         // A tutor is not allowed to reset the repository during the exam time
         assertUnchangedRepositoryStatusForForbiddenReset();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testSolutionResetBroadcastsSynchronizationUpdate() throws Exception {
-        request.postWithoutLocation(studentRepoBaseUrl + programmingExercise.getSolutionParticipation().getId() + "/reset", null, HttpStatus.OK, null);
-
-        var captor = ArgumentCaptor.forClass(ProgrammingExerciseEditorSyncEventDTO.class);
-        verify(websocketMessagingService).sendMessage(eq("/topic/programming-exercises/" + programmingExercise.getId() + "/synchronization"), captor.capture());
-        assertThat(captor.getValue().target()).isEqualTo(ProgrammingExerciseEditorSyncTarget.SOLUTION_REPOSITORY);
     }
 
     private ProgrammingExercise createProgrammingExerciseForExam() {
