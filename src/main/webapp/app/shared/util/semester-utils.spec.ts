@@ -150,6 +150,30 @@ describe('SemesterUtils', () => {
 
             expect(semesters[0]).toBe('SS25');
         });
+
+        it('should include winter semester spanning previous/current year in Jan-Mar', () => {
+            jest.useFakeTimers().setSystemTime(new Date('2025-02-15'));
+            const semesters = getCurrentAndFutureSemesters();
+
+            // Current semester should be WS24/25 (winter semester spanning 2024/2025)
+            expect(semesters[0]).toBe('WS24/25');
+            expect(semesters).toContain('SS25');
+            expect(semesters).toContain('WS25/26');
+            expect(semesters).not.toContain('SS24'); // Past semester
+        });
+
+        it('should have SS26 as default while WS25/26 is still selectable in Jan-Mar 2026', () => {
+            jest.useFakeTimers().setSystemTime(new Date('2026-02-15'));
+            const semesters = getCurrentAndFutureSemesters();
+
+            // Default semester should be SS26 (next semester, since we're > 50% through WS)
+            expect(getDefaultSemester()).toBe('SS26');
+
+            // But WS25/26 (current semester) should still be available in the list
+            expect(semesters).toContain('WS25/26');
+            expect(semesters).toContain('SS26');
+            expect(semesters[0]).toBe('WS25/26'); // Current semester is first in list
+        });
     });
 
     describe('generateCourseShortName', () => {

@@ -118,14 +118,18 @@ export function getCurrentAndFutureSemesters(): string[] {
     const currentSemester = getCurrentSemester();
     const futureYears = 2;
     const now = dayjs();
+    const month = now.month();
     const currentYear = now.year();
     const yearShort = currentYear - 2000;
 
+    // Start from previous year if we're in Jan-Mar (winter semester spans previous/current year)
+    const startYear = month <= 2 ? yearShort - 1 : yearShort;
+
     const semesters: string[] = [];
 
-    // Generate semesters for current year and future years
-    for (let i = 0; i <= futureYears; i++) {
-        const year = yearShort + i;
+    // Generate semesters from start year through future years
+    for (let i = 0; i <= futureYears + (month <= 2 ? 1 : 0); i++) {
+        const year = startYear + i;
         semesters.push(`SS${year}`);
         semesters.push(`WS${year}/${year + 1}`);
     }
