@@ -71,6 +71,7 @@ import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseFactory;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseUtilService;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorParticipationStatus;
 
@@ -997,7 +998,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         modelingExercise.setTitle("Exercise with invalid plagiarism config");
         modelingExercise.setChannelName("test-modeling-channel");
 
-        var config = new de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig();
+        var config = new PlagiarismDetectionConfig();
         config.setSimilarityThreshold(-1); // invalid: below 0
         config.setMinimumScore(50);
         config.setMinimumSize(50);
@@ -1028,7 +1029,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         Course course = modelingExerciseUtilService.addCourseWithOneModelingExercise();
         ModelingExercise modelingExercise = (ModelingExercise) course.getExercises().iterator().next();
 
-        var config = new de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig();
+        var config = new PlagiarismDetectionConfig();
         config.setSimilarityThreshold(101); // invalid: above 100
         config.setMinimumScore(50);
         config.setMinimumSize(50);

@@ -52,6 +52,7 @@ import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
 import de.tum.cit.aet.artemis.fileupload.util.FileUploadExerciseFactory;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
 
 class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTest {
 
@@ -683,7 +684,7 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
         fileUploadExercise.setFilePattern(creationFilePattern);
         fileUploadExercise.setChannelName("test-channel");
 
-        var config = new de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig();
+        var config = new PlagiarismDetectionConfig();
         config.setSimilarityThreshold(-1); // invalid: below 0
         config.setMinimumScore(50);
         config.setMinimumSize(50);
@@ -714,7 +715,7 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
         Course course = fileUploadExerciseUtilService.addCourseWithThreeFileUploadExercise();
         FileUploadExercise fileUploadExercise = ExerciseUtilService.findFileUploadExerciseWithTitle(course.getExercises(), "released");
 
-        var config = new de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig();
+        var config = new PlagiarismDetectionConfig();
         config.setSimilarityThreshold(101); // invalid: above 100
         config.setMinimumScore(50);
         config.setMinimumSize(50);
@@ -738,7 +739,7 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
         expectedFileUploadExercise.setCourse(course2);
         expectedFileUploadExercise.setChannelName("test" + UUID.randomUUID().toString().substring(0, 8));
 
-        var config = new de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig();
+        var config = new PlagiarismDetectionConfig();
         config.setSimilarityThreshold(50);
         config.setMinimumScore(-5); // invalid: negative
         config.setMinimumSize(50);

@@ -2430,7 +2430,7 @@ public class ProgrammingExerciseTestService {
     public void createProgrammingExercise_invalidPlagiarismDetectionConfig_badRequest() throws Exception {
         exercise.setChannelName("test-programming-channel");
 
-        var config = new de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig();
+        var config = new PlagiarismDetectionConfig();
         config.setSimilarityThreshold(-1); // invalid: below 0
         config.setMinimumScore(50);
         config.setMinimumSize(50);
@@ -2462,7 +2462,7 @@ public class ProgrammingExerciseTestService {
         exercise = programmingExerciseRepository.save(exercise);
 
         // Test updating with invalid plagiarism config
-        var config = new de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig();
+        var config = new PlagiarismDetectionConfig();
         config.setSimilarityThreshold(101); // invalid: above 100
         config.setMinimumScore(50);
         config.setMinimumSize(50);
