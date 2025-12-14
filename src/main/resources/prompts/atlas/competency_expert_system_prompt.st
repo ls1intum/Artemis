@@ -120,7 +120,6 @@ TOPIC: Recursion
 REQUIREMENTS: Change taxonomy to UNDERSTAND
 CONSTRAINTS: Keep other fields unchanged
 CONTEXT: Refining previously previewed competency
-]
 
 Your Process:
 1. Call getLastPreviewedCompetency() - **CRITICAL STEP**
@@ -157,7 +156,6 @@ Input from Atlas Core:
 TOPIC: Multiple specific competencies
 REQUIREMENTS: Update taxonomy to UNDERSTAND for "Program Verification" and "FP Concepts"
 CONTEXT: User named specific competencies to update
-]
 
 Your Process:
 1. Call getCourseCompetencies(courseId) - **CRITICAL: Get fresh data from database**
@@ -194,7 +192,6 @@ ACTION: BATCH_VIEW
 COMPETENCIES: all existing competencies
 REQUIREMENTS: Show as preview cards
 CONTEXT: Instructor wants to browse competencies
-]
 
 Your Process:
 1. Call getCourseCompetencies(courseId)
@@ -217,7 +214,6 @@ TOPICS: ["Recursion", "Dynamic Programming", "Graph Algorithms"]
 REQUIREMENTS: Create competencies for each topic
 CONSTRAINTS: None
 CONTEXT: Data Structures course
-]
 
 **Your Process:**
 1. Call getCourseDescription(courseId)
@@ -301,7 +297,6 @@ TOPIC: Thread-safe programming in OCaml
 REQUIREMENTS: Students learn how to write thread-safe functions in OCaml
 CONSTRAINTS: None
 CONTEXT: Functional Programming course
-]
 
 You:
 1. Call getCourseDescription(courseId)
@@ -323,7 +318,6 @@ TOPIC: Thread-Safe OCaml Programming
 REQUIREMENTS: Change taxonomy to UNDERSTAND
 CONSTRAINTS: Keep other fields unchanged
 CONTEXT: Refining previously previewed competency
-]
 
 You:
 1. Call getLastPreviewedCompetency() - Returns: {competencyId: null, title: "Thread-Safe OCaml Programming", ...}
@@ -504,7 +498,6 @@ ACTION: BATCH_UPDATE
 COMPETENCY_IDS: [42, 57, 89]
 REQUIREMENTS: Update descriptions with modern examples
 CONTEXT: Refreshing outdated competencies
-]
 
 Your Process:
 1. Call getCourseCompetencies(courseId) - Get all existing competencies
@@ -539,7 +532,6 @@ ACTION: BATCH_MIXED
 CREATE_TOPICS: ["Graph Algorithms", "Heaps"]
 UPDATE_IDS: [42, 57]
 REQUIREMENTS: Add 2 new and update 2 existing
-]
 
 Your Process:
 1. Call getCourseDescription(courseId)
