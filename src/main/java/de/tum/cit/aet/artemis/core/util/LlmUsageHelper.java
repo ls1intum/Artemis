@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.core.util;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -85,7 +86,7 @@ public class LlmUsageHelper {
         if (llmRequests == null) {
             return;
         }
-        List<LLMRequest> requests = java.util.Arrays.stream(llmRequests).filter(Objects::nonNull).toList();
+        List<LLMRequest> requests = Arrays.stream(llmRequests).filter(Objects::nonNull).toList();
         if (requests.isEmpty()) {
             return;
         }
