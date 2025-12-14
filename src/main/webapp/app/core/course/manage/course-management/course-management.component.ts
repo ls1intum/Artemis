@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subject, Subscription } from 'rxjs';
 import { Course } from 'app/core/course/shared/entities/course.model';
@@ -7,39 +7,31 @@ import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/shared/service/alert.service';
 import { CourseManagementOverviewStatisticsDto } from 'app/core/course/manage/overview/course-management-overview-statistics-dto.model';
 import { EventManager } from 'app/shared/service/event-manager.service';
-import { faAngleDown, faAngleUp, faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faAngleDown, faAngleUp, faBook, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { DocumentationButtonComponent } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
-import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CourseManagementCardComponent } from '../overview/course-management-card.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CourseAccessStorageService } from 'app/core/course/shared/services/course-access-storage.service';
 import { addPublicFilePrefix } from 'app/app.constants';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     selector: 'jhi-course',
     templateUrl: './course-management.component.html',
     styles: ['.course-table {padding-bottom: 5rem}'],
     styleUrls: ['./course-management.component.scss'],
-    imports: [
-        TranslateDirective,
-        DocumentationButtonComponent,
-        // NOTE: this is actually used in the html template, otherwise *jhiHasAnyAuthority would not work
-        HasAnyAuthorityDirective,
-        RouterLink,
-        FaIconComponent,
-        CourseManagementCardComponent,
-        ArtemisTranslatePipe,
-    ],
+    imports: [TranslateDirective, DocumentationButtonComponent, RouterLink, FaIconComponent, CourseManagementCardComponent, ArtemisTranslatePipe],
 })
 export class CourseManagementComponent implements OnInit, OnDestroy {
     private courseManagementService = inject(CourseManagementService);
     private alertService = inject(AlertService);
     private eventManager = inject(EventManager);
     private courseAccessStorageService = inject(CourseAccessStorageService);
+    private accountService = inject(AccountService);
 
     showOnlyActive = true;
 
@@ -60,6 +52,9 @@ export class CourseManagementComponent implements OnInit, OnDestroy {
     faPlus = faPlus;
     faAngleDown = faAngleDown;
     faAngleUp = faAngleUp;
+    faBook = faBook;
+    protected readonly isAdmin = computed(() => this.accountService.isAdmin());
+    protected readonly isAuthenticated = this.accountService.authenticated;
 
     /**
      * loads all courses and subscribes to courseListModification
