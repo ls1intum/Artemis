@@ -216,7 +216,7 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
     private applyRemoteFileOperation(operation: FileOperation) {
         // Handle new commit alert - notify user to refresh the page
         if (operation.type === 'NEW_COMMIT_ALERT') {
-            this.alertService.info('artemisApp.editor.newCommitAlert', { reload: true });
+            this.alertService.info('artemisApp.editor.synchronization.newCommitAlert');
             return;
         }
 

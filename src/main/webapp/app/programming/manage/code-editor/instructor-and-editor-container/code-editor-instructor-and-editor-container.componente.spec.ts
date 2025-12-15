@@ -18,8 +18,14 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
-import { ProgrammingExerciseEditorSyncService } from 'app/programming/manage/services/programming-exercise-editor-sync.service';
+import {
+    ProgrammingExerciseEditorFileChangeType,
+    ProgrammingExerciseEditorSyncMessage,
+    ProgrammingExerciseEditorSyncService,
+    ProgrammingExerciseEditorSyncTarget,
+} from 'app/programming/manage/services/programming-exercise-editor-sync.service';
 import { FileOperation, RepositoryFileSyncService } from 'app/programming/manage/services/repository-file-sync.service';
+import { FileType, RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 
 describe('CodeEditorInstructorAndEditorContainerComponent', () => {
     let fixture: ComponentFixture<CodeEditorInstructorAndEditorContainerComponent>;
@@ -47,7 +53,14 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
                 MockProvider(ProgrammingExerciseService),
                 MockProvider(CourseExerciseService),
                 MockProvider(ProgrammingExerciseEditorSyncService),
-                MockProvider(RepositoryFileSyncService, { applyRemoteOperation: jest.fn(), reset: jest.fn() } as any),
+                MockProvider(RepositoryFileSyncService, {
+                    applyRemoteOperation: jest.fn(),
+                    reset: jest.fn(),
+                    registerBaseline: jest.fn(),
+                    requestFullFile: jest.fn(),
+                    handleLocalFileOperation: jest.fn(),
+                    init: jest.fn().mockReturnValue(of()),
+                } as any),
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 provideRouter([]),
@@ -123,7 +136,70 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
 
         (comp as any).applyRemoteFileOperation({ type: 'NEW_COMMIT_ALERT' } as FileOperation);
 
-        expect(infoSpy).toHaveBeenCalledWith('artemisApp.editor.newCommitAlert', { reload: true });
+        expect(infoSpy).toHaveBeenCalledWith('artemisApp.editor.synchronization.newCommitAlert');
         expect(repositorySyncService.applyRemoteOperation).not.toHaveBeenCalled();
+    });
+
+    it('registers baselines and requests file content on load', () => {
+        const repositorySyncService = TestBed.inject(RepositoryFileSyncService) as jest.Mocked<RepositoryFileSyncService>;
+        comp.selectedRepository = RepositoryType.AUXILIARY;
+        comp.selectedRepositoryId = 99;
+        comp.codeEditorContainer = { getFileContent: jest.fn().mockReturnValue('content') } as any;
+
+        comp.onFileLoaded('src/Main.java');
+
+        expect(repositorySyncService.registerBaseline).toHaveBeenCalledWith(RepositoryType.AUXILIARY, 'src/Main.java', 'content', 99);
+        expect(repositorySyncService.requestFullFile).toHaveBeenCalledWith(RepositoryType.AUXILIARY, 'src/Main.java', 99);
+    });
+
+    it('requests full content without baseline when file not available locally', () => {
+        const repositorySyncService = TestBed.inject(RepositoryFileSyncService) as jest.Mocked<RepositoryFileSyncService>;
+        comp.selectedRepository = RepositoryType.TESTS;
+        comp.codeEditorContainer = { getFileContent: jest.fn().mockReturnValue(undefined) } as any;
+
+        comp.onFileLoaded('src/Main.java');
+
+        expect(repositorySyncService.registerBaseline).not.toHaveBeenCalled();
+        expect(repositorySyncService.requestFullFile).toHaveBeenCalledWith(RepositoryType.TESTS, 'src/Main.java', undefined);
+    });
+
+    it('handles local operations only when exercise exists', () => {
+        const repositorySyncService = TestBed.inject(RepositoryFileSyncService) as jest.Mocked<RepositoryFileSyncService>;
+        comp.selectedRepository = RepositoryType.TEMPLATE;
+
+        comp.onLocalFileOperationSync({ type: ProgrammingExerciseEditorFileChangeType.DELETE, fileName: 'toDelete.java' });
+        expect(repositorySyncService.handleLocalFileOperation).not.toHaveBeenCalled();
+
+        comp.exercise = { id: 5 } as ProgrammingExercise;
+        comp.selectedRepository = RepositoryType.AUXILIARY;
+        comp.selectedRepositoryId = 7;
+
+        comp.onLocalFileOperationSync({ type: ProgrammingExerciseEditorFileChangeType.CREATE, fileName: 'new.java', content: '', fileType: FileType.FILE });
+        expect(repositorySyncService.handleLocalFileOperation).toHaveBeenCalledWith(
+            { type: ProgrammingExerciseEditorFileChangeType.CREATE, fileName: 'new.java', content: '', fileType: FileType.FILE },
+            RepositoryType.AUXILIARY,
+            7,
+        );
+    });
+
+    it('filters synchronization messages by repository selection', () => {
+        comp.selectedRepository = RepositoryType.TEMPLATE;
+        expect((comp as any).isChangeRelevant({} as ProgrammingExerciseEditorSyncMessage)).toBeFalse();
+        expect((comp as any).isChangeRelevant({ target: ProgrammingExerciseEditorSyncTarget.SOLUTION_REPOSITORY } as ProgrammingExerciseEditorSyncMessage)).toBeFalse();
+
+        comp.selectedRepository = RepositoryType.AUXILIARY;
+        comp.selectedRepositoryId = 3;
+        expect(
+            (comp as any).isChangeRelevant({
+                target: ProgrammingExerciseEditorSyncTarget.AUXILIARY_REPOSITORY,
+                auxiliaryRepositoryId: 99,
+            } as ProgrammingExerciseEditorSyncMessage),
+        ).toBeFalse();
+        expect(
+            (comp as any).isChangeRelevant({
+                target: ProgrammingExerciseEditorSyncTarget.AUXILIARY_REPOSITORY,
+                auxiliaryRepositoryId: 3,
+            } as ProgrammingExerciseEditorSyncMessage),
+        ).toBeTrue();
     });
 });
