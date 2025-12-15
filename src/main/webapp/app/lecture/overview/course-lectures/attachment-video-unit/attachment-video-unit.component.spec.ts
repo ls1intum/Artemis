@@ -30,6 +30,14 @@ import { MockFileService } from 'test/helpers/mocks/service/mock-file.service';
 import { FileService } from 'app/shared/service/file.service';
 import urlParser from 'js-video-url-parser';
 
+// Mock ResizeObserver for VideoPlayerComponent
+class MockResizeObserver {
+    observe = jest.fn();
+    unobserve = jest.fn();
+    disconnect = jest.fn();
+}
+global.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
+
 describe('AttachmentVideoUnitComponent', () => {
     let scienceService: ScienceService;
     let fileService: FileService;
