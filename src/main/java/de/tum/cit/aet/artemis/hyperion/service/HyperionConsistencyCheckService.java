@@ -122,8 +122,8 @@ public class HyperionConsistencyCheckService {
         var results = Mono.zip(structuralMono, semanticMono).block();
         var structuralIssues = results != null ? results.getT1().issues() : List.<ConsistencyIssue>of();
         var structuralUsage = results != null ? results.getT1().usage() : null;
-        var semanticIssues = results != null ? results.getT2().issues : List.<ConsistencyIssue>of();
-        var semanticUsage = results != null ? results.getT2().usage : null;
+        var semanticIssues = results != null ? results.getT2().issues() : List.<ConsistencyIssue>of();
+        var semanticUsage = results != null ? results.getT2().usage() : null;
 
         List<ConsistencyIssue> combinedIssues = Stream.concat(structuralIssues.stream(), semanticIssues.stream()).toList();
         llmUsageHelper.storeTokenUsage(exerciseWithParticipations, usageCollector.toArray(LLMRequest[]::new));
