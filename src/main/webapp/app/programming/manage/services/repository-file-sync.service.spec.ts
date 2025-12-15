@@ -97,6 +97,14 @@ describe('RepositoryFileSyncService', () => {
             );
         });
 
+        it('skips sending patches when content is unchanged', () => {
+            service.registerBaseline(RepositoryType.TEMPLATE, 'file.txt', 'same');
+
+            service.handleLocalFileOperation({ type: ProgrammingExerciseEditorFileChangeType.CONTENT, fileName: 'file.txt', content: 'same' }, RepositoryType.TEMPLATE);
+
+            expect(syncService.sendSynchronizationUpdate).not.toHaveBeenCalled();
+        });
+
         it('sends create operation with full content', () => {
             service.handleLocalFileOperation(
                 { type: ProgrammingExerciseEditorFileChangeType.CREATE, fileName: 'new.txt', content: 'hello', fileType: FileType.FILE },
@@ -164,6 +172,26 @@ describe('RepositoryFileSyncService', () => {
             expect(baselines['42-TEMPLATE_REPOSITORY-none::old.txt']).toBeUndefined();
             expect(baselines['42-TEMPLATE_REPOSITORY-none::new.txt']).toBe('content');
         });
+
+        it('falls back to provided content on rename when no baseline exists', () => {
+            service.handleLocalFileOperation(
+                { type: ProgrammingExerciseEditorFileChangeType.RENAME, fileName: 'old.txt', newFileName: 'new.txt', content: 'renamed content' },
+                RepositoryType.TEMPLATE,
+            );
+
+            const baselines = (service as any).baselines;
+            expect(baselines['42-TEMPLATE_REPOSITORY-none::new.txt']).toBe('renamed content');
+        });
+
+        it('ignores unsupported repositories and uninitialized service', () => {
+            service.reset();
+            service.handleLocalFileOperation({ type: ProgrammingExerciseEditorFileChangeType.DELETE, fileName: 'test.txt' }, RepositoryType.TEMPLATE);
+            expect(syncService.sendSynchronizationUpdate).not.toHaveBeenCalled();
+
+            service.init(42, () => true);
+            service.handleLocalFileOperation({ type: ProgrammingExerciseEditorFileChangeType.DELETE, fileName: 'test.txt' }, RepositoryType.ASSIGNMENT);
+            expect(syncService.sendSynchronizationUpdate).not.toHaveBeenCalled();
+        });
     });
 
     describe('Remote synchronization handling', () => {
@@ -211,6 +239,21 @@ describe('RepositoryFileSyncService', () => {
                 { type: ProgrammingExerciseEditorFileChangeType.DELETE, fileName: 'delete.txt' },
                 { type: ProgrammingExerciseEditorFileChangeType.RENAME, fileName: 'old.txt', newFileName: 'renamed.txt', content: 'content' },
             ]);
+        });
+
+        it('returns undefined and does not emit when patch cannot be applied', () => {
+            const operations: FileOperation[] = [];
+            service.init(42, () => true).subscribe((op) => operations.push(op));
+            service.registerBaseline(RepositoryType.TEMPLATE, 'file.txt', 'baseline');
+
+            incomingMessages$.next({
+                target: ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY,
+                filePatches: [{ fileName: 'file.txt', patch: '<<<invalid>>>', changeType: ProgrammingExerciseEditorFileChangeType.CONTENT }],
+                timestamp: 2,
+            });
+
+            expect(operations).toEqual([]);
+            expect((service as any).baselines['42-TEMPLATE_REPOSITORY-none::file.txt']).toBe('baseline');
         });
 
         it('ignores messages without a target', () => {
@@ -290,6 +333,22 @@ describe('RepositoryFileSyncService', () => {
             );
         });
 
+        it('stores auxiliary baselines and emits updates for full file syncs', () => {
+            const operations: FileOperation[] = [];
+            service.init(42, () => true).subscribe((op) => operations.push(op));
+
+            incomingMessages$.next({
+                target: ProgrammingExerciseEditorSyncTarget.AUXILIARY_REPOSITORY,
+                auxiliaryRepositoryId: 7,
+                fileFulls: [{ fileName: 'aux/readme.md', content: 'aux content' }],
+                timestamp: 3,
+            });
+
+            const baselineKey = '42-AUXILIARY_REPOSITORY-7::aux/readme.md';
+            expect((service as any).baselines[baselineKey]).toBe('aux content');
+            expect(operations).toEqual([{ type: ProgrammingExerciseEditorFileChangeType.CONTENT, fileName: 'aux/readme.md', content: 'aux content' }]);
+        });
+
         it('applies full file sync messages to baselines', () => {
             const operations: FileOperation[] = [];
             service.init(42, () => true).subscribe((op) => operations.push(op));
@@ -307,6 +366,14 @@ describe('RepositoryFileSyncService', () => {
     describe('Full file requests', () => {
         beforeEach(() => {
             service.init(42, () => true);
+        });
+
+        it('returns early when not initialized', () => {
+            service.reset();
+
+            service.requestFullFile(RepositoryType.TEMPLATE, 'file.txt');
+
+            expect(syncService.sendSynchronizationUpdate).not.toHaveBeenCalled();
         });
 
         it('does not send requests when repository type has no sync target', () => {
