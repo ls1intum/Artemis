@@ -66,6 +66,15 @@ Start by following the :ref:`Server Setup <Server Setup>` guide, which explains 
 
 After completing the server setup, proceed with setting up the Artemis client by following the :ref:`Client Setup Guide <client-setup>`.
 
+
+Setup on Artemis Test Server with Helios
+-----------------------------
+
+Helios is an application that provides a well-designed UI for deploying various services the AET is building using GitHub Actions.
+You can use Helios to deploy an Artemis test server without needing to set up the server and client manually.
+For detailed instructions on setting up Artemis with Helios, refer to the :ref:`setup-with-helios` guide.
+
+
 .. toctree::
    :includehidden:
    :maxdepth: 2
@@ -74,6 +83,7 @@ After completing the server setup, proceed with setting up the Artemis client by
    setup/database
    setup/server
    setup/client
+   setup/helios
    setup/integrated-code-lifecycle
    setup/jenkins-localvc
    setup/aeolus

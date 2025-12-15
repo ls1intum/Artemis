@@ -6,6 +6,8 @@ Server Setup
 To start the Artemis application server from the development environment, first import the project into IntelliJ IDEA.
 Make sure to install the **Spring Boot** plugins for IntelliJ IDEA, this will make it easier to run the server.
 
+As an alternative, you may consider running the entire Artemis application using the Helios application. See :ref:`setup-with-helios` for more details.
+
 Before starting the application, update the required configuration settings.
 
 Configuration Setup
