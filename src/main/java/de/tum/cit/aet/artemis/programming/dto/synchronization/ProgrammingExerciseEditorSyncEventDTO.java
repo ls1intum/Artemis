@@ -17,11 +17,6 @@ public record ProgrammingExerciseEditorSyncEventDTO(ProgrammingExerciseEditorSyn
         return new ProgrammingExerciseEditorSyncEventDTO(target, auxiliaryRepositoryId, clientInstanceId, filePatches, null);
     }
 
-    public static ProgrammingExerciseEditorSyncEventDTO forGeneralUpdate(ProgrammingExerciseEditorSyncTarget target, @Nullable Long auxiliaryRepositoryId,
-            @Nullable String clientInstanceId) {
-        return new ProgrammingExerciseEditorSyncEventDTO(target, auxiliaryRepositoryId, clientInstanceId, null, null);
-    }
-
     public static ProgrammingExerciseEditorSyncEventDTO forNewCommitAlert(ProgrammingExerciseEditorSyncTarget target, @Nullable Long auxiliaryRepositoryId,
             @Nullable String clientInstanceId) {
         return new ProgrammingExerciseEditorSyncEventDTO(target, auxiliaryRepositoryId, clientInstanceId, null, true);

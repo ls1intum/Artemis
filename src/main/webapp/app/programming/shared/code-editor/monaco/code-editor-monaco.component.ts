@@ -252,10 +252,12 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
     }
 
     private updateFileContent(fileName: string, text: string, emitChange: boolean) {
-        const existingSession = this.fileSession()[fileName] ?? ({ code: '', loadingError: false, scrollTop: 0, cursor: { column: 0, lineNumber: 0 } } as FileSession[string]);
+        const existingSession = this.fileSession()[fileName];
+        if (!fileName || !existingSession) {
+            return;
+        }
         const previousText = existingSession.code;
         const previousScrollTop = existingSession.scrollTop;
-
         if (previousText !== text) {
             this.fileSession.set({
                 ...this.fileSession(),
