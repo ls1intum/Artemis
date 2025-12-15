@@ -2,7 +2,7 @@ import dayjs from 'dayjs/esm';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockProvider } from 'ng-mocks';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { of } from 'rxjs';
 import { AttachmentVideoUnitFormComponent, AttachmentVideoUnitFormData } from '../attachment-video-unit-form/attachment-video-unit-form.component';
 import { AttachmentVideoUnitService } from '../services/attachment-video-unit.service';
 import { EditAttachmentVideoUnitComponent } from './edit-attachment-video-unit.component';
@@ -235,30 +235,26 @@ describe('EditAttachmentVideoUnitComponent', () => {
         expect(navigateSpy).toHaveBeenCalledOnce();
     });
 
-    it('should fetch transcription data on initialization', () => {
-        const transcription = { id: 1, videoUnitId: 1, language: 'en', content: 'test' };
-        const getTranscriptionSpy = jest.spyOn(lectureTranscriptionService, 'getTranscription').mockReturnValue(of(transcription as any));
+    it('should fetch transcription status on initialization', () => {
         const getTranscriptionStatusSpy = jest.spyOn(lectureTranscriptionService, 'getTranscriptionStatus').mockReturnValue(of(undefined));
 
         fixture.detectChanges();
 
-        expect(getTranscriptionSpy).toHaveBeenCalledWith(attachmentVideoUnit.id);
         expect(getTranscriptionStatusSpy).toHaveBeenCalledWith(attachmentVideoUnit.id);
-        expect(component.formData?.transcriptionProperties?.videoTranscription).toBe(JSON.stringify(transcription));
+        // Component only fetches transcription status, not full transcription data
+        expect(component.formData).toBeDefined();
     });
 
-    it('should handle error when fetching transcription data', () => {
-        jest.spyOn(lectureTranscriptionService, 'getTranscription').mockReturnValue(of(undefined));
+    it('should handle when transcription status is not available', () => {
         jest.spyOn(lectureTranscriptionService, 'getTranscriptionStatus').mockReturnValue(of(undefined));
 
         fixture.detectChanges();
 
-        expect(component.formData?.transcriptionProperties?.videoTranscription).toBeUndefined();
+        expect(component.formData?.transcriptionStatus).toBeUndefined();
     });
 
     it('should handle transcription status when present', () => {
         const transcriptionStatus = { status: 'PENDING', progress: 50 };
-        jest.spyOn(lectureTranscriptionService, 'getTranscription').mockReturnValue(of(undefined));
         jest.spyOn(lectureTranscriptionService, 'getTranscriptionStatus').mockReturnValue(of(transcriptionStatus as any));
 
         fixture.detectChanges();

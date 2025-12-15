@@ -25,10 +25,13 @@ import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitCompletion;
+import de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState;
 import de.tum.cit.aet.artemis.lecture.domain.OnlineUnit;
+import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
 import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
 import de.tum.cit.aet.artemis.lecture.dto.LectureUnitForLearningPathNodeDetailsDTO;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitCompletionRepository;
+import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRepository;
 import de.tum.cit.aet.artemis.lecture.repository.TextUnitRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
@@ -46,6 +49,9 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentTes
 
     @Autowired
     private LectureUnitCompletionRepository lectureUnitCompletionRepository;
+
+    @Autowired
+    private LectureUnitProcessingStateRepository lectureUnitProcessingStateRepository;
 
     @Autowired
     private LectureUtilService lectureUtilService;
@@ -320,5 +326,47 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentTes
         var attachmentVideoUnit = lecture1.getLectureUnits().stream().filter(lu -> lu instanceof AttachmentVideoUnit).findFirst().orElseThrow();
         request.postWithoutLocation("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/" + attachmentVideoUnit.getId() + "/retry-processing", null, HttpStatus.FORBIDDEN,
                 null);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void retryProcessing_whenInFailedState_shouldSucceed() throws Exception {
+        // Get the attachment video unit
+        var attachmentVideoUnit = lecture1.getLectureUnits().stream().filter(lu -> lu instanceof AttachmentVideoUnit).findFirst().orElseThrow();
+
+        // Create a processing state with FAILED phase
+        LectureUnitProcessingState processingState = new LectureUnitProcessingState(attachmentVideoUnit);
+        processingState.setPhase(ProcessingPhase.FAILED);
+        processingState.setRetryCount(3);
+        processingState.setErrorKey("artemisApp.processing.error.transcriptionFailed");
+        lectureUnitProcessingStateRepository.save(processingState);
+
+        // Call the retry processing endpoint
+        request.postWithoutLocation("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/" + attachmentVideoUnit.getId() + "/retry-processing", null, HttpStatus.OK, null);
+
+        // Verify the processing state was updated
+        var updatedState = lectureUnitProcessingStateRepository.findByLectureUnit_Id(attachmentVideoUnit.getId()).orElseThrow();
+        assertThat(updatedState.getPhase()).isNotEqualTo(ProcessingPhase.FAILED);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void retryProcessing_whenNotInFailedState_shouldReturnBadRequest() throws Exception {
+        // Get the attachment video unit
+        var attachmentVideoUnit = lecture1.getLectureUnits().stream().filter(lu -> lu instanceof AttachmentVideoUnit).findFirst().orElseThrow();
+
+        // Create a processing state with TRANSCRIBING phase (not FAILED)
+        LectureUnitProcessingState processingState = new LectureUnitProcessingState(attachmentVideoUnit);
+        processingState.setPhase(ProcessingPhase.TRANSCRIBING);
+        processingState.setRetryCount(0);
+        lectureUnitProcessingStateRepository.save(processingState);
+
+        // Call the retry processing endpoint - should return BAD_REQUEST
+        request.postWithoutLocation("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/" + attachmentVideoUnit.getId() + "/retry-processing", null,
+                HttpStatus.BAD_REQUEST, null);
+
+        // Verify the processing state was not changed
+        var unchangedState = lectureUnitProcessingStateRepository.findByLectureUnit_Id(attachmentVideoUnit.getId()).orElseThrow();
+        assertThat(unchangedState.getPhase()).isEqualTo(ProcessingPhase.TRANSCRIBING);
     }
 }
