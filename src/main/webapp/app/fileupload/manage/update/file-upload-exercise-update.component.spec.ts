@@ -37,9 +37,10 @@ describe('FileUploadExerciseUpdateComponent', () => {
     let fixture: ComponentFixture<FileUploadExerciseUpdateComponent>;
     let service: FileUploadExerciseService;
 
-    const createDateFieldStub = (): Partial<FormDateTimePickerComponent> => ({
-        dateInput: { valid: true } as Partial<NgModel>,
-    });
+    const createDateFieldStub = (): FormDateTimePickerComponent =>
+        ({
+            dateInput: { valid: true },
+        }) as unknown as FormDateTimePickerComponent;
 
     beforeEach(() => {
         TestBed.configureTestingModule({

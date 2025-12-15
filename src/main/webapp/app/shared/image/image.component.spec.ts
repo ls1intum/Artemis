@@ -52,8 +52,8 @@ describe('ImageComponent', () => {
     it('should emit SUCCESS when retryLoadImage is called after error', fakeAsync(() => {
         const reloadSpy = jest.spyOn<any, any>(component['imageResource'], 'reload').mockImplementation(() => {
             component['rawLocalImageUrl'] = testLocalImageURL;
-            component['imageResource'].hasValue = () => true;
-            component['imageResource'].value = () => testLocalImageURL as any;
+            (component['imageResource'] as any).hasValue = () => true;
+            (component['imageResource'] as any).value = () => testLocalImageURL;
             (component as any).updateLoadingStatusDependingOnIf(true, false, false);
             (component as any).updateLoadingStatusDependingOnIf(false, false, true);
         });

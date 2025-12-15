@@ -38,9 +38,10 @@ describe('TextExercise Management Update Component', () => {
     let fixture: ComponentFixture<TextExerciseUpdateComponent>;
     let service: TextExerciseService;
 
-    const createDateFieldStub = (): Partial<FormDateTimePickerComponent> => ({
-        dateInput: { valid: true } as Partial<NgModel>,
-    });
+    const createDateFieldStub = (): FormDateTimePickerComponent =>
+        ({
+            dateInput: { valid: true },
+        }) as unknown as FormDateTimePickerComponent;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
