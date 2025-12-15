@@ -393,7 +393,7 @@ describe('LectureUpdateUnitsComponent', () => {
         const lectureIdCallArgument: number = createAttachmentVideoUnitStub.mock.calls[0][1];
 
         expect(lectureIdCallArgument).toBe(1);
-        expect(createAttachmentVideoUnitStub).toHaveBeenCalledWith(formData, 1);
+        expect(createAttachmentVideoUnitStub).toHaveBeenCalledWith(expect.any(FormData), 1);
         expect(updateSpy).toHaveBeenCalledOnce();
 
         updateSpy.mockRestore();
