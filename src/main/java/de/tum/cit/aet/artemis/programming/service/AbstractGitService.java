@@ -70,11 +70,11 @@ public abstract class AbstractGitService {
      * <li><a href="https://www.eclipse.org/lists/jgit-dev/msg03734.html">How to completely disable auto GC in JGit</a></li>
      * </ul>
      *
-     * @param localPath           The path to the local repository directory, null.
-     * @param remoteRepositoryUri The URI of the remote repository, null.
-     * @param defaultBranch       The name of the default branch to be checked out, null.
+     * @param localPath           The path to the local repository directory, not null.
+     * @param remoteRepositoryUri The URI of the remote repository, not null.
+     * @param defaultBranch       The name of the default branch to be checked out, not null.
      * @param isBare              Whether the repository is a bare repository (without working directory)
-     * @param writeAccess         Whether we write to the repository or . If true, the method sets the git Repo config for better performance.
+     * @param writeAccess         Whether we write to the repository or not. If true, the method sets the git Repo config for better performance.
      * @return The configured Repository instance.
      * @throws IOException             If an I/O error occurs during repository initialization or configuration.
      * @throws InvalidRefNameException If the provided default branch name is invalid.
@@ -96,7 +96,7 @@ public abstract class AbstractGitService {
         }
 
         builder.setInitialBranch(defaultBranch) // used when initializing / linking branches
-                .setMustExist(true)              // fail fast if the repository does exist
+                .setMustExist(true)              // fail fast if the repository does not exist
                 .readEnvironment()               // honor standard GIT_* environment variables
                 .findGitDir()                    // keep builder behavior consistent if GIT_DIR is set
                 .setup();                        // finalize builder configuration
