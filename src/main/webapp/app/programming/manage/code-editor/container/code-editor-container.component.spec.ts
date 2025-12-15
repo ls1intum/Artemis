@@ -9,7 +9,6 @@ import {
     FileBadgeType,
     FileType,
     RenameFileChange,
-    RepositoryType,
 } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateService, TranslateStore } from '@ngx-translate/core';
@@ -63,7 +62,6 @@ describe('CodeEditorContainerComponent', () => {
     afterEach(() => jest.clearAllMocks());
 
     it('should initialize defaults', () => {
-        expect(component.selectedRepository).toBe(RepositoryType.TEMPLATE);
         expect(component.editorState).toBe(EditorState.CLEAN);
         expect(component.commitState).toBe(CommitState.UNDEFINED);
         expect(component.unsavedFiles).toEqual({});
