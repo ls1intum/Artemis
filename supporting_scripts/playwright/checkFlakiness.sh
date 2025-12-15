@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -o pipefail
+
 # Check argument
 if [ -z "$1" ]; then
   echo "Usage: $0 <path-to-test-file-or-folder> [number-of-runs]"
@@ -9,6 +11,12 @@ fi
 
 INPUT_PATH="$1"
 NUM_RUNS="${2:-10}" # Default to 10 runs
+
+# Calculate headed runs (half of NUM_RUNS) and clamp to minimum 1
+HEADED_RUNS=$((NUM_RUNS / 2))
+if [ "$HEADED_RUNS" -lt 1 ]; then
+    HEADED_RUNS=1
+fi
 
 # Save current directory to resolve relative paths later
 ORIGINAL_PWD=$(pwd)
@@ -29,16 +37,13 @@ echo "--------------------------------------------------"
 echo "Flakiness Check Script"
 echo "--------------------------------------------------"
 echo "Target: $TEST_PATH"
-echo "Runs:   $NUM_RUNS headless + $((NUM_RUNS / 2)) headed"
+echo "Runs:   $NUM_RUNS headless + $HEADED_RUNS headed"
 echo "--------------------------------------------------"
 
 cd "$PLAYWRIGHT_DIR" || exit
 
 # Temporary file to store results (format: PASS|test_name or FAIL|test_name)
 RESULTS_FILE=$(mktemp)
-
-# Calculate headed runs (half of NUM_RUNS)
-HEADED_RUNS=$((NUM_RUNS / 2))
 
 echo ""
 echo "========== HEADLESS MODE ($NUM_RUNS runs) =========="
@@ -48,6 +53,11 @@ echo ""
 # --retries=0: Disable retries to detect true flakiness
 # --repeat-each=N: Run each test N times in a single execution
 OUTPUT=$(FORCE_COLOR=0 npx playwright test "$TEST_PATH" --reporter=list --retries=0 --repeat-each="$NUM_RUNS" 2>&1 | tee /dev/stderr)
+PIPELINE_STATUS=$?
+if [ "$PIPELINE_STATUS" -ne 0 ]; then
+    echo "Playwright failed in headless mode (exit $PIPELINE_STATUS)" >&2
+    exit "$PIPELINE_STATUS"
+fi
 
 # Parse individual test results (silently)
 echo "$OUTPUT" | while IFS= read -r line; do
@@ -73,6 +83,11 @@ echo ""
 
 # Run tests in headed mode
 OUTPUT=$(FORCE_COLOR=0 npx playwright test "$TEST_PATH" --reporter=list --retries=0 --repeat-each="$HEADED_RUNS" --headed 2>&1 | tee /dev/stderr)
+PIPELINE_STATUS=$?
+if [ "$PIPELINE_STATUS" -ne 0 ]; then
+    echo "Playwright failed in headed mode (exit $PIPELINE_STATUS)" >&2
+    exit "$PIPELINE_STATUS"
+fi
 
 # Parse individual test results (silently)
 echo "$OUTPUT" | while IFS= read -r line; do
@@ -104,9 +119,19 @@ echo "--------------------------------------------------------------------------
 # First get unique test names
 cut -d'|' -f2 "$RESULTS_FILE" | sort -u | while IFS= read -r test_name; do
     if [ -n "$test_name" ]; then
-        # Count passes and fails for this test (use grep -F for fixed string matching)
-        pass_count=$(grep -F "PASS|${test_name}" "$RESULTS_FILE" | wc -l | tr -d ' ')
-        fail_count=$(grep -F "FAIL|${test_name}" "$RESULTS_FILE" | wc -l | tr -d ' ')
+        # Count passes and fails for this test by parsing fields (avoid substring matches)
+        pass_count=$(awk -F'|' -v tn="$test_name" '
+            function trim(s) { gsub(/^[ \t]+|[ \t]+$/, "", s); return s }
+            { status = trim($1); name = trim($2) }
+            status == "PASS" && name == tn { c++ }
+            END { print c + 0 }
+        ' "$RESULTS_FILE")
+        fail_count=$(awk -F'|' -v tn="$test_name" '
+            function trim(s) { gsub(/^[ \t]+|[ \t]+$/, "", s); return s }
+            { status = trim($1); name = trim($2) }
+            status == "FAIL" && name == tn { c++ }
+            END { print c + 0 }
+        ' "$RESULTS_FILE")
         total=$((pass_count + fail_count))
         
         if [ "$total" -gt 0 ]; then
