@@ -81,7 +81,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
     const setRequiredInputs = (
         fixtureRef: ComponentFixture<ProgrammingExerciseEditableInstructionComponent>,
         exerciseInput: ProgrammingExercise = exercise,
-        forceRender$ = defaultForceRender$,
+        forceRender$: Observable<void> = defaultForceRender$,
     ) => {
         fixtureRef.componentRef.setInput('exercise', exerciseInput);
         fixtureRef.componentRef.setInput('initialEditorHeight', 'external');
@@ -324,7 +324,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
     });
 
     it('should have intelligence actions when Hyperion is active', () => {
-        const isModuleFeatureActiveSpy = jest.spyOn(TestBed.inject(ProfileService), 'isModuleFeatureActive').mockReturnValue(true);
+        jest.spyOn(TestBed.inject(ProfileService), 'isModuleFeatureActive').mockReturnValue(true);
 
         setRequiredInputs(fixture, { ...exercise, course: { id: 1 } as any } as ProgrammingExercise);
         comp.hyperionEnabled = true;
