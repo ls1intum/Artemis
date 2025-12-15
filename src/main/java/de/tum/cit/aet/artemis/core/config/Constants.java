@@ -159,6 +159,12 @@ public final class Constants {
     // This value limits the amount of characters allowed for custom instructions in Iris sub-settings.
     public static final int IRIS_CUSTOM_INSTRUCTIONS_MAX_LENGTH = 2048;
 
+    /**
+     * Maximum number of retry attempts for lecture content processing
+     * (transcription and ingestion) before marking as failed.
+     */
+    public static final int MAX_PROCESSING_RETRIES = 5;
+
     public static final String SETUP_COMMIT_MESSAGE = "Setup";
 
     public static final String ENROLL_IN_COURSE = "ENROLL_IN_COURSE";
@@ -543,12 +549,6 @@ public final class Constants {
     public static final String REDIS = "Redis";
 
     public static final String LOCAL = "Local";
-
-    /**
-     * Maximum number of retry attempts for lecture content processing
-     * (transcription and ingestion) before marking as failed.
-     */
-    public static final int MAX_PROCESSING_RETRIES = 5;
 
     private Constants() {
     }

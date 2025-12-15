@@ -28,8 +28,8 @@
             <column name="error_key" type="VARCHAR(500)">
                 <constraints nullable="true"/>
             </column>
-            <column name="processing_version" type="BIGINT" defaultValue="0">
-                <constraints nullable="false"/>
+            <column name="ingestion_job_token" type="VARCHAR(255)">
+                <constraints nullable="true"/>
             </column>
             <column name="started_at" type="DATETIME">
                 <constraints nullable="true"/>

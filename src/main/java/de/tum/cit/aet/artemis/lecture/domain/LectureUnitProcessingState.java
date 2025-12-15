@@ -75,12 +75,12 @@ public class LectureUnitProcessingState extends DomainObject {
     private String errorKey;
 
     /**
-     * Version counter incremented when content changes.
-     * Used to detect race conditions where old job callbacks arrive after content has changed.
-     * Callbacks should check this version matches the expected value.
+     * Current ingestion job token.
+     * Used to validate callbacks - only accept callbacks with matching token.
+     * When a new ingestion job starts, the token is updated, invalidating old callbacks.
      */
-    @Column(name = "processing_version", nullable = false)
-    private long processingVersion = 0;
+    @Column(name = "ingestion_job_token")
+    private String ingestionJobToken;
 
     /**
      * Timestamp when the current phase started.
@@ -154,24 +154,12 @@ public class LectureUnitProcessingState extends DomainObject {
         this.errorKey = errorKey;
     }
 
-    public long getProcessingVersion() {
-        return processingVersion;
+    public String getIngestionJobToken() {
+        return ingestionJobToken;
     }
 
-    public void setProcessingVersion(long processingVersion) {
-        this.processingVersion = processingVersion;
-    }
-
-    /**
-     * Increment the processing version to invalidate old callbacks.
-     * Should be called when content changes during processing.
-     *
-     * @return the new version number
-     */
-    public long incrementProcessingVersion() {
-        this.processingVersion++;
-        this.lastUpdated = ZonedDateTime.now();
-        return this.processingVersion;
+    public void setIngestionJobToken(String ingestionJobToken) {
+        this.ingestionJobToken = ingestionJobToken;
     }
 
     public ZonedDateTime getStartedAt() {

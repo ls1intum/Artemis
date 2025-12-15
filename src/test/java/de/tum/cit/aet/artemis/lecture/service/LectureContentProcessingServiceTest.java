@@ -43,6 +43,8 @@ import de.tum.cit.aet.artemis.nebula.api.TumLiveApi;
  */
 class LectureContentProcessingServiceTest {
 
+    private static final String TEST_JOB_TOKEN = "test-ingestion-token-123";
+
     private LectureContentProcessingService service;
 
     private LectureUnitProcessingStateRepository processingStateRepository;
@@ -361,18 +363,16 @@ class LectureContentProcessingServiceTest {
         }
 
         @Test
-        void shouldCancelPyrisIngestionWhenIngesting() {
+        void shouldCancelIngestingStateWithoutCallingPyris() {
             // Given: Unit is currently ingesting
             testState.setPhase(ProcessingPhase.INGESTING);
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
             when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-            when(irisLectureApi.cancelPendingIngestion(anyLong())).thenReturn(true);
 
             // When
             service.cancelProcessing(testUnit.getId());
 
-            // Then: Should call Pyris cancel, NOT Nebula cancel
-            verify(irisLectureApi).cancelPendingIngestion(testUnit.getId());
+            // Then: Should NOT call Nebula cancel (not transcribing), and Pyris handles deduplication automatically
             verify(transcriptionApi, never()).cancelNebulaTranscription(anyLong());
             assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.IDLE);
             assertThat(testState.getErrorKey()).isEqualTo("artemisApp.lectureUnit.processing.cancelled");
@@ -513,14 +513,16 @@ class LectureContentProcessingServiceTest {
         void shouldMarkAsDoneOnSuccess() {
             // Given
             testState.setPhase(ProcessingPhase.INGESTING);
+            testState.setIngestionJobToken(TEST_JOB_TOKEN);
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
             when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
             // When
-            service.handleIngestionComplete(testUnit.getId(), true);
+            service.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, true);
 
             // Then
             assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.DONE);
+            assertThat(testState.getIngestionJobToken()).isNull(); // Token cleared after success
         }
 
         @Test
@@ -529,7 +531,7 @@ class LectureContentProcessingServiceTest {
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.empty());
 
             // When: Callback arrives for deleted unit
-            service.handleIngestionComplete(testUnit.getId(), true);
+            service.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, true);
 
             // Then: Should handle gracefully without exception
             verify(processingStateRepository, never()).save(any());
@@ -539,10 +541,11 @@ class LectureContentProcessingServiceTest {
         void shouldIgnoreStaleCallbackWhenNotIngesting() {
             // Given: State is in a different phase (callback may be stale)
             testState.setPhase(ProcessingPhase.DONE);
+            testState.setIngestionJobToken(TEST_JOB_TOKEN);
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
 
             // When: Stale callback arrives
-            service.handleIngestionComplete(testUnit.getId(), true);
+            service.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, true);
 
             // Then: Should ignore and not modify state
             verify(processingStateRepository, never()).save(any());
@@ -550,15 +553,31 @@ class LectureContentProcessingServiceTest {
         }
 
         @Test
+        void shouldIgnoreStaleCallbackWithWrongToken() {
+            // Given: State has a different token (new job was started)
+            testState.setPhase(ProcessingPhase.INGESTING);
+            testState.setIngestionJobToken("new-job-token");
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+
+            // When: Stale callback arrives with old token
+            service.handleIngestionComplete(testUnit.getId(), "old-job-token", true);
+
+            // Then: Should ignore - no save, state unchanged
+            verify(processingStateRepository, never()).save(any());
+            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.INGESTING);
+        }
+
+        @Test
         void shouldMarkAsFailedAfterMaxIngestionRetries() {
             // Given (MAX_PROCESSING_RETRIES = 5)
             testState.setPhase(ProcessingPhase.INGESTING);
+            testState.setIngestionJobToken(TEST_JOB_TOKEN);
             testState.setRetryCount(4); // Will become 5 after failure
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
             when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
             // When
-            service.handleIngestionComplete(testUnit.getId(), false);
+            service.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, false);
 
             // Then
             assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.FAILED);
@@ -645,12 +664,13 @@ class LectureContentProcessingServiceTest {
         void shouldStayInIngestingPhaseOnFailureForSchedulerRetry() {
             // Given: Ingestion fails but not at max retries
             testState.setPhase(ProcessingPhase.INGESTING);
+            testState.setIngestionJobToken(TEST_JOB_TOKEN);
             testState.setRetryCount(1);
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
             when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
             // When
-            service.handleIngestionComplete(testUnit.getId(), false);
+            service.handleIngestionComplete(testUnit.getId(), TEST_JOB_TOKEN, false);
 
             // Then: Should stay in INGESTING phase (scheduler will retry with backoff)
             assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.INGESTING);

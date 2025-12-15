@@ -154,9 +154,7 @@ public class LectureContentProcessingService {
                 cancelTranscriptionOnNebula(lectureUnitId);
             }
 
-            if (state.getPhase() == ProcessingPhase.INGESTING) {
-                cancelIngestionOnPyris(lectureUnitId);
-            }
+            // Note: No need to cancel on Pyris - when a new job starts, Pyris terminates old processes automatically
 
             state.transitionTo(ProcessingPhase.IDLE);
             state.setErrorKey("artemisApp.lectureUnit.processing.cancelled");
@@ -208,11 +206,13 @@ public class LectureContentProcessingService {
 
     /**
      * Called when ingestion completes (from the Pyris webhook callback).
+     * Validates the job token to reject stale callbacks from old jobs.
      *
      * @param lectureUnitId the ID of the lecture unit
+     * @param jobToken      the job token from the callback
      * @param success       whether ingestion succeeded
      */
-    public void handleIngestionComplete(Long lectureUnitId, boolean success) {
+    public void handleIngestionComplete(Long lectureUnitId, String jobToken, boolean success) {
         Optional<LectureUnitProcessingState> stateOpt = processingStateRepository.findByLectureUnit_Id(lectureUnitId);
 
         if (stateOpt.isEmpty()) {
@@ -221,6 +221,13 @@ public class LectureContentProcessingService {
         }
 
         LectureUnitProcessingState state = stateOpt.get();
+
+        // Validate token - reject stale callbacks from old jobs
+        if (!jobToken.equals(state.getIngestionJobToken())) {
+            log.info("Ignoring stale ingestion callback for unit {} (token mismatch: expected {}, got {})", lectureUnitId, state.getIngestionJobToken(), jobToken);
+            return;
+        }
+
         if (state.getPhase() != ProcessingPhase.INGESTING) {
             log.warn("Received ingestion callback for unit {} in phase {} (expected INGESTING)", lectureUnitId, state.getPhase());
             return;
@@ -229,6 +236,7 @@ public class LectureContentProcessingService {
         if (success) {
             log.info("Ingestion completed successfully for unit {}", lectureUnitId);
             state.transitionTo(ProcessingPhase.DONE);
+            state.setIngestionJobToken(null); // Clear token after successful completion
         }
         else {
             log.warn("Ingestion failed for unit {}", lectureUnitId);
@@ -347,15 +355,18 @@ public class LectureContentProcessingService {
 
         try {
             state.transitionTo(ProcessingPhase.INGESTING);
-            processingStateRepository.save(state);
 
-            String result = irisLectureApi.get().addLectureUnitToPyrisDB(attachmentUnit);
+            String jobToken = irisLectureApi.get().addLectureUnitToPyrisDB(attachmentUnit);
 
-            if (result != null) {
-                log.info("Ingestion started for unit {}", unit.getId());
+            if (jobToken != null) {
+                // Store token for callback validation - rejects stale callbacks from old jobs
+                state.setIngestionJobToken(jobToken);
+                processingStateRepository.save(state);
+                log.info("Ingestion started for unit {} with token {}", unit.getId(), jobToken);
             }
             else {
                 log.warn("Ingestion returned null for unit {}", unit.getId());
+                processingStateRepository.save(state);
                 handleIngestionFailure(state);
             }
         }
@@ -557,7 +568,7 @@ public class LectureContentProcessingService {
             cancelTranscriptionOnNebula(unit.getId());
         }
 
-        cancelIngestionOnPyris(unit.getId());
+        // Note: No need to cancel on Pyris - when a new job starts, Pyris terminates old processes automatically
 
         if (irisLectureApi.isPresent()) {
             try {
@@ -581,22 +592,6 @@ public class LectureContentProcessingService {
         }
         catch (Exception e) {
             log.warn("Failed to cancel transcription on Nebula for unit {}: {}", lectureUnitId, e.getMessage());
-        }
-    }
-
-    private void cancelIngestionOnPyris(Long lectureUnitId) {
-        if (irisLectureApi.isEmpty()) {
-            return;
-        }
-
-        try {
-            boolean cancelled = irisLectureApi.get().cancelPendingIngestion(lectureUnitId);
-            if (cancelled) {
-                log.info("Cancelled pending ingestion on Pyris for unit {}", lectureUnitId);
-            }
-        }
-        catch (Exception e) {
-            log.warn("Failed to cancel ingestion on Pyris for unit {}: {}", lectureUnitId, e.getMessage());
         }
     }
 

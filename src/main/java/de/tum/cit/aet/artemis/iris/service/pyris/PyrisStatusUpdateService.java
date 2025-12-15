@@ -174,9 +174,9 @@ public class PyrisStatusUpdateService {
         if (isDone) {
             pyrisJobService.removeJob(job);
 
-            // Notify the lecture content processing service
+            // Notify the lecture content processing service with token for validation
             boolean success = statusUpdate.stages().stream().map(PyrisStageDTO::state).noneMatch(state -> state == PyrisStageState.ERROR);
-            lectureContentProcessingApi.ifPresent(api -> api.handleIngestionComplete(job.lectureUnitId(), success));
+            lectureContentProcessingApi.ifPresent(api -> api.handleIngestionComplete(job.lectureUnitId(), job.jobId(), success));
         }
         else {
             pyrisJobService.updateJob(job);
