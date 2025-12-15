@@ -297,6 +297,21 @@ public class LectureContentProcessingService {
     private void startProcessingFromIdle(AttachmentVideoUnit unit, LectureUnitProcessingState state, boolean hasVideo, boolean hasPdf) {
         log.info("Starting processing for unit {}", unit.getId());
 
+        // Check if we already have a completed transcription (e.g., only PDF was re-uploaded)
+        Optional<LectureTranscription> existingTranscription = transcriptionRepository.findByLectureUnit_Id(unit.getId());
+        if (existingTranscription.isPresent() && existingTranscription.get().getTranscriptionStatus() == TranscriptionStatus.COMPLETED) {
+            log.info("Existing completed transcription found for unit {}, skipping to ingestion", unit.getId());
+            if (irisLectureApi.isPresent()) {
+                startIngestion(state);
+            }
+            else {
+                log.debug("Iris not available, marking unit {} as done", unit.getId());
+                state.transitionTo(ProcessingPhase.DONE);
+                processingStateRepository.save(state);
+            }
+            return;
+        }
+
         if (hasVideo && transcriptionApi.isPresent() && tumLiveApi.isPresent()) {
             // Try to get playlist URL and start transcription
             Optional<String> playlistUrl = fetchPlaylistUrl(unit);
