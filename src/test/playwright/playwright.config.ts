@@ -11,7 +11,6 @@ import path from 'path';
  * https://github.com/motdotla/dotenv
  */
 dotenv.config({ path: path.join(__dirname, 'playwright.env') });
-//dotenv.config({ path: `./playwright.env` });
 
 /**
  * See https://playwright.dev/docs/test-configuration.
@@ -61,7 +60,7 @@ export default defineConfig({
             name: 'fast-tests',
             grep: /@fast|^[^@]*$/,
             timeout: (parseNumber(process.env.FAST_TEST_TIMEOUT_SECONDS) ?? 45) * 1000,
-            use: { browserName: 'chromium', viewport: null },
+            use: { browserName: 'chromium', viewport: { width: 1920, height: 1080 } },
         },
         // Tests with @slow tag. These tests are expected to run longer
         // than faster tests and have higher timeout.
