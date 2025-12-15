@@ -160,10 +160,10 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
     }
 
     /**
-     * Normalize empty values (empty string, null, 0) to undefined for comparison
+     * Normalize empty values (empty string, null/undefined) to undefined for comparison
      */
     private normalizeEmpty<T>(value: T | null | undefined): T | undefined {
-        if (value === null || value === undefined || value === '' || value === 0) {
+        if (value === null || value === undefined || value === '') {
             return undefined;
         }
         return value;

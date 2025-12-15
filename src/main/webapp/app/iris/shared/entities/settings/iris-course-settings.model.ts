@@ -57,6 +57,5 @@ export function createDefaultCourseSettings(): IrisCourseSettingsDTO {
     return {
         enabled: true,
         variant: 'default',
-        rateLimit: createEmptyRateLimit(),
     };
 }
