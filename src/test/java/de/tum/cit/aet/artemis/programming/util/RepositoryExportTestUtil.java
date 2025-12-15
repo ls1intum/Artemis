@@ -220,18 +220,30 @@ public final class RepositoryExportTestUtil {
         String slug = localVCLocalCITestService.getRepositorySlug(projectKey, participation.getParticipantIdentifier());
         Path bareRepoPath = localVCBasePath.resolve(projectKey).resolve(slug + ".git");
 
-        // Check if the bare repo already exists
+        // Check if the bare repo already exists and has valid content
         if (Files.exists(bareRepoPath.resolve("HEAD"))) {
-            // Clone existing bare repo to create working copy
-            return cloneExistingBareRepo(localVCBasePath, bareRepoPath, localVCLocalCITestService.getDefaultBranch());
+            try {
+                // Clone existing bare repo to create working copy
+                return cloneExistingBareRepo(localVCBasePath, bareRepoPath, localVCLocalCITestService.getDefaultBranch());
+            }
+            catch (Exception e) {
+                // If cloning fails (e.g., empty repo, wrong branch), recreate the repository
+                log.warn("Failed to clone existing bare repo at {}, recreating: {}", bareRepoPath, e.getMessage());
+                // Delete the invalid repo and create a new one
+                try {
+                    org.apache.commons.io.FileUtils.deleteDirectory(bareRepoPath.toFile());
+                }
+                catch (IOException deleteError) {
+                    log.warn("Failed to delete invalid repo: {}", deleteError.getMessage());
+                }
+            }
         }
-        else {
-            // Create new repo if it doesn't exist
-            LocalRepository repo = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, slug);
-            String uri = localVCLocalCITestService.buildLocalVCUri(participation.getParticipantIdentifier(), projectKey, slug);
-            participation.setRepositoryUri(uri);
-            return trackRepository(repo);
-        }
+
+        // Create new repo if it doesn't exist or cloning failed
+        LocalRepository repo = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, slug);
+        String uri = localVCLocalCITestService.buildLocalVCUri(participation.getParticipantIdentifier(), projectKey, slug);
+        participation.setRepositoryUri(uri);
+        return trackRepository(repo);
     }
 
     /**
