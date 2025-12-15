@@ -1781,8 +1781,22 @@ public class ProgrammingExerciseIntegrationTestService {
         var templateParticipation = programmingExercise.getTemplateParticipation();
         templateParticipation.setRepositoryUri(templateUri);
         templateProgrammingExerciseParticipationRepository.save(templateParticipation);
-        // Write an empty template so JPlag has a baseline for comparison
-        RepositoryExportTestUtil.writeFilesAndPush(templateRepo, Map.of("Main.java", "// Template file"), "seed template for plagiarism check");
+        // Write a template with enough Java tokens (>= 9) for JPlag basecode validation.
+        // JPlag's Java tokenizer counts structural tokens, so we need actual code statements.
+        var templateProgram = """
+                public class Main {
+
+                    public static void main(String[] args) {
+                        Main main = new Main();
+                        main.run();
+                    }
+
+                    private void run() {
+                        // TODO: Implement
+                    }
+                }
+                """;
+        RepositoryExportTestUtil.writeFilesAndPush(templateRepo, Map.of("Main.java", templateProgram), "seed template for plagiarism check");
 
         // Get student participations (excluding instructor)
         var studentParticipations = programmingExerciseStudentParticipationRepository.findByExerciseId(programmingExercise.getId()).stream()
@@ -1796,8 +1810,8 @@ public class ProgrammingExerciseIntegrationTestService {
         // Seed real LocalVC repositories for all student participations with identical Java content to ensure JPlag has multiple valid submissions
         for (ProgrammingExerciseStudentParticipation participation : studentParticipations) {
             try {
-                // Use seedStudentRepositoryForParticipation which handles repo creation/reuse properly
-                var repo = RepositoryExportTestUtil.seedStudentRepositoryForParticipation(localVCLocalCITestService, participation);
+                // Use getOrCreateWorkingCopyForParticipation which clones existing repos instead of re-initializing them
+                var repo = RepositoryExportTestUtil.getOrCreateWorkingCopyForParticipation(localVCLocalCITestService, participation, localVCBasePath);
                 RepositoryExportTestUtil.writeFilesAndPush(repo, Map.of("Main.java", exampleProgram), "seed plagiarism test content");
                 programmingExerciseStudentParticipationRepository.save(participation);
             }

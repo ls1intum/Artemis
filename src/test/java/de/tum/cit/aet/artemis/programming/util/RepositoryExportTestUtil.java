@@ -203,6 +203,60 @@ public final class RepositoryExportTestUtil {
     }
 
     /**
+     * Get a working copy for an existing student participation repository.
+     * Unlike {@link #seedStudentRepositoryForParticipation}, this method clones the existing bare repo
+     * instead of re-initializing it, preserving any existing commits.
+     * Use this when the participation already has a repository set up (e.g., by ensureLocalVcRepositoryExists).
+     * The returned repository is automatically tracked for cleanup.
+     *
+     * @param localVCLocalCITestService LocalVC helper service
+     * @param participation             the student participation with an existing repository
+     * @param localVCBasePath           the base path for LocalVC repositories
+     * @return the configured LocalRepository with working copy
+     */
+    public static LocalRepository getOrCreateWorkingCopyForParticipation(LocalVCLocalCITestService localVCLocalCITestService, ProgrammingExerciseStudentParticipation participation,
+            Path localVCBasePath) throws Exception {
+        String projectKey = participation.getProgrammingExercise().getProjectKey();
+        String slug = localVCLocalCITestService.getRepositorySlug(projectKey, participation.getParticipantIdentifier());
+        Path bareRepoPath = localVCBasePath.resolve(projectKey).resolve(slug + ".git");
+
+        // Check if the bare repo already exists
+        if (Files.exists(bareRepoPath.resolve("HEAD"))) {
+            // Clone existing bare repo to create working copy
+            return cloneExistingBareRepo(localVCBasePath, bareRepoPath, localVCLocalCITestService.getDefaultBranch());
+        }
+        else {
+            // Create new repo if it doesn't exist
+            LocalRepository repo = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, slug);
+            String uri = localVCLocalCITestService.buildLocalVCUri(participation.getParticipantIdentifier(), projectKey, slug);
+            participation.setRepositoryUri(uri);
+            return trackRepository(repo);
+        }
+    }
+
+    /**
+     * Clone an existing bare repository to create a working copy that can be used for commits and pushes.
+     */
+    private static LocalRepository cloneExistingBareRepo(Path localVCBasePath, Path bareRepoPath, String defaultBranch) throws GitAPIException, IOException {
+        // Create a temporary directory for the working copy
+        String tempPrefix = ShortNameGenerator.generateRandomShortName(6);
+        Path workingCopyPath = localVCBasePath.resolve(tempPrefix).resolve(tempPrefix + "-workingcopy");
+        Files.createDirectories(workingCopyPath);
+
+        // Clone the bare repo
+        Git workingCopyGit = Git.cloneRepository().setURI(bareRepoPath.toUri().toString()).setDirectory(workingCopyPath.toFile()).setBranch(defaultBranch).call();
+
+        // Create LocalRepository wrapper
+        LocalRepository repo = new LocalRepository(defaultBranch);
+        repo.workingCopyGitRepoFile = workingCopyPath.toFile();
+        repo.workingCopyGitRepo = workingCopyGit;
+        repo.remoteBareGitRepoFile = bareRepoPath.toFile();
+        repo.remoteBareGitRepo = Git.open(bareRepoPath.toFile());
+
+        return trackRepository(repo);
+    }
+
+    /**
      * Build a LocalVC repository URI for the given project + slug and wire it to the exercise by repository type.
      * Persisting the exercise/participations is left to the caller.
      *

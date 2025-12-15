@@ -105,6 +105,10 @@ public class LocalVCLocalCITestService {
         this.port = port;
     }
 
+    public String getDefaultBranch() {
+        return defaultBranch;
+    }
+
     public String getRepositorySlug(String projectKey, String repositoryTypeOrUserName) {
         return (projectKey + "-" + repositoryTypeOrUserName).toLowerCase();
     }
