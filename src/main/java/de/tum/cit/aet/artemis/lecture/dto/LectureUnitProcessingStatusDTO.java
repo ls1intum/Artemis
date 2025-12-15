@@ -21,6 +21,9 @@ public record LectureUnitProcessingStatusDTO(Long lectureUnitId, ProcessingPhase
      * @return the DTO
      */
     public static LectureUnitProcessingStatusDTO of(LectureUnitProcessingState state) {
+        if (state == null || state.getLectureUnit() == null) {
+            throw new IllegalArgumentException("Processing state and lecture unit must not be null");
+        }
         return new LectureUnitProcessingStatusDTO(state.getLectureUnit().getId(), state.getPhase(), state.getRetryCount(), state.getStartedAt(), state.getErrorKey());
     }
 

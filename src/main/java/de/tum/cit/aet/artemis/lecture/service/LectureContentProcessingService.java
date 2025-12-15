@@ -382,7 +382,6 @@ public class LectureContentProcessingService {
             }
             else {
                 log.warn("Ingestion returned null for unit {}", unit.getId());
-                processingStateRepository.save(state);
                 handleIngestionFailure(state);
             }
         }
@@ -487,7 +486,8 @@ public class LectureContentProcessingService {
         }
         else {
             // No playlist available anymore - try PDF fallback
-            boolean hasPdf = attachmentUnit.getAttachment() != null && attachmentUnit.getAttachment().getLink() != null;
+            boolean hasPdf = attachmentUnit.getAttachment() != null && attachmentUnit.getAttachment().getLink() != null
+                    && attachmentUnit.getAttachment().getLink().endsWith(".pdf");
             if (hasPdf && irisLectureApi.isPresent()) {
                 log.info("Playlist no longer available, falling back to PDF-only for unit {}", unit.getId());
                 state.resetRetryCount();
