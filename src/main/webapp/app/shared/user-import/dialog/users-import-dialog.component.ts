@@ -233,19 +233,19 @@ export class UsersImportDialogComponent implements OnDestroy {
         if (this.tutorialGroup) {
             this.tutorialGroupService.registerMultipleStudents(this.courseId, this.tutorialGroup.id!, this.usersToImport).subscribe({
                 next: (res: HttpResponse<Array<Student>>) => {
-                    const convertedHttpResponse = this.convertGeneratedDtoToNonGenerated(res);
-                    this.onSaveSuccess(convertedHttpResponse);
+                    const convertedStudents = this.convertGeneratedDtoToNonGenerated(res.body || []);
+                    this.onSaveSuccess(convertedStudents);
                 },
                 error: () => this.onSaveError(),
             });
         } else if (this.courseGroup && !this.exam) {
             this.courseManagementService.addUsersToGroupInCourse(this.courseId, this.usersToImport, this.courseGroup).subscribe({
-                next: (res) => this.onSaveSuccess(res),
+                next: (res) => this.onSaveSuccess(res.body || []),
                 error: () => this.onSaveError(),
             });
         } else if (!this.courseGroup && this.exam) {
             this.examManagementService.addStudentsToExam(this.courseId, this.exam.id!, this.examUsersToImport).subscribe({
-                next: (res) => this.onSaveSuccess(res),
+                next: (res) => this.onSaveSuccess(res.body || []),
                 error: () => this.onSaveError(),
             });
         } else if (this.adminUserMode) {
@@ -253,13 +253,12 @@ export class UsersImportDialogComponent implements OnDestroy {
             const artemisUsers = this.usersToImport.map((student) => ({ ...student, visibleRegistrationNumber: student.registrationNumber }));
             this.adminUserService.importAll(artemisUsers).subscribe({
                 next: (res) => {
-                    const convertedRes = new HttpResponse({
-                        body: res.body?.map((user) => ({
+                    const convertedStudents =
+                        res.body?.map((user) => ({
                             ...user,
                             registrationNumber: user.visibleRegistrationNumber,
-                        })),
-                    });
-                    this.onSaveSuccess(convertedRes);
+                        })) || [];
+                    this.onSaveSuccess(convertedStudents);
                 },
                 error: () => this.onSaveError(),
             });
@@ -271,12 +270,12 @@ export class UsersImportDialogComponent implements OnDestroy {
     /**
      * Helper method to convert the generated Student DTOs to non-generated StudentDTOs
      * This is needed as long as not all methods in this component are converted to use the generated Student DTO.
-     * @param response The HttpResponse containing the DTOs converted to @link{StudentDTO}
+     * @param response DTOs converted to @link{StudentDTO}
      */
-    private convertGeneratedDtoToNonGenerated(response: HttpResponse<Array<Student>>): HttpResponse<Partial<StudentDTO>[]> {
+    private convertGeneratedDtoToNonGenerated(response: Array<Student>): Partial<StudentDTO>[] {
         const nonGeneratedDtos: Partial<StudentDTO>[] = [];
-        if (response.body) {
-            for (const student of response.body) {
+        if (response) {
+            for (const student of response) {
                 nonGeneratedDtos.push({
                     login: student.login,
                     firstName: student.firstName,
@@ -286,13 +285,7 @@ export class UsersImportDialogComponent implements OnDestroy {
                 });
             }
         }
-        return new HttpResponse<Partial<StudentDTO>[]>({
-            body: nonGeneratedDtos,
-            headers: response.headers,
-            status: response.status,
-            statusText: response.statusText,
-            url: response.url ?? undefined,
-        });
+        return nonGeneratedDtos;
     }
 
     /**
@@ -349,12 +342,12 @@ export class UsersImportDialogComponent implements OnDestroy {
 
     /**
      * Callback method that is called when the import request was successful
-     * @param {HttpResponse<StudentDTO[]>} notFoundUsers - List of users that could NOT be imported since they were not found
+     * @param notFoundUsers - List of users that could NOT be imported since they were not found
      */
-    onSaveSuccess(notFoundUsers: HttpResponse<Partial<StudentDTO>[]>) {
+    onSaveSuccess(notFoundUsers: Partial<StudentDTO>[]) {
         this.isImporting = false;
         this.hasImported = true;
-        this.notFoundUsers = notFoundUsers.body! || [];
+        this.notFoundUsers = notFoundUsers || [];
     }
 
     /**

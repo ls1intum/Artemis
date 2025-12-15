@@ -56,7 +56,7 @@ describe('PostingThreadComponent', () => {
     it('should contain a post', () => {
         component.post = post;
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const postComponent = getElement(fixture.debugElement, 'jhi-post');
         expect(postComponent).not.toBeNull();

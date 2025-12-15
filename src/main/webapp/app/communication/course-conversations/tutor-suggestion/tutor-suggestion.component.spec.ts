@@ -18,6 +18,7 @@ import { UserService } from 'app/core/user/shared/user.service';
 import dayjs from 'dayjs/esm';
 import { IrisBaseChatbotComponent } from 'app/iris/overview/base-chatbot/iris-base-chatbot.component';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { User } from 'app/core/user/user.model';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -32,7 +33,6 @@ describe('TutorSuggestionComponent', () => {
     let accountService: AccountService;
     let featureToggleService: FeatureToggleService;
     let irisStatusService: IrisStatusService;
-    let translateService: TranslateService;
     const irisSettings = mockSettings();
 
     const statusMock = {
@@ -48,14 +48,13 @@ describe('TutorSuggestionComponent', () => {
         await TestBed.configureTestingModule({
             imports: [TutorSuggestionComponent, MockComponent(IrisBaseChatbotComponent)],
             providers: [
-                { provide: TranslateService, useValue: {} },
+                { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: UserService, useValue: mockUserService },
                 { provide: IrisStatusService, useValue: statusMock },
                 MockProvider(IrisSettingsService),
                 MockProvider(ProfileService),
                 MockProvider(FeatureToggleService),
-                MockProvider(TranslateService),
                 MockProvider(ActivatedRoute),
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -78,14 +77,8 @@ describe('TutorSuggestionComponent', () => {
         profileService = TestBed.inject(ProfileService);
         accountService = TestBed.inject(AccountService);
         featureToggleService = TestBed.inject(FeatureToggleService);
-        translateService = TestBed.inject(TranslateService);
 
         jest.spyOn(featureToggleService, 'getFeatureToggleActive').mockReturnValue(of(true));
-        jest.spyOn(translateService, 'get').mockReturnValue(of(''));
-        (translateService as any).onLangChange = of({ lang: 'en', translations: {} });
-        jest.spyOn(translateService, 'stream').mockReturnValue(of(''));
-        (translateService as any).onTranslationChange = of({ lang: 'en', translations: {} });
-        (translateService as any).onDefaultLangChange = of({ lang: 'en', translations: {} });
         chatService.setCourseId(123);
         accountService.userIdentity.set({ externalLLMUsageAccepted: dayjs() } as User);
 

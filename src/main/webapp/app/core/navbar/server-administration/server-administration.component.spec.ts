@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { ServerAdministrationComponent } from './server-administration.component';
@@ -128,11 +128,11 @@ describe('ServerAdministrationComponent', () => {
             expect(openSpy).not.toHaveBeenCalled();
         });
 
-        it('should open dropdown after timeout when user just logged in with passkey', async () => {
+        it('should open dropdown after timeout when user just logged in with passkey', fakeAsync(() => {
             jest.spyOn(accountService, 'isLoggedInWithPasskey').mockReturnValue(true);
             component['justLoggedInWithPasskey'].set(true);
 
-            const openSpy = jest.spyOn(component.adminMenuDropdown(), 'open');
+            const openSpy = jest.spyOn(component.adminMenuDropdown(), 'open').mockImplementation(() => {});
 
             component['openDropdownIfUserLoggedInWithPasskey']();
 
@@ -140,9 +140,9 @@ describe('ServerAdministrationComponent', () => {
             expect(component['justLoggedInWithPasskey']()).toBeFalse();
 
             // Wait for setTimeout to execute
-            await new Promise((resolve) => setTimeout(resolve, 10));
+            tick(0);
             expect(openSpy).toHaveBeenCalled();
-        });
+        }));
 
         it('should not show modal when passkey enforcement is disabled', () => {
             jest.spyOn(passkeyGuard, 'shouldEnforcePasskeyForAdminFeatures').mockReturnValue(false);

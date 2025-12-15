@@ -181,7 +181,7 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
         this.inputFieldSubscriptions.push(this.updateTemplateFilesField?.valueChanges?.subscribe(() => this.calculateFormValid()));
         this.inputFieldSubscriptions.push(this.programmingExerciseEditCheckoutDirectories?.formValidChanges.subscribe(() => this.calculateFormValid()));
         this.tableEditableFields?.changes.subscribe((fields: QueryList<TableEditableFieldComponent>) => {
-            fields.toArray().forEach((field) => this.inputFieldSubscriptions.push(field.editingInput.valueChanges?.subscribe(() => this.calculateFormValid())));
+            fields.toArray().forEach((field) => this.inputFieldSubscriptions.push(field.editingInput?.valueChanges?.subscribe(() => this.calculateFormValid())));
         });
 
         this.exerciseTitleChannelComponent()
@@ -222,7 +222,7 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     areAuxiliaryRepositoriesValid(): boolean {
         const areAuxiliaryRepositoriesValid =
             (every(
-                this.tableEditableFields?.map((field) => field.editingInput.valid),
+                this.tableEditableFields?.map((field) => field.editingInput?.valid),
                 Boolean,
             ) &&
                 !this.programmingExerciseCreationConfig.auxiliaryRepositoryDuplicateDirectories &&
