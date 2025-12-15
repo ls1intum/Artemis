@@ -1,6 +1,12 @@
+/* Host element participates in parent flex layout */
+:host {
+    flex: 1;
+    min-width: 200px;
+}
+
 /* --- Transcript column: header stays fixed; only list scrolls --- */
 .transcript-column {
-    flex: 1;
+    width: 100%;
     max-height: 500px;
 
     overflow: hidden;
@@ -9,7 +15,6 @@
     display: flex;
     flex-direction: column;
     min-height: 0;
-    min-width: 200px;
 }
 
 .transcript-header {
