@@ -179,7 +179,6 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnInit 
     }
 
     ngAfterViewInit() {
-        // Use takeUntilDestroyed for manual subscriptions to form changes
         this.points()
             ?.valueChanges?.pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe(() => this.calculateFormSectionStatus());

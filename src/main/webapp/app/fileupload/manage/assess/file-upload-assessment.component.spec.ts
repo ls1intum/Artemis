@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { ActivatedRoute, Params, Router, provideRouter } from '@angular/router';
+import { ActivatedRoute, Params, Router, convertToParamMap, provideRouter } from '@angular/router';
 import { BehaviorSubject, of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { TranslateModule } from '@ngx-translate/core';
@@ -130,10 +130,10 @@ describe('FileUploadAssessmentComponent', () => {
     beforeEach(async () => {
         routeParams$ = new BehaviorSubject({ exerciseId: 20, courseId: 123, submissionId: 7 });
         routeQueryParams$ = new BehaviorSubject(
-            new Map([
-                ['testRun', 'false'],
-                ['correction-round', '0'],
-            ]),
+            convertToParamMap({
+                testRun: 'false',
+                'correction-round': '0',
+            }),
         );
 
         await TestBed.configureTestingModule({
@@ -222,10 +222,10 @@ describe('FileUploadAssessmentComponent', () => {
     describe('initialization', () => {
         it('should extract test run flag and correction round from query params', () => {
             routeQueryParams$.next(
-                new Map([
-                    ['testRun', 'true'],
-                    ['correction-round', '1'],
-                ]),
+                convertToParamMap({
+                    testRun: 'true',
+                    'correction-round': '1',
+                }),
             );
             const submission = createSubmission();
             const result = createResult(submission);
@@ -377,7 +377,7 @@ describe('FileUploadAssessmentComponent', () => {
 
             component.ngOnInit();
             // Wait for all async operations (identity promise and subscriptions) to complete
-            await new Promise((resolve) => setTimeout(resolve, 10));
+            await fixture.whenStable();
 
             expect(alertInfoSpy).toHaveBeenCalledWith('artemisApp.fileUploadAssessment.messages.lock');
         });
