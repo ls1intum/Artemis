@@ -15,7 +15,6 @@ import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker'
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AlertService } from 'app/shared/service/alert.service';
-import { LectureTranscriptionService } from 'app/lecture/manage/services/lecture-transcription.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -24,9 +23,7 @@ import { objectToJsonBlob } from 'app/shared/util/blob-util';
 
 describe('EditAttachmentVideoUnitComponent', () => {
     let fixture: ComponentFixture<EditAttachmentVideoUnitComponent>;
-    let component: EditAttachmentVideoUnitComponent;
     let attachmentVideoUnitService: AttachmentVideoUnitService;
-    let lectureTranscriptionService: LectureTranscriptionService;
     let router: Router;
     let navigateSpy: jest.SpyInstance;
     let updateAttachmentVideoUnitSpy: jest.SpyInstance;
@@ -42,7 +39,6 @@ describe('EditAttachmentVideoUnitComponent', () => {
             providers: [
                 MockProvider(AttachmentVideoUnitService),
                 MockProvider(AlertService),
-                MockProvider(LectureTranscriptionService),
                 { provide: Router, useClass: MockRouter },
                 { provide: ProfileService, useClass: MockProfileService },
                 {
@@ -79,10 +75,8 @@ describe('EditAttachmentVideoUnitComponent', () => {
             ],
         }).compileComponents();
         fixture = TestBed.createComponent(EditAttachmentVideoUnitComponent);
-        component = fixture.componentInstance;
         router = TestBed.inject(Router);
         attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
-        lectureTranscriptionService = TestBed.inject(LectureTranscriptionService);
 
         attachment = new Attachment();
         attachment.id = 1;
@@ -120,8 +114,6 @@ describe('EditAttachmentVideoUnitComponent', () => {
         updateAttachmentVideoUnitSpy = jest.spyOn(attachmentVideoUnitService, 'update');
         navigateSpy = jest.spyOn(router, 'navigate');
 
-        jest.spyOn(lectureTranscriptionService, 'getTranscription').mockReturnValue(of(undefined));
-        jest.spyOn(lectureTranscriptionService, 'getTranscriptionStatus').mockReturnValue(of(undefined));
         fetchAndUpdatePlaylistUrlSpy = jest.spyOn(attachmentVideoUnitService, 'fetchAndUpdatePlaylistUrl').mockImplementation((_, formData) => of(formData));
     });
 
@@ -235,33 +227,6 @@ describe('EditAttachmentVideoUnitComponent', () => {
         expect(navigateSpy).toHaveBeenCalledOnce();
     });
 
-    it('should fetch transcription status on initialization', () => {
-        const getTranscriptionStatusSpy = jest.spyOn(lectureTranscriptionService, 'getTranscriptionStatus').mockReturnValue(of(undefined));
-
-        fixture.detectChanges();
-
-        expect(getTranscriptionStatusSpy).toHaveBeenCalledWith(attachmentVideoUnit.id);
-        // Component only fetches transcription status, not full transcription data
-        expect(component.formData).toBeDefined();
-    });
-
-    it('should handle when transcription status is not available', () => {
-        jest.spyOn(lectureTranscriptionService, 'getTranscriptionStatus').mockReturnValue(of(undefined));
-
-        fixture.detectChanges();
-
-        expect(component.formData?.transcriptionStatus).toBeUndefined();
-    });
-
-    it('should handle transcription status when present', () => {
-        const transcriptionStatus = { status: 'PENDING', progress: 50 };
-        jest.spyOn(lectureTranscriptionService, 'getTranscriptionStatus').mockReturnValue(of(transcriptionStatus as any));
-
-        fixture.detectChanges();
-
-        expect(component.formData?.transcriptionStatus).toEqual(transcriptionStatus);
-    });
-
     it('should handle update without transcription generation', () => {
         fixture.detectChanges();
         const attachmentVideoUnitFormComponent: AttachmentVideoUnitFormComponent = fixture.debugElement.query(By.directive(AttachmentVideoUnitFormComponent)).componentInstance;
@@ -300,10 +265,6 @@ describe('EditAttachmentVideoUnitComponent', () => {
             fileProperties: {
                 fileName: attachmentVideoUnit.attachment?.link,
             },
-            transcriptionProperties: {
-                videoTranscription: undefined,
-            },
-            transcriptionStatus: undefined,
             playlistUrl: playlistUrl,
         };
 
@@ -351,10 +312,6 @@ describe('EditAttachmentVideoUnitComponent', () => {
             fileProperties: {
                 fileName: attachmentVideoUnit.attachment?.link,
             },
-            transcriptionProperties: {
-                videoTranscription: undefined,
-            },
-            transcriptionStatus: undefined,
         };
 
         // fetchAndUpdatePlaylistUrlSpy is already mocked in beforeEach, no need to re-spy
@@ -381,10 +338,6 @@ describe('EditAttachmentVideoUnitComponent', () => {
             fileProperties: {
                 fileName: attachmentVideoUnit.attachment?.link,
             },
-            transcriptionProperties: {
-                videoTranscription: undefined,
-            },
-            transcriptionStatus: undefined,
         };
 
         fetchAndUpdatePlaylistUrlSpy.mockReturnValue(of(originalFormData));

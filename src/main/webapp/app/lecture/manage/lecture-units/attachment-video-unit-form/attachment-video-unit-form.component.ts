@@ -165,11 +165,6 @@ export class AttachmentVideoUnitFormComponent {
         return status === TranscriptionStatus.PENDING || status === TranscriptionStatus.PROCESSING;
     });
 
-    readonly showTranscriptionStatusBadge = computed(() => {
-        const status = this.transcriptionStatus();
-        return this.isEditMode() && status && (status === TranscriptionStatus.PENDING || status === TranscriptionStatus.PROCESSING || status === TranscriptionStatus.FAILED);
-    });
-
     isFormValid = computed(() => {
         return this.statusChanges() === 'VALID' && !this.isFileTooBig() && this.datePickerComponent()?.isValid() && (!!this.fileName() || !!this.videoSourceSignal());
     });

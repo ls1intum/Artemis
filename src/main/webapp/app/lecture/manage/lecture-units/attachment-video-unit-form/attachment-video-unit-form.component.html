@@ -161,24 +161,6 @@
                         }
                     </div>
                 </div>
-                @if (showTranscriptionStatusBadge()) {
-                    <div class="row mt-3">
-                        <div class="col-12">
-                            @if (transcriptionStatus() === TranscriptionStatus.PENDING || transcriptionStatus() === TranscriptionStatus.PROCESSING) {
-                                <div class="alert alert-info d-flex align-items-center" role="alert">
-                                    <fa-icon [icon]="faQuestionCircle" class="me-2" />
-                                    <span jhiTranslate="artemisApp.attachmentVideoUnit.transcription.editStatusProcessing"></span>
-                                </div>
-                            }
-                            @if (transcriptionStatus() === TranscriptionStatus.FAILED) {
-                                <div class="alert alert-danger d-flex align-items-center" role="alert">
-                                    <fa-icon [icon]="faTimes" class="me-2" />
-                                    <span jhiTranslate="artemisApp.attachmentVideoUnit.transcription.editStatusFailed"></span>
-                                </div>
-                            }
-                        </div>
-                    </div>
-                }
             </div>
             @if (showTranscriptionPendingWarning()) {
                 <div class="alert alert-warning mt-3 mb-3" role="alert">

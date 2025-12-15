@@ -1,7 +1,7 @@
 import { Component, OnInit, ViewChild, inject } from '@angular/core';
 import { onError } from 'app/shared/util/global.utils';
 import { ActivatedRoute, Router } from '@angular/router';
-import { finalize, map, switchMap, take } from 'rxjs/operators';
+import { finalize, switchMap, take } from 'rxjs/operators';
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
 import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -11,7 +11,6 @@ import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachme
 import { combineLatest } from 'rxjs';
 import { objectToJsonBlob } from 'app/shared/util/blob-util';
 import { LectureUnitLayoutComponent } from '../lecture-unit-layout/lecture-unit-layout.component';
-import { LectureTranscriptionService } from 'app/lecture/manage/services/lecture-transcription.service';
 
 @Component({
     selector: 'jhi-edit-attachment-video-unit',
@@ -23,7 +22,6 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
     private router = inject(Router);
     private attachmentVideoUnitService = inject(AttachmentVideoUnitService);
     private alertService = inject(AlertService);
-    private lectureTranscriptionService = inject(LectureTranscriptionService);
 
     @ViewChild('attachmentVideoUnitForm') attachmentVideoUnitForm: AttachmentVideoUnitFormComponent;
 
@@ -45,23 +43,13 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
                     this.lectureId = Number(parentParams.get('lectureId'));
                     return this.attachmentVideoUnitService.findById(attachmentVideoUnitId, this.lectureId);
                 }),
-                switchMap((attachmentVideoUnitResponse: HttpResponse<AttachmentVideoUnit>) => {
-                    const attachmentVideoUnit = attachmentVideoUnitResponse.body!;
-                    // Fetch transcription status for display
-                    return this.lectureTranscriptionService.getTranscriptionStatus(attachmentVideoUnit.id!).pipe(
-                        map((transcriptionStatus) => ({
-                            attachmentVideoUnit,
-                            transcriptionStatus,
-                        })),
-                    );
-                }),
                 finalize(() => {
                     this.isLoading = false;
                 }),
             )
             .subscribe({
-                next: ({ attachmentVideoUnit, transcriptionStatus }) => {
-                    this.attachmentVideoUnit = attachmentVideoUnit;
+                next: (attachmentVideoUnitResponse: HttpResponse<AttachmentVideoUnit>) => {
+                    this.attachmentVideoUnit = attachmentVideoUnitResponse.body!;
                     this.attachment = this.attachmentVideoUnit.attachment || {};
                     // breaking the connection to prevent errors in deserialization. will be reconnected on the server side
                     this.attachmentVideoUnit.attachment = undefined;
@@ -79,7 +67,6 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
                         fileProperties: {
                             fileName: this.attachment.link,
                         },
-                        transcriptionStatus: transcriptionStatus,
                     };
                     // Check if playlist URL is available for existing video to enable transcription generation
                     this.attachmentVideoUnitService.fetchAndUpdatePlaylistUrl(this.attachmentVideoUnit.videoSource, this.formData).subscribe({
