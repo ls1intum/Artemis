@@ -97,7 +97,9 @@ module replacement in the client.
 * **Artemis (Client):** Will execute ``npm install`` and ``npm run start``. The client will be available at
   `http://localhost:9000/ <http://localhost:9000/>`__ with hot module replacement enabled (also see
   :ref:`Client Setup <client-setup>`).
-* **Artemis Server (Dev, BuildAgend+LocalCI):** The server will be started separately from the client with the profiles
+* **Artemis BuildAgent (Prod):** The server will be started separately from the client with the profiles ``buildagent,local``.
+This configuration is used to run the build agent for the local CI. This configuration is rarely needed for development.
+* **Artemis Server (Dev, BuildAgent+LocalCI):** The server will be started separately from the client with the profiles
   ``dev,artemis,localci,localvc,scheduling,buildagent,core,ldap,local``.
 * **Artemis Server (Dev, Core, Jenkins):** The server will be started separately from the client with the profiles
   ``dev,jenkins,localvc,artemis,scheduling,core,local``.
@@ -109,8 +111,6 @@ module replacement in the client.
   ``theia,dev,localci,localvc,artemis,scheduling,buildagent,core,ldap,local``.
 * **Artemis Server (Prod, Core, LocalCI):** The server will be started separately from the client with the profiles
   ``prod,core,ldap,localvc,localci,scheduling,local``.
-* **Artemis (BuildAgent):** The server will be started separately from the client with the profiles ``buildagent,local``.
-  This configuration is used to run the build agent for the local CI. This configuration is rarely needed for development.
 
 Deprecated Options
 """""""""""""""""""
