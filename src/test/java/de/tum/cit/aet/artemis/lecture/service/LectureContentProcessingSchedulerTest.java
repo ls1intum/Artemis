@@ -271,7 +271,9 @@ class LectureContentProcessingSchedulerTest {
 
         @Test
         void shouldTriggerProcessingForUnprocessedUnits() {
-            // Given: Three unprocessed units from active courses
+            // Given: Three unprocessed units from active courses, no current processing
+            when(processingStateRepository.countByPhaseIn(anyList())).thenReturn(0L);
+
             AttachmentVideoUnit unit1 = new AttachmentVideoUnit();
             unit1.setId(101L);
             AttachmentVideoUnit unit2 = new AttachmentVideoUnit();
@@ -292,8 +294,35 @@ class LectureContentProcessingSchedulerTest {
         }
 
         @Test
+        void shouldSkipBackfillWhenMaxConcurrentReached() {
+            // Given: Already 10 units processing (max concurrent)
+            when(processingStateRepository.countByPhaseIn(List.of(ProcessingPhase.TRANSCRIBING, ProcessingPhase.INGESTING))).thenReturn(10L);
+
+            // When
+            scheduler.backfillUnprocessedUnits();
+
+            // Then: Should not query for unprocessed units or trigger any processing
+            verify(attachmentVideoUnitRepository, never()).findUnprocessedUnitsFromActiveCourses(any(), any());
+            verify(processingService, never()).triggerProcessing(any());
+        }
+
+        @Test
+        void shouldLimitToAvailableSlots() {
+            // Given: 7 units already processing, so only 3 slots available
+            when(processingStateRepository.countByPhaseIn(List.of(ProcessingPhase.TRANSCRIBING, ProcessingPhase.INGESTING))).thenReturn(7L);
+            when(attachmentVideoUnitRepository.findUnprocessedUnitsFromActiveCourses(any(ZonedDateTime.class), any())).thenReturn(List.of());
+
+            // When
+            scheduler.backfillUnprocessedUnits();
+
+            // Then: Should query with limit of 3 (available slots)
+            verify(attachmentVideoUnitRepository).findUnprocessedUnitsFromActiveCourses(any(ZonedDateTime.class), eq(org.springframework.data.domain.PageRequest.of(0, 3)));
+        }
+
+        @Test
         void shouldHandleEmptyResultsGracefully() {
             // Given: No unprocessed units
+            when(processingStateRepository.countByPhaseIn(anyList())).thenReturn(0L);
             when(attachmentVideoUnitRepository.findUnprocessedUnitsFromActiveCourses(any(ZonedDateTime.class), any())).thenReturn(List.of());
 
             // When
@@ -306,6 +335,8 @@ class LectureContentProcessingSchedulerTest {
         @Test
         void shouldCatchExceptionsAndContinueProcessingOtherUnits() {
             // Given: Three units, middle one will throw exception
+            when(processingStateRepository.countByPhaseIn(anyList())).thenReturn(0L);
+
             AttachmentVideoUnit unit1 = new AttachmentVideoUnit();
             unit1.setId(201L);
             AttachmentVideoUnit unit2 = new AttachmentVideoUnit();
@@ -329,20 +360,22 @@ class LectureContentProcessingSchedulerTest {
         }
 
         @Test
-        void shouldLimitBatchSize() {
-            // Given: Repository query is called with pagination
+        void shouldRequestMaxConcurrentSlotsWhenNoneProcessing() {
+            // Given: No units currently processing
+            when(processingStateRepository.countByPhaseIn(anyList())).thenReturn(0L);
             when(attachmentVideoUnitRepository.findUnprocessedUnitsFromActiveCourses(any(ZonedDateTime.class), any())).thenReturn(List.of());
 
             // When
             scheduler.backfillUnprocessedUnits();
 
-            // Then: Should call repository with PageRequest limiting to 10 items (BACKFILL_BATCH_SIZE)
+            // Then: Should call repository with PageRequest limiting to MAX_CONCURRENT_PROCESSING (10)
             verify(attachmentVideoUnitRepository).findUnprocessedUnitsFromActiveCourses(any(ZonedDateTime.class), eq(org.springframework.data.domain.PageRequest.of(0, 10)));
         }
 
         @Test
         void shouldPassCurrentTimeToRepository() {
             // Given: Repository should receive current time for active course filtering
+            when(processingStateRepository.countByPhaseIn(anyList())).thenReturn(0L);
             when(attachmentVideoUnitRepository.findUnprocessedUnitsFromActiveCourses(any(ZonedDateTime.class), any())).thenReturn(List.of());
 
             ZonedDateTime beforeCall = ZonedDateTime.now().minusSeconds(1);

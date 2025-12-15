@@ -126,4 +126,17 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
             AND ps.phase = :phase
             """)
     long countByCourseIdAndPhase(@Param("courseId") Long courseId, @Param("phase") ProcessingPhase phase);
+
+    /**
+     * Count processing states currently in active processing phases (TRANSCRIBING or INGESTING).
+     * Used to limit the number of concurrent processing jobs.
+     *
+     * @param phases the phases to count
+     * @return count of states in the given phases
+     */
+    @Query("""
+            SELECT COUNT(ps) FROM LectureUnitProcessingState ps
+            WHERE ps.phase IN :phases
+            """)
+    long countByPhaseIn(@Param("phases") List<ProcessingPhase> phases);
 }

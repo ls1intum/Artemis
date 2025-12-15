@@ -54,10 +54,10 @@ public class LectureContentProcessingScheduler {
     private static final int INGESTION_TIMEOUT_MINUTES = 60; // 1 hour
 
     /**
-     * Maximum number of unprocessed units to pick up per backfill run.
+     * Maximum number of concurrent processing jobs (TRANSCRIBING or INGESTING).
      * Keeps load on Nebula/Pyris manageable.
      */
-    private static final int BACKFILL_BATCH_SIZE = 10;
+    private static final int MAX_CONCURRENT_PROCESSING = 10;
 
     private final LectureUnitProcessingStateRepository processingStateRepository;
 
@@ -236,21 +236,30 @@ public class LectureContentProcessingScheduler {
      * This handles units that existed before the automated processing pipeline was deployed.
      * <p>
      * Only processes units from active, non-test courses to avoid unnecessary work.
-     * Limited to {@link #BACKFILL_BATCH_SIZE} units per run to avoid overwhelming external services.
+     * Limited by {@link #MAX_CONCURRENT_PROCESSING} to avoid overwhelming external services.
      */
     @Scheduled(fixedRate = 900000) // 15 minutes
     public void backfillUnprocessedUnits() {
         log.debug("Checking for unprocessed lecture units to backfill...");
 
-        List<AttachmentVideoUnit> unprocessedUnits = attachmentVideoUnitRepository.findUnprocessedUnitsFromActiveCourses(ZonedDateTime.now(),
-                PageRequest.of(0, BACKFILL_BATCH_SIZE));
+        // Check how many jobs are currently processing
+        long currentlyProcessing = processingStateRepository.countByPhaseIn(List.of(ProcessingPhase.TRANSCRIBING, ProcessingPhase.INGESTING));
+        if (currentlyProcessing >= MAX_CONCURRENT_PROCESSING) {
+            log.debug("Already {} units processing (max {}), skipping backfill", currentlyProcessing, MAX_CONCURRENT_PROCESSING);
+            return;
+        }
+
+        // Calculate how many more jobs we can start
+        int availableSlots = (int) (MAX_CONCURRENT_PROCESSING - currentlyProcessing);
+
+        List<AttachmentVideoUnit> unprocessedUnits = attachmentVideoUnitRepository.findUnprocessedUnitsFromActiveCourses(ZonedDateTime.now(), PageRequest.of(0, availableSlots));
 
         if (unprocessedUnits.isEmpty()) {
             log.debug("No unprocessed units found for backfill");
             return;
         }
 
-        log.info("Found {} unprocessed lecture units to backfill", unprocessedUnits.size());
+        log.info("Found {} unprocessed lecture units to backfill ({} slots available)", unprocessedUnits.size(), availableSlots);
 
         for (AttachmentVideoUnit unit : unprocessedUnits) {
             try {

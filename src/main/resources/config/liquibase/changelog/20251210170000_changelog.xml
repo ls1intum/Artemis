@@ -46,12 +46,21 @@
                                  onDelete="CASCADE"
                                  constraintName="fk_processing_state_lecture_unit"/>
 
+        <!-- Index for phase-only queries (findByPhase, countByPhaseIn) -->
         <createIndex tableName="lecture_unit_processing_state" indexName="idx_processing_state_phase">
             <column name="phase"/>
         </createIndex>
 
-        <createIndex tableName="lecture_unit_processing_state" indexName="idx_processing_state_started_at">
+        <!-- Composite index for findStuckStates: WHERE phase IN (?) AND started_at < ? -->
+        <createIndex tableName="lecture_unit_processing_state" indexName="idx_processing_state_phase_started">
+            <column name="phase"/>
             <column name="started_at"/>
+        </createIndex>
+
+        <!-- Composite index for findStatesReadyForRetry: WHERE phase = ? AND retry_count > 0 AND last_updated < ? -->
+        <createIndex tableName="lecture_unit_processing_state" indexName="idx_processing_state_phase_updated">
+            <column name="phase"/>
+            <column name="last_updated"/>
         </createIndex>
 
         <rollback>
