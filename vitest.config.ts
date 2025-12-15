@@ -1,5 +1,7 @@
 /**
  * Vitest Configuration for Artemis Angular Tests
+ *
+ * Uses @analogjs/vite-plugin-angular for Angular compilation with Vitest 4.
  */
 import { defineConfig } from 'vitest/config';
 import angular from '@analogjs/vite-plugin-angular';
@@ -21,7 +23,7 @@ export default defineConfig({
         environment: 'jsdom',
         setupFiles: ['src/test/javascript/spec/vitest-test-setup.ts'],
         include: ['src/main/webapp/app/fileupload/**/*.spec.ts'],
-        exclude: ['**/node_modules/**'],
+        exclude: ['**/node_modules/**', '**/build/**'],
         testTimeout: 10000,
         reporters: ['default', 'junit'],
         outputFile: './build/test-results/vitest/junit.xml',
@@ -36,6 +38,12 @@ export default defineConfig({
             reportsDirectory: 'build/test-results/vitest/coverage',
             include: ['src/main/webapp/app/fileupload/**/*.ts'],
             exclude: ['**/node_modules/**', '**/*.spec.ts', '**/*.routes.ts', '**/*.model.ts'],
+            thresholds: {
+                statements: 92.40,
+                branches: 77.00,
+                functions: 84.60,
+                lines: 93.00,
+            },
         },
     },
 });

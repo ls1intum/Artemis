@@ -117,6 +117,12 @@ describe('FileUploadExerciseService', () => {
             expect(response.body?.title).toBe('Updated');
         });
 
+        it('should throw error when exercise has no ID', () => {
+            const exercise = createExercise(); // No ID
+
+            expect(() => service.update(exercise)).toThrow('Cannot update exercise without an ID');
+        });
+
         it('should pass request options', async () => {
             const exercise = createExercise(456);
             const options = { notificationText: 'test' };
@@ -224,6 +230,12 @@ describe('FileUploadExerciseService', () => {
             expect(response.body).toBeDefined();
         });
 
+        it('should throw error when exercise has no ID', () => {
+            const exercise = createExercise(); // No ID
+
+            expect(() => service.reevaluateAndUpdate(exercise)).toThrow('Cannot re-evaluate exercise without an ID');
+        });
+
         it('should pass request options', async () => {
             const exercise = createExercise(456);
             const options = { deleteFeedback: true };
@@ -250,6 +262,12 @@ describe('FileUploadExerciseService', () => {
 
             const response = await resultPromise;
             expect(response.body?.id).toBe(789);
+        });
+
+        it('should throw error when exercise has no ID', () => {
+            const exercise = createExercise(); // No ID
+
+            expect(() => service.import(exercise)).toThrow('Cannot import exercise without an ID');
         });
 
         it('should convert dates from client when importing', async () => {

@@ -68,7 +68,7 @@ import { ActivatedRoute, Data, Params, UrlSegment, provideRouter } from '@angula
 import { BehaviorSubject, of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { TranslateModule } from '@ngx-translate/core';
-import { MockComponent } from 'ng-mocks';
+import { MockComponent, MockDirective } from 'ng-mocks';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import dayjs from 'dayjs/esm';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
@@ -78,7 +78,7 @@ import 'app/shared/util/array.extension';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { TranslateDirective } from '@ngx-translate/core';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 import { FileUploadExerciseUpdateComponent } from './file-upload-exercise-update.component';
@@ -112,12 +112,13 @@ import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.com
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 // NOTE: Do NOT import MarkdownEditorMonacoComponent here - it transitively imports monaco-editor
 // which causes static initializers to run before mocks are applied.
-import { Component, Input, output, signal, viewChild } from '@angular/core';
+import { Component, Input, input, output, signal, viewChild } from '@angular/core';
 
 // Mock component to replace MarkdownEditorMonacoComponent without importing the real one
 @Component({ selector: 'jhi-markdown-editor-monaco', template: '', standalone: true })
 class MockMarkdownEditorMonacoComponent {
     @Input() markdown: string = '';
+    @Input() domainActions: unknown[] = [];
 }
 
 // Stub for TitleChannelNameComponent to satisfy viewChild.required
@@ -135,9 +136,9 @@ class StubExerciseTitleChannelNameComponent {
     @Input() isExamMode: boolean = false;
     @Input() isImport: boolean = false;
     @Input() hideTitleLabel: boolean = false;
-    course = signal<Course | undefined>(undefined);
-    isEditFieldDisplayedRecord = signal<Record<string, boolean>>({});
-    courseId = signal<number | undefined>(undefined);
+    course = input<Course>();
+    isEditFieldDisplayedRecord = input<Record<string, boolean>>();
+    courseId = input<number>();
     onTitleChange = output<string>();
     onChannelNameChange = output<string>();
     readonly titleChannelNameComponent = viewChild.required(StubTitleChannelNameComponent);
@@ -250,7 +251,7 @@ describe('FileUploadExerciseUpdateComponent', () => {
                 set: {
                     imports: [
                         FormsModule,
-                        TranslateDirective,
+                        MockDirective(TranslateDirective),
                         FaIconComponent,
                         NgbTooltip,
                         ArtemisTranslatePipe,

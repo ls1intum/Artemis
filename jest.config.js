@@ -65,6 +65,7 @@ const {
 module.exports = {
     testEnvironmentOptions: {
         url: 'https://artemis.fake/test',
+        globalsCleanup: 'on',
     },
     roots: ['<rootDir>', `<rootDir>/${baseUrl}`],
     modulePaths: [`<rootDir>/${baseUrl}`],
@@ -95,11 +96,18 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/openapi/',
         '<rootDir>/src/main/webapp/app/fileupload/', // fileupload module uses Vitest
     ],
-    // Global coverage thresholds removed - per-module thresholds are enforced by
-    // supporting_scripts/code-coverage/module-coverage-client/check-client-module-coverage.mjs
-    // which supports both Jest and Vitest coverage reports
+    // Global coverage thresholds for Jest (excludes fileupload module which uses Vitest)
+    // Per-module thresholds are additionally enforced by check-client-module-coverage.mjs
+    coverageThreshold: {
+        global: {
+            statements: 90.2,
+            branches: 74.1,
+            functions: 84.3,
+            lines: 90.3,
+        },
+    },
     // 'json-summary' reporter is used by supporting_scripts/code-coverage/module-coverage-client/check-client-module-coverage.mjs
-    coverageReporters: ['clover', 'json', 'lcov', 'text-summary','json-summary'],
+    coverageReporters: ['clover', 'json', 'lcov', 'text-summary', 'json-summary'],
     setupFilesAfterEnv: ['<rootDir>/src/test/javascript/spec/jest-test-setup.ts', 'jest-extended/all'],
     moduleFileExtensions: ['ts', 'html', 'js', 'json', 'mjs'],
     transformIgnorePatterns: [`/node_modules/(?!${esModules})`],

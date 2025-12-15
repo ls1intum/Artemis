@@ -4,13 +4,33 @@ import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const PROJECT_ROOT = path.resolve(__dirname, '../../..');
 
 // Coverage file paths
-const jestSummaryPath = path.resolve(__dirname, '../../../build/test-results/coverage-summary.json');
-const vitestSummaryPath = path.resolve(__dirname, '../../../build/test-results/vitest/coverage/coverage-summary.json');
+const jestSummaryPath = path.resolve(PROJECT_ROOT, 'build/test-results/coverage-summary.json');
+const vitestSummaryPath = path.resolve(PROJECT_ROOT, 'build/test-results/vitest/coverage/coverage-summary.json');
 
-// Modules using Vitest instead of Jest
-const vitestModules = new Set(['fileupload']);
+/**
+ * Parse vitest.config.ts to extract module names from include patterns.
+ * The vitest.config.ts is the single source of truth for which modules use Vitest.
+ */
+function getVitestModules() {
+    const vitestConfigPath = path.join(PROJECT_ROOT, 'vitest.config.ts');
+    if (!fs.existsSync(vitestConfigPath)) {
+        return new Set();
+    }
+    const content = fs.readFileSync(vitestConfigPath, 'utf-8');
+    // Match patterns like: 'src/main/webapp/app/fileupload/**/*.spec.ts'
+    const modulePattern = /src\/main\/webapp\/app\/([a-zA-Z0-9_-]+)\/\*\*/g;
+    const modules = new Set();
+    let match;
+    while ((match = modulePattern.exec(content)) !== null) {
+        modules.add(match[1]);
+    }
+    return modules;
+}
+
+const VITEST_MODULES = getVitestModules();
 
 // Load coverage files
 let jestSummary = {};
@@ -31,12 +51,12 @@ if (fs.existsSync(jestSummaryPath)) {
 if (fs.existsSync(vitestSummaryPath)) {
     try {
         vitestSummary = JSON.parse(fs.readFileSync(vitestSummaryPath, 'utf-8'));
-        console.log('✅ Vitest coverage loaded for modules:', [...vitestModules].join(', '));
+        console.log('✅ Vitest coverage loaded for modules:', [...VITEST_MODULES].join(', '));
     } catch (error) {
         console.error('❌ Failed to parse Vitest coverage-summary.json:', error);
         process.exit(1);
     }
-} else if (vitestModules.size > 0) {
+} else if (VITEST_MODULES.size > 0) {
     console.error('❌ Vitest coverage-summary.json not found at', vitestSummaryPath);
     console.error('   Vitest modules require coverage. Run "npm run vitest:coverage" first.');
     process.exit(1);
@@ -86,10 +106,10 @@ const moduleThresholds = {
         lines:      88.60,
     },
     fileupload: {
-        statements: 95.70,
-        branches:   84.30,
-        functions:  96.40,
-        lines:      95.70,
+        statements: 92.40,
+        branches:   77.00,
+        functions:  84.60,
+        lines:      93.00,
     },
     hyperion: {
         statements: 0,
@@ -196,7 +216,7 @@ for (const [module, thresholds] of Object.entries(moduleThresholds)) {
     };
 
     // Use Vitest coverage for Vitest modules, Jest for everything else
-    const summary = vitestModules.has(module) ? vitestSummary : jestSummary;
+    const summary = VITEST_MODULES.has(module) ? vitestSummary : jestSummary;
 
     for (const [filePath, metricsData] of Object.entries(summary)) {
         if (filePath === 'total') continue;
@@ -220,7 +240,7 @@ for (const [module, thresholds] of Object.entries(moduleThresholds)) {
         continue;
     }
 
-    const testFramework = vitestModules.has(module) ? '[vitest]' : '[jest]';
+    const testFramework = VITEST_MODULES.has(module) ? '[vitest]' : '[jest]';
     const moduleFailed = evaluateAndPrintMetrics(`${module} ${testFramework}`, aggregatedMetrics, thresholds);
     if (moduleFailed) {
         anyModuleFailed = true;

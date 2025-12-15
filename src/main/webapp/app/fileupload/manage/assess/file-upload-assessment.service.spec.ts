@@ -252,6 +252,88 @@ describe('FileUploadAssessmentService', () => {
             const response = await resultPromise;
             expect(response.body).toBeDefined();
         });
+
+        it('should handle null body in server response', async () => {
+            const submissionId = 1;
+            const feedbacks = [createFeedback(0, 3)];
+            const complaintResponse = new ComplaintResponse();
+
+            const resultPromise = new Promise<HttpResponse<Result>>((resolve) => {
+                service.updateAssessmentAfterComplaint(feedbacks, complaintResponse, submissionId).subscribe((resp) => {
+                    resolve(resp);
+                });
+            });
+
+            const req = httpMock.expectOne({
+                url: `api/fileupload/file-upload-submissions/${submissionId}/assessment-after-complaint`,
+                method: 'PUT',
+            });
+
+            req.flush(null);
+
+            const response = await resultPromise;
+            expect(response.body).toBeNull();
+        });
+
+        it('should handle response without submission', async () => {
+            const submissionId = 1;
+            const feedbacks = [createFeedback(0, 3)];
+            const complaintResponse = new ComplaintResponse();
+            const serverResult = {
+                id: 1,
+                completionDate: '2023-01-01T12:00:00Z',
+                // No submission
+            };
+
+            const resultPromise = new Promise<HttpResponse<Result>>((resolve) => {
+                service.updateAssessmentAfterComplaint(feedbacks, complaintResponse, submissionId).subscribe((resp) => {
+                    resolve(resp);
+                });
+            });
+
+            const req = httpMock.expectOne({
+                url: `api/fileupload/file-upload-submissions/${submissionId}/assessment-after-complaint`,
+                method: 'PUT',
+            });
+
+            req.flush(serverResult);
+
+            const response = await resultPromise;
+            expect(response.body).toBeDefined();
+            expect(response.body?.submission).toBeUndefined();
+        });
+
+        it('should handle response with submission but no participation', async () => {
+            const submissionId = 1;
+            const feedbacks = [createFeedback(0, 3)];
+            const complaintResponse = new ComplaintResponse();
+            const serverResult = {
+                id: 1,
+                completionDate: '2023-01-01T12:00:00Z',
+                submission: {
+                    id: 187,
+                    submissionDate: '2023-01-01T10:00:00Z',
+                    // No participation
+                },
+            };
+
+            const resultPromise = new Promise<HttpResponse<Result>>((resolve) => {
+                service.updateAssessmentAfterComplaint(feedbacks, complaintResponse, submissionId).subscribe((resp) => {
+                    resolve(resp);
+                });
+            });
+
+            const req = httpMock.expectOne({
+                url: `api/fileupload/file-upload-submissions/${submissionId}/assessment-after-complaint`,
+                method: 'PUT',
+            });
+
+            req.flush(serverResult);
+
+            const response = await resultPromise;
+            expect(response.body).toBeDefined();
+            expect(response.body?.submission?.participation).toBeUndefined();
+        });
     });
 
     describe('cancelAssessment', () => {
