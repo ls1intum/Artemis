@@ -7,6 +7,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
+import java.util.Objects;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -224,7 +225,7 @@ public class LectureContentProcessingService {
         LectureUnitProcessingState state = stateOpt.get();
 
         // Validate token - reject stale callbacks from old jobs
-        if (!jobToken.equals(state.getIngestionJobToken())) {
+        if (!Objects.equals(jobToken, state.getIngestionJobToken())) {
             log.info("Ignoring stale ingestion callback for unit {} (token mismatch: expected {}, got {})", lectureUnitId, state.getIngestionJobToken(), jobToken);
             return;
         }
