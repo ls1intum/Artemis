@@ -362,7 +362,8 @@ describe('FeedbackAnalysisComponent', () => {
         createChannelSpy.mockRejectedValue(new Error('Error creating channel'));
         await component.openFeedbackDetailChannelModal(feedbackMock[0]);
         formSubmitted.next({ channelDto: { name: 'Test Channel' } as ChannelDTO, navigate: true });
-        await new Promise((resolve) => setTimeout(resolve, 0));
+        await fixture.whenStable();
+        fixture.changeDetectorRef.detectChanges();
         expect(alertService.error).toHaveBeenCalledOnce();
     });
 

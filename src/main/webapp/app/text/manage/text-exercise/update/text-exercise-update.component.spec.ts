@@ -6,6 +6,8 @@ import { SessionStorageService } from 'app/shared/service/session-storage.servic
 
 import { TextExerciseUpdateComponent } from 'app/text/manage/text-exercise/update/text-exercise-update.component';
 import { TextExerciseService } from 'app/text/manage/text-exercise/service/text-exercise.service';
+import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
+import { FormSectionStatus } from 'app/shared/form/form-status-bar/form-status-bar.component';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
@@ -35,6 +37,10 @@ describe('TextExercise Management Update Component', () => {
     let comp: TextExerciseUpdateComponent;
     let fixture: ComponentFixture<TextExerciseUpdateComponent>;
     let service: TextExerciseService;
+
+    const createDateFieldStub = (): Partial<FormDateTimePickerComponent> => ({
+        dateInput: { valid: true } as Partial<NgModel>,
+    });
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -228,27 +234,27 @@ describe('TextExercise Management Update Component', () => {
                 comp.formSectionStatus = [
                     { valid: true, empty: false, title: 'dummy' },
                     { valid: true, empty: false, title: 'dummy2' },
-                ] as any;
+                ] as FormSectionStatus[];
             });
             comp.exerciseTitleChannelNameComponent().titleChannelNameComponent().isValid.set(false);
             comp.exerciseUpdatePlagiarismComponent()?.isFormValid.set(true);
             comp.teamConfigFormGroupComponent = { formValidChanges: new Subject() } as TeamConfigFormGroupComponent;
             comp.bonusPoints = { valueChanges: new Subject(), valid: true } as unknown as NgModel;
             comp.points = { valueChanges: new Subject(), valid: true } as unknown as NgModel;
-            comp.solutionPublicationDateField = { dateInput: { valid: true } } as any;
-            comp.releaseDateField = { dateInput: { valid: true } } as any;
-            comp.startDateField = { dateInput: { valid: true } } as any;
-            comp.dueDateField = { dateInput: { valid: true } } as any;
-            comp.assessmentDateField = { dateInput: { valid: true } } as any;
+            comp.solutionPublicationDateField = createDateFieldStub();
+            comp.releaseDateField = createDateFieldStub();
+            comp.startDateField = createDateFieldStub();
+            comp.dueDateField = createDateFieldStub();
+            comp.assessmentDateField = createDateFieldStub();
 
             comp.ngOnInit();
             comp.ngAfterViewInit();
             // Angular will reset view children during initialization; ensure stubs stay defined.
-            comp.solutionPublicationDateField = { dateInput: { valid: true } } as any;
-            comp.releaseDateField = { dateInput: { valid: true } } as any;
-            comp.startDateField = { dateInput: { valid: true } } as any;
-            comp.dueDateField = { dateInput: { valid: true } } as any;
-            comp.assessmentDateField = { dateInput: { valid: true } } as any;
+            comp.solutionPublicationDateField = createDateFieldStub();
+            comp.releaseDateField = createDateFieldStub();
+            comp.startDateField = createDateFieldStub();
+            comp.dueDateField = createDateFieldStub();
+            comp.assessmentDateField = createDateFieldStub();
 
             comp.exerciseTitleChannelNameComponent().titleChannelNameComponent().isValid.set(true);
 

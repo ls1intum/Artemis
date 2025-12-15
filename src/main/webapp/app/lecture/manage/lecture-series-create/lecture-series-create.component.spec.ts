@@ -12,17 +12,6 @@ import { of, throwError } from 'rxjs';
 import { Lecture, LectureSeriesCreateLectureDTO } from 'app/lecture/shared/entities/lecture.model';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 
-// Mock PrimeNG's motion library to avoid matchMedia errors
-jest.mock('@primeuix/motion', () => ({
-    __esModule: true,
-    createMotion: jest.fn(() => ({
-        enter: jest.fn(() => Promise.resolve()),
-        leave: jest.fn(() => Promise.resolve()),
-        cancel: jest.fn(),
-        update: jest.fn(),
-    })),
-}));
-
 describe('LectureSeriesCreateComponent', () => {
     let fixture: ComponentFixture<LectureSeriesCreateComponent>;
     let component: LectureSeriesCreateComponent;

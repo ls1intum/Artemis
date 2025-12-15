@@ -69,6 +69,17 @@ Object.defineProperty(window, 'matchMedia', {
     })),
 });
 
+// PrimeNG UIX motion relies on matchMedia; mock it globally to avoid setup in individual specs.
+jest.mock('@primeuix/motion', () => ({
+    __esModule: true,
+    createMotion: jest.fn(() => ({
+        enter: jest.fn(() => Promise.resolve()),
+        leave: jest.fn(() => Promise.resolve()),
+        cancel: jest.fn(),
+        update: jest.fn(),
+    })),
+}));
+
 // Prevents errors with the monaco editor tests
 Object.assign(global, { TextDecoder, TextEncoder });
 // Custom language definitions load clipboardService.js, which depends on ClipboardItem. This must be mocked for the tests.

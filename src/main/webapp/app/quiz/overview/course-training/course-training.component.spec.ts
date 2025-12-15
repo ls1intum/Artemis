@@ -11,7 +11,7 @@ import { LeaderboardDTO, LeaderboardEntry, LeaderboardSettingsDTO } from './cour
 import { LocationStrategy, PathLocationStrategy } from '@angular/common';
 import dayjs from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
-import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('CourseTrainingComponent', () => {
     let component: CourseTrainingComponent;

@@ -33,7 +33,6 @@ describe('TutorSuggestionComponent', () => {
     let accountService: AccountService;
     let featureToggleService: FeatureToggleService;
     let irisStatusService: IrisStatusService;
-    let translateService: TranslateService;
     const irisSettings = mockSettings();
 
     const statusMock = {
@@ -78,7 +77,6 @@ describe('TutorSuggestionComponent', () => {
         profileService = TestBed.inject(ProfileService);
         accountService = TestBed.inject(AccountService);
         featureToggleService = TestBed.inject(FeatureToggleService);
-        translateService = TestBed.inject(TranslateService);
 
         jest.spyOn(featureToggleService, 'getFeatureToggleActive').mockReturnValue(of(true));
         chatService.setCourseId(123);

@@ -37,6 +37,10 @@ describe('FileUploadExerciseUpdateComponent', () => {
     let fixture: ComponentFixture<FileUploadExerciseUpdateComponent>;
     let service: FileUploadExerciseService;
 
+    const createDateFieldStub = (): Partial<FormDateTimePickerComponent> => ({
+        dateInput: { valid: true } as Partial<NgModel>,
+    });
+
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [OwlDateTimeModule, OwlNativeDateTimeModule],
@@ -173,11 +177,11 @@ describe('FileUploadExerciseUpdateComponent', () => {
             comp.teamConfigFormGroupComponent = { formValidChanges: new Subject() } as TeamConfigFormGroupComponent;
             comp.bonusPoints = { valueChanges: new Subject(), valid: true } as unknown as NgModel;
             comp.points = { valueChanges: new Subject(), valid: true } as unknown as NgModel;
-            comp.solutionPublicationDateField = { dateInput: { valid: true } } as any;
-            comp.releaseDateField = { dateInput: { valid: true } } as any;
-            comp.startDateField = { dateInput: { valid: true } } as any;
-            comp.dueDateField = { dateInput: { valid: true } } as any;
-            comp.assessmentDateField = { dateInput: { valid: true } } as any;
+            comp.solutionPublicationDateField = createDateFieldStub();
+            comp.releaseDateField = createDateFieldStub();
+            comp.startDateField = createDateFieldStub();
+            comp.dueDateField = createDateFieldStub();
+            comp.assessmentDateField = createDateFieldStub();
 
             comp.ngOnInit();
             comp.ngAfterViewInit();
@@ -188,7 +192,7 @@ describe('FileUploadExerciseUpdateComponent', () => {
             expect(comp.formStatusSections).toBeDefined();
             expect(comp.formStatusSections[0].valid).toBeTrue();
 
-            comp.solutionPublicationDateField = { dateInput: { valid: true } } as any;
+            comp.solutionPublicationDateField = createDateFieldStub();
             comp.validateDate();
             expect(calculateValidSpy).toHaveBeenCalledTimes(2);
 

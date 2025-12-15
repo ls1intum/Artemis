@@ -320,7 +320,8 @@ describe('CodeEditorMonacoComponent', () => {
         const addLineWidgetStub = jest.spyOn(comp.editor(), 'addLineWidget').mockImplementation();
         const selectFileInEditorStub = jest.spyOn(comp, 'selectFileInEditor').mockResolvedValue(undefined);
         const rafSpy = jest.spyOn(window, 'requestAnimationFrame').mockImplementation((cb: FrameRequestCallback) => {
-            return window.setTimeout(() => cb(0));
+            const handle = window.setTimeout(() => cb(0), 0);
+            return handle;
         });
         const cancelRafSpy = jest.spyOn(window, 'cancelAnimationFrame').mockImplementation((id?: number) => {
             if (id !== undefined) {

@@ -461,6 +461,11 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         expect(comp.gradingStatistics).toEqual(gradingStatistics);
 
         expect(comp.staticCodeAnalysisCategoriesForCharts).toEqual(codeAnalysisCategories1);
+
+        const issuesMapForFirstCategory = comp.getIssuesMap(codeAnalysisCategories1[0].name);
+        expect(issuesMapForFirstCategory).toEqual(gradingStatistics.categoryIssuesMap?.[codeAnalysisCategories1[0].name]);
+        const issuesMapForSecondCategory = comp.getIssuesMap(codeAnalysisCategories1[1].name);
+        expect(issuesMapForSecondCategory).toEqual(gradingStatistics.categoryIssuesMap?.[codeAnalysisCategories1[1].name]);
     });
 
     it('should sort code-analysis table', () => {

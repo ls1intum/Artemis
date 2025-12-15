@@ -7,7 +7,6 @@ import { AbstractControl, NG_VALIDATORS, Validator } from '@angular/forms';
 @Directive({
     selector: '[validPattern][ngModel],[validPattern][formControl]',
     providers: [{ provide: NG_VALIDATORS, useExisting: CustomPatternValidatorDirective, multi: true }],
-    standalone: true,
 })
 export class CustomPatternValidatorDirective implements Validator {
     validate(control: AbstractControl): { [key: string]: any } | null {
