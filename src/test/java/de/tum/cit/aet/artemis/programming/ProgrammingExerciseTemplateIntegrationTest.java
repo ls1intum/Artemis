@@ -39,6 +39,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -56,6 +58,9 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 
+// ExecutionMode.SAME_THREAD ensures that all tests within this class are executed sequentially in the same thread, rather than in parallel or in a different thread.
+// This is important in the context of Maven because it avoids potential race conditions or inconsistencies that could arise if multiple test methods are executed simultaneously.
+@Execution(ExecutionMode.SAME_THREAD)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingIntegrationJenkinsLocalVCTest {
 
@@ -270,18 +275,83 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
         assertThat(testResults).containsExactlyInAnyOrderEntriesOf(Map.of(testResult, 12 + (ProgrammingLanguage.JAVA.equals(language) ? 1 : 0)));
     }
 
-    private int invokeMaven(Path testRepositoryPath) throws MavenInvocationException {
+    private int invokeMaven(Path testRepositoryPath) throws MavenInvocationException, IOException {
+        log.info("Invoking Maven in directory: {}", testRepositoryPath);
+
+        // Validate that pom.xml exists
+        Path pomFile = testRepositoryPath.resolve("pom.xml");
+        if (!Files.exists(pomFile)) {
+            log.error("pom.xml not found at: {}", pomFile);
+            log.error("Directory contents: {}", listDirectoryContents(testRepositoryPath));
+            throw new IllegalStateException("pom.xml not found in test repository: " + testRepositoryPath);
+        }
+        log.info("Found pom.xml at: {}", pomFile);
+
+        // Validate that assignment/src exists (the moved source files)
+        Path assignmentSrc = testRepositoryPath.resolve("assignment/src");
+        if (!Files.exists(assignmentSrc)) {
+            log.error("assignment/src not found at: {}", assignmentSrc);
+            log.error("Directory contents: {}", listDirectoryContents(testRepositoryPath));
+            throw new IllegalStateException("assignment/src not found in test repository: " + testRepositoryPath);
+        }
+        log.info("Found assignment/src at: {}", assignmentSrc);
+
+        // Use a fresh local Maven repository to avoid cache interference between tests
+        Path localMavenRepo = testRepositoryPath.resolve(".m2-test-repo");
+        Files.createDirectories(localMavenRepo);
+        log.info("Using isolated Maven local repository: {}", localMavenRepo);
+
         InvocationRequest mvnRequest = new DefaultInvocationRequest();
         mvnRequest.setJavaHome(java17Home);
         mvnRequest.setPomFile(testRepositoryPath.toFile());
-        mvnRequest.addArgs(List.of("clean", "test"));
+        mvnRequest.addArgs(List.of("clean", "test", "-Dmaven.repo.local=" + localMavenRepo.toAbsolutePath(), "-B"));
         mvnRequest.setShowVersion(true);
+        mvnRequest.setBatchMode(true);
+
+        // Capture Maven output for debugging
+        StringBuilder mavenOutput = new StringBuilder();
+        mvnRequest.setOutputHandler(line -> {
+            mavenOutput.append(line).append("\n");
+            log.debug("[Maven] {}", line);
+        });
+        mvnRequest.setErrorHandler(line -> {
+            mavenOutput.append("[ERROR] ").append(line).append("\n");
+            log.warn("[Maven ERROR] {}", line);
+        });
 
         Invoker mvnInvoker = new DefaultInvoker();
         InvocationResult result = mvnInvoker.execute(mvnRequest);
 
+        log.info("Maven execution completed with exit code: {}", result.getExitCode());
+        if (result.getExecutionException() != null) {
+            log.error("Maven execution exception: ", result.getExecutionException());
+        }
+
+        // Log summary of Maven output on failure or unexpected success
+        if (result.getExitCode() == 0) {
+            log.info("Maven build succeeded. Output summary (last 50 lines):\n{}", getLastLines(mavenOutput.toString(), 50));
+        }
+        else {
+            log.info("Maven build failed as expected. Output summary (last 50 lines):\n{}", getLastLines(mavenOutput.toString(), 50));
+        }
+
         assertThat(result.getExecutionException()).isNull();
         return result.getExitCode();
+    }
+
+    private String listDirectoryContents(Path directory) {
+        try (Stream<Path> paths = Files.walk(directory, 2)) {
+            return paths.map(p -> directory.relativize(p).toString()).collect(Collectors.joining(", "));
+        }
+        catch (IOException e) {
+            return "Unable to list directory: " + e.getMessage();
+        }
+    }
+
+    private String getLastLines(String text, int lineCount) {
+        String[] lines = text.split("\n");
+        int start = Math.max(0, lines.length - lineCount);
+        return String.join("\n", Arrays.copyOfRange(lines, start, lines.length));
     }
 
     private int invokeGradle(Path testRepositoryPath) {
