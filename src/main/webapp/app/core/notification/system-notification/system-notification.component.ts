@@ -31,6 +31,7 @@ export class SystemNotificationComponent implements OnInit, OnDestroy {
     notificationsToDisplay: SystemNotification[] = [];
     closedIds: number[] = [];
     websocketStatusSubscription?: Subscription;
+    systemNotificationSubscription?: Subscription;
 
     nextUpdateFuture?: ReturnType<typeof setTimeout>;
 
@@ -54,6 +55,7 @@ export class SystemNotificationComponent implements OnInit, OnDestroy {
 
     ngOnDestroy() {
         this.websocketStatusSubscription?.unsubscribe();
+        this.systemNotificationSubscription?.unsubscribe();
     }
 
     private loadActiveNotification() {
@@ -68,8 +70,8 @@ export class SystemNotificationComponent implements OnInit, OnDestroy {
      * The server submits the entire list of relevant system notifications if they are updated
      */
     private subscribeSocket() {
-        this.websocketService.subscribe(WEBSOCKET_CHANNEL);
-        this.websocketService.receive(WEBSOCKET_CHANNEL).subscribe((notifications: SystemNotification[]) => {
+        this.systemNotificationSubscription?.unsubscribe();
+        this.systemNotificationSubscription = this.websocketService.subscribe<SystemNotification[]>(WEBSOCKET_CHANNEL).subscribe((notifications: SystemNotification[]) => {
             notifications.forEach((notification) => {
                 notification.notificationDate = convertDateFromServer(notification.notificationDate);
                 notification.expireDate = convertDateFromServer(notification.expireDate);
