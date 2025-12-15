@@ -51,7 +51,7 @@ describe('RepositoryFileSyncService', () => {
     });
 
     afterEach(() => {
-        service.reset();
+        service?.reset();
         jest.clearAllMocks();
     });
 
