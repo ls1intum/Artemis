@@ -12,6 +12,7 @@ import {
     ProgrammingExerciseEditorSyncService,
     ProgrammingExerciseEditorSyncTarget,
 } from 'app/programming/manage/services/programming-exercise-editor-sync.service';
+import { AlertService } from 'app/shared/service/alert.service';
 
 type TargetFilter = (message: ProgrammingExerciseEditorSyncMessage) => boolean;
 
@@ -35,6 +36,7 @@ export type FileOperation = FileContentEditOperation | FileCreateOperation | Fil
 @Injectable({ providedIn: 'root' })
 export class RepositoryFileSyncService {
     private syncService = inject(ProgrammingExerciseEditorSyncService);
+    private alertService = inject(AlertService);
     private fileService = inject(CodeEditorFileService);
 
     /** Google's diff-match-patch library for generating and applying text diffs */
@@ -455,8 +457,8 @@ export class RepositoryFileSyncService {
                 // Check if any patch failed to apply (results array contains false for failed patches)
                 const hasFailedPatches = results.some((success) => !success);
                 if (hasFailedPatches) {
-                    // Patch application failed - request full file sync as fallback
-                    // TODO: refactor this to use the public API with RepositoryType
+                    this.alertService.info('artemisApp.editor.synchronization.patchFailedAlert');
+                    this.requestFullFileForTarget(message.target, filePatch.fileName, auxiliaryId);
                     return undefined;
                 }
                 patchedContent = appliedContent;
@@ -465,7 +467,8 @@ export class RepositoryFileSyncService {
             }
         } catch (error) {
             // If patch parsing or application throws an error, request full file sync as fallback
-            // TODO: refactor this to use the public API with RepositoryType
+            this.alertService.info('artemisApp.editor.synchronization.syncErrorAlert');
+            this.requestFullFileForTarget(message.target, filePatch.fileName, auxiliaryId);
             return undefined;
         }
 
@@ -689,6 +692,14 @@ export class RepositoryFileSyncService {
         return `${this.exerciseId ?? 'unknown'}-${target}-${auxiliaryId ?? 'none'}::${fileName}`;
     }
 
+    private requestFullFileForTarget(target: ProgrammingExerciseEditorSyncTarget, fileName: string, auxiliaryId?: number) {
+        const repositoryType = RepositoryFileSyncService.SYNC_TARGET_TO_REPOSITORY_TYPE[target];
+        if (!repositoryType) {
+            return;
+        }
+        this.requestFullFile(repositoryType, fileName, auxiliaryId);
+    }
+
     static readonly REPOSITORY_TYPE_TO_SYNC_TARGET: Readonly<Record<RepositoryType, ProgrammingExerciseEditorSyncTarget | undefined>> = {
         [RepositoryType.TEMPLATE]: ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY,
         [RepositoryType.SOLUTION]: ProgrammingExerciseEditorSyncTarget.SOLUTION_REPOSITORY,
@@ -696,5 +707,13 @@ export class RepositoryFileSyncService {
         [RepositoryType.TESTS]: ProgrammingExerciseEditorSyncTarget.TESTS_REPOSITORY,
         [RepositoryType.ASSIGNMENT]: undefined,
         [RepositoryType.USER]: undefined,
+    };
+
+    static readonly SYNC_TARGET_TO_REPOSITORY_TYPE: Readonly<Record<ProgrammingExerciseEditorSyncTarget, RepositoryType | undefined>> = {
+        [ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY]: RepositoryType.TEMPLATE,
+        [ProgrammingExerciseEditorSyncTarget.SOLUTION_REPOSITORY]: RepositoryType.SOLUTION,
+        [ProgrammingExerciseEditorSyncTarget.AUXILIARY_REPOSITORY]: RepositoryType.AUXILIARY,
+        [ProgrammingExerciseEditorSyncTarget.TESTS_REPOSITORY]: RepositoryType.TESTS,
+        [ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT]: undefined,
     };
 }

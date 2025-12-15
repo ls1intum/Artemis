@@ -193,8 +193,9 @@ public class ExerciseVersionService {
             target = ProgrammingExerciseEditorSyncTarget.TESTS_REPOSITORY;
         }
         else {
-            Map<Long, String> previousAuxiliaries = Optional.ofNullable(previousProgrammingData.auxiliaryRepositories()).orElseGet(List::of).stream().collect(
-                    Collectors.toMap(ProgrammingExerciseSnapshotDTO.AuxiliaryRepositorySnapshotDTO::id, ProgrammingExerciseSnapshotDTO.AuxiliaryRepositorySnapshotDTO::commitId));
+            Map<Long, String> previousAuxiliaries = Optional.ofNullable(previousProgrammingData.auxiliaryRepositories()).orElseGet(List::of).stream()
+                    .filter(auxiliary -> auxiliary.commitId() != null).collect(Collectors.toMap(ProgrammingExerciseSnapshotDTO.AuxiliaryRepositorySnapshotDTO::id,
+                            ProgrammingExerciseSnapshotDTO.AuxiliaryRepositorySnapshotDTO::commitId));
             for (ProgrammingExerciseSnapshotDTO.AuxiliaryRepositorySnapshotDTO auxiliary : Optional.ofNullable(newProgrammingData.auxiliaryRepositories()).orElseGet(List::of)) {
                 var previousCommitId = previousAuxiliaries.get(auxiliary.id());
                 if (!Objects.equals(previousCommitId, auxiliary.commitId())) {

@@ -264,6 +264,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         reset(gitService);
         studentRepository.resetLocalRepo();
         templateRepository.resetLocalRepo();
+        solutionRepository.resetLocalRepo();
         if (tempRepository != null) {
             tempRepository.resetLocalRepo();
         }

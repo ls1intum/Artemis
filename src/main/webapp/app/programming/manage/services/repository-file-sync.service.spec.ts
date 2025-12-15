@@ -20,6 +20,8 @@ describe('RepositoryFileSyncService', () => {
     let incomingMessages$: Subject<ProgrammingExerciseEditorSyncMessage>;
     const dmp = new DiffMatchPatch();
 
+    const exerciseIdToUse = 42;
+
     beforeEach(() => {
         incomingMessages$ = new Subject<ProgrammingExerciseEditorSyncMessage>();
 
@@ -55,15 +57,15 @@ describe('RepositoryFileSyncService', () => {
 
     describe('Initialization and cleanup', () => {
         it('subscribes to synchronization updates for an exercise', () => {
-            const updates$ = service.init(42, () => true);
+            const updates$ = service.init(exerciseIdToUse, () => true);
 
-            expect(syncService.subscribeToUpdates).toHaveBeenCalledWith(42);
+            expect(syncService.subscribeToUpdates).toHaveBeenCalledWith(exerciseIdToUse);
             expect(updates$).toBeDefined();
         });
 
         it('completes listeners and unsubscribes on reset', () => {
             let completed = false;
-            service.init(42, () => true).subscribe({ complete: () => (completed = true) });
+            service.init(exerciseIdToUse, () => true).subscribe({ complete: () => (completed = true) });
 
             service.reset();
 
@@ -74,7 +76,7 @@ describe('RepositoryFileSyncService', () => {
 
     describe('Local file operations', () => {
         beforeEach(() => {
-            service.init(42, () => true);
+            service.init(exerciseIdToUse, () => true);
         });
 
         it('sends patches for content changes using existing baseline', () => {
@@ -83,7 +85,7 @@ describe('RepositoryFileSyncService', () => {
             service.handleLocalFileOperation({ type: ProgrammingExerciseEditorFileChangeType.CONTENT, fileName: 'file.txt', content: 'new content' }, RepositoryType.TEMPLATE);
 
             expect(syncService.sendSynchronizationUpdate).toHaveBeenCalledWith(
-                42,
+                exerciseIdToUse,
                 expect.objectContaining({
                     target: ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY,
                     filePatches: expect.arrayContaining([
@@ -112,7 +114,7 @@ describe('RepositoryFileSyncService', () => {
             );
 
             expect(syncService.sendSynchronizationUpdate).toHaveBeenCalledWith(
-                42,
+                exerciseIdToUse,
                 expect.objectContaining({
                     target: ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY,
                     filePatches: [
@@ -133,7 +135,7 @@ describe('RepositoryFileSyncService', () => {
             service.handleLocalFileOperation({ type: ProgrammingExerciseEditorFileChangeType.DELETE, fileName: 'old.txt' }, RepositoryType.TEMPLATE);
 
             expect(syncService.sendSynchronizationUpdate).toHaveBeenCalledWith(
-                42,
+                exerciseIdToUse,
                 expect.objectContaining({
                     filePatches: [
                         expect.objectContaining({
@@ -143,7 +145,7 @@ describe('RepositoryFileSyncService', () => {
                     ],
                 }),
             );
-            const baselineKey = '42-TEMPLATE_REPOSITORY-none::old.txt';
+            const baselineKey = 'exerciseIdToUse-TEMPLATE_REPOSITORY-none::old.txt';
             expect((service as any).baselines[baselineKey]).toBeUndefined();
         });
 
@@ -156,7 +158,7 @@ describe('RepositoryFileSyncService', () => {
             );
 
             expect(syncService.sendSynchronizationUpdate).toHaveBeenCalledWith(
-                42,
+                exerciseIdToUse,
                 expect.objectContaining({
                     filePatches: [
                         expect.objectContaining({
@@ -169,8 +171,8 @@ describe('RepositoryFileSyncService', () => {
             );
 
             const baselines = (service as any).baselines;
-            expect(baselines['42-TEMPLATE_REPOSITORY-none::old.txt']).toBeUndefined();
-            expect(baselines['42-TEMPLATE_REPOSITORY-none::new.txt']).toBe('content');
+            expect(baselines['exerciseIdToUse-TEMPLATE_REPOSITORY-none::old.txt']).toBeUndefined();
+            expect(baselines['exerciseIdToUse-TEMPLATE_REPOSITORY-none::new.txt']).toBe('content');
         });
 
         it('falls back to provided content on rename when no baseline exists', () => {
@@ -180,7 +182,7 @@ describe('RepositoryFileSyncService', () => {
             );
 
             const baselines = (service as any).baselines;
-            expect(baselines['42-TEMPLATE_REPOSITORY-none::new.txt']).toBe('renamed content');
+            expect(baselines['exerciseIdToUse-TEMPLATE_REPOSITORY-none::new.txt']).toBe('renamed content');
         });
 
         it('ignores unsupported repositories and uninitialized service', () => {
@@ -188,20 +190,16 @@ describe('RepositoryFileSyncService', () => {
             service.handleLocalFileOperation({ type: ProgrammingExerciseEditorFileChangeType.DELETE, fileName: 'test.txt' }, RepositoryType.TEMPLATE);
             expect(syncService.sendSynchronizationUpdate).not.toHaveBeenCalled();
 
-            service.init(42, () => true);
+            service.init(exerciseIdToUse, () => true);
             service.handleLocalFileOperation({ type: ProgrammingExerciseEditorFileChangeType.DELETE, fileName: 'test.txt' }, RepositoryType.ASSIGNMENT);
             expect(syncService.sendSynchronizationUpdate).not.toHaveBeenCalled();
         });
     });
 
     describe('Remote synchronization handling', () => {
-        beforeEach(() => {
-            service.init(42, () => true);
-        });
-
         it('emits applied content patches from remote changes', () => {
             const operations: FileOperation[] = [];
-            service.init(42, () => true).subscribe((op) => operations.push(op));
+            service.init(exerciseIdToUse, () => true).subscribe((op) => operations.push(op));
             service.registerBaseline(RepositoryType.TEMPLATE, 'file.txt', 'old');
 
             const patch = dmp.patch_toText(dmp.patch_make('old', 'new'));
@@ -222,7 +220,7 @@ describe('RepositoryFileSyncService', () => {
 
         it('emits create, delete, and rename operations', () => {
             const operations: FileOperation[] = [];
-            service.init(42, () => true).subscribe((op) => operations.push(op));
+            service.init(exerciseIdToUse, () => true).subscribe((op) => operations.push(op));
 
             incomingMessages$.next({
                 target: ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY,
@@ -243,7 +241,7 @@ describe('RepositoryFileSyncService', () => {
 
         it('returns undefined and does not emit when patch cannot be applied', () => {
             const operations: FileOperation[] = [];
-            service.init(42, () => true).subscribe((op) => operations.push(op));
+            service.init(exerciseIdToUse, () => true).subscribe((op) => operations.push(op));
             service.registerBaseline(RepositoryType.TEMPLATE, 'file.txt', 'baseline');
 
             incomingMessages$.next({
@@ -253,12 +251,12 @@ describe('RepositoryFileSyncService', () => {
             });
 
             expect(operations).toEqual([]);
-            expect((service as any).baselines['42-TEMPLATE_REPOSITORY-none::file.txt']).toBe('baseline');
+            expect((service as any).baselines['exerciseIdToUse-TEMPLATE_REPOSITORY-none::file.txt']).toBe('baseline');
         });
 
         it('ignores messages without a target', () => {
             const operations: FileOperation[] = [];
-            service.init(42, () => true).subscribe((op) => operations.push(op));
+            service.init(exerciseIdToUse, () => true).subscribe((op) => operations.push(op));
 
             incomingMessages$.next({
                 filePatches: [{ fileName: 'file.txt', patch: 'content', changeType: ProgrammingExerciseEditorFileChangeType.CREATE }],
@@ -270,7 +268,7 @@ describe('RepositoryFileSyncService', () => {
 
         it('skips outdated messages based on timestamp', () => {
             const operations: FileOperation[] = [];
-            service.init(42, () => true).subscribe((op) => operations.push(op));
+            service.init(exerciseIdToUse, () => true).subscribe((op) => operations.push(op));
             service.registerBaseline(RepositoryType.TEMPLATE, 'file.txt', 'initial');
 
             const newPatch = dmp.patch_toText(dmp.patch_make('initial', 'new'));
@@ -293,7 +291,7 @@ describe('RepositoryFileSyncService', () => {
 
         it('filters messages via provided target filter', () => {
             const operations: FileOperation[] = [];
-            service.init(42, (message) => message.target === ProgrammingExerciseEditorSyncTarget.SOLUTION_REPOSITORY).subscribe((op) => operations.push(op));
+            service.init(exerciseIdToUse, (message) => message.target === ProgrammingExerciseEditorSyncTarget.SOLUTION_REPOSITORY).subscribe((op) => operations.push(op));
 
             incomingMessages$.next({
                 target: ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY,
@@ -306,7 +304,7 @@ describe('RepositoryFileSyncService', () => {
 
         it('emits new commit alert operations', () => {
             const operations: FileOperation[] = [];
-            service.init(42, () => true).subscribe((op) => operations.push(op));
+            service.init(exerciseIdToUse, () => true).subscribe((op) => operations.push(op));
 
             incomingMessages$.next({
                 target: ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY,
@@ -325,7 +323,7 @@ describe('RepositoryFileSyncService', () => {
             });
 
             expect(syncService.sendSynchronizationUpdate).toHaveBeenCalledWith(
-                42,
+                exerciseIdToUse,
                 expect.objectContaining({
                     target: ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY,
                     fileFulls: [{ fileName: 'file.txt', content: 'baseline' }],
@@ -335,7 +333,7 @@ describe('RepositoryFileSyncService', () => {
 
         it('stores auxiliary baselines and emits updates for full file syncs', () => {
             const operations: FileOperation[] = [];
-            service.init(42, () => true).subscribe((op) => operations.push(op));
+            service.init(exerciseIdToUse, () => true).subscribe((op) => operations.push(op));
 
             incomingMessages$.next({
                 target: ProgrammingExerciseEditorSyncTarget.AUXILIARY_REPOSITORY,
@@ -344,14 +342,14 @@ describe('RepositoryFileSyncService', () => {
                 timestamp: 3,
             });
 
-            const baselineKey = '42-AUXILIARY_REPOSITORY-7::aux/readme.md';
+            const baselineKey = 'exerciseIdToUse-AUXILIARY_REPOSITORY-7::aux/readme.md';
             expect((service as any).baselines[baselineKey]).toBe('aux content');
             expect(operations).toEqual([{ type: ProgrammingExerciseEditorFileChangeType.CONTENT, fileName: 'aux/readme.md', content: 'aux content' }]);
         });
 
         it('applies full file sync messages to baselines', () => {
             const operations: FileOperation[] = [];
-            service.init(42, () => true).subscribe((op) => operations.push(op));
+            service.init(exerciseIdToUse, () => true).subscribe((op) => operations.push(op));
 
             incomingMessages$.next({
                 target: ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY,
@@ -365,7 +363,7 @@ describe('RepositoryFileSyncService', () => {
 
     describe('Full file requests', () => {
         beforeEach(() => {
-            service.init(42, () => true);
+            service.init(exerciseIdToUse, () => true);
         });
 
         it('returns early when not initialized', () => {
@@ -386,7 +384,7 @@ describe('RepositoryFileSyncService', () => {
             service.requestFullFile(RepositoryType.TEMPLATE, 'file.txt');
 
             expect(syncService.sendSynchronizationUpdate).toHaveBeenCalledWith(
-                42,
+                exerciseIdToUse,
                 expect.objectContaining({
                     target: ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY,
                     fileRequests: ['file.txt'],
@@ -399,7 +397,7 @@ describe('RepositoryFileSyncService', () => {
         let mockCodeEditor: Partial<CodeEditorContainerComponent>;
 
         beforeEach(() => {
-            service.init(42, () => true);
+            service.init(exerciseIdToUse, () => true);
 
             mockCodeEditor = {
                 applyRemoteFileContent: jest.fn(),
