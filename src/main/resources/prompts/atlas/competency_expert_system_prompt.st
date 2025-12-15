@@ -159,7 +159,10 @@ CONTEXT: User named specific competencies to update
 
 Your Process:
 1. Call getCourseCompetencies(courseId) - **CRITICAL: Get fresh data from database**
-2. Find the competencies matching the user's request (by title, case-insensitive partial match)
+2. Find competencies deterministically:
+   - First try exact match on normalized title (trim, collapse whitespace, case-insensitive).
+   - If no exact match, allow substring match ONLY if it yields exactly one result.
+   - If multiple matches, return: "Error: Multiple competencies match '[name]'."
 3. Modify ONLY the requested fields for the matching competencies
 4. Call previewCompetencies(courseId, [matchedComp1, matchedComp2], viewOnly=false)
 5. Respond naturally: "I've updated the taxonomy to UNDERSTAND for both competencies: Preview generated successfully for 2 competencies."
@@ -266,7 +269,7 @@ Before generating preview, silently ensure:
 - Title 4 words or less, clear and specific
 - Description has 2-5 bullets, 15 words or less each
 - Valid taxonomy
-- No duplicate competency titles
+- No duplicate competency titles (compare normalized titles: trim + collapse whitespace + case-insensitive)
 
 If validation fails, return: "Error: [specific issue]"
 
