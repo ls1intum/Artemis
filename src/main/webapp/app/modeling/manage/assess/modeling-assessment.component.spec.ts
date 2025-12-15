@@ -124,7 +124,7 @@ describe('ModelingAssessmentComponent', () => {
     it('should show title if any', () => {
         const title = 'Test Title';
         comp.title = title;
-        fixture.changeDetectorRef.detectChanges();
+        fixture.detectChanges();
         const el = fixture.debugElement.query((de) => de.nativeElement.textContent === title);
         expect(el).not.toBeNull();
     });
@@ -140,7 +140,7 @@ describe('ModelingAssessmentComponent', () => {
         });
         it('should display score display with right values', () => {
             comp.displayPoints = true;
-            fixture.changeDetectorRef.detectChanges();
+            fixture.detectChanges();
             const scoreDisplay = fixture.debugElement.query(By.directive(ScoreDisplayComponent));
             expect(scoreDisplay).not.toBeNull();
             expect(scoreDisplay.componentInstance.score).toEqual(totalScore);
@@ -149,7 +149,7 @@ describe('ModelingAssessmentComponent', () => {
 
         it('should not display score if displayPoints wrong', () => {
             comp.displayPoints = false;
-            fixture.changeDetectorRef.detectChanges();
+            fixture.detectChanges();
             const scoreDisplay = fixture.debugElement.query(By.directive(ScoreDisplayComponent));
             expect(scoreDisplay).toBeNull();
         });
@@ -158,7 +158,7 @@ describe('ModelingAssessmentComponent', () => {
     it('should display explanation editor if there is an explanation', () => {
         const explanation = 'Explanation';
         comp.explanation = explanation;
-        fixture.changeDetectorRef.detectChanges();
+        fixture.detectChanges();
         const explanationEditor = fixture.debugElement.query(By.directive(ModelingExplanationEditorComponent));
         expect(explanationEditor).not.toBeNull();
         expect(explanationEditor.componentInstance.explanation).toEqual(explanation);
@@ -168,7 +168,7 @@ describe('ModelingAssessmentComponent', () => {
     it('should initialize apollon editor', () => {
         comp.umlModel = makeMockModel();
         comp.diagramType = UMLDiagramType.ClassDiagram;
-        fixture.changeDetectorRef.detectChanges();
+        fixture.detectChanges();
         expect(comp.apollonEditor).not.toBeNull();
     });
 
@@ -176,7 +176,7 @@ describe('ModelingAssessmentComponent', () => {
         comp.umlModel = makeMockModel();
         comp.readOnly = true;
         comp.feedbacks = mockFeedbacks;
-        fixture.changeDetectorRef.detectChanges();
+        fixture.detectChanges();
         expect(comp.referencedFeedbacks).toEqual([mockFeedbackWithReference]);
         expect(comp.unreferencedFeedbacks).toEqual([mockFeedbackWithoutReference]);
         expect(comp.feedbacks).toEqual(mockFeedbacks);
@@ -223,13 +223,13 @@ describe('ModelingAssessmentComponent', () => {
         const elementCounts = getElementCounts(mockModel);
         comp.elementCounts = elementCounts;
         const spy = jest.spyOn(translatePipe, 'transform');
-        fixture.changeDetectorRef.detectChanges();
+        fixture.detectChanges();
         await fixture.whenStable();
+        await comp.ngAfterViewInit();
         for (let i = 0; i < elementCounts.length; i++) {
             expect(spy).toHaveBeenCalledWith('artemisApp.modelingAssessment.impactWarning', { affectedSubmissionsCount: elementCounts[i].numberOfOtherElements });
         }
-        const impactWarningCalls = spy.mock.calls.filter((call) => call[0] === 'artemisApp.modelingAssessment.impactWarning');
-        expect(impactWarningCalls).toHaveLength(elementCounts.length);
+        expect(spy).toHaveBeenCalledTimes(elementCounts.length);
     });
 
     it('should generate feedback from assessment', () => {
@@ -237,7 +237,7 @@ describe('ModelingAssessmentComponent', () => {
         comp.umlModel = mockModel;
         comp.resultFeedbacks = [mockFeedbackWithGradingInstruction];
 
-        fixture.changeDetectorRef.detectChanges();
+        fixture.detectChanges();
 
         comp.generateFeedbackFromAssessment(Object.values(mockModel.assessments));
         expect(comp.elementFeedback.get(mockFeedbackWithGradingInstruction.referenceId!)).toEqual(mockFeedbackWithGradingInstruction);
@@ -250,7 +250,7 @@ describe('ModelingAssessmentComponent', () => {
         comp.umlModel = makeMockModel();
         comp.highlightedElements = highlightedElements;
 
-        fixture.changeDetectorRef.detectChanges();
+        fixture.detectChanges();
         await fixture.whenStable();
         await comp.ngAfterViewInit();
         expect(comp.apollonEditor).not.toBeNull();
@@ -271,7 +271,7 @@ describe('ModelingAssessmentComponent', () => {
     it('should update model', async () => {
         const newModel = generateMockModel('newElement1', 'newElement2', 'newRelationship');
         const changes = { umlModel: { currentValue: newModel } as SimpleChange };
-        fixture.changeDetectorRef.detectChanges();
+        fixture.detectChanges();
         const apollonSpy = jest.spyOn(comp.apollonEditor!, 'model', 'set');
         await fixture.whenStable();
         await comp.apollonEditor!.nextRender;
@@ -286,7 +286,7 @@ describe('ModelingAssessmentComponent', () => {
         comp.umlModel = makeMockModel();
         comp.highlightedElements = highlightedElements;
 
-        fixture.changeDetectorRef.detectChanges();
+        fixture.detectChanges();
         await fixture.whenStable();
         await comp.ngOnChanges(changes);
         await comp.ngAfterViewInit();
@@ -315,7 +315,7 @@ describe('ModelingAssessmentComponent', () => {
         comp.referencedFeedbacks = [mockFeedbackWithReference];
         jest.spyOn(translatePipe, 'transform').mockReturnValue('Second correction round');
 
-        fixture.changeDetectorRef.detectChanges();
+        fixture.detectChanges();
         await fixture.whenStable();
         await comp.ngOnChanges(changes);
         expect(comp.apollonEditor).toBeDefined();
@@ -334,7 +334,7 @@ describe('ModelingAssessmentComponent', () => {
         comp.highlightDifferences = true;
         comp.umlModel = makeMockModel();
 
-        fixture.changeDetectorRef.detectChanges();
+        fixture.detectChanges();
         comp.feedbacks = [mockFeedbackWithReferenceCopied];
         comp.referencedFeedbacks = [mockFeedbackWithReferenceCopied];
         jest.spyOn(translatePipe, 'transform').mockReturnValue('First correction round');
@@ -360,7 +360,7 @@ describe('ModelingAssessmentComponent', () => {
         const newMockFeedbacks = [...newMockValidFeedbacks, newMockFeedbackInvalid];
         comp.umlModel = makeMockModel();
         comp.readOnly = true;
-        fixture.changeDetectorRef.detectChanges();
+        fixture.detectChanges();
         const changes = { feedbacks: { currentValue: newMockFeedbacks } as SimpleChange };
         comp.ngOnChanges(changes);
         expect(comp.feedbacks).toEqual(newMockFeedbacks);
