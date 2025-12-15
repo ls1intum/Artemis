@@ -84,9 +84,9 @@ module.exports = {
     ],
     collectCoverageFrom: [
         '<rootDir>/src/main/webapp/**/*.ts',
-        '!<rootDir>/src/main/webapp/**/*.module.ts',  // ignore modules files because they cannot be properly tested
-        '!<rootDir>/src/main/webapp/**/*.routes.ts',   // ignore routes files because they cannot be properly tested
-        '!<rootDir>/src/main/webapp/**/*.route.ts',   // ignore route files because they cannot be properly tested
+        '!<rootDir>/src/main/webapp/**/*.module.ts', // ignore modules files because they cannot be properly tested
+        '!<rootDir>/src/main/webapp/**/*.routes.ts', // ignore routes files because they cannot be properly tested
+        '!<rootDir>/src/main/webapp/**/*.route.ts', // ignore route files because they cannot be properly tested
         '!<rootDir>/**/node_modules/**',
         '!<rootDir>/src/main/webapp/app/openapi/**', // ignore openapi files because they are generated
         '!<rootDir>/src/main/webapp/app/fileupload/**', // fileupload module uses Vitest (see vitest.config.ts)
@@ -96,8 +96,8 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/openapi/',
         '<rootDir>/src/main/webapp/app/fileupload/', // fileupload module uses Vitest
     ],
-    // Global coverage thresholds for Jest (excludes fileupload module which uses Vitest)
-    // Per-module thresholds are additionally enforced by check-client-module-coverage.mjs
+    // Global coverage thresholds for Jest. Modules using Vitest (e.g., fileupload) have their own
+    // coverage thresholds in vitest.config.ts. Per-module thresholds are enforced by check-client-module-coverage.mjs
     coverageThreshold: {
         global: {
             statements: 90.2,
