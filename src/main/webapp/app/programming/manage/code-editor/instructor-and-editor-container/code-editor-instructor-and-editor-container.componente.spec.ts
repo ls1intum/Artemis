@@ -160,7 +160,8 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             jumpToLine: jest.fn(),
         };
 
-        comp.fileLoad = jest.fn();
+        comp.onFileLoad = jest.fn();
+        comp.onEditorLoaded = jest.fn();
 
         comp.selectTemplateParticipation = jest.fn().mockResolvedValue(undefined);
         comp.selectSolutionParticipation = jest.fn().mockResolvedValue(undefined);
@@ -285,21 +286,29 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
         expect(comp.fileToJumpOn).toBeUndefined();
     }));
 
-    it('shows error and clears jump state when repository selection fails', async () => {
+    it('shows error and clears jump state when repository selection fails', () => {
         const issue = mockIssues[3]; // TESTS_REPOSITORY
 
         (comp as any).codeEditorContainer.selectedRepository = jest.fn().mockReturnValue('SOLUTION');
 
         const error = new Error('repo selection failed');
-        jest.spyOn(comp, 'selectTestRepository').mockRejectedValue(error);
+        jest.spyOn(comp, 'selectTestRepository').mockImplementation(() => {
+            throw error; // must be sync to hit try/catch
+        });
 
         const alertErrorSpy = jest.spyOn(alertService, 'error');
         const translateSpy = jest.spyOn(translateService, 'instant');
 
-        // This awaits the async method so the rejection is handled
-        await comp.onIssueNavigate(issue, 1, new Event('click'));
+        comp.onIssueNavigate(issue, 1, new Event('click'));
 
         expect(translateSpy).toHaveBeenCalledWith('artemisApp.hyperion.consistencyCheck.navigationFailed');
         expect(alertErrorSpy).toHaveBeenCalled();
+
+        // With your current function, these are set BEFORE the try, then cleared in catch
+        expect(comp.lineJumpOnFileLoad).toBeUndefined();
+        expect(comp.fileToJumpOn).toBeUndefined();
+
+        // Also: since catch returns, onEditorLoaded should not be called
+        expect(comp.onEditorLoaded).not.toHaveBeenCalled();
     });
 });

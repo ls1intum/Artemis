@@ -227,6 +227,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             this.locationIndex = deltaIndex === 1 ? 0 : issue.relatedLocations.length - 1;
         }
 
+        // We can always jump to the problem statement
         if (issue.relatedLocations[this.locationIndex].type === 'PROBLEM_STATEMENT') {
             this.codeEditorContainer.selectedFile = this.codeEditorContainer.problemStatementIdentifier;
             this.editableInstructions.jumpToLine(issue.relatedLocations[this.locationIndex].endLine);
@@ -237,6 +238,8 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         this.lineJumpOnFileLoad = issue.relatedLocations[this.locationIndex].endLine;
         this.fileToJumpOn = getRepoPath(issue.relatedLocations[this.locationIndex]);
 
+        // Jump to the right repo
+        // This signals onEditorLoaded if successful
         try {
             if (issue.relatedLocations[this.locationIndex].type === 'TEMPLATE_REPOSITORY' && this.codeEditorContainer.selectedRepository() !== 'TEMPLATE') {
                 this.selectTemplateParticipation();
@@ -255,9 +258,18 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             return;
         }
 
+        // We were already in the right repo, no jump, so the editor did not reload
+        // So call the function manually
         this.onEditorLoaded();
     }
 
+    /**
+     * Ensures the target file is loaded once the editor is ready.
+     *
+     * If the file is already selected (and no load event will fire),
+     * the file-load handler is invoked directly. Otherwise, selecting
+     * the file triggers the normal load workflow.
+     */
     onEditorLoaded() {
         // File already loaded, file load event will not fire
         if (this.codeEditorContainer.selectedFile === this.fileToJumpOn) {
