@@ -133,6 +133,7 @@ public class AttachmentVideoUnitResource {
      * @param attachmentVideoUnit   the attachment video unit with updated content
      * @param attachment            the attachment with updated content
      * @param file                  the optional file to upload
+     * @param videoFile             the optional video file to upload
      * @param hiddenPages           the pages to be hidden in the attachment video unit
      * @param pageOrder             the new order of the edited attachment video unit
      * @param keepFilename          specifies if the original filename should be kept or not

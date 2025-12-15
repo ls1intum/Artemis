@@ -398,7 +398,6 @@ describe('CreateAttachmentVideoUnitComponent', () => {
         }));
 
         it('should not include video file if videoFileName is missing', fakeAsync(() => {
-            const router: Router = TestBed.inject(Router);
             const attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
 
             const pdfFile = new File(['pdf content'], 'Test-File.pdf', { type: 'application/pdf' });
