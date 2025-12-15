@@ -306,4 +306,140 @@ describe('CreateAttachmentVideoUnitComponent', () => {
             }));
         });
     });
+
+    describe('video file upload', () => {
+        it('should include video file in FormData when provided', fakeAsync(() => {
+            const router: Router = TestBed.inject(Router);
+            const attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
+
+            const pdfFile = new File(['pdf content'], 'Test-File.pdf', { type: 'application/pdf' });
+            const videoFile = new File(['video content'], 'Test-Video.mp4', { type: 'video/mp4' });
+
+            const attachmentVideoUnitFormData: AttachmentVideoUnitFormData = {
+                formProperties: {
+                    name: 'test',
+                    description: 'lorem ipsum',
+                    releaseDate: dayjs().year(2010).month(3).date(5),
+                },
+                fileProperties: {
+                    file: pdfFile,
+                    fileName: 'Test-File.pdf',
+                },
+                videoFileProperties: {
+                    videoFile: videoFile,
+                    videoFileName: 'Test-Video.mp4',
+                },
+            };
+
+            const attachmentVideoUnit = new AttachmentVideoUnit();
+            attachmentVideoUnit.name = 'test';
+
+            const attachmentVideoUnitResponse: HttpResponse<AttachmentVideoUnit> = new HttpResponse({
+                body: attachmentVideoUnit,
+                status: 201,
+            });
+
+            const createSpy = jest.spyOn(attachmentVideoUnitService, 'create').mockReturnValue(of(attachmentVideoUnitResponse));
+            const navigateSpy = jest.spyOn(router, 'navigate');
+
+            createAttachmentVideoUnitComponentFixture.detectChanges();
+
+            const attachmentVideoUnitFormComponent = createAttachmentVideoUnitComponentFixture.debugElement.query(By.directive(AttachmentVideoUnitFormComponent)).componentInstance;
+            attachmentVideoUnitFormComponent.formSubmitted.emit(attachmentVideoUnitFormData);
+
+            createAttachmentVideoUnitComponentFixture.whenStable().then(() => {
+                expect(createSpy).toHaveBeenCalledOnce();
+                const formDataArg = createSpy.mock.calls[0][0] as FormData;
+                expect(formDataArg.get('videoFile')).toBeTruthy();
+                expect(navigateSpy).toHaveBeenCalledOnce();
+            });
+        }));
+
+        it('should not include video file in FormData when not provided', fakeAsync(() => {
+            const router: Router = TestBed.inject(Router);
+            const attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
+
+            const pdfFile = new File(['pdf content'], 'Test-File.pdf', { type: 'application/pdf' });
+
+            const attachmentVideoUnitFormData: AttachmentVideoUnitFormData = {
+                formProperties: {
+                    name: 'test',
+                    description: 'lorem ipsum',
+                    releaseDate: dayjs().year(2010).month(3).date(5),
+                },
+                fileProperties: {
+                    file: pdfFile,
+                    fileName: 'Test-File.pdf',
+                },
+            };
+
+            const attachmentVideoUnit = new AttachmentVideoUnit();
+            attachmentVideoUnit.name = 'test';
+
+            const attachmentVideoUnitResponse: HttpResponse<AttachmentVideoUnit> = new HttpResponse({
+                body: attachmentVideoUnit,
+                status: 201,
+            });
+
+            const createSpy = jest.spyOn(attachmentVideoUnitService, 'create').mockReturnValue(of(attachmentVideoUnitResponse));
+            const navigateSpy = jest.spyOn(router, 'navigate');
+
+            createAttachmentVideoUnitComponentFixture.detectChanges();
+
+            const attachmentVideoUnitFormComponent = createAttachmentVideoUnitComponentFixture.debugElement.query(By.directive(AttachmentVideoUnitFormComponent)).componentInstance;
+            attachmentVideoUnitFormComponent.formSubmitted.emit(attachmentVideoUnitFormData);
+
+            createAttachmentVideoUnitComponentFixture.whenStable().then(() => {
+                expect(createSpy).toHaveBeenCalledOnce();
+                const formDataArg = createSpy.mock.calls[0][0] as FormData;
+                expect(formDataArg.get('videoFile')).toBeNull();
+                expect(navigateSpy).toHaveBeenCalledOnce();
+            });
+        }));
+
+        it('should not include video file if videoFileName is missing', fakeAsync(() => {
+            const router: Router = TestBed.inject(Router);
+            const attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
+
+            const pdfFile = new File(['pdf content'], 'Test-File.pdf', { type: 'application/pdf' });
+            const videoFile = new File(['video content'], 'Test-Video.mp4', { type: 'video/mp4' });
+
+            const attachmentVideoUnitFormData: AttachmentVideoUnitFormData = {
+                formProperties: {
+                    name: 'test',
+                    releaseDate: dayjs(),
+                },
+                fileProperties: {
+                    file: pdfFile,
+                    fileName: 'Test-File.pdf',
+                },
+                videoFileProperties: {
+                    videoFile: videoFile,
+                    videoFileName: undefined, // Missing file name
+                },
+            };
+
+            const attachmentVideoUnit = new AttachmentVideoUnit();
+            attachmentVideoUnit.name = 'test';
+
+            const attachmentVideoUnitResponse: HttpResponse<AttachmentVideoUnit> = new HttpResponse({
+                body: attachmentVideoUnit,
+                status: 201,
+            });
+
+            const createSpy = jest.spyOn(attachmentVideoUnitService, 'create').mockReturnValue(of(attachmentVideoUnitResponse));
+
+            createAttachmentVideoUnitComponentFixture.detectChanges();
+
+            const attachmentVideoUnitFormComponent = createAttachmentVideoUnitComponentFixture.debugElement.query(By.directive(AttachmentVideoUnitFormComponent)).componentInstance;
+            attachmentVideoUnitFormComponent.formSubmitted.emit(attachmentVideoUnitFormData);
+
+            createAttachmentVideoUnitComponentFixture.whenStable().then(() => {
+                expect(createSpy).toHaveBeenCalledOnce();
+                const formDataArg = createSpy.mock.calls[0][0] as FormData;
+                // videoFile should not be included because videoFileName is missing
+                expect(formDataArg.get('videoFile')).toBeNull();
+            });
+        }));
+    });
 });

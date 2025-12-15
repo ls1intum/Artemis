@@ -123,7 +123,10 @@ public class ArtemisConfigHelper {
      * @return the maximum video file size in bytes
      */
     public long getVideoUploadMaxFileSize(Environment environment) {
-        Integer maxFileSizeMB = environment.getProperty(Constants.VIDEO_UPLOAD_MAX_FILE_SIZE_PROPERTY_NAME, Integer.class, 200);
+        Integer maxFileSizeMB = environment.getProperty(Constants.VIDEO_UPLOAD_MAX_FILE_SIZE_PROPERTY_NAME, Integer.class);
+        if (maxFileSizeMB == null) {
+            maxFileSizeMB = 200; // Default: 200 MB
+        }
         return maxFileSizeMB * 1024L * 1024L; // Convert MB to bytes
     }
 

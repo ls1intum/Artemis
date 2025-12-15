@@ -838,5 +838,349 @@ describe('AttachmentVideoUnitFormComponent', () => {
             // Form should be valid
             expect(attachmentVideoUnitFormComponent.isFormValid()).toBeTrue();
         });
+
+        it('should allow editing pre-populated video data when upload feature is disabled', () => {
+            // Mock ProfileService to return false for video upload
+            const profileService = TestBed.inject(ProfileService);
+            jest.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(false);
+
+            // Create a new component instance
+            attachmentVideoUnitFormComponentFixture = TestBed.createComponent(AttachmentVideoUnitFormComponent);
+            attachmentVideoUnitFormComponent = attachmentVideoUnitFormComponentFixture.componentInstance;
+            attachmentVideoUnitFormComponentFixture.componentRef.setInput('isEditMode', true);
+            attachmentVideoUnitFormComponentFixture.detectChanges();
+
+            // Set up form data as if loaded from server (pre-populated, NOT user-touched)
+            const formData: AttachmentVideoUnitFormData = {
+                formProperties: { name: 'Existing Video Unit' },
+                fileProperties: {},
+                videoFileProperties: { videoFileName: 'existing-video.mp4', videoFile: undefined },
+            };
+            attachmentVideoUnitFormComponentFixture.componentRef.setInput('formData', formData);
+            attachmentVideoUnitFormComponentFixture.detectChanges();
+
+            // videoFileInputTouched should remain false (set via setFormValues, not user interaction)
+            expect(attachmentVideoUnitFormComponent.videoFileInputTouched).toBeFalse();
+
+            // Form should be valid because the video file was pre-populated, not user-selected
+            expect(attachmentVideoUnitFormComponent.isFormValid()).toBeTrue();
+        });
+    });
+
+    describe('Video File Upload', () => {
+        it('should call onVideoFileChange when video file input changes', () => {
+            attachmentVideoUnitFormComponentFixture.detectChanges();
+            const onVideoFileChangeSpy = jest.spyOn(attachmentVideoUnitFormComponent, 'onVideoFileChange');
+
+            const videoFileInput = attachmentVideoUnitFormComponentFixture.debugElement.nativeElement.querySelector('#videoFileInput');
+            if (videoFileInput) {
+                videoFileInput.dispatchEvent(new Event('change'));
+                expect(onVideoFileChangeSpy).toHaveBeenCalledOnce();
+            }
+        });
+
+        it('should set video file properties when video file is selected', () => {
+            attachmentVideoUnitFormComponentFixture.detectChanges();
+
+            const videoFile = new File(['video content'], 'test-video.mp4', { type: 'video/mp4' });
+            const input = document.createElement('input');
+            Object.defineProperty(input, 'files', { value: [videoFile] });
+
+            attachmentVideoUnitFormComponent.onVideoFileChange({ target: input } as unknown as Event);
+
+            expect(attachmentVideoUnitFormComponent.videoFile).toBe(videoFile);
+            expect(attachmentVideoUnitFormComponent.videoFileName()).toBe('test-video.mp4');
+            expect(attachmentVideoUnitFormComponent.videoFileInputTouched).toBeTrue();
+        });
+
+        it('should auto-fill name when video file is selected and name is empty', () => {
+            attachmentVideoUnitFormComponentFixture.detectChanges();
+            expect(attachmentVideoUnitFormComponent.nameControl!.value).toBeFalsy();
+
+            const videoFile = new File(['video content'], 'My-Lecture-Video.mp4', { type: 'video/mp4' });
+            const input = document.createElement('input');
+            Object.defineProperty(input, 'files', { value: [videoFile] });
+
+            attachmentVideoUnitFormComponent.onVideoFileChange({ target: input } as unknown as Event);
+
+            // Name should be auto-filled without extension
+            expect(attachmentVideoUnitFormComponent.nameControl!.value).toBe('My-Lecture-Video');
+        });
+
+        it('should not overwrite name when video file is selected and name already exists', () => {
+            attachmentVideoUnitFormComponentFixture.detectChanges();
+            attachmentVideoUnitFormComponent.form.patchValue({ name: 'Existing Name' });
+
+            const videoFile = new File(['video content'], 'New-Video.mp4', { type: 'video/mp4' });
+            const input = document.createElement('input');
+            Object.defineProperty(input, 'files', { value: [videoFile] });
+
+            attachmentVideoUnitFormComponent.onVideoFileChange({ target: input } as unknown as Event);
+
+            // Name should not be overwritten
+            expect(attachmentVideoUnitFormComponent.nameControl!.value).toBe('Existing Name');
+        });
+
+        it('should mark video file as too big when exceeding max size', () => {
+            attachmentVideoUnitFormComponentFixture.detectChanges();
+
+            const largeVideoFile = new File([''], 'large-video.mp4', { type: 'video/mp4' });
+            Object.defineProperty(largeVideoFile, 'size', { value: MAX_VIDEO_FILE_SIZE + 1 });
+            const input = document.createElement('input');
+            Object.defineProperty(input, 'files', { value: [largeVideoFile] });
+
+            attachmentVideoUnitFormComponent.onVideoFileChange({ target: input } as unknown as Event);
+
+            expect(attachmentVideoUnitFormComponent.isVideoFileTooBig()).toBeTrue();
+        });
+
+        it('should not mark video file as too big when within max size', () => {
+            attachmentVideoUnitFormComponentFixture.detectChanges();
+
+            const normalVideoFile = new File(['video content'], 'normal-video.mp4', { type: 'video/mp4' });
+            Object.defineProperty(normalVideoFile, 'size', { value: MAX_VIDEO_FILE_SIZE - 1 });
+            const input = document.createElement('input');
+            Object.defineProperty(input, 'files', { value: [normalVideoFile] });
+
+            attachmentVideoUnitFormComponent.onVideoFileChange({ target: input } as unknown as Event);
+
+            expect(attachmentVideoUnitFormComponent.isVideoFileTooBig()).toBeFalse();
+        });
+
+        it('should not process video file when no files are selected', () => {
+            attachmentVideoUnitFormComponentFixture.detectChanges();
+
+            const input = document.createElement('input');
+            Object.defineProperty(input, 'files', { value: [] });
+
+            attachmentVideoUnitFormComponent.onVideoFileChange({ target: input } as unknown as Event);
+
+            expect(attachmentVideoUnitFormComponent.videoFile).toBeUndefined();
+            expect(attachmentVideoUnitFormComponent.videoFileName()).toBeUndefined();
+        });
+
+        it('should include videoFileProperties in form submission', () => {
+            const profileService = TestBed.inject(ProfileService);
+            jest.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
+
+            attachmentVideoUnitFormComponentFixture = TestBed.createComponent(AttachmentVideoUnitFormComponent);
+            attachmentVideoUnitFormComponent = attachmentVideoUnitFormComponentFixture.componentInstance;
+            attachmentVideoUnitFormComponentFixture.detectChanges();
+
+            // Set up valid form data
+            attachmentVideoUnitFormComponent.form.patchValue({ name: 'Test Unit' });
+
+            // Set video file
+            const videoFile = new File(['video content'], 'test-video.mp4', { type: 'video/mp4' });
+            attachmentVideoUnitFormComponent.videoFile = videoFile;
+            attachmentVideoUnitFormComponent.videoFileName.set('test-video.mp4');
+            attachmentVideoUnitFormComponent.videoFileInputTouched = true;
+
+            const submitFormEventSpy = jest.spyOn(attachmentVideoUnitFormComponent.formSubmitted, 'emit');
+
+            attachmentVideoUnitFormComponent.submitForm();
+
+            expect(submitFormEventSpy).toHaveBeenCalledOnce();
+            const emittedData = submitFormEventSpy.mock.calls[0][0] as AttachmentVideoUnitFormData;
+            expect(emittedData.videoFileProperties).toBeDefined();
+            expect(emittedData.videoFileProperties!.videoFile).toBe(videoFile);
+            expect(emittedData.videoFileProperties!.videoFileName).toBe('test-video.mp4');
+        });
+
+        it('should invalidate form when video file is too big', () => {
+            const profileService = TestBed.inject(ProfileService);
+            jest.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
+
+            attachmentVideoUnitFormComponentFixture = TestBed.createComponent(AttachmentVideoUnitFormComponent);
+            attachmentVideoUnitFormComponent = attachmentVideoUnitFormComponentFixture.componentInstance;
+            attachmentVideoUnitFormComponentFixture.detectChanges();
+
+            // Set up valid form data
+            attachmentVideoUnitFormComponent.form.patchValue({ name: 'Test Unit' });
+
+            // Set video file that is too big
+            const largeVideoFile = new File([''], 'large-video.mp4', { type: 'video/mp4' });
+            Object.defineProperty(largeVideoFile, 'size', { value: MAX_VIDEO_FILE_SIZE + 1 });
+            attachmentVideoUnitFormComponent.videoFile = largeVideoFile;
+            attachmentVideoUnitFormComponent.videoFileName.set('large-video.mp4');
+            attachmentVideoUnitFormComponent.isVideoFileTooBig.set(true);
+            attachmentVideoUnitFormComponent.videoFileInputTouched = true;
+
+            expect(attachmentVideoUnitFormComponent.isFormValid()).toBeFalse();
+        });
+    });
+
+    describe('Upload Progress Tracking', () => {
+        it('should include uploadProgressCallback in form submission', () => {
+            attachmentVideoUnitFormComponentFixture.detectChanges();
+            attachmentVideoUnitFormComponent.form.patchValue({ name: 'Test Unit' });
+
+            // Set a PDF file for valid form
+            const pdfFile = new File(['test'], 'test.pdf', { type: 'application/pdf' });
+            attachmentVideoUnitFormComponent.file = pdfFile;
+            attachmentVideoUnitFormComponent.fileName.set('test.pdf');
+
+            const submitFormEventSpy = jest.spyOn(attachmentVideoUnitFormComponent.formSubmitted, 'emit');
+
+            attachmentVideoUnitFormComponent.submitForm();
+
+            expect(submitFormEventSpy).toHaveBeenCalledOnce();
+            const emittedData = submitFormEventSpy.mock.calls[0][0] as AttachmentVideoUnitFormData;
+            expect(emittedData.uploadProgressCallback).toBeDefined();
+            expect(typeof emittedData.uploadProgressCallback).toBe('function');
+        });
+
+        it('should update upload progress signals when callback is invoked', () => {
+            attachmentVideoUnitFormComponentFixture.detectChanges();
+            attachmentVideoUnitFormComponent.form.patchValue({ name: 'Test Unit' });
+
+            const pdfFile = new File(['test'], 'test.pdf', { type: 'application/pdf' });
+            attachmentVideoUnitFormComponent.file = pdfFile;
+            attachmentVideoUnitFormComponent.fileName.set('test.pdf');
+
+            const submitFormEventSpy = jest.spyOn(attachmentVideoUnitFormComponent.formSubmitted, 'emit');
+
+            attachmentVideoUnitFormComponent.submitForm();
+
+            const emittedData = submitFormEventSpy.mock.calls[0][0] as AttachmentVideoUnitFormData;
+            const callback = emittedData.uploadProgressCallback!;
+
+            // Invoke callback with progress
+            callback(50, 'Uploading...');
+
+            expect(attachmentVideoUnitFormComponent.isUploading()).toBeTrue();
+            expect(attachmentVideoUnitFormComponent.uploadProgress()).toBe(50);
+            expect(attachmentVideoUnitFormComponent.uploadStatus()).toBe('Uploading...');
+        });
+
+        it('should reset upload state after 100% progress', fakeAsync(() => {
+            attachmentVideoUnitFormComponentFixture.detectChanges();
+            attachmentVideoUnitFormComponent.form.patchValue({ name: 'Test Unit' });
+
+            const pdfFile = new File(['test'], 'test.pdf', { type: 'application/pdf' });
+            attachmentVideoUnitFormComponent.file = pdfFile;
+            attachmentVideoUnitFormComponent.fileName.set('test.pdf');
+
+            const submitFormEventSpy = jest.spyOn(attachmentVideoUnitFormComponent.formSubmitted, 'emit');
+
+            attachmentVideoUnitFormComponent.submitForm();
+
+            const emittedData = submitFormEventSpy.mock.calls[0][0] as AttachmentVideoUnitFormData;
+            const callback = emittedData.uploadProgressCallback!;
+
+            // Invoke callback with 100% progress
+            callback(100, 'Complete');
+
+            expect(attachmentVideoUnitFormComponent.isUploading()).toBeTrue();
+            expect(attachmentVideoUnitFormComponent.uploadProgress()).toBe(100);
+
+            // Wait for timeout to reset state
+            tick(1000);
+
+            expect(attachmentVideoUnitFormComponent.isUploading()).toBeFalse();
+            expect(attachmentVideoUnitFormComponent.uploadProgress()).toBe(0);
+            expect(attachmentVideoUnitFormComponent.uploadStatus()).toBe('');
+        }));
+
+        it('should clear previous timeout when multiple 100% callbacks are received', fakeAsync(() => {
+            attachmentVideoUnitFormComponentFixture.detectChanges();
+            attachmentVideoUnitFormComponent.form.patchValue({ name: 'Test Unit' });
+
+            const pdfFile = new File(['test'], 'test.pdf', { type: 'application/pdf' });
+            attachmentVideoUnitFormComponent.file = pdfFile;
+            attachmentVideoUnitFormComponent.fileName.set('test.pdf');
+
+            const submitFormEventSpy = jest.spyOn(attachmentVideoUnitFormComponent.formSubmitted, 'emit');
+
+            attachmentVideoUnitFormComponent.submitForm();
+
+            const emittedData = submitFormEventSpy.mock.calls[0][0] as AttachmentVideoUnitFormData;
+            const callback = emittedData.uploadProgressCallback!;
+
+            // First 100% callback
+            callback(100, 'Complete');
+            tick(500); // Wait 500ms
+
+            // Second 100% callback (simulating edge case)
+            callback(100, 'Complete again');
+            tick(500); // Wait another 500ms - first timeout would have fired here if not cleared
+
+            // State should still be uploading (second timeout hasn't completed yet)
+            expect(attachmentVideoUnitFormComponent.isUploading()).toBeTrue();
+
+            tick(500); // Complete the second timeout
+
+            expect(attachmentVideoUnitFormComponent.isUploading()).toBeFalse();
+        }));
+    });
+
+    describe('ngOnDestroy', () => {
+        it('should clean up timeout on component destruction', fakeAsync(() => {
+            attachmentVideoUnitFormComponentFixture.detectChanges();
+            attachmentVideoUnitFormComponent.form.patchValue({ name: 'Test Unit' });
+
+            const pdfFile = new File(['test'], 'test.pdf', { type: 'application/pdf' });
+            attachmentVideoUnitFormComponent.file = pdfFile;
+            attachmentVideoUnitFormComponent.fileName.set('test.pdf');
+
+            const submitFormEventSpy = jest.spyOn(attachmentVideoUnitFormComponent.formSubmitted, 'emit');
+
+            attachmentVideoUnitFormComponent.submitForm();
+
+            const emittedData = submitFormEventSpy.mock.calls[0][0] as AttachmentVideoUnitFormData;
+            const callback = emittedData.uploadProgressCallback!;
+
+            // Invoke callback with 100% progress to schedule timeout
+            callback(100, 'Complete');
+
+            // Destroy the component before timeout completes
+            attachmentVideoUnitFormComponent.ngOnDestroy();
+
+            // Advance timer - should not throw or cause issues
+            tick(1000);
+
+            // Component should be cleaned up without errors
+            expect(true).toBeTrue();
+        }));
+    });
+
+    describe('setFormValues with videoFileProperties', () => {
+        it('should set video file properties from form data', () => {
+            attachmentVideoUnitFormComponentFixture.componentRef.setInput('isEditMode', true);
+            attachmentVideoUnitFormComponentFixture.detectChanges();
+
+            const videoFile = new File(['video'], 'existing-video.mp4', { type: 'video/mp4' });
+            const formData: AttachmentVideoUnitFormData = {
+                formProperties: { name: 'Test Unit' },
+                fileProperties: {},
+                videoFileProperties: {
+                    videoFile: videoFile,
+                    videoFileName: 'existing-video.mp4',
+                },
+            };
+
+            attachmentVideoUnitFormComponentFixture.componentRef.setInput('formData', formData);
+            attachmentVideoUnitFormComponentFixture.detectChanges();
+
+            expect(attachmentVideoUnitFormComponent.videoFile).toBe(videoFile);
+            expect(attachmentVideoUnitFormComponent.videoFileName()).toBe('existing-video.mp4');
+        });
+
+        it('should handle formData without videoFileProperties', () => {
+            attachmentVideoUnitFormComponentFixture.componentRef.setInput('isEditMode', true);
+            attachmentVideoUnitFormComponentFixture.detectChanges();
+
+            const formData: AttachmentVideoUnitFormData = {
+                formProperties: { name: 'Test Unit' },
+                fileProperties: {},
+            };
+
+            attachmentVideoUnitFormComponentFixture.componentRef.setInput('formData', formData);
+            attachmentVideoUnitFormComponentFixture.detectChanges();
+
+            // Should not throw and values should remain undefined
+            expect(attachmentVideoUnitFormComponent.videoFile).toBeUndefined();
+            expect(attachmentVideoUnitFormComponent.videoFileName()).toBeUndefined();
+        });
     });
 });
