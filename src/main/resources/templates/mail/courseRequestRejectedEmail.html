@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title th:text="#{email.courseRequest.rejected.title}">Course request rejected</title>
+    <th:block th:replace="~{mail/notification/fragments :: headMetaDataAndIconLink}"/>
+    <th:block th:replace="~{mail/notification/fragments :: css}"/>
+</head>
+<body>
+<th:block th:replace="~{mail/notification/fragments :: header}"/>
+<div id="message-body">
+    <th:block th:replace="~{mail/notification/fragments :: greetingsFullName}"/>
+    <div class="notification-content">
+        <p th:text="#{email.courseRequest.rejected.text(${courseRequest.title})}">Your request was rejected.</p>
+        <p>
+            <span class="bold-text" th:text="#{email.courseRequest.rejected.reasonTitle}">Provided reason:</span>
+        </p>
+        <div class="bordered-content">
+            <span th:text="${courseRequest.decisionReason}">Reason</span>
+        </div>
+    </div>
+    <th:block th:replace="~{mail/notification/fragments :: farewell}"/>
+</div>
+<th:block th:replace="~{mail/notification/fragments :: footer}"/>
+</body>
+</html>
