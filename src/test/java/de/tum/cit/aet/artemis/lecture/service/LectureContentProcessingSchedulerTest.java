@@ -12,6 +12,7 @@ import static org.mockito.Mockito.when;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -71,6 +72,7 @@ class LectureContentProcessingSchedulerTest {
             when(processingStateRepository.findStuckStates(eq(List.of(ProcessingPhase.TRANSCRIBING)), any(ZonedDateTime.class))).thenReturn(List.of(testState));
             when(processingStateRepository.findStuckStates(eq(List.of(ProcessingPhase.INGESTING)), any(ZonedDateTime.class))).thenReturn(List.of());
             when(processingStateRepository.findStatesReadyForRetry(any(), any())).thenReturn(List.of());
+            when(processingStateRepository.findById(testState.getId())).thenReturn(Optional.of(testState));
             when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
             // When
@@ -93,6 +95,7 @@ class LectureContentProcessingSchedulerTest {
             when(processingStateRepository.findStuckStates(eq(List.of(ProcessingPhase.TRANSCRIBING)), any(ZonedDateTime.class))).thenReturn(List.of(testState));
             when(processingStateRepository.findStuckStates(eq(List.of(ProcessingPhase.INGESTING)), any(ZonedDateTime.class))).thenReturn(List.of());
             when(processingStateRepository.findStatesReadyForRetry(any(), any())).thenReturn(List.of());
+            when(processingStateRepository.findById(testState.getId())).thenReturn(Optional.of(testState));
             when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
             // When
@@ -138,6 +141,7 @@ class LectureContentProcessingSchedulerTest {
             when(processingStateRepository.findStuckStates(anyList(), any(ZonedDateTime.class))).thenReturn(List.of());
             when(processingStateRepository.findStatesReadyForRetry(eq(ProcessingPhase.TRANSCRIBING), any())).thenReturn(List.of(testState));
             when(processingStateRepository.findStatesReadyForRetry(eq(ProcessingPhase.INGESTING), any())).thenReturn(List.of());
+            when(processingStateRepository.findById(testState.getId())).thenReturn(Optional.of(testState));
 
             // When
             scheduler.processScheduledRetries();
@@ -166,6 +170,58 @@ class LectureContentProcessingSchedulerTest {
     }
 
     @Nested
+    class ConcurrentModification {
+
+        @Test
+        void shouldSkipRetryWhenStateChangedSinceBatchRead() {
+            // Given: State was TRANSCRIBING when batch was read, but user reset it to IDLE
+            testState.setPhase(ProcessingPhase.TRANSCRIBING);
+            testState.setRetryCount(1);
+            testState.setLastUpdated(ZonedDateTime.now().minusMinutes(5));
+
+            // Batch query returns the state
+            when(processingStateRepository.findStuckStates(anyList(), any(ZonedDateTime.class))).thenReturn(List.of());
+            when(processingStateRepository.findStatesReadyForRetry(eq(ProcessingPhase.TRANSCRIBING), any())).thenReturn(List.of(testState));
+            when(processingStateRepository.findStatesReadyForRetry(eq(ProcessingPhase.INGESTING), any())).thenReturn(List.of());
+
+            // But when we re-fetch, the state is now IDLE (user changed it)
+            LectureUnitProcessingState freshState = new LectureUnitProcessingState(testUnit);
+            freshState.setPhase(ProcessingPhase.IDLE); // User reset it
+            when(processingStateRepository.findById(testState.getId())).thenReturn(Optional.of(freshState));
+
+            // When
+            scheduler.processScheduledRetries();
+
+            // Then: Should NOT call retryTranscription because phase changed
+            verify(processingService, never()).retryTranscription(any());
+        }
+
+        @Test
+        void shouldSkipRecoveryWhenStateChangedSinceBatchRead() {
+            // Given: State was TRANSCRIBING when batch was read, but user reset it to IDLE
+            testState.setPhase(ProcessingPhase.TRANSCRIBING);
+            testState.setRetryCount(1);
+            testState.setStartedAt(ZonedDateTime.now().minusMinutes(130)); // Stuck
+
+            // Batch query returns the state
+            when(processingStateRepository.findStuckStates(eq(List.of(ProcessingPhase.TRANSCRIBING)), any(ZonedDateTime.class))).thenReturn(List.of(testState));
+            when(processingStateRepository.findStuckStates(eq(List.of(ProcessingPhase.INGESTING)), any(ZonedDateTime.class))).thenReturn(List.of());
+            when(processingStateRepository.findStatesReadyForRetry(any(), any())).thenReturn(List.of());
+
+            // But when we re-fetch, the state is now IDLE (user changed it)
+            LectureUnitProcessingState freshState = new LectureUnitProcessingState(testUnit);
+            freshState.setPhase(ProcessingPhase.IDLE); // User reset it
+            when(processingStateRepository.findById(testState.getId())).thenReturn(Optional.of(freshState));
+
+            // When
+            scheduler.processScheduledRetries();
+
+            // Then: Should NOT save because phase changed (no modification to freshState)
+            verify(processingStateRepository, never()).save(any());
+        }
+    }
+
+    @Nested
     class StuckRetryScenario {
 
         @Test
@@ -181,6 +237,7 @@ class LectureContentProcessingSchedulerTest {
             when(processingStateRepository.findStuckStates(eq(List.of(ProcessingPhase.TRANSCRIBING)), any(ZonedDateTime.class))).thenReturn(List.of(testState));
             when(processingStateRepository.findStuckStates(eq(List.of(ProcessingPhase.INGESTING)), any(ZonedDateTime.class))).thenReturn(List.of());
             when(processingStateRepository.findStatesReadyForRetry(any(), any())).thenReturn(List.of());
+            when(processingStateRepository.findById(testState.getId())).thenReturn(Optional.of(testState));
             when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
             // When: First stuck detection

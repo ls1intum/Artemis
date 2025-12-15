@@ -189,6 +189,7 @@ public class LectureContentProcessingService {
             if (transcription.getTranscriptionStatus() == TranscriptionStatus.COMPLETED) {
                 log.info("Transcription completed for unit {}", unitId);
                 if (irisLectureApi.isPresent()) {
+                    state.resetRetryCount(); // Fresh retries for ingestion phase
                     startIngestion(state);
                 }
                 else {

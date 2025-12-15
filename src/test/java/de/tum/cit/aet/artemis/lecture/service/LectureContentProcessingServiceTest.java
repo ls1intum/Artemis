@@ -436,6 +436,29 @@ class LectureContentProcessingServiceTest {
         }
 
         @Test
+        void shouldResetRetryCountWhenMovingToIngestion() {
+            // Given: Transcription succeeded after some retries
+            testState.setPhase(ProcessingPhase.TRANSCRIBING);
+            testState.setRetryCount(3); // Had 3 retries during transcription
+            LectureTranscription transcription = new LectureTranscription();
+            transcription.setId(42L);
+            transcription.setLectureUnit(testUnit);
+            transcription.setTranscriptionStatus(TranscriptionStatus.COMPLETED);
+
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(transcription));
+            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            when(irisLectureApi.addLectureUnitToPyrisDB(any())).thenReturn("ingestion-job");
+
+            // When
+            service.handleTranscriptionComplete(transcription);
+
+            // Then: Retry count should be reset for fresh ingestion retries
+            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.INGESTING);
+            assertThat(testState.getRetryCount()).isZero();
+        }
+
+        @Test
         void shouldIncrementRetryCountOnFailure() {
             // Given
             testState.setPhase(ProcessingPhase.TRANSCRIBING);

@@ -110,29 +110,43 @@ public class LectureContentProcessingScheduler {
 
     /**
      * Retry a single failed state.
+     * Re-fetches state from DB to avoid overwriting concurrent user changes.
      *
-     * @param state the state to retry
-     * @param phase the current processing phase
+     * @param state the state to retry (used only for ID lookup)
+     * @param phase the expected processing phase
      */
     private void retryState(LectureUnitProcessingState state, ProcessingPhase phase) {
-        if (state.getLectureUnit() == null) {
-            log.warn("Cannot retry state {} - no associated lecture unit", state.getId());
-            processingStateRepository.delete(state);
+        // Re-fetch fresh state to avoid overwriting concurrent changes (e.g., user updated content)
+        LectureUnitProcessingState freshState = processingStateRepository.findById(state.getId()).orElse(null);
+        if (freshState == null) {
+            log.debug("State {} no longer exists, skipping retry", state.getId());
             return;
         }
 
-        log.info("Retrying {} for unit {} after exponential backoff (attempt {}/{})", phase, state.getLectureUnit().getId(), state.getRetryCount(), MAX_PROCESSING_RETRIES);
+        if (freshState.getPhase() != phase) {
+            log.info("State for unit {} changed from {} to {} since batch read, skipping retry", freshState.getLectureUnit().getId(), phase, freshState.getPhase());
+            return;
+        }
+
+        if (freshState.getLectureUnit() == null) {
+            log.warn("Cannot retry state {} - no associated lecture unit", freshState.getId());
+            processingStateRepository.delete(freshState);
+            return;
+        }
+
+        log.info("Retrying {} for unit {} after exponential backoff (attempt {}/{})", phase, freshState.getLectureUnit().getId(), freshState.getRetryCount(),
+                MAX_PROCESSING_RETRIES);
 
         try {
             if (phase == ProcessingPhase.TRANSCRIBING) {
-                processingService.retryTranscription(state);
+                processingService.retryTranscription(freshState);
             }
             else if (phase == ProcessingPhase.INGESTING) {
-                processingService.retryIngestion(state);
+                processingService.retryIngestion(freshState);
             }
         }
         catch (Exception e) {
-            log.error("Failed to retry {} for unit {}: {}", phase, state.getLectureUnit().getId(), e.getMessage());
+            log.error("Failed to retry {} for unit {}: {}", phase, freshState.getLectureUnit().getId(), e.getMessage());
         }
     }
 
@@ -159,35 +173,48 @@ public class LectureContentProcessingScheduler {
 
     /**
      * Recover a single stuck processing state.
+     * Re-fetches state from DB to avoid overwriting concurrent user changes.
      * Increments retry count and updates startedAt to prevent re-detection.
      * The retryFailedStates method will handle the actual retry with backoff.
      *
-     * @param state the stuck processing state to recover
-     * @param phase the current processing phase
+     * @param state the stuck processing state to recover (used only for ID lookup)
+     * @param phase the expected processing phase
      */
     private void recoverStuckState(LectureUnitProcessingState state, ProcessingPhase phase) {
-        if (state.getLectureUnit() == null) {
-            log.warn("Cannot recover state {} - no associated lecture unit", state.getId());
-            processingStateRepository.delete(state);
+        // Re-fetch fresh state to avoid overwriting concurrent changes (e.g., user updated content)
+        LectureUnitProcessingState freshState = processingStateRepository.findById(state.getId()).orElse(null);
+        if (freshState == null) {
+            log.debug("State {} no longer exists, skipping recovery", state.getId());
             return;
         }
 
-        log.info("Recovering stuck processing state for unit {}, phase: {}", state.getLectureUnit().getId(), phase);
+        if (freshState.getPhase() != phase) {
+            log.info("State for unit {} changed from {} to {} since batch read, skipping recovery", freshState.getLectureUnit().getId(), phase, freshState.getPhase());
+            return;
+        }
+
+        if (freshState.getLectureUnit() == null) {
+            log.warn("Cannot recover state {} - no associated lecture unit", freshState.getId());
+            processingStateRepository.delete(freshState);
+            return;
+        }
+
+        log.info("Recovering stuck processing state for unit {}, phase: {}", freshState.getLectureUnit().getId(), phase);
 
         // Increment retry count - this marks it for retry with backoff
-        state.incrementRetryCount();
+        freshState.incrementRetryCount();
         // Update startedAt to prevent this state from being detected as stuck again
-        state.setStartedAt(java.time.ZonedDateTime.now());
+        freshState.setStartedAt(java.time.ZonedDateTime.now());
 
-        if (state.getRetryCount() >= MAX_PROCESSING_RETRIES) {
-            log.warn("Max recovery attempts reached for unit {}, marking as failed", state.getLectureUnit().getId());
-            state.markFailed("artemisApp.lectureUnit.processing.error.timeout");
+        if (freshState.getRetryCount() >= MAX_PROCESSING_RETRIES) {
+            log.warn("Max recovery attempts reached for unit {}, marking as failed", freshState.getLectureUnit().getId());
+            freshState.markFailed("artemisApp.lectureUnit.processing.error.timeout");
         }
         else {
             // retryFailedStates will pick this up after backoff period
-            log.info("Stuck state for unit {} marked for retry (attempt {}/{})", state.getLectureUnit().getId(), state.getRetryCount(), MAX_PROCESSING_RETRIES);
+            log.info("Stuck state for unit {} marked for retry (attempt {}/{})", freshState.getLectureUnit().getId(), freshState.getRetryCount(), MAX_PROCESSING_RETRIES);
         }
 
-        processingStateRepository.save(state);
+        processingStateRepository.save(freshState);
     }
 }
