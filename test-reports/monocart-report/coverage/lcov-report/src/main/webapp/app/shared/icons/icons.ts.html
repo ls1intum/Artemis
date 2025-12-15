@@ -1,0 +1,310 @@
+
+<!doctype html>
+<html lang="en">
+
+<head>
+    <title>Code coverage report for src/main/webapp/app/shared/icons/icons.ts</title>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../../../../../../prettify.css" />
+    <link rel="stylesheet" href="../../../../../../base.css" />
+    <link rel="shortcut icon" type="image/x-icon" href="../../../../../../favicon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style type='text/css'>
+        .coverage-summary .sorter {
+            background-image: url(../../../../../../sort-arrow-sprite.png);
+        }
+    </style>
+</head>
+    
+<body>
+<div class='wrapper'>
+    <div class='pad1'>
+        <h1><a href="../../../../../../index.html">All files</a> / <a href="../../index.html">src/main/webapp/app</a> / <a href="../index.html">shared</a> / <a href="index.html">icons</a> icons.ts</h1>
+        <div class='clearfix'>
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">100% </span>
+                <span class="quiet">Statements</span>
+                <span class='fraction'>5/5</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">100% </span>
+                <span class="quiet">Branches</span>
+                <span class='fraction'>0/0</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">100% </span>
+                <span class="quiet">Functions</span>
+                <span class='fraction'>0/0</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">100% </span>
+                <span class="quiet">Lines</span>
+                <span class='fraction'>5/5</span>
+            </div>
+        
+            
+        </div>
+        <p class="quiet">
+            Press <em>n</em> or <em>j</em> to go to the next uncovered block, <em>b</em>, <em>p</em> or <em>k</em> for the previous block.
+        </p>
+        <template id="filterTemplate">
+            <div class="quiet">
+                Filter:
+                <input type="search" id="fileSearch">
+            </div>
+        </template>
+    </div>
+    <div class='status-line high'></div>
+    <pre><table class="coverage">
+<tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
+<a name='L2'></a><a href='#L2'>2</a>
+<a name='L3'></a><a href='#L3'>3</a>
+<a name='L4'></a><a href='#L4'>4</a>
+<a name='L5'></a><a href='#L5'>5</a>
+<a name='L6'></a><a href='#L6'>6</a>
+<a name='L7'></a><a href='#L7'>7</a>
+<a name='L8'></a><a href='#L8'>8</a>
+<a name='L9'></a><a href='#L9'>9</a>
+<a name='L10'></a><a href='#L10'>10</a>
+<a name='L11'></a><a href='#L11'>11</a>
+<a name='L12'></a><a href='#L12'>12</a>
+<a name='L13'></a><a href='#L13'>13</a>
+<a name='L14'></a><a href='#L14'>14</a>
+<a name='L15'></a><a href='#L15'>15</a>
+<a name='L16'></a><a href='#L16'>16</a>
+<a name='L17'></a><a href='#L17'>17</a>
+<a name='L18'></a><a href='#L18'>18</a>
+<a name='L19'></a><a href='#L19'>19</a>
+<a name='L20'></a><a href='#L20'>20</a>
+<a name='L21'></a><a href='#L21'>21</a>
+<a name='L22'></a><a href='#L22'>22</a>
+<a name='L23'></a><a href='#L23'>23</a>
+<a name='L24'></a><a href='#L24'>24</a>
+<a name='L25'></a><a href='#L25'>25</a>
+<a name='L26'></a><a href='#L26'>26</a>
+<a name='L27'></a><a href='#L27'>27</a>
+<a name='L28'></a><a href='#L28'>28</a>
+<a name='L29'></a><a href='#L29'>29</a>
+<a name='L30'></a><a href='#L30'>30</a>
+<a name='L31'></a><a href='#L31'>31</a>
+<a name='L32'></a><a href='#L32'>32</a>
+<a name='L33'></a><a href='#L33'>33</a>
+<a name='L34'></a><a href='#L34'>34</a>
+<a name='L35'></a><a href='#L35'>35</a>
+<a name='L36'></a><a href='#L36'>36</a>
+<a name='L37'></a><a href='#L37'>37</a>
+<a name='L38'></a><a href='#L38'>38</a>
+<a name='L39'></a><a href='#L39'>39</a>
+<a name='L40'></a><a href='#L40'>40</a>
+<a name='L41'></a><a href='#L41'>41</a>
+<a name='L42'></a><a href='#L42'>42</a>
+<a name='L43'></a><a href='#L43'>43</a>
+<a name='L44'></a><a href='#L44'>44</a>
+<a name='L45'></a><a href='#L45'>45</a>
+<a name='L46'></a><a href='#L46'>46</a>
+<a name='L47'></a><a href='#L47'>47</a>
+<a name='L48'></a><a href='#L48'>48</a>
+<a name='L49'></a><a href='#L49'>49</a>
+<a name='L50'></a><a href='#L50'>50</a>
+<a name='L51'></a><a href='#L51'>51</a>
+<a name='L52'></a><a href='#L52'>52</a>
+<a name='L53'></a><a href='#L53'>53</a>
+<a name='L54'></a><a href='#L54'>54</a>
+<a name='L55'></a><a href='#L55'>55</a>
+<a name='L56'></a><a href='#L56'>56</a>
+<a name='L57'></a><a href='#L57'>57</a>
+<a name='L58'></a><a href='#L58'>58</a>
+<a name='L59'></a><a href='#L59'>59</a>
+<a name='L60'></a><a href='#L60'>60</a>
+<a name='L61'></a><a href='#L61'>61</a>
+<a name='L62'></a><a href='#L62'>62</a>
+<a name='L63'></a><a href='#L63'>63</a>
+<a name='L64'></a><a href='#L64'>64</a>
+<a name='L65'></a><a href='#L65'>65</a>
+<a name='L66'></a><a href='#L66'>66</a>
+<a name='L67'></a><a href='#L67'>67</a>
+<a name='L68'></a><a href='#L68'>68</a>
+<a name='L69'></a><a href='#L69'>69</a>
+<a name='L70'></a><a href='#L70'>70</a>
+<a name='L71'></a><a href='#L71'>71</a>
+<a name='L72'></a><a href='#L72'>72</a>
+<a name='L73'></a><a href='#L73'>73</a>
+<a name='L74'></a><a href='#L74'>74</a>
+<a name='L75'></a><a href='#L75'>75</a>
+<a name='L76'></a><a href='#L76'>76</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { IconDefinition, IconName, IconPack, IconPrefix } from '@fortawesome/fontawesome-svg-core';
+&nbsp;
+export const facSidebar: IconDefinition = {
+    prefix: 'fac' as IconPrefix,
+    iconName: 'sidebar' as IconName,
+    icon: [
+        24, // SVG view box width
+        21, // SVG view box height
+        [],
+        '',
+        'M2 0C0.895431 0 0 0.89543 0 2V19C0 20.1046 0.89543 21 2 21H22C23.1046 21 24 20.1046 24 19V2C24 0.895431 23.1046 0 22 0H2ZM22 1.5C22.2761 1.5 22.5 1.72386 22.5 2V19C22.5 19.2761 22.2761 19.5 22 19.5H11.25V1.5H22ZM2 1.5H9.75V19.5H2C1.72386 19.5 1.5 19.2761 1.5 19V2C1.5 1.72386 1.72386 1.5 2 1.5Z M3.25 8.25C3.25 7.83579 3.58579 7.5 4 7.5H7C7.41421 7.5 7.75 7.83579 7.75 8.25C7.75 8.66421 7.41421 9 7 9H4C3.58579 9 3.25 8.66421 3.25 8.25Z M4 10.5C3.58579 10.5 3.25 10.8358 3.25 11.25C3.25 11.6642 3.58579 12 4 12H7C7.41421 12 7.75 11.6642 7.75 11.25C7.75 10.8358 7.41421 10.5 7 10.5H4Z M4 4.5C3.58579 4.5 3.25 4.83579 3.25 5.25C3.25 5.66421 3.58579 6 4 6H7C7.41421 6 7.75 5.66421 7.75 5.25C7.75 4.83579 7.41421 4.5 7 4.5H4Z',
+    ],
+} as IconDefinition;
+&nbsp;
+export const facSaveSuccess: IconDefinition = {
+    prefix: 'fac' as IconPrefix,
+    iconName: 'save-success' as IconName,
+    icon: [
+        24, // SVG view box width
+        21, // SVG view box height
+        [],
+        '',
+        [
+            'M2.35767 19.8571V4.14285C2.35767 3.71071 2.71133 3.35715 3.14355 3.35715H3.92944V8.46428C3.92944 9.11742 4.45502 9.64285 5.10828 9.64285H14.539C15.1922 9.64285 15.7178 9.11742 15.7178 8.46428V3.54866L15.7571 3.58795L19.4213 7.24152L19.4164 7.24643C19.5638 7.39375 19.6472 7.59509 19.6472 7.80135V11.1949C20.5037 11.4015 21.2987 11.7655 22 12.2547V7.80624C22 6.97144 21.6709 6.17097 21.0815 5.5817L21.0864 5.57678L17.4271 1.9183C16.8377 1.32903 16.037 1 15.2021 1H3.14355C1.4097 1 0 2.40938 0 4.14285V19.8571C0 21.5906 1.4097 23 3.14355 23H13.101C12.4235 22.3361 11.8803 21.5355 11.5161 20.6429H3.14355C2.71133 20.6429 2.35767 20.2893 2.35767 19.8571ZM6.28711 7.28572V3.35715H13.3601V7.28572H6.28711Z M13.2049 12.9003C11.8476 14.177 11 15.9895 11 18C11 18.0957 11.0019 18.1909 11.0057 18.2857H11.0024C10.1687 18.2857 9.36917 17.9546 8.77963 17.3652C8.19009 16.7758 7.85889 15.9764 7.85889 15.1429C7.85889 14.3093 8.19009 13.5099 8.77963 12.9205C9.36917 12.3311 10.1687 12 11.0024 12C11.8266 12 12.6173 12.3235 13.2049 12.9003Z',
+            'M18 24C19.5913 24 21.1174 23.3679 22.2426 22.2426C23.3679 21.1174 24 19.5913 24 18C24 16.4087 23.3679 14.8826 22.2426 13.7574C21.1174 12.6321 19.5913 12 18 12C16.4087 12 14.8826 12.6321 13.7574 13.7574C12.6321 14.8826 12 16.4087 12 18C12 19.5913 12.6321 21.1174 13.7574 22.2426C14.8826 23.3679 16.4087 24 18 24ZM20.6484 16.8984L17.6484 19.8984C17.4281 20.1188 17.0719 20.1188 16.8539 19.8984L15.3539 18.3984C15.1336 18.1781 15.1336 17.8219 15.3539 17.6039C15.5742 17.3859 15.9305 17.3836 16.1484 17.6039L17.25 18.7055L19.8516 16.1016C20.0719 15.8813 20.4281 15.8813 20.6461 16.1016C20.8641 16.3219 20.8664 16.6781 20.6461 16.8961L20.6484 16.8984Z',
+        ],
+    ],
+} as IconDefinition;
+&nbsp;
+export const facSaveWarning: IconDefinition = {
+    prefix: 'fac' as IconPrefix,
+    iconName: 'save-warning' as IconName,
+    icon: [
+        24, // SVG view box width
+        21, // SVG view box height
+        [],
+        '',
+        [
+            'M2.35767 19.8571V4.14285C2.35767 3.71071 2.71133 3.35715 3.14355 3.35715H3.92944V8.46428C3.92944 9.11742 4.45502 9.64285 5.10828 9.64285H14.539C15.1922 9.64285 15.7178 9.11742 15.7178 8.46428V3.54866L15.7571 3.58795L19.4213 7.24152L19.4164 7.24643C19.5638 7.39375 19.6472 7.59509 19.6472 7.80135V11.1949C20.5037 11.4015 21.2987 11.7655 22 12.2547V7.80624C22 6.97144 21.6709 6.17097 21.0815 5.5817L21.0864 5.57678L17.4271 1.9183C16.8377 1.32903 16.037 1 15.2021 1H3.14355C1.4097 1 0 2.40938 0 4.14285V19.8571C0 21.5906 1.4097 23 3.14355 23H13.101C12.4235 22.3361 11.8803 21.5355 11.5161 20.6429H3.14355C2.71133 20.6429 2.35767 20.2893 2.35767 19.8571ZM6.28711 7.28572V3.35715H13.3601V7.28572H6.28711Z M13.2049 12.9003C11.8476 14.177 11 15.9895 11 18C11 18.0957 11.0019 18.1909 11.0057 18.2857H11.0024C10.1687 18.2857 9.36917 17.9546 8.77963 17.3652C8.19009 16.7758 7.85889 15.9764 7.85889 15.1429C7.85889 14.3093 8.19009 13.5099 8.77963 12.9205C9.36917 12.3311 10.1687 12 11.0024 12C11.8266 12 12.6173 12.3235 13.2049 12.9003Z',
+            'M18 24C19.5913 24 21.1174 23.3679 22.2426 22.2426C23.3679 21.1174 24 19.5913 24 18C24 16.4087 23.3679 14.8826 22.2426 13.7574C21.1174 12.6321 19.5913 12 18 12C16.4087 12 14.8826 12.6321 13.7574 13.7574C12.6321 14.8826 12 16.4087 12 18C12 19.5913 12.6321 21.1174 13.7574 22.2426C14.8826 23.3679 16.4087 24 18 24ZM18 15C18.3117 15 18.5625 15.2508 18.5625 15.5625V18.1875C18.5625 18.4992 18.3117 18.75 18 18.75C17.6883 18.75 17.4375 18.4992 17.4375 18.1875V15.5625C17.4375 15.2508 17.6883 15 18 15ZM17.25 20.25C17.25 20.0511 17.329 19.8603 17.4697 19.7197C17.6103 19.579 17.8011 19.5 18 19.5C18.1989 19.5 18.3897 19.579 18.5303 19.7197C18.671 19.8603 18.75 20.0511 18.75 20.25C18.75 20.4489 18.671 20.6397 18.5303 20.7803C18.3897 20.921 18.1989 21 18 21C17.8011 21 17.6103 20.921 17.4697 20.7803C17.329 20.6397 17.25 20.4489 17.25 20.25Z',
+        ],
+    ],
+} as IconDefinition;
+&nbsp;
+export const facDetails: IconDefinition = {
+    prefix: 'fac' as IconPrefix,
+    iconName: 'details' as IconName,
+    icon: [
+        24, // SVG view box width
+        24, // SVG view box height
+        [],
+        '',
+        'M2.25 21C2.25 21.4125 2.5875 21.75 3 21.75H12.1424C13.196 22.3848 14.4303 22.75 15.75 22.75C16.3886 22.75 17.0073 22.6645 17.5951 22.5043C17.0752 23.3981 16.1068 24 15 24H3C1.34531 24 0 22.6547 0 21V3C0 1.34531 1.34531 0 3 0H10.7578C11.5547 0 12.3141 0.314063 12.8766 0.876563L17.1234 5.11875C17.6859 5.68125 18 6.44531 18 7.24219V9.11945C17.2939 8.87991 16.5371 8.75 15.75 8.75V7.5H12C11.1703 7.5 10.5 6.82969 10.5 6V2.25H3C2.5875 2.25 2.25 2.5875 2.25 3V21Z M9.83815 12H5.625C5.00156 12 4.5 12.5016 4.5 13.125C4.5 13.7484 5.00156 14.25 5.625 14.25H8.91109C9.08828 13.4384 9.40626 12.6795 9.83815 12Z M8.78971 16.5H5.625C5.00156 16.5 4.5 17.0016 4.5 17.625C4.5 18.2484 5.00156 18.75 5.625 18.75H9.42363C9.09363 18.0553 8.87467 17.2977 8.78971 16.5Z M21.3756 15.6867C21.3756 16.9416 20.9681 18.1008 20.2818 19.0413L23.7436 22.5052C24.0855 22.8469 24.0855 23.4019 23.7436 23.7437C23.4018 24.0854 22.8467 24.0854 22.5049 23.7437L19.043 20.2797C18.1023 20.9687 16.9429 21.3733 15.6878 21.3733C12.5458 21.3733 10 18.828 10 15.6867C10 12.5453 12.5458 10 15.6878 10C18.8297 10 21.3756 12.5453 21.3756 15.6867ZM15.6878 19.6236C16.2049 19.6236 16.7169 19.5218 17.1947 19.3239C17.6724 19.1261 18.1065 18.8361 18.4721 18.4705C18.8378 18.1049 19.1278 17.6709 19.3257 17.1933C19.5236 16.7156 19.6255 16.2037 19.6255 15.6867C19.6255 15.1697 19.5236 14.6577 19.3257 14.1801C19.1278 13.7024 18.8378 13.2684 18.4721 12.9028C18.1065 12.5373 17.6724 12.2473 17.1947 12.0494C16.7169 11.8516 16.2049 11.7497 15.6878 11.7497C15.1707 11.7497 14.6586 11.8516 14.1809 12.0494C13.7031 12.2473 13.2691 12.5373 12.9034 12.9028C12.5378 13.2684 12.2477 13.7024 12.0498 14.1801C11.8519 14.6577 11.7501 15.1697 11.7501 15.6867C11.7501 16.2037 11.8519 16.7156 12.0498 17.1933C12.2477 17.6709 12.5378 18.1049 12.9034 18.4705C13.2691 18.8361 13.7031 19.1261 14.1809 19.3239C14.6586 19.5218 15.1707 19.6236 15.6878 19.6236Z',
+    ],
+} as IconDefinition;
+&nbsp;
+export const facArtemisIntelligence: IconDefinition = {
+    prefix: 'fac' as IconPrefix,
+    iconName: 'artemis-intelligence' as IconName,
+    icon: [
+        24, // SVG view box width
+        24, // SVG view box height
+        [],
+        '',
+        'M6.56973 16.902H7.44723C7.74423 16.902 7.96023 16.8705 8.09523 16.8075C8.23023 16.7445 8.32923 16.6005 8.39223 16.3755L9.85023 10.7865C9.88623 10.6425 9.92223 10.4985 9.95823 10.3545C9.99423 10.2105 10.0257 10.0665 10.0527 9.9225H10.1067C10.1337 10.0665 10.1652 10.2105 10.2012 10.3545C10.2372 10.4985 10.2732 10.6425 10.3092 10.7865L11.7267 16.3755C11.7897 16.6005 11.8977 16.7445 12.0507 16.8075C12.2127 16.8705 12.4242 16.902 12.6852 16.902H13.6167C13.9227 16.902 14.1252 16.866 14.2242 16.794C14.3322 16.722 14.3862 16.623 14.3862 16.497C14.3862 16.407 14.3727 16.3125 14.3457 16.2135C14.3187 16.1055 14.2827 15.993 14.2377 15.876L11.8077 8.046C11.7177 7.767 11.5962 7.5915 11.4432 7.5195C11.2992 7.4385 11.0787 7.398 10.7817 7.398H9.40473C9.11673 7.398 8.89623 7.4385 8.74323 7.5195C8.59023 7.5915 8.46873 7.767 8.37873 8.046L5.96223 15.876C5.92623 15.993 5.89473 16.1055 5.86773 16.2135C5.83173 16.3125 5.81373 16.407 5.81373 16.497C5.81373 16.623 5.86323 16.722 5.96223 16.794C6.07023 16.866 6.27273 16.902 6.56973 16.902ZM7.77123 15.2415H12.3882V13.1895H7.77123V15.2415Z M15.9695 16.902C15.5915 16.902 15.317 16.8525 15.146 16.7535C14.975 16.6455 14.8895 16.5015 14.8895 16.3215V7.9785C14.8895 7.7985 14.975 7.659 15.146 7.56C15.317 7.452 15.5915 7.398 15.9695 7.398H16.307C16.685 7.398 16.9595 7.452 17.1305 7.56C17.3015 7.659 17.387 7.7985 17.387 7.9785V16.3215C17.387 16.5015 17.3015 16.6455 17.1305 16.7535C16.9595 16.8525 16.685 16.902 16.307 16.902H15.9695Z M7.125 0C7.74844 0 8.25 0.501562 8.25 1.125V3H10.875V1.125C10.875 0.501562 11.3766 0 12 0C12.6234 0 13.125 0.501562 13.125 1.125V3H15.75V1.125C15.75 0.501562 16.2516 0 16.875 0C17.4984 0 18 0.501562 18 1.125V3C19.6547 3 21 4.34531 21 6H22.875C23.4984 6 24 6.50156 24 7.125C24 7.74844 23.4984 8.25 22.875 8.25H21V10.875H22.875C23.4984 10.875 24 11.3766 24 12C24 12.6234 23.4984 13.125 22.875 13.125H21V15.75H22.875C23.4984 15.75 24 16.2516 24 16.875C24 17.4984 23.4984 18 22.875 18H21C21 19.6547 19.6547 21 18 21V22.875C18 23.4984 17.4984 24 16.875 24C16.2516 24 15.75 23.4984 15.75 22.875V21H13.125V22.875C13.125 23.4984 12.6234 24 12 24C11.3766 24 10.875 23.4984 10.875 22.875V21H8.25V22.875C8.25 23.4984 7.74844 24 7.125 24C6.50156 24 6 23.4984 6 22.875V21C4.34531 21 3 19.6547 3 18H1.125C0.501562 18 0 17.4984 0 16.875C0 16.2516 0.501562 15.75 1.125 15.75H3V13.125H1.125C0.501562 13.125 0 12.6234 0 12C0 11.3766 0.501562 10.875 1.125 10.875H3V8.25H1.125C0.501562 8.25 0 7.74844 0 7.125C0 6.50156 0.501562 6 1.125 6H3C3 4.34531 4.34531 3 6 3V1.125C6 0.501562 6.50156 0 7.125 0ZM6.32812 5.10938C5.65503 5.10938 5.10938 5.65503 5.10938 6.32812V17.7188C5.10938 18.3918 5.65503 18.9375 6.32812 18.9375H17.7188C18.3918 18.9375 18.9375 18.3918 18.9375 17.7188V6.32812C18.9375 5.65503 18.3918 5.10938 17.7188 5.10938H6.32812Z',
+    ],
+} as IconDefinition;
+&nbsp;
+export const artemisIconPack: IconPack = {
+    facSidebar,
+    facSaveSuccess,
+    facSaveWarning,
+    facDetails,
+    facArtemisIntelligence,
+};
+&nbsp;</pre></td></tr></table></pre>
+
+                <div class='push'></div><!-- for sticky footer -->
+            </div><!-- /wrapper -->
+            <div class='footer quiet pad2 space-top1 center small'>
+                Code coverage generated by
+                <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
+                at 2025-12-15T14:15:25.933Z
+            </div>
+        <script src="../../../../../../prettify.js"></script>
+        <script>
+            window.onload = function () {
+                prettyPrint();
+            };
+        </script>
+        <script src="../../../../../../sorter.js"></script>
+        <script src="../../../../../../block-navigation.js"></script>
+    </body>
+</html>
+    
