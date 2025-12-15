@@ -3,6 +3,7 @@ import { Subject } from 'rxjs';
 import { DiffMatchPatch } from 'diff-match-patch-typescript';
 
 import { ProblemStatementSyncService } from 'app/programming/manage/services/problem-statement-sync.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import {
     ProgrammingExerciseEditorSyncMessage,
     ProgrammingExerciseEditorSyncService,
@@ -29,6 +30,10 @@ describe('ProblemStatementSyncService', () => {
                         unsubscribe: jest.fn(),
                     },
                 },
+                {
+                    provide: AlertService,
+                    useValue: { info: jest.fn(), error: jest.fn(), success: jest.fn() },
+                },
             ],
         });
 
@@ -37,7 +42,7 @@ describe('ProblemStatementSyncService', () => {
     });
 
     afterEach(() => {
-        service.reset();
+        service?.reset();
         jest.clearAllMocks();
     });
 

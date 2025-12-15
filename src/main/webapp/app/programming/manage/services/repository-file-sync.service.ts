@@ -159,7 +159,7 @@ export class RepositoryFileSyncService {
      * @param auxiliaryId - Optional ID for auxiliary repositories
      */
     requestFullFile(repositoryType: RepositoryType, fileName: string, auxiliaryId?: number) {
-        if (!this.send || !this.exerciseId) {
+        if (!this.exerciseId) {
             return;
         }
         const target = RepositoryFileSyncService.REPOSITORY_TYPE_TO_SYNC_TARGET[repositoryType];
@@ -182,7 +182,7 @@ export class RepositoryFileSyncService {
      * @param auxiliaryId - Optional auxiliary repository ID
      */
     handleLocalFileOperation(operation: FileOperation, repositoryType: RepositoryType, auxiliaryId?: number) {
-        if (!this.exerciseId || !this.send) {
+        if (!this.exerciseId) {
             return;
         }
 
@@ -649,7 +649,7 @@ export class RepositoryFileSyncService {
      * @private
      */
     private respondWithFullFiles(message: ProgrammingExerciseEditorSyncMessage) {
-        if (!message.target || !message.fileRequests?.length || !this.send) {
+        if (!message.target || !message.fileRequests?.length) {
             return;
         }
         const auxiliaryId = message.target === ProgrammingExerciseEditorSyncTarget.AUXILIARY_REPOSITORY ? message.auxiliaryRepositoryId : undefined;
