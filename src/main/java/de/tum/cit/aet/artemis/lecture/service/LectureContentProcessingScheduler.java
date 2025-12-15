@@ -13,7 +13,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState;
 import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRepository;
@@ -21,9 +20,13 @@ import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRepos
 /**
  * Scheduler for managing lecture content processing jobs.
  * <p>
- * Handles recovery of stuck processing states after node restart or timeout.
- * States that are stuck longer than their phase-specific timeout are reset
- * and re-triggered for processing.
+ * Handles two types of recovery:
+ * <ol>
+ * <li>Stuck states: Processing that never received a callback (timeout-based)</li>
+ * <li>Failed states: Processing that failed and needs retry with exponential backoff</li>
+ * </ol>
+ * <p>
+ * Exponential backoff formula: 2^retryCount minutes (2, 4, 8, 16, 32 minutes for retries 1-5).
  * <p>
  * Note: Cleanup of orphaned states (where lecture unit was deleted) is handled
  * automatically by database CASCADE DELETE on the foreign key constraint.
@@ -57,37 +60,90 @@ public class LectureContentProcessingScheduler {
     }
 
     /**
-     * Periodically check for stuck processing states and recover them.
+     * Periodically check for processing states that need attention.
      * <p>
-     * A state is considered stuck if it has been in a processing phase
-     * longer than the phase-specific timeout without completing.
-     * This can happen if:
+     * Handles two scenarios:
      * <ul>
-     * <li>The processing node crashed or restarted</li>
-     * <li>A callback from Nebula or Pyris was lost</li>
-     * <li>The external service is unresponsive</li>
+     * <li>Stuck states: Jobs that never received a callback (timeout-based) - increments retry count</li>
+     * <li>Failed states: Jobs that failed explicitly and are waiting for retry (backoff-based)</li>
      * </ul>
      * <p>
-     * Stuck states are reset to IDLE and re-triggered, up to MAX_PROCESSING_RETRIES times.
+     * IMPORTANT: Stuck detection runs FIRST to increment retry count before backoff retry kicks in.
+     * This ensures stuck retries eventually fail after max retries instead of looping forever.
      */
     @Scheduled(fixedRate = 300000) // 5 minutes
-    public void recoverStuckProcessingStates() {
-        log.debug("Checking for stuck processing states...");
+    public void processScheduledRetries() {
+        log.debug("Checking for processing states that need attention...");
 
-        recoverPhase(ProcessingPhase.TRANSCRIBING, TRANSCRIPTION_TIMEOUT_MINUTES);
-        recoverPhase(ProcessingPhase.INGESTING, INGESTION_TIMEOUT_MINUTES);
+        // First, handle stuck states where callback was never received (increments retry count)
+        recoverStuckPhase(ProcessingPhase.TRANSCRIBING, TRANSCRIPTION_TIMEOUT_MINUTES);
+        recoverStuckPhase(ProcessingPhase.INGESTING, INGESTION_TIMEOUT_MINUTES);
+
+        // Then, handle states that are ready for retry (either failed explicitly or marked by stuck recovery)
+        retryFailedStates(ProcessingPhase.TRANSCRIBING);
+        retryFailedStates(ProcessingPhase.INGESTING);
     }
 
     /**
-     * Find and recover all states stuck in a specific phase.
-     * <p>
-     * Queries for states that have been in the given phase longer than
-     * the timeout threshold and attempts to recover each one.
+     * Find and retry all failed states in a specific phase that have waited long enough.
+     * Uses exponential backoff: 2^retryCount minutes.
+     *
+     * @param phase the processing phase to check
+     */
+    private void retryFailedStates(ProcessingPhase phase) {
+        // Find states ready for retry at each backoff level
+        for (int retryCount = 1; retryCount < MAX_PROCESSING_RETRIES; retryCount++) {
+            long backoffMinutes = LectureContentProcessingService.calculateBackoffMinutes(retryCount);
+            ZonedDateTime cutoff = ZonedDateTime.now().minusMinutes(backoffMinutes);
+
+            List<LectureUnitProcessingState> readyStates = processingStateRepository.findStatesReadyForRetry(phase, cutoff);
+
+            // Filter to only states at this exact retry count (to avoid double-processing)
+            final int currentRetryCount = retryCount;
+            List<LectureUnitProcessingState> statesToRetry = readyStates.stream().filter(s -> s.getRetryCount() == currentRetryCount).toList();
+
+            for (LectureUnitProcessingState state : statesToRetry) {
+                retryState(state, phase);
+            }
+        }
+    }
+
+    /**
+     * Retry a single failed state.
+     *
+     * @param state the state to retry
+     * @param phase the current processing phase
+     */
+    private void retryState(LectureUnitProcessingState state, ProcessingPhase phase) {
+        if (state.getLectureUnit() == null) {
+            log.warn("Cannot retry state {} - no associated lecture unit", state.getId());
+            processingStateRepository.delete(state);
+            return;
+        }
+
+        log.info("Retrying {} for unit {} after exponential backoff (attempt {}/{})", phase, state.getLectureUnit().getId(), state.getRetryCount(), MAX_PROCESSING_RETRIES);
+
+        try {
+            if (phase == ProcessingPhase.TRANSCRIBING) {
+                processingService.retryTranscription(state);
+            }
+            else if (phase == ProcessingPhase.INGESTING) {
+                processingService.retryIngestion(state);
+            }
+        }
+        catch (Exception e) {
+            log.error("Failed to retry {} for unit {}: {}", phase, state.getLectureUnit().getId(), e.getMessage());
+        }
+    }
+
+    /**
+     * Find and recover all states stuck in a specific phase (no callback received).
+     * Only applies to states that haven't failed yet (retryCount == 0).
      *
      * @param phase          the processing phase to check
      * @param timeoutMinutes the timeout threshold in minutes
      */
-    private void recoverPhase(ProcessingPhase phase, int timeoutMinutes) {
+    private void recoverStuckPhase(ProcessingPhase phase, int timeoutMinutes) {
         ZonedDateTime cutoff = ZonedDateTime.now().minusMinutes(timeoutMinutes);
 
         List<LectureUnitProcessingState> stuckStates = processingStateRepository.findStuckStates(List.of(phase), cutoff);
@@ -96,53 +152,42 @@ public class LectureContentProcessingScheduler {
             log.info("Found {} stuck processing states in phase {} older than {} minutes", stuckStates.size(), phase, timeoutMinutes);
 
             for (LectureUnitProcessingState state : stuckStates) {
-                recoverStuckState(state);
+                recoverStuckState(state, phase);
             }
         }
     }
 
     /**
-     * Attempt to recover a single stuck processing state.
-     * <p>
-     * The state is reset to IDLE and re-triggered for processing.
-     * If the retry count exceeds MAX_PROCESSING_RETRIES, the state is marked as failed.
-     * <p>
-     * Only AttachmentVideoUnit instances can be re-triggered since only they
-     * support the automated processing pipeline.
+     * Recover a single stuck processing state.
+     * Increments retry count and updates startedAt to prevent re-detection.
+     * The retryFailedStates method will handle the actual retry with backoff.
      *
      * @param state the stuck processing state to recover
+     * @param phase the current processing phase
      */
-    private void recoverStuckState(LectureUnitProcessingState state) {
+    private void recoverStuckState(LectureUnitProcessingState state, ProcessingPhase phase) {
         if (state.getLectureUnit() == null) {
-            // This shouldn't happen with CASCADE DELETE, but handle defensively
             log.warn("Cannot recover state {} - no associated lecture unit", state.getId());
             processingStateRepository.delete(state);
             return;
         }
 
-        log.info("Recovering stuck processing state for unit {}, phase: {}", state.getLectureUnit().getId(), state.getPhase());
+        log.info("Recovering stuck processing state for unit {}, phase: {}", state.getLectureUnit().getId(), phase);
 
+        // Increment retry count - this marks it for retry with backoff
         state.incrementRetryCount();
+        // Update startedAt to prevent this state from being detected as stuck again
+        state.setStartedAt(java.time.ZonedDateTime.now());
 
         if (state.getRetryCount() >= MAX_PROCESSING_RETRIES) {
             log.warn("Max recovery attempts reached for unit {}, marking as failed", state.getLectureUnit().getId());
             state.markFailed("artemisApp.lectureUnit.processing.error.timeout");
-            processingStateRepository.save(state);
-            return;
+        }
+        else {
+            // retryFailedStates will pick this up after backoff period
+            log.info("Stuck state for unit {} marked for retry (attempt {}/{})", state.getLectureUnit().getId(), state.getRetryCount(), MAX_PROCESSING_RETRIES);
         }
 
-        // Reset to IDLE to allow re-processing
-        state.transitionTo(ProcessingPhase.IDLE);
         processingStateRepository.save(state);
-
-        // Trigger re-processing (only AttachmentVideoUnits support automated processing)
-        if (state.getLectureUnit() instanceof AttachmentVideoUnit attachmentUnit) {
-            try {
-                processingService.triggerProcessing(attachmentUnit);
-            }
-            catch (Exception e) {
-                log.error("Failed to re-trigger processing for unit {}: {}", state.getLectureUnit().getId(), e.getMessage());
-            }
-        }
     }
 }

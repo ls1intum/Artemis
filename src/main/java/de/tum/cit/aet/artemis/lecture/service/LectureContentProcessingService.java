@@ -121,6 +121,9 @@ public class LectureContentProcessingService {
         // Detect and handle content changes
         if (handleContentChanges(unit, state, hasVideo, hasPdf)) {
             state.resetRetryCount();
+            // Transition to IDLE to allow reprocessing with new content
+            state.transitionTo(ProcessingPhase.IDLE);
+            processingStateRepository.save(state);
         }
 
         // Check if already processing or done
@@ -385,38 +388,11 @@ public class LectureContentProcessingService {
             }
         }
         else {
-            // Retry by fetching playlist URL again
-            retryTranscription(state);
-        }
-    }
-
-    private void retryTranscription(LectureUnitProcessingState state) {
-        LectureUnit unit = state.getLectureUnit();
-        if (!(unit instanceof AttachmentVideoUnit attachmentUnit)) {
-            state.markFailed("artemisApp.lectureUnit.processing.error.invalidUnitType");
+            // Stay in TRANSCRIBING phase, scheduler will retry with exponential backoff
+            long backoffMinutes = calculateBackoffMinutes(state.getRetryCount());
+            log.info("Transcription failed for unit {}, scheduled for retry in {} minutes (attempt {}/{})", state.getLectureUnit().getId(), backoffMinutes, state.getRetryCount(),
+                    MAX_PROCESSING_RETRIES);
             processingStateRepository.save(state);
-            return;
-        }
-
-        // Refetch playlist URL
-        Optional<String> playlistUrl = fetchPlaylistUrl(attachmentUnit);
-
-        if (playlistUrl.isPresent()) {
-            log.info("Retrying transcription for unit {} (attempt {})", unit.getId(), state.getRetryCount());
-            processingStateRepository.save(state);
-            startTranscription(attachmentUnit, state, playlistUrl.get());
-        }
-        else {
-            // No playlist available anymore - try PDF fallback
-            boolean hasPdf = attachmentUnit.getAttachment() != null && attachmentUnit.getAttachment().getLink() != null;
-            if (hasPdf && irisLectureApi.isPresent()) {
-                log.info("Playlist no longer available, falling back to PDF-only");
-                startIngestion(state);
-            }
-            else {
-                state.markFailed("artemisApp.lectureUnit.processing.error.noPlaylist");
-                processingStateRepository.save(state);
-            }
         }
     }
 
@@ -429,10 +405,87 @@ public class LectureContentProcessingService {
             processingStateRepository.save(state);
         }
         else {
-            log.info("Retrying ingestion for unit {} (attempt {})", state.getLectureUnit().getId(), state.getRetryCount());
+            // Stay in INGESTING phase, scheduler will retry with exponential backoff
+            long backoffMinutes = calculateBackoffMinutes(state.getRetryCount());
+            log.info("Ingestion failed for unit {}, scheduled for retry in {} minutes (attempt {}/{})", state.getLectureUnit().getId(), backoffMinutes, state.getRetryCount(),
+                    MAX_PROCESSING_RETRIES);
             processingStateRepository.save(state);
-            startIngestion(state);
         }
+    }
+
+    /**
+     * Calculate exponential backoff delay in minutes.
+     * Formula: 2^retryCount minutes (2, 4, 8, 16, 32 minutes for retries 1-5).
+     *
+     * @param retryCount current retry attempt number
+     * @return backoff delay in minutes
+     */
+    static long calculateBackoffMinutes(int retryCount) {
+        return (long) Math.pow(2, retryCount);
+    }
+
+    /**
+     * Retry transcription for a state that failed.
+     * Called by the scheduler after exponential backoff period.
+     *
+     * @param state the processing state to retry
+     */
+    public void retryTranscription(LectureUnitProcessingState state) {
+        LectureUnit unit = state.getLectureUnit();
+        if (!(unit instanceof AttachmentVideoUnit attachmentUnit)) {
+            state.markFailed("artemisApp.lectureUnit.processing.error.invalidUnitType");
+            processingStateRepository.save(state);
+            return;
+        }
+
+        // Refetch playlist URL
+        Optional<String> playlistUrl = fetchPlaylistUrl(attachmentUnit);
+
+        if (playlistUrl.isPresent()) {
+            log.info("Retrying transcription for unit {} (attempt {}/{})", unit.getId(), state.getRetryCount(), MAX_PROCESSING_RETRIES);
+            // Update timestamps to mark retry start (prevents re-detection by scheduler)
+            state.setStartedAt(java.time.ZonedDateTime.now());
+            state.setLastUpdated(java.time.ZonedDateTime.now());
+            processingStateRepository.save(state);
+
+            try {
+                NebulaTranscriptionRequestDTO request = new NebulaTranscriptionRequestDTO(playlistUrl.get(), attachmentUnit.getLecture().getId(), attachmentUnit.getId());
+                transcriptionApi.get().startNebulaTranscription(attachmentUnit.getLecture().getId(), attachmentUnit.getId(), request);
+                log.info("Transcription retry job started for unit {}", unit.getId());
+            }
+            catch (Exception e) {
+                log.error("Failed to start transcription retry for unit {}: {}", unit.getId(), e.getMessage());
+                handleTranscriptionFailure(state);
+            }
+        }
+        else {
+            // No playlist available anymore - try PDF fallback
+            boolean hasPdf = attachmentUnit.getAttachment() != null && attachmentUnit.getAttachment().getLink() != null;
+            if (hasPdf && irisLectureApi.isPresent()) {
+                log.info("Playlist no longer available, falling back to PDF-only for unit {}", unit.getId());
+                state.resetRetryCount();
+                startIngestion(state);
+            }
+            else {
+                state.markFailed("artemisApp.lectureUnit.processing.error.noPlaylist");
+                processingStateRepository.save(state);
+            }
+        }
+    }
+
+    /**
+     * Retry ingestion for a state that failed.
+     * Called by the scheduler after exponential backoff period.
+     *
+     * @param state the processing state to retry
+     */
+    public void retryIngestion(LectureUnitProcessingState state) {
+        log.info("Retrying ingestion for unit {} (attempt {}/{})", state.getLectureUnit().getId(), state.getRetryCount(), MAX_PROCESSING_RETRIES);
+        // Update timestamps to mark retry start (prevents re-detection by scheduler)
+        state.setStartedAt(java.time.ZonedDateTime.now());
+        state.setLastUpdated(java.time.ZonedDateTime.now());
+        processingStateRepository.save(state);
+        startIngestion(state);
     }
 
     // -------------------- Helper Methods --------------------
@@ -456,20 +509,30 @@ public class LectureContentProcessingService {
 
     /**
      * Detect content changes and perform cleanup if needed.
+     * Only returns true if existing content changed (not for new units being processed for the first time).
      *
-     * @return true if content changed
+     * @return true if content changed and cleanup was performed
      */
     private boolean handleContentChanges(AttachmentVideoUnit unit, LectureUnitProcessingState state, boolean hasVideo, boolean hasPdf) {
         String currentVideoHash = computeHash(unit.getVideoSource());
         Integer currentAttachmentVersion = unit.getAttachment() != null ? unit.getAttachment().getVersion() : null;
 
-        boolean videoChanged = hasVideo && !currentVideoHash.equals(state.getVideoSourceHash());
-        boolean attachmentChanged = hasPdf && (state.getAttachmentVersion() == null || !state.getAttachmentVersion().equals(currentAttachmentVersion));
+        // Only consider it a "change" if there was previous content (hash/version was set)
+        boolean videoChanged = hasVideo && state.getVideoSourceHash() != null && !currentVideoHash.equals(state.getVideoSourceHash());
+        boolean attachmentChanged = hasPdf && state.getAttachmentVersion() != null && !state.getAttachmentVersion().equals(currentAttachmentVersion);
+
+        // For new units, just set the hash/version without triggering cleanup
+        if (hasVideo && state.getVideoSourceHash() == null) {
+            state.setVideoSourceHash(currentVideoHash);
+        }
+        if (hasPdf && state.getAttachmentVersion() == null) {
+            state.setAttachmentVersion(currentAttachmentVersion);
+        }
 
         if (videoChanged || attachmentChanged) {
             log.info("Content changed for unit {}, video: {}, attachment: {}", unit.getId(), videoChanged, attachmentChanged);
 
-            if (videoChanged && hasVideo) {
+            if (videoChanged) {
                 cleanupForReprocessing(unit, true);
                 state.setVideoSourceHash(currentVideoHash);
             }

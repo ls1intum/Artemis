@@ -548,7 +548,7 @@ public final class Constants {
      * Maximum number of retry attempts for lecture content processing
      * (transcription and ingestion) before marking as failed.
      */
-    public static final int MAX_PROCESSING_RETRIES = 3;
+    public static final int MAX_PROCESSING_RETRIES = 5;
 
     private Constants() {
     }

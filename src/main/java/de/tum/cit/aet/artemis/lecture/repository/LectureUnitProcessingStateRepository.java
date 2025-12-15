@@ -46,6 +46,7 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
     /**
      * Find processing states that are stuck (in active phases for too long).
      * Used for recovery after node restart or detecting hung processes.
+     * Applies to any retry count - a retry can also get stuck if callback is lost.
      *
      * @param phases     the phases to check
      * @param cutoffTime the time before which states are considered stuck
@@ -57,6 +58,22 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
             AND ps.startedAt < :cutoffTime
             """)
     List<LectureUnitProcessingState> findStuckStates(@Param("phases") List<ProcessingPhase> phases, @Param("cutoffTime") ZonedDateTime cutoffTime);
+
+    /**
+     * Find processing states that failed and are ready for retry after backoff.
+     * Used by the scheduler to retry failed states with exponential backoff.
+     *
+     * @param phase      the processing phase to check
+     * @param cutoffTime the time before which states are ready for retry
+     * @return list of states ready for retry
+     */
+    @Query("""
+            SELECT ps FROM LectureUnitProcessingState ps
+            WHERE ps.phase = :phase
+            AND ps.retryCount > 0
+            AND ps.lastUpdated < :cutoffTime
+            """)
+    List<LectureUnitProcessingState> findStatesReadyForRetry(@Param("phase") ProcessingPhase phase, @Param("cutoffTime") ZonedDateTime cutoffTime);
 
     /**
      * Find all processing states for a lecture.
