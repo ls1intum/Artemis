@@ -69,6 +69,12 @@ describe('ProblemStatementSyncService', () => {
         );
     }));
 
+    it('does not send patch if init was not called', () => {
+        service.handleLocalChange('content without init');
+
+        expect(syncService.sendSynchronizationUpdate).not.toHaveBeenCalled();
+    });
+
     it('emits full content updates received from other clients', () => {
         const received: string[] = [];
         service.init(99, 'Initial content').subscribe((content) => received.push(content));
@@ -95,6 +101,21 @@ describe('ProblemStatementSyncService', () => {
         });
 
         expect(received).toEqual(['Hello Artemis']);
+    });
+
+    it('ignores patches that cannot be applied', () => {
+        const received: string[] = [];
+        service.init(99, 'Base content').subscribe((content) => received.push(content));
+
+        // Build a patch against a different base so application fails
+        const incompatiblePatch = dmp.patch_toText(dmp.patch_make('other base', 'new content'));
+        incomingMessages$.next({
+            target: ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT,
+            problemStatementPatch: incompatiblePatch,
+            timestamp: 1,
+        });
+
+        expect(received).toEqual([]);
     });
 
     it('ignores non problem-statement messages', () => {

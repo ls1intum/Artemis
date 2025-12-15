@@ -61,8 +61,7 @@
                 "refreshExplanationLong": "Du hast noch nicht gespeicherte oder hochgeladene Änderungen im Online Editor. Wenn Du 'Aktualisieren' drückst werden alle Änderungen verworfen und mit dem letzten Commit vom Server überschrieben. Dies kann nicht rückgängig gemacht werden!"
             },
             "synchronization": {
-                "repositoryChanged": "Dieses Repository wurde in einer anderen Sitzung geändert. Aktualisiere die Dateien, um die Änderungen zu übernehmen.",
-                "problemStatementChanged": "Die Aufgabenstellung wurde in einer anderen Sitzung geändert. Aktualisiere, um den neuesten Inhalt zu laden."
+                "newCommitAlert": "Ein neuer Commit wurde in das Repository gepusht. Bitte klicke auf „Aktualisieren“, um die neuesten Änderungen zu sehen."
             },
             "fileBrowser": {
                 "fileBrowser": "Dateibrowser",

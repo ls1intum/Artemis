@@ -213,6 +213,18 @@ describe('RepositoryFileSyncService', () => {
             ]);
         });
 
+        it('ignores messages without a target', () => {
+            const operations: FileOperation[] = [];
+            service.init(42, () => true).subscribe((op) => operations.push(op));
+
+            incomingMessages$.next({
+                filePatches: [{ fileName: 'file.txt', patch: 'content', changeType: ProgrammingExerciseEditorFileChangeType.CREATE }],
+                timestamp: 1,
+            });
+
+            expect(operations).toHaveLength(0);
+        });
+
         it('skips outdated messages based on timestamp', () => {
             const operations: FileOperation[] = [];
             service.init(42, () => true).subscribe((op) => operations.push(op));
@@ -297,6 +309,12 @@ describe('RepositoryFileSyncService', () => {
             service.init(42, () => true);
         });
 
+        it('does not send requests when repository type has no sync target', () => {
+            service.requestFullFile(RepositoryType.ASSIGNMENT, 'file.txt');
+
+            expect(syncService.sendSynchronizationUpdate).not.toHaveBeenCalled();
+        });
+
         it('requests full file content for a repository type', () => {
             service.requestFullFile(RepositoryType.TEMPLATE, 'file.txt');
 
@@ -355,6 +373,15 @@ describe('RepositoryFileSyncService', () => {
 
             expect(mockCodeEditor.fileBrowser!.repositoryFiles?.['new.txt']).toBe(FileType.FILE);
             expect(mockCodeEditor.applyRemoteFileContent).toHaveBeenCalledWith('new.txt', 'content');
+        });
+
+        it('ignores NEW_COMMIT_ALERT operations when applying', () => {
+            const operation: FileOperation = { type: 'NEW_COMMIT_ALERT' };
+
+            service.applyRemoteOperation(operation, mockCodeEditor as CodeEditorContainerComponent);
+
+            expect(mockCodeEditor.applyRemoteFileContent).not.toHaveBeenCalled();
+            expect(mockCodeEditor.fileBrowser!.refreshTreeview).not.toHaveBeenCalled();
         });
 
         it('removes files on delete operations and updates selection', () => {

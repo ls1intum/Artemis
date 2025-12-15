@@ -61,8 +61,7 @@
                 "refreshExplanationLong": "You have unsaved or uncommitted changes in the online editor. When you click the button below, these changes will be reset and overwritten with the last commit on the repository server. This can not be undone!"
             },
             "synchronization": {
-                "repositoryChanged": "This repository was updated in another session. Refresh the files to sync the changes.",
-                "problemStatementChanged": "The problem statement was updated in another session. Refresh to load the latest content."
+                "newCommitAlert": "A new commit has been pushed to the repository. Please click \"Refresh Files\" to see the latest changes."
             },
             "fileBrowser": {
                 "fileBrowser": "File browser",
