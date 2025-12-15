@@ -1,4 +1,17 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, HostListener, Input, OnChanges, Output, SimpleChanges, ViewChild, inject, input } from '@angular/core';
+import {
+    ChangeDetectionStrategy,
+    ChangeDetectorRef,
+    Component,
+    EventEmitter,
+    HostListener,
+    Input,
+    OnChanges,
+    Output,
+    SimpleChanges,
+    ViewChild,
+    inject,
+    input,
+} from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { isEmpty as _isEmpty, fromPairs, toPairs, uniq } from 'lodash-es';
 import { CodeEditorFileService } from 'app/programming/shared/code-editor/services/code-editor-file.service';
@@ -56,6 +69,7 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
     private translateService = inject(TranslateService);
     private alertService = inject(AlertService);
     private fileService = inject(CodeEditorFileService);
+    private changeDetector = inject(ChangeDetectorRef);
 
     readonly CommitState = CommitState;
     readonly EditorState = EditorState;
@@ -111,6 +125,8 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
     onDiscardSuggestion = new EventEmitter<Feedback>();
     @Input()
     course?: Course;
+    @Output()
+    onEditorLoaded = new EventEmitter<boolean>();
 
     selectedRepository = input<RepositoryType>();
 
@@ -131,6 +147,7 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
 
     set selectedFile(file: string | undefined) {
         this.selectedFileValue = file;
+        this.changeDetector.markForCheck();
     }
 
     get problemStatementIdentifier(): string {

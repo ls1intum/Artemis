@@ -218,7 +218,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      * @param {1 | -1} deltaIndex        Direction of navigation (forward or backward).
      * @param {Event} event              The originating UI event.
      */
-    async onIssueNavigate(issue: ConsistencyIssue, deltaIndex: 1 | -1, event: Event) {
+    onIssueNavigate(issue: ConsistencyIssue, deltaIndex: 1 | -1, event: Event) {
         if (issue === this.selectedIssue) {
             // Stay in bounds of the array
             this.locationIndex = (this.locationIndex + this.selectedIssue.relatedLocations.length + deltaIndex) % this.selectedIssue.relatedLocations.length;
@@ -233,36 +233,40 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             return;
         }
 
+        // Set parameters for when fileLoad is called
+        this.lineJumpOnFileLoad = issue.relatedLocations[this.locationIndex].endLine;
+        this.fileToJumpOn = getRepoPath(issue.relatedLocations[this.locationIndex]);
+
         try {
             if (issue.relatedLocations[this.locationIndex].type === 'TEMPLATE_REPOSITORY' && this.codeEditorContainer.selectedRepository() !== 'TEMPLATE') {
-                await this.selectTemplateParticipation();
+                this.selectTemplateParticipation();
+                return;
             } else if (issue.relatedLocations[this.locationIndex].type === 'SOLUTION_REPOSITORY' && this.codeEditorContainer.selectedRepository() !== 'SOLUTION') {
-                await this.selectSolutionParticipation();
+                this.selectSolutionParticipation();
+                return;
             } else if (issue.relatedLocations[this.locationIndex].type === 'TESTS_REPOSITORY' && this.codeEditorContainer.selectedRepository() !== 'TESTS') {
-                await this.selectTestRepository();
+                this.selectTestRepository();
+                return;
             }
         } catch (error) {
             this.alertService.error(this.translateService.instant('artemisApp.hyperion.consistencyCheck.navigationFailed'));
             this.lineJumpOnFileLoad = undefined;
             this.fileToJumpOn = undefined;
+            return;
         }
 
-        // Set parameters for when fileLoad is called
-        this.lineJumpOnFileLoad = issue.relatedLocations[this.locationIndex].endLine;
-        this.fileToJumpOn = getRepoPath(issue.relatedLocations[this.locationIndex]);
+        this.onEditorLoaded();
+    }
 
-        // We need to wait for the editor to be fully loaded,
-        // else the file content does not show
-        setTimeout(() => {
-            // File already loaded, file load event will not fire
-            if (this.codeEditorContainer.selectedFile === this.fileToJumpOn) {
-                this.fileLoad(this.fileToJumpOn!);
-                return;
-            }
+    onEditorLoaded() {
+        // File already loaded, file load event will not fire
+        if (this.codeEditorContainer.selectedFile === this.fileToJumpOn) {
+            this.onFileLoad(this.fileToJumpOn!);
+            return;
+        }
 
-            // Will load file and signal to fileLoad when finished loading
-            this.codeEditorContainer.selectedFile = this.fileToJumpOn;
-        }, 0);
+        // Will load file and signal to fileLoad when finished loading
+        this.codeEditorContainer.selectedFile = this.fileToJumpOn;
     }
 
     /**
@@ -271,7 +275,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      * @param {string} fileName
      *        The name of the file that was just loaded.
      */
-    fileLoad(fileName: string) {
+    onFileLoad(fileName: string) {
         if (this.lineJumpOnFileLoad && this.fileToJumpOn === fileName) {
             this.codeEditorContainer.jumpToLine(this.lineJumpOnFileLoad);
             this.lineJumpOnFileLoad = undefined;

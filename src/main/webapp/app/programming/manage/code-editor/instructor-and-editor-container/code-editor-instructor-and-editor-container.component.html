@@ -25,7 +25,8 @@
             [course]="course"
             [allowHiddenFiles]="true"
             [consistencyIssues]="consistencyIssues()"
-            (onFileLoad)="fileLoad($event)"
+            (onFileLoad)="onFileLoad($event)"
+            (onEditorLoaded)="onEditorLoaded()"
         >
             <div editorTitle>
                 <span>{{ exercise?.title }}</span>
