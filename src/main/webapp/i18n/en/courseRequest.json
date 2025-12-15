@@ -1,0 +1,65 @@
+{
+    "artemisApp": {
+        "courseRequest": {
+            "title": "Request a new course",
+            "description": "Fill out the basic course information. We will notify you once an administrator processes your request.",
+            "form": {
+                "title": "Course title",
+                "shortName": "Short name",
+                "shortNameHint": "Must be unique, 3-7 characters recommended, letters and numbers only.",
+                "shortNameTooShort": "The short name must be at least 3 characters long.",
+                "shortNameInvalid": "The short name must only contain letters and numbers, without spaces.",
+                "shortNameNotUnique": "This short name is already in use. We have suggested \"{{ suggestedShortName }}\" as an alternative.",
+                "generate": "Generate",
+                "semester": "Semester",
+                "startDate": "Start date",
+                "endDate": "End date",
+                "testCourse": "This is a test course",
+                "reason": "Reason",
+                "reasonPlaceholder": "Why do you need this course?",
+                "submit": "Submit request",
+                "dateError": "The start date must be before the end date."
+            },
+            "success": "Your course request was submitted successfully. We'll be in touch soon.",
+            "error": "The course request could not be submitted.",
+            "status": {
+                "PENDING": "Pending",
+                "ACCEPTED": "Accepted",
+                "REJECTED": "Rejected"
+            },
+            "admin": {
+                "title": "Course requests",
+                "subtitle": "Review course requests submitted by users and create the course with one click.",
+                "pendingTitle": "Pending Requests",
+                "decidedTitle": "Decided Requests",
+                "requester": "Requester",
+                "course": "Course",
+                "semester": "Semester",
+                "dates": "Dates",
+                "reason": "Requester reason",
+                "decision": "Decision",
+                "status": "Status",
+                "created": "Created",
+                "processed": "Processed",
+                "actions": "Actions",
+                "testCourse": "Test course",
+                "previousInstructor": "Previous Instructor",
+                "accept": "Accept",
+                "reject": "Reject",
+                "rejectReasonLabel": "Rejection reason",
+                "rejectReasonPlaceholder": "Provide a reason for rejecting the request",
+                "rejectConfirm": "Send rejection",
+                "noRequests": "No course requests available yet.",
+                "noPendingRequests": "No pending requests.",
+                "noDecidedRequests": "No decided requests.",
+                "acceptSuccess": "Course request \"{{ title }}\" accepted. Course {{ shortName }} created.",
+                "rejectSuccess": "Course request \"{{ title }}\" rejected.",
+                "link": "Open course",
+                "edit": "Edit",
+                "editTitle": "Edit course request",
+                "editSuccess": "Course request updated successfully.",
+                "shortNameConflict": "The short name \"{{ shortName }}\" is already in use. Please edit the request and use a unique short name such as \"{{ suggestedShortName }}\"."
+            }
+        }
+    }
+}
