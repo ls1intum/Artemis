@@ -5,12 +5,19 @@ import { expect } from '@playwright/test';
 import dayjs from 'dayjs';
 import type { Page } from '@playwright/test';
 
-async function selectDateInPicker(page: Page, monthsAhead: number, day: number) {
-    await page.locator('.btn.position-absolute').first().click();
+async function selectDateInPicker(page: Page, pickerId: string, monthsAhead: number, day: number) {
+    await page.getByTestId(`${pickerId}-open`).click();
+
+    const panel = page.locator(`.${pickerId}-owl-panel`);
+    await expect(panel).toBeVisible();
+
     for (let i = 0; i < monthsAhead; i++) {
-        await page.getByRole('button', { name: 'Next month' }).click();
+        await panel.getByRole('button', { name: 'Next month' }).click();
     }
-    await page.getByText(String(day)).first().click();
+
+    const targetDate = dayjs().add(monthsAhead, 'months').date(day).toDate();
+    const targetLabel = new Intl.DateTimeFormat('en-US', { month: 'long', day: 'numeric', year: 'numeric' }).format(targetDate);
+    await panel.getByRole('cell', { name: targetLabel }).click();
 }
 
 test.describe('Competency Management', { tag: '@fast' }, () => {
@@ -41,7 +48,7 @@ test.describe('Competency Management', { tag: '@fast' }, () => {
         await page.getByRole('textbox', { name: 'Editor content' }).fill(competencyData.description);
 
         // Set soft due date
-        await selectDateInPicker(page, 2, 15);
+        await selectDateInPicker(page, 'softDueDate', 2, 15);
 
         // Set taxonomy
         await page.getByLabel('Taxonomy').selectOption(`2: ${competencyData.taxonomy}`);
@@ -163,7 +170,7 @@ test.describe('Prerequisite Management', { tag: '@fast' }, () => {
         await page.getByRole('textbox', { name: 'Editor content' }).fill(prerequisiteData.description);
 
         // Set soft due date
-        await selectDateInPicker(page, 1, 15);
+        await selectDateInPicker(page, 'softDueDate', 1, 15);
 
         // Set taxonomy
         await page.getByLabel('Taxonomy').selectOption(`2: ${prerequisiteData.taxonomy}`);
@@ -207,7 +214,7 @@ test.describe('Prerequisite Management', { tag: '@fast' }, () => {
             await prereqEditor.type(updatedPrerequisiteData.description);
 
             // Set updated soft due date
-            await selectDateInPicker(page, 2, 15);
+            await selectDateInPicker(page, 'softDueDate', 2, 15);
 
             // Set updated taxonomy
             await page.getByLabel('Taxonomy').selectOption(`3: ${updatedPrerequisiteData.taxonomy}`);

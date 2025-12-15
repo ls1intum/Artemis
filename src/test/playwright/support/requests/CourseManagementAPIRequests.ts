@@ -277,4 +277,58 @@ export class CourseManagementAPIRequests {
         }
         return response.json();
     }
+
+    /**
+     * Creates a text unit for the specified lecture via API.
+     *
+     * @param lecture - The lecture to which the text unit belongs.
+     * @param name - The name of the text unit.
+     * @param content - The content of the text unit (optional).
+     * @param competencyLinks - Optional array of competency links to associate with the text unit.
+     *                          Each link should have { competency: { id, type }, weight }.
+     *                          The type should be 'competency' or 'prerequisite' for Jackson polymorphic deserialization.
+     * @returns Promise with the created text unit.
+     */
+    async createTextUnit(
+        lecture: Lecture,
+        name: string,
+        content?: string,
+        competencyLinks?: Array<{ competency: { id: number; type: string }; weight: number }>,
+    ): Promise<{ id: number; name: string; content: string; type: string }> {
+        const data: {
+            type: string;
+            name: string;
+            content: string;
+            releaseDate: string;
+            competencyLinks?: Array<{ competency: { id: number; type: string }; weight: number }>;
+        } = {
+            type: 'text',
+            name,
+            content: content || `Content for ${name}`,
+            releaseDate: dayjs().subtract(1, 'hour').toISOString(),
+        };
+        if (competencyLinks && competencyLinks.length > 0) {
+            data.competencyLinks = competencyLinks;
+        }
+        const response = await this.page.request.post(`api/lecture/lectures/${lecture.id}/text-units`, { data });
+        if (!response.ok()) {
+            const errorBody = await response.text();
+            throw new Error(`Failed to create text unit: ${response.status()} ${response.statusText()} - ${errorBody}`);
+        }
+        return response.json();
+    }
+
+    /**
+     * Enables learning paths for the specified course via API.
+     *
+     * @param course - The course for which learning paths should be enabled.
+     * @returns Promise that resolves when learning paths are enabled.
+     */
+    async enableLearningPaths(course: Course): Promise<void> {
+        const response = await this.page.request.put(`api/atlas/courses/${course.id}/learning-paths/enable`);
+        if (!response.ok()) {
+            const errorBody = await response.text();
+            throw new Error(`Failed to enable learning paths: ${response.status()} ${response.statusText()} - ${errorBody}`);
+        }
+    }
 }

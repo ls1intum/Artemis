@@ -49,6 +49,7 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
 
     @ViewChild('dateInput', { static: false }) dateInput: NgModel;
 
+    id = input<string>();
     labelName = input<string>();
     hideLabelName = input<boolean>(false);
     labelTooltip = input<string>();
@@ -66,6 +67,12 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
 
     protected isInputValid = signal<boolean>(false);
     protected dateInputValue = signal<string>('');
+
+    protected readonly baseId = computed(() => this.id() ?? 'date-time-picker');
+    protected readonly inputFieldId = computed(() => `${this.baseId()}-input`);
+    protected readonly openButtonTestId = computed(() => `${this.baseId()}-open`);
+    protected readonly clearButtonTestId = computed(() => `${this.baseId()}-clear`);
+    protected readonly pickerPanelClass = computed(() => `${this.baseId()}-owl-panel`);
 
     isValid = computed(() => {
         const isInvalid = this.error() || !this.isInputValid() || (this.requiredField() && !this.dateInputValue()) || this.warning();
