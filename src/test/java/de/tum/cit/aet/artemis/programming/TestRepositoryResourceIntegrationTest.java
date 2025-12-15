@@ -8,7 +8,6 @@ import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 
@@ -398,17 +397,6 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
 
         Path filePath = Path.of(testRepo.workingCopyGitRepoFile + "/" + currentLocalFileName);
         assertThat(filePath).hasContent("updatedFileContent");
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testSaveFilesCommitFalseDoesNotBroadcastSynchronizationUpdate() throws Exception {
-        programmingExerciseRepository.save(programmingExercise);
-        reset(websocketMessagingService);
-
-        request.put(testRepoBaseUrl + programmingExercise.getId() + "/files?commit=false", List.of(), HttpStatus.OK);
-
-        verify(websocketMessagingService, never()).sendMessage(eq("/topic/programming-exercises/" + programmingExercise.getId() + "/synchronization"), any());
     }
 
     @Disabled

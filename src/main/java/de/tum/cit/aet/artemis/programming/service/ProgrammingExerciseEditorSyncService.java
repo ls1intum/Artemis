@@ -43,6 +43,7 @@ public class ProgrammingExerciseEditorSyncService {
      *
      * @return the client instance id or null if no request context is available
      */
+    @Nullable
     public static String getClientInstanceId() {
         RequestAttributes attributes = RequestContextHolder.getRequestAttributes();
         if (attributes instanceof ServletRequestAttributes servletRequestAttributes) {

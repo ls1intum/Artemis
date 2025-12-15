@@ -119,7 +119,9 @@ public class TestRepositoryResource extends RepositoryResource {
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> createFile(@PathVariable Long exerciseId, @RequestParam("file") String filePath, HttpServletRequest request) {
         ResponseEntity<Void> response = super.createFile(exerciseId, filePath, request);
-        broadcastTestRepositoryChange(exerciseId, ProgrammingExerciseEditorFileSyncDTO.forFileCreate(filePath));
+        if (response.getStatusCode().is2xxSuccessful()) {
+            broadcastTestRepositoryChange(exerciseId, ProgrammingExerciseEditorFileSyncDTO.forFileCreate(filePath));
+        }
         return response;
     }
 
@@ -129,7 +131,9 @@ public class TestRepositoryResource extends RepositoryResource {
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> createFolder(@PathVariable Long exerciseId, @RequestParam("folder") String folderPath, HttpServletRequest request) {
         ResponseEntity<Void> response = super.createFolder(exerciseId, folderPath, request);
-        broadcastTestRepositoryChange(exerciseId, ProgrammingExerciseEditorFileSyncDTO.forFolderCreate(folderPath));
+        if (response.getStatusCode().is2xxSuccessful()) {
+            broadcastTestRepositoryChange(exerciseId, ProgrammingExerciseEditorFileSyncDTO.forFolderCreate(folderPath));
+        }
         return response;
     }
 
@@ -139,7 +143,9 @@ public class TestRepositoryResource extends RepositoryResource {
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> renameFile(@PathVariable Long exerciseId, @RequestBody FileMove fileMove) {
         ResponseEntity<Void> response = super.renameFile(exerciseId, fileMove);
-        broadcastTestRepositoryChange(exerciseId, ProgrammingExerciseEditorFileSyncDTO.forRename(fileMove.currentFilePath(), fileMove.newFilename()));
+        if (response.getStatusCode().is2xxSuccessful()) {
+            broadcastTestRepositoryChange(exerciseId, ProgrammingExerciseEditorFileSyncDTO.forRename(fileMove.currentFilePath(), fileMove.newFilename()));
+        }
         return response;
     }
 
@@ -149,7 +155,9 @@ public class TestRepositoryResource extends RepositoryResource {
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> deleteFile(@PathVariable Long exerciseId, @RequestParam("file") String filename) {
         ResponseEntity<Void> response = super.deleteFile(exerciseId, filename);
-        broadcastTestRepositoryChange(exerciseId, ProgrammingExerciseEditorFileSyncDTO.forDelete(filename));
+        if (response.getStatusCode().is2xxSuccessful()) {
+            broadcastTestRepositoryChange(exerciseId, ProgrammingExerciseEditorFileSyncDTO.forDelete(filename));
+        }
         return response;
     }
 

@@ -417,13 +417,13 @@ public abstract class RepositoryResource {
      * @param auxiliaryRepositoryId optional, the id of the auxiliary repository associated with this change, only needed when target is AUXILIARY_REPOSITORY
      * @param filePatch             the file operation to broadcast
      */
-    protected void broadcastRepositoryUpdates(Long exerciseId, ProgrammingExerciseEditorSyncTarget target, Long auxiliaryRepositoryId,
+    protected void broadcastRepositoryUpdates(Long exerciseId, ProgrammingExerciseEditorSyncTarget target, @Nullable Long auxiliaryRepositoryId,
             @Nullable ProgrammingExerciseEditorFileSyncDTO filePatch) {
         try {
             programmingExerciseEditorSyncService.broadcastFileChanges(exerciseId, target, auxiliaryRepositoryId, filePatch);
         }
         catch (Exception e) {
-            log.error("Could not broadcast repository change for synchronization of exercise {}: {}", exerciseId, e.getMessage());
+            log.error("Could not broadcast repository change for synchronization of exercise {}", exerciseId, e);
         }
     }
 }

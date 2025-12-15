@@ -6,10 +6,12 @@ import {
     ProgrammingExerciseEditorSyncService,
     ProgrammingExerciseEditorSyncTarget,
 } from 'app/programming/manage/services/programming-exercise-editor-sync.service';
+import { AlertService } from 'app/shared/service/alert.service';
 
 @Injectable({ providedIn: 'root' })
 export class ProblemStatementSyncService {
     private syncService = inject(ProgrammingExerciseEditorSyncService);
+    private alertService = inject(AlertService);
     private readonly diffMatchPatch = new DiffMatchPatch();
 
     private exerciseId?: number;
@@ -146,13 +148,13 @@ export class ProblemStatementSyncService {
                 // Check if any patch failed to apply (results array contains false for failed patches)
                 const hasFailedPatches = results.some((success) => !success);
                 if (hasFailedPatches) {
-                    // TODO: we should alert this or handle it more gracefully
+                    this.alertService.info('artemisApp.editor.synchronization.patchFailedAlert');
                     return;
                 }
                 this.lastSyncedContent = patchedContent;
                 this.patchOperations.next(patchedContent);
             } catch (error) {
-                // TODO: we should alert this or handle it more gracefully
+                this.alertService.info('artemisApp.editor.synchronization.syncErrorAlert');
             }
         }
     }

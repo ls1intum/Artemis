@@ -124,7 +124,9 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> createFile(@PathVariable Long auxiliaryRepositoryId, @RequestParam("file") String filePath, HttpServletRequest request) {
         ResponseEntity<Void> response = super.createFile(auxiliaryRepositoryId, filePath, request);
-        broadcastAuxiliaryRepositoryChange(auxiliaryRepositoryId, ProgrammingExerciseEditorFileSyncDTO.forFileCreate(filePath));
+        if (response.getStatusCode().is2xxSuccessful()) {
+            broadcastAuxiliaryRepositoryChange(auxiliaryRepositoryId, ProgrammingExerciseEditorFileSyncDTO.forFileCreate(filePath));
+        }
         return response;
     }
 
@@ -134,7 +136,9 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> createFolder(@PathVariable Long auxiliaryRepositoryId, @RequestParam("folder") String folderPath, HttpServletRequest request) {
         ResponseEntity<Void> response = super.createFolder(auxiliaryRepositoryId, folderPath, request);
-        broadcastAuxiliaryRepositoryChange(auxiliaryRepositoryId, ProgrammingExerciseEditorFileSyncDTO.forFolderCreate(folderPath));
+        if (response.getStatusCode().is2xxSuccessful()) {
+            broadcastAuxiliaryRepositoryChange(auxiliaryRepositoryId, ProgrammingExerciseEditorFileSyncDTO.forFolderCreate(folderPath));
+        }
         return response;
     }
 
@@ -144,7 +148,9 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> renameFile(@PathVariable Long auxiliaryRepositoryId, @RequestBody FileMove fileMove) {
         ResponseEntity<Void> response = super.renameFile(auxiliaryRepositoryId, fileMove);
-        broadcastAuxiliaryRepositoryChange(auxiliaryRepositoryId, ProgrammingExerciseEditorFileSyncDTO.forRename(fileMove.currentFilePath(), fileMove.newFilename()));
+        if (response.getStatusCode().is2xxSuccessful()) {
+            broadcastAuxiliaryRepositoryChange(auxiliaryRepositoryId, ProgrammingExerciseEditorFileSyncDTO.forRename(fileMove.currentFilePath(), fileMove.newFilename()));
+        }
         return response;
     }
 
@@ -154,7 +160,9 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> deleteFile(@PathVariable Long auxiliaryRepositoryId, @RequestParam("file") String filename) {
         ResponseEntity<Void> response = super.deleteFile(auxiliaryRepositoryId, filename);
-        broadcastAuxiliaryRepositoryChange(auxiliaryRepositoryId, ProgrammingExerciseEditorFileSyncDTO.forDelete(filename));
+        if (response.getStatusCode().is2xxSuccessful()) {
+            broadcastAuxiliaryRepositoryChange(auxiliaryRepositoryId, ProgrammingExerciseEditorFileSyncDTO.forDelete(filename));
+        }
         return response;
     }
 

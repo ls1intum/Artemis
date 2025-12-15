@@ -324,7 +324,9 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     @EnforceAtLeastStudent
     public ResponseEntity<Void> createFile(@PathVariable Long participationId, @RequestParam("file") String filePath, HttpServletRequest request) {
         ResponseEntity<Void> response = super.createFile(participationId, filePath, request);
-        broadcastChangesForNonStudentRepository(participationId, ProgrammingExerciseEditorFileSyncDTO.forFileCreate(filePath));
+        if (response.getStatusCode().is2xxSuccessful()) {
+            broadcastChangesForNonStudentRepository(participationId, ProgrammingExerciseEditorFileSyncDTO.forFileCreate(filePath));
+        }
         return response;
     }
 
@@ -334,7 +336,9 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     @EnforceAtLeastStudent
     public ResponseEntity<Void> createFolder(@PathVariable Long participationId, @RequestParam("folder") String folderPath, HttpServletRequest request) {
         ResponseEntity<Void> response = super.createFolder(participationId, folderPath, request);
-        broadcastChangesForNonStudentRepository(participationId, ProgrammingExerciseEditorFileSyncDTO.forFolderCreate(folderPath));
+        if (response.getStatusCode().is2xxSuccessful()) {
+            broadcastChangesForNonStudentRepository(participationId, ProgrammingExerciseEditorFileSyncDTO.forFolderCreate(folderPath));
+        }
         return response;
     }
 
@@ -344,7 +348,9 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     @EnforceAtLeastStudent
     public ResponseEntity<Void> renameFile(@PathVariable Long participationId, @RequestBody FileMove fileMove) {
         ResponseEntity<Void> response = super.renameFile(participationId, fileMove);
-        broadcastChangesForNonStudentRepository(participationId, ProgrammingExerciseEditorFileSyncDTO.forRename(fileMove.currentFilePath(), fileMove.newFilename()));
+        if (response.getStatusCode().is2xxSuccessful()) {
+            broadcastChangesForNonStudentRepository(participationId, ProgrammingExerciseEditorFileSyncDTO.forRename(fileMove.currentFilePath(), fileMove.newFilename()));
+        }
         return response;
     }
 
@@ -353,7 +359,9 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     @EnforceAtLeastStudent
     public ResponseEntity<Void> deleteFile(@PathVariable Long participationId, @RequestParam("file") String filename) {
         ResponseEntity<Void> response = super.deleteFile(participationId, filename);
-        broadcastChangesForNonStudentRepository(participationId, ProgrammingExerciseEditorFileSyncDTO.forDelete(filename));
+        if (response.getStatusCode().is2xxSuccessful()) {
+            broadcastChangesForNonStudentRepository(participationId, ProgrammingExerciseEditorFileSyncDTO.forDelete(filename));
+        }
         return response;
     }
 

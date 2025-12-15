@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -177,24 +178,24 @@ public class ExerciseVersionService {
             return;
         }
 
-        var newProgrammingData = newSnapshot.programmingData();
-        var previousProgrammingData = previousSnapshot.programmingData();
+        ProgrammingExerciseSnapshotDTO newProgrammingData = newSnapshot.programmingData();
+        ProgrammingExerciseSnapshotDTO previousProgrammingData = previousSnapshot.programmingData();
         ProgrammingExerciseEditorSyncTarget target = null;
         Long auxiliaryRepositoryId = null;
 
-        if (commitIdChanged(previousProgrammingData.templateParticipation(), newProgrammingData.templateParticipation())) {
+        if (participationCommitChanged(previousProgrammingData.templateParticipation(), newProgrammingData.templateParticipation())) {
             target = ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY;
         }
-        else if (commitIdChanged(previousProgrammingData.solutionParticipation(), newProgrammingData.solutionParticipation())) {
+        else if (participationCommitChanged(previousProgrammingData.solutionParticipation(), newProgrammingData.solutionParticipation())) {
             target = ProgrammingExerciseEditorSyncTarget.SOLUTION_REPOSITORY;
         }
         else if (!Objects.equals(previousProgrammingData.testsCommitId(), newProgrammingData.testsCommitId())) {
             target = ProgrammingExerciseEditorSyncTarget.TESTS_REPOSITORY;
         }
         else {
-            var previousAuxiliaries = Optional.ofNullable(previousProgrammingData.auxiliaryRepositories()).orElseGet(List::of).stream().collect(
+            Map<Long, String> previousAuxiliaries = Optional.ofNullable(previousProgrammingData.auxiliaryRepositories()).orElseGet(List::of).stream().collect(
                     Collectors.toMap(ProgrammingExerciseSnapshotDTO.AuxiliaryRepositorySnapshotDTO::id, ProgrammingExerciseSnapshotDTO.AuxiliaryRepositorySnapshotDTO::commitId));
-            for (var auxiliary : Optional.ofNullable(newProgrammingData.auxiliaryRepositories()).orElseGet(List::of)) {
+            for (ProgrammingExerciseSnapshotDTO.AuxiliaryRepositorySnapshotDTO auxiliary : Optional.ofNullable(newProgrammingData.auxiliaryRepositories()).orElseGet(List::of)) {
                 var previousCommitId = previousAuxiliaries.get(auxiliary.id());
                 if (!Objects.equals(previousCommitId, auxiliary.commitId())) {
                     target = ProgrammingExerciseEditorSyncTarget.AUXILIARY_REPOSITORY;
@@ -212,13 +213,13 @@ public class ExerciseVersionService {
         }
     }
 
-    private boolean commitIdChanged(ProgrammingExerciseSnapshotDTO.ParticipationSnapshotDTO previousParticipation,
+    private boolean participationCommitChanged(ProgrammingExerciseSnapshotDTO.ParticipationSnapshotDTO previousParticipation,
             ProgrammingExerciseSnapshotDTO.ParticipationSnapshotDTO newParticipation) {
         if (previousParticipation == null && newParticipation == null) {
             return false;
         }
-        var previousCommitId = previousParticipation == null ? null : previousParticipation.commitId();
-        var newCommitId = newParticipation == null ? null : newParticipation.commitId();
+        String previousCommitId = previousParticipation == null ? null : previousParticipation.commitId();
+        String newCommitId = newParticipation == null ? null : newParticipation.commitId();
         return !Objects.equals(previousCommitId, newCommitId);
     }
 }

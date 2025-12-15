@@ -202,6 +202,16 @@ describe('CodeEditorContainerComponent', () => {
         expect(syncSpy).not.toHaveBeenCalled();
     });
 
+    it('resets remote update flag when applying remote content fails', () => {
+        const error = new Error('apply failed');
+        (component.monacoEditor as any).applyRemoteFileContent.mockImplementation(() => {
+            throw error;
+        });
+
+        expect(() => component.applyRemoteFileContent('src/main/App.java', 'remote')).toThrow(error);
+        expect((component as any).isApplyingRemoteFileUpdate).toBeFalse();
+    });
+
     it('emits file load events', () => {
         const loadSpy = jest.fn();
         component.onFileLoad.subscribe(loadSpy);

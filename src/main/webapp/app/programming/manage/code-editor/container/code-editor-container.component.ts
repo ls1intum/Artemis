@@ -314,10 +314,13 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
 
     applyRemoteFileContent(fileName: string, text: string) {
         this.isApplyingRemoteFileUpdate = true;
-        this.monacoEditor?.applyRemoteFileContent(fileName, text);
-        this.unsavedFiles = { ...this.unsavedFiles, [fileName]: text };
-        this.onFileChanged.emit();
-        this.isApplyingRemoteFileUpdate = false;
+        try {
+            this.monacoEditor?.applyRemoteFileContent(fileName, text);
+            this.unsavedFiles = { ...this.unsavedFiles, [fileName]: text };
+            this.onFileChanged.emit();
+        } finally {
+            this.isApplyingRemoteFileUpdate = false;
+        }
     }
 
     getFileContent(fileName: string): string | undefined {

@@ -61,7 +61,9 @@
                 "refreshExplanationLong": "Du hast noch nicht gespeicherte oder hochgeladene Änderungen im Online Editor. Wenn Du 'Aktualisieren' drückst werden alle Änderungen verworfen und mit dem letzten Commit vom Server überschrieben. Dies kann nicht rückgängig gemacht werden!"
             },
             "synchronization": {
-                "newCommitAlert": "Ein neuer Commit wurde in das Repository gepusht. Bitte klicke auf „Aktualisieren“, um die neuesten Änderungen zu sehen."
+                "newCommitAlert": "Ein neuer Commit wurde in das Repository gepusht. Bitte klicke auf \"Aktualisieren\", um die neuesten Änderungen zu sehen.",
+                "patchFailedAlert": "Die Synchronisierung der Aufgabenstellung von einem anderen Editor ist fehlgeschlagen. Bitte aktualisiere die Seite oder Dateien, um die neueste Version zu sehen.",
+                "syncErrorAlert": "Ein Fehler ist bei der Synchronisierung der Aufgabenstellung aufgetreten. Bitte aktualisiere die Seite oder Dateien, um die neueste Version zu sehen."
             },
             "fileBrowser": {
                 "fileBrowser": "Dateibrowser",
