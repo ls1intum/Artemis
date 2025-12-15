@@ -19,6 +19,7 @@ import { ProgrammingExerciseService } from 'app/programming/manage/services/prog
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { ProgrammingExerciseEditorSyncService } from 'app/programming/manage/services/programming-exercise-editor-sync.service';
+import { FileOperation, RepositoryFileSyncService } from 'app/programming/manage/services/repository-file-sync.service';
 
 describe('CodeEditorInstructorAndEditorContainerComponent', () => {
     let fixture: ComponentFixture<CodeEditorInstructorAndEditorContainerComponent>;
@@ -46,6 +47,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
                 MockProvider(ProgrammingExerciseService),
                 MockProvider(CourseExerciseService),
                 MockProvider(ProgrammingExerciseEditorSyncService),
+                MockProvider(RepositoryFileSyncService, { applyRemoteOperation: jest.fn(), reset: jest.fn() } as any),
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 provideRouter([]),
@@ -113,5 +115,15 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
 
         (artemisIntelligenceService as any).isLoading = () => false;
         expect(comp.isCheckingConsistency()).toBeFalse();
+    });
+
+    it('shows new commit alert and skips applying remote operations', () => {
+        const infoSpy = jest.spyOn(alertService, 'info');
+        const repositorySyncService = TestBed.inject(RepositoryFileSyncService) as jest.Mocked<RepositoryFileSyncService>;
+
+        (comp as any).applyRemoteFileOperation({ type: 'NEW_COMMIT_ALERT' } as FileOperation);
+
+        expect(infoSpy).toHaveBeenCalledWith('artemisApp.editor.newCommitAlert', { reload: true });
+        expect(repositorySyncService.applyRemoteOperation).not.toHaveBeenCalled();
     });
 });
