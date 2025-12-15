@@ -6,7 +6,7 @@ import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseEditorSyncTarget;
+import de.tum.cit.aet.artemis.programming.domain.synchronization.ProgrammingExerciseEditorSyncTarget;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ProgrammingExerciseEditorSyncEventDTO(ProgrammingExerciseEditorSyncTarget target, @Nullable Long auxiliaryRepositoryId, @Nullable String clientInstanceId,

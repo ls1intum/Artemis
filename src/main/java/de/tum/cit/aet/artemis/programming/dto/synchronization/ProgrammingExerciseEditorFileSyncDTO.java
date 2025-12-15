@@ -4,6 +4,9 @@ import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.programming.domain.synchronization.ProgrammingExerciseEditorFileChangeType;
+import de.tum.cit.aet.artemis.programming.domain.synchronization.ProgrammingExerciseEditorFileType;
+
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ProgrammingExerciseEditorFileSyncDTO(String fileName, @Nullable String patch, @Nullable ProgrammingExerciseEditorFileChangeType changeType,
         @Nullable String newFileName, @Nullable ProgrammingExerciseEditorFileType fileType) {

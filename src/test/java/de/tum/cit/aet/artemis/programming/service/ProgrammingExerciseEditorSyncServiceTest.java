@@ -15,10 +15,10 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseEditorSyncTarget;
-import de.tum.cit.aet.artemis.programming.dto.synchronization.ProgrammingExerciseEditorFileChangeType;
+import de.tum.cit.aet.artemis.programming.domain.synchronization.ProgrammingExerciseEditorFileChangeType;
+import de.tum.cit.aet.artemis.programming.domain.synchronization.ProgrammingExerciseEditorFileType;
+import de.tum.cit.aet.artemis.programming.domain.synchronization.ProgrammingExerciseEditorSyncTarget;
 import de.tum.cit.aet.artemis.programming.dto.synchronization.ProgrammingExerciseEditorFileSyncDTO;
-import de.tum.cit.aet.artemis.programming.dto.synchronization.ProgrammingExerciseEditorFileType;
 import de.tum.cit.aet.artemis.programming.dto.synchronization.ProgrammingExerciseEditorSyncEventDTO;
 
 class ProgrammingExerciseEditorSyncServiceTest {
