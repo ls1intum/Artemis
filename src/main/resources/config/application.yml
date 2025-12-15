@@ -138,8 +138,10 @@ artemis:
 
     iris:
         ratelimit:
-            default-limit: 0
-            default-timeframe-hours: 0
+            # Use -1 for both values to indicate unlimited (no rate limiting)
+            # Otherwise: default-limit >= 0 (0 = no requests allowed), default-timeframe-hours >= 1
+            default-limit: -1
+            default-timeframe-hours: -1
 
     # Default security configuration for internal endpoints accessed by other Artemis components
     # Currently set to allow all IPs. Adjust as necessary for your deployment.

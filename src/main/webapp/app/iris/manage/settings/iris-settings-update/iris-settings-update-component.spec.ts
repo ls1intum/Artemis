@@ -476,4 +476,104 @@ describe('IrisSettingsUpdateComponent', () => {
             expect(component.CUSTOM_INSTRUCTIONS_MAX_LENGTH).toBe(2048);
         });
     });
+
+    describe('rate limit validation', () => {
+        beforeEach(fakeAsync(() => {
+            routeParamsSubject.next({ courseId: '1' });
+            component.ngOnInit();
+            tick();
+        }));
+
+        it('should be valid when both fields are empty (use defaults)', fakeAsync(() => {
+            component.rateLimitRequests = undefined;
+            component.rateLimitTimeframeHours = undefined;
+            component.ngDoCheck();
+
+            expect(component.rateLimitValidationError).toBeUndefined();
+            expect(component.isFormValid()).toBeTrue();
+        }));
+
+        it('should be valid when both fields are filled with valid values', fakeAsync(() => {
+            component.rateLimitRequests = 100;
+            component.rateLimitTimeframeHours = 24;
+            component.ngDoCheck();
+
+            expect(component.rateLimitValidationError).toBeUndefined();
+            expect(component.isFormValid()).toBeTrue();
+        }));
+
+        it('should be valid when requests is 0 and timeframe is positive', fakeAsync(() => {
+            component.rateLimitRequests = 0;
+            component.rateLimitTimeframeHours = 24;
+            component.ngDoCheck();
+
+            expect(component.rateLimitValidationError).toBeUndefined();
+            expect(component.isFormValid()).toBeTrue();
+        }));
+
+        it('should be invalid when only requests is filled', fakeAsync(() => {
+            component.rateLimitRequests = 100;
+            component.rateLimitTimeframeHours = undefined;
+            component.ngDoCheck();
+
+            expect(component.rateLimitValidationError).toBe('artemisApp.iris.settings.rateLimitValidation.bothRequired');
+            expect(component.isFormValid()).toBeFalse();
+        }));
+
+        it('should be invalid when only timeframe is filled', fakeAsync(() => {
+            component.rateLimitRequests = undefined;
+            component.rateLimitTimeframeHours = 24;
+            component.ngDoCheck();
+
+            expect(component.rateLimitValidationError).toBe('artemisApp.iris.settings.rateLimitValidation.bothRequired');
+            expect(component.isFormValid()).toBeFalse();
+        }));
+
+        it('should be invalid when requests is negative', fakeAsync(() => {
+            component.rateLimitRequests = -1;
+            component.rateLimitTimeframeHours = 24;
+            component.ngDoCheck();
+
+            expect(component.rateLimitValidationError).toBe('artemisApp.iris.settings.rateLimitValidation.requestsNonNegative');
+            expect(component.isFormValid()).toBeFalse();
+        }));
+
+        it('should be invalid when timeframe is zero', fakeAsync(() => {
+            component.rateLimitRequests = 100;
+            component.rateLimitTimeframeHours = 0;
+            component.ngDoCheck();
+
+            expect(component.rateLimitValidationError).toBe('artemisApp.iris.settings.rateLimitValidation.timeframePositive');
+            expect(component.isFormValid()).toBeFalse();
+        }));
+
+        it('should be invalid when timeframe is negative', fakeAsync(() => {
+            component.rateLimitRequests = 100;
+            component.rateLimitTimeframeHours = -1;
+            component.ngDoCheck();
+
+            expect(component.rateLimitValidationError).toBe('artemisApp.iris.settings.rateLimitValidation.timeframePositive');
+            expect(component.isFormValid()).toBeFalse();
+        }));
+
+        it('should handle empty string as empty value for requests', fakeAsync(() => {
+            component.rateLimitRequests = '' as unknown as number;
+            component.rateLimitTimeframeHours = undefined;
+            component.ngDoCheck();
+
+            // Both effectively empty, should be valid
+            expect(component.rateLimitValidationError).toBeUndefined();
+            expect(component.isFormValid()).toBeTrue();
+        }));
+
+        it('should handle empty string as empty value for timeframe', fakeAsync(() => {
+            component.rateLimitRequests = undefined;
+            component.rateLimitTimeframeHours = '' as unknown as number;
+            component.ngDoCheck();
+
+            // Both effectively empty, should be valid
+            expect(component.rateLimitValidationError).toBeUndefined();
+            expect(component.isFormValid()).toBeTrue();
+        }));
+    });
 });

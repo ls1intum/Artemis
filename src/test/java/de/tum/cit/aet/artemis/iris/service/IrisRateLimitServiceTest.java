@@ -91,13 +91,14 @@ class IrisRateLimitServiceTest {
 
     @Test
     void getRateLimitInformation_unlimitedOverridesSkipCounting() {
-        var effective = IrisRateLimitConfiguration.empty();
+        var effective = IrisRateLimitConfiguration.empty(); // null, null = unlimited
         when(irisSettingsService.getCourseSettingsDTO(COURSE_ID))
                 .thenReturn(new CourseIrisSettingsDTO(COURSE_ID, IrisCourseSettingsDTO.defaultSettings(), effective, IrisRateLimitConfiguration.empty()));
 
         var info = rateLimitService.getRateLimitInformation(COURSE_ID, user);
 
-        assertThat(info).isEqualTo(new IrisRateLimitService.IrisRateLimitInformation(0, -1, 0));
+        // Both -1 means unlimited (no counting needed)
+        assertThat(info).isEqualTo(new IrisRateLimitService.IrisRateLimitInformation(0, -1, -1));
         verify(irisMessageRepository, never()).countLlmResponsesOfUserWithinTimeframe(anyLong(), any(), any());
     }
 

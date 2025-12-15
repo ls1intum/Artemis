@@ -41,23 +41,116 @@ class IrisSettingsServiceTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    void updateCourseSettings_sanitizesRateLimitAndInstructions() {
-        var payload = IrisCourseSettingsDTO.of(false, "  keep trimmed  ", IrisPipelineVariant.ADVANCED, new IrisRateLimitConfiguration(0, 5));
+    void updateCourseSettings_sanitizesCustomInstructions() {
+        var payload = IrisCourseSettingsDTO.of(false, "  keep trimmed  ", IrisPipelineVariant.ADVANCED, new IrisRateLimitConfiguration(100, 24));
 
         var dto = irisSettingsService.updateCourseSettings(course.getId(), payload);
 
         assertThat(dto.settings().customInstructions()).isEqualTo("keep trimmed");
-        assertThat(dto.settings().rateLimit().requests()).isNull(); // 0 normalized to null
-        assertThat(dto.settings().rateLimit().timeframeHours()).isEqualTo(5);
+        assertThat(dto.settings().rateLimit().requests()).isEqualTo(100);
+        assertThat(dto.settings().rateLimit().timeframeHours()).isEqualTo(24);
     }
 
     @Test
     void updateCourseSettings_rejectsNegativeRateLimit() {
         enableIrisFor(course);
 
-        var invalidPayload = IrisCourseSettingsDTO.of(true, null, null, new IrisRateLimitConfiguration(-1, null));
+        var invalidPayload = IrisCourseSettingsDTO.of(true, null, null, new IrisRateLimitConfiguration(-1, 24));
 
-        assertThatThrownBy(() -> irisSettingsService.updateCourseSettings(course.getId(), invalidPayload)).isInstanceOf(BadRequestAlertException.class);
+        assertThatThrownBy(() -> irisSettingsService.updateCourseSettings(course.getId(), invalidPayload)).isInstanceOf(BadRequestAlertException.class)
+                .hasMessageContaining("Rate limit requests must be 0 or greater");
+    }
+
+    @Test
+    void updateCourseSettings_rejectsPartialRateLimit_onlyRequests() {
+        enableIrisFor(course);
+
+        var invalidPayload = IrisCourseSettingsDTO.of(true, null, null, new IrisRateLimitConfiguration(100, null));
+
+        assertThatThrownBy(() -> irisSettingsService.updateCourseSettings(course.getId(), invalidPayload)).isInstanceOf(BadRequestAlertException.class)
+                .hasMessageContaining("Both rate limit fields must be filled or both must be empty");
+    }
+
+    @Test
+    void updateCourseSettings_rejectsPartialRateLimit_onlyTimeframe() {
+        enableIrisFor(course);
+
+        var invalidPayload = IrisCourseSettingsDTO.of(true, null, null, new IrisRateLimitConfiguration(null, 24));
+
+        assertThatThrownBy(() -> irisSettingsService.updateCourseSettings(course.getId(), invalidPayload)).isInstanceOf(BadRequestAlertException.class)
+                .hasMessageContaining("Both rate limit fields must be filled or both must be empty");
+    }
+
+    @Test
+    void updateCourseSettings_rejectsZeroTimeframe() {
+        enableIrisFor(course);
+
+        var invalidPayload = IrisCourseSettingsDTO.of(true, null, null, new IrisRateLimitConfiguration(100, 0));
+
+        assertThatThrownBy(() -> irisSettingsService.updateCourseSettings(course.getId(), invalidPayload)).isInstanceOf(BadRequestAlertException.class)
+                .hasMessageContaining("Rate limit timeframe must be greater than 0");
+    }
+
+    @Test
+    void updateCourseSettings_rejectsNegativeTimeframe() {
+        enableIrisFor(course);
+
+        var invalidPayload = IrisCourseSettingsDTO.of(true, null, null, new IrisRateLimitConfiguration(100, -5));
+
+        assertThatThrownBy(() -> irisSettingsService.updateCourseSettings(course.getId(), invalidPayload)).isInstanceOf(BadRequestAlertException.class)
+                .hasMessageContaining("Rate limit timeframe must be greater than 0");
+    }
+
+    @Test
+    void updateCourseSettings_acceptsBothFieldsEmpty() {
+        enableIrisFor(course);
+
+        // Both null = use defaults (should return null rateLimit)
+        var payload = IrisCourseSettingsDTO.of(true, null, null, new IrisRateLimitConfiguration(null, null));
+
+        var dto = irisSettingsService.updateCourseSettings(course.getId(), payload);
+
+        assertThat(dto.settings().rateLimit()).isNull();
+    }
+
+    @Test
+    void updateCourseSettings_acceptsNullRateLimit() {
+        enableIrisFor(course);
+
+        // null rateLimit = use defaults
+        var payload = IrisCourseSettingsDTO.of(true, null, null, null);
+
+        var dto = irisSettingsService.updateCourseSettings(course.getId(), payload);
+
+        assertThat(dto.settings().rateLimit()).isNull();
+    }
+
+    @Test
+    void updateCourseSettings_acceptsBothFieldsFilled() {
+        enableIrisFor(course);
+
+        var payload = IrisCourseSettingsDTO.of(true, null, null, new IrisRateLimitConfiguration(100, 24));
+
+        var dto = irisSettingsService.updateCourseSettings(course.getId(), payload);
+
+        assertThat(dto.settings().rateLimit()).isNotNull();
+        assertThat(dto.settings().rateLimit().requests()).isEqualTo(100);
+        assertThat(dto.settings().rateLimit().timeframeHours()).isEqualTo(24);
+    }
+
+    @Test
+    void updateCourseSettings_acceptsZeroRequests() {
+        enableIrisFor(course);
+
+        // 0 requests means "unlimited" - should be allowed (rate limit service treats 0 as unlimited)
+        var payload = IrisCourseSettingsDTO.of(true, null, null, new IrisRateLimitConfiguration(0, 24));
+
+        var dto = irisSettingsService.updateCourseSettings(course.getId(), payload);
+
+        // 0 is stored as-is (rate limit service treats it as unlimited)
+        assertThat(dto.settings().rateLimit()).isNotNull();
+        assertThat(dto.settings().rateLimit().requests()).isZero();
+        assertThat(dto.settings().rateLimit().timeframeHours()).isEqualTo(24);
     }
 
     @Test

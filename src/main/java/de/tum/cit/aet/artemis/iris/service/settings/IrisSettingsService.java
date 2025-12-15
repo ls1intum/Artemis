@@ -189,12 +189,31 @@ public class IrisSettingsService {
 
     /**
      * Returns the application-level default rate limit configuration.
+     * <p>
+     * Interprets the configured values as follows:
+     * - (-1, -1) = unlimited (returns null, null)
+     * - Not set / both 0 with old config = unlimited (returns null, null)
+     * - Otherwise: requests < 0 → 0 (blocking), timeframe < 1 → 1 (minimum 1 hour)
      *
      * @return the default rate limit configuration from application properties
      */
     @Transactional(readOnly = true)
     public IrisRateLimitConfiguration getApplicationRateLimitDefaults() {
-        return new IrisRateLimitConfiguration(nullIfNonPositive(configuredDefaultRateLimit), nullIfNonPositive(configuredDefaultTimeframeHours));
+        // (-1, -1) means unlimited
+        if (configuredDefaultRateLimit == -1 && configuredDefaultTimeframeHours == -1) {
+            return new IrisRateLimitConfiguration(null, null);
+        }
+
+        // Sanitize: requests < 0 → 0 (blocking), timeframe < 1 → 1 (minimum)
+        Integer requests = configuredDefaultRateLimit < 0 ? 0 : configuredDefaultRateLimit;
+        Integer timeframe = configuredDefaultTimeframeHours < 1 ? 1 : configuredDefaultTimeframeHours;
+
+        // If both end up as 0/1 due to old config with 0,0, treat as unlimited
+        if (requests == 0 && timeframe == 1 && configuredDefaultRateLimit == 0 && configuredDefaultTimeframeHours == 0) {
+            return new IrisRateLimitConfiguration(null, null);
+        }
+
+        return new IrisRateLimitConfiguration(requests, timeframe);
     }
 
     private IrisCourseSettingsDTO sanitizePayload(IrisCourseSettingsDTO payload) {
@@ -209,19 +228,31 @@ public class IrisSettingsService {
         if (rateLimit == null) {
             return null; // null = use defaults, non-null = explicit override
         }
-        var sanitizedRequests = sanitizeRateLimitValue(rateLimit.requests(), "irisRateLimitRequestsInvalid");
-        var sanitizedTimeframe = sanitizeRateLimitValue(rateLimit.timeframeHours(), "irisRateLimitTimeframeInvalid");
-        return new IrisRateLimitConfiguration(sanitizedRequests, sanitizedTimeframe);
-    }
 
-    private Integer sanitizeRateLimitValue(Integer value, String errorKey) {
-        if (value == null) {
+        boolean hasRequests = rateLimit.requests() != null;
+        boolean hasTimeframe = rateLimit.timeframeHours() != null;
+
+        // Both empty = use defaults (return null)
+        if (!hasRequests && !hasTimeframe) {
             return null;
         }
-        if (value < 0) {
-            throw new BadRequestAlertException("Rate limit values must be greater or equal to zero", "IrisSettings", errorKey);
+
+        // One filled, one empty = invalid
+        if (hasRequests != hasTimeframe) {
+            throw new BadRequestAlertException("Both rate limit fields must be filled or both must be empty", "IrisSettings", "irisRateLimitBothRequired");
         }
-        return value == 0 ? null : value;
+
+        // Both filled - validate values
+        // Note: 0 requests means "no requests allowed" (blocking)
+        if (rateLimit.requests() < 0) {
+            throw new BadRequestAlertException("Rate limit requests must be 0 or greater", "IrisSettings", "irisRateLimitRequestsInvalid");
+        }
+
+        if (rateLimit.timeframeHours() <= 0) {
+            throw new BadRequestAlertException("Rate limit timeframe must be greater than 0", "IrisSettings", "irisRateLimitTimeframeInvalid");
+        }
+
+        return rateLimit;
     }
 
     private IrisRateLimitConfiguration resolveEffectiveRateLimit(IrisCourseSettingsDTO settings, IrisRateLimitConfiguration defaults) {
@@ -235,9 +266,5 @@ public class IrisSettingsService {
 
         // Non-null rateLimit = explicit override (null values inside = unlimited)
         return settings.rateLimit();
-    }
-
-    private Integer nullIfNonPositive(int value) {
-        return value <= 0 ? null : value;
     }
 }

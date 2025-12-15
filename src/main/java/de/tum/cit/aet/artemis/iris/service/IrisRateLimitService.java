@@ -81,7 +81,9 @@ public class IrisRateLimitService {
         int timeframeHours = resolveTimeframe(configuration);
 
         int currentMessageCount = 0;
-        if (requestsLimit != -1 && timeframeHours > 0) {
+        // Only count messages if rate limiting is active (both not unlimited)
+        // Note: requestsLimit=0 means blocking, so we still need to check even though limit is 0
+        if (requestsLimit != -1 && timeframeHours != -1) {
             var end = ZonedDateTime.now();
             var start = end.minusHours(timeframeHours);
             currentMessageCount = irisMessageRepository.countLlmResponsesOfUserWithinTimeframe(user.getId(), start, end);
@@ -167,39 +169,71 @@ public class IrisRateLimitService {
         return course != null ? course.getId() : null;
     }
 
+    /**
+     * Resolves the requests limit from the configuration.
+     * <p>
+     * - null = unlimited (returns -1)
+     * - 0 = blocking (returns 0, meaning no requests allowed)
+     * - positive = explicit limit
+     *
+     * @param configuration the rate limit configuration
+     * @return the resolved requests limit (-1 = unlimited, 0 = blocking, positive = limit)
+     */
     private int resolveRequestsLimit(IrisRateLimitConfiguration configuration) {
         var requests = configuration.requests();
-        if (requests == null || requests <= 0) {
-            return -1;
+        if (requests == null) {
+            return -1; // unlimited
         }
-        return requests;
+        // 0 means blocking (no requests allowed), positive means explicit limit
+        return Math.max(0, requests);
     }
 
+    /**
+     * Resolves the timeframe from the configuration.
+     * <p>
+     * - null = unlimited (returns -1)
+     * - positive = explicit timeframe in hours
+     *
+     * @param configuration the rate limit configuration
+     * @return the resolved timeframe (-1 = unlimited, positive = hours)
+     */
     private int resolveTimeframe(IrisRateLimitConfiguration configuration) {
         var timeframe = configuration.timeframeHours();
-        if (timeframe == null || timeframe <= 0) {
-            return 0;
+        if (timeframe == null) {
+            return -1; // unlimited
         }
-        return timeframe;
+        // Ensure at least 1 hour if set
+        return Math.max(1, timeframe);
     }
 
     /**
      * Contains information about the rate limit of a user.
      *
      * @param currentMessageCount     the current rate limit
-     * @param rateLimit               the max rate limit (-1 = unlimited)
-     * @param rateLimitTimeframeHours timeframe in hours (0 = unlimited)
+     * @param rateLimit               the max rate limit (-1 = unlimited, 0 = blocking, positive = limit)
+     * @param rateLimitTimeframeHours timeframe in hours (-1 = unlimited, positive = hours)
      */
     public record IrisRateLimitInformation(int currentMessageCount, int rateLimit, int rateLimitTimeframeHours) {
 
         /**
          * Checks if the rate limit is exceeded.
-         * It is exceeded if the rateLimit is set and the currentMessageCount is greater or equal to the rateLimit.
+         * <p>
+         * The limit is exceeded if:
+         * - rateLimit is 0 (blocking - no requests allowed), OR
+         * - rateLimit is positive AND currentMessageCount >= rateLimit
+         * <p>
+         * If rateLimit is -1 (unlimited), the limit is never exceeded.
          *
          * @return true if the rate limit is exceeded, false otherwise
          */
         public boolean isRateLimitExceeded() {
-            return rateLimit != -1 && currentMessageCount >= rateLimit;
+            if (rateLimit == -1) {
+                return false; // unlimited
+            }
+            if (rateLimit == 0) {
+                return true; // blocking - always exceeded
+            }
+            return currentMessageCount >= rateLimit;
         }
     }
 }

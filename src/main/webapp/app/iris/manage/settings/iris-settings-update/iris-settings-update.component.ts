@@ -67,6 +67,9 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
     isAdmin: boolean;
     private isAutoSaving = false; // Prevents dirty flash during enable/disable auto-save
 
+    // Validation state for rate limit
+    rateLimitValidationError?: string;
+
     // Button types
     PRIMARY = ButtonType.PRIMARY;
     WARNING = ButtonType.WARNING;
@@ -104,6 +107,53 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
             this.normalizeEmpty(this.rateLimitRequests) !== this.normalizeEmpty(this.originalRateLimitRequests) ||
             this.normalizeEmpty(this.rateLimitTimeframeHours) !== this.normalizeEmpty(this.originalRateLimitTimeframeHours);
         this.isDirty = settingsChanged || rateLimitChanged;
+
+        // Validate rate limit fields
+        this.validateRateLimit();
+    }
+
+    /**
+     * Validates the rate limit fields.
+     * Rules:
+     * - Both fields must be empty (use defaults) OR both must be filled
+     * - If filled: requests >= 0, timeframe > 0 (no zero timeframe allowed)
+     */
+    private validateRateLimit(): void {
+        const hasRequests = this.rateLimitRequests != null && this.rateLimitRequests !== ('' as unknown as number);
+        const hasTimeframe = this.rateLimitTimeframeHours != null && this.rateLimitTimeframeHours !== ('' as unknown as number);
+
+        // Both empty = valid (use defaults)
+        if (!hasRequests && !hasTimeframe) {
+            this.rateLimitValidationError = undefined;
+            return;
+        }
+
+        // One filled, one empty = invalid
+        if (hasRequests !== hasTimeframe) {
+            this.rateLimitValidationError = 'artemisApp.iris.settings.rateLimitValidation.bothRequired';
+            return;
+        }
+
+        // Both filled - validate values
+        if (this.rateLimitRequests! < 0) {
+            this.rateLimitValidationError = 'artemisApp.iris.settings.rateLimitValidation.requestsNonNegative';
+            return;
+        }
+
+        if (this.rateLimitTimeframeHours! <= 0) {
+            this.rateLimitValidationError = 'artemisApp.iris.settings.rateLimitValidation.timeframePositive';
+            return;
+        }
+
+        // All valid
+        this.rateLimitValidationError = undefined;
+    }
+
+    /**
+     * Check if the form is valid for saving
+     */
+    isFormValid(): boolean {
+        return !this.rateLimitValidationError;
     }
 
     /**
