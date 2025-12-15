@@ -23,8 +23,8 @@ import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState;
 import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
-import de.tum.cit.aet.artemis.lecture.repository.AttachmentVideoUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRepository;
+import de.tum.cit.aet.artemis.lecture.test_repository.AttachmentVideoUnitTestRepository;
 
 /**
  * Unit tests for {@link LectureContentProcessingScheduler}.
@@ -36,7 +36,7 @@ class LectureContentProcessingSchedulerTest {
 
     private LectureUnitProcessingStateRepository processingStateRepository;
 
-    private AttachmentVideoUnitRepository attachmentVideoUnitRepository;
+    private AttachmentVideoUnitTestRepository attachmentVideoUnitRepository;
 
     private LectureContentProcessingService processingService;
 
@@ -47,7 +47,7 @@ class LectureContentProcessingSchedulerTest {
     @BeforeEach
     void setUp() {
         processingStateRepository = mock(LectureUnitProcessingStateRepository.class);
-        attachmentVideoUnitRepository = mock(AttachmentVideoUnitRepository.class);
+        attachmentVideoUnitRepository = mock(AttachmentVideoUnitTestRepository.class);
         processingService = mock(LectureContentProcessingService.class);
 
         scheduler = new LectureContentProcessingScheduler(processingStateRepository, attachmentVideoUnitRepository, processingService);

@@ -88,7 +88,7 @@ public interface AttachmentVideoUnitRepository extends ArtemisJpaRepository<Atta
                 AND (c.startDate <= :now OR c.startDate IS NULL)
                 AND (c.endDate >= :now OR c.endDate IS NULL)
                 AND c.testCourse = FALSE
-                AND (l.tutorialLecture IS NULL OR l.tutorialLecture = FALSE)
+                AND l.isTutorialLecture = FALSE
                 AND (avu.videoSource IS NOT NULL OR avu.attachment IS NOT NULL)
             ORDER BY avu.id
             """)
