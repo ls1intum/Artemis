@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.exercise.service;
 import static de.tum.cit.aet.artemis.exercise.util.ExerciseVersionUtilService.zonedDateTimeBiPredicate;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
@@ -383,7 +382,7 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
         exerciseVersionService.createExerciseVersion(exercise);
 
         // No synchronization should be broadcast for non-programming exercises
-        verify(websocketMessagingService, never()).sendMessage(anyString(), any());
+        verify(websocketMessagingService, never()).sendMessage(eq("/topic/programming-exercises/" + exercise.getId() + "/synchronization"), any());
     }
 
 }

@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { DiffMatchPatch } from 'diff-match-patch-typescript';
-import { Subject, Subscription, debounceTime } from 'rxjs';
+import { Observable, Subject, Subscription, debounceTime } from 'rxjs';
 import {
     ProgrammingExerciseEditorSyncMessage,
     ProgrammingExerciseEditorSyncService,
@@ -24,7 +24,7 @@ export class ProblemStatementSyncService {
     private lastSyncedContent = '';
     private lastProcessedTimestamp = 0;
 
-    init(exerciseId: number, initialContent: string) {
+    init(exerciseId: number, initialContent: string): Observable<string> {
         this.reset();
         this.exerciseId = exerciseId;
         this.lastSyncedContent = initialContent;
@@ -54,6 +54,9 @@ export class ProblemStatementSyncService {
      * @param content The edited content to be synchronized
      */
     queueLocalChange(content: string) {
+        if (!this.exerciseId || this.localChangesQueue.closed) {
+            return;
+        }
         this.localChangesQueue.next(content);
     }
 

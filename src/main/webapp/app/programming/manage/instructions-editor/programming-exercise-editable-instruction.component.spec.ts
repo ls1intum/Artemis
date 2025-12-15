@@ -136,6 +136,35 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         jest.restoreAllMocks();
     });
 
+    it('should initialize sync service and subscribe to remote updates', fakeAsync(() => {
+        const exercise = { id: 30, templateParticipation, problemStatement: 'test' } as ProgrammingExercise;
+        setRequiredInputs(fixture, exercise);
+        fixture.detectChanges();
+        tick();
+
+        expect(problemStatementSyncServiceMock.init).toHaveBeenCalledWith(exercise.id, exercise.problemStatement);
+
+        // Simulate remote update
+        problemStatementUpdates$.next('remote problem statement');
+        tick();
+
+        // Verify component applied the update without queueing it
+        expect(comp.exercise().problemStatement).toBe('remote problem statement');
+        expect(problemStatementSyncServiceMock.queueLocalChange).not.toHaveBeenCalled();
+
+        fixture.destroy();
+        flush();
+    }));
+
+    it('should reset sync service on component destroy', () => {
+        setRequiredInputs(fixture, exercise);
+        fixture.detectChanges();
+
+        fixture.destroy();
+
+        expect(problemStatementSyncServiceMock.reset).toHaveBeenCalled();
+    });
+
     it('should not have any test cases if the test case service emits an empty array', fakeAsync(() => {
         setRequiredInputs(fixture, exercise);
         fixture.detectChanges();
