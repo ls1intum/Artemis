@@ -580,7 +580,7 @@ describe('EditAttachmentVideoUnitComponent', () => {
             fixture.detectChanges();
 
             expect(updateAttachmentVideoUnitSpy).toHaveBeenCalledOnce();
-            const formDataArg = updateAttachmentVideoUnitSpy.mock.calls[0][1] as FormData;
+            const formDataArg = updateAttachmentVideoUnitSpy.mock.calls[0][2] as FormData;
             expect(formDataArg.get('videoFile')).toBeTruthy();
         });
 
@@ -604,7 +604,7 @@ describe('EditAttachmentVideoUnitComponent', () => {
             fixture.detectChanges();
 
             expect(updateAttachmentVideoUnitSpy).toHaveBeenCalledOnce();
-            const formDataArg = updateAttachmentVideoUnitSpy.mock.calls[0][1] as FormData;
+            const formDataArg = updateAttachmentVideoUnitSpy.mock.calls[0][2] as FormData;
             expect(formDataArg.get('videoFile')).toBeNull();
         });
 
@@ -634,7 +634,7 @@ describe('EditAttachmentVideoUnitComponent', () => {
             fixture.detectChanges();
 
             expect(updateAttachmentVideoUnitSpy).toHaveBeenCalledOnce();
-            const formDataArg = updateAttachmentVideoUnitSpy.mock.calls[0][1] as FormData;
+            const formDataArg = updateAttachmentVideoUnitSpy.mock.calls[0][2] as FormData;
             // videoFile should not be included because videoFileName is missing
             expect(formDataArg.get('videoFile')).toBeNull();
         });
