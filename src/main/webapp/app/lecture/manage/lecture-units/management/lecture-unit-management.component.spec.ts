@@ -11,7 +11,7 @@ import { TextUnitComponent } from 'app/lecture/overview/course-lectures/text-uni
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
-import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
+import { LectureUnitService, ProcessingPhase } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';
@@ -111,6 +111,7 @@ describe('LectureUnitManagementComponent', () => {
         updateOrderSpy.mockReturnValue(returnValue);
         deleteLectureUnitSpy.mockReturnValue(of(new HttpResponse({ body: attachmentVideoUnit, status: 200 })));
         jest.spyOn(lectureTranscriptionService, 'getTranscriptionStatus').mockReturnValue(of(TranscriptionStatus.COMPLETED));
+        jest.spyOn(lectureUnitService, 'getProcessingStatus').mockReturnValue(of({ lectureUnitId: attachmentVideoUnit.id!, phase: ProcessingPhase.DONE, retryCount: 0 }));
         lectureUnitManagementComponentFixture.detectChanges();
     });
 
@@ -237,6 +238,97 @@ describe('LectureUnitManagementComponent', () => {
         it('should return true for hasTranscriptionBadge when transcription failed', () => {
             lectureUnitManagementComponent.transcriptionStatus[attachmentVideoUnit.id!] = TranscriptionStatus.FAILED;
             expect(lectureUnitManagementComponent.hasTranscriptionBadge(attachmentVideoUnit)).toBeTrue();
+        });
+    });
+
+    describe('Processing Status', () => {
+        it('should load processing status for attachment video units', () => {
+            const statusSpy = jest
+                .spyOn(lectureUnitService, 'getProcessingStatus')
+                .mockReturnValue(of({ lectureUnitId: attachmentVideoUnit.id!, phase: ProcessingPhase.DONE, retryCount: 0 }));
+
+            lectureUnitManagementComponent.loadData();
+
+            expect(statusSpy).toHaveBeenCalledWith(lectureId, attachmentVideoUnit.id);
+            expect(lectureUnitManagementComponent.processingStatus[attachmentVideoUnit.id!]).toBe(ProcessingPhase.DONE);
+        });
+
+        it('should correctly identify processing states', () => {
+            lectureUnitManagementComponent.processingStatus[attachmentVideoUnit.id!] = ProcessingPhase.IDLE;
+            expect(lectureUnitManagementComponent.isProcessingIdle(attachmentVideoUnit)).toBeTrue();
+
+            lectureUnitManagementComponent.processingStatus[attachmentVideoUnit.id!] = ProcessingPhase.TRANSCRIBING;
+            expect(lectureUnitManagementComponent.isProcessingTranscribing(attachmentVideoUnit)).toBeTrue();
+            expect(lectureUnitManagementComponent.isProcessingInProgress(attachmentVideoUnit)).toBeTrue();
+
+            lectureUnitManagementComponent.processingStatus[attachmentVideoUnit.id!] = ProcessingPhase.INGESTING;
+            expect(lectureUnitManagementComponent.isProcessingIngesting(attachmentVideoUnit)).toBeTrue();
+            expect(lectureUnitManagementComponent.isProcessingInProgress(attachmentVideoUnit)).toBeTrue();
+
+            lectureUnitManagementComponent.processingStatus[attachmentVideoUnit.id!] = ProcessingPhase.DONE;
+            expect(lectureUnitManagementComponent.isProcessingDone(attachmentVideoUnit)).toBeTrue();
+
+            lectureUnitManagementComponent.processingStatus[attachmentVideoUnit.id!] = ProcessingPhase.FAILED;
+            expect(lectureUnitManagementComponent.isProcessingFailed(attachmentVideoUnit)).toBeTrue();
+        });
+
+        it('should return true for hasProcessingBadge when processing is in progress', () => {
+            lectureUnitManagementComponent.processingStatus[attachmentVideoUnit.id!] = ProcessingPhase.TRANSCRIBING;
+            expect(lectureUnitManagementComponent.hasProcessingBadge(attachmentVideoUnit)).toBeTrue();
+        });
+
+        it('should return true for hasProcessingBadge when processing is done', () => {
+            lectureUnitManagementComponent.processingStatus[attachmentVideoUnit.id!] = ProcessingPhase.DONE;
+            expect(lectureUnitManagementComponent.hasProcessingBadge(attachmentVideoUnit)).toBeTrue();
+        });
+
+        it('should return true for hasProcessingBadge when processing failed', () => {
+            lectureUnitManagementComponent.processingStatus[attachmentVideoUnit.id!] = ProcessingPhase.FAILED;
+            expect(lectureUnitManagementComponent.hasProcessingBadge(attachmentVideoUnit)).toBeTrue();
+        });
+    });
+
+    describe('isAwaitingProcessing', () => {
+        it('should return true when status is IDLE and course is active', () => {
+            lectureUnitManagementComponent.processingStatus[attachmentVideoUnit.id!] = ProcessingPhase.IDLE;
+            lectureUnitManagementComponent.lecture.course!.startDate = undefined;
+            lectureUnitManagementComponent.lecture.course!.endDate = undefined;
+            expect(lectureUnitManagementComponent.isAwaitingProcessing(attachmentVideoUnit)).toBeTrue();
+        });
+
+        it('should return true when status is undefined and course is active', () => {
+            delete lectureUnitManagementComponent.processingStatus[attachmentVideoUnit.id!];
+            lectureUnitManagementComponent.lecture.course!.startDate = undefined;
+            lectureUnitManagementComponent.lecture.course!.endDate = undefined;
+            expect(lectureUnitManagementComponent.isAwaitingProcessing(attachmentVideoUnit)).toBeTrue();
+        });
+
+        it('should return false when processing is in progress', () => {
+            lectureUnitManagementComponent.processingStatus[attachmentVideoUnit.id!] = ProcessingPhase.TRANSCRIBING;
+            expect(lectureUnitManagementComponent.isAwaitingProcessing(attachmentVideoUnit)).toBeFalse();
+        });
+
+        it('should return false when processing is done', () => {
+            lectureUnitManagementComponent.processingStatus[attachmentVideoUnit.id!] = ProcessingPhase.DONE;
+            expect(lectureUnitManagementComponent.isAwaitingProcessing(attachmentVideoUnit)).toBeFalse();
+        });
+    });
+
+    describe('isCourseActive', () => {
+        it('should return true when course has no date restrictions', () => {
+            lectureUnitManagementComponent.lecture.course!.startDate = undefined;
+            lectureUnitManagementComponent.lecture.course!.endDate = undefined;
+            expect(lectureUnitManagementComponent.isCourseActive()).toBeTrue();
+        });
+
+        it('should return false when no lecture is set', () => {
+            lectureUnitManagementComponent.lecture = undefined as any;
+            expect(lectureUnitManagementComponent.isCourseActive()).toBeFalse();
+        });
+
+        it('should return false when no course is set', () => {
+            lectureUnitManagementComponent.lecture.course = undefined;
+            expect(lectureUnitManagementComponent.isCourseActive()).toBeFalse();
         });
     });
 

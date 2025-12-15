@@ -10,11 +10,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState;
 import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
+import de.tum.cit.aet.artemis.lecture.repository.AttachmentVideoUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRepository;
 
 /**
@@ -50,12 +53,22 @@ public class LectureContentProcessingScheduler {
      */
     private static final int INGESTION_TIMEOUT_MINUTES = 60; // 1 hour
 
+    /**
+     * Maximum number of unprocessed units to pick up per backfill run.
+     * Keeps load on Nebula/Pyris manageable.
+     */
+    private static final int BACKFILL_BATCH_SIZE = 10;
+
     private final LectureUnitProcessingStateRepository processingStateRepository;
+
+    private final AttachmentVideoUnitRepository attachmentVideoUnitRepository;
 
     private final LectureContentProcessingService processingService;
 
-    public LectureContentProcessingScheduler(LectureUnitProcessingStateRepository processingStateRepository, LectureContentProcessingService processingService) {
+    public LectureContentProcessingScheduler(LectureUnitProcessingStateRepository processingStateRepository, AttachmentVideoUnitRepository attachmentVideoUnitRepository,
+            LectureContentProcessingService processingService) {
         this.processingStateRepository = processingStateRepository;
+        this.attachmentVideoUnitRepository = attachmentVideoUnitRepository;
         this.processingService = processingService;
     }
 
@@ -216,5 +229,38 @@ public class LectureContentProcessingScheduler {
         }
 
         processingStateRepository.save(freshState);
+    }
+
+    /**
+     * Periodically process legacy AttachmentVideoUnits that don't have a processing state yet.
+     * This handles units that existed before the automated processing pipeline was deployed.
+     * <p>
+     * Only processes units from active, non-test courses to avoid unnecessary work.
+     * Limited to {@link #BACKFILL_BATCH_SIZE} units per run to avoid overwhelming external services.
+     */
+    @Scheduled(fixedRate = 900000) // 15 minutes
+    public void backfillUnprocessedUnits() {
+        log.debug("Checking for unprocessed lecture units to backfill...");
+
+        List<AttachmentVideoUnit> unprocessedUnits = attachmentVideoUnitRepository.findUnprocessedUnitsFromActiveCourses(ZonedDateTime.now(),
+                PageRequest.of(0, BACKFILL_BATCH_SIZE));
+
+        if (unprocessedUnits.isEmpty()) {
+            log.debug("No unprocessed units found for backfill");
+            return;
+        }
+
+        log.info("Found {} unprocessed lecture units to backfill", unprocessedUnits.size());
+
+        for (AttachmentVideoUnit unit : unprocessedUnits) {
+            try {
+                log.info("Triggering processing for legacy unit {} (lecture: {}, course: {})", unit.getId(), unit.getLecture() != null ? unit.getLecture().getId() : "unknown",
+                        unit.getLecture() != null && unit.getLecture().getCourse() != null ? unit.getLecture().getCourse().getId() : "unknown");
+                processingService.triggerProcessing(unit);
+            }
+            catch (Exception e) {
+                log.error("Failed to trigger processing for unit {}: {}", unit.getId(), e.getMessage());
+            }
+        }
     }
 }

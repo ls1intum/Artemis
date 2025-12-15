@@ -47,6 +47,7 @@
                                 </div>
                             }
 
+                            <!-- Transcription Status Badge -->
                             @if (lectureUnit.type === LectureUnitType.ATTACHMENT_VIDEO) {
                                 @if (isTranscriptionPending(lectureUnit)) {
                                     <div class="badge bg-info">
@@ -62,6 +63,36 @@
                                     <div class="badge bg-success">
                                         <fa-icon [icon]="faFileLines" class="me-1" />
                                         <span jhiTranslate="artemisApp.attachmentVideoUnit.hasTranscription"></span>
+                                    </div>
+                                }
+                            }
+
+                            <!-- Processing Pipeline Status Badge -->
+                            @if (lectureUnit.type === LectureUnitType.ATTACHMENT_VIDEO) {
+                                @if (isAwaitingProcessing(lectureUnit)) {
+                                    <div class="badge bg-secondary">
+                                        <fa-icon [icon]="faClock" class="me-1" />
+                                        <span jhiTranslate="artemisApp.attachmentVideoUnit.awaitingProcessing"></span>
+                                    </div>
+                                } @else if (isProcessingTranscribing(lectureUnit)) {
+                                    <div class="badge bg-info">
+                                        <fa-icon [icon]="faSpinner" animation="spin" class="me-1" />
+                                        <span jhiTranslate="artemisApp.attachmentVideoUnit.processingTranscribing"></span>
+                                    </div>
+                                } @else if (isProcessingIngesting(lectureUnit)) {
+                                    <div class="badge bg-info">
+                                        <fa-icon [icon]="faSpinner" animation="spin" class="me-1" />
+                                        <span jhiTranslate="artemisApp.attachmentVideoUnit.processingIngesting"></span>
+                                    </div>
+                                } @else if (isProcessingFailed(lectureUnit)) {
+                                    <div class="badge bg-danger">
+                                        <fa-icon [icon]="faExclamationTriangle" class="me-1" />
+                                        <span jhiTranslate="artemisApp.attachmentVideoUnit.processingFailed"></span>
+                                    </div>
+                                } @else if (isProcessingDone(lectureUnit)) {
+                                    <div class="badge bg-success">
+                                        <fa-icon [icon]="faFileLines" class="me-1" />
+                                        <span jhiTranslate="artemisApp.attachmentVideoUnit.processingComplete"></span>
                                     </div>
                                 }
                             }
@@ -96,7 +127,7 @@
                             }
                         </div>
                         @if (lectureUnit.type === LectureUnitType.ATTACHMENT_VIDEO) {
-                            @if (isTranscriptionFailed(lectureUnit)) {
+                            @if (isProcessingFailed(lectureUnit)) {
                                 <button
                                     type="button"
                                     class="btn btn-warning btn-sm flex-grow-1"

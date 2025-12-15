@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -22,6 +23,7 @@ import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState;
 import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
+import de.tum.cit.aet.artemis.lecture.repository.AttachmentVideoUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRepository;
 
 /**
@@ -34,6 +36,8 @@ class LectureContentProcessingSchedulerTest {
 
     private LectureUnitProcessingStateRepository processingStateRepository;
 
+    private AttachmentVideoUnitRepository attachmentVideoUnitRepository;
+
     private LectureContentProcessingService processingService;
 
     private AttachmentVideoUnit testUnit;
@@ -43,9 +47,10 @@ class LectureContentProcessingSchedulerTest {
     @BeforeEach
     void setUp() {
         processingStateRepository = mock(LectureUnitProcessingStateRepository.class);
+        attachmentVideoUnitRepository = mock(AttachmentVideoUnitRepository.class);
         processingService = mock(LectureContentProcessingService.class);
 
-        scheduler = new LectureContentProcessingScheduler(processingStateRepository, processingService);
+        scheduler = new LectureContentProcessingScheduler(processingStateRepository, attachmentVideoUnitRepository, processingService);
 
         // Set up test data
         Lecture testLecture = new Lecture();
@@ -258,6 +263,98 @@ class LectureContentProcessingSchedulerTest {
             assertThat(testState.getRetryCount()).isEqualTo(5);
             assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.FAILED);
             assertThat(testState.getErrorKey()).isEqualTo("artemisApp.lectureUnit.processing.error.timeout");
+        }
+    }
+
+    @Nested
+    class BackfillUnprocessedUnits {
+
+        @Test
+        void shouldTriggerProcessingForUnprocessedUnits() {
+            // Given: Three unprocessed units from active courses
+            AttachmentVideoUnit unit1 = new AttachmentVideoUnit();
+            unit1.setId(101L);
+            AttachmentVideoUnit unit2 = new AttachmentVideoUnit();
+            unit2.setId(102L);
+            AttachmentVideoUnit unit3 = new AttachmentVideoUnit();
+            unit3.setId(103L);
+
+            List<AttachmentVideoUnit> unprocessedUnits = List.of(unit1, unit2, unit3);
+            when(attachmentVideoUnitRepository.findUnprocessedUnitsFromActiveCourses(any(ZonedDateTime.class), any())).thenReturn(unprocessedUnits);
+
+            // When
+            scheduler.backfillUnprocessedUnits();
+
+            // Then: Should trigger processing for each unit
+            verify(processingService).triggerProcessing(unit1);
+            verify(processingService).triggerProcessing(unit2);
+            verify(processingService).triggerProcessing(unit3);
+        }
+
+        @Test
+        void shouldHandleEmptyResultsGracefully() {
+            // Given: No unprocessed units
+            when(attachmentVideoUnitRepository.findUnprocessedUnitsFromActiveCourses(any(ZonedDateTime.class), any())).thenReturn(List.of());
+
+            // When
+            scheduler.backfillUnprocessedUnits();
+
+            // Then: Should not call processingService at all
+            verify(processingService, never()).triggerProcessing(any());
+        }
+
+        @Test
+        void shouldCatchExceptionsAndContinueProcessingOtherUnits() {
+            // Given: Three units, middle one will throw exception
+            AttachmentVideoUnit unit1 = new AttachmentVideoUnit();
+            unit1.setId(201L);
+            AttachmentVideoUnit unit2 = new AttachmentVideoUnit();
+            unit2.setId(202L);
+            AttachmentVideoUnit unit3 = new AttachmentVideoUnit();
+            unit3.setId(203L);
+
+            List<AttachmentVideoUnit> unprocessedUnits = List.of(unit1, unit2, unit3);
+            when(attachmentVideoUnitRepository.findUnprocessedUnitsFromActiveCourses(any(ZonedDateTime.class), any())).thenReturn(unprocessedUnits);
+
+            // Simulate exception on unit2
+            doThrow(new RuntimeException("Processing service unavailable")).when(processingService).triggerProcessing(unit2);
+
+            // When
+            scheduler.backfillUnprocessedUnits();
+
+            // Then: Should still process all three units (exception caught for unit2)
+            verify(processingService).triggerProcessing(unit1);
+            verify(processingService).triggerProcessing(unit2);
+            verify(processingService).triggerProcessing(unit3);
+        }
+
+        @Test
+        void shouldLimitBatchSize() {
+            // Given: Repository query is called with pagination
+            when(attachmentVideoUnitRepository.findUnprocessedUnitsFromActiveCourses(any(ZonedDateTime.class), any())).thenReturn(List.of());
+
+            // When
+            scheduler.backfillUnprocessedUnits();
+
+            // Then: Should call repository with PageRequest limiting to 10 items (BACKFILL_BATCH_SIZE)
+            verify(attachmentVideoUnitRepository).findUnprocessedUnitsFromActiveCourses(any(ZonedDateTime.class), eq(org.springframework.data.domain.PageRequest.of(0, 10)));
+        }
+
+        @Test
+        void shouldPassCurrentTimeToRepository() {
+            // Given: Repository should receive current time for active course filtering
+            when(attachmentVideoUnitRepository.findUnprocessedUnitsFromActiveCourses(any(ZonedDateTime.class), any())).thenReturn(List.of());
+
+            ZonedDateTime beforeCall = ZonedDateTime.now().minusSeconds(1);
+
+            // When
+            scheduler.backfillUnprocessedUnits();
+
+            ZonedDateTime afterCall = ZonedDateTime.now().plusSeconds(1);
+
+            // Then: Should pass a timestamp close to now
+            verify(attachmentVideoUnitRepository).findUnprocessedUnitsFromActiveCourses(
+                    org.mockito.ArgumentMatchers.argThat(timestamp -> timestamp.isAfter(beforeCall) && timestamp.isBefore(afterCall)), any());
         }
     }
 }

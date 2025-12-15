@@ -93,6 +93,11 @@
             "transcriptionProcessing": "Transkription wird verarbeitet",
             "transcriptionFailed": "Transkription fehlgeschlagen",
             "hasTranscription": "Transkription vollständig",
+            "awaitingProcessing": "Wartet auf Verarbeitung",
+            "processingTranscribing": "Transkription läuft",
+            "processingIngesting": "Indizierung läuft",
+            "processingComplete": "Verarbeitung abgeschlossen",
+            "processingFailed": "Verarbeitung fehlgeschlagen",
             "createAttachmentVideoUnits": {
                 "informativeText": {
                     "firstLine": "Artemis sucht nach der Gliederung (Folie mit Titel 'Outline' und Stichpunkten mit Kapitelüberschriften) und unterteilt das PDF in Einheiten.",

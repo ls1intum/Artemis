@@ -8,11 +8,12 @@ import { LectureUnit, LectureUnitType } from 'app/lecture/shared/entities/lectur
 import { AlertService } from 'app/shared/service/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { Subject } from 'rxjs';
-import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
+import { LectureUnitService, ProcessingPhase } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { AttachmentVideoUnit, TranscriptionStatus } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { ExerciseUnit } from 'app/lecture/shared/entities/lecture-unit/exerciseUnit.model';
-import { faExclamationTriangle, faEye, faFileLines, faPencilAlt, faRepeat, faSpinner, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faClock, faExclamationTriangle, faEye, faFileLines, faPencilAlt, faRepeat, faSpinner, faTrash } from '@fortawesome/free-solid-svg-icons';
+import dayjs from 'dayjs/esm';
 import { CdkDrag, CdkDragDrop, CdkDropList, moveItemInArray } from '@angular/cdk/drag-drop';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { LectureTranscriptionService } from 'app/lecture/manage/services/lecture-transcription.service';
@@ -58,10 +59,11 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     protected readonly faFileLines = faFileLines;
     protected readonly faExclamationTriangle = faExclamationTriangle;
     protected readonly faRepeat = faRepeat;
+    protected readonly faClock = faClock;
 
     protected readonly LectureUnitType = LectureUnitType;
     protected readonly ActionType = ActionType;
-    protected readonly TranscriptionStatus = TranscriptionStatus;
+    protected readonly ProcessingPhase = ProcessingPhase;
 
     private readonly activatedRoute = inject(ActivatedRoute);
     private readonly lectureService = inject(LectureService);
@@ -81,6 +83,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     isLoading = false;
     viewButtonAvailable: Record<number, boolean> = {};
     transcriptionStatus: Record<number, TranscriptionStatus> = {};
+    processingStatus: Record<number, ProcessingPhase> = {};
     isRetryingProcessing: Record<number, boolean> = {};
 
     private dialogErrorSource = new Subject<string>();
@@ -125,6 +128,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
                             this.viewButtonAvailable[lectureUnit.id!] = this.isViewButtonAvailable(lectureUnit);
                             if (lectureUnit.type === LectureUnitType.ATTACHMENT_VIDEO) {
                                 this.loadTranscriptionStatus(lectureUnit.id!);
+                                this.loadProcessingStatus(lectureUnit.id!);
                             }
                         });
                     } else {
@@ -265,6 +269,19 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         });
     }
 
+    private loadProcessingStatus(lectureUnitId: number) {
+        if (!this.lectureId) {
+            return;
+        }
+        this.lectureUnitService.getProcessingStatus(this.lectureId, lectureUnitId).subscribe({
+            next: (status) => {
+                if (status) {
+                    this.processingStatus[lectureUnitId] = status.phase;
+                }
+            },
+        });
+    }
+
     hasTranscription(lectureUnit: AttachmentVideoUnit): boolean {
         return this.transcriptionStatus[lectureUnit.id!] === TranscriptionStatus.COMPLETED;
     }
@@ -282,17 +299,78 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         return this.isTranscriptionPending(lectureUnit) || this.isTranscriptionFailed(lectureUnit) || this.hasTranscription(lectureUnit);
     }
 
+    // Processing status helper methods (for ProcessingPhase)
+    isProcessingIdle(lectureUnit: AttachmentVideoUnit): boolean {
+        return this.processingStatus[lectureUnit.id!] === ProcessingPhase.IDLE;
+    }
+
+    isProcessingTranscribing(lectureUnit: AttachmentVideoUnit): boolean {
+        return this.processingStatus[lectureUnit.id!] === ProcessingPhase.TRANSCRIBING;
+    }
+
+    isProcessingIngesting(lectureUnit: AttachmentVideoUnit): boolean {
+        return this.processingStatus[lectureUnit.id!] === ProcessingPhase.INGESTING;
+    }
+
+    isProcessingDone(lectureUnit: AttachmentVideoUnit): boolean {
+        return this.processingStatus[lectureUnit.id!] === ProcessingPhase.DONE;
+    }
+
+    isProcessingFailed(lectureUnit: AttachmentVideoUnit): boolean {
+        return this.processingStatus[lectureUnit.id!] === ProcessingPhase.FAILED;
+    }
+
+    isProcessingInProgress(lectureUnit: AttachmentVideoUnit): boolean {
+        const status = this.processingStatus[lectureUnit.id!];
+        return status === ProcessingPhase.TRANSCRIBING || status === ProcessingPhase.INGESTING;
+    }
+
+    hasProcessingBadge(lectureUnit: AttachmentVideoUnit): boolean {
+        return this.isProcessingInProgress(lectureUnit) || this.isProcessingFailed(lectureUnit) || this.isProcessingDone(lectureUnit) || this.isAwaitingProcessing(lectureUnit);
+    }
+
+    /**
+     * Check if the course is currently active (within start and end dates).
+     * A course is active if: startDate <= now <= endDate (null dates are treated as no restriction)
+     */
+    isCourseActive(): boolean {
+        const course = this.lecture?.course;
+        if (!course) {
+            return false;
+        }
+        const now = dayjs();
+        const startOk = !course.startDate || dayjs(course.startDate).isBefore(now) || dayjs(course.startDate).isSame(now);
+        const endOk = !course.endDate || dayjs(course.endDate).isAfter(now) || dayjs(course.endDate).isSame(now);
+        return startOk && endOk;
+    }
+
+    /**
+     * Check if a lecture unit is awaiting processing (IDLE state and course is active so it will be processed).
+     */
+    isAwaitingProcessing(lectureUnit: AttachmentVideoUnit): boolean {
+        const status = this.processingStatus[lectureUnit.id!];
+        // If processing is in progress or done, it's not awaiting
+        if (status !== undefined && status !== ProcessingPhase.IDLE) {
+            return false;
+        }
+        // IDLE or no status yet - show "awaiting" only if the course is active (backfill scheduler only processes active courses)
+        return this.isCourseActive();
+    }
+
     getBadgeTopOffset(lectureUnit: LectureUnit) {
-        let offset = 0;
+        let badgeCount = 1; // Release date badge is always there
         if (lectureUnit.type === LectureUnitType.ATTACHMENT_VIDEO) {
-            const hasAttachment = this.hasAttachment(<AttachmentVideoUnit>lectureUnit);
-            const hasTranscriptionBadge = this.hasTranscriptionBadge(<AttachmentVideoUnit>lectureUnit);
-            if (hasAttachment && hasTranscriptionBadge) {
-                offset = -60;
-            } else if (hasTranscriptionBadge || hasAttachment) {
-                offset = -40;
+            if (this.hasAttachment(<AttachmentVideoUnit>lectureUnit)) {
+                badgeCount++;
+            }
+            if (this.hasTranscriptionBadge(<AttachmentVideoUnit>lectureUnit)) {
+                badgeCount++;
+            }
+            if (this.hasProcessingBadge(<AttachmentVideoUnit>lectureUnit)) {
+                badgeCount++;
             }
         }
+        const offset = badgeCount > 1 ? -(badgeCount - 1) * 20 : 0;
         return offset === 0 ? null : `${offset}px`;
     }
 
@@ -309,9 +387,10 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         this.lectureUnitService.retryProcessing(this.lectureId, lectureUnit.id).subscribe({
             next: () => {
                 this.alertService.success('artemisApp.lectureUnit.processingRetryStarted');
-                // Reload transcription status after a short delay to show updated state
+                // Reload both statuses after a short delay to show updated state
                 setTimeout(() => {
                     this.loadTranscriptionStatus(lectureUnit.id!);
+                    this.loadProcessingStatus(lectureUnit.id!);
                     this.isRetryingProcessing[lectureUnit.id!] = false;
                 }, 1000);
             },

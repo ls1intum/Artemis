@@ -93,6 +93,11 @@
             "transcriptionProcessing": "Transcription Processing",
             "transcriptionFailed": "Transcription Failed",
             "hasTranscription": "Transcription complete",
+            "awaitingProcessing": "Awaiting Processing",
+            "processingTranscribing": "Transcribing",
+            "processingIngesting": "Indexing",
+            "processingComplete": "Processing complete",
+            "processingFailed": "Processing Failed",
             "createAttachmentVideoUnits": {
                 "informativeText": {
                     "firstLine": "Artemis searches for the Outline (slide with title 'Outline' and bullet points with unit headings) to split the PDF into units.",
