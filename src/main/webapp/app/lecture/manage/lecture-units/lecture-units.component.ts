@@ -2,7 +2,7 @@ import { Component, Input, OnInit, ViewChild, computed, inject, signal, viewChil
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';
 import { OnlineUnit } from 'app/lecture/shared/entities/lecture-unit/onlineUnit.model';
-import { AttachmentVideoUnit, LectureTranscriptionDTO } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
+import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { TextUnitFormComponent, TextUnitFormData } from 'app/lecture/manage/lecture-units/text-unit-form/text-unit-form.component';
 import { OnlineUnitFormComponent, OnlineUnitFormData } from 'app/lecture/manage/lecture-units/online-unit-form/online-unit-form.component';
 import { AttachmentVideoUnitFormComponent, AttachmentVideoUnitFormData } from 'app/lecture/manage/lecture-units/attachment-video-unit-form/attachment-video-unit-form.component';
@@ -21,7 +21,7 @@ import { ActivatedRoute } from '@angular/router';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { UnitCreationCardComponent } from 'app/lecture/manage/lecture-units/unit-creation-card/unit-creation-card.component';
 import { CreateExerciseUnitComponent } from 'app/lecture/manage/lecture-units/create-exercise-unit/create-exercise-unit.component';
-import { catchError, map, switchMap } from 'rxjs/operators';
+import { switchMap } from 'rxjs/operators';
 import { combineLatest, of } from 'rxjs';
 import { LectureTranscriptionService } from '../services/lecture-transcription.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -170,7 +170,6 @@ export class LectureUpdateUnitsComponent implements OnInit {
         const { description, name, releaseDate, videoSource, updateNotificationText, competencyLinks } = attachmentVideoUnitFormData.formProperties;
 
         const { file, fileName } = attachmentVideoUnitFormData.fileProperties;
-        const { videoTranscription } = attachmentVideoUnitFormData.transcriptionProperties || {};
 
         if (!name || (!fileName && !videoSource)) {
             return;
@@ -225,52 +224,23 @@ export class LectureUpdateUnitsComponent implements OnInit {
             ? this.attachmentVideoUnitService.update(this.lecture.id!, this.currentlyProcessedAttachmentVideoUnit.id!, formData, notificationText)
             : this.attachmentVideoUnitService.create(formData, this.lecture.id!);
 
-        save$
-            .pipe(
-                switchMap((response) => {
-                    const lectureUnit = response.body!;
-                    // Second: Handle manual transcription save if provided
-                    if (!videoTranscription || !lectureUnit.id) {
-                        return of(lectureUnit);
-                    }
-
-                    let transcription: LectureTranscriptionDTO;
-                    try {
-                        transcription = JSON.parse(videoTranscription) as LectureTranscriptionDTO;
-                    } catch (e) {
-                        this.alertService.error('artemisApp.lectureUnit.attachmentVideoUnit.transcriptionInvalidJson');
-                        return of(lectureUnit);
-                    }
-
-                    transcription.lectureUnitId = lectureUnit.id;
-
-                    return this.lectureTranscriptionService.createTranscription(this.lecture.id!, lectureUnit.id, transcription).pipe(
-                        map(() => lectureUnit),
-                        // Swallow transcription errors so the primary save still counts as success
-                        catchError((err) => {
-                            onError(this.alertService, err);
-                            return of(lectureUnit);
-                        }),
-                    );
-                }),
-            )
-            .subscribe({
-                next: () => {
-                    this.onCloseLectureUnitForms();
-                    this.unitManagementComponent.loadData();
-                },
-                error: (res: HttpErrorResponse | Error) => {
-                    if (res instanceof Error) {
-                        this.alertService.error(res.message);
-                        return;
-                    }
-                    if (res.error?.params === 'file' && res?.error?.title) {
-                        this.alertService.error(res.error.title);
-                    } else {
-                        onError(this.alertService, res);
-                    }
-                },
-            });
+        save$.subscribe({
+            next: () => {
+                this.onCloseLectureUnitForms();
+                this.unitManagementComponent.loadData();
+            },
+            error: (res: HttpErrorResponse | Error) => {
+                if (res instanceof Error) {
+                    this.alertService.error(res.message);
+                    return;
+                }
+                if (res.error?.params === 'file' && res?.error?.title) {
+                    this.alertService.error(res.error.title);
+                } else {
+                    onError(this.alertService, res);
+                }
+            },
+        });
     }
 
     /**
@@ -337,9 +307,6 @@ export class LectureUpdateUnitsComponent implements OnInit {
                             },
                             fileProperties: {
                                 fileName: this.currentlyProcessedAttachmentVideoUnit.attachment?.link,
-                            },
-                            transcriptionProperties: {
-                                videoTranscription: transcription ? JSON.stringify(transcription) : undefined,
                             },
                             transcriptionStatus: transcriptionStatus,
                         };

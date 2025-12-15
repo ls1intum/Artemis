@@ -299,10 +299,14 @@ public class LectureTranscriptionService {
                 log.info("Transcription cancelled and deleted successfully for lectureUnitId={}, jobId={}", lectureUnitId, jobId);
             }
             else {
+                log.error("Nebula cancellation failed for lectureUnitId={}, jobId={}, status={}", lectureUnitId, jobId, response.getStatusCode());
                 throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Nebula cancellation returned status: " + response.getStatusCode());
             }
         }
         catch (Exception e) {
+            if (e instanceof ResponseStatusException) {
+                throw (ResponseStatusException) e;
+            }
             log.error("Error cancelling transcription for lectureUnitId: {}, jobId: {} → {}", lectureUnitId, jobId, e.getMessage(), e);
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to cancel transcription: " + e.getMessage(), e);
         }

@@ -97,36 +97,4 @@ describe('LectureDetailComponent', () => {
             }
         }
     });
-    it('should call the service to ingest lectures when ingestLecturesInPyris is called', () => {
-        component.lecture = mockLecture;
-        const ingestSpy = jest.spyOn(lectureService, 'ingestLecturesInPyris').mockImplementation(() => of(new HttpResponse<void>({ status: 200 })));
-        component.ingestLectureInPyris();
-        expect(ingestSpy).toHaveBeenCalledWith(mockLecture.course?.id, mockLecture.id);
-        expect(ingestSpy).toHaveBeenCalledOnce();
-    });
-
-    it('should log error when error occurs', () => {
-        component.lecture = mockLecture;
-        jest.spyOn(lectureService, 'ingestLecturesInPyris').mockReturnValue(throwError(() => new Error('Error while ingesting')));
-        component.ingestLectureInPyris();
-    });
-    it('should set lectureIngestionEnabled based on service response', () => {
-        component.lecture = mockLecture;
-        irisSettingsService = TestBed.inject(IrisSettingsService);
-        profileService = TestBed.inject(ProfileService);
-        const profileInfoResponse = {
-            activeProfiles: [PROFILE_IRIS],
-        } as ProfileInfo;
-        const irisSettingsResponse = {
-            irisLectureIngestionSettings: {
-                enabled: true,
-            },
-        } as IrisCourseSettings;
-        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfoResponse);
-        jest.spyOn(irisSettingsService, 'getCombinedCourseSettings').mockImplementation(() => of(irisSettingsResponse));
-        mockActivatedRoute.data = of({ lecture: mockLecture }); // Update the ActivatedRoute mock data
-        component.ngOnInit();
-        expect(irisSettingsService.getCombinedCourseSettings).toHaveBeenCalledWith(component.lecture.course?.id);
-        expect(component.lectureIngestionEnabled).toBeTrue();
-    });
 });

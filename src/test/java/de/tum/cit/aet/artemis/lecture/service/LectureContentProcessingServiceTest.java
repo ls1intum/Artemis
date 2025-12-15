@@ -837,7 +837,6 @@ class LectureContentProcessingServiceTest {
 
             // Then: Should skip entirely - no state created, no APIs called
             verify(processingStateRepository, never()).save(any());
-            verify(processingStateRepository, never()).save(any());
         }
 
         @Test
@@ -856,7 +855,6 @@ class LectureContentProcessingServiceTest {
             service.triggerProcessing(testUnit);
 
             // Then: Should skip - PDF-only needs Iris for ingestion
-            verify(processingStateRepository, never()).save(any());
             verify(processingStateRepository, never()).save(any());
         }
 

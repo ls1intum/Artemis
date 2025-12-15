@@ -63,7 +63,7 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentTes
 
     @BeforeEach
     void initTestCase() throws Exception {
-        userUtilService.addUsers(TEST_PREFIX, 2, 1, 0, 1);
+        userUtilService.addUsers(TEST_PREFIX, 2, 1, 1, 1);
         List<Course> courses = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, 1);
         Course course1 = this.courseRepository.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(courses.getFirst().getId());
         var sortedLectures = course1.getLectures().stream().sorted(Comparator.comparing(Lecture::getId)).toList();
@@ -297,7 +297,7 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentTes
         var attachmentVideoUnit = lecture1.getLectureUnits().stream().filter(lu -> lu instanceof AttachmentVideoUnit).findFirst().orElseThrow();
         // The endpoint exists but may return 403 if processing service is not available
         // This tests the endpoint is accessible to editors
-        request.get("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/" + attachmentVideoUnit.getId() + "/processing-status", HttpStatus.FORBIDDEN, Object.class);
+        request.get("/api/lecture/lectures/" + lecture1.getId() + "/lecture-units/" + attachmentVideoUnit.getId() + "/processing-status", HttpStatus.OK, Object.class);
     }
 
     @Test
