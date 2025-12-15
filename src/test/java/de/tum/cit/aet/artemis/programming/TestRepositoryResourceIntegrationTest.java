@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.programming;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 
@@ -183,7 +184,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
         request.postWithoutResponseBody(testRepoBaseUrl + programmingExercise.getId() + "/folder", HttpStatus.OK, params);
 
         var captor = ArgumentCaptor.forClass(ProgrammingExerciseEditorSyncEventDTO.class);
-        verify(websocketMessagingService).sendMessage(ProgrammingExerciseEditorSyncService.getSynchronizationTopic(programmingExercise.getId()), captor.capture());
+        verify(websocketMessagingService).sendMessage(eq(ProgrammingExerciseEditorSyncService.getSynchronizationTopic(programmingExercise.getId())), captor.capture());
         assertThat(captor.getValue().target()).isEqualTo(ProgrammingExerciseEditorSyncTarget.TESTS_REPOSITORY);
     }
 
@@ -210,7 +211,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
         request.postWithoutLocation(testRepoBaseUrl + programmingExercise.getId() + "/rename-file", fileMove, HttpStatus.OK, null);
 
         var captor = ArgumentCaptor.forClass(ProgrammingExerciseEditorSyncEventDTO.class);
-        verify(websocketMessagingService).sendMessage(ProgrammingExerciseEditorSyncService.getSynchronizationTopic(programmingExercise.getId()), captor.capture());
+        verify(websocketMessagingService).sendMessage(eq(ProgrammingExerciseEditorSyncService.getSynchronizationTopic(programmingExercise.getId())), captor.capture());
         assertThat(captor.getValue().target()).isEqualTo(ProgrammingExerciseEditorSyncTarget.TESTS_REPOSITORY);
     }
 
@@ -259,7 +260,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
         request.postWithoutLocation(testRepoBaseUrl + programmingExercise.getId() + "/rename-file", fileMove, HttpStatus.OK, null);
 
         var captor = ArgumentCaptor.forClass(ProgrammingExerciseEditorSyncEventDTO.class);
-        verify(websocketMessagingService).sendMessage(ProgrammingExerciseEditorSyncService.getSynchronizationTopic(programmingExercise.getId()), captor.capture());
+        verify(websocketMessagingService).sendMessage(eq(ProgrammingExerciseEditorSyncService.getSynchronizationTopic(programmingExercise.getId())), captor.capture());
         assertThat(captor.getValue().target()).isEqualTo(ProgrammingExerciseEditorSyncTarget.TESTS_REPOSITORY);
     }
 
@@ -286,7 +287,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
         request.delete(testRepoBaseUrl + programmingExercise.getId() + "/file", HttpStatus.OK, params);
 
         var captor = ArgumentCaptor.forClass(ProgrammingExerciseEditorSyncEventDTO.class);
-        verify(websocketMessagingService).sendMessage(ProgrammingExerciseEditorSyncService.getSynchronizationTopic(programmingExercise.getId()), captor.capture());
+        verify(websocketMessagingService).sendMessage(eq(ProgrammingExerciseEditorSyncService.getSynchronizationTopic(programmingExercise.getId())), captor.capture());
         assertThat(captor.getValue().target()).isEqualTo(ProgrammingExerciseEditorSyncTarget.TESTS_REPOSITORY);
     }
 

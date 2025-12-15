@@ -788,7 +788,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
 
         request.put(studentRepoBaseUrl + programmingExercise.getTemplateParticipation().getId() + "/files?commit=false", List.of(), HttpStatus.OK);
 
-        verify(websocketMessagingService, never()).sendMessage(ProgrammingExerciseEditorSyncService.getSynchronizationTopic(programmingExercise.getId()), any());
+        verify(websocketMessagingService, never()).sendMessage(eq(ProgrammingExerciseEditorSyncService.getSynchronizationTopic(programmingExercise.getId())), any());
     }
 
     @Test
@@ -798,7 +798,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
 
         request.put(studentRepoBaseUrl + programmingExercise.getSolutionParticipation().getId() + "/files?commit=false", List.of(), HttpStatus.OK);
 
-        verify(websocketMessagingService, never()).sendMessage(ProgrammingExerciseEditorSyncService.getSynchronizationTopic(programmingExercise.getId()), any());
+        verify(websocketMessagingService, never()).sendMessage(eq(ProgrammingExerciseEditorSyncService.getSynchronizationTopic(programmingExercise.getId())), any());
     }
 
     @Test
@@ -808,7 +808,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
 
         request.put(studentRepoBaseUrl + participation.getId() + "/files?commit=false", getFileSubmissions("updatedFileContent"), HttpStatus.OK);
 
-        verify(websocketMessagingService, never()).sendMessage(ProgrammingExerciseEditorSyncService.getSynchronizationTopic(programmingExercise.getId()), any());
+        verify(websocketMessagingService, never()).sendMessage(eq(ProgrammingExerciseEditorSyncService.getSynchronizationTopic(programmingExercise.getId())), any());
     }
 
     @Disabled
