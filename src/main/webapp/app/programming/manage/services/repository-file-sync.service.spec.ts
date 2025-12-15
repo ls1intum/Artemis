@@ -12,6 +12,7 @@ import {
 import { CodeEditorFileService } from 'app/programming/shared/code-editor/services/code-editor-file.service';
 import { DeleteFileChange, FileType, RenameFileChange, RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor/container/code-editor-container.component';
+import { AlertService } from 'app/shared/service/alert.service';
 
 describe('RepositoryFileSyncService', () => {
     let service: RepositoryFileSyncService;
@@ -21,6 +22,13 @@ describe('RepositoryFileSyncService', () => {
     const dmp = new DiffMatchPatch();
 
     const exerciseIdToUse = 42;
+    type RepositoryFileSyncServiceInternals = {
+        baselines: Record<string, string>;
+        getBaselineKey: (target: ProgrammingExerciseEditorSyncTarget, fileName: string, auxiliaryId?: number) => string;
+    };
+    const getBaselines = (service: RepositoryFileSyncService) => (service as unknown as RepositoryFileSyncServiceInternals).baselines;
+    const buildBaselineKey = (service: RepositoryFileSyncService, target: ProgrammingExerciseEditorSyncTarget, fileName: string, auxiliaryId?: number) =>
+        (service as unknown as RepositoryFileSyncServiceInternals).getBaselineKey(target, fileName, auxiliaryId);
 
     beforeEach(() => {
         incomingMessages$ = new Subject<ProgrammingExerciseEditorSyncMessage>();
@@ -28,6 +36,12 @@ describe('RepositoryFileSyncService', () => {
         TestBed.configureTestingModule({
             providers: [
                 RepositoryFileSyncService,
+                {
+                    provide: AlertService,
+                    useValue: {
+                        info: jest.fn(),
+                    },
+                },
                 {
                     provide: ProgrammingExerciseEditorSyncService,
                     useValue: {
@@ -145,8 +159,8 @@ describe('RepositoryFileSyncService', () => {
                     ],
                 }),
             );
-            const baselineKey = 'exerciseIdToUse-TEMPLATE_REPOSITORY-none::old.txt';
-            expect((service as any).baselines[baselineKey]).toBeUndefined();
+            const baselineKey = buildBaselineKey(service, ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY, 'old.txt', undefined);
+            expect(getBaselines(service)[baselineKey]).toBeUndefined();
         });
 
         it('moves baseline on rename operations and sends rename payload', () => {
@@ -170,9 +184,9 @@ describe('RepositoryFileSyncService', () => {
                 }),
             );
 
-            const baselines = (service as any).baselines;
-            expect(baselines['exerciseIdToUse-TEMPLATE_REPOSITORY-none::old.txt']).toBeUndefined();
-            expect(baselines['exerciseIdToUse-TEMPLATE_REPOSITORY-none::new.txt']).toBe('content');
+            const baselines = getBaselines(service);
+            expect(baselines[buildBaselineKey(service, ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY, 'old.txt', undefined)]).toBeUndefined();
+            expect(baselines[buildBaselineKey(service, ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY, 'new.txt', undefined)]).toBe('content');
         });
 
         it('falls back to provided content on rename when no baseline exists', () => {
@@ -181,8 +195,8 @@ describe('RepositoryFileSyncService', () => {
                 RepositoryType.TEMPLATE,
             );
 
-            const baselines = (service as any).baselines;
-            expect(baselines['exerciseIdToUse-TEMPLATE_REPOSITORY-none::new.txt']).toBe('renamed content');
+            const baselines = getBaselines(service);
+            expect(baselines[buildBaselineKey(service, ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY, 'new.txt', undefined)]).toBe('renamed content');
         });
 
         it('ignores unsupported repositories and uninitialized service', () => {
@@ -251,7 +265,7 @@ describe('RepositoryFileSyncService', () => {
             });
 
             expect(operations).toEqual([]);
-            expect((service as any).baselines['exerciseIdToUse-TEMPLATE_REPOSITORY-none::file.txt']).toBe('baseline');
+            expect(getBaselines(service)[buildBaselineKey(service, ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY, 'file.txt', undefined)]).toBe('baseline');
         });
 
         it('ignores messages without a target', () => {
@@ -315,6 +329,7 @@ describe('RepositoryFileSyncService', () => {
         });
 
         it('responds to file requests with available baselines', () => {
+            service.init(exerciseIdToUse, () => true);
             service.registerBaseline(RepositoryType.TEMPLATE, 'file.txt', 'baseline');
 
             incomingMessages$.next({
@@ -342,8 +357,8 @@ describe('RepositoryFileSyncService', () => {
                 timestamp: 3,
             });
 
-            const baselineKey = 'exerciseIdToUse-AUXILIARY_REPOSITORY-7::aux/readme.md';
-            expect((service as any).baselines[baselineKey]).toBe('aux content');
+            const baselineKey = buildBaselineKey(service, ProgrammingExerciseEditorSyncTarget.AUXILIARY_REPOSITORY, 'aux/readme.md', 7);
+            expect(getBaselines(service)[baselineKey]).toBe('aux content');
             expect(operations).toEqual([{ type: ProgrammingExerciseEditorFileChangeType.CONTENT, fileName: 'aux/readme.md', content: 'aux content' }]);
         });
 
