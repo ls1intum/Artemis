@@ -9,11 +9,8 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,7 +22,6 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.communication.domain.Faq;
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.iris.dto.IngestionState;
@@ -46,7 +42,6 @@ import de.tum.cit.aet.artemis.lecture.domain.AttachmentType;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
-import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 
 @Lazy
 @Service
@@ -243,64 +238,6 @@ public class PyrisWebhookService {
                 toUpdateAttachmentVideoUnit.lectureUnitId(), settingsDTO, List.of());
         pyrisConnectorService.executeLectureAdditionWebhook(executionDTO);
         return jobToken;
-    }
-
-    /**
-     * uses getLectureUnitIngestionState for all lecture units and then determines the IngestionState of the lecture
-     *
-     * @param courseId id of the course
-     * @return The ingestion state of the lecture
-     *
-     */
-    public Map<Long, IngestionState> getLecturesIngestionState(long courseId) {
-        LectureRepositoryApi api = lectureRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureRepositoryApi.class));
-        Set<Lecture> lectures = api.findAllByCourseId(courseId);
-        return lectures.stream().collect(Collectors.toMap(DomainObject::getId, lecture -> getLectureIngestionState(courseId, lecture.getId())));
-
-    }
-
-    /**
-     * uses getLectureUnitIngestionState for all lecture units and then determines the IngestionState of the lecture
-     *
-     * @param courseId  id of the course
-     * @param lectureId id of the lecture
-     * @return The ingestion state of the lecture
-     *
-     */
-    private IngestionState getLectureIngestionState(long courseId, long lectureId) {
-        Map<Long, IngestionState> states = getLectureUnitsIngestionState(courseId, lectureId);
-
-        if (states.values().stream().allMatch(state -> state == IngestionState.DONE)) {
-            return IngestionState.DONE;
-        }
-
-        if (states.values().stream().allMatch(state -> state == IngestionState.NOT_STARTED)) {
-            return IngestionState.NOT_STARTED;
-        }
-
-        if (states.values().stream().allMatch(state -> state == IngestionState.ERROR)) {
-            return IngestionState.ERROR;
-        }
-
-        if (states.containsValue(IngestionState.DONE) || states.containsValue(IngestionState.IN_PROGRESS)) {
-            return IngestionState.PARTIALLY_INGESTED;
-        }
-
-        return IngestionState.NOT_STARTED;
-    }
-
-    /**
-     * uses send an api call to get all the ingestion states of the lecture units of one lecture in Pyris
-     *
-     * @param courseId  id of the course
-     * @param lectureId id of the lecture
-     * @return The ingestion state of the lecture Unit
-     */
-    public Map<Long, IngestionState> getLectureUnitsIngestionState(long courseId, long lectureId) {
-        LectureRepositoryApi api = lectureRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureRepositoryApi.class));
-        List<LectureUnit> lectureunits = api.findByIdWithLectureUnitsElseThrow(lectureId).getLectureUnits();
-        return lectureunits.stream().filter(lectureUnit -> lectureUnit instanceof AttachmentVideoUnit)
-                .collect(Collectors.toMap(DomainObject::getId, unit -> pyrisConnectorService.getLectureUnitIngestionState(courseId, lectureId, unit.getId())));
     }
 
     private boolean faqIngestionEnabled(Course course) {

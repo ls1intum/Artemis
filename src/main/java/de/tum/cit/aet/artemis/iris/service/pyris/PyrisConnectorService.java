@@ -44,7 +44,6 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.memiris.PyrisLearningDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.memiris.PyrisMemoryConnectionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.memiris.PyrisMemoryDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.memiris.PyrisMemoryWithRelationsDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureIngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.web.internal.PyrisInternalStatusUpdateResource;
 
 /**
@@ -226,35 +225,6 @@ public class PyrisConnectorService {
         catch (RestClientException | IllegalArgumentException e) {
             log.error("Failed to send lecture unit {} to Pyris: {}", executionDTO.pyrisLectureUnit().lectureUnitId(), e.getMessage());
             throw new PyrisConnectorException("Could not fetch response from Pyris");
-        }
-    }
-
-    /**
-     * Retrieves the ingestion state of the lecture unit specified by retrieving the ingestion state from the vector database in Pyris.
-     *
-     * @param courseId      id of the course
-     * @param lectureId     id of the lecture
-     * @param lectureUnitId id of the lectureUnit to check in the Pyris vector database
-     * @return The ingestion state of the lecture Unit
-     *
-     */
-    IngestionState getLectureUnitIngestionState(long courseId, long lectureId, long lectureUnitId) {
-        try {
-            String encodedBaseUrl = URLEncoder.encode(artemisBaseUrl, StandardCharsets.UTF_8);
-            String url = pyrisUrl + "/api/v1/courses/" + courseId + "/lectures/" + lectureId + "/lectureUnits/" + lectureUnitId + "/ingestion-state?base_url=" + encodedBaseUrl;
-            IngestionStateResponseDTO response = restTemplate.getForObject(url, IngestionStateResponseDTO.class);
-            IngestionState state = response.state();
-            if (state != IngestionState.DONE) {
-                if (pyrisJobService.currentJobs().stream().filter(job -> job instanceof LectureIngestionWebhookJob).map(job -> (LectureIngestionWebhookJob) job)
-                        .anyMatch(ingestionJob -> ingestionJob.courseId() == courseId && ingestionJob.lectureId() == lectureId && ingestionJob.lectureUnitId() == lectureUnitId)) {
-                    return IngestionState.IN_PROGRESS;
-                }
-            }
-            return state;
-        }
-        catch (RestClientException | IllegalArgumentException e) {
-            log.error("Error fetching ingestion state for lecture {}, lecture unit {}", lectureId, lectureUnitId, e);
-            throw new PyrisConnectorException("Error fetching ingestion state for lecture unit" + lectureUnitId);
         }
     }
 

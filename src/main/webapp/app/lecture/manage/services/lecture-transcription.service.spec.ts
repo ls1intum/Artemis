@@ -22,27 +22,6 @@ describe('LectureTranscriptionService', () => {
         httpMock.verify();
     });
 
-    it('should ingest transcription', () => {
-        const courseId = 1;
-        const lectureId = 1;
-        const lectureUnitId = 1;
-        service.ingestTranscription(courseId, lectureId, lectureUnitId).subscribe(() => {});
-
-        const req = httpMock.expectOne({ method: 'POST', url: `api/lecture/lectures/${lectureId}/lecture-units/${lectureUnitId}/ingest` });
-        req.flush({});
-    });
-
-    it('should return false on ingest transcription error', () => {
-        const courseId = 1;
-        const lectureId = 1;
-        const lectureUnitId = 1;
-        let result: boolean | undefined;
-        service.ingestTranscription(courseId, lectureId, lectureUnitId).subscribe((r) => (result = r));
-        const req = httpMock.expectOne(`api/lecture/lectures/${lectureId}/lecture-units/${lectureUnitId}/ingest`);
-        req.flush('error', { status: 500, statusText: 'Server Error' });
-        expect(result).toBeFalse();
-    });
-
     it('should get transcriptions', () => {
         const dto: LectureTranscriptionDTO = { lectureUnitId: 1, language: 'en', segments: [] };
         let result: LectureTranscriptionDTO | undefined;

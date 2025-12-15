@@ -25,8 +25,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
@@ -230,27 +228,6 @@ public class LectureUnitService {
         catch (URISyntaxException | MalformedURLException | IllegalArgumentException e) {
             throw new BadRequestException();
         }
-    }
-
-    /**
-     * This method is responsible for ingesting a specific `LectureUnit` into Pyris, but only if it is an instance of
-     * `AttachmentVideoUnit`. If the Pyris webhook service is available, it attempts to add the `LectureUnit` to the Pyris
-     * database.
-     * The method responds with different HTTP status codes based on the result:
-     * Returns {OK} if the ingestion is successful.
-     * Returns {SERVICE_UNAVAILABLE} if the Pyris webhook service is unavailable or if the ingestion fails.
-     * Returns {400 BAD_REQUEST} if the provided lecture unit is not of type {AttachmentVideoUnit}.
-     *
-     * @param lectureUnit the lecture unit to be ingested, which must be an instance of AttachmentVideoUnit.
-     * @return ResponseEntity<Void> representing the outcome of the operation with the appropriate HTTP status.
-     */
-    public ResponseEntity<Void> ingestLectureUnitInPyris(LectureUnit lectureUnit) {
-        if (irisLectureApi.isEmpty()) {
-            log.error("Could not send Lecture Unit to Pyris: Pyris webhook service is not available, check if IRIS is enabled.");
-            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
-        }
-        boolean isIngested = irisLectureApi.get().addLectureUnitToPyrisDB((AttachmentVideoUnit) lectureUnit) != null;
-        return ResponseEntity.status(isIngested ? HttpStatus.OK : HttpStatus.BAD_REQUEST).build();
     }
 
     /**

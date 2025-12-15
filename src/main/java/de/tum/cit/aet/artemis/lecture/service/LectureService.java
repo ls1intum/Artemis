@@ -197,21 +197,6 @@ public class LectureService {
     }
 
     /**
-     * Ingest the lectures when triggered by the ingest lectures button
-     *
-     * @param lectures set of lectures to be ingested
-     */
-    public void ingestLecturesInPyris(Set<Lecture> lectures) {
-        if (irisLectureApi.isPresent()) {
-            List<AttachmentVideoUnit> attachmentVideoUnitList = lectures.stream().flatMap(lec -> lec.getLectureUnits().stream()).filter(unit -> unit instanceof AttachmentVideoUnit)
-                    .map(unit -> (AttachmentVideoUnit) unit).toList();
-            for (AttachmentVideoUnit attachmentVideoUnit : attachmentVideoUnitList) {
-                irisLectureApi.get().addLectureUnitToPyrisDB(attachmentVideoUnit);
-            }
-        }
-    }
-
-    /**
      * Retrieves a detailed {@link Lecture} for a given lecture ID and user.
      * <p>
      * This method:

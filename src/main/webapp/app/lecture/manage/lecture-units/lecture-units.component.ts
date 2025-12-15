@@ -22,7 +22,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { UnitCreationCardComponent } from 'app/lecture/manage/lecture-units/unit-creation-card/unit-creation-card.component';
 import { CreateExerciseUnitComponent } from 'app/lecture/manage/lecture-units/create-exercise-unit/create-exercise-unit.component';
 import { switchMap } from 'rxjs/operators';
-import { combineLatest, of } from 'rxjs';
+import { of } from 'rxjs';
 import { LectureTranscriptionService } from '../services/lecture-transcription.service';
 import { AccountService } from 'app/core/auth/account.service';
 
@@ -271,15 +271,12 @@ export class LectureUpdateUnitsComponent implements OnInit {
             .pipe(
                 switchMap((unit) => {
                     if (unit.type === LectureUnitType.ATTACHMENT_VIDEO && this.accountService.isAdmin()) {
-                        return combineLatest({
-                            transcription: this.lectureTranscriptionService.getTranscription(unit.id!),
-                            transcriptionStatus: this.lectureTranscriptionService.getTranscriptionStatus(unit.id!),
-                        });
+                        return this.lectureTranscriptionService.getTranscriptionStatus(unit.id!);
                     }
-                    return of({ transcription: null, transcriptionStatus: undefined });
+                    return of(undefined);
                 }),
             )
-            .subscribe(({ transcription, transcriptionStatus }) => {
+            .subscribe((transcriptionStatus) => {
                 switch (lectureUnit.type) {
                     case LectureUnitType.TEXT:
                         this.textUnitFormData = {

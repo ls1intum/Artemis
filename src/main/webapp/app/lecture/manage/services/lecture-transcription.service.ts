@@ -9,21 +9,6 @@ import { LectureTranscriptionDTO, TranscriptionStatus } from 'app/lecture/shared
 export class LectureTranscriptionService {
     private httpClient = inject(HttpClient);
 
-    ingestTranscription(courseId: number, lectureId: number, lectureUnitId: number): Observable<boolean> {
-        return this.httpClient
-            .post(
-                `api/lecture/lectures/${lectureId}/lecture-units/${lectureUnitId}/ingest`,
-                {},
-                {
-                    observe: 'response',
-                },
-            )
-            .pipe(
-                map((response) => response.status === 200),
-                catchError(() => of(false)),
-            );
-    }
-
     getTranscription(lectureUnitId: number): Observable<LectureTranscriptionDTO | undefined> {
         return this.httpClient
             .get<LectureTranscriptionDTO>(`api/lecture/lecture-unit/${lectureUnitId}/transcript`, {
