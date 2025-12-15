@@ -52,6 +52,19 @@ jest.mock('interactjs', () => ({
     default: mockInteract,
 }));
 
+// ---- Mock ResizeObserver ----
+class MockResizeObserver {
+    callback: ResizeObserverCallback;
+    constructor(callback: ResizeObserverCallback) {
+        this.callback = callback;
+    }
+    observe = jest.fn();
+    unobserve = jest.fn();
+    disconnect = jest.fn();
+}
+
+global.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
+
 // ---- Imports AFTER the mock ----
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { VideoPlayerComponent } from './video-player.component';
