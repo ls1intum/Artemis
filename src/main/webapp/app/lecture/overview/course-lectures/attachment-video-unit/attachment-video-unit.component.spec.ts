@@ -35,6 +35,14 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
 
+// Mock ResizeObserver for VideoPlayerComponent
+class MockResizeObserver {
+    observe = jest.fn();
+    unobserve = jest.fn();
+    disconnect = jest.fn();
+}
+global.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
+
 describe('AttachmentVideoUnitComponent', () => {
     let scienceService: ScienceService;
     let fileService: FileService;
