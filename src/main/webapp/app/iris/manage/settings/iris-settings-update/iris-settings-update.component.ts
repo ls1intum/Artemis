@@ -67,8 +67,9 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
     isAdmin: boolean;
     private isAutoSaving = false; // Prevents dirty flash during enable/disable auto-save
 
-    // Validation state for rate limit
-    rateLimitValidationError?: string;
+    // Validation state for rate limit (field-specific errors)
+    rateLimitRequestsError?: string;
+    rateLimitTimeframeError?: string;
 
     // Button types
     PRIMARY = ButtonType.PRIMARY;
@@ -122,38 +123,40 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
         const hasRequests = this.rateLimitRequests != null && this.rateLimitRequests !== ('' as unknown as number);
         const hasTimeframe = this.rateLimitTimeframeHours != null && this.rateLimitTimeframeHours !== ('' as unknown as number);
 
+        // Reset errors
+        this.rateLimitRequestsError = undefined;
+        this.rateLimitTimeframeError = undefined;
+
         // Both empty = valid (use defaults)
         if (!hasRequests && !hasTimeframe) {
-            this.rateLimitValidationError = undefined;
             return;
         }
 
-        // One filled, one empty = invalid
-        if (hasRequests !== hasTimeframe) {
-            this.rateLimitValidationError = 'artemisApp.iris.settings.rateLimitValidation.bothRequired';
+        // One filled, one empty = mark the empty field with error
+        if (hasRequests && !hasTimeframe) {
+            this.rateLimitTimeframeError = 'artemisApp.iris.settings.rateLimitValidation.bothRequired';
+            return;
+        }
+        if (!hasRequests && hasTimeframe) {
+            this.rateLimitRequestsError = 'artemisApp.iris.settings.rateLimitValidation.bothRequired';
             return;
         }
 
         // Both filled - validate values
         if (this.rateLimitRequests! < 0) {
-            this.rateLimitValidationError = 'artemisApp.iris.settings.rateLimitValidation.requestsNonNegative';
-            return;
+            this.rateLimitRequestsError = 'artemisApp.iris.settings.rateLimitValidation.requestsNonNegative';
         }
 
         if (this.rateLimitTimeframeHours! <= 0) {
-            this.rateLimitValidationError = 'artemisApp.iris.settings.rateLimitValidation.timeframePositive';
-            return;
+            this.rateLimitTimeframeError = 'artemisApp.iris.settings.rateLimitValidation.timeframePositive';
         }
-
-        // All valid
-        this.rateLimitValidationError = undefined;
     }
 
     /**
      * Check if the form is valid for saving
      */
     isFormValid(): boolean {
-        return !this.rateLimitValidationError;
+        return !this.rateLimitRequestsError && !this.rateLimitTimeframeError;
     }
 
     /**
@@ -361,5 +364,48 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
             requests: this.rateLimitRequests,
             timeframeHours: this.rateLimitTimeframeHours,
         };
+    }
+
+    /**
+     * Returns the effective rate limit configuration based on current form state.
+     * Updates live as the user types to provide immediate feedback.
+     */
+    get effectiveRateLimitPreview(): IrisRateLimitConfiguration | undefined {
+        const hasRequests = this.rateLimitRequests != null && this.rateLimitRequests !== ('' as unknown as number);
+        const hasTimeframe = this.rateLimitTimeframeHours != null && this.rateLimitTimeframeHours !== ('' as unknown as number);
+
+        // If both fields are empty, show application defaults
+        if (!hasRequests && !hasTimeframe) {
+            return this.applicationDefaults;
+        }
+
+        // If form is incomplete/invalid, show what's entered so far merged with defaults
+        // This gives visual feedback while typing
+        return {
+            requests: hasRequests ? this.rateLimitRequests : this.applicationDefaults?.requests,
+            timeframeHours: hasTimeframe ? this.rateLimitTimeframeHours : this.applicationDefaults?.timeframeHours,
+        };
+    }
+
+    /**
+     * Checks if the effective rate limit is unlimited (both null/undefined)
+     */
+    get isEffectiveRateLimitUnlimited(): boolean {
+        const preview = this.effectiveRateLimitPreview;
+        return !preview || (preview.requests == null && preview.timeframeHours == null);
+    }
+
+    /**
+     * Checks if the effective requests limit is set (not null/undefined)
+     */
+    get hasEffectiveRequestsLimit(): boolean {
+        return this.effectiveRateLimitPreview?.requests != null;
+    }
+
+    /**
+     * Checks if the effective timeframe is set (not null/undefined)
+     */
+    get hasEffectiveTimeframeLimit(): boolean {
+        return this.effectiveRateLimitPreview?.timeframeHours != null;
     }
 }

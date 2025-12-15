@@ -489,7 +489,8 @@ describe('IrisSettingsUpdateComponent', () => {
             component.rateLimitTimeframeHours = undefined;
             component.ngDoCheck();
 
-            expect(component.rateLimitValidationError).toBeUndefined();
+            expect(component.rateLimitRequestsError).toBeUndefined();
+            expect(component.rateLimitTimeframeError).toBeUndefined();
             expect(component.isFormValid()).toBeTrue();
         }));
 
@@ -498,7 +499,8 @@ describe('IrisSettingsUpdateComponent', () => {
             component.rateLimitTimeframeHours = 24;
             component.ngDoCheck();
 
-            expect(component.rateLimitValidationError).toBeUndefined();
+            expect(component.rateLimitRequestsError).toBeUndefined();
+            expect(component.rateLimitTimeframeError).toBeUndefined();
             expect(component.isFormValid()).toBeTrue();
         }));
 
@@ -507,52 +509,58 @@ describe('IrisSettingsUpdateComponent', () => {
             component.rateLimitTimeframeHours = 24;
             component.ngDoCheck();
 
-            expect(component.rateLimitValidationError).toBeUndefined();
+            expect(component.rateLimitRequestsError).toBeUndefined();
+            expect(component.rateLimitTimeframeError).toBeUndefined();
             expect(component.isFormValid()).toBeTrue();
         }));
 
-        it('should be invalid when only requests is filled', fakeAsync(() => {
+        it('should mark timeframe field as invalid when only requests is filled', fakeAsync(() => {
             component.rateLimitRequests = 100;
             component.rateLimitTimeframeHours = undefined;
             component.ngDoCheck();
 
-            expect(component.rateLimitValidationError).toBe('artemisApp.iris.settings.rateLimitValidation.bothRequired');
+            expect(component.rateLimitRequestsError).toBeUndefined();
+            expect(component.rateLimitTimeframeError).toBe('artemisApp.iris.settings.rateLimitValidation.bothRequired');
             expect(component.isFormValid()).toBeFalse();
         }));
 
-        it('should be invalid when only timeframe is filled', fakeAsync(() => {
+        it('should mark requests field as invalid when only timeframe is filled', fakeAsync(() => {
             component.rateLimitRequests = undefined;
             component.rateLimitTimeframeHours = 24;
             component.ngDoCheck();
 
-            expect(component.rateLimitValidationError).toBe('artemisApp.iris.settings.rateLimitValidation.bothRequired');
+            expect(component.rateLimitRequestsError).toBe('artemisApp.iris.settings.rateLimitValidation.bothRequired');
+            expect(component.rateLimitTimeframeError).toBeUndefined();
             expect(component.isFormValid()).toBeFalse();
         }));
 
-        it('should be invalid when requests is negative', fakeAsync(() => {
+        it('should mark requests field as invalid when requests is negative', fakeAsync(() => {
             component.rateLimitRequests = -1;
             component.rateLimitTimeframeHours = 24;
             component.ngDoCheck();
 
-            expect(component.rateLimitValidationError).toBe('artemisApp.iris.settings.rateLimitValidation.requestsNonNegative');
+            expect(component.rateLimitRequestsError).toBe('artemisApp.iris.settings.rateLimitValidation.requestsNonNegative');
+            expect(component.rateLimitTimeframeError).toBeUndefined();
             expect(component.isFormValid()).toBeFalse();
         }));
 
-        it('should be invalid when timeframe is zero', fakeAsync(() => {
+        it('should mark timeframe field as invalid when timeframe is zero', fakeAsync(() => {
             component.rateLimitRequests = 100;
             component.rateLimitTimeframeHours = 0;
             component.ngDoCheck();
 
-            expect(component.rateLimitValidationError).toBe('artemisApp.iris.settings.rateLimitValidation.timeframePositive');
+            expect(component.rateLimitRequestsError).toBeUndefined();
+            expect(component.rateLimitTimeframeError).toBe('artemisApp.iris.settings.rateLimitValidation.timeframePositive');
             expect(component.isFormValid()).toBeFalse();
         }));
 
-        it('should be invalid when timeframe is negative', fakeAsync(() => {
+        it('should mark timeframe field as invalid when timeframe is negative', fakeAsync(() => {
             component.rateLimitRequests = 100;
             component.rateLimitTimeframeHours = -1;
             component.ngDoCheck();
 
-            expect(component.rateLimitValidationError).toBe('artemisApp.iris.settings.rateLimitValidation.timeframePositive');
+            expect(component.rateLimitRequestsError).toBeUndefined();
+            expect(component.rateLimitTimeframeError).toBe('artemisApp.iris.settings.rateLimitValidation.timeframePositive');
             expect(component.isFormValid()).toBeFalse();
         }));
 
@@ -562,7 +570,8 @@ describe('IrisSettingsUpdateComponent', () => {
             component.ngDoCheck();
 
             // Both effectively empty, should be valid
-            expect(component.rateLimitValidationError).toBeUndefined();
+            expect(component.rateLimitRequestsError).toBeUndefined();
+            expect(component.rateLimitTimeframeError).toBeUndefined();
             expect(component.isFormValid()).toBeTrue();
         }));
 
@@ -572,8 +581,19 @@ describe('IrisSettingsUpdateComponent', () => {
             component.ngDoCheck();
 
             // Both effectively empty, should be valid
-            expect(component.rateLimitValidationError).toBeUndefined();
+            expect(component.rateLimitRequestsError).toBeUndefined();
+            expect(component.rateLimitTimeframeError).toBeUndefined();
             expect(component.isFormValid()).toBeTrue();
+        }));
+
+        it('should mark both fields as invalid when both have errors', fakeAsync(() => {
+            component.rateLimitRequests = -5;
+            component.rateLimitTimeframeHours = -3;
+            component.ngDoCheck();
+
+            expect(component.rateLimitRequestsError).toBe('artemisApp.iris.settings.rateLimitValidation.requestsNonNegative');
+            expect(component.rateLimitTimeframeError).toBe('artemisApp.iris.settings.rateLimitValidation.timeframePositive');
+            expect(component.isFormValid()).toBeFalse();
         }));
     });
 });
