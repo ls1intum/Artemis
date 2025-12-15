@@ -9,7 +9,6 @@ import { ParticipationWebsocketService } from 'app/core/course/shared/services/p
 import { MockResultService } from 'test/helpers/mocks/service/mock-result.service';
 import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
 import { MockProgrammingExerciseGradingService } from 'test/helpers/mocks/service/mock-programming-exercise-grading.service';
-import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { ResultService } from 'app/exercise/result/result.service';
 import { TemplateProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/template-programming-exercise-participation.model';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
@@ -54,7 +53,6 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
     templateParticipation.id = 99;
 
     const exercise = { id: 30, templateParticipation } as ProgrammingExercise;
-    const participation = { id: 1, results: [{ id: 10, feedbacks: [{ id: 20 }, { id: 21 }] }] } as Participation;
     const testCases = [
         { testName: 'test1', active: true },
         { testName: 'test2', active: true },

@@ -1,7 +1,7 @@
 import { AlertService } from 'app/shared/service/alert.service';
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { MockProvider } from 'ng-mocks';
-import { BehaviorSubject, of } from 'rxjs';
+import { of } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -18,13 +18,7 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
-import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
-import { BrowserFingerprintService } from 'app/core/account/fingerprint/browser-fingerprint.service';
-import {
-    ProgrammingExerciseEditorSyncMessage,
-    ProgrammingExerciseEditorSyncService,
-    ProgrammingExerciseEditorSyncTarget,
-} from 'app/programming/manage/services/programming-exercise-editor-sync.service';
+import { ProgrammingExerciseEditorSyncService } from 'app/programming/manage/services/programming-exercise-editor-sync.service';
 
 describe('CodeEditorInstructorAndEditorContainerComponent', () => {
     let fixture: ComponentFixture<CodeEditorInstructorAndEditorContainerComponent>;
@@ -32,7 +26,6 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
     let artemisIntelligenceService: ArtemisIntelligenceService;
     let consistencyCheckService: ConsistencyCheckService;
     let alertService: AlertService;
-    let browserFingerprintService: BrowserFingerprintService;
     let synchronizationService: ProgrammingExerciseEditorSyncService;
 
     const course = { id: 123, exercises: [] } as Course;
@@ -53,10 +46,6 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
                 MockProvider(ProgrammingExerciseService),
                 MockProvider(CourseExerciseService),
                 MockProvider(ProgrammingExerciseEditorSyncService),
-                {
-                    provide: BrowserFingerprintService,
-                    useValue: { instanceIdentifier: new BehaviorSubject<string | undefined>(undefined) },
-                },
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 provideRouter([]),
@@ -71,7 +60,6 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
         artemisIntelligenceService = TestBed.inject(ArtemisIntelligenceService);
         consistencyCheckService = TestBed.inject(ConsistencyCheckService);
         alertService = TestBed.inject(AlertService);
-        browserFingerprintService = TestBed.inject(BrowserFingerprintService);
         synchronizationService = TestBed.inject(ProgrammingExerciseEditorSyncService);
         jest.spyOn(synchronizationService, 'subscribeToUpdates').mockReturnValue(of());
     }));
