@@ -75,6 +75,7 @@ public class ProgrammingExerciseEditorSyncService {
      * @param exerciseId            the exercise id
      * @param target                the target data type associated with this change (e.g. template repository, solution repository, auxiliary repository, problem statement)
      * @param auxiliaryRepositoryId (optional) the id of the auxiliary repository associated with this change
+     * @param filePatch             (optional) the file patch associated with this change
      */
     public void broadcastFileChanges(long exerciseId, ProgrammingExerciseEditorSyncTarget target, @Nullable Long auxiliaryRepositoryId,
             @Nullable ProgrammingExerciseEditorFileSyncDTO filePatch) {
