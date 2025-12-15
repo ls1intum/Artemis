@@ -96,7 +96,7 @@ public class HyperionConsistencyCheckService {
      * Any individual failure degrades gracefully to an empty list; the aggregated response is always non-null.
      *
      * @param exercise programming exercise reference to check consistency for
-     * @return aggregated consistency issues
+     * @return aggregated consistency issues, timing, token usage, and costs.
      */
     @Observed(name = "hyperion.consistency", contextualName = "consistency check", lowCardinalityKeyValues = { AI_SPAN_KEY, AI_SPAN_VALUE })
     public ConsistencyCheckResponseDTO checkConsistency(ProgrammingExercise exercise) {
@@ -168,7 +168,7 @@ public class HyperionConsistencyCheckService {
      * Run the structural consistency prompt. Returns empty list on any exception.
      *
      * @param input prompt variables (rendered_context, programming_language)
-     * @return structural issues (never null)
+     * @return structural issues (never null) and LLM Usage
      */
     private AIResult runStructuralCheck(Map<String, String> input, Observation parentObs, Consumer<LLMRequest> usageSink) {
         var child = Observation.createNotStarted("hyperion.consistency.structural", observationRegistry).contextualName("structural check")
@@ -207,7 +207,7 @@ public class HyperionConsistencyCheckService {
         }
         catch (RuntimeException e) {
             child.error(e);
-            log.warn("Failed to obtain or parse AI response for {} - returning empty list", resourcePath, e);
+            log.warn("Failed to obtain or parse AI response for {} - returning empty list null Usage", resourcePath, e);
             return new AIResult(List.of(), null);
         }
         finally {
@@ -219,7 +219,7 @@ public class HyperionConsistencyCheckService {
      * Run the semantic consistency prompt. Returns empty list on any exception.
      *
      * @param input prompt variables (rendered_context, programming_language)
-     * @return semantic issues
+     * @return semantic issues and LLM Usage
      */
     private AIResult runSemanticCheck(Map<String, String> input, Observation parentObs, Consumer<LLMRequest> usageSink) {
         var child = Observation.createNotStarted("hyperion.consistency.semantic", observationRegistry).contextualName("semantic check")
