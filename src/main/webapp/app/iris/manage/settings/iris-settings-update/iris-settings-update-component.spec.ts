@@ -596,4 +596,126 @@ describe('IrisSettingsUpdateComponent', () => {
             expect(component.isFormValid()).toBeFalse();
         }));
     });
+
+    describe('effective rate limit preview', () => {
+        beforeEach(fakeAsync(() => {
+            routeParamsSubject.next({ courseId: '1' });
+            component.ngOnInit();
+            tick();
+        }));
+
+        it('should return application defaults when both fields are empty', fakeAsync(() => {
+            component.rateLimitRequests = undefined;
+            component.rateLimitTimeframeHours = undefined;
+
+            expect(component.effectiveRateLimitPreview).toEqual({ requests: 50, timeframeHours: 12 });
+        }));
+
+        it('should return entered values when both fields are filled', fakeAsync(() => {
+            component.rateLimitRequests = 200;
+            component.rateLimitTimeframeHours = 48;
+
+            expect(component.effectiveRateLimitPreview).toEqual({ requests: 200, timeframeHours: 48 });
+        }));
+
+        it('should merge entered values with defaults when only requests is filled', fakeAsync(() => {
+            component.rateLimitRequests = 200;
+            component.rateLimitTimeframeHours = undefined;
+
+            expect(component.effectiveRateLimitPreview).toEqual({ requests: 200, timeframeHours: 12 });
+        }));
+
+        it('should merge entered values with defaults when only timeframe is filled', fakeAsync(() => {
+            component.rateLimitRequests = undefined;
+            component.rateLimitTimeframeHours = 48;
+
+            expect(component.effectiveRateLimitPreview).toEqual({ requests: 50, timeframeHours: 48 });
+        }));
+
+        it('should handle zero requests as a valid value', fakeAsync(() => {
+            component.rateLimitRequests = 0;
+            component.rateLimitTimeframeHours = 24;
+
+            expect(component.effectiveRateLimitPreview).toEqual({ requests: 0, timeframeHours: 24 });
+        }));
+
+        it('should treat empty string as empty value', fakeAsync(() => {
+            component.rateLimitRequests = '' as unknown as number;
+            component.rateLimitTimeframeHours = '' as unknown as number;
+
+            expect(component.effectiveRateLimitPreview).toEqual({ requests: 50, timeframeHours: 12 });
+        }));
+    });
+
+    describe('isEffectiveRateLimitUnlimited', () => {
+        beforeEach(fakeAsync(() => {
+            routeParamsSubject.next({ courseId: '1' });
+            component.ngOnInit();
+            tick();
+        }));
+
+        it('should return false when defaults have values', fakeAsync(() => {
+            component.rateLimitRequests = undefined;
+            component.rateLimitTimeframeHours = undefined;
+            // applicationDefaults is { requests: 50, timeframeHours: 12 }
+
+            expect(component.isEffectiveRateLimitUnlimited).toBeFalse();
+        }));
+
+        it('should return false when explicit values are set', fakeAsync(() => {
+            component.rateLimitRequests = 100;
+            component.rateLimitTimeframeHours = 24;
+
+            expect(component.isEffectiveRateLimitUnlimited).toBeFalse();
+        }));
+
+        it('should return true when defaults are null', fakeAsync(() => {
+            // Simulate unlimited defaults
+            component.applicationDefaults = { requests: undefined, timeframeHours: undefined };
+            component.rateLimitRequests = undefined;
+            component.rateLimitTimeframeHours = undefined;
+
+            expect(component.isEffectiveRateLimitUnlimited).toBeTrue();
+        }));
+    });
+
+    describe('hasEffectiveRequestsLimit and hasEffectiveTimeframeLimit', () => {
+        beforeEach(fakeAsync(() => {
+            routeParamsSubject.next({ courseId: '1' });
+            component.ngOnInit();
+            tick();
+        }));
+
+        it('should return true when defaults have values and fields are empty', fakeAsync(() => {
+            component.rateLimitRequests = undefined;
+            component.rateLimitTimeframeHours = undefined;
+
+            expect(component.hasEffectiveRequestsLimit).toBeTrue();
+            expect(component.hasEffectiveTimeframeLimit).toBeTrue();
+        }));
+
+        it('should return true when explicit values are set', fakeAsync(() => {
+            component.rateLimitRequests = 100;
+            component.rateLimitTimeframeHours = 24;
+
+            expect(component.hasEffectiveRequestsLimit).toBeTrue();
+            expect(component.hasEffectiveTimeframeLimit).toBeTrue();
+        }));
+
+        it('should return true for requests when requests is 0', fakeAsync(() => {
+            component.rateLimitRequests = 0;
+            component.rateLimitTimeframeHours = 24;
+
+            expect(component.hasEffectiveRequestsLimit).toBeTrue();
+        }));
+
+        it('should return false when defaults are null and fields are empty', fakeAsync(() => {
+            component.applicationDefaults = { requests: undefined, timeframeHours: undefined };
+            component.rateLimitRequests = undefined;
+            component.rateLimitTimeframeHours = undefined;
+
+            expect(component.hasEffectiveRequestsLimit).toBeFalse();
+            expect(component.hasEffectiveTimeframeLimit).toBeFalse();
+        }));
+    });
 });
