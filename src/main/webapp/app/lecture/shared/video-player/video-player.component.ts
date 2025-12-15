@@ -55,6 +55,12 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
     /** Store reference to window resize handler for cleanup */
     private resizeHandler: (() => void) | undefined = undefined;
 
+    /** ResizeObserver for syncing transcript height with video column */
+    private resizeObserver: ResizeObserver | undefined = undefined;
+
+    /** Minimum height for the transcript column */
+    private readonly MIN_TRANSCRIPT_HEIGHT = 500;
+
     ngAfterViewInit(): void {
         const elRef = this.videoRef();
         const videoElement = elRef ? elRef.nativeElement : undefined;
@@ -131,6 +137,7 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
                     // Set video column width and disable flex
                     videoColumnEl.style.flex = 'none';
                     videoColumnEl.style.width = `${clampedWidth}px`;
+                    // ResizeObserver will automatically sync transcript height
                 },
             },
             cursorChecker: () => 'col-resize',
@@ -140,8 +147,37 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
         this.resizeHandler = () => {
             videoColumnEl.style.flex = '';
             videoColumnEl.style.width = '';
+            // ResizeObserver will automatically sync transcript height
         };
         window.addEventListener('resize', this.resizeHandler);
+
+        // Use ResizeObserver to reliably sync transcript height whenever video column size changes
+        this.resizeObserver = new ResizeObserver(() => {
+            this.syncTranscriptHeight();
+        });
+        this.resizeObserver.observe(videoColumnEl);
+    }
+
+    /**
+     * Syncs the transcript column's max-height to match the video column's height.
+     * Ensures the transcript is at least MIN_TRANSCRIPT_HEIGHT pixels tall.
+     */
+    private syncTranscriptHeight(): void {
+        const videoColumnEl = this.videoColumn()?.nativeElement;
+        const wrapperEl = this.videoWrapper()?.nativeElement;
+
+        if (!videoColumnEl || !wrapperEl) {
+            return;
+        }
+
+        const transcriptColumnEl = wrapperEl.querySelector('.transcript-column') as HTMLElement | null;
+        if (!transcriptColumnEl) {
+            return;
+        }
+
+        const videoHeight = videoColumnEl.offsetHeight;
+        const targetHeight = Math.max(videoHeight, this.MIN_TRANSCRIPT_HEIGHT);
+        transcriptColumnEl.style.maxHeight = `${targetHeight}px`;
     }
 
     /** Seek the video to the given time and resume playback. */
@@ -203,6 +239,12 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
         if (this.resizeHandler) {
             window.removeEventListener('resize', this.resizeHandler);
             this.resizeHandler = undefined;
+        }
+
+        // Clean up ResizeObserver
+        if (this.resizeObserver) {
+            this.resizeObserver.disconnect();
+            this.resizeObserver = undefined;
         }
     }
 }
