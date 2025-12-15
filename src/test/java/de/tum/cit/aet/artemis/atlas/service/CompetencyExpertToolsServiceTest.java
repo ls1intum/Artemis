@@ -422,7 +422,7 @@ class CompetencyExpertToolsServiceTest {
 
             // After clearing, session ID should be null
             // This can be verified by calling getLastPreviewedCompetency which checks for null session
-            String result = competencyExpertToolsService.getLastPreviewedCompetency();
+            String result = competencyExpertToolsService.getLastPreviewedCompetency(123L);
             assertThat(result).contains("No active session");
         }
 
@@ -462,7 +462,7 @@ class CompetencyExpertToolsServiceTest {
             // Don't set any session ID
             CompetencyExpertToolsService.clearCurrentSessionId();
 
-            String result = service.getLastPreviewedCompetency();
+            String result = service.getLastPreviewedCompetency(123L);
 
             assertThat(result).isNotNull();
             JsonNode jsonNode = objectMapper.readTree(result);
@@ -479,7 +479,7 @@ class CompetencyExpertToolsServiceTest {
 
             when(mockAtlasAgentService.getCachedPendingCompetencyOperations(sessionId)).thenReturn(null);
 
-            String result = service.getLastPreviewedCompetency();
+            String result = service.getLastPreviewedCompetency(123L);
 
             assertThat(result).isNotNull();
             JsonNode jsonNode = objectMapper.readTree(result);
@@ -500,7 +500,7 @@ class CompetencyExpertToolsServiceTest {
 
             when(mockAtlasAgentService.getCachedPendingCompetencyOperations(sessionId)).thenReturn(cachedData);
 
-            String result = service.getLastPreviewedCompetency();
+            String result = service.getLastPreviewedCompetency(123L);
 
             assertThat(result).isNotNull();
             JsonNode jsonNode = objectMapper.readTree(result);

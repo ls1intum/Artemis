@@ -191,10 +191,11 @@ public class CompetencyExpertToolsService {
      * If cached competencies have null IDs, searches the database to find matching competencies
      * by title and updates the cache with their IDs.
      *
+     * @param courseId the course ID
      * @return JSON response with the cached competency data or error if none exists
      */
     @Tool(description = "Get the last previewed competency data for refinement. Use this when user requests changes to a previewed competency.")
-    public String getLastPreviewedCompetency() {
+    public String getLastPreviewedCompetency(@ToolParam(description = "the ID of the course") Long courseId) {
         String sessionId = currentSessionId.get();
         if (sessionId == null) {
             record ErrorResponse(String error) {
@@ -212,7 +213,6 @@ public class CompetencyExpertToolsService {
         boolean needsSync = cachedData.stream().anyMatch(comp -> comp.getCompetencyId() == null);
 
         if (needsSync) {
-            Long courseId = extractCourseIdFromContext();
             if (courseId != null) {
                 Set<Competency> existingCompetencies = competencyRepository.findAllByCourseId(courseId);
 
@@ -230,25 +230,6 @@ public class CompetencyExpertToolsService {
         record Response(String sessionId, List<CompetencyOperation> competencies) {
         }
         return toJson(new Response(sessionId, cachedData));
-    }
-
-    /**
-     * Extracts course ID from the session ID format.
-     *
-     * @return the course ID, or null if not available
-     */
-    private Long extractCourseIdFromContext() {
-        String sessionId = currentSessionId.get();
-        if (sessionId != null && sessionId.startsWith("course_")) {
-            try {
-                String courseIdPart = sessionId.substring(7, sessionId.indexOf("_user_"));
-                return Long.parseLong(courseIdPart);
-            }
-            catch (Exception e) {
-                return null;
-            }
-        }
-        return null;
     }
 
     /**
@@ -411,9 +392,10 @@ public class CompetencyExpertToolsService {
 
     /**
      * Retrieves the current competency previews from ThreadLocal.
+     * Clears the stored previews after retrieval to avoid stale data.
      * Used by AtlasAgentService to extract preview data after tool execution.
      *
-     * @return The stored list of previews, or null if none exists
+     * @return The stored list of previews, or empty list if none exists
      */
     public static List<CompetencyPreviewDTO> getAndClearPreviews() {
         List<CompetencyPreviewDTO> previews = currentPreviews.get();
