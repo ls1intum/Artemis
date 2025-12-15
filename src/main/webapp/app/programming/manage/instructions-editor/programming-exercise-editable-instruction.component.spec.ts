@@ -133,6 +133,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
 
     afterEach(() => {
         (gradingService as MockProgrammingExerciseGradingService).initSubject([]);
+        jest.clearAllMocks();
         jest.restoreAllMocks();
     });
 
@@ -155,6 +156,39 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         fixture.destroy();
         flush();
     }));
+
+    it('skips initializing sync when edit mode disabled', fakeAsync(() => {
+        comp.editMode = false;
+        setRequiredInputs(fixture, { ...exercise, problemStatement: 'content' });
+
+        fixture.detectChanges();
+        tick();
+
+        expect(problemStatementSyncServiceMock.init).not.toHaveBeenCalled();
+    }));
+
+    it('queues local changes and emits unsaved flag on user edits', () => {
+        const hasUnsavedSpy = jest.fn();
+        comp.hasUnsavedChanges.subscribe(hasUnsavedSpy);
+        setRequiredInputs(fixture, { ...exercise, problemStatement: 'old' });
+
+        comp.updateProblemStatement('changed');
+
+        expect(problemStatementSyncServiceMock.queueLocalChange).toHaveBeenCalledWith('changed');
+        expect(hasUnsavedSpy).toHaveBeenCalledWith(true);
+    });
+
+    it('applies remote updates and marks unsaved state', () => {
+        const instructionSpy = jest.fn();
+        comp.instructionChange.subscribe(instructionSpy);
+        setRequiredInputs(fixture, { ...exercise, problemStatement: 'old' });
+
+        (comp as any).applyRemoteProblemStatementUpdate('remote content');
+
+        expect(comp.exercise().problemStatement).toBe('remote content');
+        expect(instructionSpy).toHaveBeenCalledWith('remote content');
+        expect(comp.unsavedChangesValue).toBeTrue();
+    });
 
     it('should reset sync service on component destroy', () => {
         setRequiredInputs(fixture, exercise);
