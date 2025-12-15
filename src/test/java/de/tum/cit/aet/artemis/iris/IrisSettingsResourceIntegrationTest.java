@@ -237,20 +237,15 @@ class IrisSettingsResourceIntegrationTest extends AbstractIrisIntegrationTest {
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    void testUpdateCourseSettings_zeroRateLimit_treatedAsUnlimited() throws Exception {
+    void testUpdateCourseSettings_zeroRateLimit_rejected() throws Exception {
         enableIrisFor(course1);
 
         var current = irisSettingsService.getSettingsForCourse(course1);
+        // 0 timeframe is invalid (would cause division by zero in rate limiting)
         var zeroRateLimit = new IrisRateLimitConfiguration(0, 0);
         var update = IrisCourseSettingsDTO.of(current.enabled(), current.customInstructions(), current.variant(), zeroRateLimit);
 
-        var response = request.putWithResponseBody("/api/iris/courses/" + course1.getId() + "/iris-settings", update, CourseIrisSettingsDTO.class, HttpStatus.OK);
-
-        assertThat(response).isNotNull();
-        // Zero should be normalized to null (unlimited), not fall back to defaults
-        assertThat(response.settings().rateLimit()).isNotNull();
-        assertThat(response.settings().rateLimit().requests()).isNull();
-        assertThat(response.settings().rateLimit().timeframeHours()).isNull();
+        request.putWithResponseBody("/api/iris/courses/" + course1.getId() + "/iris-settings", update, CourseIrisSettingsDTO.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
