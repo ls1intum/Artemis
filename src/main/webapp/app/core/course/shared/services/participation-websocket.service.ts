@@ -337,10 +337,7 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      */
     public subscribeForParticipationChanges(): BehaviorSubject<Participation | undefined> {
         if (!this.participationObservable) {
-            this.logDebug('[ParticipationWS] create participationObservable', { instanceId: this.instanceId });
             this.participationObservable = new BehaviorSubject<Participation | undefined>(undefined);
-        } else {
-            this.logDebug('[ParticipationWS] reuse participationObservable', { instanceId: this.instanceId });
         }
         return this.participationObservable;
     }
