@@ -120,8 +120,8 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
      * - If filled: requests >= 0, timeframe > 0 (no zero timeframe allowed)
      */
     private validateRateLimit(): void {
-        const hasRequests = this.rateLimitRequests != null;
-        const hasTimeframe = this.rateLimitTimeframeHours != null;
+        const hasRequests = this.hasNumericValue(this.rateLimitRequests);
+        const hasTimeframe = this.hasNumericValue(this.rateLimitTimeframeHours);
 
         // Reset errors
         this.rateLimitRequestsError = undefined;
@@ -167,6 +167,13 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
             return undefined;
         }
         return value;
+    }
+
+    /**
+     * Checks if a number field has a value (not null, undefined, or empty string from Angular forms)
+     */
+    private hasNumericValue(value: number | undefined): boolean {
+        return value != null && (value as unknown) !== '';
     }
 
     /**
@@ -371,8 +378,8 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
      * Updates live as the user types to provide immediate feedback.
      */
     get effectiveRateLimitPreview(): IrisRateLimitConfiguration | undefined {
-        const hasRequests = this.rateLimitRequests != null;
-        const hasTimeframe = this.rateLimitTimeframeHours != null;
+        const hasRequests = this.hasNumericValue(this.rateLimitRequests);
+        const hasTimeframe = this.hasNumericValue(this.rateLimitTimeframeHours);
 
         // If both fields are empty, show application defaults
         if (!hasRequests && !hasTimeframe) {
