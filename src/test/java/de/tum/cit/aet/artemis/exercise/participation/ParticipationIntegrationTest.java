@@ -80,6 +80,7 @@ import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
+import de.tum.cit.aet.artemis.programming.icl.LocalVCLocalCITestService;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
@@ -88,6 +89,7 @@ import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseParticipationUtilService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseTestService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
+import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 import de.tum.cit.aet.artemis.quiz.domain.QuizBatch;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
@@ -143,6 +145,9 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private LocalVCLocalCITestService localVCLocalCITestService;
 
     @Autowired
     private ProgrammingExerciseParticipationUtilService programmingExerciseParticipationUtilService;
@@ -566,10 +571,9 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     private void prepareMocksForProgrammingExercise() throws Exception {
         programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
         jenkinsRequestMockProvider.enableMockingOfRequests();
-        programmingExerciseTestService.setupRepositoryMocks(programmingExercise);
-        var repo = new LocalRepository(defaultBranch);
-        repo.configureRepos(localVCBasePath, "studentRepo", "studentOriginRepo");
-        repo.resetLocalRepo();
+        // Create actual LocalVC repositories for template, solution, and tests
+        RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, programmingExercise);
+        programmingExercise = exerciseRepository.save(programmingExercise);
     }
 
     @Test
