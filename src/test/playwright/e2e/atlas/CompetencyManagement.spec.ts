@@ -50,9 +50,8 @@ async function selectDateInPicker(page: Page, pickerId: string, monthsAhead: num
         await panel.getByRole('button', { name: 'Next month' }).click();
     }
 
-    const targetDate = dayjs().add(monthsAhead, 'months').date(day).toDate();
-    const targetLabel = new Intl.DateTimeFormat('en-US', { month: 'long', day: 'numeric', year: 'numeric' }).format(targetDate);
-    await panel.getByRole('cell', { name: targetLabel }).click();
+    const targetDate = dayjs().add(monthsAhead, 'months').date(day);
+    await panel.getByRole('cell', { name: targetDate.date().toString() }).click();
 }
 
 async function setMarkdownDescription(page: Page, text: string) {
