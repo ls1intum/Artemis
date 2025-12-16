@@ -40,13 +40,12 @@
                     "allowNarrowLayouts": "Engere Layouts zulassen?",
                     "allowNarrowLayoutsTooltip": "Wenn diese Option aktiviert ist, kann Artemis die Studierenden direkt nebeneinander platzieren, falls es sonst nicht möglich ist alle Studierenden unterzubringen",
                     "searchPlaceholder": "Suche nach Zimmernummer, Name und/oder Gebäude",
-                    "number": "Nummer",
+                    "number": "Raumnummer",
                     "name": "Name",
                     "building": "Gebäude",
                     "enoughSeatsForStudents": "Du kannst alle {{ totalStudents }} Studierenden unterbringen.",
                     "notEnoughSeatsForStudents": "Du kannst nur {{ usableCapacity }} der {{ totalStudents }} Studierenden unterbringen ({{ percentage }}%).",
-                    "distribute": "Verteilen",
-                    "distributeWarning": "Du hast nicht ausreichend Kapazitäten"
+                    "distribute": "Verteilen"
                 }
             },
             "overview": {

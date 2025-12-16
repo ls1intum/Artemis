@@ -74,7 +74,7 @@ export class StudentsRoomDistributionDialogComponent {
         if (usableCapacity > totalStudents) {
             usableCapacity = totalStudents;
         }
-        const percentage: number = totalStudents > 0 ? Math.min(100, Math.round((usableCapacity / totalStudents) * 100)) : 0;
+        const percentage: number = totalStudents > 0 ? Math.min(100, Math.floor((usableCapacity / totalStudents) * 100)) : 0;
 
         return {
             totalStudents,
