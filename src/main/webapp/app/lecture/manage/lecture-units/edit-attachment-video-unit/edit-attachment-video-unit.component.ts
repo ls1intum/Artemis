@@ -68,12 +68,6 @@ export class EditAttachmentVideoUnitComponent implements OnInit {
                             fileName: this.attachment.link,
                         },
                     };
-                    // Check if playlist URL is available for existing video to enable transcription generation
-                    this.attachmentVideoUnitService.fetchAndUpdatePlaylistUrl(this.attachmentVideoUnit.videoSource, this.formData).subscribe({
-                        next: (updatedFormData) => {
-                            this.formData = updatedFormData;
-                        },
-                    });
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });
