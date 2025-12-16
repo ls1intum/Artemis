@@ -33,9 +33,9 @@ import de.tum.cit.aet.artemis.exam.dto.room.ExamSeatDTO;
 public class ExamRoom extends AbstractAuditingEntity {
 
     /**
-     * The room number, e.g., '123.EG.01' or '123.456.78.9'.
+     * The room number, e.g., '123.EG.01' or '123.456.78.9'. This is a room's unique identifier.
      */
-    @Column(name = "room_number", nullable = false, length = 255)
+    @Column(name = "room_number", nullable = false, length = 255, unique = true)
     private String roomNumber;
 
     /**

@@ -73,7 +73,7 @@ public class ExamRoomService {
 
     /**
      * Looks through all JSON files contained in a given zip file (recursive search).
-     * Then it adds all exam rooms it could parse to the database, ignoring duplicates of the same room.
+     * Adds all exam rooms it could parse to the database.
      * The exam rooms' primary room numbers are the filenames of the JSON files containing their data.
      *
      * @param zipFile A zip file containing JSON files of exam room data.
@@ -82,10 +82,8 @@ public class ExamRoomService {
     public ExamRoomUploadInformationDTO parseAndStoreExamRoomDataFromZipFile(MultipartFile zipFile) {
         // We want to discard any duplicate rooms. Having duplicate rooms is only possible if you also nest the same
         // .json file in one or more subfolders. Doing this is either a (malicious) mistake, or perhaps a backup file,
-        // and will thus be ignored. In this equality we only consider the room number, the name, and the building,
-        // as it would be a mistake to store the same room twice and risk a potential creation date collision later on.
-        // All 3 fields are explicitly not nullable.
-        Set<ExamRoom> examRooms = new TreeSet<>(Comparator.comparing(ExamRoom::getRoomNumber).thenComparing(ExamRoom::getName).thenComparing(ExamRoom::getBuilding));
+        // and will thus raise an error, indicating the ambiguity.
+        Set<ExamRoom> examRooms = new TreeSet<>(Comparator.comparing(ExamRoom::getRoomNumber));
 
         try (ZipInputStream zis = new ZipInputStream(zipFile.getInputStream())) {
             ZipEntry entry;
@@ -111,6 +109,10 @@ public class ExamRoomService {
                     ExamRoomInput examRoomInput = objectMapper.readValue(zis.readAllBytes(), ExamRoomInput.class);
 
                     ExamRoom examRoom = convertRoomNumberAndExamRoomInputToExamRoom(roomNumber, examRoomInput);
+                    if (examRooms.contains(examRoom)) {
+                        throw new BadRequestAlertException("Duplicate room number", ENTITY_NAME, "room.duplicateRooms", Map.of("roomNumber", roomNumber));
+                    }
+
                     examRooms.add(examRoom);
                 }
                 finally {
