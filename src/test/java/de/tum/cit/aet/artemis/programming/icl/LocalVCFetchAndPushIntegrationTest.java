@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.programming.icl;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY;
 import static de.tum.cit.aet.artemis.core.config.Constants.LOCAL_CI_RESULTS_DIRECTORY;
-import static de.tum.cit.aet.artemis.core.user.util.UserFactory.USER_PASSWORD;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
@@ -26,18 +25,13 @@ import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.TransportException;
-import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.RefSpec;
-import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.parallel.Execution;
-import org.junit.jupiter.api.parallel.ExecutionMode;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -46,19 +40,19 @@ import org.springframework.web.util.UriComponentsBuilder;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.service.ldap.LdapUserDto;
+import de.tum.cit.aet.artemis.core.user.util.UserFactory;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
+import de.tum.cit.aet.artemis.exam.service.StudentExamService;
+import de.tum.cit.aet.artemis.exam.util.ExamPrepareExercisesTestUtil;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
-import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy;
-import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 
 /**
@@ -67,18 +61,18 @@ import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
  * - Template, tests, solution, aux repos (only editors and instructors)
  * - Student repos (only students with access to the repo + TAs and above)
  * <p>
- * This test class does NOT mock git functionality and does NOT use LocalRepository.
  * Programming exercises are created via REST API which automatically creates repositories.
  * Docker/LocalCI execution is mocked to avoid lengthy tests.
  */
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@Execution(ExecutionMode.SAME_THREAD)
 class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTestBase {
 
     private static final String TEST_PREFIX = "localvcfetchpush";
 
     @Value("${artemis.version-control.url}")
     private URI localVCBaseUri;
+
+    @Autowired
+    private StudentExamService studentExamService;
 
     private Course course;
 
@@ -98,11 +92,6 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
     @Override
     protected String getTestPrefix() {
         return TEST_PREFIX;
-    }
-
-    @BeforeAll
-    void setupAll() {
-        CredentialsProvider.setDefault(new UsernamePasswordCredentialsProvider(localVCUsername, localVCPassword));
     }
 
     @BeforeEach
@@ -185,18 +174,18 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
     /**
      * Creates a programming exercise with an auxiliary repository via REST API.
      */
-    private ProgrammingExercise createProgrammingExerciseWithAuxRepoViaApi(String channelName) throws Exception {
+    private ProgrammingExercise createProgrammingExerciseWithAuxRepoViaApi() throws Exception {
         // Mock Docker for the initial template and solution builds
         mockDockerClientForExerciseCreation();
 
         ProgrammingExercise newExercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
         newExercise.setProjectType(ProjectType.PLAIN_GRADLE);
         newExercise.setAllowOfflineIde(true);
-        newExercise.setChannelName(channelName);
+        newExercise.setChannelName("test-aux-repo");
 
         // Add auxiliary repository configuration
         AuxiliaryRepository auxRepo = new AuxiliaryRepository();
-        auxRepo.setName("auxiliary");
+        auxRepo.setName("testaux");
         auxRepo.setCheckoutDirectory("aux");
         auxRepo.setDescription("Auxiliary repository for testing");
         newExercise.setAuxiliaryRepositories(List.of(auxRepo));
@@ -208,8 +197,8 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
      * Clones a repository from the server and returns the Git handle.
      * The cloned repository is tracked for cleanup.
      */
-    private Git cloneRepository(String username, String password, String projectKey, String repositorySlug) throws GitAPIException, IOException {
-        String repoUri = buildRepositoryUri(username, password, projectKey, repositorySlug);
+    private Git cloneRepository(String username, String projectKey, String repositorySlug) throws GitAPIException, IOException {
+        String repoUri = buildRepositoryUri(username, projectKey, repositorySlug);
         Path clonePath = Files.createTempDirectory(tempPath, "localvc-test-clone-");
         clonedRepoPaths.add(clonePath);
 
@@ -219,11 +208,8 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
     /**
      * Builds a repository URI with credentials for the local VC server.
      */
-    private String buildRepositoryUri(String username, String password, String projectKey, String repositorySlug) {
-        String userInfo = username;
-        if (password != null && !password.isEmpty()) {
-            userInfo += ":" + password;
-        }
+    private String buildRepositoryUri(String username, String projectKey, String repositorySlug) {
+        String userInfo = username + ":" + UserFactory.USER_PASSWORD;
         return UriComponentsBuilder.fromUri(localVCBaseUri).port(port).userInfo(userInfo).pathSegment("git", projectKey.toUpperCase(), repositorySlug + ".git").build().toUri()
                 .toString();
     }
@@ -231,9 +217,9 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
     /**
      * Tests fetch operation - expects success.
      */
-    private void testFetchSuccessful(Git git, String username, String password, String projectKey, String repositorySlug) {
+    private void testFetchSuccessful(Git git, String username, String projectKey, String repositorySlug) {
         try {
-            String repoUri = buildRepositoryUri(username, password, projectKey, repositorySlug);
+            String repoUri = buildRepositoryUri(username, projectKey, repositorySlug);
             git.fetch().setRemote(repoUri).setRefSpecs(new RefSpec("+refs/heads/*:refs/remotes/origin/*")).call();
         }
         catch (GitAPIException e) {
@@ -244,14 +230,14 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
     /**
      * Tests fetch operation - expects error containing the given message.
      */
-    private void testFetchReturnsError(Git git, String username, String password, String projectKey, String repositorySlug, String expectedErrorMessage) {
-        String repoUri = buildRepositoryUri(username, password, projectKey, repositorySlug);
+    private void testFetchReturnsForbidden(Git git, String username, String projectKey, String repositorySlug) {
+        String repoUri = buildRepositoryUri(username, projectKey, repositorySlug);
         try {
             git.fetch().setRemote(repoUri).setRefSpecs(new RefSpec("+refs/heads/*:refs/remotes/origin/*")).call();
             throw new AssertionError("Fetch should have failed but succeeded");
         }
         catch (TransportException e) {
-            assertThat(e.getMessage()).contains(expectedErrorMessage);
+            assertThat(e.getMessage()).contains(AbstractProgrammingIntegrationLocalCILocalVCTestBase.FORBIDDEN);
         }
         catch (GitAPIException e) {
             throw new AssertionError("Expected TransportException but got: " + e.getClass().getSimpleName(), e);
@@ -261,9 +247,9 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
     /**
      * Tests push operation - expects success.
      */
-    private void testPushSuccessful(Git git, String username, String password, String projectKey, String repositorySlug) {
+    private void testPushSuccessful(Git git, String username, String projectKey, String repositorySlug) {
         try {
-            String repoUri = buildRepositoryUri(username, password, projectKey, repositorySlug);
+            String repoUri = buildRepositoryUri(username, projectKey, repositorySlug);
             git.push().setRemote(repoUri).call();
         }
         catch (GitAPIException e) {
@@ -274,14 +260,14 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
     /**
      * Tests push operation - expects error containing the given message.
      */
-    private void testPushReturnsError(Git git, String username, String password, String projectKey, String repositorySlug, String expectedErrorMessage) {
-        String repoUri = buildRepositoryUri(username, password, projectKey, repositorySlug);
+    private void testPushReturnsForbidden(Git git, String username, String projectKey, String repositorySlug) {
+        String repoUri = buildRepositoryUri(username, projectKey, repositorySlug);
         try {
             git.push().setRemote(repoUri).call();
             throw new AssertionError("Push should have failed but succeeded");
         }
         catch (TransportException e) {
-            assertThat(e.getMessage()).contains(expectedErrorMessage);
+            assertThat(e.getMessage()).contains(AbstractProgrammingIntegrationLocalCILocalVCTestBase.FORBIDDEN);
         }
         catch (GitAPIException e) {
             throw new AssertionError("Expected TransportException but got: " + e.getClass().getSimpleName(), e);
@@ -344,29 +330,29 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             String templateRepoSlug = projectKey.toLowerCase() + "-exercise";
 
             // Students should NOT be able to fetch or push
-            try (Git studentGit = cloneRepository(instructor1.getLogin(), USER_PASSWORD, projectKey, templateRepoSlug)) {
-                testFetchReturnsError(studentGit, student1.getLogin(), USER_PASSWORD, projectKey, templateRepoSlug, FORBIDDEN);
-                testPushReturnsError(studentGit, student1.getLogin(), USER_PASSWORD, projectKey, templateRepoSlug, FORBIDDEN);
+            try (Git studentGit = cloneRepository(instructor1.getLogin(), projectKey, templateRepoSlug)) {
+                testFetchReturnsForbidden(studentGit, student1.getLogin(), projectKey, templateRepoSlug);
+                testPushReturnsForbidden(studentGit, student1.getLogin(), projectKey, templateRepoSlug);
             }
 
             // Tutors should be able to fetch but NOT push
-            try (Git tutorGit = cloneRepository(instructor1.getLogin(), USER_PASSWORD, projectKey, templateRepoSlug)) {
-                testFetchSuccessful(tutorGit, tutor1.getLogin(), USER_PASSWORD, projectKey, templateRepoSlug);
-                testPushReturnsError(tutorGit, tutor1.getLogin(), USER_PASSWORD, projectKey, templateRepoSlug, FORBIDDEN);
+            try (Git tutorGit = cloneRepository(instructor1.getLogin(), projectKey, templateRepoSlug)) {
+                testFetchSuccessful(tutorGit, tutor1.getLogin(), projectKey, templateRepoSlug);
+                testPushReturnsForbidden(tutorGit, tutor1.getLogin(), projectKey, templateRepoSlug);
             }
 
             // Editors should be able to fetch and push
-            try (Git editorGit = cloneRepository(instructor1.getLogin(), USER_PASSWORD, projectKey, templateRepoSlug)) {
-                testFetchSuccessful(editorGit, editor1.getLogin(), USER_PASSWORD, projectKey, templateRepoSlug);
+            try (Git editorGit = cloneRepository(instructor1.getLogin(), projectKey, templateRepoSlug)) {
+                testFetchSuccessful(editorGit, editor1.getLogin(), projectKey, templateRepoSlug);
                 commitFile(editorGit, "editor-file.txt");
-                testPushSuccessful(editorGit, editor1.getLogin(), USER_PASSWORD, projectKey, templateRepoSlug);
+                testPushSuccessful(editorGit, editor1.getLogin(), projectKey, templateRepoSlug);
             }
 
             // Instructors should be able to fetch and push
-            try (Git instructorGit = cloneRepository(instructor1.getLogin(), USER_PASSWORD, projectKey, templateRepoSlug)) {
-                testFetchSuccessful(instructorGit, instructor1.getLogin(), USER_PASSWORD, projectKey, templateRepoSlug);
+            try (Git instructorGit = cloneRepository(instructor1.getLogin(), projectKey, templateRepoSlug)) {
+                testFetchSuccessful(instructorGit, instructor1.getLogin(), projectKey, templateRepoSlug);
                 commitFile(instructorGit, "instructor-file.txt");
-                testPushSuccessful(instructorGit, instructor1.getLogin(), USER_PASSWORD, projectKey, templateRepoSlug);
+                testPushSuccessful(instructorGit, instructor1.getLogin(), projectKey, templateRepoSlug);
             }
         }
 
@@ -379,29 +365,29 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             String solutionRepoSlug = projectKey.toLowerCase() + "-solution";
 
             // Students should NOT be able to fetch or push
-            try (Git git = cloneRepository(instructor1.getLogin(), USER_PASSWORD, projectKey, solutionRepoSlug)) {
-                testFetchReturnsError(git, student1.getLogin(), USER_PASSWORD, projectKey, solutionRepoSlug, FORBIDDEN);
-                testPushReturnsError(git, student1.getLogin(), USER_PASSWORD, projectKey, solutionRepoSlug, FORBIDDEN);
+            try (Git git = cloneRepository(instructor1.getLogin(), projectKey, solutionRepoSlug)) {
+                testFetchReturnsForbidden(git, student1.getLogin(), projectKey, solutionRepoSlug);
+                testPushReturnsForbidden(git, student1.getLogin(), projectKey, solutionRepoSlug);
             }
 
             // Tutors should be able to fetch but NOT push
-            try (Git git = cloneRepository(instructor1.getLogin(), USER_PASSWORD, projectKey, solutionRepoSlug)) {
-                testFetchSuccessful(git, tutor1.getLogin(), USER_PASSWORD, projectKey, solutionRepoSlug);
-                testPushReturnsError(git, tutor1.getLogin(), USER_PASSWORD, projectKey, solutionRepoSlug, FORBIDDEN);
+            try (Git git = cloneRepository(instructor1.getLogin(), projectKey, solutionRepoSlug)) {
+                testFetchSuccessful(git, tutor1.getLogin(), projectKey, solutionRepoSlug);
+                testPushReturnsForbidden(git, tutor1.getLogin(), projectKey, solutionRepoSlug);
             }
 
             // Editors should be able to fetch and push
-            try (Git git = cloneRepository(instructor1.getLogin(), USER_PASSWORD, projectKey, solutionRepoSlug)) {
-                testFetchSuccessful(git, editor1.getLogin(), USER_PASSWORD, projectKey, solutionRepoSlug);
+            try (Git git = cloneRepository(instructor1.getLogin(), projectKey, solutionRepoSlug)) {
+                testFetchSuccessful(git, editor1.getLogin(), projectKey, solutionRepoSlug);
                 commitFile(git, "editor-solution.txt");
-                testPushSuccessful(git, editor1.getLogin(), USER_PASSWORD, projectKey, solutionRepoSlug);
+                testPushSuccessful(git, editor1.getLogin(), projectKey, solutionRepoSlug);
             }
 
             // Instructors should be able to fetch and push
-            try (Git git = cloneRepository(instructor1.getLogin(), USER_PASSWORD, projectKey, solutionRepoSlug)) {
-                testFetchSuccessful(git, instructor1.getLogin(), USER_PASSWORD, projectKey, solutionRepoSlug);
+            try (Git git = cloneRepository(instructor1.getLogin(), projectKey, solutionRepoSlug)) {
+                testFetchSuccessful(git, instructor1.getLogin(), projectKey, solutionRepoSlug);
                 commitFile(git, "instructor-solution.txt");
-                testPushSuccessful(git, instructor1.getLogin(), USER_PASSWORD, projectKey, solutionRepoSlug);
+                testPushSuccessful(git, instructor1.getLogin(), projectKey, solutionRepoSlug);
             }
         }
 
@@ -414,38 +400,37 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             String testsRepoSlug = projectKey.toLowerCase() + "-tests";
 
             // Students should NOT be able to fetch or push
-            try (Git git = cloneRepository(instructor1.getLogin(), USER_PASSWORD, projectKey, testsRepoSlug)) {
-                testFetchReturnsError(git, student1.getLogin(), USER_PASSWORD, projectKey, testsRepoSlug, FORBIDDEN);
-                testPushReturnsError(git, student1.getLogin(), USER_PASSWORD, projectKey, testsRepoSlug, FORBIDDEN);
+            try (Git git = cloneRepository(instructor1.getLogin(), projectKey, testsRepoSlug)) {
+                testFetchReturnsForbidden(git, student1.getLogin(), projectKey, testsRepoSlug);
+                testPushReturnsForbidden(git, student1.getLogin(), projectKey, testsRepoSlug);
             }
 
             // Tutors should be able to fetch but NOT push
-            try (Git git = cloneRepository(instructor1.getLogin(), USER_PASSWORD, projectKey, testsRepoSlug)) {
-                testFetchSuccessful(git, tutor1.getLogin(), USER_PASSWORD, projectKey, testsRepoSlug);
-                testPushReturnsError(git, tutor1.getLogin(), USER_PASSWORD, projectKey, testsRepoSlug, FORBIDDEN);
+            try (Git git = cloneRepository(instructor1.getLogin(), projectKey, testsRepoSlug)) {
+                testFetchSuccessful(git, tutor1.getLogin(), projectKey, testsRepoSlug);
+                testPushReturnsForbidden(git, tutor1.getLogin(), projectKey, testsRepoSlug);
             }
 
             // Editors should be able to fetch and push
-            try (Git git = cloneRepository(instructor1.getLogin(), USER_PASSWORD, projectKey, testsRepoSlug)) {
-                testFetchSuccessful(git, editor1.getLogin(), USER_PASSWORD, projectKey, testsRepoSlug);
+            try (Git git = cloneRepository(instructor1.getLogin(), projectKey, testsRepoSlug)) {
+                testFetchSuccessful(git, editor1.getLogin(), projectKey, testsRepoSlug);
                 commitFile(git, "editor-test.txt");
-                testPushSuccessful(git, editor1.getLogin(), USER_PASSWORD, projectKey, testsRepoSlug);
+                testPushSuccessful(git, editor1.getLogin(), projectKey, testsRepoSlug);
             }
 
             // Instructors should be able to fetch and push
-            try (Git git = cloneRepository(instructor1.getLogin(), USER_PASSWORD, projectKey, testsRepoSlug)) {
-                testFetchSuccessful(git, instructor1.getLogin(), USER_PASSWORD, projectKey, testsRepoSlug);
+            try (Git git = cloneRepository(instructor1.getLogin(), projectKey, testsRepoSlug)) {
+                testFetchSuccessful(git, instructor1.getLogin(), projectKey, testsRepoSlug);
                 commitFile(git, "instructor-test.txt");
-                testPushSuccessful(git, instructor1.getLogin(), USER_PASSWORD, projectKey, testsRepoSlug);
+                testPushSuccessful(git, instructor1.getLogin(), projectKey, testsRepoSlug);
             }
         }
 
-        @Disabled("Auxiliary repositories cannot be created via REST API during exercise setup - requires manual repo creation")
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void testFetchPush_auxiliaryRepository() throws Exception {
             // Create exercise with auxiliary repository via REST API
-            ProgrammingExercise exercise = createProgrammingExerciseWithAuxRepoViaApi("test-aux-repo");
+            ProgrammingExercise exercise = createProgrammingExerciseWithAuxRepoViaApi();
             String projectKey = exercise.getProjectKey();
 
             // Get the auxiliary repository slug from the created exercise
@@ -454,29 +439,29 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             String auxRepoSlug = projectKey.toLowerCase() + "-" + auxRepo.getName().toLowerCase();
 
             // Students should NOT be able to fetch or push
-            try (Git git = cloneRepository(instructor1.getLogin(), USER_PASSWORD, projectKey, auxRepoSlug)) {
-                testFetchReturnsError(git, student1.getLogin(), USER_PASSWORD, projectKey, auxRepoSlug, FORBIDDEN);
-                testPushReturnsError(git, student1.getLogin(), USER_PASSWORD, projectKey, auxRepoSlug, FORBIDDEN);
+            try (Git git = cloneRepository(instructor1.getLogin(), projectKey, auxRepoSlug)) {
+                testFetchReturnsForbidden(git, student1.getLogin(), projectKey, auxRepoSlug);
+                testPushReturnsForbidden(git, student1.getLogin(), projectKey, auxRepoSlug);
             }
 
             // Tutors should be able to fetch but NOT push
-            try (Git git = cloneRepository(instructor1.getLogin(), USER_PASSWORD, projectKey, auxRepoSlug)) {
-                testFetchSuccessful(git, tutor1.getLogin(), USER_PASSWORD, projectKey, auxRepoSlug);
-                testPushReturnsError(git, tutor1.getLogin(), USER_PASSWORD, projectKey, auxRepoSlug, FORBIDDEN);
+            try (Git git = cloneRepository(instructor1.getLogin(), projectKey, auxRepoSlug)) {
+                testFetchSuccessful(git, tutor1.getLogin(), projectKey, auxRepoSlug);
+                testPushReturnsForbidden(git, tutor1.getLogin(), projectKey, auxRepoSlug);
             }
 
             // Editors should be able to fetch and push
-            try (Git git = cloneRepository(instructor1.getLogin(), USER_PASSWORD, projectKey, auxRepoSlug)) {
-                testFetchSuccessful(git, editor1.getLogin(), USER_PASSWORD, projectKey, auxRepoSlug);
+            try (Git git = cloneRepository(instructor1.getLogin(), projectKey, auxRepoSlug)) {
+                testFetchSuccessful(git, editor1.getLogin(), projectKey, auxRepoSlug);
                 commitFile(git, "editor-aux.txt");
-                testPushSuccessful(git, editor1.getLogin(), USER_PASSWORD, projectKey, auxRepoSlug);
+                testPushSuccessful(git, editor1.getLogin(), projectKey, auxRepoSlug);
             }
 
             // Instructors should be able to fetch and push
-            try (Git git = cloneRepository(instructor1.getLogin(), USER_PASSWORD, projectKey, auxRepoSlug)) {
-                testFetchSuccessful(git, instructor1.getLogin(), USER_PASSWORD, projectKey, auxRepoSlug);
+            try (Git git = cloneRepository(instructor1.getLogin(), projectKey, auxRepoSlug)) {
+                testFetchSuccessful(git, instructor1.getLogin(), projectKey, auxRepoSlug);
                 commitFile(git, "instructor-aux.txt");
-                testPushSuccessful(git, instructor1.getLogin(), USER_PASSWORD, projectKey, auxRepoSlug);
+                testPushSuccessful(git, instructor1.getLogin(), projectKey, auxRepoSlug);
             }
         }
 
@@ -501,36 +486,36 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             String student1RepoSlug = projectKey.toLowerCase() + "-" + student1.getLogin();
 
             // Student1 should be able to fetch and push to their own repository
-            try (Git git = cloneRepository(student1.getLogin(), USER_PASSWORD, projectKey, student1RepoSlug)) {
-                testFetchSuccessful(git, student1.getLogin(), USER_PASSWORD, projectKey, student1RepoSlug);
+            try (Git git = cloneRepository(student1.getLogin(), projectKey, student1RepoSlug)) {
+                testFetchSuccessful(git, student1.getLogin(), projectKey, student1RepoSlug);
                 commitFile(git, "student1-submission.txt");
-                testPushSuccessful(git, student1.getLogin(), USER_PASSWORD, projectKey, student1RepoSlug);
+                testPushSuccessful(git, student1.getLogin(), projectKey, student1RepoSlug);
             }
 
             // Student2 should NOT be able to access student1's repository
-            try (Git git = cloneRepository(student1.getLogin(), USER_PASSWORD, projectKey, student1RepoSlug)) {
-                testFetchReturnsError(git, student2.getLogin(), USER_PASSWORD, projectKey, student1RepoSlug, FORBIDDEN);
-                testPushReturnsError(git, student2.getLogin(), USER_PASSWORD, projectKey, student1RepoSlug, FORBIDDEN);
+            try (Git git = cloneRepository(student1.getLogin(), projectKey, student1RepoSlug)) {
+                testFetchReturnsForbidden(git, student2.getLogin(), projectKey, student1RepoSlug);
+                testPushReturnsForbidden(git, student2.getLogin(), projectKey, student1RepoSlug);
             }
 
             // Tutors should be able to fetch but NOT push
-            try (Git git = cloneRepository(student1.getLogin(), USER_PASSWORD, projectKey, student1RepoSlug)) {
-                testFetchSuccessful(git, tutor1.getLogin(), USER_PASSWORD, projectKey, student1RepoSlug);
-                testPushReturnsError(git, tutor1.getLogin(), USER_PASSWORD, projectKey, student1RepoSlug, FORBIDDEN);
+            try (Git git = cloneRepository(student1.getLogin(), projectKey, student1RepoSlug)) {
+                testFetchSuccessful(git, tutor1.getLogin(), projectKey, student1RepoSlug);
+                testPushReturnsForbidden(git, tutor1.getLogin(), projectKey, student1RepoSlug);
             }
 
             // Editors should be able to fetch and push
-            try (Git git = cloneRepository(student1.getLogin(), USER_PASSWORD, projectKey, student1RepoSlug)) {
-                testFetchSuccessful(git, editor1.getLogin(), USER_PASSWORD, projectKey, student1RepoSlug);
+            try (Git git = cloneRepository(student1.getLogin(), projectKey, student1RepoSlug)) {
+                testFetchSuccessful(git, editor1.getLogin(), projectKey, student1RepoSlug);
                 commitFile(git, "editor-feedback.txt");
-                testPushSuccessful(git, editor1.getLogin(), USER_PASSWORD, projectKey, student1RepoSlug);
+                testPushSuccessful(git, editor1.getLogin(), projectKey, student1RepoSlug);
             }
 
             // Instructors should be able to fetch and push
-            try (Git git = cloneRepository(student1.getLogin(), USER_PASSWORD, projectKey, student1RepoSlug)) {
-                testFetchSuccessful(git, instructor1.getLogin(), USER_PASSWORD, projectKey, student1RepoSlug);
+            try (Git git = cloneRepository(student1.getLogin(), projectKey, student1RepoSlug)) {
+                testFetchSuccessful(git, instructor1.getLogin(), projectKey, student1RepoSlug);
                 commitFile(git, "instructor-feedback.txt");
-                testPushSuccessful(git, instructor1.getLogin(), USER_PASSWORD, projectKey, student1RepoSlug);
+                testPushSuccessful(git, instructor1.getLogin(), projectKey, student1RepoSlug);
             }
         }
 
@@ -544,8 +529,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             // Student1 starts the exercise via REST API (this creates the repository)
             userUtilService.changeUser(TEST_PREFIX + "student1");
             mockDockerClientForStudentBuild();
-            StudentParticipation participation = request.postWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations", null, StudentParticipation.class,
-                    HttpStatus.CREATED);
+            request.postWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations", null, StudentParticipation.class, HttpStatus.CREATED);
 
             // Now set due date to the past
             userUtilService.changeUser(TEST_PREFIX + "instructor1");
@@ -555,22 +539,22 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             String student1RepoSlug = projectKey.toLowerCase() + "-" + student1.getLogin();
 
             // Student1 should be able to fetch but NOT push after due date
-            try (Git git = cloneRepository(student1.getLogin(), USER_PASSWORD, projectKey, student1RepoSlug)) {
-                testFetchSuccessful(git, student1.getLogin(), USER_PASSWORD, projectKey, student1RepoSlug);
-                testPushReturnsError(git, student1.getLogin(), USER_PASSWORD, projectKey, student1RepoSlug, FORBIDDEN);
+            try (Git git = cloneRepository(student1.getLogin(), projectKey, student1RepoSlug)) {
+                testFetchSuccessful(git, student1.getLogin(), projectKey, student1RepoSlug);
+                testPushReturnsForbidden(git, student1.getLogin(), projectKey, student1RepoSlug);
             }
 
             // Tutors should be able to fetch but NOT push
-            try (Git git = cloneRepository(student1.getLogin(), USER_PASSWORD, projectKey, student1RepoSlug)) {
-                testFetchSuccessful(git, tutor1.getLogin(), USER_PASSWORD, projectKey, student1RepoSlug);
-                testPushReturnsError(git, tutor1.getLogin(), USER_PASSWORD, projectKey, student1RepoSlug, FORBIDDEN);
+            try (Git git = cloneRepository(student1.getLogin(), projectKey, student1RepoSlug)) {
+                testFetchSuccessful(git, tutor1.getLogin(), projectKey, student1RepoSlug);
+                testPushReturnsForbidden(git, tutor1.getLogin(), projectKey, student1RepoSlug);
             }
 
             // Instructors should still be able to fetch and push
-            try (Git git = cloneRepository(student1.getLogin(), USER_PASSWORD, projectKey, student1RepoSlug)) {
-                testFetchSuccessful(git, instructor1.getLogin(), USER_PASSWORD, projectKey, student1RepoSlug);
+            try (Git git = cloneRepository(student1.getLogin(), projectKey, student1RepoSlug)) {
+                testFetchSuccessful(git, instructor1.getLogin(), projectKey, student1RepoSlug);
                 commitFile(git, "instructor-feedback.txt");
-                testPushSuccessful(git, instructor1.getLogin(), USER_PASSWORD, projectKey, student1RepoSlug);
+                testPushSuccessful(git, instructor1.getLogin(), projectKey, student1RepoSlug);
             }
         }
 
@@ -603,29 +587,29 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             String student2RepoSlug = projectKey.toLowerCase() + "-" + student2.getLogin();
 
             // Student1 can access their own repo
-            try (Git git = cloneRepository(student1.getLogin(), USER_PASSWORD, projectKey, student1RepoSlug)) {
-                testFetchSuccessful(git, student1.getLogin(), USER_PASSWORD, projectKey, student1RepoSlug);
+            try (Git git = cloneRepository(student1.getLogin(), projectKey, student1RepoSlug)) {
+                testFetchSuccessful(git, student1.getLogin(), projectKey, student1RepoSlug);
                 commitFile(git, "student1-work.txt");
-                testPushSuccessful(git, student1.getLogin(), USER_PASSWORD, projectKey, student1RepoSlug);
+                testPushSuccessful(git, student1.getLogin(), projectKey, student1RepoSlug);
             }
 
             // Student2 can access their own repo
-            try (Git git = cloneRepository(student2.getLogin(), USER_PASSWORD, projectKey, student2RepoSlug)) {
-                testFetchSuccessful(git, student2.getLogin(), USER_PASSWORD, projectKey, student2RepoSlug);
+            try (Git git = cloneRepository(student2.getLogin(), projectKey, student2RepoSlug)) {
+                testFetchSuccessful(git, student2.getLogin(), projectKey, student2RepoSlug);
                 commitFile(git, "student2-work.txt");
-                testPushSuccessful(git, student2.getLogin(), USER_PASSWORD, projectKey, student2RepoSlug);
+                testPushSuccessful(git, student2.getLogin(), projectKey, student2RepoSlug);
             }
 
             // Student1 cannot access student2's repo
-            try (Git git = cloneRepository(student2.getLogin(), USER_PASSWORD, projectKey, student2RepoSlug)) {
-                testFetchReturnsError(git, student1.getLogin(), USER_PASSWORD, projectKey, student2RepoSlug, FORBIDDEN);
-                testPushReturnsError(git, student1.getLogin(), USER_PASSWORD, projectKey, student2RepoSlug, FORBIDDEN);
+            try (Git git = cloneRepository(student2.getLogin(), projectKey, student2RepoSlug)) {
+                testFetchReturnsForbidden(git, student1.getLogin(), projectKey, student2RepoSlug);
+                testPushReturnsForbidden(git, student1.getLogin(), projectKey, student2RepoSlug);
             }
 
             // Student2 cannot access student1's repo
-            try (Git git = cloneRepository(student1.getLogin(), USER_PASSWORD, projectKey, student1RepoSlug)) {
-                testFetchReturnsError(git, student2.getLogin(), USER_PASSWORD, projectKey, student1RepoSlug, FORBIDDEN);
-                testPushReturnsError(git, student2.getLogin(), USER_PASSWORD, projectKey, student1RepoSlug, FORBIDDEN);
+            try (Git git = cloneRepository(student1.getLogin(), projectKey, student1RepoSlug)) {
+                testFetchReturnsForbidden(git, student2.getLogin(), projectKey, student1RepoSlug);
+                testPushReturnsForbidden(git, student2.getLogin(), projectKey, student1RepoSlug);
             }
         }
 
@@ -640,74 +624,26 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             String projectKey = exercise.getProjectKey();
 
             // Create participation for student1 via utility (not REST API since start date is in future)
-            ProgrammingExerciseStudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, student1.getLogin());
+            participationUtilService.addStudentParticipationForProgrammingExercise(exercise, student1.getLogin());
             String student1RepoSlug = projectKey.toLowerCase() + "-" + student1.getLogin();
 
             // Student1 should NOT be able to fetch or push before start date
-            try (Git git = cloneRepository(instructor1.getLogin(), USER_PASSWORD, projectKey, student1RepoSlug)) {
-                testFetchReturnsError(git, student1.getLogin(), USER_PASSWORD, projectKey, student1RepoSlug, FORBIDDEN);
-                testPushReturnsError(git, student1.getLogin(), USER_PASSWORD, projectKey, student1RepoSlug, FORBIDDEN);
+            try (Git git = cloneRepository(instructor1.getLogin(), projectKey, student1RepoSlug)) {
+                testFetchReturnsForbidden(git, student1.getLogin(), projectKey, student1RepoSlug);
+                testPushReturnsForbidden(git, student1.getLogin(), projectKey, student1RepoSlug);
             }
 
             // Tutors should be able to fetch but NOT push
-            try (Git git = cloneRepository(instructor1.getLogin(), USER_PASSWORD, projectKey, student1RepoSlug)) {
-                testFetchSuccessful(git, tutor1.getLogin(), USER_PASSWORD, projectKey, student1RepoSlug);
-                testPushReturnsError(git, tutor1.getLogin(), USER_PASSWORD, projectKey, student1RepoSlug, FORBIDDEN);
+            try (Git git = cloneRepository(instructor1.getLogin(), projectKey, student1RepoSlug)) {
+                testFetchSuccessful(git, tutor1.getLogin(), projectKey, student1RepoSlug);
+                testPushReturnsForbidden(git, tutor1.getLogin(), projectKey, student1RepoSlug);
             }
 
             // Instructors should be able to fetch and push
-            try (Git git = cloneRepository(instructor1.getLogin(), USER_PASSWORD, projectKey, student1RepoSlug)) {
-                testFetchSuccessful(git, instructor1.getLogin(), USER_PASSWORD, projectKey, student1RepoSlug);
+            try (Git git = cloneRepository(instructor1.getLogin(), projectKey, student1RepoSlug)) {
+                testFetchSuccessful(git, instructor1.getLogin(), projectKey, student1RepoSlug);
                 commitFile(git, "instructor-file.txt");
-                testPushSuccessful(git, instructor1.getLogin(), USER_PASSWORD, projectKey, student1RepoSlug);
-            }
-        }
-
-        @Disabled("Submission policy test requires multiple builds but the Docker mock stream gets exhausted after first build")
-        @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-        void testPush_studentRepository_submissionPolicyEnforced() throws Exception {
-            // Create exercise via REST API
-            ProgrammingExercise exercise = createProgrammingExerciseViaApi("test-submission-policy");
-            String projectKey = exercise.getProjectKey();
-
-            // Add LockRepositoryPolicy with limit of 1 submission
-            LockRepositoryPolicy lockRepositoryPolicy = new LockRepositoryPolicy();
-            lockRepositoryPolicy.setSubmissionLimit(1);
-            lockRepositoryPolicy.setActive(true);
-            request.postWithResponseBody("/api/programming/programming-exercises/" + exercise.getId() + "/submission-policy", lockRepositoryPolicy, SubmissionPolicy.class,
-                    HttpStatus.CREATED);
-
-            // Student1 starts the exercise
-            userUtilService.changeUser(TEST_PREFIX + "student1");
-            mockDockerClientForStudentBuild();
-            StudentParticipation participation = request.postWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations", null, StudentParticipation.class,
-                    HttpStatus.CREATED);
-
-            String student1RepoSlug = projectKey.toLowerCase() + "-" + student1.getLogin();
-
-            // First push should succeed
-            try (Git git = cloneRepository(student1.getLogin(), USER_PASSWORD, projectKey, student1RepoSlug)) {
-                testFetchSuccessful(git, student1.getLogin(), USER_PASSWORD, projectKey, student1RepoSlug);
-                commitFile(git, "first-submission.txt");
-                testPushSuccessful(git, student1.getLogin(), USER_PASSWORD, projectKey, student1RepoSlug);
-            }
-
-            // Wait for result to be processed (required for submission count)
-            await().until(() -> resultRepository.findFirstWithSubmissionsByParticipationIdOrderByCompletionDateDesc(participation.getId()).isPresent());
-
-            // Second push should fail due to submission policy
-            try (Git git = cloneRepository(student1.getLogin(), USER_PASSWORD, projectKey, student1RepoSlug)) {
-                testFetchSuccessful(git, student1.getLogin(), USER_PASSWORD, projectKey, student1RepoSlug);
-                commitFile(git, "second-submission.txt");
-                testPushReturnsError(git, student1.getLogin(), USER_PASSWORD, projectKey, student1RepoSlug, FORBIDDEN);
-            }
-
-            // Instructors should still be able to push
-            try (Git git = cloneRepository(student1.getLogin(), USER_PASSWORD, projectKey, student1RepoSlug)) {
-                testFetchSuccessful(git, instructor1.getLogin(), USER_PASSWORD, projectKey, student1RepoSlug);
-                commitFile(git, "instructor-push.txt");
-                testPushSuccessful(git, instructor1.getLogin(), USER_PASSWORD, projectKey, student1RepoSlug);
+                testPushSuccessful(git, instructor1.getLogin(), projectKey, student1RepoSlug);
             }
         }
     }
@@ -735,40 +671,39 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             team.setShortName("team1");
             team.setExercise(exercise);
             team.setStudents(Set.of(student1));
-            team = teamRepository.save(team);
+            teamRepository.save(team);
 
             String teamRepoSlug = projectKey.toLowerCase() + "-team1";
 
             // Team member (student1) starts the exercise via REST API (creates repo)
             userUtilService.changeUser(TEST_PREFIX + "student1");
             mockDockerClientForStudentBuild();
-            StudentParticipation participation = request.postWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations", null, StudentParticipation.class,
-                    HttpStatus.CREATED);
+            request.postWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations", null, StudentParticipation.class, HttpStatus.CREATED);
 
             // Team member (student1) should be able to fetch and push
-            try (Git git = cloneRepository(student1.getLogin(), USER_PASSWORD, projectKey, teamRepoSlug)) {
-                testFetchSuccessful(git, student1.getLogin(), USER_PASSWORD, projectKey, teamRepoSlug);
+            try (Git git = cloneRepository(student1.getLogin(), projectKey, teamRepoSlug)) {
+                testFetchSuccessful(git, student1.getLogin(), projectKey, teamRepoSlug);
                 commitFile(git, "team-work.txt");
-                testPushSuccessful(git, student1.getLogin(), USER_PASSWORD, projectKey, teamRepoSlug);
+                testPushSuccessful(git, student1.getLogin(), projectKey, teamRepoSlug);
             }
 
             // Non-team member (student2) should NOT be able to access
-            try (Git git = cloneRepository(student1.getLogin(), USER_PASSWORD, projectKey, teamRepoSlug)) {
-                testFetchReturnsError(git, student2.getLogin(), USER_PASSWORD, projectKey, teamRepoSlug, FORBIDDEN);
-                testPushReturnsError(git, student2.getLogin(), USER_PASSWORD, projectKey, teamRepoSlug, FORBIDDEN);
+            try (Git git = cloneRepository(student1.getLogin(), projectKey, teamRepoSlug)) {
+                testFetchReturnsForbidden(git, student2.getLogin(), projectKey, teamRepoSlug);
+                testPushReturnsForbidden(git, student2.getLogin(), projectKey, teamRepoSlug);
             }
 
             // Tutors should be able to fetch but NOT push
-            try (Git git = cloneRepository(student1.getLogin(), USER_PASSWORD, projectKey, teamRepoSlug)) {
-                testFetchSuccessful(git, tutor1.getLogin(), USER_PASSWORD, projectKey, teamRepoSlug);
-                testPushReturnsError(git, tutor1.getLogin(), USER_PASSWORD, projectKey, teamRepoSlug, FORBIDDEN);
+            try (Git git = cloneRepository(student1.getLogin(), projectKey, teamRepoSlug)) {
+                testFetchSuccessful(git, tutor1.getLogin(), projectKey, teamRepoSlug);
+                testPushReturnsForbidden(git, tutor1.getLogin(), projectKey, teamRepoSlug);
             }
 
             // Instructors should be able to fetch and push
-            try (Git git = cloneRepository(student1.getLogin(), USER_PASSWORD, projectKey, teamRepoSlug)) {
-                testFetchSuccessful(git, instructor1.getLogin(), USER_PASSWORD, projectKey, teamRepoSlug);
+            try (Git git = cloneRepository(student1.getLogin(), projectKey, teamRepoSlug)) {
+                testFetchSuccessful(git, instructor1.getLogin(), projectKey, teamRepoSlug);
                 commitFile(git, "instructor-team-feedback.txt");
-                testPushSuccessful(git, instructor1.getLogin(), USER_PASSWORD, projectKey, teamRepoSlug);
+                testPushSuccessful(git, instructor1.getLogin(), projectKey, teamRepoSlug);
             }
         }
 
@@ -800,22 +735,22 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             String teamRepoSlug = projectKey.toLowerCase() + "-team2";
 
             // Team member should NOT be able to access before start date
-            try (Git git = cloneRepository(instructor1.getLogin(), USER_PASSWORD, projectKey, teamRepoSlug)) {
-                testFetchReturnsError(git, student1.getLogin(), USER_PASSWORD, projectKey, teamRepoSlug, FORBIDDEN);
-                testPushReturnsError(git, student1.getLogin(), USER_PASSWORD, projectKey, teamRepoSlug, FORBIDDEN);
+            try (Git git = cloneRepository(instructor1.getLogin(), projectKey, teamRepoSlug)) {
+                testFetchReturnsForbidden(git, student1.getLogin(), projectKey, teamRepoSlug);
+                testPushReturnsForbidden(git, student1.getLogin(), projectKey, teamRepoSlug);
             }
 
             // Tutors should be able to fetch but NOT push
-            try (Git git = cloneRepository(instructor1.getLogin(), USER_PASSWORD, projectKey, teamRepoSlug)) {
-                testFetchSuccessful(git, tutor1.getLogin(), USER_PASSWORD, projectKey, teamRepoSlug);
-                testPushReturnsError(git, tutor1.getLogin(), USER_PASSWORD, projectKey, teamRepoSlug, FORBIDDEN);
+            try (Git git = cloneRepository(instructor1.getLogin(), projectKey, teamRepoSlug)) {
+                testFetchSuccessful(git, tutor1.getLogin(), projectKey, teamRepoSlug);
+                testPushReturnsForbidden(git, tutor1.getLogin(), projectKey, teamRepoSlug);
             }
 
             // Instructors should be able to fetch and push
-            try (Git git = cloneRepository(instructor1.getLogin(), USER_PASSWORD, projectKey, teamRepoSlug)) {
-                testFetchSuccessful(git, instructor1.getLogin(), USER_PASSWORD, projectKey, teamRepoSlug);
+            try (Git git = cloneRepository(instructor1.getLogin(), projectKey, teamRepoSlug)) {
+                testFetchSuccessful(git, instructor1.getLogin(), projectKey, teamRepoSlug);
                 commitFile(git, "instructor-setup.txt");
-                testPushSuccessful(git, instructor1.getLogin(), USER_PASSWORD, projectKey, teamRepoSlug);
+                testPushSuccessful(git, instructor1.getLogin(), projectKey, teamRepoSlug);
             }
         }
 
@@ -839,15 +774,14 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             team.setShortName("team3");
             team.setExercise(exercise);
             team.setStudents(Set.of(student1));
-            team = teamRepository.save(team);
+            teamRepository.save(team);
 
             String teamRepoSlug = projectKey.toLowerCase() + "-team3";
 
             // Team member (student1) starts the exercise via REST API (creates repo)
             userUtilService.changeUser(TEST_PREFIX + "student1");
             mockDockerClientForStudentBuild();
-            StudentParticipation participation = request.postWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations", null, StudentParticipation.class,
-                    HttpStatus.CREATED);
+            request.postWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations", null, StudentParticipation.class, HttpStatus.CREATED);
 
             // Now set due date to the past
             userUtilService.changeUser(TEST_PREFIX + "instructor1");
@@ -855,22 +789,22 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             programmingExerciseRepository.save(exercise);
 
             // Team member should be able to fetch but NOT push after due date
-            try (Git git = cloneRepository(student1.getLogin(), USER_PASSWORD, projectKey, teamRepoSlug)) {
-                testFetchSuccessful(git, student1.getLogin(), USER_PASSWORD, projectKey, teamRepoSlug);
-                testPushReturnsError(git, student1.getLogin(), USER_PASSWORD, projectKey, teamRepoSlug, FORBIDDEN);
+            try (Git git = cloneRepository(student1.getLogin(), projectKey, teamRepoSlug)) {
+                testFetchSuccessful(git, student1.getLogin(), projectKey, teamRepoSlug);
+                testPushReturnsForbidden(git, student1.getLogin(), projectKey, teamRepoSlug);
             }
 
             // Tutors should be able to fetch but NOT push
-            try (Git git = cloneRepository(student1.getLogin(), USER_PASSWORD, projectKey, teamRepoSlug)) {
-                testFetchSuccessful(git, tutor1.getLogin(), USER_PASSWORD, projectKey, teamRepoSlug);
-                testPushReturnsError(git, tutor1.getLogin(), USER_PASSWORD, projectKey, teamRepoSlug, FORBIDDEN);
+            try (Git git = cloneRepository(student1.getLogin(), projectKey, teamRepoSlug)) {
+                testFetchSuccessful(git, tutor1.getLogin(), projectKey, teamRepoSlug);
+                testPushReturnsForbidden(git, tutor1.getLogin(), projectKey, teamRepoSlug);
             }
 
             // Instructors should be able to fetch and push
-            try (Git git = cloneRepository(student1.getLogin(), USER_PASSWORD, projectKey, teamRepoSlug)) {
-                testFetchSuccessful(git, instructor1.getLogin(), USER_PASSWORD, projectKey, teamRepoSlug);
+            try (Git git = cloneRepository(student1.getLogin(), projectKey, teamRepoSlug)) {
+                testFetchSuccessful(git, instructor1.getLogin(), projectKey, teamRepoSlug);
                 commitFile(git, "instructor-feedback.txt");
-                testPushSuccessful(git, instructor1.getLogin(), USER_PASSWORD, projectKey, teamRepoSlug);
+                testPushSuccessful(git, instructor1.getLogin(), projectKey, teamRepoSlug);
             }
         }
     }
@@ -888,29 +822,28 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             // TA starts the exercise via REST API (creates repo)
             userUtilService.changeUser(TEST_PREFIX + "tutor1");
             mockDockerClientForStudentBuild();
-            StudentParticipation taParticipation = request.postWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations", null, StudentParticipation.class,
-                    HttpStatus.CREATED);
+            request.postWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations", null, StudentParticipation.class, HttpStatus.CREATED);
 
             String taRepoSlug = projectKey.toLowerCase() + "-" + tutor1.getLogin();
 
             // Students should NOT be able to access TA's assignment repository
-            try (Git git = cloneRepository(tutor1.getLogin(), USER_PASSWORD, projectKey, taRepoSlug)) {
-                testFetchReturnsError(git, student1.getLogin(), USER_PASSWORD, projectKey, taRepoSlug, FORBIDDEN);
-                testPushReturnsError(git, student1.getLogin(), USER_PASSWORD, projectKey, taRepoSlug, FORBIDDEN);
+            try (Git git = cloneRepository(tutor1.getLogin(), projectKey, taRepoSlug)) {
+                testFetchReturnsForbidden(git, student1.getLogin(), projectKey, taRepoSlug);
+                testPushReturnsForbidden(git, student1.getLogin(), projectKey, taRepoSlug);
             }
 
             // TA (owner) should be able to fetch and push to their personal repository
-            try (Git git = cloneRepository(tutor1.getLogin(), USER_PASSWORD, projectKey, taRepoSlug)) {
-                testFetchSuccessful(git, tutor1.getLogin(), USER_PASSWORD, projectKey, taRepoSlug);
+            try (Git git = cloneRepository(tutor1.getLogin(), projectKey, taRepoSlug)) {
+                testFetchSuccessful(git, tutor1.getLogin(), projectKey, taRepoSlug);
                 commitFile(git, "ta-work.txt");
-                testPushSuccessful(git, tutor1.getLogin(), USER_PASSWORD, projectKey, taRepoSlug);
+                testPushSuccessful(git, tutor1.getLogin(), projectKey, taRepoSlug);
             }
 
             // Instructors should be able to fetch and push
-            try (Git git = cloneRepository(instructor1.getLogin(), USER_PASSWORD, projectKey, taRepoSlug)) {
-                testFetchSuccessful(git, instructor1.getLogin(), USER_PASSWORD, projectKey, taRepoSlug);
+            try (Git git = cloneRepository(instructor1.getLogin(), projectKey, taRepoSlug)) {
+                testFetchSuccessful(git, instructor1.getLogin(), projectKey, taRepoSlug);
                 commitFile(git, "instructor-feedback.txt");
-                testPushSuccessful(git, instructor1.getLogin(), USER_PASSWORD, projectKey, taRepoSlug);
+                testPushSuccessful(git, instructor1.getLogin(), projectKey, taRepoSlug);
             }
         }
 
@@ -923,28 +856,27 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
 
             // Instructor starts the exercise via REST API (creates repo)
             mockDockerClientForStudentBuild();
-            StudentParticipation instructorParticipation = request.postWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations", null,
-                    StudentParticipation.class, HttpStatus.CREATED);
+            request.postWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations", null, StudentParticipation.class, HttpStatus.CREATED);
 
             String instructorRepoSlug = projectKey.toLowerCase() + "-" + instructor1.getLogin();
 
             // Students should NOT be able to access instructor's assignment repository
-            try (Git git = cloneRepository(instructor1.getLogin(), USER_PASSWORD, projectKey, instructorRepoSlug)) {
-                testFetchReturnsError(git, student1.getLogin(), USER_PASSWORD, projectKey, instructorRepoSlug, FORBIDDEN);
-                testPushReturnsError(git, student1.getLogin(), USER_PASSWORD, projectKey, instructorRepoSlug, FORBIDDEN);
+            try (Git git = cloneRepository(instructor1.getLogin(), projectKey, instructorRepoSlug)) {
+                testFetchReturnsForbidden(git, student1.getLogin(), projectKey, instructorRepoSlug);
+                testPushReturnsForbidden(git, student1.getLogin(), projectKey, instructorRepoSlug);
             }
 
             // TAs should be able to fetch but NOT push to instructor's repository
-            try (Git git = cloneRepository(instructor1.getLogin(), USER_PASSWORD, projectKey, instructorRepoSlug)) {
-                testFetchSuccessful(git, tutor1.getLogin(), USER_PASSWORD, projectKey, instructorRepoSlug);
-                testPushReturnsError(git, tutor1.getLogin(), USER_PASSWORD, projectKey, instructorRepoSlug, FORBIDDEN);
+            try (Git git = cloneRepository(instructor1.getLogin(), projectKey, instructorRepoSlug)) {
+                testFetchSuccessful(git, tutor1.getLogin(), projectKey, instructorRepoSlug);
+                testPushReturnsForbidden(git, tutor1.getLogin(), projectKey, instructorRepoSlug);
             }
 
             // Instructor (owner) should be able to fetch and push
-            try (Git git = cloneRepository(instructor1.getLogin(), USER_PASSWORD, projectKey, instructorRepoSlug)) {
-                testFetchSuccessful(git, instructor1.getLogin(), USER_PASSWORD, projectKey, instructorRepoSlug);
+            try (Git git = cloneRepository(instructor1.getLogin(), projectKey, instructorRepoSlug)) {
+                testFetchSuccessful(git, instructor1.getLogin(), projectKey, instructorRepoSlug);
                 commitFile(git, "instructor-work.txt");
-                testPushSuccessful(git, instructor1.getLogin(), USER_PASSWORD, projectKey, instructorRepoSlug);
+                testPushSuccessful(git, instructor1.getLogin(), projectKey, instructorRepoSlug);
             }
         }
     }
@@ -952,7 +884,6 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
     @Nested
     class PracticeRepositoryTests {
 
-        @Disabled("Practice repositories require manual repository creation which cannot be done via REST API")
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void testFetchPush_studentPracticeRepository() throws Exception {
@@ -963,44 +894,45 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
 
             String projectKey = exercise.getProjectKey();
 
-            // Create practice participation for student1
-            ProgrammingExerciseStudentParticipation practiceParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, student1.getLogin());
-            practiceParticipation.setPracticeMode(true);
-            programmingExerciseStudentParticipationRepository.save(practiceParticipation);
+            // Create practice participation for student1 via REST API
+            userUtilService.changeUser(TEST_PREFIX + "student1");
+            mockDockerClientForStudentBuild();
+            StudentParticipation practiceParticipation = request.postWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations/practice", null,
+                    StudentParticipation.class, HttpStatus.CREATED);
+            assertThat(practiceParticipation.isPracticeMode()).isTrue();
 
-            String practiceRepoSlug = projectKey.toLowerCase() + "-" + student1.getLogin();
+            String practiceRepoSlug = projectKey.toLowerCase() + "-practice-" + student1.getLogin();
 
-            // Mock Docker for build execution
+            // Mock Docker for additional builds
             mockDockerClientForStudentBuild();
 
             // Student1 (owner) should be able to fetch and push to their practice repository
-            try (Git git = cloneRepository(student1.getLogin(), USER_PASSWORD, projectKey, practiceRepoSlug)) {
-                testFetchSuccessful(git, student1.getLogin(), USER_PASSWORD, projectKey, practiceRepoSlug);
+            try (Git git = cloneRepository(student1.getLogin(), projectKey, practiceRepoSlug)) {
+                testFetchSuccessful(git, student1.getLogin(), projectKey, practiceRepoSlug);
                 commitFile(git, "practice-work.txt");
-                testPushSuccessful(git, student1.getLogin(), USER_PASSWORD, projectKey, practiceRepoSlug);
+                testPushSuccessful(git, student1.getLogin(), projectKey, practiceRepoSlug);
             }
 
             // Student2 should NOT be able to access student1's practice repository
-            try (Git git = cloneRepository(student1.getLogin(), USER_PASSWORD, projectKey, practiceRepoSlug)) {
-                testFetchReturnsError(git, student2.getLogin(), USER_PASSWORD, projectKey, practiceRepoSlug, FORBIDDEN);
-                testPushReturnsError(git, student2.getLogin(), USER_PASSWORD, projectKey, practiceRepoSlug, FORBIDDEN);
+            try (Git git = cloneRepository(student1.getLogin(), projectKey, practiceRepoSlug)) {
+                testFetchReturnsForbidden(git, student2.getLogin(), projectKey, practiceRepoSlug);
+                testPushReturnsForbidden(git, student2.getLogin(), projectKey, practiceRepoSlug);
             }
 
             // TAs should be able to fetch but NOT push
-            try (Git git = cloneRepository(student1.getLogin(), USER_PASSWORD, projectKey, practiceRepoSlug)) {
-                testFetchSuccessful(git, tutor1.getLogin(), USER_PASSWORD, projectKey, practiceRepoSlug);
-                testPushReturnsError(git, tutor1.getLogin(), USER_PASSWORD, projectKey, practiceRepoSlug, FORBIDDEN);
+            try (Git git = cloneRepository(student1.getLogin(), projectKey, practiceRepoSlug)) {
+                testFetchSuccessful(git, tutor1.getLogin(), projectKey, practiceRepoSlug);
+                testPushReturnsForbidden(git, tutor1.getLogin(), projectKey, practiceRepoSlug);
             }
 
             // Instructors should be able to fetch and push
-            try (Git git = cloneRepository(student1.getLogin(), USER_PASSWORD, projectKey, practiceRepoSlug)) {
-                testFetchSuccessful(git, instructor1.getLogin(), USER_PASSWORD, projectKey, practiceRepoSlug);
+            try (Git git = cloneRepository(student1.getLogin(), projectKey, practiceRepoSlug)) {
+                testFetchSuccessful(git, instructor1.getLogin(), projectKey, practiceRepoSlug);
                 commitFile(git, "instructor-feedback.txt");
-                testPushSuccessful(git, instructor1.getLogin(), USER_PASSWORD, projectKey, practiceRepoSlug);
+                testPushSuccessful(git, instructor1.getLogin(), projectKey, practiceRepoSlug);
             }
         }
 
-        @Disabled("Practice repositories require manual repository creation which cannot be done via REST API")
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void testFetchPush_teachingAssistantPracticeRepository() throws Exception {
@@ -1011,38 +943,39 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
 
             String projectKey = exercise.getProjectKey();
 
-            // Create practice participation for tutor1
-            ProgrammingExerciseStudentParticipation practiceParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, tutor1.getLogin());
-            practiceParticipation.setPracticeMode(true);
-            programmingExerciseStudentParticipationRepository.save(practiceParticipation);
+            // Create practice participation for tutor1 via REST API
+            userUtilService.changeUser(TEST_PREFIX + "tutor1");
+            mockDockerClientForStudentBuild();
+            StudentParticipation practiceParticipation = request.postWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations/practice", null,
+                    StudentParticipation.class, HttpStatus.CREATED);
+            assertThat(practiceParticipation.isPracticeMode()).isTrue();
 
-            String practiceRepoSlug = projectKey.toLowerCase() + "-" + tutor1.getLogin();
+            String practiceRepoSlug = projectKey.toLowerCase() + "-practice-" + tutor1.getLogin();
 
-            // Mock Docker for build execution
+            // Mock Docker for additional builds
             mockDockerClientForStudentBuild();
 
             // Students should NOT be able to access TA's practice repository
-            try (Git git = cloneRepository(tutor1.getLogin(), USER_PASSWORD, projectKey, practiceRepoSlug)) {
-                testFetchReturnsError(git, student1.getLogin(), USER_PASSWORD, projectKey, practiceRepoSlug, FORBIDDEN);
-                testPushReturnsError(git, student1.getLogin(), USER_PASSWORD, projectKey, practiceRepoSlug, FORBIDDEN);
+            try (Git git = cloneRepository(tutor1.getLogin(), projectKey, practiceRepoSlug)) {
+                testFetchReturnsForbidden(git, student1.getLogin(), projectKey, practiceRepoSlug);
+                testPushReturnsForbidden(git, student1.getLogin(), projectKey, practiceRepoSlug);
             }
 
             // TA (owner) should be able to fetch and push
-            try (Git git = cloneRepository(tutor1.getLogin(), USER_PASSWORD, projectKey, practiceRepoSlug)) {
-                testFetchSuccessful(git, tutor1.getLogin(), USER_PASSWORD, projectKey, practiceRepoSlug);
+            try (Git git = cloneRepository(tutor1.getLogin(), projectKey, practiceRepoSlug)) {
+                testFetchSuccessful(git, tutor1.getLogin(), projectKey, practiceRepoSlug);
                 commitFile(git, "ta-practice-work.txt");
-                testPushSuccessful(git, tutor1.getLogin(), USER_PASSWORD, projectKey, practiceRepoSlug);
+                testPushSuccessful(git, tutor1.getLogin(), projectKey, practiceRepoSlug);
             }
 
             // Instructors should be able to fetch and push
-            try (Git git = cloneRepository(tutor1.getLogin(), USER_PASSWORD, projectKey, practiceRepoSlug)) {
-                testFetchSuccessful(git, instructor1.getLogin(), USER_PASSWORD, projectKey, practiceRepoSlug);
+            try (Git git = cloneRepository(tutor1.getLogin(), projectKey, practiceRepoSlug)) {
+                testFetchSuccessful(git, instructor1.getLogin(), projectKey, practiceRepoSlug);
                 commitFile(git, "instructor-feedback.txt");
-                testPushSuccessful(git, instructor1.getLogin(), USER_PASSWORD, projectKey, practiceRepoSlug);
+                testPushSuccessful(git, instructor1.getLogin(), projectKey, practiceRepoSlug);
             }
         }
 
-        @Disabled("Practice repositories require manual repository creation which cannot be done via REST API")
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void testFetchPush_instructorPracticeRepository() throws Exception {
@@ -1053,34 +986,35 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
 
             String projectKey = exercise.getProjectKey();
 
-            // Create practice participation for instructor1
-            ProgrammingExerciseStudentParticipation practiceParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise,
-                    instructor1.getLogin());
-            practiceParticipation.setPracticeMode(true);
-            programmingExerciseStudentParticipationRepository.save(practiceParticipation);
+            // Create practice participation for instructor1 via REST API
+            // Note: instructor1 is already the current user from @WithMockUser
+            mockDockerClientForStudentBuild();
+            StudentParticipation practiceParticipation = request.postWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations/practice", null,
+                    StudentParticipation.class, HttpStatus.CREATED);
+            assertThat(practiceParticipation.isPracticeMode()).isTrue();
 
-            String practiceRepoSlug = projectKey.toLowerCase() + "-" + instructor1.getLogin();
+            String practiceRepoSlug = projectKey.toLowerCase() + "-practice-" + instructor1.getLogin();
 
-            // Mock Docker for build execution
+            // Mock Docker for additional builds
             mockDockerClientForStudentBuild();
 
             // Students should NOT be able to access instructor's practice repository
-            try (Git git = cloneRepository(instructor1.getLogin(), USER_PASSWORD, projectKey, practiceRepoSlug)) {
-                testFetchReturnsError(git, student1.getLogin(), USER_PASSWORD, projectKey, practiceRepoSlug, FORBIDDEN);
-                testPushReturnsError(git, student1.getLogin(), USER_PASSWORD, projectKey, practiceRepoSlug, FORBIDDEN);
+            try (Git git = cloneRepository(instructor1.getLogin(), projectKey, practiceRepoSlug)) {
+                testFetchReturnsForbidden(git, student1.getLogin(), projectKey, practiceRepoSlug);
+                testPushReturnsForbidden(git, student1.getLogin(), projectKey, practiceRepoSlug);
             }
 
             // TAs should be able to fetch but NOT push
-            try (Git git = cloneRepository(instructor1.getLogin(), USER_PASSWORD, projectKey, practiceRepoSlug)) {
-                testFetchSuccessful(git, tutor1.getLogin(), USER_PASSWORD, projectKey, practiceRepoSlug);
-                testPushReturnsError(git, tutor1.getLogin(), USER_PASSWORD, projectKey, practiceRepoSlug, FORBIDDEN);
+            try (Git git = cloneRepository(instructor1.getLogin(), projectKey, practiceRepoSlug)) {
+                testFetchSuccessful(git, tutor1.getLogin(), projectKey, practiceRepoSlug);
+                testPushReturnsForbidden(git, tutor1.getLogin(), projectKey, practiceRepoSlug);
             }
 
             // Instructor (owner) should be able to fetch and push
-            try (Git git = cloneRepository(instructor1.getLogin(), USER_PASSWORD, projectKey, practiceRepoSlug)) {
-                testFetchSuccessful(git, instructor1.getLogin(), USER_PASSWORD, projectKey, practiceRepoSlug);
+            try (Git git = cloneRepository(instructor1.getLogin(), projectKey, practiceRepoSlug)) {
+                testFetchSuccessful(git, instructor1.getLogin(), projectKey, practiceRepoSlug);
                 commitFile(git, "instructor-practice-work.txt");
-                testPushSuccessful(git, instructor1.getLogin(), USER_PASSWORD, projectKey, practiceRepoSlug);
+                testPushSuccessful(git, instructor1.getLogin(), projectKey, practiceRepoSlug);
             }
         }
     }
@@ -1094,8 +1028,6 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
         private ProgrammingExercise examProgrammingExercise;
 
         private StudentExam studentExam1;
-
-        private StudentExam studentExam2;
 
         private String examProjectKey;
 
@@ -1114,6 +1046,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
         }
 
         @BeforeEach
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void setupExam() throws Exception {
             // Update course groups to match the user groups created by addUsers(TEST_PREFIX, ...)
             // This is required for exam tests where students must be in the course's student group
@@ -1138,27 +1071,27 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             examProgrammingExercise = createExamProgrammingExerciseViaApi(exerciseGroup);
             examProjectKey = examProgrammingExercise.getProjectKey();
 
-            // Create student exams
-            studentExam1 = examUtilService.addStudentExamWithUser(exam, student1);
-            studentExam1.setExercises(List.of(examProgrammingExercise));
-            studentExam1.setWorkingTime(exam.getWorkingTime());
+            // Register students as ExamUsers (required for generate-student-exams)
+            exam = examUtilService.registerUsersForExamAndSaveExam(exam, TEST_PREFIX, 2);
+
+            // Reload exam with exercise groups and exercises to ensure everything is properly loaded
+            exam = examRepository.findByIdWithExamUsersExerciseGroupsAndExercisesElseThrow(exam.getId());
+
+            // Generate student exams using the service directly (avoids REST API validation issues)
+            List<StudentExam> generatedExams = studentExamService.generateStudentExams(exam);
+
+            // Find student exams for student1 and student2
+            studentExam1 = generatedExams.stream().filter(se -> se.getUser().getLogin().equals(student1.getLogin())).findFirst().orElseThrow();
+            StudentExam studentExam2 = generatedExams.stream().filter(se -> se.getUser().getLogin().equals(student2.getLogin())).findFirst().orElseThrow();
+
+            // Set started date for the student exams (simulating that students have started the exam)
             studentExam1.setStartedAndStartDate(now.minusMinutes(30));
             studentExamRepository.save(studentExam1);
-
-            studentExam2 = examUtilService.addStudentExamWithUser(exam, student2);
-            studentExam2.setExercises(List.of(examProgrammingExercise));
-            studentExam2.setWorkingTime(exam.getWorkingTime());
             studentExam2.setStartedAndStartDate(now.minusMinutes(30));
             studentExamRepository.save(studentExam2);
 
-            // Start exercises to create student participation repositories
-            request.postWithoutLocation("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/student-exams/start-exercises", null, HttpStatus.OK, null);
-
-            // Wait for participations to be created
-            await().until(
-                    () -> programmingExerciseStudentParticipationRepository.findByExerciseIdAndStudentLogin(examProgrammingExercise.getId(), student1.getLogin()).isPresent());
-            await().until(
-                    () -> programmingExerciseStudentParticipationRepository.findByExerciseIdAndStudentLogin(examProgrammingExercise.getId(), student2.getLogin()).isPresent());
+            // Start exercises to create student participation repositories and wait for completion
+            ExamPrepareExercisesTestUtil.prepareExerciseStart(request, exam, course);
         }
 
         @Test
@@ -1167,33 +1100,32 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             String templateRepoSlug = examProjectKey.toLowerCase() + "-exercise";
 
             // Students should NOT be able to fetch or push
-            try (Git git = cloneRepository(instructor1.getLogin(), USER_PASSWORD, examProjectKey, templateRepoSlug)) {
-                testFetchReturnsError(git, student1.getLogin(), USER_PASSWORD, examProjectKey, templateRepoSlug, FORBIDDEN);
-                testPushReturnsError(git, student1.getLogin(), USER_PASSWORD, examProjectKey, templateRepoSlug, FORBIDDEN);
+            try (Git git = cloneRepository(instructor1.getLogin(), examProjectKey, templateRepoSlug)) {
+                testFetchReturnsForbidden(git, student1.getLogin(), examProjectKey, templateRepoSlug);
+                testPushReturnsForbidden(git, student1.getLogin(), examProjectKey, templateRepoSlug);
             }
 
             // Tutors should be able to fetch but NOT push
-            try (Git git = cloneRepository(instructor1.getLogin(), USER_PASSWORD, examProjectKey, templateRepoSlug)) {
-                testFetchSuccessful(git, tutor1.getLogin(), USER_PASSWORD, examProjectKey, templateRepoSlug);
-                testPushReturnsError(git, tutor1.getLogin(), USER_PASSWORD, examProjectKey, templateRepoSlug, FORBIDDEN);
+            try (Git git = cloneRepository(instructor1.getLogin(), examProjectKey, templateRepoSlug)) {
+                testFetchSuccessful(git, tutor1.getLogin(), examProjectKey, templateRepoSlug);
+                testPushReturnsForbidden(git, tutor1.getLogin(), examProjectKey, templateRepoSlug);
             }
 
             // Editors should be able to fetch and push
-            try (Git git = cloneRepository(instructor1.getLogin(), USER_PASSWORD, examProjectKey, templateRepoSlug)) {
-                testFetchSuccessful(git, editor1.getLogin(), USER_PASSWORD, examProjectKey, templateRepoSlug);
+            try (Git git = cloneRepository(instructor1.getLogin(), examProjectKey, templateRepoSlug)) {
+                testFetchSuccessful(git, editor1.getLogin(), examProjectKey, templateRepoSlug);
                 commitFile(git, "editor-exam-file.txt");
-                testPushSuccessful(git, editor1.getLogin(), USER_PASSWORD, examProjectKey, templateRepoSlug);
+                testPushSuccessful(git, editor1.getLogin(), examProjectKey, templateRepoSlug);
             }
 
             // Instructors should be able to fetch and push
-            try (Git git = cloneRepository(instructor1.getLogin(), USER_PASSWORD, examProjectKey, templateRepoSlug)) {
-                testFetchSuccessful(git, instructor1.getLogin(), USER_PASSWORD, examProjectKey, templateRepoSlug);
+            try (Git git = cloneRepository(instructor1.getLogin(), examProjectKey, templateRepoSlug)) {
+                testFetchSuccessful(git, instructor1.getLogin(), examProjectKey, templateRepoSlug);
                 commitFile(git, "instructor-exam-file.txt");
-                testPushSuccessful(git, instructor1.getLogin(), USER_PASSWORD, examProjectKey, templateRepoSlug);
+                testPushSuccessful(git, instructor1.getLogin(), examProjectKey, templateRepoSlug);
             }
         }
 
-        @Disabled("Exam student repository access requires complex setup that is difficult to achieve via REST API")
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void testFetchPush_examStudentRepository_duringWorkingTime() throws Exception {
@@ -1204,33 +1136,32 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             mockDockerClientForStudentBuild();
 
             // Student1 should be able to fetch and push during exam working time
-            try (Git git = cloneRepository(student1.getLogin(), USER_PASSWORD, examProjectKey, student1RepoSlug)) {
-                testFetchSuccessful(git, student1.getLogin(), USER_PASSWORD, examProjectKey, student1RepoSlug);
+            try (Git git = cloneRepository(student1.getLogin(), examProjectKey, student1RepoSlug)) {
+                testFetchSuccessful(git, student1.getLogin(), examProjectKey, student1RepoSlug);
                 commitFile(git, "exam-answer.txt");
-                testPushSuccessful(git, student1.getLogin(), USER_PASSWORD, examProjectKey, student1RepoSlug);
+                testPushSuccessful(git, student1.getLogin(), examProjectKey, student1RepoSlug);
             }
 
             // Student2 should NOT be able to access student1's repository
-            try (Git git = cloneRepository(student1.getLogin(), USER_PASSWORD, examProjectKey, student1RepoSlug)) {
-                testFetchReturnsError(git, student2.getLogin(), USER_PASSWORD, examProjectKey, student1RepoSlug, FORBIDDEN);
-                testPushReturnsError(git, student2.getLogin(), USER_PASSWORD, examProjectKey, student1RepoSlug, FORBIDDEN);
+            try (Git git = cloneRepository(student1.getLogin(), examProjectKey, student1RepoSlug)) {
+                testFetchReturnsForbidden(git, student2.getLogin(), examProjectKey, student1RepoSlug);
+                testPushReturnsForbidden(git, student2.getLogin(), examProjectKey, student1RepoSlug);
             }
 
             // Tutors should be able to fetch but NOT push
-            try (Git git = cloneRepository(student1.getLogin(), USER_PASSWORD, examProjectKey, student1RepoSlug)) {
-                testFetchSuccessful(git, tutor1.getLogin(), USER_PASSWORD, examProjectKey, student1RepoSlug);
-                testPushReturnsError(git, tutor1.getLogin(), USER_PASSWORD, examProjectKey, student1RepoSlug, FORBIDDEN);
+            try (Git git = cloneRepository(student1.getLogin(), examProjectKey, student1RepoSlug)) {
+                testFetchSuccessful(git, tutor1.getLogin(), examProjectKey, student1RepoSlug);
+                testPushReturnsForbidden(git, tutor1.getLogin(), examProjectKey, student1RepoSlug);
             }
 
             // Instructors should be able to fetch and push
-            try (Git git = cloneRepository(student1.getLogin(), USER_PASSWORD, examProjectKey, student1RepoSlug)) {
-                testFetchSuccessful(git, instructor1.getLogin(), USER_PASSWORD, examProjectKey, student1RepoSlug);
+            try (Git git = cloneRepository(student1.getLogin(), examProjectKey, student1RepoSlug)) {
+                testFetchSuccessful(git, instructor1.getLogin(), examProjectKey, student1RepoSlug);
                 commitFile(git, "instructor-exam-feedback.txt");
-                testPushSuccessful(git, instructor1.getLogin(), USER_PASSWORD, examProjectKey, student1RepoSlug);
+                testPushSuccessful(git, instructor1.getLogin(), examProjectKey, student1RepoSlug);
             }
         }
 
-        @Disabled("Exam student repository access requires complex setup that is difficult to achieve via REST API")
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void testFetchPush_examStudentRepository_twoStudents() throws Exception {
@@ -1242,33 +1173,32 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             mockDockerClientForStudentBuild();
 
             // Student1 can access their own exam repo
-            try (Git git = cloneRepository(student1.getLogin(), USER_PASSWORD, examProjectKey, student1RepoSlug)) {
-                testFetchSuccessful(git, student1.getLogin(), USER_PASSWORD, examProjectKey, student1RepoSlug);
+            try (Git git = cloneRepository(student1.getLogin(), examProjectKey, student1RepoSlug)) {
+                testFetchSuccessful(git, student1.getLogin(), examProjectKey, student1RepoSlug);
                 commitFile(git, "exam-work.txt");
-                testPushSuccessful(git, student1.getLogin(), USER_PASSWORD, examProjectKey, student1RepoSlug);
+                testPushSuccessful(git, student1.getLogin(), examProjectKey, student1RepoSlug);
             }
 
             // Student2 can access their own exam repo
-            try (Git git = cloneRepository(student2.getLogin(), USER_PASSWORD, examProjectKey, student2RepoSlug)) {
-                testFetchSuccessful(git, student2.getLogin(), USER_PASSWORD, examProjectKey, student2RepoSlug);
+            try (Git git = cloneRepository(student2.getLogin(), examProjectKey, student2RepoSlug)) {
+                testFetchSuccessful(git, student2.getLogin(), examProjectKey, student2RepoSlug);
                 commitFile(git, "exam-work.txt");
-                testPushSuccessful(git, student2.getLogin(), USER_PASSWORD, examProjectKey, student2RepoSlug);
+                testPushSuccessful(git, student2.getLogin(), examProjectKey, student2RepoSlug);
             }
 
             // Student1 cannot access student2's exam repo
-            try (Git git = cloneRepository(student2.getLogin(), USER_PASSWORD, examProjectKey, student2RepoSlug)) {
-                testFetchReturnsError(git, student1.getLogin(), USER_PASSWORD, examProjectKey, student2RepoSlug, FORBIDDEN);
-                testPushReturnsError(git, student1.getLogin(), USER_PASSWORD, examProjectKey, student2RepoSlug, FORBIDDEN);
+            try (Git git = cloneRepository(student2.getLogin(), examProjectKey, student2RepoSlug)) {
+                testFetchReturnsForbidden(git, student1.getLogin(), examProjectKey, student2RepoSlug);
+                testPushReturnsForbidden(git, student1.getLogin(), examProjectKey, student2RepoSlug);
             }
 
             // Student2 cannot access student1's exam repo
-            try (Git git = cloneRepository(student1.getLogin(), USER_PASSWORD, examProjectKey, student1RepoSlug)) {
-                testFetchReturnsError(git, student2.getLogin(), USER_PASSWORD, examProjectKey, student1RepoSlug, FORBIDDEN);
-                testPushReturnsError(git, student2.getLogin(), USER_PASSWORD, examProjectKey, student1RepoSlug, FORBIDDEN);
+            try (Git git = cloneRepository(student1.getLogin(), examProjectKey, student1RepoSlug)) {
+                testFetchReturnsForbidden(git, student2.getLogin(), examProjectKey, student1RepoSlug);
+                testPushReturnsForbidden(git, student2.getLogin(), examProjectKey, student1RepoSlug);
             }
         }
 
-        @Disabled("Exam student repository access requires complex setup that is difficult to achieve via REST API")
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void testFetchPush_examStudentRepository_afterExamEnd() throws Exception {
@@ -1285,26 +1215,25 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             String student1RepoSlug = examProjectKey.toLowerCase() + "-" + student1.getLogin();
 
             // Student1 should be able to fetch but NOT push after exam end
-            try (Git git = cloneRepository(student1.getLogin(), USER_PASSWORD, examProjectKey, student1RepoSlug)) {
-                testFetchSuccessful(git, student1.getLogin(), USER_PASSWORD, examProjectKey, student1RepoSlug);
-                testPushReturnsError(git, student1.getLogin(), USER_PASSWORD, examProjectKey, student1RepoSlug, FORBIDDEN);
+            try (Git git = cloneRepository(student1.getLogin(), examProjectKey, student1RepoSlug)) {
+                testFetchSuccessful(git, student1.getLogin(), examProjectKey, student1RepoSlug);
+                testPushReturnsForbidden(git, student1.getLogin(), examProjectKey, student1RepoSlug);
             }
 
             // Tutors should be able to fetch but NOT push
-            try (Git git = cloneRepository(student1.getLogin(), USER_PASSWORD, examProjectKey, student1RepoSlug)) {
-                testFetchSuccessful(git, tutor1.getLogin(), USER_PASSWORD, examProjectKey, student1RepoSlug);
-                testPushReturnsError(git, tutor1.getLogin(), USER_PASSWORD, examProjectKey, student1RepoSlug, FORBIDDEN);
+            try (Git git = cloneRepository(student1.getLogin(), examProjectKey, student1RepoSlug)) {
+                testFetchSuccessful(git, tutor1.getLogin(), examProjectKey, student1RepoSlug);
+                testPushReturnsForbidden(git, tutor1.getLogin(), examProjectKey, student1RepoSlug);
             }
 
             // Instructors should still be able to fetch and push
-            try (Git git = cloneRepository(student1.getLogin(), USER_PASSWORD, examProjectKey, student1RepoSlug)) {
-                testFetchSuccessful(git, instructor1.getLogin(), USER_PASSWORD, examProjectKey, student1RepoSlug);
+            try (Git git = cloneRepository(student1.getLogin(), examProjectKey, student1RepoSlug)) {
+                testFetchSuccessful(git, instructor1.getLogin(), examProjectKey, student1RepoSlug);
                 commitFile(git, "instructor-exam-feedback.txt");
-                testPushSuccessful(git, instructor1.getLogin(), USER_PASSWORD, examProjectKey, student1RepoSlug);
+                testPushSuccessful(git, instructor1.getLogin(), examProjectKey, student1RepoSlug);
             }
         }
 
-        @Disabled("Exam student repository access requires complex setup that is difficult to achieve via REST API")
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void testFetchPush_examStudentRepository_beforeExamStart() throws Exception {
@@ -1322,38 +1251,48 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             String student1RepoSlug = examProjectKey.toLowerCase() + "-" + student1.getLogin();
 
             // Student1 should NOT be able to fetch or push before exam starts
-            try (Git git = cloneRepository(instructor1.getLogin(), USER_PASSWORD, examProjectKey, student1RepoSlug)) {
-                testFetchReturnsError(git, student1.getLogin(), USER_PASSWORD, examProjectKey, student1RepoSlug, FORBIDDEN);
-                testPushReturnsError(git, student1.getLogin(), USER_PASSWORD, examProjectKey, student1RepoSlug, FORBIDDEN);
+            try (Git git = cloneRepository(instructor1.getLogin(), examProjectKey, student1RepoSlug)) {
+                testFetchReturnsForbidden(git, student1.getLogin(), examProjectKey, student1RepoSlug);
+                testPushReturnsForbidden(git, student1.getLogin(), examProjectKey, student1RepoSlug);
             }
 
             // Tutors should be able to fetch but NOT push
-            try (Git git = cloneRepository(instructor1.getLogin(), USER_PASSWORD, examProjectKey, student1RepoSlug)) {
-                testFetchSuccessful(git, tutor1.getLogin(), USER_PASSWORD, examProjectKey, student1RepoSlug);
-                testPushReturnsError(git, tutor1.getLogin(), USER_PASSWORD, examProjectKey, student1RepoSlug, FORBIDDEN);
+            try (Git git = cloneRepository(instructor1.getLogin(), examProjectKey, student1RepoSlug)) {
+                testFetchSuccessful(git, tutor1.getLogin(), examProjectKey, student1RepoSlug);
+                testPushReturnsForbidden(git, tutor1.getLogin(), examProjectKey, student1RepoSlug);
             }
 
             // Instructors should be able to fetch and push
-            try (Git git = cloneRepository(instructor1.getLogin(), USER_PASSWORD, examProjectKey, student1RepoSlug)) {
-                testFetchSuccessful(git, instructor1.getLogin(), USER_PASSWORD, examProjectKey, student1RepoSlug);
+            try (Git git = cloneRepository(instructor1.getLogin(), examProjectKey, student1RepoSlug)) {
+                testFetchSuccessful(git, instructor1.getLogin(), examProjectKey, student1RepoSlug);
                 commitFile(git, "instructor-setup.txt");
-                testPushSuccessful(git, instructor1.getLogin(), USER_PASSWORD, examProjectKey, student1RepoSlug);
+                testPushSuccessful(git, instructor1.getLogin(), examProjectKey, student1RepoSlug);
             }
         }
 
-        @Disabled("Exam student repository access requires complex setup that is difficult to achieve via REST API")
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void testFetchPush_examStudentRepository_duringGracePeriod() throws Exception {
-            // Set exam to be in grace period
+            // Set exam to be in grace period:
+            // - Exam started 2 hours ago
+            // - Exam official end time is 5 minutes ago (for students without extended time)
+            // - Grace period is 10 minutes (so grace period ends in 5 minutes)
+            // - Student has extended working time so their individual time is still ongoing
+            //
+            // For regular exams, individual end date = exam.startDate + workingTime
+            // To have the individual end be 5 min from now: workingTime = 2h + 5min = 125min = 7500sec
             ZonedDateTime now = ZonedDateTime.now();
-            exam.setStartDate(now.minusHours(2));
-            exam.setEndDate(now.minusMinutes(5)); // Exam ended 5 minutes ago
-            exam.setGracePeriod(600); // 10 minute grace period
+            exam.setStartDate(now.minusHours(2)); // Exam started 2 hours ago
+            exam.setEndDate(now.minusMinutes(5)); // Official end was 5 minutes ago
+            exam.setGracePeriod(600); // 10 minute grace period (grace period ends in 5 minutes)
             examRepository.save(exam);
 
-            // Update student exam - started but not submitted
-            studentExam1.setStartedAndStartDate(now.minusMinutes(90));
+            // Update student exam - student has extended working time
+            // For regular exams: individualEndDate = exam.startDate + workingTime
+            // exam.startDate = now - 2h, workingTime = 7500s (125 min)
+            // So individualEndDate = (now - 2h) + 125min = now + 5min (still ongoing)
+            studentExam1.setWorkingTime(7500); // 125 minutes (extends 5 minutes beyond now)
+            studentExam1.setStartedAndStartDate(now.minusHours(2)); // Started when exam started
             studentExam1.setSubmitted(false);
             studentExamRepository.save(studentExam1);
 
@@ -1363,28 +1302,27 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             // Mock Docker for CI execution
             mockDockerClientForStudentBuild();
 
-            // Student1 should be able to fetch and push during grace period
-            try (Git git = cloneRepository(student1.getLogin(), USER_PASSWORD, examProjectKey, student1RepoSlug)) {
-                testFetchSuccessful(git, student1.getLogin(), USER_PASSWORD, examProjectKey, student1RepoSlug);
+            // Student1 should be able to fetch and push while their individual working time is still ongoing
+            try (Git git = cloneRepository(student1.getLogin(), examProjectKey, student1RepoSlug)) {
+                testFetchSuccessful(git, student1.getLogin(), examProjectKey, student1RepoSlug);
                 commitFile(git, "last-minute-answer.txt");
-                testPushSuccessful(git, student1.getLogin(), USER_PASSWORD, examProjectKey, student1RepoSlug);
+                testPushSuccessful(git, student1.getLogin(), examProjectKey, student1RepoSlug);
             }
 
             // Tutors should be able to fetch but NOT push
-            try (Git git = cloneRepository(student1.getLogin(), USER_PASSWORD, examProjectKey, student1RepoSlug)) {
-                testFetchSuccessful(git, tutor1.getLogin(), USER_PASSWORD, examProjectKey, student1RepoSlug);
-                testPushReturnsError(git, tutor1.getLogin(), USER_PASSWORD, examProjectKey, student1RepoSlug, FORBIDDEN);
+            try (Git git = cloneRepository(student1.getLogin(), examProjectKey, student1RepoSlug)) {
+                testFetchSuccessful(git, tutor1.getLogin(), examProjectKey, student1RepoSlug);
+                testPushReturnsForbidden(git, tutor1.getLogin(), examProjectKey, student1RepoSlug);
             }
 
             // Instructors should be able to fetch and push
-            try (Git git = cloneRepository(student1.getLogin(), USER_PASSWORD, examProjectKey, student1RepoSlug)) {
-                testFetchSuccessful(git, instructor1.getLogin(), USER_PASSWORD, examProjectKey, student1RepoSlug);
+            try (Git git = cloneRepository(student1.getLogin(), examProjectKey, student1RepoSlug)) {
+                testFetchSuccessful(git, instructor1.getLogin(), examProjectKey, student1RepoSlug);
                 commitFile(git, "instructor-feedback.txt");
-                testPushSuccessful(git, instructor1.getLogin(), USER_PASSWORD, examProjectKey, student1RepoSlug);
+                testPushSuccessful(git, instructor1.getLogin(), examProjectKey, student1RepoSlug);
             }
         }
 
-        @Disabled("Exam student repository access requires complex setup that is difficult to achieve via REST API")
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void testFetchPush_examStudentRepository_afterGracePeriodEnds() throws Exception {
@@ -1404,26 +1342,25 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             String student1RepoSlug = examProjectKey.toLowerCase() + "-" + student1.getLogin();
 
             // Student1 should be able to fetch but NOT push after grace period ends
-            try (Git git = cloneRepository(student1.getLogin(), USER_PASSWORD, examProjectKey, student1RepoSlug)) {
-                testFetchSuccessful(git, student1.getLogin(), USER_PASSWORD, examProjectKey, student1RepoSlug);
-                testPushReturnsError(git, student1.getLogin(), USER_PASSWORD, examProjectKey, student1RepoSlug, FORBIDDEN);
+            try (Git git = cloneRepository(student1.getLogin(), examProjectKey, student1RepoSlug)) {
+                testFetchSuccessful(git, student1.getLogin(), examProjectKey, student1RepoSlug);
+                testPushReturnsForbidden(git, student1.getLogin(), examProjectKey, student1RepoSlug);
             }
 
             // Tutors should be able to fetch but NOT push
-            try (Git git = cloneRepository(student1.getLogin(), USER_PASSWORD, examProjectKey, student1RepoSlug)) {
-                testFetchSuccessful(git, tutor1.getLogin(), USER_PASSWORD, examProjectKey, student1RepoSlug);
-                testPushReturnsError(git, tutor1.getLogin(), USER_PASSWORD, examProjectKey, student1RepoSlug, FORBIDDEN);
+            try (Git git = cloneRepository(student1.getLogin(), examProjectKey, student1RepoSlug)) {
+                testFetchSuccessful(git, tutor1.getLogin(), examProjectKey, student1RepoSlug);
+                testPushReturnsForbidden(git, tutor1.getLogin(), examProjectKey, student1RepoSlug);
             }
 
             // Instructors should still be able to fetch and push
-            try (Git git = cloneRepository(instructor1.getLogin(), USER_PASSWORD, examProjectKey, student1RepoSlug)) {
-                testFetchSuccessful(git, instructor1.getLogin(), USER_PASSWORD, examProjectKey, student1RepoSlug);
+            try (Git git = cloneRepository(instructor1.getLogin(), examProjectKey, student1RepoSlug)) {
+                testFetchSuccessful(git, instructor1.getLogin(), examProjectKey, student1RepoSlug);
                 commitFile(git, "instructor-final-feedback.txt");
-                testPushSuccessful(git, instructor1.getLogin(), USER_PASSWORD, examProjectKey, student1RepoSlug);
+                testPushSuccessful(git, instructor1.getLogin(), examProjectKey, student1RepoSlug);
             }
         }
 
-        @Disabled("Exam test run repository access requires complex setup that is difficult to achieve via REST API")
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void testFetchPush_instructorExamTestRun() throws Exception {
@@ -1443,7 +1380,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             studentExamRepository.save(instructorTestRunExam);
 
             // Start the test run via conduction endpoint - this creates the participation and repository
-            request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/test-run/" + instructorTestRunExam.getId() + "/conduction", HttpStatus.OK,
+            request.get("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/test-run/" + instructorTestRunExam.getId() + "/conduction", HttpStatus.OK,
                     StudentExam.class);
 
             // Wait for participation to be created
@@ -1456,22 +1393,22 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             mockDockerClientForStudentBuild();
 
             // Students should NOT be able to access instructor's test run repository
-            try (Git git = cloneRepository(instructor1.getLogin(), USER_PASSWORD, examProjectKey, instructorRepoSlug)) {
-                testFetchReturnsError(git, student1.getLogin(), USER_PASSWORD, examProjectKey, instructorRepoSlug, FORBIDDEN);
-                testPushReturnsError(git, student1.getLogin(), USER_PASSWORD, examProjectKey, instructorRepoSlug, FORBIDDEN);
+            try (Git git = cloneRepository(instructor1.getLogin(), examProjectKey, instructorRepoSlug)) {
+                testFetchReturnsForbidden(git, student1.getLogin(), examProjectKey, instructorRepoSlug);
+                testPushReturnsForbidden(git, student1.getLogin(), examProjectKey, instructorRepoSlug);
             }
 
             // Tutors should be able to fetch but NOT push (not their participation)
-            try (Git git = cloneRepository(instructor1.getLogin(), USER_PASSWORD, examProjectKey, instructorRepoSlug)) {
-                testFetchSuccessful(git, tutor1.getLogin(), USER_PASSWORD, examProjectKey, instructorRepoSlug);
-                testPushReturnsError(git, tutor1.getLogin(), USER_PASSWORD, examProjectKey, instructorRepoSlug, FORBIDDEN);
+            try (Git git = cloneRepository(instructor1.getLogin(), examProjectKey, instructorRepoSlug)) {
+                testFetchSuccessful(git, tutor1.getLogin(), examProjectKey, instructorRepoSlug);
+                testPushReturnsForbidden(git, tutor1.getLogin(), examProjectKey, instructorRepoSlug);
             }
 
             // Instructor (owner of test run) should be able to fetch and push
-            try (Git git = cloneRepository(instructor1.getLogin(), USER_PASSWORD, examProjectKey, instructorRepoSlug)) {
-                testFetchSuccessful(git, instructor1.getLogin(), USER_PASSWORD, examProjectKey, instructorRepoSlug);
+            try (Git git = cloneRepository(instructor1.getLogin(), examProjectKey, instructorRepoSlug)) {
+                testFetchSuccessful(git, instructor1.getLogin(), examProjectKey, instructorRepoSlug);
                 commitFile(git, "test-run-answer.txt");
-                testPushSuccessful(git, instructor1.getLogin(), USER_PASSWORD, examProjectKey, instructorRepoSlug);
+                testPushSuccessful(git, instructor1.getLogin(), examProjectKey, instructorRepoSlug);
             }
         }
     }
