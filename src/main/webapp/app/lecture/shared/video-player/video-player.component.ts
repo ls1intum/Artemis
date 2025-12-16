@@ -2,19 +2,31 @@ import { AfterViewInit, Component, ElementRef, OnDestroy, input, signal, viewChi
 import { CommonModule } from '@angular/common';
 import { TranscriptViewerComponent } from '../transcript-viewer/transcript-viewer.component';
 import Hls from 'hls.js';
+import interact from 'interactjs';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faGripLinesVertical } from '@fortawesome/free-solid-svg-icons';
 
 import { TranscriptSegment } from 'app/lecture/shared/models/transcript-segment.model';
 
 @Component({
     selector: 'jhi-video-player',
     standalone: true,
-    imports: [CommonModule, TranscriptViewerComponent],
+    imports: [CommonModule, TranscriptViewerComponent, FaIconComponent],
     templateUrl: './video-player.component.html',
     styleUrls: ['./video-player.component.scss'],
 })
 export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
     /** Reference to the <video> element in the template */
     videoRef = viewChild<ElementRef<HTMLVideoElement>>('videoRef');
+
+    /** Reference to the video wrapper container */
+    videoWrapper = viewChild<ElementRef<HTMLDivElement>>('videoWrapper');
+
+    /** Reference to the video column for resizing */
+    videoColumn = viewChild<ElementRef<HTMLDivElement>>('videoColumn');
+
+    /** Reference to the resizer handle */
+    resizerHandle = viewChild<ElementRef<HTMLDivElement>>('resizerHandle');
 
     /** The URL of the video to play (required input) */
     videoUrl = input<string | undefined>();
@@ -33,6 +45,21 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
 
     /** Store reference to timeupdate handler for cleanup */
     private timeupdateHandler: (() => void) | undefined = undefined;
+
+    /** FontAwesome icon for the resizer grip */
+    faGripLinesVertical = faGripLinesVertical;
+
+    /** Interact.js instance for cleanup */
+    private interactInstance: ReturnType<typeof interact> | undefined = undefined;
+
+    /** Store reference to window resize handler for cleanup */
+    private resizeHandler: (() => void) | undefined = undefined;
+
+    /** ResizeObserver for syncing transcript height with video column */
+    private resizeObserver: ResizeObserver | undefined = undefined;
+
+    /** Minimum height for the transcript column */
+    private readonly MIN_TRANSCRIPT_HEIGHT = 500;
 
     ngAfterViewInit(): void {
         const elRef = this.videoRef();
@@ -79,6 +106,78 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
             this.updateCurrentSegment(videoElement.currentTime);
         };
         videoElement.addEventListener('timeupdate', this.timeupdateHandler);
+
+        // Initialize resizable panel
+        this.initializeResizer();
+    }
+
+    /**
+     * Initializes the interact.js resizer for dragging the divider between video and transcript.
+     */
+    private initializeResizer(): void {
+        const videoColumnEl = this.videoColumn()?.nativeElement;
+        const wrapperEl = this.videoWrapper()?.nativeElement;
+        const resizerEl = this.resizerHandle()?.nativeElement;
+
+        if (!videoColumnEl || !wrapperEl || !resizerEl) {
+            return;
+        }
+
+        this.interactInstance = interact(resizerEl).draggable({
+            listeners: {
+                move: (event) => {
+                    const wrapperRect = wrapperEl.getBoundingClientRect();
+                    const minWidth = 300;
+                    const maxWidth = wrapperRect.width - 250; // Leave space for transcript
+
+                    // Calculate new width based on drag position
+                    const newWidth = event.clientX - wrapperRect.left;
+                    const clampedWidth = Math.max(minWidth, Math.min(maxWidth, newWidth));
+
+                    // Set video column width and disable flex
+                    videoColumnEl.style.flex = 'none';
+                    videoColumnEl.style.width = `${clampedWidth}px`;
+                    // ResizeObserver will automatically sync transcript height
+                },
+            },
+            cursorChecker: () => 'col-resize',
+        });
+
+        // Reset to default flex layout on window resize to prevent overflow
+        this.resizeHandler = () => {
+            videoColumnEl.style.flex = '';
+            videoColumnEl.style.width = '';
+            // ResizeObserver will automatically sync transcript height
+        };
+        window.addEventListener('resize', this.resizeHandler);
+
+        // Use ResizeObserver to reliably sync transcript height whenever video column size changes
+        this.resizeObserver = new ResizeObserver(() => {
+            this.syncTranscriptHeight();
+        });
+        this.resizeObserver.observe(videoColumnEl);
+    }
+
+    /**
+     * Syncs the transcript column's max-height to match the video column's height.
+     * Ensures the transcript is at least MIN_TRANSCRIPT_HEIGHT pixels tall.
+     */
+    private syncTranscriptHeight(): void {
+        const videoColumnEl = this.videoColumn()?.nativeElement;
+        const wrapperEl = this.videoWrapper()?.nativeElement;
+
+        if (!videoColumnEl || !wrapperEl) {
+            return;
+        }
+
+        const transcriptColumnEl = wrapperEl.querySelector('.transcript-column') as HTMLElement | null;
+        if (!transcriptColumnEl) {
+            return;
+        }
+
+        const videoHeight = videoColumnEl.offsetHeight;
+        const targetHeight = Math.max(videoHeight, this.MIN_TRANSCRIPT_HEIGHT);
+        transcriptColumnEl.style.maxHeight = `${targetHeight}px`;
     }
 
     /** Seek the video to the given time and resume playback. */
@@ -128,6 +227,24 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
         if (this.hls) {
             this.hls.destroy();
             this.hls = undefined;
+        }
+
+        // Clean up interact instance
+        if (this.interactInstance) {
+            this.interactInstance.unset();
+            this.interactInstance = undefined;
+        }
+
+        // Clean up window resize listener
+        if (this.resizeHandler) {
+            window.removeEventListener('resize', this.resizeHandler);
+            this.resizeHandler = undefined;
+        }
+
+        // Clean up ResizeObserver
+        if (this.resizeObserver) {
+            this.resizeObserver.disconnect();
+            this.resizeObserver = undefined;
         }
     }
 }

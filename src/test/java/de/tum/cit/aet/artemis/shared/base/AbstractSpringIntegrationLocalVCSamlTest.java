@@ -14,10 +14,13 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
+import java.io.IOException;
+import java.net.ServerSocket;
 import java.nio.file.Path;
 import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.parallel.ResourceLock;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +28,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.saml2.provider.service.registration.RelyingPartyRegistrationRepository;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
@@ -38,8 +43,31 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
 @ActiveProfiles({ SPRING_PROFILE_TEST, PROFILE_ARTEMIS, PROFILE_CORE, PROFILE_LOCALVC, PROFILE_LOCALCI, PROFILE_SAML2, PROFILE_SCHEDULING, PROFILE_LTI, "local" })
 @TestPropertySource(properties = { ATLAS_ENABLED_PROPERTY_NAME + "=false", "artemis.user-management.use-external=false",
-        "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_localvc_saml", "artemis.version-control.ssh-port=1237" })
+        "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_localvc_saml" })
 public abstract class AbstractSpringIntegrationLocalVCSamlTest extends AbstractArtemisIntegrationTest {
+
+    private static int sshPort;
+
+    @BeforeAll
+    static void initPorts() {
+        sshPort = findAvailableTcpPort();
+    }
+
+    @DynamicPropertySource
+    static void registerDynamicProperties(DynamicPropertyRegistry registry) {
+        registry.add("artemis.version-control.ssh-port", () -> sshPort);
+        registry.add("artemis.version-control.ssh-template-clone-url", () -> "ssh://git@localhost:" + sshPort + "/");
+    }
+
+    private static int findAvailableTcpPort() {
+        try (ServerSocket socket = new ServerSocket(0)) {
+            socket.setReuseAddress(true);
+            return socket.getLocalPort();
+        }
+        catch (IOException e) {
+            throw new IllegalStateException("Could not find an available TCP port", e);
+        }
+    }
 
     @Autowired
     protected PasswordService passwordService;
