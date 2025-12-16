@@ -10,6 +10,7 @@ import { WebsocketService } from 'app/shared/service/websocket.service';
 import dayjs from 'dayjs/esm';
 import { cloneDeep } from 'lodash-es';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 
 /**
  * Websocket destination for user-specific participation results.
@@ -133,7 +134,12 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      * @returns A pipeable operator for handling incoming results
      */
     private getNotifyAllSubscribersPipe = () => {
-        return pipe(tap(this.notifyResultSubscribers), switchMap(this.getParticipationForResult), tap(this.notifyParticipationSubscribers));
+        return pipe(
+            tap(this.notifyResultSubscribers),
+            tap(this.updateCachedParticipationWithResult),
+            switchMap(this.getParticipationForResult),
+            tap(this.notifyParticipationSubscribers),
+        );
     };
 
     /**
@@ -315,6 +321,43 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
             }
         }
     }
+
+    private updateCachedParticipationWithResult = (result: Result): void => {
+        const participationId = result.submission?.participation?.id;
+        if (!participationId) {
+            return;
+        }
+
+        const cachedParticipation = this.cachedParticipations.get(participationId);
+        if (!cachedParticipation) {
+            // we don't know this participation yet, hence nothing to update.
+            return;
+        }
+        const submissions = cachedParticipation.submissions ?? [];
+
+        const updatedSubmissions: Submission[] = submissions.map((submission) => {
+            if (submission.id !== result.submission!.id) {
+                return submission;
+            }
+
+            const oldResults = submission.results ?? [];
+            const withoutSameId = oldResults.filter((r) => r.id !== result.id);
+            const newResults = [...withoutSameId, result];
+            const updatedSubmission: Submission = {
+                ...submission,
+                results: newResults,
+            };
+
+            return updatedSubmission;
+        });
+
+        const updatedParticipation: StudentParticipation = {
+            ...cachedParticipation,
+            submissions: updatedSubmissions,
+        };
+
+        this.cachedParticipations.set(participationId, updatedParticipation);
+    };
 
     /**
      * Notifies the result and participation subscribers with the newest result.

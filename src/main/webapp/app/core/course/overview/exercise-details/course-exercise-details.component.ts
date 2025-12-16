@@ -339,6 +339,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                 this.logDebug('[CourseExerciseDetails] participation changed event', {
                     participationId: changedParticipation?.id,
                     exerciseId: changedParticipation?.exercise?.id,
+                    otherStuff: changedParticipation?.submissions![changedParticipation?.submissions?.length! - 1],
                 });
 
                 if (changedParticipation && this.exercise && changedParticipation.exercise?.id === this.exercise.id) {
