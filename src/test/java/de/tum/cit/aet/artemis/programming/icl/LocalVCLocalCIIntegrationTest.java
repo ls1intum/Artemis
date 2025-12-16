@@ -11,7 +11,6 @@ import static org.assertj.core.groups.Tuple.tuple;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 
 import java.io.IOException;
@@ -319,7 +318,9 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
 
         localVCLocalCITestService.commitFile(auxiliaryRepository.workingCopyGitRepoFile.toPath(), auxiliaryRepository.workingCopyGitRepo);
 
-        doReturn(ObjectId.fromString(DUMMY_COMMIT_HASH_VALID)).when(gitService).getLastCommitHash(eq(programmingExercise.getVcsTestRepositoryUri()));
+        // Get the real commit hash from the seeded test repository instead of mocking
+        ObjectId testRepositoryCommitHash = gitService.getLastCommitHash(programmingExercise.getVcsTestRepositoryUri());
+        assertThat(testRepositoryCommitHash).as("Test repository should have at least one commit").isNotNull();
 
         // Mock dockerClient.copyArchiveFromContainerCmd() such that it returns the XMLs containing the test results.
         // Mock the results for the solution repository build and for the template repository build that will both be triggered as a result of updating the tests.
@@ -331,8 +332,8 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
         localVCLocalCITestService.testPushSuccessful(auxiliaryRepository.workingCopyGitRepo, instructor1Login, projectKey1, auxiliaryRepositorySlug);
 
         // Solution submissions created as a result from a push to the auxiliary repository should contain the last commit of the test repository.
-        localVCLocalCITestService.testLatestSubmission(solutionParticipation.getId(), DUMMY_COMMIT_HASH_VALID, 13, false);
-        localVCLocalCITestService.testLatestSubmission(templateParticipation.getId(), DUMMY_COMMIT_HASH_VALID, 0, false);
+        localVCLocalCITestService.testLatestSubmission(solutionParticipation.getId(), testRepositoryCommitHash.name(), 13, false);
+        localVCLocalCITestService.testLatestSubmission(templateParticipation.getId(), testRepositoryCommitHash.name(), 0, false);
 
         await().until(() -> {
             Optional<BuildJob> buildJobOptional = buildJobRepository.findFirstByParticipationIdOrderByBuildStartDateDesc(templateParticipation.getId());
@@ -1112,6 +1113,8 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
         void setup() {
             queuedJobs.clear();
             sharedQueueProcessingService.removeListenerAndCancelScheduledFuture();
+            // Reset pause state to ensure clean state for each test
+            sharedQueueProcessingService.resetPauseState();
         }
 
         @AfterEach
@@ -1119,6 +1122,8 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
             queuedJobs.clear();
             log.info("Clear queued jobs done");
 
+            // Reset pause state and init to activate queue listener again
+            sharedQueueProcessingService.resetPauseState();
             sharedQueueProcessingService.init();
             log.info("Cleanup queue processing service done");
         }
