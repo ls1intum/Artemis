@@ -68,7 +68,7 @@ After completing the server setup, proceed with setting up the Artemis client by
 
 
 Setup on Artemis Test Server with Helios
------------------------------
+----------------------------------------
 
 Helios is an application that provides a well-designed UI for deploying various services the AET is building using GitHub Actions.
 You can use Helios to deploy an Artemis test server without needing to set up the server and client manually.

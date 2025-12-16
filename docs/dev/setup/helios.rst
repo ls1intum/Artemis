@@ -1,7 +1,7 @@
 .. _setup-with-helios:
 
 Server and Client Setup with Helios
---------------------------------
+-----------------------------------
 
 Helios acts as UI over GitHub actions and allows a straightforward and quick setup of the Artemis server and client on test servers.
 
@@ -19,7 +19,7 @@ Once you have fulfilled the prerequisites, follow these steps to set up Artemis 
 Once the deployment is successful, Helios will provide you with the URL to access the Artemis application on the selected test server. 
 You can now log in using your TUM credentials.
 
-You can check out the configurations of the test servers on the :ref:`GitHub Deployment <_testservers>` page.
+You can check out the configurations of the test servers on the :ref:`GitHub Deployment <testservers>` page.
 
 **Note 1**: While deploying and shortly after you will have a lock on the selected test server. Eventually, the lock will expire and make the resource available for other Helios users.
 
