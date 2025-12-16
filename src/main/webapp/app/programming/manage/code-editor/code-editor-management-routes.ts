@@ -1,9 +1,9 @@
 import { Routes } from '@angular/router';
 
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
-import { Authority } from 'app/shared/constants/authority.constants';
+import { IS_AT_LEAST_EDITOR } from 'app/shared/constants/authority.constants';
 
-export const routes: Routes = [
+export const codeEditorManagementRoutes: Routes = [
     {
         path: 'ide/test',
         loadComponent: () =>
@@ -11,7 +11,7 @@ export const routes: Routes = [
                 (m) => m.CodeEditorInstructorAndEditorContainerComponent,
             ),
         data: {
-            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_EDITOR,
             pageTitle: 'artemisApp.editor.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -23,7 +23,7 @@ export const routes: Routes = [
                 (m) => m.CodeEditorInstructorAndEditorContainerComponent,
             ),
         data: {
-            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_EDITOR,
             pageTitle: 'artemisApp.editor.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -35,7 +35,7 @@ export const routes: Routes = [
                 (m) => m.CodeEditorInstructorAndEditorContainerComponent,
             ),
         data: {
-            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: IS_AT_LEAST_EDITOR,
             pageTitle: 'artemisApp.editor.home.title',
         },
         canActivate: [UserRouteAccessService],

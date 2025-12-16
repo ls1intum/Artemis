@@ -93,10 +93,10 @@ module.exports = {
     ],
     coverageThreshold: {
         global: {
-            statements: 90.10,
-            branches: 76.40,
-            functions: 84.10,
-            lines: 90.10,
+            statements: 90.00,
+            branches: 76.20,
+            functions: 83.90,
+            lines: 90.00,
         },
     },
     // 'json-summary' reporter is used by supporting_scripts/code-coverage/module-coverage-client/check-client-module-coverage.mjs

@@ -10,6 +10,7 @@ import React from 'react';
  * @param {ImageSize} [props.size] - The size of the image (default: medium).
  * @param {object} [props.style] - Optional style object to merge with default styles.
  * @param {object} [props.style] - Optional style object to merge with default styles.
+ * @param {string} [props.caption] - Optional caption that is displayed below the image..
  * @returns {React.ReactElement} The rendered image component.
  */
 const Image = ({
@@ -18,6 +19,7 @@ const Image = ({
                    size = ImageSize.medium,
                    style,
                    hideBorder,
+                   caption,
                    ...rest
                }: {
     src: string | {};
@@ -25,6 +27,7 @@ const Image = ({
     size?: ImageSize;
     style?: object;
     hideBorder?: boolean;
+    caption?: string;
 }): React.ReactElement => {
     const sizeStyles = {
         [ImageSize.small]: { maxWidth: '300px' },
@@ -32,26 +35,29 @@ const Image = ({
         [ImageSize.large]: { maxWidth: '100%' },
     };
 
-    const defaultStyles = {
+    const defaultImageStyles = {
         ...sizeStyles[size],
+        width: 'auto',
         height: 'auto',
+        objectFit: 'contain' as const,
         border: hideBorder ? 'none' : '1px solid var(--ifm-color-emphasis-300)',
         borderRadius: '8px',
-        margin: '1.5rem 0',
+        margin: '0',
         padding: '0.5rem', // Internal padding around the image
         display: 'block', // Prevents extra space below the image
+        imageRendering: '-webkit-optimize-contrast' as const, // Improves sharpness when scaling
+        backfaceVisibility: 'hidden' as const, // Prevents blurry rendering in some browsers
+        transform: 'translateZ(0)', // Forces GPU acceleration for sharper rendering
     };
 
     // Custom styles will override default styles if there's a conflict.
-    const combinedStyles = { ...defaultStyles, ...style };
+    const combinedImageStyles = { ...defaultImageStyles, ...style };
 
     return (
-        <img
-            src={src as string}
-            alt={alt}
-            style={combinedStyles}
-            {...rest}
-        />
+        <figure style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.125rem', margin: '1.5rem 0', width: 'fit-content' }}>
+            <img src={src as string} alt={alt} style={combinedImageStyles} />
+            {caption && <figcaption style={{ fontSize: '0.75rem', fontWeight: 'bold', textAlign: 'center' }}>{caption}</figcaption>}
+        </figure>
     );
 };
 

@@ -1,4 +1,4 @@
-import { Component, OnDestroy, effect, inject, signal } from '@angular/core';
+import { Component, OnDestroy, computed, effect, inject, signal } from '@angular/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { AccountService } from 'app/core/auth/account.service';
@@ -16,6 +16,9 @@ import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { CustomMaxLengthDirective } from 'app/shared/validators/custom-max-length-validator/custom-max-length-validator.directive';
 import { WebauthnService } from 'app/core/user/settings/passkey-settings/webauthn.service';
+import { BadgeModule } from 'primeng/badge';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { Authority } from 'app/shared/constants/authority.constants';
 
 export interface DisplayedPasskey extends PasskeyDTO {
     isEditingLabel?: boolean;
@@ -24,7 +27,18 @@ export interface DisplayedPasskey extends PasskeyDTO {
 
 @Component({
     selector: 'jhi-passkey-settings',
-    imports: [TranslateDirective, FaIconComponent, DeleteButtonDirective, ArtemisDatePipe, ButtonComponent, CommonModule, FormsModule, CustomMaxLengthDirective],
+    imports: [
+        TranslateDirective,
+        FaIconComponent,
+        DeleteButtonDirective,
+        ArtemisDatePipe,
+        ButtonComponent,
+        CommonModule,
+        FormsModule,
+        CustomMaxLengthDirective,
+        BadgeModule,
+        ArtemisTranslatePipe,
+    ],
     templateUrl: './passkey-settings.component.html',
     styleUrl: './passkey-settings.component.scss',
 })
@@ -54,6 +68,11 @@ export class PasskeySettingsComponent implements OnDestroy {
 
     currentUser = signal<User | undefined>(undefined);
 
+    isAdmin = computed(() => {
+        const user = this.currentUser();
+        return user?.authorities?.includes(Authority.ADMIN) ?? false;
+    });
+
     deleteMessage = '';
     isDeletingPasskey = false;
 
@@ -78,6 +97,14 @@ export class PasskeySettingsComponent implements OnDestroy {
 
     async updateRegisteredPasskeys(): Promise<void> {
         this.registeredPasskeys.set(await this.passkeySettingsApiService.getRegisteredPasskeys());
+
+        if (this.registeredPasskeys().length === 0) {
+            this.accountService.userIdentity.set({
+                ...this.accountService.userIdentity(),
+                askToSetupPasskey: true,
+                internal: this.accountService.userIdentity()?.internal ?? false,
+            });
+        }
     }
 
     private loadCurrentUser() {

@@ -17,6 +17,7 @@ import { provideHttpClient } from '@angular/common/http';
 import dayjs from 'dayjs/esm';
 import { ConversationDTO, ConversationType } from 'app/communication/shared/entities/conversation/conversation.model';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
+import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 
 describe('CourseOverviewService', () => {
     let courseOverviewService: CourseOverviewService;
@@ -189,33 +190,122 @@ describe('CourseOverviewService', () => {
         expect(groupedLectures['current'].entityData[0].title).toBe('Algorithms');
     });
 
-    it('should return undefined if lectures array is undefined', () => {
-        expect(courseOverviewService.getUpcomingLecture(undefined)).toBeUndefined();
+    describe('getUpcomingLecture', () => {
+        it('should return undefined if lectures array is undefined', () => {
+            expect(courseOverviewService.getUpcomingLecture(undefined)).toBeUndefined();
+        });
+
+        it('should return undefined if lectures array is empty', () => {
+            expect(courseOverviewService.getUpcomingLecture([])).toBeUndefined();
+        });
+
+        it('should handle all past lectures', () => {
+            const pastLectures: Lecture[] = [
+                { id: 1, title: 'Past Lecture 1', startDate: dayjs().subtract(2, 'day') },
+                { id: 2, title: 'Past Lecture 2', startDate: dayjs().subtract(1, 'day') },
+            ];
+            const upcomingLecture = courseOverviewService.getUpcomingLecture(pastLectures);
+
+            expect(upcomingLecture?.id).toBe(2);
+        });
+
+        it('should correctly identify the lecture furthest in the future', () => {
+            const lectures: Lecture[] = [
+                { id: 1, title: 'Past Lecture', startDate: dayjs().subtract(1, 'day') },
+                { id: 2, title: 'Upcoming Lecture', startDate: dayjs().add(1, 'day') },
+                { id: 3, title: 'Far Future Lecture', startDate: dayjs().add(2, 'weeks') },
+            ];
+            const upcomingLecture = courseOverviewService.getUpcomingLecture(lectures);
+
+            expect(upcomingLecture?.id).toBe(3);
+        });
     });
 
-    it('should return undefined if lectures array is empty', () => {
-        expect(courseOverviewService.getUpcomingLecture([])).toBeUndefined();
+    describe('getUpcomingTutorialGroup', () => {
+        it('should return undefined if tutorial groups are undefined', () => {
+            const result = courseOverviewService.getUpcomingTutorialGroup(undefined);
+            expect(result).toBeUndefined();
+        });
+
+        it('should return undefined if there are no future tutorial groups', () => {
+            const now = dayjs();
+            const futureTutorialGroups: TutorialGroup[] = [
+                { id: 1, nextSession: { start: now.subtract(1, 'day') } },
+                { id: 2, nextSession: { start: now.subtract(2, 'day') } },
+            ];
+            const result = courseOverviewService.getUpcomingTutorialGroup(futureTutorialGroups);
+            expect(result).toBeUndefined();
+        });
+
+        it('should return upcoming of tutorial groups', () => {
+            const now = dayjs();
+            const futureTutorialGroups: TutorialGroup[] = [
+                { id: 1, nextSession: { start: now.add(1, 'day') } },
+                { id: 2, nextSession: { start: now.add(2, 'day') } },
+            ];
+            const result = courseOverviewService.getUpcomingTutorialGroup(futureTutorialGroups);
+            expect(result?.id).toBe(1);
+        });
     });
 
-    it('should handle all past lectures', () => {
-        const pastLectures: Lecture[] = [
-            { id: 1, title: 'Past Lecture 1', startDate: dayjs().subtract(2, 'day') },
-            { id: 2, title: 'Past Lecture 2', startDate: dayjs().subtract(1, 'day') },
-        ];
-        const upcomingLecture = courseOverviewService.getUpcomingLecture(pastLectures);
-
-        expect(upcomingLecture?.id).toBe(2);
-    });
-
-    it('should correctly identify the lecture furthest in the future', () => {
+    it('should map lectures correctly to sidebar card elements', () => {
+        const translateService = TestBed.inject(TranslateService);
+        jest.spyOn(translateService, 'instant').mockReturnValue('No Date');
+        const firstLectureStart = dayjs('2025-01-01T00:00:00Z');
         const lectures: Lecture[] = [
-            { id: 1, title: 'Past Lecture', startDate: dayjs().subtract(1, 'day') },
-            { id: 2, title: 'Upcoming Lecture', startDate: dayjs().add(1, 'day') },
-            { id: 3, title: 'Far Future Lecture', startDate: dayjs().add(2, 'weeks') },
+            { id: 1, title: 'Lecture 1', startDate: dayjs('2025-01-01T00:00:00Z') },
+            { id: 2, title: 'Lecture 2' },
         ];
-        const upcomingLecture = courseOverviewService.getUpcomingLecture(lectures);
 
-        expect(upcomingLecture?.id).toBe(3);
+        const result = courseOverviewService.mapLecturesToSidebarCardElements(lectures);
+
+        expect(result).toEqual([
+            {
+                title: 'Lecture 1',
+                id: 1,
+                subtitleLeft: firstLectureStart.format('MMM DD, YYYY'),
+                size: 'M',
+                startDate: firstLectureStart,
+            },
+            {
+                title: 'Lecture 2',
+                id: 2,
+                subtitleLeft: 'No Date',
+                size: 'M',
+                startDate: undefined,
+            },
+        ]);
+    });
+
+    it('should map tutorial lectures correctly to sidebar card elements', () => {
+        const translateService = TestBed.inject(TranslateService);
+        jest.spyOn(translateService, 'instant').mockReturnValue('No Date');
+        const firstLectureStart = dayjs('2025-01-01T00:00:00Z');
+        const lectures: Lecture[] = [
+            { id: 1, title: 'Lecture 1', startDate: dayjs('2025-01-01T00:00:00Z'), isTutorialLecture: true },
+            { id: 2, title: 'Lecture 2', isTutorialLecture: true },
+        ];
+
+        const result = courseOverviewService.mapLecturesToSidebarCardElements(lectures);
+
+        expect(result).toEqual([
+            {
+                title: 'Lecture 1',
+                id: 1,
+                targetComponentSubRoute: 'tutorial-lectures',
+                subtitleLeft: firstLectureStart.format('MMM DD, YYYY'),
+                size: 'M',
+                startDate: firstLectureStart,
+            },
+            {
+                title: 'Lecture 2',
+                id: 2,
+                targetComponentSubRoute: 'tutorial-lectures',
+                subtitleLeft: 'No Date',
+                size: 'M',
+                startDate: undefined,
+            },
+        ]);
     });
 
     it('should group exercises by start date and map to sidebar card elements', () => {
@@ -601,6 +691,74 @@ describe('CourseOverviewService', () => {
 
             expect(result.attendanceChipColor).toBe(expectedColor);
             expect(result.attendanceText).toBe(`Ø ${(ratio * 100).toFixed(0)}%`);
+        });
+    });
+
+    describe('getCorrespondingExerciseGroupByDate with QuizExercise', () => {
+        let quizExercise: QuizExercise;
+
+        beforeEach(() => {
+            quizExercise = new QuizExercise(course, undefined);
+            quizExercise.title = 'Test Quiz';
+        });
+
+        it('should return "current" if the Release Date is today', () => {
+            quizExercise.releaseDate = dayjs();
+            quizExercise.dueDate = dayjs().add(5, 'days');
+            const result = courseOverviewService.getCorrespondingExerciseGroupByDate(quizExercise);
+            expect(result).toBe('current');
+        });
+
+        it('should return "current" if the Start Date is today', () => {
+            quizExercise.startDate = dayjs();
+            quizExercise.dueDate = dayjs().add(5, 'days');
+            const result = courseOverviewService.getCorrespondingExerciseGroupByDate(quizExercise);
+            expect(result).toBe('current');
+        });
+
+        it('should return "current" if the Due Date is today', () => {
+            quizExercise.releaseDate = dayjs().subtract(5, 'days');
+            quizExercise.dueDate = dayjs();
+            const result = courseOverviewService.getCorrespondingExerciseGroupByDate(quizExercise);
+            expect(result).toBe('current');
+        });
+
+        it('should return "current" if now is strictly between Release Date and Due Date', () => {
+            quizExercise.releaseDate = dayjs().subtract(1, 'day');
+            quizExercise.dueDate = dayjs().add(1, 'day');
+
+            const result = courseOverviewService.getCorrespondingExerciseGroupByDate(quizExercise);
+            expect(result).toBe('current');
+        });
+
+        it('should return "current" if now is strictly between Start Date and Due Date', () => {
+            quizExercise.startDate = dayjs().subtract(1, 'day');
+            quizExercise.dueDate = dayjs().add(1, 'day');
+
+            const result = courseOverviewService.getCorrespondingExerciseGroupByDate(quizExercise);
+            expect(result).toBe('current');
+        });
+
+        it('should fall back to "past" if the quiz is completely over (dates in past)', () => {
+            quizExercise.releaseDate = dayjs().subtract(5, 'days');
+            quizExercise.dueDate = dayjs().subtract(2, 'days');
+            const result = courseOverviewService.getCorrespondingExerciseGroupByDate(quizExercise);
+            expect(result).toBe('past');
+        });
+
+        it('should fall back to "future" if the quiz has not started (dates in future)', () => {
+            quizExercise.releaseDate = dayjs().add(5, 'days');
+            quizExercise.dueDate = dayjs().add(7, 'days');
+            const result = courseOverviewService.getCorrespondingExerciseGroupByDate(quizExercise);
+            expect(result).toBe('future');
+        });
+
+        it('should handle undefined dates gracefully', () => {
+            quizExercise.releaseDate = undefined;
+            quizExercise.startDate = undefined;
+            quizExercise.dueDate = undefined;
+            const result = courseOverviewService.getCorrespondingExerciseGroupByDate(quizExercise);
+            expect(result).toBe('noDate');
         });
     });
 });

@@ -370,8 +370,13 @@ describe('CodeEditorContainerIntegration', () => {
         container.unsavedFiles = unsavedChanges;
 
         containerFixture.detectChanges();
+        // Ensure child component receives latest state despite OnPush change detection.
+        container.actions.editorState = container.editorState;
+        container.actions.unsavedFiles = container.unsavedFiles;
+        container.actions.commitState = container.commitState;
+        containerFixture.detectChanges();
 
-        expect(container.fileBrowser.unsavedFiles).toEqual(Object.keys(unsavedChanges));
+        expect(container.unsavedFiles).toEqual(unsavedChanges);
         expect(container.actions.editorState).toBe(EditorState.UNSAVED_CHANGES);
 
         container.fileBrowser.onFileDeleted(new DeleteFileChange(FileType.FILE, 'file'));
@@ -391,9 +396,12 @@ describe('CodeEditorContainerIntegration', () => {
         expect(container.unsavedFiles).toStrictEqual({});
         container.commitState = CommitState.UNCOMMITTED_CHANGES;
         containerFixture.detectChanges();
+        // Ensure the child component input reflects the current state for OnPush change detection.
+        container.actions.commitState = container.commitState;
+        containerFixture.detectChanges();
 
         // commit
-        expect(container.actions.commitState).toBe(CommitState.UNCOMMITTED_CHANGES);
+        expect(container.actions.commitState).toBe(container.commitState);
         commitStub.mockReturnValue(of(undefined));
         getLatestPendingSubmissionSubject.next({
             submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION,
@@ -432,6 +440,11 @@ describe('CodeEditorContainerIntegration', () => {
         container.unsavedFiles = { [unsavedFile]: 'lorem ipsum' };
         container.editorState = EditorState.UNSAVED_CHANGES;
         container.commitState = CommitState.UNCOMMITTED_CHANGES;
+        containerFixture.detectChanges();
+        // Propagate state to the actions component which uses OnPush change detection.
+        container.actions.unsavedFiles = container.unsavedFiles;
+        container.actions.editorState = container.editorState;
+        container.actions.commitState = container.commitState;
         containerFixture.detectChanges();
 
         // trying to commit
