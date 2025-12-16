@@ -15,7 +15,6 @@ async function selectTaxonomy(page: Page, taxonomy: string) {
             const text = (option.textContent ?? '').trim();
             const lowerText = text.toLowerCase();
 
-            // Prefer exact match ignoring leading numeric prefixes like "2: " (label can be translated / differently cased).
             const normalized = lowerText.replace(/^\d+\s*:\s*/, '').trim();
             if (normalized === wanted || normalized.includes(wanted) || lowerText.includes(wanted)) {
                 return (option as HTMLOptionElement).value;
