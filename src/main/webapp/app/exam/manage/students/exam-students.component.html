@@ -283,5 +283,10 @@
     </jhi-data-table>
 </div>
 
-<jhi-students-room-distribution-dialog [courseId]="courseId" [exam]="exam" (onSave)="reloadExamWithRegisteredUsers()" #studentsRoomDistributionDialog />
-<jhi-students-reseating-dialog [courseId]="courseId" [exam]="exam" (onSave)="reloadExamWithRegisteredUsers()" #reseatingDialog />
+<jhi-students-room-distribution-dialog
+    [courseId]="courseId"
+    [exam]="exam"
+    (onSave)="reloadExamWithRegisteredUsers(); reseatingDialog.updateRoomsUsedInExam()"
+    #studentsRoomDistributionDialog
+/>
+<jhi-students-reseating-dialog [courseId]="courseId" [exam]="exam" (onSave)="reloadExamWithRegisteredUsers(); reseatingDialog.updateRoomsUsedInExam()" #reseatingDialog />

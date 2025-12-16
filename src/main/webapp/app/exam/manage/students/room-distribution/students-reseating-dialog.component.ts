@@ -38,7 +38,6 @@ import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.com
     imports: [FormsModule, TranslateDirective, FaIconComponent, NgbTypeaheadModule, ArtemisTranslatePipe, DialogModule, ButtonModule, HelpIconComponent],
 })
 export class StudentsReseatingDialogComponent implements OnInit {
-    // Icons
     protected readonly faBan = faBan;
     protected readonly faChair = faChair;
 
@@ -54,7 +53,7 @@ export class StudentsReseatingDialogComponent implements OnInit {
     selectedRoomNumber: WritableSignal<string> = signal('');
     private readonly selectedRoom: Signal<RoomForDistributionDTO | undefined> = computed(() => this.getRoomDTOFromSelectedRoomNumber());
     private readonly selectedRoomId: Signal<number | undefined> = computed(() => this.selectedRoom()?.id);
-    readonly selectedRoomIsPersisted: Signal<boolean> = computed(() => this.selectedRoomId() !== undefined);
+    readonly selectedRoomIsPersisted: Signal<boolean> = computed(() => this.selectedRoomId() !== undefined && this.selectedRoomId()! >= 0);
     private seatsOfSelectedRoom: WritableSignal<SeatsOfExamRoomDTO> = signal({ seats: [] });
     selectedSeat: WritableSignal<string> = signal('');
     readonly selectedSeatIsPersisted: Signal<boolean> = computed(() => this.selectedRoomIsPersisted() && this.seatsOfSelectedRoom().seats.includes(this.selectedSeat()));
@@ -81,9 +80,25 @@ export class StudentsReseatingDialogComponent implements OnInit {
     }
 
     ngOnInit(): void {
+        this.updateRoomsUsedInExam();
+    }
+
+    updateRoomsUsedInExam(): void {
         this.studentsRoomDistributionService.loadRoomsUsedInExam(this.courseId(), this.exam().id!).subscribe({
             next: (rooms: RoomForDistributionDTO[]) => {
                 this.roomsUsedInExam.set(rooms);
+
+                this.exam().examUsers?.forEach((examUser: ExamUser, index: number) => {
+                    if (examUser.plannedRoom && this.roomsUsedInExam().find((room) => room.roomNumber === examUser.plannedRoom) === undefined) {
+                        const unpersistedRoom: RoomForDistributionDTO = {
+                            id: -index - 1, // a negative id indicates that the room is not persisted
+                            roomNumber: examUser.plannedRoom,
+                            name: 'N/A',
+                            building: 'N/A',
+                        };
+                        this.roomsUsedInExam.update((currentRooms) => [...currentRooms, unpersistedRoom]);
+                    }
+                });
             },
             error: (_err) => {
                 this.roomsUsedInExam.set([]);

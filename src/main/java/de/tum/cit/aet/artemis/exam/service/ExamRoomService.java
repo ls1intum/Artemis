@@ -570,8 +570,15 @@ public class ExamRoomService {
         return examRoomRepository.findAllIdsOfCurrentExamRooms().containsAll(examRoomIds);
     }
 
-    public boolean isRoomPersisted(@NotBlank String roomNumber) {
-        return !examRoomRepository.findAllByRoomNumber(roomNumber).isEmpty();
+    /**
+     * Check whether the given room is persisted and connected to the given exam
+     *
+     * @param roomNumber The room number
+     * @param examId     The exam id
+     * @return {@code true} iff the room is persisted and connected to the exam
+     */
+    public boolean isRoomPersistedAndConnectedToExam(@NotBlank String roomNumber, long examId) {
+        return examRoomRepository.existsByRoomNumberAndIsConnectedToExam(roomNumber, examId);
     }
 
 }

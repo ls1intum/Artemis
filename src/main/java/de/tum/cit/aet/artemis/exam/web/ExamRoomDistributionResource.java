@@ -241,7 +241,7 @@ public class ExamRoomDistributionResource {
             throw new BadRequestAlertException("No room number was provided", ENTITY_NAME, "room.noRoomProvided");
         }
 
-        if (StringUtil.isBlank(reseatInformation.newSeat()) && !examRoomService.isRoomPersisted(reseatInformation.newRoom())) {
+        if (StringUtil.isBlank(reseatInformation.newSeat()) && !examRoomService.isRoomPersistedAndConnectedToExam(reseatInformation.newRoom(), examId)) {
             throw new BadRequestAlertException("Can't automatically determine seat of unpersisted room", ENTITY_NAME, "room.noAutomaticSeat");
         }
 
