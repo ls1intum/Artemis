@@ -13,7 +13,6 @@ import { SessionStorageService } from 'app/shared/service/session-storage.servic
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateService } from '@ngx-translate/core';
-import { Router } from '@angular/router';
 import { fakeAsync, tick } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { RoomForDistributionDTO } from 'app/exam/manage/students/room-distribution/students-room-distribution.model';
@@ -23,6 +22,8 @@ import { MockStudentsRoomDistributionService } from 'test/helpers/mocks/service/
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
+import { RouterTestingModule } from '@angular/router/testing';
+import { Router, UrlTree } from '@angular/router';
 
 function dispatchInputEvent(inputElement: HTMLInputElement, value: string) {
     inputElement.value = value;
@@ -33,6 +34,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
     let component: StudentsRoomDistributionDialogComponent;
     let fixture: ComponentFixture<StudentsRoomDistributionDialogComponent>;
     let service: StudentsRoomDistributionService | MockStudentsRoomDistributionService;
+    let router: Router;
 
     const course: Course = { id: 1 };
     const exam: Exam = { course, id: 2, title: 'Exam Title' };
@@ -44,24 +46,25 @@ describe('StudentsRoomDistributionDialogComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [FaIconComponent, FormsModule],
+            imports: [FaIconComponent, FormsModule, RouterTestingModule],
             declarations: [MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe), MockComponent(HelpIconComponent)],
             providers: [
                 MockProvider(NgbActiveModal),
                 MockProvider(HttpClient),
                 MockProvider(SessionStorageService),
                 MockProvider(LocalStorageService),
-                MockProvider(Router),
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AlertService, useClass: MockAlertService },
                 { provide: StudentsRoomDistributionService, useClass: MockStudentsRoomDistributionService },
                 provideNoopAnimations(),
             ],
         }).compileComponents();
+
         fixture = TestBed.createComponent(StudentsRoomDistributionDialogComponent);
         component = fixture.componentInstance;
         fixture.componentRef.setInput('courseId', course.id);
         fixture.componentRef.setInput('exam', exam);
+        router = TestBed.inject(Router);
         service = TestBed.inject(StudentsRoomDistributionService) as unknown as MockStudentsRoomDistributionService;
 
         jest.spyOn(service, 'loadRoomData').mockImplementation(() => {
@@ -227,5 +230,21 @@ describe('StudentsRoomDistributionDialogComponent', () => {
         checkbox.click();
         fixture.detectChanges();
         expect(component.allowNarrowLayouts()).toBeFalse();
+    });
+
+    it('should redirect to exam room management page', async () => {
+        const navigateSpy = jest.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
+
+        fixture.detectChanges();
+
+        const link: HTMLAnchorElement = fixture.debugElement.nativeElement.querySelector('#examRoomManagementLink');
+        expect(link).toBeTruthy();
+
+        link.click();
+        await fixture.whenStable();
+        expect(navigateSpy).toHaveBeenCalledOnce();
+
+        const [urlTree] = navigateSpy.mock.calls[0] as [UrlTree, unknown];
+        expect(router.serializeUrl(urlTree)).toContain('exam-rooms');
     });
 });

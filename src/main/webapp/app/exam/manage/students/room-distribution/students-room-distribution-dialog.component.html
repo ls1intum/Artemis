@@ -88,7 +88,12 @@
         <div style="flex: 1; width: 100%; display: flex; justify-content: space-between; align-items: center">
             <p>
                 <span jhiTranslate="artemisApp.exam.examUsers.rooms.cantFindRoom"></span>
-                <a [routerLink]="['../exam-rooms']" class="text-primary text-decoration-underline" jhiTranslate="artemisApp.examRooms.management.openButtonTitle"> </a>
+                <a
+                    id="examRoomManagementLink"
+                    [routerLink]="['../exam-rooms']"
+                    class="text-primary text-decoration-underline"
+                    jhiTranslate="artemisApp.examRooms.management.openButtonTitle"
+                ></a>
             </p>
             <div class="p-d-flex p-ai-center p-gap-2">
                 <button id="cancel-button" type="button" class="btn btn-secondary cancel" (click)="closeDialog()">
