@@ -11,6 +11,7 @@ import {
     ViewChild,
     inject,
     input,
+    output,
 } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { isEmpty as _isEmpty, fromPairs, toPairs, uniq } from 'lodash-es';
@@ -125,8 +126,8 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
     onDiscardSuggestion = new EventEmitter<Feedback>();
     @Input()
     course?: Course;
-    @Output()
-    onEditorLoaded = new EventEmitter<boolean>();
+
+    onEditorLoaded = output<void>();
 
     selectedRepository = input<RepositoryType>();
 

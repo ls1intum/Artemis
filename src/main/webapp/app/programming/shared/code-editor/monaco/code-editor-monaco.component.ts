@@ -98,7 +98,7 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
     readonly onAcceptSuggestion = output<Feedback>();
     readonly onDiscardSuggestion = output<Feedback>();
     readonly onHighlightLines = output<MonacoEditorLineHighlight[]>();
-    readonly onEditorLoaded = output<boolean>();
+    readonly onEditorLoaded = output<void>();
 
     readonly loadingCount = signal<number>(0);
     readonly newFeedbackLines = signal<number[]>([]);

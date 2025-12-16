@@ -19,6 +19,7 @@ import { CodeEditorFileService } from 'app/programming/shared/code-editor/servic
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { editor } from 'monaco-editor';
 
 class MockFileService {
     updateFileReferences = jest.fn((refs) => refs);
@@ -55,6 +56,7 @@ describe('CodeEditorContainerComponent', () => {
             getText: jest.fn().mockReturnValue('content'),
             getNumberOfLines: jest.fn().mockReturnValue(3),
             highlightLines: jest.fn(),
+            editor: jest.fn().mockReturnValue({ revealLine: jest.fn() }),
         } as any;
         component.grid = { toggleCollapse: jest.fn() } as any;
     });
@@ -225,5 +227,23 @@ describe('CodeEditorContainerComponent', () => {
         event.preventDefault.mockClear();
         expect(component.unloadNotification(event)).toBeTrue();
         expect(event.preventDefault).not.toHaveBeenCalled();
+    });
+
+    it('jumpToLine should call monaco revealLine with Immediate scroll type', () => {
+        const ed = component.monacoEditor.editor();
+        const revealSpy = jest.spyOn(ed, 'revealLine');
+
+        component.jumpToLine(12);
+
+        expect(revealSpy).toHaveBeenCalledWith(12, editor.ScrollType.Immediate);
+    });
+
+    it('fileLoad should emit onFileLoad', () => {
+        const spy = jest.fn();
+        component.onFileLoad.subscribe(spy);
+
+        component.fileLoad('src/main/App.java');
+
+        expect(spy).toHaveBeenCalledWith('src/main/App.java');
     });
 });

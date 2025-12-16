@@ -154,14 +154,12 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             selectedFile: undefined as string | undefined,
             selectedRepository: jest.fn().mockReturnValue('SOLUTION'),
             problemStatementIdentifier: 'problem_statement.md',
+            jumpToLine: jest.fn(),
         };
 
         (comp as any).editableInstructions = {
             jumpToLine: jest.fn(),
         };
-
-        comp.onFileLoad = jest.fn();
-        comp.onEditorLoaded = jest.fn();
 
         comp.selectTemplateParticipation = jest.fn().mockResolvedValue(undefined);
         comp.selectSolutionParticipation = jest.fn().mockResolvedValue(undefined);
@@ -293,22 +291,89 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
 
         const error = new Error('repo selection failed');
         jest.spyOn(comp, 'selectTestRepository').mockImplementation(() => {
-            throw error; // must be sync to hit try/catch
+            throw error; // sync throw so try/catch is hit
         });
 
         const alertErrorSpy = jest.spyOn(alertService, 'error');
         const translateSpy = jest.spyOn(translateService, 'instant');
+        const onEditorLoadedSpy = jest.spyOn(comp, 'onEditorLoaded');
 
         comp.onIssueNavigate(issue, 1, new Event('click'));
 
         expect(translateSpy).toHaveBeenCalledWith('artemisApp.hyperion.consistencyCheck.navigationFailed');
         expect(alertErrorSpy).toHaveBeenCalled();
 
-        // With your current function, these are set BEFORE the try, then cleared in catch
         expect(comp.lineJumpOnFileLoad).toBeUndefined();
         expect(comp.fileToJumpOn).toBeUndefined();
 
-        // Also: since catch returns, onEditorLoaded should not be called
-        expect(comp.onEditorLoaded).not.toHaveBeenCalled();
+        expect(onEditorLoadedSpy).not.toHaveBeenCalled(); // <-- use the spy
+    });
+
+    it('onEditorLoaded calls onFileLoad immediately when file is already selected', () => {
+        const targetFile = 'src/tests/ExampleTest.java';
+
+        comp.fileToJumpOn = targetFile;
+        (comp as any).codeEditorContainer.selectedFile = targetFile;
+
+        const onFileLoadSpy = jest.spyOn(comp, 'onFileLoad');
+
+        comp.onEditorLoaded();
+
+        expect(onFileLoadSpy).toHaveBeenCalledWith(targetFile);
+        // Should not re-assign selectedFile in this branch
+        expect((comp as any).codeEditorContainer.selectedFile).toBe(targetFile);
+    });
+
+    it('onEditorLoaded sets selectedFile when file is not selected yet', () => {
+        const targetFile = 'src/tests/ExampleTest.java';
+
+        comp.fileToJumpOn = targetFile;
+        (comp as any).codeEditorContainer.selectedFile = 'some/other/file.java';
+
+        const onFileLoadSpy = jest.spyOn(comp, 'onFileLoad');
+
+        comp.onEditorLoaded();
+
+        // Should not call onFileLoad immediately
+        expect(onFileLoadSpy).not.toHaveBeenCalled();
+        // Should trigger load by selecting the file
+        expect((comp as any).codeEditorContainer.selectedFile).toBe(targetFile);
+    });
+
+    it('onFileLoad jumps to line and clears lineJumpOnFileLoad when file matches', () => {
+        const targetFile = 'src/solution/Solution.java';
+        const targetLine = 60;
+
+        comp.fileToJumpOn = targetFile;
+        comp.lineJumpOnFileLoad = targetLine;
+
+        comp.onFileLoad(targetFile);
+
+        expect((comp as any).codeEditorContainer.jumpToLine).toHaveBeenCalledWith(targetLine);
+        // lineJumpOnFileLoad should be cleared
+        expect(comp.lineJumpOnFileLoad).toBeUndefined();
+    });
+
+    it('onFileLoad does nothing if file does not match fileToJumpOn', () => {
+        comp.fileToJumpOn = 'src/solution/Solution.java';
+        comp.lineJumpOnFileLoad = 60;
+
+        comp.onFileLoad('src/tests/ExampleTest.java');
+
+        expect((comp as any).codeEditorContainer.jumpToLine).not.toHaveBeenCalled();
+        // should remain unchanged
+        expect(comp.lineJumpOnFileLoad).toBe(60);
+    });
+
+    it('onFileLoad does nothing if lineJumpOnFileLoad is undefined', () => {
+        const targetFile = 'src/solution/Solution.java';
+
+        comp.fileToJumpOn = targetFile;
+        comp.lineJumpOnFileLoad = undefined;
+
+        comp.onFileLoad(targetFile);
+
+        expect((comp as any).codeEditorContainer.jumpToLine).not.toHaveBeenCalled();
+        expect(comp.lineJumpOnFileLoad).toBeUndefined();
     });
 });
