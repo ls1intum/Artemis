@@ -143,19 +143,21 @@
             </div>
         }
 
-        <!-- Save Button -->
-        <div class="mt-4">
-            <jhi-button
-                id="save"
-                [btnType]="PRIMARY"
-                [isLoading]="isSaving"
-                [disabled]="!isDirty || !isFormValid()"
-                [icon]="faSave"
-                [title]="'artemisApp.iris.settings.button.save'"
-                [fullWidth]="true"
-                (onClick)="saveSettings()"
-            />
-        </div>
+        <!-- Save Button (only shown when there are pending changes) -->
+        @if (isDirty) {
+            <div class="mt-4">
+                <jhi-button
+                    id="save"
+                    [btnType]="PRIMARY"
+                    [isLoading]="isSaving"
+                    [disabled]="!isFormValid()"
+                    [icon]="faSave"
+                    [title]="'artemisApp.iris.settings.button.save'"
+                    [fullWidth]="true"
+                    (onClick)="saveSettings()"
+                />
+            </div>
+        }
     </div>
 }
 
