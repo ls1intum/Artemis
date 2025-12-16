@@ -147,6 +147,7 @@ describe('CodeEditorContainerComponent', () => {
             fileName: 'old/File.java',
             newFileName: 'new/File.java',
             content: 'renamed',
+            fileType: FileType.FILE,
         });
     });
 

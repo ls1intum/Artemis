@@ -349,7 +349,7 @@ public abstract class RepositoryResource {
         }
 
         if (!Files.exists(resolvedPath)) {
-            throw new EntityNotFoundException("File not found");
+            throw new IllegalArgumentException("File not found");
         }
 
         if (Files.isDirectory(resolvedPath)) {
