@@ -359,12 +359,6 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      * @returns BehaviorSubject that emits the latest result or undefined initially
      */
     public subscribeForLatestResultOfParticipation(participationId: number, personal: boolean, exerciseId?: number): BehaviorSubject<Result | undefined> {
-        this.logDebug('[ParticipationWS] subscribeForLatestResultOfParticipation', {
-            participationId,
-            personal,
-            exerciseId,
-            hasExistingSubject: this.resultObservables.has(participationId),
-        });
         this.openResultWebsocketSubscriptionIfNotExisting(participationId, personal, exerciseId);
         let resultObservable = this.resultObservables.get(participationId)!;
         if (!resultObservable) {
