@@ -152,7 +152,6 @@ public class CourseDeletionService {
         deleteFaqsOfCourse(course);
         deleteCourseRequests(course.getId());
         learnerProfileApi.ifPresent(api -> api.deleteAllForCourse(course));
-        irisSettingsApi.ifPresent(api -> api.deleteSettingsFor(course));
         courseRepository.deleteById(course.getId());
         log.debug("Successfully deleted course {}.", course.getTitle());
     }
