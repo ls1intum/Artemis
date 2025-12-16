@@ -164,7 +164,7 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
         if (editorWasRefreshed || editorWasReset) {
             this.fileSession.set({});
             this.editor().reset();
-            this.onEditorLoaded.emit(true);
+            this.onEditorLoaded.emit();
         }
         if ((changes.selectedFile && this.selectedFile()) || (editorWasRefreshed && this.selectedFile())) {
             const previousFileName: string | undefined = changes.selectedFile?.previousValue;
