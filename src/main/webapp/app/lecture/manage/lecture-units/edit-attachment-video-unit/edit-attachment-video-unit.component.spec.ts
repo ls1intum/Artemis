@@ -238,7 +238,6 @@ describe('EditAttachmentVideoUnitComponent', () => {
                 releaseDate: attachmentVideoUnit.releaseDate,
                 videoSource: attachmentVideoUnit.videoSource,
                 version: 1,
-                generateTranscript: false,
             },
             fileProperties: {},
         };

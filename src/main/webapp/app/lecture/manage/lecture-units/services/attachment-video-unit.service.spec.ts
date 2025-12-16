@@ -18,7 +18,6 @@ describe('AttachmentVideoUnitService', () => {
     let httpMock: HttpTestingController;
     let elemDefault: AttachmentVideoUnit;
     let expectedResult: any;
-    let alertService: AlertService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -36,7 +35,6 @@ describe('AttachmentVideoUnitService', () => {
         expectedResult = {} as HttpResponse<AttachmentVideoUnit>;
         service = TestBed.inject(AttachmentVideoUnitService);
         httpMock = TestBed.inject(HttpTestingController);
-        alertService = TestBed.inject(AlertService);
 
         const attachment = new Attachment();
         attachment.id = 0;

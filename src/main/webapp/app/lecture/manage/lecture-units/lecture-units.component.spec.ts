@@ -664,7 +664,6 @@ describe('LectureUpdateUnitsComponent', () => {
             expect(wizardUnitComponent.isAttachmentVideoUnitFormOpen()).toBeTrue();
             expect(getTranscriptionSpy).toHaveBeenCalledWith(attachmentVideoUnit.id);
             expect(getTranscriptionStatusSpy).toHaveBeenCalledWith(attachmentVideoUnit.id);
-            expect(wizardUnitComponent.currentlyProcessedAttachmentVideoUnit?.transcriptionProperties).toBe(transcript);
         });
     }));
 
@@ -730,9 +729,6 @@ describe('LectureUpdateUnitsComponent', () => {
             fileProperties: {
                 fileName: attachmentVideoUnit.attachment?.link,
             },
-            transcriptionProperties: {
-                videoTranscription: undefined,
-            },
             transcriptionStatus: undefined,
             playlistUrl: playlistUrl,
         };
@@ -780,9 +776,6 @@ describe('LectureUpdateUnitsComponent', () => {
             },
             fileProperties: {
                 fileName: attachmentVideoUnit.attachment?.link,
-            },
-            transcriptionProperties: {
-                videoTranscription: undefined,
             },
             transcriptionStatus: undefined,
         };
@@ -854,9 +847,6 @@ describe('LectureUpdateUnitsComponent', () => {
             fileProperties: {
                 fileName: attachmentVideoUnit.attachment?.link,
             },
-            transcriptionProperties: {
-                videoTranscription: undefined,
-            },
             transcriptionStatus: undefined,
         };
 
@@ -896,7 +886,6 @@ describe('LectureUpdateUnitsComponent', () => {
             expect(wizardUnitComponent.isAttachmentVideoUnitFormOpen()).toBeTrue();
             expect(getTranscriptionSpy).toHaveBeenCalledWith(attachmentVideoUnit.id);
             expect(getTranscriptionStatusSpy).toHaveBeenCalledWith(attachmentVideoUnit.id);
-            expect(wizardUnitComponent.currentlyProcessedAttachmentVideoUnit?.transcriptionProperties).toBeUndefined();
         });
     }));
 
