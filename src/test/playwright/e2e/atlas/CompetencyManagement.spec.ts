@@ -5,6 +5,32 @@ import { expect } from '@playwright/test';
 import dayjs from 'dayjs';
 import type { Page } from '@playwright/test';
 
+async function selectTaxonomy(page: Page, taxonomy: string) {
+    const select = page.locator('#taxonomy');
+    await expect(select).toBeVisible();
+
+    const optionValue = await page.locator('#taxonomy option').evaluateAll((options, desired) => {
+        const wanted = String(desired).trim().toLowerCase();
+        for (const option of options) {
+            const text = (option.textContent ?? '').trim();
+            const lowerText = text.toLowerCase();
+
+            // Prefer exact match ignoring leading numeric prefixes like "2: " (label can be translated / differently cased).
+            const normalized = lowerText.replace(/^\d+\s*:\s*/, '').trim();
+            if (normalized === wanted || normalized.includes(wanted) || lowerText.includes(wanted)) {
+                return (option as HTMLOptionElement).value;
+            }
+        }
+        return null;
+    }, taxonomy);
+
+    if (optionValue === null) {
+        throw new Error(`Could not find taxonomy option ending with '${taxonomy}'`);
+    }
+
+    await select.selectOption(optionValue);
+}
+
 async function selectDateInPicker(page: Page, pickerId: string, monthsAhead: number, day: number) {
     const picker = page.locator(`jhi-date-time-picker#${pickerId}`);
     await expect(picker).toHaveCount(1);
@@ -83,7 +109,7 @@ test.describe('Competency Management', { tag: '@fast' }, () => {
         await selectDateInPicker(page, 'softDueDate', 2, 15);
 
         // Set taxonomy
-        await page.locator('#taxonomy').selectOption(`2: ${competencyData.taxonomy}`);
+        await selectTaxonomy(page, competencyData.taxonomy);
 
         // Submit
         await page.getByRole('button', { name: 'Submit' }).click();
@@ -130,7 +156,7 @@ test.describe('Competency Management', { tag: '@fast' }, () => {
             await setMarkdownDescription(page, updatedCompetencyData.description);
 
             // Update taxonomy
-            await page.locator('#taxonomy').selectOption(`3: ${updatedCompetencyData.taxonomy}`);
+            await selectTaxonomy(page, updatedCompetencyData.taxonomy);
 
             // Submit
             await page.getByRole('button', { name: 'Submit' }).click();
@@ -203,7 +229,7 @@ test.describe('Prerequisite Management', { tag: '@fast' }, () => {
         await selectDateInPicker(page, 'softDueDate', 1, 15);
 
         // Set taxonomy
-        await page.locator('#taxonomy').selectOption(`2: ${prerequisiteData.taxonomy}`);
+        await selectTaxonomy(page, prerequisiteData.taxonomy);
 
         // Submit
         await page.getByRole('button', { name: 'Submit' }).click();
@@ -244,7 +270,7 @@ test.describe('Prerequisite Management', { tag: '@fast' }, () => {
             await selectDateInPicker(page, 'softDueDate', 2, 15);
 
             // Set updated taxonomy
-            await page.locator('#taxonomy').selectOption(`3: ${updatedPrerequisiteData.taxonomy}`);
+            await selectTaxonomy(page, updatedPrerequisiteData.taxonomy);
 
             // Submit
             await page.getByRole('button', { name: 'Submit' }).click();
