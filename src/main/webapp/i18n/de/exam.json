@@ -45,7 +45,8 @@
                     "building": "Gebäude",
                     "enoughSeatsForStudents": "Du kannst alle {{ totalStudents }} Studierenden unterbringen.",
                     "notEnoughSeatsForStudents": "Du kannst nur {{ usableCapacity }} der {{ totalStudents }} Studierenden unterbringen ({{ percentage }}%).",
-                    "distribute": "Verteilen"
+                    "distribute": "Verteilen",
+                    "noRoomSelected": "Es ist kein Raum ausgewählt"
                 }
             },
             "overview": {

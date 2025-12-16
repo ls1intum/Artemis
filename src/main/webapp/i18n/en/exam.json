@@ -45,7 +45,8 @@
                     "building": "Building",
                     "enoughSeatsForStudents": "You can seat all {{ totalStudents }} students.",
                     "notEnoughSeatsForStudents": "You can only seat {{ usableCapacity }} of the {{ totalStudents }} students ({{ percentage }}%).",
-                    "distribute": "Distribute"
+                    "distribute": "Distribute",
+                    "noRoomSelected": "No room is selected"
                 }
             },
             "overview": {
