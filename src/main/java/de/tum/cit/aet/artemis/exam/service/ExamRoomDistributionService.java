@@ -422,7 +422,7 @@ public class ExamRoomDistributionService {
             throw new BadRequestAlertException("The student already sits in this room", ENTITY_NAME, "room.alreadyInRoom");
         }
 
-        ExamRoom newRoom = examRoomRepository.findAllByExamIdAndRoomNumberWithLayoutStrategies(examUser.getExam().getId(), newRoomNumber).stream().findFirst()
+        ExamRoom newRoom = examRoomRepository.findByExamIdAndRoomNumberWithLayoutStrategies(examUser.getExam().getId(), newRoomNumber)
                 .orElseThrow(() -> new BadRequestAlertException("New room could not be found", ENTITY_NAME, "room.notFound"));
 
         Set<ExamUser> examUsers = examUser.getExam().getExamUsers();

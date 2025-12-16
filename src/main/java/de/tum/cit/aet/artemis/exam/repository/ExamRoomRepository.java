@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.exam.repository;
 
+import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.context.annotation.Conditional;
@@ -147,6 +148,13 @@ public interface ExamRoomRepository extends ArtemisJpaRepository<ExamRoom, Long>
             """)
     Set<ExamRoom> findAllByExamId(@Param("examId") long examId);
 
+    /**
+     * Finds the exam room connected to the given exam ID with the specified room number, including its layout strategies.
+     *
+     * @param examId        The exam id
+     * @param newRoomNumber The room number
+     * @return The exam room with layout eagerly loaded layout strategies if it exists, empty otherwise
+     */
     @Query("""
             SELECT er
             FROM ExamRoom er
@@ -156,8 +164,15 @@ public interface ExamRoomRepository extends ArtemisJpaRepository<ExamRoom, Long>
             WHERE erea.exam.id = :examId
                 AND er.roomNumber = :newRoomNumber
             """)
-    Set<ExamRoom> findAllByExamIdAndRoomNumberWithLayoutStrategies(@Param("examId") long examId, @Param("newRoomNumber") String newRoomNumber);
+    Optional<ExamRoom> findByExamIdAndRoomNumberWithLayoutStrategies(@Param("examId") long examId, @Param("newRoomNumber") String newRoomNumber);
 
+    /**
+     * Checks whether a room with the given room number is connected to the specified exam.
+     *
+     * @param roomNumber The room number
+     * @param examId     The exam id
+     * @return {@code true} if such a room exists and is connected to the exam, {@code false} otherwise
+     */
     @Query("""
             SELECT COUNT(*) > 0
             FROM ExamRoom er
