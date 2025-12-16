@@ -157,6 +157,8 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     readonly onInlineCommentApply = output<InlineComment>();
     /** Emits when user deletes a comment */
     readonly onInlineCommentDelete = output<string>();
+    /** Emits when user cancels an in-progress apply operation */
+    readonly onInlineCommentCancelApply = output<void>();
     generateHtmlSubject: Subject<void> = new Subject<void>();
 
     // Inline comment selection state
@@ -209,10 +211,8 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         if (this.testCaseSubscription) {
             this.testCaseSubscription.unsubscribe();
         }
-        // Close all active inline comment widgets and clear tracking map
-        if (this.markdownEditorMonaco) {
-            this.inlineCommentHostService.closeAllWidgets(this.markdownEditorMonaco);
-        }
+        // Forcefully clear all active widgets - editor may already be destroyed
+        this.inlineCommentHostService.clearAllWidgets();
         this.commentWidgetMap.clear();
     }
 
@@ -286,6 +286,9 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
                 // Clear selection
                 this.currentSelection = null;
             },
+            onCancelApply: () => {
+                this.onInlineCommentCancelApply.emit();
+            },
             onDelete: (commentId: string) => {
                 this.onInlineCommentDelete.emit(commentId);
             },
@@ -325,18 +328,29 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         }
 
         for (const comment of comments) {
-            // Skip comments that are currently being applied to avoid re-creating widgets
-            // that would fire duplicate apply events
+            // Skip comments that are currently being applied - preserve their existing widget
+            // to show the loading state, don't close or re-create it
             if (comment.status === 'applying') {
                 continue;
             }
 
-            // Check if widget exists for this comment
+            // Skip if there's already a widget at this line (e.g., from context menu)
+            if (this.inlineCommentHostService.hasWidgetAtLine(comment.startLine)) {
+                continue;
+            }
+
+            // Check if widget exists for this comment in our tracking map
             const existingWidgetId = this.commentWidgetMap.get(comment.id);
             if (existingWidgetId) {
-                // Close the existing widget to refresh with updated data
-                this.inlineCommentHostService.closeWidget(existingWidgetId, this.markdownEditorMonaco);
-                this.commentWidgetMap.delete(comment.id);
+                // Widget exists - only close/refresh if status is NOT pending
+                // This prevents unnecessary widget recreation for unchanged comments
+                if (comment.status !== 'pending') {
+                    this.inlineCommentHostService.closeWidget(existingWidgetId, this.markdownEditorMonaco);
+                    this.commentWidgetMap.delete(comment.id);
+                } else {
+                    // Already has a widget and is pending - skip to avoid duplicate
+                    continue;
+                }
             }
 
             const widgetId = this.inlineCommentHostService.openWidget(
@@ -353,6 +367,9 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
                     },
                     onCancel: () => {
                         // Keep the comment but close widget - parent handles state
+                    },
+                    onCancelApply: () => {
+                        this.onInlineCommentCancelApply.emit();
                     },
                     onDelete: (commentId: string) => {
                         this.onInlineCommentDelete.emit(commentId);

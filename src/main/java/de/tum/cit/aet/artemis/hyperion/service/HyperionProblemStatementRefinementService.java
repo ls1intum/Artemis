@@ -128,11 +128,15 @@ public class HyperionProblemStatementRefinementService {
             // Build a combined prompt from all inline comments
             String combinedInstructions = buildCombinedInstructions(inlineComments);
 
-            Map<String, String> templateVariables = Map.of("text", originalProblemStatementText.trim(), "userPrompt", combinedInstructions, "courseTitle",
+            // Add line numbers to help the LLM identify exact lines to modify
+            String textWithLineNumbers = addLineNumbers(originalProblemStatementText.trim());
+
+            Map<String, String> templateVariables = Map.of("textWithLineNumbers", textWithLineNumbers, "targetedInstructions", combinedInstructions, "courseTitle",
                     course.getTitle() != null ? course.getTitle() : "Programming Course", "courseDescription",
                     course.getDescription() != null ? course.getDescription() : "A programming course");
 
-            String prompt = templateService.render("/prompts/hyperion/refine_problem_statement.st", templateVariables);
+            // Use the targeted refinement template for inline comments
+            String prompt = templateService.render("/prompts/hyperion/refine_problem_statement_targeted.st", templateVariables);
             String refinedProblemStatementText = chatClient.prompt().user(prompt).call().content();
 
             return validateAndReturnResponse(course, originalProblemStatementText, refinedProblemStatementText);
@@ -151,6 +155,23 @@ public class HyperionProblemStatementRefinementService {
             String lineRef = comment.startLine().equals(comment.endLine()) ? "Line " + comment.startLine() : "Lines " + comment.startLine() + "-" + comment.endLine();
             return lineRef + ": " + comment.instruction();
         }).collect(Collectors.joining("\n"));
+    }
+
+    /**
+     * Adds line numbers to each line of the problem statement.
+     * Format: "1: first line\n2: second line\n..."
+     * This helps the LLM accurately identify which lines to modify.
+     */
+    private String addLineNumbers(String text) {
+        String[] lines = text.split("\n", -1); // -1 to preserve trailing empty lines
+        StringBuilder result = new StringBuilder();
+        for (int i = 0; i < lines.length; i++) {
+            result.append(i + 1).append(": ").append(lines[i]);
+            if (i < lines.length - 1) {
+                result.append("\n");
+            }
+        }
+        return result.toString();
     }
 
     /**

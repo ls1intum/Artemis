@@ -1,4 +1,4 @@
-import { AfterViewChecked, Component, OnDestroy, ViewChild, inject, signal } from '@angular/core';
+import { AfterViewChecked, Component, OnDestroy, ViewChild, computed, inject, signal } from '@angular/core';
 import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/programming/shared/actions/trigger-build-button/student/programming-exercise-student-trigger-build-button.component';
 import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor/container/code-editor-container.component';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
@@ -7,7 +7,7 @@ import { CodeEditorInstructorBaseContainerComponent } from 'app/programming/mana
 import { ProgrammingExerciseEditableInstructionComponent } from 'app/programming/manage/instructions-editor/programming-exercise-editable-instruction.component';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { faBan, faCircleNotch, faPlus, faSave, faTimes, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faCircleNotch, faPlus, faSave, faSpinner, faTimes, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { IrisSettings } from 'app/iris/shared/entities/settings/iris-settings.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -93,9 +93,16 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
 
     // Inline comment state
     protected pendingComments = this.inlineCommentService.getPendingComments();
+    protected pendingCount = this.inlineCommentService.pendingCount;
+    protected hasPendingComments = this.inlineCommentService.hasPendingComments;
     protected applyingCommentId = signal<string | undefined>(undefined);
+    protected isApplyingAll = signal(false);
+    protected isAnyApplying = computed(() => !!this.applyingCommentId() || this.isApplyingAll());
     private currentRefinementSubscription: Subscription | undefined;
     private exerciseContextInitialized = false;
+
+    // Icons for inline comments
+    protected readonly faSpinner = faSpinner;
 
     // Diff mode properties
     showDiff = false;
@@ -236,7 +243,14 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      * Handles saving an inline comment (adds to pending list).
      */
     onSaveInlineComment(comment: InlineComment): void {
-        this.inlineCommentService.addExistingComment({ ...comment, status: 'pending' });
+        const existingComment = this.inlineCommentService.getComment(comment.id);
+        if (existingComment) {
+            // Update existing comment's status
+            this.inlineCommentService.updateStatus(comment.id, 'pending');
+        } else {
+            // Add new comment
+            this.inlineCommentService.addExistingComment({ ...comment, status: 'pending' });
+        }
     }
 
     /**
@@ -255,6 +269,97 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      */
     onDeleteInlineComment(commentId: string): void {
         this.inlineCommentService.removeComment(commentId);
+    }
+
+    /**
+     * Cancels the current inline comment apply operation.
+     */
+    onCancelInlineCommentApply(): void {
+        if (this.currentRefinementSubscription) {
+            this.currentRefinementSubscription.unsubscribe();
+            this.currentRefinementSubscription = undefined;
+        }
+
+        const commentId = this.applyingCommentId();
+        if (commentId) {
+            this.inlineCommentService.updateStatus(commentId, 'pending');
+        }
+        this.applyingCommentId.set(undefined);
+        this.isApplyingAll.set(false);
+    }
+
+    /**
+     * Clears all pending inline comments.
+     */
+    clearAllComments(): void {
+        this.inlineCommentService.clearAll();
+    }
+
+    /**
+     * Applies all pending inline comments.
+     */
+    applyAllComments(): void {
+        const comments = this.pendingComments();
+        if (comments.length === 0) {
+            return;
+        }
+
+        const courseId = this.exercise?.course?.id ?? this.exercise?.exerciseGroup?.exam?.course?.id;
+        if (!courseId || !this.exercise?.problemStatement) {
+            this.alertService.error('artemisApp.programmingExercise.inlineComment.applyError');
+            return;
+        }
+
+        this.isApplyingAll.set(true);
+
+        // Mark all comments as applying
+        for (const comment of comments) {
+            this.inlineCommentService.updateStatus(comment.id, 'applying');
+        }
+
+        const apiComments: ApiInlineComment[] = comments.map((comment) => ({
+            startLine: comment.startLine,
+            endLine: comment.endLine,
+            instruction: comment.instruction,
+        }));
+
+        const request: ProblemStatementRefinementRequest = {
+            problemStatementText: this.exercise.problemStatement,
+            inlineComments: apiComments,
+        };
+
+        this.currentRefinementSubscription = this.hyperionApiService
+            .refineProblemStatement(courseId, request)
+            .pipe(
+                finalize(() => {
+                    this.isApplyingAll.set(false);
+                    this.currentRefinementSubscription = undefined;
+                }),
+            )
+            .subscribe({
+                next: (response) => {
+                    if (response.refinedProblemStatement && response.refinedProblemStatement.trim() !== '') {
+                        this.originalProblemStatement = this.exercise.problemStatement || '';
+                        this.refinedProblemStatement = response.refinedProblemStatement;
+                        this.diffContentSet = false;
+                        this.showDiff = true;
+
+                        this.inlineCommentService.markAllApplied(comments.map((c) => c.id));
+                        this.alertService.success('artemisApp.programmingExercise.inlineComment.applyAllSuccess');
+                    } else {
+                        for (const comment of comments) {
+                            this.inlineCommentService.updateStatus(comment.id, 'error');
+                        }
+                        this.alertService.error('artemisApp.programmingExercise.inlineComment.applyError');
+                    }
+                },
+                error: () => {
+                    for (const comment of comments) {
+                        this.inlineCommentService.updateStatus(comment.id, 'error');
+                    }
+                    this.alertService.error('artemisApp.programmingExercise.inlineComment.applyError');
+                },
+            });
     }
 
     /**

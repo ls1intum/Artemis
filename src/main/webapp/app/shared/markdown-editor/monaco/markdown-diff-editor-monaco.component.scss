@@ -2,7 +2,6 @@
     display: flex;
     flex-flow: column nowrap;
     flex: 1 1 auto;
-    height: inherit;
     color: var(--md-wrapper-color);
     background-color: var(--md-editor-background);
 
@@ -26,11 +25,11 @@
     .markdown-diff-editor-wrapper {
         display: flex;
         flex-direction: column;
-        flex: 0 0 auto;
+        flex: 1 1 auto;
         min-height: 0;
         border: 1px solid var(--border-color);
         background-color: var(--md-editor-background);
-        overflow: auto;
+        overflow: hidden;
     }
 
     .markdown-diff-editor-toolbar {
@@ -67,36 +66,28 @@
     }
 }
 
+// Fill parent height when resize is disabled and using external height
+:host.fill-height {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+
+    .markdown-diff-editor-root {
+        height: 100%;
+    }
+
+    .markdown-diff-editor-wrapper {
+        flex: 1 1 auto;
+        height: auto !important; // Override inline style
+    }
+}
+
 .md-resize-icon {
     color: var(--md-resize-icon-color);
 }
 
 .resize-placeholder {
     border: 1px solid var(--border-color);
-}
-
-.file-upload-footer-input {
-    width: 0.1px;
-    height: 0.1px;
-    opacity: 0;
-    overflow: hidden;
-    position: absolute;
-    z-index: -1;
-}
-
-.file-upload-footer-label {
-    cursor: pointer;
-    width: 100%;
-    border-radius: 0 0.15em 0.15em 0;
-
-    .upload-subtitle {
-        font-size: 12px;
-        color: var(--bs-secondary);
-    }
-}
-
-.background-editor-high {
-    overflow: auto;
 }
 
 .dropdown-menu {

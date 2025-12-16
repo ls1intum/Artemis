@@ -45,6 +45,7 @@ export class InlineCommentHostService {
             onSave: (comment: InlineComment) => void;
             onApply: (comment: InlineComment) => void;
             onCancel: () => void;
+            onCancelApply?: () => void;
             onDelete?: (commentId: string) => void;
         },
         options?: {
@@ -71,17 +72,20 @@ export class InlineCommentHostService {
         // Subscribe to outputs
         componentRef.instance.onSave.subscribe((comment: InlineComment) => {
             callbacks.onSave(comment);
-            this.closeWidget(widgetId, editor);
+            // Don't close widget - let user continue editing or click Apply later
         });
 
         componentRef.instance.onApply.subscribe((comment: InlineComment) => {
             callbacks.onApply(comment);
-            this.closeWidget(widgetId, editor);
         });
 
         componentRef.instance.onCancel.subscribe(() => {
             callbacks.onCancel();
             this.closeWidget(widgetId, editor);
+        });
+
+        componentRef.instance.onCancelApply.subscribe(() => {
+            callbacks.onCancelApply?.();
         });
 
         componentRef.instance.onDelete.subscribe((commentId: string) => {
@@ -145,6 +149,18 @@ export class InlineCommentHostService {
         for (const widgetId of this.activeWidgets.keys()) {
             this.closeWidget(widgetId, editor);
         }
+    }
+
+    /**
+     * Forcefully clears all tracked widgets. Use when editor reference may be stale.
+     * Destroys Angular components but cannot remove from Monaco (editor may be destroyed).
+     */
+    clearAllWidgets(): void {
+        for (const widgetInfo of this.activeWidgets.values()) {
+            this.appRef.detachView(widgetInfo.componentRef.hostView);
+            widgetInfo.componentRef.destroy();
+        }
+        this.activeWidgets.clear();
     }
 
     /**

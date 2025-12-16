@@ -140,6 +140,8 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy, A
     protected pendingCount = this.inlineCommentService.pendingCount;
     protected applyingCommentId = signal<string | undefined>(undefined);
     protected isApplyingAll = signal(false);
+    /** True if any refinement operation is in progress (single comment or all) */
+    protected isAnyApplying = computed(() => this.isApplyingAll() || this.applyingCommentId() !== undefined);
 
     /**
      * Lifecycle hook called after every check of the component's view.
@@ -542,10 +544,17 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy, A
     }
 
     /**
-     * Handles saving an inline comment (adds to pending list).
+     * Handles saving an inline comment (adds to pending list or updates existing).
      */
     onSaveInlineComment(comment: InlineComment): void {
-        this.inlineCommentService.addExistingComment({ ...comment, status: 'pending' });
+        const existingComment = this.inlineCommentService.getComment(comment.id);
+        if (existingComment) {
+            // Update existing comment's instruction
+            this.inlineCommentService.updateStatus(comment.id, 'pending');
+        } else {
+            // Add new comment
+            this.inlineCommentService.addExistingComment({ ...comment, status: 'pending' });
+        }
     }
 
     /**
@@ -571,5 +580,25 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy, A
      */
     clearAllComments(): void {
         this.inlineCommentService.clearAll();
+    }
+
+    /**
+     * Cancels the current inline comment apply operation.
+     */
+    onCancelInlineCommentApply(): void {
+        // Cancel the current API subscription
+        if (this.currentGenerationSubscription) {
+            this.currentGenerationSubscription.unsubscribe();
+            this.currentGenerationSubscription = undefined;
+        }
+
+        // Reset the applying state
+        const commentId = this.applyingCommentId();
+        if (commentId) {
+            // Reset comment status to pending so user can try again
+            this.inlineCommentService.updateStatus(commentId, 'pending');
+        }
+        this.applyingCommentId.set(undefined);
+        this.isApplyingAll.set(false);
     }
 }

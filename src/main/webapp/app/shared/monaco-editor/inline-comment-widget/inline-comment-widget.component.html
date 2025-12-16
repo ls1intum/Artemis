@@ -2,7 +2,7 @@
     <!-- Header (clickable to toggle when collapsed) -->
     <div class="widget-header" (click)="isCollapsed() ? toggleCollapse() : null" [class.clickable]="isCollapsed()">
         <div class="header-left">
-            @if (existingComment()) {
+            @if (hasComment()) {
                 <fa-icon [icon]="isCollapsed() ? faChevronRight : faChevronDown" class="collapse-icon me-2" (click)="toggleCollapse(); $event.stopPropagation()" />
             }
             <span class="line-label">{{ lineLabel() }}</span>
@@ -15,7 +15,7 @@
             class="btn-close"
             [attr.aria-label]="'entity.action.cancel' | artemisTranslate"
             (click)="handleCancel(); $event.stopPropagation()"
-            [disabled]="isApplying()"
+            [disabled]="isApplyingCombined()"
         ></button>
     </div>
 
@@ -27,7 +27,7 @@
                 [ngModel]="instruction()"
                 (ngModelChange)="instruction.set($event)"
                 [placeholder]="'artemisApp.programmingExercise.inlineComment.placeholder' | artemisTranslate"
-                [disabled]="isApplying() || readOnly()"
+                [disabled]="isApplyingCombined() || readOnly()"
                 rows="3"
                 maxlength="500"
             ></textarea>
@@ -37,14 +37,15 @@
         <!-- Actions -->
         <div class="widget-actions">
             @if (isEditing()) {
-                <button type="button" class="btn btn-outline-danger btn-sm" (click)="handleDelete()" [disabled]="isApplying()">
+                <button type="button" class="btn btn-outline-danger btn-sm" (click)="handleDelete()" [disabled]="isApplyingCombined()">
                     <fa-icon [icon]="faBan" />
                     <span jhiTranslate="entity.action.delete"></span>
                 </button>
             }
 
             <div class="action-buttons">
-                <button type="button" class="btn btn-secondary btn-sm" (click)="handleCancel()" [disabled]="isApplying()">
+                <!-- Cancel button - always enabled to allow aborting the operation -->
+                <button type="button" class="btn btn-secondary btn-sm" (click)="handleCancel()">
                     <fa-icon [icon]="faBan" />
                     <span jhiTranslate="entity.action.cancel"></span>
                 </button>
@@ -55,7 +56,7 @@
                 </button>
 
                 <button type="button" class="btn btn-outline-primary btn-sm" [disabled]="!canSubmit()" (click)="handleApply()">
-                    @if (isApplying()) {
+                    @if (isApplyingCombined()) {
                         <fa-icon [icon]="faSpinner" animation="spin" />
                     } @else {
                         <fa-icon [icon]="facArtemisIntelligence" />

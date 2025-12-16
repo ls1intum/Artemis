@@ -1,78 +1,59 @@
 <div #fullElement class="markdown-diff-editor-root default-font-size">
-    <!-- Markdown Formatting Toolbar -->
-    <div class="markdown-diff-editor-toolbar d-flex align-items-center p-2">
-        <!-- Standard Actions -->
-        @for (action of defaultActions(); track action.id) {
-            <ng-container [ngTemplateOutlet]="simpleActionButton" [ngTemplateOutletContext]="{ action }" />
-        }
-
-        <!-- Color Action -->
-        @if (colorAction()) {
-            <div class="btn-group ms-1">
-                <button type="button" class="btn btn-sm px-2 py-0 color-preview" (click)="openColorSelector($event)" [jhiTranslate]="colorAction()!.translationKey"></button>
-                <jhi-color-selector [tagColors]="colorSignal()" (selectedColor)="onSelectColor($event)" />
-            </div>
-        }
-
-        <!-- Domain Actions (without options) -->
-        @for (action of domainActionsWithoutOptions(); track action.id) {
-            <ng-container [ngTemplateOutlet]="simpleActionButton" [ngTemplateOutletContext]="{ action }" />
-        }
-
-        <!-- Domain Actions (with options) -->
-        @for (action of domainActionsWithOptions(); track action.id) {
-            <div class="btn-group ms-1" ngbDropdown role="group">
-                <button class="btn btn-sm px-2 py-0" type="button" ngbDropdownToggle>
-                    <span [jhiTranslate]="action.translationKey"></span>
-                </button>
-                <div class="dropdown-menu" ngbDropdownMenu>
-                    @if (action.values.length) {
-                        @for (value of action.values; track value.id) {
-                            <button type="button" class="dropdown-item" (click)="executeDomainAction(action, value)">
-                                <span>{{ value.value }}</span>
-                            </button>
-                        }
-                    } @else {
-                        <button type="button" class="dropdown-item" [disabled]="true" jhiTranslate="global.generic.emptyList"></button>
-                    }
-                </div>
-            </div>
-        }
-
-        @for (action of metaActions(); track action.id) {
-            <ng-container [ngTemplateOutlet]="simpleActionButton" [ngTemplateOutletContext]="{ action }" />
-        }
-    </div>
-
     <div
         #wrapper
         class="markdown-diff-editor-wrapper"
-        [style.height.px]="targetWrapperHeight"
+        [style.height.px]="fillHeight() ? null : targetWrapperHeight"
         [style.cursor]="isResizing ? 'ns-resize' : undefined"
-        [style.min-height.px]="minWrapperHeight"
-    ></div>
+        [style.min-height.px]="fillHeight() ? null : minWrapperHeight"
+    >
+        <!-- Markdown Formatting Toolbar -->
+        <div class="markdown-diff-editor-toolbar d-flex align-items-center p-2">
+            <!-- Standard Actions -->
+            @for (action of defaultActions(); track action.id) {
+                <ng-container [ngTemplateOutlet]="simpleActionButton" [ngTemplateOutletContext]="{ action }" />
+            }
 
-    <!-- Footer with file upload and markdown guide -->
-    @if (enableFileUpload()) {
-        <div class="d-flex align-items-center border-top" #fileUploadFooter>
-            <input
-                id="file-upload-diff-editor"
-                class="file-upload-footer-input"
-                type="file"
-                [accept]="allowedFileExtensions()"
-                [multiple]="true"
-                (change)="handleFileUpload($event)"
-            />
-            <label for="file-upload-diff-editor" class="file-upload-footer-label d-inline" [style.cursor]="isResizing ? 'ns-resize !important' : undefined">
-                <div class="row mx-0 align-items-baseline">
-                    <span class="col upload-subtitle" jhiTranslate="artemisApp.markdownEditor.fileUpload"></span>
+            <!-- Color Action -->
+            @if (colorAction()) {
+                <div class="btn-group ms-1">
+                    <button type="button" class="btn btn-sm px-2 py-0 color-preview" (click)="openColorSelector($event)" [jhiTranslate]="colorAction()!.translationKey"></button>
+                    <jhi-color-selector [tagColors]="colorSignal()" (selectedColor)="onSelectColor($event)" />
                 </div>
-            </label>
-            <a class="col-auto mx-1" href="https://markdown-it.github.io/" target="_blank" rel="noopener noreferrer">
-                <fa-icon [icon]="faQuestionCircle" [ngbTooltip]="'artemisApp.markdownEditor.guide' | artemisTranslate" />
-            </a>
+            }
+
+            <!-- Domain Actions (without options) -->
+            @for (action of domainActionsWithoutOptions(); track action.id) {
+                <ng-container [ngTemplateOutlet]="simpleActionButton" [ngTemplateOutletContext]="{ action }" />
+            }
+
+            <!-- Domain Actions (with options) -->
+            @for (action of domainActionsWithOptions(); track action.id) {
+                <div class="btn-group ms-1" ngbDropdown role="group">
+                    <button class="btn btn-sm px-2 py-0" type="button" ngbDropdownToggle>
+                        <span [jhiTranslate]="action.translationKey"></span>
+                    </button>
+                    <div class="dropdown-menu" ngbDropdownMenu>
+                        @if (action.values.length) {
+                            @for (value of action.values; track value.id) {
+                                <button type="button" class="dropdown-item" (click)="executeDomainAction(action, value)">
+                                    <span>{{ value.value }}</span>
+                                </button>
+                            }
+                        } @else {
+                            <button type="button" class="dropdown-item" [disabled]="true" jhiTranslate="global.generic.emptyList"></button>
+                        }
+                    </div>
+                </div>
+            }
+
+            @for (action of metaActions(); track action.id) {
+                <ng-container [ngTemplateOutlet]="simpleActionButton" [ngTemplateOutletContext]="{ action }" />
+            }
         </div>
-    }
+
+        <!-- Monaco Diff Editor Container (dynamically injected) -->
+        <div #editorContainer class="markdown-diff-editor-container"></div>
+    </div>
 
     @if (enableResize()) {
         <div #resizePlaceholder [style.cursor]="isResizing ? 'ns-resize' : undefined" class="d-flex justify-content-center resize-placeholder">

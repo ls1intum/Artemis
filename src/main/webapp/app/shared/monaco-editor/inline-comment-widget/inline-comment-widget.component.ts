@@ -48,6 +48,9 @@ export class InlineCommentWidgetComponent {
     /** Emits when user cancels/closes the widget */
     onCancel = output<void>();
 
+    /** Emits when user wants to cancel an in-progress apply operation */
+    onCancelApply = output<void>();
+
     /** Emits when user deletes an existing comment */
     onDelete = output<string>();
 
@@ -67,6 +70,15 @@ export class InlineCommentWidgetComponent {
 
     /** Whether the widget is currently collapsed */
     protected isCollapsed = signal(false);
+
+    /** Internal applying state - set when Apply is clicked */
+    private _isApplyingInternal = signal(false);
+
+    /** Tracks the comment created on first Save/Apply (for retry scenarios) */
+    private _createdComment = signal<InlineComment | undefined>(undefined);
+
+    /** Combined applying state from input or internal */
+    protected isApplyingCombined = computed(() => this.isApplying() || this._isApplyingInternal());
 
     /** Flag to track if instruction has been initialized (to avoid overwriting user edits) */
     private instructionInitialized = false;
@@ -88,11 +100,14 @@ export class InlineCommentWidgetComponent {
 
     /** Whether the submit actions are enabled */
     protected canSubmit = computed(() => {
-        return this.instruction().trim().length > 0 && !this.isApplying() && !this.readOnly();
+        return this.instruction().trim().length > 0 && !this.isApplyingCombined() && !this.readOnly();
     });
 
     /** Whether we're editing an existing comment */
-    protected isEditing = computed(() => !!this.existingComment());
+    protected isEditing = computed(() => !!this.existingComment() || !!this._createdComment());
+
+    /** Whether we have any comment (from input or created internally) - used for collapse button */
+    protected hasComment = computed(() => !!this.existingComment() || !!this._createdComment());
 
     // Lifecycle
 
@@ -133,6 +148,8 @@ export class InlineCommentWidgetComponent {
 
         const comment = this.createOrUpdateComment('pending');
         this.onSave.emit(comment);
+        // Collapse the widget after saving
+        this.isCollapsed.set(true);
     }
 
     /**
@@ -143,14 +160,33 @@ export class InlineCommentWidgetComponent {
             return;
         }
 
+        // Set internal applying state to disable UI
+        this._isApplyingInternal.set(true);
+
         const comment = this.createOrUpdateComment('applying');
         this.onApply.emit(comment);
     }
 
     /**
      * Cancels and closes the widget.
+     * If an apply operation is in progress, cancels it but keeps the widget open.
+     * If the comment has been saved, collapses the widget instead of closing.
      */
     protected handleCancel(): void {
+        if (this._isApplyingInternal()) {
+            // Cancel the in-progress apply operation but keep widget open
+            this.onCancelApply.emit();
+            this._isApplyingInternal.set(false);
+            return; // Don't close the widget - let user try again
+        }
+
+        // If we have a saved comment, just collapse instead of closing
+        if (this.hasComment()) {
+            this.isCollapsed.set(true);
+            return;
+        }
+
+        // Only close widget if it's a fresh unsaved comment
         this.onCancel.emit();
     }
 
@@ -158,17 +194,30 @@ export class InlineCommentWidgetComponent {
      * Deletes an existing comment.
      */
     protected handleDelete(): void {
-        const existing = this.existingComment();
-        if (existing) {
-            this.onDelete.emit(existing.id);
+        // Check both input comment and internally created comment
+        const commentId = this.existingComment()?.id ?? this._createdComment()?.id;
+        if (commentId) {
+            this.onDelete.emit(commentId);
         }
     }
 
     // Helpers
 
     private createOrUpdateComment(status: 'pending' | 'applying'): InlineComment {
-        const existing = this.existingComment();
+        // First check if we have a previously created comment (for retries)
+        const createdComment = this._createdComment();
+        if (createdComment) {
+            const updated = {
+                ...createdComment,
+                instruction: this.instruction().trim(),
+                status,
+            };
+            this._createdComment.set(updated);
+            return updated;
+        }
 
+        // Check for existing comment from input
+        const existing = this.existingComment();
         if (existing) {
             return {
                 ...existing,
@@ -177,7 +226,10 @@ export class InlineCommentWidgetComponent {
             };
         }
 
+        // Create new comment and track it for retries
         const newComment = createInlineComment(this.startLine(), this.endLine(), this.instruction().trim());
-        return { ...newComment, status };
+        const tracked = { ...newComment, status };
+        this._createdComment.set(tracked);
+        return tracked;
     }
 }

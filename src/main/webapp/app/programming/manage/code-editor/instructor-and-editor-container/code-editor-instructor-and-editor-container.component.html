@@ -196,9 +196,30 @@
                         [allowSplitView]="false"
                         [domainActions]="domainActions"
                         [metaActions]="metaActions"
+                        [enableResize]="false"
+                        [fillHeight]="true"
                     >
                     </jhi-markdown-diff-editor-monaco>
                 } @else if (exercise.templateParticipation) {
+                    <!-- Pending Inline Comments Bar -->
+                    @if (hasPendingComments()) {
+                        <div class="pending-comments-bar d-flex justify-content-between align-items-center mb-2 p-2 border rounded bg-light">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="fw-medium">{{ 'artemisApp.programmingExercise.inlineComment.pendingComments' | artemisTranslate: { count: pendingCount() } }}</span>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <button type="button" class="btn btn-outline-secondary btn-sm" (click)="clearAllComments()" [disabled]="isAnyApplying()">
+                                    <span jhiTranslate="entity.action.clear"></span>
+                                </button>
+                                <button type="button" class="btn btn-outline-primary btn-sm" (click)="applyAllComments()" [disabled]="isAnyApplying()">
+                                    @if (isApplyingAll()) {
+                                        <fa-icon [icon]="faSpinner" animation="spin" class="me-1" />
+                                    }
+                                    <span>{{ 'artemisApp.programmingExercise.inlineComment.applyAll' | artemisTranslate }} ({{ pendingCount() }})</span>
+                                </button>
+                            </div>
+                        </div>
+                    }
                     <jhi-programming-exercise-editable-instructions
                         [(exercise)]="exercise"
                         [(participation)]="selectedParticipation!"
@@ -207,11 +228,12 @@
                         [enableResize]="false"
                         [consistencyIssues]="consistencyIssues()"
                         [pendingComments]="pendingComments()"
-                        class="h-100"
+                        class="flex-grow-1 overflow-auto"
                         (instructionChange)="onInstructionChanged($event)"
                         (onInlineCommentSave)="onSaveInlineComment($event)"
                         (onInlineCommentApply)="onApplyInlineComment($event)"
                         (onInlineCommentDelete)="onDeleteInlineComment($event)"
+                        (onInlineCommentCancelApply)="onCancelInlineCommentApply()"
                     />
                 } @else {
                     <!-- Loading state while waiting for templateParticipation -->
