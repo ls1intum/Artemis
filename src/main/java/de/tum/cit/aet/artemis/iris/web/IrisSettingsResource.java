@@ -97,18 +97,6 @@ public class IrisSettingsResource {
             return false; // null vs {} must be treated as a change
         }
 
-        Integer leftRequests = normalizeRateLimitValue(left.requests());
-        Integer rightRequests = normalizeRateLimitValue(right.requests());
-        Integer leftTimeframe = normalizeRateLimitValue(left.timeframeHours());
-        Integer rightTimeframe = normalizeRateLimitValue(right.timeframeHours());
-
-        return Objects.equals(leftRequests, rightRequests) && Objects.equals(leftTimeframe, rightTimeframe);
-    }
-
-    private Integer normalizeRateLimitValue(Integer value) {
-        if (value == null || value == 0) {
-            return null;
-        }
-        return value;
+        return Objects.equals(left.requests(), right.requests()) && Objects.equals(left.timeframeHours(), right.timeframeHours());
     }
 }

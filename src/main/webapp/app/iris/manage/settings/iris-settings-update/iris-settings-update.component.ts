@@ -120,8 +120,8 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
      * - If filled: requests >= 0, timeframe > 0 (no zero timeframe allowed)
      */
     private validateRateLimit(): void {
-        const hasRequests = this.rateLimitRequests != null && this.rateLimitRequests !== ('' as unknown as number);
-        const hasTimeframe = this.rateLimitTimeframeHours != null && this.rateLimitTimeframeHours !== ('' as unknown as number);
+        const hasRequests = this.rateLimitRequests != null && this.rateLimitRequests !== '';
+        const hasTimeframe = this.rateLimitTimeframeHours != null && this.rateLimitTimeframeHours !== '';
 
         // Reset errors
         this.rateLimitRequestsError = undefined;
@@ -371,8 +371,8 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
      * Updates live as the user types to provide immediate feedback.
      */
     get effectiveRateLimitPreview(): IrisRateLimitConfiguration | undefined {
-        const hasRequests = this.rateLimitRequests != null && this.rateLimitRequests !== ('' as unknown as number);
-        const hasTimeframe = this.rateLimitTimeframeHours != null && this.rateLimitTimeframeHours !== ('' as unknown as number);
+        const hasRequests = this.rateLimitRequests != null && this.rateLimitRequests !== '';
+        const hasTimeframe = this.rateLimitTimeframeHours != null && this.rateLimitTimeframeHours !== '';
 
         // If both fields are empty, show application defaults
         if (!hasRequests && !hasTimeframe) {

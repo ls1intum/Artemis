@@ -142,12 +142,12 @@ class IrisSettingsServiceTest extends AbstractIrisIntegrationTest {
     void updateCourseSettings_acceptsZeroRequests() {
         enableIrisFor(course);
 
-        // 0 requests means "unlimited" - should be allowed (rate limit service treats 0 as unlimited)
+        // 0 requests means "blocking" (no requests allowed) - should be allowed as a valid configuration
         var payload = IrisCourseSettingsDTO.of(true, null, null, new IrisRateLimitConfiguration(0, 24));
 
         var dto = irisSettingsService.updateCourseSettings(course.getId(), payload);
 
-        // 0 is stored as-is (rate limit service treats it as unlimited)
+        // 0 is stored as-is (rate limit service treats it as blocking)
         assertThat(dto.settings().rateLimit()).isNotNull();
         assertThat(dto.settings().rateLimit().requests()).isZero();
         assertThat(dto.settings().rateLimit().timeframeHours()).isEqualTo(24);

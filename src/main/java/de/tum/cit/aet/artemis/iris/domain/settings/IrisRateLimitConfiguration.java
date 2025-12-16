@@ -14,12 +14,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * Rate limit overrides stored alongside the course settings.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record IrisRateLimitConfiguration(@Nullable @Min(0) Integer requests, @Nullable @Min(0) Integer timeframeHours) implements Serializable {
+public record IrisRateLimitConfiguration(@Nullable @Min(0) Integer requests, @Nullable @Min(1) Integer timeframeHours) implements Serializable {
 
     private static final IrisRateLimitConfiguration EMPTY = new IrisRateLimitConfiguration(null, null);
 
     @JsonCreator
-    public IrisRateLimitConfiguration(@JsonProperty("requests") @Nullable @Min(0) Integer requests, @JsonProperty("timeframeHours") @Nullable @Min(0) Integer timeframeHours) {
+    public IrisRateLimitConfiguration(@JsonProperty("requests") @Nullable @Min(0) Integer requests, @JsonProperty("timeframeHours") @Nullable @Min(1) Integer timeframeHours) {
         this.requests = requests;
         this.timeframeHours = timeframeHours;
     }
