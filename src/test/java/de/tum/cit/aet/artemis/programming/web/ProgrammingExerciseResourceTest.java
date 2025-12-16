@@ -10,7 +10,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,13 +30,14 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTheiaConfigDTO;
 import de.tum.cit.aet.artemis.programming.icl.LocalVCLocalCITestService;
-import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.TemplateProgrammingExerciseParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseParticipationUtilService;
+import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseTestService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
+import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 import de.tum.cit.aet.artemis.programming.util.ZipTestUtil;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 
@@ -79,7 +79,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     private ProgrammingExerciseStudentParticipationTestRepository programmingExerciseStudentParticipationTestRepository;
 
     @Autowired
-    private SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
+    private ProgrammingExerciseTestService programmingExerciseTestService;
 
     protected Course course;
 
@@ -195,18 +195,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
     void testExportStudentRequestedSolutionRepository_shouldReturnZipWithoutGit() throws Exception {
         programmingExercise.setExampleSolutionPublicationDate(ZonedDateTime.now().minusHours(2));
         programmingExerciseRepository.save(programmingExercise);
-
-        String projectKey = programmingExercise.getProjectKey();
-        String solutionRepositorySlug = projectKey.toLowerCase() + "-solution";
-
-        // Create LocalVC repo for solution first
-        localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, solutionRepositorySlug);
-
-        programmingExercise = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
-
-        var solutionParticipation = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
-        solutionParticipation.setRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + solutionRepositorySlug + ".git");
-        solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
+        programmingExercise = programmingExerciseTestService.setupExerciseForExport(programmingExercise);
 
         byte[] result = request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-student-requested-repository?includeTests=false",
                 HttpStatus.OK, byte[].class);
@@ -225,13 +214,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         programmingExercise.setExampleSolutionPublicationDate(ZonedDateTime.now().minusHours(2));
         programmingExercise.setReleaseTestsWithExampleSolution(true);
         programmingExerciseRepository.save(programmingExercise);
-
-        // Prepare tests repository in LocalVC
-        String projectKey = programmingExercise.getProjectKey();
-        String testsRepositorySlug = projectKey.toLowerCase() + "-tests";
-        localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, testsRepositorySlug);
-        programmingExercise.setTestRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + testsRepositorySlug + ".git");
-        programmingExerciseRepository.save(programmingExercise);
+        programmingExercise = programmingExerciseTestService.setupExerciseForExport(programmingExercise);
 
         byte[] result = request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-student-requested-repository?includeTests=true",
                 HttpStatus.OK, byte[].class);
@@ -250,11 +233,8 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         assertThat(participations).isNotEmpty();
         var studentParticipation = participations.iterator().next();
 
-        // Create a LocalVC repository for the student and wire the URI
-        String projectKey = programmingExercise.getProjectKey();
-        String repositorySlug = localVCLocalCITestService.getRepositorySlug(projectKey, TEST_PREFIX + "student1");
-        localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, repositorySlug);
-        studentParticipation.setRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + repositorySlug + ".git");
+        // Create and wire a LocalVC student repository via util
+        RepositoryExportTestUtil.seedStudentRepositoryForParticipation(localVCLocalCITestService, studentParticipation);
         programmingExerciseStudentParticipationTestRepository.save(studentParticipation);
 
         byte[] result = request.get("/api/programming/programming-exercises/" + programmingExercise.getId() + "/export-student-repository/" + studentParticipation.getId(),
@@ -376,16 +356,14 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
 
     private void setupLocalVCRepository(LocalRepository localRepo, ProgrammingExercise exercise) throws Exception {
         String projectKey = exercise.getProjectKey();
-        String templateRepositorySlug = projectKey.toLowerCase() + "-exercise";
+        String templateRepositorySlug = projectKey.toLowerCase() + "-" + RepositoryType.TEMPLATE.getName();
 
-        // Create and configure the repository using LocalVCLocalCITestService
-        LocalRepository localVCRepo = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, templateRepositorySlug);
+        // Seed target bare repo under LocalVC and copy contents from source
+        RepositoryExportTestUtil.seedLocalVcBareFrom(localVCLocalCITestService, projectKey, templateRepositorySlug, localRepo);
 
-        FileUtils.copyDirectory(localRepo.remoteBareGitRepo.getRepository().getDirectory(), localVCRepo.remoteBareGitRepoFile);
-
-        // Set the proper LocalVC URI format
+        // Wire URI to template participation for this exercise
         var templateParticipation = templateProgrammingExerciseParticipationTestRepo.findByProgrammingExerciseId(exercise.getId()).orElseThrow();
-        templateParticipation.setRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + templateRepositorySlug + ".git");
+        templateParticipation.setRepositoryUri(localVCLocalCITestService.buildLocalVCUri(null, null, projectKey, templateRepositorySlug));
         templateProgrammingExerciseParticipationTestRepo.save(templateParticipation);
     }
 }
