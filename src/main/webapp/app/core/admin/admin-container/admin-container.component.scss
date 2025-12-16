@@ -1,0 +1,87 @@
+$menu-width-closed: 64px;
+$menu-width-open: 220px;
+$spacing: 0.5rem;
+
+// Allow scrolling in the sidebar when content overflows
+::ng-deep .mat-drawer-inner-container {
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+}
+
+.sidebar-wrapper {
+    overflow-x: hidden;
+    position: sticky;
+    width: 100vw;
+    padding: 0 $spacing 0 0;
+}
+
+.mat-drawer-side {
+    border: none;
+}
+
+.mat-drawer-container {
+    // Fixed height based on viewport minus navbar and footer
+    height: calc(100vh - var(--sidebar-header-footer-combined-height, 105px) - 15px);
+
+    .mat-drawer {
+        box-sizing: content-box;
+        width: $menu-width-open;
+        transition: width 0.2s ease-in-out !important;
+        background-color: var(--module-bg) !important;
+        border-radius: 0.5rem;
+    }
+
+    .mat-drawer-content {
+        position: sticky;
+        z-index: 1;
+        display: block;
+        height: 100%;
+        width: calc(100vw - $menu-width-open - #{$spacing});
+        overflow: hidden;
+        margin-left: $menu-width-open !important;
+        transition:
+            width 0.2s ease-in-out,
+            margin-left 0.2s ease-in-out !important;
+    }
+
+    &.container-closed {
+        .mat-drawer {
+            width: $menu-width-closed;
+        }
+
+        .mat-drawer-content {
+            width: calc(100vw - $menu-width-closed - #{$spacing});
+            margin-left: $menu-width-closed !important;
+        }
+    }
+
+    @media screen and (max-width: 960px) {
+        .mat-drawer {
+            width: $menu-width-closed;
+        }
+
+        .mat-drawer-content {
+            width: calc(100vw - $menu-width-closed - #{$spacing});
+            margin-left: $menu-width-closed !important;
+        }
+    }
+}
+
+.admin-body-container {
+    height: 100%;
+    overflow-y: auto;
+}
+
+@media print {
+    .mat-drawer {
+        display: none !important;
+    }
+
+    .mat-drawer-container,
+    .mat-drawer-container.container-closed {
+        .mat-drawer-content {
+            margin-left: 0 !important;
+            width: 100% !important;
+        }
+    }
+}

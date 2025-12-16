@@ -118,10 +118,6 @@ export const routes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'programming-exercises/:exerciseId/iris-settings',
-        loadChildren: () => import('app/iris/manage/settings/iris-exercise-settings-update/iris-exercise-settings-update-route').then((m) => m.routes),
-    },
-    {
         path: 'programming-exercises/:exerciseId/edit-build-plan',
         loadComponent: () => import('app/programming/manage/build-plan-editor/build-plan-editor.component').then((m) => m.BuildPlanEditorComponent),
         resolve: {
