@@ -86,8 +86,6 @@ public class IrisLectureChatSessionService extends AbstractIrisChatSessionServic
      *
      * @param session The chat session to send to the LLM
      */
-    // earlier the executePipeline method of pyrisPipelineService was called directelly from here
-    // IrisCourseChatSessionService has two requestAndHandleResponse method since the additional one is needed for CompetencyJOL
     @Override
     public void requestAndHandleResponse(IrisLectureChatSession session) {
         LectureRepositoryApi api = lectureRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureRepositoryApi.class));

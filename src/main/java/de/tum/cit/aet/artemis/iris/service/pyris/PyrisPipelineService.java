@@ -168,7 +168,7 @@ public class PyrisPipelineService {
      * @param lecture            the lecture the session belongs to
      */
     public void executeLectureChatPipeline(String variant, String customInstructions, IrisLectureChatSession session, Lecture lecture) {
-        var course = lecture.getCourse();
+        Course course = lecture.getCourse();
         if (course == null) {
             throw new IllegalStateException("Lecture " + lecture.getId() + " does not belong to a course");
         }
@@ -185,7 +185,7 @@ public class PyrisPipelineService {
             Optional.empty(),
             pyrisJobService.addLectureChatJob(course.getId(), lecture.getId(), session.getId(), lastMessageId),
             executionDto -> {
-                var courseId = course.getId();
+                Long courseId = course.getId();
                 List<PyrisLectureUnitDTO> lectureUnits = lecture.getLectureUnits() == null ? List.of()
                         : lecture.getLectureUnits().stream().map(unit -> {
                             Integer attachmentVersion = null;
