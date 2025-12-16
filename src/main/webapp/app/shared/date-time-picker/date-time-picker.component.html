@@ -1,5 +1,5 @@
 @if (labelName() && !hideLabelName()) {
-    <label [attr.for]="inputFieldId()" class="form-control-label col">
+    <label for="date-input-field" class="form-control-label col">
         {{ labelName() }}
     </label>
 }
@@ -18,8 +18,7 @@
     <input
         #dateInput="ngModel"
         class="form-control position-relative ps-5"
-        [id]="inputFieldId()"
-        [attr.data-testid]="inputFieldId()"
+        id="date-input-field"
         [ngClass]="{ 'is-invalid': !isValid(), 'border-warning': warning() }"
         [class.ng-invalid]="!isValid()"
         [ngModel]="value()"
@@ -43,19 +42,19 @@
     }
 
     <ng-template #owlTrigger let-owlTrigger let-icon="icon">
-        <button [owlDateTimeTrigger]="owlTrigger" class="btn position-absolute" type="button" [attr.data-testid]="openButtonTestId()">
+        <button [owlDateTimeTrigger]="owlTrigger" class="btn position-absolute" type="button">
             <fa-icon [icon]="icon" />
         </button>
     </ng-template>
     <div class="position-relative">
-        <button class="btn position-absolute" type="button" style="right: 0" (click)="clearDate()" [attr.data-testid]="clearButtonTestId()">
+        <button class="btn position-absolute" type="button" style="right: 0" (click)="clearDate()">
             <fa-icon [icon]="faCircleXmark" />
         </button>
     </div>
 
-    <owl-date-time [startAt]="startDate()" [panelClass]="pickerPanelClass()" #dtDefault />
-    <owl-date-time [pickerType]="'calendar'" [panelClass]="pickerPanelClass()" #dtCalendar />
-    <owl-date-time [pickerType]="'timer'" [panelClass]="pickerPanelClass()" #dtTimer />
+    <owl-date-time [startAt]="startDate()" #dtDefault />
+    <owl-date-time [pickerType]="'calendar'" #dtCalendar />
+    <owl-date-time [pickerType]="'timer'" #dtTimer />
 </div>
 @if (dateInput.invalid || (requiredField() && !dateInput.value)) {
     <div class="invalid-feedback" jhiTranslate="entity.dateMissingOrNotValid" [translateValues]="{ labelName: labelName() }"></div>
