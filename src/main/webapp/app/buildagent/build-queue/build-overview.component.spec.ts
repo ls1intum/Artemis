@@ -594,6 +594,7 @@ describe('BuildQueueComponent', () => {
                     { provide: ActivatedRoute, useValue: routeStub },
                     { provide: TranslateService, useClass: MockTranslateService },
                     { provide: NgbModal, useClass: MockNgbModalService },
+                    { provide: WebsocketService, useClass: MockWebsocketService },
                     { provide: FeatureToggleService, useValue: { isEnabled: () => false } },
                     provideHttpClientTesting(),
                 ],
