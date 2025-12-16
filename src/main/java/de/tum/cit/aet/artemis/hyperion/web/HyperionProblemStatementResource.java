@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.web;
 
+import jakarta.validation.Valid;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
@@ -17,23 +19,26 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.Enfo
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyCheckResponseDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementGenerationRequestDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementGenerationResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementRewriteRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementRewriteResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionConsistencyCheckService;
+import de.tum.cit.aet.artemis.hyperion.service.HyperionProblemStatementGenerationService;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionProblemStatementRewriteService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 
 /**
- * REST controller for Hyperion Review & Refine features (consistency check and problem statement rewrite).
+ * REST controller for Hyperion problem statement features (generation, rewrite, and consistency check).
  */
 @Conditional(HyperionEnabled.class)
 @Lazy
 @RestController
 @RequestMapping("api/hyperion/")
-public class HyperionReviewAndRefineResource {
+public class HyperionProblemStatementResource {
 
-    private static final Logger log = LoggerFactory.getLogger(HyperionReviewAndRefineResource.class);
+    private static final Logger log = LoggerFactory.getLogger(HyperionProblemStatementResource.class);
 
     private final CourseRepository courseRepository;
 
@@ -43,12 +48,16 @@ public class HyperionReviewAndRefineResource {
 
     private final HyperionProblemStatementRewriteService problemStatementRewriteService;
 
-    public HyperionReviewAndRefineResource(CourseRepository courseRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            HyperionConsistencyCheckService consistencyCheckService, HyperionProblemStatementRewriteService problemStatementRewriteService) {
+    private final HyperionProblemStatementGenerationService problemStatementGenerationService;
+
+    public HyperionProblemStatementResource(CourseRepository courseRepository, ProgrammingExerciseRepository programmingExerciseRepository,
+            HyperionConsistencyCheckService consistencyCheckService, HyperionProblemStatementRewriteService problemStatementRewriteService,
+            HyperionProblemStatementGenerationService problemStatementGenerationService) {
         this.courseRepository = courseRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.consistencyCheckService = consistencyCheckService;
         this.problemStatementRewriteService = problemStatementRewriteService;
+        this.problemStatementGenerationService = problemStatementGenerationService;
     }
 
     /**
@@ -80,6 +89,23 @@ public class HyperionReviewAndRefineResource {
         log.debug("REST request to Hyperion rewrite problem statement for course [{}]", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         var result = problemStatementRewriteService.rewriteProblemStatement(course, request.problemStatementText());
+        return ResponseEntity.ok(result);
+    }
+
+    /**
+     * POST courses/{courseId}/problem-statements/generate: Generate a draft problem statement for a programming exercise in the given course.
+     *
+     * @param courseId the id of the course the problem statement belongs to
+     * @param request  the request containing the user prompt
+     * @return the ResponseEntity with status 200 (OK) and the generated draft problem statement or an error status
+     */
+    @EnforceAtLeastEditorInCourse
+    @PostMapping("courses/{courseId}/problem-statements/generate")
+    public ResponseEntity<ProblemStatementGenerationResponseDTO> generateProblemStatement(@PathVariable long courseId,
+            @Valid @RequestBody ProblemStatementGenerationRequestDTO request) {
+        log.debug("REST request to Hyperion generate draft problem statement for course [{}]", courseId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        var result = problemStatementGenerationService.generateProblemStatement(course, request.userPrompt());
         return ResponseEntity.ok(result);
     }
 }

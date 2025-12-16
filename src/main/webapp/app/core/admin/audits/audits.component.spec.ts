@@ -139,7 +139,7 @@ describe('AuditsComponent', () => {
 
             // THEN
             expect(service.query).toHaveBeenCalledOnce();
-            expect(comp.audits).toEqual(expect.objectContaining([audit]));
+            expect(comp.audits).toContainEqual(audit);
             expect(comp.totalItems).toBe(1);
         });
     });
