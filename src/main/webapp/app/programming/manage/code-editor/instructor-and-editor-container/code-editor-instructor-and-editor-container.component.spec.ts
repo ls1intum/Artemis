@@ -182,10 +182,31 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
         );
     });
 
+    it('clears selected file on rename and forwards operation with repository context', () => {
+        const repositorySyncService = TestBed.inject(RepositoryFileSyncService) as jest.Mocked<RepositoryFileSyncService>;
+        comp.exercise = { id: 99 } as ProgrammingExercise;
+        comp.selectedRepository = RepositoryType.TEMPLATE;
+        comp.codeEditorContainer = { selectedFile: 'old.java' } as any;
+
+        const operation = {
+            type: ProgrammingExerciseEditorFileChangeType.RENAME,
+            fileName: 'old.java',
+            newFileName: 'new.java',
+            content: 'content',
+            fileType: FileType.FILE,
+        } as const;
+
+        comp.onLocalFileOperationSync(operation);
+
+        expect(comp.codeEditorContainer.selectedFile).toBeUndefined();
+        expect(repositorySyncService.handleLocalFileOperation).toHaveBeenCalledWith(operation, RepositoryType.TEMPLATE, undefined);
+    });
+
     it('filters synchronization messages by repository selection', () => {
         comp.selectedRepository = RepositoryType.TEMPLATE;
         expect((comp as any).isChangeRelevant({} as ProgrammingExerciseEditorSyncMessage)).toBeFalse();
         expect((comp as any).isChangeRelevant({ target: ProgrammingExerciseEditorSyncTarget.SOLUTION_REPOSITORY } as ProgrammingExerciseEditorSyncMessage)).toBeFalse();
+        expect((comp as any).isChangeRelevant({ target: ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY } as ProgrammingExerciseEditorSyncMessage)).toBeTrue();
 
         comp.selectedRepository = RepositoryType.AUXILIARY;
         comp.selectedRepositoryId = 3;
