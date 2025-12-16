@@ -6,7 +6,7 @@ import { Subscription, filter } from 'rxjs';
 
 import { AdminSidebarComponent } from 'app/core/admin/admin-sidebar/admin-sidebar.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_EXAM, PROFILE_IRIS, PROFILE_LOCALCI, PROFILE_LTI } from 'app/app.constants';
+import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_EXAM, PROFILE_LOCALCI, PROFILE_LTI } from 'app/app.constants';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { LayoutService } from 'app/shared/breakpoints/layout.service';
 import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.service';
@@ -27,7 +27,6 @@ export class AdminContainerComponent implements OnInit, OnDestroy {
 
     // Feature flags
     localCIActive = false;
-    irisEnabled = false;
     ltiEnabled = false;
     atlasEnabled = false;
     examEnabled = false;
@@ -40,7 +39,6 @@ export class AdminContainerComponent implements OnInit, OnDestroy {
         const profileInfo = this.profileService.getProfileInfo();
         this.atlasEnabled = profileInfo.activeModuleFeatures.includes(MODULE_FEATURE_ATLAS);
         this.examEnabled = profileInfo.activeModuleFeatures.includes(MODULE_FEATURE_EXAM);
-        this.irisEnabled = profileInfo.activeProfiles.includes(PROFILE_IRIS);
         this.localCIActive = profileInfo.activeProfiles.includes(PROFILE_LOCALCI);
         this.ltiEnabled = profileInfo.activeProfiles.includes(PROFILE_LTI);
 
