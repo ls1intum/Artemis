@@ -461,7 +461,8 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
     /**
      * Fetches the number of student participations in the given exercise
      *
-     * @param exerciseId the id of the exercise to get the amount for
+     * @param exerciseId       the id of the exercise to get the amount for
+     * @param studentGroupName the student group name of the exercise's course
      * @return The number of student participations as <code>Long</code>
      */
     @Query("""
@@ -470,9 +471,9 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
                 JOIN e.studentParticipations p
                 JOIN p.student.groups g
             WHERE e.id = :exerciseId
-                 AND g = e.course.studentGroupName
+                 AND g = :studentGroupName
             """)
-    Long getStudentParticipationCountById(@Param("exerciseId") Long exerciseId);
+    Long getStudentParticipationCountById(@Param("exerciseId") Long exerciseId, @Param("studentGroupName") String studentGroupName);
 
     /**
      * Fetches the number of team participations in the given exercise
