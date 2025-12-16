@@ -5,6 +5,7 @@ import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.after;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.times;
@@ -44,6 +45,7 @@ import de.tum.cit.aet.artemis.iris.domain.settings.event.IrisEventType;
 import de.tum.cit.aet.artemis.iris.repository.IrisSettingsRepository;
 import de.tum.cit.aet.artemis.iris.service.pyris.event.CompetencyJolSetEvent;
 import de.tum.cit.aet.artemis.iris.service.pyris.event.NewResultEvent;
+import de.tum.cit.aet.artemis.iris.service.pyris.event.PyrisEvent;
 import de.tum.cit.aet.artemis.iris.util.IrisChatSessionUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
@@ -411,5 +413,16 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
 
         verify(irisCourseChatSessionService, times(1)).handleCompetencyJolSetEvent(any(CompetencyJolSetEvent.class));
         verify(pyrisPipelineService, times(1)).executeCourseChatPipeline(eq("default"), eq(testCourseCustomInstructions), eq(irisSession), any(CompetencyJol.class));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testTriggerWithUnsupportedEvent() {
+        PyrisEvent unsupportedEvent = mock(PyrisEvent.class);
+        pyrisEventService.trigger(unsupportedEvent);
+        await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> {
+            verify(irisCourseChatSessionService, never()).handleCompetencyJolSetEvent(any());
+            verify(irisExerciseChatSessionService, never()).handleNewResultEvent(any());
+        });
     }
 }
