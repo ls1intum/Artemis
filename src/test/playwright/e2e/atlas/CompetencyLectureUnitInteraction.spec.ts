@@ -3,6 +3,7 @@ import { admin } from '../../support/users';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { expect } from '@playwright/test';
+import { UnitType } from '../../support/pageobjects/lecture/LectureManagementPage';
 
 test.describe('Competency Lecture Unit Linking', { tag: '@fast' }, () => {
     let course: Course;
@@ -197,10 +198,3 @@ test.describe('Competency Lecture Unit Linking', { tag: '@fast' }, () => {
         });
     });
 });
-
-enum UnitType {
-    TEXT = '#createTextUnitButton',
-    EXERCISE = '#createExerciseUnitButton',
-    VIDEO = '#createVideoUnitButton',
-    FILE = '#createFileUploadUnitButton',
-}

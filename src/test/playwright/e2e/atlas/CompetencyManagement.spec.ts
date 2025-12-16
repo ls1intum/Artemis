@@ -43,7 +43,7 @@ async function setMarkdownDescription(page: Page, text: string) {
         if (typeof anyMonaco.pressSequentially === 'function') {
             await anyMonaco.pressSequentially(text);
         } else {
-            await monaco.type(text);
+            await monaco.fill(text);
         }
     } else {
         const fallback = page.getByRole('textbox', { name: 'Editor content' });
