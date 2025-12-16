@@ -5,12 +5,15 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.client.ChatClient.CallResponseSpec;
+import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
+import de.tum.cit.aet.artemis.core.util.LlmUsageHelper;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementGenerationResponseDTO;
 
@@ -34,15 +37,18 @@ public class HyperionProblemStatementGenerationService {
 
     private final HyperionPromptTemplateService templateService;
 
+    private final LlmUsageHelper llmUsageHelper;
+
     /**
      *
      *
      * @param chatClient      the AI chat client (optional)
      * @param templateService prompt template service
      */
-    public HyperionProblemStatementGenerationService(ChatClient chatClient, HyperionPromptTemplateService templateService) {
+    public HyperionProblemStatementGenerationService(ChatClient chatClient, HyperionPromptTemplateService templateService, LlmUsageHelper llmUsageHelper) {
         this.chatClient = chatClient;
         this.templateService = templateService;
+        this.llmUsageHelper = llmUsageHelper;
     }
 
     /**
@@ -63,7 +69,12 @@ public class HyperionProblemStatementGenerationService {
                     course.getDescription() != null ? course.getDescription() : "A programming course");
 
             String prompt = templateService.render("/prompts/hyperion/generate_draft_problem_statement.st", templateVariables);
-            String generatedProblemStatement = chatClient.prompt().user(prompt).call().content();
+            CallResponseSpec response = chatClient.prompt().user(prompt).call();
+            ChatResponse chatResponse = response.chatResponse();
+            String generatedProblemStatement = chatResponse != null && chatResponse.getResult() != null && chatResponse.getResult().getOutput() != null
+                    ? chatResponse.getResult().getOutput().getText()
+                    : response.content();
+            String normalizedModel = extractModelName(chatResponse);
 
             // Validate response length
             if (generatedProblemStatement != null && generatedProblemStatement.length() > MAX_PROBLEM_STATEMENT_LENGTH) {
@@ -73,7 +84,7 @@ public class HyperionProblemStatementGenerationService {
                         "ProblemStatement", "problemStatementTooLong");
             }
 
-            return new ProblemStatementGenerationResponseDTO(generatedProblemStatement);
+            return new ProblemStatementGenerationResponseDTO(generatedProblemStatement, normalizedModel);
         }
         catch (InternalServerErrorAlertException e) {
             // Re-throw our own exceptions
@@ -83,5 +94,17 @@ public class HyperionProblemStatementGenerationService {
             log.error("Error generating problem statement for course [{}]: {}", course.getId(), e.getMessage(), e);
             throw new InternalServerErrorAlertException("Failed to generate problem statement: " + e.getMessage(), "ProblemStatement", "problemStatementGenerationFailed");
         }
+    }
+
+    private String extractModelName(ChatResponse chatResponse) {
+        if (chatResponse == null || chatResponse.getMetadata() == null) {
+            return null;
+        }
+        String rawModel = chatResponse.getMetadata().getModel();
+        if (rawModel == null) {
+            return null;
+        }
+        String normalizedModel = llmUsageHelper.normalizeModelName(rawModel);
+        return normalizedModel == null || normalizedModel.isBlank() ? null : normalizedModel;
     }
 }

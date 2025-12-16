@@ -13,6 +13,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.metadata.ChatResponseMetadata;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
@@ -20,12 +21,16 @@ import org.springframework.ai.chat.prompt.Prompt;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
+import de.tum.cit.aet.artemis.core.util.LlmUsageHelper;
 import de.tum.cit.aet.artemis.hyperion.dto.ProblemStatementGenerationResponseDTO;
 
 class HyperionProblemStatementGenerationServiceTest {
 
     @Mock
     private ChatModel chatModel;
+
+    @Mock
+    private LlmUsageHelper llmUsageHelper;
 
     private HyperionProblemStatementGenerationService hyperionProblemStatementGenerationService;
 
@@ -34,7 +39,8 @@ class HyperionProblemStatementGenerationServiceTest {
         MockitoAnnotations.openMocks(this);
         ChatClient chatClient = ChatClient.create(chatModel);
         var templateService = new HyperionPromptTemplateService();
-        this.hyperionProblemStatementGenerationService = new HyperionProblemStatementGenerationService(chatClient, templateService);
+        when(llmUsageHelper.normalizeModelName(any())).thenCallRealMethod();
+        this.hyperionProblemStatementGenerationService = new HyperionProblemStatementGenerationService(chatClient, templateService, llmUsageHelper);
     }
 
     @Test
@@ -49,6 +55,18 @@ class HyperionProblemStatementGenerationServiceTest {
         assertThat(resp).isNotNull();
         assertThat(resp.draftProblemStatement()).isEqualTo(generatedDraft);
         assertThat(resp.error()).isNull();
+    }
+
+    @Test
+    void generateProblemStatement_setsNormalizedModelNameWhenMetadataAvailable() throws Exception {
+        String generatedDraft = "Generated draft problem statement";
+        var metadata = ChatResponseMetadata.builder().model("gpt-4o-2025-08-07").build();
+        when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> new ChatResponse(List.of(new Generation(new AssistantMessage(generatedDraft))), metadata));
+
+        var course = new Course();
+        ProblemStatementGenerationResponseDTO resp = hyperionProblemStatementGenerationService.generateProblemStatement(course, "Prompt");
+
+        assertThat(resp.modelName()).isEqualTo("gpt-4o");
     }
 
     @Test

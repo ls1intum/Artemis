@@ -21,5 +21,8 @@ export interface ProblemStatementGenerationResponse {
      * Error message if generation failed
      */
     error?: string;
+    /**
+     * LLM model used for generation
+     */
+    modelName?: string;
 }
-

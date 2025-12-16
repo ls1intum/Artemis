@@ -30,6 +30,9 @@
                 <span class="d-none d-sm-inline" jhiTranslate="entity.action.cancel"></span>
             </button>
         </div>
+        @if (hyperionModelName) {
+            <p class="text-secondary small mb-0 mt-2">Model: {{ hyperionModelName }}</p>
+        }
     }
     @if (isEditFieldDisplayedRecord()?.problemStatement) {
         <div class="form-group" id="field_problemStatement" name="problemStatement">
