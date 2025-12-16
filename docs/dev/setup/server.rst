@@ -107,7 +107,7 @@ module replacement in the client.
   `http://localhost:9000/ <http://localhost:9000/>`__ with hot module replacement enabled (also see
   :ref:`Client Setup <client-setup>`).
 * **Artemis BuildAgent (Prod):** The server will be started separately from the client with the profiles ``buildagent,local``.
-This configuration is used to run the build agent for the local CI. This configuration is rarely needed for development.
+  This configuration is used to run the build agent for the local CI. This configuration is rarely needed for development.
 * **Artemis Server (Dev, BuildAgent+LocalCI):** The server will be started separately from the client with the profiles
   ``dev,artemis,localci,localvc,scheduling,buildagent,core,ldap,local``.
 * **Artemis Server (Dev, Core, Jenkins):** The server will be started separately from the client with the profiles
