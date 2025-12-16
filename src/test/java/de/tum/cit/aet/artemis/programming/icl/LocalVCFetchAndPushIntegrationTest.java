@@ -10,6 +10,7 @@ import static org.mockito.Mockito.doReturn;
 
 import java.io.IOException;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
@@ -53,6 +54,7 @@ import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCIL
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
+import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 
 /**
@@ -280,9 +282,9 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
     private void commitFile(Git git, String fileName) throws GitAPIException, IOException {
         Path repoPath = git.getRepository().getWorkTree().toPath();
         Path filePath = repoPath.resolve(fileName);
-        Files.writeString(filePath, "Test content for " + fileName);
+        FileUtils.writeStringToFile(filePath.toFile(), "Test content for " + fileName, StandardCharsets.UTF_8);
         git.add().addFilepattern(fileName).call();
-        git.commit().setMessage("Add " + fileName).call();
+        GitService.commit(git).setMessage("Add " + fileName).call();
     }
 
     /**
