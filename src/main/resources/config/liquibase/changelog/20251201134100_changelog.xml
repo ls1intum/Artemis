@@ -5,6 +5,7 @@
 
     <changeSet id="20251201134100-multiple-docker-containers"
                author="erik stern">
+        <!-- Add the ability to save multiple container configs. -->
         <createTable tableName="docker_container_config">
             <column autoIncrement="true" name="id" type="bigint">
                 <constraints nullable="false" primaryKey="true"/>
@@ -33,6 +34,23 @@
             FROM programming_exercise_build_config bc
         </sql>
 
+        <!-- Remember container id in the build job. -->
+        <addColumn tableName="build_job">
+            <column name="container_id" type="bigint" />
+        </addColumn>
+
+        <!-- Add join table for build job and result. -->
+        <createTable tableName="build_job_result">
+            <column name="build_job_id" type="bigint">
+                <constraints nullable="false" foreignKeyName="fk_bjr_build_job" references="build_job(id)" />
+            </column>
+            <column name="result_id" type="bigint">
+                <constraints nullable="false" unique="true" foreignKeyName="fk_bjr_result" references="result(id)" />
+            </column>
+        </createTable>
+
+        <!-- TODO: Migrate build_job_id in old table???, not the new column we added... -->
+
         <dropColumn tableName="programming_exercise_build_config"
                     columnName="build_plan_configuration"/>
         <dropColumn tableName="programming_exercise_build_config"
@@ -58,6 +76,8 @@
             <dropForeignKeyConstraint baseTableName="fk_docker_container_build_config_id"/>
 
             <dropTable tableName="docker_container_config"/>
+
+            <dropColumn tableName="build_job" columnName="container_id" />
         </rollback>
     </changeSet>
 

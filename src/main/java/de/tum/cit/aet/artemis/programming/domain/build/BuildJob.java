@@ -1,15 +1,19 @@
 package de.tum.cit.aet.artemis.programming.domain.build;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.OneToOne;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -38,9 +42,16 @@ public class BuildJob extends DomainObject {
     @Column(name = "participation_id")
     private Long participationId;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(unique = true)
-    private Result result;
+    @Column(name = "container_id")
+    private Long containerId;
+
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinTable(
+        name = "build_job_result",
+        joinColumns = @JoinColumn(name = "build_job_id"),
+        inverseJoinColumns = @JoinColumn(name = "result_id")
+    )
+    private List<Result> results = new ArrayList<>();
 
     @Column(name = "build_agent_address")
     private String buildAgentAddress;
@@ -85,12 +96,17 @@ public class BuildJob extends DomainObject {
     }
 
     public BuildJob(BuildJobQueueItem queueItem, BuildStatus buildStatus, Result result) {
+        this(queueItem, buildStatus, List.of(result));
+    }
+
+    public BuildJob(BuildJobQueueItem queueItem, BuildStatus buildStatus, List<Result> results) {
         this.buildJobId = queueItem.id();
         this.name = queueItem.name();
         this.exerciseId = queueItem.exerciseId();
         this.courseId = queueItem.courseId();
         this.participationId = queueItem.participationId();
-        this.result = result;
+        this.containerId = queueItem.containerId();
+        this.results = new ArrayList<>(results);
         this.buildAgentAddress = queueItem.buildAgent().memberAddress();
         this.buildSubmissionDate = queueItem.jobTimingInfo().submissionDate();
         this.buildStartDate = queueItem.jobTimingInfo().buildStartDate();
@@ -145,12 +161,20 @@ public class BuildJob extends DomainObject {
         this.participationId = participationId;
     }
 
-    public Result getResult() {
-        return result;
+    public Long getContainerId() {
+        return containerId;
     }
 
-    public void setResult(Result result) {
-        this.result = result;
+    public void setContainerId(Long containerId) {
+        this.containerId = containerId;
+    }
+
+    public List<Result> getResults() {
+        return results;
+    }
+
+    public void setResults(List<Result> results) {
+        this.results = results;
     }
 
     public String getBuildAgentAddress() {
