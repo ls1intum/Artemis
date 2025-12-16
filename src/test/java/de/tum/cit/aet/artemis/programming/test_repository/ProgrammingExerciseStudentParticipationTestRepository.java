@@ -29,5 +29,5 @@ public interface ProgrammingExerciseStudentParticipationTestRepository extends P
             UPDATE ProgrammingExerciseStudentParticipation p
             SET p.buildPlanId = :buildPlanId
             """)
-    void updateBuildPlanIdOfAll(@Param("buildPlanId") Long buildPlanId);
+    void updateBuildPlanIdOfAll(@Param("buildPlanId") String buildPlanId);
 }

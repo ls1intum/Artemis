@@ -1,7 +1,11 @@
-<div class="video-wrapper">
-    <div class="video-column">
+<div class="video-wrapper" #videoWrapper>
+    <div class="video-column" #videoColumn>
         <!-- Native HTML5 video element for hls.js -->
         <video #videoRef id="video-player" class="video-player" controls preload="auto" playsinline></video>
+    </div>
+
+    <div class="resizer-handle" #resizerHandle>
+        <fa-icon [icon]="faGripLinesVertical" />
     </div>
 
     <jhi-transcript-viewer #transcriptViewer [transcriptSegments]="transcriptSegments()" [currentSegmentIndex]="currentSegmentIndex()" (segmentClicked)="seekTo($event)" />

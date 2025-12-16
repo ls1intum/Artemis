@@ -35,6 +35,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildCon
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseTestService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
+import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCTest;
 
 class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
@@ -61,6 +62,8 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsLoc
 
     private Course course1;
 
+    private String createdProjectKey;
+
     private static final int NUMBER_OF_STUDENTS = 2;
 
     private static final int NUMBER_OF_TUTORS = 1;
@@ -80,6 +83,11 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsLoc
         jenkinsRequestMockProvider.reset();
         if (programmingExerciseTestService.exerciseRepo != null) {
             programmingExerciseTestService.tearDown();
+        }
+        // Clean up LocalVC project created by versionControlService.createProjectForExercise
+        if (createdProjectKey != null) {
+            RepositoryExportTestUtil.deleteLocalVcProjectIfPresent(localVCBasePath, createdProjectKey);
+            createdProjectKey = null;
         }
 
         ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 500;
@@ -155,7 +163,8 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsLoc
         programming.setBuildConfig(programmingExerciseBuildConfigRepository.save(programming.getBuildConfig()));
         exerciseRepository.save(programming);
 
-        doReturn(true).when(versionControlService).checkIfProjectExists(any(), any());
+        versionControlService.createProjectForExercise(programming);
+        createdProjectKey = programming.getProjectKey();
         doReturn(null).when(continuousIntegrationService).checkIfProjectExists(any(), any());
 
         request.performMvcRequest(
