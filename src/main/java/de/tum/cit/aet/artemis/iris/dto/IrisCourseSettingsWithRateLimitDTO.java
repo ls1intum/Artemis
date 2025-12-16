@@ -7,11 +7,11 @@ import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettingsDTO;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisRateLimitConfiguration;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record CourseIrisSettingsDTO(Long courseId, IrisCourseSettingsDTO settings, IrisRateLimitConfiguration effectiveRateLimit,
+public record IrisCourseSettingsWithRateLimitDTO(Long courseId, IrisCourseSettingsDTO settings, IrisRateLimitConfiguration effectiveRateLimit,
         IrisRateLimitConfiguration applicationRateLimitDefaults) {
 
-    public static CourseIrisSettingsDTO fromEntity(CourseIrisSettings entity, IrisRateLimitConfiguration effectiveRateLimit,
+    public static IrisCourseSettingsWithRateLimitDTO fromEntity(CourseIrisSettings entity, IrisRateLimitConfiguration effectiveRateLimit,
             IrisRateLimitConfiguration applicationRateLimitDefaults) {
-        return new CourseIrisSettingsDTO(entity.getCourseId(), entity.getSettings(), effectiveRateLimit, applicationRateLimitDefaults);
+        return new IrisCourseSettingsWithRateLimitDTO(entity.getCourseId(), entity.getSettings(), effectiveRateLimit, applicationRateLimitDefaults);
     }
 }

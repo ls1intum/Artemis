@@ -221,7 +221,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
 
             this.irisEnabled = this.profileService.isProfileActive(PROFILE_IRIS);
             if (this.irisEnabled && !this.exercise.exerciseGroup && this.courseId) {
-                this.irisSettingsSubscription = this.irisSettingsService.getCourseSettings(this.courseId).subscribe((response) => {
+                this.irisSettingsSubscription = this.irisSettingsService.getCourseSettingsWithRateLimit(this.courseId).subscribe((response) => {
                     this.irisChatEnabled = response?.settings?.enabled ?? false;
                 });
             }

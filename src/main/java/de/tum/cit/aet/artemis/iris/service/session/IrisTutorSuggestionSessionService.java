@@ -207,7 +207,7 @@ public class IrisTutorSuggestionSessionService extends AbstractIrisChatSessionSe
     }
 
     @Override
-    public void checkIsFeatureActivatedFor(IrisTutorSuggestionSession irisSession) {
+    public void checkIrisEnabledFor(IrisTutorSuggestionSession irisSession) {
         var post = postRepository.findPostOrMessagePostByIdElseThrow(irisSession.getPostId());
         var course = post.getCoursePostingBelongsTo();
         if (course != null) {

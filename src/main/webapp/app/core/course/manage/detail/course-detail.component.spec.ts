@@ -28,7 +28,7 @@ import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.serv
 import { FullscreenComponent } from 'app/modeling/shared/fullscreen/fullscreen.component';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
-import { CourseIrisSettingsDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
+import { IrisCourseSettingsWithRateLimitDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
 
 describe('Course Management Detail Component', () => {
     let component: CourseDetailComponent;
@@ -124,7 +124,7 @@ describe('Course Management Detail Component', () => {
         courseDataSubject.next({ course: { ...course, isAtLeastInstructor: true } });
         const irisSpy = jest
             .spyOn(irisSettingsService, 'getCourseSettings')
-            .mockReturnValue(of({ courseId: 123, settings: { enabled: true, variant: 'default', rateLimit: {} } } as CourseIrisSettingsDTO));
+            .mockReturnValue(of({ courseId: 123, settings: { enabled: true, variant: 'default', rateLimit: {} } } as IrisCourseSettingsWithRateLimitDTO));
         await component.ngOnInit();
         expect(irisSpy).toHaveBeenCalledOnce();
     });

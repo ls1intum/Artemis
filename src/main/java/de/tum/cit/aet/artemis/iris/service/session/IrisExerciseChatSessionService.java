@@ -128,7 +128,7 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
      * @param session The session to check
      */
     @Override
-    public void checkIsFeatureActivatedFor(IrisProgrammingExerciseChatSession session) {
+    public void checkIrisEnabledFor(IrisProgrammingExerciseChatSession session) {
         var exercise = exerciseRepository.findByIdElseThrow(session.getExerciseId());
         var course = exercise.getCourseViaExerciseGroupOrCourseMember();
         if (course != null) {

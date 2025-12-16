@@ -29,7 +29,7 @@ import de.tum.cit.aet.artemis.iris.domain.session.IrisTextExerciseChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisTutorSuggestionSession;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettingsDTO;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisRateLimitConfiguration;
-import de.tum.cit.aet.artemis.iris.dto.CourseIrisSettingsDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisCourseSettingsWithRateLimitDTO;
 import de.tum.cit.aet.artemis.iris.exception.IrisRateLimitExceededException;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
@@ -80,7 +80,7 @@ class IrisRateLimitServiceTest {
     void getRateLimitInformation_usesCourseOverridesWhenPresent() {
         var effective = new IrisRateLimitConfiguration(5, 3);
         when(irisSettingsService.getCourseSettingsDTO(COURSE_ID))
-                .thenReturn(new CourseIrisSettingsDTO(COURSE_ID, IrisCourseSettingsDTO.defaultSettings(), effective, IrisRateLimitConfiguration.empty()));
+                .thenReturn(new IrisCourseSettingsWithRateLimitDTO(COURSE_ID, IrisCourseSettingsDTO.defaultSettings(), effective, IrisRateLimitConfiguration.empty()));
         when(irisMessageRepository.countLlmResponsesOfUserWithinTimeframe(eq(USER_ID), any(), any())).thenReturn(3);
 
         var info = rateLimitService.getRateLimitInformation(COURSE_ID, user);
@@ -93,7 +93,7 @@ class IrisRateLimitServiceTest {
     void getRateLimitInformation_unlimitedOverridesSkipCounting() {
         var effective = IrisRateLimitConfiguration.empty(); // null, null = unlimited
         when(irisSettingsService.getCourseSettingsDTO(COURSE_ID))
-                .thenReturn(new CourseIrisSettingsDTO(COURSE_ID, IrisCourseSettingsDTO.defaultSettings(), effective, IrisRateLimitConfiguration.empty()));
+                .thenReturn(new IrisCourseSettingsWithRateLimitDTO(COURSE_ID, IrisCourseSettingsDTO.defaultSettings(), effective, IrisRateLimitConfiguration.empty()));
 
         var info = rateLimitService.getRateLimitInformation(COURSE_ID, user);
 
@@ -118,7 +118,7 @@ class IrisRateLimitServiceTest {
 
         var effective = new IrisRateLimitConfiguration(1, 1);
         when(irisSettingsService.getCourseSettingsDTO(COURSE_ID))
-                .thenReturn(new CourseIrisSettingsDTO(COURSE_ID, IrisCourseSettingsDTO.defaultSettings(), effective, IrisRateLimitConfiguration.empty()));
+                .thenReturn(new IrisCourseSettingsWithRateLimitDTO(COURSE_ID, IrisCourseSettingsDTO.defaultSettings(), effective, IrisRateLimitConfiguration.empty()));
 
         assertThatThrownBy(() -> rateLimitService.checkRateLimitElseThrow(session, user)).isInstanceOf(IrisRateLimitExceededException.class);
     }
@@ -134,7 +134,7 @@ class IrisRateLimitServiceTest {
 
         var effective = new IrisRateLimitConfiguration(1, 1);
         when(irisSettingsService.getCourseSettingsDTO(COURSE_ID))
-                .thenReturn(new CourseIrisSettingsDTO(COURSE_ID, IrisCourseSettingsDTO.defaultSettings(), effective, IrisRateLimitConfiguration.empty()));
+                .thenReturn(new IrisCourseSettingsWithRateLimitDTO(COURSE_ID, IrisCourseSettingsDTO.defaultSettings(), effective, IrisRateLimitConfiguration.empty()));
 
         assertThatThrownBy(() -> rateLimitService.checkRateLimitElseThrow(session, user)).isInstanceOf(IrisRateLimitExceededException.class);
         verify(irisSettingsService).getCourseSettingsDTO(COURSE_ID);
@@ -157,7 +157,7 @@ class IrisRateLimitServiceTest {
 
         var effective = new IrisRateLimitConfiguration(1, 1);
         when(irisSettingsService.getCourseSettingsDTO(COURSE_ID))
-                .thenReturn(new CourseIrisSettingsDTO(COURSE_ID, IrisCourseSettingsDTO.defaultSettings(), effective, IrisRateLimitConfiguration.empty()));
+                .thenReturn(new IrisCourseSettingsWithRateLimitDTO(COURSE_ID, IrisCourseSettingsDTO.defaultSettings(), effective, IrisRateLimitConfiguration.empty()));
 
         assertThatThrownBy(() -> rateLimitService.checkRateLimitElseThrow(session, user)).isInstanceOf(IrisRateLimitExceededException.class);
         verify(irisSettingsService).getCourseSettingsDTO(COURSE_ID);
@@ -180,7 +180,7 @@ class IrisRateLimitServiceTest {
 
         var effective = new IrisRateLimitConfiguration(1, 1);
         when(irisSettingsService.getCourseSettingsDTO(COURSE_ID))
-                .thenReturn(new CourseIrisSettingsDTO(COURSE_ID, IrisCourseSettingsDTO.defaultSettings(), effective, IrisRateLimitConfiguration.empty()));
+                .thenReturn(new IrisCourseSettingsWithRateLimitDTO(COURSE_ID, IrisCourseSettingsDTO.defaultSettings(), effective, IrisRateLimitConfiguration.empty()));
 
         assertThatThrownBy(() -> rateLimitService.checkRateLimitElseThrow(session, user)).isInstanceOf(IrisRateLimitExceededException.class);
         verify(irisSettingsService).getCourseSettingsDTO(COURSE_ID);
@@ -205,7 +205,7 @@ class IrisRateLimitServiceTest {
 
         var effective = new IrisRateLimitConfiguration(1, 1);
         when(irisSettingsService.getCourseSettingsDTO(COURSE_ID))
-                .thenReturn(new CourseIrisSettingsDTO(COURSE_ID, IrisCourseSettingsDTO.defaultSettings(), effective, IrisRateLimitConfiguration.empty()));
+                .thenReturn(new IrisCourseSettingsWithRateLimitDTO(COURSE_ID, IrisCourseSettingsDTO.defaultSettings(), effective, IrisRateLimitConfiguration.empty()));
 
         assertThatThrownBy(() -> rateLimitService.checkRateLimitElseThrow(session, user)).isInstanceOf(IrisRateLimitExceededException.class);
         verify(irisSettingsService).getCourseSettingsDTO(COURSE_ID);

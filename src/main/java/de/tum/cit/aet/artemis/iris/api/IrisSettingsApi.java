@@ -7,7 +7,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.iris.dto.CourseIrisSettingsDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisCourseSettingsWithRateLimitDTO;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 
 @Profile(PROFILE_IRIS)
@@ -21,8 +21,8 @@ public class IrisSettingsApi extends AbstractIrisApi {
         this.irisSettingsService = irisSettingsService;
     }
 
-    public CourseIrisSettingsDTO getSettingsForCourse(long courseId) {
-        return irisSettingsService.getCourseSettingsDTO(courseId);
+    public IrisCourseSettingsWithRateLimitDTO getSettingsForCourse(long courseId) {
+        return irisSettingsService.getCourseSettingsWithRateLimit(courseId);
     }
 
     public boolean isIrisEnabledForCourse(long courseId) {

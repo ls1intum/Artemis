@@ -139,7 +139,7 @@ public class IrisRateLimitService {
         if (courseId == null) {
             return irisSettingsService.getApplicationRateLimitDefaults();
         }
-        return irisSettingsService.getCourseSettingsDTO(courseId).effectiveRateLimit();
+        return irisSettingsService.getCourseSettingsWithRateLimit(courseId).effectiveRateLimit();
     }
 
     private Optional<Long> resolveCourseId(IrisChatSession session) {

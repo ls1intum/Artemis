@@ -101,7 +101,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
             this.getCourseDetailSections();
         });
         if (this.irisEnabled && this.course.isAtLeastInstructor) {
-            const irisSettings = await firstValueFrom(this.irisSettingsService.getCourseSettings(this.course.id!));
+            const irisSettings = await firstValueFrom(this.irisSettingsService.getCourseSettingsWithRateLimit(this.course.id!));
             this.irisChatEnabled = irisSettings?.settings?.enabled ?? false;
         }
         this.paramSub = this.route.params.subscribe((params) => {

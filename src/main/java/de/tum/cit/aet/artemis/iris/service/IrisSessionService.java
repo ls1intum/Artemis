@@ -79,7 +79,7 @@ public class IrisSessionService {
      */
     public void checkIsIrisActivated(IrisSession session) {
         var wrapper = getIrisSessionSubService(session);
-        wrapper.irisSubFeatureInterface.checkIsFeatureActivatedFor(wrapper.irisSession);
+        wrapper.irisSubFeatureInterface.checkIrisEnabledFor(wrapper.irisSession);
     }
 
     /**

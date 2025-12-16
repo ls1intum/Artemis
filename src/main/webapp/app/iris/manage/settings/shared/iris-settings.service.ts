@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { finalize, map, shareReplay, tap } from 'rxjs/operators';
-import { CourseIrisSettingsDTO, IrisCourseSettingsDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
+import { IrisCourseSettingsDTO, IrisCourseSettingsWithRateLimitDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
 
 /**
  * Service for managing Iris course-level settings.
@@ -15,8 +15,8 @@ export class IrisSettingsService {
     public resourceUrl = 'api/iris';
 
     // Simplified caching for course settings only
-    private courseSettingsCache = new Map<number, CourseIrisSettingsDTO>();
-    private pendingCourseRequests = new Map<number, Observable<CourseIrisSettingsDTO | undefined>>();
+    private courseSettingsCache = new Map<number, IrisCourseSettingsWithRateLimitDTO>();
+    private pendingCourseRequests = new Map<number, Observable<IrisCourseSettingsWithRateLimitDTO | undefined>>();
     private courseCacheTimestamps = new Map<number, number>();
     private static readonly CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
@@ -27,7 +27,7 @@ export class IrisSettingsService {
      *
      * @param courseId the id of the course
      */
-    getCourseSettings(courseId: number): Observable<CourseIrisSettingsDTO | undefined> {
+    getCourseSettingsWithRateLimit(courseId: number): Observable<IrisCourseSettingsWithRateLimitDTO | undefined> {
         const now = Date.now();
         const cached = this.courseSettingsCache.get(courseId);
         const timestamp = this.courseCacheTimestamps.get(courseId);
@@ -41,8 +41,8 @@ export class IrisSettingsService {
             return pending;
         }
 
-        const request$ = this.http.get<CourseIrisSettingsDTO>(`${this.resourceUrl}/courses/${courseId}/iris-settings`, { observe: 'response' }).pipe(
-            map((res: HttpResponse<CourseIrisSettingsDTO>) => res.body ?? undefined),
+        const request$ = this.http.get<IrisCourseSettingsWithRateLimitDTO>(`${this.resourceUrl}/courses/${courseId}/iris-settings`, { observe: 'response' }).pipe(
+            map((res: HttpResponse<IrisCourseSettingsWithRateLimitDTO>) => res.body ?? undefined),
             tap((settings) => {
                 if (settings) {
                     this.courseSettingsCache.set(courseId, settings);
@@ -64,8 +64,8 @@ export class IrisSettingsService {
      * @param courseId the id of the course
      * @param settings the settings to update
      */
-    updateCourseSettings(courseId: number, settings: IrisCourseSettingsDTO): Observable<HttpResponse<CourseIrisSettingsDTO>> {
-        return this.http.put<CourseIrisSettingsDTO>(`${this.resourceUrl}/courses/${courseId}/iris-settings`, settings, { observe: 'response' }).pipe(
+    updateCourseSettings(courseId: number, settings: IrisCourseSettingsDTO): Observable<HttpResponse<IrisCourseSettingsWithRateLimitDTO>> {
+        return this.http.put<IrisCourseSettingsWithRateLimitDTO>(`${this.resourceUrl}/courses/${courseId}/iris-settings`, settings, { observe: 'response' }).pipe(
             tap(() => {
                 // Invalidate cache on successful update
                 this.courseSettingsCache.delete(courseId);

@@ -19,7 +19,7 @@ import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { ImportAllCompetenciesComponent } from 'app/atlas/manage/competency-management/import-all-competencies.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
-import { CourseIrisSettingsDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
+import { IrisCourseSettingsWithRateLimitDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
 import { PROFILE_IRIS } from 'app/app.constants';
 import { Prerequisite } from 'app/atlas/shared/entities/prerequisite.model';
 import { CompetencyManagementTableComponent } from 'app/atlas/manage/competency-management/competency-management-table.component';
@@ -143,7 +143,7 @@ describe('CompetencyManagementComponent', () => {
                 variant: 'default',
                 rateLimit: {},
             },
-        } as CourseIrisSettingsDTO;
+        } as IrisCourseSettingsWithRateLimitDTO;
         getIrisSettingsSpy.mockReturnValue(of(irisSettingsResponse));
 
         fixture.detectChanges();

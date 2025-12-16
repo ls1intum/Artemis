@@ -8,7 +8,7 @@ import { Course } from 'app/core/course/shared/entities/course.model';
 import { provideRouter } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { ComponentRef } from '@angular/core';
-import { CourseIrisSettingsDTO, IrisCourseSettingsDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
+import { IrisCourseSettingsDTO, IrisCourseSettingsWithRateLimitDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
 
 describe('IrisEnabledComponent', () => {
     let comp: IrisEnabledComponent;
@@ -26,7 +26,7 @@ describe('IrisEnabledComponent', () => {
         rateLimit: { requests: 100, timeframeHours: 24 },
     };
 
-    const mockResponse: CourseIrisSettingsDTO = {
+    const mockResponse: IrisCourseSettingsWithRateLimitDTO = {
         courseId: 5,
         settings: mockSettings,
         effectiveRateLimit: { requests: 100, timeframeHours: 24 },
@@ -116,7 +116,7 @@ describe('IrisEnabledComponent', () => {
             fixture.detectChanges();
         });
 
-        it('should enable Iris and update backend', async () => {
+        it('should enable Iris and update server', async () => {
             const disabledSettings = { ...mockSettings, enabled: false };
             comp.settings.set(disabledSettings);
 
@@ -137,7 +137,7 @@ describe('IrisEnabledComponent', () => {
             expect(comp.isEnabled()).toBeTrue();
         });
 
-        it('should disable Iris and update backend', async () => {
+        it('should disable Iris and update server', async () => {
             comp.settings.set(mockSettings);
 
             const updateSpy = jest

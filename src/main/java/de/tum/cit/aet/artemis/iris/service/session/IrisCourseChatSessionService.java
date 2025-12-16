@@ -100,7 +100,7 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
      * @param session The session to check
      */
     @Override
-    public void checkIsFeatureActivatedFor(IrisCourseChatSession session) {
+    public void checkIrisEnabledFor(IrisCourseChatSession session) {
         var course = courseRepository.findByIdElseThrow(session.getCourseId());
         irisSettingsService.ensureEnabledForCourseOrElseThrow(course);
     }

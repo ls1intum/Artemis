@@ -19,7 +19,7 @@ import { ScienceEventType } from 'app/shared/science/science.model';
 import { Subscription } from 'rxjs';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ChatServiceMode } from 'app/iris/overview/services/iris-chat.service';
-import { CourseIrisSettingsDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
+import { IrisCourseSettingsWithRateLimitDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { UpperCasePipe } from '@angular/common';
@@ -90,7 +90,7 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     isDownloadingLink?: string;
     lectureUnits: LectureUnit[] = [];
     hasPdfLectureUnit: boolean;
-    irisSettings?: CourseIrisSettingsDTO;
+    irisSettings?: IrisCourseSettingsWithRateLimitDTO;
     paramsSubscription: Subscription;
     courseParamsSubscription: Subscription;
     irisEnabled = false;
@@ -145,7 +145,7 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
                                 ).length > 0;
                         }
                         if (this.irisEnabled && this.lecture?.course?.id) {
-                            this.irisSettingsService.getCourseSettings(this.lecture.course.id).subscribe((response) => {
+                            this.irisSettingsService.getCourseSettingsWithRateLimit(this.lecture.course.id).subscribe((response) => {
                                 this.irisSettings = response;
                             });
                         }

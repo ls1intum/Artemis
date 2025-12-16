@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit, inject, input, signal } from '@angular/core';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 import { ChannelDTO, ChannelSubType, getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
-import { CourseIrisSettingsDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
+import { IrisCourseSettingsWithRateLimitDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
 import { Subscription, catchError, distinctUntilKeyChanged, filter, of } from 'rxjs';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { Router } from '@angular/router';
@@ -34,7 +34,7 @@ export class RedirectToIrisButtonComponent implements OnInit, OnDestroy {
 
     private conversationServiceSubscription: Subscription;
     private settingsSubscription: Subscription | undefined;
-    private irisCourseSettings: CourseIrisSettingsDTO | undefined;
+    private irisCourseSettings: IrisCourseSettingsWithRateLimitDTO | undefined;
     channelSubTypeReferenceRouterLink = '';
     irisEnabled = signal<boolean>(false);
 
@@ -113,9 +113,9 @@ export class RedirectToIrisButtonComponent implements OnInit, OnDestroy {
             case ChannelSubType.EXERCISE: {
                 const course = this.course();
                 if (course?.id) {
-                    this.updateIrisStatus<CourseIrisSettingsDTO>(
+                    this.updateIrisStatus<IrisCourseSettingsWithRateLimitDTO>(
                         this.irisCourseSettings,
-                        () => this.irisSettingsService.getCourseSettings(course.id!),
+                        () => this.irisSettingsService.getCourseSettingsWithRateLimit(course.id!),
                         (settings) => settings.settings?.enabled,
                         channelDTO,
                         (settings) => (this.irisCourseSettings = settings),

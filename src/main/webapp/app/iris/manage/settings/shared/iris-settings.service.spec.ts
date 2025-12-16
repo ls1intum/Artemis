@@ -3,13 +3,13 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { take } from 'rxjs/operators';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { provideHttpClient } from '@angular/common/http';
-import { CourseIrisSettingsDTO, IrisCourseSettingsDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
+import { IrisCourseSettingsDTO, IrisCourseSettingsWithRateLimitDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
 
 describe('Iris Settings Service', () => {
     let service: IrisSettingsService;
     let httpMock: HttpTestingController;
 
-    const mockCourseSettings: CourseIrisSettingsDTO = {
+    const mockCourseSettings: IrisCourseSettingsWithRateLimitDTO = {
         courseId: 1,
         settings: {
             enabled: true,
@@ -44,7 +44,7 @@ describe('Iris Settings Service', () => {
     describe('getCourseSettings', () => {
         it('should get course settings', fakeAsync(() => {
             service
-                .getCourseSettings(1)
+                .getCourseSettingsWithRateLimit(1)
                 .pipe(take(1))
                 .subscribe((resp) => expect(resp).toEqual(mockCourseSettings));
 
@@ -55,11 +55,11 @@ describe('Iris Settings Service', () => {
 
         it('should reuse pending request when getting course settings', fakeAsync(() => {
             service
-                .getCourseSettings(1)
+                .getCourseSettingsWithRateLimit(1)
                 .pipe(take(1))
                 .subscribe((resp) => expect(resp).toEqual(mockCourseSettings));
             service
-                .getCourseSettings(1)
+                .getCourseSettingsWithRateLimit(1)
                 .pipe(take(1))
                 .subscribe((resp) => expect(resp).toEqual(mockCourseSettings));
 
@@ -70,14 +70,14 @@ describe('Iris Settings Service', () => {
         }));
 
         it('should reuse cached result after getting course settings', fakeAsync(() => {
-            service.getCourseSettings(1).pipe(take(1)).subscribe();
+            service.getCourseSettingsWithRateLimit(1).pipe(take(1)).subscribe();
             const req = httpMock.expectOne({ method: 'GET' });
             req.flush(mockCourseSettings, { status: 200, statusText: 'Ok' });
             tick();
 
             // Second request should use cache, no HTTP request
             service
-                .getCourseSettings(1)
+                .getCourseSettingsWithRateLimit(1)
                 .pipe(take(1))
                 .subscribe((resp) => expect(resp).toEqual(mockCourseSettings));
             httpMock.expectNone({ method: 'GET' });
@@ -85,7 +85,7 @@ describe('Iris Settings Service', () => {
         }));
 
         it('should trigger new request after cache duration', fakeAsync(() => {
-            service.getCourseSettings(1).pipe(take(1)).subscribe();
+            service.getCourseSettingsWithRateLimit(1).pipe(take(1)).subscribe();
             const req = httpMock.expectOne({ method: 'GET' });
             req.flush(mockCourseSettings, { status: 200, statusText: 'Ok' });
             tick();
@@ -93,7 +93,7 @@ describe('Iris Settings Service', () => {
             // Advance time by more than CACHE_DURATION
             tick((IrisSettingsService as any).CACHE_DURATION + 1);
 
-            service.getCourseSettings(1).pipe(take(1)).subscribe();
+            service.getCourseSettingsWithRateLimit(1).pipe(take(1)).subscribe();
             const newReq = httpMock.expectOne({ method: 'GET' });
             newReq.flush(mockCourseSettings, { status: 200, statusText: 'Ok' });
             tick();
@@ -101,7 +101,7 @@ describe('Iris Settings Service', () => {
 
         it('should clear pending request and allow retry after failure', fakeAsync(() => {
             service
-                .getCourseSettings(1)
+                .getCourseSettingsWithRateLimit(1)
                 .pipe(take(1))
                 .subscribe({
                     error: (err) => expect(err.status).toBe(500),
@@ -112,7 +112,7 @@ describe('Iris Settings Service', () => {
 
             // Retry should trigger a new request
             service
-                .getCourseSettings(1)
+                .getCourseSettingsWithRateLimit(1)
                 .pipe(take(1))
                 .subscribe((resp) => expect(resp).toEqual(mockCourseSettings));
             const retryReq = httpMock.expectOne({ method: 'GET' });
@@ -122,7 +122,7 @@ describe('Iris Settings Service', () => {
 
         it('should handle undefined response body', fakeAsync(() => {
             service
-                .getCourseSettings(1)
+                .getCourseSettingsWithRateLimit(1)
                 .pipe(take(1))
                 .subscribe((resp) => expect(resp).toBeUndefined());
 
@@ -147,13 +147,13 @@ describe('Iris Settings Service', () => {
 
         it('should invalidate cache on successful update', fakeAsync(() => {
             // First, populate the cache
-            service.getCourseSettings(1).pipe(take(1)).subscribe();
+            service.getCourseSettingsWithRateLimit(1).pipe(take(1)).subscribe();
             const getReq = httpMock.expectOne({ method: 'GET' });
             getReq.flush(mockCourseSettings, { status: 200, statusText: 'Ok' });
             tick();
 
             // Verify cache is populated (no new request)
-            service.getCourseSettings(1).pipe(take(1)).subscribe();
+            service.getCourseSettingsWithRateLimit(1).pipe(take(1)).subscribe();
             httpMock.expectNone({ method: 'GET' });
 
             // Update settings
@@ -163,7 +163,7 @@ describe('Iris Settings Service', () => {
             tick();
 
             // Next getCourseSettings should trigger a new request (cache invalidated)
-            service.getCourseSettings(1).pipe(take(1)).subscribe();
+            service.getCourseSettingsWithRateLimit(1).pipe(take(1)).subscribe();
             const newGetReq = httpMock.expectOne({ method: 'GET' });
             newGetReq.flush(mockCourseSettings, { status: 200, statusText: 'Ok' });
             tick();
@@ -173,13 +173,13 @@ describe('Iris Settings Service', () => {
     describe('invalidateCacheForCourse', () => {
         it('should invalidate cache for specific course', fakeAsync(() => {
             // Populate cache for course 1
-            service.getCourseSettings(1).pipe(take(1)).subscribe();
+            service.getCourseSettingsWithRateLimit(1).pipe(take(1)).subscribe();
             const req1 = httpMock.expectOne({ method: 'GET', url: 'api/iris/courses/1/iris-settings' });
             req1.flush(mockCourseSettings, { status: 200, statusText: 'Ok' });
             tick();
 
             // Populate cache for course 2
-            service.getCourseSettings(2).pipe(take(1)).subscribe();
+            service.getCourseSettingsWithRateLimit(2).pipe(take(1)).subscribe();
             const req2 = httpMock.expectOne({ method: 'GET', url: 'api/iris/courses/2/iris-settings' });
             req2.flush({ ...mockCourseSettings, courseId: 2 }, { status: 200, statusText: 'Ok' });
             tick();
@@ -188,13 +188,13 @@ describe('Iris Settings Service', () => {
             service.invalidateCacheForCourse(1);
 
             // Course 1 should trigger new request
-            service.getCourseSettings(1).pipe(take(1)).subscribe();
+            service.getCourseSettingsWithRateLimit(1).pipe(take(1)).subscribe();
             const newReq1 = httpMock.expectOne({ method: 'GET', url: 'api/iris/courses/1/iris-settings' });
             newReq1.flush(mockCourseSettings, { status: 200, statusText: 'Ok' });
             tick();
 
             // Course 2 should use cache (no new request)
-            service.getCourseSettings(2).pipe(take(1)).subscribe();
+            service.getCourseSettingsWithRateLimit(2).pipe(take(1)).subscribe();
             httpMock.expectNone({ method: 'GET' });
         }));
     });
@@ -202,7 +202,7 @@ describe('Iris Settings Service', () => {
     describe('clearCache', () => {
         it('should clear all cached settings', fakeAsync(() => {
             // Populate cache
-            service.getCourseSettings(1).pipe(take(1)).subscribe();
+            service.getCourseSettingsWithRateLimit(1).pipe(take(1)).subscribe();
             const req = httpMock.expectOne({ method: 'GET' });
             req.flush(mockCourseSettings, { status: 200, statusText: 'Ok' });
             tick();
@@ -211,7 +211,7 @@ describe('Iris Settings Service', () => {
             service.clearCache();
 
             // Should trigger new request
-            service.getCourseSettings(1).pipe(take(1)).subscribe();
+            service.getCourseSettingsWithRateLimit(1).pipe(take(1)).subscribe();
             const newReq = httpMock.expectOne({ method: 'GET' });
             newReq.flush(mockCourseSettings, { status: 200, statusText: 'Ok' });
             tick();

@@ -13,9 +13,9 @@ import { FormsModule } from '@angular/forms';
 import { captureException } from '@sentry/angular';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import {
-    CourseIrisSettingsDTO,
     IRIS_PIPELINE_VARIANTS,
     IrisCourseSettingsDTO,
+    IrisCourseSettingsWithRateLimitDTO,
     IrisPipelineVariant,
     IrisRateLimitConfiguration,
 } from 'app/iris/shared/entities/settings/iris-course-settings.model';
@@ -189,7 +189,7 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
     }
 
     /**
-     * Load course settings from the backend
+     * Load course settings from the server
      */
     loadSettings(): void {
         if (!this.courseId) {
@@ -198,7 +198,7 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
         }
 
         this.isLoading = true;
-        this.irisSettingsService.getCourseSettings(this.courseId).subscribe({
+        this.irisSettingsService.getCourseSettingsWithRateLimit(this.courseId).subscribe({
             next: (response) => {
                 this.isLoading = false;
                 if (!response) {
@@ -226,7 +226,7 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
     }
 
     /**
-     * Save the current settings to the backend
+     * Save the current settings to the server
      */
     saveSettings(): void {
         if (!this.courseId || !this.settings) {
@@ -253,7 +253,7 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
 
         this.isSaving = true;
         this.irisSettingsService.updateCourseSettings(this.courseId, settingsToSave).subscribe({
-            next: (response: HttpResponse<CourseIrisSettingsDTO>) => {
+            next: (response: HttpResponse<IrisCourseSettingsWithRateLimitDTO>) => {
                 this.isSaving = false;
                 this.isDirty = false;
                 if (response.body) {
@@ -311,7 +311,7 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
         };
 
         this.irisSettingsService.updateCourseSettings(this.courseId, settingsToSave).subscribe({
-            next: (response: HttpResponse<CourseIrisSettingsDTO>) => {
+            next: (response: HttpResponse<IrisCourseSettingsWithRateLimitDTO>) => {
                 if (response.body) {
                     // Update original settings to reflect the new enabled state
                     this.originalSettings = cloneDeep(response.body.settings);

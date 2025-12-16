@@ -32,7 +32,7 @@ export class IrisEnabledComponent implements OnInit {
     ngOnInit(): void {
         const courseId = this.course()?.id;
         if (courseId) {
-            this.irisSettingsService.getCourseSettings(courseId).subscribe({
+            this.irisSettingsService.getCourseSettingsWithRateLimit(courseId).subscribe({
                 next: (response) => {
                     if (response) {
                         this.settings.set(response.settings);
@@ -46,7 +46,7 @@ export class IrisEnabledComponent implements OnInit {
     }
 
     /**
-     * Toggle the enabled state and save to backend
+     * Toggle the enabled state and save to server
      */
     setEnabled(enabled: boolean) {
         const courseId = this.course()?.id;
@@ -63,7 +63,7 @@ export class IrisEnabledComponent implements OnInit {
         };
         this.settings.set(newSettings);
 
-        // Save to backend
+        // Save to server
         this.irisSettingsService.updateCourseSettings(courseId, newSettings).subscribe({
             next: (response) => {
                 if (response.body) {

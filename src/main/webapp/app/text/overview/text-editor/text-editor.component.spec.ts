@@ -46,7 +46,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { PROFILE_IRIS } from 'app/app.constants';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
-import { CourseIrisSettingsDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
+import { IrisCourseSettingsWithRateLimitDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
@@ -487,7 +487,7 @@ describe('TextEditorComponent', () => {
             },
             effectiveRateLimit: { requests: 100, timeframeHours: 24 },
             applicationRateLimitDefaults: { requests: 50, timeframeHours: 12 },
-        } as CourseIrisSettingsDTO;
+        } as IrisCourseSettingsWithRateLimitDTO;
         jest.spyOn(irisSettingsService, 'getCourseSettings').mockReturnValue(of(mockIrisSettings));
 
         route.params = of({ exerciseId: '456' });

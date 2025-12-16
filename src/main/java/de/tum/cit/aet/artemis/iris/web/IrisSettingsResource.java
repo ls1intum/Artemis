@@ -24,7 +24,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.Enfo
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettingsDTO;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisRateLimitConfiguration;
-import de.tum.cit.aet.artemis.iris.dto.CourseIrisSettingsDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisCourseSettingsWithRateLimitDTO;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 
 @Profile(PROFILE_IRIS)
@@ -51,9 +51,9 @@ public class IrisSettingsResource {
 
     @GetMapping("courses/{courseId}/iris-settings")
     @EnforceAtLeastStudentInCourse
-    public ResponseEntity<CourseIrisSettingsDTO> getCourseSettings(@PathVariable Long courseId) {
+    public ResponseEntity<IrisCourseSettingsWithRateLimitDTO> getCourseSettings(@PathVariable Long courseId) {
         courseRepository.findByIdElseThrow(courseId);
-        return ResponseEntity.ok(irisSettingsService.getCourseSettingsDTO(courseId));
+        return ResponseEntity.ok(irisSettingsService.getCourseSettingsWithRateLimit(courseId));
     }
 
     /**
@@ -65,12 +65,12 @@ public class IrisSettingsResource {
      */
     @PutMapping("courses/{courseId}/iris-settings")
     @EnforceAtLeastInstructorInCourse
-    public ResponseEntity<CourseIrisSettingsDTO> updateCourseSettings(@PathVariable Long courseId, @Valid @RequestBody IrisCourseSettingsDTO update) {
+    public ResponseEntity<IrisCourseSettingsWithRateLimitDTO> updateCourseSettings(@PathVariable Long courseId, @Valid @RequestBody IrisCourseSettingsDTO update) {
         courseRepository.findByIdElseThrow(courseId);
         var current = irisSettingsService.getSettingsForCourse(courseId);
         var request = Objects.requireNonNullElse(update, current);
-        var sanitizedRequest = irisSettingsService.sanitizePayloadForUpdate(request);
-        var sanitizedCurrent = irisSettingsService.sanitizePayloadForUpdate(current);
+        var sanitizedRequest = irisSettingsService.sanitizePayload(request);
+        var sanitizedCurrent = irisSettingsService.sanitizePayload(current);
         var isAdmin = authorizationCheckService.isAdmin(userRepository.getUserWithGroupsAndAuthorities());
         if (!isAdmin) {
             enforceInstructorRestrictions(sanitizedRequest, sanitizedCurrent);

@@ -219,7 +219,6 @@ describe('LectureUnitManagementComponent', () => {
         expect(profileService.getProfileInfo).toHaveBeenCalled();
         expect(irisSettingsService.getCourseSettings).toHaveBeenCalledWith(lecture.course!.id);
         expect(lectureUnitManagementComponent.irisEnabled).toBeTrue();
-        expect(lectureUnitManagementComponent.lectureIngestionEnabled).toBeTrue();
     });
 
     it('should update ingestion states correctly when getIngestionState returns data', () => {

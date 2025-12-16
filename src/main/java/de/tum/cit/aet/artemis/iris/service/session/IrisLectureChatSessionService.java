@@ -162,7 +162,7 @@ public class IrisLectureChatSessionService implements IrisChatBasedFeatureInterf
     }
 
     @Override
-    public void checkIsFeatureActivatedFor(IrisLectureChatSession session) {
+    public void checkIrisEnabledFor(IrisLectureChatSession session) {
         var lecture = lectureRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureRepositoryApi.class)).findByIdElseThrow(session.getLectureId());
         irisSettingsService.ensureEnabledForCourseOrElseThrow(lecture.getCourse());
     }

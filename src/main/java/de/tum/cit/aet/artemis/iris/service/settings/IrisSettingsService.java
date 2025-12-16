@@ -17,7 +17,7 @@ import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.iris.domain.settings.CourseIrisSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettingsDTO;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisRateLimitConfiguration;
-import de.tum.cit.aet.artemis.iris.dto.CourseIrisSettingsDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisCourseSettingsWithRateLimitDTO;
 import de.tum.cit.aet.artemis.iris.repository.CourseIrisSettingsRepository;
 
 /**
@@ -26,7 +26,6 @@ import de.tum.cit.aet.artemis.iris.repository.CourseIrisSettingsRepository;
 @Service
 @Profile(PROFILE_IRIS)
 @Lazy
-@Transactional
 public class IrisSettingsService {
 
     private final CourseIrisSettingsRepository courseIrisSettingsRepository;
@@ -52,6 +51,7 @@ public class IrisSettingsService {
      * @param courseId the owning course id
      * @return managed entity containing the settings
      */
+    @Transactional
     public CourseIrisSettings getOrCreateCourseSettings(long courseId) {
         return courseIrisSettingsRepository.findByCourseId(courseId).orElseGet(() -> {
             var entity = new CourseIrisSettings();
@@ -88,22 +88,12 @@ public class IrisSettingsService {
      * @param courseId the course id
      * @return DTO containing the payload
      */
-    public CourseIrisSettingsDTO getCourseSettingsDTO(long courseId) {
+    public IrisCourseSettingsWithRateLimitDTO getCourseSettingsWithRateLimit(long courseId) {
         var entity = getOrCreateCourseSettings(courseId);
         var settings = entity.getSettings();
         var defaults = getApplicationRateLimitDefaults();
         var effective = resolveEffectiveRateLimit(settings, defaults);
-        return CourseIrisSettingsDTO.fromEntity(entity, effective, defaults);
-    }
-
-    /**
-     * Sanitizes a payload before it is used for permission checks or persistence.
-     *
-     * @param payload incoming payload
-     * @return sanitized payload
-     */
-    public IrisCourseSettingsDTO sanitizePayloadForUpdate(IrisCourseSettingsDTO payload) {
-        return sanitizePayload(payload);
+        return IrisCourseSettingsWithRateLimitDTO.fromEntity(entity, effective, defaults);
     }
 
     /**
@@ -113,14 +103,15 @@ public class IrisSettingsService {
      * @param payload  the new payload
      * @return DTO representing the persisted state
      */
-    public CourseIrisSettingsDTO updateCourseSettings(long courseId, IrisCourseSettingsDTO payload) {
+    @Transactional
+    public IrisCourseSettingsWithRateLimitDTO updateCourseSettings(long courseId, IrisCourseSettingsDTO payload) {
         var entity = getOrCreateCourseSettings(courseId);
         var sanitized = sanitizePayload(payload);
         entity.setSettings(sanitized);
         var saved = courseIrisSettingsRepository.save(entity);
         var defaults = getApplicationRateLimitDefaults();
         var effective = resolveEffectiveRateLimit(sanitized, defaults);
-        return CourseIrisSettingsDTO.fromEntity(saved, effective, defaults);
+        return IrisCourseSettingsWithRateLimitDTO.fromEntity(saved, effective, defaults);
     }
 
     /**
@@ -128,6 +119,7 @@ public class IrisSettingsService {
      *
      * @param course the course
      */
+    @Transactional
     public void deleteSettingsFor(Course course) {
         if (course == null) {
             return;
@@ -140,6 +132,7 @@ public class IrisSettingsService {
      *
      * @param courseId the course id
      */
+    @Transactional
     public void deleteSettingsFor(long courseId) {
         courseIrisSettingsRepository.deleteByCourseId(courseId);
     }
@@ -197,7 +190,6 @@ public class IrisSettingsService {
      *
      * @return the default rate limit configuration from application properties
      */
-    @Transactional(readOnly = true)
     public IrisRateLimitConfiguration getApplicationRateLimitDefaults() {
         // (-1, -1) means unlimited
         if (configuredDefaultRateLimit == -1 && configuredDefaultTimeframeHours == -1) {
@@ -205,8 +197,8 @@ public class IrisSettingsService {
         }
 
         // Sanitize: requests < 0 → 0 (blocking), timeframe < 1 → 1 (minimum)
-        Integer requests = configuredDefaultRateLimit < 0 ? 0 : configuredDefaultRateLimit;
-        Integer timeframe = configuredDefaultTimeframeHours < 1 ? 1 : configuredDefaultTimeframeHours;
+        int requests = Math.max(configuredDefaultRateLimit, 0);
+        int timeframe = Math.max(configuredDefaultTimeframeHours, 1);
 
         // If both end up as 0/1 due to old config with 0,0, treat as unlimited
         if (requests == 0 && timeframe == 1 && configuredDefaultRateLimit == 0 && configuredDefaultTimeframeHours == 0) {
@@ -216,7 +208,13 @@ public class IrisSettingsService {
         return new IrisRateLimitConfiguration(requests, timeframe);
     }
 
-    private IrisCourseSettingsDTO sanitizePayload(IrisCourseSettingsDTO payload) {
+    /**
+     * Sanitizes a payload before it is used for permission checks or persistence.
+     *
+     * @param payload incoming payload
+     * @return sanitized payload
+     */
+    public IrisCourseSettingsDTO sanitizePayload(IrisCourseSettingsDTO payload) {
         if (payload == null) {
             return IrisCourseSettingsDTO.defaultSettings();
         }

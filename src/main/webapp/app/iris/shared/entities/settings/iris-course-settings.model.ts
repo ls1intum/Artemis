@@ -1,11 +1,11 @@
 /**
- * New simplified course-level Iris settings models matching the backend DTOs.
+ * New simplified course-level Iris settings models matching the server DTOs.
  * These replace the legacy three-tier (Global → Course → Exercise) × 8-feature system.
  */
 
 /**
  * Pipeline variant selection for Iris (admin-only configuration).
- * Matches the backend enum serialization as lowercase strings via @JsonValue.
+ * Matches the server enum serialization as lowercase strings via @JsonValue.
  */
 export const IRIS_PIPELINE_VARIANTS = ['default', 'advanced'] as const;
 export type IrisPipelineVariant = (typeof IRIS_PIPELINE_VARIANTS)[number];
@@ -33,10 +33,10 @@ export interface IrisCourseSettingsDTO {
 }
 
 /**
- * Complete course settings response from the backend API.
+ * Complete course settings response from the server API.
  * Includes both the editable settings and the computed effective rate limits.
  */
-export interface CourseIrisSettingsDTO {
+export interface IrisCourseSettingsWithRateLimitDTO {
     courseId: number;
     settings: IrisCourseSettingsDTO;
     effectiveRateLimit: IrisRateLimitConfiguration;

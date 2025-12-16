@@ -84,10 +84,6 @@ public class PyrisWebhookService {
         this.instanceMessageSendService = instanceMessageSendService;
     }
 
-    private boolean lectureIngestionEnabled(Course course) {
-        return irisSettingsService.getSettingsForCourse(course).enabled();
-    }
-
     private String attachmentToBase64(AttachmentVideoUnit attachmentVideoUnit) {
         Path path = FilePathConverter.fileSystemPathForExternalUri(URI.create(attachmentVideoUnit.getAttachment().getLink()), FilePathType.ATTACHMENT_UNIT);
         try {
@@ -204,7 +200,7 @@ public class PyrisWebhookService {
      * @return jobToken if the job was created else null
      */
     public String addLectureUnitToPyrisDB(AttachmentVideoUnit attachmentVideoUnit) {
-        if (lectureIngestionEnabled(attachmentVideoUnit.getLecture().getCourse()) && !attachmentVideoUnit.getLecture().isTutorialLecture()) {
+        if (irisSettingsService.isEnabledForCourse(attachmentVideoUnit.getLecture().getCourse()) && !attachmentVideoUnit.getLecture().isTutorialLecture()) {
             if ((attachmentVideoUnit.getVideoSource() != null && !attachmentVideoUnit.getVideoSource().isEmpty()) || (attachmentVideoUnit.getAttachment() != null
                     && (attachmentVideoUnit.getAttachment().getAttachmentType() == AttachmentType.FILE && attachmentVideoUnit.getAttachment().getLink().endsWith(".pdf")))) {
                 return executeLectureAdditionWebhook(processAttachmentVideoUnitForUpdate(attachmentVideoUnit), attachmentVideoUnit.getLecture().getCourse());
@@ -303,10 +299,6 @@ public class PyrisWebhookService {
                 .collect(Collectors.toMap(DomainObject::getId, unit -> pyrisConnectorService.getLectureUnitIngestionState(courseId, lectureId, unit.getId())));
     }
 
-    private boolean faqIngestionEnabled(Course course) {
-        return irisSettingsService.getSettingsForCourse(course).enabled();
-    }
-
     /**
      * send the updated / created faqs to Pyris for ingestion if autoLecturesUpdate is enabled.
      *
@@ -328,7 +320,7 @@ public class PyrisWebhookService {
      * @return jobToken if the job was created else null
      */
     public String addFaq(Faq faq) {
-        if (faqIngestionEnabled(faq.getCourse())) {
+        if (irisSettingsService.isEnabledForCourse(faq.getCourse())) {
             return executeFaqAdditionWebhook(new PyrisFaqWebhookDTO(faq.getId(), faq.getQuestionTitle(), faq.getQuestionAnswer(), faq.getCourse().getId(),
                     faq.getCourse().getTitle(), faq.getCourse().getDescription()), faq.getCourse());
         }

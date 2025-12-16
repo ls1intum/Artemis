@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { IrisSettingsUpdateComponent } from 'app/iris/manage/settings/iris-settings-update/iris-settings-update.component';
-import { CourseIrisSettingsDTO, IrisCourseSettingsDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
+import { IrisCourseSettingsDTO, IrisCourseSettingsWithRateLimitDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
@@ -33,7 +33,7 @@ describe('IrisSettingsUpdateComponent', () => {
         rateLimit: { requests: 100, timeframeHours: 24 },
     };
 
-    const mockResponse: CourseIrisSettingsDTO = {
+    const mockResponse: IrisCourseSettingsWithRateLimitDTO = {
         courseId: 1,
         settings: mockSettings,
         effectiveRateLimit: { requests: 100, timeframeHours: 24 },
@@ -102,7 +102,7 @@ describe('IrisSettingsUpdateComponent', () => {
         }));
 
         it('should handle null rateLimit from server', fakeAsync(() => {
-            const nullRateLimitResponse: CourseIrisSettingsDTO = {
+            const nullRateLimitResponse: IrisCourseSettingsWithRateLimitDTO = {
                 courseId: 1,
                 settings: { enabled: true, variant: 'default', rateLimit: undefined as any },
                 effectiveRateLimit: { requests: 50, timeframeHours: 12 },
