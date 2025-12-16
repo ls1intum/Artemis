@@ -23,6 +23,8 @@ import { By } from '@angular/platform-browser';
 import { BuildJobStatisticsComponent } from 'app/buildagent/build-job-statistics/build-job-statistics.component';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
+import { WebsocketService } from 'app/shared/service/websocket.service';
+import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 
 class ActivatedRouteStub {
     private params$ = new BehaviorSubject<{ [key: string]: any }>({});
@@ -296,6 +298,7 @@ describe('BuildQueueComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(AlertService),
                 { provide: NgbModal, useClass: MockNgbModalService },
+                { provide: WebsocketService, useClass: MockWebsocketService },
             ],
         }).compileComponents();
 
