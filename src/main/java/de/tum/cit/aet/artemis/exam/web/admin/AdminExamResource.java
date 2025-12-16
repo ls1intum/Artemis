@@ -1,13 +1,16 @@
 package de.tum.cit.aet.artemis.exam.web.admin;
 
 import java.util.List;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.web.servlet.MultipartProperties;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.unit.DataSize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -16,10 +19,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
-import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomAdminOverviewDTO;
@@ -46,9 +47,12 @@ public class AdminExamResource {
 
     private final ExamRoomService examRoomService;
 
-    public AdminExamResource(ExamRepository examRepository, ExamRoomService examRoomService) {
+    private final MultipartProperties multipartProperties;
+
+    public AdminExamResource(ExamRepository examRepository, ExamRoomService examRoomService, MultipartProperties multipartProperties) {
         this.examRepository = examRepository;
         this.examRoomService = examRoomService;
+        this.multipartProperties = multipartProperties;
     }
 
     /**
@@ -86,8 +90,12 @@ public class AdminExamResource {
             throw new BadRequestAlertException("The rooms file is empty", ENTITY_NAME, "room.fileEmpty");
         }
 
-        // Validate file size
-        FileUtil.validateFileSize(zipFile, Constants.MAX_FILE_SIZE);
+        final DataSize maxSize = multipartProperties.getMaxFileSize();
+        final long maxBytes = maxSize.toBytes();
+        if (maxBytes > 0 && zipFile.getSize() > maxBytes) {
+            throw new BadRequestAlertException("The rooms file exceeds the %s limit".formatted(maxSize.toString()), ENTITY_NAME, "room.fileTooLarge",
+                    Map.of("maxSize", maxSize.toString()));
+        }
 
         var uploadInformationDTO = examRoomService.parseAndStoreExamRoomDataFromZipFile(zipFile);
         return ResponseEntity.ok(uploadInformationDTO);

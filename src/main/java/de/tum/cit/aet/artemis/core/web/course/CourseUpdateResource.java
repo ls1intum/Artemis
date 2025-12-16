@@ -29,7 +29,6 @@ import de.tum.cit.aet.artemis.atlas.api.LearnerProfileApi;
 import de.tum.cit.aet.artemis.atlas.api.LearningPathApi;
 import de.tum.cit.aet.artemis.communication.service.ConductAgreementService;
 import de.tum.cit.aet.artemis.core.FilePathType;
-import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -116,10 +115,6 @@ public class CourseUpdateResource {
     public ResponseEntity<Course> updateCourse(@PathVariable Long courseId, @RequestPart("course") Course courseUpdate, @RequestPart(required = false) MultipartFile file)
             throws URISyntaxException {
         log.debug("REST request to update Course : {}", courseUpdate);
-
-        // Validate file size
-        FileUtil.validateFileSize(file, Constants.MAX_FILE_SIZE);
-
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
         var existingCourse = courseRepository.findByIdForUpdateElseThrow(courseUpdate.getId());

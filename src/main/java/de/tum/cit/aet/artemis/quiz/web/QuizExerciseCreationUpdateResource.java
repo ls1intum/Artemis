@@ -28,7 +28,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.cit.aet.artemis.atlas.api.AtlasMLApi;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO;
-import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
@@ -37,7 +36,6 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.Enfo
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.course.CourseService;
-import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
@@ -108,10 +106,6 @@ public class QuizExerciseCreationUpdateResource {
     public ResponseEntity<QuizExercise> createExamQuizExercise(@PathVariable Long exerciseGroupId, @Valid @RequestPart("exercise") QuizExerciseCreateDTO quizExerciseDTO,
             @RequestPart(value = "files", required = false) List<MultipartFile> files) throws IOException, URISyntaxException {
         log.info("REST request to create QuizExercise : {} in exam exercise group {}", quizExerciseDTO, exerciseGroupId);
-
-        // Validate file sizes
-        FileUtil.validateFileSize(files, Constants.MAX_FILE_SIZE);
-
         QuizExercise quizExercise = quizExerciseDTO.toDomainObject();
 
         // We create a new ExerciseGroup with the given id
@@ -151,10 +145,6 @@ public class QuizExerciseCreationUpdateResource {
     public ResponseEntity<QuizExercise> createCourseQuizExercise(@PathVariable Long courseId, @Valid @RequestPart("exercise") QuizExerciseCreateDTO quizExerciseDTO,
             @RequestPart(value = "files", required = false) List<MultipartFile> files) throws IOException, URISyntaxException {
         log.info("REST request to create QuizExercise : {} in course {}", quizExerciseDTO, courseId);
-
-        // Validate file sizes
-        FileUtil.validateFileSize(files, Constants.MAX_FILE_SIZE);
-
         Course course = courseRepository.findByIdElseThrow(courseId);
         QuizExercise quizExercise = quizExerciseDTO.toDomainObject();
         quizExercise.setCourse(course);
@@ -193,10 +183,6 @@ public class QuizExerciseCreationUpdateResource {
             @RequestPart(value = "files", required = false) List<MultipartFile> files, @RequestParam(value = "notificationText", required = false) String notificationText)
             throws IOException {
         log.info("REST request to patch quiz exercise : {}", exerciseId);
-
-        // Validate file sizes
-        FileUtil.validateFileSize(files, Constants.MAX_FILE_SIZE);
-
         QuizExercise quizBase = quizExerciseRepository.findByIdWithQuestionsAndStatisticsAndCompetenciesAndBatchesAndGradingCriteriaElseThrow(exerciseId);
 
         QuizExercise originalQuiz = quizExerciseService.copyFieldsForUpdate(quizBase);

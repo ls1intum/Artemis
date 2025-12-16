@@ -133,10 +133,6 @@ public class AdminCourseResource {
     // TODO: use a DTO and do not save on an entity serialized from the client
     public ResponseEntity<Course> createCourse(@RequestPart Course course, @RequestPart(required = false) MultipartFile file) throws URISyntaxException {
         log.debug("REST request to save Course : {}", course);
-
-        // Validate file size
-        FileUtil.validateFileSize(file, Constants.MAX_FILE_SIZE);
-
         if (course.getId() != null) {
             throw new BadRequestAlertException("A new course cannot already have an ID", Course.ENTITY_NAME, "idExists");
         }
