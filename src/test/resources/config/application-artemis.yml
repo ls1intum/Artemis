@@ -15,12 +15,7 @@ artemis:
     temp-path: ./local/server-integration-test/temp
     bcrypt-salt-rounds: 4  # We don't need secure passwords for testing. Lower rounds will speed up tests. 4 ist the lowest allowed round count.
     user-management:
-        use-external: true
-        external:
-            url: https://user-management.fake.fake
-            user: fake-username-um
-            password: fake-password
-            admin-group-name: admins
+        use-external: true # enables ldap authentication
         ldap:
             url: https://ldap.fake.fake
             user-dn: fake-username-ldap
