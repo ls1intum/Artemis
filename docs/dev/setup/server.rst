@@ -3,6 +3,15 @@
 Server Setup
 ------------
 
+.. note::
+    **First-time deployment checklist:**
+    
+    Before starting the Artemis server for the first time:
+    
+    1. **Database**: Ensure a database is running. See :ref:`Database Setup <Database Setup>` for instructions.
+    2. **Configuration**: Create ``application-local.yml`` in ``src/main/resources/config`` (see Configuration Setup below).
+    3. **Deployment**: We recommend deploying **Artemis Server (Dev, BuildAgent+LocalCI)** for local development.
+
 To start the Artemis application server from the development environment, first import the project into IntelliJ IDEA.
 Make sure to install the **Spring Boot** plugins for IntelliJ IDEA, this will make it easier to run the server.
 
