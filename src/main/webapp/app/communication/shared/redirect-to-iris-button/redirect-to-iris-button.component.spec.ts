@@ -59,7 +59,7 @@ describe('RedirectToIrisButtonComponent', () => {
     });
 
     it('should be enabled for exercise chats if Iris is activated for the exercise', fakeAsync(() => {
-        const getCourseSettingsSpy = jest.spyOn(irisSettingsService, 'getCourseSettings').mockReturnValue(of(mockCourseSettings(1, true)));
+        const getCourseSettingsSpy = jest.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit').mockReturnValue(of(mockCourseSettings(1, true)));
         jest.spyOn(profileService, 'isProfileActive').mockReturnValue(true);
 
         componentRef.setInput('course', { id: 1, studentCourseAnalyticsDashboardEnabled: false } as Course);
@@ -80,7 +80,7 @@ describe('RedirectToIrisButtonComponent', () => {
     }));
 
     it('should be enabled for lecture chats if Iris is activated for the lecture', fakeAsync(() => {
-        const getCourseSettingsSpy = jest.spyOn(irisSettingsService, 'getCourseSettings').mockReturnValue(of(mockCourseSettings(56, true)));
+        const getCourseSettingsSpy = jest.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit').mockReturnValue(of(mockCourseSettings(56, true)));
         jest.spyOn(profileService, 'isProfileActive').mockReturnValue(true);
 
         componentRef.setInput('course', { id: 56, studentCourseAnalyticsDashboardEnabled: false } as Course);
@@ -101,7 +101,7 @@ describe('RedirectToIrisButtonComponent', () => {
     }));
 
     it('should be enabled for general chat if Iris is activated for the course chat', fakeAsync(() => {
-        const getCourseSettingsSpy = jest.spyOn(irisSettingsService, 'getCourseSettings').mockReturnValue(of(mockCourseSettings(64, true)));
+        const getCourseSettingsSpy = jest.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit').mockReturnValue(of(mockCourseSettings(64, true)));
         jest.spyOn(profileService, 'isProfileActive').mockReturnValue(true);
 
         componentRef.setInput('course', { id: 64, studentCourseAnalyticsDashboardEnabled: true } as Course);
@@ -122,7 +122,7 @@ describe('RedirectToIrisButtonComponent', () => {
     }));
 
     it('should be disabled for exercise chats if Iris is disabled for the exercise', fakeAsync(() => {
-        const getCourseSettingsSpy = jest.spyOn(irisSettingsService, 'getCourseSettings').mockReturnValue(of(mockCourseSettings(1, false)));
+        const getCourseSettingsSpy = jest.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit').mockReturnValue(of(mockCourseSettings(1, false)));
         jest.spyOn(profileService, 'isProfileActive').mockReturnValue(true);
 
         componentRef.setInput('course', { id: 1, studentCourseAnalyticsDashboardEnabled: false } as Course);
@@ -143,7 +143,7 @@ describe('RedirectToIrisButtonComponent', () => {
     }));
 
     it('should be disabled for general chats if Iris is disabled for the course chat', fakeAsync(() => {
-        const getCourseSettingsSpy = jest.spyOn(irisSettingsService, 'getCourseSettings').mockReturnValue(of(mockCourseSettings(42, false)));
+        const getCourseSettingsSpy = jest.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit').mockReturnValue(of(mockCourseSettings(42, false)));
         jest.spyOn(profileService, 'isProfileActive').mockReturnValue(true);
 
         componentRef.setInput('course', { id: 42, studentCourseAnalyticsDashboardEnabled: true } as Course);
@@ -164,7 +164,7 @@ describe('RedirectToIrisButtonComponent', () => {
     }));
 
     it('should be disabled for lecture chats if Iris is disabled for the lecture', fakeAsync(() => {
-        const getCourseSettingsSpy = jest.spyOn(irisSettingsService, 'getCourseSettings').mockReturnValue(of(mockCourseSettings(56, false)));
+        const getCourseSettingsSpy = jest.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit').mockReturnValue(of(mockCourseSettings(56, false)));
         jest.spyOn(profileService, 'isProfileActive').mockReturnValue(true);
 
         componentRef.setInput('course', { id: 56, studentCourseAnalyticsDashboardEnabled: false } as Course);
@@ -185,7 +185,7 @@ describe('RedirectToIrisButtonComponent', () => {
     }));
 
     it('should handle errors when retrieving Iris settings', fakeAsync(() => {
-        const getSettingsSpy = jest.spyOn(irisSettingsService, 'getCourseSettings').mockReturnValue(throwError(() => new Error('Failed to fetch settings')));
+        const getSettingsSpy = jest.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit').mockReturnValue(throwError(() => new Error('Failed to fetch settings')));
         jest.spyOn(profileService, 'isProfileActive').mockReturnValue(true);
 
         componentRef.setInput('course', { id: 1, studentCourseAnalyticsDashboardEnabled: false } as Course);
@@ -206,7 +206,7 @@ describe('RedirectToIrisButtonComponent', () => {
     }));
 
     it('should be displayed for general chats regardless whether Student Course Analytics Dashboard is disabled', fakeAsync(() => {
-        const getCourseSettingsSpy = jest.spyOn(irisSettingsService, 'getCourseSettings').mockReturnValue(of(mockCourseSettings(42, true)));
+        const getCourseSettingsSpy = jest.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit').mockReturnValue(of(mockCourseSettings(42, true)));
         jest.spyOn(profileService, 'isProfileActive').mockReturnValue(true);
 
         componentRef.setInput('course', { id: 42, studentCourseAnalyticsDashboardEnabled: false } as Course);
@@ -260,7 +260,7 @@ describe('RedirectToIrisButtonComponent', () => {
     }));
 
     function setupIrisSettingsAndConversation() {
-        jest.spyOn(irisSettingsService, 'getCourseSettings').mockReturnValue(of(irisSettings));
+        jest.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit').mockReturnValue(of(irisSettings));
         componentRef.setInput('course', { id: 1 } as Course);
 
         const mockChannelDTO = {

@@ -41,7 +41,7 @@ describe('Iris Settings Service', () => {
         service.clearCache(); // Clear cache between tests
     });
 
-    describe('getCourseSettings', () => {
+    describe('getCourseSettingsWithRateLimit', () => {
         it('should get course settings', fakeAsync(() => {
             service
                 .getCourseSettingsWithRateLimit(1)

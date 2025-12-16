@@ -437,7 +437,7 @@ describe('CourseExerciseDetailsComponent', () => {
             jest.spyOn(profileService, 'isProfileActive').mockReturnValue(activeProfiles.includes(PROFILE_IRIS));
 
             const irisSettingsService = TestBed.inject(IrisSettingsService);
-            const getCourseSettingsSpy = jest.spyOn(irisSettingsService, 'getCourseSettings').mockReturnValue(of(fakeSettings));
+            const getCourseSettingsSpy = jest.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit').mockReturnValue(of(fakeSettings));
 
             // Act
             comp.ngOnInit();

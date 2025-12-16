@@ -123,7 +123,7 @@ describe('Course Management Detail Component', () => {
         jest.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeProfiles: ['iris'] } as ProfileInfo);
         courseDataSubject.next({ course: { ...course, isAtLeastInstructor: true } });
         const irisSpy = jest
-            .spyOn(irisSettingsService, 'getCourseSettings')
+            .spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit')
             .mockReturnValue(of({ courseId: 123, settings: { enabled: true, variant: 'default', rateLimit: {} } } as IrisCourseSettingsWithRateLimitDTO));
         await component.ngOnInit();
         expect(irisSpy).toHaveBeenCalledOnce();
@@ -132,7 +132,7 @@ describe('Course Management Detail Component', () => {
     it('should not make iris settings call when not instructor', async () => {
         jest.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeProfiles: ['iris'] } as ProfileInfo);
         courseDataSubject.next({ course: { ...course, isAtLeastEditor: true } });
-        const irisSpy = jest.spyOn(irisSettingsService, 'getCourseSettings');
+        const irisSpy = jest.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit');
         await component.ngOnInit();
         expect(irisSpy).not.toHaveBeenCalled();
     });

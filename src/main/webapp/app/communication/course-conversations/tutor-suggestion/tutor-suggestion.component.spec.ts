@@ -96,7 +96,7 @@ describe('TutorSuggestionComponent', () => {
 
     it('should initialize and switch chat service if IRIS is enabled', () => {
         jest.spyOn(accountService, 'isAtLeastTutorInCourse').mockReturnValue(true);
-        jest.spyOn(courseSettingsService, 'getCourseSettings').mockReturnValue(of(courseSettings));
+        jest.spyOn(courseSettingsService, 'getCourseSettingsWithRateLimit').mockReturnValue(of(courseSettings));
         jest.spyOn(profileService, 'isProfileActive').mockReturnValue(true);
         const switchToSpy = jest.spyOn(chatService, 'switchTo').mockReturnValue(undefined);
         const getFeatureToggleSpy = jest.spyOn(featureToggleService, 'getFeatureToggleActive');
@@ -109,7 +109,7 @@ describe('TutorSuggestionComponent', () => {
 
     it('should initialize properly in ngOnInit and load settings', fakeAsync(() => {
         jest.spyOn(accountService, 'isAtLeastTutorInCourse').mockReturnValue(true);
-        const getCourseSettingsSpy = jest.spyOn(courseSettingsService, 'getCourseSettings').mockReturnValue(of(courseSettings));
+        const getCourseSettingsSpy = jest.spyOn(courseSettingsService, 'getCourseSettingsWithRateLimit').mockReturnValue(of(courseSettings));
         const profileServiceMock = jest.spyOn(profileService, 'isProfileActive').mockReturnValue(true);
         const switchToSpy = jest.spyOn(chatService, 'switchTo').mockReturnValue(undefined);
         jest.spyOn(featureToggleService, 'getFeatureToggleActive').mockReturnValue(of(true));
@@ -141,7 +141,7 @@ describe('TutorSuggestionComponent', () => {
         }));
 
         it('false if settings are not available', fakeAsync(() => {
-            jest.spyOn(courseSettingsService, 'getCourseSettings').mockReturnValue(of(undefined));
+            jest.spyOn(courseSettingsService, 'getCourseSettingsWithRateLimit').mockReturnValue(of(undefined));
             jest.spyOn(featureToggleService, 'getFeatureToggleActive').mockReturnValue(of(true));
             jest.spyOn(irisStatusService, 'getActiveStatus').mockReturnValue(of(true));
 
@@ -194,7 +194,7 @@ describe('TutorSuggestionComponent', () => {
 
         it('true if all conditions are met', fakeAsync(() => {
             jest.spyOn(accountService, 'isAtLeastTutorInCourse').mockReturnValue(true);
-            jest.spyOn(courseSettingsService, 'getCourseSettings').mockReturnValue(of(courseSettings));
+            jest.spyOn(courseSettingsService, 'getCourseSettingsWithRateLimit').mockReturnValue(of(courseSettings));
             jest.spyOn(profileService, 'isProfileActive').mockReturnValue(true);
             jest.spyOn(featureToggleService, 'getFeatureToggleActive').mockReturnValue(of(true));
             jest.spyOn(irisStatusService, 'getActiveStatus').mockReturnValue(of(true));
@@ -231,7 +231,7 @@ describe('TutorSuggestionComponent', () => {
     it('should unsubscribe from all services on destroy', () => {
         jest.spyOn(accountService, 'isAtLeastTutorInCourse').mockReturnValue(true);
         jest.spyOn(profileService, 'isProfileActive').mockReturnValue(true);
-        jest.spyOn(courseSettingsService, 'getCourseSettings').mockReturnValue(of(courseSettings));
+        jest.spyOn(courseSettingsService, 'getCourseSettingsWithRateLimit').mockReturnValue(of(courseSettings));
         jest.spyOn(chatService, 'currentStages').mockReturnValue(of([]));
 
         jest.spyOn(chatService, 'currentMessages').mockReturnValue(concat(of([])));
@@ -382,7 +382,7 @@ describe('TutorSuggestionComponent', () => {
         it('should not request suggestion when student is not tutor in course', fakeAsync(() => {
             jest.spyOn(accountService, 'isAtLeastTutorInCourse').mockReturnValue(false);
             jest.spyOn(profileService, 'isProfileActive').mockReturnValue(true);
-            jest.spyOn(courseSettingsService, 'getCourseSettings').mockReturnValue(of(courseSettings));
+            jest.spyOn(courseSettingsService, 'getCourseSettingsWithRateLimit').mockReturnValue(of(courseSettings));
             jest.spyOn(chatService, 'currentStages').mockReturnValue(of([]));
             jest.spyOn(chatService, 'currentError').mockReturnValue(of());
             jest.spyOn(chatService, 'requestTutorSuggestion').mockReturnValue(of());

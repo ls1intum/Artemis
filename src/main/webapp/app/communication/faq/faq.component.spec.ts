@@ -299,9 +299,9 @@ describe('FaqComponent', () => {
         } as IrisCourseSettingsWithRateLimitDTO;
         jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfoResponse);
         jest.spyOn(profileService, 'isProfileActive').mockReturnValue(true);
-        jest.spyOn(irisSettingsService, 'getCourseSettings').mockImplementation(() => of(irisSettingsResponse));
+        jest.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit').mockImplementation(() => of(irisSettingsResponse));
         faqComponent.ngOnInit();
-        expect(irisSettingsService.getCourseSettings).toHaveBeenCalledWith(faqComponent.courseId);
+        expect(irisSettingsService.getCourseSettingsWithRateLimit).toHaveBeenCalledWith(faqComponent.courseId);
         expect(faqComponent.irisEnabled).toBeTrue();
     });
 

@@ -48,7 +48,7 @@ describe('IrisSettingsUpdateComponent', () => {
                 {
                     provide: IrisSettingsService,
                     useValue: {
-                        getCourseSettings: jest.fn().mockReturnValue(of(mockResponse)),
+                        getCourseSettingsWithRateLimit: jest.fn().mockReturnValue(of(mockResponse)),
                         updateCourseSettings: jest.fn().mockReturnValue(of(new HttpResponse({ body: mockResponse }))),
                     },
                 },
@@ -68,13 +68,13 @@ describe('IrisSettingsUpdateComponent', () => {
         accountService = TestBed.inject(AccountService);
 
         // Store spy reference so tests can override return values
-        getCourseSettingsSpy = irisSettingsService.getCourseSettings as jest.Mock;
+        getCourseSettingsSpy = irisSettingsService.getCourseSettingsWithRateLimit as jest.Mock;
         jest.spyOn(accountService, 'isAdmin').mockReturnValue(true);
     });
 
     afterEach(() => {
         // Clear call counts but not implementations
-        (irisSettingsService.getCourseSettings as jest.Mock).mockClear();
+        (irisSettingsService.getCourseSettingsWithRateLimit as jest.Mock).mockClear();
         (irisSettingsService.updateCourseSettings as jest.Mock).mockClear();
     });
 
@@ -85,7 +85,7 @@ describe('IrisSettingsUpdateComponent', () => {
     describe('ngOnInit', () => {
         it('should load settings from route params', fakeAsync(() => {
             routeParamsSubject.next({ courseId: '1' });
-            const getCourseSettingsSpy = jest.spyOn(irisSettingsService, 'getCourseSettings');
+            const getCourseSettingsSpy = jest.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit');
 
             component.ngOnInit();
             tick();
@@ -316,7 +316,7 @@ describe('IrisSettingsUpdateComponent', () => {
 
     describe('setEnabled', () => {
         const initComponent = () => {
-            (irisSettingsService.getCourseSettings as jest.Mock).mockReturnValue(of(mockResponse));
+            (irisSettingsService.getCourseSettingsWithRateLimit as jest.Mock).mockReturnValue(of(mockResponse));
             (irisSettingsService.updateCourseSettings as jest.Mock).mockReturnValue(of(new HttpResponse({ body: mockResponse })));
             routeParamsSubject.next({ courseId: '1' });
             component.ngOnInit();
@@ -399,7 +399,7 @@ describe('IrisSettingsUpdateComponent', () => {
 
     describe('dirty checking', () => {
         const initComponent = () => {
-            (irisSettingsService.getCourseSettings as jest.Mock).mockReturnValue(of(mockResponse));
+            (irisSettingsService.getCourseSettingsWithRateLimit as jest.Mock).mockReturnValue(of(mockResponse));
             routeParamsSubject.next({ courseId: '1' });
             component.ngOnInit();
             tick();

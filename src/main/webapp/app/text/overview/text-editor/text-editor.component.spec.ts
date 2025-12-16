@@ -488,7 +488,7 @@ describe('TextEditorComponent', () => {
             effectiveRateLimit: { requests: 100, timeframeHours: 24 },
             applicationRateLimitDefaults: { requests: 50, timeframeHours: 12 },
         } as IrisCourseSettingsWithRateLimitDTO;
-        jest.spyOn(irisSettingsService, 'getCourseSettings').mockReturnValue(of(mockIrisSettings));
+        jest.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit').mockReturnValue(of(mockIrisSettings));
 
         route.params = of({ exerciseId: '456' });
 
@@ -498,7 +498,7 @@ describe('TextEditorComponent', () => {
         tick();
 
         expect(profileService.isProfileActive).toHaveBeenCalledWith(PROFILE_IRIS);
-        expect(irisSettingsService.getCourseSettings).toHaveBeenCalledWith(123);
+        expect(irisSettingsService.getCourseSettingsWithRateLimit).toHaveBeenCalledWith(123);
         expect(comp.irisSettings).toEqual(mockIrisSettings);
 
         flush();
@@ -508,7 +508,7 @@ describe('TextEditorComponent', () => {
         const profileInfo = { activeProfiles: [PROFILE_IRIS] } as ProfileInfo;
         jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
 
-        jest.spyOn(irisSettingsService, 'getCourseSettings');
+        jest.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit');
 
         route.params = of({ exerciseId: '456' });
 
@@ -518,7 +518,7 @@ describe('TextEditorComponent', () => {
         tick();
 
         expect(profileService.getProfileInfo).toHaveBeenCalled();
-        expect(irisSettingsService.getCourseSettings).not.toHaveBeenCalled();
+        expect(irisSettingsService.getCourseSettingsWithRateLimit).not.toHaveBeenCalled();
         expect(comp.irisSettings).toBeUndefined();
 
         flush();
@@ -528,7 +528,7 @@ describe('TextEditorComponent', () => {
         const profileInfo = { activeProfiles: ['no-iris'] } as ProfileInfo;
         jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
 
-        jest.spyOn(irisSettingsService, 'getCourseSettings');
+        jest.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit');
 
         route.params = of({ exerciseId: '456' });
 
@@ -538,7 +538,7 @@ describe('TextEditorComponent', () => {
         tick();
 
         expect(profileService.getProfileInfo).toHaveBeenCalled();
-        expect(irisSettingsService.getCourseSettings).not.toHaveBeenCalled();
+        expect(irisSettingsService.getCourseSettingsWithRateLimit).not.toHaveBeenCalled();
         expect(comp.irisSettings).toBeUndefined();
 
         flush();

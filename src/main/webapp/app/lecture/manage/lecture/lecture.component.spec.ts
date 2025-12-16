@@ -318,7 +318,7 @@ describe('Lecture', () => {
         const settingsSubject = new Subject<any>();
 
         jest.spyOn(lectureService, 'findAllByCourseId').mockReturnValue(lectureSubject.asObservable());
-        jest.spyOn(TestBed.inject(IrisSettingsService), 'getCourseSettings').mockReturnValue(settingsSubject.asObservable());
+        jest.spyOn(TestBed.inject(IrisSettingsService), 'getCourseSettingsWithRateLimit').mockReturnValue(settingsSubject.asObservable());
 
         // Set up test data
         const lectures = [lectureToIngest];

@@ -30,10 +30,10 @@ class IrisSettingsServiceTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    void getCourseSettingsDTO_usesApplicationDefaultsWhenOverridesMissing() {
+    void getCourseSettingsWithRateLimit_usesApplicationDefaultsWhenOverridesMissing() {
         enableIrisFor(course);
 
-        var dto = irisSettingsService.getCourseSettingsDTO(course.getId());
+        var dto = irisSettingsService.getCourseSettingsWithRateLimit(course.getId());
 
         assertThat(dto.settings().enabled()).isTrue();
         assertThat(dto.applicationRateLimitDefaults()).isNotNull();
@@ -178,14 +178,14 @@ class IrisSettingsServiceTest extends AbstractIrisIntegrationTest {
         enableIrisFor(course);
 
         // Verify settings exist
-        var settingsBefore = irisSettingsService.getCourseSettingsDTO(course.getId());
+        var settingsBefore = irisSettingsService.getCourseSettingsWithRateLimit(course.getId());
         assertThat(settingsBefore.settings().enabled()).isTrue();
 
         // Delete settings
         irisSettingsService.deleteSettingsFor(course);
 
         // Verify settings are gone or reset to defaults
-        var settingsAfter = irisSettingsService.getCourseSettingsDTO(course.getId());
+        var settingsAfter = irisSettingsService.getCourseSettingsWithRateLimit(course.getId());
         assertThat(settingsAfter.settings()).isEqualTo(IrisCourseSettingsDTO.defaultSettings());
     }
 
@@ -194,14 +194,14 @@ class IrisSettingsServiceTest extends AbstractIrisIntegrationTest {
         enableIrisFor(course);
 
         // Verify settings exist
-        var settingsBefore = irisSettingsService.getCourseSettingsDTO(course.getId());
+        var settingsBefore = irisSettingsService.getCourseSettingsWithRateLimit(course.getId());
         assertThat(settingsBefore.settings().enabled()).isTrue();
 
         // Delete settings
         irisSettingsService.deleteSettingsFor(course.getId());
 
         // Verify settings are gone or reset to defaults
-        var settingsAfter = irisSettingsService.getCourseSettingsDTO(course.getId());
+        var settingsAfter = irisSettingsService.getCourseSettingsWithRateLimit(course.getId());
         assertThat(settingsAfter.settings()).isEqualTo(IrisCourseSettingsDTO.defaultSettings());
     }
 }

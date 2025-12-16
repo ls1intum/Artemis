@@ -119,10 +119,10 @@ describe('LectureDetailComponent', () => {
         } as ProfileInfo;
         const irisSettingsResponse = mockCourseSettings(mockLecture.course!.id, true);
         jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfoResponse);
-        jest.spyOn(irisSettingsService, 'getCourseSettings').mockImplementation(() => of(irisSettingsResponse));
+        jest.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit').mockImplementation(() => of(irisSettingsResponse));
         mockActivatedRoute.data = of({ lecture: mockLecture }); // Update the ActivatedRoute mock data
         component.ngOnInit();
-        expect(irisSettingsService.getCourseSettings).toHaveBeenCalledWith(component.lecture.course?.id);
+        expect(irisSettingsService.getCourseSettingsWithRateLimit).toHaveBeenCalledWith(component.lecture.course?.id);
         expect(component.irisEnabled).toBeTrue();
     });
 });

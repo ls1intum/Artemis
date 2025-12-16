@@ -6,7 +6,9 @@ import java.util.Optional;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.iris.domain.settings.CourseIrisSettings;
@@ -18,5 +20,7 @@ public interface CourseIrisSettingsRepository extends ArtemisJpaRepository<Cours
 
     Optional<CourseIrisSettings> findByCourseId(Long courseId);
 
+    @Modifying
+    @Transactional
     void deleteByCourseId(Long courseId);
 }

@@ -8,7 +8,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
@@ -51,7 +50,6 @@ public class IrisSettingsService {
      * @param courseId the owning course id
      * @return managed entity containing the settings
      */
-    @Transactional
     public CourseIrisSettings getOrCreateCourseSettings(long courseId) {
         return courseIrisSettingsRepository.findByCourseId(courseId).orElseGet(() -> {
             var entity = new CourseIrisSettings();
@@ -103,7 +101,6 @@ public class IrisSettingsService {
      * @param payload  the new payload
      * @return DTO representing the persisted state
      */
-    @Transactional
     public IrisCourseSettingsWithRateLimitDTO updateCourseSettings(long courseId, IrisCourseSettingsDTO payload) {
         var entity = getOrCreateCourseSettings(courseId);
         var sanitized = sanitizePayload(payload);
@@ -119,7 +116,6 @@ public class IrisSettingsService {
      *
      * @param course the course
      */
-    @Transactional
     public void deleteSettingsFor(Course course) {
         if (course == null) {
             return;
@@ -132,7 +128,6 @@ public class IrisSettingsService {
      *
      * @param courseId the course id
      */
-    @Transactional
     public void deleteSettingsFor(long courseId) {
         courseIrisSettingsRepository.deleteByCourseId(courseId);
     }

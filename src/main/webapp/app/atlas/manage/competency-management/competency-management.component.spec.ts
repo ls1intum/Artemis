@@ -123,7 +123,7 @@ describe('CompetencyManagementComponent', () => {
         } as ProfileInfo;
         getProfileInfoSpy = jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfoResponse);
 
-        getIrisSettingsSpy = jest.spyOn(irisSettingsService, 'getCourseSettings');
+        getIrisSettingsSpy = jest.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit');
 
         fixture = TestBed.createComponent(CompetencyManagementComponent);
         component = fixture.componentInstance;

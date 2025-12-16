@@ -35,7 +35,7 @@ describe('IrisEnabledComponent', () => {
 
     beforeEach(() => {
         const mockIrisSettingsService = {
-            getCourseSettings: jest.fn(),
+            getCourseSettingsWithRateLimit: jest.fn(),
             updateCourseSettings: jest.fn(),
         };
 
@@ -55,7 +55,7 @@ describe('IrisEnabledComponent', () => {
     });
 
     it('should initialize', () => {
-        jest.spyOn(irisSettingsService, 'getCourseSettings').mockReturnValue(of(mockResponse));
+        jest.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit').mockReturnValue(of(mockResponse));
         componentRef.setInput('course', course);
         fixture.detectChanges();
         expect(comp).toBeDefined();
@@ -63,7 +63,7 @@ describe('IrisEnabledComponent', () => {
 
     describe('ngOnInit', () => {
         it('should load course settings on init', async () => {
-            const getCourseSettingsSpy = jest.spyOn(irisSettingsService, 'getCourseSettings').mockReturnValue(of(mockResponse));
+            const getCourseSettingsSpy = jest.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit').mockReturnValue(of(mockResponse));
             componentRef.setInput('course', course);
             fixture.detectChanges();
 
@@ -76,7 +76,7 @@ describe('IrisEnabledComponent', () => {
         });
 
         it('should handle undefined response', async () => {
-            const getCourseSettingsSpy = jest.spyOn(irisSettingsService, 'getCourseSettings').mockReturnValue(of(undefined));
+            const getCourseSettingsSpy = jest.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit').mockReturnValue(of(undefined));
             componentRef.setInput('course', course);
             fixture.detectChanges();
 
@@ -88,7 +88,7 @@ describe('IrisEnabledComponent', () => {
         });
 
         it('should silently fail on error', async () => {
-            const getCourseSettingsSpy = jest.spyOn(irisSettingsService, 'getCourseSettings').mockReturnValue(throwError(() => new Error('Test error')));
+            const getCourseSettingsSpy = jest.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit').mockReturnValue(throwError(() => new Error('Test error')));
             componentRef.setInput('course', course);
             fixture.detectChanges();
 
@@ -101,7 +101,7 @@ describe('IrisEnabledComponent', () => {
 
         it('should not load settings if course has no id', () => {
             const courseWithoutId = new Course();
-            const getCourseSettingsSpy = jest.spyOn(irisSettingsService, 'getCourseSettings');
+            const getCourseSettingsSpy = jest.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit');
             componentRef.setInput('course', courseWithoutId);
             fixture.detectChanges();
 
@@ -111,7 +111,7 @@ describe('IrisEnabledComponent', () => {
 
     describe('setEnabled', () => {
         beforeEach(() => {
-            jest.spyOn(irisSettingsService, 'getCourseSettings').mockReturnValue(of(mockResponse));
+            jest.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit').mockReturnValue(of(mockResponse));
             componentRef.setInput('course', course);
             fixture.detectChanges();
         });
@@ -199,7 +199,7 @@ describe('IrisEnabledComponent', () => {
 
     describe('getSettingsRoute', () => {
         it('should return correct route for course settings', () => {
-            jest.spyOn(irisSettingsService, 'getCourseSettings').mockReturnValue(of(mockResponse));
+            jest.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit').mockReturnValue(of(mockResponse));
             componentRef.setInput('course', course);
             fixture.detectChanges();
 
@@ -221,7 +221,7 @@ describe('IrisEnabledComponent', () => {
 
     describe('computed properties', () => {
         it('should compute isEnabled correctly', () => {
-            jest.spyOn(irisSettingsService, 'getCourseSettings').mockReturnValue(of(mockResponse));
+            jest.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit').mockReturnValue(of(mockResponse));
             componentRef.setInput('course', course);
             fixture.detectChanges();
 
@@ -236,7 +236,7 @@ describe('IrisEnabledComponent', () => {
         });
 
         it('should compute isDisabled correctly', () => {
-            jest.spyOn(irisSettingsService, 'getCourseSettings').mockReturnValue(of(mockResponse));
+            jest.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit').mockReturnValue(of(mockResponse));
             componentRef.setInput('course', course);
             fixture.detectChanges();
 

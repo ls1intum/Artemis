@@ -114,7 +114,7 @@ describe('LectureUnitManagementComponent', () => {
         deleteLectureUnitSpy = jest.spyOn(lectureUnitService, 'delete');
         updateOrderSpy = jest.spyOn(lectureUnitService, 'updateOrder');
         getProfileInfo = jest.spyOn(profileService, 'getProfileInfo');
-        getCombinedCourseSettings = jest.spyOn(irisSettingsService, 'getCourseSettings');
+        getCombinedCourseSettings = jest.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit');
         textUnit = new TextUnit();
         textUnit.id = 0;
         exerciseUnit = new ExerciseUnit();
@@ -217,7 +217,7 @@ describe('LectureUnitManagementComponent', () => {
         lectureUnitManagementComponent.lecture = lecture;
         lectureUnitManagementComponent.initializeProfileInfo();
         expect(profileService.getProfileInfo).toHaveBeenCalled();
-        expect(irisSettingsService.getCourseSettings).toHaveBeenCalledWith(lecture.course!.id);
+        expect(irisSettingsService.getCourseSettingsWithRateLimit).toHaveBeenCalledWith(lecture.course!.id);
         expect(lectureUnitManagementComponent.irisEnabled).toBeTrue();
     });
 
