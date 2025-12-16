@@ -61,7 +61,6 @@
                 [container]="'body'"
                 (click)="toggleCollapseState.emit()"
                 [attr.aria-expanded]="!isNavbarCollapsed()"
-                aria-controls="collapseBasic"
             >
                 <span class="double-arrow-icon">
                     <fa-icon class="me-negative fa-xs" [icon]="faChevronRight" />
@@ -79,7 +78,6 @@
                 [ngbTooltip]="'global.menu.admin.sidebar.expandMenu' | artemisTranslate"
                 (click)="toggleCollapseState.emit()"
                 [attr.aria-expanded]="!isNavbarCollapsed()"
-                aria-controls="collapseBasic"
             >
                 <span class="double-arrow-icon">
                     <fa-icon class="me-negative fa-xs" [icon]="faChevronRight" />
