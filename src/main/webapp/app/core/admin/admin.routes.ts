@@ -161,6 +161,13 @@ const routes: Routes = [
             pageTitle: 'artemisApp.upcomingExamsAndExercises.upcomingExamsAndExercises',
         },
     },
+    {
+        path: 'course-requests',
+        loadComponent: () => import('app/core/admin/course-requests/course-requests.component').then((m) => m.CourseRequestsComponent),
+        data: {
+            pageTitle: 'artemisApp.courseRequest.admin.title',
+        },
+    },
     ...organizationMgmtRoute,
     ...userManagementRoute,
     ...systemNotificationManagementRoute,
