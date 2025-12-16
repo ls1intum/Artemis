@@ -12,8 +12,14 @@ import { ltiConfigurationRoute } from 'app/core/admin/lti-configuration/lti-conf
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 import { UpcomingExamsAndExercisesComponent } from 'app/core/admin/upcoming-exams-and-exercises/upcoming-exams-and-exercises.component';
 import { IS_AT_LEAST_ADMIN } from 'app/shared/constants/authority.constants';
+import { AdminContainerComponent } from 'app/core/admin/admin-container/admin-container.component';
 
-const routes: Routes = [
+const childRoutes: Routes = [
+    {
+        path: '',
+        pathMatch: 'full',
+        redirectTo: 'user-management',
+    },
     {
         path: 'audits',
         loadComponent: () => import('app/core/admin/audits/audits.component').then((m) => m.AuditsComponent),
@@ -180,6 +186,14 @@ const routes: Routes = [
     ...userManagementRoute,
     ...systemNotificationManagementRoute,
     ...ltiConfigurationRoute,
+];
+
+const routes: Routes = [
+    {
+        path: '',
+        component: AdminContainerComponent,
+        children: childRoutes,
+    },
 ];
 
 export default routes;
