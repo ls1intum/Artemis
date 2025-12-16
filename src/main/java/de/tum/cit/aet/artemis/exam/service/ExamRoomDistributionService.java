@@ -352,7 +352,8 @@ public class ExamRoomDistributionService {
      * @throws BadRequestAlertException if the new seat is already occupied
      */
     public void reseatStudent(long examUserId, String newRoomNumber, String newSeatName) {
-        ExamUser examUser = examUserRepository.findWithExamWithExamUsersById(examUserId).orElseThrow();
+        ExamUser examUser = examUserRepository.findWithExamWithExamUsersById(examUserId)
+                .orElseThrow(() -> new BadRequestAlertException("Exam user does not exist", ENTITY_NAME, "examUsers.notFound"));
         Set<ExamUser> examUsers = examUser.getExam().getExamUsers();
         examUserService.setPlannedRoomAndSeatTransientForExamUsers(examUsers);
 
