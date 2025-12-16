@@ -34,7 +34,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -82,9 +81,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.icl.LocalVCLocalCITestService;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
-import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
-import de.tum.cit.aet.artemis.programming.util.LocalRepository;
-import de.tum.cit.aet.artemis.programming.util.LocalRepositoryUriUtil;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseParticipationUtilService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseTestService;
@@ -188,9 +184,6 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     @Captor
     private ArgumentCaptor<Result> resultCaptor;
 
-    @Value("${artemis.version-control.default-branch:main}")
-    private String defaultBranch;
-
     private Course course;
 
     private ModelingExercise modelingExercise;
@@ -241,6 +234,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
         featureToggleService.enableFeature(Feature.ProgrammingExercises);
         programmingExerciseTestService.tearDown();
+        RepositoryExportTestUtil.cleanupTrackedRepositories();
     }
 
     @Test
@@ -576,6 +570,21 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         programmingExercise = exerciseRepository.save(programmingExercise);
     }
 
+    /**
+     * Creates a student participation with a real LocalVC repository for the given exercise.
+     * The repository is automatically tracked for cleanup in @AfterEach.
+     *
+     * @param exercise  the programming exercise
+     * @param userLogin the user login for the participation
+     * @param state     the initialization state for the participation
+     * @return the saved participation with a valid repository URI
+     */
+    private ProgrammingExerciseStudentParticipation createParticipationWithRepository(ProgrammingExercise exercise, String userLogin, InitializationState state) throws Exception {
+        var participation = ParticipationFactory.generateProgrammingExerciseStudentParticipation(state, exercise, userUtilService.getUserByLogin(userLogin));
+        RepositoryExportTestUtil.seedStudentRepositoryForParticipation(localVCLocalCITestService, participation);
+        return participationRepo.save(participation);
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteParticipation() throws Exception {
@@ -684,21 +693,12 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         this.courseRepository.save(course);
 
         this.programmingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_TEST);
-        this.exerciseRepository.save(programmingExercise);
+        RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, programmingExercise);
+        this.programmingExercise = exerciseRepository.save(programmingExercise);
 
         athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("programming");
 
-        var participation = ParticipationFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INACTIVE, programmingExercise,
-                userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
-
-        var localRepo = new LocalRepository(defaultBranch);
-        localRepo.configureRepos(localVCBasePath, "testLocalRepo", "testOriginRepo");
-
-        var localVcsRepositoryUri = new LocalVCRepositoryUri(LocalRepositoryUriUtil.convertToLocalVcUriString(localRepo.remoteBareGitRepoFile, localVCBasePath));
-        participation.setRepositoryUri(localVcsRepositoryUri);
-        participationRepo.save(participation);
-
-        gitService.getDefaultLocalCheckOutPathOfRepo(participation.getVcsRepositoryUri());
+        var participation = createParticipationWithRepository(programmingExercise, TEST_PREFIX + "student1", InitializationState.INACTIVE);
 
         Result result1 = participationUtilService.createSubmissionAndResult(participation, 100, false);
         Result result2 = participationUtilService.addResultToSubmission(participation, result1.getSubmission());
@@ -718,8 +718,6 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         assertThat(invokedResult.isSuccessful()).isTrue();
         assertThat(invokedResult.isAthenaBased()).isTrue();
         assertThat(invokedResult.getFeedbacks()).hasSize(1);
-
-        localRepo.resetLocalRepo();
     }
 
     @Test
@@ -731,21 +729,12 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         this.courseRepository.save(course);
 
         this.programmingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_TEST);
-        this.exerciseRepository.save(programmingExercise);
+        RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, programmingExercise);
+        this.programmingExercise = exerciseRepository.save(programmingExercise);
 
         athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("programming");
 
-        var participation = ParticipationFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INACTIVE, programmingExercise,
-                userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
-
-        var localRepo = new LocalRepository(defaultBranch);
-        localRepo.configureRepos(localVCBasePath, "testLocalRepo", "testOriginRepo");
-
-        var localVcsRepositoryUri = new LocalVCRepositoryUri(LocalRepositoryUriUtil.convertToLocalVcUriString(localRepo.remoteBareGitRepoFile, localVCBasePath));
-        participation.setRepositoryUri(localVcsRepositoryUri);
-        participationRepo.save(participation);
-
-        gitService.getDefaultLocalCheckOutPathOfRepo(participation.getVcsRepositoryUri());
+        var participation = createParticipationWithRepository(programmingExercise, TEST_PREFIX + "student1", InitializationState.INACTIVE);
 
         Result result1 = participationUtilService.createSubmissionAndResult(participation, 100, false);
         Result result2 = participationUtilService.addResultToSubmission(participation, result1.getSubmission());
@@ -764,8 +753,6 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         assertThat(invokedResult.isSuccessful()).isTrue();
         assertThat(invokedResult.isAthenaBased()).isTrue();
         assertThat(invokedResult.getFeedbacks()).hasSize(1);
-
-        localRepo.resetLocalRepo();
     }
 
     @Test
@@ -855,20 +842,11 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         this.courseRepository.save(course);
 
         this.programmingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_TEST);
-        this.exerciseRepository.save(programmingExercise);
+        RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, programmingExercise);
+        this.programmingExercise = exerciseRepository.save(programmingExercise);
         this.athenaRequestMockProvider.mockGetFeedbackSuggestionsWithFailure("programming");
 
-        var participation = ParticipationFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INACTIVE, programmingExercise,
-                userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
-
-        var localRepo = new LocalRepository(defaultBranch);
-        localRepo.configureRepos(localVCBasePath, "testLocalRepo", "testOriginRepo");
-
-        var localVcsRepositoryUri = new LocalVCRepositoryUri(LocalRepositoryUriUtil.convertToLocalVcUriString(localRepo.remoteBareGitRepoFile, localVCBasePath));
-        participation.setRepositoryUri(localVcsRepositoryUri);
-        participationRepo.save(participation);
-
-        gitService.getDefaultLocalCheckOutPathOfRepo(participation.getVcsRepositoryUri());
+        var participation = createParticipationWithRepository(programmingExercise, TEST_PREFIX + "student1", InitializationState.INACTIVE);
 
         Result result1 = participationUtilService.createSubmissionAndResult(participation, 100, false);
         Result result2 = participationUtilService.addResultToSubmission(participation, result1.getSubmission());
@@ -887,8 +865,6 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         assertThat(invokedResult.isSuccessful()).isFalse();
         assertThat(invokedResult.isAthenaBased()).isTrue();
         assertThat(invokedResult.getFeedbacks()).hasSize(0);
-
-        localRepo.resetLocalRepo();
     }
 
     @Test
@@ -969,19 +945,15 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void resumeProgrammingExerciseParticipation() throws Exception {
-        var participation = ParticipationFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INACTIVE, programmingExercise,
-                userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
-        var localRepo = new LocalRepository(defaultBranch);
-        localRepo.configureRepos(localVCBasePath, "testLocalRepo", "testOriginRepo");
-        var localVcsRepositoryUri = new LocalVCRepositoryUri(LocalRepositoryUriUtil.convertToLocalVcUriString(localRepo.remoteBareGitRepoFile, localVCBasePath));
-        participation.setRepositoryUri(localVcsRepositoryUri);
-        participationRepo.save(participation);
-        gitService.getDefaultLocalCheckOutPathOfRepo(participation.getVcsRepositoryUri());
+        RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, programmingExercise);
+        programmingExercise = exerciseRepository.save(programmingExercise);
+
+        var participation = createParticipationWithRepository(programmingExercise, TEST_PREFIX + "student1", InitializationState.INACTIVE);
+
         var updatedParticipation = request.putWithResponseBody(
                 "/api/exercise/exercises/" + programmingExercise.getId() + "/resume-programming-participation/" + participation.getId(), null,
                 ProgrammingExerciseStudentParticipation.class, HttpStatus.OK);
         assertThat(updatedParticipation.getInitializationState()).isEqualTo(InitializationState.INITIALIZED);
-        localRepo.resetLocalRepo();
     }
 
     @Test
@@ -1650,23 +1622,14 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         var exerciseGroup1 = examWithExerciseGroups.getExerciseGroups().getFirst();
         programmingExercise = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exerciseGroup1);
         programmingExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig()));
+        RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, programmingExercise);
         programmingExercise = exerciseRepository.save(programmingExercise);
         course.addExercises(programmingExercise);
         course = courseRepository.save(course);
 
-        var participation = ParticipationFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INACTIVE, programmingExercise,
-                userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
-
-        var localRepo = new LocalRepository(defaultBranch);
-        localRepo.configureRepos(localVCBasePath, "testLocalRepo", "testOriginRepo");
-
-        var localVcsRepositoryUri = new LocalVCRepositoryUri(LocalRepositoryUriUtil.convertToLocalVcUriString(localRepo.remoteBareGitRepoFile, localVCBasePath));
-        participation.setRepositoryUri(localVcsRepositoryUri);
-        participationRepo.save(participation);
+        var participation = createParticipationWithRepository(programmingExercise, TEST_PREFIX + "student1", InitializationState.INACTIVE);
 
         var submission = participationUtilService.addSubmission(participation, new ProgrammingSubmission());
-
-        gitService.getDefaultLocalCheckOutPathOfRepo(participation.getVcsRepositoryUri());
 
         var result = ParticipationFactory.generateResult(true, 100).submission(submission);
         result.setCompletionDate(ZonedDateTime.now());
@@ -1674,8 +1637,6 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         resultRepository.save(result);
 
         request.putAndExpectError("/api/exercise/exercises/" + programmingExercise.getId() + "/request-feedback", null, HttpStatus.BAD_REQUEST, "preconditions not met");
-
-        localRepo.resetLocalRepo();
     }
 
     @Test
@@ -1683,20 +1644,12 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     void whenFeedbackRequestedAndDeadlinePassed_thenFail() throws Exception {
 
         programmingExercise.setDueDate(ZonedDateTime.now().minusDays(100));
+        RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, programmingExercise);
         programmingExercise = exerciseRepository.save(programmingExercise);
 
-        var participation = ParticipationFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INACTIVE, programmingExercise,
-                userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        var participation = createParticipationWithRepository(programmingExercise, TEST_PREFIX + "student1", InitializationState.INACTIVE);
 
-        var localRepo = new LocalRepository(defaultBranch);
-        localRepo.configureRepos(localVCBasePath, "testLocalRepo", "testOriginRepo");
-
-        var localVcsRepositoryUri = new LocalVCRepositoryUri(LocalRepositoryUriUtil.convertToLocalVcUriString(localRepo.remoteBareGitRepoFile, localVCBasePath));
-        participation.setRepositoryUri(localVcsRepositoryUri);
-        participationRepo.save(participation);
         var submission = participationUtilService.addSubmission(participation, new ProgrammingSubmission());
-
-        gitService.getDefaultLocalCheckOutPathOfRepo(participation.getVcsRepositoryUri());
 
         var result = ParticipationFactory.generateResult(true, 100).submission(submission);
         result.setCompletionDate(ZonedDateTime.now());
@@ -1704,8 +1657,6 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         resultRepository.save(result);
 
         request.putAndExpectError("/api/exercise/exercises/" + programmingExercise.getId() + "/request-feedback", null, HttpStatus.BAD_REQUEST, "feedbackRequestAfterDueDate");
-
-        localRepo.resetLocalRepo();
     }
 
     @Test
@@ -1713,20 +1664,12 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     void whenFeedbackRequestedAndRateLimitExceeded_thenFail() throws Exception {
 
         programmingExercise.setDueDate(ZonedDateTime.now().plusDays(100));
+        RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, programmingExercise);
         programmingExercise = exerciseRepository.save(programmingExercise);
 
-        var participation = ParticipationFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INACTIVE, programmingExercise,
-                userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        var participation = createParticipationWithRepository(programmingExercise, TEST_PREFIX + "student1", InitializationState.INACTIVE);
 
-        var localRepo = new LocalRepository(defaultBranch);
-        localRepo.configureRepos(localVCBasePath, "testLocalRepo", "testOriginRepo");
-
-        var localVcsRepositoryUri = new LocalVCRepositoryUri(LocalRepositoryUriUtil.convertToLocalVcUriString(localRepo.remoteBareGitRepoFile, localVCBasePath));
-        participation.setRepositoryUri(localVcsRepositoryUri);
-        participationRepo.save(participation);
         var submission = participationUtilService.addSubmission(participation, new ProgrammingSubmission());
-
-        gitService.getDefaultLocalCheckOutPathOfRepo(participation.getVcsRepositoryUri());
 
         var result = ParticipationFactory.generateResult(true, 100).submission(submission);
         result.setCompletionDate(ZonedDateTime.now());
@@ -1745,8 +1688,6 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         submissionRepository.save(submission);
 
         request.putAndExpectError("/api/exercise/exercises/" + programmingExercise.getId() + "/request-feedback", null, HttpStatus.BAD_REQUEST, "maxAthenaResultsReached");
-
-        localRepo.resetLocalRepo();
     }
 
     @Test
