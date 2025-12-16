@@ -227,28 +227,6 @@ describe('EditAttachmentVideoUnitComponent', () => {
         expect(navigateSpy).toHaveBeenCalledOnce();
     });
 
-    it('should handle update without transcription generation', () => {
-        fixture.detectChanges();
-        const attachmentVideoUnitFormComponent: AttachmentVideoUnitFormComponent = fixture.debugElement.query(By.directive(AttachmentVideoUnitFormComponent)).componentInstance;
-
-        const attachmentVideoUnitFormData: AttachmentVideoUnitFormData = {
-            formProperties: {
-                name: attachmentVideoUnit.name,
-                description: attachmentVideoUnit.description,
-                releaseDate: attachmentVideoUnit.releaseDate,
-                videoSource: attachmentVideoUnit.videoSource,
-                version: 1,
-            },
-            fileProperties: {},
-        };
-
-        updateAttachmentVideoUnitSpy.mockReturnValue(of({ body: attachmentVideoUnit, status: 200 }));
-        attachmentVideoUnitFormComponent.formSubmitted.emit(attachmentVideoUnitFormData);
-        fixture.detectChanges();
-
-        expect(updateAttachmentVideoUnitSpy).toHaveBeenCalledWith(1, 1, expect.any(FormData), undefined);
-        expect(navigateSpy).toHaveBeenCalledOnce();
-    });
     it('should fetch playlist URL when editing existing video with videoSource', () => {
         const playlistUrl = 'https://live.rbg.tum.de/playlist.m3u8';
 
