@@ -11,7 +11,7 @@ import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
  * DTO representing the processing status of a lecture unit.
  * Used to show processing progress and errors in the UI.
  */
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record LectureUnitProcessingStatusDTO(Long lectureUnitId, ProcessingPhase phase, int retryCount, ZonedDateTime startedAt, String errorKey) {
 
     /**
