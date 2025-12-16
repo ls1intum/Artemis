@@ -22,11 +22,11 @@ public class ProgrammingExerciseAtlasIrisService {
         this.competencyProgressApi = competencyProgressApi;
     }
 
-    public void updateCompetencyProgressOnCreationAndEnableIris(ProgrammingExercise exercise) {
+    public void updateCompetencyProgressOnCreation(ProgrammingExercise exercise) {
         competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(exercise));
     }
 
-    public void updateCompetencyProgressOnExerciseUpdateAndEnableIris(ProgrammingExercise programmingExerciseBeforeUpdate, ProgrammingExercise programmingExerciseAfterUpdate) {
+    public void updateCompetencyProgressOnExerciseUpdate(ProgrammingExercise programmingExerciseBeforeUpdate, ProgrammingExercise programmingExerciseAfterUpdate) {
         competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsync(programmingExerciseBeforeUpdate, Optional.of(programmingExerciseAfterUpdate)));
     }
 

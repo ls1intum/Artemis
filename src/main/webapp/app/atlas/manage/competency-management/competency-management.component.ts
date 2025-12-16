@@ -75,7 +75,7 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
     competencies = computed(() => this.courseCompetencies().filter((cc) => cc.type === CourseCompetencyType.COMPETENCY));
     prerequisites = computed(() => this.courseCompetencies().filter((cc) => cc.type === CourseCompetencyType.PREREQUISITE));
 
-    irisCompetencyGenerationEnabled = signal<boolean>(false);
+    irisEnabled = signal<boolean>(false);
     standardizedCompetenciesEnabled = toSignal(this.featureToggleService.getFeatureToggleActive(FeatureToggle.StandardizedCompetencies), { requireSync: true });
     agentChatEnabled = signal<boolean>(false);
 
@@ -116,7 +116,7 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
     private async loadIrisEnabled() {
         try {
             const courseSettings = await firstValueFrom(this.irisSettingsService.getCourseSettingsWithRateLimit(this.courseId()));
-            this.irisCompetencyGenerationEnabled.set(courseSettings?.settings?.enabled ?? false);
+            this.irisEnabled.set(courseSettings?.settings?.enabled ?? false);
         } catch (error) {
             this.alertService.error(error);
         }
