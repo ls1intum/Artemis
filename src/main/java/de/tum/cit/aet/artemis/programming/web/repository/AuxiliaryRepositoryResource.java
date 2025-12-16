@@ -40,6 +40,7 @@ import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.FileType;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
+import de.tum.cit.aet.artemis.programming.domain.synchronization.ProgrammingExerciseEditorFileType;
 import de.tum.cit.aet.artemis.programming.domain.synchronization.ProgrammingExerciseEditorSyncTarget;
 import de.tum.cit.aet.artemis.programming.dto.FileMove;
 import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTO;
@@ -147,11 +148,15 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
     @EnforceAtLeastTutor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> renameFile(@PathVariable Long auxiliaryRepositoryId, @RequestBody FileMove fileMove) {
-        ResponseEntity<Void> response = super.renameFile(auxiliaryRepositoryId, fileMove);
-        if (response.getStatusCode().is2xxSuccessful()) {
-            broadcastAuxiliaryRepositoryChange(auxiliaryRepositoryId, ProgrammingExerciseEditorFileSyncDTO.forRename(fileMove.currentFilePath(), fileMove.newFilename()));
-        }
-        return response;
+        return executeAndCheckForExceptions(() -> {
+            Repository repository = getRepository(auxiliaryRepositoryId, RepositoryActionType.WRITE, true, false);
+            ProgrammingExerciseEditorFileType fileType = getEditorFileType(repository, fileMove.currentFilePath());
+            String newFilePath = buildNewFilePath(fileMove.currentFilePath(), fileMove.newFilename());
+
+            repositoryService.renameFile(repository, fileMove);
+            broadcastAuxiliaryRepositoryChange(auxiliaryRepositoryId, ProgrammingExerciseEditorFileSyncDTO.forRename(fileMove.currentFilePath(), newFilePath, fileType));
+            return new ResponseEntity<>(HttpStatus.OK);
+        });
     }
 
     @Override

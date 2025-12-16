@@ -19,7 +19,13 @@ type TargetFilter = (message: ProgrammingExerciseEditorSyncMessage) => boolean;
 export type FileContentEditOperation = { type: ProgrammingExerciseEditorFileChangeType.CONTENT; fileName: string; content: string };
 export type FileCreateOperation = { type: ProgrammingExerciseEditorFileChangeType.CREATE; fileName: string; content: string; fileType?: FileType };
 export type FileDeleteOperation = { type: ProgrammingExerciseEditorFileChangeType.DELETE; fileName: string };
-export type FileRenameOperation = { type: ProgrammingExerciseEditorFileChangeType.RENAME; fileName: string; newFileName: string; content: string };
+export type FileRenameOperation = {
+    type: ProgrammingExerciseEditorFileChangeType.RENAME;
+    fileName: string;
+    newFileName: string;
+    content: string;
+    fileType: FileType;
+};
 export type NewCommitAlertOperation = { type: 'NEW_COMMIT_ALERT' };
 
 export type FileOperation = FileContentEditOperation | FileCreateOperation | FileDeleteOperation | FileRenameOperation | NewCommitAlertOperation;
@@ -199,13 +205,13 @@ export class RepositoryFileSyncService {
                 break;
             case ProgrammingExerciseEditorFileChangeType.CREATE:
                 this.handleLocalFileCreate(operation, target, auxiliaryId);
-                break;
+                return;
             case ProgrammingExerciseEditorFileChangeType.DELETE:
                 this.handleLocalFileDelete(operation, target, auxiliaryId);
-                break;
+                return;
             case ProgrammingExerciseEditorFileChangeType.RENAME:
                 this.handleLocalFileRename(operation, target, auxiliaryId);
-                break;
+                return;
         }
     }
 
@@ -260,12 +266,6 @@ export class RepositoryFileSyncService {
     private handleLocalFileCreate(operation: FileCreateOperation, target: ProgrammingExerciseEditorSyncTarget, auxiliaryId?: number) {
         const baselineKey = this.getBaselineKey(target, operation.fileName, auxiliaryId);
         this.baselines[baselineKey] = operation.content;
-
-        this.send({
-            target,
-            auxiliaryRepositoryId: auxiliaryId,
-            filePatches: [{ fileName: operation.fileName, changeType: ProgrammingExerciseEditorFileChangeType.CREATE, patch: operation.content, fileType: operation.fileType }],
-        });
     }
 
     /**
@@ -285,21 +285,14 @@ export class RepositoryFileSyncService {
     private handleLocalFileDelete(operation: FileDeleteOperation, target: ProgrammingExerciseEditorSyncTarget, auxiliaryId?: number) {
         const baselineKey = this.getBaselineKey(target, operation.fileName, auxiliaryId);
         delete this.baselines[baselineKey];
-
-        this.send({
-            target,
-            auxiliaryRepositoryId: auxiliaryId,
-            filePatches: [{ fileName: operation.fileName, changeType: ProgrammingExerciseEditorFileChangeType.DELETE }],
-        });
     }
 
     /**
-     * Handles local file rename and broadcasts it to other editors.
+     * Handles local file rename. We keep baselines in sync locally and rely on the server broadcast to inform peers.
      *
      * 1. Retrieves content from the old file's baseline
      * 2. Transfers the baseline to the new fileName
      * 3. Deletes the old fileName's baseline
-     * 4. Sends RENAME message with both old and new names, plus content
      *
      * The content is included to ensure all editors have the same final state,
      * even if they haven't fully synced the file before the rename.
@@ -315,14 +308,9 @@ export class RepositoryFileSyncService {
 
         // Keep the current content even if we never registered a baseline for the old path
         const renameContent = previousContent || operation.content;
+        this.renameTrackingEntries(target, auxiliaryId, operation.fileName, operation.newFileName);
         this.baselines[this.getBaselineKey(target, operation.newFileName, auxiliaryId)] = renameContent;
         delete this.baselines[baselineKey];
-
-        this.send({
-            target,
-            auxiliaryRepositoryId: auxiliaryId,
-            filePatches: [{ fileName: operation.fileName, changeType: ProgrammingExerciseEditorFileChangeType.RENAME, newFileName: operation.newFileName, patch: renameContent }],
-        });
     }
 
     /**
@@ -431,12 +419,22 @@ export class RepositoryFileSyncService {
 
         // **RENAME**: Moves the baseline to the new filename and returns a rename operation
         if (filePatch.changeType === ProgrammingExerciseEditorFileChangeType.RENAME && filePatch.newFileName) {
-            const currentContent = this.baselines[baselineKey] ?? filePatch.patch ?? '';
+            const newKey = this.getBaselineKey(message.target, filePatch.newFileName, auxiliaryId);
+            const currentContent = this.baselines[baselineKey] ?? this.baselines[newKey] ?? filePatch.patch ?? '';
             delete this.baselines[baselineKey];
 
-            const newKey = this.getBaselineKey(message.target, filePatch.newFileName, auxiliaryId);
             this.baselines[newKey] = currentContent;
-            return { type: ProgrammingExerciseEditorFileChangeType.RENAME, fileName: filePatch.fileName, newFileName: filePatch.newFileName, content: currentContent };
+            const fileType = filePatch.fileType ?? (filePatch.fileName.includes('.') ? FileType.FILE : FileType.FOLDER);
+            if (fileType === FileType.FOLDER) {
+                this.renameTrackingEntries(message.target, auxiliaryId, filePatch.fileName, filePatch.newFileName);
+            }
+            return {
+                type: ProgrammingExerciseEditorFileChangeType.RENAME,
+                fileName: filePatch.fileName,
+                newFileName: filePatch.newFileName,
+                content: currentContent,
+                fileType,
+            };
         }
 
         //  **CREATE**: Registers a new baseline with initial content and returns a create operation
@@ -509,7 +507,7 @@ export class RepositoryFileSyncService {
                 break;
             case ProgrammingExerciseEditorFileChangeType.RENAME:
                 if (operation.newFileName) {
-                    this.applyRemoteRename(operation.fileName, operation.newFileName, operation.content, codeEditorContainer);
+                    this.applyRemoteRename(operation.fileName, operation.newFileName, operation.content, codeEditorContainer, operation.fileType);
                 }
                 break;
             case ProgrammingExerciseEditorFileChangeType.DELETE:
@@ -586,17 +584,20 @@ export class RepositoryFileSyncService {
      * @param codeEditorContainer - The code editor container to update
      * @private
      */
-    private applyRemoteRename(oldFileName: string, newFileName: string, content: string, codeEditorContainer: CodeEditorContainerComponent) {
+    private applyRemoteRename(oldFileName: string, newFileName: string, content: string, codeEditorContainer: CodeEditorContainerComponent, fileType: FileType) {
         const fileBrowser = codeEditorContainer.fileBrowser;
-        const deleteChange = new RenameFileChange(this.lookupFileType(oldFileName, codeEditorContainer), oldFileName, newFileName);
+        const renameChange = new RenameFileChange(fileType, oldFileName, newFileName);
         if (fileBrowser?.repositoryFiles) {
-            fileBrowser.repositoryFiles = this.fileService.updateFileReferences(fileBrowser.repositoryFiles, deleteChange);
+            fileBrowser.repositoryFiles = this.fileService.updateFileReferences(fileBrowser.repositoryFiles, renameChange);
         }
-        codeEditorContainer.unsavedFiles = this.fileService.updateFileReferences(codeEditorContainer.unsavedFiles, deleteChange);
-        if (codeEditorContainer.selectedFile === oldFileName) {
-            codeEditorContainer.selectedFile = newFileName;
+        codeEditorContainer.unsavedFiles = this.fileService.updateFileReferences(codeEditorContainer.unsavedFiles, renameChange);
+        if (codeEditorContainer.selectedFile) {
+            codeEditorContainer.selectedFile = this.fileService.updateFileReference(codeEditorContainer.selectedFile, renameChange);
         }
-        codeEditorContainer.applyRemoteFileContent(newFileName, content);
+        if (fileType === FileType.FILE) {
+            codeEditorContainer.applyRemoteFileContent(newFileName, content);
+        }
+        codeEditorContainer.onFileChanged.emit();
     }
 
     /**
@@ -672,6 +673,28 @@ export class RepositoryFileSyncService {
             auxiliaryRepositoryId: message.auxiliaryRepositoryId,
             fileFulls: files,
         });
+    }
+
+    /**
+     * Renames all tracked baseline and timestamp entries for a file or folder rename.
+     * For folders, cascades to all nested paths.
+     */
+    private renameTrackingEntries(target: ProgrammingExerciseEditorSyncTarget, auxiliaryId: number | undefined, oldFileName: string, newFileName: string) {
+        const basePrefix = `${this.exerciseId ?? 'unknown'}-${target}-${auxiliaryId ?? 'none'}::`;
+        const oldPrefix = `${basePrefix}${oldFileName}`;
+        const newPrefix = `${basePrefix}${newFileName}`;
+        const renameKeys = (collection: Record<string, unknown>) => {
+            Object.keys(collection).forEach((key) => {
+                if (key.startsWith(oldPrefix) && (key.length === oldPrefix.length || key.charAt(oldPrefix.length) === '/')) {
+                    const suffix = key.slice(oldPrefix.length);
+                    const newKey = `${newPrefix}${suffix}`;
+                    collection[newKey] = collection[key];
+                    delete collection[key];
+                }
+            });
+        };
+        renameKeys(this.baselines);
+        renameKeys(this.lastProcessedTimestamps);
     }
 
     /**

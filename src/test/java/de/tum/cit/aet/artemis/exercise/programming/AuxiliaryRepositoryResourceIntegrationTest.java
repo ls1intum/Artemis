@@ -368,6 +368,13 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractProgrammingInte
         var syncEvent = captor.getValue();
         assertThat(syncEvent.target()).isEqualTo(ProgrammingExerciseEditorSyncTarget.AUXILIARY_REPOSITORY);
         assertThat(syncEvent.auxiliaryRepositoryId()).isEqualTo(auxiliaryRepository.getId());
+        assertThat(syncEvent.filePatches()).hasSize(1);
+
+        var filePatch = syncEvent.filePatches().getFirst();
+        assertThat(filePatch.fileName()).isEqualTo(currentLocalFolderName);
+        assertThat(filePatch.changeType()).isEqualTo(ProgrammingExerciseEditorFileChangeType.RENAME);
+        assertThat(filePatch.newFileName()).isEqualTo("renamedFolder");
+        assertThat(filePatch.fileType()).isEqualTo(ProgrammingExerciseEditorFileType.FOLDER);
     }
 
     @Test

@@ -10,6 +10,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,9 +37,11 @@ import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.programming.domain.File;
 import de.tum.cit.aet.artemis.programming.domain.FileType;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
+import de.tum.cit.aet.artemis.programming.domain.synchronization.ProgrammingExerciseEditorFileType;
 import de.tum.cit.aet.artemis.programming.domain.synchronization.ProgrammingExerciseEditorSyncTarget;
 import de.tum.cit.aet.artemis.programming.dto.FileMove;
 import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTO;
@@ -334,6 +338,33 @@ public abstract class RepositoryResource {
         }
 
         return new ResponseEntity<>(new RepositoryStatusDTO(repositoryStatus), HttpStatus.OK);
+    }
+
+    protected ProgrammingExerciseEditorFileType getEditorFileType(Repository repository, String filePath) {
+        Path repositoryRoot = repository.getLocalPath();
+        Path resolvedPath = repositoryRoot.resolve(filePath).normalize();
+
+        if (!resolvedPath.startsWith(repositoryRoot)) {
+            throw new IllegalArgumentException("File path is outside of repository");
+        }
+
+        if (!Files.exists(resolvedPath)) {
+            throw new EntityNotFoundException("File not found");
+        }
+
+        if (Files.isDirectory(resolvedPath)) {
+            return ProgrammingExerciseEditorFileType.FOLDER;
+        }
+
+        return ProgrammingExerciseEditorFileType.FILE;
+    }
+
+    protected String buildNewFilePath(String currentFilePath, String newFileName) {
+        String sanitizedNewFileName = FileUtil.sanitizeFilename(newFileName);
+        Path currentPath = Path.of(currentFilePath);
+        Path parent = currentPath.getParent();
+        Path newPath = parent != null ? parent.resolve(sanitizedNewFileName) : Path.of(sanitizedNewFileName);
+        return newPath.normalize().toString();
     }
 
     /**

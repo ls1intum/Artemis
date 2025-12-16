@@ -259,6 +259,7 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
                     fileName: fileChange.oldFileName,
                     newFileName: fileChange.newFileName,
                     content,
+                    fileType: fileChange.fileType,
                 });
             } else {
                 this.fileOperationSync.emit({ type: ProgrammingExerciseEditorFileChangeType.DELETE, fileName: fileChange.fileName });

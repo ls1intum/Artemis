@@ -55,7 +55,7 @@ class ProgrammingExerciseEditorSyncServiceTest {
 
     @Test
     void broadcastFileChangesWithRenameOperation() {
-        ProgrammingExerciseEditorFileSyncDTO filePatch = ProgrammingExerciseEditorFileSyncDTO.forRename("old/path.txt", "new/path.txt");
+        ProgrammingExerciseEditorFileSyncDTO filePatch = ProgrammingExerciseEditorFileSyncDTO.forRename("old/path.txt", "new/path.txt", ProgrammingExerciseEditorFileType.FILE);
         synchronizationService.broadcastFileChanges(50L, ProgrammingExerciseEditorSyncTarget.TESTS_REPOSITORY, null, filePatch);
 
         var captor = ArgumentCaptor.forClass(ProgrammingExerciseEditorSyncEventDTO.class);
@@ -67,6 +67,7 @@ class ProgrammingExerciseEditorSyncServiceTest {
         assertThat(patch.fileName()).isEqualTo("old/path.txt");
         assertThat(patch.changeType()).isEqualTo(ProgrammingExerciseEditorFileChangeType.RENAME);
         assertThat(patch.newFileName()).isEqualTo("new/path.txt");
+        assertThat(patch.fileType()).isEqualTo(ProgrammingExerciseEditorFileType.FILE);
     }
 
     @Test

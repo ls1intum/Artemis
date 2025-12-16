@@ -38,8 +38,8 @@ public record ProgrammingExerciseEditorFileSyncDTO(String fileName, @Nullable St
      * @param newFilename     the new name for the file/folder
      * @return a DTO representing a rename operation
      */
-    public static ProgrammingExerciseEditorFileSyncDTO forRename(String currentFilePath, String newFilename) {
-        return new ProgrammingExerciseEditorFileSyncDTO(currentFilePath, null, ProgrammingExerciseEditorFileChangeType.RENAME, newFilename, null);
+    public static ProgrammingExerciseEditorFileSyncDTO forRename(String currentFilePath, String newFilename, ProgrammingExerciseEditorFileType fileType) {
+        return new ProgrammingExerciseEditorFileSyncDTO(currentFilePath, null, ProgrammingExerciseEditorFileChangeType.RENAME, newFilename, fileType);
     }
 
     /**

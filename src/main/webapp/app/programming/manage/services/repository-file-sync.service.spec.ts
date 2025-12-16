@@ -54,6 +54,7 @@ describe('RepositoryFileSyncService', () => {
                     provide: CodeEditorFileService,
                     useValue: {
                         updateFileReferences: jest.fn((files, _change) => files),
+                        updateFileReference: jest.fn((fileName) => fileName),
                     },
                 },
             ],
@@ -121,68 +122,36 @@ describe('RepositoryFileSyncService', () => {
             expect(syncService.sendSynchronizationUpdate).not.toHaveBeenCalled();
         });
 
-        it('sends create operation with full content', () => {
+        it('stores baseline for create operations without broadcasting', () => {
             service.handleLocalFileOperation(
                 { type: ProgrammingExerciseEditorFileChangeType.CREATE, fileName: 'new.txt', content: 'hello', fileType: FileType.FILE },
                 RepositoryType.TEMPLATE,
             );
 
-            expect(syncService.sendSynchronizationUpdate).toHaveBeenCalledWith(
-                exerciseIdToUse,
-                expect.objectContaining({
-                    target: ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY,
-                    filePatches: [
-                        expect.objectContaining({
-                            fileName: 'new.txt',
-                            changeType: ProgrammingExerciseEditorFileChangeType.CREATE,
-                            patch: 'hello',
-                            fileType: FileType.FILE,
-                        }),
-                    ],
-                }),
-            );
+            expect(syncService.sendSynchronizationUpdate).not.toHaveBeenCalled();
+            const baselines = getBaselines(service);
+            expect(baselines[buildBaselineKey(service, ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY, 'new.txt', undefined)]).toBe('hello');
         });
 
-        it('sends delete operations and removes baseline', () => {
+        it('removes baseline on delete without broadcasting', () => {
             service.registerBaseline(RepositoryType.TEMPLATE, 'old.txt', 'content');
 
             service.handleLocalFileOperation({ type: ProgrammingExerciseEditorFileChangeType.DELETE, fileName: 'old.txt' }, RepositoryType.TEMPLATE);
 
-            expect(syncService.sendSynchronizationUpdate).toHaveBeenCalledWith(
-                exerciseIdToUse,
-                expect.objectContaining({
-                    filePatches: [
-                        expect.objectContaining({
-                            fileName: 'old.txt',
-                            changeType: ProgrammingExerciseEditorFileChangeType.DELETE,
-                        }),
-                    ],
-                }),
-            );
+            expect(syncService.sendSynchronizationUpdate).not.toHaveBeenCalled();
             const baselineKey = buildBaselineKey(service, ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY, 'old.txt', undefined);
             expect(getBaselines(service)[baselineKey]).toBeUndefined();
         });
 
-        it('moves baseline on rename operations and sends rename payload', () => {
+        it('moves baseline on rename operations without broadcasting', () => {
             service.registerBaseline(RepositoryType.TEMPLATE, 'old.txt', 'content');
 
             service.handleLocalFileOperation(
-                { type: ProgrammingExerciseEditorFileChangeType.RENAME, fileName: 'old.txt', newFileName: 'new.txt', content: 'content' },
+                { type: ProgrammingExerciseEditorFileChangeType.RENAME, fileName: 'old.txt', newFileName: 'new.txt', content: 'content', fileType: FileType.FILE },
                 RepositoryType.TEMPLATE,
             );
 
-            expect(syncService.sendSynchronizationUpdate).toHaveBeenCalledWith(
-                exerciseIdToUse,
-                expect.objectContaining({
-                    filePatches: [
-                        expect.objectContaining({
-                            fileName: 'old.txt',
-                            newFileName: 'new.txt',
-                            changeType: ProgrammingExerciseEditorFileChangeType.RENAME,
-                        }),
-                    ],
-                }),
-            );
+            expect(syncService.sendSynchronizationUpdate).not.toHaveBeenCalled();
 
             const baselines = getBaselines(service);
             expect(baselines[buildBaselineKey(service, ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY, 'old.txt', undefined)]).toBeUndefined();
@@ -191,7 +160,7 @@ describe('RepositoryFileSyncService', () => {
 
         it('falls back to provided content on rename when no baseline exists', () => {
             service.handleLocalFileOperation(
-                { type: ProgrammingExerciseEditorFileChangeType.RENAME, fileName: 'old.txt', newFileName: 'new.txt', content: 'renamed content' },
+                { type: ProgrammingExerciseEditorFileChangeType.RENAME, fileName: 'old.txt', newFileName: 'new.txt', content: 'renamed content', fileType: FileType.FILE },
                 RepositoryType.TEMPLATE,
             );
 
@@ -241,7 +210,13 @@ describe('RepositoryFileSyncService', () => {
                 filePatches: [
                     { fileName: 'new.txt', patch: 'content', changeType: ProgrammingExerciseEditorFileChangeType.CREATE, fileType: FileType.FILE },
                     { fileName: 'delete.txt', changeType: ProgrammingExerciseEditorFileChangeType.DELETE },
-                    { fileName: 'old.txt', newFileName: 'renamed.txt', patch: 'content', changeType: ProgrammingExerciseEditorFileChangeType.RENAME },
+                    {
+                        fileName: 'old.txt',
+                        newFileName: 'renamed.txt',
+                        patch: 'content',
+                        changeType: ProgrammingExerciseEditorFileChangeType.RENAME,
+                        fileType: FileType.FILE,
+                    },
                 ],
                 timestamp: 1,
             });
@@ -249,7 +224,13 @@ describe('RepositoryFileSyncService', () => {
             expect(operations).toEqual([
                 { type: ProgrammingExerciseEditorFileChangeType.CREATE, fileName: 'new.txt', content: 'content', fileType: FileType.FILE },
                 { type: ProgrammingExerciseEditorFileChangeType.DELETE, fileName: 'delete.txt' },
-                { type: ProgrammingExerciseEditorFileChangeType.RENAME, fileName: 'old.txt', newFileName: 'renamed.txt', content: 'content' },
+                {
+                    type: ProgrammingExerciseEditorFileChangeType.RENAME,
+                    fileName: 'old.txt',
+                    newFileName: 'renamed.txt',
+                    content: 'content',
+                    fileType: FileType.FILE,
+                },
             ]);
         });
 
@@ -485,12 +466,13 @@ describe('RepositoryFileSyncService', () => {
                 fileName: 'old.txt',
                 newFileName: 'new.txt',
                 content: 'content',
+                fileType: FileType.FILE,
             };
 
             service.applyRemoteOperation(operation, mockCodeEditor as CodeEditorContainerComponent);
 
             expect(fileService.updateFileReferences).toHaveBeenCalledWith(expect.anything(), expect.any(RenameFileChange));
-            expect(mockCodeEditor.selectedFile).toBe('new.txt');
+            expect(fileService.updateFileReference).toHaveBeenCalledWith('old.txt', expect.any(RenameFileChange));
         });
     });
 });

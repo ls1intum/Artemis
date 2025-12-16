@@ -22,7 +22,7 @@ import { Subject } from 'rxjs';
 import { debounceTime, shareReplay } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/shared/service/alert.service';
-import { ProgrammingExerciseEditorSyncMessage } from 'app/programming/manage/services/programming-exercise-editor-sync.service';
+import { ProgrammingExerciseEditorFileChangeType, ProgrammingExerciseEditorSyncMessage } from 'app/programming/manage/services/programming-exercise-editor-sync.service';
 import { FileOperation, RepositoryFileSyncService } from 'app/programming/manage/services/repository-file-sync.service';
 /**
  * Enumeration specifying the loading state
@@ -186,6 +186,15 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
             return;
         }
         const auxiliaryId = this.selectedRepository === RepositoryType.AUXILIARY ? this.selectedRepositoryId : undefined;
+
+        // when renaming a file/path locally, the selected file should be set to undefined to
+        // avoid editor automatically opening the new file, which would causes synchronization
+        // service to request full content of the file from other active online ediors,
+        // causing a race condition with rename operation's baseline update
+        if (operation.type === ProgrammingExerciseEditorFileChangeType.RENAME) {
+            this.codeEditorContainer.selectedFile = undefined;
+        }
+
         this.repositorySyncService.handleLocalFileOperation(operation, this.selectedRepository, auxiliaryId);
     }
 
