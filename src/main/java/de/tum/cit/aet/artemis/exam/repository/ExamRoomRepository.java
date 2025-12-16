@@ -151,8 +151,8 @@ public interface ExamRoomRepository extends ArtemisJpaRepository<ExamRoom, Long>
     /**
      * Finds the exam room connected to the given exam ID with the specified room number, including its layout strategies.
      *
-     * @param examId        The exam id
-     * @param newRoomNumber The room number
+     * @param examId     The exam id
+     * @param roomNumber The room number
      * @return The exam room with layout eagerly loaded layout strategies if it exists, empty otherwise
      */
     @Query("""
@@ -162,9 +162,9 @@ public interface ExamRoomRepository extends ArtemisJpaRepository<ExamRoom, Long>
                 ON er.id = erea.examRoom.id
             LEFT JOIN FETCH er.layoutStrategies
             WHERE erea.exam.id = :examId
-                AND er.roomNumber = :newRoomNumber
+                AND er.roomNumber = :roomNumber
             """)
-    Optional<ExamRoom> findByExamIdAndRoomNumberWithLayoutStrategies(@Param("examId") long examId, @Param("newRoomNumber") String newRoomNumber);
+    Optional<ExamRoom> findByExamIdAndRoomNumberWithLayoutStrategies(@Param("examId") long examId, @Param("roomNumber") String roomNumber);
 
     /**
      * Checks whether a room with the given room number is connected to the specified exam.
