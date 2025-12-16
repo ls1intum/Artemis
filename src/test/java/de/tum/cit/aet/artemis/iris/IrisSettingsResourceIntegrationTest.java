@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -12,10 +13,14 @@ import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettingsDTO;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisPipelineVariant;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisRateLimitConfiguration;
 import de.tum.cit.aet.artemis.iris.dto.IrisCourseSettingsWithRateLimitDTO;
+import de.tum.cit.aet.artemis.iris.repository.CourseIrisSettingsRepository;
 
 class IrisSettingsResourceIntegrationTest extends AbstractIrisIntegrationTest {
 
     private static final String TEST_PREFIX = "irissettingsresource";
+
+    @Autowired
+    private CourseIrisSettingsRepository courseIrisSettingsRepository;
 
     private Course course1;
 
@@ -290,5 +295,25 @@ class IrisSettingsResourceIntegrationTest extends AbstractIrisIntegrationTest {
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testRemovedExerciseSettingsUpdateEndpoint_notFound() throws Exception {
         request.put("/api/iris/exercises/1/settings", null, HttpStatus.NOT_FOUND);
+    }
+
+    // ==================== Cascade Deletion Tests ====================
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testCourseDeletion_cascadesIrisSettingsDeletion() throws Exception {
+        // Setup: Enable Iris for the course to create settings
+        enableIrisFor(course1);
+
+        // Verify settings exist before deletion
+        var settingsBefore = courseIrisSettingsRepository.findByCourseId(course1.getId());
+        assertThat(settingsBefore).isPresent();
+
+        // Delete the course
+        request.delete("/api/core/admin/courses/" + course1.getId(), HttpStatus.OK);
+
+        // Verify Iris settings were also deleted via cascade
+        var settingsAfter = courseIrisSettingsRepository.findByCourseId(course1.getId());
+        assertThat(settingsAfter).isEmpty();
     }
 }

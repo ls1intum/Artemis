@@ -49,9 +49,12 @@ public class IrisSettingsService {
      *
      * @param courseId the owning course id
      * @return managed entity containing the settings
+     * @throws EntityNotFoundException if the course does not exist
      */
     public CourseIrisSettings getOrCreateCourseSettings(long courseId) {
         return courseIrisSettingsRepository.findByCourseId(courseId).orElseGet(() -> {
+            // Validate course exists before creating settings to provide a clear error message
+            courseRepository.findByIdElseThrow(courseId);
             var entity = new CourseIrisSettings();
             entity.setCourseId(courseId);
             entity.setSettings(IrisCourseSettingsDTO.defaultSettings());
