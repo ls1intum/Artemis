@@ -3,13 +3,14 @@ package de.tum.cit.aet.artemis.exercise.participation.util;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -22,6 +23,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.jspecify.annotations.NonNull;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
@@ -71,6 +73,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.icl.LocalVCLocalCITestService;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.service.ParticipationVcsAccessTokenService;
 import de.tum.cit.aet.artemis.programming.service.UriService;
@@ -80,6 +83,8 @@ import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.TemplateProgrammingExerciseParticipationTestRepository;
+import de.tum.cit.aet.artemis.programming.util.LocalRepository;
+import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
@@ -104,6 +109,9 @@ public class ParticipationUtilService {
 
     @Autowired
     private ParticipationVcsAccessTokenService participationVCSAccessTokenService;
+
+    @Autowired
+    private ObjectProvider<LocalVCLocalCITestService> localVCLocalCITestService;
 
     @Autowired
     private ExerciseTestRepository exerciseRepository;
@@ -156,6 +164,9 @@ public class ParticipationUtilService {
     @Value("${artemis.version-control.url}")
     protected URI localVCBaseUri;
 
+    @Value("${artemis.version-control.local-vcs-repo-path}")
+    private Path localVCBasePath;
+
     @Autowired
     private ResultTestRepository resultRepository;
 
@@ -182,6 +193,7 @@ public class ParticipationUtilService {
             participation.setInitializationState(InitializationState.INITIALIZED);
             var localVcRepoUri = new LocalVCRepositoryUri(localVCBaseUri, exercise.getProjectKey(), repoName);
             participation.setRepositoryUri(localVcRepoUri.toString());
+            ensureLocalVcRepositoryExists(localVcRepoUri);
             programmingExerciseStudentParticipationRepo.save(participation);
             storedParticipation = programmingExerciseStudentParticipationRepo.findByExerciseIdAndStudentLogin(exercise.getId(), login);
             assertThat(storedParticipation).isPresent();
@@ -339,10 +351,11 @@ public class ParticipationUtilService {
         ProgrammingExerciseStudentParticipation participation = ParticipationFactory.generateIndividualProgrammingExerciseStudentParticipation(exercise,
                 userUtilService.getUserByLogin(login));
         final var repoName = (exercise.getProjectKey() + "-" + login).toLowerCase();
-        var localVcRepoUri = new LocalVCRepositoryUri(localVCBaseUri, exercise.getProjectKey().toLowerCase(), repoName);
+        var localVcRepoUri = new LocalVCRepositoryUri(localVCBaseUri, exercise.getProjectKey(), repoName);
         participation.setRepositoryUri(localVcRepoUri.toString());
         participation = programmingExerciseStudentParticipationRepo.save(participation);
         participationVCSAccessTokenService.createParticipationVCSAccessToken(userUtilService.getUserByLogin(login), participation);
+        ensureLocalVcRepositoryExists(localVcRepoUri);
         return (ProgrammingExerciseStudentParticipation) studentParticipationRepo.findWithEagerSubmissionsAndResultsAssessorsById(participation.getId()).orElseThrow();
     }
 
@@ -364,6 +377,7 @@ public class ParticipationUtilService {
         final var repoName = (exercise.getProjectKey() + "-" + team.getShortName()).toLowerCase();
         var localVcRepoUri = new LocalVCRepositoryUri(localVCBaseUri, exercise.getProjectKey(), repoName);
         participation.setRepositoryUri(localVcRepoUri.toString());
+        ensureLocalVcRepositoryExists(localVcRepoUri);
         participation = programmingExerciseStudentParticipationRepo.save(participation);
 
         return (ProgrammingExerciseStudentParticipation) studentParticipationRepo.findWithEagerSubmissionsAndResultsAssessorsById(participation.getId()).orElseThrow();
@@ -388,6 +402,7 @@ public class ParticipationUtilService {
                 userUtilService.getUserByLogin(login));
         final var repoName = (exercise.getProjectKey() + "-" + login).toLowerCase();
         participation.setRepositoryUri(localRepoPath.toString());
+        ensureLocalVcRepositoryExists(localRepoPath);
         participation = programmingExerciseStudentParticipationRepo.save(participation);
 
         return (ProgrammingExerciseStudentParticipation) studentParticipationRepo.findWithEagerSubmissionsAndResultsAssessorsById(participation.getId()).orElseThrow();
@@ -964,15 +979,12 @@ public class ParticipationUtilService {
      * Mocks methods in VC and CI system needed for the creation of a StudentParticipation given the ProgrammingExercise. The StudentParticipation's repositoryUri is set to a fake
      * URL.
      *
-     * @param templateRepoName             The expected sourceRepositoryName when calling the copyRepository method of the mocked VersionControlService
-     * @param versionControlService        The mocked VersionControlService
+     * @param templateRepoName             The expected sourceRepositoryName when calling the LocalVC service
+     * @param versionControlService        The VersionControlService (real LocalVC service)
      * @param continuousIntegrationService The mocked ContinuousIntegrationService
      */
     public void mockCreationOfExerciseParticipation(String templateRepoName, VersionControlService versionControlService,
             ContinuousIntegrationService continuousIntegrationService) {
-        var someURL = new LocalVCRepositoryUri("http://vcs.fake.fake/git/abc/abcRepoSlug.git");
-        doReturn(someURL).when(versionControlService).copyRepositoryWithoutHistory(any(String.class), eq(templateRepoName), any(String.class), any(String.class), any(String.class),
-                any(Integer.class));
         mockCreationOfExerciseParticipationInternal(continuousIntegrationService);
     }
 
@@ -980,13 +992,10 @@ public class ParticipationUtilService {
      * Mocks methods in VC and CI system needed for the creation of a StudentParticipation given the ProgrammingExercise. The StudentParticipation's repositoryUri is set to a fake
      * URL.
      *
-     * @param versionControlService        The mocked VersionControlService
+     * @param versionControlService        The VersionControlService (real LocalVC service)
      * @param continuousIntegrationService The mocked ContinuousIntegrationService
      */
     public void mockCreationOfExerciseParticipation(VersionControlService versionControlService, ContinuousIntegrationService continuousIntegrationService) {
-        var someURL = new LocalVCRepositoryUri("http://vcs.fake.fake/git/abc/abcRepoSlug.git");
-        doReturn(someURL).when(versionControlService).copyRepositoryWithoutHistory(any(String.class), any(), any(String.class), any(String.class), any(String.class),
-                any(Integer.class));
         mockCreationOfExerciseParticipationInternal(continuousIntegrationService);
     }
 
@@ -1045,5 +1054,43 @@ public class ParticipationUtilService {
         // Verify submission has both results: one completed, one draft
         assertThat(submission.getResults()).hasSize(2);
 
+    }
+
+    private void ensureLocalVcRepositoryExists(LocalVCRepositoryUri repositoryUri) {
+        if (repositoryUri == null || localVCBasePath == null) {
+            return;
+        }
+        Path repoPath = repositoryUri.getLocalRepositoryPath(localVCBasePath);
+        if (Files.exists(repoPath)) {
+            return;
+        }
+        var relativePath = repositoryUri.getRelativeRepositoryPath();
+        String slugWithGit = relativePath.getFileName().toString();
+        String repositorySlug = slugWithGit.endsWith(".git") ? slugWithGit.substring(0, slugWithGit.length() - 4) : slugWithGit;
+        try {
+            LocalVCLocalCITestService helper = localVCLocalCITestService != null ? localVCLocalCITestService.getIfAvailable() : null;
+            if (helper != null) {
+                RepositoryExportTestUtil.trackRepository(helper.createAndConfigureLocalRepository(repositoryUri.getProjectKey(), repositorySlug));
+            }
+            else {
+                Files.createDirectories(repoPath.getParent());
+                LocalRepository.initialize(repoPath, defaultBranch, true).close();
+            }
+        }
+        catch (Exception e) {
+            throw new IllegalStateException("Failed to create LocalVC repository for " + repositoryUri.getURI(), e);
+        }
+    }
+
+    private void ensureLocalVcRepositoryExists(URI repositoryUri) {
+        if (repositoryUri == null) {
+            return;
+        }
+        try {
+            ensureLocalVcRepositoryExists(new LocalVCRepositoryUri(repositoryUri.toString()));
+        }
+        catch (RuntimeException ignored) {
+            // ignore non-LocalVC URIs
+        }
     }
 }
