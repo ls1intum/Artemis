@@ -8,7 +8,7 @@
                         "dialogTitle": "Student Umsetzen",
                         "introText": "Dieser Dialog kann benutzt werden um einem Studenten einen anderen Platz zuzuweisen. Das Ändern des Raumes eines Studenten wird wenn möglich automatisch die potentiell entstandene Lücke füllen. Das Umsetzen eines Studenten zu einem anderen Sitz im selben Raum füllt keine potentiell enstandene Lücke.",
                         "isLocationKnown": "Platz hinterlegt",
-                        "isLocationKnownTooltip": "Zeigt an ob der zugewiesene Raum oder Sitz im System hinterlegt ist, d.h. ob er in der Anwesenheitskontrollen-iPad-App in der Raum-Ansicht angezeigt werden kann",
+                        "isLocationKnownTooltip": "Zeigt an, ob der zugewiesene Raum oder Sitz im System hinterlegt ist, d.h. ob er in der Anwesenheitskontrollen-iPad-App in der Raum-Ansicht angezeigt werden kann",
                         "selectedStudent": "Ausgewählter Student: {{ studentLogin }} ({{ studentName }}); Raum: '{{ plannedRoom }}', Sitz: '{{ plannedSeat }}'",
                         "selectRoom": "Neuer Raum:",
                         "selectSeat": "Neuer Sitz:",
