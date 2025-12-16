@@ -152,7 +152,7 @@ public class ProgrammingExerciseCreationUpdateService {
         programmingExercise.setSolutionParticipation(null);
         programmingExercise.setTemplateParticipation(null);
         programmingExercise.getBuildConfig().setId(null);
-        for (var containerConfig: programmingExercise.getBuildConfig().getContainerConfigs().values()) {
+        for (var containerConfig : programmingExercise.getBuildConfig().getContainerConfigs().values()) {
             containerConfig.setId(null);
             containerConfig.setBuildConfig(programmingExercise.getBuildConfig());
         }
@@ -273,7 +273,7 @@ public class ProgrammingExerciseCreationUpdateService {
         String problemStatementWithTestNames = updatedProgrammingExercise.getProblemStatement();
         programmingExerciseTaskService.replaceTestNamesWithIds(updatedProgrammingExercise);
 
-        for (var containerConfig: updatedProgrammingExercise.getBuildConfig().getContainerConfigs().values()) {
+        for (var containerConfig : updatedProgrammingExercise.getBuildConfig().getContainerConfigs().values()) {
             containerConfig.setBuildConfig(updatedProgrammingExercise.getBuildConfig());
         }
         programmingExerciseBuildConfigRepository.save(updatedProgrammingExercise.getBuildConfig());

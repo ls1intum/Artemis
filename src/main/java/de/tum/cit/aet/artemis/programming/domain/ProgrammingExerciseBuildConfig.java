@@ -245,14 +245,15 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
     @JsonIgnore
     public List<Windfile> getWindfiles() {
         List<Windfile> windfiles = new ArrayList<>();
-        for (DockerContainerConfig containerConfig: getContainerConfigs().values().stream().sorted(Comparator.comparing(DomainObject::getId)).toList()) {
+        for (DockerContainerConfig containerConfig : getContainerConfigs().values().stream().sorted(Comparator.comparing(DomainObject::getId)).toList()) {
             // TODO: Sorting here is obviously very ugly.
             if (containerConfig.getBuildPlanConfiguration() == null) {
                 windfiles.add(null); // TODO: IDK if this is a good idea, let's see...
             }
             try {
                 windfiles.add(Windfile.deserialize(containerConfig.getBuildPlanConfiguration()));
-            } catch (JsonProcessingException e) {
+            }
+            catch (JsonProcessingException e) {
                 log.error("Could not parse build plan configuration for programming exercise {}", this.getId(), e);
                 windfiles.add(null); // TODO: IDK if this is a good idea, let's see...
             }

@@ -10,8 +10,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-import de.tum.cit.aet.artemis.core.domain.DomainObject;
-import de.tum.cit.aet.artemis.programming.domain.DockerContainerConfig;
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,11 +24,13 @@ import de.tum.cit.aet.artemis.buildagent.dto.DockerRunConfig;
 import de.tum.cit.aet.artemis.buildagent.dto.JobTimingInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.RepositoryInfo;
 import de.tum.cit.aet.artemis.core.config.ProgrammingLanguageConfiguration;
+import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.exception.LocalCIException;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
+import de.tum.cit.aet.artemis.programming.domain.DockerContainerConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildStatistics;
@@ -211,7 +211,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
         ZonedDateTime submissionDate = ZonedDateTime.now();
 
-        String buildJobId = String.valueOf(participation.getId()) + submissionDate.toInstant().toEpochMilli();
+        long time = submissionDate.toInstant().toEpochMilli();
 
         var programmingExerciseBuildConfig = loadBuildConfig(programmingExercise);
 
@@ -229,27 +229,27 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         BuildAgentDTO buildAgent = new BuildAgentDTO(null, null, null);
 
         // TODO: Sorting here is obviously very ugly.
-        var sortedContainerConfigs = programmingExerciseBuildConfig.getContainerConfigs().values().stream().sorted(
-            Comparator.comparing(DomainObject::getId)).toList();
+        var sortedContainerConfigs = programmingExerciseBuildConfig.getContainerConfigs().values().stream().sorted(Comparator.comparing(DomainObject::getId)).toList();
+
+        var buildJobs = distributedDataAccessService.getDistributedBuildJobQueue();
 
         for (int i = 0; i < buildConfigs.size(); i++) { // TODO: You cannot do this as the windfile might be default? Fix later.
             final BuildConfig buildConfig = buildConfigs.get(i);
             final DockerContainerConfig containerConfig = sortedContainerConfigs.get(i);
 
-            BuildJobQueueItem buildJobQueueItem = new BuildJobQueueItem(buildJobId, participation.getBuildPlanId(),
-                buildAgent, participation.getId(), courseId, programmingExercise.getId(), retryCount, priority, null,
-                repositoryInfo, jobTimingInfo, buildConfig, null, containerConfig.getId());
+            String buildJobId = String.format("%d-%d-%d", participation.getId(), containerConfig.getId(), time);
+            BuildJobQueueItem buildJobQueueItem = new BuildJobQueueItem(buildJobId, participation.getBuildPlanId(), buildAgent, participation.getId(), containerConfig.getId(),
+                    courseId, programmingExercise.getId(), retryCount, priority, null, repositoryInfo, jobTimingInfo, buildConfig, null);
 
             // Save the build job before adding it to the queue to ensure it exists in the database.
             // This prevents potential race conditions where a build agent pulls the job from the queue very quickly before it is persisted,
             // leading to a failed update operation due to a missing record.
-            buildJobRepository.save(new BuildJob(buildJobQueueItem, BuildStatus.QUEUED, null));
-            distributedDataAccessService.getDistributedBuildJobQueue().add(buildJobQueueItem);
-            log.info("Added build job {} for exercise {} and participation {} and container {} with priority {} to the queue",
-                buildJobId, programmingExercise.getShortName(), participation.getId(), containerConfig.getId(), priority);
+            buildJobRepository.save(new BuildJob(buildJobQueueItem, BuildStatus.QUEUED, List.of()));
+            buildJobs.add(buildJobQueueItem);
+            log.info("Added build job {} for exercise {} and participation {} and container {} with priority {} to the queue", buildJobId, programmingExercise.getShortName(),
+                    participation.getId(), containerConfig.getId(), priority);
 
-            distributedDataAccessService.getDistributedDockerImageCleanupInfo()
-                .put(buildConfig.dockerImage(), jobTimingInfo.submissionDate());
+            distributedDataAccessService.getDistributedDockerImageCleanupInfo().put(buildConfig.dockerImage(), jobTimingInfo.submissionDate());
         }
     }
 
@@ -340,8 +340,11 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         catch (NullPointerException e) {
             log.warn("Could not retrieve windfile for programming exercise {}. Using default windfile instead.", programmingExercise.getId());
             programmingExercise.setBuildConfig(buildConfig); // windfile could fail to lazy load build config
-            windfiles = List.of(aeolusTemplateService.getDefaultWindfileFor(programmingExercise)); // TODO: Does it make sense to just assume one? This might be a horrible idea, as it is out of sync with the db.
-            dockerImages = List.of(programmingLanguageConfiguration.getImage(programmingExercise.getProgrammingLanguage(), Optional.ofNullable(programmingExercise.getProjectType()))); // TODO: dito.
+            windfiles = List.of(aeolusTemplateService.getDefaultWindfileFor(programmingExercise)); // TODO: Does it make sense to just assume one? This might be a horrible idea, as
+                                                                                                   // it is out of sync with the db.
+            dockerImages = List
+                    .of(programmingLanguageConfiguration.getImage(programmingExercise.getProgrammingLanguage(), Optional.ofNullable(programmingExercise.getProjectType()))); // TODO:
+                                                                                                                                                                             // dito.
         }
 
         DockerRunConfig dockerRunConfig = programmingExerciseBuildConfigService.getDockerRunConfig(buildConfig);
@@ -355,10 +358,9 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
             programmingExercise.setBuildConfig(buildConfig);
             String buildScript = localCIBuildConfigurationService.createBuildScript(programmingExercise);
 
-             buildConfigs.add(new BuildConfig(buildScript, dockerImages.get(i), commitHashToBuild, assignmentCommitHash, testCommitHash,
-                branch, programmingLanguage, projectType, staticCodeAnalysisEnabled, sequentialTestRunsEnabled,
-                resultPaths, buildConfig.getTimeoutSeconds(), buildConfig.getAssignmentCheckoutPath(),
-                buildConfig.getTestCheckoutPath(), buildConfig.getSolutionCheckoutPath(), dockerRunConfig));
+            buildConfigs.add(new BuildConfig(buildScript, dockerImages.get(i), commitHashToBuild, assignmentCommitHash, testCommitHash, branch, programmingLanguage, projectType,
+                    staticCodeAnalysisEnabled, sequentialTestRunsEnabled, resultPaths, buildConfig.getTimeoutSeconds(), buildConfig.getAssignmentCheckoutPath(),
+                    buildConfig.getTestCheckoutPath(), buildConfig.getSolutionCheckoutPath(), dockerRunConfig));
         }
 
         return buildConfigs;

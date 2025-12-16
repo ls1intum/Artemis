@@ -22,6 +22,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobResultCountDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.DockerImageBuild;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultBuildJob;
@@ -78,15 +79,17 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
             """)
     Set<DockerImageBuild> findAllLastBuildDatesForDockerImages();
 
+    // TODO: This might be non-desirable. Maybe think about whether we want this exact new behavior.
     @Query("""
             SELECT new de.tum.cit.aet.artemis.buildagent.dto.ResultBuildJob(
-                b.result.id,
+                r.id,
                 b.exerciseId,
                 b.buildJobId
             )
             FROM BuildJob b
+            JOIN b.results r
             WHERE b.participationId = :participationId
-                AND b.result.id IS NOT NULL
+                AND r.id IS NOT NULL
             """)
     Set<ResultBuildJob> findBuildJobIdsWithResultForParticipationId(@Param("participationId") long participationId);
 
@@ -103,6 +106,23 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
     List<BuildJobResultCountDTO> getBuildJobsResultsStatistics(@Param("fromDateTime") ZonedDateTime fromDateTime, @Param("courseId") Long courseId);
 
     Optional<BuildJob> findByBuildJobId(String buildJobId);
+
+    @Query("""
+            SELECT b
+            FROM BuildJob b
+            LEFT JOIN FETCH b.results
+            WHERE b.buildJobId = :id
+            """)
+    Optional<BuildJob> findByBuildJobIdAndResults(String id);
+
+    @Query("""
+            SELECT r
+            FROM Result r
+            LEFT JOIN FETCH r.feedbacks f
+            LEFT JOIN FETCH f.testCase
+            WHERE r.id = :id
+            """)
+    Optional<Result> findByResultIdAndLoadFeedbacksAndTestCases(long id);
 
     default BuildJob findByBuildJobIdElseThrow(String buildJobId) {
         return getValueElseThrow(findByBuildJobId(buildJobId));

@@ -61,7 +61,7 @@ public record FinishedBuildJobDTO(String id, String name, String buildAgentAddre
      * @return the converted DTO
      */
     public static FinishedBuildJobDTO of(BuildJob buildJob) {
-        ResultDTO resultDTO = buildJob.getResult() == null ? null : ResultDTO.of(buildJob.getResult());
+        ResultDTO resultDTO = null; // TODO: Reenable. buildJob.getResult() == null ? null : ResultDTO.of(buildJob.getResult());
 
         return new FinishedBuildJobDTO(buildJob.getBuildJobId(), buildJob.getName(), buildJob.getBuildAgentAddress(), buildJob.getParticipationId(), buildJob.getCourseId(),
                 buildJob.getExerciseId(), buildJob.getBuildStatus(), buildJob.getRepositoryType(), buildJob.getRepositoryName(), buildJob.getTriggeredByPushTo(),

@@ -614,7 +614,7 @@ public class Result extends DomainObject implements Comparable<Result> {
 
     @Override
     public String toString() {
-        return "Result{" + "id" + getId() + ", completionDate=" + completionDate + ", successful=" + successful + ", score=" + score + ", rated=" + rated + ", assessmentType="
+        return "Result{" + "id=" + getId() + ", completionDate=" + completionDate + ", successful=" + successful + ", score=" + score + ", rated=" + rated + ", assessmentType="
                 + assessmentType + ", hasComplaint=" + hasComplaint + ", testCaseCount=" + testCaseCount + ", passedTestCaseCount=" + passedTestCaseCount + ", codeIssueCount="
                 + codeIssueCount + '}';
     }

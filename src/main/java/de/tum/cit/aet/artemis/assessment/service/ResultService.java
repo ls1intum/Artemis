@@ -733,4 +733,68 @@ public class ResultService {
         List<Feedback> feedbacks = new ArrayList<>(feedbackList);
         result.updateAllFeedbackItems(feedbacks, true);
     }
+
+    // TODO: Check if this is good. Bc. maybe these hacks break the feedbacks?
+    public Result mergeMultipleResultsIntoSingleResult(List<Result> results) {
+        if (results == null) {
+            return null;
+        }
+
+        List<Result> nonNullResults = results.stream().filter(Objects::nonNull).collect(Collectors.toList());
+        if (nonNullResults.isEmpty()) {
+            return null;
+        }
+
+        Result merged = new Result();
+        Result referenceResult = nonNullResults.stream().max(
+                Comparator.comparing(Result::getCompletionDate, Comparator.nullsLast(ZonedDateTime::compareTo)).thenComparing(Result::getId, Comparator.nullsLast(Long::compareTo)))
+                .orElse(nonNullResults.get(0));
+
+        merged.setSubmission(referenceResult.getSubmission());
+        merged.setAssessor(referenceResult.getAssessor());
+        merged.setAssessmentType(referenceResult.getAssessmentType());
+        merged.setHasComplaint(referenceResult.hasComplaint());
+        merged.setExampleResult(referenceResult.isExampleResult());
+        merged.setAssessmentNote(referenceResult.getAssessmentNote());
+        merged.setExerciseId(referenceResult.getExerciseId());
+        merged.setRated(referenceResult.isRated());
+
+        ZonedDateTime latestCompletionDate = nonNullResults.stream().map(Result::getCompletionDate).filter(Objects::nonNull).max(ZonedDateTime::compareTo)
+                .orElse(referenceResult.getCompletionDate());
+        merged.setCompletionDate(latestCompletionDate);
+
+        List<Feedback> mergedFeedbacks = nonNullResults.stream().map(Result::getFeedbacks).filter(Objects::nonNull).flatMap(List::stream).collect(Collectors.toList());
+        merged.setFeedbacks(new ArrayList<>(mergedFeedbacks));
+
+        int totalTestCaseCount = nonNullResults.stream().map(Result::getTestCaseCount).filter(Objects::nonNull).mapToInt(Integer::intValue).sum();
+        int totalPassedTestCaseCount = nonNullResults.stream().map(Result::getPassedTestCaseCount).filter(Objects::nonNull).mapToInt(Integer::intValue).sum();
+        int totalCodeIssueCount = nonNullResults.stream().map(Result::getCodeIssueCount).filter(Objects::nonNull).mapToInt(Integer::intValue).sum();
+
+        merged.setTestCaseCount(totalTestCaseCount);
+        merged.setPassedTestCaseCount(totalPassedTestCaseCount);
+        merged.setCodeIssueCount(totalCodeIssueCount);
+
+        Submission submission = referenceResult.getSubmission();
+        boolean scoreCalculated = false;
+        if (submission != null && submission.getParticipation() != null && submission.getParticipation().getExercise() instanceof ProgrammingExercise programmingExercise) {
+            merged.calculateScoreForProgrammingExercise(programmingExercise);
+            scoreCalculated = merged.getScore() != null;
+        }
+
+        if (!scoreCalculated) {
+            Double bestScore = nonNullResults.stream().map(Result::getScore).filter(Objects::nonNull).max(Double::compareTo).orElse(null);
+            if (bestScore != null) {
+                merged.setScore(bestScore);
+                scoreCalculated = true;
+            }
+        }
+
+        if (!scoreCalculated) {
+            boolean anySuccessful = nonNullResults.stream().map(Result::isSuccessful).anyMatch(Boolean.TRUE::equals);
+            merged.setSuccessful(anySuccessful ? Boolean.TRUE : Boolean.FALSE);
+        }
+
+        return merged;
+    }
+
 }

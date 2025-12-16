@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.programming.service.localci;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -28,6 +29,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
@@ -83,6 +85,8 @@ public class LocalCIResultProcessingService {
 
     private final ProgrammingSubmissionMessagingService programmingSubmissionMessagingService;
 
+    private final ResultService resultService;
+
     private UUID listenerId;
 
     private final AtomicLong processedResults = new AtomicLong();
@@ -98,7 +102,7 @@ public class LocalCIResultProcessingService {
             BuildJobRepository buildJobRepository, ProgrammingExerciseRepository programmingExerciseRepository, ParticipationRepository participationRepository,
             ProgrammingTriggerService programmingTriggerService, BuildLogEntryService buildLogEntryService,
             ProgrammingExerciseBuildStatisticsRepository programmingExerciseBuildStatisticsRepository, DistributedDataAccessService distributedDataAccessService,
-            ProgrammingSubmissionMessagingService programmingSubmissionMessagingService) {
+            ProgrammingSubmissionMessagingService programmingSubmissionMessagingService, ResultService resultService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.participationRepository = participationRepository;
         this.programmingExerciseGradingService = programmingExerciseGradingService;
@@ -109,6 +113,7 @@ public class LocalCIResultProcessingService {
         this.programmingExerciseBuildStatisticsRepository = programmingExerciseBuildStatisticsRepository;
         this.distributedDataAccessService = distributedDataAccessService;
         this.programmingSubmissionMessagingService = programmingSubmissionMessagingService;
+        this.resultService = resultService;
     }
 
     /**
@@ -255,26 +260,27 @@ public class LocalCIResultProcessingService {
             // save build job to database
             if (buildException != null) {
                 if (buildException.getCause() instanceof CancellationException && buildException.getMessage().equals("Build job with id " + buildJob.id() + " was cancelled.")) {
-                    savedBuildJob = saveFinishedBuildJob(buildJob, BuildStatus.CANCELLED, result);
+                    savedBuildJob = addResultToBuildJob(buildJob, BuildStatus.CANCELLED, result);
                 }
                 else if (buildException.getCause() instanceof TimeoutException) {
-                    savedBuildJob = saveFinishedBuildJob(buildJob, BuildStatus.TIMEOUT, result);
+                    savedBuildJob = addResultToBuildJob(buildJob, BuildStatus.TIMEOUT, result);
                 }
                 else {
                     log.error("Error while processing build job: {}", buildJob, buildException);
-                    savedBuildJob = saveFinishedBuildJob(buildJob, BuildStatus.FAILED, result);
+                    savedBuildJob = addResultToBuildJob(buildJob, BuildStatus.FAILED, result);
                 }
             }
             else {
-                savedBuildJob = saveFinishedBuildJob(buildJob, BuildStatus.SUCCESSFUL, result);
+                savedBuildJob = addResultToBuildJob(buildJob, BuildStatus.SUCCESSFUL, result);
                 if (programmingExerciseParticipation != null) {
                     updateExerciseBuildDurationAsync(programmingExerciseParticipation.getProgrammingExercise().getId());
                 }
             }
 
             if (programmingExerciseParticipation != null) {
-                if (result != null) {
-                    programmingMessagingService.notifyUserAboutNewResult(result, programmingExerciseParticipation);
+                var mergedResult = resultService.mergeMultipleResultsIntoSingleResult(savedBuildJob.getResults());
+                if (mergedResult != null) { // TODO: Null should happen as soon as something actually fails the build? No, only if everything fails flat out.
+                    programmingMessagingService.notifyUserAboutNewResult(mergedResult, programmingExerciseParticipation);
                 }
                 else {
                     log.error("Result could not be processed for build job: {}", buildJob);
@@ -315,6 +321,7 @@ public class LocalCIResultProcessingService {
     }
 
     /**
+     * TODO: Modify docs
      * Save a finished build job to the database.
      *
      * @param queueItem   the build job object from the queue
@@ -323,10 +330,20 @@ public class LocalCIResultProcessingService {
      *
      * @return the saved the build job
      */
-    private BuildJob saveFinishedBuildJob(BuildJobQueueItem queueItem, BuildStatus buildStatus, Result result) {
+    private BuildJob addResultToBuildJob(BuildJobQueueItem queueItem, BuildStatus buildStatus, Result result) {
         try {
-            BuildJob buildJob = new BuildJob(queueItem, buildStatus, result);
-            buildJobRepository.findByBuildJobId(queueItem.id()).ifPresent(existingBuildJob -> buildJob.setId(existingBuildJob.getId()));
+            var found = buildJobRepository.findByBuildJobIdAndResults(queueItem.id());
+            BuildJob buildJob;
+            if (found.isPresent()) {
+                buildJob = found.get();
+                buildJob.setResults(new ArrayList<>(
+                        buildJob.getResults().stream().map(r -> buildJobRepository.findByResultIdAndLoadFeedbacksAndTestCases(r.getId()).orElseGet(null)).toList()));
+            }
+            else {
+                buildJob = new BuildJob(queueItem, buildStatus, List.of());
+            }
+
+            buildJob.getResults().add(result);
             return buildJobRepository.save(buildJob);
         }
         catch (Exception e) {
