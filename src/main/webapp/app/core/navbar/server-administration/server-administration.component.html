@@ -2,7 +2,7 @@
     @if (!isExamActive() && !isExamStarted()) {
         <a class="nav-link py-0" routerLink="/admin" (click)="onLinkClick($event)" id="admin-menu">
             <span>
-                <fa-icon [icon]="faUserPlus" />
+                <fa-icon [icon]="faUserShield" />
                 <span jhiTranslate="global.menu.admin.main"></span>
             </span>
         </a>

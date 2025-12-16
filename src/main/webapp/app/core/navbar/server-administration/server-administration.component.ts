@@ -1,12 +1,12 @@
 import { Component, inject, input, output, viewChild } from '@angular/core';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { faUserPlus } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { LoginWithPasskeyModalComponent } from 'app/core/navbar/server-administration/login-with-passkey-modal/login-with-passkey-modal.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { PasskeyAuthenticationGuard } from 'app/core/auth/passkey-authentication-guard/passkey-authentication.guard';
+import { faUserShield } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-server-administration',
@@ -15,7 +15,7 @@ import { PasskeyAuthenticationGuard } from 'app/core/auth/passkey-authentication
     styleUrl: '../navbar.scss',
 })
 export class ServerAdministrationComponent {
-    protected readonly faUserPlus = faUserPlus;
+    protected readonly faUserShield = faUserShield;
 
     private readonly accountService = inject(AccountService);
     private readonly isLoggedInWithPasskeyGuard = inject(PasskeyAuthenticationGuard);
