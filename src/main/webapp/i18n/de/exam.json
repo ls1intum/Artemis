@@ -46,7 +46,7 @@
                     "enoughSeatsForStudents": "Du kannst alle {{ totalStudents }} Studierenden unterbringen.",
                     "notEnoughSeatsForStudents": "Du kannst nur {{ usableCapacity }} der {{ totalStudents }} Studierenden unterbringen ({{ percentage }}%).",
                     "distribute": "Verteilen",
-                    "distributeWarning": "Du hast nicht ausreichend Kapazitäten"
+                    "cantFindRoom": "Raum kann nicht gefunden werden? Lade ihn hier hoch: "
                 }
             },
             "overview": {
