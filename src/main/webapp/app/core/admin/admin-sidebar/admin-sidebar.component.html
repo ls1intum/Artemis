@@ -56,7 +56,7 @@
                 type="button"
                 class="double-arrow px-2"
                 [ngClass]="{ 'menu-closed': isNavbarCollapsed() }"
-                [ngbTooltip]="'global.menu.admin.sidebar.collapseMenu' | artemisTranslate"
+                [ngbTooltip]="'global.menu.admin.collapseMenu' | artemisTranslate"
                 tooltipClass="double-arrow-tooltip"
                 [container]="'body'"
                 (click)="toggleCollapseState.emit()"
