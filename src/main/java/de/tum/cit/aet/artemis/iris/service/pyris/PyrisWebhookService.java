@@ -79,10 +79,6 @@ public class PyrisWebhookService {
         this.instanceMessageSendService = instanceMessageSendService;
     }
 
-    private boolean lectureIngestionEnabled(Course course) {
-        return irisSettingsService.getCombinedIrisSettingsFor(course, true).irisLectureIngestionSettings().enabled();
-    }
-
     private String attachmentToBase64(AttachmentVideoUnit attachmentVideoUnit) {
         Path path = FilePathConverter.fileSystemPathForExternalUri(URI.create(attachmentVideoUnit.getAttachment().getLink()), FilePathType.ATTACHMENT_UNIT);
         try {
@@ -164,8 +160,8 @@ public class PyrisWebhookService {
             return;
         }
 
-        var settings = irisSettingsService.getCombinedIrisSettingsFor(course.get(), false).irisLectureIngestionSettings();
-        if (!settings.enabled() || !settings.autoIngest()) {
+        var settings = irisSettingsService.getSettingsForCourse(course.get());
+        if (!settings.enabled()) {
             return;
         }
         for (AttachmentVideoUnit attachmentVideoUnit : newAttachmentVideoUnits) {
@@ -199,7 +195,7 @@ public class PyrisWebhookService {
      * @return jobToken if the job was created else null
      */
     public String addLectureUnitToPyrisDB(AttachmentVideoUnit attachmentVideoUnit) {
-        if (lectureIngestionEnabled(attachmentVideoUnit.getLecture().getCourse()) && !attachmentVideoUnit.getLecture().isTutorialLecture()) {
+        if (irisSettingsService.isEnabledForCourse(attachmentVideoUnit.getLecture().getCourse()) && !attachmentVideoUnit.getLecture().isTutorialLecture()) {
             if ((attachmentVideoUnit.getVideoSource() != null && !attachmentVideoUnit.getVideoSource().isEmpty()) || (attachmentVideoUnit.getAttachment() != null
                     && (attachmentVideoUnit.getAttachment().getAttachmentType() == AttachmentType.FILE && attachmentVideoUnit.getAttachment().getLink().endsWith(".pdf")))) {
                 return executeLectureAdditionWebhook(processAttachmentVideoUnitForUpdate(attachmentVideoUnit), attachmentVideoUnit.getLecture().getCourse());
@@ -232,17 +228,12 @@ public class PyrisWebhookService {
     private String executeLectureAdditionWebhook(PyrisLectureUnitWebhookDTO toUpdateAttachmentVideoUnit, Course course) {
         String jobToken = pyrisJobService.addLectureIngestionWebhookJob(toUpdateAttachmentVideoUnit.courseId(), toUpdateAttachmentVideoUnit.lectureId(),
                 toUpdateAttachmentVideoUnit.lectureUnitId());
-        var settings = irisSettingsService.getCombinedIrisSettingsFor(course, false).irisLectureIngestionSettings();
-        PyrisPipelineExecutionSettingsDTO settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, artemisBaseUrl, settings.selectedVariant());
+        var settings = irisSettingsService.getSettingsForCourse(course);
+        PyrisPipelineExecutionSettingsDTO settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, artemisBaseUrl, settings.variant().jsonValue());
         PyrisWebhookLectureIngestionExecutionDTO executionDTO = new PyrisWebhookLectureIngestionExecutionDTO(toUpdateAttachmentVideoUnit,
                 toUpdateAttachmentVideoUnit.lectureUnitId(), settingsDTO, List.of());
         pyrisConnectorService.executeLectureAdditionWebhook(executionDTO);
         return jobToken;
-    }
-
-    private boolean faqIngestionEnabled(Course course) {
-        var settings = irisSettingsService.getRawIrisSettingsFor(course).getIrisFaqIngestionSettings();
-        return settings != null && settings.isEnabled();
     }
 
     /**
@@ -252,9 +243,9 @@ public class PyrisWebhookService {
      */
     public void autoUpdateFaqInPyris(Faq newFaq) {
         var course = newFaq.getCourse();
-        var settings = irisSettingsService.getCombinedIrisSettingsFor(course, false).irisFaqIngestionSettings();
+        var settings = irisSettingsService.getSettingsForCourse(course);
 
-        if (settings.enabled() && settings.autoIngest()) {
+        if (settings.enabled()) {
             addFaq(newFaq);
         }
     }
@@ -266,7 +257,7 @@ public class PyrisWebhookService {
      * @return jobToken if the job was created else null
      */
     public String addFaq(Faq faq) {
-        if (faqIngestionEnabled(faq.getCourse())) {
+        if (irisSettingsService.isEnabledForCourse(faq.getCourse())) {
             return executeFaqAdditionWebhook(new PyrisFaqWebhookDTO(faq.getId(), faq.getQuestionTitle(), faq.getQuestionAnswer(), faq.getCourse().getId(),
                     faq.getCourse().getTitle(), faq.getCourse().getDescription()), faq.getCourse());
         }
@@ -283,8 +274,8 @@ public class PyrisWebhookService {
 
     private String executeFaqAdditionWebhook(PyrisFaqWebhookDTO toUpdateFaq, Course course) {
         String jobToken = pyrisJobService.addFaqIngestionWebhookJob(toUpdateFaq.courseId(), toUpdateFaq.faqId());
-        var settings = irisSettingsService.getCombinedIrisSettingsFor(course, false).irisFaqIngestionSettings();
-        PyrisPipelineExecutionSettingsDTO settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, artemisBaseUrl, settings.selectedVariant());
+        var settings = irisSettingsService.getSettingsForCourse(course);
+        PyrisPipelineExecutionSettingsDTO settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, artemisBaseUrl, settings.variant().jsonValue());
         PyrisWebhookFaqIngestionExecutionDTO executionDTO = new PyrisWebhookFaqIngestionExecutionDTO(toUpdateFaq, settingsDTO, List.of());
         pyrisConnectorService.executeFaqAdditionWebhook(toUpdateFaq, executionDTO);
         return jobToken;
