@@ -62,6 +62,12 @@ describe('IrisExerciseSettingsUpdateComponent Component', () => {
         jest.restoreAllMocks();
     });
 
+    it('Returns true when view child is not initialized yet', () => {
+        expect(comp.settingsUpdateComponent).toBeUndefined();
+        expect(comp.canDeactivate()).toBeTrue();
+        expect(comp.canDeactivateWarning).toBeUndefined();
+    });
+
     it('Setup works correctly', () => {
         fixture.detectChanges();
         expect(paramsSpy).toHaveBeenCalledOnce();
@@ -93,5 +99,45 @@ describe('IrisExerciseSettingsUpdateComponent Component', () => {
         comp.settingsUpdateComponent!.saveIrisSettings();
         expect(setSettingsSpy).toHaveBeenCalledWith(2, irisSettings);
         expect(comp.settingsUpdateComponent!.irisSettings).toEqual(irisSettingsSaved);
+    });
+});
+
+describe('IrisExerciseSettingsUpdateComponent without parent route params', () => {
+    let comp: IrisExerciseSettingsUpdateComponent;
+    let fixture: ComponentFixture<IrisExerciseSettingsUpdateComponent>;
+    let featureToggleService: FeatureToggleService;
+
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            declarations: [IrisExerciseSettingsUpdateComponent, IrisSettingsUpdateComponent, MockComponent(IrisCommonSubSettingsUpdateComponent), MockComponent(ButtonComponent)],
+            providers: [
+                provideRouter([]),
+                MockProvider(IrisSettingsService),
+                MockProvider(FeatureToggleService),
+                { provide: ActivatedRoute, useValue: {} as ActivatedRoute },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: AccountService, useClass: MockAccountService },
+            ],
+        })
+            .compileComponents()
+            .then(() => {
+                featureToggleService = TestBed.inject(FeatureToggleService);
+                jest.spyOn(featureToggleService, 'getFeatureToggleActive').mockReturnValue(of(true));
+            });
+        fixture = TestBed.createComponent(IrisExerciseSettingsUpdateComponent);
+        comp = fixture.componentInstance;
+    });
+
+    afterEach(() => {
+        jest.restoreAllMocks();
+    });
+
+    it('Skips rendering settings when no ids are provided and returns canDeactivate true', () => {
+        fixture.detectChanges();
+        expect(comp.courseId).toBeUndefined();
+        expect(comp.exerciseId).toBeUndefined();
+        expect(fixture.debugElement.query(By.directive(IrisSettingsUpdateComponent))).toBeNull();
+        expect(comp.canDeactivate()).toBeTrue();
+        expect(comp.canDeactivateWarning).toBeUndefined();
     });
 });
