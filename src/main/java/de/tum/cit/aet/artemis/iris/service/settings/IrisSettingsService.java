@@ -115,27 +115,6 @@ public class IrisSettingsService {
     }
 
     /**
-     * Removes the settings entry for a course. The next access will recreate defaults.
-     *
-     * @param course the course
-     */
-    public void deleteSettingsFor(Course course) {
-        if (course == null) {
-            return;
-        }
-        courseIrisSettingsRepository.deleteByCourseId(course.getId());
-    }
-
-    /**
-     * Removes the settings entry for a course id. Primarily used by course deletion flows.
-     *
-     * @param courseId the course id
-     */
-    public void deleteSettingsFor(long courseId) {
-        courseIrisSettingsRepository.deleteByCourseId(courseId);
-    }
-
-    /**
      * Checks whether Iris is enabled for the given course id.
      *
      * @param courseId the course id

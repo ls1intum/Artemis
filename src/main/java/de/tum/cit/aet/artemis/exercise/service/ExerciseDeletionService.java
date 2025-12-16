@@ -141,7 +141,6 @@ public class ExerciseDeletionService {
         // delete all exercise units linking to the exercise
         lectureUnitApi.ifPresent(api -> api.removeLectureUnitFromExercise(exerciseId));
 
-        // delete all iris settings for this exercise
         // delete all plagiarism results belonging to this exercise
         plagiarismResultApi.ifPresent(api -> api.deletePlagiarismResultsByExerciseId(exerciseId));
 

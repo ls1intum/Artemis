@@ -172,36 +172,4 @@ class IrisSettingsServiceTest extends AbstractIrisIntegrationTest {
 
         assertThatThrownBy(() -> irisSettingsService.getSettingsForCourseOrThrow(nonExistentCourseId)).isInstanceOf(EntityNotFoundException.class).hasMessageContaining("Course");
     }
-
-    @Test
-    void deleteSettingsFor_byCourseObject() {
-        enableIrisFor(course);
-
-        // Verify settings exist
-        var settingsBefore = irisSettingsService.getCourseSettingsWithRateLimit(course.getId());
-        assertThat(settingsBefore.settings().enabled()).isTrue();
-
-        // Delete settings
-        irisSettingsService.deleteSettingsFor(course);
-
-        // Verify settings are gone or reset to defaults
-        var settingsAfter = irisSettingsService.getCourseSettingsWithRateLimit(course.getId());
-        assertThat(settingsAfter.settings()).isEqualTo(IrisCourseSettingsDTO.defaultSettings());
-    }
-
-    @Test
-    void deleteSettingsFor_byCourseId() {
-        enableIrisFor(course);
-
-        // Verify settings exist
-        var settingsBefore = irisSettingsService.getCourseSettingsWithRateLimit(course.getId());
-        assertThat(settingsBefore.settings().enabled()).isTrue();
-
-        // Delete settings
-        irisSettingsService.deleteSettingsFor(course.getId());
-
-        // Verify settings are gone or reset to defaults
-        var settingsAfter = irisSettingsService.getCourseSettingsWithRateLimit(course.getId());
-        assertThat(settingsAfter.settings()).isEqualTo(IrisCourseSettingsDTO.defaultSettings());
-    }
 }
