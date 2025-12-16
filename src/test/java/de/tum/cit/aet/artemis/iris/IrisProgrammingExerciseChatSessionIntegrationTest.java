@@ -283,8 +283,7 @@ class IrisProgrammingExerciseChatSessionIntegrationTest extends AbstractIrisInte
         });
 
         // Create request DTO without uncommitted files
-        List<IrisMessageContentDTO> contentDTOs = message.getContent().stream()
-                .map(content -> (IrisMessageContentDTO) new IrisMessageContentDTO.TextContent(content.getContentAsString())).toList();
+        List<IrisMessageContentDTO> contentDTOs = message.getContent().stream().map(content -> new IrisMessageContentDTO("text", content.getContentAsString(), null)).toList();
         var requestDTO = new IrisMessageRequestDTO(contentDTOs, message.getMessageDifferentiator(), Map.of());
 
         var response = request.postWithResponseBody("/api/iris/sessions/" + session.getId() + "/messages", requestDTO, IrisMessage.class, HttpStatus.CREATED);
@@ -311,8 +310,7 @@ class IrisProgrammingExerciseChatSessionIntegrationTest extends AbstractIrisInte
         });
 
         // Create request DTO with uncommitted files
-        List<IrisMessageContentDTO> contentDTOs = message.getContent().stream()
-                .map(content -> (IrisMessageContentDTO) new IrisMessageContentDTO.TextContent(content.getContentAsString())).toList();
+        List<IrisMessageContentDTO> contentDTOs = message.getContent().stream().map(content -> new IrisMessageContentDTO("text", content.getContentAsString(), null)).toList();
         var requestDTO = new IrisMessageRequestDTO(contentDTOs, message.getMessageDifferentiator(), uncommittedFiles);
 
         var response = request.postWithResponseBody("/api/iris/sessions/" + session.getId() + "/messages", requestDTO, IrisMessage.class, HttpStatus.CREATED);
