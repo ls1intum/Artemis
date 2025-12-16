@@ -238,23 +238,24 @@ export class NavbarComponent implements OnInit, OnDestroy {
     }
 
     breadcrumbTranslation: { [key: string]: string } = {
+        admin: 'global.menu.admin.main',
         new: 'global.generic.create',
         process: 'artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.pageTitle',
         verify_attendance: 'artemisApp.examManagement.examStudents.verifyChecks',
         create: 'global.generic.create',
         start: 'global.generic.start',
         edit: 'global.generic.edit',
-        audits: 'audits.title',
-        configuration: 'configuration.title',
-        feature_toggles: 'featureToggles.title',
-        health: 'health.title',
-        logs: 'logs.title',
+        audits: 'global.menu.admin.sidebar.audits',
+        configuration: 'global.menu.admin.sidebar.configuration',
+        feature_toggles: 'global.menu.admin.sidebar.features',
+        health: 'global.menu.admin.sidebar.health',
+        logs: 'global.menu.admin.sidebar.logs',
         docs: 'global.menu.admin.apidocs',
-        metrics: 'metrics.title',
-        user_statistics: 'statistics.title',
-        user_management: 'artemisApp.userManagement.home.title',
-        system_notification_management: 'artemisApp.systemNotification.systemNotifications',
-        upcoming_exams_and_exercises: 'artemisApp.upcomingExamsAndExercises.upcomingExamsAndExercises',
+        metrics: 'global.menu.admin.sidebar.metrics',
+        user_statistics: 'global.menu.admin.sidebar.statistics',
+        user_management: 'global.menu.admin.sidebar.users',
+        system_notification_management: 'global.menu.admin.sidebar.notifications',
+        upcoming_exams_and_exercises: 'global.menu.admin.sidebar.upcoming',
         account: 'global.menu.account.main',
         activate: 'activate.title',
         password: 'global.menu.account.password',
@@ -275,7 +276,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
         instructor_dashboard: 'entity.action.instructorDashboard',
         assessment_dashboard: 'artemisApp.assessmentDashboard.home.title',
         test_run_exercise_assessment_dashboard: 'artemisApp.exerciseAssessmentDashboard.home.title',
-        lti_configuration: 'artemisApp.lti.home.title',
+        iris: 'global.menu.admin.sidebar.iris',
+        lti_configuration: 'global.menu.admin.sidebar.lti',
         teams: 'artemisApp.team.home.title',
         ratings: 'artemisApp.ratingList.pageTitle',
         competency_management: 'artemisApp.competency.manage.title',
@@ -318,7 +320,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         student_exams: 'artemisApp.studentExams.title',
         test_assessment_dashboard: 'artemisApp.examManagement.assessmentDashboard',
         tutor_exam_dashboard: 'artemisApp.examManagement.assessmentDashboard',
-        organization_management: 'artemisApp.organizationManagement.title',
+        organization_management: 'global.menu.admin.sidebar.organizations',
         participant_scores: 'artemisApp.participantScores.pageTitle',
         course_statistics: 'statistics.course_statistics_title',
         grading_system: 'artemisApp.gradingSystem.title',
@@ -336,23 +338,26 @@ export class NavbarComponent implements OnInit, OnDestroy {
         tutorial_free_days: 'artemisApp.pages.tutorialFreePeriodsManagement.title',
         tutorial_groups_checklist: 'artemisApp.pages.checklist.title',
         create_tutorial_groups_configuration: 'artemisApp.pages.createTutorialGroupsConfiguration.title',
-        privacy_statement: 'artemisApp.legal.privacyStatement.title',
-        imprint: 'artemisApp.legal.imprint.title',
+        privacy_statement: 'global.menu.admin.sidebar.privacy',
+        imprint: 'global.menu.admin.sidebar.imprint',
         edit_build_plan: 'artemisApp.programmingExercise.buildPlanEditor',
         suspicious_behavior: 'artemisApp.examManagement.suspiciousBehavior.title',
         suspicious_sessions: 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessions.title',
         exam_timeline: 'artemisApp.examTimeline.breadcrumb',
         iris_settings: 'artemisApp.iris.settings.title.breadcrumb',
         generate: 'entity.action.generate',
-        build_queue: 'artemisApp.buildQueue.title',
-        build_agents: 'artemisApp.buildAgents.title',
+        build_queue: 'global.menu.admin.sidebar.buildQueue',
+        build_agents: 'global.menu.admin.sidebar.buildAgents',
+        websocket: 'global.menu.admin.sidebar.websocket',
+        exam_rooms: 'global.menu.admin.sidebar.examRooms',
         commit_history: 'artemisApp.repository.commitHistory.title',
         commit_details: 'artemisApp.repository.commitHistory.commitDetails.title',
         repository: 'artemisApp.repository.title',
-        standardized_competencies: 'artemisApp.standardizedCompetency.manage.title',
+        standardized_competencies: 'global.menu.admin.sidebar.competencies',
         prerequisites: 'artemisApp.prerequisite.title',
         import_standardized: 'artemisApp.standardizedCompetency.courseImport.title',
-        cleanup_service: 'cleanupService.title',
+        cleanup_service: 'global.menu.admin.sidebar.cleanup',
+        course_requests: 'global.menu.admin.sidebar.courseRequests',
         user_repository: 'artemisApp.repository.userRepository.title',
         template_repository: 'artemisApp.repository.templateRepository.title',
         solution_repository: 'artemisApp.repository.solutionRepository.title',
@@ -398,6 +403,12 @@ export class NavbarComponent implements OnInit, OnDestroy {
         // Temporarily restrict routes
         if (!fullURI.startsWith('/admin') && !fullURI.startsWith('/course-management') && !fullURI.startsWith('/courses')) {
             return;
+        }
+
+        // Handle the admin default redirect - when navigating to /admin, it redirects to /admin/user-management
+        // Ensure breadcrumbs reflect the actual destination
+        if (fullURI === '/admin' || fullURI === '/admin/') {
+            fullURI = '/admin/user-management';
         }
 
         // try catch for extra safety measures
@@ -583,7 +594,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
             case 'groups':
             case 'code-editor':
             case 'repository':
-            case 'admin':
             case 'ide':
             case 'text-units':
             case 'exercise-units':
@@ -596,6 +606,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
             case 'test-exam':
             case 'participate':
             case 'overview':
+                break;
+            case 'admin':
+                this.addBreadcrumb(currentPath, 'global.menu.admin.main', true);
                 break;
             case 'example-submissions':
                 // Hide example submission dashboard for non editor users
