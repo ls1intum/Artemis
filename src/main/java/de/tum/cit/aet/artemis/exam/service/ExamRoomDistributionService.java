@@ -38,7 +38,6 @@ import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExamRoomExamAssignmentRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExamRoomRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
-import jodd.util.StringUtil;
 
 /**
  * Service Implementation for managing distributions of exam users to exam rooms in an exam.
@@ -363,11 +362,11 @@ public class ExamRoomDistributionService {
         boolean isOldLocationPersisted = oldPlannedRoom != null;
         ExamUser lastStudentInOldRoom = isOldLocationPersisted ? findLastStudentInRoom(examUser.getPlannedRoomTransient(), examUsers) : null;
 
-        if (StringUtil.isBlank(newSeatName)) {
-            seatStudentDynamicLocation(examUser, newRoomNumber);
+        if (StringUtils.hasText(newSeatName)) {
+            seatStudentFixedSeat(examUser, newRoomNumber, newSeatName);
         }
         else {
-            seatStudentFixedSeat(examUser, newRoomNumber, newSeatName);
+            seatStudentDynamicLocation(examUser, newRoomNumber);
         }
 
         if (isOldLocationPersisted && lastStudentInOldRoom != null) {
