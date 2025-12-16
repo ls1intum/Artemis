@@ -61,7 +61,6 @@ export class ProgrammingExerciseProblemComponent implements OnDestroy {
     // Problem statement generation properties
     userPrompt = '';
     isGenerating = false;
-    hyperionModelName: string | undefined;
     private currentGenerationSubscription: Subscription | undefined = undefined;
     private profileService = inject(ProfileService);
     hyperionEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
@@ -110,7 +109,6 @@ export class ProgrammingExerciseProblemComponent implements OnDestroy {
         }
 
         this.isGenerating = true;
-        this.hyperionModelName = undefined;
 
         const request: ProblemStatementGenerationRequest = {
             userPrompt: this.userPrompt.trim(),
@@ -139,14 +137,12 @@ export class ProgrammingExerciseProblemComponent implements OnDestroy {
                         this.programmingExerciseChange.emit(exercise);
                     }
                     this.userPrompt = '';
-                    this.hyperionModelName = response.modelName || undefined;
 
                     // Show success alert
                     this.alertService.success('artemisApp.programmingExercise.problemStatement.generationSuccess');
                 },
                 error: (error) => {
                     this.alertService.error('artemisApp.programmingExercise.problemStatement.generationError');
-                    this.hyperionModelName = undefined;
                 },
             });
     }
