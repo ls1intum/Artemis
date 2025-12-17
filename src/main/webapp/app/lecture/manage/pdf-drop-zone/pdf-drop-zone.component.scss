@@ -21,6 +21,17 @@
         background-color: color-mix(in srgb, var(--bs-primary) 10%, transparent);
     }
 
+    &.disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+
+        &:hover,
+        &:focus {
+            border-color: var(--bs-border-color);
+            background-color: transparent;
+        }
+    }
+
     .file-input {
         display: none;
     }

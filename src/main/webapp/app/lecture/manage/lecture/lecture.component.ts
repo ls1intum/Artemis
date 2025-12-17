@@ -1,4 +1,5 @@
 import { PROFILE_IRIS } from 'app/app.constants';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import dayjs from 'dayjs/esm';
 import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
@@ -16,7 +17,7 @@ import { Subject, from } from 'rxjs';
 import { DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
 import { SortService } from 'app/shared/service/sort.service';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
-import { AttachmentVideoUnit, IngestionState } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
+import { IngestionState } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { DocumentationButtonComponent } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
 import { NgClass } from '@angular/common';
@@ -32,8 +33,6 @@ import { CourseTitleBarActionsDirective } from 'app/core/course/shared/directive
 import { PdfDropZoneComponent } from '../pdf-drop-zone/pdf-drop-zone.component';
 import { PdfUploadTarget, PdfUploadTargetDialogComponent } from '../pdf-upload-target-dialog/pdf-upload-target-dialog.component';
 import { AttachmentVideoUnitService } from '../lecture-units/services/attachment-video-unit.service';
-import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachment.model';
-import { objectToJsonBlob } from 'app/shared/util/blob-util';
 
 export enum LectureDateFilter {
     PAST = 'filterPast',
@@ -326,7 +325,8 @@ export class LectureComponent implements OnInit, OnDestroy {
 
         const lecture = new Lecture();
         lecture.title = title;
-        lecture.course = { id: this.courseId } as any;
+        lecture.course = new Course();
+        lecture.course.id = this.courseId;
 
         this.lectureService
             .create(lecture)
@@ -388,26 +388,6 @@ export class LectureComponent implements OnInit, OnDestroy {
      * Creates a single attachment unit for a file
      */
     private createAttachmentUnit(lectureId: number, file: File) {
-        const unitName = file.name
-            .replace(/\.pdf$/i, '')
-            .replace(/[_-]/g, ' ')
-            .trim();
-        const now = dayjs();
-
-        const attachmentVideoUnit = new AttachmentVideoUnit();
-        attachmentVideoUnit.name = unitName;
-        attachmentVideoUnit.releaseDate = now;
-
-        const attachment = new Attachment();
-        attachment.name = unitName;
-        attachment.releaseDate = now;
-        attachment.attachmentType = AttachmentType.FILE;
-
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('attachmentVideoUnit', objectToJsonBlob(attachmentVideoUnit));
-        formData.append('attachment', objectToJsonBlob(attachment));
-
-        return this.attachmentVideoUnitService.create(formData, lectureId);
+        return this.attachmentVideoUnitService.createAttachmentVideoUnitFromFile(lectureId, file);
     }
 }

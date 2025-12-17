@@ -109,7 +109,8 @@
                 "confirm": "Erstellen",
                 "filesSelected": "{{ count }} PDF-Datei(en) ausgewählt",
                 "success": "PDF-Inhalte wurden erfolgreich hinzugefügt.",
-                "lectureCreated": "Vorlesung und Inhalte wurden erfolgreich erstellt."
+                "lectureCreated": "Vorlesung und Inhalte wurden erfolgreich erstellt.",
+                "fileTooLarge": "Eine oder mehrere Dateien überschreiten die maximale Größe von 20MB und wurden übersprungen."
             },
             "createSeries": {
                 "startAndEndDateExplanation": "Erstelle schnell eine Vorlesungsserie, indem du Title und Zeiten definierst. Füge Inhalte später hinzu. Definiere als erstes den Start und das Ende von mindestens einer Vorlesung, die du wöchentlich wiederholen willst:",

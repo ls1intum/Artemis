@@ -109,7 +109,8 @@
                 "confirm": "Create",
                 "filesSelected": "{{ count }} PDF file(s) selected",
                 "success": "PDF content added successfully.",
-                "lectureCreated": "Lecture and content created successfully."
+                "lectureCreated": "Lecture and content created successfully.",
+                "fileTooLarge": "One or more files exceed the maximum size of 20MB and were skipped."
             },
             "createSeries": {
                 "startAndEndDateExplanation": "Quickly create a lecture series by only defining titles and timing. Add lecture contents later. Start by specifying start and end of at least one lecture, that you would like to repeat weekly:",

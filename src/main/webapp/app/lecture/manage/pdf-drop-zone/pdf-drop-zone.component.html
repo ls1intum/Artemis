@@ -1,15 +1,16 @@
 <div
     class="pdf-drop-zone"
-    [ngClass]="{ 'drag-over': isDragOver() }"
+    [ngClass]="{ 'drag-over': isDragOver(), disabled: disabled() }"
     (dragover)="onDragOver($event)"
     (dragleave)="onDragLeave($event)"
     (drop)="onDrop($event)"
     (click)="onClick()"
     (keydown.enter)="onClick()"
     (keydown.space)="onClick()"
-    tabindex="0"
+    [tabindex]="disabled() ? -1 : 0"
     role="button"
     [attr.aria-label]="'artemisApp.lecture.pdfUpload.dropZoneTitle' | artemisTranslate"
+    [attr.aria-disabled]="disabled()"
 >
     <input #fileInput type="file" accept=".pdf,application/pdf" multiple class="file-input" (change)="onFileInputChange($event)" />
     <div class="drop-zone-content">

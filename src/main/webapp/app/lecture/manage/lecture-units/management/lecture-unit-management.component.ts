@@ -9,9 +9,6 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { Subject, from } from 'rxjs';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
-import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachment.model';
-import { objectToJsonBlob } from 'app/shared/util/blob-util';
-import dayjs from 'dayjs/esm';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { AttachmentVideoUnit, IngestionState, TranscriptionStatus } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { ExerciseUnit } from 'app/lecture/shared/entities/lecture-unit/exerciseUnit.model';
@@ -436,11 +433,8 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     getBadgeTopOffset(lectureUnit: LectureUnit) {
         let offset = 0;
         if (lectureUnit.type === LectureUnitType.ATTACHMENT_VIDEO) {
-            const hasAttachment = this.hasAttachment(<AttachmentVideoUnit>lectureUnit);
             const hasTranscriptionBadge = this.hasTranscriptionBadge(<AttachmentVideoUnit>lectureUnit);
-            if (hasAttachment && hasTranscriptionBadge) {
-                offset = -30;
-            } else if (hasTranscriptionBadge || hasAttachment) {
+            if (hasTranscriptionBadge) {
                 offset = -20;
             }
         }
@@ -499,26 +493,6 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
      * Creates a single attachment unit from a file
      */
     private createAttachmentUnitFromFile(file: File) {
-        const unitName = file.name
-            .replace(/\.pdf$/i, '')
-            .replace(/[_-]/g, ' ')
-            .trim();
-        const releaseDate = dayjs().add(15, 'minutes');
-
-        const attachmentVideoUnit = new AttachmentVideoUnit();
-        attachmentVideoUnit.name = unitName;
-        attachmentVideoUnit.releaseDate = releaseDate;
-
-        const attachment = new Attachment();
-        attachment.name = unitName;
-        attachment.releaseDate = releaseDate;
-        attachment.attachmentType = AttachmentType.FILE;
-
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('attachmentVideoUnit', objectToJsonBlob(attachmentVideoUnit));
-        formData.append('attachment', objectToJsonBlob(attachment));
-
-        return this.attachmentVideoUnitService.create(formData, this.lectureId!);
+        return this.attachmentVideoUnitService.createAttachmentVideoUnitFromFile(this.lectureId!, file);
     }
 }

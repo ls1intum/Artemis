@@ -202,7 +202,7 @@
 
         @if (showDropZone) {
             <div class="mt-4">
-                <jhi-pdf-drop-zone (filesDropped)="onPdfFilesDropped($event)" />
+                <jhi-pdf-drop-zone [disabled]="isUploadingPdfs()" (filesDropped)="onPdfFilesDropped($event)" />
             </div>
         }
     </div>

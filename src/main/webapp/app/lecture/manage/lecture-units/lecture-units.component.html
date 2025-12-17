@@ -1,5 +1,5 @@
 <div>
-    <h3 id="artemisApp.lecture.sections.units"><span jhiTranslate="artemisApp.lecture.sections.units"></span></h3>
+    <h3><span jhiTranslate="artemisApp.lecture.sections.units"></span></h3>
     <p><span jhiTranslate="artemisApp.lecture.sections.unitsDescription"></span></p>
 
     <jhi-lecture-unit-management
@@ -59,6 +59,6 @@
     </div>
 
     <div class="mt-4">
-        <jhi-pdf-drop-zone (filesDropped)="onPdfFilesDropped($event)" />
+        <jhi-pdf-drop-zone [disabled]="isUploadingPdfs()" (filesDropped)="onPdfFilesDropped($event)" />
     </div>
 </div>
