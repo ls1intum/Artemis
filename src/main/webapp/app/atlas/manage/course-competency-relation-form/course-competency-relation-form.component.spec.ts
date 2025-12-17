@@ -290,7 +290,7 @@ describe('CourseCompetencyRelationFormComponent', () => {
         component.tailCompetencyId.set(1);
         component.relationType.set(CompetencyRelationType.EXTENDS);
 
-        expect(component['selectableTailCourseCompetencyIds']).not.toContain(1);
+        expect(component['selectableTailCourseCompetencyIds']()).not.toContain(1);
         expect(component.showCircularDependencyError()).toBeTrue();
     });
 

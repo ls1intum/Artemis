@@ -2,10 +2,6 @@ package de.tum.cit.aet.artemis.programming.util;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
@@ -64,8 +60,6 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildCon
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.StaticCodeAnalysisCategoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.SubmissionPolicyRepository;
-import de.tum.cit.aet.artemis.programming.service.GitRepositoryExportService;
-import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTaskTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
@@ -149,12 +143,6 @@ public class ProgrammingExerciseUtilService {
 
     @Autowired
     private UserUtilService userUtilService;
-
-    @Autowired
-    private GitService gitService;
-
-    @Autowired
-    private GitRepositoryExportService gitRepositoryExportService;
 
     @Autowired
     private SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
@@ -879,10 +867,5 @@ public class ProgrammingExerciseUtilService {
         var mockRepository = mock(Repository.class);
         doReturn(true).when(mockRepository).isValidFile(any());
         doReturn(testRepo.workingCopyGitRepoFile.toPath()).when(mockRepository).getLocalPath();
-        // Mock Git service operations
-        doReturn(mockRepository).when(gitService).getOrCheckoutRepository(any(), any(), any(), anyBoolean(), anyString(), anyBoolean());
-        doNothing().when(gitService).resetToOriginHead(any());
-        doReturn(Path.of("repo.zip")).when(gitRepositoryExportService).getRepositoryWithParticipation(any(), anyString(), anyBoolean(), eq(true));
-        doReturn(Path.of("repo")).when(gitRepositoryExportService).getRepositoryWithParticipation(any(), anyString(), anyBoolean(), eq(false));
     }
 }

@@ -76,9 +76,11 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     faTimes = faTimes;
     faCircleNotch = faCircleNotch;
     faTimesCircle = faTimesCircle;
+
     faSpinner = faSpinner;
     facArtemisIntelligence = facArtemisIntelligence;
     irisSettings?: IrisSettings;
+
     hyperionEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
 
     protected readonly RepositoryType = RepositoryType;

@@ -37,8 +37,8 @@ public interface UserCourseNotificationStatusRepository extends ArtemisJpaReposi
      * @param userId                the ID of the user
      * @param status                the new status to set
      */
+    @Transactional // ok because of modifying query
     @Modifying
-    @Transactional
     @Query("""
             UPDATE UserCourseNotificationStatus ucns
             SET ucns.status = :status
@@ -59,8 +59,8 @@ public interface UserCourseNotificationStatusRepository extends ArtemisJpaReposi
      * @param courseId the ID of the course
      * @param status   the new status to set
      */
+    @Transactional // ok because of modifying query
     @Modifying
-    @Transactional
     @Query("""
             UPDATE UserCourseNotificationStatus ucns
             SET ucns.status = :status
