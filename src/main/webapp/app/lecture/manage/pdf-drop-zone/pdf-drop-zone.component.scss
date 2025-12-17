@@ -1,5 +1,5 @@
 .pdf-drop-zone {
-    border: 2px dashed var(--bs-secondary);
+    border: 2px dashed var(--bs-border-color);
     border-radius: 8px;
     padding: 1.5rem;
     margin-bottom: 1rem;
@@ -7,7 +7,6 @@
     transition:
         border-color 0.2s ease,
         background-color 0.2s ease;
-    background-color: var(--bs-tertiary-bg);
 
     &:hover,
     &:focus {

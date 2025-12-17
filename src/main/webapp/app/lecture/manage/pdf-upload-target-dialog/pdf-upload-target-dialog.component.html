@@ -40,15 +40,24 @@
             </div>
         }
 
-        <div class="form-check target-option mt-3" [class.selected]="targetType() === 'existing'">
-            <input class="form-check-input" type="radio" name="targetType" id="targetExisting" [checked]="targetType() === 'existing'" (change)="onTargetTypeChange('existing')" />
-            <label class="form-check-label" for="targetExisting">
-                <fa-icon [icon]="faFolderOpen" class="me-2" />
-                <span jhiTranslate="artemisApp.lecture.pdfUpload.existingLecture"></span>
-            </label>
-        </div>
+        @if (lectures.length > 0) {
+            <div class="form-check target-option mt-3" [class.selected]="targetType() === 'existing'">
+                <input
+                    class="form-check-input"
+                    type="radio"
+                    name="targetType"
+                    id="targetExisting"
+                    [checked]="targetType() === 'existing'"
+                    (change)="onTargetTypeChange('existing')"
+                />
+                <label class="form-check-label" for="targetExisting">
+                    <fa-icon [icon]="faFolderOpen" class="me-2" />
+                    <span jhiTranslate="artemisApp.lecture.pdfUpload.existingLecture"></span>
+                </label>
+            </div>
+        }
 
-        @if (targetType() === 'existing') {
+        @if (targetType() === 'existing' && lectures.length > 0) {
             <div class="lecture-select mt-3 ms-4">
                 <label for="lectureSelect" class="form-label" jhiTranslate="artemisApp.lecture.pdfUpload.selectLecture"></label>
                 <select class="form-select" id="lectureSelect" [value]="selectedLectureId() ?? ''" (change)="onLectureSelect($event)">

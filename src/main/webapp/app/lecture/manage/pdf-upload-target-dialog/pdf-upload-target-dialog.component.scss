@@ -1,6 +1,6 @@
 .upload-summary {
     padding: 0.75rem;
-    background-color: var(--bs-tertiary-bg);
+    border: 1px solid var(--bs-border-color);
     border-radius: 4px;
 
     .file-list {
@@ -35,10 +35,15 @@
         background-color: color-mix(in srgb, var(--bs-primary) 5%, transparent);
     }
 
+    .form-check-input {
+        margin-left: 0.05rem;
+    }
+
     .form-check-label {
         cursor: pointer;
         display: flex;
         align-items: center;
+        margin-left: 0.75rem;
     }
 }
 
