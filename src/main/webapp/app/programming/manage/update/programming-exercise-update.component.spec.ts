@@ -288,22 +288,22 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             it('should set valid project type in simple mode if default project type (gradle) is not supported', () => {
                 comp.isSimpleMode.set(true);
                 comp.projectTypes = [ProjectType.PLAIN_MAVEN];
-                fixture.detectChanges();
+                fixture.changeDetectorRef.detectChanges();
 
                 comp.save();
 
-                fixture.detectChanges();
+                fixture.changeDetectorRef.detectChanges();
                 expect(comp.programmingExercise.projectType).toBe(ProjectType.PLAIN_MAVEN);
             });
 
             it('should keep gradle if gradle is supported', fakeAsync(() => {
                 comp.isSimpleMode.set(true);
                 comp.projectTypes = [ProjectType.PLAIN_MAVEN, ProjectType.PLAIN_GRADLE];
-                fixture.detectChanges();
+                fixture.changeDetectorRef.detectChanges();
 
                 comp.save();
 
-                fixture.detectChanges();
+                fixture.changeDetectorRef.detectChanges();
                 expect(comp.programmingExercise.projectType).toBe(ProjectType.PLAIN_GRADLE);
             }));
 
@@ -311,11 +311,11 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 comp.isSimpleMode.set(true);
                 comp.isCreate = false;
                 comp.projectTypes = [ProjectType.PLAIN_MAVEN];
-                fixture.detectChanges();
+                fixture.changeDetectorRef.detectChanges();
 
                 comp.save();
 
-                fixture.detectChanges();
+                fixture.changeDetectorRef.detectChanges();
                 expect(comp.programmingExercise.projectType).toBe(ProjectType.PLAIN_GRADLE);
             }));
         });
@@ -448,6 +448,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
             // Switch to another programming language not supporting sca
             comp.onProgrammingLanguageChange(ProgrammingLanguage.HASKELL);
+            fixture.changeDetectorRef.detectChanges();
             tick();
 
             expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBeFalse();
@@ -562,7 +563,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             const getFeaturesStub = jest.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature');
             getFeaturesStub.mockImplementation((language: ProgrammingLanguage) => getProgrammingLanguageFeature(language));
             comp.ngOnInit();
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             tick();
             expect(comp.isImportFromFile).toBeFalse();
             expect(comp.isImportFromExistingExercise).toBeTrue();
@@ -599,15 +600,18 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                     // Needed to trigger setting of update template since we can't use UI components.
                     comp.programmingExercise.staticCodeAnalysisEnabled = !scaActivatedOriginal;
                     comp.onStaticCodeAnalysisChanged();
+                    fixture.changeDetectorRef.detectChanges();
 
                     expect(comp.importOptions.updateTemplate).toBeTrue();
 
                     comp.programmingExercise.staticCodeAnalysisEnabled = !scaActivatedOriginal;
                     comp.onStaticCodeAnalysisChanged();
+                    fixture.changeDetectorRef.detectChanges();
                 }
 
                 comp.programmingExercise.staticCodeAnalysisEnabled = !scaActivatedOriginal;
                 comp.onStaticCodeAnalysisChanged();
+                fixture.changeDetectorRef.detectChanges();
 
                 if (!scaActivatedOriginal) {
                     comp.programmingExercise.maxStaticCodeAnalysisPenalty = newMaxPenalty;
@@ -710,7 +714,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             const getFeaturesStub = jest.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature');
             getFeaturesStub.mockImplementation((language: ProgrammingLanguage) => getProgrammingLanguageFeature(language));
             comp.ngOnInit();
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             tick();
             expect(comp.isImportFromFile).toBeTrue();
             expect(comp.isImportFromExistingExercise).toBeFalse();
@@ -775,7 +779,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             sharingServiceStub.mockReturnValue(of(programmingExercise));
             comp.ngOnInit();
 
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             tick();
             expect(comp.isImportFromFile).toBeFalse();
             expect(comp.isImportFromSharing).toBeTrue();
@@ -801,7 +805,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             sharingServiceStub.mockReturnValue(of(programmingExercise));
             comp.ngOnInit();
 
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             tick();
             expect(comp.isImportFromFile).toBeFalse();
             expect(comp.isImportFromSharing).toBeTrue();
@@ -874,7 +878,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             sharingServiceStub.mockReturnValue(of(programmingExercise));
             comp.ngOnInit();
 
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             tick();
             expect(comp.isImportFromFile).toBeFalse();
             expect(comp.isImportFromSharing).toBeTrue();
@@ -1124,7 +1128,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             comp.programmingExercise.allowOfflineIde = false;
             comp.programmingExercise.allowOnlineIde = false;
 
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
 
             expect(comp.getInvalidReasons()).toContainEqual(expectedException);
         });

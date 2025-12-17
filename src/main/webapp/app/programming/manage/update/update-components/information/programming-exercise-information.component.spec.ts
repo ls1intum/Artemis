@@ -100,7 +100,7 @@ describe('ProgrammingExerciseInformationComponent', () => {
             fixture.componentRef.setInput('isImport', true);
 
             comp.programmingExercise().title = 'Test Exercise';
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
 
             expect(comp.programmingExercise().shortName).toBe('l01e01');
         });
@@ -109,7 +109,7 @@ describe('ProgrammingExerciseInformationComponent', () => {
             fixture.componentRef.setInput('isSimpleMode', true);
 
             comp.programmingExercise().title = 'Test Exercise';
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
 
             expect(comp.programmingExercise().shortName).toMatch('TestExercise');
         });
@@ -119,7 +119,7 @@ describe('ProgrammingExerciseInformationComponent', () => {
             comp.alreadyUsedShortNames.set(new Set(['TestExercise']));
 
             comp.programmingExercise().title = 'Test Exercise';
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
 
             expect(comp.programmingExercise().shortName).toMatch('TestExercise1');
         });

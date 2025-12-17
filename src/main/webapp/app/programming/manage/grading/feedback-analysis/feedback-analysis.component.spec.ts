@@ -97,6 +97,8 @@ describe('FeedbackAnalysisComponent', () => {
 
         fixture.componentRef.setInput('exerciseId', 1);
         fixture.componentRef.setInput('exerciseTitle', 'Sample Exercise Title');
+        fixture.componentRef.setInput('courseId', 1);
+        fixture.componentRef.setInput('isCommunicationEnabled', true);
         const previousState: FeedbackAnalysisState = {
             page: 1,
             pageSize: 25,
@@ -115,7 +117,7 @@ describe('FeedbackAnalysisComponent', () => {
         fixture.componentRef.instance.previousRequestFilters.set(previousFilters);
         fixture.componentRef.instance.previousRequestGroupFeedback.set(false);
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
     });
 
     afterEach(() => {
@@ -360,6 +362,8 @@ describe('FeedbackAnalysisComponent', () => {
         createChannelSpy.mockRejectedValue(new Error('Error creating channel'));
         await component.openFeedbackDetailChannelModal(feedbackMock[0]);
         formSubmitted.next({ channelDto: { name: 'Test Channel' } as ChannelDTO, navigate: true });
+        await fixture.whenStable();
+        fixture.changeDetectorRef.detectChanges();
         expect(alertService.error).toHaveBeenCalledOnce();
     });
 

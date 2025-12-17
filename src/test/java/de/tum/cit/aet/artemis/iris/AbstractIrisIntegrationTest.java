@@ -6,9 +6,6 @@ import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-import java.util.Set;
-import java.util.TreeSet;
-
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.mockito.ArgumentMatcher;
@@ -19,8 +16,9 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import de.tum.cit.aet.artemis.core.connector.IrisRequestMockProvider;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettings;
-import de.tum.cit.aet.artemis.iris.repository.IrisSettingsRepository;
+import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettingsDTO;
+import de.tum.cit.aet.artemis.iris.domain.settings.IrisPipelineVariant;
+import de.tum.cit.aet.artemis.iris.domain.settings.IrisRateLimitConfiguration;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
@@ -39,9 +37,6 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
     protected ProgrammingExerciseTestRepository programmingExerciseRepository;
 
     @Autowired
-    private IrisSettingsRepository irisSettingsRepository;
-
-    @Autowired
     protected ProgrammingExerciseUtilService programmingExerciseUtilService;
 
     private static final long TIMEOUT_MS = 200;
@@ -57,94 +52,68 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
     }
 
     protected void activateIrisGlobally() {
-        var globalSettings = irisSettingsService.getGlobalSettings();
-        activateSubSettings(globalSettings.getIrisProgrammingExerciseChatSettings());
-        activateSubSettings(globalSettings.getIrisTextExerciseChatSettings());
-        activateSubSettings(globalSettings.getIrisCourseChatSettings());
-        activateSubSettings(globalSettings.getIrisLectureIngestionSettings());
-        activateSubSettings(globalSettings.getIrisCompetencyGenerationSettings());
-        activateSubSettings(globalSettings.getIrisLectureChatSettings());
-        activateSubSettings(globalSettings.getIrisFaqIngestionSettings());
-        activateSubSettings(globalSettings.getIrisTutorSuggestionSettings());
-        irisSettingsRepository.save(globalSettings);
+        // Global toggles have been removed; keeping this hook for backwards-compatible test setups.
     }
 
     protected void disableIrisGlobally() {
-        var globalSettings = irisSettingsService.getGlobalSettings();
-        deactivateSubSettings(globalSettings.getIrisProgrammingExerciseChatSettings());
-        deactivateSubSettings(globalSettings.getIrisTextExerciseChatSettings());
-        deactivateSubSettings(globalSettings.getIrisCourseChatSettings());
-        deactivateSubSettings(globalSettings.getIrisLectureIngestionSettings());
-        deactivateSubSettings(globalSettings.getIrisCompetencyGenerationSettings());
-        deactivateSubSettings(globalSettings.getIrisLectureChatSettings());
-        deactivateSubSettings(globalSettings.getIrisFaqIngestionSettings());
-        deactivateSubSettings(globalSettings.getIrisTutorSuggestionSettings());
-        irisSettingsRepository.save(globalSettings);
+        // Global toggles have been removed; keeping this hook for backwards-compatible test setups.
     }
 
     /**
-     * Sets a type of IrisSubSettings to enabled and their preferred model to null.
+     * Enables Iris for the provided course using the new course-level settings payload.
      *
-     * @param settings the settings to be enabled
+     * @param course the course that should have Iris enabled
      */
-    private void activateSubSettings(IrisSubSettings settings) {
-        settings.setEnabled(true);
-        settings.setSelectedVariant("default");
-        settings.setAllowedVariants(new TreeSet<>(Set.of("default")));
+    protected void enableIrisFor(Course course) {
+        var current = irisSettingsService.getSettingsForCourse(course);
+        irisSettingsService.updateCourseSettings(course.getId(), IrisCourseSettingsDTO.of(true, current.customInstructions(), current.variant(), current.rateLimit()));
     }
 
     /**
-     * Sets a type of IrisSubSettings to disabled.
+     * Disables Iris for the provided course.
      *
-     * @param settings the settings to be disabled
+     * @param course the course to disable Iris for
      */
-    private void deactivateSubSettings(IrisSubSettings settings) {
-        settings.setEnabled(false);
-        settings.setSelectedVariant("default");
-        settings.setAllowedVariants(new TreeSet<>(Set.of("default")));
+    protected void disableIrisFor(Course course) {
+        var current = irisSettingsService.getSettingsForCourse(course);
+        irisSettingsService.updateCourseSettings(course.getId(), IrisCourseSettingsDTO.of(false, current.customInstructions(), current.variant(), current.rateLimit()));
+    }
+
+    /**
+     * Sets course level custom instructions and variant for the provided course.
+     *
+     * @param course             the target course
+     * @param customInstructions instructions to be stored (nullable)
+     * @param variant            pipeline variant to apply
+     */
+    protected void configureCourseSettings(Course course, String customInstructions, IrisPipelineVariant variant) {
+        var current = irisSettingsService.getSettingsForCourse(course);
+        irisSettingsService.updateCourseSettings(course.getId(), IrisCourseSettingsDTO.of(current.enabled(), customInstructions, variant, current.rateLimit()));
+    }
+
+    /**
+     * Applies a rate-limit override for the given course.
+     *
+     * @param course   the course to update
+     * @param requests number of requests allowed (null for default/unlimited)
+     * @param hours    timeframe in hours (null for default/unlimited)
+     */
+    protected void configureCourseRateLimit(Course course, Integer requests, Integer hours) {
+        var current = irisSettingsService.getSettingsForCourse(course);
+        irisSettingsService.updateCourseSettings(course.getId(),
+                IrisCourseSettingsDTO.of(current.enabled(), current.customInstructions(), current.variant(), new IrisRateLimitConfiguration(requests, hours)));
     }
 
     protected void activateIrisFor(Course course) {
-        var courseSettings = irisSettingsService.getDefaultSettingsFor(course);
-
-        activateSubSettings(courseSettings.getIrisProgrammingExerciseChatSettings());
-        activateSubSettings(courseSettings.getIrisTextExerciseChatSettings());
-        activateSubSettings(courseSettings.getIrisLectureChatSettings());
-        activateSubSettings(courseSettings.getIrisCourseChatSettings());
-        activateSubSettings(courseSettings.getIrisCompetencyGenerationSettings());
-        activateSubSettings(courseSettings.getIrisLectureIngestionSettings());
-        activateSubSettings(courseSettings.getIrisFaqIngestionSettings());
-        activateSubSettings(courseSettings.getIrisTutorSuggestionSettings());
-
-        irisSettingsRepository.save(courseSettings);
-    }
-
-    protected void disableCourseChatFor(Course course) {
-        var courseSettings = irisSettingsService.getDefaultSettingsFor(course);
-        deactivateSubSettings(courseSettings.getIrisCourseChatSettings());
-        irisSettingsRepository.save(courseSettings);
-    }
-
-    protected void disableProgrammingExerciseChatFor(Course course) {
-        var courseSettings = irisSettingsService.getDefaultSettingsFor(course);
-        deactivateSubSettings(courseSettings.getIrisProgrammingExerciseChatSettings());
-        irisSettingsRepository.save(courseSettings);
+        enableIrisFor(course);
     }
 
     protected void activateIrisFor(Exercise exercise) {
-        var exerciseSettings = irisSettingsService.getDefaultSettingsFor(exercise);
-        activateSubSettings(exerciseSettings.getIrisProgrammingExerciseChatSettings());
-        activateSubSettings(exerciseSettings.getIrisTextExerciseChatSettings());
-
-        irisSettingsRepository.save(exerciseSettings);
+        enableIrisFor(exercise.getCourseViaExerciseGroupOrCourseMember());
     }
 
     protected void disableIrisFor(Exercise exercise) {
-        var exerciseSettings = irisSettingsService.getDefaultSettingsFor(exercise);
-        deactivateSubSettings(exerciseSettings.getIrisProgrammingExerciseChatSettings());
-        deactivateSubSettings(exerciseSettings.getIrisTextExerciseChatSettings());
-
-        irisSettingsRepository.save(exerciseSettings);
+        disableIrisFor(exercise.getCourseViaExerciseGroupOrCourseMember());
     }
 
     /**

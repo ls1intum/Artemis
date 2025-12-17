@@ -82,7 +82,7 @@ describe('CourseUsersSelectorComponent', () => {
             const exampleUserPublicInfoDTO = generateExampleUserPublicInfoDTO({});
             userSelectorComponent.selectedUsers = [exampleUserPublicInfoDTO];
             wrapperComponent.multiSelect = testCase.multiSelect;
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             tick();
             expect(userSelectorComponent.selectedUsers).toEqual([exampleUserPublicInfoDTO]);
             expect(fixture.debugElement.queryAll(By.css('.selected-user'))).toHaveLength(1);
@@ -91,7 +91,7 @@ describe('CourseUsersSelectorComponent', () => {
         it('should convert undefined to empty array', fakeAsync(() => {
             userSelectorComponent.selectedUsers = [];
             wrapperComponent.multiSelect = testCase.multiSelect;
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             tick();
             expect(userSelectorComponent.selectedUsers).toEqual([]);
         }));
@@ -109,13 +109,13 @@ describe('CourseUsersSelectorComponent', () => {
             // searching for a user
             changeInput(fixture.debugElement.nativeElement, 'test');
             tick(1000);
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             expect(searchStub).toHaveBeenCalledOnce();
             expect(searchStub).toHaveBeenCalledWith(1, 'test', ['students', 'tutors', 'instructors']);
             expectDropdownItems(fixture.nativeElement, ['MHMortimer of Sto Helit (mort)']);
             // selecting the user in the dropdown
             getDropdownButtons(fixture.debugElement)[0].triggerEventHandler('click', {});
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             tick();
             expect(userSelectorComponent.selectedUsers).toEqual([user]);
 
@@ -123,7 +123,7 @@ describe('CourseUsersSelectorComponent', () => {
             expect(fixture.debugElement.queryAll(By.css('.selected-user'))).toHaveLength(1);
             const deleteButton = fixture.debugElement.query(By.css('.delete-user'));
             deleteButton.triggerEventHandler('click', {});
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             tick();
             expect(userSelectorComponent.selectedUsers).toEqual([]);
             expect(wrapperComponent.selectedUsers).toEqual([]);
@@ -134,7 +134,7 @@ describe('CourseUsersSelectorComponent', () => {
             const exampleUserPublicInfoDTO = generateExampleUserPublicInfoDTO({});
             userSelectorComponent.selectedUsers = [exampleUserPublicInfoDTO];
             wrapperComponent.disabled = true;
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             tick(1000);
             expect(userSelectorComponent.selectedUsers).toEqual([exampleUserPublicInfoDTO]);
             expect(fixture.debugElement.query(By.css('.delete-user'))).toBeFalsy();
@@ -147,7 +147,7 @@ describe('CourseUsersSelectorComponent', () => {
 
             changeInput(fixture.debugElement.nativeElement, 'test');
             tick(1000);
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             expect(searchStub).toHaveBeenCalledOnce();
 
             const profilePicture = fixture.debugElement.query(By.directive(ProfilePictureComponent));

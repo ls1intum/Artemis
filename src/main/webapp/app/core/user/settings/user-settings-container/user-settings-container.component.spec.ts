@@ -37,7 +37,7 @@ describe('UserSettingsContainerComponent', () => {
         fixture = TestBed.createComponent(UserSettingsContainerComponent);
         component = fixture.componentInstance;
         translateService = TestBed.inject(TranslateService);
-        translateService.currentLang = 'en';
+        translateService.use('en');
     });
 
     it('should initialize', async () => {

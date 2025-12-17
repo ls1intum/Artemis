@@ -24,7 +24,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
-import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettingsType;
 import de.tum.cit.aet.artemis.iris.dto.IngestionState;
 import de.tum.cit.aet.artemis.iris.dto.IngestionStateResponseDTO;
 import de.tum.cit.aet.artemis.iris.dto.MemirisLearningDTO;
@@ -34,7 +33,6 @@ import de.tum.cit.aet.artemis.iris.dto.MemirisMemoryWithRelationsDTO;
 import de.tum.cit.aet.artemis.iris.exception.IrisException;
 import de.tum.cit.aet.artemis.iris.exception.IrisForbiddenException;
 import de.tum.cit.aet.artemis.iris.exception.IrisInternalPyrisErrorException;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisVariantDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisFaqWebhookDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisWebhookFaqDeletionExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisWebhookFaqIngestionExecutionDTO;
@@ -163,26 +161,6 @@ public class PyrisConnectorService {
         catch (RestClientException | IllegalArgumentException e) {
             log.error("Failed to delete Memiris memory {} for user {}", memoryId, userId, e);
             throw new PyrisConnectorException("Could not delete memory in Pyris");
-        }
-    }
-
-    /**
-     * Requests all available variants from Pyris for a feature
-     *
-     * @param feature The feature to get the variants for
-     * @return A list of available Models as IrisVariantDTO
-     */
-    public List<PyrisVariantDTO> getAvailableVariants(IrisSubSettingsType feature) throws PyrisConnectorException {
-        try {
-            var response = restTemplate.getForEntity(pyrisUrl + "/api/v1/pipelines/" + feature.name() + "/variants", PyrisVariantDTO[].class);
-            if (!response.getStatusCode().is2xxSuccessful() || !response.hasBody()) {
-                throw new PyrisConnectorException("Could not fetch offered variants");
-            }
-            return Arrays.asList(response.getBody());
-        }
-        catch (HttpStatusCodeException e) {
-            log.error("Failed to fetch offered variants from Pyris", e);
-            throw new PyrisConnectorException("Could not fetch offered variants");
         }
     }
 

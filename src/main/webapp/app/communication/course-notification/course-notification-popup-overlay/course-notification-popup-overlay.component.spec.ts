@@ -77,7 +77,7 @@ describe('CourseNotificationPopupOverlayComponent', () => {
         const mockNotification = createMockNotification(1, 101);
 
         websocketNotificationSubject.next(mockNotification);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(componentAsAny.notifications).toHaveLength(1);
         expect(componentAsAny.notifications[0]).toBe(mockNotification);
@@ -89,7 +89,7 @@ describe('CourseNotificationPopupOverlayComponent', () => {
         const mockNotification = createMockNotification(1, 101);
         componentAsAny.notifications = [mockNotification];
         componentAsAny.isExpanded = true;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         component.removeNotification(1);
 
@@ -99,7 +99,7 @@ describe('CourseNotificationPopupOverlayComponent', () => {
     it('should handle closeClicked correctly', () => {
         const mockNotification = createMockNotification(1, 101);
         componentAsAny.notifications = [mockNotification];
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         component.closeClicked(mockNotification);
 
@@ -120,7 +120,7 @@ describe('CourseNotificationPopupOverlayComponent', () => {
         const mockNotification2 = createMockNotification(2, 102);
         componentAsAny.notifications = [mockNotification1, mockNotification2];
         componentAsAny.isExpanded = false;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         component.overlayClicked();
 
@@ -131,7 +131,7 @@ describe('CourseNotificationPopupOverlayComponent', () => {
         const mockNotification = createMockNotification(1, 101);
         componentAsAny.notifications = [mockNotification];
         componentAsAny.isExpanded = false;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         component.overlayClicked();
 
@@ -140,7 +140,7 @@ describe('CourseNotificationPopupOverlayComponent', () => {
 
     it('should set isExpanded to false when collapseOverlayClicked', fakeAsync(() => {
         componentAsAny.isExpanded = true;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         component.collapseOverlayClicked();
         tick(0);
@@ -150,7 +150,7 @@ describe('CourseNotificationPopupOverlayComponent', () => {
 
     it('should do nothing when collapseOverlayClicked and isExpanded is false', fakeAsync(() => {
         componentAsAny.isExpanded = false;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         component.collapseOverlayClicked();
         tick(0);
@@ -170,7 +170,7 @@ describe('CourseNotificationPopupOverlayComponent', () => {
         const mockNotification = createMockNotification(1, 101);
         componentAsAny.notifications = [mockNotification];
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const notificationElements = fixture.debugElement.queryAll(By.css('.course-notification-popup-overlay-notification'));
         expect(notificationElements).toHaveLength(1);
@@ -179,7 +179,7 @@ describe('CourseNotificationPopupOverlayComponent', () => {
     it('should add d-none class when no notifications are present', () => {
         componentAsAny.notifications = [];
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const overlayElement = fixture.debugElement.query(By.css('.course-notification-popup-overlay'));
         expect(overlayElement.nativeElement.classList).toContain('d-none');
@@ -190,7 +190,7 @@ describe('CourseNotificationPopupOverlayComponent', () => {
         componentAsAny.notifications = [mockNotification];
         componentAsAny.isExpanded = true;
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const overlayElement = fixture.debugElement.query(By.css('.course-notification-popup-overlay'));
         expect(overlayElement.nativeElement.classList).toContain('is-expanded');
@@ -200,7 +200,7 @@ describe('CourseNotificationPopupOverlayComponent', () => {
         const mockNotification1 = createMockNotification(1, 101);
         const mockNotification2 = createMockNotification(2, 102);
         componentAsAny.notifications = [mockNotification1, mockNotification2];
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         const overlayClickedSpy = jest.spyOn(component, 'overlayClicked');
         const overlayElement = fixture.debugElement.query(By.css('.course-notification-popup-overlay'));
 
@@ -212,7 +212,7 @@ describe('CourseNotificationPopupOverlayComponent', () => {
     it('should trigger collapseOverlayClicked when clicking the collapse button', () => {
         const mockNotification = createMockNotification(1, 101);
         componentAsAny.notifications = [mockNotification];
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         const collapseOverlayClickedSpy = jest.spyOn(component, 'collapseOverlayClicked');
         const collapseButton = fixture.debugElement.query(By.css('.btn-outline-primary'));
 
@@ -226,7 +226,7 @@ describe('CourseNotificationPopupOverlayComponent', () => {
         const mockNotification2 = createMockNotification(2, 102);
         componentAsAny.notifications = [mockNotification1, mockNotification2];
         componentAsAny.isExpanded = true;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         component.clearAllNotifications();
         tick(0); // Process the setTimeout
@@ -239,7 +239,7 @@ describe('CourseNotificationPopupOverlayComponent', () => {
         const mockNotification = createMockNotification(1, 101);
         componentAsAny.notifications = [mockNotification];
         componentAsAny.isExpanded = false;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const setNotificationStatusSpy = jest.spyOn(courseNotificationService, 'setNotificationStatus');
         const setNotificationStatusInMapSpy = jest.spyOn(courseNotificationService, 'setNotificationStatusInMap');
@@ -259,7 +259,7 @@ describe('CourseNotificationPopupOverlayComponent', () => {
         const mockNotification3 = createMockNotification(3, 102);
         componentAsAny.notifications = [mockNotification1, mockNotification2, mockNotification3];
         componentAsAny.isExpanded = true;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         component.clearAllNotifications();
         tick(0);
@@ -277,7 +277,7 @@ describe('CourseNotificationPopupOverlayComponent', () => {
         const mockNotification = createMockNotification(1, 101);
         componentAsAny.notifications = [mockNotification];
         componentAsAny.isExpanded = true;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const clearAllNotificationsSpy = jest.spyOn(component, 'clearAllNotifications');
 

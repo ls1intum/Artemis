@@ -243,7 +243,11 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                     this.changeDetector.detectChanges();
                     this.compareNewExamScoresCalculationWithOldCalculation(findExamScoresResponse.body!);
                 },
-                error: (res: HttpErrorResponse) => onError(this.alertService, res),
+                error: (res: HttpErrorResponse) => {
+                    onError(this.alertService, res);
+                    this.isLoading = false;
+                    this.changeDetector.detectChanges();
+                },
             });
         });
 
