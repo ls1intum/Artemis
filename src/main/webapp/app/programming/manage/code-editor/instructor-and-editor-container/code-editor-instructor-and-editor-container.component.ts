@@ -7,23 +7,32 @@ import { CodeEditorInstructorBaseContainerComponent } from 'app/programming/mana
 import { ProgrammingExerciseEditableInstructionComponent } from 'app/programming/manage/instructions-editor/programming-exercise-editable-instruction.component';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { faCircleNotch, faPlus, faTimes, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
+import { faCircleNotch, faPlus, faSpinner, faTimes, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ProgrammingExerciseInstructorExerciseStatusComponent } from '../../status/programming-exercise-instructor-exercise-status.component';
 import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { CodeGenerationRequestDTO } from 'app/openapi/model/codeGenerationRequestDTO';
+import { AlertService, AlertType } from 'app/shared/service/alert.service';
+import { facArtemisIntelligence } from 'app/shared/icons/icons';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal/confirm-autofocus-modal.component';
+import { HyperionWebsocketService } from 'app/hyperion/services/hyperion-websocket.service';
+import { CodeEditorRepositoryService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
+import { Subscription, catchError, of, take } from 'rxjs';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { faCheckDouble } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ConsistencyCheckService } from 'app/programming/manage/consistency-check/consistency-check.service';
 import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
-import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
-import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ConsistencyCheckError } from 'app/programming/shared/entities/consistency-check-result.model';
 import { ConsistencyCheckResponse } from 'app/openapi/model/consistencyCheckResponse';
+import { HyperionCodeGenerationApiService } from 'app/openapi/api/hyperionCodeGenerationApi.service';
 
 @Component({
     selector: 'jhi-code-editor-instructor',
@@ -32,6 +41,7 @@ import { ConsistencyCheckResponse } from 'app/openapi/model/consistencyCheckResp
     imports: [
         FaIconComponent,
         TranslateDirective,
+        ArtemisTranslatePipe,
         CodeEditorContainerComponent,
         IncludedInScoreBadgeComponent,
         ProgrammingExerciseInstructorExerciseStatusComponent,
@@ -40,6 +50,7 @@ import { ConsistencyCheckResponse } from 'app/openapi/model/consistencyCheckResp
         NgbDropdownMenu,
         NgbDropdownButtonItem,
         NgbDropdownItem,
+        NgbTooltip,
         UpdatingResultComponent,
         ProgrammingExerciseStudentTriggerBuildButtonComponent,
         ProgrammingExerciseEditableInstructionComponent,
@@ -64,11 +75,159 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     faTimes = faTimes;
     faCircleNotch = faCircleNotch;
     faTimesCircle = faTimesCircle;
+
+    faSpinner = faSpinner;
+    facArtemisIntelligence = facArtemisIntelligence;
+
     hyperionEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
 
     protected readonly RepositoryType = RepositoryType;
     protected readonly FeatureToggle = FeatureToggle;
     protected readonly faCheckDouble = faCheckDouble;
+    private codeGenAlertService = inject(AlertService);
+    private modalService = inject(NgbModal);
+    private hyperionWs = inject(HyperionWebsocketService);
+    private repoService = inject(CodeEditorRepositoryService);
+    private hyperionCodeGenerationApi = inject(HyperionCodeGenerationApiService);
+    isGeneratingCode = signal(false);
+    private jobSubscription?: Subscription;
+    private jobTimeoutHandle?: number;
+
+    /**
+     * Starts Hyperion code generation after user confirmation.
+     */
+    generateCode(): void {
+        if (!this.exercise?.id || this.isGeneratingCode()) {
+            return;
+        }
+
+        if (this.selectedRepository !== RepositoryType.TEMPLATE && this.selectedRepository !== RepositoryType.SOLUTION && this.selectedRepository !== RepositoryType.TESTS) {
+            this.codeGenAlertService.addAlert({ type: AlertType.WARNING, translationKey: 'artemisApp.programmingExercise.codeGeneration.unsupportedRepository' });
+            return;
+        }
+        const modalRef = this.modalService.open(ConfirmAutofocusModalComponent, { keyboard: true, size: 'md' });
+        modalRef.componentInstance.title = 'artemisApp.programmingExercise.codeGeneration.confirmTitle';
+        modalRef.componentInstance.text = 'artemisApp.programmingExercise.codeGeneration.confirmText';
+        modalRef.componentInstance.translateText = true;
+        modalRef.result.then(() => this.startCodeGeneration()).catch(() => {});
+    }
+
+    /**
+     * Triggers the async generation endpoint and subscribes to job updates.
+     */
+    private startCodeGeneration() {
+        this.isGeneratingCode.set(true);
+        const repositoryType = this.selectedRepository as CodeGenerationRequestDTO.RepositoryTypeEnum;
+        const exerciseId = this.exercise!.id!;
+        this.hyperionCodeGenerationApi.generateCode(exerciseId, { repositoryType }).subscribe({
+            next: (res) => {
+                if (!res?.jobId) {
+                    this.isGeneratingCode.set(false);
+                    this.codeGenAlertService.addAlert({
+                        type: AlertType.DANGER,
+                        translationKey: 'artemisApp.programmingExercise.codeGeneration.error',
+                    });
+                    return;
+                }
+                this.subscribeToJob(res.jobId);
+            },
+            error: (err) => {
+                this.isGeneratingCode.set(false);
+                this.codeGenAlertService.addAlert({
+                    type: AlertType.DANGER,
+                    translationKey: 'artemisApp.programmingExercise.codeGeneration.error',
+                });
+            },
+            complete: () => {},
+        });
+    }
+
+    /**
+     * Subscribes to job updates, refreshes files on updates, and stops spinner on terminal events.
+     * @param jobId job identifier
+     */
+    private subscribeToJob(jobId: string) {
+        const cleanup = () => {
+            this.isGeneratingCode.set(false);
+            this.hyperionWs.unsubscribeFromJob(jobId);
+            this.jobSubscription?.unsubscribe();
+            if (this.jobTimeoutHandle) {
+                clearTimeout(this.jobTimeoutHandle);
+                this.jobTimeoutHandle = undefined;
+            }
+        };
+
+        this.jobSubscription = this.hyperionWs.subscribeToJob(jobId).subscribe({
+            next: (event) => {
+                switch (event.type) {
+                    case 'STARTED':
+                        // spinner already on; just log
+                        break;
+
+                    case 'PROGRESS':
+                        break;
+
+                    case 'FILE_UPDATED':
+                    case 'NEW_FILE':
+                        this.repoService
+                            .pull()
+                            .pipe(
+                                take(1),
+                                catchError(() => {
+                                    return of(void 0);
+                                }),
+                            )
+                            .subscribe(() => {});
+                        break;
+
+                    case 'DONE':
+                        this.codeEditorContainer?.actions?.executeRefresh();
+                        cleanup();
+                        this.codeGenAlertService.addAlert({
+                            type: event.success ? AlertType.SUCCESS : AlertType.WARNING,
+                            translationKey: event.success
+                                ? 'artemisApp.programmingExercise.codeGeneration.success'
+                                : 'artemisApp.programmingExercise.codeGeneration.partialSuccess',
+                            translationParams: { repositoryType: this.selectedRepository },
+                        });
+                        break;
+
+                    case 'ERROR':
+                        cleanup();
+                        this.codeGenAlertService.addAlert({
+                            type: AlertType.DANGER,
+                            translationKey: 'artemisApp.programmingExercise.codeGeneration.error',
+                            translationParams: { repositoryType: this.selectedRepository },
+                        });
+                        break;
+
+                    default:
+                }
+            },
+            error: () => {
+                cleanup();
+                this.codeGenAlertService.addAlert({
+                    type: AlertType.DANGER,
+                    translationKey: 'artemisApp.programmingExercise.codeGeneration.error',
+                    translationParams: { repositoryType: this.selectedRepository },
+                });
+            },
+            complete: () => {
+                // don't auto-stop spinner here; DONE/ERROR/timeout handle it
+            },
+        });
+
+        // Safety timeout (20 minutes)
+        this.jobTimeoutHandle = window.setTimeout(() => {
+            if (this.isGeneratingCode()) {
+                cleanup();
+                this.codeGenAlertService.addAlert({
+                    type: AlertType.WARNING,
+                    translationKey: 'artemisApp.programmingExercise.codeGeneration.timeout',
+                });
+            }
+        }, 1_200_000);
+    }
 
     /**
      * Checks whether a consistency check operation is currently running.
