@@ -66,7 +66,7 @@ export class AdminContainerComponent implements OnInit, OnDestroy {
     }
 
     @HostListener('document:keydown.control.m', ['$event'])
-    onKeyDown(event: KeyboardEvent) {
+    onKeyDown(event: Event) {
         if (this.layoutService.isBreakpointActive(CustomBreakpointNames.sidebarExpandable)) {
             event.preventDefault();
             this.toggleCollapseState();

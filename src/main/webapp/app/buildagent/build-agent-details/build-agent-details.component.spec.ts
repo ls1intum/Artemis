@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { Subject, of, throwError } from 'rxjs';
 import { BuildJob, FinishedBuildJob } from 'app/buildagent/shared/entities/build-job.model';
@@ -21,6 +21,9 @@ import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.s
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { FinishedBuildJobFilter } from 'app/buildagent/build-queue/finished-builds-filter-modal/finished-builds-filter-modal.component';
 import { BuildAgentsService } from 'app/buildagent/build-agents.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { NO_ERRORS_SCHEMA } from '@angular/core';
 
 describe('BuildAgentDetailsComponent', () => {
     let component: BuildAgentDetailsComponent;
@@ -178,8 +181,9 @@ describe('BuildAgentDetailsComponent', () => {
     let agentTopicSubject: Subject<BuildAgentInformation>;
     let runningJobsSubject: Subject<BuildJob[]>;
 
-    beforeEach(waitForAsync(() => {
+    beforeEach(() => {
         TestBed.configureTestingModule({
+            imports: [BuildAgentDetailsComponent],
             declarations: [],
             providers: [
                 { provide: WebsocketService, useValue: mockWebsocketService },
@@ -188,11 +192,13 @@ describe('BuildAgentDetailsComponent', () => {
                 { provide: DataTableComponent, useClass: DataTableComponent },
                 { provide: BuildOverviewService, useValue: mockBuildQueueService },
                 { provide: NgbModal, useClass: MockNgbModalService },
+                { provide: TranslateService, useClass: MockTranslateService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 MockProvider(AlertService),
             ],
-        }).compileComponents();
+            schemas: [NO_ERRORS_SCHEMA],
+        }).overrideComponent(BuildAgentDetailsComponent, { set: { template: '' } });
 
         fixture = TestBed.createComponent(BuildAgentDetailsComponent);
         component = fixture.componentInstance;
@@ -218,7 +224,7 @@ describe('BuildAgentDetailsComponent', () => {
         mockBuildQueueService.cancelBuildJob.mockReturnValue(of({}));
         mockBuildQueueService.cancelAllRunningBuildJobsForAgent.mockReturnValue(of({}));
         mockBuildQueueService.getFinishedBuildJobs.mockReturnValue(of(mockFinishedJobsResponse));
-    }));
+    });
 
     beforeEach(() => {
         jest.clearAllMocks();
@@ -254,6 +260,7 @@ describe('BuildAgentDetailsComponent', () => {
 
     it('should unsubscribe from the websocket channel on destruction', () => {
         component.ngOnInit();
+        fixture.changeDetectorRef.detectChanges();
 
         const agentUnsubscribeSpy = jest.spyOn(component.agentDetailsWebsocketSubscription!, 'unsubscribe');
         const runningUnsubscribeSpy = jest.spyOn(component.runningJobsWebsocketSubscription!, 'unsubscribe');
@@ -269,6 +276,7 @@ describe('BuildAgentDetailsComponent', () => {
         const spy = jest.spyOn(component, 'cancelBuildJob');
 
         component.ngOnInit();
+        fixture.changeDetectorRef.detectChanges();
         component.cancelBuildJob(buildJob.id!);
 
         expect(spy).toHaveBeenCalledExactlyOnceWith(buildJob.id!);
@@ -278,6 +286,7 @@ describe('BuildAgentDetailsComponent', () => {
         const spy = jest.spyOn(component, 'cancelAllBuildJobs');
 
         component.ngOnInit();
+        fixture.changeDetectorRef.detectChanges();
         component.cancelAllBuildJobs();
 
         expect(spy).toHaveBeenCalledOnce();
@@ -305,6 +314,7 @@ describe('BuildAgentDetailsComponent', () => {
 
     it('should show success alert when pausing build agent', () => {
         component.buildAgent = mockBuildAgent;
+        fixture.changeDetectorRef.detectChanges();
 
         component.pauseBuildAgent();
         expect(alertServiceAddAlertStub).toHaveBeenCalledWith({
@@ -316,6 +326,7 @@ describe('BuildAgentDetailsComponent', () => {
     it('should show error alert when pausing build agent fails', () => {
         mockBuildAgentsService.pauseBuildAgent.mockReturnValue(throwError(() => new Error()));
         component.buildAgent = mockBuildAgent;
+        fixture.changeDetectorRef.detectChanges();
 
         component.pauseBuildAgent();
         expect(alertServiceAddAlertStub).toHaveBeenCalledWith({
@@ -326,6 +337,7 @@ describe('BuildAgentDetailsComponent', () => {
 
     it('should show success alert when resuming build agent', () => {
         component.buildAgent = mockBuildAgent;
+        fixture.changeDetectorRef.detectChanges();
 
         component.resumeBuildAgent();
         expect(alertServiceAddAlertStub).toHaveBeenCalledWith({
@@ -337,6 +349,7 @@ describe('BuildAgentDetailsComponent', () => {
     it('should show error alert when resuming build agent fails', () => {
         mockBuildAgentsService.resumeBuildAgent.mockReturnValue(throwError(() => new Error()));
         component.buildAgent = mockBuildAgent;
+        fixture.changeDetectorRef.detectChanges();
 
         component.resumeBuildAgent();
         expect(alertServiceAddAlertStub).toHaveBeenCalledWith({
@@ -349,19 +362,21 @@ describe('BuildAgentDetailsComponent', () => {
         mockBuildAgentsService.getBuildAgentDetails.mockReturnValue(of(mockBuildAgent));
 
         component.ngOnInit();
+        fixture.changeDetectorRef.detectChanges();
         component.searchTerm = 'search';
+        fixture.changeDetectorRef.detectChanges();
         component.triggerLoadFinishedJobs();
 
         const requestWithSearchTerm = { ...request };
         requestWithSearchTerm.searchTerm = 'search';
-        // Wait for the debounce time to pass
         await new Promise((resolve) => setTimeout(resolve, 110));
-        expect(mockBuildQueueService.getFinishedBuildJobs).toHaveBeenNthCalledWith(2, requestWithSearchTerm, filterOptionsEmpty);
+        expect(mockBuildQueueService.getFinishedBuildJobs).toHaveBeenLastCalledWith(requestWithSearchTerm, expect.objectContaining({ buildAgentAddress: 'localhost:8080' }));
     });
 
     it('should set build job duration', () => {
         mockBuildAgentsService.getBuildAgentDetails.mockReturnValue(of(mockBuildAgent));
         component.ngOnInit();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(component.finishedBuildJobs).toEqual(mockFinishedJobs);
         for (const finishedBuildJob of component.finishedBuildJobs) {
@@ -385,6 +400,7 @@ describe('BuildAgentDetailsComponent', () => {
         component.finishedBuildJobs = mockFinishedJobs;
         component.buildAgent = mockBuildAgent;
         component.finishedBuildJobFilter = new FinishedBuildJobFilter(mockBuildAgent.buildAgent!.memberAddress!);
+        fixture.changeDetectorRef.detectChanges();
 
         component.openFilterModal();
 

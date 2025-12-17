@@ -135,7 +135,7 @@ describe('FaqUpdateComponent', () => {
             ),
         );
 
-        faqUpdateComponentFixture.detectChanges();
+        faqUpdateComponentFixture.changeDetectorRef.detectChanges();
         faqUpdateComponent.save();
         tick();
 
@@ -160,7 +160,7 @@ describe('FaqUpdateComponent', () => {
             ),
         );
 
-        faqUpdateComponentFixture.detectChanges();
+        faqUpdateComponentFixture.changeDetectorRef.detectChanges();
         faqUpdateComponent.save();
         tick();
 
@@ -171,7 +171,7 @@ describe('FaqUpdateComponent', () => {
     it('should edit a faq', fakeAsync(() => {
         activatedRoute.parent!.data = of({ course: { id: 1 }, faq: { id: 6 } });
         faqUpdateComponent.isAtLeastInstructor = true;
-        faqUpdateComponentFixture.detectChanges();
+        faqUpdateComponentFixture.changeDetectorRef.detectChanges();
         faqUpdateComponent.faq = { id: 6, questionTitle: 'test1Updated' } as Faq;
 
         const updateSpy = jest.spyOn(faqService, 'update').mockReturnValue(
@@ -191,14 +191,14 @@ describe('FaqUpdateComponent', () => {
 
         faqUpdateComponent.save();
         tick();
-        faqUpdateComponentFixture.detectChanges();
+        faqUpdateComponentFixture.changeDetectorRef.detectChanges();
         expect(updateSpy).toHaveBeenCalledExactlyOnceWith(courseId, { id: 6, questionTitle: 'test1Updated', faqState: 'ACCEPTED' });
     }));
 
     it('should propose to edit a faq', fakeAsync(() => {
         activatedRoute.parent!.data = of({ course: { id: 1 }, faq: { id: 6 } });
         faqUpdateComponent.isAtLeastInstructor = false;
-        faqUpdateComponentFixture.detectChanges();
+        faqUpdateComponentFixture.changeDetectorRef.detectChanges();
         faqUpdateComponent.faq = { id: 6, questionTitle: 'test1Updated' } as Faq;
 
         const updateSpy = jest.spyOn(faqService, 'update').mockReturnValue(
@@ -218,7 +218,7 @@ describe('FaqUpdateComponent', () => {
 
         faqUpdateComponent.save();
         tick();
-        faqUpdateComponentFixture.detectChanges();
+        faqUpdateComponentFixture.changeDetectorRef.detectChanges();
         expect(updateSpy).toHaveBeenCalledExactlyOnceWith(courseId, { id: 6, questionTitle: 'test1Updated', faqState: 'PROPOSED' });
     }));
 
@@ -227,7 +227,7 @@ describe('FaqUpdateComponent', () => {
         activatedRoute.parent!.data = of({ course: { id: 1 }, faq: { id: 6, questionTitle: '', course: { id: 1 } } });
 
         faqUpdateComponent.ngOnInit();
-        faqUpdateComponentFixture.detectChanges();
+        faqUpdateComponentFixture.changeDetectorRef.detectChanges();
 
         const navigateSpy = jest.spyOn(router, 'navigate');
         const previousState = jest.spyOn(faqUpdateComponent, 'previousState');
@@ -241,14 +241,14 @@ describe('FaqUpdateComponent', () => {
 
     it('should update categories', fakeAsync(() => {
         const categories = [new FaqCategory('category1', 'red'), new FaqCategory('category2', 'blue')];
-        faqUpdateComponentFixture.detectChanges();
+        faqUpdateComponentFixture.changeDetectorRef.detectChanges();
         faqUpdateComponent.updateCategories(categories);
         expect(faqUpdateComponent.faqCategories).toEqual(categories);
         expect(faqUpdateComponent.faq.categories).toEqual(categories);
     }));
 
     it('should not be able to save unless title and question are filled', fakeAsync(() => {
-        faqUpdateComponentFixture.detectChanges();
+        faqUpdateComponentFixture.changeDetectorRef.detectChanges();
         faqUpdateComponent.faq = { questionTitle: 'test1' } as Faq;
         faqUpdateComponent.validate();
         expect(faqUpdateComponent.isAllowedToSave).toBeFalse();

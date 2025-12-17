@@ -91,7 +91,7 @@ describe('TriggerBuildButtonSpec', () => {
         comp.exercise = { id: 4 } as ProgrammingExercise;
 
         triggerChanges(comp, { property: 'participation', currentValue: comp.participation });
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         // Button should not show if there is no failed submission.
         let triggerButton = getTriggerButton();
@@ -104,7 +104,7 @@ describe('TriggerBuildButtonSpec', () => {
             participationId: comp.participation.id!,
         });
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         triggerButton = getTriggerButton();
         expect(triggerButton).toBeDefined();
     });
@@ -119,7 +119,7 @@ describe('TriggerBuildButtonSpec', () => {
             submission: undefined,
             participationId: comp.participation.id!,
         });
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         let triggerButton = getTriggerButton();
         expect(triggerButton.disabled).toBeFalse();
@@ -136,7 +136,7 @@ describe('TriggerBuildButtonSpec', () => {
             participationId: comp.participation.id!,
         });
         expect(comp.isBuilding).toBeTrue();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(triggerButton.disabled).toBeTrue();
 
         // Now the server signals that the build is done, the button should now be removed.
@@ -146,7 +146,7 @@ describe('TriggerBuildButtonSpec', () => {
             participationId: comp.participation.id!,
         });
         expect(comp.isBuilding).toBeFalse();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         triggerButton = getTriggerButton();
         expect(triggerButton).toBeNull();
     });
@@ -159,7 +159,7 @@ describe('TriggerBuildButtonSpec', () => {
         comp.exercise = { id: 5, dueDate: dayjs().subtract(1, 'day') } as ProgrammingExercise;
 
         triggerChanges(comp, { property: 'participation', currentValue: comp.participation });
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(comp.lastResultIsManual).toBeTrue();
     });

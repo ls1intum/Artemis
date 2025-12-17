@@ -336,7 +336,7 @@ describe('CourseNotificationOverviewComponent', () => {
         const button = fixture.debugElement.query(By.css('button'));
 
         button.nativeElement.click();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(toggleSpy).toHaveBeenCalledOnce();
     });
@@ -344,7 +344,7 @@ describe('CourseNotificationOverviewComponent', () => {
     it('should apply is-shown class when overlay is shown', () => {
         componentAsAny.isShown = true;
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const overlay = fixture.debugElement.query(By.css('.course-notification-overview-overlay'));
         expect(overlay.classes['is-shown']).toBeTrue();
@@ -353,7 +353,7 @@ describe('CourseNotificationOverviewComponent', () => {
     it('should display loading indicator when isLoading is true', () => {
         componentAsAny.isLoading = true;
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const loadingIndicator = fixture.debugElement.query(By.css('.course-notification-overview-notification-loading'));
         expect(loadingIndicator).not.toBeNull();
@@ -363,7 +363,7 @@ describe('CourseNotificationOverviewComponent', () => {
         componentAsAny.isLoading = false;
         componentAsAny.notificationsForSelectedCategory = [];
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const emptyState = fixture.debugElement.query(By.css('.course-notification-overview-notification-empty-prompt'));
         expect(emptyState).not.toBeNull();
@@ -373,14 +373,14 @@ describe('CourseNotificationOverviewComponent', () => {
         componentAsAny.isLoading = false;
         componentAsAny.notificationsForSelectedCategory = [createMockNotification(1, 101, CourseNotificationCategory.COMMUNICATION)];
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const notificationElements = fixture.debugElement.queryAll(By.css('jhi-course-notification'));
         expect(notificationElements).toHaveLength(1);
     });
 
     it('should display correct categories and handle category selection', () => {
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const categoryElements = fixture.debugElement.queryAll(By.css('.course-notification-overview-category'));
         expect(categoryElements.length).toBeGreaterThan(0);

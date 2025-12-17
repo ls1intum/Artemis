@@ -121,7 +121,7 @@ describe('TutorEffortStatisticsComponent', () => {
 
     it('should show the table headers if tutor efforts list is not empty', () => {
         component.tutorEfforts = tutorEffortsMocked;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         const numberOfSubmissionsAssessed = compiled.querySelector('[jhiTranslate$=numberOfSubmissionsAssessed]');
         const totalTimeSpent = compiled.querySelector('[jhiTranslate$=totalTimeSpent]');
         const averageTime = compiled.querySelector('[jhiTranslate$=averageTime]');
@@ -134,7 +134,7 @@ describe('TutorEffortStatisticsComponent', () => {
 
     it('should show the no data message if tutor efforts list is empty', () => {
         component.tutorEfforts = [];
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         const noData = compiled.querySelector('[jhiTranslate$=noData]');
         const numberOfSubmissionsAssessed = compiled.querySelector('[jhiTranslate$=numberOfSubmissionsAssessed]');
         expect(noData).not.toBeNull();

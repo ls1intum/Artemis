@@ -140,7 +140,7 @@ describe('FileUploadAssessmentComponent', () => {
             comp.assessmentsAreValid = true;
             comp.isLoading = false;
 
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
 
             expect(getFirstResult(comp.submission)).toEqual(comp.result);
         }));
@@ -160,7 +160,7 @@ describe('FileUploadAssessmentComponent', () => {
             comp.assessmentsAreValid = true;
             comp.isLoading = false;
 
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
 
             expect(getFirstResult(comp.submission)).toEqual(comp.result);
             expect(comp.correctionRound).toBe(1);
@@ -274,7 +274,7 @@ describe('FileUploadAssessmentComponent', () => {
         comp.submission = submission;
         setLatestSubmissionResult(comp.submission, result);
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(comp.unreferencedFeedback).toHaveLength(2);
         expect(comp.busy).toBeFalse();
         expect(comp.totalScore).toBe(15);
@@ -335,7 +335,7 @@ describe('FileUploadAssessmentComponent', () => {
             comp.submission = submission;
             setLatestSubmissionResult(comp.submission, initResult);
 
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             comp.onSaveAssessment();
             expect(comp.result).toEqual(changedResult);
             expect(comp.isLoading).toBeFalse();
@@ -360,7 +360,7 @@ describe('FileUploadAssessmentComponent', () => {
             comp.submission = submission;
             setLatestSubmissionResult(comp.submission, initResult);
 
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             comp.onSaveAssessment();
             expect(alertServiceErrorSpy).toHaveBeenCalledWith('artemisApp.assessment.messages.saveFailed');
             expect(comp.isLoading).toBeFalse();
@@ -400,7 +400,7 @@ describe('FileUploadAssessmentComponent', () => {
         comp.submission = submission;
         setLatestSubmissionResult(comp.submission, initResult);
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         comp.onSubmitAssessment();
 
         expect(comp.isLoading).toBeFalse();
@@ -427,7 +427,7 @@ describe('FileUploadAssessmentComponent', () => {
             comp.submission = submission;
             setLatestSubmissionResult(comp.submission, initResult);
 
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             let onSuccessCalled = false;
             let onErrorCalled = false;
             const assessmentAfterComplaint: AssessmentAfterComplaint = {
@@ -471,7 +471,7 @@ describe('FileUploadAssessmentComponent', () => {
             comp.submission = submission;
             setLatestSubmissionResult(comp.submission, initResult);
 
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
 
             let onSuccessCalled = false;
             let onErrorCalled = false;
@@ -515,7 +515,7 @@ describe('FileUploadAssessmentComponent', () => {
             comp.submission = submission;
             setLatestSubmissionResult(comp.submission, initResult);
 
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
 
             let onSuccessCalled = false;
             let onErrorCalled = false;
@@ -694,7 +694,7 @@ describe('FileUploadAssessmentComponent', () => {
         comp.submission = {
             id: 2,
         } as unknown as FileUploadSubmission;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         comp.onCancelAssessment();
         expect(windowConfirmStub).toHaveBeenCalledOnce();
