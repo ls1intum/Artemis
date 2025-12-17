@@ -238,7 +238,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     /**
      * Closes any open dropdown menus when clicking outside.
      */
-    @HostListener('document:click', ['$event'])
+    @HostListener('document:click')
     onClickOutside() {
         this.showDropdown = false;
         this.enableBodyScroll();

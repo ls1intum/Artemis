@@ -32,12 +32,12 @@ describe('SearchFilterComponent', () => {
 
     it('should call resetSearchValue when the reset icon is clicked', () => {
         component.filterForm.controls['searchFilter'].setValue('test search');
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         jest.spyOn(component, 'resetSearchValue');
 
         const resetIcon = fixture.debugElement.query(By.css('#test-fa-times')).nativeElement;
         resetIcon.click();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(component.resetSearchValue).toHaveBeenCalled();
         expect(component.filterForm.value.searchFilter).toBeNull();
@@ -49,7 +49,7 @@ describe('SearchFilterComponent', () => {
         // Assuming the form control is named 'searchFilter' and bound to an input field
         const inputElement = fixture.debugElement.query(By.css('input')).nativeElement;
         inputElement.dispatchEvent(new Event('keyup'));
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(component.newSearchEvent.emit).toHaveBeenCalled();
     });

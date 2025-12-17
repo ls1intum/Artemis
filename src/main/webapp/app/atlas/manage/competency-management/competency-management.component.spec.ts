@@ -148,7 +148,7 @@ describe('CompetencyManagementComponent', () => {
 
         fixture.detectChanges();
         await fixture.whenStable();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(getProfileInfoSpy).toHaveBeenCalled();
         expect(getIrisSettingsSpy).toHaveBeenCalled();
@@ -227,11 +227,11 @@ describe('CompetencyManagementComponent', () => {
         jest.spyOn(modalService, 'open').mockReturnValue(modalRef);
         jest.spyOn(courseCompetencyApiService, 'importAllByCourseId').mockResolvedValue(importedCompetencies);
         component.courseCompetencies.set([]);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         const existingCompetencies = component.competencies().length;
 
         await component.openImportAllModal();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
         expect(modalService.open).toHaveBeenCalledExactlyOnceWith(ImportAllCourseCompetenciesModalComponent, {
             size: 'lg',

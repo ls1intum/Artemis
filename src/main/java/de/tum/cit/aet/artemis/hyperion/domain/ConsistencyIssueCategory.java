@@ -1,8 +1,11 @@
-package de.tum.cit.aet.artemis.hyperion.dto;
+package de.tum.cit.aet.artemis.hyperion.domain;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
  * Unified category enum for consistency issues. Composed of structural and semantic categories.
  */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public enum ConsistencyIssueCategory {
 
     // Structural

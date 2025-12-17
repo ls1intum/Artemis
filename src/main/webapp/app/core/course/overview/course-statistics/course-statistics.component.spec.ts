@@ -372,7 +372,7 @@ describe('CourseStatisticsComponent', () => {
         comp.ngOnInit();
         // Include all exercises
         comp.toggleNotIncludedInScoreExercises();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(comp.ngxExerciseGroups.size).toBe(4);
         const modelingWrapper = fixture.debugElement.query(By.css('#modeling-wrapper'));
         expect(modelingWrapper.query(By.css('h4')).nativeElement.textContent).toBe('artemisApp.courseOverview.statistics.exerciseCount');
@@ -434,7 +434,7 @@ describe('CourseStatisticsComponent', () => {
         jest.spyOn(scoresStorageService, 'getStoredScoresPerExerciseType').mockReturnValue(mockScoresPerExerciseType);
         fixture.detectChanges();
         comp.ngOnInit();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(comp.ngxExerciseGroups.size).toBe(1);
         const exercise: NgxExercise = comp.ngxExerciseGroups.get(ExerciseType.MODELING)![0];
         expect(exercise.absoluteScore).toBe(20);
@@ -454,7 +454,7 @@ describe('CourseStatisticsComponent', () => {
         comp.courseId = course.id!;
         fixture.detectChanges();
         comp.ngOnInit();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         // Should not have found a course yet.
         expect(comp.course).toBeUndefined();

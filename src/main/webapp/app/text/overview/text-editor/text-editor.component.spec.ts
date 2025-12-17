@@ -1,6 +1,5 @@
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
-import { input } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { ActivatedRoute, RouterModule, convertToParamMap } from '@angular/router';
 import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
@@ -75,8 +74,9 @@ describe('TextEditorComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [RouterModule.forRoot([textEditorRoute[0]]), FaIconComponent],
-            declarations: [
+            imports: [
+                RouterModule.forRoot([textEditorRoute[0]]),
+                FaIconComponent,
                 TextEditorComponent,
                 MockComponent(SubmissionResultStatusComponent),
                 MockComponent(ButtonComponent),
@@ -125,11 +125,9 @@ describe('TextEditorComponent', () => {
     });
 
     it('should use inputValues if present instead of loading new details', fakeAsync(() => {
-        TestBed.runInInjectionContext(() => {
-            comp.inputExercise = input<TextExercise>(textExercise);
-            comp.inputParticipation = input<StudentParticipation>(participation);
-            comp.inputSubmission = input<TextSubmission>({ id: 1, text: 'test' });
-        });
+        fixture.componentRef.setInput('inputExercise', textExercise);
+        fixture.componentRef.setInput('inputParticipation', participation);
+        fixture.componentRef.setInput('inputSubmission', { id: 1, text: 'test' });
         // @ts-ignore updateParticipation is private
         const updateParticipationSpy = jest.spyOn(comp, 'updateParticipation');
         // @ts-ignore setupComponentWithInputValuesSpy is private
@@ -148,7 +146,7 @@ describe('TextEditorComponent', () => {
         getTextForParticipationStub.mockReturnValue(participationSubject);
         comp.textExercise = textExercise;
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         tick();
 
         expect(comp.isAllowedToSubmitAfterDueDate).toBeFalsy();
@@ -166,7 +164,7 @@ describe('TextEditorComponent', () => {
         getTextForParticipationStub.mockReturnValue(participationSubject);
         comp.textExercise = textExercise;
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         tick();
 
         expect(comp.isAllowedToSubmitAfterDueDate).toBeFalsy();
@@ -183,7 +181,7 @@ describe('TextEditorComponent', () => {
         getTextForParticipationStub.mockReturnValue(participationSubject);
         comp.textExercise = textExercise;
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         tick();
 
         expect(comp.isAllowedToSubmitAfterDueDate).toBeTruthy();
@@ -199,7 +197,7 @@ describe('TextEditorComponent', () => {
         comp.result = result;
         comp.textExercise = textExercise;
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         tick();
 
         expect(comp.isAlwaysActive).toBeFalsy();
@@ -216,7 +214,7 @@ describe('TextEditorComponent', () => {
         comp.textExercise.dueDate = dayjs();
         participation.initializationDate = dayjs().add(1, 'days');
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         tick();
 
         expect(comp.isAlwaysActive).toBeTruthy();
@@ -232,14 +230,14 @@ describe('TextEditorComponent', () => {
         textExercise.dueDate = dayjs().add(1, 'days');
         participation.initializationDate = dayjs();
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         tick();
 
         expect(comp.isActive).toBeTruthy();
 
         comp.textExercise.dueDate = dayjs().subtract(1, 'days');
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         tick();
 
         expect(comp.isActive).toBeFalsy();
@@ -434,7 +432,7 @@ describe('TextEditorComponent', () => {
     it('should not render the submit button when isReadOnlyWithShowResult is true', () => {
         comp.isReadOnlyWithShowResult = true;
         comp.textExercise = textExercise;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const submitButton = fixture.debugElement.query(By.css('#submit'));
         expect(submitButton).toBeFalsy();
@@ -447,7 +445,7 @@ describe('TextEditorComponent', () => {
         comp.textExercise = textExercise;
         comp.submission = { id: 5, submitted: true };
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const submitButton = fixture.debugElement.query(By.css('#submit'));
         expect(submitButton).toBeTruthy();

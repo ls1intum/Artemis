@@ -122,6 +122,6 @@ export const notUndefined = (anyValue: any): boolean => anyValue !== undefined;
 
 export function getCurrentLocaleSignal(translateService: TranslateService): Signal<string> {
     return toSignal(translateService.onLangChange.pipe(map((event) => event.lang)), {
-        initialValue: translateService.currentLang,
+        initialValue: translateService.getCurrentLang(),
     });
 }

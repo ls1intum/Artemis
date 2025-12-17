@@ -23,15 +23,16 @@ export class MockPostService {
 
     getPosts(courseId: number, postContextFilter: PostContextFilter): Observable<HttpResponse<Post[]>> {
         if (postContextFilter.conversationIds) {
+            // Return a copy to avoid tests mutating shared data
             return of({
-                body: messagesBetweenUser1User2,
+                body: [...messagesBetweenUser1User2],
                 headers: new HttpHeaders({
                     'X-Total-Count': messagesBetweenUser1User2.length.toString(),
                 }),
             }) as Observable<HttpResponse<Post[]>>;
         } else {
             return of({
-                body: !postContextFilter.pageSize ? metisCoursePosts : metisCoursePosts.slice(0, postContextFilter.pageSize),
+                body: !postContextFilter.pageSize ? [...metisCoursePosts] : metisCoursePosts.slice(0, postContextFilter.pageSize),
                 headers: new HttpHeaders({
                     'X-Total-Count': metisCoursePosts.length.toString(),
                 }),
