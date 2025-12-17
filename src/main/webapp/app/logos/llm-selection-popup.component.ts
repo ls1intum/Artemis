@@ -25,7 +25,6 @@ export class LLMSelectionModalComponent implements OnInit, OnDestroy {
 
     isVisible = false;
     private modalSubscription?: Subscription;
-
     isOnPremiseEnabled: boolean;
 
     ngOnInit(): void {
