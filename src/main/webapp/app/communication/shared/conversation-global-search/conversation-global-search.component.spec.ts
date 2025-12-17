@@ -82,7 +82,7 @@ describe('ConversationGlobalSearchComponent', () => {
         inputEl.value = 'in:general';
         inputEl.dispatchEvent(new Event('input'));
         tick();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         // Verify that dropdown is shown with filtered results
         expect(component.showDropdown).toBeTrue();
@@ -97,7 +97,7 @@ describe('ConversationGlobalSearchComponent', () => {
         inputEl.value = 'from:john';
         inputEl.dispatchEvent(new Event('input'));
         tick();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         // Verify API is called to search users
         expect(courseManagementService.searchUsers).toHaveBeenCalledWith(1, 'john', ['students', 'tutors', 'instructors']);
@@ -115,7 +115,7 @@ describe('ConversationGlobalSearchComponent', () => {
         inputEl.value = 'from:me';
         inputEl.dispatchEvent(new Event('input'));
         tick();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         // Verify dropdown shows current user
         expect(component.showDropdown).toBeTrue();
@@ -129,11 +129,11 @@ describe('ConversationGlobalSearchComponent', () => {
         component.fullSearchTerm = 'in:general';
         component.filterItems({ target: { value: 'in:general' } } as unknown as Event);
         tick();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         component.selectOption(component.filteredOptions[0]);
         tick();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         // Verify selection was added and event was emitted
         expect(component.selectedConversations).toHaveLength(1);
@@ -148,11 +148,11 @@ describe('ConversationGlobalSearchComponent', () => {
         const selectionChangeSpy = jest.spyOn(component.onSelectionChange, 'emit');
         const focusSpy = jest.spyOn(component, 'focusInput');
         component.selectedConversations = [mockConversations[0]];
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         component.removeSelectedChannel(mockConversations[0]);
         tick();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         // Verify conversation was removed and event was emitted
         expect(component.selectedConversations).toHaveLength(0);
@@ -165,11 +165,11 @@ describe('ConversationGlobalSearchComponent', () => {
         const focusSpy = jest.spyOn(component, 'focusInput');
 
         component.selectedAuthors = mockUsers;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         component.removeSelectedAuthor(component.selectedAuthors[0]);
         tick();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(component.selectedAuthors).toHaveLength(1);
         expect(component.selectedAuthors[0].id).toBe(2);
@@ -192,7 +192,7 @@ describe('ConversationGlobalSearchComponent', () => {
 
         component.clearSearch();
         tick();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(component.fullSearchTerm).toBe('');
         expect(component.selectedConversations).toHaveLength(0);
@@ -210,7 +210,7 @@ describe('ConversationGlobalSearchComponent', () => {
         inputEl.value = 'invalidPrefix';
         inputEl.dispatchEvent(new Event('input'));
         tick();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(component.searchMode).toBe(component.SearchMode.NORMAL);
         expect(component.showDropdown).toBeFalse();
@@ -229,7 +229,7 @@ describe('ConversationGlobalSearchComponent', () => {
         component.fullSearchTerm = 'in:general';
         component.filterItems({ target: { value: 'in:general' } } as unknown as Event);
         tick();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         component.navigateDropdown(1, { preventDefault: jest.fn() } as unknown as Event);
         expect(component.activeDropdownIndex).toBe(0);
@@ -243,7 +243,7 @@ describe('ConversationGlobalSearchComponent', () => {
         const focusSpy = jest.spyOn(component, 'focusInput');
         component.focusWithSelectedConversation(mockConversations[0]);
         tick();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(component.selectedConversations).toEqual([mockConversations[0]]);
         expect(focusSpy).toHaveBeenCalled();
@@ -262,11 +262,11 @@ describe('ConversationGlobalSearchComponent', () => {
                 img: mockUsers[0].imageUrl,
             },
         ];
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         component.selectOption(component.filteredOptions[0]);
         tick();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(component.selectedAuthors).toEqual([mockUsers[0]]);
         expect(component.showDropdown).toBeFalse();
@@ -298,7 +298,7 @@ describe('ConversationGlobalSearchComponent', () => {
     it('should close the dropdown when clicking outside the search input', fakeAsync(() => {
         component.showDropdown = true;
         component.isSearchActive = true;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const mockEvent = {
             target: document.createElement('div'),
@@ -306,7 +306,7 @@ describe('ConversationGlobalSearchComponent', () => {
 
         component.onClickOutside(mockEvent);
         tick();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(component.showDropdown).toBeFalse();
         expect(component.isSearchActive).toBeFalse();
@@ -370,7 +370,7 @@ describe('ConversationGlobalSearchComponent', () => {
         jest.spyOn(courseManagementService, 'searchUsers').mockReturnValue(throwError(() => new Error('Error')));
         component.filterUsers('test');
         tick();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(component.filteredUsers).toEqual([]);
         expect(component.userSearchStatus).toBe(component.UserSearchStatus.RESULTS);

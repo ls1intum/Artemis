@@ -318,7 +318,7 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
     }
 
     @HostListener('window:keydown.Control.Shift.b', ['$event'])
-    onKeyDownControlShiftB(event: KeyboardEvent) {
+    onKeyDownControlShiftB(event: Event) {
         event.preventDefault();
         this.toggleSidebar();
     }
@@ -343,7 +343,7 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
     }
 
     @HostListener('window:keydown.Control.m', ['$event'])
-    onKeyDownControlM(event: KeyboardEvent) {
+    onKeyDownControlM(event: Event) {
         event.preventDefault();
         this.toggleCollapseState();
     }

@@ -120,7 +120,7 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
     /**
      * Closes dropdown if user clicks anywhere outside the component.
      */
-    @HostListener('document:click', ['$event'])
+    @HostListener('document:click')
     onClickOutside() {
         this.showDropdown = false;
         this.enableBodyScroll();
