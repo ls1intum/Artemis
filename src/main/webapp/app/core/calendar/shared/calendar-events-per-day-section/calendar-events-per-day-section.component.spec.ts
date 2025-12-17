@@ -9,8 +9,6 @@ import { CalendarService } from 'app/core/calendar/shared/service/calendar.servi
 import { CalendarEvent, CalendarEventType } from 'app/core/calendar/shared/entities/calendar-event.model';
 import { CalendarEventDetailPopoverComponent } from 'app/core/calendar/shared/calendar-event-detail-popover-component/calendar-event-detail-popover.component';
 import { CalendarEventsPerDaySectionComponent } from 'app/core/calendar/shared/calendar-events-per-day-section/calendar-events-per-day-section.component';
-import { provideNoopAnimationsForTests } from 'test/helpers/animations';
-
 describe('CalendarEventsPerDaySectionComponent', () => {
     let component: CalendarEventsPerDaySectionComponent;
     let fixture: ComponentFixture<CalendarEventsPerDaySectionComponent>;
@@ -47,7 +45,6 @@ describe('CalendarEventsPerDaySectionComponent', () => {
                     provide: CalendarService,
                     useFactory: () => new MockCalendarService(mockMap),
                 },
-                provideNoopAnimationsForTests(),
             ],
         }).compileComponents();
 

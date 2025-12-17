@@ -2,8 +2,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { CalendarSubscriptionPopoverComponent } from 'app/core/calendar/shared/calendar-subscription-popover/calendar-subscription-popover.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { provideNoopAnimationsForTests } from 'test/helpers/animations';
-
 const getParametersOf = (urlStr: string) => new URL(urlStr, 'http://dummy.invalid').searchParams;
 const splitFilterParameters = (parameters: URLSearchParams) => (parameters.get('filterOptions') ?? '').split(',').filter(Boolean).sort();
 
@@ -14,7 +12,7 @@ describe('CalendarSubscriptionPopoverComponent (signal-based tests)', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [CalendarSubscriptionPopoverComponent],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }, provideNoopAnimationsForTests()],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
         fixture = TestBed.createComponent(CalendarSubscriptionPopoverComponent);
