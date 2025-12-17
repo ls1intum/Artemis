@@ -518,7 +518,7 @@ describe('Lecture', () => {
             createdUnit.id = 1;
 
             jest.spyOn(lectureService, 'create').mockReturnValue(of(new HttpResponse({ body: createdLecture, status: 201 })));
-            jest.spyOn(attachmentVideoUnitService, 'create').mockReturnValue(of(new HttpResponse({ body: createdUnit, status: 201 })));
+            jest.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile').mockReturnValue(of(new HttpResponse({ body: createdUnit, status: 201 })));
             const navigateSpy = jest.spyOn(router, 'navigate');
             const successSpy = jest.spyOn(alertService, 'success');
 
@@ -539,7 +539,7 @@ describe('Lecture', () => {
             tick();
 
             expect(lectureService.create).toHaveBeenCalled();
-            expect(attachmentVideoUnitService.create).toHaveBeenCalled();
+            expect(attachmentVideoUnitService.createAttachmentVideoUnitFromFile).toHaveBeenCalled();
             expect(successSpy).toHaveBeenCalledWith('artemisApp.lecture.pdfUpload.success');
             expect(navigateSpy).toHaveBeenCalledWith(['course-management', 1, 'lectures', 999, 'edit']);
             expect(lectureComponent.isUploadingPdfs()).toBeFalse();
@@ -549,7 +549,7 @@ describe('Lecture', () => {
             const createdUnit = new AttachmentVideoUnit();
             createdUnit.id = 1;
 
-            jest.spyOn(attachmentVideoUnitService, 'create').mockReturnValue(of(new HttpResponse({ body: createdUnit, status: 201 })));
+            jest.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile').mockReturnValue(of(new HttpResponse({ body: createdUnit, status: 201 })));
             const navigateSpy = jest.spyOn(router, 'navigate');
             const successSpy = jest.spyOn(alertService, 'success');
 
@@ -569,7 +569,7 @@ describe('Lecture', () => {
             lectureComponent.onPdfFilesDropped(files);
             tick();
 
-            expect(attachmentVideoUnitService.create).toHaveBeenCalled();
+            expect(attachmentVideoUnitService.createAttachmentVideoUnitFromFile).toHaveBeenCalled();
             expect(successSpy).toHaveBeenCalledWith('artemisApp.lecture.pdfUpload.success');
             expect(navigateSpy).toHaveBeenCalledWith(['course-management', 1, 'lectures', 42, 'edit']);
             expect(lectureComponent.isUploadingPdfs()).toBeFalse();
@@ -579,7 +579,7 @@ describe('Lecture', () => {
             const createdUnit = new AttachmentVideoUnit();
             createdUnit.id = 1;
 
-            const createSpy = jest.spyOn(attachmentVideoUnitService, 'create').mockReturnValue(of(new HttpResponse({ body: createdUnit, status: 201 })));
+            const createSpy = jest.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile').mockReturnValue(of(new HttpResponse({ body: createdUnit, status: 201 })));
 
             const dialogResult: PdfUploadTarget = {
                 targetType: 'existing',
@@ -628,7 +628,7 @@ describe('Lecture', () => {
         }));
 
         it('should handle error when creating attachment unit fails', fakeAsync(() => {
-            jest.spyOn(attachmentVideoUnitService, 'create').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+            jest.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
 
             const dialogResult: PdfUploadTarget = {
                 targetType: 'existing',
@@ -651,7 +651,7 @@ describe('Lecture', () => {
         }));
 
         it('should do nothing when dialog is dismissed', fakeAsync(() => {
-            const createSpy = jest.spyOn(attachmentVideoUnitService, 'create');
+            const createSpy = jest.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile');
 
             jest.spyOn(modalService, 'open').mockReturnValue({
                 componentInstance: { lectures: [], initializeWithFiles: jest.fn() },
@@ -667,11 +667,11 @@ describe('Lecture', () => {
             expect(createSpy).not.toHaveBeenCalled();
         }));
 
-        it('should derive unit name from PDF filename', fakeAsync(() => {
+        it('should call service with correct lecture id and file', fakeAsync(() => {
             const createdUnit = new AttachmentVideoUnit();
             createdUnit.id = 1;
 
-            const createSpy = jest.spyOn(attachmentVideoUnitService, 'create').mockReturnValue(of(new HttpResponse({ body: createdUnit, status: 201 })));
+            const createSpy = jest.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile').mockReturnValue(of(new HttpResponse({ body: createdUnit, status: 201 })));
 
             const dialogResult: PdfUploadTarget = {
                 targetType: 'existing',
@@ -684,21 +684,12 @@ describe('Lecture', () => {
             } as unknown as NgbModalRef);
 
             lectureComponentFixture.detectChanges();
-            const files = [new File(['content'], 'Chapter_01_Introduction.pdf', { type: 'application/pdf' })];
+            const pdfFile = new File(['content'], 'Chapter_01_Introduction.pdf', { type: 'application/pdf' });
 
-            lectureComponent.onPdfFilesDropped(files);
+            lectureComponent.onPdfFilesDropped([pdfFile]);
             tick();
 
-            const formData = createSpy.mock.calls[0][0] as FormData;
-            const unitBlob = formData.get('attachmentVideoUnit') as Blob;
-
-            const reader = new FileReader();
-            reader.onload = () => {
-                const unitData = JSON.parse(reader.result as string);
-                expect(unitData.name).toBe('Chapter 01 Introduction');
-            };
-            reader.readAsText(unitBlob);
-            tick();
+            expect(createSpy).toHaveBeenCalledWith(42, pdfFile);
         }));
     });
 });

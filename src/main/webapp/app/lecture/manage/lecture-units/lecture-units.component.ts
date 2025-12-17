@@ -437,26 +437,6 @@ export class LectureUpdateUnitsComponent implements OnInit {
      * Creates a single attachment unit from a file
      */
     private createAttachmentUnitFromFile(file: File) {
-        const unitName = file.name
-            .replace(/\.pdf$/i, '')
-            .replace(/[_-]/g, ' ')
-            .trim();
-        const releaseDate = dayjs().add(15, 'minutes');
-
-        const attachmentVideoUnit = new AttachmentVideoUnit();
-        attachmentVideoUnit.name = unitName;
-        attachmentVideoUnit.releaseDate = releaseDate;
-
-        const attachment = new Attachment();
-        attachment.name = unitName;
-        attachment.releaseDate = releaseDate;
-        attachment.attachmentType = AttachmentType.FILE;
-
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('attachmentVideoUnit', objectToJsonBlob(attachmentVideoUnit));
-        formData.append('attachment', objectToJsonBlob(attachment));
-
-        return this.attachmentVideoUnitService.create(formData, this.lecture.id!);
+        return this.attachmentVideoUnitService.createAttachmentVideoUnitFromFile(this.lecture.id!, file);
     }
 }

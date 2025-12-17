@@ -4,7 +4,7 @@ import { AttachmentVideoUnit, IngestionState, TranscriptionStatus } from 'app/le
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ExerciseUnit } from 'app/lecture/shared/entities/lecture-unit/exerciseUnit.model';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { Component, Input } from '@angular/core';
+import { Component, Input, input } from '@angular/core';
 import { ExerciseUnitComponent } from 'app/lecture/overview/course-lectures/exercise-unit/exercise-unit.component';
 import { AttachmentVideoUnitComponent } from 'app/lecture/overview/course-lectures/attachment-video-unit/attachment-video-unit.component';
 import { TextUnitComponent } from 'app/lecture/overview/course-lectures/text-unit/text-unit.component';
@@ -50,7 +50,9 @@ class CompetenciesPopoverStubComponent {
 }
 
 @Component({ selector: 'jhi-pdf-drop-zone', template: '' })
-class PdfDropZoneStubComponent {}
+class PdfDropZoneStubComponent {
+    disabled = input<boolean>(false);
+}
 
 describe('LectureUnitManagementComponent', () => {
     let lectureUnitManagementComponent: LectureUnitManagementComponent;
@@ -359,7 +361,7 @@ describe('LectureUnitManagementComponent', () => {
             createdUnit.id = 42;
             createdUnit.name = 'Test File';
 
-            const createSpy = jest.spyOn(attachmentVideoUnitService, 'create').mockReturnValue(of(new HttpResponse({ body: createdUnit, status: 201 })));
+            const createSpy = jest.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile').mockReturnValue(of(new HttpResponse({ body: createdUnit, status: 201 })));
             const successSpy = jest.spyOn(alertService, 'success');
 
             lectureUnitManagementComponent.lecture = lecture;
@@ -379,7 +381,7 @@ describe('LectureUnitManagementComponent', () => {
             const createdUnit = new AttachmentVideoUnit();
             createdUnit.id = 99;
 
-            jest.spyOn(attachmentVideoUnitService, 'create').mockReturnValue(of(new HttpResponse({ body: createdUnit, status: 201 })));
+            jest.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile').mockReturnValue(of(new HttpResponse({ body: createdUnit, status: 201 })));
 
             lectureUnitManagementComponent.lecture = lecture;
             lectureUnitManagementComponent.lectureId = lecture.id;
@@ -403,7 +405,7 @@ describe('LectureUnitManagementComponent', () => {
             const alertService = TestBed.inject(AlertService);
 
             let callCount = 0;
-            const createSpy = jest.spyOn(attachmentVideoUnitService, 'create').mockImplementation(() => {
+            const createSpy = jest.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile').mockImplementation(() => {
                 callCount++;
                 const unit = new AttachmentVideoUnit();
                 unit.id = callCount;
@@ -430,7 +432,7 @@ describe('LectureUnitManagementComponent', () => {
             const alertService = TestBed.inject(AlertService);
 
             // Use status 400 as status 500 intentionally doesn't show an alert (see onError in global.utils.ts)
-            jest.spyOn(attachmentVideoUnitService, 'create').mockReturnValue(throwError(() => ({ status: 400 })));
+            jest.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile').mockReturnValue(throwError(() => ({ status: 400 })));
             const errorSpy = jest.spyOn(alertService, 'error');
 
             lectureUnitManagementComponent.lecture = lecture;
@@ -444,7 +446,7 @@ describe('LectureUnitManagementComponent', () => {
         });
 
         it('should not process if no files are provided', () => {
-            const createSpy = jest.spyOn(attachmentVideoUnitService, 'create');
+            const createSpy = jest.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile');
 
             lectureUnitManagementComponent.lecture = lecture;
             lectureUnitManagementComponent.lectureId = lecture.id;
@@ -455,7 +457,7 @@ describe('LectureUnitManagementComponent', () => {
         });
 
         it('should not process if lectureId is undefined', () => {
-            const createSpy = jest.spyOn(attachmentVideoUnitService, 'create');
+            const createSpy = jest.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile');
 
             lectureUnitManagementComponent.lecture = lecture;
             lectureUnitManagementComponent.lectureId = undefined;
@@ -472,7 +474,7 @@ describe('LectureUnitManagementComponent', () => {
             const createdUnit = new AttachmentVideoUnit();
             createdUnit.id = 99;
 
-            jest.spyOn(attachmentVideoUnitService, 'create').mockReturnValue(of(new HttpResponse({ body: createdUnit, status: 201 })));
+            jest.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile').mockReturnValue(of(new HttpResponse({ body: createdUnit, status: 201 })));
 
             // Lecture without course
             const lectureWithoutCourse = new Lecture();
@@ -490,7 +492,7 @@ describe('LectureUnitManagementComponent', () => {
             const createdUnit = new AttachmentVideoUnit();
             createdUnit.id = 1;
 
-            jest.spyOn(attachmentVideoUnitService, 'create').mockReturnValue(of(new HttpResponse({ body: createdUnit, status: 201 })));
+            jest.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile').mockReturnValue(of(new HttpResponse({ body: createdUnit, status: 201 })));
 
             lectureUnitManagementComponent.lecture = lecture;
             lectureUnitManagementComponent.lectureId = lecture.id;
@@ -509,7 +511,7 @@ describe('LectureUnitManagementComponent', () => {
             const navigateSpy = jest.spyOn(router, 'navigate');
 
             let callCount = 0;
-            jest.spyOn(attachmentVideoUnitService, 'create').mockImplementation(() => {
+            jest.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile').mockImplementation(() => {
                 callCount++;
                 const unit = new AttachmentVideoUnit();
                 unit.id = callCount * 10; // 10, 20, 30

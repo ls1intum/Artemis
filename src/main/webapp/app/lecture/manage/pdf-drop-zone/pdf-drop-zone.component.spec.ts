@@ -1,8 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { PdfDropZoneComponent } from './pdf-drop-zone.component';
-import { MockDirective, MockPipe } from 'ng-mocks';
+import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { AlertService } from 'app/shared/service/alert.service';
 
 describe('PdfDropZoneComponent', () => {
     let component: PdfDropZoneComponent;
@@ -11,6 +12,7 @@ describe('PdfDropZoneComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [PdfDropZoneComponent],
+            providers: [MockProvider(AlertService)],
         })
             .overrideComponent(PdfDropZoneComponent, {
                 remove: { imports: [TranslateDirective, ArtemisTranslatePipe] },
