@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { MockComponent, MockInstance, MockProvider } from 'ng-mocks';
-import { signal } from '@angular/core';
+import { MockComponent, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
@@ -31,7 +30,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { LectureTranscriptionService } from 'app/lecture/manage/services/lecture-transcription.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { PdfDropZoneComponent } from 'app/lecture/manage/pdf-drop-zone/pdf-drop-zone.component';
-import { Component, ElementRef, Signal, computed, output } from '@angular/core';
+import { Component, ElementRef, NO_ERRORS_SCHEMA, Signal, computed, input, output } from '@angular/core';
 import { ngMocks } from 'ng-mocks';
 
 // Tell ng-mocks to skip auto-mocking PdfDropZoneComponent
@@ -42,13 +41,35 @@ class PdfDropZoneStubComponent {
     filesDropped = output<File[]>();
 }
 
+@Component({ selector: 'jhi-text-unit-form', standalone: true, template: '' })
+class TextUnitFormStubComponent {
+    formData = input<TextUnitFormData>();
+    isEditMode = input<boolean>(false);
+    hasCancelButton = input<boolean>(false);
+    formSubmitted = output<TextUnitFormData>();
+    isFormValid = () => true;
+}
+
+@Component({ selector: 'jhi-online-unit-form', standalone: true, template: '' })
+class OnlineUnitFormStubComponent {
+    formData = input<OnlineUnitFormData>();
+    isEditMode = input<boolean>(false);
+    hasCancelButton = input<boolean>(false);
+    formSubmitted = output<OnlineUnitFormData>();
+    isFormValid = () => true;
+}
+
+@Component({ selector: 'jhi-attachment-video-unit-form', standalone: true, template: '' })
+class AttachmentVideoUnitFormStubComponent {
+    formData = input<AttachmentVideoUnitFormData>();
+    isEditMode = input<boolean>(false);
+    hasCancelButton = input<boolean>(false);
+    formSubmitted = output<AttachmentVideoUnitFormData>();
+    isFormValid = () => true;
+}
+
 // Helper type so CI uses the exact method return type
 type StartTxReturn = ReturnType<AttachmentVideoUnitService['startTranscription']>;
-
-// Mock viewChild signals for form components to avoid signal binding errors
-MockInstance(TextUnitFormComponent, 'datePickerComponent', signal(undefined));
-MockInstance(OnlineUnitFormComponent, 'datePickerComponent', signal(undefined));
-MockInstance(AttachmentVideoUnitFormComponent, 'datePickerComponent', signal(undefined));
 
 describe('LectureUpdateUnitsComponent', () => {
     let wizardUnitComponentFixture: ComponentFixture<LectureUpdateUnitsComponent>;
@@ -77,6 +98,7 @@ describe('LectureUpdateUnitsComponent', () => {
                 MockComponent(LectureUnitManagementComponent),
                 PdfDropZoneStubComponent,
             ],
+            schemas: [NO_ERRORS_SCHEMA],
             providers: [
                 MockProvider(AlertService),
                 MockProvider(TextUnitService),
@@ -91,8 +113,8 @@ describe('LectureUpdateUnitsComponent', () => {
             ],
         })
             .overrideComponent(LectureUpdateUnitsComponent, {
-                remove: { imports: [PdfDropZoneComponent] },
-                add: { imports: [PdfDropZoneStubComponent] },
+                remove: { imports: [PdfDropZoneComponent, TextUnitFormComponent, OnlineUnitFormComponent, AttachmentVideoUnitFormComponent] },
+                add: { imports: [PdfDropZoneStubComponent, TextUnitFormStubComponent, OnlineUnitFormStubComponent, AttachmentVideoUnitFormStubComponent] },
             })
             .compileComponents();
 
