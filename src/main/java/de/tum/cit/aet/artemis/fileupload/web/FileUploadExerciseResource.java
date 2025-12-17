@@ -6,7 +6,9 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
+import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -16,6 +18,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -26,6 +29,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
@@ -61,6 +65,7 @@ import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
+import de.tum.cit.aet.artemis.fileupload.dto.UpdateFileUploadExercisesDTO;
 import de.tum.cit.aet.artemis.fileupload.repository.FileUploadExerciseRepository;
 import de.tum.cit.aet.artemis.fileupload.service.FileUploadExerciseImportService;
 import de.tum.cit.aet.artemis.fileupload.service.FileUploadExerciseService;
@@ -301,9 +306,9 @@ public class FileUploadExerciseResource {
     /**
      * PUT /file-upload-exercises : Updates an existing fileUploadExercise.
      *
-     * @param fileUploadExercise the fileUploadExercise to update
-     * @param notificationText   the text shown to students
-     * @param exerciseId         the id of exercise
+     * @param updateFileUploadExercisesDTO the fileUploadExerciseDTO to update
+     * @param notificationText             the text shown to students
+     * @param exerciseId                   the id of exercise
      * @return the ResponseEntity with status 200 (OK) and with body the updated
      *         fileUploadExercise, or with status 400 (Bad Request) if the
      *         fileUploadExercise is not valid, or
@@ -312,51 +317,63 @@ public class FileUploadExerciseResource {
      */
     @PutMapping("file-upload-exercises/{exerciseId}")
     @EnforceAtLeastEditor
-    public ResponseEntity<FileUploadExercise> updateFileUploadExercise(@RequestBody FileUploadExercise fileUploadExercise,
+    public ResponseEntity<FileUploadExercise> updateFileUploadExercise(@RequestBody UpdateFileUploadExercisesDTO updateFileUploadExercisesDTO,
             @RequestParam(value = "notificationText", required = false) String notificationText, @PathVariable Long exerciseId) {
-        log.debug("REST request to update FileUploadExercise : {}", fileUploadExercise);
+        log.debug("REST request to update FileUploadExercise : {}", updateFileUploadExercisesDTO);
         // TODO: The route has an exerciseId but we don't do anything useful with it.
         // Change route and client requests?
+        final var fileUploadExerciseBeforeUpdate = fileUploadExerciseRepository.findByIdWithExampleSubmissionsAndResultsAndCompetenciesAndGradingCriteria(exerciseId).orElseThrow();
 
-        // Validate the updated file upload exercise
-        validateNewOrUpdatedFileUploadExercise(fileUploadExercise);
-        // validates general settings: points, dates
-        fileUploadExercise.validateGeneralSettings();
+        ZonedDateTime oldDueDate = fileUploadExerciseBeforeUpdate.getDueDate();
+        ZonedDateTime oldAssessmentDueDate = fileUploadExerciseBeforeUpdate.getAssessmentDueDate();
+        ZonedDateTime oldReleaseDate = fileUploadExerciseBeforeUpdate.getReleaseDate();
+        Double oldMaxPoints = fileUploadExerciseBeforeUpdate.getMaxPoints();
+        Double oldBonusPoints = fileUploadExerciseBeforeUpdate.getBonusPoints();
+        String oldProblemStatement = fileUploadExerciseBeforeUpdate.getProblemStatement();
 
         // Retrieve the course over the exerciseGroup or the given courseId
-        Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(fileUploadExercise);
+        if (updateFileUploadExercisesDTO.courseId() == null) {
+            throw new BadRequestAlertException("The courseId is required.", ENTITY_NAME, "courseIdMissing");
+        }
+        Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(fileUploadExerciseBeforeUpdate);
+        if (!Objects.equals(course.getId(), updateFileUploadExercisesDTO.courseId())) {
+            throw new BadRequestAlertException("The course can not be changed.", ENTITY_NAME, "courseIdInvalid");
+        }
 
         // Check that the user is authorized to update the exercise
         User user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
-        final var fileUploadExerciseBeforeUpdate = fileUploadExerciseRepository.findWithEagerCompetenciesByIdElseThrow(fileUploadExercise.getId());
+
+        FileUploadExercise updatedFileUploadExercise = fileUploadExerciseService.updateFileUploadExercise(updateFileUploadExercisesDTO, fileUploadExerciseBeforeUpdate);
+        // Validate the updated file upload exercise
+        validateNewOrUpdatedFileUploadExercise(updatedFileUploadExercise);
 
         // Forbid conversion between normal course exercise and exam exercise
-        exerciseService.checkForConversionBetweenExamAndCourseExercise(fileUploadExercise, fileUploadExerciseBeforeUpdate, ENTITY_NAME);
+        exerciseService.checkForConversionBetweenExamAndCourseExercise(updatedFileUploadExercise, fileUploadExerciseBeforeUpdate, ENTITY_NAME);
 
-        channelService.updateExerciseChannel(fileUploadExerciseBeforeUpdate, fileUploadExercise);
+        channelService.updateExerciseChannel(fileUploadExerciseBeforeUpdate, updatedFileUploadExercise);
 
-        var updatedExercise = exerciseService.saveWithCompetencyLinks(fileUploadExercise, fileUploadExerciseRepository::save);
-        exerciseService.logUpdate(updatedExercise, updatedExercise.getCourseViaExerciseGroupOrCourseMember(), user);
-        exerciseService.updatePointsInRelatedParticipantScores(fileUploadExerciseBeforeUpdate, updatedExercise);
-        slideApi.ifPresent(api -> api.handleDueDateChange(fileUploadExerciseBeforeUpdate, updatedExercise));
-        participationRepository.removeIndividualDueDatesIfBeforeDueDate(updatedExercise, fileUploadExerciseBeforeUpdate.getDueDate());
+        var persistedExercise = exerciseService.saveWithCompetencyLinks(updatedFileUploadExercise, fileUploadExerciseRepository::save);
+        exerciseService.logUpdate(persistedExercise, persistedExercise.getCourseViaExerciseGroupOrCourseMember(), user);
+        exerciseService.updatePointsInRelatedParticipantScores(oldMaxPoints, oldBonusPoints, persistedExercise);
+        slideApi.ifPresent(api -> api.handleDueDateChange(oldDueDate, persistedExercise));
+        participationRepository.removeIndividualDueDatesIfBeforeDueDate(persistedExercise, oldDueDate);
 
-        exerciseService.notifyAboutExerciseChanges(fileUploadExerciseBeforeUpdate, updatedExercise, notificationText);
-        competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsync(fileUploadExerciseBeforeUpdate, Optional.of(fileUploadExercise)));
+        exerciseService.notifyAboutExerciseChanges(oldReleaseDate, oldAssessmentDueDate, oldProblemStatement, persistedExercise, notificationText);
+        competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsync(fileUploadExerciseBeforeUpdate, Optional.of(persistedExercise)));
 
         // Notify AtlasML about the exercise update
         atlasMLApi.ifPresent(api -> {
             try {
-                api.saveExerciseWithCompetencies(updatedExercise, OperationTypeDTO.UPDATE);
+                api.saveExerciseWithCompetencies(persistedExercise, OperationTypeDTO.UPDATE);
             }
             catch (Exception e) {
                 log.warn("Failed to notify AtlasML about exercise update: {}", e.getMessage());
             }
         });
-        exerciseVersionService.createExerciseVersion(updatedExercise);
+        exerciseVersionService.createExerciseVersion(persistedExercise);
 
-        return ResponseEntity.ok(updatedExercise);
+        return ResponseEntity.ok(persistedExercise);
     }
 
     /**
@@ -477,8 +494,7 @@ public class FileUploadExerciseResource {
      * updates an existing fileUploadExercise.
      *
      * @param exerciseId                                  of the exercise
-     * @param fileUploadExercise                          the fileUploadExercise to
-     *                                                        re-evaluate and update
+     * @param updateFileUploadExercisesDTO                the fileUploadExerciseDTO to re-evaluate and update
      * @param deleteFeedbackAfterGradingInstructionUpdate boolean flag that
      *                                                        indicates whether the
      *                                                        associated feedback should
@@ -493,19 +509,25 @@ public class FileUploadExerciseResource {
      */
     @PutMapping("file-upload-exercises/{exerciseId}/re-evaluate")
     @EnforceAtLeastEditor
-    public ResponseEntity<FileUploadExercise> reEvaluateAndUpdateFileUploadExercise(@PathVariable long exerciseId, @RequestBody FileUploadExercise fileUploadExercise,
+    public ResponseEntity<FileUploadExercise> reEvaluateAndUpdateFileUploadExercise(@PathVariable long exerciseId,
+            @RequestBody UpdateFileUploadExercisesDTO updateFileUploadExercisesDTO,
             @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterGradingInstructionUpdate) {
-        log.debug("REST request to re-evaluate FileUploadExercise : {}", fileUploadExercise);
+        log.debug("REST request to re-evaluate FileUploadExercise : {}", updateFileUploadExercisesDTO);
+
+        final FileUploadExercise existingExercise = fileUploadExerciseRepository.findByIdWithExampleSubmissionsAndResultsAndCompetenciesAndGradingCriteria(exerciseId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "FileUploadExercise not found"));
 
         // check that the exercise exists for given id
         fileUploadExerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkGivenExerciseIdSameForExerciseInRequestBodyElseThrow(exerciseId, fileUploadExercise);
+        authCheckService.checkGivenExerciseIdSameForExerciseRequestBodyIdElseThrow(exerciseId, updateFileUploadExercisesDTO.id());
 
-        Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(fileUploadExercise);
+        Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(existingExercise);
 
         // Check that the user is authorized to update the exercise
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
-        exerciseService.reEvaluateExercise(fileUploadExercise, deleteFeedbackAfterGradingInstructionUpdate);
-        return updateFileUploadExercise(fileUploadExercise, null, fileUploadExercise.getId());
+        FileUploadExercise exerciseForReevaluation = fileUploadExerciseService.updateFileUploadExercise(updateFileUploadExercisesDTO, existingExercise);
+
+        exerciseService.reEvaluateExercise(exerciseForReevaluation, deleteFeedbackAfterGradingInstructionUpdate);
+        return updateFileUploadExercise(updateFileUploadExercisesDTO, null, updateFileUploadExercisesDTO.id());
     }
 }
