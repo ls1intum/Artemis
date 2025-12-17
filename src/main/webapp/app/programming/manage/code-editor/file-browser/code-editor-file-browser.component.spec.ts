@@ -101,7 +101,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         fixture.componentRef.setInput('isProblemStatementVisible', true);
         comp.repositoryFiles = { [PROBLEM_STATEMENT_IDENTIFIER]: FileType.PROBLEM_STATEMENT };
         comp.setupTreeview();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const item = { value: PROBLEM_STATEMENT_IDENTIFIER, text: PROBLEM_STATEMENT_IDENTIFIER } as TreeViewItem<string>;
         const openModalSpy = jest.spyOn(comp.modalService, 'open');
@@ -116,12 +116,12 @@ describe('CodeEditorFileBrowserComponent', () => {
     it('should NOT enter rename mode for Problem Statement (PS is not renamable)', fakeAsync(() => {
         comp.repositoryFiles = { [PROBLEM_STATEMENT_IDENTIFIER]: FileType.PROBLEM_STATEMENT };
         comp.setupTreeview();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         // Try to trigger renaming on PS
         const psItem = { value: PROBLEM_STATEMENT_IDENTIFIER, text: PROBLEM_STATEMENT_IDENTIFIER } as TreeViewItem<string>;
         comp.setRenamingFile(psItem);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         tick();
 
         // PS must never be put into renaming state
@@ -183,7 +183,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         expect(comp.repositoryFiles[PROBLEM_STATEMENT_IDENTIFIER]).toBe(FileType.PROBLEM_STATEMENT);
         // flip instructions visibility (signal input)
         fixture.componentRef.setInput('showEditorInstructions', false);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(comp.repositoryFiles[PROBLEM_STATEMENT_IDENTIFIER]).toBeUndefined();
         expect(comp.filesTreeViewItem.find((i) => i.value === PROBLEM_STATEMENT_IDENTIFIER)).toBeUndefined();
     });
@@ -193,9 +193,9 @@ describe('CodeEditorFileBrowserComponent', () => {
         fixture.componentRef.setInput('participation', { id: 1 });
         comp.ngOnInit();
         fixture.componentRef.setInput('showEditorInstructions', false);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         fixture.componentRef.setInput('showEditorInstructions', true);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(comp.repositoryFiles[PROBLEM_STATEMENT_IDENTIFIER]).toBe(FileType.PROBLEM_STATEMENT);
         expect(comp.filesTreeViewItem.map((i) => i.value)).toContain(PROBLEM_STATEMENT_IDENTIFIER);
     });
@@ -232,7 +232,7 @@ describe('CodeEditorFileBrowserComponent', () => {
             'folder/file1': FileType.FILE,
         };
         comp.setupTreeview();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const item = { value: 'folder', text: 'folder' } as unknown as TreeViewItem<string>;
         const modalRef = {
@@ -279,7 +279,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         };
         comp.compressFolders = false;
         comp.setupTreeview();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         // after compression
         expect(comp.filesTreeViewItem).toHaveLength(2);
         expect(comp.filesTreeViewItem[0].children).toHaveLength(1);
@@ -342,7 +342,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         };
         comp.compressFolders = true;
         comp.setupTreeview();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         // after compression
         expect(comp.filesTreeViewItem).toHaveLength(2);
         expect(comp.filesTreeViewItem[0].children).toHaveLength(1);
@@ -611,7 +611,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         comp.repositoryFiles = repositoryFiles;
         comp.filesTreeViewItem = treeItems;
         comp.creatingFile = ['folder2', FileType.FILE];
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         let creatingElement = debugElement.query(By.css('jhi-code-editor-file-browser-create-node'));
         expect(creatingElement).not.toBeNull();
@@ -623,7 +623,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         expect(creatingInput.nativeElement).toEqual(focusedElement);
 
         comp.onCreateFile(fileName);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         tick();
 
         expect(createFileStub).toHaveBeenCalledOnce();
@@ -663,7 +663,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         comp.repositoryFiles = repositoryFiles;
         comp.filesTreeViewItem = treeItems;
         comp.creatingFile = ['folder2', FileType.FOLDER];
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         let creatingElement = debugElement.query(By.css('jhi-code-editor-file-browser-create-node'));
         expect(creatingElement).not.toBeNull();
@@ -675,7 +675,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         expect(creatingInput.nativeElement).toEqual(focusedElement);
 
         comp.onCreateFile(fileName);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         tick();
 
         expect(createFolderStub).toHaveBeenCalledOnce();
@@ -694,7 +694,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         const onErrorSpy = jest.spyOn(comp.onError, 'emit');
         comp.creatingFile = ['', FileType.FILE];
         comp.onCreateFile(fileName);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(onErrorSpy).toHaveBeenCalledOnce();
         expect(createFileStub).not.toHaveBeenCalled();
     });
@@ -706,7 +706,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         comp.creatingFile = ['', FileType.FOLDER];
         comp.repositoryFiles = {};
         comp.onCreateFile(folderName);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(onErrorSpy).not.toHaveBeenCalled();
     });
@@ -718,7 +718,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         comp.creatingFile = ['', fileType];
         comp.repositoryFiles = {};
         comp.onCreateFile(name);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(onErrorSpy).toHaveBeenCalledOnce();
         expect(onErrorSpy).toHaveBeenCalledWith('unsupportedFile');
@@ -731,7 +731,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         comp.creatingFile = ['folder2', FileType.FILE];
         comp.repositoryFiles = repositoryFiles;
         comp.onCreateFile(fileName);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(onErrorSpy).toHaveBeenCalledOnce();
         expect(createFileStub).not.toHaveBeenCalled();
     });
@@ -780,7 +780,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         comp.repositoryFiles = repositoryFiles;
         comp.renamingFile = [fileName, fileName, FileType.FILE];
         comp.filesTreeViewItem = treeItems;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         let filesInTreeHtml = debugElement.queryAll(By.css('jhi-code-editor-file-browser-file'));
         expect(filesInTreeHtml).toHaveLength(1);
@@ -797,7 +797,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         renamingInput.nativeElement.value = afterRename;
         renamingInput.nativeElement.dispatchEvent(new Event('input'));
         renamingInput.nativeElement.dispatchEvent(new Event('focusout'));
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(renameFileStub).toHaveBeenCalledOnce();
         expect(renameFileStub).toHaveBeenCalledWith(fileName, afterRename);
@@ -857,7 +857,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         comp.repositoryFiles = repositoryFiles;
         comp.renamingFile = [folderName, folderName, FileType.FILE];
         comp.filesTreeViewItem = treeItems;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         let filesInTreeHtml = debugElement.queryAll(By.css('jhi-code-editor-file-browser-file'));
         expect(filesInTreeHtml).toHaveLength(2);
@@ -901,9 +901,9 @@ describe('CodeEditorFileBrowserComponent', () => {
         const repositoryFiles = { file1: FileType.FILE, newFileName: FileType.FILE };
         comp.repositoryFiles = repositoryFiles;
         comp.setupTreeview();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         comp.renamingFile = [fileName, fileName, FileType.FILE];
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         let renamingInput = debugElement.queryAll(By.css('jhi-code-editor-file-browser-file'))[0].query(By.css('input'));
         expect(renamingInput).not.toBeNull();
@@ -916,7 +916,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         renamingInput.nativeElement.value = afterRename;
         renamingInput.nativeElement.dispatchEvent(new Event('input'));
         renamingInput.nativeElement.dispatchEvent(new Event('focusout'));
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(renameFileStub).not.toHaveBeenCalled();
         expect(comp.repositoryFiles).toEqual(repositoryFiles);
@@ -934,9 +934,9 @@ describe('CodeEditorFileBrowserComponent', () => {
         const repositoryFiles = { file1: FileType.FILE, newFileName: FileType.FILE };
         comp.repositoryFiles = repositoryFiles;
         comp.setupTreeview();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         comp.renamingFile = [fileName, fileName, FileType.FILE];
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         let renamingInput = debugElement.queryAll(By.css('jhi-code-editor-file-browser-file'))[0].query(By.css('input'));
         expect(renamingInput).not.toBeNull();
@@ -949,7 +949,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         renamingInput.nativeElement.value = afterRename;
         renamingInput.nativeElement.dispatchEvent(new Event('input'));
         renamingInput.nativeElement.dispatchEvent(new Event('focusout'));
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(renameFileStub).not.toHaveBeenCalled();
         expect(comp.repositoryFiles).toEqual(repositoryFiles);
@@ -969,7 +969,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         comp.renamingFile = ['', 'oldFolderName', FileType.FOLDER];
         comp.repositoryFiles = { oldFolderName: FileType.FOLDER };
         comp.onRenameFile(newFolderName);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(onErrorSpy).not.toHaveBeenCalled();
     });
@@ -982,7 +982,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         comp.renamingFile = ['', 'oldName', fileType];
         comp.repositoryFiles = { oldName: fileType };
         comp.onRenameFile(newName);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(onErrorSpy).toHaveBeenCalledOnce();
         expect(onErrorSpy).toHaveBeenCalledWith('unsupportedFile');
@@ -993,9 +993,9 @@ describe('CodeEditorFileBrowserComponent', () => {
         const repositoryFiles = { file1: FileType.FILE, newFileName: FileType.FILE };
         comp.repositoryFiles = repositoryFiles;
         comp.setupTreeview();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         comp.renamingFile = [fileName, fileName, FileType.FILE];
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         let renamingInput = debugElement.queryAll(By.css('jhi-code-editor-file-browser-file'))[0].query(By.css('input'));
         expect(renamingInput).not.toBeNull();
@@ -1006,7 +1006,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         expect(renamingInput.nativeElement).toEqual(focusedElement);
 
         renamingInput.nativeElement.dispatchEvent(new Event('focusout'));
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(renameFileStub).not.toHaveBeenCalled();
         expect(comp.repositoryFiles).toEqual(repositoryFiles);

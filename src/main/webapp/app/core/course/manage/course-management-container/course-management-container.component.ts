@@ -32,7 +32,7 @@ import { CourseSidebarItemService } from 'app/core/course/shared/services/sideba
 import { CourseTitleBarComponent } from 'app/core/course/shared/course-title-bar/course-title-bar.component';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
-import { IrisCourseSettingsUpdateComponent } from 'app/iris/manage/settings/iris-course-settings-update/iris-course-settings-update.component';
+import { IrisSettingsUpdateComponent } from 'app/iris/manage/settings/iris-settings-update/iris-settings-update.component';
 import { TutorialGroupsChecklistComponent } from 'app/tutorialgroup/manage/tutorial-groups-checklist/tutorial-groups-checklist.component';
 import { CompetencyManagementComponent } from 'app/atlas/manage/competency-management/competency-management.component';
 import { LearningPathInstructorPageComponent } from 'app/atlas/manage/learning-path-instructor-page/learning-path-instructor-page.component';
@@ -133,7 +133,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         | CourseManagementExercisesComponent
         | LectureComponent
         | CourseManagementStatisticsComponent
-        | IrisCourseSettingsUpdateComponent
+        | IrisSettingsUpdateComponent
         | CourseConversationsComponent
         | TutorialGroupsChecklistComponent
         | CompetencyManagementComponent

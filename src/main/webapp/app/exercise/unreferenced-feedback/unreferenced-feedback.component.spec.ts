@@ -36,12 +36,12 @@ describe('UnreferencedFeedbackComponent', () => {
         feedback.credits = undefined;
         comp.unreferencedFeedback.push(feedback);
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         comp.validateFeedback();
         expect(comp.assessmentsAreValid).toBeFalse();
 
         feedback.credits = 1;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         comp.validateFeedback();
         expect(comp.assessmentsAreValid).toBeTrue();
@@ -54,7 +54,7 @@ describe('UnreferencedFeedbackComponent', () => {
         expect(comp.unreferencedFeedback).toHaveLength(1);
         expect(comp.unreferencedFeedback[0].reference).toBeDefined();
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         comp.addUnreferencedFeedback();
 
         expect(comp.unreferencedFeedback).toHaveLength(2);
@@ -121,7 +121,7 @@ describe('UnreferencedFeedbackComponent', () => {
     it('should only replace feedback on drop, not add another one', () => {
         jest.spyOn(sgiService, 'updateFeedbackWithStructuredGradingInstructionEvent').mockImplementation();
         comp.createAssessmentOnDrop(new Event(''));
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const unreferencedFeedbackDetailDebugElement = fixture.debugElement.query(By.css('jhi-unreferenced-feedback-detail'));
         const unreferencedFeedbackDetailComp: UnreferencedFeedbackDetailStubComponent = unreferencedFeedbackDetailDebugElement.componentInstance;
@@ -131,7 +131,7 @@ describe('UnreferencedFeedbackComponent', () => {
 
         const dropEvent = new Event('drop', { bubbles: true, cancelable: true });
         unreferencedFeedbackDetailDebugElement.nativeElement.querySelector('div').dispatchEvent(dropEvent);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(updateFeedbackOnDropStub).toHaveBeenCalledOnce();
         // do not propagate the event to the parent component

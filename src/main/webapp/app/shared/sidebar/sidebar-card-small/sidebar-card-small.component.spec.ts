@@ -62,7 +62,7 @@ describe('SidebarCardSmallComponent', () => {
         jest.spyOn(component, 'refreshChildComponent');
         const element: HTMLElement = fixture.nativeElement.querySelector('#test-sidebar-card-small');
         element.click();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(component.emitStoreAndRefresh).toHaveBeenCalledWith(component.sidebarItem.id);
     });
 
@@ -74,7 +74,7 @@ describe('SidebarCardSmallComponent', () => {
     it('should navigate to the item URL on click', async () => {
         jest.spyOn(component, 'emitStoreAndRefresh');
         component.itemSelected = true;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         const itemElement = fixture.nativeElement.querySelector('#test-sidebar-card-small');
         itemElement.click();
         await fixture.whenStable();
@@ -87,7 +87,7 @@ describe('SidebarCardSmallComponent', () => {
     it('should navigate to the when no item was selected before', async () => {
         jest.spyOn(component, 'emitStoreAndRefresh');
         component.itemSelected = false;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         const itemElement = fixture.nativeElement.querySelector('#test-sidebar-card-small');
         itemElement.click();
         await fixture.whenStable();
@@ -104,7 +104,7 @@ describe('SidebarCardSmallComponent', () => {
             size: 'S',
             conversation: { hasUnreadMessage: true, isMuted: true },
         };
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         const card = fixture.nativeElement.querySelector('#test-sidebar-card-small');
         expect(card.classList.contains('border-primary')).toBeFalse();
     });
@@ -116,7 +116,7 @@ describe('SidebarCardSmallComponent', () => {
             size: 'S',
             conversation: { hasUnreadMessage: true, isMuted: false },
         };
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         const card = fixture.nativeElement.querySelector('#test-sidebar-card-small');
         expect(card.classList.contains('border-primary')).toBeTrue();
     });

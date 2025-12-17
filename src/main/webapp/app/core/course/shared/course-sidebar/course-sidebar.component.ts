@@ -104,7 +104,7 @@ export class CourseSidebarComponent implements OnChanges {
     }
 
     /** Listen window resize event by height */
-    @HostListener('window:resize', ['$event'])
+    @HostListener('window:resize')
     onResize() {
         this.updateVisibleNavbarItems(window.innerHeight);
     }

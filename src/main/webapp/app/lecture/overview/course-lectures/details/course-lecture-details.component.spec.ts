@@ -164,20 +164,20 @@ describe('CourseLectureDetailsComponent', () => {
     });
 
     it('should initialize', () => {
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(courseLecturesDetailsComponent).not.toBeNull();
         courseLecturesDetailsComponent.ngOnDestroy();
     });
 
     it('should render information boxes for lecture start/end date', fakeAsync(() => {
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const boxes = debugElement.queryAll(By.css('jhi-information-box'));
         expect(boxes).toHaveLength(2);
     }));
 
     it('should display all three lecture units: 2 attachment video units and 1 text unit', fakeAsync(() => {
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const attachmentVideoUnits = debugElement.queryAll(By.css('jhi-attachment-video-unit'));
         const textUnits = debugElement.queryAll(By.css('jhi-text-unit'));
@@ -186,7 +186,7 @@ describe('CourseLectureDetailsComponent', () => {
     }));
 
     it('should display download PDF button', fakeAsync(() => {
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const downloadButton = debugElement.query(By.css('#downloadButton'));
         expect(downloadButton).not.toBeNull();
@@ -197,7 +197,7 @@ describe('CourseLectureDetailsComponent', () => {
         lecture.lectureUnits = [lectureUnit3];
         courseLecturesDetailsComponent.lecture = lecture;
         courseLecturesDetailsComponent.ngOnInit();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const downloadButton = debugElement.query(By.css('#downloadButton'));
         expect(downloadButton).toBeNull();
@@ -206,7 +206,7 @@ describe('CourseLectureDetailsComponent', () => {
 
     it('should not display manage button when user is only tutor', fakeAsync(() => {
         lecture.course!.isAtLeastTutor = true;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const manageLectureButton = debugElement.query(By.css('#manageLectureButton'));
         expect(manageLectureButton).toBeNull();
@@ -214,7 +214,7 @@ describe('CourseLectureDetailsComponent', () => {
 
     it('should display manage button when user is at least editor', fakeAsync(() => {
         lecture.course!.isAtLeastEditor = true;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const manageLectureButton = debugElement.query(By.css('#manageLectureButton'));
         expect(manageLectureButton).not.toBeNull();
@@ -222,7 +222,7 @@ describe('CourseLectureDetailsComponent', () => {
 
     it('should not display manage button when user is a student', fakeAsync(() => {
         lecture.course!.isAtLeastTutor = false;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const manageLectureButton = debugElement.query(By.css('#manageLectureButton'));
         expect(manageLectureButton).toBeNull();
@@ -231,7 +231,7 @@ describe('CourseLectureDetailsComponent', () => {
     it('should redirect to lecture management', fakeAsync(() => {
         const router = TestBed.inject(Router);
         const navigateSpy = jest.spyOn(router, 'navigate');
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         courseLecturesDetailsComponent.redirectToLectureManagement();
         expect(navigateSpy).toHaveBeenCalledWith(['course-management', 456, 'lectures', 1]);
@@ -262,7 +262,7 @@ describe('CourseLectureDetailsComponent', () => {
     }));
 
     it('should show discussion section when communication is enabled', fakeAsync(() => {
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const discussionSection = fixture.nativeElement.querySelector('jhi-discussion-section');
         expect(discussionSection).toBeTruthy();
@@ -276,7 +276,7 @@ describe('CourseLectureDetailsComponent', () => {
         const response = of(new HttpResponse({ body: { ...lecture }, status: 200 }));
         jest.spyOn(TestBed.inject(LectureService), 'findWithDetails').mockReturnValue(response);
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const discussionSection = fixture.nativeElement.querySelector('jhi-discussion-section');
         expect(discussionSection).toBeFalsy();
@@ -295,7 +295,7 @@ describe('CourseLectureDetailsComponent', () => {
     }));
 
     it('should download PDF file', fakeAsync(() => {
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const downloadAttachmentStub = jest.spyOn(courseLecturesDetailsComponent, 'downloadMergedFiles');
         const downloadStreamStub = jest.spyOn(DownloadUtils, 'downloadStream').mockImplementation(() => {});
@@ -314,7 +314,7 @@ describe('CourseLectureDetailsComponent', () => {
 
         courseLecturesDetailsComponent.lecture = lecture;
         courseLecturesDetailsComponent.ngOnInit();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(lectureUnit3.completed).toBeFalsy();
         courseLecturesDetailsComponent.completeLectureUnit({ lectureUnit: lectureUnit3, completed: true });

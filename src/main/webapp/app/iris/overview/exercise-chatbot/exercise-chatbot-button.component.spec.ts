@@ -38,6 +38,7 @@ describe('ExerciseChatbotButtonComponent', () => {
     const statusMock = {
         currentRatelimitInfo: jest.fn().mockReturnValue(of({})),
         handleRateLimitInfo: jest.fn(),
+        setCurrentCourse: jest.fn(),
     };
     const userMock = {
         acceptExternalLLMUsage: jest.fn(),
@@ -114,7 +115,7 @@ describe('ExerciseChatbotButtonComponent', () => {
         const spy = jest.spyOn(chatService, 'switchTo');
 
         component.mode = ChatServiceMode.PROGRAMMING_EXERCISE;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         mockParamsSubject.next({
             exerciseId: mockExerciseId,
@@ -132,7 +133,7 @@ describe('ExerciseChatbotButtonComponent', () => {
         const spy = jest.spyOn(chatService, 'switchTo');
 
         component.mode = ChatServiceMode.TEXT_EXERCISE;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         mockParamsSubject.next({
             exerciseId: mockExerciseId,
@@ -165,8 +166,8 @@ describe('ExerciseChatbotButtonComponent', () => {
         chatService.switchTo(ChatServiceMode.PROGRAMMING_EXERCISE, mockExerciseId);
 
         // when
-        fixture.detectChanges();
         tick();
+        fixture.changeDetectorRef.detectChanges();
 
         // then
         const unreadIndicatorElement: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('.unread-indicator');
@@ -186,8 +187,8 @@ describe('ExerciseChatbotButtonComponent', () => {
         component.openChat();
 
         // when
-        fixture.detectChanges();
         tick();
+        fixture.changeDetectorRef.detectChanges();
 
         // then
         const unreadIndicatorElement: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('.unread-indicator');

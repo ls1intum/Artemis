@@ -88,7 +88,7 @@ describe('AttachmentVideoUnitFormComponent', () => {
         const exampleTranscription = '{"language": "en"}';
         attachmentVideoUnitFormComponent.videoTranscriptionControl!.setValue(exampleTranscription);
 
-        attachmentVideoUnitFormComponentFixture.detectChanges();
+        attachmentVideoUnitFormComponentFixture.changeDetectorRef.detectChanges();
         expect(attachmentVideoUnitFormComponent.form.valid).toBeTrue();
 
         const submitFormSpy = jest.spyOn(attachmentVideoUnitFormComponent, 'submitForm');
@@ -132,7 +132,7 @@ describe('AttachmentVideoUnitFormComponent', () => {
         attachmentVideoUnitFormComponentFixture.detectChanges();
 
         attachmentVideoUnitFormComponentFixture.componentRef.setInput('formData', formData);
-        attachmentVideoUnitFormComponentFixture.detectChanges();
+        attachmentVideoUnitFormComponentFixture.changeDetectorRef.detectChanges();
 
         expect(attachmentVideoUnitFormComponent.nameControl?.value).toEqual(formData.formProperties.name);
         expect(attachmentVideoUnitFormComponent.releaseDateControl?.value).toEqual(formData.formProperties.releaseDate);
@@ -153,7 +153,7 @@ describe('AttachmentVideoUnitFormComponent', () => {
             transcriptionStatus: TranscriptionStatus.PENDING,
         };
         attachmentVideoUnitFormComponentFixture.componentRef.setInput('formData', formDataWithStatus);
-        attachmentVideoUnitFormComponentFixture.detectChanges();
+        attachmentVideoUnitFormComponentFixture.changeDetectorRef.detectChanges();
         expect(attachmentVideoUnitFormComponent.transcriptionStatus()).toBe(TranscriptionStatus.PENDING);
 
         const formDataWithoutStatus: AttachmentVideoUnitFormData = {
@@ -161,7 +161,7 @@ describe('AttachmentVideoUnitFormComponent', () => {
             fileProperties: {},
         };
         attachmentVideoUnitFormComponentFixture.componentRef.setInput('formData', formDataWithoutStatus);
-        attachmentVideoUnitFormComponentFixture.detectChanges();
+        attachmentVideoUnitFormComponentFixture.changeDetectorRef.detectChanges();
         expect(attachmentVideoUnitFormComponent.transcriptionStatus()).toBeUndefined();
         expect(attachmentVideoUnitFormComponent.showTranscriptionPendingWarning()).toBeFalse();
     });
@@ -176,13 +176,13 @@ describe('AttachmentVideoUnitFormComponent', () => {
             transcriptionStatus: TranscriptionStatus.PENDING,
         };
         attachmentVideoUnitFormComponentFixture.componentRef.setInput('formData', formDataWithStatus);
-        attachmentVideoUnitFormComponentFixture.detectChanges();
+        attachmentVideoUnitFormComponentFixture.changeDetectorRef.detectChanges();
 
         expect(attachmentVideoUnitFormComponent.transcriptionStatus()).toBe(TranscriptionStatus.PENDING);
         expect(attachmentVideoUnitFormComponent.showTranscriptionPendingWarning()).toBeTrue();
 
         attachmentVideoUnitFormComponentFixture.componentRef.setInput('isEditMode', false);
-        attachmentVideoUnitFormComponentFixture.detectChanges();
+        attachmentVideoUnitFormComponentFixture.changeDetectorRef.detectChanges();
 
         expect(attachmentVideoUnitFormComponent.transcriptionStatus()).toBeUndefined();
         expect(attachmentVideoUnitFormComponent.showTranscriptionPendingWarning()).toBeFalse();
@@ -209,7 +209,7 @@ describe('AttachmentVideoUnitFormComponent', () => {
         const exampleVideoUrl = 'https://live.rbg.tum.de/?video_only=1';
         attachmentVideoUnitFormComponent.videoSourceControl!.setValue(exampleVideoUrl);
 
-        attachmentVideoUnitFormComponentFixture.detectChanges();
+        attachmentVideoUnitFormComponentFixture.changeDetectorRef.detectChanges();
         expect(attachmentVideoUnitFormComponent.form.valid).toBeTrue();
 
         const submitFormSpy = jest.spyOn(attachmentVideoUnitFormComponent, 'submitForm');
@@ -326,7 +326,7 @@ describe('AttachmentVideoUnitFormComponent', () => {
         attachmentVideoUnitFormComponent.updateNotificationTextControl!.setValue(exampleUpdateNotificationText);
         // Do not set file and ensure videoSource is empty
         attachmentVideoUnitFormComponent.videoSourceControl!.setValue('');
-        attachmentVideoUnitFormComponentFixture.detectChanges();
+        attachmentVideoUnitFormComponentFixture.changeDetectorRef.detectChanges();
 
         expect(attachmentVideoUnitFormComponent.form.valid).toBeTrue();
 
@@ -360,7 +360,7 @@ describe('AttachmentVideoUnitFormComponent', () => {
         attachmentVideoUnitFormComponent.videoSourceControl!.setValue(exampleVideoUrl);
         // Do not set file
 
-        attachmentVideoUnitFormComponentFixture.detectChanges();
+        attachmentVideoUnitFormComponentFixture.changeDetectorRef.detectChanges();
 
         expect(attachmentVideoUnitFormComponent.form.valid).toBeTrue();
 
@@ -426,7 +426,7 @@ describe('AttachmentVideoUnitFormComponent', () => {
         // Ensure videoSource is missing
         attachmentVideoUnitFormComponent.videoSourceControl!.setValue('');
 
-        attachmentVideoUnitFormComponentFixture.detectChanges();
+        attachmentVideoUnitFormComponentFixture.changeDetectorRef.detectChanges();
 
         expect(attachmentVideoUnitFormComponent.form.valid).toBeTrue();
 
@@ -480,7 +480,7 @@ describe('AttachmentVideoUnitFormComponent', () => {
         attachmentVideoUnitFormComponentFixture.detectChanges();
 
         attachmentVideoUnitFormComponent.urlHelperControl!.setValue(validYouTubeUrl);
-        attachmentVideoUnitFormComponentFixture.detectChanges();
+        attachmentVideoUnitFormComponentFixture.changeDetectorRef.detectChanges();
         const transformButton = attachmentVideoUnitFormComponentFixture.debugElement.nativeElement.querySelector('#transformButton');
         transformButton.click();
 
@@ -495,7 +495,7 @@ describe('AttachmentVideoUnitFormComponent', () => {
 
         attachmentVideoUnitFormComponentFixture.detectChanges();
         attachmentVideoUnitFormComponent.urlHelperControl!.setValue(tumLiveUrl);
-        attachmentVideoUnitFormComponentFixture.detectChanges();
+        attachmentVideoUnitFormComponentFixture.changeDetectorRef.detectChanges();
 
         const transformButton = attachmentVideoUnitFormComponentFixture.debugElement.nativeElement.querySelector('#transformButton');
         transformButton.click();
@@ -737,7 +737,7 @@ describe('AttachmentVideoUnitFormComponent', () => {
         };
 
         attachmentVideoUnitFormComponentFixture.componentRef.setInput('formData', formDataWithPlaylist);
-        attachmentVideoUnitFormComponentFixture.detectChanges();
+        attachmentVideoUnitFormComponentFixture.changeDetectorRef.detectChanges();
 
         // Effect should have triggered and set the playlist URL
         expect(attachmentVideoUnitFormComponent.playlistUrl()).toBe(playlistUrl);
@@ -756,7 +756,7 @@ describe('AttachmentVideoUnitFormComponent', () => {
             fileProperties: {},
         };
         attachmentVideoUnitFormComponentFixture.componentRef.setInput('formData', formDataWithoutPlaylist);
-        attachmentVideoUnitFormComponentFixture.detectChanges();
+        attachmentVideoUnitFormComponentFixture.changeDetectorRef.detectChanges();
 
         expect(attachmentVideoUnitFormComponent.playlistUrl()).toBeUndefined();
 
@@ -767,7 +767,7 @@ describe('AttachmentVideoUnitFormComponent', () => {
             playlistUrl: playlistUrl,
         };
         attachmentVideoUnitFormComponentFixture.componentRef.setInput('formData', formDataWithPlaylist);
-        attachmentVideoUnitFormComponentFixture.detectChanges();
+        attachmentVideoUnitFormComponentFixture.changeDetectorRef.detectChanges();
 
         // Effect should have updated the playlist URL
         expect(attachmentVideoUnitFormComponent.playlistUrl()).toBe(playlistUrl);
