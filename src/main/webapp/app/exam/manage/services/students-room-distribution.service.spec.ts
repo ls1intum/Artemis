@@ -5,7 +5,6 @@ import { provideHttpClient } from '@angular/common/http';
 import { StudentsRoomDistributionService } from 'app/exam/manage/services/students-room-distribution.service';
 import { ExamDistributionCapacityDTO, RoomForDistributionDTO } from 'app/exam/manage/students/room-distribution/students-room-distribution.model';
 import { HttpResponse } from '@angular/common/http';
-import { afterEach, beforeEach, describe, expect, it } from '@jest/globals';
 
 describe('StudentsRoomDistributionService', () => {
     let service: StudentsRoomDistributionService;
@@ -123,6 +122,101 @@ describe('StudentsRoomDistributionService', () => {
             req.flush(null, { status: 200, statusText: 'OK' });
 
             expect(actualResponse?.status).toBe(200);
+        });
+    });
+
+    describe('loadRoomsUsedInExam', () => {
+        it('should send GET request and return rooms', () => {
+            const courseId = 5;
+            const examId = 10;
+            const mockRooms: RoomForDistributionDTO[] = [
+                { id: 1, name: 'A', roomNumber: 'R1', building: 'H1' },
+                { id: 2, name: 'B', roomNumber: 'R2', building: 'H2' },
+            ];
+
+            let actualRooms: RoomForDistributionDTO[] | undefined;
+
+            service.loadRoomsUsedInExam(courseId, examId).subscribe((rooms) => (actualRooms = rooms));
+
+            const req = httpMock.expectOne(`${BASE_URL}/courses/${courseId}/exams/${examId}/rooms-used`);
+
+            expect(req.request.method).toBe('GET');
+            req.flush(mockRooms);
+
+            expect(actualRooms).toEqual(mockRooms);
+        });
+    });
+
+    describe('loadSeatsOfExamRoom', () => {
+        it('should send GET request and return seats', () => {
+            const examRoomId = 123;
+
+            const mockSeats = {
+                roomId: 123,
+                seats: [
+                    { id: 1, name: 'S1' },
+                    { id: 2, name: 'S2' },
+                ],
+            };
+
+            let actualSeats: any;
+
+            service.loadSeatsOfExamRoom(examRoomId).subscribe((resp) => (actualSeats = resp));
+
+            const req = httpMock.expectOne(`${BASE_URL}/rooms/${examRoomId}/seats`);
+
+            expect(req.request.method).toBe('GET');
+            req.flush(mockSeats);
+
+            expect(actualSeats).toEqual(mockSeats);
+        });
+    });
+
+    describe('reseatStudent', () => {
+        it('should POST reseat request with correct body', () => {
+            const courseId = 6;
+            const examId = 12;
+            const examUserId = 99;
+            const newRoom = 'Room 42';
+            const newSeat = 'A15';
+
+            let completed = false;
+
+            service.reseatStudent(courseId, examId, examUserId, newRoom, newSeat).subscribe(() => {
+                completed = true;
+            });
+
+            const req = httpMock.expectOne(`${BASE_URL}/courses/${courseId}/exams/${examId}/reseat-student`);
+            expect(req.request.method).toBe('POST');
+
+            expect(req.request.body).toEqual({
+                examUserId,
+                newRoom,
+                newSeat,
+            });
+
+            req.flush(null);
+
+            expect(completed).toBeTrue();
+        });
+
+        it('should send newSeat as undefined when omitted', () => {
+            const courseId = 6;
+            const examId = 12;
+            const examUserId = 99;
+            const newRoom = 'Room 42';
+
+            service.reseatStudent(courseId, examId, examUserId, newRoom).subscribe();
+
+            const req = httpMock.expectOne(`${BASE_URL}/courses/${courseId}/exams/${examId}/reseat-student`);
+
+            expect(req.request.body).toEqual({
+                examUserId,
+                newRoom,
+                newSeat: undefined,
+            });
+
+            req.flush(null);
         });
     });
 });

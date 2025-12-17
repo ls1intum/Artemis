@@ -182,7 +182,6 @@ export class IrisChatService implements OnDestroy {
         if (!this.sessionId) {
             return throwError(() => new Error('Not initialized'));
         }
-        this.suggestions.next([]);
 
         // Trim messages (Spaces, newlines)
         message = message.trim();
@@ -191,6 +190,7 @@ export class IrisChatService implements OnDestroy {
         newMessage.content = [new IrisTextMessageContent(message)];
         return this.irisChatHttpService.createMessage(this.sessionId, newMessage).pipe(
             tap((m) => {
+                this.suggestions.next([]);
                 this.replaceOrAddMessage(m.body!);
             }),
             map(() => undefined),

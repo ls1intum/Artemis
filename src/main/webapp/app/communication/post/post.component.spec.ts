@@ -1,21 +1,47 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { WebsocketService } from 'app/shared/service/websocket.service';
-import { MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { OverlayModule } from '@angular/cdk/overlay';
+import { DOCUMENT } from '@angular/common';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { DebugElement } from '@angular/core';
-import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
+import { Router, RouterState, provideRouter } from '@angular/router';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateService } from '@ngx-translate/core';
+import { ConversationService } from 'app/communication/conversations/service/conversation.service';
+import { OneToOneChatService } from 'app/communication/conversations/service/one-to-one-chat.service';
+import { CourseWideSearchConfig } from 'app/communication/course-conversations-components/course-wide-search/course-wide-search.component';
+import { DisplayPriority, PageType, SortDirection } from 'app/communication/metis.util';
 import { PostComponent } from 'app/communication/post/post.component';
-import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
-import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
-import { getElement } from 'test/helpers/utils/general-test.utils';
+import { PostingContentComponent } from 'app/communication/posting-content/posting-content.components';
+import { AnswerPostCreateEditModalComponent } from 'app/communication/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
 import { PostingFooterComponent } from 'app/communication/posting-footer/posting-footer.component';
 import { PostingHeaderComponent } from 'app/communication/posting-header/posting-header.component';
-import { PostingContentComponent } from 'app/communication/posting-content/posting-content.components';
-import { MockMetisService } from 'test/helpers/mocks/service/mock-metis-service.service';
+import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { MetisService } from 'app/communication/service/metis.service';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { DisplayPriority, PageType, SortDirection } from 'app/communication/metis.util';
+import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
+import { OneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
+import { Post } from 'app/communication/shared/entities/post.model';
+import { Posting, PostingType } from 'app/communication/shared/entities/posting.model';
+import { AccountService } from 'app/core/auth/account.service';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { WebsocketService } from 'app/shared/service/websocket.service';
+import dayjs from 'dayjs/esm';
+import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { of } from 'rxjs';
+import { MockQueryParamsDirective, MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { MockConversationService } from 'test/helpers/mocks/service/mock-conversation.service';
+import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
+import { MockMetisService } from 'test/helpers/mocks/service/mock-metis-service.service';
+import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { OverlayModule } from '@angular/cdk/overlay';
+import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import {
     metisChannel,
     metisCourse,
@@ -26,35 +52,7 @@ import {
     sortedAnswerArray,
     unsortedAnswerArray,
 } from 'test/helpers/sample/metis-sample-data';
-import { MockQueryParamsDirective, MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
-import { OneToOneChatService } from 'app/communication/conversations/service/one-to-one-chat.service';
-import { Router, RouterState, provideRouter } from '@angular/router';
-import { of } from 'rxjs';
-import { OneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
-import { HttpResponse } from '@angular/common/http';
-import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { AnswerPostCreateEditModalComponent } from 'app/communication/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { DOCUMENT } from '@angular/common';
-import { Posting, PostingType } from 'app/communication/shared/entities/posting.model';
-import { Post } from 'app/communication/shared/entities/post.model';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { TranslateService } from '@ngx-translate/core';
-import { By } from '@angular/platform-browser';
-import dayjs from 'dayjs/esm';
-import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
-import { ConversationService } from 'app/communication/conversations/service/conversation.service';
-import { MockConversationService } from 'test/helpers/mocks/service/mock-conversation.service';
-import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
-import { CourseWideSearchConfig } from 'app/communication/course-conversations-components/course-wide-search/course-wide-search.component';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { provideHttpClient } from '@angular/common/http';
+import { getElement } from 'test/helpers/utils/general-test.utils';
 
 describe('PostComponent', () => {
     let component: PostComponent;
@@ -87,7 +85,6 @@ describe('PostComponent', () => {
             imports: [
                 NgbTooltip,
                 OverlayModule,
-                MockModule(BrowserAnimationsModule),
                 PostComponent,
                 FaIconComponent, // we want to test the type of rendered icons, therefore we cannot mock the component
                 MockPipe(HtmlForMarkdownPipe),
@@ -529,9 +526,7 @@ describe('PostComponent', () => {
     });
 
     it('should update showSearchResultInAnswersHint to true for search query matching answer content', () => {
-        const testPost = { id: 123, content: 'Base Post', answers: [{ content: 'Answer' }] };
-
-        component.posting = testPost;
+        component.posting = { id: 123, content: 'Base Post', answers: [{ content: 'Answer' }] };
         fixture.componentRef.setInput('searchConfig', {
             searchTerm: 'answer',
             selectedConversations: [],
@@ -548,9 +543,7 @@ describe('PostComponent', () => {
     });
 
     it('should update showSearchResultInAnswersHint to true for search query matching answer content and base post content', () => {
-        const testPost = { id: 123, content: 'Base Post with answer', answers: [{ content: 'Answer' }] };
-
-        component.posting = testPost;
+        component.posting = { id: 123, content: 'Base Post with answer', answers: [{ content: 'Answer' }] };
         searchConfig.searchTerm = 'answer';
         fixture.componentRef.setInput('searchConfig', searchConfig);
         component.showSearchResultInAnswersHint = false;
@@ -560,9 +553,7 @@ describe('PostComponent', () => {
     });
 
     it('should update showSearchResultInAnswersHint to false for search query matching only base post content', () => {
-        const testPost = { id: 123, content: 'Base Post', answers: [{ content: 'Answer' }] };
-
-        component.posting = testPost;
+        component.posting = { id: 123, content: 'Base Post', answers: [{ content: 'Answer' }] };
         searchConfig.searchTerm = 'base';
         fixture.componentRef.setInput('searchConfig', searchConfig);
         component.showSearchResultInAnswersHint = true;
@@ -572,9 +563,7 @@ describe('PostComponent', () => {
     });
 
     it('should update showSearchResultInAnswersHint to false for empty search query', () => {
-        const testPost = { id: 123, content: 'Base Post', answers: [{ content: 'Answer' }] };
-
-        component.posting = testPost;
+        component.posting = { id: 123, content: 'Base Post', answers: [{ content: 'Answer' }] };
         fixture.componentRef.setInput('searchConfig', searchConfig);
         component.showSearchResultInAnswersHint = true;
         component.ngOnChanges();
@@ -584,9 +573,7 @@ describe('PostComponent', () => {
 
     // update to true when selected author is in answers
     it('should update showSearchResultInAnswersHint to true for selected author in answers', () => {
-        const testPost = { id: 123, content: 'Base Post', answers: [{ content: 'Answer', author: { id: 1, internal: true } }] };
-
-        component.posting = testPost;
+        component.posting = { id: 123, content: 'Base Post', answers: [{ content: 'Answer', author: { id: 1, internal: true } }] };
         searchConfig.selectedAuthors = [{ id: 1 }];
         fixture.componentRef.setInput('searchConfig', searchConfig);
         component.showSearchResultInAnswersHint = true;
