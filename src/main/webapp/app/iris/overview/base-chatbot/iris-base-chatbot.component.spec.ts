@@ -540,7 +540,7 @@ describe('IrisBaseChatbotComponent', () => {
         expect(suggestionButtons).toHaveLength(0);
     });
 
-    it('should not render suggestions if isLoading is true', () => {
+    it('should disable suggestion buttons if isLoading is true', () => {
         // Arrange
         const expectedSuggestions = ['suggestion1', 'suggestion2'];
         const mockMessages = [mockClientMessage, mockServerMessage];
@@ -555,7 +555,10 @@ describe('IrisBaseChatbotComponent', () => {
 
         // Assert
         const suggestionButtons = fixture.nativeElement.querySelectorAll('.suggestion-button');
-        expect(suggestionButtons).toHaveLength(0);
+        expect(suggestionButtons).toHaveLength(expectedSuggestions.length);
+        suggestionButtons.forEach((button: HTMLButtonElement) => {
+            expect(button.disabled).toBeTrue();
+        });
     });
 
     it('should not render suggestions if hasUserAcceptedExternalLLMUsage is false', () => {
