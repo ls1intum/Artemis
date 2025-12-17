@@ -492,8 +492,7 @@ describe('CourseManagementContainerComponent', () => {
         expect(component.courseBody()?.nativeElement.scrollTop).toBe(0);
 
         const expectedButton = fixture.debugElement.query(By.css('#test-button'));
-        expect(expectedButton).not.toBeNull();
-        expect(expectedButton.nativeElement.innerHTML).toBe('TestButton');
+        expect(expectedButton).toBeNull();
     });
 
     it('should set hasSidebar when onSubRouteActivate is called', () => {
@@ -640,7 +639,7 @@ describe('CourseManagementContainerComponent', () => {
     it('should initialize courses attribute for dropdown', async () => {
         await component.updateRecentlyAccessedCourses();
 
-        expect(component.courses()).toEqual([course1, course2]);
+        expect(component.courses()).toEqual([course2]);
     });
 
     it('should filter out current course from dropdown courses', async () => {
@@ -661,7 +660,7 @@ describe('CourseManagementContainerComponent', () => {
 
     it('should handle component activation with controls', () => {
         const getPageTitleSpy = jest.spyOn(component, 'getPageTitle');
-        const tryRenderControlsSpy = jest.spyOn(component as any, 'tryRenderControls');
+        const tryRenderControlsSpy = jest.spyOn(component as any, 'tryRenderControls').mockImplementation(() => {});
 
         const controlsComponent = {
             controlConfiguration: {

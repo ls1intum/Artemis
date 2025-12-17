@@ -104,17 +104,16 @@ export class LectureComponent implements OnInit, OnDestroy {
     faPuzzlePiece = faPuzzlePiece;
     faFilter = faFilter;
     faSort = faSort;
-    lectureIngestionEnabled = false;
 
     protected readonly IngestionState = IngestionState;
 
     ngOnInit() {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
-        this.irisEnabled = this.profileService.isProfileActive(PROFILE_IRIS);
-        if (this.irisEnabled) {
-            this.irisSettingsService.getCombinedCourseSettings(this.courseId).subscribe((settings) => {
-                this.lectureIngestionEnabled = settings?.irisLectureIngestionSettings?.enabled || false;
-                if (this.lectureIngestionEnabled && this.lectures?.length) {
+        const irisProfileActive = this.profileService.isProfileActive(PROFILE_IRIS);
+        if (irisProfileActive) {
+            this.irisSettingsService.getCourseSettingsWithRateLimit(this.courseId).subscribe((response) => {
+                this.irisEnabled = response?.settings?.enabled || false;
+                if (this.irisEnabled && this.lectures?.length) {
                     this.updateIngestionStates();
                 }
             });
@@ -202,7 +201,7 @@ export class LectureComponent implements OnInit, OnDestroy {
                         Object.assign(lecture, lectureData);
                         return lecture;
                     });
-                    if (this.lectureIngestionEnabled) {
+                    if (this.irisEnabled) {
                         this.updateIngestionStates();
                     }
                     this.applyFilters();

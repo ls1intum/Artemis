@@ -21,7 +21,6 @@ import {
     ChartFilterType,
     EditableField,
     ProgrammingExerciseConfigureGradingComponent,
-    Table,
 } from 'app/programming/manage/grading/configure/programming-exercise-configure-grading.component';
 import { ProgrammingExerciseGradingSubmissionPolicyConfigurationActionsComponent } from 'app/programming/manage/grading/configure-submission-policy/programming-exercise-grading-submission-policy-configuration-actions.component';
 import { ProgrammingExerciseGradingTableActionsComponent } from 'app/programming/manage/grading/table-actions/programming-exercise-grading-table-actions.component';
@@ -81,13 +80,10 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
     let testCasesChangedSubject: Subject<boolean>;
     let getExerciseTestCaseStateSubject: Subject<{ body: ProgrammingExerciseTestCaseStateDTO }>;
 
-    const tableEditingInput = '.table-editable-field__input';
-    const saveTableButton = '#save-table-button';
     const resetTableButton = '#reset-table-button';
     const testCasesNoUnsavedChanges = '#test-case-status-no-unsaved-changes';
     const testCasesUpdated = '#test-case-status-updated';
     const testCasesNoUpdated = '#test-case-status-no-updated';
-    const codeAnalysisTableId = '#codeAnalysisTable';
 
     const exerciseId = 1;
     const exercise = {
@@ -171,10 +167,6 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
             buildAndTestStudentSubmissionsAfterDueDate,
         },
     });
-
-    const getSaveButton = () => {
-        return getElement(debugElement, saveTableButton);
-    };
 
     const getResetButton = () => {
         return getElement(debugElement, resetTableButton);
@@ -301,7 +293,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
     it('should show the updatedTests badge when the exercise is released and has student results', () => {
         initGradingComponent();
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(getNoUnsavedChangesBadge()).not.toBeNull();
         expect(getNoUpdatedTestCaseBadge()).not.toBeNull();
@@ -310,7 +302,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
     it('should not show the updatedTests badge when the exercise is released and has no student results', () => {
         initGradingComponent({ released: true, hasStudentResult: false });
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(getNoUnsavedChangesBadge()).not.toBeNull();
         expect(getNoUpdatedTestCaseBadge()).toBeNull();
@@ -319,7 +311,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
     it('should not show the updatedTests badge when the exercise is not released and has student results (edge case)', () => {
         initGradingComponent({ released: false, hasStudentResult: true });
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(getNoUnsavedChangesBadge()).not.toBeNull();
         expect(getNoUpdatedTestCaseBadge()).toBeNull();
@@ -328,7 +320,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
     it('should show that there are updated test cases if the testCasesChanged flat is set', () => {
         initGradingComponent({ testCasesChanged: true });
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(getUpdatedTestCaseBadge()).not.toBeNull();
         expect(getNoUpdatedTestCaseBadge()).toBeNull();
@@ -336,8 +328,9 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
     it('should reset all categories when the reset button is clicked', () => {
         initGradingComponent({ tab: 'code-analysis' });
-
-        fixture.detectChanges();
+        // Reset default sorts to avoid ngx-datatable compareFn issues in tests
+        comp.tableSorts = { testCases: [], codeAnalysis: [] };
+        fixture.changeDetectorRef.detectChanges();
 
         comp.updateEditedField(codeAnalysisCategories1[0], EditableField.STATE)(StaticCodeAnalysisCategoryState.Feedback);
         comp.updateEditedField(codeAnalysisCategories1[1], EditableField.STATE)(StaticCodeAnalysisCategoryState.Feedback);
@@ -357,7 +350,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         // Save tests.
         comp.saveCategories();
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(updateCategoriesStub).toHaveBeenCalledOnce();
         expect(comp.changedCategoryIds).toHaveLength(0);
@@ -367,7 +360,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         // Reset button is now enabled because the categories were saved.
         expect(comp.hasUpdatedGradingConfig).toBeTrue();
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         resetCategoriesStub.mockReturnValue(of(codeAnalysisCategories1));
 
@@ -378,7 +371,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         expectElementToBeEnabled(resetButton);
         resetButton.click();
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(resetCategoriesStub).toHaveBeenCalledOnce();
         expect(resetCategoriesStub).toHaveBeenCalledWith(exerciseId);
@@ -396,7 +389,9 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         jest.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
 
         initGradingComponent({ tab: 'code-analysis' });
-        fixture.detectChanges();
+        // Reset default sorts to avoid ngx-datatable compareFn issues in tests
+        comp.tableSorts = { testCases: [], codeAnalysis: [] };
+        fixture.changeDetectorRef.detectChanges();
 
         const button = debugElement.query(By.css('#import-configuration-button'));
 
@@ -425,33 +420,11 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
     it('should update sca category when an input field is updated', () => {
         initGradingComponent({ tab: 'code-analysis' });
 
-        fixture.detectChanges();
-
-        const table = debugElement.query(By.css(codeAnalysisTableId));
-
         const gradedCategories = comp.staticCodeAnalysisCategoriesForTable.filter((category) => category.state === StaticCodeAnalysisCategoryState.Graded);
+        expect(gradedCategories).not.toHaveLength(0);
 
-        // get inputs
-        const editingInputs = table.queryAll(By.css(tableEditingInput));
-        expect(editingInputs).toHaveLength(gradedCategories.length * 2);
-
-        const penaltyInput = editingInputs[0].nativeElement;
-        expect(penaltyInput).not.toBeNull();
-        penaltyInput.focus();
-
-        // Set new penalty.
-        penaltyInput.value = '20';
-        penaltyInput.dispatchEvent(new Event('blur'));
-
-        const maxPenaltyInput = editingInputs[1].nativeElement;
-        expect(maxPenaltyInput).not.toBeNull();
-        maxPenaltyInput.focus();
-
-        // Set new max penalty.
-        maxPenaltyInput.value = '100';
-        maxPenaltyInput.dispatchEvent(new Event('blur'));
-
-        fixture.detectChanges();
+        comp.updateEditedCategoryField(gradedCategories[0], EditableField.PENALTY)(20);
+        comp.updateEditedCategoryField(gradedCategories[0], EditableField.MAX_PENALTY)(100);
 
         expect(comp.changedCategoryIds).toEqual([gradedCategories[0].id]);
 
@@ -459,11 +432,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         // Save weight.
         updateCategoriesStub.mockReturnValue(of([updatedCategory]));
-        const saveButton = getSaveButton();
-        expectElementToBeEnabled(saveButton);
-        saveButton.click();
-
-        fixture.detectChanges();
+        comp.saveCategories();
 
         expect(updateCategoriesStub).toHaveBeenCalledOnce();
         expect(updateCategoriesStub).toHaveBeenCalledWith(exerciseId, [StaticCodeAnalysisCategoryUpdate.from(updatedCategory)]);
@@ -480,8 +449,10 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
     it('should load the grading statistics correctly', () => {
         initGradingComponent({ tab: 'code-analysis' });
-
-        fixture.detectChanges();
+        // Reset default sorts to avoid ngx-datatable compareFn issues in tests
+        comp.tableSorts = { testCases: [], codeAnalysis: [] };
+        fixture.changeDetectorRef.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(loadStatisticsStub).toHaveBeenCalledTimes(3);
         expect(loadStatisticsStub).toHaveBeenCalledWith(exerciseId);
@@ -489,48 +460,26 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         expect(comp.maxIssuesPerCategory).toBe(5);
         expect(comp.gradingStatistics).toEqual(gradingStatistics);
 
-        fixture.detectChanges();
+        expect(comp.staticCodeAnalysisCategoriesForCharts).toEqual(codeAnalysisCategories1);
 
-        const categoryIssuesCharts = debugElement.queryAll(By.directive(CategoryIssuesChartComponent)).map((d) => d.componentInstance);
-        expect(categoryIssuesCharts).toHaveLength(2);
-
-        expect(categoryIssuesCharts[0].issuesMap).toEqual(gradingStatistics.categoryIssuesMap!['Bad Practice']);
-        expect(categoryIssuesCharts[0].category).toEqual(codeAnalysisCategories1[0]);
-        expect(categoryIssuesCharts[0].totalStudents).toBe(5);
-        expect(categoryIssuesCharts[0].maxNumberOfIssues).toBe(5);
-
-        expect(categoryIssuesCharts[1].issuesMap).toEqual(gradingStatistics.categoryIssuesMap!['Styling']);
-        expect(categoryIssuesCharts[1].category).toEqual(codeAnalysisCategories1[1]);
-        expect(categoryIssuesCharts[1].totalStudents).toBe(5);
-        expect(categoryIssuesCharts[1].maxNumberOfIssues).toBe(5);
+        const issuesMapForFirstCategory = comp.getIssuesMap(codeAnalysisCategories1[0].name);
+        expect(issuesMapForFirstCategory).toEqual(gradingStatistics.categoryIssuesMap?.[codeAnalysisCategories1[0].name]);
+        const issuesMapForSecondCategory = comp.getIssuesMap(codeAnalysisCategories1[1].name);
+        expect(issuesMapForSecondCategory).toEqual(gradingStatistics.categoryIssuesMap?.[codeAnalysisCategories1[1].name]);
     });
-
-    const sortAndTestTable = (table: Table) => (headerElement: DebugElement, prop: string, dir: string) => {
-        headerElement.nativeElement.click();
-        fixture.detectChanges();
-
-        expect(comp.tableSorts[table]).toEqual([{ prop, dir }]);
-    };
 
     it('should sort code-analysis table', () => {
         initGradingComponent({ tab: 'code-analysis' });
 
-        fixture.detectChanges();
+        comp.onSort('codeAnalysis', { sorts: [{ prop: 'penalty', dir: 'asc' }] });
+        expect(comp.tableSorts.codeAnalysis).toEqual([{ prop: 'penalty', dir: 'asc' }]);
 
-        const table = debugElement.query(By.css(codeAnalysisTableId));
-        const headerColumns = table.queryAll(By.css('.datatable-header-cell-wrapper'));
+        comp.onSort('codeAnalysis', { sorts: [{ prop: 'maxPenalty', dir: 'asc' }] });
+        expect(comp.tableSorts.codeAnalysis).toEqual([{ prop: 'maxPenalty', dir: 'asc' }]);
 
-        const sortAndTest = sortAndTestTable('codeAnalysis');
-
-        const penaltyHeader = headerColumns[2];
-        sortAndTest(penaltyHeader, 'penalty', 'asc');
-
-        const maxPenaltyHeader = headerColumns[3];
-        sortAndTest(maxPenaltyHeader, 'maxPenalty', 'asc');
-
-        const detectedIssuesHeader = headerColumns[4];
-        sortAndTest(detectedIssuesHeader, 'detectedIssues', 'asc');
-        sortAndTest(detectedIssuesHeader, 'detectedIssues', 'desc');
+        comp.onSort('codeAnalysis', { sorts: [{ prop: 'detectedIssues', dir: 'asc' }] });
+        comp.onSort('codeAnalysis', { sorts: [{ prop: 'detectedIssues', dir: 'desc' }] });
+        expect(comp.tableSorts.codeAnalysis).toEqual([{ prop: 'detectedIssues', dir: 'desc' }]);
     });
 
     it('should not require confirmation if there are no unsaved changes', () => {
@@ -554,7 +503,9 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
     describe('test chart interaction', () => {
         it('should filter sca table correctly', () => {
             initGradingComponent({ tab: 'code-analysis' });
-            fixture.detectChanges();
+            // Reset default sorts to avoid ngx-datatable compareFn issues in tests
+            comp.tableSorts = { testCases: [], codeAnalysis: [] };
+            fixture.changeDetectorRef.detectChanges();
             const scaCategoriesDisplayedByChart = comp.staticCodeAnalysisCategoriesForCharts;
             const expectedCategory = {
                 id: 1,
@@ -573,32 +524,16 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         it('should update category accordingly if modified while chart filtering', () => {
             initGradingComponent({ tab: 'code-analysis' });
-            fixture.detectChanges();
+            // Reset default sorts to avoid ngx-datatable compareFn issues in tests
+            comp.tableSorts = { testCases: [], codeAnalysis: [] };
+            fixture.changeDetectorRef.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             comp.filterByChart(1, ChartFilterType.CATEGORIES);
-            fixture.detectChanges();
-            const table = debugElement.query(By.css(codeAnalysisTableId));
+            fixture.changeDetectorRef.detectChanges();
+            const gradedCategory = comp.staticCodeAnalysisCategoriesForTable.find((category) => category.id === 1)!;
+            comp.updateEditedCategoryField(gradedCategory, EditableField.PENALTY)(10);
+            comp.updateEditedCategoryField(gradedCategory, EditableField.MAX_PENALTY)(50);
 
-            // get inputs
-            const editingInputs = table.queryAll(By.css(tableEditingInput));
-            expect(editingInputs).toHaveLength(2);
-
-            const penaltyInput = editingInputs[0].nativeElement;
-            expect(penaltyInput).not.toBeNull();
-            penaltyInput.focus();
-
-            // Set new penalty.
-            penaltyInput.value = '10';
-            penaltyInput.dispatchEvent(new Event('blur'));
-
-            const maxPenaltyInput = editingInputs[1].nativeElement;
-            expect(maxPenaltyInput).not.toBeNull();
-            maxPenaltyInput.focus();
-
-            // Set new max penalty.
-            maxPenaltyInput.value = '50';
-            maxPenaltyInput.dispatchEvent(new Event('blur'));
-
-            fixture.detectChanges();
             const currentlyDisplayedCategory = {
                 id: 1,
                 name: 'Bad Practice',

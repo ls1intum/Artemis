@@ -81,6 +81,6 @@ describe('GenericUpdateTextPropertyDialog', () => {
             maxPropertyLength,
             translationKeys,
         });
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
     }
 });

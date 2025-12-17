@@ -119,7 +119,6 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
     irisEnabled = false;
-    lectureIngestionEnabled = false;
     routerEditLinksBase: { [key: string]: string } = {
         [LectureUnitType.ATTACHMENT_VIDEO]: 'attachment-video-units',
         [LectureUnitType.TEXT]: 'text-units',
@@ -186,11 +185,11 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     }
 
     initializeProfileInfo() {
-        this.irisEnabled = this.profileService.isProfileActive(PROFILE_IRIS);
-        if (this.irisEnabled && this.lecture.course && this.lecture.course.id) {
-            this.irisSettingsService.getCombinedCourseSettings(this.lecture.course.id).subscribe((settings) => {
-                this.lectureIngestionEnabled = settings?.irisLectureIngestionSettings?.enabled || false;
-                if (this.lectureIngestionEnabled) {
+        const irisProfileActive = this.profileService.isProfileActive(PROFILE_IRIS);
+        if (irisProfileActive && this.lecture.course && this.lecture.course.id) {
+            this.irisSettingsService.getCourseSettingsWithRateLimit(this.lecture.course.id).subscribe((response) => {
+                this.irisEnabled = response?.settings?.enabled || false;
+                if (this.irisEnabled) {
                     this.updateIngestionStates();
                 }
             });
