@@ -162,12 +162,6 @@
                     </div>
                 </div>
             </div>
-            @if (showTranscriptionPendingWarning()) {
-                <div class="alert alert-warning mt-3 mb-3" role="alert">
-                    <fa-icon [icon]="faQuestionCircle" />
-                    <span jhiTranslate="artemisApp.attachmentVideoUnit.transcription.pendingWarning"></span>
-                </div>
-            }
             <div class="row">
                 <div class="col-12">
                     <button id="submitButton" class="btn btn-primary" type="submit" [disabled]="!isFormValid()">

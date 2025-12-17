@@ -20,7 +20,7 @@ import { OnlineUnitFormData } from 'app/lecture/manage/lecture-units/online-unit
 import { AttachmentVideoUnitFormData } from 'app/lecture/manage/lecture-units/attachment-video-unit-form/attachment-video-unit-form.component';
 import { OnlineUnit } from 'app/lecture/shared/entities/lecture-unit/onlineUnit.model';
 import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachment.model';
-import { AttachmentVideoUnit, LectureTranscriptionDTO } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
+import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { objectToJsonBlob } from 'app/shared/util/blob-util';
 import { CreateExerciseUnitComponent } from 'app/lecture/manage/lecture-units/create-exercise-unit/create-exercise-unit.component';
 import { LectureUpdateUnitsComponent } from 'app/lecture/manage/lecture-units/lecture-units.component';
@@ -28,8 +28,6 @@ import { CompetencyLectureUnitLink } from 'app/atlas/shared/entities/competency.
 import { UnitCreationCardComponent } from 'app/lecture/manage/lecture-units/unit-creation-card/unit-creation-card.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { LectureTranscriptionService } from 'app/lecture/manage/services/lecture-transcription.service';
-import { AccountService } from 'app/core/auth/account.service';
 import { TextUnitFormComponent } from 'app/lecture/manage/lecture-units/text-unit-form/text-unit-form.component';
 import { OnlineUnitFormComponent } from 'app/lecture/manage/lecture-units/online-unit-form/online-unit-form.component';
 import { AttachmentVideoUnitFormComponent } from 'app/lecture/manage/lecture-units/attachment-video-unit-form/attachment-video-unit-form.component';
@@ -42,8 +40,6 @@ MockInstance(AttachmentVideoUnitFormComponent, 'datePickerComponent', signal(und
 describe('LectureUpdateUnitsComponent', () => {
     let wizardUnitComponentFixture: ComponentFixture<LectureUpdateUnitsComponent>;
     let wizardUnitComponent: LectureUpdateUnitsComponent;
-    let lectureTranscriptionService: LectureTranscriptionService;
-    let accountService: AccountService;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -62,8 +58,6 @@ describe('LectureUpdateUnitsComponent', () => {
                 MockProvider(OnlineUnitService),
                 MockProvider(AttachmentVideoUnitService),
                 MockProvider(LectureUnitManagementComponent),
-                MockProvider(LectureTranscriptionService),
-                MockProvider(AccountService),
                 { provide: Router, useClass: MockRouter },
                 { provide: ActivatedRoute, useValue: { queryParams: of({}) } },
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -74,8 +68,6 @@ describe('LectureUpdateUnitsComponent', () => {
         wizardUnitComponent = wizardUnitComponentFixture.componentInstance;
         wizardUnitComponent.lecture = new Lecture();
         wizardUnitComponent.lecture.id = 1;
-        lectureTranscriptionService = TestBed.inject(LectureTranscriptionService);
-        accountService = TestBed.inject(AccountService);
     });
 
     afterEach(() => {
@@ -597,8 +589,6 @@ describe('LectureUpdateUnitsComponent', () => {
     }));
 
     it('should open edit attachment form when clicked', fakeAsync(() => {
-        jest.spyOn(lectureTranscriptionService, 'getTranscription').mockReturnValue(of(undefined));
-        jest.spyOn(lectureTranscriptionService, 'getTranscriptionStatus').mockReturnValue(of(undefined));
         const attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
         jest.spyOn(attachmentVideoUnitService, 'fetchAndUpdatePlaylistUrl').mockImplementation((_, formData) => of(formData));
 
@@ -642,76 +632,6 @@ describe('LectureUpdateUnitsComponent', () => {
         expect(wizardUnitComponent.isExerciseUnitFormOpen()).toBeTrue();
     }));
 
-    it('should fetch transcription when starting to edit a video unit as admin', fakeAsync(() => {
-        wizardUnitComponentFixture.detectChanges();
-        tick();
-
-        const attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
-        jest.spyOn(attachmentVideoUnitService, 'fetchAndUpdatePlaylistUrl').mockImplementation((_, formData) => of(formData));
-        jest.spyOn(accountService, 'isAdmin').mockReturnValue(true);
-
-        const attachment = new Attachment();
-        attachment.id = 1;
-        attachment.version = 1;
-        attachment.attachmentType = AttachmentType.FILE;
-        attachment.releaseDate = dayjs().year(2010).month(3).date(5);
-        attachment.name = 'test';
-        attachment.link = '/path/to/file';
-
-        const attachmentVideoUnit = new AttachmentVideoUnit();
-        attachmentVideoUnit.id = 1;
-        attachmentVideoUnit.attachment = attachment;
-
-        const transcript: LectureTranscriptionDTO = {
-            lectureUnitId: 1,
-            language: 'en',
-            segments: [],
-        };
-
-        const getTranscriptionSpy = jest.spyOn(lectureTranscriptionService, 'getTranscription').mockReturnValue(of(transcript));
-        const getTranscriptionStatusSpy = jest.spyOn(lectureTranscriptionService, 'getTranscriptionStatus').mockReturnValue(of(undefined));
-
-        wizardUnitComponent.startEditLectureUnit(attachmentVideoUnit);
-        tick();
-
-        wizardUnitComponentFixture.whenStable().then(() => {
-            expect(wizardUnitComponent.isAttachmentVideoUnitFormOpen()).toBeTrue();
-            expect(getTranscriptionSpy).toHaveBeenCalledWith(attachmentVideoUnit.id);
-            expect(getTranscriptionStatusSpy).toHaveBeenCalledWith(attachmentVideoUnit.id);
-            expect(wizardUnitComponent.attachmentVideoUnitFormData?.transcriptionProperties?.videoTranscription).toBe(JSON.stringify(transcript));
-        });
-    }));
-
-    it('should not fetch transcription when starting to edit a video unit as non-admin', fakeAsync(() => {
-        wizardUnitComponentFixture.detectChanges();
-        tick();
-
-        const attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
-        jest.spyOn(attachmentVideoUnitService, 'fetchAndUpdatePlaylistUrl').mockImplementation((_, formData) => of(formData));
-
-        const attachment = new Attachment();
-        attachment.id = 1;
-        attachment.version = 1;
-        attachment.attachmentType = AttachmentType.FILE;
-        attachment.releaseDate = dayjs().year(2010).month(3).date(5);
-        attachment.name = 'test';
-        attachment.link = '/path/to/file';
-
-        const attachmentVideoUnit = new AttachmentVideoUnit();
-        attachmentVideoUnit.id = 1;
-        attachmentVideoUnit.attachment = attachment;
-
-        jest.spyOn(accountService, 'isAdmin').mockReturnValue(false);
-        const getTranscriptionSpy = jest.spyOn(lectureTranscriptionService, 'getTranscription');
-
-        wizardUnitComponent.startEditLectureUnit(attachmentVideoUnit);
-
-        wizardUnitComponentFixture.whenStable().then(() => {
-            expect(wizardUnitComponent.isAttachmentVideoUnitFormOpen()).toBeTrue();
-            expect(getTranscriptionSpy).not.toHaveBeenCalled();
-        });
-    }));
-
     it('should fetch playlist URL when starting to edit a video unit with videoSource', fakeAsync(() => {
         wizardUnitComponentFixture.detectChanges();
         tick();
@@ -744,13 +664,10 @@ describe('LectureUpdateUnitsComponent', () => {
             fileProperties: {
                 fileName: attachmentVideoUnit.attachment?.link,
             },
-            transcriptionStatus: undefined,
             playlistUrl: playlistUrl,
         };
 
         const fetchAndUpdatePlaylistUrlSpy = jest.spyOn(attachmentVideoUnitService, 'fetchAndUpdatePlaylistUrl').mockReturnValue(of(expectedFormData));
-
-        jest.spyOn(accountService, 'isAdmin').mockReturnValue(false);
 
         wizardUnitComponent.startEditLectureUnit(attachmentVideoUnit);
         tick();
@@ -792,24 +709,19 @@ describe('LectureUpdateUnitsComponent', () => {
             fileProperties: {
                 fileName: attachmentVideoUnit.attachment?.link,
             },
-            transcriptionStatus: undefined,
         };
 
         const fetchAndUpdatePlaylistUrlSpy = jest.spyOn(attachmentVideoUnitService, 'fetchAndUpdatePlaylistUrl').mockReturnValue(of(originalFormData));
-
-        jest.spyOn(accountService, 'isAdmin').mockReturnValue(false);
 
         wizardUnitComponent.startEditLectureUnit(attachmentVideoUnit);
         tick();
 
         expect(fetchAndUpdatePlaylistUrlSpy).toHaveBeenCalledWith(attachmentVideoUnit.videoSource, expect.anything());
 
-        wizardUnitComponentFixture.whenStable().then(() => {
-            // Should still open the form even if playlist URL fetch fails
-            expect(wizardUnitComponent.isAttachmentVideoUnitFormOpen()).toBeTrue();
-            // playlistUrl should not be set
-            expect(wizardUnitComponent.attachmentVideoUnitFormData?.playlistUrl).toBeUndefined();
-        });
+        // Should still open the form even if playlist URL fetch fails
+        expect(wizardUnitComponent.isAttachmentVideoUnitFormOpen()).toBeTrue();
+        // playlistUrl should not be set
+        expect(wizardUnitComponent.attachmentVideoUnitFormData?.playlistUrl).toBeUndefined();
     }));
 
     it('should not fetch playlist URL when starting to edit a video unit without videoSource', fakeAsync(() => {
@@ -832,108 +744,12 @@ describe('LectureUpdateUnitsComponent', () => {
 
         const fetchAndUpdatePlaylistUrlSpy = jest.spyOn(attachmentVideoUnitService, 'fetchAndUpdatePlaylistUrl').mockImplementation((_, formData) => of(formData));
 
-        jest.spyOn(accountService, 'isAdmin').mockReturnValue(false);
-
         wizardUnitComponent.startEditLectureUnit(attachmentVideoUnit);
         tick();
-
-        // It might be called with undefined, depending on implementation, but the key is it shouldn't trigger a subscription that fails
-        // In our implementation: this.attachmentVideoUnitService.fetchAndUpdatePlaylistUrl(this.currentlyProcessedAttachmentVideoUnit.videoSource, ...).subscribe(...)
-        // So it IS called. We just need to make sure it returns something safe if called, or check that it handles undefined correctly.
-        // Actually, the implementation calls it unconditionally now.
-        // So we should mock it to return the form data.
-
-        // However, the test says "should not fetch playlist URL".
-        // If we want to strictly test that it doesn't make an HTTP call, we'd need to test the service.
-        // Here we are testing the component. The component DOES call the service method now.
-        // So we should expect it to be called.
-
-        // Wait, if the component calls it with undefined videoSource, the service method returns of(currentFormData).
-        // So we should mock it to return the form data.
-
-        const expectedFormData: AttachmentVideoUnitFormData = {
-            formProperties: {
-                name: attachmentVideoUnit.name,
-                description: attachmentVideoUnit.description,
-                releaseDate: attachmentVideoUnit.releaseDate,
-                version: attachmentVideoUnit.attachment?.version,
-                videoSource: undefined,
-            },
-            fileProperties: {
-                fileName: attachmentVideoUnit.attachment?.link,
-            },
-            transcriptionStatus: undefined,
-        };
-
-        fetchAndUpdatePlaylistUrlSpy.mockReturnValue(of(expectedFormData));
 
         expect(wizardUnitComponent.isAttachmentVideoUnitFormOpen()).toBeTrue();
 
-        // We can verify it was called with undefined
+        // Verify it was called with undefined videoSource
         expect(fetchAndUpdatePlaylistUrlSpy).toHaveBeenCalledWith(undefined, expect.anything());
-    }));
-
-    it('should handle null transcription when editing attachment video unit', fakeAsync(() => {
-        wizardUnitComponentFixture.detectChanges();
-        tick();
-
-        const attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
-        jest.spyOn(attachmentVideoUnitService, 'fetchAndUpdatePlaylistUrl').mockImplementation((_, formData) => of(formData));
-
-        const attachment = new Attachment();
-        attachment.id = 1;
-        attachment.version = 1;
-        attachment.attachmentType = AttachmentType.FILE;
-        attachment.releaseDate = dayjs().year(2010).month(3).date(5);
-        attachment.name = 'test';
-        attachment.link = '/path/to/file';
-
-        const attachmentVideoUnit = new AttachmentVideoUnit();
-        attachmentVideoUnit.id = 1;
-        attachmentVideoUnit.attachment = attachment;
-
-        const getTranscriptionSpy = jest.spyOn(lectureTranscriptionService, 'getTranscription').mockReturnValue(of(null as any));
-        const getTranscriptionStatusSpy = jest.spyOn(lectureTranscriptionService, 'getTranscriptionStatus').mockReturnValue(of(null as any));
-        jest.spyOn(accountService, 'isAdmin').mockReturnValue(true);
-
-        wizardUnitComponent.startEditLectureUnit(attachmentVideoUnit);
-
-        wizardUnitComponentFixture.whenStable().then(() => {
-            expect(wizardUnitComponent.isAttachmentVideoUnitFormOpen()).toBeTrue();
-            expect(getTranscriptionSpy).toHaveBeenCalledWith(attachmentVideoUnit.id);
-            expect(getTranscriptionStatusSpy).toHaveBeenCalledWith(attachmentVideoUnit.id);
-        });
-    }));
-
-    it('should handle transcription status when editing attachment video unit', fakeAsync(() => {
-        wizardUnitComponentFixture.detectChanges();
-        tick();
-
-        const attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
-        jest.spyOn(attachmentVideoUnitService, 'fetchAndUpdatePlaylistUrl').mockImplementation((_, formData) => of(formData));
-
-        const attachment = new Attachment();
-        attachment.id = 1;
-        attachment.version = 1;
-        attachment.attachmentType = AttachmentType.FILE;
-        attachment.releaseDate = dayjs().year(2010).month(3).date(5);
-        attachment.name = 'test';
-        attachment.link = '/path/to/file';
-
-        const attachmentVideoUnit = new AttachmentVideoUnit();
-        attachmentVideoUnit.id = 1;
-        attachmentVideoUnit.attachment = attachment;
-
-        const transcriptionStatus = { status: 'PENDING', progress: 50 };
-        jest.spyOn(lectureTranscriptionService, 'getTranscription').mockReturnValue(of(undefined));
-        jest.spyOn(lectureTranscriptionService, 'getTranscriptionStatus').mockReturnValue(of(transcriptionStatus as any));
-        jest.spyOn(accountService, 'isAdmin').mockReturnValue(true);
-
-        wizardUnitComponent.startEditLectureUnit(attachmentVideoUnit);
-
-        wizardUnitComponentFixture.whenStable().then(() => {
-            expect(wizardUnitComponent.isAttachmentVideoUnitFormOpen()).toBeTrue();
-            expect(wizardUnitComponent.attachmentVideoUnitFormData?.transcriptionStatus).toEqual(transcriptionStatus);
-        });
     }));
 });

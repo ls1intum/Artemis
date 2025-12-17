@@ -14,13 +14,11 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
-import { TranscriptionStatus } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 
 export interface AttachmentVideoUnitFormData {
     formProperties: FormProperties;
     fileProperties: FileProperties;
     playlistUrl?: string;
-    transcriptionStatus?: string;
 }
 
 // matches structure of the reactive form
@@ -95,14 +93,12 @@ export class AttachmentVideoUnitFormComponent {
     protected readonly faQuestionCircle = faQuestionCircle;
     protected readonly faTimes = faTimes;
     protected readonly faArrowLeft = faArrowLeft;
-    protected readonly TranscriptionStatus = TranscriptionStatus;
 
     protected readonly allowedFileExtensions = ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE;
     protected readonly acceptedFileExtensionsFileBrowser = ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER;
 
     private readonly attachmentVideoUnitService = inject(AttachmentVideoUnitService);
     playlistUrl = signal<string | undefined>(undefined);
-    transcriptionStatus = signal<TranscriptionStatus | undefined>(undefined);
 
     formData = input<AttachmentVideoUnitFormData>();
     isEditMode = input<boolean>(false);
@@ -133,15 +129,11 @@ export class AttachmentVideoUnitFormComponent {
             const formData = this.formData();
             if (this.isEditMode() && formData) {
                 this.setFormValues(formData);
-                const newStatus = formData.transcriptionStatus ? (formData.transcriptionStatus as TranscriptionStatus) : undefined;
-                this.transcriptionStatus.set(newStatus);
 
                 // Set playlist URL if available from formData (for existing videos)
                 if (formData.playlistUrl) {
                     this.playlistUrl.set(formData.playlistUrl);
                 }
-            } else {
-                this.transcriptionStatus.set(undefined);
             }
         });
     }
@@ -159,11 +151,6 @@ export class AttachmentVideoUnitFormComponent {
     private readonly statusChanges = toSignal(this.form.statusChanges ?? 'INVALID');
 
     readonly videoSourceSignal = toSignal(this.videoSourceControl!.valueChanges, { initialValue: this.videoSourceControl!.value });
-
-    readonly showTranscriptionPendingWarning = computed(() => {
-        const status = this.transcriptionStatus();
-        return status === TranscriptionStatus.PENDING || status === TranscriptionStatus.PROCESSING;
-    });
 
     isFormValid = computed(() => {
         return this.statusChanges() === 'VALID' && !this.isFileTooBig() && this.datePickerComponent()?.isValid() && (!!this.fileName() || !!this.videoSourceSignal());
