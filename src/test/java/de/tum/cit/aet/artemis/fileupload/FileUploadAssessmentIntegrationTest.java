@@ -43,6 +43,7 @@ import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
 import de.tum.cit.aet.artemis.fileupload.dto.FileUploadAssessmentDTO;
+import de.tum.cit.aet.artemis.fileupload.dto.UpdateFileUploadExercisesDTO;
 import de.tum.cit.aet.artemis.fileupload.util.FileUploadExerciseFactory;
 import de.tum.cit.aet.artemis.programming.dto.ResultDTO;
 
@@ -66,7 +67,7 @@ class FileUploadAssessmentIntegrationTest extends AbstractFileUploadIntegrationT
     private List<Feedback> exerciseWithSGI() throws Exception {
         exerciseUtilService.addGradingInstructionsToExercise(afterReleaseFileUploadExercise);
         FileUploadExercise receivedFileUploadExercise = request.putWithResponseBody("/api/fileupload/file-upload-exercises/" + afterReleaseFileUploadExercise.getId(),
-                afterReleaseFileUploadExercise, FileUploadExercise.class, HttpStatus.OK);
+                UpdateFileUploadExercisesDTO.of(afterReleaseFileUploadExercise), FileUploadExercise.class, HttpStatus.OK);
         return ParticipationFactory.applySGIonFeedback(receivedFileUploadExercise);
     }
 

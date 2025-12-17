@@ -169,6 +169,14 @@
             "notSuperAdminApproved": "Your passkey is not approved by a super admin. Double check in the user settings whether your passkey was super admin approved and re-login in with the respective passkey.",
             "loginRequiredButFeatureNotEnabled": "Passkey login is required but the feature is not enabled on this Artemis instance. Please enable the passkey feature on this Artemis instance."
         },
+        "CourseCompetency": {
+            "wrongCourse": "The competency does not belong to the exercise's course."
+        },
+        "CompetencyExerciseLink": {
+            "isNull": "No competency link was provided.",
+            "competencyMissing": "The competency link must reference a competency.",
+            "courseMissing": "The competency referenced by this link is not associated with a course."
+        },
         "FileUploadExercise": {
             "isNull": "No fileUpload exercise was provided.",
             "fileUploadExerciseTitleInvalid": "The title is not set or is too short.",

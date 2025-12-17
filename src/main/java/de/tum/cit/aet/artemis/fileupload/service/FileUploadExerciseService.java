@@ -187,7 +187,7 @@ public class FileUploadExerciseService {
 
             for (var dto : updateFileUploadExercisesDTO.competencyLinks()) {
                 if (exerciseCourseId != null && dto.courseId() != null && !Objects.equals(exerciseCourseId, dto.courseId())) {
-                    throw new BadRequestAlertException("The competency does not belong to the exercise's course.", ENTITY_NAME, "wrongCourse");
+                    throw new BadRequestAlertException("The competency does not belong to the exercise's course.", "CourseCompetency", "CourseCompetency.wrongCourse");
                 }
 
                 var competencyDto = dto.courseCompetencyDTO();
