@@ -1,27 +1,31 @@
 @if ((alerts?.length ?? 0) >= 2) {
-    <div class="dismiss-all alert-animation-enter">
-        <div class="btn btn-secondary" (click)="alertService.closeAll()">
-            <fa-icon [icon]="times" />
-            <span jhiTranslate="artemisApp.alerts.dismissAll"></span>
+    <div class="alert-animation-wrapper" animate.enter="alert-entering" animate.leave="alert-leaving">
+        <div class="dismiss-all">
+            <div class="btn btn-secondary" (click)="alertService.closeAll()">
+                <fa-icon [icon]="times" />
+                <span jhiTranslate="artemisApp.alerts.dismissAll"></span>
+            </div>
         </div>
     </div>
 }
 @for (alert of alerts; track alert) {
-    <div class="alert-wrap alert-animation-enter">
-        <div class="alert-inner" [ngClass]="alert.type.containerClassName">
-            <div class="left">
-                <fa-icon [icon]="alert.type.icon" size="2x" />
-                <div class="message" [innerHTML]="alert.message"></div>
+    <div class="alert-animation-wrapper" animate.enter="alert-entering" animate.leave="alert-leaving">
+        <div class="alert-wrap">
+            <div class="alert-inner" [ngClass]="alert.type.containerClassName">
+                <div class="left">
+                    <fa-icon [icon]="alert.type.icon" size="2x" />
+                    <div class="message" [innerHTML]="alert.message"></div>
+                </div>
+                @if (alert.action) {
+                    <button type="button" [ngClass]="'btn ' + alert.type.buttonClassName" (click)="alert.action.callback(alert)">{{ alert.action.label }}</button>
+                }
+                @if (alert.dismissible) {
+                    <jhi-close-circle (click)="alert.close()" />
+                }
+                @if ((alert?.timeout || 0) > 0) {
+                    <div class="time-bar" [ngStyle]="{ animationDuration: alert.timeout + 'ms' }"></div>
+                }
             </div>
-            @if (alert.action) {
-                <button type="button" [ngClass]="'btn ' + alert.type.buttonClassName" (click)="alert.action.callback(alert)">{{ alert.action.label }}</button>
-            }
-            @if (alert.dismissible) {
-                <jhi-close-circle (click)="alert.close()" />
-            }
-            @if ((alert?.timeout || 0) > 0) {
-                <div class="time-bar" [ngStyle]="{ animationDuration: alert.timeout + 'ms' }"></div>
-            }
         </div>
     </div>
 }
