@@ -190,4 +190,37 @@ class IrisChatSessionResourceTest extends AbstractIrisIntegrationTest {
         IrisChatSessionDTO untitledDto = irisChatSessions.stream().filter(session -> session.entityId() == lecture.getId()).findFirst().orElse(null);
         assertThat(untitledDto.title()).isNull();
     }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getAllSessionsForCourse_returnsEmptyWhenIrisDisabledForCourse() throws Exception {
+        User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+
+        // Create sessions with messages (which would normally be returned)
+        saveChatSessionWithMessages(IrisChatSessionFactory.createCourseSessionForUserWithMessages(course, user));
+        saveChatSessionWithMessages(IrisChatSessionFactory.createLectureSessionForUserWithMessages(lecture, user));
+
+        // Disable Iris for the course
+        disableIrisFor(course);
+
+        // Should return empty list when Iris is disabled at course level
+        List<IrisChatSessionDTO> irisChatSessions = request.getList("/api/iris/chat-history/" + course.getId() + "/sessions", HttpStatus.OK, IrisChatSessionDTO.class);
+        assertThat(irisChatSessions).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getSessionForSessionId_returns403WhenIrisDisabledForCourse() throws Exception {
+        User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+
+        // Create and save a valid session
+        IrisCourseChatSession courseSession = IrisChatSessionFactory.createCourseChatSessionForUser(course, user);
+        irisSessionRepository.save(courseSession);
+
+        // Disable Iris for the course
+        disableIrisFor(course);
+
+        // Should return 403 Forbidden when Iris is disabled at course level
+        request.get("/api/iris/chat-history/" + course.getId() + "/session/" + courseSession.getId(), HttpStatus.FORBIDDEN, IrisSession.class);
+    }
 }

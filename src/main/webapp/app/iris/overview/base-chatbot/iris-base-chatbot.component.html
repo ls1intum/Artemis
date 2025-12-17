@@ -251,7 +251,7 @@
         </div>
         @if (error) {
             <div class="client-chat-error">
-                {{ error | artemisTranslate }}
+                {{ error | artemisTranslate: { hours: rateLimitInfo?.rateLimitTimeframeHours } }}
             </div>
         }
         @if (!active) {
