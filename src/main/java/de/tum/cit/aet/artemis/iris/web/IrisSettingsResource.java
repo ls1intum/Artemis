@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
@@ -35,14 +34,10 @@ public class IrisSettingsResource {
 
     private final AuthorizationCheckService authorizationCheckService;
 
-    private final UserRepository userRepository;
-
-    public IrisSettingsResource(CourseRepository courseRepository, IrisSettingsService irisSettingsService, AuthorizationCheckService authorizationCheckService,
-            UserRepository userRepository) {
+    public IrisSettingsResource(CourseRepository courseRepository, IrisSettingsService irisSettingsService, AuthorizationCheckService authorizationCheckService) {
         this.courseRepository = courseRepository;
         this.irisSettingsService = irisSettingsService;
         this.authorizationCheckService = authorizationCheckService;
-        this.userRepository = userRepository;
     }
 
     @GetMapping("courses/{courseId}/iris-settings")
@@ -63,7 +58,7 @@ public class IrisSettingsResource {
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<IrisCourseSettingsWithRateLimitDTO> updateCourseSettings(@PathVariable Long courseId, @Valid @RequestBody IrisCourseSettings update) {
         courseRepository.findByIdElseThrow(courseId);
-        var isAdmin = authorizationCheckService.isAdmin(userRepository.getUserWithGroupsAndAuthorities());
+        var isAdmin = authorizationCheckService.isAdmin();
         var saved = irisSettingsService.updateCourseSettings(courseId, update, isAdmin);
         return ResponseEntity.ok(saved);
     }
