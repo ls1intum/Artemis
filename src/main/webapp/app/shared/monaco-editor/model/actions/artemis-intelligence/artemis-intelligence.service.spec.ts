@@ -8,7 +8,7 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { WebsocketService } from 'app/shared/service/websocket.service';
-import { HyperionReviewAndRefineApiService } from 'app/openapi/api/hyperionReviewAndRefineApi.service';
+import { HyperionProblemStatementApiService } from 'app/openapi/api/hyperionProblemStatementApi.service';
 import { ProblemStatementRewriteResponse } from 'app/openapi/model/problemStatementRewriteResponse';
 import { ConsistencyCheckResponse } from 'app/openapi/model/consistencyCheckResponse';
 import {
@@ -134,7 +134,7 @@ describe('ArtemisIntelligenceService', () => {
                 { provide: WebsocketService, useValue: mockWebsocketService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AlertService, useValue: mockAlertService },
-                { provide: HyperionReviewAndRefineApiService, useValue: mockHyperionApiService },
+                { provide: HyperionProblemStatementApiService, useValue: mockHyperionApiService },
             ],
         });
 

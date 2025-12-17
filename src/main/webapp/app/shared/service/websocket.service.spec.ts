@@ -166,7 +166,9 @@ describe('WebsocketService', () => {
         const resultPromise = firstValueFrom(websocketService.subscribe('/topic/test')!);
         await expect(resultPromise).rejects.toThrow('boom');
         expect(decodeSpy).toHaveBeenCalled();
-        expect(captureExceptionMock).toHaveBeenCalledWith('Failed to decompress message', expect.any(Error));
+        expect(captureExceptionMock).toHaveBeenCalledWith(expect.any(Error), {
+            mechanism: { handled: true, type: 'websocket-decompression', data: { message: 'Failed to decompress message' } },
+        });
     });
 
     it('send does nothing when disconnected', () => {
@@ -210,7 +212,9 @@ describe('WebsocketService', () => {
         });
         websocketService.send('/test', { data: 'x'.repeat(2000) });
         expect(errorSpy).toHaveBeenCalled();
-        expect(captureExceptionMock).toHaveBeenCalledWith('Failed to compress websocket message', expect.any(Error));
+        expect(captureExceptionMock).toHaveBeenCalledWith(expect.any(Error), {
+            mechanism: { handled: true, type: 'websocket-compression', data: { message: 'Failed to compress message' } },
+        });
         expect(rxStomp.publish).toHaveBeenCalledWith({
             destination: '/test',
             body: JSON.stringify({ data: 'x'.repeat(2000) }),

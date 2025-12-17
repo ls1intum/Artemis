@@ -8,7 +8,7 @@
             </button>
         </div>
         <div *titleBarActions class="ms-auto justify-content-end">
-            @if (irisCompetencyGenerationEnabled()) {
+            @if (irisEnabled()) {
                 <a class="btn btn-primary btn-sm" id="generateButton" [routerLink]="['/course-management', courseId(), 'competency-management', 'generate']">
                     <fa-icon [icon]="faRobot" />
                     <span jhiTranslate="artemisApp.competency.manage.generateButton"></span>

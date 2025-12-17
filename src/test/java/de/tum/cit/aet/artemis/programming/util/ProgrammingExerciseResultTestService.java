@@ -8,18 +8,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.after;
 import static org.mockito.Mockito.argThat;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
@@ -168,9 +165,6 @@ public class ProgrammingExerciseResultTestService {
         programmingExerciseStudentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, userPrefix + "student1");
         programmingExerciseStudentParticipationStaticCodeAnalysis = participationUtilService
                 .addStudentParticipationForProgrammingExercise(programmingExerciseWithStaticCodeAnalysis, userPrefix + "student2");
-        var localRepoFile = Files.createTempDirectory(tempPath, "repo").toFile();
-        var repository = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile.toPath(), null);
-        doReturn(repository).when(gitService).getOrCheckoutRepositoryWithTargetPath(any(), any(Path.class), anyBoolean(), anyBoolean());
     }
 
     public void setupProgrammingExerciseForExam(boolean isExamOver) {

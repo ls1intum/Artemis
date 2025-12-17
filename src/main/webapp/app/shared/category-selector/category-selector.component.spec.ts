@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CategorySelectorComponent } from 'app/shared/category-selector/category-selector.component';
-import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
+import { MockComponent, MockPipe } from 'ng-mocks';
 import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
 import { MatAutocompleteModule, MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -9,6 +9,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 
 describe('CategorySelectorComponent', () => {
     let comp: CategorySelectorComponent;
@@ -48,25 +49,16 @@ describe('CategorySelectorComponent', () => {
         category: 'category8',
     } as ExerciseCategory;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            imports: [
-                MockModule(MatAutocompleteModule),
-                MockModule(MatFormFieldModule),
-                MockModule(MatChipsModule),
-                MockModule(MatSelectModule),
-                MockModule(ReactiveFormsModule),
-                MockModule(FormsModule),
-            ],
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [MatAutocompleteModule, MatFormFieldModule, MatChipsModule, MatSelectModule, ReactiveFormsModule, FormsModule, NoopAnimationsModule],
             declarations: [CategorySelectorComponent, MockComponent(ColorSelectorComponent), MockPipe(ArtemisTranslatePipe)],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(CategorySelectorComponent);
-                comp = fixture.componentInstance;
+        }).compileComponents();
 
-                emitSpy = jest.spyOn(comp.selectedCategories, 'emit');
-            });
+        fixture = TestBed.createComponent(CategorySelectorComponent);
+        comp = fixture.componentInstance;
+
+        emitSpy = jest.spyOn(comp.selectedCategories, 'emit');
     });
 
     afterEach(() => {
@@ -76,6 +68,7 @@ describe('CategorySelectorComponent', () => {
     it('should remove category', () => {
         fixture.detectChanges();
         comp.categories = [category1, category2, category3];
+        fixture.changeDetectorRef.detectChanges();
         const cancelColorSelectorSpy = jest.spyOn(comp.colorSelector, 'cancelColorSelector');
         comp.onItemRemove(category2);
 
@@ -112,8 +105,8 @@ describe('CategorySelectorComponent', () => {
     it('should create new item on select', () => {
         comp.categories = [category6];
         comp.existingCategories = [category6, category7, category8];
+        fixture.changeDetectorRef.detectChanges();
         const event = { option: { value: 'category9' } } as MatAutocompleteSelectedEvent;
-        fixture.detectChanges();
         comp.onItemSelect(event);
 
         const categoryColor = comp.categories[1].color;
@@ -126,8 +119,8 @@ describe('CategorySelectorComponent', () => {
     it('should not create new item on select', () => {
         comp.categories = [category6];
         comp.existingCategories = [category7, category8];
+        fixture.changeDetectorRef.detectChanges();
         const event = { option: { value: 'category7' } } as MatAutocompleteSelectedEvent;
-        fixture.detectChanges();
         comp.onItemSelect(event);
 
         expect(comp.categories).toEqual([category6, category7]);
@@ -138,8 +131,8 @@ describe('CategorySelectorComponent', () => {
 
     it('should not create duplicate item on add', () => {
         comp.categories = [category6];
+        fixture.changeDetectorRef.detectChanges();
         const event = { value: 'category6', chipInput: { clear: () => {} } as MatChipInput } as MatChipInputEvent;
-        fixture.detectChanges();
         comp.onItemAdd(event);
 
         expect(comp.categories).toEqual([category6]);
@@ -150,8 +143,8 @@ describe('CategorySelectorComponent', () => {
     it('should save exiting category on add', () => {
         comp.categories = [category6];
         comp.existingCategories = [category7, category8];
+        fixture.changeDetectorRef.detectChanges();
         const event = { value: 'category8', chipInput: { clear: () => {} } as MatChipInput } as MatChipInputEvent;
-        fixture.detectChanges();
         comp.onItemAdd(event);
 
         expect(comp.categories).toEqual([category6, category8]);
@@ -162,8 +155,8 @@ describe('CategorySelectorComponent', () => {
     it('should create new item on add for existing categories', () => {
         comp.categories = [category6];
         comp.existingCategories = [];
+        fixture.changeDetectorRef.detectChanges();
         const event = { value: 'category9', chipInput: { clear: () => {} } as MatChipInput } as MatChipInputEvent;
-        fixture.detectChanges();
         comp.onItemAdd(event);
 
         const categoryColor = comp.categories[1].color;
@@ -174,8 +167,8 @@ describe('CategorySelectorComponent', () => {
 
     it('should create new item on add for empty categories', () => {
         comp.existingCategories = [];
+        fixture.changeDetectorRef.detectChanges();
         const event = { value: 'category6', chipInput: { clear: () => {} } as MatChipInput } as MatChipInputEvent;
-        fixture.detectChanges();
         comp.onItemAdd(event);
 
         const categoryColor = comp.categories[0].color;
