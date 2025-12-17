@@ -93,7 +93,7 @@
             "hasTranscription": "Transkription vollständig",
             "createAttachmentVideoUnits": {
                 "informativeText": {
-                    "firstLine": "Artemis sucht nach der Gliederung (Folie mit Titel 'Outline' und Stichpunkten mit Inhaltsüberschriften) und unterteilt das PDF in Inhalte.",
+                    "firstLine": "Artemis sucht nach der Gliederung (Folie mit Titel 'Outline' und Stichpunkten mit Inhaltsüberschriften) und unterteilt das PDF in mehrere Dateien.",
                     "secondLine": "Artemis erwartet eine Wiederholung der Gliederungsfolie vor jedem Inhaltsabschnitt.",
                     "note": "Hinweis: Du kannst die Informationen bearbeiten, bevor die Inhalte übermittelt werden."
                 },

@@ -139,7 +139,7 @@
             "pdfPreview": {
                 "title": "Anhang",
                 "attachmentIDError": "Ungültiger Anhang oder ungültige Anhangs-ID.",
-                "attachmentVideoUnitIDError": "Ungültige Dateieinheit oder ungültige Dateieinheits-ID.",
+                "attachmentVideoUnitIDError": "Ungültiger Inhalt oder ungültige Inhalts-ID.",
                 "noPDFAvailable": "Kein PDF verfügbar",
                 "cancelButton": "Abbrechen",
                 "removePageButton": "Seiten entfernen",
