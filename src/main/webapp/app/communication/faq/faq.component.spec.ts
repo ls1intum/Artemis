@@ -19,7 +19,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { PROFILE_IRIS } from 'app/app.constants';
-import { IrisCourseSettings } from 'app/iris/shared/entities/settings/iris-settings.model';
+import { IrisCourseSettingsWithRateLimitDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { CustomExerciseCategoryBadgeComponent } from 'app/exercise/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
@@ -281,21 +281,28 @@ describe('FaqComponent', () => {
         expect(alertServiceStub).toHaveBeenCalledOnce();
     });
 
-    it('should set faqIngestionEnabled based on service response', () => {
+    it('should set irisEnabled based on service response', () => {
         faqComponent.faqs = [faq1];
         const profileInfoResponse = {
             activeProfiles: [PROFILE_IRIS],
         } as ProfileInfo;
         const irisSettingsResponse = {
-            irisFaqIngestionSettings: {
+            courseId: faqComponent.courseId,
+            settings: {
                 enabled: true,
+                customInstructions: '',
+                variant: 'default',
+                rateLimit: { requests: 100, timeframeHours: 24 },
             },
-        } as IrisCourseSettings;
+            effectiveRateLimit: { requests: 100, timeframeHours: 24 },
+            applicationRateLimitDefaults: { requests: 50, timeframeHours: 12 },
+        } as IrisCourseSettingsWithRateLimitDTO;
         jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfoResponse);
-        jest.spyOn(irisSettingsService, 'getCombinedCourseSettings').mockImplementation(() => of(irisSettingsResponse));
+        jest.spyOn(profileService, 'isProfileActive').mockReturnValue(true);
+        jest.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit').mockImplementation(() => of(irisSettingsResponse));
         faqComponent.ngOnInit();
-        expect(irisSettingsService.getCombinedCourseSettings).toHaveBeenCalledWith(faqComponent.courseId);
-        expect(faqComponent.faqIngestionEnabled).toBeTrue();
+        expect(irisSettingsService.getCourseSettingsWithRateLimit).toHaveBeenCalledWith(faqComponent.courseId);
+        expect(faqComponent.irisEnabled).toBeTrue();
     });
 
     it('should call faq service to enable faq', () => {
