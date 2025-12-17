@@ -14,9 +14,9 @@ public interface IrisSubFeatureInterface<S extends IrisSession> {
     void checkHasAccessTo(User user, S irisSession);
 
     /**
-     * Checks if the feature is active for the context (e.g. an exercise) of the session.
+     * Checks if Iris is active for the context (e.g. an exercise in a course) of the session.
      *
      * @param irisSession The session to check
      */
-    void checkIsFeatureActivatedFor(S irisSession);
+    void checkIrisEnabledFor(S irisSession);
 }
