@@ -1,0 +1,28 @@
+import { CompetencyExerciseLink } from 'app/atlas/shared/entities/competency.model';
+import { CourseCompetencyDTO, toCourseCompetencyDTO } from 'app/atlas/shared/dto/course-competency-dto.ts‎';
+
+export interface CompetencyExerciseLinkDTO {
+    courseCompetencyDTO: CourseCompetencyDTO;
+    weight?: number;
+    courseId?: number;
+}
+
+/**
+ * Maps a CompetencyExerciseLink client model → CompetencyExerciseLinkDTO for API updates.
+ */
+export const toCompetencyExerciseLinkDTO = (link: CompetencyExerciseLink): CompetencyExerciseLinkDTO => {
+    if (!link.competency) {
+        throw new Error('missing competency.');
+    }
+
+    return {
+        courseCompetencyDTO: toCourseCompetencyDTO(link.competency),
+        weight: link.weight,
+        courseId: link.competency.course?.id ?? undefined,
+    };
+};
+
+/**
+ * Maps an array of CompetencyExerciseLink → CompetencyExerciseLinkDTO[].
+ */
+export const mapCompetencyLinks = (links: CompetencyExerciseLink[] | undefined): CompetencyExerciseLinkDTO[] => links?.map(toCompetencyExerciseLinkDTO) ?? [];

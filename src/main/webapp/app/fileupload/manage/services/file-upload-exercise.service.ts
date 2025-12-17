@@ -6,6 +6,7 @@ import { map } from 'rxjs/operators';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { createRequestOption } from 'app/shared/util/request.util';
 import { ExerciseServicable, ExerciseService } from 'app/exercise/services/exercise.service';
+import { toUpdateFileUploadExerciseDTO } from 'app/fileupload/shared/entities/update-file-upload-exercise-dto';
 
 export type EntityResponseType = HttpResponse<FileUploadExercise>;
 export type EntityArrayResponseType = HttpResponse<FileUploadExercise[]>;
@@ -38,12 +39,9 @@ export class FileUploadExerciseService implements ExerciseServicable<FileUploadE
      */
     update(fileUploadExercise: FileUploadExercise, req?: any): Observable<EntityResponseType> {
         const options = createRequestOption(req);
-        let copy = ExerciseService.convertExerciseDatesFromClient(fileUploadExercise);
-        copy = FileUploadExerciseService.formatFilePattern(copy);
-        copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
-        copy.categories = ExerciseService.stringifyExerciseCategories(copy);
+        const dto = toUpdateFileUploadExerciseDTO(fileUploadExercise);
         return this.http
-            .put<FileUploadExercise>(`${this.resourceUrl}/${fileUploadExercise.id!}`, copy, { params: options, observe: 'response' })
+            .put<FileUploadExercise>(`${this.resourceUrl}/${fileUploadExercise.id!}`, dto, { params: options, observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
     }
 
@@ -84,11 +82,9 @@ export class FileUploadExerciseService implements ExerciseServicable<FileUploadE
      */
     reevaluateAndUpdate(fileUploadExercise: FileUploadExercise, req?: any): Observable<EntityResponseType> {
         const options = createRequestOption(req);
-        let copy = ExerciseService.convertExerciseDatesFromClient(fileUploadExercise);
-        copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
-        copy.categories = ExerciseService.stringifyExerciseCategories(copy);
+        const dto = toUpdateFileUploadExerciseDTO(fileUploadExercise);
         return this.http
-            .put<FileUploadExercise>(`${this.resourceUrl}/${fileUploadExercise.id}/re-evaluate`, copy, { params: options, observe: 'response' })
+            .put<FileUploadExercise>(`${this.resourceUrl}/${fileUploadExercise.id}/re-evaluate`, dto, { params: options, observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
     }
 

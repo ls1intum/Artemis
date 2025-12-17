@@ -576,4 +576,8 @@ export class ExerciseService {
             exampleSolutionPublished: true,
         };
     }
+
+    static stringifyExerciseDTOCategories(exercise: Exercise): string[] | undefined {
+        return exercise.categories?.map((category) => JSON.stringify(category));
+    }
 }
