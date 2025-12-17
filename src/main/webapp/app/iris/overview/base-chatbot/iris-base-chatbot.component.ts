@@ -3,6 +3,7 @@ import {
     faChevronRight,
     faCircle,
     faCircleInfo,
+    faCircleNotch,
     faCompress,
     faExpand,
     faLink,
@@ -89,6 +90,7 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
     protected readonly faChevronRight = faChevronRight;
     protected readonly facSidebar = facSidebar;
     protected readonly faLink = faLink;
+    protected readonly faCircleNotch = faCircleNotch;
 
     // Types
     protected readonly IrisLogoSize = IrisLogoSize;
@@ -129,6 +131,7 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
     newMessageTextContent = '';
     isLoading: boolean;
     shouldAnimate = false;
+    animatingMessageIds = new Set<number>();
     hasActiveStage = false;
 
     isChatHistoryOpen = true;
@@ -165,6 +168,12 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
             }
         });
         this.sessionIdSubscription = this.chatService.currentSessionId().subscribe((sessionId) => {
+            // Disable animations when switching sessions, re-enable after messages load
+            if (this.currentSessionId !== sessionId) {
+                this.animatingMessageIds.clear();
+                this.shouldAnimate = false;
+                setTimeout(() => (this.shouldAnimate = true));
+            }
             this.currentSessionId = sessionId;
         });
         this.relatedEntityIdSubscription = this.chatService.currentRelatedEntityId().subscribe((entityId) => {
@@ -177,6 +186,15 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
             if (messages.length !== this.messages?.length) {
                 this.scrollToBottom('auto');
                 setTimeout(() => this.messageTextarea?.nativeElement?.focus(), 10);
+            }
+            // Track new messages for animation (only if shouldAnimate is enabled)
+            if (this.shouldAnimate) {
+                const existingIds = new Set(this.messages?.map((m) => m.id) ?? []);
+                messages.forEach((m) => {
+                    if (m.id && !existingIds.has(m.id)) {
+                        this.animatingMessageIds.add(m.id);
+                    }
+                });
             }
             this.messages = _.cloneDeep(messages).reverse();
             this.messages.forEach((message) => {
@@ -218,6 +236,7 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
         });
         this.suggestionsSubscription = this.chatService.currentSuggestions().subscribe((suggestions) => {
             this.suggestions = suggestions;
+            this.clickedSuggestion = undefined;
         });
 
         this.checkIfUserAcceptedExternalLLMUsage();
@@ -234,7 +253,9 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
 
     ngAfterViewInit() {
         this.checkUnreadMessageScroll();
-        setTimeout(() => (this.shouldAnimate = true));
+        // Enable animations after initial messages have loaded
+        // Delay ensures initial message batch doesn't trigger animations
+        setTimeout(() => (this.shouldAnimate = true), 500);
     }
 
     checkUnreadMessageScroll() {
@@ -455,7 +476,10 @@ export class IrisBaseChatbotComponent implements OnInit, OnDestroy, AfterViewIni
         this.isScrolledToBottom = scrollTop < 50;
     }
 
+    clickedSuggestion: string | undefined;
+
     onSuggestionClick(suggestion: string) {
+        this.clickedSuggestion = suggestion;
         this.newMessageTextContent = suggestion;
         this.onSend();
     }
