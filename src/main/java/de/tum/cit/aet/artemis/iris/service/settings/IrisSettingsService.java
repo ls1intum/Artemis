@@ -45,20 +45,17 @@ public class IrisSettingsService {
     }
 
     /**
-     * Retrieves the Iris course settings or creates a default entry if missing.
+     * Retrieves the Iris course settings or returns a transient entity with defaults if none exist.
      *
      * @param courseId the owning course id
-     * @return managed entity containing the settings
-     * @throws EntityNotFoundException if the course does not exist
+     * @return entity containing the settings (may be transient if no DB entry exists)
      */
-    public CourseIrisSettings getOrCreateCourseSettings(long courseId) {
+    private CourseIrisSettings getOrDefaultCourseSettings(long courseId) {
         return courseIrisSettingsRepository.findByCourseId(courseId).orElseGet(() -> {
-            // Validate course exists before creating settings to provide a clear error message
-            courseRepository.findByIdElseThrow(courseId);
             var entity = new CourseIrisSettings();
             entity.setCourseId(courseId);
             entity.setSettings(IrisCourseSettingsDTO.defaultSettings());
-            return courseIrisSettingsRepository.save(entity);
+            return entity;
         });
     }
 
@@ -70,7 +67,7 @@ public class IrisSettingsService {
      */
     public IrisCourseSettingsDTO getSettingsForCourse(Course course) {
         Objects.requireNonNull(course, "course must not be null");
-        return getOrCreateCourseSettings(course.getId()).getSettings();
+        return getOrDefaultCourseSettings(course.getId()).getSettings();
     }
 
     /**
@@ -80,7 +77,7 @@ public class IrisSettingsService {
      * @return sanitized payload
      */
     public IrisCourseSettingsDTO getSettingsForCourse(long courseId) {
-        return getOrCreateCourseSettings(courseId).getSettings();
+        return getOrDefaultCourseSettings(courseId).getSettings();
     }
 
     /**
@@ -90,7 +87,7 @@ public class IrisSettingsService {
      * @return DTO containing the payload
      */
     public IrisCourseSettingsWithRateLimitDTO getCourseSettingsWithRateLimit(long courseId) {
-        var entity = getOrCreateCourseSettings(courseId);
+        var entity = getOrDefaultCourseSettings(courseId);
         var settings = entity.getSettings();
         var defaults = getApplicationRateLimitDefaults();
         var effective = resolveEffectiveRateLimit(settings, defaults);
@@ -98,20 +95,53 @@ public class IrisSettingsService {
     }
 
     /**
-     * Updates (or creates) the Iris settings for a course.
+     * Updates (or creates if not present) the Iris settings for a course.
+     * <p>
+     * Handles null payloads (uses current settings), sanitization, and instructor restrictions.
      *
      * @param courseId the course id
-     * @param payload  the new payload
+     * @param payload  the new payload (nullable, will use current settings if null)
+     * @param isAdmin  whether the requesting user is an admin (admins can change variant and rate limits)
      * @return DTO representing the persisted state
      */
-    public IrisCourseSettingsWithRateLimitDTO updateCourseSettings(long courseId, IrisCourseSettingsDTO payload) {
-        var entity = getOrCreateCourseSettings(courseId);
-        var sanitized = sanitizePayload(payload);
-        entity.setSettings(sanitized);
+    public IrisCourseSettingsWithRateLimitDTO updateCourseSettings(long courseId, IrisCourseSettingsDTO payload, boolean isAdmin) {
+        var current = getSettingsForCourse(courseId);
+        var request = Objects.requireNonNullElse(payload, current);
+        var sanitizedRequest = sanitizePayload(request);
+        var sanitizedCurrent = sanitizePayload(current);
+
+        if (!isAdmin) {
+            enforceInstructorRestrictions(sanitizedRequest, sanitizedCurrent);
+        }
+
+        var entity = courseIrisSettingsRepository.findByCourseId(courseId).orElseGet(() -> {
+            var newEntity = new CourseIrisSettings();
+            newEntity.setCourseId(courseId);
+            return newEntity;
+        });
+        entity.setSettings(sanitizedRequest);
         var saved = courseIrisSettingsRepository.save(entity);
         var defaults = getApplicationRateLimitDefaults();
-        var effective = resolveEffectiveRateLimit(sanitized, defaults);
+        var effective = resolveEffectiveRateLimit(sanitizedRequest, defaults);
         return IrisCourseSettingsWithRateLimitDTO.fromEntity(saved, effective, defaults);
+    }
+
+    /**
+     * Validates that non-admin users are not trying to change restricted settings.
+     * Instructors can only modify enabled status and custom instructions; variant and rate limits are admin-only.
+     *
+     * @param request the requested new settings
+     * @param current the current settings
+     * @throws AccessForbiddenAlertException if the request attempts to change variant or rate limits
+     */
+    private void enforceInstructorRestrictions(IrisCourseSettingsDTO request, IrisCourseSettingsDTO current) {
+        if (!Objects.equals(request.variant(), current.variant())) {
+            throw new AccessForbiddenAlertException("Only administrators can change the Iris pipeline variant", "IrisSettings", "irisVariantRestricted");
+        }
+
+        if (!Objects.equals(request.rateLimit(), current.rateLimit())) {
+            throw new AccessForbiddenAlertException("Only administrators can change Iris rate limits", "IrisSettings", "irisRateLimitRestricted");
+        }
     }
 
     /**
