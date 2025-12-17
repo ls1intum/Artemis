@@ -507,7 +507,7 @@ public class User extends AbstractAuditingEntity implements Participant {
         return aiSelectionDecision != null;
     }
 
-    public AiSelectionDecision getAiSelectionDecision() {
+    public AiSelectionDecision getSelectedLLMUsage() {
         return aiSelectionDecision;
     }
 

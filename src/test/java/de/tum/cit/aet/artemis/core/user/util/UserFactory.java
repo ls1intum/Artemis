@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.domain.Authority;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
@@ -91,6 +92,7 @@ public class UserFactory {
         user.setGroups(new HashSet<>());
         user.setAuthorities(new HashSet<>());
         user.setSelectedLLMUsageTimestamp(ZonedDateTime.now());
+        user.setSelectedLLMUsage(AiSelectionDecision.CLOUD_AI);
         return user;
     }
 

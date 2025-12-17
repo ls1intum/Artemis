@@ -75,7 +75,7 @@ public class IrisCompetencyGenerationService {
         // @formatter:off
         pyrisPipelineService.executePipeline(
                 "competency-extraction",
-                user.getAiSelectionDecision(),
+                user.getSelectedLLMUsage(),
                 settings.variant().jsonValue(),
                 Optional.empty(),
                 pyrisJobService.createTokenForJob(token -> new CompetencyExtractionJob(token, course.getId(), user.getId())),

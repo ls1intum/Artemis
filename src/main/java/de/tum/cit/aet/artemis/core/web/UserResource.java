@@ -151,7 +151,7 @@ public class UserResource {
         User user = userRepository.getUser();
         ZonedDateTime hasSelectedTimestamp = ZonedDateTime.now();
         AiSelectionDecision selectedLLMUsage = selectedLLMUsageDTO.selection();
-        AiSelectionDecision before = user.getAiSelectionDecision();
+        AiSelectionDecision before = user.getSelectedLLMUsage();
         userRepository.updateSelectedLLMUsage(user.getId(), selectedLLMUsage, hasSelectedTimestamp);
         var auditEvent = new AuditEvent(user.getLogin(), Constants.AI_SELECTION_DECISION, "before=" + before + ";after=" + selectedLLMUsage + ";at=" + hasSelectedTimestamp);
         auditEventRepository.add(auditEvent);

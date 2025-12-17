@@ -64,7 +64,7 @@ public class IrisRewritingService {
         // @formatter:off
         pyrisPipelineService.executePipeline(
             "rewriting",
-            user.getAiSelectionDecision(),
+            user.getSelectedLLMUsage(),
             variant.name().toLowerCase(),
             Optional.empty(),
             pyrisJobService.createTokenForJob(token -> new RewritingJob(token, course.getId(), user.getId())),

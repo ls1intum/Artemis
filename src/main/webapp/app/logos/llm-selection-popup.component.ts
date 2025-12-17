@@ -76,6 +76,7 @@ export class LLMSelectionModalComponent implements OnInit, OnDestroy {
 
     onLearnMoreClick(event: MouseEvent): void {
         event.preventDefault();
+        this.modalService.emitChoice('none');
         this.router.navigate(['/llm-selection']);
         this.close();
     }

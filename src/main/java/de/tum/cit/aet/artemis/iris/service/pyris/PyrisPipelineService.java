@@ -174,7 +174,7 @@ public class PyrisPipelineService {
         var user = userRepository.findByIdElseThrow(session.getUserId());
         executePipeline(
                 "programming-exercise-chat",
-                user.getAiSelectionDecision(),
+                user.getSelectedLLMUsage(),
                 variant,
                 eventVariant,
                 pyrisJobService.addExerciseChatJob(exercise.getCourseViaExerciseGroupOrCourseMember().getId(), exercise.getId(), session.getId()),
@@ -223,7 +223,7 @@ public class PyrisPipelineService {
         var lastMessageId = !session.getMessages().isEmpty() ? session.getMessages().getLast().getId() : null;
         executePipeline(
             "course-chat",
-            user.getAiSelectionDecision(),
+            user.getSelectedLLMUsage(),
             variant,
             eventVariant,
             pyrisJobService.addCourseChatJob(courseId, session.getId(), lastMessageId), executionDto -> {
@@ -276,7 +276,7 @@ public class PyrisPipelineService {
         // @formatter:off
         executePipeline(
             "tutor-suggestion",
-            user.getAiSelectionDecision(),
+            user.getSelectedLLMUsage(),
             variant,
             eventVariant,
             pyrisJobService.addTutorSuggestionJob(post.getId(), course.getId(), session.getId()),

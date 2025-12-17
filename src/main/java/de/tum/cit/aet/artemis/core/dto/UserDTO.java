@@ -104,7 +104,7 @@ public class UserDTO extends AuditingEntityDTO {
         this(user.getId(), user.getLogin(), user.getName(), user.getFirstName(), user.getLastName(), user.getEmail(), user.getVisibleRegistrationNumber(), user.getActivated(),
                 user.getImageUrl(), user.getLangKey(), user.isInternal(), DEFAULT_IS_LOGGED_IN_WITH_PASSKEY, DEFAULT_IS_SUPER_ADMIN_APPROVED, user.getCreatedBy(),
                 user.getCreatedDate(), user.getLastModifiedBy(), user.getLastModifiedDate(), user.getAuthorities(), user.getGroups(), user.getOrganizations(),
-                user.getAiSelectionDecision(), user.getSelectedLLMUsageTimestamp(), user.isMemirisEnabled());
+                user.getSelectedLLMUsage(), user.getSelectedLLMUsageTimestamp(), user.isMemirisEnabled());
     }
 
     public UserDTO(Long id, String login, String name, String firstName, String lastName, String email, String visibleRegistrationNumber, boolean activated, String imageUrl,

@@ -510,12 +510,12 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
 
     @Test
     @WithMockUser(username = AUTHENTICATEDUSER)
-    void declineExternalLLMUsageSuccessful() throws Exception {
+    void selectNoAIUsageSuccessful() throws Exception {
         User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
         user.setSelectedLLMUsageTimestamp(null);
         userTestRepository.save(user);
 
-        SelectedLLMUsageDTO selectedLLMUsageDTO = new SelectedLLMUsageDTO(AiSelectionDecision.CLOUD_AI);
+        SelectedLLMUsageDTO selectedLLMUsageDTO = new SelectedLLMUsageDTO(AiSelectionDecision.NO_AI);
         request.put("/api/core/users/select-llm-usage", selectedLLMUsageDTO, HttpStatus.OK);
 
         Optional<User> updatedUser = userTestRepository.findOneByLogin(AUTHENTICATEDUSER);

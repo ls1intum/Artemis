@@ -292,8 +292,8 @@ export class IrisChatService implements OnDestroy {
             this.acceptSubscription?.unsubscribe();
             this.userService.updateLLMSelectionDecision(accepted).subscribe(() => {
                 this.accountService.setUserLLMSelectionDecision(accepted);
+                this.close();
             });
-            this.close();
             return;
         }
         this.acceptSubscription?.unsubscribe();
