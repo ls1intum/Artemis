@@ -21,7 +21,7 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisTextExerciseChatSession;
-import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettingsDTO;
+import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
@@ -98,7 +98,7 @@ public class IrisTextExerciseChatSessionService
             throw new ConflictException("Iris is not supported for exam exercises", "Iris", "irisExamExercise");
         }
         var course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        var settings = course == null ? IrisCourseSettingsDTO.defaultSettings() : irisSettingsService.getSettingsForCourse(course);
+        var settings = course == null ? IrisCourseSettings.defaultSettings() : irisSettingsService.getSettingsForCourse(course);
         if (!settings.enabled()) {
             throw new ConflictException("Iris is not enabled for this exercise", "Iris", "irisDisabled");
         }

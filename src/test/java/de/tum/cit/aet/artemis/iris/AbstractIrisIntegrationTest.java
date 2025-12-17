@@ -16,7 +16,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import de.tum.cit.aet.artemis.core.connector.IrisRequestMockProvider;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettingsDTO;
+import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisPipelineVariant;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisRateLimitConfiguration;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
@@ -66,7 +66,7 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
      */
     protected void enableIrisFor(Course course) {
         var current = irisSettingsService.getSettingsForCourse(course);
-        irisSettingsService.updateCourseSettings(course.getId(), IrisCourseSettingsDTO.of(true, current.customInstructions(), current.variant(), current.rateLimit()), true);
+        irisSettingsService.updateCourseSettings(course.getId(), IrisCourseSettings.of(true, current.customInstructions(), current.variant(), current.rateLimit()), true);
     }
 
     /**
@@ -76,7 +76,7 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
      */
     protected void disableIrisFor(Course course) {
         var current = irisSettingsService.getSettingsForCourse(course);
-        irisSettingsService.updateCourseSettings(course.getId(), IrisCourseSettingsDTO.of(false, current.customInstructions(), current.variant(), current.rateLimit()), true);
+        irisSettingsService.updateCourseSettings(course.getId(), IrisCourseSettings.of(false, current.customInstructions(), current.variant(), current.rateLimit()), true);
     }
 
     /**
@@ -88,7 +88,7 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
      */
     protected void configureCourseSettings(Course course, String customInstructions, IrisPipelineVariant variant) {
         var current = irisSettingsService.getSettingsForCourse(course);
-        irisSettingsService.updateCourseSettings(course.getId(), IrisCourseSettingsDTO.of(current.enabled(), customInstructions, variant, current.rateLimit()), true);
+        irisSettingsService.updateCourseSettings(course.getId(), IrisCourseSettings.of(current.enabled(), customInstructions, variant, current.rateLimit()), true);
     }
 
     /**
@@ -101,7 +101,7 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
     protected void configureCourseRateLimit(Course course, Integer requests, Integer hours) {
         var current = irisSettingsService.getSettingsForCourse(course);
         irisSettingsService.updateCourseSettings(course.getId(),
-                IrisCourseSettingsDTO.of(current.enabled(), current.customInstructions(), current.variant(), new IrisRateLimitConfiguration(requests, hours)), true);
+                IrisCourseSettings.of(current.enabled(), current.customInstructions(), current.variant(), new IrisRateLimitConfiguration(requests, hours)), true);
     }
 
     protected void activateIrisFor(Course course) {

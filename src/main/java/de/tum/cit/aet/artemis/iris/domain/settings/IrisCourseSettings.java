@@ -15,16 +15,16 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * JSON DTO persisted for Iris course settings.
+ * JSON object persisted for Iris course settings.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record IrisCourseSettingsDTO(boolean enabled, @Size(max = IRIS_CUSTOM_INSTRUCTIONS_MAX_LENGTH) @Nullable String customInstructions, IrisPipelineVariant variant,
+public record IrisCourseSettings(boolean enabled, @Size(max = IRIS_CUSTOM_INSTRUCTIONS_MAX_LENGTH) @Nullable String customInstructions, IrisPipelineVariant variant,
         @Valid @Nullable IrisRateLimitConfiguration rateLimit) implements Serializable {
 
-    private static final IrisCourseSettingsDTO DEFAULT = new IrisCourseSettingsDTO(true, null, IrisPipelineVariant.DEFAULT, null);
+    private static final IrisCourseSettings DEFAULT = new IrisCourseSettings(true, null, IrisPipelineVariant.DEFAULT, null);
 
     @JsonCreator
-    public IrisCourseSettingsDTO(@JsonProperty("enabled") boolean enabled, @JsonProperty("customInstructions") @Nullable String customInstructions,
+    public IrisCourseSettings(@JsonProperty("enabled") boolean enabled, @JsonProperty("customInstructions") @Nullable String customInstructions,
             @JsonProperty("variant") IrisPipelineVariant variant, @JsonProperty("rateLimit") @Valid IrisRateLimitConfiguration rateLimit) {
         this.enabled = enabled;
         this.customInstructions = sanitizeCustomInstructions(customInstructions);
@@ -32,7 +32,7 @@ public record IrisCourseSettingsDTO(boolean enabled, @Size(max = IRIS_CUSTOM_INS
         this.rateLimit = rateLimit; // null = use defaults, non-null = explicit override (even if values are null = unlimited)
     }
 
-    public static IrisCourseSettingsDTO defaultSettings() {
+    public static IrisCourseSettings defaultSettings() {
         return DEFAULT;
     }
 
@@ -53,8 +53,8 @@ public record IrisCourseSettingsDTO(boolean enabled, @Size(max = IRIS_CUSTOM_INS
      * @param rateLimit          optional rate limit overrides
      * @return sanitized DTO instance
      */
-    public static IrisCourseSettingsDTO of(boolean enabled, @Nullable String customInstructions, @Nullable IrisPipelineVariant variant,
+    public static IrisCourseSettings of(boolean enabled, @Nullable String customInstructions, @Nullable IrisPipelineVariant variant,
             @Nullable IrisRateLimitConfiguration rateLimit) {
-        return new IrisCourseSettingsDTO(enabled, customInstructions, variant, rateLimit);
+        return new IrisCourseSettings(enabled, customInstructions, variant, rateLimit);
     }
 }
