@@ -45,13 +45,13 @@ public record IrisCourseSettings(boolean enabled, @Size(max = IRIS_CUSTOM_INSTRU
     }
 
     /**
-     * Creates a DTO with overrides merged on top of defaults.
+     * Creates an object with overrides merged on top of defaults.
      *
      * @param enabled            desired enabled flag
      * @param customInstructions optional custom instructions
      * @param variant            desired variant (defaults to {@link IrisPipelineVariant#DEFAULT})
      * @param rateLimit          optional rate limit overrides
-     * @return sanitized DTO instance
+     * @return sanitized instance
      */
     public static IrisCourseSettings of(boolean enabled, @Nullable String customInstructions, @Nullable IrisPipelineVariant variant,
             @Nullable IrisRateLimitConfiguration rateLimit) {
