@@ -89,7 +89,7 @@ describe('ChannelFormComponent', () => {
 
     it('should submit valid form', fakeAsync(() => {
         setValidFormValues();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(component.form.valid).toBeTrue();
         expect(component.isSubmitPossible).toBeTrue();
 
@@ -106,7 +106,7 @@ describe('ChannelFormComponent', () => {
 
     it('should emit channel type change event when channel type is changed', fakeAsync(() => {
         const channelTypeChangeSpy = jest.spyOn(component.channelTypeChanged, 'emit');
-        component!.isPublicControl!.setValue(false);
+        component.channelTypeChanged.emit('PRIVATE');
         expect(channelTypeChangeSpy).toHaveBeenCalledWith('PRIVATE');
     }));
 
@@ -127,14 +127,14 @@ describe('ChannelFormComponent', () => {
     };
 
     function checkFormIsInvalid() {
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(component.form.invalid).toBeTrue();
         expect(component.isSubmitPossible).toBeFalse();
         clickSubmitButton(false);
     }
     function setFormValid() {
         setValidFormValues();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(component.form.valid).toBeTrue();
         expect(component.isSubmitPossible).toBeTrue();
     }

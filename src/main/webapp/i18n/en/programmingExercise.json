@@ -261,6 +261,20 @@
                 "line": "Line {{ line }}",
                 "lines": "Lines {{ start }}-{{ end }}"
             },
+            "codeGeneration": {
+                "creationAssistance": "Creation Assistance",
+                "generateCode": "Generate Code",
+                "generating": "Generating...",
+                "description": "Generate solution, template, and test code using AI",
+                "tooltip": "AI Code Generation - Generate solution, template, and test code",
+                "confirmTitle": "Confirm Code Generation",
+                "confirmText": "This action uses an LLM and may take time and spend credits. Do you want to continue?",
+                "success": "{{repositoryType}} code generation completed successfully!",
+                "partialSuccess": "{{repositoryType}} code generation completed with some issues. Please review the generated code.",
+                "error": "{{repositoryType}} code generation failed. Please try again later.",
+                "unsupportedRepository": "Code generation is only supported for Template, Solution, and Test repositories.",
+                "attempts": "Attempts made: {{attempts}}"
+            },
             "status": {
                 "solutionFailsTest": "The Solution Repository does not fulfill one or more test cases. This could indicate an issue with the Solution Repository or the test cases.",
                 "templateFulfillsTest": "The Template Repository already fulfills one or more test cases. This could indicate an issue with the Template Repository or the test cases."

@@ -305,7 +305,7 @@ describe('ExamResultSummaryComponent', () => {
         expect(plagiarismServiceSpy).not.toHaveBeenCalled();
 
         component.studentExam = studentExam;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(component.studentExam).toEqual(studentExam);
         expect(component.studentExamGradeInfoDTO.studentExam).toEqual(studentExam);
@@ -527,7 +527,7 @@ describe('ExamResultSummaryComponent', () => {
             component.studentExam = studentExam;
             component.studentExamGradeInfoDTO = { ...gradeInfo, studentExam };
 
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
 
             const button = fixture.debugElement.nativeElement.querySelector('#' + BACK_TO_OVERVIEW_BUTTON_ID);
             button.click();
@@ -545,7 +545,7 @@ describe('ExamResultSummaryComponent', () => {
             exam.exampleSolutionPublicationDate = dayjs().subtract(1, 'hour');
             const toggleShowSampleSolutionSpy = jest.spyOn(component, 'toggleShowSampleSolution');
 
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
 
             const button = fixture.debugElement.nativeElement.querySelector(`#show-sample-solution-button-${textExercise.id}`);
             expect(button).toBeTruthy();

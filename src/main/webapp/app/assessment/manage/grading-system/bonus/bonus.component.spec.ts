@@ -300,7 +300,7 @@ describe('BonusComponent', () => {
         const sortGradeStepsSpy = jest.spyOn(gradingSystemService, 'sortGradeSteps');
         const setGradePointsSpy = jest.spyOn(gradingSystemService, 'setGradePoints');
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         component.setBonus(bonus);
 
         expect(findBonusForExamSpy).toHaveBeenCalledOnce();
@@ -402,7 +402,7 @@ describe('BonusComponent', () => {
         const createBonusSpy = jest.spyOn(bonusService, 'createBonusForExam').mockReturnValue(of({ body: bonus } as EntityResponseType));
         const findBonusSpy = findBonusForExamSpy.mockReturnValue(throwError(() => ({ status: 404 })));
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const newBonus = { ...bonus, id: undefined };
         component.bonus = newBonus;

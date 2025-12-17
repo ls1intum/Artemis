@@ -1,6 +1,6 @@
 import { BreakpointObserver, BreakpointState, Breakpoints } from '@angular/cdk/layout';
 import { CourseConversationsComponent } from 'app/communication/shared/course-conversations/course-conversations.component';
-import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
 import { Conversation, ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { OneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from 'test/helpers/sample/conversationExampleModels';
@@ -46,6 +46,9 @@ import {
 import { ConversationGlobalSearchComponent } from 'app/communication/shared/conversation-global-search/conversation-global-search.component';
 import { AlertService } from 'app/shared/service/alert.service';
 import { FaqService } from 'app/communication/faq/faq.service';
+import { TranslateModule } from '@ngx-translate/core';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 const examples: (ConversationDTO | undefined)[] = [
     undefined,
@@ -139,8 +142,10 @@ examples.forEach((activeConversation) => {
                     MockProvider(ProfileService),
                     MockProvider(AlertService),
                     MockProvider(FaqService),
+                    provideHttpClient(),
+                    provideHttpClientTesting(),
                 ],
-                imports: [FormsModule, ReactiveFormsModule, FontAwesomeModule, NgbModule],
+                imports: [FormsModule, ReactiveFormsModule, FontAwesomeModule, NgbModule, TranslateModule.forRoot()],
             }).compileComponents();
 
             const metisService = new MockMetisService();
@@ -169,6 +174,8 @@ examples.forEach((activeConversation) => {
             metisConversationService.acceptCodeOfConduct = jest.fn();
             metisConversationService.createGroupChat = jest.fn().mockReturnValue(EMPTY);
             metisConversationService.createOneToOneChat = jest.fn().mockReturnValue(EMPTY);
+            metisConversationService.createChannel = jest.fn().mockReturnValue(EMPTY);
+            metisConversationService.markAllChannelsAsRead = jest.fn().mockReturnValue(of());
 
             fixture = TestBed.createComponent(CourseConversationsComponent);
             component = fixture.componentInstance;
@@ -267,6 +274,7 @@ examples.forEach((activeConversation) => {
             }));
 
             it('should open the create channel dialog when onCreateChannelPressed is called', fakeAsync(() => {
+                fixture.detectChanges();
                 mockModalRef.result = Promise.resolve(expectedResults);
                 const spy = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef as NgbModalRef);
 
@@ -282,7 +290,7 @@ examples.forEach((activeConversation) => {
         it('should update thread in post', fakeAsync(() => {
             fixture.detectChanges();
             component.postInThread = { id: 1, content: 'loremIpsum' } as Post;
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             const updatedPost = { id: 1, content: 'updatedContent' } as Post;
             postsSubject.next([updatedPost]);
             tick();
@@ -292,7 +300,7 @@ examples.forEach((activeConversation) => {
         it('should set active conversation depending on the query param', fakeAsync(() => {
             queryParamsSubject.next({ conversationId: '12' });
             // mock setActiveConversationById method
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             tick();
             expect(setActiveConversationSpy).toHaveBeenCalledWith(12);
         }));
@@ -300,7 +308,7 @@ examples.forEach((activeConversation) => {
         it('should call sidebar collapse if conversation changes', fakeAsync(() => {
             const closeSidebarOnMobileSpy = jest.spyOn(component, 'closeSidebarOnMobile');
             queryParamsSubject.next({ conversationId: '12' });
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             tick();
             expect(closeSidebarOnMobileSpy).toHaveBeenCalled();
         }));
@@ -308,7 +316,7 @@ examples.forEach((activeConversation) => {
         it('should call sidebar collapse if thread opens', fakeAsync(() => {
             const closeSidebarOnMobileSpy = jest.spyOn(component, 'closeSidebarOnMobile');
             queryParamsSubject.next({ messageId: '12' });
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             tick();
             expect(closeSidebarOnMobileSpy).toHaveBeenCalled();
         }));
@@ -338,7 +346,7 @@ examples.forEach((activeConversation) => {
                 selectedAuthors: [],
                 selectedConversations: [],
             });
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             expect(component.courseWideSearchConfig.searchTerm).toBe('test');
         });
 
@@ -393,6 +401,7 @@ examples.forEach((activeConversation) => {
                 matches: true,
                 breakpoints: { [Breakpoints.Handset]: true },
             });
+            fixture.changeDetectorRef.detectChanges();
             component.onSearch({
                 searchTerm: '',
                 selectedAuthors: [],
@@ -410,11 +419,11 @@ examples.forEach((activeConversation) => {
 
         it('should toggle sidebar visibility based on isCollapsed property', () => {
             component.isCollapsed = false;
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             expect(fixture.nativeElement.querySelector('.sidebar-collapsed')).toBeNull();
 
             component.isCollapsed = true;
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             expect(fixture.nativeElement.querySelector('.sidebar-collapsed')).not.toBeNull();
         });
 
@@ -642,8 +651,10 @@ examples.forEach((activeConversation) => {
         });
 
         it('should mark all channels as read', () => {
+            fixture.detectChanges();
             const markAllChannelsAsRead = jest.spyOn(metisConversationService, 'markAllChannelsAsRead').mockReturnValue(of());
             const forceRefresh = jest.spyOn(metisConversationService, 'forceRefresh');
+            forceRefresh.mockClear();
             component.markAllChannelAsRead();
             expect(markAllChannelsAsRead).toHaveBeenCalledOnce();
             expect(forceRefresh).toHaveBeenCalledTimes(2);
@@ -651,12 +662,14 @@ examples.forEach((activeConversation) => {
 
         describe('conversation selection', () => {
             it('should handle numeric conversationId', () => {
+                fixture.detectChanges();
                 component.onConversationSelected(123);
                 expect(component.selectedSavedPostStatus).toBeUndefined();
                 expect(setActiveConversationSpy).toHaveBeenCalledWith(123);
             });
 
             it('should handle valid string conversationId as SavedPostStatus', () => {
+                fixture.detectChanges();
                 const validStatus = SavedPostStatus.ARCHIVED.toString().toLowerCase();
                 component.onConversationSelected(validStatus);
                 expect(component.selectedSavedPostStatus).toBe(SavedPostStatus.ARCHIVED);
@@ -665,12 +678,16 @@ examples.forEach((activeConversation) => {
                 expect(component.activeConversation).toBeUndefined();
             });
 
-            it('should ignore invalid string conversationId', () => {
+            it('should ignore invalid string conversationId', fakeAsync(() => {
+                fixture.detectChanges();
                 const invalidStatus = 'invalidStatus';
+                setActiveConversationSpy.mockClear();
                 component.onConversationSelected(invalidStatus);
+                tick();
                 expect(component.selectedSavedPostStatus).toBeUndefined();
-                expect(metisConversationService.setActiveConversation).not.toHaveBeenCalled();
-            });
+                expect(setActiveConversationSpy).not.toHaveBeenCalled();
+                discardPeriodicTasks();
+            }));
 
             it('should toggle the value of showOnlyPinned', () => {
                 expect(component.showOnlyPinned).toBeFalse();

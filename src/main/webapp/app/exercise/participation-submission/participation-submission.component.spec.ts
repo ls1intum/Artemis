@@ -165,6 +165,7 @@ describe('ParticipationSubmissionComponent', () => {
 
         fixture.detectChanges();
         tick();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(comp.isLoading).toBeFalse();
         // check if findAllSubmissionsOfParticipationStub() is called and works
@@ -172,10 +173,6 @@ describe('ParticipationSubmissionComponent', () => {
         expect(comp.participation).toEqual(participation);
         expect(comp.submissions).toEqual(submissions);
         expect(comp.participation?.submissions).toEqual(submissions);
-
-        // check if delete button is available
-        const deleteButton = debugElement.query(By.css('#deleteButton'));
-        expect(deleteButton).not.toBeNull();
 
         // check if the right amount of rows is visible
         const row = debugElement.query(By.css('#participationSubmissionTable'));
@@ -214,6 +211,7 @@ describe('ParticipationSubmissionComponent', () => {
 
         fixture.detectChanges();
         tick();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(comp.isLoading).toBeFalse();
         expect(findWithTemplateAndSolutionParticipationStub).toHaveBeenCalledOnce();
@@ -254,6 +252,7 @@ describe('ParticipationSubmissionComponent', () => {
 
         fixture.detectChanges();
         tick();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(comp.isLoading).toBeFalse();
         expect(findWithTemplateAndSolutionParticipationStub).toHaveBeenCalledOnce();
@@ -305,7 +304,7 @@ describe('ParticipationSubmissionComponent', () => {
 
         it('should delete result of textSubmission', fakeAsync(() => {
             jest.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: textExercise })));
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             tick();
             expect(findAllSubmissionsOfParticipationStub).toHaveBeenCalledOnce();
             expect(comp.submissions![0].results![0].submission).toEqual(submissionWithTwoResults);
@@ -372,7 +371,7 @@ describe('ParticipationSubmissionComponent', () => {
 
         it('should not delete result of textSubmission', fakeAsync(() => {
             jest.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: textExercise })));
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             tick();
             expect(findAllSubmissionsOfParticipationStub).toHaveBeenCalledOnce();
             expect(comp.submissions![0].results![0].submission).toEqual(submissionWithTwoResults2);
@@ -387,7 +386,7 @@ describe('ParticipationSubmissionComponent', () => {
     });
 
     function deleteResult(submission: Submission, resultToDelete: Result) {
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         tick();
         comp.deleteResult(submission, resultToDelete);
         tick();

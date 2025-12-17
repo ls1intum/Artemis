@@ -139,7 +139,7 @@ describe('CourseSidebarComponent', () => {
         expect(component.activeBreakpoints()).toEqual([]);
         expect(component.canExpand()).toBeFalse();
         layoutService.activeBreakpoints = [CustomBreakpointNames.sidebarExpandable];
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         const isBreakpointActiveSpy = jest.spyOn(layoutService, 'isBreakpointActive');
 
         breakpointsSubject.next([CustomBreakpointNames.sidebarExpandable]);
@@ -150,7 +150,7 @@ describe('CourseSidebarComponent', () => {
 
         layoutService.activeBreakpoints = [CustomBreakpointNames.small];
         breakpointsSubject.next([CustomBreakpointNames.small]);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(component.canExpand()).toBeFalse();
     });
 
@@ -220,11 +220,11 @@ describe('CourseSidebarComponent', () => {
 
     it('should display more icon and label if at least one item gets hidden in the sidebar', () => {
         component.anyItemHidden.set(true);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(fixture.nativeElement.querySelector('.three-dots').hidden).toBeFalse();
 
         component.anyItemHidden.set(false);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(fixture.nativeElement.querySelector('.three-dots').hidden).toBeTrue();
     });
     it('should display course icon when available', () => {
@@ -249,7 +249,7 @@ describe('CourseSidebarComponent', () => {
     it('should emit toggleCollapseState when collapse chevron is clicked', () => {
         const toggleCollapseStateSpy = jest.spyOn(component.toggleCollapseState, 'emit');
         component.canExpand = signal(true);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         const collapseButton = fixture.debugElement.query(By.css('.double-arrow'));
         expect(collapseButton).toBeTruthy();
         collapseButton.nativeElement.click();
@@ -269,7 +269,7 @@ describe('CourseSidebarComponent', () => {
     it('should emit courseActionItemClick when an action item is clicked', () => {
         const courseActionItemClickSpy = jest.spyOn(component.courseActionItemClick, 'emit');
         component.anyItemHidden.set(false);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         const actionItem = fixture.debugElement.query(By.css('#action-item-0'));
         actionItem.nativeElement.click();
         expect(courseActionItemClickSpy).toHaveBeenCalledWith(mockActionItems[0]);

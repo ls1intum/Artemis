@@ -222,7 +222,27 @@ paths:
           description: OK
           content:
             application/json:
-              schema: {$ref: '#/components/schemas/ProblemStatementGenerationResponse'}
+              schema: {$ref: '#/components/schemas/ProblemStatementGenerationResponse'}  
+  /api/hyperion/programming-exercises/{exerciseId}/generate-code:
+    post:
+      tags: [hyperion-code-generation]
+      operationId: generateCode
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CodeGenerationRequestDTO'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CodeGenerationJobStartDTO'}
   /api/tutorialgroup/tutorial-groups/{tutorialGroupId}/title:
     get:
       tags: [tutorial-group]
@@ -431,6 +451,11 @@ components:
         language: {type: string}
         additionalInformation: {type: string}
         isOnline: {type: boolean}
+    CodeGenerationJobStartDTO:
+      type: object
+      properties:
+        jobId: {type: string}
+      required: [jobId]
     ProblemStatementGenerationResponse:
       type: object
       description: Response containing generated problem statement
@@ -625,3 +650,12 @@ components:
         registrationNumber: {type: string}
         firstName: {type: string}
         lastName: {type: string}
+    CodeGenerationRequestDTO:
+      type: object
+      description: Request DTO for code generation
+      properties:
+        repositoryType:
+          type: string
+          description: Type of repository to generate code for
+          enum: [TEMPLATE, SOLUTION, TESTS]
+          example: SOLUTION

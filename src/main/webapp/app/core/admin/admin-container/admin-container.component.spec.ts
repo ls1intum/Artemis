@@ -109,7 +109,6 @@ describe('AdminContainerComponent', () => {
 
     it('should have all feature flags as false by default', () => {
         expect(component.localCIActive).toBeFalse();
-        expect(component.irisEnabled).toBeFalse();
         expect(component.ltiEnabled).toBeFalse();
         expect(component.atlasEnabled).toBeFalse();
         expect(component.examEnabled).toBeFalse();
@@ -119,7 +118,7 @@ describe('AdminContainerComponent', () => {
     it('should detect feature flags from profile info', () => {
         const profileInfoWithFeatures: ProfileInfo = {
             ...mockProfileInfo,
-            activeProfiles: ['iris', 'localci', 'lti'],
+            activeProfiles: ['localci', 'lti'],
             activeModuleFeatures: ['atlas', 'exam'],
         };
 
@@ -129,7 +128,6 @@ describe('AdminContainerComponent', () => {
         const newComponent = newFixture.componentInstance;
         newFixture.detectChanges();
 
-        expect(newComponent.irisEnabled).toBeTrue();
         expect(newComponent.localCIActive).toBeTrue();
         expect(newComponent.ltiEnabled).toBeTrue();
         expect(newComponent.atlasEnabled).toBeTrue();
