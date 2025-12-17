@@ -8,7 +8,7 @@ import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { PostingMarkdownEditorComponent } from 'app/communication/posting-markdown-editor/posting-markdown-editor.component';
 import { PostingButtonComponent } from 'app/communication/posting-button/posting-button.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
-import { ViewContainerRef, input, runInInjectionContext } from '@angular/core';
+import { ViewContainerRef } from '@angular/core';
 import { MockViewContainerRef } from 'test/helpers/mocks/service/mock-view-container-ref.service';
 import { metisAnswerPostToCreateUser1, metisAnswerPostUser2, metisResolvingAnswerPostUser1 } from 'test/helpers/sample/metis-sample-data';
 
@@ -62,14 +62,12 @@ describe('AnswerPostCreateEditModalComponent', () => {
         const mockClear = jest.fn();
         const mockCreateEmbeddedView = jest.fn();
 
-        runInInjectionContext(fixture.debugElement.injector, () => {
-            component.createEditAnswerPostContainerRef = input<ViewContainerRef>({
-                clear: mockClear,
-                createEmbeddedView: mockCreateEmbeddedView,
-            } as unknown as ViewContainerRef);
-        });
+        fixture.componentRef.setInput('createEditAnswerPostContainerRef', {
+            clear: mockClear,
+            createEmbeddedView: mockCreateEmbeddedView,
+        } as unknown as ViewContainerRef);
+        fixture.changeDetectorRef.detectChanges();
         component.open();
-        fixture.detectChanges();
         expect(mockCreateEmbeddedView).toHaveBeenCalledOnce();
     });
 
@@ -78,14 +76,12 @@ describe('AnswerPostCreateEditModalComponent', () => {
         const mockClear = jest.fn();
         const mockCreateEmbeddedView = jest.fn();
 
-        runInInjectionContext(fixture.debugElement.injector, () => {
-            component.createEditAnswerPostContainerRef = input<ViewContainerRef>({
-                clear: mockClear,
-                createEmbeddedView: mockCreateEmbeddedView,
-            } as unknown as ViewContainerRef);
-        });
+        fixture.componentRef.setInput('createEditAnswerPostContainerRef', {
+            clear: mockClear,
+            createEmbeddedView: mockCreateEmbeddedView,
+        } as unknown as ViewContainerRef);
+        fixture.changeDetectorRef.detectChanges();
         component.close();
-        fixture.detectChanges();
         expect(mockClear).toHaveBeenCalledOnce();
     });
 

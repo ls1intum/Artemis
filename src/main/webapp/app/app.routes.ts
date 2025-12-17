@@ -67,6 +67,16 @@ const routes: Routes = [
         },
     },
     {
+        path: 'course-requests',
+        loadComponent: () => import('app/core/course/request/course-request.component').then((m) => m.CourseRequestComponent),
+        data: {
+            authorities: IS_AT_LEAST_STUDENT,
+            pageTitle: 'artemisApp.courseRequest.title',
+            usesModuleBackground: true,
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
         path: 'imprint',
         loadComponent: () => import('app/core/legal/imprint.component').then((m) => m.ImprintComponent),
         data: {

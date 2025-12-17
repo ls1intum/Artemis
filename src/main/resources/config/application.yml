@@ -136,6 +136,13 @@ artemis:
         url: # Set this in production environment (e.g., https://nebula.example.com)
         secret-token: # Set this in production environment
 
+    iris:
+        ratelimit:
+            # Use -1 for both values to indicate unlimited (no rate limiting)
+            # Otherwise: default-limit >= 0 (0 = no requests allowed), default-timeframe-hours >= 1
+            default-limit: -1
+            default-timeframe-hours: -1
+
     # Default security configuration for internal endpoints accessed by other Artemis components
     # Currently set to allow all IPs. Adjust as necessary for your deployment.
     security:
