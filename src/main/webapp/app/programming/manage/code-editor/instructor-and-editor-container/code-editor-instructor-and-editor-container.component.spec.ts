@@ -202,6 +202,47 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
         expect(repositorySyncService.handleLocalFileOperation).toHaveBeenCalledWith(operation, RepositoryType.TEMPLATE, undefined);
     });
 
+    it('applies remote operations through sync service', () => {
+        const repositorySyncService = TestBed.inject(RepositoryFileSyncService) as jest.Mocked<RepositoryFileSyncService>;
+        comp.codeEditorContainer = {} as any;
+        const operation = { type: ProgrammingExerciseEditorFileChangeType.CREATE, fileName: 'new', content: '', fileType: FileType.FILE } as const;
+
+        (comp as any).applyRemoteFileOperation(operation as any);
+
+        expect(repositorySyncService.applyRemoteOperation).toHaveBeenCalledWith(operation, comp.codeEditorContainer);
+    });
+
+    it('applies domain changes for participations and tests', () => {
+        const exercise = {
+            templateParticipation: { id: 1, programmingExercise: undefined } as any,
+            solutionParticipation: { id: 2, programmingExercise: undefined } as any,
+            studentParticipations: [{ id: 3, exercise: undefined }] as any,
+        } as ProgrammingExercise;
+        comp.exercise = exercise;
+        comp.codeEditorContainer = { initializeProperties: jest.fn(), selectedRepository: undefined } as any;
+
+        (comp as any).applyDomainChange(DomainType.PARTICIPATION, { id: 2 } as any);
+        expect(comp.selectedRepository).toBe(RepositoryType.SOLUTION);
+        expect((comp.selectedParticipation as any).programmingExercise).toBe(exercise);
+
+        (comp as any).applyDomainChange(DomainType.TEST_REPOSITORY, exercise);
+        expect(comp.selectedRepository).toBe(RepositoryType.TESTS);
+    });
+
+    it('reuses loaded exercise when matching id', () => {
+        const programmingExerciseService = TestBed.inject(ProgrammingExerciseService) as jest.Mocked<ProgrammingExerciseService>;
+        programmingExerciseService.findWithTemplateAndSolutionParticipationAndResults = jest.fn();
+        const existingExercise = { id: 55 } as ProgrammingExercise;
+        comp.exercise = existingExercise;
+
+        const result$ = comp.loadExercise(55);
+        let loaded: ProgrammingExercise | undefined;
+        result$.subscribe((exercise) => (loaded = exercise));
+
+        expect(loaded).toBe(existingExercise);
+        expect(programmingExerciseService.findWithTemplateAndSolutionParticipationAndResults).not.toHaveBeenCalled();
+    });
+
     it('filters synchronization messages by repository selection', () => {
         comp.selectedRepository = RepositoryType.TEMPLATE;
         expect((comp as any).isChangeRelevant({} as ProgrammingExerciseEditorSyncMessage)).toBeFalse();

@@ -18,15 +18,18 @@ describe('RepositoryFileSyncService', () => {
     let service: RepositoryFileSyncService;
     let syncService: jest.Mocked<ProgrammingExerciseEditorSyncService>;
     let fileService: jest.Mocked<CodeEditorFileService>;
+    let alertService: jest.Mocked<AlertService>;
     let incomingMessages$: Subject<ProgrammingExerciseEditorSyncMessage>;
     const dmp = new DiffMatchPatch();
 
     const exerciseIdToUse = 42;
     type RepositoryFileSyncServiceInternals = {
         baselines: Record<string, string>;
+        lastProcessedTimestamps: Record<string, number>;
         getBaselineKey: (target: ProgrammingExerciseEditorSyncTarget, fileName: string, auxiliaryId?: number) => string;
     };
     const getBaselines = (service: RepositoryFileSyncService) => (service as unknown as RepositoryFileSyncServiceInternals).baselines;
+    const getTimestamps = (service: RepositoryFileSyncService) => (service as unknown as RepositoryFileSyncServiceInternals).lastProcessedTimestamps;
     const buildBaselineKey = (service: RepositoryFileSyncService, target: ProgrammingExerciseEditorSyncTarget, fileName: string, auxiliaryId?: number) =>
         (service as unknown as RepositoryFileSyncServiceInternals).getBaselineKey(target, fileName, auxiliaryId);
 
@@ -63,6 +66,7 @@ describe('RepositoryFileSyncService', () => {
         service = TestBed.inject(RepositoryFileSyncService);
         syncService = TestBed.inject(ProgrammingExerciseEditorSyncService) as jest.Mocked<ProgrammingExerciseEditorSyncService>;
         fileService = TestBed.inject(CodeEditorFileService) as jest.Mocked<CodeEditorFileService>;
+        alertService = TestBed.inject(AlertService) as jest.Mocked<AlertService>;
     });
 
     afterEach(() => {
@@ -234,6 +238,45 @@ describe('RepositoryFileSyncService', () => {
             ]);
         });
 
+        it('renames folders without creating baselines for folder paths', () => {
+            const operations: FileOperation[] = [];
+            service.init(exerciseIdToUse, () => true).subscribe((op) => operations.push(op));
+            service.registerBaseline(RepositoryType.TEMPLATE, 'folder/file.txt', 'content');
+
+            incomingMessages$.next({
+                target: ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY,
+                filePatches: [
+                    {
+                        fileName: 'folder',
+                        newFileName: 'renamed',
+                        changeType: ProgrammingExerciseEditorFileChangeType.RENAME,
+                        fileType: FileType.FOLDER,
+                    },
+                ],
+                timestamp: 2,
+            });
+
+            const baselines = getBaselines(service);
+            const oldFileKey = buildBaselineKey(service, ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY, 'folder/file.txt', undefined);
+            const newFileKey = buildBaselineKey(service, ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY, 'renamed/file.txt', undefined);
+            const folderKey = buildBaselineKey(service, ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY, 'renamed', undefined);
+            const timestamps = getTimestamps(service);
+
+            expect(baselines[oldFileKey]).toBeUndefined();
+            expect(baselines[newFileKey]).toBe('content');
+            expect(baselines[folderKey]).toBeUndefined();
+            expect(timestamps[folderKey]).toBeUndefined();
+            expect(operations).toEqual([
+                {
+                    type: ProgrammingExerciseEditorFileChangeType.RENAME,
+                    fileName: 'folder',
+                    newFileName: 'renamed',
+                    content: '',
+                    fileType: FileType.FOLDER,
+                },
+            ]);
+        });
+
         it('returns undefined and does not emit when patch cannot be applied', () => {
             const operations: FileOperation[] = [];
             service.init(exerciseIdToUse, () => true).subscribe((op) => operations.push(op));
@@ -247,6 +290,28 @@ describe('RepositoryFileSyncService', () => {
 
             expect(operations).toEqual([]);
             expect(getBaselines(service)[buildBaselineKey(service, ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY, 'file.txt', undefined)]).toBe('baseline');
+        });
+
+        it('requests a full file instead of applying patches when no baseline exists', () => {
+            const operations: FileOperation[] = [];
+            service.init(exerciseIdToUse, () => true).subscribe((op) => operations.push(op));
+
+            const patch = dmp.patch_toText(dmp.patch_make('old content', 'new content'));
+            incomingMessages$.next({
+                target: ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY,
+                filePatches: [{ fileName: 'file.txt', patch, changeType: ProgrammingExerciseEditorFileChangeType.CONTENT }],
+                timestamp: 3,
+            });
+
+            expect(operations).toHaveLength(0);
+            expect(alertService.info).not.toHaveBeenCalled();
+            expect(syncService.sendSynchronizationUpdate).toHaveBeenCalledWith(
+                exerciseIdToUse,
+                expect.objectContaining({
+                    target: ProgrammingExerciseEditorSyncTarget.TEMPLATE_REPOSITORY,
+                    fileRequests: ['file.txt'],
+                }),
+            );
         });
 
         it('ignores messages without a target', () => {

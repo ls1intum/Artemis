@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { ProgrammingExerciseProblemComponent } from 'app/programming/manage/update/update-components/problem/programming-exercise-problem.component';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -32,6 +32,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
 
     const mockAlertService = {
         success: jest.fn(),
+        error: jest.fn(),
     };
 
     beforeEach(() => {
@@ -105,4 +106,69 @@ describe('ProgrammingExerciseProblemComponent', () => {
         // Verify the exercise was updated
         expect(programmingExercise.problemStatement).toBe(generatedText);
     }));
+
+    it('should not call API when prompt or course is missing', () => {
+        mockHyperionApiService.generateProblemStatement.mockClear();
+        comp.userPrompt = '   ';
+        comp.generateProblemStatement();
+        expect(mockHyperionApiService.generateProblemStatement).not.toHaveBeenCalled();
+
+        const programmingExercise = new ProgrammingExercise(undefined, undefined);
+        comp.userPrompt = 'prompt';
+        fixture.componentRef.setInput('programmingExercise', programmingExercise);
+        mockHyperionApiService.generateProblemStatement.mockClear();
+        comp.generateProblemStatement();
+        expect(mockHyperionApiService.generateProblemStatement).not.toHaveBeenCalled();
+    });
+
+    it('shows error when generated problem statement is empty', fakeAsync(() => {
+        const courseId = 21;
+        const programmingExercise = new ProgrammingExercise(undefined, undefined);
+        programmingExercise.course = { id: courseId } as any;
+        fixture.componentRef.setInput('programmingExercise', programmingExercise);
+
+        comp.userPrompt = 'valid';
+        mockHyperionApiService.generateProblemStatement.mockReturnValue(of({ draftProblemStatement: '   ' }));
+
+        comp.generateProblemStatement();
+
+        expect(mockAlertService.error).toHaveBeenCalledWith('artemisApp.programmingExercise.problemStatement.generationError');
+        expect(comp.userPrompt).toBe('valid');
+        expect(comp.isGenerating).toBeFalse();
+    }));
+
+    it('shows error when generation fails', fakeAsync(() => {
+        const courseId = 31;
+        const programmingExercise = new ProgrammingExercise(undefined, undefined);
+        programmingExercise.course = { id: courseId } as any;
+        fixture.componentRef.setInput('programmingExercise', programmingExercise);
+
+        comp.userPrompt = 'cause error';
+        mockHyperionApiService.generateProblemStatement.mockReturnValue(throwError(() => new Error('failure')));
+
+        comp.generateProblemStatement();
+
+        expect(mockAlertService.error).toHaveBeenCalledWith('artemisApp.programmingExercise.problemStatement.generationError');
+        expect(comp.isGenerating).toBeFalse();
+    }));
+
+    it('cancels generation and unsubscribes', () => {
+        comp.isGenerating = true;
+        comp['currentGenerationSubscription'] = of().subscribe();
+        const unsubscribeSpy = jest.spyOn(comp['currentGenerationSubscription']!, 'unsubscribe');
+
+        comp.cancelGeneration();
+
+        expect(unsubscribeSpy).toHaveBeenCalled();
+        expect(comp.isGenerating).toBeFalse();
+    });
+
+    it('cleans up subscription on destroy', () => {
+        comp['currentGenerationSubscription'] = of().subscribe();
+        const unsubscribeSpy = jest.spyOn(comp['currentGenerationSubscription']!, 'unsubscribe');
+
+        comp.ngOnDestroy();
+
+        expect(unsubscribeSpy).toHaveBeenCalled();
+    });
 });

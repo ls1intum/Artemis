@@ -401,33 +401,45 @@ export class RepositoryFileSyncService {
         }
         const auxiliaryId = message.target === ProgrammingExerciseEditorSyncTarget.AUXILIARY_REPOSITORY ? message.auxiliaryRepositoryId : undefined;
         const baselineKey = this.getBaselineKey(message.target, filePatch.fileName, auxiliaryId);
+        const messageTimestamp = message.timestamp ?? Date.now();
 
         // Duplicate prevention:
         // - Checks message timestamp against lastProcessedTimestamps to skip duplicate/old messages
         // - This prevents race conditions when multiple editors send updates simultaneously
-        const messageTimestamp = message.timestamp ?? Date.now();
         if (this.lastProcessedTimestamps[baselineKey] && messageTimestamp <= this.lastProcessedTimestamps[baselineKey]) {
             return undefined;
         }
-        this.lastProcessedTimestamps[baselineKey] = messageTimestamp;
 
         // **DELETE**: Removes the file's baseline and returns a delete operation
         if (filePatch.changeType === ProgrammingExerciseEditorFileChangeType.DELETE) {
             delete this.baselines[baselineKey];
+            this.lastProcessedTimestamps[baselineKey] = messageTimestamp;
             return { type: ProgrammingExerciseEditorFileChangeType.DELETE, fileName: filePatch.fileName };
         }
 
         // **RENAME**: Moves the baseline to the new filename and returns a rename operation
         if (filePatch.changeType === ProgrammingExerciseEditorFileChangeType.RENAME && filePatch.newFileName) {
-            const newKey = this.getBaselineKey(message.target, filePatch.newFileName, auxiliaryId);
-            const currentContent = this.baselines[baselineKey] ?? this.baselines[newKey] ?? filePatch.patch ?? '';
-            delete this.baselines[baselineKey];
-
-            this.baselines[newKey] = currentContent;
             const fileType = filePatch.fileType ?? (filePatch.fileName.includes('.') ? FileType.FILE : FileType.FOLDER);
+            const newKey = this.getBaselineKey(message.target, filePatch.newFileName, auxiliaryId);
             if (fileType === FileType.FOLDER) {
                 this.renameTrackingEntries(message.target, auxiliaryId, filePatch.fileName, filePatch.newFileName);
+                delete this.baselines[baselineKey];
+                delete this.lastProcessedTimestamps[baselineKey];
+                return {
+                    type: ProgrammingExerciseEditorFileChangeType.RENAME,
+                    fileName: filePatch.fileName,
+                    newFileName: filePatch.newFileName,
+                    content: filePatch.patch ?? '',
+                    fileType,
+                };
             }
+
+            const currentContent = this.baselines[baselineKey] ?? this.baselines[newKey] ?? filePatch.patch ?? '';
+            delete this.baselines[baselineKey];
+            delete this.lastProcessedTimestamps[baselineKey];
+
+            this.baselines[newKey] = currentContent;
+            this.lastProcessedTimestamps[newKey] = messageTimestamp;
             return {
                 type: ProgrammingExerciseEditorFileChangeType.RENAME,
                 fileName: filePatch.fileName,
@@ -441,12 +453,18 @@ export class RepositoryFileSyncService {
         if (filePatch.changeType === ProgrammingExerciseEditorFileChangeType.CREATE) {
             const content = filePatch?.patch ?? '';
             this.baselines[baselineKey] = content;
+            this.lastProcessedTimestamps[baselineKey] = messageTimestamp;
             return { type: ProgrammingExerciseEditorFileChangeType.CREATE, fileName: filePatch.fileName, content, fileType: filePatch.fileType };
         }
 
         // **CONTENT** (default): Applies diff patch to baseline and returns updated content
         const patches = filePatch.patch ? this.diffMatchPatch.patch_fromText(filePatch.patch) : [];
-        const currentContent = this.baselines[baselineKey] ?? '';
+        const currentContent = this.baselines[baselineKey];
+
+        if (currentContent === undefined) {
+            this.requestFullFileForTarget(message.target, filePatch.fileName, auxiliaryId);
+            return undefined;
+        }
 
         let patchedContent: string;
         try {
@@ -456,7 +474,6 @@ export class RepositoryFileSyncService {
                 const hasFailedPatches = results.some((success) => !success);
                 if (hasFailedPatches) {
                     this.alertService.info('artemisApp.editor.synchronization.patchFailedAlert');
-                    this.requestFullFileForTarget(message.target, filePatch.fileName, auxiliaryId);
                     return undefined;
                 }
                 patchedContent = appliedContent;
@@ -466,11 +483,11 @@ export class RepositoryFileSyncService {
         } catch (error) {
             // If patch parsing or application throws an error, request full file sync as fallback
             this.alertService.info('artemisApp.editor.synchronization.syncErrorAlert');
-            this.requestFullFileForTarget(message.target, filePatch.fileName, auxiliaryId);
             return undefined;
         }
 
         this.baselines[baselineKey] = patchedContent;
+        this.lastProcessedTimestamps[baselineKey] = messageTimestamp;
         return { type: ProgrammingExerciseEditorFileChangeType.CONTENT, fileName: filePatch.fileName, content: patchedContent };
     }
 

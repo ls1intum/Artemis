@@ -4,34 +4,51 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.clearInvocations;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 import java.util.concurrent.CompletableFuture;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.web.context.request.RequestAttributes;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
-import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
+import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
 import de.tum.cit.aet.artemis.programming.domain.synchronization.ProgrammingExerciseEditorFileChangeType;
 import de.tum.cit.aet.artemis.programming.domain.synchronization.ProgrammingExerciseEditorFileType;
 import de.tum.cit.aet.artemis.programming.domain.synchronization.ProgrammingExerciseEditorSyncTarget;
 import de.tum.cit.aet.artemis.programming.dto.synchronization.ProgrammingExerciseEditorFileSyncDTO;
 import de.tum.cit.aet.artemis.programming.dto.synchronization.ProgrammingExerciseEditorSyncEventDTO;
 
-class ProgrammingExerciseEditorSyncServiceTest {
+class ProgrammingExerciseEditorSyncServiceTest extends AbstractProgrammingIntegrationLocalCILocalVCTestBase {
 
-    private WebsocketMessagingService websocketMessagingService;
+    private static final String TEST_PREFIX = "programmingexerciseeditorsyncservicetest";
 
+    @Override
+    protected String getTestPrefix() {
+        return TEST_PREFIX;
+    }
+
+    @Autowired
     private ProgrammingExerciseEditorSyncService synchronizationService;
 
     @BeforeEach
     void setUp() {
-        websocketMessagingService = mock(WebsocketMessagingService.class);
-        synchronizationService = new ProgrammingExerciseEditorSyncService(websocketMessagingService);
-        when(websocketMessagingService.sendMessage(anyString(), any(Object.class))).thenReturn(CompletableFuture.completedFuture(null));
+        doReturn(CompletableFuture.completedFuture(null)).when(websocketMessagingService).sendMessage(anyString(), any(Object.class));
+        clearInvocations(websocketMessagingService);
+    }
+
+    @AfterEach
+    void resetRequestContext() {
+        RequestContextHolder.resetRequestAttributes();
     }
 
     @Test
@@ -143,8 +160,50 @@ class ProgrammingExerciseEditorSyncServiceTest {
     }
 
     @Test
+    void broadcastNewCommitAlertUsesClientInstanceHeader() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader(ProgrammingExerciseEditorSyncService.CLIENT_INSTANCE_HEADER, "client-commits");
+        RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
+
+        synchronizationService.broadcastNewCommitAlert(101L, ProgrammingExerciseEditorSyncTarget.SOLUTION_REPOSITORY, null);
+
+        var captor = ArgumentCaptor.forClass(ProgrammingExerciseEditorSyncEventDTO.class);
+        verify(websocketMessagingService).sendMessage(eq("/topic/programming-exercises/101/synchronization"), captor.capture());
+        var sentMessage = captor.getValue();
+
+        assertThat(sentMessage.clientInstanceId()).isEqualTo("client-commits");
+        assertThat(sentMessage.newCommitAlert()).isTrue();
+    }
+
+    @Test
     void getSynchronizationTopicGeneratesCorrectTopic() {
         String topic = ProgrammingExerciseEditorSyncService.getSynchronizationTopic(123L);
         assertThat(topic).isEqualTo("/topic/programming-exercises/123/synchronization");
+    }
+
+    @Test
+    void broadcastUsesClientInstanceHeader() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader(ProgrammingExerciseEditorSyncService.CLIENT_INSTANCE_HEADER, "client-42");
+        RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
+
+        synchronizationService.broadcastFileChanges(11L, ProgrammingExerciseEditorSyncTarget.PROBLEM_STATEMENT, null, null);
+
+        var captor = ArgumentCaptor.forClass(ProgrammingExerciseEditorSyncEventDTO.class);
+        verify(websocketMessagingService).sendMessage(eq("/topic/programming-exercises/11/synchronization"), captor.capture());
+        assertThat(captor.getValue().clientInstanceId()).isEqualTo("client-42");
+    }
+
+    @Test
+    void getClientInstanceIdReturnsNullWhenNoRequest() {
+        assertThat(ProgrammingExerciseEditorSyncService.getClientInstanceId()).isNull();
+    }
+
+    @Test
+    void getClientInstanceIdReturnsNullForNonServletAttributes() {
+        RequestAttributes nonServletAttributes = mock(RequestAttributes.class);
+        RequestContextHolder.setRequestAttributes(nonServletAttributes);
+
+        assertThat(ProgrammingExerciseEditorSyncService.getClientInstanceId()).isNull();
     }
 }
