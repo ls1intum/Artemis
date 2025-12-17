@@ -220,7 +220,7 @@ describe('CourseExamsComponent', () => {
         expect(componentFixture.nativeElement.querySelector('#exam-sidebar-test').hidden).toBeTrue();
 
         component.isExamStarted = false;
-        componentFixture.detectChanges();
+        componentFixture.changeDetectorRef.detectChanges();
         expect(componentFixture.nativeElement.querySelector('#exam-sidebar-test').hidden).toBeFalse();
     });
 
