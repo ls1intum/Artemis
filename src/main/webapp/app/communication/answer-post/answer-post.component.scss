@@ -3,19 +3,53 @@
 @import 'bootstrap/scss/mixins';
 @import '../metis.component';
 
-// CSS animations to replace @angular/animations
-@keyframes fade-in {
+// CSS animations for enter/leave (used with Angular's animate.enter/animate.leave)
+// Reactions bar enter animation using CSS Grid for height + opacity
+.reactions-entering {
+    display: grid;
+    grid-template-rows: 0fr;
+    opacity: 0;
+    animation: reactions-enter 0.3s ease-in-out forwards;
+
+    > * {
+        overflow: hidden;
+    }
+}
+
+@keyframes reactions-enter {
     from {
+        grid-template-rows: 0fr;
         opacity: 0;
     }
 
     to {
+        grid-template-rows: 1fr;
         opacity: 1;
     }
 }
 
-.fade-animation-enter {
-    animation: fade-in 300ms ease-in forwards;
+// Reactions bar leave animation
+.reactions-leaving {
+    display: grid;
+    grid-template-rows: 1fr;
+    opacity: 1;
+    animation: reactions-leave 0.2s ease-in-out forwards;
+
+    > * {
+        overflow: hidden;
+    }
+}
+
+@keyframes reactions-leave {
+    from {
+        grid-template-rows: 1fr;
+        opacity: 1;
+    }
+
+    to {
+        grid-template-rows: 0fr;
+        opacity: 0;
+    }
 }
 
 .answer-post {

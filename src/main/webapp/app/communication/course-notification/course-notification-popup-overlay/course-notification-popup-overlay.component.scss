@@ -1,18 +1,71 @@
-// CSS animations to replace @angular/animations
-@keyframes notification-scale-in {
-    from {
-        opacity: 0;
-        transform: scale(0);
-    }
+// CSS animations for enter/leave (used with Angular's animate.enter/animate.leave)
+// Wrapper for animation - positioned absolutely like the original notification div
+.notification-animation-wrapper {
+    position: absolute;
+    bottom: 1.5rem;
+    right: 0;
+    transition:
+        opacity 0.4s ease-out,
+        bottom 0.4s ease-in-out;
+}
 
-    to {
-        opacity: 1;
-        transform: scale(1);
+// Note: nth-last-child(2) is the last notification because .course-notification-popup-overlay-collapse is always nth-last-child(1)
+.notification-animation-wrapper:nth-last-child(2) {
+    bottom: 0;
+    opacity: 1;
+}
+
+.notification-animation-wrapper:nth-last-child(3) {
+    bottom: 0.5rem;
+    opacity: 1;
+}
+
+.notification-animation-wrapper:nth-last-child(4) {
+    bottom: 1rem;
+    opacity: 1;
+}
+
+// Notification enter animation: scale in from 0 to 1
+// The animation is on the wrapper, the child scales
+.notification-entering {
+    > * {
+        transform: scale(0);
+        opacity: 0;
+        animation: notification-scale-in 0.2s ease-out forwards;
     }
 }
 
-.notification-animation-enter {
-    animation: notification-scale-in 200ms ease-in-out forwards;
+@keyframes notification-scale-in {
+    from {
+        transform: scale(0);
+        opacity: 0;
+    }
+
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+// Notification leave animation: scale out from 1 to 0
+.notification-leaving {
+    > * {
+        transform: scale(1);
+        opacity: 1;
+        animation: notification-scale-out 0.2s ease-in forwards;
+    }
+}
+
+@keyframes notification-scale-out {
+    from {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    to {
+        transform: scale(0);
+        opacity: 0;
+    }
 }
 
 .course-notification-popup-overlay {
@@ -49,28 +102,9 @@
     display: none;
 }
 
+// Content wrapper - positioning handled by .notification-animation-wrapper
 .course-notification-popup-overlay-notification {
-    position: absolute;
-    bottom: 1.5rem;
-    right: 0;
-    transition:
-        opacity 0.4s ease-out,
-        bottom 0.4s ease-in-out;
-}
-
-.course-notification-popup-overlay-notification:nth-last-child(1) {
-    bottom: 0;
-    opacity: 1;
-}
-
-.course-notification-popup-overlay-notification:nth-last-child(2) {
-    bottom: 0.5rem;
-    opacity: 1;
-}
-
-.course-notification-popup-overlay-notification:nth-last-child(3) {
-    bottom: 1rem;
-    opacity: 1;
+    // No positioning here, wrapper handles it
 }
 
 .course-notification-popup-overlay-collapse {
@@ -90,7 +124,7 @@
         max-height 0s linear,
         height 0s linear;
 
-    & .course-notification-popup-overlay-notification {
+    & .notification-animation-wrapper {
         opacity: 1;
     }
 

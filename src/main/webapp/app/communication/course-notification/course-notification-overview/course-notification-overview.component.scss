@@ -3,8 +3,40 @@ $overlay-container-height: 30rem;
 $padding: 1.4rem;
 $overlay-offset-top: 2.8rem;
 
-// CSS animations to replace @angular/animations
-@keyframes fade-in {
+// CSS animations for enter/leave (used with Angular's animate.enter/animate.leave)
+// Wrapper for animation - similar pattern to alerts
+.notification-animation-wrapper {
+    margin: 0.5rem 0;
+
+    &:first-child {
+        margin-top: 1rem;
+    }
+
+    &:last-child {
+        margin-bottom: 0;
+    }
+}
+
+// Notification item enter animation: fade in + height expand
+.notification-item-entering {
+    max-height: 0;
+    overflow: hidden;
+    animation:
+        notification-height-in 0.2s ease-in-out forwards,
+        notification-fade-in 0.2s ease-in-out forwards;
+}
+
+@keyframes notification-height-in {
+    from {
+        max-height: 0;
+    }
+
+    to {
+        max-height: 200px;
+    }
+}
+
+@keyframes notification-fade-in {
     from {
         opacity: 0;
     }
@@ -14,13 +46,25 @@ $overlay-offset-top: 2.8rem;
     }
 }
 
-.fade-animation-delayed-enter {
-    animation: fade-in 200ms 400ms ease-in-out forwards;
-    opacity: 0;
+// Notification item leave animation: fade out + height collapse
+.notification-item-leaving {
+    max-height: 200px;
+    overflow: hidden;
+    animation:
+        notification-height-out 0.15s ease-in-out forwards,
+        notification-fade-out 0.15s ease-in-out forwards;
 }
 
-.notification-wrap-animation-enter {
-    animation: fade-in 200ms ease-in-out forwards;
+@keyframes notification-height-out {
+    to {
+        max-height: 0;
+    }
+}
+
+@keyframes notification-fade-out {
+    to {
+        opacity: 0;
+    }
 }
 
 .course-notification-overview-bubble {
@@ -106,16 +150,9 @@ $overlay-offset-top: 2.8rem;
     border-color: var(--secondary);
 }
 
+// Margins are now handled by .notification-animation-wrapper
 .course-notification-overview-notification-wrap {
-    margin: 0.5rem 0;
-}
-
-.course-notification-overview-notification-wrap:first-child {
-    margin-top: 1rem;
-}
-
-.course-notification-overview-notification-wrap:last-child {
-    margin-bottom: 0;
+    // Content wrapper - no margins here, handled by animation wrapper
 }
 
 .course-notification-overview-notification-empty-prompt {

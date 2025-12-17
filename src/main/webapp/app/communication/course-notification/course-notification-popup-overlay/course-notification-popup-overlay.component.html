@@ -6,17 +6,21 @@
 >
     @for (notification of notifications; track notification.notificationId) {
         <div
+            class="notification-animation-wrapper"
+            animate.enter="notification-entering"
+            animate.leave="notification-leaving"
             [ngStyle]="{ bottom: isExpanded ? (notifications.length - $index - 1) * 7 + 5 + 'rem' : null }"
-            class="course-notification-popup-overlay-notification notification-animation-enter"
         >
-            <jhi-course-notification
-                [courseNotification]="notification"
-                [isShowClose]="true"
-                [isHideTime]="true"
-                [isRedirectToUrl]="isExpanded || notifications.length === 1"
-                [displayTimeInMilliseconds]="popupTimeInMilliseconds - 500"
-                (onCloseClicked)="closeClicked(notification)"
-            />
+            <div class="course-notification-popup-overlay-notification">
+                <jhi-course-notification
+                    [courseNotification]="notification"
+                    [isShowClose]="true"
+                    [isHideTime]="true"
+                    [isRedirectToUrl]="isExpanded || notifications.length === 1"
+                    [displayTimeInMilliseconds]="popupTimeInMilliseconds - 500"
+                    (onCloseClicked)="closeClicked(notification)"
+                />
+            </div>
         </div>
     }
 

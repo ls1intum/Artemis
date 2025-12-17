@@ -41,22 +41,24 @@
         <div #scrollContainer class="course-notification-overview-notification-container">
             @if (!isLoading) {
                 @if (notificationsForSelectedCategory.length > 0) {
-                    <div class="fade-animation-delayed-enter">
+                    <div>
                         @for (notification of notificationsForSelectedCategory; track notification) {
-                            <div class="course-notification-overview-notification-wrap notification-wrap-animation-enter">
-                                <jhi-course-notification
-                                    [courseNotification]="notification"
-                                    [isUnseen]="notification.status === CourseNotificationViewingStatus.UNSEEN"
-                                    [isShowClose]="true"
-                                    [isRedirectToUrl]="true"
-                                    (onCloseClicked)="closeClicked(notification)"
-                                />
+                            <div class="notification-animation-wrapper" animate.enter="notification-item-entering" animate.leave="notification-item-leaving">
+                                <div class="course-notification-overview-notification-wrap">
+                                    <jhi-course-notification
+                                        [courseNotification]="notification"
+                                        [isUnseen]="notification.status === CourseNotificationViewingStatus.UNSEEN"
+                                        [isShowClose]="true"
+                                        [isRedirectToUrl]="true"
+                                        (onCloseClicked)="closeClicked(notification)"
+                                    />
+                                </div>
                             </div>
                         }
                         <div class="py-1"></div>
                     </div>
                 } @else {
-                    <div class="course-notification-overview-notification-empty-prompt fade-animation-delayed-enter">
+                    <div class="course-notification-overview-notification-empty-prompt">
                         <fa-icon class="course-notification-overview-notification-empty-prompt-icon" [icon]="faEnvelopeOpen" />
                         <div class="mt-3 text-secondary">
                             <strong jhiTranslate="artemisApp.courseNotification.overview.emptyTitle"></strong>
