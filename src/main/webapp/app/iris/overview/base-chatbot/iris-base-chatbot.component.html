@@ -169,14 +169,20 @@
                     (!this.rateLimitInfo?.rateLimit || this.rateLimitInfo?.currentMessageCount !== this.rateLimitInfo?.rateLimit) &&
                     !this.hasActiveStage
                 ) {
-                    <div class="suggestions-container suggestion-animation-enter">
-                        @for (suggestion of suggestions; track suggestion) {
-                            <button class="suggestion-button" (click)="onSuggestionClick(suggestion)" [innerHTML]="suggestion"></button>
-                        }
+                    <div animate.enter="suggestion-entering" animate.leave="suggestion-leaving">
+                        <div class="suggestions-container">
+                            @for (suggestion of suggestions; track suggestion) {
+                                <button class="suggestion-button" (click)="onSuggestionClick(suggestion)" [innerHTML]="suggestion"></button>
+                            }
+                        </div>
                     </div>
                 }
                 @for (message of messages; track message.id; let i = $index) {
-                    <div [class.message-animation-enter]="shouldAnimate" [style.transform-origin]="message.sender === IrisSender.USER ? 'bottom right' : 'bottom left'">
+                    <div
+                        animate.enter="message-entering"
+                        [class.animate-enabled]="shouldAnimate"
+                        [style.transform-origin]="message.sender === IrisSender.USER ? 'bottom right' : 'bottom left'"
+                    >
                         @for (content of message.content; track content.id) {
                             <div>
                                 @if (message.sender === IrisSender.USER) {
