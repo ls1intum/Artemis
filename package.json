@@ -36,6 +36,7 @@
         "@ng-bootstrap/ng-bootstrap": "20.0.0",
         "@ngx-translate/core": "17.0.0",
         "@ngx-translate/http-loader": "17.0.0",
+        "@popperjs/core": "^2.11.8",
         "@primeuix/themes": "2.0.2",
         "@sentry/angular": "10.31.0",
         "@siemens/ngx-datatable": "25.0.0",
@@ -161,6 +162,8 @@
         "yargs-parser": "22.0.0"
     },
     "devDependencies": {
+        "@analogjs/vite-plugin-angular": "2.2.0",
+        "@analogjs/vitest-angular": "2.2.0",
         "@angular-builders/jest": "20.0.0",
         "@angular-devkit/build-angular": "21.0.3",
         "@angular-eslint/builder": "21.1.0",
@@ -184,6 +187,7 @@
         "@typescript-eslint/eslint-plugin": "8.50.0",
         "@typescript-eslint/parser": "8.50.0",
         "@typescript-eslint/utils": "8.50.0",
+        "@vitest/coverage-v8": "4.0.16",
         "angular-eslint": "21.1.0",
         "cross-env": "10.1.0",
         "eslint": "9.39.2",
@@ -216,9 +220,8 @@
         "ts-morph": "27.0.0",
         "typescript": "5.9.3",
         "typescript-eslint": "8.50.0",
-        "vite-tsconfig-paths": "5.1.4",
-        "vitest": "4.0.15",
-        "@vitest/coverage-v8": "4.0.15"
+        "vite-tsconfig-paths": "6.0.2",
+        "vitest": "4.0.16"
     },
     "engines": {
         "node": ">=24.7.0",
