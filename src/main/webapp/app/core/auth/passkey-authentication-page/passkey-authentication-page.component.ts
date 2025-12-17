@@ -72,10 +72,6 @@ export class PasskeyAuthenticationPageComponent implements OnInit, OnDestroy {
         }
     }
 
-    askToSetupPasskey() {
-        return this.accountService.askToSetupPasskey();
-    }
-
     redirectToOriginalUrlOrHome() {
         if (this.returnUrl) {
             this.router.navigateByUrl(this.returnUrl);

@@ -29,7 +29,7 @@
                             <p class="text-wrap text-break mw-100" jhiTranslate="global.menu.admin.passkeyNotYetApproved"></p>
                         </div>
                     }
-                    @if (!askToSetupPasskey()) {
+                    @if (!accountService.askToSetupPasskey()) {
                         <jhi-button (onClick)="signInWithPasskey()" [title]="'global.menu.account.loginWithPasskey'" [icon]="faKey" [shouldSubmit]="false" />
                     } @else {
                         <jhi-button (onClick)="setupPasskey()" [title]="'global.menu.admin.setupPasskey'" [icon]="faKey" [shouldSubmit]="false" />
