@@ -189,9 +189,7 @@ public class IrisTextExerciseChatSessionService
     public void checkIrisEnabledFor(IrisTextExerciseChatSession session) {
         var exercise = textRepositoryApi.orElseThrow(() -> new TextApiNotPresentException(TextApi.class)).findByIdElseThrow(session.getExerciseId());
         var course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        if (course != null) {
-            irisSettingsService.ensureEnabledForCourseOrElseThrow(course);
-        }
+        irisSettingsService.ensureEnabledForCourseOrElseThrow(course);
     }
 
     @Override
