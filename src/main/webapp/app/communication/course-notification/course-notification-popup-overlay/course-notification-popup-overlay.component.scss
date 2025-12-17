@@ -26,13 +26,11 @@
 }
 
 // Notification enter animation: scale in from 0 to 1
-// The animation is on the wrapper, the child scales
+// Animation must be on the element itself (not children) for Angular to detect animationend
 .notification-entering {
-    > * {
-        transform: scale(0);
-        opacity: 0;
-        animation: notification-scale-in 0.2s ease-out forwards;
-    }
+    transform: scale(0);
+    opacity: 0;
+    animation: notification-scale-in 0.2s ease-out forwards;
 }
 
 @keyframes notification-scale-in {
@@ -48,12 +46,12 @@
 }
 
 // Notification leave animation: scale out from 1 to 0
+// Animation must be on the element itself (not children) for Angular to detect animationend
 .notification-leaving {
-    > * {
-        transform: scale(1);
-        opacity: 1;
-        animation: notification-scale-out 0.2s ease-in forwards;
-    }
+    pointer-events: none;
+    transform: scale(1);
+    opacity: 1;
+    animation: notification-scale-out 0.2s ease-in forwards;
 }
 
 @keyframes notification-scale-out {
@@ -73,15 +71,20 @@
     bottom: 1rem;
     right: 1rem;
     min-height: 10rem;
-    height: 10rem;
+    height: auto;
     min-width: 23rem;
     display: flex;
     flex-direction: column-reverse;
     justify-content: end;
     align-items: end;
     z-index: 1000;
-    overflow-y: auto;
-    overflow-x: visible;
+    overflow: visible;
+    pointer-events: none;
+
+    // Allow clicks on children
+    > * {
+        pointer-events: auto;
+    }
     transition:
         max-height 0.2s 0.2s ease-in-out,
         height 0.2s 0.2s ease-in-out;
@@ -116,6 +119,11 @@
     width: 20rem;
     text-align: right;
     transition: opacity 0.4s ease-in-out;
+
+    // Keep buttons circular
+    .btn.rounded-circle {
+        aspect-ratio: 1;
+    }
 }
 
 .course-notification-popup-overlay.is-expanded {
