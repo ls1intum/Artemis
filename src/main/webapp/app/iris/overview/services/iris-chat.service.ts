@@ -610,6 +610,9 @@ export class IrisChatService implements OnDestroy {
     public setCourseId(courseId: number | undefined): void {
         // eslint-disable-next-line @typescript-eslint/no-deprecated -- usage in setter is okay
         this.courseId = courseId;
+        if (courseId) {
+            this.irisStatusService.setCurrentCourse(courseId);
+        }
     }
 
     public currentNumNewMessages(): Observable<number> {

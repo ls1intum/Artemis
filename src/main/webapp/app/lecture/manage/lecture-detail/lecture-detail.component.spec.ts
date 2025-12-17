@@ -20,7 +20,7 @@ import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settin
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { PROFILE_IRIS } from 'app/app.constants';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
-import { IrisCourseSettings } from 'app/iris/shared/entities/settings/iris-settings.model';
+import { mockCourseSettings } from 'test/helpers/mocks/iris/mock-settings';
 
 const mockLecture = {
     title: 'Test Lecture',
@@ -110,23 +110,19 @@ describe('LectureDetailComponent', () => {
         jest.spyOn(lectureService, 'ingestLecturesInPyris').mockReturnValue(throwError(() => new Error('Error while ingesting')));
         component.ingestLectureInPyris();
     });
-    it('should set lectureIngestionEnabled based on service response', () => {
+    it('should set irisEnabled based on service response', () => {
         component.lecture = mockLecture;
         irisSettingsService = TestBed.inject(IrisSettingsService);
         profileService = TestBed.inject(ProfileService);
         const profileInfoResponse = {
             activeProfiles: [PROFILE_IRIS],
         } as ProfileInfo;
-        const irisSettingsResponse = {
-            irisLectureIngestionSettings: {
-                enabled: true,
-            },
-        } as IrisCourseSettings;
+        const irisSettingsResponse = mockCourseSettings(mockLecture.course!.id, true);
         jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfoResponse);
-        jest.spyOn(irisSettingsService, 'getCombinedCourseSettings').mockImplementation(() => of(irisSettingsResponse));
+        jest.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit').mockImplementation(() => of(irisSettingsResponse));
         mockActivatedRoute.data = of({ lecture: mockLecture }); // Update the ActivatedRoute mock data
         component.ngOnInit();
-        expect(irisSettingsService.getCombinedCourseSettings).toHaveBeenCalledWith(component.lecture.course?.id);
-        expect(component.lectureIngestionEnabled).toBeTrue();
+        expect(irisSettingsService.getCourseSettingsWithRateLimit).toHaveBeenCalledWith(component.lecture.course?.id);
+        expect(component.irisEnabled).toBeTrue();
     });
 });

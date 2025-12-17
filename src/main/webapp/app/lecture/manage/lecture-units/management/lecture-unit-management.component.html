@@ -90,7 +90,7 @@
                     </div>
 
                     <div class="d-flex gap-1 flex-column justify-content-center col-3 col-sm-2 col-lg-1" role="group">
-                        @if (!lecture.isTutorialLecture && lectureIngestionEnabled && lectureUnit.type === LectureUnitType.ATTACHMENT_VIDEO) {
+                        @if (!lecture.isTutorialLecture && irisEnabled && lectureUnit.type === LectureUnitType.ATTACHMENT_VIDEO) {
                             <div class="d-flex gap-1 w-100">
                                 @if (lecture.course?.id && showCompetencies) {
                                     <jhi-competencies-popover
