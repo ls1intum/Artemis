@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { MockComponent, MockProvider } from 'ng-mocks';
+import { MockComponent, MockInstance, MockProvider } from 'ng-mocks';
+import { signal } from '@angular/core';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
@@ -29,6 +30,14 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { LectureTranscriptionService } from 'app/lecture/manage/services/lecture-transcription.service';
 import { AccountService } from 'app/core/auth/account.service';
+import { TextUnitFormComponent } from 'app/lecture/manage/lecture-units/text-unit-form/text-unit-form.component';
+import { OnlineUnitFormComponent } from 'app/lecture/manage/lecture-units/online-unit-form/online-unit-form.component';
+import { AttachmentVideoUnitFormComponent } from 'app/lecture/manage/lecture-units/attachment-video-unit-form/attachment-video-unit-form.component';
+
+// Mock viewChild signals for form components to avoid signal binding errors
+MockInstance(TextUnitFormComponent, 'datePickerComponent', signal(undefined));
+MockInstance(OnlineUnitFormComponent, 'datePickerComponent', signal(undefined));
+MockInstance(AttachmentVideoUnitFormComponent, 'datePickerComponent', signal(undefined));
 
 describe('LectureUpdateUnitsComponent', () => {
     let wizardUnitComponentFixture: ComponentFixture<LectureUpdateUnitsComponent>;
@@ -43,6 +52,9 @@ describe('LectureUpdateUnitsComponent', () => {
                 LectureUpdateUnitsComponent,
                 MockComponent(CreateExerciseUnitComponent),
                 MockComponent(LectureUnitManagementComponent),
+                MockComponent(TextUnitFormComponent),
+                MockComponent(OnlineUnitFormComponent),
+                MockComponent(AttachmentVideoUnitFormComponent),
             ],
             providers: [
                 MockProvider(AlertService),
@@ -636,6 +648,7 @@ describe('LectureUpdateUnitsComponent', () => {
 
         const attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
         jest.spyOn(attachmentVideoUnitService, 'fetchAndUpdatePlaylistUrl').mockImplementation((_, formData) => of(formData));
+        jest.spyOn(accountService, 'isAdmin').mockReturnValue(true);
 
         const attachment = new Attachment();
         attachment.id = 1;
@@ -659,11 +672,13 @@ describe('LectureUpdateUnitsComponent', () => {
         const getTranscriptionStatusSpy = jest.spyOn(lectureTranscriptionService, 'getTranscriptionStatus').mockReturnValue(of(undefined));
 
         wizardUnitComponent.startEditLectureUnit(attachmentVideoUnit);
+        tick();
 
         wizardUnitComponentFixture.whenStable().then(() => {
             expect(wizardUnitComponent.isAttachmentVideoUnitFormOpen()).toBeTrue();
             expect(getTranscriptionSpy).toHaveBeenCalledWith(attachmentVideoUnit.id);
             expect(getTranscriptionStatusSpy).toHaveBeenCalledWith(attachmentVideoUnit.id);
+            expect(wizardUnitComponent.attachmentVideoUnitFormData?.transcriptionProperties?.videoTranscription).toBe(JSON.stringify(transcript));
         });
     }));
 
@@ -879,6 +894,7 @@ describe('LectureUpdateUnitsComponent', () => {
 
         const getTranscriptionSpy = jest.spyOn(lectureTranscriptionService, 'getTranscription').mockReturnValue(of(null as any));
         const getTranscriptionStatusSpy = jest.spyOn(lectureTranscriptionService, 'getTranscriptionStatus').mockReturnValue(of(null as any));
+        jest.spyOn(accountService, 'isAdmin').mockReturnValue(true);
 
         wizardUnitComponent.startEditLectureUnit(attachmentVideoUnit);
 
@@ -911,6 +927,7 @@ describe('LectureUpdateUnitsComponent', () => {
         const transcriptionStatus = { status: 'PENDING', progress: 50 };
         jest.spyOn(lectureTranscriptionService, 'getTranscription').mockReturnValue(of(undefined));
         jest.spyOn(lectureTranscriptionService, 'getTranscriptionStatus').mockReturnValue(of(transcriptionStatus as any));
+        jest.spyOn(accountService, 'isAdmin').mockReturnValue(true);
 
         wizardUnitComponent.startEditLectureUnit(attachmentVideoUnit);
 

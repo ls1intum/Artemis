@@ -438,7 +438,7 @@ describe('IrisBaseChatbotComponent', () => {
 
     it('should disable submit button if isLoading is true', () => {
         component.isLoading = true;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         const sendButton = fixture.debugElement.query(By.css('#irisSendButton')).componentInstance;
 
         expect(sendButton.disabled).toBeTruthy();
@@ -448,7 +448,7 @@ describe('IrisBaseChatbotComponent', () => {
         component.userAccepted = false;
         component.isLoading = false;
         component.error = undefined;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         const sendButton = fixture.debugElement.query(By.css('#irisSendButton'));
 
         expect(sendButton).toBeNull();
@@ -458,7 +458,7 @@ describe('IrisBaseChatbotComponent', () => {
         component.userAccepted = true;
         component.isLoading = false;
         component.error = undefined;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         const sendButton = fixture.debugElement.query(By.css('#irisSendButton')).componentInstance;
 
         expect(sendButton.disabled).toBeFalsy();
@@ -468,7 +468,7 @@ describe('IrisBaseChatbotComponent', () => {
         component.userAccepted = true;
         component.isLoading = false;
         component.error = IrisErrorMessageKey.SEND_MESSAGE_FAILED;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         const sendButton = fixture.debugElement.query(By.css('#irisSendButton')).componentInstance;
 
         expect(sendButton.disabled).toBeFalsy();
@@ -552,7 +552,7 @@ describe('IrisBaseChatbotComponent', () => {
         // Act
         component.ngOnInit();
         component.isLoading = true;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         // Assert
         const suggestionButtons = fixture.nativeElement.querySelectorAll('.suggestion-button');
@@ -570,7 +570,7 @@ describe('IrisBaseChatbotComponent', () => {
         // Act
         component.ngOnInit();
         component.userAccepted = false;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         // Assert
         const suggestionButtons = fixture.nativeElement.querySelectorAll('.suggestion-button');
@@ -588,7 +588,7 @@ describe('IrisBaseChatbotComponent', () => {
         // Act
         component.ngOnInit();
         component.rateLimitInfo = { currentMessageCount: 100, rateLimit: 100, rateLimitTimeframeHours: 1 };
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         // Assert
         const suggestionButtons = fixture.nativeElement.querySelectorAll('.suggestion-button');
@@ -606,7 +606,7 @@ describe('IrisBaseChatbotComponent', () => {
         // Act
         component.ngOnInit();
         component.active = false;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         // Assert
         const suggestionButtons = fixture.nativeElement.querySelectorAll('.suggestion-button');
@@ -624,7 +624,7 @@ describe('IrisBaseChatbotComponent', () => {
         // Act
         component.ngOnInit();
         component.hasActiveStage = true;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         // Assert
         const suggestionButtons = fixture.nativeElement.querySelectorAll('.suggestion-button');
@@ -891,7 +891,7 @@ describe('IrisBaseChatbotComponent', () => {
             fixture.componentRef.setInput('isChatHistoryAvailable', true);
 
             chatService.switchToSession(session);
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             tick();
 
             const relatedEntityButton = fixture.nativeElement.querySelector('.related-entity-button') as HTMLButtonElement;

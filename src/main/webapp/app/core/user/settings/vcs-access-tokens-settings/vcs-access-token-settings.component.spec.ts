@@ -44,7 +44,7 @@ describe('VcsAccessTokensSettingsComponent', () => {
         comp = fixture.componentInstance;
 
         translateService = TestBed.inject(TranslateService);
-        translateService.currentLang = 'en';
+        translateService.use('en');
 
         accountServiceMock.getAuthenticationState.mockReturnValue(of({ id: 1, vcsAccessToken: token, vcsAccessTokenExpiryDate: '11:20' } as User));
         accountServiceMock.addNewVcsAccessToken.mockReturnValue(of({ id: 1, vcsAccessToken: token, vcsAccessTokenExpiryDate: '11:20' } as User));
@@ -67,7 +67,7 @@ describe('VcsAccessTokensSettingsComponent', () => {
         // click button to send expiry date to server, to create the new token
         const createTokenButton = fixture.debugElement.query(By.css('#cancel-vcs-token-creation-button'));
         createTokenButton.triggerEventHandler('onClick', null);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(comp.edit).toBeFalsy();
     });
 
@@ -78,12 +78,12 @@ describe('VcsAccessTokensSettingsComponent', () => {
         // add an invalid expiry date
         comp.expiryDate = dayjs().subtract(7, 'day');
         comp.validateDate();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         // click button to send expiry date to server, to create the new token
         const createTokenButton = fixture.debugElement.query(By.css('#create-vcs-token-button'));
         createTokenButton.triggerEventHandler('onClick', null);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(comp.edit).toBeTruthy();
         expect(comp.currentUser?.vcsAccessToken).toBeUndefined();
         expect(alertServiceMock.error).toHaveBeenCalled();
@@ -104,7 +104,7 @@ describe('VcsAccessTokensSettingsComponent', () => {
         // click button to send expiry date to server, to create the new token
         const createTokenButton = fixture.debugElement.query(By.css('#create-vcs-token-button'));
         createTokenButton.triggerEventHandler('onClick', null);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(comp.edit).toBeTruthy();
         expect(alertServiceMock.error).toHaveBeenCalled();
     });
@@ -120,12 +120,12 @@ describe('VcsAccessTokensSettingsComponent', () => {
         // add an expiry date
         comp.expiryDate = tokenExpiryDate;
         comp.validateDate();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         // click button to send expiry date to server, to create the new token
         const createTokenButton = fixture.debugElement.query(By.css('#create-vcs-token-button'));
         createTokenButton.triggerEventHandler('onClick', null);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(comp.edit).toBeFalsy();
         expect(accountServiceMock.addNewVcsAccessToken).toHaveBeenCalled();

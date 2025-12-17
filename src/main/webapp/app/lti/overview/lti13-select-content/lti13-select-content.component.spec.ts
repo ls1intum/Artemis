@@ -1,23 +1,20 @@
 import { Lti13SelectContentComponent } from 'app/lti/overview/lti13-select-content/lti13-select-content.component';
-import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { of } from 'rxjs';
-import { TranslateLoader, TranslateModule, TranslateService } from '@ngx-translate/core';
-import { provideHttpClient } from '@angular/common/http';
-import { TranslateHttpLoader } from '@ngx-translate/http-loader';
-import { HttpClient } from '@angular/common/http';
-
-function HttpLoaderFactory(http: HttpClient) {
-    return new TranslateHttpLoader(http);
-}
+import { TranslateService } from '@ngx-translate/core';
+import { MockDirective, MockPipe } from 'ng-mocks';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
 
 describe('Lti13SelectContentComponent', () => {
     let component: Lti13SelectContentComponent;
     let fixture: ComponentFixture<Lti13SelectContentComponent>;
     let routeMock: any;
 
-    beforeEach(waitForAsync(() => {
+    beforeEach(() => {
         routeMock = {
             snapshot: {
                 queryParamMap: {
@@ -28,21 +25,16 @@ describe('Lti13SelectContentComponent', () => {
         };
 
         TestBed.configureTestingModule({
-            imports: [
-                ReactiveFormsModule,
-                FormsModule,
-                Lti13SelectContentComponent,
-                TranslateModule.forRoot({
-                    loader: {
-                        provide: TranslateLoader,
-                        useFactory: HttpLoaderFactory,
-                        deps: [HttpClient],
-                    },
-                }),
+            imports: [ReactiveFormsModule, FormsModule, Lti13SelectContentComponent],
+            providers: [
+                FormBuilder,
+                { provide: ActivatedRoute, useValue: routeMock },
+                { provide: TranslateService, useClass: MockTranslateService },
+                MockDirective(TranslateDirective),
+                MockPipe(SafeResourceUrlPipe),
             ],
-            providers: [FormBuilder, { provide: ActivatedRoute, useValue: routeMock }, TranslateService, provideHttpClient()],
-        }).compileComponents();
-    }));
+        });
+    });
 
     beforeEach(() => {
         HTMLFormElement.prototype.submit = jest.fn();
@@ -51,7 +43,7 @@ describe('Lti13SelectContentComponent', () => {
     });
 
     it('should create', () => {
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(component).toBeTruthy();
     });
 
