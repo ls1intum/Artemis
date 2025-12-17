@@ -185,77 +185,63 @@ describe('PasskeyAuthenticationPageComponent', () => {
         });
     });
 
-    describe('template rendering', () => {
-        beforeEach(() => {
-            jest.spyOn(accountService, 'identity').mockResolvedValue({} as User);
-        });
+    it('should display setup passkey button when user should setup passkey', async () => {
+        jest.spyOn(accountService, 'askToSetupPasskey').mockReturnValue(true);
+        fixture.detectChanges();
+        await fixture.whenStable();
 
-        it('should display header', async () => {
-            fixture.detectChanges();
-            await fixture.whenStable();
+        const button = fixture.nativeElement.querySelector('jhi-button');
+        expect(button).toBeTruthy();
+    });
 
-            const header = fixture.nativeElement.querySelector('h3');
-            expect(header).toBeTruthy();
-        });
+    it('should display sign in button when user has passkey registered', async () => {
+        jest.spyOn(accountService, 'askToSetupPasskey').mockReturnValue(false);
+        fixture.detectChanges();
+        await fixture.whenStable();
 
-        it('should display setup passkey button when user should setup passkey', async () => {
-            jest.spyOn(accountService, 'askToSetupPasskey').mockReturnValue(true);
-            fixture.detectChanges();
-            await fixture.whenStable();
+        const button = fixture.nativeElement.querySelector('jhi-button');
+        expect(button).toBeTruthy();
+    });
 
-            const button = fixture.nativeElement.querySelector('jhi-button');
-            expect(button).toBeTruthy();
-        });
+    it('should display info alert when user is not logged in with passkey', async () => {
+        jest.spyOn(accountService, 'isLoggedInWithPasskey').mockReturnValue(false);
+        fixture.detectChanges();
+        await fixture.whenStable();
 
-        it('should display sign in button when user has passkey registered', async () => {
-            jest.spyOn(accountService, 'askToSetupPasskey').mockReturnValue(false);
-            fixture.detectChanges();
-            await fixture.whenStable();
+        const infoAlert = fixture.nativeElement.querySelector('.alert-info');
+        expect(infoAlert).toBeTruthy();
+    });
 
-            const button = fixture.nativeElement.querySelector('jhi-button');
-            expect(button).toBeTruthy();
-        });
+    it('should display warning alert and link when user is logged in with passkey but not approved', async () => {
+        jest.spyOn(accountService, 'isLoggedInWithPasskey').mockReturnValue(true);
+        fixture.detectChanges();
+        await fixture.whenStable();
 
-        it('should display info alert when user is not logged in with passkey', async () => {
-            jest.spyOn(accountService, 'isLoggedInWithPasskey').mockReturnValue(false);
-            fixture.detectChanges();
-            await fixture.whenStable();
+        const warningAlert = fixture.nativeElement.querySelector('.alert-warning');
+        const link = fixture.nativeElement.querySelector('a[routerLink="/user-settings/passkeys"]');
+        expect(warningAlert).toBeTruthy();
+        expect(link).toBeTruthy();
+    });
 
-            const infoAlert = fixture.nativeElement.querySelector('.alert-info');
-            expect(infoAlert).toBeTruthy();
-        });
+    it('should set shouldSubmit to false on setup passkey button to prevent duplicate requests', async () => {
+        jest.spyOn(accountService, 'askToSetupPasskey').mockReturnValue(true);
+        fixture.detectChanges();
+        await fixture.whenStable();
 
-        it('should display warning alert and link when user is logged in with passkey but not approved', async () => {
-            jest.spyOn(accountService, 'isLoggedInWithPasskey').mockReturnValue(true);
-            fixture.detectChanges();
-            await fixture.whenStable();
+        const buttonElement = fixture.nativeElement.querySelector('jhi-button');
+        const button = buttonElement.querySelector('button');
 
-            const warningAlert = fixture.nativeElement.querySelector('.alert-warning');
-            const link = fixture.nativeElement.querySelector('a[routerLink="/user-settings/passkeys"]');
-            expect(warningAlert).toBeTruthy();
-            expect(link).toBeTruthy();
-        });
+        expect(button.type).toBe('button');
+    });
 
-        it('should set shouldSubmit to false on setup passkey button to prevent duplicate requests', async () => {
-            jest.spyOn(accountService, 'askToSetupPasskey').mockReturnValue(true);
-            fixture.detectChanges();
-            await fixture.whenStable();
+    it('should set shouldSubmit to false on sign in with passkey button to prevent duplicate requests', async () => {
+        jest.spyOn(accountService, 'askToSetupPasskey').mockReturnValue(false);
+        fixture.detectChanges();
+        await fixture.whenStable();
 
-            const buttonElement = fixture.nativeElement.querySelector('jhi-button');
-            const button = buttonElement.querySelector('button');
+        const buttonElement = fixture.nativeElement.querySelector('jhi-button');
+        const button = buttonElement.querySelector('button');
 
-            expect(button.type).toBe('button');
-        });
-
-        it('should set shouldSubmit to false on sign in with passkey button to prevent duplicate requests', async () => {
-            jest.spyOn(accountService, 'askToSetupPasskey').mockReturnValue(false);
-            fixture.detectChanges();
-            await fixture.whenStable();
-
-            const buttonElement = fixture.nativeElement.querySelector('jhi-button');
-            const button = buttonElement.querySelector('button');
-
-            expect(button.type).toBe('button');
-        });
+        expect(button.type).toBe('button');
     });
 });
