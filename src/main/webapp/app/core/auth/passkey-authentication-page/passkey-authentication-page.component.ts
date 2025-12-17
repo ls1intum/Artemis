@@ -25,15 +25,12 @@ export class PasskeyAuthenticationPageComponent implements OnInit, OnDestroy {
     private readonly alertService = inject(AlertService);
     protected readonly accountService = inject(AccountService);
 
-    userHasRegisteredPasskey: boolean = false;
     returnUrl: string | undefined = undefined;
 
     private routeSubscription?: Subscription;
 
     ngOnInit() {
         this.initializeUserIdentity().then(() => {
-            this.userHasRegisteredPasskey = !this.accountService.userIdentity()?.askToSetupPasskey;
-
             const redirectDirectlyIfUserIsAlreadyLoggedInWithPasskey = this.accountService.isUserLoggedInWithApprovedPasskey() && this.returnUrl;
             if (redirectDirectlyIfUserIsAlreadyLoggedInWithPasskey) {
                 this.router.navigateByUrl(this.returnUrl!);

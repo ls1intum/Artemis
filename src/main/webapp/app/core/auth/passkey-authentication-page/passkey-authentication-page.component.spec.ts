@@ -89,17 +89,6 @@ describe('PasskeyAuthenticationPageComponent', () => {
 
             expect(navigateByUrlSpy).toHaveBeenCalledWith('/admin/user-management');
         });
-
-        it('should set userHasRegisteredPasskey based on askToSetupPasskey', async () => {
-            const mockUser = { id: 1, login: 'testuser', askToSetupPasskey: false, internal: true };
-            jest.spyOn(accountService, 'identity').mockResolvedValue(mockUser as User);
-            jest.spyOn(accountService, 'userIdentity').mockReturnValue(mockUser);
-
-            component.ngOnInit();
-            await fixture.whenStable();
-
-            expect(component.userHasRegisteredPasskey).toBeTrue();
-        });
     });
 
     describe('redirectToOriginalUrlOrHome', () => {
