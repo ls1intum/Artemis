@@ -3,7 +3,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import dayjs from 'dayjs/esm';
 import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { concatMap, filter, map } from 'rxjs/operators';
+import { concatMap, filter, last, map } from 'rxjs/operators';
 import { LectureService } from '../services/lecture.service';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -341,25 +341,21 @@ export class LectureComponent implements OnInit, OnDestroy {
                     // Create attachment units sequentially to maintain order
                     return from(files).pipe(
                         concatMap((file) => this.createAttachmentUnit(createdLecture.id!, file)),
-                        // Collect all results and return the lecture at the end
                         map(() => createdLecture),
+                        // Emit only the final value after all files are processed
+                        last(),
                     );
                 }),
             )
             .subscribe({
                 next: (createdLecture: Lecture) => {
-                    // Navigation happens after each file, but we want it only after the last one
+                    this.isUploadingPdfs.set(false);
+                    this.alertService.success('artemisApp.lecture.pdfUpload.success');
+                    this.router.navigate(['course-management', this.courseId, 'lectures', createdLecture.id, 'edit']);
                 },
                 error: (error: HttpErrorResponse) => {
                     this.isUploadingPdfs.set(false);
                     onError(this.alertService, error);
-                },
-                complete: () => {
-                    this.isUploadingPdfs.set(false);
-                    // Get the created lecture (first one added to list during this operation)
-                    const createdLecture = this.lectures[this.lectures.length - 1];
-                    this.alertService.success('artemisApp.lecture.pdfUpload.success');
-                    this.router.navigate(['course-management', this.courseId, 'lectures', createdLecture.id, 'edit']);
                 },
             });
     }

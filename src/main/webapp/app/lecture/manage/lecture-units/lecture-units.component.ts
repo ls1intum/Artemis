@@ -21,7 +21,7 @@ import { ActivatedRoute } from '@angular/router';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { UnitCreationCardComponent } from 'app/lecture/manage/lecture-units/unit-creation-card/unit-creation-card.component';
 import { CreateExerciseUnitComponent } from 'app/lecture/manage/lecture-units/create-exercise-unit/create-exercise-unit.component';
-import { catchError, concatMap, map, switchMap } from 'rxjs/operators';
+import { catchError, concatMap, filter, map, switchMap } from 'rxjs/operators';
 import { combineLatest, from, of } from 'rxjs';
 import { LectureTranscriptionService } from '../services/lecture-transcription.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -410,6 +410,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
         from(files)
             .pipe(
                 concatMap((file) => this.createAttachmentUnitFromFile(file)),
+                filter((response) => response.body != null),
                 map((response) => response.body as AttachmentVideoUnit),
             )
             .subscribe({

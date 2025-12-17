@@ -1321,7 +1321,7 @@ describe('LectureUpdateUnitsComponent', () => {
             loadDataSpy.mockRestore();
         }));
 
-        it('should derive unit name from PDF filename', fakeAsync(() => {
+        it('should derive unit name from PDF filename', async () => {
             const attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
 
             const createdUnit = new AttachmentVideoUnit();
@@ -1330,26 +1330,28 @@ describe('LectureUpdateUnitsComponent', () => {
             const createSpy = jest.spyOn(attachmentVideoUnitService, 'create').mockReturnValue(of(new HttpResponse({ body: createdUnit, status: 201 })));
 
             wizardUnitComponentFixture.detectChanges();
-            tick();
+            await wizardUnitComponentFixture.whenStable();
 
             const pdfFile = new File(['content'], 'Chapter_01_Introduction.pdf', { type: 'application/pdf' });
             wizardUnitComponent.onPdfFilesDropped([pdfFile]);
-            tick();
+            await wizardUnitComponentFixture.whenStable();
 
             const formData = createSpy.mock.calls[0][0] as FormData;
             const unitBlob = formData.get('attachmentVideoUnit') as Blob;
 
             // Read the blob content to verify the name
-            const reader = new FileReader();
-            reader.onload = () => {
-                const unitData = JSON.parse(reader.result as string);
-                expect(unitData.name).toBe('Chapter 01 Introduction');
-            };
-            reader.readAsText(unitBlob);
-            tick();
-        }));
+            const unitData = await new Promise<any>((resolve) => {
+                const reader = new FileReader();
+                reader.onload = () => {
+                    resolve(JSON.parse(reader.result as string));
+                };
+                reader.readAsText(unitBlob);
+            });
 
-        it('should set release date to 15 minutes in future', fakeAsync(() => {
+            expect(unitData.name).toBe('Chapter 01 Introduction');
+        });
+
+        it('should set release date to 15 minutes in future', async () => {
             const attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
 
             const createdUnit = new AttachmentVideoUnit();
@@ -1358,28 +1360,30 @@ describe('LectureUpdateUnitsComponent', () => {
             const createSpy = jest.spyOn(attachmentVideoUnitService, 'create').mockReturnValue(of(new HttpResponse({ body: createdUnit, status: 201 })));
 
             wizardUnitComponentFixture.detectChanges();
-            tick();
+            await wizardUnitComponentFixture.whenStable();
 
             const beforeTime = dayjs();
             const pdfFile = new File(['content'], 'test.pdf', { type: 'application/pdf' });
             wizardUnitComponent.onPdfFilesDropped([pdfFile]);
-            tick();
+            await wizardUnitComponentFixture.whenStable();
             const afterTime = dayjs();
 
             const formData = createSpy.mock.calls[0][0] as FormData;
             const unitBlob = formData.get('attachmentVideoUnit') as Blob;
 
-            const reader = new FileReader();
-            reader.onload = () => {
-                const unitData = JSON.parse(reader.result as string);
-                const releaseDate = dayjs(unitData.releaseDate);
-                // Release date should be ~15 minutes from now
-                expect(releaseDate.isAfter(beforeTime.add(14, 'minutes'))).toBeTrue();
-                expect(releaseDate.isBefore(afterTime.add(16, 'minutes'))).toBeTrue();
-            };
-            reader.readAsText(unitBlob);
-            tick();
-        }));
+            const unitData = await new Promise<any>((resolve) => {
+                const reader = new FileReader();
+                reader.onload = () => {
+                    resolve(JSON.parse(reader.result as string));
+                };
+                reader.readAsText(unitBlob);
+            });
+
+            const releaseDate = dayjs(unitData.releaseDate);
+            // Release date should be ~15 minutes from now
+            expect(releaseDate.isAfter(beforeTime.add(14, 'minutes'))).toBeTrue();
+            expect(releaseDate.isBefore(afterTime.add(16, 'minutes'))).toBeTrue();
+        });
 
         it('should handle multiple PDF files sequentially', fakeAsync(() => {
             const attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
