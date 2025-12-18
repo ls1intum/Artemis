@@ -21,7 +21,6 @@ import { of } from 'rxjs';
 import { isGroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
 import { By } from '@angular/platform-browser';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
-import { input, runInInjectionContext } from '@angular/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { faUser, faUserCheck, faUserGraduate } from '@fortawesome/free-solid-svg-icons';
 import { ConversationMemberRowComponent } from 'app/communication/course-conversations-components/dialogs/conversation-detail-dialog/tabs/conversation-members/conversation-member-row/conversation-member-row.component';
@@ -62,8 +61,14 @@ examples.forEach((activeConversation) => {
 
         beforeEach(waitForAsync(() => {
             TestBed.configureTestingModule({
-                imports: [NgbTooltipModule, FaIconComponent],
-                declarations: [ConversationMemberRowComponent, MockPipe(ArtemisTranslatePipe), MockComponent(ProfilePictureComponent), MockDirective(TranslateDirective)],
+                imports: [
+                    ConversationMemberRowComponent,
+                    NgbTooltipModule,
+                    FaIconComponent,
+                    MockPipe(ArtemisTranslatePipe),
+                    MockComponent(ProfilePictureComponent),
+                    MockDirective(TranslateDirective),
+                ],
                 providers: [
                     MockProvider(AccountService),
                     MockProvider(NgbModal),
@@ -88,12 +93,10 @@ examples.forEach((activeConversation) => {
             canRevokeChannelModeratorRole.mockReturnValue(true);
 
             fixture = TestBed.createComponent(ConversationMemberRowComponent);
-            TestBed.runInInjectionContext(() => {
-                component = fixture.componentInstance;
-                component.activeConversation = input<ConversationDTO>(activeConversation);
-                component.course = input<Course>(course);
-                component.conversationMember = input<ConversationUserDTO>(conversationMember);
-            });
+            component = fixture.componentInstance;
+            fixture.componentRef.setInput('activeConversation', activeConversation);
+            fixture.componentRef.setInput('course', course);
+            fixture.componentRef.setInput('conversationMember', conversationMember);
             component.canRevokeChannelModeratorRole = canRevokeChannelModeratorRole;
             component.canGrantChannelModeratorRole = canGrantChannelModeratorRole;
             component.canRemoveUsersFromConversation = canRemoveUsersFromConversation;
@@ -108,7 +111,6 @@ examples.forEach((activeConversation) => {
         it('should create', fakeAsync(() => {
             fixture.detectChanges();
             tick();
-            fixture.detectChanges();
             expect(component).toBeTruthy();
             expect(component.canBeRemovedFromConversation).toEqual(canRemoveUsersFromConversation());
 
@@ -121,7 +123,7 @@ examples.forEach((activeConversation) => {
         it('should show remove user button if the user has the permissions in group chat', fakeAsync(() => {
             fixture.detectChanges();
             tick();
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             if (isGroupChatDTO(activeConversation)) {
                 expect(component.canBeRemovedFromConversation).toBeTrue();
                 checkRemoveMemberButton(true);
@@ -131,7 +133,7 @@ examples.forEach((activeConversation) => {
         it('should show remove user button if the user has the permissions in channel', fakeAsync(() => {
             fixture.detectChanges();
             tick();
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             if (isChannelDTO(activeConversation)) {
                 expect(component.canBeRemovedFromConversation).toEqual(canRemoveUsersFromConversation());
                 checkRemoveMemberButton(component.canBeRemovedFromConversation);
@@ -142,7 +144,7 @@ examples.forEach((activeConversation) => {
             canRemoveUsersFromConversation.mockReturnValue(false);
             fixture.detectChanges();
             tick();
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             if (isChannelDTO(activeConversation) || isGroupChatDTO(activeConversation)) {
                 expect(component.canBeRemovedFromConversation).toBeFalse();
                 checkRemoveMemberButton(false);
@@ -152,7 +154,7 @@ examples.forEach((activeConversation) => {
         it('should show revoke moderator button if user is already moderator', fakeAsync(() => {
             fixture.detectChanges();
             tick();
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             if (isChannelDTO(activeConversation)) {
                 expect(component.canBeGrantedChannelModeratorRole).toBeFalse(); // is already moderator
                 expect(component.canBeRevokedChannelModeratorRole).toBeTrue();
@@ -163,14 +165,12 @@ examples.forEach((activeConversation) => {
 
         it('should show grant moderator button if user is not yet moderator', fakeAsync(() => {
             if (isChannelDTO(activeConversation)) {
-                runInInjectionContext(fixture.debugElement.injector, () => {
-                    const conversationMember = component.conversationMember();
-                    (conversationMember as ChannelDTO).isChannelModerator = false;
-                    component.conversationMember = input<ConversationUserDTO>(conversationMember as ConversationUserDTO);
-                });
+                const updatedMember = { ...conversationMember };
+                (updatedMember as ChannelDTO).isChannelModerator = false;
+                fixture.componentRef.setInput('conversationMember', updatedMember);
                 fixture.detectChanges();
                 tick();
-                fixture.detectChanges();
+                fixture.changeDetectorRef.detectChanges();
 
                 expect(component.canBeGrantedChannelModeratorRole).toBeTrue();
                 expect(component.canBeRevokedChannelModeratorRole).toBeFalse();
@@ -209,7 +209,6 @@ examples.forEach((activeConversation) => {
         it('should open the grant channel moderator role dialog', fakeAsync(() => {
             fixture.detectChanges();
             tick();
-            fixture.detectChanges();
             if (isChannelDTO(activeConversation)) {
                 const channelService = TestBed.inject(ChannelService);
                 const changesPerformedSpy = jest.spyOn(component.changePerformed, 'emit');
@@ -226,7 +225,6 @@ examples.forEach((activeConversation) => {
         it('should open the revoke channel moderator role dialog', fakeAsync(() => {
             fixture.detectChanges();
             tick();
-            fixture.detectChanges();
             if (isChannelDTO(activeConversation)) {
                 const channelService = TestBed.inject(ChannelService);
                 const changesPerformedSpy = jest.spyOn(component.changePerformed, 'emit');
@@ -243,7 +241,6 @@ examples.forEach((activeConversation) => {
         it('should open the remove from private channel dialog', fakeAsync(() => {
             fixture.detectChanges();
             tick();
-            fixture.detectChanges();
             if (isChannelDTO(activeConversation)) {
                 const channelService = TestBed.inject(ChannelService);
                 const changesPerformedSpy = jest.spyOn(component.changePerformed, 'emit');
@@ -260,7 +257,6 @@ examples.forEach((activeConversation) => {
         it('should open the remove from group chat dialog', fakeAsync(() => {
             fixture.detectChanges();
             tick();
-            fixture.detectChanges();
             if (isGroupChatDTO(activeConversation)) {
                 const groupChatService = TestBed.inject(GroupChatService);
                 const changesPerformedSpy = jest.spyOn(component.changePerformed, 'emit');
@@ -277,9 +273,9 @@ examples.forEach((activeConversation) => {
         it('should emit userId when another user clicks the name', fakeAsync(() => {
             fixture.detectChanges();
             tick();
-            fixture.detectChanges();
 
             component.idOfLoggedInUser = loggedInUser.id!;
+            fixture.changeDetectorRef.detectChanges();
             const userNameClickedSpy = jest.spyOn(component.onUserNameClicked, 'emit');
             component.userNameClicked();
 
@@ -289,9 +285,8 @@ examples.forEach((activeConversation) => {
         it('should set isCurrentUser to true if conversation member is the logged-in user', fakeAsync(() => {
             loggedInUser.id = conversationMember.id!;
 
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             tick();
-            fixture.detectChanges();
 
             expect(component.isCurrentUser).toBeTrue();
         }));
@@ -299,9 +294,8 @@ examples.forEach((activeConversation) => {
         it('should set isCurrentUser to false if conversation member is NOT the logged-in user', fakeAsync(() => {
             loggedInUser.id = 999;
 
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             tick();
-            fixture.detectChanges();
 
             expect(component.isCurrentUser).toBeFalse();
         }));
@@ -309,9 +303,8 @@ examples.forEach((activeConversation) => {
         it('should prevent removal action if the user is the current user', fakeAsync(() => {
             loggedInUser.id = conversationMember.id!;
 
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             tick();
-            fixture.detectChanges();
 
             expect(component.canBeRemovedFromConversation).toBeFalse();
         }));
@@ -330,12 +323,11 @@ examples.forEach((activeConversation) => {
                 isTeachingAssistant,
             } as ConversationUserDTO;
 
-            runInInjectionContext(fixture.debugElement.injector, () => {
-                component.conversationMember = input<ConversationUserDTO>(updatedMember);
-                component.setUserAuthorityIconAndTooltip();
-                expect(component.userIcon).toBe(expectedIcon);
-                expect(component.userTooltip).toBe(expectedTooltip);
-            });
+            fixture.componentRef.setInput('conversationMember', updatedMember);
+            fixture.changeDetectorRef.detectChanges();
+            component.setUserAuthorityIconAndTooltip();
+            expect(component.userIcon).toBe(expectedIcon);
+            expect(component.userTooltip).toBe(expectedTooltip);
         });
 
         function genericConfirmationDialogTest(method: (event: MouseEvent) => void) {
@@ -350,7 +342,6 @@ examples.forEach((activeConversation) => {
                 result: Promise.resolve(),
             };
             const openDialogSpy = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef as unknown as NgbModalRef);
-            fixture.detectChanges();
 
             const fakeClickEvent = new MouseEvent('click');
             method(fakeClickEvent);

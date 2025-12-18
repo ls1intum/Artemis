@@ -37,7 +37,7 @@ describe('Grading System Component', () => {
         routeParamsSubject.next({ courseId });
         const paramsSpy = jest.spyOn(route.params, 'subscribe');
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(paramsSpy).toHaveBeenCalledOnce();
         expect(comp.courseId).toBe(courseId);
@@ -51,7 +51,7 @@ describe('Grading System Component', () => {
         routeParamsSubject.next({ courseId, examId });
         const paramsSpy = jest.spyOn(route.params, 'subscribe');
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(paramsSpy).toHaveBeenCalledOnce();
         expect(comp.courseId).toBe(courseId);

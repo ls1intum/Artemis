@@ -6,7 +6,7 @@ import RewritingVariant from 'app/shared/monaco-editor/model/actions/artemis-int
 import { AlertService } from 'app/shared/service/alert.service';
 import { RewriteResult } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-result';
 import { WebsocketService } from 'app/shared/service/websocket.service';
-import { HyperionReviewAndRefineApiService } from 'app/openapi/api/hyperionReviewAndRefineApi.service';
+import { HyperionProblemStatementApiService } from 'app/openapi/api/hyperionProblemStatementApi.service';
 import { ProblemStatementRewriteRequest } from 'app/openapi/model/problemStatementRewriteRequest';
 import { ProblemStatementRewriteResponse } from 'app/openapi/model/problemStatementRewriteResponse';
 import { ConsistencyCheckResponse } from 'app/openapi/model/consistencyCheckResponse';
@@ -67,7 +67,7 @@ export class ArtemisIntelligenceService {
     private http = inject(HttpClient);
     private alertService = inject(AlertService);
     private websocketService = inject(WebsocketService);
-    private hyperionApiService = inject(HyperionReviewAndRefineApiService);
+    private hyperionApiService = inject(HyperionProblemStatementApiService);
 
     private isLoadingRewrite = signal<boolean>(false);
     private isLoadingConsistencyCheck = signal<boolean>(false);
