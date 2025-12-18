@@ -853,7 +853,6 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     public void validateScoreSettings() {
         // Check if max score is set
         if (getMaxPoints() == null || getMaxPoints() <= 0) {
-            // Correct invalid maxPoints to default value (prevents invalid state)
             throw new BadRequestAlertException("The max points needs to be greater than 0", "Exercise", "maxScoreInvalid");
         }
 
