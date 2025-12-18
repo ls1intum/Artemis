@@ -206,7 +206,7 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
             return;
         }
 
-        // If the user has not accepted external LLM usage, or participation is of a team, we do not proceed
+        // If the user has not accepted LLM usage, or participation is of a team, we do not proceed
         if (!studentParticipation.getStudent().map(User::hasSelectedLLMUsage).orElse(true)) {
             return;
         }
