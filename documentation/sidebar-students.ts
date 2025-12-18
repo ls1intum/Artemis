@@ -20,6 +20,7 @@ const sidebars: SidebarsConfig = {
         'learning-analytics',
         'adaptive-learning',
         'markdown-support'
+        'mobile-applications',
     ],
 };
 
