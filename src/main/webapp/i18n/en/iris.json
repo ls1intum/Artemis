@@ -155,8 +155,8 @@
                 "partiallyIngested": "Partially processed"
             },
             "ingestionAlert": {
-                "lectureUnitSuccess": "Lecture unit processing in Iris has started",
-                "lectureUnitError": "Error while sending lecture unit to Iris",
+                "lectureUnitSuccess": "Lecture content processing in Iris has started",
+                "lectureUnitError": "Error while sending lecture content to Iris",
                 "lectureSuccess": "Lecture processing in Iris has started",
                 "lectureError": "Error while sending lecture to Iris",
                 "allLecturesSuccess": "All Lectures are now being processed",
