@@ -21,6 +21,9 @@ public record IrisMessageContentDTO(@Nullable String type, @Nullable String text
      */
     public IrisMessageContent toEntity() {
         if ("json".equals(type)) {
+            if (jsonContent == null) {
+                throw new IllegalArgumentException("jsonContent must not be null for json message content");
+            }
             var entity = new IrisJsonMessageContent();
             entity.setJsonContent(jsonContent);
             return entity;
