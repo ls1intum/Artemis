@@ -136,7 +136,7 @@ export class AssessmentHeaderComponent {
     }
 
     @HostListener('document:keydown.control.s', ['$event'])
-    saveOnControlAndS(event: KeyboardEvent) {
+    saveOnControlAndS(event: Event) {
         event.preventDefault();
         if (!this.saveDisabled) {
             this.save.emit();
@@ -144,7 +144,7 @@ export class AssessmentHeaderComponent {
     }
 
     @HostListener('document:keydown.control.enter', ['$event'])
-    submitOnControlAndEnter(event: KeyboardEvent) {
+    submitOnControlAndEnter(event: Event) {
         event.preventDefault();
         if (!this.overrideDisabled) {
             this.onSubmit.emit();
@@ -155,7 +155,7 @@ export class AssessmentHeaderComponent {
     }
 
     @HostListener('document:keydown.control.shift.arrowRight', ['$event'])
-    assessNextOnControlShiftAndArrowRight(event: KeyboardEvent) {
+    assessNextOnControlShiftAndArrowRight(event: Event) {
         event.preventDefault();
         if (!this.assessNextDisabled) {
             this.nextSubmission.emit();

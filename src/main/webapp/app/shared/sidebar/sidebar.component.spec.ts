@@ -15,7 +15,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseFilterModalComponent } from 'app/shared/exercise-filter/exercise-filter-modal.component';
 import { ExerciseFilterResults } from 'app/shared/types/exercise-filter';
-import { EventEmitter, input, runInInjectionContext } from '@angular/core';
+import { EventEmitter } from '@angular/core';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
@@ -68,7 +68,6 @@ describe('SidebarComponent', () => {
         component.sidebarData = {
             sidebarType: 'default',
         } as SidebarData;
-        fixture.detectChanges();
     });
 
     it('should filter sidebar items based on search criteria', () => {
@@ -80,7 +79,7 @@ describe('SidebarComponent', () => {
             ],
         };
         component.searchValue = 'Item 1';
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         // Check if only the item with title 'Item 1' is being displayed
         let filteredItems = component.sidebarData.ungroupedData?.filter((item) => item.title.includes(component.searchValue));
@@ -99,6 +98,7 @@ describe('SidebarComponent', () => {
             groupByCategory: true,
             ungroupedData: [] as SidebarCardElement[],
         };
+        fixture.changeDetectorRef.detectChanges();
 
         const noDataMessageElement = fixture.debugElement.query(By.css('.scrollable-item-content'));
         expect(noDataMessageElement).toBeTruthy();
@@ -111,7 +111,7 @@ describe('SidebarComponent', () => {
             groupByCategory: true,
             sidebarType: 'exercise',
         };
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const size = component.getSize();
         expect(size).toBe('M');
@@ -122,7 +122,7 @@ describe('SidebarComponent', () => {
             groupByCategory: true,
             sidebarType: 'exam',
         };
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const size = component.getSize();
         expect(size).toBe('L');
@@ -132,7 +132,7 @@ describe('SidebarComponent', () => {
         component.sidebarData = {
             groupByCategory: true,
         };
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const size = component.getSize();
         expect(size).toBe('M');
@@ -142,7 +142,7 @@ describe('SidebarComponent', () => {
         fixture.detectChanges();
         const prevSubscription = component.sidebarEventSubscription;
         fixture.componentRef.setInput('reEmitNonDistinctSidebarEvents', true);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(component.sidebarEventSubscription).not.toBe(prevSubscription);
     });
 
@@ -151,7 +151,7 @@ describe('SidebarComponent', () => {
 
         it('should display the filter link', () => {
             component.showFilter = true;
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
 
             const filterLink = fixture.debugElement.query(By.css(FILTER_LINK_SELECTOR));
 
@@ -166,7 +166,7 @@ describe('SidebarComponent', () => {
 
         it('should open modal on click with initialized filters', () => {
             component.showFilter = true;
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             const filterAppliedMock = new EventEmitter<ExerciseFilterResults>();
             const mockReturnValue = {
                 result: Promise.resolve({}),
@@ -298,23 +298,19 @@ describe('SidebarComponent', () => {
         });
 
         it('should show "Create Channel" button when canCreateChannel is true', () => {
-            runInInjectionContext(fixture.debugElement.injector, () => {
-                component.inCommunication = input<boolean>(true);
-                component.sidebarData.canCreateChannel = true;
-                fixture.detectChanges();
-                const createChannelButton = fixture.debugElement.query(By.css('.createChannel'));
-                expect(createChannelButton).toBeTruthy();
-            });
+            fixture.componentRef.setInput('inCommunication', true);
+            component.sidebarData.canCreateChannel = true;
+            fixture.changeDetectorRef.detectChanges();
+            const createChannelButton = fixture.debugElement.query(By.css('.createChannel'));
+            expect(createChannelButton).toBeTruthy();
         });
 
         it('should not show "Create Channel" button when canCreateChannel is false', () => {
-            runInInjectionContext(fixture.debugElement.injector, () => {
-                component.inCommunication = input<boolean>(true);
-                component.sidebarData.canCreateChannel = false;
-                fixture.detectChanges();
-                const createChannelButton = fixture.debugElement.query(By.css('.createChannel'));
-                expect(createChannelButton).toBeFalsy();
-            });
+            fixture.componentRef.setInput('inCommunication', true);
+            component.sidebarData.canCreateChannel = false;
+            fixture.changeDetectorRef.detectChanges();
+            const createChannelButton = fixture.debugElement.query(By.css('.createChannel'));
+            expect(createChannelButton).toBeFalsy();
         });
     });
 });

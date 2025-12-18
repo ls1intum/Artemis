@@ -1,132 +1,170 @@
-<div>
-    <jhi-button
-        id="reload"
-        [btnType]="isDirty ? WARNING : PRIMARY"
-        [isLoading]="isLoading"
-        [icon]="faRotate"
-        [title]="'artemisApp.iris.settings.button.reload'"
-        (onClick)="loadIrisSettings()"
-    />
-    <jhi-button id="save" [btnType]="SUCCESS" [isLoading]="isSaving" [icon]="faSave" [title]="'artemisApp.iris.settings.button.save'" (onClick)="saveIrisSettings()" />
+<div *titleBarTitle class="d-flex align-items-center">
+    <jhi-course-title-bar-title title="artemisApp.iris.settings.title" />
+    @if (settings) {
+        <span class="ms-3">
+            @if (isDirty) {
+                <span class="badge bg-warning">
+                    <fa-icon [icon]="faExclamationTriangle" class="me-1" />
+                    <span jhiTranslate="artemisApp.iris.settings.unsaved"></span>
+                </span>
+            } @else {
+                <span class="badge bg-success">
+                    <fa-icon [icon]="faCheck" class="me-1" />
+                    <span jhiTranslate="artemisApp.iris.settings.saved"></span>
+                </span>
+            }
+        </span>
+    }
 </div>
-@if (irisSettings) {
+
+@if (settings) {
     <div>
-        <h3 class="mt-2" jhiTranslate="artemisApp.iris.settings.subSettings.exerciseChatSettings"></h3>
-        <div>
-            <jhi-iris-common-sub-settings-update
-                [subSettings]="irisSettings?.irisProgrammingExerciseChatSettings"
-                [parentSubSettings]="parentIrisSettings?.irisProgrammingExerciseChatSettings"
-                [settingsType]="settingsType"
-                [courseId]="courseId"
-                (onChanges)="isDirty = true"
-            />
+        <!-- Enable/Disable Toggle -->
+        <div class="mb-4">
+            <h4 jhiTranslate="artemisApp.iris.settings.enableLabel"></h4>
+            <p jhiTranslate="artemisApp.iris.settings.enableHelp"></p>
+            <div class="btn-group" role="group">
+                <button type="button" class="btn" [class.btn-success]="settings.enabled" [class.btn-outline-success]="!settings.enabled" (click)="setEnabled(true)">
+                    <span jhiTranslate="artemisApp.iris.settings.enabled"></span>
+                </button>
+                <button type="button" class="btn" [class.btn-danger]="!settings.enabled" [class.btn-outline-danger]="settings.enabled" (click)="setEnabled(false)">
+                    <span jhiTranslate="artemisApp.iris.settings.disabled"></span>
+                </button>
+            </div>
         </div>
 
-        <hr class="hr" />
-
-        <h3 jhiTranslate="artemisApp.iris.settings.subSettings.textExerciseChatSettings"></h3>
-        <div>
-            <jhi-iris-common-sub-settings-update
-                [subSettings]="irisSettings?.irisTextExerciseChatSettings"
-                [parentSubSettings]="parentIrisSettings?.irisTextExerciseChatSettings"
-                [settingsType]="settingsType"
-                [courseId]="courseId"
-                (onChanges)="isDirty = true"
-            />
+        <!-- Custom Instructions (Instructors + Admins) -->
+        <div class="mb-4">
+            <h4 jhiTranslate="artemisApp.iris.settings.customInstructions"></h4>
+            <p jhiTranslate="artemisApp.iris.settings.customInstructionsHelp"></p>
+            <textarea
+                id="customInstructions"
+                class="form-control"
+                rows="6"
+                [(ngModel)]="settings.customInstructions"
+                [maxlength]="CUSTOM_INSTRUCTIONS_MAX_LENGTH"
+                placeholder="{{ 'artemisApp.iris.settings.customInstructionsPlaceholder' | artemisTranslate }}"
+            ></textarea>
+            <small class="form-text text-muted float-end">{{ getCustomInstructionsLength() }} / {{ CUSTOM_INSTRUCTIONS_MAX_LENGTH }}</small>
         </div>
 
-        @if (settingsType !== EXERCISE) {
-            <hr class="hr" />
+        <!-- Admin-Only Section -->
+        @if (isAdmin) {
+            <hr class="my-4" />
 
-            <h3 jhiTranslate="artemisApp.iris.settings.subSettings.courseChatSettings"></h3>
-            <div>
-                <jhi-iris-common-sub-settings-update
-                    [subSettings]="irisSettings?.irisCourseChatSettings"
-                    [parentSubSettings]="parentIrisSettings?.irisCourseChatSettings"
-                    [settingsType]="settingsType"
-                    [courseId]="courseId"
-                    (onChanges)="isDirty = true"
-                />
-            </div>
+            <div class="admin-section">
+                <h3 jhiTranslate="artemisApp.iris.settings.adminSettings"></h3>
+                <p class="text-muted" jhiTranslate="artemisApp.iris.settings.adminOnly"></p>
 
-            <hr class="hr" />
-
-            <div>
-                <h3 jhiTranslate="artemisApp.iris.settings.subSettings.lectureChatSettings"></h3>
-                <div>
-                    <jhi-iris-common-sub-settings-update
-                        [subSettings]="irisSettings?.irisLectureChatSettings"
-                        [parentSubSettings]="parentIrisSettings?.irisLectureChatSettings"
-                        [settingsType]="settingsType"
-                        [courseId]="courseId"
-                        (onChanges)="isDirty = true"
-                    />
+                <!-- Pipeline Variant -->
+                <div class="mb-3">
+                    <label for="variant" class="form-label">
+                        <strong jhiTranslate="artemisApp.iris.settings.variant"></strong>
+                    </label>
+                    <select id="variant" class="form-select" [(ngModel)]="settings.variant">
+                        @for (variant of availableVariants; track variant) {
+                            <option [value]="variant">{{ variant }}</option>
+                        }
+                    </select>
+                    <p class="form-text" jhiTranslate="artemisApp.iris.settings.variantHelp"></p>
                 </div>
 
-                <hr class="hr" />
-                <h3 jhiTranslate="artemisApp.iris.settings.subSettings.lectureIngestionSettings.title"></h3>
-                <jhi-iris-common-sub-settings-update
-                    [subSettings]="irisSettings?.irisLectureIngestionSettings!"
-                    [parentSubSettings]="parentIrisSettings?.irisLectureIngestionSettings"
-                    [settingsType]="settingsType"
-                    [courseId]="courseId"
-                    (onChanges)="isDirty = true"
-                />
-                <br />
-
-                <div class="form-check form-switch">
-                    <input class="form-check-input" type="checkbox" id="autoLectureIngestion" [(ngModel)]="autoLectureIngestion" />
-                    <label
-                        class="form-check-label"
-                        for="autoLectureIngestion"
-                        jhiTranslate="artemisApp.iris.settings.subSettings.lectureIngestionSettings.autoIngestOnAttachmentUpload"
-                    ></label>
+                <!-- Rate Limit Overrides -->
+                <div class="mb-3">
+                    <label class="form-label">
+                        <strong jhiTranslate="artemisApp.iris.settings.rateLimit"></strong>
+                    </label>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label for="rateLimitRequests" class="form-label" jhiTranslate="artemisApp.iris.settings.rateLimitRequests"></label>
+                            <input
+                                id="rateLimitRequests"
+                                type="number"
+                                class="form-control"
+                                [class.is-invalid]="rateLimitRequestsError"
+                                [(ngModel)]="rateLimitRequests"
+                                min="0"
+                                placeholder="{{
+                                    'artemisApp.iris.settings.rateLimitRequestsPlaceholder' | artemisTranslate: { default: applicationDefaults?.requests || 'unlimited' }
+                                }}"
+                            />
+                            @if (rateLimitRequestsError) {
+                                <div class="text-danger small mt-1">
+                                    <span [jhiTranslate]="rateLimitRequestsError"></span>
+                                </div>
+                            }
+                        </div>
+                        <div class="col-md-6">
+                            <label for="rateLimitTimeframe" class="form-label" jhiTranslate="artemisApp.iris.settings.rateLimitTimeframe"></label>
+                            <input
+                                id="rateLimitTimeframe"
+                                type="number"
+                                class="form-control"
+                                [class.is-invalid]="rateLimitTimeframeError"
+                                [(ngModel)]="rateLimitTimeframeHours"
+                                min="1"
+                                placeholder="{{
+                                    'artemisApp.iris.settings.rateLimitTimeframePlaceholder' | artemisTranslate: { default: applicationDefaults?.timeframeHours || 'unlimited' }
+                                }}"
+                            />
+                            @if (rateLimitTimeframeError) {
+                                <div class="text-danger small mt-1">
+                                    <span [jhiTranslate]="rateLimitTimeframeError"></span>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                    <p class="form-text" jhiTranslate="artemisApp.iris.settings.rateLimitHelp"></p>
                 </div>
-            </div>
 
-            <hr class="hr" />
-            <div>
-                <h3 jhiTranslate="artemisApp.iris.settings.subSettings.faqIngestionSettings.title"></h3>
-                <jhi-iris-common-sub-settings-update
-                    [subSettings]="irisSettings?.irisFaqIngestionSettings!"
-                    [parentSubSettings]="parentIrisSettings?.irisFaqIngestionSettings"
-                    [settingsType]="settingsType"
-                    [courseId]="courseId"
-                    (onChanges)="isDirty = true"
-                />
-                <br />
-                <div class="form-check form-switch">
-                    <input class="form-check-input" type="checkbox" id="autoFaqIngestion" [(ngModel)]="autoFaqIngestion" />
-                    <label class="form-check-label" for="autoFaqIngestion" jhiTranslate="artemisApp.iris.settings.subSettings.faqIngestionSettings.autoIngest"></label>
+                <!-- Effective Rate Limit Display (live preview) -->
+                <div class="alert alert-info">
+                    <strong jhiTranslate="artemisApp.iris.settings.effectiveRateLimit"></strong>:
+                    <span>
+                        @if (isEffectiveRateLimitUnlimited) {
+                            <span jhiTranslate="artemisApp.iris.settings.unlimited"></span>
+                        } @else {
+                            @if (hasEffectiveRequestsLimit) {
+                                {{ effectiveRateLimitPreview?.requests }}
+                                <span jhiTranslate="artemisApp.iris.settings.requests"></span>
+                            } @else {
+                                <span jhiTranslate="artemisApp.iris.settings.unlimited"></span>
+                            }
+                            <span jhiTranslate="artemisApp.iris.settings.per"></span>
+                            @if (hasEffectiveTimeframeLimit) {
+                                {{ effectiveRateLimitPreview?.timeframeHours }}
+                                <span jhiTranslate="artemisApp.iris.settings.hours"></span>
+                            } @else {
+                                <span jhiTranslate="artemisApp.iris.settings.unlimitedTime"></span>
+                            }
+                        }
+                    </span>
                 </div>
             </div>
         }
-        @if (settingsType !== EXERCISE) {
-            <hr class="hr" />
 
-            <div>
-                <h3 jhiTranslate="artemisApp.iris.settings.subSettings.competencyGenerationSettings"></h3>
-                <jhi-iris-common-sub-settings-update
-                    [subSettings]="irisSettings?.irisCompetencyGenerationSettings!"
-                    [parentSubSettings]="parentIrisSettings?.irisCompetencyGenerationSettings"
-                    [settingsType]="settingsType"
-                    [courseId]="courseId"
-                    (onChanges)="isDirty = true"
-                />
-            </div>
-
-            <hr class="hr" />
-
-            <div [hidden]="!tutorSuggestionFeatureEnabled">
-                <h3 jhiTranslate="artemisApp.iris.settings.subSettings.tutorSuggestionSettings"></h3>
-                <jhi-iris-common-sub-settings-update
-                    [subSettings]="irisSettings?.irisTutorSuggestionSettings!"
-                    [parentSubSettings]="parentIrisSettings?.irisTutorSuggestionSettings"
-                    [settingsType]="settingsType"
-                    [courseId]="courseId"
-                    (onChanges)="isDirty = true"
+        <!-- Save Button (only shown when there are pending changes) -->
+        @if (isDirty) {
+            <div class="mt-4">
+                <jhi-button
+                    id="save"
+                    [btnType]="PRIMARY"
+                    [isLoading]="isSaving"
+                    [disabled]="!isFormValid()"
+                    [icon]="faSave"
+                    [title]="'artemisApp.iris.settings.button.save'"
+                    [fullWidth]="true"
+                    (onClick)="saveSettings()"
                 />
             </div>
         }
+    </div>
+}
+
+@if (isLoading) {
+    <div class="d-flex justify-content-center my-5">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden" jhiTranslate="artemisApp.iris.settings.loading"></span>
+        </div>
     </div>
 }

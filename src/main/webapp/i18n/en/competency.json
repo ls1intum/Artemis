@@ -19,7 +19,7 @@
             "optionalDescription": "Optional competencies are not required to complete the learning path. They can provide additional practice or may cover material that exceeds the courses requirements.",
             "course": "Course",
             "progress": "Progress",
-            "progressDescription": "The progress is influenced by the percentage of completed lecture units and your score in the exercises.",
+            "progressDescription": "The progress is influenced by the percentage of completed lecture content and your score in the exercises.",
             "mastery": "Mastery",
             "masteryDescription": "A weighted metric of your progress, which shows your overall advancement towards competency mastery.",
             "masteredStudents": "Mastered students",
@@ -32,8 +32,8 @@
                 "MORE_EASY_POINTS": "Since you mostly scored your points in easy exercises, the mastery is lower than the progress",
                 "MORE_HARD_POINTS": "Since you mostly scored your points in hard exercises, the mastery is higher than the progress",
                 "QUICKLY_SOLVED_EXERCISES": "Since you solved some exercises quickly, the mastery is higher than the progress",
-                "MORE_LOW_WEIGHTED_EXERCISES": "Since you solved exercises or completed lecture units that are marked by the instructor as less important for this competency, the mastery is lower than the progress",
-                "MORE_HIGH_WEIGHTED_EXERCISES": "Since you solved exercises or completed lecture units that are marked by the instructor as more important for this competency, the mastery is higher than the progress"
+                "MORE_LOW_WEIGHTED_EXERCISES": "Since you solved exercises or completed lecture content that are marked by the instructor as less important for this competency, the mastery is lower than the progress",
+                "MORE_HIGH_WEIGHTED_EXERCISES": "Since you solved exercises or completed lecture content that are marked by the instructor as more important for this competency, the mastery is higher than the progress"
             },
             "table": {
                 "panelHeader": "Your advancement"
@@ -119,14 +119,14 @@
                 "descriptionMaxLengthValidationError": "A competency description is limited to {{max}} characters",
                 "softDueDate": "Recommended date of completion",
                 "softDueDateHint": "Guide students by selecting when you expect them to have mastered this competency. This is not a hard deadline.",
-                "connectWithLectureUnits": "Link the competency with lecture units"
+                "connectWithLectureUnits": "Link the competency with lecture content"
             },
             "edit": {
                 "title": "Edit a competency"
             },
             "link": {
                 "title": "Linked Competencies",
-                "lectureUnit": "Optionally link this lecture unit to one or more competencies.",
+                "lectureUnit": "Optionally link this lecture content to one or more competencies.",
                 "exercise": "Optionally link this exercise to one or more competencies.",
                 "weightTooltip": "The relevance of this learning object for the competency.",
                 "weightLabels": {
@@ -139,11 +139,11 @@
                 "tooltip": "This competency is suggested by AI based on the exercise description"
             },
             "competencyCard": {
-                "connectedLectureUnits": "Linked Lecture Units",
-                "connectedLectureUnitsExplanation": "The following lecture units are linked to this competency:",
+                "connectedLectureUnits": "Linked Lecture Content",
+                "connectedLectureUnitsExplanation": "The following lecture content is linked to this competency:",
                 "ringsTooltip": "Your route to competency mastery. (Red = Mastery, Green = Progress)",
                 "ringsTooltipHideProgress": "You have not yet rated your mastery of this competency, please rate it to see your progress.",
-                "exerciseNote": "Please note that we take always the last submission into account for exercise units. Even submissions after the due date. This means for example that you can improve your progress by re-trying a quiz as often as you like. It is therefore normal, that the score here might differ from the score you officially achieved in an exercise.",
+                "exerciseNote": "Please note that we take always the last submission into account for exercises. Even submissions after the due date. This means for example that you can improve your progress by re-trying a quiz as often as you like. It is therefore normal, that the score here might differ from the score you officially achieved in an exercise.",
                 "delete": {
                     "question": "Do you really want to delete the competency <strong>{{ title }}</strong>? You can not undo this action!",
                     "typeNameToConfirm": "Please enter the name of the competency for confirmation.",
@@ -151,8 +151,8 @@
                 },
                 "remove": "Remove",
                 "achieved": "achieved",
-                "progressUnavailable": "Progress calculation is currently only available for competencies linked to lecture units.",
-                "noUnitsConnected": "This competency is not linked to any lecture units",
+                "progressUnavailable": "Progress calculation is currently only available for competencies linked to lecture content.",
+                "noUnitsConnected": "This competency is not linked to any lecture content",
                 "progressExplanation": "Progress: You achieved currently <strong>{{ progress }}%</strong> of <strong>{{ points }}</strong> points",
                 "progressCourseExplanation": "Average Course Progress: The course achieved currently on average <strong>{{ progress }}%</strong> of <strong>{{ points }}</strong> points",
                 "softDueDate": "Recommended"
@@ -167,8 +167,8 @@
             },
             "competencyPopover": {
                 "connectedCompetencies": "Linked Competencies",
-                "explanation": "This lecture unit helps you to achieve the following competencies: ",
-                "noCompetencies": "No competencies are linked with this lecture unit! "
+                "explanation": "This lecture content helps you to achieve the following competencies: ",
+                "noCompetencies": "No competencies are linked with this lecture content! "
             },
             "relation": {
                 "competencyRelations": "Competency Relations",
@@ -209,11 +209,11 @@
                 "importExercisesLabel": "Import exercises",
                 "importExercisesTooltip": "Imports all exercises of the course competencies or links them to the imported course competency if an exercise with that name already exists",
                 "importLecturesLabel": "Import lectures",
-                "importLecturesTooltip": "Imports all related lecture units of the course competencies or links them to the imported course competency if a lecture unit with that name already exists",
+                "importLecturesTooltip": "Imports all related lecture content of the course competencies or links them to the imported course competency if a lecture content with that name already exists",
                 "referenceDateLabel": "Reference date",
                 "referenceDateTooltip": "The reference date is used to calculate the dates of the imported resources. The earliest date of this type is set to the reference date and all other dates are set relative to this date.",
                 "referenceDateTypeLabel": "Reference date type",
-                "referenceDateTypeTooltip": "'Release date' refers to the release date of exercises and lecture units as well as the visible date of lectures. 'Due date' refers to the due date of exercises and competencies as well as the end date of lectures.",
+                "referenceDateTypeTooltip": "'Release date' refers to the release date of exercises and lecture content as well as the visible date of lectures. 'Due date' refers to the due date of exercises and competencies as well as the end date of lectures.",
                 "referenceDateType": {
                     "noSelection": "-- Choose a reference date first --",
                     "releaseDate": "Release date",
@@ -240,7 +240,7 @@
                 "averageStudentScore": "Average student mastery",
                 "selectLecture": "Select a Lecture",
                 "noLectures": "This course has no lectures",
-                "dropdown": "{{lectureTitle}} ({{ noOfConnectedUnits }} unit(s) linked)",
+                "dropdown": "{{lectureTitle}} ({{ noOfConnectedUnits }} content linked)",
                 "lectureUnitTable": {
                     "type": "Type",
                     "name": "Lecture Unit",
@@ -327,7 +327,7 @@
                     "paragraph1": "In general we distinguish between a competency and a prerequisite.",
                     "paragraph2": "To create a competency, click the 'Create Competency' button at the top of the competency page. On the creation page, you can specify a unique name and an appropriate description for the competency. Additionally, you have the option to set a recommended completion date, which indicates to students by when they should master the connected learning objects.",
                     "paragraph3": "You can also add taxonomy to the competency, providing students with greater insight into its purpose. If certain learning objects within this competency are optional, you can establish a threshold for when the competency will be considered mastered. You also have the option to mark the entire competency as optional.",
-                    "paragraph4": "Finally, you can directly link lecture units to the competency. While you can also connect exercises to a competency, this must be done in the exercise edit/creation view.",
+                    "paragraph4": "Finally, you can directly link lecture content to the competency. While you can also connect exercises to a competency, this must be done in the exercise edit/creation view.",
                     "paragraph5": "In addition to creating competencies or prerequisites yourself, you can also import them from other courses or utilize standardized competencies. For more information on this process, please refer to the user <a href={{ link }} target=\"_blank\">manual for Artemis.</a>"
                 },
                 "courseCompetencyRelations": {
@@ -389,7 +389,7 @@
                 "descriptionMaxLengthValidationError": "A prerequisite description is limited to {{max}} characters",
                 "softDueDate": "Recommended date of completion",
                 "softDueDateHint": "Guide students by selecting when you expect them to have mastered this prerequisite. This is not a hard deadline.",
-                "connectWithLectureUnits": "Link the prerequisite with lecture units"
+                "connectWithLectureUnits": "Link the prerequisite with lecture content"
             },
             "edit": {
                 "title": "Edit a Prerequisite"
@@ -409,7 +409,7 @@
         "learningPath": {
             "learningPathButton": "Learning Paths",
             "breadcrumbs": {
-                "lectureUnit": "Lecture Unit",
+                "lectureUnit": "Lecture Content",
                 "exercise": "Exercise"
             },
             "manageLearningPaths": {
@@ -451,7 +451,7 @@
             },
             "participate": {
                 "viewProgress": "View current progress details",
-                "noTaskSelected": "Currently you have no lecture unit or exercise selected.",
+                "noTaskSelected": "Currently you have no lecture content or exercise selected.",
                 "prevHint": "Go to previous recommendation",
                 "nextHint": "Go to next recommendation"
             },
@@ -475,12 +475,12 @@
                         "tooltip": "Here the different competencies join again. The competencies have been defined as equivalent by your instructor, i.e. mastering one of the competencies is sufficient."
                     },
                     "learningObject": {
-                        "title": "Pending lecture unit / exercise",
-                        "tooltip": "A lecture unit or exercise that has not been sufficiently solved."
+                        "title": "Pending lecture content / exercise",
+                        "tooltip": "A lecture content or exercise that has not been sufficiently solved."
                     },
                     "completedLearningObject": {
-                        "title": "Completed lecture unit / exercise",
-                        "tooltip": "A lecture unit or exercise that has been sufficiently solved."
+                        "title": "Completed lecture content / exercise",
+                        "tooltip": "A lecture content or exercise that has been sufficiently solved."
                     }
                 }
             }
