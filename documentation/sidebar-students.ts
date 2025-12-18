@@ -5,6 +5,15 @@ const sidebars: SidebarsConfig = {
         'intro',
         'general',
         'courses',
+        {
+            type: 'category',
+            label: 'Exercises',
+            link: {
+                type: 'doc',
+                id: 'exercises/intro',
+            },
+            items: ['exercises/quiz-exercise', 'exercises/modeling-exercise'],
+        },
         'assessment',
         'quiz-training',
         'exams',
