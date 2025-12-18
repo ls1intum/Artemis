@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { NgbDropdown, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { NgClass, NgTemplateOutlet, SlicePipe } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -100,7 +99,6 @@ describe('CourseSidebarComponent', () => {
                 NgTemplateOutlet,
                 SlicePipe,
                 MockModule(NgbTooltipModule),
-                MockModule(BrowserAnimationsModule),
                 RouterLink,
                 RouterLinkActive,
                 CourseSidebarComponent,
