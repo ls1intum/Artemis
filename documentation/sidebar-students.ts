@@ -24,6 +24,7 @@ const sidebars: SidebarsConfig = {
         'tutorial-groups',
         'plagiarism-check',
         'notifications',
+        'user-experience',
     ],
 };
 
