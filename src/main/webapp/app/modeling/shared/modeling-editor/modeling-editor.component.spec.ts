@@ -51,7 +51,7 @@ describe('ModelingEditorComponent', () => {
     it('ngAfterViewInit', async () => {
         jest.spyOn(console, 'error').mockImplementation(); // prevent: findDOMNode is deprecated and will be removed in the next major release
         component.umlModel = classDiagram;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         // test
         await component.ngAfterViewInit();
@@ -65,7 +65,7 @@ describe('ModelingEditorComponent', () => {
 
     it('ngOnDestroy', () => {
         component.umlModel = classDiagram;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         component.ngAfterViewInit();
 
         component.ngOnDestroy();
@@ -77,7 +77,7 @@ describe('ModelingEditorComponent', () => {
         // @ts-ignore
         const model = classDiagram;
         component.umlModel = model;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         await component.ngAfterViewInit();
 
         const changedModel = cloneDeep(model) as any;
@@ -108,7 +108,7 @@ describe('ModelingEditorComponent', () => {
 
     it('getCurrentModel', () => {
         component.umlModel = classDiagram;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         component.ngAfterViewInit();
 
         // test
@@ -120,7 +120,7 @@ describe('ModelingEditorComponent', () => {
     it('elementWithClass', () => {
         const model = classDiagram;
         component.umlModel = model;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         component.ngAfterViewInit();
 
         // test
@@ -131,7 +131,7 @@ describe('ModelingEditorComponent', () => {
     it('elementWithAttribute', () => {
         const model = classDiagram;
         component.umlModel = model;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         component.ngAfterViewInit();
 
         // test
@@ -142,7 +142,7 @@ describe('ModelingEditorComponent', () => {
     it('elementWithMethod', () => {
         const model = classDiagram;
         component.umlModel = model;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         component.ngAfterViewInit();
 
         // test
@@ -153,7 +153,7 @@ describe('ModelingEditorComponent', () => {
     it('should not show save indicator without savedStatus set', () => {
         component.savedStatus = undefined;
         component.readOnly = true;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         component.ngAfterViewInit();
 
         const statusHint = fixture.debugElement.query(By.css('.status-hint'));
@@ -163,7 +163,7 @@ describe('ModelingEditorComponent', () => {
     it('should not show save indicator in read only mode', () => {
         component.savedStatus = { isSaving: false, isChanged: false };
         component.readOnly = true;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         component.ngAfterViewInit();
 
         const statusHint = fixture.debugElement.query(By.css('.status-hint'));
@@ -173,7 +173,7 @@ describe('ModelingEditorComponent', () => {
     it('should not show save indicator in fullscreen mode', () => {
         component.savedStatus = { isSaving: false, isChanged: false };
         jest.spyOn(component, 'isFullScreen', 'get').mockReturnValue(true);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         component.ngAfterViewInit();
 
         const statusHint = fixture.debugElement.query(By.css('.status-hint'));
@@ -182,7 +182,7 @@ describe('ModelingEditorComponent', () => {
 
     it('should show green checkmark save indicator if everything is saved', () => {
         component.savedStatus = { isSaving: false, isChanged: false };
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         component.ngAfterViewInit();
 
         const statusHint = fixture.debugElement.query(By.css('.status-hint.text-success'));
@@ -197,7 +197,7 @@ describe('ModelingEditorComponent', () => {
 
     it('should show yellow times save indicator if something is unsaved', () => {
         component.savedStatus = { isSaving: false, isChanged: true };
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         component.ngAfterViewInit();
 
         const statusHint = fixture.debugElement.query(By.css('.status-hint.text-warning'));
@@ -212,7 +212,7 @@ describe('ModelingEditorComponent', () => {
 
     it('should show saving indicator if it is currently saving', () => {
         component.savedStatus = { isSaving: true, isChanged: true };
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         component.ngAfterViewInit();
 
         const statusHint = fixture.debugElement.query(By.css('.status-hint.text-info'));

@@ -115,6 +115,7 @@ const EXTERNAL_HEIGHT = 'external';
  */
 const BORDER_WIDTH_OFFSET = 3;
 const BORDER_HEIGHT_OFFSET = 2;
+
 @Component({
     selector: 'jhi-markdown-editor-monaco',
     templateUrl: './markdown-editor-monaco.component.html',
