@@ -274,7 +274,7 @@ describe('PasskeyAuthenticationPageComponent', () => {
         const buttonElement = fixture.nativeElement.querySelector('jhi-button');
         const button = buttonElement.querySelector('button');
 
-        expect(button.type).toBe('button');
+        expect(button.type).toBe('button'); // would be 'submit' if shouldSubmit was true
     });
 
     it('should set shouldSubmit to false on sign in with passkey button to prevent duplicate requests', async () => {
@@ -285,6 +285,6 @@ describe('PasskeyAuthenticationPageComponent', () => {
         const buttonElement = fixture.nativeElement.querySelector('jhi-button');
         const button = buttonElement.querySelector('button');
 
-        expect(button.type).toBe('button');
+        expect(button.type).toBe('button'); // would be 'submit' if shouldSubmit was true
     });
 });
