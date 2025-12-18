@@ -11,14 +11,14 @@ import Image, {ImageSize} from "../../src/components/Image/Image";
 import adminManageStandardizedCompetenciesImg from './assets/adaptive-learning/standardized-competency-management.png';
 import adminImportStandardizedCompetenciesImg from './assets/adaptive-learning/import-standardized-competency-catalog.png';
 
-# Manage Standardized Competencies (Administrator)
+# Manage Standardized Competencies
 
 ## Standardized Competencies
 
-| The **Standardized Competency Catalog** is a catalog of competencies that is accessible to all instructors in an Artemis instance.
+The **Standardized Competency Catalog** is a catalog of competencies that is accessible to all instructors in an Artemis instance.
 Instructors may view this catalog and import competencies from it into their course.
-| The competencies consist of a title, description and taxonomy. Instead of being tied to specific courses, competencies are organized under knowledge areas.
-| Knowledge areas may also contain other knowledge areas, enabling a hierarchical structure (e.g., Artificial Intelligence -> Machine Learning).
+The competencies consist of a title, description and taxonomy. Instead of being tied to specific courses, competencies are organized under knowledge areas.
+Knowledge areas may also contain other knowledge areas, enabling a hierarchical structure (e.g., Artificial Intelligence -> Machine Learning).
 
 ## Manage Standardized Competencies
 
@@ -37,14 +37,14 @@ Instructors may view this catalog and import competencies from it into their cou
     height="350"
 />
 
-| Administrators can manage the standardized competency catalog of their Artemis instance
+Administrators can manage the standardized competency catalog of their Artemis instance
 in the *Standardized Competency Management* view.
 
-| They can filter the displayed content by competency title and knowledge area.
+They can filter the displayed content by competency title and knowledge area.
 Clicking on a knowledge area expands it and clicking on the eye icon shows the knowledge area details on the right.
-| From this details view they can edit or delete the knowledge area, or create new knowledge areas and competencies under it.
+From this details view they can edit or delete the knowledge area, or create new knowledge areas and competencies under it.
 Likewise, clicking on a standardized competency opens its details, allowing administrators to edit or delete it.
-| Finally, administrators can also import a standardized competency catalog from a JSON file,
+Finally, administrators can also import a standardized competency catalog from a JSON file,
 or export the standardized competency catalog of their Artemis instance into a JSON file.
 
 <Image src={adminManageStandardizedCompetenciesImg} alt={"admin-manage-standardized-competencies"} size={ImageSize.large} />
@@ -52,15 +52,13 @@ or export the standardized competency catalog of their Artemis instance into a J
 ## Import a Standardized Competency Catalog
 
 <Callout variant={CalloutVariant.info}>
-    <p>
-        To obtain a file containing a standardized competency catalog, you can contact the Artemis developer team.
-    </p>
+    <p>To obtain a file containing a standardized competency catalog, you can contact the Artemis developer team.</p>
 </Callout>
 
-| When importing, administrators first view a collapsible example of the expected file structure.
+When importing, administrators first view a collapsible example of the expected file structure.
 They can then select a file containing standardized competencies from their local system.
-| Artemis displays a preview of the knowledge areas and competencies that will be imported
+Artemis displays a preview of the knowledge areas and competencies that will be imported
 and administrators can view the details for each competency by clicking on it.
-| After clicking on import, the complete catalog will be imported into the Artemis instance.
+After clicking on import, the complete catalog will be imported into the Artemis instance.
 
 <Image src={adminImportStandardizedCompetenciesImg} alt={"admin-import-standardized-competencies"} size={ImageSize.large} />
