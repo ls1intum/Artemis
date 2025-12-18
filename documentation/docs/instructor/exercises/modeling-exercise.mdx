@@ -142,7 +142,7 @@ Artemis uses those submissions to automatically apply the known assessment comme
   <p>Artemis uses semi-automatic grading of modeling exercises using machine learning. You can train the model by selecting the <em>Use in Assessment Training</em> checkbox while creating an example submission.</p>
 </Callout>
 
-<Image src={useInAssessmentTraining} alt="Use in Assessment Training" size={ImageSize.medium} caption="Use in Assessment Training Option" />
+<Image src={useInAssessmentTraining} alt="Use in Assessment Training" size={ImageSize.large} caption="Use in Assessment Training Option" />
 
 ### Import Modeling Exercise
 
@@ -252,24 +252,32 @@ When a modeling exercise is configured to allow **Allow automatic AI preliminary
    - 1.2. Create a diagram in the modeling editor and submit it
    - 1.3. Feedback may be requested either from the exercise overview page or directly within the modeling editor
 
-<Image src={automaticFeedbackRequestEditor} alt="Automatic Feedback Request Editor" size={ImageSize.large} caption="Request Feedback Button in Exercise Overview and Modeling Editor" />
+    <Image src={automaticFeedbackRequestEditor} alt="Automatic Feedback Request Editor" size={ImageSize.large} caption="Request Feedback Button in Exercise Overview and Modeling Editor" />
 
 2. **Viewing Feedback**
    - 2.1. After a feedback request is made, the system processes the diagram and generates preliminary feedback
    - 2.2. An alert appears at the top of the page to indicate that the feedback is ready
 
-<Image src={automaticFeedbackRequestAlert} alt="Automatic Feedback Request Alert" size={ImageSize.large} caption="Notification Alert When AI Feedback is Ready" />
+    <Image src={automaticFeedbackRequestAlert} alt="Automatic Feedback Request Alert" size={ImageSize.large} caption="Notification Alert When AI Feedback is Ready" />
 
    - 2.3. A preliminary score is displayed in the top-right corner of the screen
 
-<Image src={automaticFeedbackRequestScore} alt="Automatic Feedback Request Score" size={ImageSize.large} caption="Preliminary Score in Modeling Editor" />
+    <Image src={automaticFeedbackRequestScore} alt="Automatic Feedback Request Score" size={ImageSize.large} caption="Preliminary Score in Modeling Editor" />
 
    - 2.4. Clicking on the score reveals detailed, inline feedback that highlights specific issues and provides suggestions directly within the diagram
 
-<Image src={automaticFeedbackViewDetailed} alt="Automatic Feedback View Detailed" size={ImageSize.large} caption="Detailed AI Feedback" />
+    <Image src={automaticFeedbackViewDetailed} alt="Automatic Feedback View Detailed" size={ImageSize.large} caption="Detailed AI Feedback" />
 
 3. **Submission History**
    - Feedback can be requested multiple times before the submission due date. All feedback requests are recorded in the submission history
    - To review previous feedback, access the submission history section and click on an entry to display its detailed feedback
 
-<Image src={automaticFeedbackHistory} alt="Automatic Feedback History" size={ImageSize.large} caption="Submission History Section in Modeling Editor" />
+    <Image src={automaticFeedbackHistory} alt="Automatic Feedback History" size={ImageSize.large} caption="Submission History Section in Modeling Editor" />
+
+### Demo
+
+A demonstration of the automated generation of student feedback for a class diagram:
+
+<iframe src="https://tum.live/w/artemisintro/55922?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
+    Video tutorial of the automated assessment of modeling exercises on TUM-Live.
+</iframe>
