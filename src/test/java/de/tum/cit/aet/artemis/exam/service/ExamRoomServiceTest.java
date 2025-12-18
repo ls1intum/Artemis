@@ -87,8 +87,8 @@ class ExamRoomServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    void testGetExamRoomAdminOverview_empty() {
-        var overview = examRoomService.getExamRoomAdminOverview();
+    void testGetExamRoomOverview_empty() {
+        var overview = examRoomService.getExamRoomOverview();
 
         assertThat(overview).isNotNull();
         assertThat(overview.numberOfStoredExamRooms()).isZero();
@@ -98,9 +98,9 @@ class ExamRoomServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    void testGetExamRoomAdminOverview_insertOnce() {
+    void testGetExamRoomOverview_insertOnce() {
         examRoomService.parseAndStoreExamRoomDataFromZipFile(ExamRoomZipFiles.zipFileSingleExamRoom);
-        var overview = examRoomService.getExamRoomAdminOverview();
+        var overview = examRoomService.getExamRoomOverview();
 
         assertThat(overview).isNotNull();
         assertThat(overview.numberOfStoredExamRooms()).isOne();
@@ -127,12 +127,12 @@ class ExamRoomServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    void testGetExamRoomAdminOverview_insertMultipleTimes() {
+    void testGetExamRoomOverview_insertMultipleTimes() {
         for (int i = 0; i < 3; i++) {
             examRoomService.parseAndStoreExamRoomDataFromZipFile(ExamRoomZipFiles.zipFileSingleExamRoom);
         }
 
-        var overview = examRoomService.getExamRoomAdminOverview();
+        var overview = examRoomService.getExamRoomOverview();
         assertThat(overview).isNotNull();
         assertThat(overview.numberOfStoredExamRooms()).isEqualTo(3);
         assertThat(overview.numberOfStoredExamSeats()).isEqualTo(528 * 3);

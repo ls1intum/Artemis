@@ -18,10 +18,10 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.exam.domain.room.ExamRoom;
-import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomAdminOverviewDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomLayoutStrategyDTO;
+import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomOverviewDTO;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomUploadInformationDTO;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamRoomTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamRoomZipFiles;
@@ -89,43 +89,43 @@ class ExamRoomIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
     void testUploadExamRoomDataAsStudent() throws Exception {
-        request.postMultipartFileOnly("/api/exam/admin/exam-rooms/upload", ExamRoomZipFiles.zipFileSingleExamRoom, HttpStatus.FORBIDDEN);
+        request.postMultipartFileOnly("/api/exam/exam-rooms/upload", ExamRoomZipFiles.zipFileSingleExamRoom, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = TUTOR_LOGIN, roles = "TA")
     void testUploadExamRoomDataAsTutor() throws Exception {
-        request.postMultipartFileOnly("/api/exam/admin/exam-rooms/upload", ExamRoomZipFiles.zipFileSingleExamRoom, HttpStatus.FORBIDDEN);
+        request.postMultipartFileOnly("/api/exam/exam-rooms/upload", ExamRoomZipFiles.zipFileSingleExamRoom, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = EDITOR_LOGIN, roles = "EDITOR")
     void testUploadExamRoomDataAsEditor() throws Exception {
-        request.postMultipartFileOnly("/api/exam/admin/exam-rooms/upload", ExamRoomZipFiles.zipFileSingleExamRoom, HttpStatus.FORBIDDEN);
+        request.postMultipartFileOnly("/api/exam/exam-rooms/upload", ExamRoomZipFiles.zipFileSingleExamRoom, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
     void testUploadExamRoomDataAsInstructor() throws Exception {
-        request.postMultipartFileOnly("/api/exam/admin/exam-rooms/upload", ExamRoomZipFiles.zipFileSingleExamRoom, HttpStatus.FORBIDDEN);
+        request.postMultipartFileOnly("/api/exam/exam-rooms/upload", ExamRoomZipFiles.zipFileSingleExamRoom, HttpStatus.OK);
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testUploadExamRoomDataAsAdmin() throws Exception {
-        request.postMultipartFileOnly("/api/exam/admin/exam-rooms/upload", ExamRoomZipFiles.zipFileSingleExamRoom, HttpStatus.OK);
+        request.postMultipartFileOnly("/api/exam/exam-rooms/upload", ExamRoomZipFiles.zipFileSingleExamRoom, HttpStatus.OK);
     }
 
     @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
+    @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
     void testUploadEmptyRoomFile() throws Exception {
-        request.postMultipartFileOnly("/api/exam/admin/exam-rooms/upload", ExamRoomZipFiles.emptyZipFile, HttpStatus.BAD_REQUEST);
+        request.postMultipartFileOnly("/api/exam/exam-rooms/upload", ExamRoomZipFiles.emptyZipFile, HttpStatus.BAD_REQUEST);
     }
 
     @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
+    @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
     void testUploadSingleRoom() throws Exception {
-        var uploadInformation = request.postMultipartFileOnlyWithResponseBody("/api/exam/admin/exam-rooms/upload", ExamRoomZipFiles.zipFileSingleExamRoom,
+        var uploadInformation = request.postMultipartFileOnlyWithResponseBody("/api/exam/exam-rooms/upload", ExamRoomZipFiles.zipFileSingleExamRoom,
                 ExamRoomUploadInformationDTO.class, HttpStatus.OK);
 
         validateUploadOverviewAndCheckIfDbContainsRooms(uploadInformation, ExamRoomZipFiles.zipFileSingleExamRoom.getOriginalFilename(), 1, 528, singleExpectedRoom);
@@ -176,9 +176,9 @@ class ExamRoomIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
+    @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
     void testUploadFourRooms() throws Exception {
-        var uploadInformation = request.postMultipartFileOnlyWithResponseBody("/api/exam/admin/exam-rooms/upload", ExamRoomZipFiles.zipFileFourExamRooms,
+        var uploadInformation = request.postMultipartFileOnlyWithResponseBody("/api/exam/exam-rooms/upload", ExamRoomZipFiles.zipFileFourExamRooms,
                 ExamRoomUploadInformationDTO.class, HttpStatus.OK);
 
         validateUploadOverviewAndCheckIfDbContainsRooms(uploadInformation, ExamRoomZipFiles.zipFileFourExamRooms.getOriginalFilename(), 4, 994, fourExpectedRooms);
@@ -186,11 +186,11 @@ class ExamRoomIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
+    @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
     void testUploadFourRoomsMultipleTimes() throws Exception {
         // upload the same file multiple times, should not create duplicates
         for (int i = 0; i < 3; i++) {
-            var uploadInformation = request.postMultipartFileOnlyWithResponseBody("/api/exam/admin/exam-rooms/upload", ExamRoomZipFiles.zipFileFourExamRooms,
+            var uploadInformation = request.postMultipartFileOnlyWithResponseBody("/api/exam/exam-rooms/upload", ExamRoomZipFiles.zipFileFourExamRooms,
                     ExamRoomUploadInformationDTO.class, HttpStatus.OK);
 
             validateUploadOverviewAndCheckIfDbContainsRooms(uploadInformation, ExamRoomZipFiles.zipFileFourExamRooms.getOriginalFilename(), 4, 994, fourExpectedRooms);
@@ -200,9 +200,9 @@ class ExamRoomIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
+    @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
     void testUploadSingleRoomNoLayouts() throws Exception {
-        var uploadInformation = request.postMultipartFileOnlyWithResponseBody("/api/exam/admin/exam-rooms/upload", ExamRoomZipFiles.zipFileSingleRoomNoLayouts,
+        var uploadInformation = request.postMultipartFileOnlyWithResponseBody("/api/exam/exam-rooms/upload", ExamRoomZipFiles.zipFileSingleRoomNoLayouts,
                 ExamRoomUploadInformationDTO.class, HttpStatus.OK);
 
         validateUploadOverviewAndCheckIfDbContainsRooms(uploadInformation, ExamRoomZipFiles.zipFileSingleRoomNoLayouts.getOriginalFilename(), 1, 101, singleNoLayoutsExpectedRoom);
@@ -211,74 +211,74 @@ class ExamRoomIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
+    @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
     void testUploadIllegalExamRooms() throws Exception {
-        request.postMultipartFileOnly("/api/exam/admin/exam-rooms/upload", ExamRoomZipFiles.zipFileIllegalExamRooms, HttpStatus.BAD_REQUEST);
+        request.postMultipartFileOnly("/api/exam/exam-rooms/upload", ExamRoomZipFiles.zipFileIllegalExamRooms, HttpStatus.BAD_REQUEST);
     }
 
     /* Tests for the GET /exam-rooms/admin-overview endpoint */
 
     @Test
     @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
-    void testGetAdminOverviewAsStudent() throws Exception {
-        request.get("/api/exam/admin/exam-rooms/admin-overview", HttpStatus.FORBIDDEN, Void.class);
+    void testGetExamRoomOverviewAsStudent() throws Exception {
+        request.get("/api/exam/exam-rooms/overview", HttpStatus.FORBIDDEN, Void.class);
     }
 
     @Test
     @WithMockUser(username = TUTOR_LOGIN, roles = "TA")
-    void testGetAdminOverviewAsTutor() throws Exception {
-        request.get("/api/exam/admin/exam-rooms/admin-overview", HttpStatus.FORBIDDEN, Void.class);
+    void testGetExamRoomOverviewAsTutor() throws Exception {
+        request.get("/api/exam/exam-rooms/overview", HttpStatus.FORBIDDEN, Void.class);
     }
 
     @Test
     @WithMockUser(username = EDITOR_LOGIN, roles = "EDITOR")
-    void testGetAdminOverviewAsEditor() throws Exception {
-        request.get("/api/exam/admin/exam-rooms/admin-overview", HttpStatus.FORBIDDEN, Void.class);
+    void testGetExamRoomOverviewAsEditor() throws Exception {
+        request.get("/api/exam/exam-rooms/overview", HttpStatus.FORBIDDEN, Void.class);
     }
 
     @Test
     @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
-    void testGetAdminOverviewAsInstructor() throws Exception {
-        request.get("/api/exam/admin/exam-rooms/admin-overview", HttpStatus.FORBIDDEN, Void.class);
+    void testGetExamRoomOverviewAsInstructor() throws Exception {
+        request.get("/api/exam/exam-rooms/overview", HttpStatus.OK, Void.class);
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    void testGetAdminOverviewAsAdmin() throws Exception {
-        request.get("/api/exam/admin/exam-rooms/admin-overview", HttpStatus.OK, Void.class);
+    void testGetExamRoomOverviewAsAdmin() throws Exception {
+        request.get("/api/exam/exam-rooms/overview", HttpStatus.OK, Void.class);
     }
 
     @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void testGetAdminOverviewEmpty() throws Exception {
-        var adminOverview = request.get("/api/exam/admin/exam-rooms/admin-overview", HttpStatus.OK, ExamRoomAdminOverviewDTO.class);
+    @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+    void testGetExamRoomOverviewEmpty() throws Exception {
+        var roomOverview = request.get("/api/exam/exam-rooms/overview", HttpStatus.OK, ExamRoomOverviewDTO.class);
 
-        validateAdminOverview(adminOverview, 0, 0, 0);
+        validateExamRoomOverview(roomOverview, 0, 0, 0);
     }
 
     @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void testGetAdminOverviewFourRooms() throws Exception {
-        request.postMultipartFileOnly("/api/exam/admin/exam-rooms/upload", ExamRoomZipFiles.zipFileFourExamRooms, HttpStatus.OK);
+    @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+    void testGetExamRoomOverviewFourRooms() throws Exception {
+        request.postMultipartFileOnly("/api/exam/exam-rooms/upload", ExamRoomZipFiles.zipFileFourExamRooms, HttpStatus.OK);
 
-        var adminOverview = request.get("/api/exam/admin/exam-rooms/admin-overview", HttpStatus.OK, ExamRoomAdminOverviewDTO.class);
+        var roomOverview = request.get("/api/exam/exam-rooms/overview", HttpStatus.OK, ExamRoomOverviewDTO.class);
 
-        validateAdminOverview(adminOverview, 4, 994, 15, ExamRoomZipFiles.fourExamRoomNames);
+        validateExamRoomOverview(roomOverview, 4, 994, 15, ExamRoomZipFiles.fourExamRoomNames);
     }
 
-    private void validateAdminOverview(ExamRoomAdminOverviewDTO adminOverview, int expectedNumberOfStoredRooms, int expectedNumberOfStoredSeats,
+    private void validateExamRoomOverview(ExamRoomOverviewDTO roomOverview, int expectedNumberOfStoredRooms, int expectedNumberOfStoredSeats,
             int expectedNumberOfStoredLayoutStrategies, String... expectedNewRoomNames) {
-        assertThat(adminOverview.numberOfStoredExamRooms()).isEqualTo(expectedNumberOfStoredRooms);
-        assertThat(adminOverview.numberOfStoredExamSeats()).isEqualTo(expectedNumberOfStoredSeats);
-        assertThat(adminOverview.numberOfStoredLayoutStrategies()).isEqualTo(expectedNumberOfStoredLayoutStrategies);
+        assertThat(roomOverview.numberOfStoredExamRooms()).isEqualTo(expectedNumberOfStoredRooms);
+        assertThat(roomOverview.numberOfStoredExamSeats()).isEqualTo(expectedNumberOfStoredSeats);
+        assertThat(roomOverview.numberOfStoredLayoutStrategies()).isEqualTo(expectedNumberOfStoredLayoutStrategies);
 
-        if (adminOverview.newestUniqueExamRooms() == null) {
+        if (roomOverview.newestUniqueExamRooms() == null) {
             assertThat(expectedNewRoomNames).isEmpty();
             return;
         }
 
         // Here we know that we have newestUniqueExamRooms != null
-        var newestRoomNames = adminOverview.newestUniqueExamRooms().stream().map(ExamRoomDTO::name).toList();
+        var newestRoomNames = roomOverview.newestUniqueExamRooms().stream().map(ExamRoomDTO::name).toList();
         assertThat(newestRoomNames).contains(expectedNewRoomNames);  // we want to test the subset containment
         // because `newestRoomNames` could contain older rooms we didn't upload in the latest run
 
@@ -289,49 +289,49 @@ class ExamRoomIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                         : er.getLayoutStrategies().stream().map(ls -> new ExamRoomLayoutStrategyDTO(ls.getName(), ls.getType(), ls.getCapacity())).collect(Collectors.toSet())))
                 .toList();
 
-        assertThat(adminOverview.newestUniqueExamRooms()).containsExactlyInAnyOrderElementsOf(newestUniqueExamRoomsFromDb);
+        assertThat(roomOverview.newestUniqueExamRooms()).containsExactlyInAnyOrderElementsOf(newestUniqueExamRoomsFromDb);
     }
 
     @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void testGetAdminOverviewFourRoomsMultipleTimes() throws Exception {
+    @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+    void testGetExamRoomOverviewFourRoomsMultipleTimes() throws Exception {
         for (int i = 0; i < 3; i++) {
-            request.postMultipartFileOnly("/api/exam/admin/exam-rooms/upload", ExamRoomZipFiles.zipFileFourExamRooms, HttpStatus.OK);
+            request.postMultipartFileOnly("/api/exam/exam-rooms/upload", ExamRoomZipFiles.zipFileFourExamRooms, HttpStatus.OK);
         }
 
-        var adminOverview = request.get("/api/exam/admin/exam-rooms/admin-overview", HttpStatus.OK, ExamRoomAdminOverviewDTO.class);
-        validateAdminOverview(adminOverview, 4 * 3, 994 * 3, 15 * 3, ExamRoomZipFiles.fourExamRoomNames);
+        var roomOverview = request.get("/api/exam/exam-rooms/overview", HttpStatus.OK, ExamRoomOverviewDTO.class);
+        validateExamRoomOverview(roomOverview, 4 * 3, 994 * 3, 15 * 3, ExamRoomZipFiles.fourExamRoomNames);
     }
 
     @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void testGetAdminOverviewSingleRoomNoLayouts() throws Exception {
-        request.postMultipartFileOnly("/api/exam/admin/exam-rooms/upload", ExamRoomZipFiles.zipFileSingleRoomNoLayouts, HttpStatus.OK);
+    @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+    void testGetExamRoomOverviewSingleRoomNoLayouts() throws Exception {
+        request.postMultipartFileOnly("/api/exam/exam-rooms/upload", ExamRoomZipFiles.zipFileSingleRoomNoLayouts, HttpStatus.OK);
 
-        var adminOverview = request.get("/api/exam/admin/exam-rooms/admin-overview", HttpStatus.OK, ExamRoomAdminOverviewDTO.class);
-        validateAdminOverview(adminOverview, 1, 101, 0, ExamRoomZipFiles.singleExamRoomNoLayoutsName);
+        var roomOverview = request.get("/api/exam/exam-rooms/overview", HttpStatus.OK, ExamRoomOverviewDTO.class);
+        validateExamRoomOverview(roomOverview, 1, 101, 0, ExamRoomZipFiles.singleExamRoomNoLayoutsName);
     }
 
     @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void testGetAdminOverviewSingleRoomRepeated() throws Exception {
+    @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+    void testGetExamRoomOverviewSingleRoomRepeated() throws Exception {
         final int ITERATIONS = 3;
         for (int i = 0; i < ITERATIONS; i++) {
-            request.postMultipartFileOnly("/api/exam/admin/exam-rooms/upload", ExamRoomZipFiles.zipFileSingleExamRoomRepeated, HttpStatus.OK);
+            request.postMultipartFileOnly("/api/exam/exam-rooms/upload", ExamRoomZipFiles.zipFileSingleExamRoomRepeated, HttpStatus.OK);
         }
 
-        var adminOverview = request.get("/api/exam/admin/exam-rooms/admin-overview", HttpStatus.OK, ExamRoomAdminOverviewDTO.class);
-        validateAdminOverview(adminOverview, ITERATIONS, 528 * ITERATIONS, 4 * ITERATIONS, ExamRoomZipFiles.singleExamRoomName);
+        var roomOverview = request.get("/api/exam/exam-rooms/overview", HttpStatus.OK, ExamRoomOverviewDTO.class);
+        validateExamRoomOverview(roomOverview, ITERATIONS, 528 * ITERATIONS, 4 * ITERATIONS, ExamRoomZipFiles.singleExamRoomName);
     }
 
     @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void testGetAdminOverviewSingleRoomIntoExistingData() throws Exception {
-        request.postMultipartFileOnly("/api/exam/admin/exam-rooms/upload", ExamRoomZipFiles.zipFileRealisticScenario, HttpStatus.OK);
-        request.postMultipartFileOnly("/api/exam/admin/exam-rooms/upload", ExamRoomZipFiles.zipFileSingleExamRoom, HttpStatus.OK);
+    @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+    void testGetExamRoomOverviewSingleRoomIntoExistingData() throws Exception {
+        request.postMultipartFileOnly("/api/exam/exam-rooms/upload", ExamRoomZipFiles.zipFileRealisticScenario, HttpStatus.OK);
+        request.postMultipartFileOnly("/api/exam/exam-rooms/upload", ExamRoomZipFiles.zipFileSingleExamRoom, HttpStatus.OK);
 
-        var adminOverview = request.get("/api/exam/admin/exam-rooms/admin-overview", HttpStatus.OK, ExamRoomAdminOverviewDTO.class);
-        validateAdminOverview(adminOverview, 59 + 1, 14_589 + 528, 212 + 4, ExamRoomZipFiles.singleExamRoomName);
+        var roomOverview = request.get("/api/exam/exam-rooms/overview", HttpStatus.OK, ExamRoomOverviewDTO.class);
+        validateExamRoomOverview(roomOverview, 59 + 1, 14_589 + 528, 212 + 4, ExamRoomZipFiles.singleExamRoomName);
     }
 
     /* Tests for the DELETE /exam-rooms/outdated-and-unused endpoint */
@@ -339,31 +339,31 @@ class ExamRoomIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
     void testDeleteOutdatedAndUnusedExamRoomsAsStudent() throws Exception {
-        request.delete("/api/exam/admin/exam-rooms/outdated-and-unused", HttpStatus.FORBIDDEN);
+        request.delete("/api/exam/exam-rooms/outdated-and-unused", HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = TUTOR_LOGIN, roles = "TA")
     void testDeleteOutdatedAndUnusedExamRoomsAsTutor() throws Exception {
-        request.delete("/api/exam/admin/exam-rooms/outdated-and-unused", HttpStatus.FORBIDDEN);
+        request.delete("/api/exam/exam-rooms/outdated-and-unused", HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = EDITOR_LOGIN, roles = "EDITOR")
     void testDeleteOutdatedAndUnusedExamRoomsAsEditor() throws Exception {
-        request.delete("/api/exam/admin/exam-rooms/outdated-and-unused", HttpStatus.FORBIDDEN);
+        request.delete("/api/exam/exam-rooms/outdated-and-unused", HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
     void testDeleteOutdatedAndUnusedExamRoomsAsInstructor() throws Exception {
-        request.delete("/api/exam/admin/exam-rooms/outdated-and-unused", HttpStatus.FORBIDDEN);
+        request.delete("/api/exam/exam-rooms/outdated-and-unused", HttpStatus.OK);
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testDeleteOutdatedAndUnusedExamRoomsAsAdmin() throws Exception {
-        request.delete("/api/exam/admin/exam-rooms/outdated-and-unused", HttpStatus.OK);
+        request.delete("/api/exam/exam-rooms/outdated-and-unused", HttpStatus.OK);
     }
 
     private void validateDeletionSummary(ExamRoomDeletionSummaryDTO deletionSummary, int expectedNumberOfDeletedRooms) {
@@ -372,36 +372,36 @@ class ExamRoomIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
+    @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
     void testDeleteOutdatedAndUnusedExamRoomsEmpty() throws Exception {
-        var deletionSummary = request.delete("/api/exam/admin/exam-rooms/outdated-and-unused", new LinkedMultiValueMap<>(), null, ExamRoomDeletionSummaryDTO.class, HttpStatus.OK);
+        var deletionSummary = request.delete("/api/exam/exam-rooms/outdated-and-unused", new LinkedMultiValueMap<>(), null, ExamRoomDeletionSummaryDTO.class, HttpStatus.OK);
 
         validateDeletionSummary(deletionSummary, 0);
         validateDbStoredElementCounts(0, 0, 0);
     }
 
     @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
+    @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
     void testDeleteOutdatedAndUnusedRealisticRoomDataNothingToDelete() throws Exception {
-        request.postMultipartFileOnly("/api/exam/admin/exam-rooms/upload", ExamRoomZipFiles.zipFileRealisticScenario, HttpStatus.OK);
+        request.postMultipartFileOnly("/api/exam/exam-rooms/upload", ExamRoomZipFiles.zipFileRealisticScenario, HttpStatus.OK);
         assertThat(examRoomRepository.count()).isPositive();
 
-        var deletionSummary = request.delete("/api/exam/admin/exam-rooms/outdated-and-unused", new LinkedMultiValueMap<>(), null, ExamRoomDeletionSummaryDTO.class, HttpStatus.OK);
+        var deletionSummary = request.delete("/api/exam/exam-rooms/outdated-and-unused", new LinkedMultiValueMap<>(), null, ExamRoomDeletionSummaryDTO.class, HttpStatus.OK);
         validateDeletionSummary(deletionSummary, 0);
         validateDbStoredElementCounts(59, 14_589, 212);
     }
 
     @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
+    @WithMockUser(username = INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
     void testDeleteOutdatedAndUnusedTonsOfExamRoomData() throws Exception {
         final int ITERATIONS = 10;
         for (int i = 0; i < ITERATIONS; i++) {
-            request.postMultipartFileOnly("/api/exam/admin/exam-rooms/upload", ExamRoomZipFiles.zipFileRealisticScenario, HttpStatus.OK);
+            request.postMultipartFileOnly("/api/exam/exam-rooms/upload", ExamRoomZipFiles.zipFileRealisticScenario, HttpStatus.OK);
         }
 
         assertThat(examRoomRepository.count()).isPositive();
 
-        var deletionSummary = request.delete("/api/exam/admin/exam-rooms/outdated-and-unused", new LinkedMultiValueMap<>(), null, ExamRoomDeletionSummaryDTO.class, HttpStatus.OK);
+        var deletionSummary = request.delete("/api/exam/exam-rooms/outdated-and-unused", new LinkedMultiValueMap<>(), null, ExamRoomDeletionSummaryDTO.class, HttpStatus.OK);
         validateDeletionSummary(deletionSummary, 59 * (ITERATIONS - 1));
         validateDbStoredElementCounts(59, 14_589, 212);
     }
