@@ -1,8 +1,6 @@
 import { Routes } from '@angular/router';
-import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { userManagementRoute } from 'app/core/admin/user-management/user-management.route';
 import { systemNotificationManagementRoute } from 'app/core/admin/system-notification-management/system-notification-management.route';
-import { IrisGuard } from 'app/iris/shared/iris-guard.service';
 
 import { organizationMgmtRoute } from 'app/core/admin/organization-management/organization-management.route';
 
@@ -142,16 +140,6 @@ const childRoutes: Routes = [
         data: {
             authorities: IS_AT_LEAST_ADMIN,
         },
-    },
-    {
-        path: 'iris',
-        loadComponent: () => import('app/iris/manage/settings/iris-global-settings-update/iris-global-settings-update.component').then((m) => m.IrisGlobalSettingsUpdateComponent),
-        data: {
-            authorities: IS_AT_LEAST_ADMIN,
-            pageTitle: 'artemisApp.iris.settings.title.global',
-        },
-        canActivate: [UserRouteAccessService, IrisGuard],
-        canDeactivate: [PendingChangesGuard],
     },
     {
         path: 'cleanup-service',

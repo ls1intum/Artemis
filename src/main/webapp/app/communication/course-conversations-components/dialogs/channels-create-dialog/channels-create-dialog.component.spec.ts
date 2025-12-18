@@ -25,7 +25,7 @@ describe('ChannelsCreateDialogComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(ChannelsCreateDialogComponent);
                 component = fixture.componentInstance;
-                fixture.detectChanges();
+                fixture.changeDetectorRef.detectChanges();
                 initializeDialog(component, fixture, { course });
             });
     }));

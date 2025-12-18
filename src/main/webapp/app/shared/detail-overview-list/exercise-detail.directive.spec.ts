@@ -41,13 +41,8 @@ describe('ExerciseDetailDirective', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            declarations: [
-                TestDetailHostComponent,
-                ExerciseDetailDirective,
-                MockDirective(TranslateDirective),
-                MockComponent(TextDetailComponent),
-                MockComponent(ProgrammingDiffReportDetailComponent),
-            ],
+            imports: [TestDetailHostComponent],
+            declarations: [ExerciseDetailDirective, MockDirective(TranslateDirective), MockComponent(TextDetailComponent), MockComponent(ProgrammingDiffReportDetailComponent)],
         }).compileComponents();
 
         fixture = TestBed.createComponent(TestDetailHostComponent);
@@ -111,7 +106,7 @@ describe('ExerciseDetailDirective', () => {
     function checkComponentForDetailWasNotCreated(detailToBeChecked: NotShownDetail) {
         const createComponentSpy = jest.spyOn(component.directive.viewContainerRef, 'createComponent');
         component.detail = detailToBeChecked;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         component.directive.ngOnInit();
 
         expect(createComponentSpy).not.toHaveBeenCalled();
@@ -120,7 +115,7 @@ describe('ExerciseDetailDirective', () => {
     function checkComponentForDetailWasCreated(detailToBeChecked: ShownDetail, expectedComponent: any) {
         const createComponentSpy = jest.spyOn(component.directive.viewContainerRef, 'createComponent');
         component.detail = detailToBeChecked;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         component.directive.ngOnInit();
 
         expect(createComponentSpy).toHaveBeenCalledWith(expectedComponent);

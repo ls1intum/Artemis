@@ -37,6 +37,11 @@ describe('FileUploadExerciseUpdateComponent', () => {
     let fixture: ComponentFixture<FileUploadExerciseUpdateComponent>;
     let service: FileUploadExerciseService;
 
+    const createDateFieldStub = (): FormDateTimePickerComponent =>
+        ({
+            dateInput: { valid: true },
+        }) as unknown as FormDateTimePickerComponent;
+
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [OwlDateTimeModule, OwlNativeDateTimeModule],
@@ -173,16 +178,22 @@ describe('FileUploadExerciseUpdateComponent', () => {
             comp.teamConfigFormGroupComponent = { formValidChanges: new Subject() } as TeamConfigFormGroupComponent;
             comp.bonusPoints = { valueChanges: new Subject(), valid: true } as unknown as NgModel;
             comp.points = { valueChanges: new Subject(), valid: true } as unknown as NgModel;
+            comp.solutionPublicationDateField = createDateFieldStub();
+            comp.releaseDateField = createDateFieldStub();
+            comp.startDateField = createDateFieldStub();
+            comp.dueDateField = createDateFieldStub();
+            comp.assessmentDateField = createDateFieldStub();
 
             comp.ngOnInit();
             comp.ngAfterViewInit();
 
             comp.exerciseTitleChannelNameComponent().titleChannelNameComponent().isValid.set(true);
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             expect(calculateValidSpy).toHaveBeenCalledOnce();
             expect(comp.formStatusSections).toBeDefined();
             expect(comp.formStatusSections[0].valid).toBeTrue();
 
+            comp.solutionPublicationDateField = createDateFieldStub();
             comp.validateDate();
             expect(calculateValidSpy).toHaveBeenCalledTimes(2);
 
