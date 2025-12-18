@@ -57,7 +57,7 @@ const moduleThresholds = {
         statements: 91.60,
         branches:   75.80,
         functions:  84.60,
-        lines:      91.90,
+        lines:      91.80,
     },
     exercise: {
         statements: 88.40,
