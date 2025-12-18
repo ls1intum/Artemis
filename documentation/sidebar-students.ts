@@ -13,6 +13,7 @@ const sidebars: SidebarsConfig = {
         'plagiarism-check',
         'notifications',
         'user-experience',
+        'courses',
     ],
 };
 
