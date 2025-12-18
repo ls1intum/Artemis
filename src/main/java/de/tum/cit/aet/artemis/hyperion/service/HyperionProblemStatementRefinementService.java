@@ -107,7 +107,8 @@ public class HyperionProblemStatementRefinementService {
      * @throws IllegalStateException if the AI chat client is not configured
      */
     public ProblemStatementRefinementResponseDTO refineProblemStatementWithComments(Course course, String originalProblemStatementText, List<InlineCommentDTO> inlineComments) {
-        log.debug("Refining problem statement with {} inline comments for course [{}]", inlineComments.size(), course.getId());
+        int commentCount = inlineComments == null ? 0 : inlineComments.size();
+        log.debug("Refining problem statement with {} inline comments for course [{}]", commentCount, course.getId());
 
         if (originalProblemStatementText == null || originalProblemStatementText.isBlank()) {
             log.warn("Cannot refine empty problem statement for course [{}]", course.getId());

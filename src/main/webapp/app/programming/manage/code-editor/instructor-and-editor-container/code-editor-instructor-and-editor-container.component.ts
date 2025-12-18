@@ -8,7 +8,6 @@ import { ProgrammingExerciseEditableInstructionComponent } from 'app/programming
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { faBan, faCircleNotch, faPlus, faSave, faSpinner, faTimes, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
-import { IrisSettings } from 'app/iris/shared/entities/settings/iris-settings.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ProgrammingExerciseInstructorExerciseStatusComponent } from '../../status/programming-exercise-instructor-exercise-status.component';
@@ -24,7 +23,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal/confirm-autofocus-modal.component';
 import { HyperionWebsocketService } from 'app/hyperion/services/hyperion-websocket.service';
 import { CodeEditorRepositoryService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
-import { Subscription, catchError, of, take } from 'rxjs';
+import { Subscription, catchError, finalize, of, take } from 'rxjs';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { faCheckDouble } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -38,7 +37,6 @@ import { InlineComment } from 'app/shared/monaco-editor/model/inline-comment.mod
 import { HyperionProblemStatementApiService } from 'app/openapi/api/hyperionProblemStatementApi.service';
 import { ProblemStatementRefinementRequest } from 'app/openapi/model/problemStatementRefinementRequest';
 import { InlineComment as ApiInlineComment } from 'app/openapi/model/inlineComment';
-import { Subscription, finalize } from 'rxjs';
 import { MarkdownDiffEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-diff-editor-monaco.component';
 import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
 import { TextEditorDomainAction } from 'app/shared/monaco-editor/model/actions/text-editor-domain-action.model';
@@ -95,7 +93,6 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     faTimesCircle = faTimesCircle;
     faSave = faSave;
     faBan = faBan;
-    irisSettings?: IrisSettings;
 
     faSpinner = faSpinner;
     facArtemisIntelligence = facArtemisIntelligence;
@@ -259,9 +256,6 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     protected isAnyApplying = computed(() => !!this.applyingCommentId() || this.isApplyingAll());
     private currentRefinementSubscription: Subscription | undefined;
     private exerciseContextInitialized = false;
-
-    // Icons for inline comments
-    protected readonly faSpinner = faSpinner;
 
     // Diff mode properties
     showDiff = false;

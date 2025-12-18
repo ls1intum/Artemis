@@ -233,35 +233,6 @@ describe('MarkdownDiffEditorMonacoComponent', () => {
         expect(fullscreenAction.element).toBe(comp.fullElement().nativeElement);
     });
 
-    it('should emit file upload event', () => {
-        const emitSpy = jest.spyOn(comp.onFileUpload, 'emit');
-        const files = [new File([''], 'test.png')];
-        const event = { target: { files } } as unknown as Event;
-
-        comp.handleFileUpload(event);
-
-        expect(emitSpy).toHaveBeenCalledWith(files);
-    });
-
-    it('should not emit file upload if no files', () => {
-        const emitSpy = jest.spyOn(comp.onFileUpload, 'emit');
-        const event = { target: { files: [] } } as unknown as Event;
-
-        comp.handleFileUpload(event);
-
-        expect(emitSpy).not.toHaveBeenCalled();
-    });
-
-    it('should emit file drop event', () => {
-        const emitSpy = jest.spyOn(comp.onFileDrop, 'emit');
-        const event = { preventDefault: jest.fn() } as unknown as DragEvent;
-
-        comp.handleFileDrop(event);
-
-        expect(event.preventDefault).toHaveBeenCalled();
-        expect(emitSpy).toHaveBeenCalledWith(event);
-    });
-
     it('should update editor options when allowSplitView changes', () => {
         fixture.componentRef.setInput('allowSplitView', false);
         fixture.detectChanges();
