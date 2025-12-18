@@ -201,14 +201,14 @@ describe('MarkdownDiffEditorMonacoComponent', () => {
     it('should open color selector', () => {
         fixture.detectChanges();
         const selector = comp.colorSelector();
-        if (selector) {
-            const openSpy = jest.spyOn(selector, 'openColorSelector');
-            const event = new MouseEvent('click');
+        expect(selector).toBeDefined();
 
-            comp.openColorSelector(event);
+        const openSpy = jest.spyOn(selector!, 'openColorSelector');
+        const event = new MouseEvent('click');
 
-            expect(openSpy).toHaveBeenCalledWith(event, comp.colorPickerMarginTop, comp.colorPickerHeight);
-        }
+        comp.openColorSelector(event);
+
+        expect(openSpy).toHaveBeenCalledWith(event, comp.colorPickerMarginTop, comp.colorPickerHeight);
     });
 
     it('should execute color action with correct color class', () => {

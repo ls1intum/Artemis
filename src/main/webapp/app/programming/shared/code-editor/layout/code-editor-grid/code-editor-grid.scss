@@ -31,7 +31,6 @@
             display: flex;
             height: inherit;
             min-width: 0;
-            /* allow middle strip to shrink */
 
             .editor-sidebar-left {
                 flex: 0 1 auto;
@@ -48,7 +47,6 @@
         .editor-center {
             flex: 1 1 auto;
             min-width: 0;
-            /* let center shrink */
 
             .card {
                 height: 100%;
