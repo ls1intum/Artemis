@@ -137,7 +137,7 @@ describe('TutorialGroupSessionsManagement', () => {
 
         component.loadAll();
         tick();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(getOneOfCourseSpy).toHaveBeenCalledWith(course.id!, tutorialGroupId);
         expect(refreshSpy).toHaveBeenCalledOnce();

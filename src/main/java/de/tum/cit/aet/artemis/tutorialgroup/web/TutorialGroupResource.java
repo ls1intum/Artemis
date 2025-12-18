@@ -84,7 +84,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupService;
 @RequestMapping("api/tutorialgroup/")
 public class TutorialGroupResource {
 
-    private static final String TITLE_REGEX = "^[a-zA-Z0-9]{1}[a-zA-Z0-9- ]{0,19}$";
+    private static final String TITLE_REGEX = "^[a-zA-Z0-9]{1}[a-zA-Z0-9: \\\\-]{0,19}$";
 
     public static final String ENTITY_NAME = "tutorialGroup";
 

@@ -13,7 +13,6 @@ import {
     faLock,
     faPlug,
     faPuzzlePiece,
-    faRobot,
     faStamp,
     faTachometerAlt,
     faTasks,
@@ -58,7 +57,6 @@ export class AdminSidebarComponent {
 
     isNavbarCollapsed = input<boolean>(false);
     localCIActive = input<boolean>(false);
-    irisEnabled = input<boolean>(false);
     ltiEnabled = input<boolean>(false);
     standardizedCompetenciesEnabled = input<boolean>(false);
     atlasEnabled = input<boolean>(false);
@@ -99,15 +97,6 @@ export class AdminSidebarComponent {
 
         // Group 2: Content & Learning
         const contentItems: AdminSidebarItem[] = [];
-        if (this.irisEnabled()) {
-            contentItems.push({
-                routerLink: '/admin/iris',
-                icon: faRobot,
-                title: 'IRIS',
-                translation: 'global.menu.admin.sidebar.iris',
-                testId: 'admin-iris',
-            });
-        }
         if (this.ltiEnabled()) {
             contentItems.push({
                 routerLink: '/admin/lti-configuration',

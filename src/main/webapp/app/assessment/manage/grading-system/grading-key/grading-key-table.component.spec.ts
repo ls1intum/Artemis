@@ -181,7 +181,7 @@ describe('GradingKeyTableComponent', () => {
         jest.spyOn(gradingSystemService, 'findGradeSteps').mockReturnValue(of(gradeStepsDto));
         jest.spyOn(gradingSystemService, 'sortGradeSteps').mockReturnValue([gradeStep1, gradeStep2]);
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(fixture).toBeTruthy();
         expect(comp).toBeTruthy();

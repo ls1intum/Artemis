@@ -39,7 +39,7 @@ describe('ImprintComponent', () => {
         jest.spyOn(languageHelper, 'language', 'get').mockReturnValue(of('en'));
         const imprintServiceSpy = jest.spyOn(legalDocumentService, 'getImprint');
         component.ngOnInit();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(imprintServiceSpy).toHaveBeenCalledOnce();
         expect(imprintServiceSpy).toHaveBeenCalledWith(LegalDocumentLanguage.ENGLISH);
     });

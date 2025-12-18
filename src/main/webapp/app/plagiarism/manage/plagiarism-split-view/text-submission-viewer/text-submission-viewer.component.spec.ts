@@ -159,7 +159,7 @@ describe('Text Submission Viewer Component', () => {
     it('handles file selection', async () => {
         const submissionId = 1;
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const fileName = Object.keys(files)[1];
 
@@ -167,7 +167,7 @@ describe('Text Submission Viewer Component', () => {
 
         comp.handleFileSelect(fileName);
         await fixture.whenStable();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const expectedDomain: DomainChange = [DomainType.PARTICIPATION, { id: submissionId }];
         expect(repositoryService.getFileForPlagiarismView).toHaveBeenCalledWith(fileName, expectedDomain);
@@ -178,7 +178,7 @@ describe('Text Submission Viewer Component', () => {
     it('handles binary file selection', () => {
         fixture.componentRef.setInput('exercise', { type: ExerciseType.PROGRAMMING } as Exercise);
         fixture.componentRef.setInput('plagiarismSubmission', { submissionId: 1 } as PlagiarismSubmission);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         const fileName = Object.keys(files)[4];
         jest.spyOn(repositoryService, 'getFileForPlagiarismView').mockReturnValue(of({ fileContent: 'Test' }));
 
@@ -472,7 +472,7 @@ describe('Text Submission Viewer Component', () => {
         ];
         jest.spyOn(comp, 'getMatchesForCurrentFile').mockReturnValue(mockMatches);
         fixture.componentRef.setInput('exercise', { type: ExerciseType.TEXT } as Exercise);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const fileContent = `Lorem ipsum dolor sit amet.\nConsetetur sadipscing elitr.`;
         const expectedFileContent = `Lorem ipsum dolor sit amet.\nConsetetur sadipscing elitr.`;
@@ -503,7 +503,7 @@ describe('Text Submission Viewer Component', () => {
         ];
         jest.spyOn(comp, 'getMatchesForCurrentFile').mockReturnValue(mockMatches);
         fixture.componentRef.setInput('exercise', { type: ExerciseType.PROGRAMMING } as Exercise);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const fileContent = `Lorem ipsum dolor sit amet.\nConsetetur sadipscing elitr.`;
         const expectedFileContent = `Lorem ipsum dolor sit amet.\nConsetetur sadipscing elitr.`;

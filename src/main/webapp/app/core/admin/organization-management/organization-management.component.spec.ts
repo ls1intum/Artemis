@@ -83,7 +83,7 @@ describe('OrganizationManagementComponent', () => {
         jest.spyOn(organizationService, 'deleteOrganization').mockReturnValue(of(new HttpResponse<void>()));
 
         component.deleteOrganization(5);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         tick();
         expect(component).not.toBeNull();
         expect(component.organizations).toHaveLength(0);

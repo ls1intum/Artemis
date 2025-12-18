@@ -222,7 +222,7 @@ describe('ComplaintsForTutorComponent', () => {
 
         const emitSpy = jest.spyOn(complaintsForTutorComponent.updateAssessmentAfterComplaint, 'emit');
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const acceptComplaintButton = fixture.debugElement.query(By.css('#acceptComplaintButton')).nativeElement;
         acceptComplaintButton.click();
@@ -261,7 +261,7 @@ describe('ComplaintsForTutorComponent', () => {
             ),
         );
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const rejectComplaintButton = fixture.debugElement.query(By.css('#rejectComplaintButton')).nativeElement;
         rejectComplaintButton.click();
@@ -313,7 +313,7 @@ describe('ComplaintsForTutorComponent', () => {
         expect(responseTextArea.value).toHaveLength(27);
 
         // Update fixture
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         tick();
 
         expect(rejectComplaintButton.disabled).toBeTrue();
@@ -358,7 +358,7 @@ describe('ComplaintsForTutorComponent', () => {
         exercise.course = undefined;
         exercise.exerciseGroup = { exam: { course: course } } as ExerciseGroup;
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         // use the default value if the course would define a lower maximum for exam exercises
         expect(complaintsForTutorComponent.maxComplaintResponseTextLimit).toBe(2000);
