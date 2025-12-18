@@ -271,9 +271,12 @@ describe('PasskeyAuthenticationPageComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
 
+        const buttonDebugElement = fixture.debugElement.query(By.directive(ButtonComponent));
         const buttonElement = fixture.nativeElement.querySelector('jhi-button');
         const button = buttonElement.querySelector('button');
 
+        const buttonComponent = buttonDebugElement.componentInstance as ButtonComponent;
+        expect(buttonComponent.title).toBe('global.menu.admin.setupPasskey');
         expect(button.type).toBe('button'); // would be 'submit' if shouldSubmit was true
     });
 
@@ -282,9 +285,12 @@ describe('PasskeyAuthenticationPageComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
 
+        const buttonDebugElement = fixture.debugElement.query(By.directive(ButtonComponent));
         const buttonElement = fixture.nativeElement.querySelector('jhi-button');
         const button = buttonElement.querySelector('button');
 
+        const buttonComponent = buttonDebugElement.componentInstance as ButtonComponent;
+        expect(buttonComponent.title).toBe('global.menu.account.loginWithPasskey');
         expect(button.type).toBe('button'); // would be 'submit' if shouldSubmit was true
     });
 });
