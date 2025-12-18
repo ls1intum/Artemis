@@ -24,6 +24,13 @@ describe('MarkdownDiffEditorMonacoComponent', () => {
     let mockModifiedEditor: jest.Mocked<monaco.editor.IStandaloneCodeEditor>;
 
     beforeEach(() => {
+        // Mock ResizeObserver which is not available in Jest environment
+        global.ResizeObserver = jest.fn().mockImplementation(() => ({
+            observe: jest.fn(),
+            unobserve: jest.fn(),
+            disconnect: jest.fn(),
+        }));
+
         // Create mock editors
         mockOriginalEditor = {
             getValue: jest.fn().mockReturnValue(''),
