@@ -62,14 +62,14 @@ describe('ExerciseImportFromFileComponent', () => {
             // GIVEN
             const alertServiceSpy = jest.spyOn(alertService, 'error');
             component.exerciseType = exerciseType;
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             component.fileForImport = (await generateValidTestZipFileWithExerciseType(exerciseType)) as File;
             await fixture.whenStable();
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             // WHEN
             await component.uploadExercise();
             await fixture.whenStable();
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             // THEN
             expect(alertServiceSpy).toHaveBeenCalledOnce();
             expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.exercise.importFromFile.notSupportedExerciseType', { exerciseType: exerciseType });
@@ -80,7 +80,7 @@ describe('ExerciseImportFromFileComponent', () => {
     it('should raise error alert if not one json file at the root level', async () => {
         //
         alertServiceSpy = jest.spyOn(alertService, 'error');
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         component.fileForImport = (await generateTestZipFileWithoutJsonFile()) as File;
         await assertErrorAlertIsRaisedWithoutOneValidJsonFile();
         component.fileForImport = (await generateTestZipFileWithTwoJsonFiles()) as File;
@@ -89,15 +89,15 @@ describe('ExerciseImportFromFileComponent', () => {
 
     it('should raise error alert if exercise type does not match exercise type of imported exercise', async () => {
         alertServiceSpy = jest.spyOn(alertService, 'error');
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         component.exerciseType = ExerciseType.TEXT;
         component.fileForImport = (await generateValidTestZipFileWithExerciseType(ExerciseType.PROGRAMMING)) as File;
         await fixture.whenStable();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         // WHEN
         await component.uploadExercise();
         await fixture.whenStable();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         // THEN
         expect(alertServiceSpy).toHaveBeenCalledOnce();
         expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.exercise.importFromFile.exerciseTypeDoesntMatch');
@@ -108,11 +108,11 @@ describe('ExerciseImportFromFileComponent', () => {
         component.exerciseType = ExerciseType.PROGRAMMING;
         component.fileForImport = (await generateValidTestZipFileWithExerciseType(ExerciseType.PROGRAMMING)) as File;
         await fixture.whenStable();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         // WHEN
         await component.uploadExercise();
         await fixture.whenStable();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         // THEN
         expect(component.exercise.id).toBeUndefined();
         expect(component.exercise.zipFileForImport).toBe(component.fileForImport);
@@ -125,18 +125,18 @@ describe('ExerciseImportFromFileComponent', () => {
         component.exerciseType = ExerciseType.PROGRAMMING;
         component.fileForImport = (await generateValidTestZipFileWithExerciseType(ExerciseType.PROGRAMMING, true)) as File;
         await fixture.whenStable();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         // WHEN
         await component.uploadExercise();
         await fixture.whenStable();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         // THEN
         expect((component.exercise as ProgrammingExercise).buildConfig).toBeDefined();
     });
 
     it('should disable upload button as long as no file is selected', () => {
         component.fileForImport = undefined;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const uploadButton = fixture.debugElement.query(By.css('#upload-exercise-btn'));
         expect(uploadButton.componentInstance.disabled).toBeTrue();
@@ -144,7 +144,7 @@ describe('ExerciseImportFromFileComponent', () => {
 
     it('should enable upload button once file is selected', () => {
         component.fileForImport = new File([''], 'test.zip', { type: 'application/zip' });
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const uploadButton = fixture.debugElement.query(By.css('#upload-exercise-btn'));
         expect(uploadButton.componentInstance.disabled).toBeFalse();
@@ -152,11 +152,11 @@ describe('ExerciseImportFromFileComponent', () => {
 
     async function assertErrorAlertIsRaisedWithoutOneValidJsonFile() {
         await fixture.whenStable();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         // WHEN
         await component.uploadExercise();
         await fixture.whenStable();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         // THEN
         expect(alertServiceSpy).toHaveBeenCalledOnce();
         expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.importFromFile.noExerciseDetailsJsonAtRootLevel');

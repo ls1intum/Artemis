@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.iris.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import jakarta.ws.rs.BadRequestException;
@@ -17,7 +16,6 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
-import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisCourseChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisLectureChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisProgrammingExerciseChatSession;
@@ -81,7 +79,7 @@ public class IrisSessionService {
      */
     public void checkIsIrisActivated(IrisSession session) {
         var wrapper = getIrisSessionSubService(session);
-        wrapper.irisSubFeatureInterface.checkIsFeatureActivatedFor(wrapper.irisSession);
+        wrapper.irisSubFeatureInterface.checkIrisEnabledFor(wrapper.irisSession);
     }
 
     /**
@@ -149,9 +147,14 @@ public class IrisSessionService {
      */
     public void checkRateLimit(IrisSession session, User user) {
         var wrapper = getIrisSessionSubService(session);
-        if (wrapper.irisSubFeatureInterface instanceof IrisRateLimitedFeatureInterface rateLimitedWrapper) {
-            rateLimitedWrapper.checkRateLimit(user);
+        if (wrapper.irisSubFeatureInterface instanceof IrisRateLimitedFeatureInterface<?> rateLimitedWrapper) {
+            invokeRateLimitCheck(rateLimitedWrapper, wrapper.irisSession, user);
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    private <S extends IrisSession> void invokeRateLimitCheck(IrisRateLimitedFeatureInterface<S> rateLimitedWrapper, IrisSession session, User user) {
+        rateLimitedWrapper.checkRateLimit(user, (S) session);
     }
 
     /**
@@ -187,26 +190,12 @@ public class IrisSessionService {
      * @return A list of all IrisChatSessionsDTOs for a course
      */
     public List<IrisChatSessionDTO> getIrisSessionsByCourseAndUserId(Course course, Long userId) {
-        var settings = irisSettingsService.getCombinedIrisSettingsForCourse(course.getId(), true);
-        List<Class<? extends IrisChatSession>> enabledTypes = new ArrayList<>();
-
-        if (settings.irisTextExerciseChatSettings().enabled()) {
-            enabledTypes.add(IrisTextExerciseChatSession.class);
+        var settings = irisSettingsService.getSettingsForCourse(course);
+        if (!settings.enabled()) {
+            return List.of();
         }
 
-        if (settings.irisProgrammingExerciseChatSettings().enabled()) {
-            enabledTypes.add(IrisProgrammingExerciseChatSession.class);
-        }
-
-        if (settings.irisCourseChatSettings().enabled()) {
-            enabledTypes.add(IrisCourseChatSession.class);
-        }
-
-        if (settings.irisLectureChatSettings().enabled()) {
-            enabledTypes.add(IrisLectureChatSession.class);
-        }
-
-        return irisChatSessionRepository.findByCourseIdAndUserId(course.getId(), userId, enabledTypes).stream().map(dao -> new IrisChatSessionDTO(dao.session().getId(),
-                dao.entityId(), dao.entityName(), dao.session().getTitle(), dao.session().getCreationDate(), dao.session().getMode())).toList();
+        return irisChatSessionRepository.findByCourseIdAndUserId(course.getId(), userId).stream().map(dao -> new IrisChatSessionDTO(dao.session().getId(), dao.entityId(),
+                dao.entityName(), dao.session().getTitle(), dao.session().getCreationDate(), dao.session().getMode())).toList();
     }
 }

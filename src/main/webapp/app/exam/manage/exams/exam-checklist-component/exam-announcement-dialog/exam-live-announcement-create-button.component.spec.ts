@@ -9,7 +9,6 @@ import { ExamLiveAnnouncementCreateButtonComponent } from 'app/exam/manage/exams
 import { of } from 'rxjs';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { input } from '@angular/core';
 
 describe('ExamLiveAnnouncementCreateButtonComponent', () => {
     let component: ExamLiveAnnouncementCreateButtonComponent;
@@ -36,9 +35,7 @@ describe('ExamLiveAnnouncementCreateButtonComponent', () => {
             visibleDate: dayjs().subtract(1, 'day'),
             course: { id: 2 },
         } as Exam;
-        TestBed.runInInjectionContext(() => {
-            component.exam = input(exam);
-        });
+        fixture.componentRef.setInput('exam', exam);
     });
 
     it.each([
@@ -63,8 +60,12 @@ describe('ExamLiveAnnouncementCreateButtonComponent', () => {
     });
 
     it('should not open dialog when announcementCreationAllowed is false', () => {
-        fixture.detectChanges();
-        component.announcementCreationAllowed = false;
+        const examInFuture = {
+            id: 1,
+            visibleDate: dayjs().add(1, 'day'),
+            course: { id: 2 },
+        } as Exam;
+        fixture.componentRef.setInput('exam', examInFuture);
         fixture.detectChanges();
 
         const button = fixture.debugElement.query(By.css('.btn-warning'));

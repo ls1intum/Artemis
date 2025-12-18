@@ -7,6 +7,7 @@ import dayjs from 'dayjs/esm';
 import { round } from 'app/shared/util/utils';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { WebsocketService } from 'app/shared/service/websocket.service';
+import { Subscription } from 'rxjs';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -67,6 +68,8 @@ export class ExamStatusComponent implements OnChanges, OnInit, OnDestroy {
 
     numberOfSubmitted = 0;
     numberOfStarted = 0;
+    private submittedSubscription?: Subscription;
+    private startedSubscription?: Subscription;
 
     // Icons
     faTimes = faTimes;
@@ -78,11 +81,9 @@ export class ExamStatusComponent implements OnChanges, OnInit, OnDestroy {
 
     ngOnInit() {
         const submittedTopic = this.examChecklistService.getSubmittedTopic(this.exam());
-        this.websocketService.subscribe(submittedTopic);
-        this.websocketService.receive(submittedTopic).subscribe(() => (this.numberOfSubmitted += 1));
+        this.submittedSubscription = this.websocketService.subscribe<void>(submittedTopic).subscribe(() => (this.numberOfSubmitted += 1));
         const startedTopic = this.examChecklistService.getStartedTopic(this.exam());
-        this.websocketService.subscribe(startedTopic);
-        this.websocketService.receive(startedTopic).subscribe(() => (this.numberOfStarted += 1));
+        this.startedSubscription = this.websocketService.subscribe<void>(startedTopic).subscribe(() => (this.numberOfStarted += 1));
     }
 
     ngOnChanges() {
@@ -111,10 +112,8 @@ export class ExamStatusComponent implements OnChanges, OnInit, OnDestroy {
     }
 
     ngOnDestroy(): void {
-        const submittedTopic = this.examChecklistService.getSubmittedTopic(this.exam());
-        this.websocketService.unsubscribe(submittedTopic);
-        const startedTopic = this.examChecklistService.getStartedTopic(this.exam());
-        this.websocketService.unsubscribe(startedTopic);
+        this.submittedSubscription?.unsubscribe();
+        this.startedSubscription?.unsubscribe();
     }
 
     /**

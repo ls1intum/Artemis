@@ -17,7 +17,6 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
 import { GenericUpdateTextPropertyDialogComponent } from 'app/communication/course-conversations-components/generic-update-text-property-dialog/generic-update-text-property-dialog.component';
 import { defaultSecondLayerDialogOptions } from 'app/communication/course-conversations-components/other/conversation.util';
-import { input } from '@angular/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ConversationInfoComponent } from 'app/communication/course-conversations-components/dialogs/conversation-detail-dialog/tabs/conversation-info/conversation-info.component';
 import { ConversationService } from 'app/communication/conversations/service/conversation.service';
@@ -51,8 +50,7 @@ examples.forEach((activeConversation) => {
 
         beforeEach(waitForAsync(() => {
             TestBed.configureTestingModule({
-                imports: [TranslateModule.forRoot()],
-                declarations: [ConversationInfoComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe), MockDirective(TranslateDirective)],
+                imports: [ConversationInfoComponent, TranslateModule.forRoot(), MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe), MockDirective(TranslateDirective)],
                 providers: [
                     MockProvider(ChannelService),
                     MockProvider(GroupChatService),
@@ -71,11 +69,9 @@ examples.forEach((activeConversation) => {
             canChangeChannelProperties.mockReturnValue(true);
             canChangeGroupChatProperties.mockReturnValue(true);
             fixture = TestBed.createComponent(ConversationInfoComponent);
-            TestBed.runInInjectionContext(() => {
-                component = fixture.componentInstance;
-                component.activeConversation = input<ConversationDTO>(activeConversation);
-                component.course = input<Course>(course);
-            });
+            component = fixture.componentInstance;
+            fixture.componentRef.setInput('activeConversation', activeConversation);
+            fixture.componentRef.setInput('course', course);
             component.canChangeChannelProperties = canChangeChannelProperties;
             component.canChangeGroupChatProperties = canChangeGroupChatProperties;
 
@@ -141,7 +137,7 @@ examples.forEach((activeConversation) => {
                 checkThatActionButtonOfSectionExistsInTemplate('description');
 
                 canChangeChannelProperties.mockReturnValue(false);
-                fixture.detectChanges();
+                fixture.changeDetectorRef.detectChanges();
                 checkThatActionButtonOfSectionDoesNotExistInTemplate('name');
                 checkThatActionButtonOfSectionDoesNotExistInTemplate('topic');
                 checkThatActionButtonOfSectionDoesNotExistInTemplate('description');
@@ -150,7 +146,7 @@ examples.forEach((activeConversation) => {
             if (isGroupChatDTO(activeConversation)) {
                 checkThatActionButtonOfSectionExistsInTemplate('name');
                 canChangeGroupChatProperties.mockReturnValue(false);
-                fixture.detectChanges();
+                fixture.changeDetectorRef.detectChanges();
                 checkThatActionButtonOfSectionDoesNotExistInTemplate('name');
             }
         });
@@ -207,7 +203,7 @@ examples.forEach((activeConversation) => {
         it('should show correct notification message and link for ignored preset', () => {
             component['notificationSettings'] = { selectedPreset: 3, notificationTypeChannels: {} } as any;
             component['checkNotificationStatus']();
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             const link = fixture.nativeElement.querySelector('#notification-section a');
             expect(link).toBeTruthy();
         });
@@ -230,7 +226,7 @@ examples.forEach((activeConversation) => {
             } as any;
             activeConversation.isMuted = false;
             component['checkNotificationStatus']();
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
 
             expect(component.isNotificationsEnabled).toBeTruthy();
             const desc = fixture.nativeElement.querySelector('#notification-section .text-muted');
@@ -256,7 +252,7 @@ examples.forEach((activeConversation) => {
             activeConversation.isMuted = false;
             component['loadNotificationSettings']();
             tick(); // Wait for the service response to be processed
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
 
             expect(component.isNotificationsEnabled).toBeFalsy();
             const desc = fixture.nativeElement.querySelector('#notification-section .text-muted');
@@ -278,7 +274,7 @@ examples.forEach((activeConversation) => {
             activeConversation.isMuted = true;
             component['loadNotificationSettings']();
             tick(); // Wait for the service response to be processed
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
 
             expect(component.isNotificationsEnabled).toBeTruthy();
             const desc = fixture.nativeElement.querySelector('#notification-section .text-muted');
@@ -331,9 +327,8 @@ examples.forEach((activeConversation) => {
                 const groupChatService = TestBed.inject(GroupChatService);
                 const updateSpy = jest.spyOn(groupChatService, 'update');
 
-                TestBed.runInInjectionContext(() => {
-                    component.course = input<Course>({} as Course);
-                });
+                fixture.componentRef.setInput('course', {} as Course);
+                fixture.changeDetectorRef.detectChanges();
                 component['updateGroupChat'](activeConversation, 'name', 'new name');
 
                 expect(updateSpy).not.toHaveBeenCalled();
@@ -345,9 +340,8 @@ examples.forEach((activeConversation) => {
                 const channelService = TestBed.inject(ChannelService);
                 const updateSpy = jest.spyOn(channelService, 'update');
 
-                TestBed.runInInjectionContext(() => {
-                    component.course = input<Course>({} as Course);
-                });
+                fixture.componentRef.setInput('course', {} as Course);
+                fixture.changeDetectorRef.detectChanges();
                 component['updateChannel'](activeConversation, 'name', 'new name');
 
                 expect(updateSpy).not.toHaveBeenCalled();
@@ -410,7 +404,7 @@ examples.forEach((activeConversation) => {
                 result: Promise.resolve('updated'),
             };
             const openDialogSpy = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef as unknown as NgbModalRef);
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
 
             button.click();
             tick();

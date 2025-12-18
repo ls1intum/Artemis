@@ -93,8 +93,7 @@ describe('System Notification Component', () => {
         const originalNotifications = [createActiveNotification(SystemNotificationType.WARNING, 1), createInactiveNotification(SystemNotificationType.INFO, 2)];
         const newNotifications = [createActiveNotification(SystemNotificationType.WARNING, 3), createInactiveNotification(SystemNotificationType.INFO, 4)];
 
-        const subscribeSpy = jest.spyOn(websocketService, 'subscribe');
-        const receiveSpy = jest.spyOn(websocketService, 'receive').mockReturnValue(of(newNotifications));
+        const subscribeSpy = jest.spyOn(websocketService, 'subscribe').mockReturnValue(of(newNotifications));
         const getActiveNotificationSpy = jest.spyOn(systemNotificationService, 'getActiveNotifications').mockReturnValue(of(originalNotifications));
 
         systemNotificationComponent.ngOnInit();
@@ -107,8 +106,6 @@ describe('System Notification Component', () => {
         expect(systemNotificationComponent.notificationsToDisplay).toEqual([newNotifications[0]]);
         expect(subscribeSpy).toHaveBeenCalledOnce();
         expect(subscribeSpy).toHaveBeenCalledWith(WEBSOCKET_CHANNEL);
-        expect(receiveSpy).toHaveBeenCalledOnce();
-        expect(receiveSpy).toHaveBeenCalledWith(WEBSOCKET_CHANNEL);
         expect(getActiveNotificationSpy).toHaveBeenCalledOnce();
         flush();
     }));

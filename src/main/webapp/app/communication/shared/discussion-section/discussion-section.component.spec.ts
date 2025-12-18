@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
+import { WebsocketService } from 'app/shared/service/websocket.service';
 import { of } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { MockComponent, MockModule, MockProvider } from 'ng-mocks';
@@ -22,6 +23,7 @@ import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-acti
 import { ActivatedRoute, Router } from '@angular/router';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { getElement, getElements } from 'test/helpers/utils/general-test.utils';
 import {
     messagesBetweenUser1User2,
@@ -44,7 +46,6 @@ import { MetisConversationService } from 'app/communication/service/metis-conver
 import { MockMetisConversationService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-metis-conversation.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { LinkifyService } from 'app/communication/link-preview/services/linkify.service';
 import { LinkPreviewService } from 'app/communication/link-preview/services/link-preview.service';
 import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
@@ -69,14 +70,7 @@ describe('DiscussionSectionComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [
-                MockModule(FormsModule),
-                MockModule(ReactiveFormsModule),
-                MockModule(NgbTooltipModule),
-                DiscussionSectionComponent,
-                MockModule(BrowserAnimationsModule),
-                FaIconComponent,
-            ],
+            imports: [MockModule(FormsModule), MockModule(ReactiveFormsModule), MockModule(NgbTooltipModule), DiscussionSectionComponent, FaIconComponent],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -95,6 +89,7 @@ describe('DiscussionSectionComponent', () => {
                 { provide: MetisService, useClass: MetisService },
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: CourseStorageService, useClass: CourseStorageService },
+                { provide: WebsocketService, useClass: MockWebsocketService },
                 {
                     provide: ActivatedRoute,
                     useValue: new MockActivatedRoute({ postId: metisPostTechSupport.id, courseId: metisCourse.id }),
@@ -147,7 +142,8 @@ describe('DiscussionSectionComponent', () => {
         expect(component.createdPost).toBeDefined();
         expect(component.channel).toEqual(metisLectureChannelDTO);
         expect(getChannelOfLectureSpy).toHaveBeenCalled();
-        expect(component.posts).toEqual(messagesBetweenUser1User2.reverse());
+        // Use spread operator to avoid mutating the shared test data array
+        expect(component.posts).toEqual([...messagesBetweenUser1User2].reverse());
     }));
 
     it('should set course and messages for exercise with exercise channel on initialization', fakeAsync(() => {
@@ -158,7 +154,8 @@ describe('DiscussionSectionComponent', () => {
         expect(component.createdPost).toBeDefined();
         expect(component.channel).toEqual(metisExerciseChannelDTO);
         expect(getChannelOfExerciseSpy).toHaveBeenCalled();
-        expect(component.posts).toEqual(messagesBetweenUser1User2.reverse());
+        // Use spread operator to avoid mutating the shared test data array
+        expect(component.posts).toEqual([...messagesBetweenUser1User2].reverse());
     }));
 
     it('should reset current post', fakeAsync(() => {
@@ -177,7 +174,7 @@ describe('DiscussionSectionComponent', () => {
         expect(component.formGroup.get('filterToUnresolved')?.value).toBeFalse();
         expect(component.formGroup.get('filterToOwn')?.value).toBeFalse();
         expect(component.formGroup.get('filterToAnsweredOrReacted')?.value).toBeFalse();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         const searchInput = getElement(fixture.debugElement, 'input[name=searchText]');
         expect(searchInput.textContent).toBe('');
         tick();
@@ -187,10 +184,16 @@ describe('DiscussionSectionComponent', () => {
         fixture.componentRef.setInput('exercise', { ...metisExercise, course: metisCourse });
         fixture.detectChanges();
         tick();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         tick();
-        component.posts = metisExercisePosts;
-        fixture.detectChanges();
+        // Create posts with unique IDs to avoid duplicate key errors with track by post.id
+        component.posts = [
+            { ...metisExercisePosts[0], id: 101 },
+            { ...metisExercisePosts[1], id: 102 },
+            { ...metisExercisePosts[0], id: 103 },
+            { ...metisExercisePosts[1], id: 104 },
+        ];
+        fixture.changeDetectorRef.detectChanges();
         tick();
         const newPostButtons = getElements(fixture.debugElement, '#new-post');
         expect(newPostButtons).not.toBeNull();
@@ -201,7 +204,7 @@ describe('DiscussionSectionComponent', () => {
         fixture.componentRef.setInput('exercise', { ...metisExercise, course: metisCourse });
         fixture.detectChanges();
         tick();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         const newPostButtons = getElements(fixture.debugElement, '#new-post');
         expect(newPostButtons).not.toBeNull();
         expect(newPostButtons).toHaveLength(1);
@@ -211,7 +214,7 @@ describe('DiscussionSectionComponent', () => {
         fixture.componentRef.setInput('exercise', { ...metisExercise, course: metisCourse });
         fixture.detectChanges();
         tick();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         const searchInput = getElement(fixture.debugElement, 'input[name=searchText]');
         const filterResolvedCheckbox = getElement(fixture.debugElement, 'input[name=filterToUnresolved]');
         const filterOwnCheckbox = getElement(fixture.debugElement, 'input[name=filterToOwn]');
@@ -226,7 +229,7 @@ describe('DiscussionSectionComponent', () => {
     it('should hide search-bar and filters if focused to a post', fakeAsync(() => {
         fixture.detectChanges();
         tick();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         const searchInput = getElement(fixture.debugElement, 'input[name=searchText]');
         const filterResolvedCheckbox = getElement(fixture.debugElement, 'input[name=filterToUnresolved]');
         const filterOwnCheckbox = getElement(fixture.debugElement, 'input[name=filterToOwn]');
@@ -243,7 +246,7 @@ describe('DiscussionSectionComponent', () => {
         metisServiceGetFilteredPostsSpy.mockReset();
         fixture.detectChanges();
         tick();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         component.formGroup.patchValue({
             filterToUnresolved: true,
             filterToOwn: true,
@@ -259,7 +262,7 @@ describe('DiscussionSectionComponent', () => {
         filterToAnsweredOrReacted.dispatchEvent(new Event('change'));
 
         tick();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(component.currentPostContextFilter.filterToUnresolved).toBeTrue();
         expect(component.currentPostContextFilter.authorIds!.length > 0).toBeTrue();
@@ -270,7 +273,7 @@ describe('DiscussionSectionComponent', () => {
     it('loads exercise messages if communication only', fakeAsync(() => {
         component.course = { id: 1, courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_ONLY } as Course;
         fixture.componentRef.setInput('exercise', { id: 2 } as Exercise);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         component.setChannel(1);
 
@@ -285,7 +288,7 @@ describe('DiscussionSectionComponent', () => {
     it('loads lecture messages if communication only', fakeAsync(() => {
         component.course = { id: 1, courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_ONLY } as Course;
         fixture.componentRef.setInput('lecture', { id: 2 } as Lecture);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         component.setChannel(1);
 
@@ -300,7 +303,7 @@ describe('DiscussionSectionComponent', () => {
     it('collapses sidebar if no channel exists', fakeAsync(() => {
         component.course = { id: 1, courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_ONLY } as Course;
         fixture.componentRef.setInput('lecture', { id: 2 } as Lecture);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         getChannelOfLectureSpy = jest.spyOn(channelService, 'getChannelOfLecture').mockReturnValue(
             of(
                 new HttpResponse({
@@ -340,6 +343,7 @@ describe('DiscussionSectionComponent', () => {
     it('should change sort direction', () => {
         fixture.detectChanges();
         component.currentSortDirection = SortDirection.ASCENDING;
+        fixture.changeDetectorRef.detectChanges();
         component.onChangeSortDir();
         expect(component.currentSortDirection).toBe(SortDirection.DESCENDING);
         component.onChangeSortDir();
@@ -347,6 +351,10 @@ describe('DiscussionSectionComponent', () => {
     });
 
     it('fetches new messages on scroll up if more messages are available', fakeAsync(() => {
+        // Use unique post IDs to avoid duplicate key warnings from Angular's @for track
+        metisServiceGetFilteredPostsSpy.mockImplementation(() => {
+            component.posts = [{ id: 1001 } as any, { id: 1002 } as any];
+        });
         const course = { id: 1, courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_ONLY } as Course;
         fixture.componentRef.setInput('lecture', { id: 2, course: course } as Lecture);
         fixture.detectChanges();

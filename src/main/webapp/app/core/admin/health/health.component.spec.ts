@@ -81,7 +81,7 @@ describe('HealthComponent', () => {
         expect(linkToClick).not.toBeNull();
 
         linkToClick.nativeElement.click();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(modalServiceSpy).toHaveBeenCalledOnce();
         expect(modalServiceSpy).toHaveBeenCalledWith(HealthModalComponent);

@@ -58,9 +58,7 @@ describe('GenerateCompetenciesComponent', () => {
                 {
                     provide: WebsocketService,
                     useValue: {
-                        subscribe: jest.fn(),
-                        receive: jest.fn(() => mockWebSocketSubject.asObservable()),
-                        unsubscribe: jest.fn(),
+                        subscribe: jest.fn(() => mockWebSocketSubject.asObservable()),
                     },
                 },
                 CourseDescriptionFormComponent,
@@ -138,7 +136,7 @@ describe('GenerateCompetenciesComponent', () => {
             result: [{ title: 'Title', description: 'Description', taxonomy: CompetencyTaxonomy.ANALYZE }],
         };
         mockWebSocketSubject.next(websocketMessage);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(fixture.debugElement.queryAll(By.directive(CompetencyRecommendationDetailComponent))).toHaveLength(1);
         expect(comp.competencies.value).toHaveLength(1);
@@ -190,7 +188,7 @@ describe('GenerateCompetenciesComponent', () => {
         const saveButton = fixture.debugElement.nativeElement.querySelector('#saveButton > .jhi-btn');
         saveButton.click();
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         await fixture.whenStable();
         expect(openSpy).toHaveBeenCalledOnce();
@@ -216,7 +214,7 @@ describe('GenerateCompetenciesComponent', () => {
         const saveButton = fixture.debugElement.nativeElement.querySelector('#saveButton > .jhi-btn');
         saveButton.click();
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         await fixture.whenStable();
         expect(openSpy).not.toHaveBeenCalled();

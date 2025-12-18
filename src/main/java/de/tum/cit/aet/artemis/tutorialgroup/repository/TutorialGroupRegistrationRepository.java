@@ -29,7 +29,7 @@ public interface TutorialGroupRegistrationRepository extends ArtemisJpaRepositor
 
     Set<TutorialGroupRegistration> findAllByTutorialGroup(TutorialGroup tutorialGroup);
 
-    @Transactional  // ok because of delete
+    @Transactional // ok because of delete
     @Modifying
     void deleteAllByStudentIsInAndTypeAndTutorialGroupCourse(Set<User> students, TutorialGroupRegistrationType type, Course course);
 }

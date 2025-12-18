@@ -8,7 +8,7 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { WebsocketService } from 'app/shared/service/websocket.service';
-import { HyperionReviewAndRefineApiService } from 'app/openapi/api/hyperionReviewAndRefineApi.service';
+import { HyperionProblemStatementApiService } from 'app/openapi/api/hyperionProblemStatementApi.service';
 import { ProblemStatementRewriteResponse } from 'app/openapi/model/problemStatementRewriteResponse';
 import { ConsistencyCheckResponse } from 'app/openapi/model/consistencyCheckResponse';
 import {
@@ -38,9 +38,7 @@ describe('ArtemisIntelligenceService', () => {
     } as unknown as MonacoEditorComponent;
 
     const mockWebsocketService = {
-        subscribe: jest.fn(),
-        unsubscribe: jest.fn(),
-        receive: jest.fn().mockReturnValue(
+        subscribe: jest.fn().mockReturnValue(
             new BehaviorSubject({
                 result: 'Rewritten Text',
                 inconsistencies: ['Some inconsistency'],
@@ -136,7 +134,7 @@ describe('ArtemisIntelligenceService', () => {
                 { provide: WebsocketService, useValue: mockWebsocketService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AlertService, useValue: mockAlertService },
-                { provide: HyperionReviewAndRefineApiService, useValue: mockHyperionApiService },
+                { provide: HyperionProblemStatementApiService, useValue: mockHyperionApiService },
             ],
         });
 
@@ -165,7 +163,6 @@ describe('ArtemisIntelligenceService', () => {
                 expect(result.improvement).toBe('Improved text');
 
                 expect(alertService.success).toHaveBeenCalledWith('artemisApp.markdownEditor.artemisIntelligence.alerts.rewrite.success');
-                expect(websocketService.unsubscribe).toHaveBeenCalledWith(`/user/topic/iris/rewriting/${courseId}`);
             });
 
             const req = httpMock.expectOne(`api/iris/courses/${courseId}/rewrite-text`);
@@ -212,7 +209,7 @@ describe('ArtemisIntelligenceService', () => {
         });
 
         it('should handle WebSocket error correctly', () => {
-            mockWebsocketService.receive.mockReturnValueOnce(throwError(() => new Error('WebSocket Error')));
+            mockWebsocketService.subscribe.mockReturnValueOnce(throwError(() => new Error('WebSocket Error')));
 
             service.rewrite('OriginalText', RewritingVariant.FAQ, 1).subscribe({
                 next: () => {
