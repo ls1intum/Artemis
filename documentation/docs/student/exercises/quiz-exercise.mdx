@@ -22,14 +22,7 @@ Quiz exercises allow you to test your knowledge through different types of quest
 
 If a quiz exercise is available on the Artemis home page as a current exercise, you will be able to see it in the course overview or inside the course where it belongs.
 
-<Image src={currentQuizExercise} alt="Current Quiz Exercise" size={ImageSize.medium} caption="Current Quiz Exercise Overview" />
-
-The current exercise box will show:
-- The name of the quiz
-- The button to start the quiz
-- The category
-- The message if the quiz is active
-- The due date
+<Image src={currentQuizExercise} alt="Current Quiz Exercise" size={ImageSize.large} caption="Current Quiz Exercise Overview" />
 
 To start the quiz, press the <img src={openQuizButton} alt="Open Quiz" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button.
 
@@ -43,22 +36,15 @@ To start the quiz, press the <img src={openQuizButton} alt="Open Quiz" style={{d
 
 When the quiz starts, you can see the questions and solve them.
 
-<Image src={oneChoiceQuestion} alt="One Choice Question" size={ImageSize.medium} caption="Quiz Question View" />
+<Image src={oneChoiceQuestion} alt="One Choice Question" size={ImageSize.large} caption="Quiz Question View" />
 
 The quiz page is composed of:
 
-- **Number and title of the question**
-- **Points** for solving that question
-- **The quiz statement**
 - **Options**:
   - Options with circles mean one choice could be correct
   - Options with squares mean multiple options could be correct
-- **In the footer**:
-  - The number of questions and overall points
-  - Time left to complete the quiz
-  - Last time saved: The quiz will save all changes after they occur
-  - Connection status
-  - <img src={submitButton} alt="Submit" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button: To allow you to submit the quiz before the time ends
+- Last time saved: The quiz will save all changes automatically
+- <img src={submitButton} alt="Submit" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button: To allow you to submit the quiz before the time ends
 
 <Callout variant={CalloutVariant.warning}>
   <p>The quiz automatically saves your changes as you make them. However, when the quiz time's up, the answers will be submitted automatically.</p>
