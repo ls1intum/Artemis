@@ -37,11 +37,11 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.atlas.api.AtlasMLApi;
+import de.tum.cit.aet.artemis.atlas.api.CompetencyApi;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO;
-import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
@@ -120,8 +120,6 @@ public class ModelingExerciseResource {
 
     private final GradingCriterionRepository gradingCriterionRepository;
 
-    private final CompetencyRepository competencyRepository;
-
     private final ChannelService channelService;
 
     private final ChannelRepository channelRepository;
@@ -134,12 +132,15 @@ public class ModelingExerciseResource {
 
     private final Optional<AtlasMLApi> atlasMLApi;
 
+    private final Optional<CompetencyApi> competencyApi;
+
     public ModelingExerciseResource(ModelingExerciseRepository modelingExerciseRepository, UserRepository userRepository, CourseService courseService,
             AuthorizationCheckService authCheckService, CourseRepository courseRepository, ParticipationRepository participationRepository,
             ModelingExerciseService modelingExerciseService, ExerciseDeletionService exerciseDeletionService, ModelingExerciseImportService modelingExerciseImportService,
             SubmissionExportService modelingSubmissionExportService, ExerciseService exerciseService, GroupNotificationScheduleService groupNotificationScheduleService,
-            GradingCriterionRepository gradingCriterionRepository, CompetencyRepository competencyRepository, ChannelService channelService, ChannelRepository channelRepository,
-            ExerciseVersionService exerciseVersionService, Optional<CompetencyProgressApi> competencyProgressApi, Optional<SlideApi> slideApi, Optional<AtlasMLApi> atlasMLApi) {
+            GradingCriterionRepository gradingCriterionRepository, ChannelService channelService, ChannelRepository channelRepository,
+            ExerciseVersionService exerciseVersionService, Optional<CompetencyProgressApi> competencyProgressApi, Optional<SlideApi> slideApi, Optional<AtlasMLApi> atlasMLApi,
+            Optional<CompetencyApi> competencyApi) {
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.courseService = courseService;
         this.modelingExerciseService = modelingExerciseService;
@@ -153,7 +154,7 @@ public class ModelingExerciseResource {
         this.groupNotificationScheduleService = groupNotificationScheduleService;
         this.exerciseService = exerciseService;
         this.gradingCriterionRepository = gradingCriterionRepository;
-        this.competencyRepository = competencyRepository;
+        this.competencyApi = competencyApi;
         this.channelService = channelService;
         this.channelRepository = channelRepository;
         this.exerciseVersionService = exerciseVersionService;
@@ -492,7 +493,7 @@ public class ModelingExerciseResource {
      *
      * @param modelingExercise Modeling exercise to be validated
      */
-    public void validateTitle(ModelingExercise modelingExercise) {
+    private void validateTitle(ModelingExercise modelingExercise) {
         // Check if exercise title is set
         if (modelingExercise.getTitle() == null || modelingExercise.getTitle().isBlank() || modelingExercise.getTitle().length() < 3) {
             throw new BadRequestAlertException("The title is not set or is too short.", ENTITY_NAME, "titleLengthInvalid");
@@ -522,7 +523,7 @@ public class ModelingExerciseResource {
         Set<GradingCriterion> managedCriteria = ensureGradingCriteriaSet(exercise);
 
         Map<Long, GradingCriterion> existingById = managedCriteria.stream().filter(gc -> gc.getId() != null)
-                .collect(Collectors.toMap(GradingCriterion::getId, gc -> gc, (a, _) -> a));
+                .collect(Collectors.toMap(GradingCriterion::getId, gc -> gc, (a, b) -> a));
 
         Set<GradingCriterion> updated = dto.gradingCriteria().stream().map(gcDto -> {
             GradingCriterion criterion = (gcDto.id() != null) ? existingById.get(gcDto.id()) : null;
@@ -575,11 +576,12 @@ public class ModelingExerciseResource {
             clearInitializedCollection(exercise.getCompetencyLinks());
             return;
         }
+        CompetencyApi api = competencyApi.orElseThrow(() -> new BadRequestAlertException("Competency links require Atlas to be enabled.", "CourseCompetency", "atlasDisabled"));
 
         Set<CompetencyExerciseLink> managedLinks = ensureCompetencyLinksSet(exercise);
 
         Map<Long, CompetencyExerciseLink> existingByCompetencyId = managedLinks.stream().filter(link -> link.getCompetency() != null && link.getCompetency().getId() != null)
-                .collect(Collectors.toMap(link -> link.getCompetency().getId(), link -> link, (a, _) -> a));
+                .collect(Collectors.toMap(link -> link.getCompetency().getId(), link -> link, (a, b) -> a));
 
         Long exerciseCourseId = exercise.getCourseViaExerciseGroupOrCourseMember() != null ? exercise.getCourseViaExerciseGroupOrCourseMember().getId() : null;
 
@@ -587,7 +589,7 @@ public class ModelingExerciseResource {
         for (var linkDto : dto.competencyLinks()) {
 
             if (exerciseCourseId != null && linkDto.courseId() != null && !Objects.equals(exerciseCourseId, linkDto.courseId())) {
-                throw new BadRequestAlertException("The competency does not belong to the exercise's course.", ENTITY_NAME, "wrongCourse");
+                throw new BadRequestAlertException("The competency does not belong to the exercise's course.", "CourseCompetency", "wrongCourse");
             }
 
             var competencyDto = linkDto.courseCompetencyDTO();
@@ -595,7 +597,7 @@ public class ModelingExerciseResource {
 
             CompetencyExerciseLink link = existingByCompetencyId.get(competencyId);
             if (link == null) {
-                Competency competencyRef = competencyRepository.getReferenceById(competencyId);
+                Competency competencyRef = api.getReference(competencyId);
                 validateCompetencyBelongsToExerciseCourse(exerciseCourseId, competencyRef);
                 link = new CompetencyExerciseLink(competencyRef, exercise, linkDto.weight());
             }
@@ -642,7 +644,7 @@ public class ModelingExerciseResource {
         Long competencyCourseId = competencyCourse != null ? competencyCourse.getId() : null;
 
         if (competencyCourseId != null && !Objects.equals(exerciseCourseId, competencyCourseId)) {
-            throw new BadRequestAlertException("The competency does not belong to the exercise's course.", ENTITY_NAME, "wrongCourse");
+            throw new BadRequestAlertException("The competency does not belong to the exercise's course.", "CourseCompetency", "wrongCourse");
         }
     }
 
@@ -678,11 +680,10 @@ public class ModelingExerciseResource {
      * @throws BadRequestAlertException if required fields are missing/invalid or a competency from the DTO
      *                                      does not belong to the exercise's course or otherwise violates domain constraints
      */
-    public ModelingExercise update(UpdateModelingExerciseDTO updateModelingExerciseDTO, ModelingExercise exercise) {
+    private ModelingExercise update(UpdateModelingExerciseDTO updateModelingExerciseDTO, ModelingExercise exercise) {
         if (updateModelingExerciseDTO == null) {
             throw new BadRequestAlertException("No modeling exercise was provided.", ENTITY_NAME, "isNull");
         }
-
         exercise.setTitle(updateModelingExerciseDTO.title());
         validateTitle(exercise);
         exercise.setShortName(updateModelingExerciseDTO.shortName());

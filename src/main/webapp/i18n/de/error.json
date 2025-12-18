@@ -176,7 +176,8 @@
             "loginRequiredButFeatureNotEnabled": "Für diese Funktion ist ein Passkey-Login erforderlich. Allerdings ist die Passkey-Authentifizierung auf dieser Artemis-Instanz nicht aktiviert. Bitte aktiviere die Passkey-Authentifizierung auf dieser Artemis Instanz."
         },
         "CourseCompetency": {
-            "wrongCourse": "Die Kompetenz gehört nicht zum Kurs der Übung."
+            "wrongCourse": "Die Kompetenz gehört nicht zum Kurs der Übung.",
+            "atlasDisabled": "Für die Verknüpfung von Kompetenzen muss Atlas aktiviert sein."
         },
         "CompetencyExerciseLink": {
             "isNull": "Es wurde kein Kompetenzlink übermittelt.",

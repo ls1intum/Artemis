@@ -176,7 +176,8 @@
             "loginRequiredButFeatureNotEnabled": "Passkey login is required but the feature is not enabled on this Artemis instance. Please enable the passkey feature on this Artemis instance."
         },
         "CourseCompetency": {
-            "wrongCourse": "The competency does not belong to the exercise's course."
+            "wrongCourse": "The competency does not belong to the exercise's course.",
+            "atlasDisabled": "Competency links require Atlas to be enabled."
         },
         "CompetencyExerciseLink": {
             "isNull": "No competency link was provided.",
