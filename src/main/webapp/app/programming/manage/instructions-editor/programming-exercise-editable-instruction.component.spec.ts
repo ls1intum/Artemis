@@ -9,6 +9,8 @@ import { ParticipationWebsocketService } from 'app/core/course/shared/services/p
 import { MockResultService } from 'test/helpers/mocks/service/mock-result.service';
 import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
 import { MockProgrammingExerciseGradingService } from 'test/helpers/mocks/service/mock-programming-exercise-grading.service';
+import { triggerChanges } from 'test/helpers/utils/general-test.utils';
+import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { ResultService } from 'app/exercise/result/result.service';
 import { TemplateProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/template-programming-exercise-participation.model';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
@@ -53,6 +55,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
     templateParticipation.id = 99;
 
     const exercise = { id: 30, templateParticipation } as ProgrammingExercise;
+    const participation = { id: 1, results: [{ id: 10, feedbacks: [{ id: 20 }, { id: 21 }] }] } as Participation;
     const testCases = [
         { testName: 'test1', active: true },
         { testName: 'test2', active: true },
@@ -109,7 +112,6 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
                     getProfileInfo: () => mockProfileInfo,
                 }),
                 { provide: AccountService, useClass: MockAccountService },
-                { provide: ProblemStatementSyncService, useValue: problemStatementSyncServiceMock },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -387,7 +389,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
     });
 
     it('should have intelligence actions when Hyperion is active', () => {
-        jest.spyOn(TestBed.inject(ProfileService), 'isModuleFeatureActive').mockReturnValue(true);
+        const isModuleFeatureActiveSpy = jest.spyOn(TestBed.inject(ProfileService), 'isModuleFeatureActive').mockReturnValue(true);
 
         setRequiredInputs(fixture, { ...exercise, course: { id: 1 } as any } as ProgrammingExercise);
         comp.hyperionEnabled = true;
@@ -396,5 +398,6 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         const actions = comp.artemisIntelligenceActions();
         expect(actions).toHaveLength(1);
         expect(actions[0]).toBeInstanceOf(RewriteAction);
+        expect(isModuleFeatureActiveSpy).toHaveBeenCalledWith(MODULE_FEATURE_HYPERION);
     });
 });

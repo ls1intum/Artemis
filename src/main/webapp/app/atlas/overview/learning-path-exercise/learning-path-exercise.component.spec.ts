@@ -1,6 +1,7 @@
 import { LearningPathExerciseComponent } from 'app/atlas/overview/learning-path-exercise/learning-path-exercise.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('LearningPathExerciseComponent', () => {
     let component: LearningPathExerciseComponent;
@@ -9,7 +10,7 @@ describe('LearningPathExerciseComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [LearningPathExerciseComponent],
-            providers: [{ provide: TranslateService, useValue: jest.fn() }],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
         fixture = TestBed.createComponent(LearningPathExerciseComponent);

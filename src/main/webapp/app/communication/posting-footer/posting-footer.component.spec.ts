@@ -9,14 +9,12 @@ import { MockAnswerPostService } from 'test/helpers/mocks/service/mock-answer-po
 import { PostComponent } from 'app/communication/post/post.component';
 import { AnswerPostComponent } from 'app/communication/answer-post/answer-post.component';
 import { AnswerPostCreateEditModalComponent } from 'app/communication/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
-import { TranslatePipeMock } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockMetisService } from 'test/helpers/mocks/service/mock-metis-service.service';
 import { metisPostExerciseUser1, post, unApprovedAnswerPost1, unApprovedAnswerPost2, unsortedAnswerArray } from 'test/helpers/sample/metis-sample-data';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { User } from 'app/core/user/user.model';
 import dayjs from 'dayjs/esm';
-import { Injector, input, runInInjectionContext, signal } from '@angular/core';
-import { Posting } from 'app/communication/shared/entities/posting.model';
+import { signal } from '@angular/core';
 import { PostingFooterComponent } from 'app/communication/posting-footer/posting-footer.component';
 import { Post } from 'app/communication/shared/entities/post.model';
 
@@ -30,7 +28,6 @@ describe('PostingFooterComponent', () => {
     let fixture: ComponentFixture<PostingFooterComponent>;
     let metisService: MetisService;
     let metisServiceUserAuthorityStub: jest.SpyInstance;
-    let injector: Injector;
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
@@ -39,9 +36,8 @@ describe('PostingFooterComponent', () => {
                 { provide: AnswerPostService, useClass: MockAnswerPostService },
                 { provide: MetisService, useClass: MockMetisService },
             ],
-            declarations: [
+            imports: [
                 PostingFooterComponent,
-                TranslatePipeMock,
                 MockComponent(FaIconComponent),
                 MockComponent(PostComponent),
                 MockComponent(AnswerPostComponent),
@@ -54,7 +50,6 @@ describe('PostingFooterComponent', () => {
                 component = fixture.componentInstance;
                 metisService = TestBed.inject(MetisService);
                 metisServiceUserAuthorityStub = jest.spyOn(metisService, 'metisUserIsAtLeastTutorInCourse');
-                injector = fixture.debugElement.injector;
             });
     });
 
@@ -63,14 +58,12 @@ describe('PostingFooterComponent', () => {
     });
 
     it('should be initialized correctly for users that are at least tutors in course', () => {
-        runInInjectionContext(injector, () => {
-            post.answers = unsortedAnswerArray;
-            component.posting = input<Posting>(post);
-            metisServiceUserAuthorityStub.mockReturnValue(true);
-            component.ngOnInit();
-            expect(component.isAtLeastTutorInCourse).toBeTrue();
-            expect(component.createdAnswerPost.resolvesPost).toBeTrue();
-        });
+        post.answers = unsortedAnswerArray;
+        fixture.componentRef.setInput('posting', post);
+        metisServiceUserAuthorityStub.mockReturnValue(true);
+        component.ngOnInit();
+        expect(component.isAtLeastTutorInCourse).toBeTrue();
+        expect(component.createdAnswerPost.resolvesPost).toBeTrue();
     });
 
     it('should group answer posts correctly', () => {
@@ -155,14 +148,12 @@ describe('PostingFooterComponent', () => {
     });
 
     it('should be initialized correctly for users that are not at least tutors in course', () => {
-        runInInjectionContext(injector, () => {
-            post.answers = unsortedAnswerArray;
-            component.posting = input<Posting>(post);
-            metisServiceUserAuthorityStub.mockReturnValue(false);
-            component.ngOnInit();
-            expect(component.isAtLeastTutorInCourse).toBeFalse();
-            expect(component.createdAnswerPost.resolvesPost).toBeFalse();
-        });
+        post.answers = unsortedAnswerArray;
+        fixture.componentRef.setInput('posting', post);
+        metisServiceUserAuthorityStub.mockReturnValue(false);
+        component.ngOnInit();
+        expect(component.isAtLeastTutorInCourse).toBeFalse();
+        expect(component.createdAnswerPost.resolvesPost).toBeFalse();
     });
 
     it('should open create answer post modal', () => {
@@ -207,7 +198,7 @@ describe('PostingFooterComponent', () => {
         const post4: AnswerPost = { id: 4, author: authorB, creationDate: baseTime.add(12, 'minute') } as unknown as AnswerPost;
         const post5: AnswerPost = { id: 5, author: authorB, creationDate: baseTime.add(14, 'minute') } as unknown as AnswerPost;
         fixture.componentRef.setInput('sortedAnswerPosts', [post3, post1, post5, post2, post4]);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         const mockContainerRef = { clear: jest.fn() } as any;
         const mockSignal = signal(mockContainerRef);
 
@@ -237,10 +228,8 @@ describe('PostingFooterComponent', () => {
     });
 
     it('should handle empty answer posts array', () => {
-        runInInjectionContext(injector, () => {
-            component.sortedAnswerPosts = input<AnswerPost[]>([]);
-            component.groupAnswerPosts();
-            expect(component.groupedAnswerPosts).toHaveLength(0);
-        });
+        fixture.componentRef.setInput('sortedAnswerPosts', []);
+        component.groupAnswerPosts();
+        expect(component.groupedAnswerPosts).toHaveLength(0);
     });
 });

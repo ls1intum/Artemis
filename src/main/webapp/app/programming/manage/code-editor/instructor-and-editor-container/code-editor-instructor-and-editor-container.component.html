@@ -109,7 +109,7 @@
                     </div>
                 </div>
                 <!-- action buttons -->
-                <div>
+                <div class="d-flex align-items-center">
                     @if (!exercise.studentParticipations || !exercise.studentParticipations.length) {
                         <div
                             [ngbTooltip]="'artemisApp.editor.repoSelect.createAssignmentRepoDisabledTooltip' | artemisTranslate"
@@ -127,7 +127,7 @@
                         </div>
                     }
                     @if (exercise.studentParticipations && exercise.studentParticipations.length && exercise.isAtLeastInstructor) {
-                        <button (click)="deleteAssignmentParticipation()" [disabled]="loadingState !== LOADING_STATE.CLEAR" class="btn btn-danger">
+                        <button (click)="deleteAssignmentParticipation()" [disabled]="loadingState !== LOADING_STATE.CLEAR" class="btn btn-danger me-2">
                             @if (loadingState !== LOADING_STATE.DELETING_ASSIGNMENT_REPO && loadingState !== LOADING_STATE.CREATING_ASSIGNMENT_REPO) {
                                 <fa-icon [icon]="faTimes" class="text-white me-2" />
                             }
@@ -136,6 +136,32 @@
                             }
                             <span jhiTranslate="artemisApp.editor.repoSelect.deleteAssignmentRepo"></span>
                         </button>
+                    }
+                    <!-- Hyperion Code Generation -->
+                    @if (hyperionEnabled) {
+                        <div class="btn-group me-2" ngbDropdown role="group" aria-label="AI Code Generation">
+                            @if (isGeneratingCode()) {
+                                <button class="btn btn-outline-primary" disabled>
+                                    <fa-icon [icon]="faSpinner" animation="spin" />
+                                </button>
+                            } @else {
+                                <button class="btn btn-outline-primary" type="button" ngbDropdownToggle>
+                                    <fa-icon [icon]="facArtemisIntelligence" />
+                                    <span class="ms-2" jhiTranslate="artemisApp.programmingExercise.codeGeneration.creationAssistance">Creation Assistance</span>
+                                </button>
+                                <div class="dropdown-menu" ngbDropdownMenu>
+                                    <button
+                                        type="button"
+                                        class="dropdown-item"
+                                        (click)="generateCode()"
+                                        [disabled]="isGeneratingCode()"
+                                        jhiTranslate="artemisApp.programmingExercise.codeGeneration.generateCode"
+                                    >
+                                        Generate Code
+                                    </button>
+                                </div>
+                            }
+                        </div>
                     }
                     @if (exercise.isAtLeastInstructor && hyperionEnabled) {
                         <button (click)="checkConsistencies(exercise)" class="btn btn-primary me-2" [disabled]="isCheckingConsistency()">
@@ -163,12 +189,7 @@
                     />
                 }
                 @if (selectedRepository !== RepositoryType.TESTS) {
-                    <jhi-programming-exercise-student-trigger-build-button
-                        class="me-3"
-                        [exercise]="exercise"
-                        [participation]="selectedParticipation!"
-                        [btnSize]="ButtonSize.MEDIUM"
-                    />
+                    <jhi-programming-exercise-student-trigger-build-button [exercise]="exercise" [participation]="selectedParticipation!" [btnSize]="ButtonSize.MEDIUM" />
                 }
             </div>
             <jhi-programming-exercise-editable-instructions

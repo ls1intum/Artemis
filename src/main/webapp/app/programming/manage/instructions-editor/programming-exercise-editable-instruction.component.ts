@@ -177,7 +177,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     }
 
     @HostListener('document:keydown.control.s', ['$event'])
-    saveOnControlAndS(event: KeyboardEvent) {
+    saveOnControlAndS(event: Event) {
         if (!navigator.userAgent.includes('Mac')) {
             event.preventDefault();
             this.saveInstructions(event);
@@ -185,7 +185,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     }
 
     @HostListener('document:keydown.meta.s', ['$event'])
-    saveOnCommandAndS(event: KeyboardEvent) {
+    saveOnCommandAndS(event: Event) {
         if (navigator.userAgent.includes('Mac')) {
             event.preventDefault();
             this.saveInstructions(event);

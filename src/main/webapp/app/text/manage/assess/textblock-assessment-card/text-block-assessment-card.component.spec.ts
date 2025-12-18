@@ -91,7 +91,7 @@ describe('TextblockAssessmentCardComponent', () => {
     it('should show text block', () => {
         const loremIpsum = 'Lorem Ipsum';
         component.textBlockRef.block!.text = loremIpsum;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const compiled = fixture.debugElement.nativeElement;
         expect(compiled.querySelector('span').textContent).toEqual(loremIpsum);
@@ -105,14 +105,14 @@ describe('TextblockAssessmentCardComponent', () => {
         component.textBlockRef.feedback!.gradingInstruction = new GradingInstruction();
         component.textBlockRef.feedback!.gradingInstruction.usageCount = 0;
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         element = fixture.debugElement.query(By.directive(TextBlockFeedbackEditorComponent));
         expect(element).toBeTruthy();
     });
 
     it('should delete feedback', () => {
         component.textBlockRef.initFeedback();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         jest.spyOn(component.didDelete, 'emit');
         const feedbackEditor = fixture.debugElement.query(By.directive(TextBlockFeedbackEditorComponent));
@@ -127,7 +127,7 @@ describe('TextblockAssessmentCardComponent', () => {
     it('should delete feedback but not emit delete event when textblock is undeletable', () => {
         component.textBlockRef.initFeedback();
         component.textBlockRef.deletable = false;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         jest.spyOn(component.didDelete, 'emit');
         const feedbackEditor = fixture.debugElement.query(By.directive(TextBlockFeedbackEditorComponent));
@@ -146,7 +146,7 @@ describe('TextblockAssessmentCardComponent', () => {
         //@ts-ignore
         const sendAssessmentEvent = jest.spyOn<any, any>(component.textAssessmentAnalytics, 'sendAssessmentEvent');
         component.select();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(sendAssessmentEvent).toHaveBeenCalledWith(TextAssessmentEventType.ADD_FEEDBACK_AUTOMATICALLY_SELECTED_BLOCK, FeedbackType.MANUAL, TextBlockType.AUTOMATIC);
     });
 
@@ -159,7 +159,7 @@ describe('TextblockAssessmentCardComponent', () => {
         //@ts-ignore
         const sendAssessmentEvent = jest.spyOn<any, any>(component.textAssessmentAnalytics, 'sendAssessmentEvent');
         component.select();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(sendAssessmentEvent).not.toHaveBeenCalled();
     });
 });

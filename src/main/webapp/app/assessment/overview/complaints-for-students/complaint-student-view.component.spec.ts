@@ -161,7 +161,7 @@ describe('ComplaintsStudentViewComponent', () => {
             component.isCorrectUserToFileAction = true;
             const complaintBySubmissionMock = jest.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of());
 
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
 
             //Check if button is available
             expect(component.complaint).toBeUndefined();
@@ -174,7 +174,7 @@ describe('ComplaintsStudentViewComponent', () => {
             const button = fixture.debugElement.nativeElement.querySelector('#complain');
             button.click();
 
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
 
             expect(component.formComplaintType).toBe(ComplaintType.COMPLAINT);
             // Wait for setTimeout to execute
@@ -257,7 +257,7 @@ describe('ComplaintsStudentViewComponent', () => {
             component.isCorrectUserToFileAction = true;
             component.remainingNumberOfComplaints = 1;
 
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
 
             // Mock complaint scrollpoint
             const scrollIntoViewMock = jest.fn();
@@ -266,7 +266,7 @@ describe('ComplaintsStudentViewComponent', () => {
             const button = fixture.debugElement.nativeElement.querySelector('#complain');
             button.click();
 
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
 
             expect(component.formComplaintType).toBe(ComplaintType.COMPLAINT);
             tick(); // Wait for update to happen
@@ -278,7 +278,7 @@ describe('ComplaintsStudentViewComponent', () => {
             component.showSection = true;
             component.isCorrectUserToFileAction = true;
 
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
 
             //Check if button is available
             expect(component.complaint).toBeUndefined();
@@ -290,7 +290,7 @@ describe('ComplaintsStudentViewComponent', () => {
             const button = fixture.debugElement.nativeElement.querySelector('#more-feedback');
             button.click();
 
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
 
             expect(component.formComplaintType).toBe(ComplaintType.MORE_FEEDBACK);
             tick(); // Wait for update to happen
