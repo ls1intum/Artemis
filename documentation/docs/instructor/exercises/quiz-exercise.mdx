@@ -114,13 +114,11 @@ This kind of question is composed of a problem statement, a background image, an
   - Proportional with Penalty
   - Proportional without Penalty
 - **Present Drag Items in Random order**
-- **Delete icon**: To delete the current question
 - **Edit View**: Enables the text editor to write the question statement with explanations and hints
 - **Edit bar**: When the edit view is enabled, the format bar provides:
   - Style to the statement text
-  - Explanations [exp]
-  - Hints [hint]
-- **Text editor**: The quiz statement can be developed with hints and explanations
+  - Explanations `[exp]`
+  - Hints `[hint]`
 - **Upload Background**: To select and upload the background from the PC files to drag and drop the options over it
 - **Add Drag Items**:
   - Text items: Type the options
@@ -133,16 +131,11 @@ In the quiz edit view click the button <img src={createDragAndDropQuizButton} al
 
 <Image src={apollonDiagrams} alt="Apollon Diagrams" size={ImageSize.large} caption="Apollon Diagrams Overview" />
 
-In the Apollon diagram view, you can see the list of existing Apollon diagrams and the possible actions to perform with them:
-- Open
-- Delete
-
 Clicking on the creation of a new Apollon Diagram button <img src={createANewApollonDiagram} alt="Create a New Apollon Diagram" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> opens the following form:
 
 <Image src={apollonForm} alt="Apollon Form" size={ImageSize.medium} caption="Apollon Diagram Creation Form" />
 
-- **Title** (required): provide the title of the Apollon diagram, which will be used as title for the generated quiz question
-- **Diagram Type**: A drop-down menu to select one of the following diagram types:
+- Supported Diagram Types
   - Class Diagram
   - Activity Diagram
   - Object Diagram
@@ -153,21 +146,10 @@ Clicking on the creation of a new Apollon Diagram button <img src={createANewApo
   - Petri Net
   - Syntax Tree
   - Flowchart
-- **Create button**: Creates the Apollon diagram and opens the edit view
-- **Cancel button**: Returns to the list of existing Apollon diagrams
 
 After creating or opening an Apollon diagram, it can be edited in the edit view.
 
 <Image src={apollonEditor} alt="Apollon Editor" size={ImageSize.large} caption="Apollon Diagram Editor" />
-
-- **Back to overview link**: Returns to the existing Apollon diagram lists
-- **Download button**: Download the diagram as image. The "Crop Image to Selection" checkbox allows to include only the currently selected elements in the image
-- **Title** (required): Allows to edit the tile of the diagram
-- **Modeling field**: The items for modeling the diagram will be displayed here
-- **Elements to Drag and Drop** into the modeling field
-- **Close**: Returns to the quiz view without saving and creating a question
-- **Save Diagram button**: Saves the Apollon diagram and stays in the edit view
-- **Generate a quiz exercise button**: Generates a quiz drag-and-drop question and returns to the quiz edit view
 
 #### Add Short-Answer Question
 
@@ -183,10 +165,8 @@ This kind of question is composed of a statement and spots to fill them out by t
   - Proportional without Penalty
 - **Match Letter Case**
 - **Match Answers Exactly**: This option moves the match slider to 100%
-- **Delete icon**: To delete the current question
 - **Add Spot Option**: To add the spot between the text to be filled out
 - **Add Answer Option**: To provide the answer for each spot
-- **Text editor**: The quiz statement can be developed with the spots and options
 - **Text View**: Enables the text editor to write and edit the question statement
 - **Visual View**: Enables the student view
 
@@ -196,18 +176,6 @@ This option allows to import existing questions from other quiz exercises, cours
 
 <Image src={existingQuestion} alt="Existing Question" size={ImageSize.large} caption="Import Existing Questions" />
 
-- **Source buttons**:
-  - From a course
-  - From an exam
-  - From a file
-- **List picker** to select a specific course, exam or file
-- **Searching bar**: to look for the question providing its name or part of it
-- **Filter options** according to the type of questions:
-  - Drag and Drop Question
-  - Multiple Choice Question
-  - Short Answer Question
-- **Apply filter button**
-- **List of questions** with the title, short title, and Type. In the Add column, it is possible to select all questions to be imported
 - At the end of the list, click the <img src={addSelectedQuestionsButton} alt="Add Selected Questions" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button to import all selected questions
 
 ### Footer
@@ -218,8 +186,6 @@ On the creation quiz page there is a footer with the following fields:
 
 - Error messages
 - Warning messages
-- Cancel button
-- Save button
 
 ### Import a Quiz
 
@@ -229,8 +195,6 @@ The list of existing quizzes will appear.
 
 <Image src={importListQuizzes} alt="Import List Quizzes" size={ImageSize.medium} caption="Quiz Import List" />
 
-- The **searching bar**: Allows to look for a specific quiz by typing its name or part of it
-- The **list of quizzes**: With their ID, title, course and indicator if they are exam questions
 - Clicking the <img src={importButton} alt="Import" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button opens the quiz editor with the existing questions. Here it is possible to edit all parameters such as in the create new quiz exercise section
 
 ### Export a Quiz
@@ -239,8 +203,7 @@ In the quiz exercises section, click on the <img src={exportQuizButton} alt="Exp
 
 <Image src={exportQuizzesList} alt="Export Quizzes List" size={ImageSize.medium} caption="Quiz Export List" />
 
-- Select the quizzes for being exported in the Export column
-- The <img src={exportButton} alt="Export" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button will download the quiz in a JSON file
+The <img src={exportButton} alt="Export" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button will download the quiz in a JSON file
 
 <Callout variant={CalloutVariant.info}>
   <p><strong>Note:</strong> Artemis uses an npm package called <a href="https://www.npmjs.com/package/@ls1intum/apollon">Apollon</a> as its modeling editor. It has a standalone version which can be accessed via <a href="https://apollon.ase.in.tum.de/">https://apollon.ase.in.tum.de/</a>. The standalone version is free to use without the necessity of creating an account and offers additional features, including sharing and exporting diagrams. For more information, visit <a href="https://github.com/ls1intum/Apollon_standalone">Apollon Standalone</a>.</p>
