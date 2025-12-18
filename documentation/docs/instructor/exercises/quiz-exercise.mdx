@@ -28,10 +28,11 @@ import createDragAndDropQuizButton from './assets/quiz/create-drag-and-drop-quiz
 
 ## Overview
 
-Instructors and editors can create, import, and export quiz exercises. Quiz exercises support three types of questions:
+Instructors and editors can create, import, and export quiz exercises. Quiz exercises support four types of questions:
 
 - **Multiple-Choice Questions**: Questions with multiple answer options where one or more can be correct
 - **Drag-and-Drop Questions**: Questions where students drag items onto a background image
+- **Apollon Drag-and-Drop Questions**: Questions where students drag items onto a UML diagram created with the [Apollon editor](https://github.com/ls1intum/Apollon) inside Artemis
 - **Short-Answer Questions**: Questions where students fill in text answers
 
 ## Setup
@@ -49,28 +50,22 @@ In the quiz exercises section, click on the <img src={createQuizButton} alt="Cre
 
 <Image src={createAQuizForm} alt="Create a Quiz Form" size={ImageSize.large} caption="Quiz Creation Form" />
 
-The form includes the following fields:
+#### Batch Mode
+Controls how students can participate in the quiz
+- **Synchronized**: There is exactly one opportunity for all students to participate in the quiz
+- **Batched**: There are multiple opportunities for students to participate in the quiz by using a password
+- **Individual**: Students can participate in the quiz by themselves at any time while it is released
 
-- **Title**: Provide a title for the quiz exercise (mandatory)
-- **Categories**: Type the category for the quiz exercise
-- **Difficulty**: Select the difficulty level among Easy, Medium and Hard, or select No Level
-- **Duration**: Provide the time in minutes and seconds for students to solve the quiz exercise
-- **Options**: Choose between presenting the questions in random order or not
-- **Batch Mode**: Controls how students can participate in the quiz
-  - **Synchronized**: There is exactly one opportunity for all students to participate in the quiz
-  - **Batched**: There are multiple opportunities for students to participate in the quiz by using a password
-  - **Individual**: Students can participate in the quiz by themselves at any time while it is released
-- **Visible from**: The date and hour when the quiz becomes visible to students
-- **Schedule Quiz Start**: To establish the date and hour at which the quiz will be available for solving
-  - **Start of working time**: Set the time for the students to see the questions and start answering them. Students can start working on the quiz from this time until the duration ends
-- **Should this exercise be included in the course score calculation?**:
-  - **Yes**: the points will be included in the course score calculation
-  - **No**: the points will not be included in the course score calculation
-  - **Bonus**: the points will be considered as bonus points
+#### Schedule Quiz Start
+Establish the date and hour at which the quiz will be available for solving
 
-<Callout variant={CalloutVariant.danger}>
-  <p>Fields marked with red are mandatory to be filled.</p>
-</Callout>
+**Start of working time**: Set the time for the students to see the questions and start answering them. Students can start working on the quiz from this time until the duration ends
+
+#### Course Score Calculation
+Should this exercise be included in the course score calculation?
+- **Yes**: the points will be included in the course score calculation
+- **No**: the points will not be included in the course score calculation
+- **Bonus**: the points will be considered as bonus points
 
 ### Question Types
 
