@@ -244,7 +244,8 @@
                 "reviewChangesDescription": "Green lines will be added, red lines will be removed.",
                 "acceptChanges": "Accept Changes",
                 "rejectChanges": "Reject Changes",
-                "changesApplied": "Changes have been applied to the problem statement."
+                "changesApplied": "Changes have been applied to the problem statement.",
+                "aiRefining": "AI is refining the problem statement..."
             },
             "inlineComment": {
                 "placeholder": "Describe what should change in these lines...",
@@ -259,7 +260,9 @@
                 "applyAllSuccess": "All comments applied successfully.",
                 "applyAllError": "Failed to apply some comments.",
                 "line": "Line {{ line }}",
-                "lines": "Lines {{ start }}-{{ end }}"
+                "lines": "Lines {{ start }}-{{ end }}",
+                "expand": "Expand comment",
+                "collapse": "Collapse comment"
             },
             "status": {
                 "solutionFailsTest": "The Solution Repository does not fulfill one or more test cases. This could indicate an issue with the Solution Repository or the test cases.",

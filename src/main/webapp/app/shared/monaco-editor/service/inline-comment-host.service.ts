@@ -51,6 +51,7 @@ export class InlineCommentHostService {
         options?: {
             collapsed?: boolean;
             readOnly?: boolean;
+            globalApplying?: boolean;
         },
     ): string {
         const widgetId = `inline-comment-widget-${++this.widgetCounter}`;
@@ -65,6 +66,7 @@ export class InlineCommentHostService {
         componentRef.setInput('endLine', endLine);
         componentRef.setInput('collapsed', options?.collapsed ?? false);
         componentRef.setInput('readOnly', options?.readOnly ?? false);
+        componentRef.setInput('globalApplying', options?.globalApplying ?? false);
         if (existingComment) {
             componentRef.setInput('existingComment', existingComment);
         }
@@ -180,5 +182,16 @@ export class InlineCommentHostService {
      */
     getActiveWidgetCount(): number {
         return this.activeWidgets.size;
+    }
+
+    /**
+     * Updates the globalApplying state on all active widgets.
+     * This should be called when any AI operation starts or stops.
+     * @param isApplying Whether any AI operation is currently in progress.
+     */
+    updateGlobalApplyingState(isApplying: boolean): void {
+        for (const widgetInfo of this.activeWidgets.values()) {
+            widgetInfo.componentRef.setInput('globalApplying', isApplying);
+        }
     }
 }

@@ -18,6 +18,7 @@
                             class="h-100"
                             [shrinkToFit]="false"
                             [stickyScroll]="false"
+                            [readOnly]="readOnly()"
                             (textChanged)="onTextChanged($event)"
                             (contentHeightChanged)="onContentHeightChanged($event)"
                             (drop)="onFileDrop($event)"

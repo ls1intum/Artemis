@@ -39,6 +39,9 @@ export class InlineCommentWidgetComponent {
     /** Whether the widget should start collapsed (for saved comments) */
     collapsed = input<boolean>(false);
 
+    /** Whether any apply operation is in progress globally (disables new applies) */
+    globalApplying = input<boolean>(false);
+
     /** Emits when user saves the comment for later */
     onSave = output<InlineComment>();
 
@@ -77,8 +80,8 @@ export class InlineCommentWidgetComponent {
     /** Tracks the comment created on first Save/Apply (for retry scenarios) */
     private _createdComment = signal<InlineComment | undefined>(undefined);
 
-    /** Combined applying state from input or internal */
-    protected isApplyingCombined = computed(() => this.isApplying() || this._isApplyingInternal());
+    /** Combined applying state from input or internal or global */
+    protected isApplyingCombined = computed(() => this.isApplying() || this._isApplyingInternal() || this.globalApplying());
 
     /** Flag to track if instruction has been initialized (to avoid overwriting user edits) */
     private instructionInitialized = false;

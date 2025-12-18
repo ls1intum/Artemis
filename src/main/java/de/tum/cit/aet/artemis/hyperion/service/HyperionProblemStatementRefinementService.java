@@ -139,6 +139,11 @@ public class HyperionProblemStatementRefinementService {
             String prompt = templateService.render("/prompts/hyperion/refine_problem_statement_targeted.st", templateVariables);
             String refinedProblemStatementText = chatClient.prompt().user(prompt).call().content();
 
+            if (refinedProblemStatementText == null) {
+                log.warn("Refined problem statement is null for course [{}]", course.getId());
+                throw new InternalServerErrorAlertException("AI returned null when refining the problem statement", "ProblemStatement", "problemStatementRefinementNull");
+            }
+
             return validateAndReturnResponse(course, originalProblemStatementText, refinedProblemStatementText);
         }
         catch (Exception e) {

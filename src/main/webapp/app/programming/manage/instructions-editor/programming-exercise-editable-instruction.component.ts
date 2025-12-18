@@ -91,6 +91,13 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
                 this.renderPendingCommentsAsWidgets();
             }
         });
+
+        // Effect to propagate isAnyApplying changes to all active widgets
+        effect(() => {
+            const applying = this.isAnyApplying();
+            // Update all active widgets with the new applying state
+            this.inlineCommentHostService.updateGlobalApplyingState(applying);
+        });
     }
 
     taskRegex = TaskAction.GLOBAL_TASK_REGEX;
@@ -135,6 +142,10 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     readonly consistencyIssues = input<ConsistencyIssue[]>([]);
     /** Pending inline comments to display in the editor */
     readonly pendingComments = input<InlineComment[]>([]);
+    /** Whether any apply operation is in progress globally */
+    readonly isAnyApplying = input<boolean>(false);
+    /** Whether any refinement is in progress (makes editor read-only) */
+    readonly isRefining = input<boolean>(false);
 
     @Input()
     get exercise() {
@@ -273,26 +284,33 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         }
 
         // Open the inline comment widget
-        this.inlineCommentHostService.openWidget(this.markdownEditorMonaco, startLine, endLine, existingComment, {
-            onSave: (comment: InlineComment) => {
-                this.onCreateInlineComment.emit({ startLine: comment.startLine, endLine: comment.endLine });
-                // Also emit the full comment for the parent to handle
-                this.onInlineCommentSave.emit(comment);
+        this.inlineCommentHostService.openWidget(
+            this.markdownEditorMonaco,
+            startLine,
+            endLine,
+            existingComment,
+            {
+                onSave: (comment: InlineComment) => {
+                    this.onCreateInlineComment.emit({ startLine: comment.startLine, endLine: comment.endLine });
+                    // Also emit the full comment for the parent to handle
+                    this.onInlineCommentSave.emit(comment);
+                },
+                onApply: (comment: InlineComment) => {
+                    this.onInlineCommentApply.emit(comment);
+                },
+                onCancel: () => {
+                    // Clear selection
+                    this.currentSelection = null;
+                },
+                onCancelApply: () => {
+                    this.onInlineCommentCancelApply.emit();
+                },
+                onDelete: (commentId: string) => {
+                    this.onInlineCommentDelete.emit(commentId);
+                },
             },
-            onApply: (comment: InlineComment) => {
-                this.onInlineCommentApply.emit(comment);
-            },
-            onCancel: () => {
-                // Clear selection
-                this.currentSelection = null;
-            },
-            onCancelApply: () => {
-                this.onInlineCommentCancelApply.emit();
-            },
-            onDelete: (commentId: string) => {
-                this.onInlineCommentDelete.emit(commentId);
-            },
-        });
+            { globalApplying: this.isAnyApplying() },
+        );
 
         // Clear selection after opening widget
         this.currentSelection = null;
@@ -375,7 +393,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
                         this.onInlineCommentDelete.emit(commentId);
                     },
                 },
-                { collapsed: true },
+                { collapsed: true, globalApplying: this.isAnyApplying() },
             );
 
             // Track the widget ID for this comment

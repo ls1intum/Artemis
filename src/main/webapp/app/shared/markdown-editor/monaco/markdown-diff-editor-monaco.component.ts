@@ -85,6 +85,8 @@ export class MarkdownDiffEditorMonacoComponent implements AfterViewInit, OnDestr
     initialEditorHeight = input<number>(300);
     resizableMinHeight = input<number>(200);
     resizableMaxHeight = input<number>(800);
+    /** Whether the modified (right) editor should be read-only */
+    readOnly = input<boolean>(false);
 
     // Host bindings for fill-height mode
     @HostBinding('style.display') get hostDisplay() {
@@ -179,6 +181,11 @@ export class MarkdownDiffEditorMonacoComponent implements AfterViewInit, OnDestr
                     alwaysConsumeMouseWheel: false,
                 },
             });
+            // Apply readOnly to the modified (right) editor
+            const modifiedEditor = this._editor.getModifiedEditor();
+            if (modifiedEditor) {
+                modifiedEditor.updateOptions({ readOnly: this.readOnly() });
+            }
         });
     }
 

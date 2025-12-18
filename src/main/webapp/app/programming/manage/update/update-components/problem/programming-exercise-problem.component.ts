@@ -71,7 +71,7 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy, A
     programmingExerciseChange = output<ProgrammingExercise>();
     // Problem statement generation properties
     userPrompt = '';
-    isGenerating = false;
+    isGenerating = signal(false);
     private currentGenerationSubscription: Subscription | undefined = undefined;
     private profileService = inject(ProfileService);
     hyperionEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
@@ -116,7 +116,7 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy, A
         const exercise = this.programmingExercise();
         return exercise?.id;
     }
-    isRefining = false;
+    isRefining = signal(false);
 
     // Diff mode properties
     showDiff = false;
@@ -140,8 +140,8 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy, A
     protected pendingCount = this.inlineCommentService.pendingCount;
     protected applyingCommentId = signal<string | undefined>(undefined);
     protected isApplyingAll = signal(false);
-    /** True if any refinement operation is in progress (single comment or all) */
-    protected isAnyApplying = computed(() => this.isApplyingAll() || this.applyingCommentId() !== undefined);
+    /** True if any AI operation is in progress (single comment, all comments, refinement, or generation) */
+    protected isAnyApplying = computed(() => this.isApplyingAll() || this.applyingCommentId() !== undefined || this.isRefining() || this.isGenerating());
 
     /**
      * Lifecycle hook called after every check of the component's view.
@@ -194,8 +194,8 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy, A
         }
 
         // Reset global generation/refinement flags
-        this.isGenerating = false;
-        this.isRefining = false;
+        this.isGenerating.set(false);
+        this.isRefining.set(false);
 
         // Reset inline comment application states
         const wasApplyingSingle = this.applyingCommentId() !== undefined;
@@ -263,7 +263,7 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy, A
             return;
         }
 
-        this.isGenerating = true;
+        this.isGenerating.set(true);
 
         const request: ProblemStatementGenerationRequest = {
             userPrompt: this.userPrompt.trim(),
@@ -273,7 +273,7 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy, A
             .generateProblemStatement(courseId, request)
             .pipe(
                 finalize(() => {
-                    this.isGenerating = false;
+                    this.isGenerating.set(false);
                     this.currentGenerationSubscription = undefined;
                 }),
             )
@@ -313,7 +313,7 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy, A
             return;
         }
 
-        this.isRefining = true;
+        this.isRefining.set(true);
 
         const request: ProblemStatementRefinementRequest = {
             problemStatementText: exercise.problemStatement,
@@ -324,7 +324,7 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy, A
             .refineProblemStatement(courseId, request)
             .pipe(
                 finalize(() => {
-                    this.isRefining = false;
+                    this.isRefining.set(false);
                     this.currentGenerationSubscription = undefined;
                 }),
             )

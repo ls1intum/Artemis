@@ -1,4 +1,11 @@
 <div class="editable-instruction-container">
+    <!-- AI Refinement in progress banner -->
+    @if (isRefining()) {
+        <div class="alert alert-info d-flex align-items-center mb-2 py-2">
+            <fa-icon [icon]="faCircleNotch" animation="spin" class="me-2" />
+            <span jhiTranslate="artemisApp.programmingExercise.problemStatement.aiRefining"></span>
+        </div>
+    }
     <!-- The position of the markdown-editor in the html should not be changed, as it is used for resizing!-->
     @if (exercise) {
         <jhi-markdown-editor-monaco
@@ -13,6 +20,7 @@
             [showPreviewButton]="false"
             [showVisualButton]="false"
             [showEditButton]="false"
+            [readOnly]="isRefining()"
             [consistencyIssues]="consistencyIssues()"
             (markdownChange)="updateProblemStatement($event)"
             (onSelectionChange)="onEditorSelectionChange($event)"

@@ -3,7 +3,15 @@
     <div class="widget-header" (click)="isCollapsed() ? toggleCollapse() : null" [class.clickable]="isCollapsed()">
         <div class="header-left">
             @if (hasComment()) {
-                <fa-icon [icon]="isCollapsed() ? faChevronRight : faChevronDown" class="collapse-icon me-2" (click)="toggleCollapse(); $event.stopPropagation()" />
+                <fa-icon
+                    [icon]="isCollapsed() ? faChevronRight : faChevronDown"
+                    class="collapse-icon me-2"
+                    (click)="toggleCollapse(); $event.stopPropagation()"
+                    [attr.aria-label]="
+                        (isCollapsed() ? 'artemisApp.programmingExercise.inlineComment.expand' : 'artemisApp.programmingExercise.inlineComment.collapse') | artemisTranslate
+                    "
+                    role="button"
+                />
             }
             <span class="line-label">{{ lineLabel() }}</span>
             @if (isCollapsed() && instruction()) {

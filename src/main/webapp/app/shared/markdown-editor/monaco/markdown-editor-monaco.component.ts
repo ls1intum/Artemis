@@ -261,6 +261,8 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     readonly fallbackConversationId = input<number>();
 
     showCloseButton = input<boolean>(false);
+    /** Whether the editor is read-only */
+    readOnly = input<boolean>(false);
     closeEditor = output<void>();
 
     @Output()

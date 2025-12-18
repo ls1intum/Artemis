@@ -198,6 +198,7 @@
                         [metaActions]="metaActions"
                         [enableResize]="false"
                         [fillHeight]="true"
+                        [readOnly]="isAnyApplying()"
                     >
                     </jhi-markdown-diff-editor-monaco>
                 } @else if (exercise.templateParticipation) {
@@ -228,6 +229,8 @@
                         [enableResize]="false"
                         [consistencyIssues]="consistencyIssues()"
                         [pendingComments]="pendingComments()"
+                        [isAnyApplying]="isAnyApplying()"
+                        [isRefining]="isAnyApplying()"
                         class="flex-grow-1 overflow-auto"
                         (instructionChange)="onInstructionChanged($event)"
                         (onInlineCommentSave)="onSaveInlineComment($event)"

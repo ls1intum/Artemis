@@ -11,14 +11,14 @@
                 [(ngModel)]="userPrompt"
                 class="form-control"
                 rows="4"
-                [placeholder]="isGenerating || isRefining ? userPrompt : getTranslatedPlaceholder()"
-                [disabled]="isGenerating || isRefining"
+                [placeholder]="isGenerating() || isRefining() ? userPrompt : getTranslatedPlaceholder()"
+                [disabled]="isGenerating() || isRefining()"
             >
             </textarea>
         </div>
         <div class="d-flex justify-content-start gap-2">
-            <button class="btn btn-outline-primary" type="button" [disabled]="!userPrompt?.trim() || isGenerating || isRefining" (click)="handleProblemStatementAction()">
-                @if (isGenerating || isRefining) {
+            <button class="btn btn-outline-primary" type="button" [disabled]="!userPrompt?.trim() || isGenerating() || isRefining()" (click)="handleProblemStatementAction()">
+                @if (isGenerating() || isRefining()) {
                     <fa-icon [icon]="faSpinner" animation="spin" />
                 } @else {
                     <fa-icon [icon]="facArtemisIntelligence" />
@@ -90,10 +90,10 @@
                     ></span>
                 </ngb-alert>
             }
-            @if (programmingExerciseCreationConfig.isImportFromExistingExercise) {
+            @if (programmingExerciseCreationConfig.isImportFromExistingExercise && programmingExercise()) {
                 <jhi-programming-exercise-instructions
                     [exercise]="programmingExercise()!"
-                    [participation]="programmingExercise()!.templateParticipation!"
+                    [participation]="programmingExercise()?.templateParticipation"
                     [personalParticipation]="false"
                 />
             }
@@ -110,9 +110,10 @@
                         [allowSplitView]="false"
                         [domainActions]="domainActions"
                         [metaActions]="metaActions"
+                        [readOnly]="isAnyApplying()"
                     >
                     </jhi-markdown-diff-editor-monaco>
-                } @else {
+                } @else if (programmingExercise()?.templateParticipation) {
                     <!-- Regular Editable Instructions -->
                     <jhi-programming-exercise-editable-instructions
                         [participation]="programmingExercise()!.templateParticipation!"
@@ -121,6 +122,8 @@
                         [showStatus]="!!programmingExercise()?.id"
                         [editMode]="!!programmingExercise()?.id"
                         [pendingComments]="pendingComments()"
+                        [isAnyApplying]="isAnyApplying()"
+                        [isRefining]="isAnyApplying() || isRefining() || isGenerating()"
                         (hasUnsavedChanges)="programmingExerciseCreationConfig.hasUnsavedChanges = $event"
                         (instructionChange)="onProblemStatementChange($event)"
                         (exerciseChange)="programmingExerciseChange.emit($event)"

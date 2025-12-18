@@ -29,7 +29,7 @@
         min-height: 0;
         border: 1px solid var(--border-color);
         background-color: var(--md-editor-background);
-        overflow: hidden;
+        overflow: visible;
     }
 
     .markdown-diff-editor-toolbar {
