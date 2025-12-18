@@ -35,6 +35,7 @@ const sidebars: SidebarsConfig = {
         'courses',
         'exports',
         'grading',
+        'integrated-code-lifecycle',
     ],
 };
 
