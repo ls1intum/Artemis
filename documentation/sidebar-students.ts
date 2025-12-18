@@ -4,27 +4,23 @@ const sidebars: SidebarsConfig = {
     default: [
         'intro',
         'general',
-        {
-            type: 'category',
-            label: 'Exercises',
-            link: {
-                type: 'doc',
-                id: 'exercises/intro'
-            },
-            items: [
-                'exercises/quiz-exercise',
-                'exercises/modeling-exercise',
-            ]
-        },
+        'courses',
         'assessment',
-        'exams',
         'quiz-training',
+        'exams',
         'calendar',
-        'faq',
-        'tutorial-groups',
-        'plagiarism-check',
-        'notifications',
         'user-experience',
+        'notifications',
+        'faq',
+        'grading',
+        'integrated-code-lifecycle',
+        'tutorial-groups',
+        'learning-analytics',
+        'adaptive-learning',
+        'mobile-applications',
+        'plagiarism-check',
+        'markdown-support',
+        'exports',
     ],
 };
 
