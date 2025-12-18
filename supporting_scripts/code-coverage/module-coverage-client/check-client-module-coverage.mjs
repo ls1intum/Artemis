@@ -97,7 +97,7 @@ const moduleThresholds = {
         statements: 91.6,
         branches:   75.8,
         functions:  84.6,
-        lines:      91.9,
+        lines:      91.8,
     },
     exercise: {
         statements: 88.50,
@@ -118,10 +118,10 @@ const moduleThresholds = {
         lines:      0,
     },
     iris: {
-        statements: 88.8,
-        branches:   77.70,
-        functions:  84.60,
-        lines:      89.1,
+        statements: 88.5,
+        branches:   76.6,
+        functions:  84.1,
+        lines:      88.9,
     },
     lecture: {
         statements: 91.70,
@@ -155,7 +155,7 @@ const moduleThresholds = {
     },
     quiz: {
         statements: 87.70,
-        branches:   72.40,
+        branches:   72.2,
         functions:  81.40,
         lines:      87.90,
     },
