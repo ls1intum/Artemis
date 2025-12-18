@@ -31,7 +31,15 @@ const sidebars: SidebarsConfig = {
         },
         'faq',
         'tutorial-groups',
-        'plagiarism-check'
+        'plagiarism-check',
+        'courses',
+        'exports',
+        'grading',
+        'integrated-code-lifecycle',
+        'learning-analytics',
+        'adaptive-learning',
+        'sharing',
+        'lti-configuration',
     ],
 };
 
