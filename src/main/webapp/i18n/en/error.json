@@ -186,11 +186,10 @@
         "ModelingExercise": {
             "isNull": "No modeling exercise was provided.",
             "idMissing": "The modeling exercise must be saved before it can be converted.",
-            "modelingExerciseTitleInvalid": "The title is not set or is too short.",
-            "titleInvalid": "The title is invalid.",
-            "modelingExerciseShortNameInvalid": "The short name is not set or is too short.",
-            "shortnameInvalid": "The shortname is invalid.",
-            "courseIdMissing": "The courseId is required."
+            "titleLengthInvalid": "The title is not set or is too short.",
+            "titlePatternInvalid": "The title is invalid.",
+            "courseIdMissing": "The courseId is required.",
+            "forbidChangeCourseId": "Exercise course id does not match the stored course id"
         }
     }
 }

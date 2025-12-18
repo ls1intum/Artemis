@@ -1,8 +1,8 @@
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { type UMLDiagramType, UMLDiagramType as UMLDiagramTypes } from '@ls1intum/apollon';
-import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 
 export class ModelingExercise extends Exercise {
     public diagramType?: UMLDiagramType;

@@ -186,11 +186,10 @@
         "ModelingExercise": {
             "isNull": "Es wurde keine Modellierungsaufgabe übermittelt.",
             "idMissing": "Die Modellierungsaufgabe muss gespeichert werden, bevor sie umgewandelt werden kann.",
-            "modelingExerciseTitleInvalid": "Der Titel ist nicht festgelegt oder zu kurz.",
-            "titleInvalid": "Der Titel ist ungültig.",
-            "modelingExerciseShortNameInvalid": "Der Kurzname ist nicht festgelegt oder zu kurz.",
-            "shortnameInvalid": "Der Kurzname ist ungültig.",
-            "courseIdMissing": "Die Kurs ID ist erforderlich."
+            "titleLengthInvalid": "Der Titel ist nicht festgelegt oder zu kurz.",
+            "titlePatternInvalid": "Der Titel ist ungültig.",
+            "courseIdMissing": "Die Kurs ID ist erforderlich.",
+            "forbidChangeCourseId": "Die Übungskurs-ID stimmt nicht mit der gespeicherten Kurs-ID überein"
         }
     }
 }

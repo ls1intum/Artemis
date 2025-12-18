@@ -1,16 +1,22 @@
 package de.tum.cit.aet.artemis.modeling.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.TITLE_NAME_PATTERN;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.stream.Collectors;
 
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -32,7 +38,10 @@ import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.atlas.api.AtlasMLApi;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
+import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO;
+import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
@@ -111,6 +120,8 @@ public class ModelingExerciseResource {
 
     private final GradingCriterionRepository gradingCriterionRepository;
 
+    private final CompetencyRepository competencyRepository;
+
     private final ChannelService channelService;
 
     private final ChannelRepository channelRepository;
@@ -127,7 +138,7 @@ public class ModelingExerciseResource {
             AuthorizationCheckService authCheckService, CourseRepository courseRepository, ParticipationRepository participationRepository,
             ModelingExerciseService modelingExerciseService, ExerciseDeletionService exerciseDeletionService, ModelingExerciseImportService modelingExerciseImportService,
             SubmissionExportService modelingSubmissionExportService, ExerciseService exerciseService, GroupNotificationScheduleService groupNotificationScheduleService,
-            GradingCriterionRepository gradingCriterionRepository, ChannelService channelService, ChannelRepository channelRepository,
+            GradingCriterionRepository gradingCriterionRepository, CompetencyRepository competencyRepository, ChannelService channelService, ChannelRepository channelRepository,
             ExerciseVersionService exerciseVersionService, Optional<CompetencyProgressApi> competencyProgressApi, Optional<SlideApi> slideApi, Optional<AtlasMLApi> atlasMLApi) {
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.courseService = courseService;
@@ -142,6 +153,7 @@ public class ModelingExerciseResource {
         this.groupNotificationScheduleService = groupNotificationScheduleService;
         this.exerciseService = exerciseService;
         this.gradingCriterionRepository = gradingCriterionRepository;
+        this.competencyRepository = competencyRepository;
         this.channelService = channelService;
         this.channelRepository = channelRepository;
         this.exerciseVersionService = exerciseVersionService;
@@ -248,7 +260,7 @@ public class ModelingExerciseResource {
             throw new BadRequestAlertException("The courseId is required.", ENTITY_NAME, "courseIdMissing");
         }
         if (!Objects.equals(originalExercise.getCourseViaExerciseGroupOrCourseMember().getId(), updateModelingExerciseDTO.courseId())) {
-            throw new ConflictException("Exercise course id does not match the stored course id", ENTITY_NAME, "cannotChangeCourseId");
+            throw new ConflictException("Exercise course id does not match the stored course id", ENTITY_NAME, "forbidChangeCourseId");
         }
 
         ZonedDateTime oldDueDate = originalExercise.getDueDate();
@@ -259,7 +271,7 @@ public class ModelingExerciseResource {
         String oldProblemStatement = originalExercise.getProblemStatement();
 
         // whether is exam exercise or course exercise are not changeable
-        ModelingExercise updatedExercise = modelingExerciseService.updateModelingExercise(updateModelingExerciseDTO, originalExercise);
+        ModelingExercise updatedExercise = update(updateModelingExerciseDTO, originalExercise);
         // Valid exercises have set either a course or an exerciseGroup
         updatedExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
         // Forbid conversion between normal course exercise and exam exercise
@@ -464,12 +476,250 @@ public class ModelingExerciseResource {
 
         var user = userRepository.getUserWithGroupsAndAuthorities();
         // make sure the course actually exists
-        ModelingExercise exerciseForReevaluation = modelingExerciseService.updateModelingExercise(updateModelingExerciseDTO, existingExercise);
+        ModelingExercise exerciseForReevaluation = update(updateModelingExerciseDTO, existingExercise);
         var course = courseRepository.findByIdElseThrow(exerciseForReevaluation.getCourseViaExerciseGroupOrCourseMember().getId());
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
 
         exerciseService.reEvaluateExercise(exerciseForReevaluation, deleteFeedbackAfterGradingInstructionUpdate);
 
         return updateModelingExercise(updateModelingExerciseDTO, null);
+    }
+
+    /**
+     * Validate the modeling exercise title.
+     * 1. Check presence and length of exercise title
+     * 2. Find forbidden patterns in exercise title
+     *
+     * @param modelingExercise Modeling exercise to be validated
+     */
+    public void validateTitle(ModelingExercise modelingExercise) {
+        // Check if exercise title is set
+        if (modelingExercise.getTitle() == null || modelingExercise.getTitle().isBlank() || modelingExercise.getTitle().length() < 3) {
+            throw new BadRequestAlertException("The title is not set or is too short.", ENTITY_NAME, "titleLengthInvalid");
+        }
+        // Check if the exercise title matches regex
+        Matcher titleMatcher = TITLE_NAME_PATTERN.matcher(modelingExercise.getTitle());
+        if (!titleMatcher.matches()) {
+            throw new BadRequestAlertException("The title is invalid.", ENTITY_NAME, "titlePatternInvalid");
+        }
+    }
+
+    /**
+     * Replaces the grading criteria of the given exercise according to PUT semantics.
+     * <p>
+     * If {@code dto.gradingCriteria()} is {@code null} or empty, all existing criteria are removed (if initialized).
+     * Otherwise, existing criteria are updated by id and new ones are created for DTOs without id.
+     *
+     * @param dto      the update DTO containing grading criteria
+     * @param exercise the exercise to mutate
+     */
+    private void updateGradingCriteria(UpdateModelingExerciseDTO dto, ModelingExercise exercise) {
+        if (dto.gradingCriteria() == null || dto.gradingCriteria().isEmpty()) {
+            clearInitializedCollection(exercise.getGradingCriteria());
+            return;
+        }
+
+        Set<GradingCriterion> managedCriteria = ensureGradingCriteriaSet(exercise);
+
+        Map<Long, GradingCriterion> existingById = managedCriteria.stream().filter(gc -> gc.getId() != null)
+                .collect(Collectors.toMap(GradingCriterion::getId, gc -> gc, (a, _) -> a));
+
+        Set<GradingCriterion> updated = dto.gradingCriteria().stream().map(gcDto -> {
+            GradingCriterion criterion = (gcDto.id() != null) ? existingById.get(gcDto.id()) : null;
+            if (criterion == null) {
+                criterion = gcDto.toEntity();
+                criterion.setExercise(exercise);
+            }
+            else {
+                gcDto.applyTo(criterion);
+            }
+            return criterion;
+        }).collect(Collectors.toSet());
+
+        managedCriteria.clear();
+        managedCriteria.addAll(updated);
+    }
+
+    /**
+     * Ensures that the exercise has a mutable set for grading criteria.
+     * Creates and assigns a new {@link HashSet} if the current set is {@code null}.
+     *
+     * @param exercise the exercise to mutate
+     * @return the non-null mutable set of grading criteria
+     */
+    private Set<GradingCriterion> ensureGradingCriteriaSet(ModelingExercise exercise) {
+        Set<GradingCriterion> managedCriteria = exercise.getGradingCriteria();
+        if (managedCriteria == null) {
+            managedCriteria = new HashSet<>();
+            exercise.setGradingCriteria(managedCriteria);
+        }
+        return managedCriteria;
+    }
+
+    /**
+     * Replaces the competency links of the given exercise according to PUT semantics.
+     * <p>
+     * If {@code dto.competencyLinks()} is {@code null} or empty, all existing links are removed (if initialized).
+     * Otherwise, weights are updated for existing links and missing links are created using managed competency references.
+     *
+     * <p>
+     * <b>Hibernate note:</b> Uses {@code competencyRepository.getReferenceById(...)} to avoid creating detached entities
+     * and to keep associations consistent with the persistence context.
+     *
+     * @param dto      the update DTO containing competency link updates
+     * @param exercise the exercise to mutate
+     * @throws BadRequestAlertException if a competency does not belong to the exercise's course
+     */
+    private void updateCompetencyLinks(UpdateModelingExerciseDTO dto, ModelingExercise exercise) {
+        if (dto.competencyLinks() == null || dto.competencyLinks().isEmpty()) {
+            clearInitializedCollection(exercise.getCompetencyLinks());
+            return;
+        }
+
+        Set<CompetencyExerciseLink> managedLinks = ensureCompetencyLinksSet(exercise);
+
+        Map<Long, CompetencyExerciseLink> existingByCompetencyId = managedLinks.stream().filter(link -> link.getCompetency() != null && link.getCompetency().getId() != null)
+                .collect(Collectors.toMap(link -> link.getCompetency().getId(), link -> link, (a, _) -> a));
+
+        Long exerciseCourseId = exercise.getCourseViaExerciseGroupOrCourseMember() != null ? exercise.getCourseViaExerciseGroupOrCourseMember().getId() : null;
+
+        Set<CompetencyExerciseLink> updated = new HashSet<>();
+        for (var linkDto : dto.competencyLinks()) {
+
+            if (exerciseCourseId != null && linkDto.courseId() != null && !Objects.equals(exerciseCourseId, linkDto.courseId())) {
+                throw new BadRequestAlertException("The competency does not belong to the exercise's course.", ENTITY_NAME, "wrongCourse");
+            }
+
+            var competencyDto = linkDto.courseCompetencyDTO();
+            Long competencyId = competencyDto.id();
+
+            CompetencyExerciseLink link = existingByCompetencyId.get(competencyId);
+            if (link == null) {
+                Competency competencyRef = competencyRepository.getReferenceById(competencyId);
+                validateCompetencyBelongsToExerciseCourse(exerciseCourseId, competencyRef);
+                link = new CompetencyExerciseLink(competencyRef, exercise, linkDto.weight());
+            }
+            else {
+                link.setWeight(linkDto.weight());
+            }
+
+            updated.add(link);
+        }
+
+        managedLinks.clear();
+        managedLinks.addAll(updated);
+    }
+
+    /**
+     * Ensures that the exercise has a mutable set for competency links.
+     * Creates and assigns a new {@link HashSet} if the current set is {@code null}.
+     *
+     * @param exercise the exercise to mutate
+     * @return the non-null mutable set of competency links
+     */
+    private Set<CompetencyExerciseLink> ensureCompetencyLinksSet(ModelingExercise exercise) {
+        Set<CompetencyExerciseLink> managedLinks = exercise.getCompetencyLinks();
+        if (managedLinks == null) {
+            managedLinks = new HashSet<>();
+            exercise.setCompetencyLinks(managedLinks);
+        }
+        return managedLinks;
+    }
+
+    /**
+     * Validates that the given competency belongs to the same course as the exercise.
+     * If the exercise has no course (e.g. inconsistent state), this check is skipped.
+     *
+     * @param exerciseCourseId the course id of the exercise (may be {@code null})
+     * @param competency       a managed competency entity or reference
+     * @throws BadRequestAlertException if the competency is associated with a different course
+     */
+    private void validateCompetencyBelongsToExerciseCourse(Long exerciseCourseId, Competency competency) {
+        if (exerciseCourseId == null) {
+            return;
+        }
+        var competencyCourse = competency.getCourse();
+        Long competencyCourseId = competencyCourse != null ? competencyCourse.getId() : null;
+
+        if (competencyCourseId != null && !Objects.equals(exerciseCourseId, competencyCourseId)) {
+            throw new BadRequestAlertException("The competency does not belong to the exercise's course.", ENTITY_NAME, "wrongCourse");
+        }
+    }
+
+    /**
+     * Clears the given collection if it is initialized.
+     * <p>
+     * This avoids triggering lazy initialization in callers that do not fetch the collection.
+     * In this service, callers typically load the exercise with the required associations eagerly.
+     *
+     * @param set the set to clear
+     * @param <T> element type
+     */
+    private static <T> void clearInitializedCollection(Set<T> set) {
+        if (set != null && Hibernate.isInitialized(set)) {
+            set.clear();
+        }
+    }
+
+    /**
+     * Applies new updateModelingExerciseDTO's data to the given exercise, mutating it in place.
+     * <p>
+     * This method follows PUT semantics:
+     * <ul>
+     * <li>All fields in the DTO represent the new state.</li>
+     * <li>Required attributes (e.g. title) are validated here and must not be {@code null} or blank.</li>
+     * <li>Nullable attributes are explicitly overwritten, i.e. {@code null} means "clear existing value".</li>
+     * <li>Collections (grading criteria, competency links) are fully replaced; {@code null} or empty means "remove all".</li>
+     * </ul>
+     *
+     * @param updateModelingExerciseDTO the DTO containing the updated state for the exercise
+     * @param exercise                  the exercise to update (will be mutated)
+     * @return the same {@link ModelingExercise} instance after applying the updates
+     * @throws BadRequestAlertException if required fields are missing/invalid or a competency from the DTO
+     *                                      does not belong to the exercise's course or otherwise violates domain constraints
+     */
+    public ModelingExercise update(UpdateModelingExerciseDTO updateModelingExerciseDTO, ModelingExercise exercise) {
+        if (updateModelingExerciseDTO == null) {
+            throw new BadRequestAlertException("No modeling exercise was provided.", ENTITY_NAME, "isNull");
+        }
+
+        exercise.setTitle(updateModelingExerciseDTO.title());
+        validateTitle(exercise);
+        exercise.setShortName(updateModelingExerciseDTO.shortName());
+        // problemStatement: null → empty string
+        String newProblemStatement = updateModelingExerciseDTO.problemStatement() == null ? "" : updateModelingExerciseDTO.problemStatement();
+        exercise.setProblemStatement(newProblemStatement);
+
+        exercise.setChannelName(updateModelingExerciseDTO.channelName());
+        exercise.setCategories(updateModelingExerciseDTO.categories());
+        exercise.setDifficulty(updateModelingExerciseDTO.difficulty());
+
+        exercise.setMaxPoints(updateModelingExerciseDTO.maxPoints());
+        exercise.setBonusPoints(updateModelingExerciseDTO.bonusPoints());
+        exercise.setIncludedInOverallScore(updateModelingExerciseDTO.includedInOverallScore());
+
+        exercise.setReleaseDate(updateModelingExerciseDTO.releaseDate());
+        exercise.setStartDate(updateModelingExerciseDTO.startDate());
+        exercise.setDueDate(updateModelingExerciseDTO.dueDate());
+        exercise.setAssessmentDueDate(updateModelingExerciseDTO.assessmentDueDate());
+        exercise.setExampleSolutionPublicationDate(updateModelingExerciseDTO.exampleSolutionPublicationDate());
+
+        // validates general settings: points, dates
+        exercise.validateGeneralSettings();
+
+        exercise.setAllowComplaintsForAutomaticAssessments(updateModelingExerciseDTO.allowComplaintsForAutomaticAssessments());
+        exercise.setAllowFeedbackRequests(updateModelingExerciseDTO.allowFeedbackRequests());
+        exercise.setPresentationScoreEnabled(updateModelingExerciseDTO.presentationScoreEnabled());
+        exercise.setSecondCorrectionEnabled(updateModelingExerciseDTO.secondCorrectionEnabled());
+        exercise.setFeedbackSuggestionModule(updateModelingExerciseDTO.feedbackSuggestionModule());
+        exercise.setGradingInstructions(updateModelingExerciseDTO.gradingInstructions());
+
+        exercise.setExampleSolutionModel(updateModelingExerciseDTO.exampleSolutionModel());
+        exercise.setExampleSolutionExplanation(updateModelingExerciseDTO.exampleSolutionExplanation());
+
+        updateGradingCriteria(updateModelingExerciseDTO, exercise);
+        updateCompetencyLinks(updateModelingExerciseDTO, exercise);
+
+        return exercise;
     }
 }
