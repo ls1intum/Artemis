@@ -15,6 +15,7 @@ const sidebars: SidebarsConfig = {
         'user-experience',
         'courses',
         'exports',
+        'grading',
     ],
 };
 

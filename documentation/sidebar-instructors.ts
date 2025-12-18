@@ -34,6 +34,7 @@ const sidebars: SidebarsConfig = {
         'plagiarism-check',
         'courses',
         'exports',
+        'grading',
     ],
 };
 
