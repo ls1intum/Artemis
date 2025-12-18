@@ -91,7 +91,7 @@ describe('Course Management Exercises Component', () => {
     it('should open search bar on toggle search', () => {
         fixture.detectChanges();
         comp.toggleSearch();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         const searchBar = fixture.debugElement.nativeElement.querySelector('jhi-course-management-exercises-search');
 
         expect(comp.showSearch).toBeTrue();

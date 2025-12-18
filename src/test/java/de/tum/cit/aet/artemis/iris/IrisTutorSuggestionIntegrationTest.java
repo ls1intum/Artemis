@@ -85,7 +85,7 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
     private IrisMessageService irisMessageService;
 
     @Autowired
-    private PyrisInternalStatusUpdateResource pyrisInternalStatusUpdateResource;
+    private PyrisInternalStatusUpdateResource publicPyrisStatusUpdateResource;
 
     private ProgrammingExercise programmingExercise;
 
@@ -310,7 +310,7 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
         var statusUpdate = new TutorSuggestionStatusUpdateDTO("Test suggestion", "Test result", stages, null);
         var mockRequestForStatusUpdate = new org.springframework.mock.web.MockHttpServletRequest();
         mockRequestForStatusUpdate.addHeader(HttpHeaders.AUTHORIZATION, Constants.BEARER_PREFIX + token);
-        pyrisInternalStatusUpdateResource.setTutorSuggestionJobStatus(token, statusUpdate, mockRequestForStatusUpdate);
+        publicPyrisStatusUpdateResource.setTutorSuggestionJobStatus(token, statusUpdate, mockRequestForStatusUpdate);
 
         // Remove the job and assert that accessing it throws an exception
         var requestAfterRemoval = new org.springframework.mock.web.MockHttpServletRequest();

@@ -44,7 +44,6 @@ import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisProgrammingExerciseChatSession;
-import de.tum.cit.aet.artemis.iris.domain.settings.IrisGlobalSettings;
 import de.tum.cit.aet.artemis.iris.dto.MemirisMemoryDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
@@ -193,9 +192,8 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
     void sendOneMessageWithCustomInstructions() throws Exception {
         // Set custom instructions for programming exercise chat
         String testCustomInstructions = "Please focus on code style.";
-        var exerciseSettings = irisSettingsService.getRawIrisSettingsFor(soloExercise);
-        exerciseSettings.getIrisProgrammingExerciseChatSettings().setCustomInstructions(testCustomInstructions);
-        irisSettingsService.saveIrisSettings(exerciseSettings);
+        configureCourseSettings(soloExercise.getCourseViaExerciseGroupOrCourseMember(), testCustomInstructions,
+                irisSettingsService.getSettingsForCourse(soloExercise.getCourseViaExerciseGroupOrCourseMember()).variant());
 
         // Prepare session and message
         long submissionId = soloParticipation.getSubmissions().iterator().next().getId();
@@ -433,10 +431,8 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
             pipelineDone.set(true);
         });
 
-        IrisGlobalSettings globalSettings = irisSettingsService.getGlobalSettings();
-        globalSettings.getIrisProgrammingExerciseChatSettings().setRateLimit(1);
-        globalSettings.getIrisProgrammingExerciseChatSettings().setRateLimitTimeframeHours(10);
-        irisSettingsService.saveIrisSettings(globalSettings);
+        var course = soloExercise.getCourseViaExerciseGroupOrCourseMember();
+        configureCourseRateLimit(course, 1, 10);
 
         try {
             request.postWithoutResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend1, HttpStatus.CREATED);
@@ -451,9 +447,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
         }
         finally {
             // Reset to not interfere with other tests
-            globalSettings.getIrisProgrammingExerciseChatSettings().setRateLimit(null);
-            globalSettings.getIrisProgrammingExerciseChatSettings().setRateLimitTimeframeHours(null);
-            irisSettingsService.saveIrisSettings(globalSettings);
+            configureCourseRateLimit(course, null, null);
         }
     }
 

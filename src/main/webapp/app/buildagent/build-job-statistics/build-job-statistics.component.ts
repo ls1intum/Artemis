@@ -70,7 +70,8 @@ export class BuildJobStatisticsComponent implements OnInit {
 
     getBuildJobStatistics(span: SpanType) {
         this.route.url.pipe(take(1)).subscribe((url) => {
-            if (url[0].path === 'build-queue') {
+            const firstSegment = url[0];
+            if (firstSegment?.path === 'build-queue') {
                 this.getBuildJobStatisticsForBuildQueue(span);
             } else {
                 this.displayMissingBuilds = false;
