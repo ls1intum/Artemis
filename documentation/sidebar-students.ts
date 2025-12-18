@@ -14,6 +14,7 @@ const sidebars: SidebarsConfig = {
         'notifications',
         'user-experience',
         'courses',
+        'exports',
     ],
 };
 

@@ -33,6 +33,7 @@ const sidebars: SidebarsConfig = {
         'tutorial-groups',
         'plagiarism-check',
         'courses',
+        'exports',
     ],
 };
 
