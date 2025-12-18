@@ -98,6 +98,16 @@
             "processingIngesting": "Indizierung läuft",
             "processingComplete": "Verarbeitung abgeschlossen",
             "processingFailed": "Verarbeitung fehlgeschlagen",
+            "processing": {
+                "cancelled": "Verarbeitung wurde abgebrochen",
+                "error": {
+                    "invalidUnitType": "Ungültiger Vorlesungseinheitentyp für Verarbeitung",
+                    "transcriptionFailed": "Transkription fehlgeschlagen nach mehreren Versuchen",
+                    "ingestionFailed": "Inhaltsindizierung fehlgeschlagen nach mehreren Versuchen",
+                    "noPlaylist": "Video-Playlist ist nicht mehr verfügbar",
+                    "timeout": "Verarbeitung abgelaufen nach mehreren Versuchen"
+                }
+            },
             "createAttachmentVideoUnits": {
                 "informativeText": {
                     "firstLine": "Artemis sucht nach der Gliederung (Folie mit Titel 'Outline' und Stichpunkten mit Inhaltsüberschriften) und unterteilt das PDF in mehrere Dateien.",

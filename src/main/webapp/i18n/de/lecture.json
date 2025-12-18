@@ -12,8 +12,7 @@
                     "filterFuture": "Zukünftige",
                     "filterUnspecifiedDates": "Ohne Zeitangaben"
                 },
-                "createOrEditLabel": "Vorlesung erstellen oder bearbeiten",
-                "ingestLecturesInPyrisLabel": "Vorlesungen an Iris senden"
+                "createOrEditLabel": "Vorlesung erstellen oder bearbeiten"
             },
             "created": "Vorlesung erstellt mit ID {{ param }}",
             "updated": "Vorlesung aktualisiert mit ID {{ param }}",

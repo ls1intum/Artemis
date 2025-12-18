@@ -195,7 +195,7 @@ export interface LectureUnitProcessingStatus {
     phase: ProcessingPhase;
     retryCount: number;
     startedAt?: string;
-    errorMessage?: string;
+    errorKey?: string;
 }
 
 /**

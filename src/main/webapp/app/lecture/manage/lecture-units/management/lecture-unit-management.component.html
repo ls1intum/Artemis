@@ -80,7 +80,10 @@
                                         <span jhiTranslate="artemisApp.attachmentVideoUnit.processingIngesting"></span>
                                     </div>
                                 } @else if (isProcessingFailed(lectureUnit)) {
-                                    <div class="badge bg-danger">
+                                    <div
+                                        class="badge bg-danger"
+                                        [ngbTooltip]="getProcessingErrorKey(lectureUnit) | artemisTranslate"
+                                    >
                                         <fa-icon [icon]="faExclamationTriangle" class="me-1" />
                                         <span jhiTranslate="artemisApp.attachmentVideoUnit.processingFailed"></span>
                                     </div>

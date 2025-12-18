@@ -98,6 +98,16 @@
             "processingIngesting": "Indexing",
             "processingComplete": "Processing complete",
             "processingFailed": "Processing Failed",
+            "processing": {
+                "cancelled": "Processing was cancelled",
+                "error": {
+                    "invalidUnitType": "Invalid lecture unit type for processing",
+                    "transcriptionFailed": "Transcription generation failed after multiple attempts",
+                    "ingestionFailed": "Content indexing failed after multiple attempts",
+                    "noPlaylist": "Video playlist is no longer available",
+                    "timeout": "Processing timed out after multiple attempts"
+                }
+            },
             "createAttachmentVideoUnits": {
                 "informativeText": {
                     "firstLine": "Artemis searches for the Outline (slide with title 'Outline' and bullet points with content headings) to split the PDF into content.",

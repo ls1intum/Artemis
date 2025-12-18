@@ -8,7 +8,7 @@ import { LectureUnit, LectureUnitType } from 'app/lecture/shared/entities/lectur
 import { AlertService } from 'app/shared/service/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { Subject, from } from 'rxjs';
-import { LectureUnitService, ProcessingPhase } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
+import { LectureUnitProcessingStatus, LectureUnitService, ProcessingPhase } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { AttachmentVideoUnit, TranscriptionStatus } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { ExerciseUnit } from 'app/lecture/shared/entities/lecture-unit/exerciseUnit.model';
@@ -89,7 +89,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     isLoading = false;
     viewButtonAvailable: Record<number, boolean> = {};
     transcriptionStatus: Record<number, TranscriptionStatus> = {};
-    processingStatus: Record<number, ProcessingPhase> = {};
+    processingStatus: Record<number, LectureUnitProcessingStatus> = {};
     isRetryingProcessing: Record<number, boolean> = {};
     isUploadingPdfs = signal<boolean>(false);
 
@@ -283,7 +283,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         this.lectureUnitService.getProcessingStatus(this.lectureId, lectureUnitId).subscribe({
             next: (status) => {
                 if (status) {
-                    this.processingStatus[lectureUnitId] = status.phase;
+                    this.processingStatus[lectureUnitId] = status;
                 }
             },
         });
@@ -308,28 +308,32 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
 
     // Processing status helper methods (for ProcessingPhase)
     isProcessingIdle(lectureUnit: AttachmentVideoUnit): boolean {
-        return this.processingStatus[lectureUnit.id!] === ProcessingPhase.IDLE;
+        return this.processingStatus[lectureUnit.id!]?.phase === ProcessingPhase.IDLE;
     }
 
     isProcessingTranscribing(lectureUnit: AttachmentVideoUnit): boolean {
-        return this.processingStatus[lectureUnit.id!] === ProcessingPhase.TRANSCRIBING;
+        return this.processingStatus[lectureUnit.id!]?.phase === ProcessingPhase.TRANSCRIBING;
     }
 
     isProcessingIngesting(lectureUnit: AttachmentVideoUnit): boolean {
-        return this.processingStatus[lectureUnit.id!] === ProcessingPhase.INGESTING;
+        return this.processingStatus[lectureUnit.id!]?.phase === ProcessingPhase.INGESTING;
     }
 
     isProcessingDone(lectureUnit: AttachmentVideoUnit): boolean {
-        return this.processingStatus[lectureUnit.id!] === ProcessingPhase.DONE;
+        return this.processingStatus[lectureUnit.id!]?.phase === ProcessingPhase.DONE;
     }
 
     isProcessingFailed(lectureUnit: AttachmentVideoUnit): boolean {
-        return this.processingStatus[lectureUnit.id!] === ProcessingPhase.FAILED;
+        return this.processingStatus[lectureUnit.id!]?.phase === ProcessingPhase.FAILED;
     }
 
     isProcessingInProgress(lectureUnit: AttachmentVideoUnit): boolean {
-        const status = this.processingStatus[lectureUnit.id!];
-        return status === ProcessingPhase.TRANSCRIBING || status === ProcessingPhase.INGESTING;
+        const phase = this.processingStatus[lectureUnit.id!]?.phase;
+        return phase === ProcessingPhase.TRANSCRIBING || phase === ProcessingPhase.INGESTING;
+    }
+
+    getProcessingErrorKey(lectureUnit: AttachmentVideoUnit): string | undefined {
+        return this.processingStatus[lectureUnit.id!]?.errorKey;
     }
 
     hasProcessingBadge(lectureUnit: AttachmentVideoUnit): boolean {
@@ -355,9 +359,9 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
      * Check if a lecture unit is awaiting processing (IDLE state and course is active so it will be processed).
      */
     isAwaitingProcessing(lectureUnit: AttachmentVideoUnit): boolean {
-        const status = this.processingStatus[lectureUnit.id!];
+        const phase = this.processingStatus[lectureUnit.id!]?.phase;
         // If processing is in progress or done, it's not awaiting
-        if (status !== undefined && status !== ProcessingPhase.IDLE) {
+        if (phase !== undefined && phase !== ProcessingPhase.IDLE) {
             return false;
         }
         // IDLE or no status yet - show "awaiting" only if the course is active (backfill scheduler only processes active courses)

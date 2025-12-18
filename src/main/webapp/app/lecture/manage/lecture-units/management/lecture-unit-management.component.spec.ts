@@ -266,47 +266,57 @@ describe('LectureUnitManagementComponent', () => {
             lectureUnitManagementComponent.loadData();
 
             expect(statusSpy).toHaveBeenCalledWith(lectureId, attachmentVideoUnit.id);
-            expect(lectureUnitManagementComponent.processingStatus[attachmentVideoUnit.id!]).toBe(ProcessingPhase.DONE);
+            expect(lectureUnitManagementComponent.processingStatus[attachmentVideoUnit.id!]?.phase).toBe(ProcessingPhase.DONE);
         });
 
         it('should correctly identify processing states', () => {
-            lectureUnitManagementComponent.processingStatus[attachmentVideoUnit.id!] = ProcessingPhase.IDLE;
+            lectureUnitManagementComponent.processingStatus[attachmentVideoUnit.id!] = { lectureUnitId: attachmentVideoUnit.id!, phase: ProcessingPhase.IDLE, retryCount: 0 };
             expect(lectureUnitManagementComponent.isProcessingIdle(attachmentVideoUnit)).toBeTrue();
 
-            lectureUnitManagementComponent.processingStatus[attachmentVideoUnit.id!] = ProcessingPhase.TRANSCRIBING;
+            lectureUnitManagementComponent.processingStatus[attachmentVideoUnit.id!] = { lectureUnitId: attachmentVideoUnit.id!, phase: ProcessingPhase.TRANSCRIBING, retryCount: 0 };
             expect(lectureUnitManagementComponent.isProcessingTranscribing(attachmentVideoUnit)).toBeTrue();
             expect(lectureUnitManagementComponent.isProcessingInProgress(attachmentVideoUnit)).toBeTrue();
 
-            lectureUnitManagementComponent.processingStatus[attachmentVideoUnit.id!] = ProcessingPhase.INGESTING;
+            lectureUnitManagementComponent.processingStatus[attachmentVideoUnit.id!] = { lectureUnitId: attachmentVideoUnit.id!, phase: ProcessingPhase.INGESTING, retryCount: 0 };
             expect(lectureUnitManagementComponent.isProcessingIngesting(attachmentVideoUnit)).toBeTrue();
             expect(lectureUnitManagementComponent.isProcessingInProgress(attachmentVideoUnit)).toBeTrue();
 
-            lectureUnitManagementComponent.processingStatus[attachmentVideoUnit.id!] = ProcessingPhase.DONE;
+            lectureUnitManagementComponent.processingStatus[attachmentVideoUnit.id!] = { lectureUnitId: attachmentVideoUnit.id!, phase: ProcessingPhase.DONE, retryCount: 0 };
             expect(lectureUnitManagementComponent.isProcessingDone(attachmentVideoUnit)).toBeTrue();
 
-            lectureUnitManagementComponent.processingStatus[attachmentVideoUnit.id!] = ProcessingPhase.FAILED;
+            lectureUnitManagementComponent.processingStatus[attachmentVideoUnit.id!] = { lectureUnitId: attachmentVideoUnit.id!, phase: ProcessingPhase.FAILED, retryCount: 0 };
             expect(lectureUnitManagementComponent.isProcessingFailed(attachmentVideoUnit)).toBeTrue();
         });
 
         it('should return true for hasProcessingBadge when processing is in progress', () => {
-            lectureUnitManagementComponent.processingStatus[attachmentVideoUnit.id!] = ProcessingPhase.TRANSCRIBING;
+            lectureUnitManagementComponent.processingStatus[attachmentVideoUnit.id!] = { lectureUnitId: attachmentVideoUnit.id!, phase: ProcessingPhase.TRANSCRIBING, retryCount: 0 };
             expect(lectureUnitManagementComponent.hasProcessingBadge(attachmentVideoUnit)).toBeTrue();
         });
 
         it('should return true for hasProcessingBadge when processing is done', () => {
-            lectureUnitManagementComponent.processingStatus[attachmentVideoUnit.id!] = ProcessingPhase.DONE;
+            lectureUnitManagementComponent.processingStatus[attachmentVideoUnit.id!] = { lectureUnitId: attachmentVideoUnit.id!, phase: ProcessingPhase.DONE, retryCount: 0 };
             expect(lectureUnitManagementComponent.hasProcessingBadge(attachmentVideoUnit)).toBeTrue();
         });
 
         it('should return true for hasProcessingBadge when processing failed', () => {
-            lectureUnitManagementComponent.processingStatus[attachmentVideoUnit.id!] = ProcessingPhase.FAILED;
+            lectureUnitManagementComponent.processingStatus[attachmentVideoUnit.id!] = { lectureUnitId: attachmentVideoUnit.id!, phase: ProcessingPhase.FAILED, retryCount: 0 };
             expect(lectureUnitManagementComponent.hasProcessingBadge(attachmentVideoUnit)).toBeTrue();
+        });
+
+        it('should return error key from processing status', () => {
+            lectureUnitManagementComponent.processingStatus[attachmentVideoUnit.id!] = {
+                lectureUnitId: attachmentVideoUnit.id!,
+                phase: ProcessingPhase.FAILED,
+                retryCount: 3,
+                errorKey: 'artemisApp.lectureUnit.processing.error.transcriptionFailed',
+            };
+            expect(lectureUnitManagementComponent.getProcessingErrorKey(attachmentVideoUnit)).toBe('artemisApp.lectureUnit.processing.error.transcriptionFailed');
         });
     });
 
     describe('isAwaitingProcessing', () => {
         it('should return true when status is IDLE and course is active', () => {
-            lectureUnitManagementComponent.processingStatus[attachmentVideoUnit.id!] = ProcessingPhase.IDLE;
+            lectureUnitManagementComponent.processingStatus[attachmentVideoUnit.id!] = { lectureUnitId: attachmentVideoUnit.id!, phase: ProcessingPhase.IDLE, retryCount: 0 };
             lectureUnitManagementComponent.lecture.course!.startDate = undefined;
             lectureUnitManagementComponent.lecture.course!.endDate = undefined;
             expect(lectureUnitManagementComponent.isAwaitingProcessing(attachmentVideoUnit)).toBeTrue();
@@ -320,12 +330,12 @@ describe('LectureUnitManagementComponent', () => {
         });
 
         it('should return false when processing is in progress', () => {
-            lectureUnitManagementComponent.processingStatus[attachmentVideoUnit.id!] = ProcessingPhase.TRANSCRIBING;
+            lectureUnitManagementComponent.processingStatus[attachmentVideoUnit.id!] = { lectureUnitId: attachmentVideoUnit.id!, phase: ProcessingPhase.TRANSCRIBING, retryCount: 0 };
             expect(lectureUnitManagementComponent.isAwaitingProcessing(attachmentVideoUnit)).toBeFalse();
         });
 
         it('should return false when processing is done', () => {
-            lectureUnitManagementComponent.processingStatus[attachmentVideoUnit.id!] = ProcessingPhase.DONE;
+            lectureUnitManagementComponent.processingStatus[attachmentVideoUnit.id!] = { lectureUnitId: attachmentVideoUnit.id!, phase: ProcessingPhase.DONE, retryCount: 0 };
             expect(lectureUnitManagementComponent.isAwaitingProcessing(attachmentVideoUnit)).toBeFalse();
         });
     });
