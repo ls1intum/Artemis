@@ -13,11 +13,11 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
-import de.tum.cit.aet.artemis.iris.domain.settings.CourseIrisSettings;
-import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettingsDTO;
+import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
+import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettingsEntity;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisRateLimitConfiguration;
 import de.tum.cit.aet.artemis.iris.dto.IrisCourseSettingsWithRateLimitDTO;
-import de.tum.cit.aet.artemis.iris.repository.CourseIrisSettingsRepository;
+import de.tum.cit.aet.artemis.iris.repository.IrisCourseSettingsRepository;
 
 /**
  * Service entry point for interacting with the new single layer Iris settings model.
@@ -27,7 +27,7 @@ import de.tum.cit.aet.artemis.iris.repository.CourseIrisSettingsRepository;
 @Lazy
 public class IrisSettingsService {
 
-    private final CourseIrisSettingsRepository courseIrisSettingsRepository;
+    private final IrisCourseSettingsRepository irisCourseSettingsRepository;
 
     private final CourseRepository courseRepository;
 
@@ -35,83 +35,97 @@ public class IrisSettingsService {
 
     private final int configuredDefaultTimeframeHours;
 
-    public IrisSettingsService(CourseIrisSettingsRepository courseIrisSettingsRepository, CourseRepository courseRepository,
+    public IrisSettingsService(IrisCourseSettingsRepository irisCourseSettingsRepository, CourseRepository courseRepository,
             @Value("${artemis.iris.ratelimit.default-limit:0}") int configuredDefaultRateLimit,
             @Value("${artemis.iris.ratelimit.default-timeframe-hours:0}") int configuredDefaultTimeframeHours) {
-        this.courseIrisSettingsRepository = courseIrisSettingsRepository;
+        this.irisCourseSettingsRepository = irisCourseSettingsRepository;
         this.courseRepository = courseRepository;
         this.configuredDefaultRateLimit = configuredDefaultRateLimit;
         this.configuredDefaultTimeframeHours = configuredDefaultTimeframeHours;
     }
 
     /**
-     * Retrieves the Iris course settings or creates a default entry if missing.
-     *
-     * @param courseId the owning course id
-     * @return managed entity containing the settings
-     * @throws EntityNotFoundException if the course does not exist
-     */
-    public CourseIrisSettings getOrCreateCourseSettings(long courseId) {
-        return courseIrisSettingsRepository.findByCourseId(courseId).orElseGet(() -> {
-            // Validate course exists before creating settings to provide a clear error message
-            courseRepository.findByIdElseThrow(courseId);
-            var entity = new CourseIrisSettings();
-            entity.setCourseId(courseId);
-            entity.setSettings(IrisCourseSettingsDTO.defaultSettings());
-            return courseIrisSettingsRepository.save(entity);
-        });
-    }
-
-    /**
      * Returns the effective settings for the given course.
      *
      * @param course the course
-     * @return sanitized payload
+     * @return settings DTO (defaults if no custom settings exist)
      */
-    public IrisCourseSettingsDTO getSettingsForCourse(Course course) {
+    public IrisCourseSettings getSettingsForCourse(Course course) {
         Objects.requireNonNull(course, "course must not be null");
-        return getOrCreateCourseSettings(course.getId()).getSettings();
+        return getSettingsForCourse(course.getId());
     }
 
     /**
      * Returns the effective settings for the given course id.
      *
      * @param courseId the course id
-     * @return sanitized payload
+     * @return settings DTO (defaults if no custom settings exist)
      */
-    public IrisCourseSettingsDTO getSettingsForCourse(long courseId) {
-        return getOrCreateCourseSettings(courseId).getSettings();
+    public IrisCourseSettings getSettingsForCourse(long courseId) {
+        return irisCourseSettingsRepository.findByCourseId(courseId).map(IrisCourseSettingsEntity::getSettings).orElseGet(IrisCourseSettings::defaultSettings);
     }
 
     /**
      * Returns the Iris settings mapped to a DTO for REST responses.
      *
      * @param courseId the course id
-     * @return DTO containing the payload
+     * @return DTO containing the payload with effective rate limits
      */
     public IrisCourseSettingsWithRateLimitDTO getCourseSettingsWithRateLimit(long courseId) {
-        var entity = getOrCreateCourseSettings(courseId);
-        var settings = entity.getSettings();
+        var settings = getSettingsForCourse(courseId);
         var defaults = getApplicationRateLimitDefaults();
         var effective = resolveEffectiveRateLimit(settings, defaults);
-        return IrisCourseSettingsWithRateLimitDTO.fromEntity(entity, effective, defaults);
+        return new IrisCourseSettingsWithRateLimitDTO(courseId, settings, effective, defaults);
     }
 
     /**
-     * Updates (or creates) the Iris settings for a course.
+     * Updates (or creates if not present) the Iris settings for a course.
+     * <p>
+     * Handles null payloads (uses current settings), sanitization, and instructor restrictions.
      *
      * @param courseId the course id
-     * @param payload  the new payload
+     * @param payload  the new payload (nullable, will use current settings if null)
+     * @param isAdmin  whether the requesting user is an admin (admins can change variant and rate limits)
      * @return DTO representing the persisted state
      */
-    public IrisCourseSettingsWithRateLimitDTO updateCourseSettings(long courseId, IrisCourseSettingsDTO payload) {
-        var entity = getOrCreateCourseSettings(courseId);
-        var sanitized = sanitizePayload(payload);
-        entity.setSettings(sanitized);
-        var saved = courseIrisSettingsRepository.save(entity);
+    public IrisCourseSettingsWithRateLimitDTO updateCourseSettings(long courseId, IrisCourseSettings payload, boolean isAdmin) {
+        var current = getSettingsForCourse(courseId);
+        var request = Objects.requireNonNullElse(payload, current);
+        var sanitizedRequest = sanitizePayload(request);
+        var sanitizedCurrent = sanitizePayload(current);
+
+        if (!isAdmin) {
+            enforceInstructorRestrictions(sanitizedRequest, sanitizedCurrent);
+        }
+
+        var entity = irisCourseSettingsRepository.findByCourseId(courseId).orElseGet(() -> {
+            var newEntity = new IrisCourseSettingsEntity();
+            newEntity.setCourseId(courseId);
+            return newEntity;
+        });
+        entity.setSettings(sanitizedRequest);
+        irisCourseSettingsRepository.save(entity);
         var defaults = getApplicationRateLimitDefaults();
-        var effective = resolveEffectiveRateLimit(sanitized, defaults);
-        return IrisCourseSettingsWithRateLimitDTO.fromEntity(saved, effective, defaults);
+        var effective = resolveEffectiveRateLimit(sanitizedRequest, defaults);
+        return new IrisCourseSettingsWithRateLimitDTO(courseId, sanitizedRequest, effective, defaults);
+    }
+
+    /**
+     * Validates that non-admin users are not trying to change restricted settings.
+     * Instructors can only modify enabled status and custom instructions; variant and rate limits are admin-only.
+     *
+     * @param request the requested new settings
+     * @param current the current settings
+     * @throws AccessForbiddenAlertException if the request attempts to change variant or rate limits
+     */
+    private void enforceInstructorRestrictions(IrisCourseSettings request, IrisCourseSettings current) {
+        if (!Objects.equals(request.variant(), current.variant())) {
+            throw new AccessForbiddenAlertException("Only administrators can change the Iris pipeline variant", "IrisSettings", "irisVariantRestricted");
+        }
+
+        if (!Objects.equals(request.rateLimit(), current.rateLimit())) {
+            throw new AccessForbiddenAlertException("Only administrators can change Iris rate limits", "IrisSettings", "irisRateLimitRestricted");
+        }
     }
 
     /**
@@ -152,7 +166,7 @@ public class IrisSettingsService {
      * @param courseId the course id
      * @return the Iris settings for the course
      */
-    public IrisCourseSettingsDTO getSettingsForCourseOrThrow(long courseId) {
+    public IrisCourseSettings getSettingsForCourseOrThrow(long courseId) {
         courseRepository.findByIdElseThrow(courseId);
         return getSettingsForCourse(courseId);
     }
@@ -191,12 +205,12 @@ public class IrisSettingsService {
      * @param payload incoming payload
      * @return sanitized payload
      */
-    public IrisCourseSettingsDTO sanitizePayload(IrisCourseSettingsDTO payload) {
+    public IrisCourseSettings sanitizePayload(IrisCourseSettings payload) {
         if (payload == null) {
-            return IrisCourseSettingsDTO.defaultSettings();
+            return IrisCourseSettings.defaultSettings();
         }
         var sanitizedRateLimit = sanitizeRateLimit(payload.rateLimit());
-        return IrisCourseSettingsDTO.of(payload.enabled(), payload.customInstructions(), payload.variant(), sanitizedRateLimit);
+        return IrisCourseSettings.of(payload.enabled(), payload.customInstructions(), payload.variant(), sanitizedRateLimit);
     }
 
     private IrisRateLimitConfiguration sanitizeRateLimit(IrisRateLimitConfiguration rateLimit) {
@@ -230,7 +244,7 @@ public class IrisSettingsService {
         return rateLimit;
     }
 
-    private IrisRateLimitConfiguration resolveEffectiveRateLimit(IrisCourseSettingsDTO settings, IrisRateLimitConfiguration defaults) {
+    private IrisRateLimitConfiguration resolveEffectiveRateLimit(IrisCourseSettings settings, IrisRateLimitConfiguration defaults) {
         Objects.requireNonNull(settings, "settings must not be null");
         defaults = Objects.requireNonNullElse(defaults, IrisRateLimitConfiguration.empty());
 

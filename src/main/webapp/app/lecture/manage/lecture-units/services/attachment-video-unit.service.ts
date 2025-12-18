@@ -5,6 +5,9 @@ import { Injectable, inject } from '@angular/core';
 import { Observable, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { LectureUnitInformationDTO } from 'app/lecture/manage/lecture-units/attachment-video-units/attachment-video-units.component';
+import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachment.model';
+import { objectToJsonBlob } from 'app/shared/util/blob-util';
+import dayjs from 'dayjs/esm';
 
 type EntityResponseType = HttpResponse<AttachmentVideoUnit>;
 
@@ -127,5 +130,37 @@ export class AttachmentVideoUnitService {
                 return currentFormData;
             }),
         );
+    }
+
+    /**
+     * Creates an attachment video unit from a PDF file.
+     * Derives the unit name from the filename and sets release date to 15 minutes in the future.
+     *
+     * @param lectureId - The ID of the lecture to add the unit to
+     * @param file - The PDF file to create the attachment unit from
+     * @returns Observable of the HTTP response containing the created AttachmentVideoUnit
+     */
+    createAttachmentVideoUnitFromFile(lectureId: number, file: File): Observable<EntityResponseType> {
+        const unitName = file.name
+            .replace(/\.pdf$/i, '')
+            .replace(/[_-]/g, ' ')
+            .trim();
+        const releaseDate = dayjs().add(15, 'minutes');
+
+        const attachmentVideoUnit = new AttachmentVideoUnit();
+        attachmentVideoUnit.name = unitName;
+        attachmentVideoUnit.releaseDate = releaseDate;
+
+        const attachment = new Attachment();
+        attachment.name = unitName;
+        attachment.releaseDate = releaseDate;
+        attachment.attachmentType = AttachmentType.FILE;
+
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('attachmentVideoUnit', objectToJsonBlob(attachmentVideoUnit));
+        formData.append('attachment', objectToJsonBlob(attachment));
+
+        return this.create(formData, lectureId);
     }
 }

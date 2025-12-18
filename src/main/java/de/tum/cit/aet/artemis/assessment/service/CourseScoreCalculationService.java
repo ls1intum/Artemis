@@ -218,13 +218,13 @@ public class CourseScoreCalculationService {
      * Get all the items needed for the CourseForDashboardDTO.
      * This includes scoresPerExerciseType and participationResults.
      *
-     * @param course                            the course to calculate the items for.
-     * @param gradingScale                      the grading scale with the presentation configuration to use for calculating the presentation points.
-     * @param userId                            the id of the students whose scores in the course will be calculated.
-     * @param includeIrisCourseDashboardEnabled whether the enabled state of the course chat should be included in the CourseForDashboardDTO
+     * @param course                     the course to calculate the items for.
+     * @param gradingScale               the grading scale with the presentation configuration to use for calculating the presentation points.
+     * @param userId                     the id of the students whose scores in the course will be calculated.
+     * @param includeIrisEnabledInCourse whether the enabled state of Iris in this course should be included in the CourseForDashboardDTO
      * @return the CourseForDashboardDTO containing all the mentioned items.
      */
-    public CourseForDashboardDTO getScoresAndParticipationResults(Course course, @Nullable GradingScale gradingScale, long userId, boolean includeIrisCourseDashboardEnabled) {
+    public CourseForDashboardDTO getScoresAndParticipationResults(Course course, @Nullable GradingScale gradingScale, long userId, boolean includeIrisEnabledInCourse) {
         Set<StudentParticipation> gradedStudentParticipations = new HashSet<>();
         for (Exercise exercise : course.getExercises()) {
             exercise.setCourse(course);
@@ -281,7 +281,7 @@ public class CourseScoreCalculationService {
         return new CourseForDashboardDTO(course, totalScores, scoresPerExerciseType.get(ExerciseType.TEXT), scoresPerExerciseType.get(ExerciseType.PROGRAMMING),
                 scoresPerExerciseType.get(ExerciseType.MODELING), scoresPerExerciseType.get(ExerciseType.FILE_UPLOAD), scoresPerExerciseType.get(ExerciseType.QUIZ),
                 participationResults, userCourseNotificationStatusRepository.countUnseenCourseNotificationsForUserInCourse(userId, course.getId()),
-                includeIrisCourseDashboardEnabled ? irisSettingsApi.map(api -> api.isIrisEnabledForCourse(course.getId())).orElse(false) : null);
+                includeIrisEnabledInCourse ? irisSettingsApi.map(api -> api.isIrisEnabledForCourse(course.getId())).orElse(false) : null);
     }
 
     /**

@@ -11,14 +11,14 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
-import de.tum.cit.aet.artemis.iris.domain.settings.CourseIrisSettings;
+import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettingsEntity;
 
 @Lazy
 @Repository
 @Profile(PROFILE_IRIS)
-public interface CourseIrisSettingsRepository extends ArtemisJpaRepository<CourseIrisSettings, Long> {
+public interface IrisCourseSettingsRepository extends ArtemisJpaRepository<IrisCourseSettingsEntity, Long> {
 
-    Optional<CourseIrisSettings> findByCourseId(Long courseId);
+    Optional<IrisCourseSettingsEntity> findByCourseId(Long courseId);
 
     @Modifying
     @Transactional

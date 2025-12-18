@@ -9,7 +9,7 @@
     <div>
         <!-- Lecture Unit Rows-->
         @if (showCreationCard) {
-            <div class="w-100 d-flex justify-content-end" [class.justify-content-center]="!lectureUnits?.length">
+            <div class="w-100 d-flex justify-content-end mb-5" [class.justify-content-center]="!lectureUnits?.length">
                 <jhi-unit-creation-card />
             </div>
         }
@@ -41,11 +41,6 @@
                                         : ('artemisApp.lectureUnit.details.releaseDateNotSet' | artemisTranslate)
                                 }}
                             </div>
-                            @if (lectureUnit.type === LectureUnitType.ATTACHMENT_VIDEO && hasAttachment(lectureUnit)) {
-                                <div class="badge bg-info attachment-badge">
-                                    {{ ('artemisApp.lectureUnit.details.attachmentVersion' | artemisTranslate) + getAttachmentVersion(lectureUnit) }}
-                                </div>
-                            }
 
                             <!-- Transcription Status Badge -->
                             @if (lectureUnit.type === LectureUnitType.ATTACHMENT_VIDEO) {
@@ -115,22 +110,13 @@
                         </div>
                     </div>
 
-                    <div class="d-flex gap-1 flex-column justify-content-center col-3 col-sm-2 col-lg-1" role="group">
-                        <div class="d-flex gap-1 w-100">
-                            @if (lecture.course?.id && showCompetencies) {
-                                <jhi-competencies-popover
-                                    class="flex-grow-1"
-                                    [courseId]="lecture.course!.id!"
-                                    [competencyLinks]="lectureUnit.competencyLinks || []"
-                                    [navigateTo]="'competencyManagement'"
-                                />
-                            }
-                        </div>
-                        @if (lectureUnit.type === LectureUnitType.ATTACHMENT_VIDEO) {
-                            @if (isProcessingFailed(lectureUnit)) {
+                    <div class="d-flex gap-1 flex-column justify-content-center action-buttons" role="group">
+                        <!-- Row 1: Retry Processing (only for failed attachment/video units) -->
+                        @if (lectureUnit.type === LectureUnitType.ATTACHMENT_VIDEO && isProcessingFailed(lectureUnit)) {
+                            <div class="d-flex gap-1 w-100">
                                 <button
                                     type="button"
-                                    class="btn btn-warning btn-sm flex-grow-1"
+                                    class="btn btn-warning btn-sm flex-fill"
                                     [disabled]="isRetryingProcessing[lectureUnit.id!]"
                                     (click)="retryProcessing(lectureUnit)"
                                     [ngbTooltip]="'artemisApp.lectureUnit.retryProcessing' | artemisTranslate"
@@ -141,33 +127,49 @@
                                         <fa-icon [icon]="faRepeat" />
                                     }
                                 </button>
+                            </div>
+                        }
+                        <!-- Row 2: View + Linked Competencies -->
+                        <div class="d-flex gap-1 w-100">
+                            @if (viewButtonAvailable[lectureUnit.id!]) {
+                                <div class="flex-fill">
+                                    <a
+                                        type="button"
+                                        class="btn btn-primary btn-sm w-100"
+                                        [routerLink]="[
+                                            '/course-management',
+                                            lecture.course?.id,
+                                            'lectures',
+                                            lecture.id,
+                                            'unit-management',
+                                            'attachment-video-units',
+                                            lectureUnit.id,
+                                            'view',
+                                        ]"
+                                        [ngbTooltip]="'entity.action.view' | artemisTranslate"
+                                    >
+                                        <fa-icon [icon]="faEye" />
+                                    </a>
+                                </div>
                             }
-                        }
-                        @if (viewButtonAvailable[lectureUnit.id!]) {
-                            <a
-                                type="button"
-                                class="btn btn-primary btn-sm flex-grow-1"
-                                [routerLink]="[
-                                    '/course-management',
-                                    lecture.course?.id,
-                                    'lectures',
-                                    lecture.id,
-                                    'unit-management',
-                                    'attachment-video-units',
-                                    lectureUnit.id,
-                                    'view',
-                                ]"
-                                [ngbTooltip]="'entity.action.view' | artemisTranslate"
-                            >
-                                <fa-icon [icon]="faEye" />
-                            </a>
-                        }
+                            @if (lecture.course?.id && showCompetencies) {
+                                <div class="flex-fill">
+                                    <jhi-competencies-popover
+                                        [courseId]="lecture.course!.id!"
+                                        [competencyLinks]="lectureUnit.competencyLinks || []"
+                                        [navigateTo]="'competencyManagement'"
+                                        [ngbTooltip]="'artemisApp.competency.competencyPopover.connectedCompetencies' | artemisTranslate"
+                                    />
+                                </div>
+                            }
+                        </div>
+                        <!-- Row 3: Edit + Delete -->
                         <div class="d-flex gap-1 w-100">
                             @if (this.emitEditEvents) {
                                 @if (editButtonAvailable(lectureUnit)) {
                                     <button
                                         type="button"
-                                        class="btn btn-primary btn-sm edit flex-grow-1"
+                                        class="btn btn-primary btn-sm edit flex-fill"
                                         (click)="onEditButtonClicked(lectureUnit)"
                                         [ngbTooltip]="'entity.action.edit' | artemisTranslate"
                                     >
@@ -178,7 +180,7 @@
                                 @if (editButtonAvailable(lectureUnit)) {
                                     <a
                                         type="button"
-                                        class="btn btn-primary btn-sm edit flex-grow-1"
+                                        class="btn btn-primary btn-sm edit flex-fill"
                                         [routerLink]="['./', routerEditLinksBase[lectureUnit.type!], lectureUnit.id, 'edit']"
                                         [ngbTooltip]="'entity.action.edit' | artemisTranslate"
                                     >
@@ -189,7 +191,7 @@
                             @if (lecture.isAtLeastInstructor) {
                                 <button
                                     type="button"
-                                    class="btn btn-danger btn-sm flex-grow-1"
+                                    class="btn btn-danger btn-sm flex-fill"
                                     jhiDeleteButton
                                     [renderButtonStyle]="false"
                                     [renderButtonText]="false"
@@ -209,5 +211,11 @@
                 </div>
             }
         </div>
+
+        @if (showDropZone) {
+            <div class="mt-4">
+                <jhi-pdf-drop-zone [disabled]="isUploadingPdfs()" (filesDropped)="onPdfFilesDropped($event)" />
+            </div>
+        }
     </div>
 }

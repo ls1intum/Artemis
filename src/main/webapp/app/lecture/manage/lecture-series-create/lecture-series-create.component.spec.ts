@@ -10,8 +10,6 @@ import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
 import dayjs, { Dayjs } from 'dayjs/esm';
 import { of, throwError } from 'rxjs';
 import { Lecture, LectureSeriesCreateLectureDTO } from 'app/lecture/shared/entities/lecture.model';
-import { provideNoopAnimations } from '@angular/platform-browser/animations';
-
 describe('LectureSeriesCreateComponent', () => {
     let fixture: ComponentFixture<LectureSeriesCreateComponent>;
     let component: LectureSeriesCreateComponent;
@@ -41,7 +39,6 @@ describe('LectureSeriesCreateComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: Router, useValue: routerMock },
                 { provide: ArtemisNavigationUtilService, useValue: navigationUtilServiceMock },
-                provideNoopAnimations(),
             ],
         }).compileComponents();
 

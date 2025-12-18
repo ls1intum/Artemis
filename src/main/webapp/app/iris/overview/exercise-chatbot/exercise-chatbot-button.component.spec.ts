@@ -18,7 +18,6 @@ import { IrisStatusService } from 'app/iris/overview/services/iris-status.servic
 import { UserService } from 'app/core/user/shared/user.service';
 import dayjs from 'dayjs/esm';
 import { provideHttpClient } from '@angular/common/http';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { User } from 'app/core/user/user.model';
 
@@ -73,7 +72,7 @@ describe('ExerciseChatbotButtonComponent', () => {
         } as unknown as Overlay;
 
         await TestBed.configureTestingModule({
-            imports: [FontAwesomeModule, NoopAnimationsModule, MockPipe(HtmlForMarkdownPipe)],
+            imports: [FontAwesomeModule, MockPipe(HtmlForMarkdownPipe)],
             declarations: [IrisExerciseChatbotButtonComponent, MockComponent(IrisLogoComponent)],
             providers: [
                 provideHttpClient(),

@@ -4,7 +4,7 @@ import { AttachmentVideoUnit, TranscriptionStatus } from 'app/lecture/shared/ent
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ExerciseUnit } from 'app/lecture/shared/entities/lecture-unit/exerciseUnit.model';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { Component, Input } from '@angular/core';
+import { Component, Input, input } from '@angular/core';
 import { ExerciseUnitComponent } from 'app/lecture/overview/course-lectures/exercise-unit/exercise-unit.component';
 import { AttachmentVideoUnitComponent } from 'app/lecture/overview/course-lectures/attachment-video-unit/attachment-video-unit.component';
 import { TextUnitComponent } from 'app/lecture/overview/course-lectures/text-unit/text-unit.component';
@@ -19,7 +19,7 @@ import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
-import { of, throwError } from 'rxjs';
+import { of } from 'rxjs';
 import { By } from '@angular/platform-browser';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { CompetencyLectureUnitLink } from 'app/atlas/shared/entities/competency.model';
@@ -32,12 +32,20 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { OnlineUnit } from 'app/lecture/shared/entities/lecture-unit/onlineUnit.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { LectureTranscriptionService } from 'app/lecture/manage/services/lecture-transcription.service';
+import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
+import { throwError } from 'rxjs';
+import { PdfDropZoneComponent } from '../../pdf-drop-zone/pdf-drop-zone.component';
 
 @Component({ selector: 'jhi-competencies-popover', template: '' })
 class CompetenciesPopoverStubComponent {
     @Input() courseId!: number;
     @Input() competencyLinks: CompetencyLectureUnitLink[] = [];
     @Input() navigateTo: 'competencyManagement' | 'courseStatistics' = 'courseStatistics';
+}
+
+@Component({ selector: 'jhi-pdf-drop-zone', template: '' })
+class PdfDropZoneStubComponent {
+    disabled = input<boolean>(false);
 }
 
 describe('LectureUnitManagementComponent', () => {
@@ -47,6 +55,7 @@ describe('LectureUnitManagementComponent', () => {
     let lectureUnitService: LectureUnitService;
     let lectureTranscriptionService: LectureTranscriptionService;
     let alertService: AlertService;
+    let attachmentVideoUnitService: AttachmentVideoUnitService;
     let findLectureWithDetailsSpy: jest.SpyInstance;
     let deleteLectureUnitSpy: jest.SpyInstance;
     let updateOrderSpy: jest.SpyInstance;
@@ -62,11 +71,11 @@ describe('LectureUnitManagementComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [MockDirective(NgbTooltip), FaIconComponent],
+            imports: [MockDirective(NgbTooltip), FaIconComponent, LectureUnitManagementComponent],
             declarations: [
-                LectureUnitManagementComponent,
                 MockComponent(UnitCreationCardComponent),
                 CompetenciesPopoverStubComponent,
+                PdfDropZoneStubComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
                 MockComponent(ExerciseUnitComponent),
@@ -81,16 +90,23 @@ describe('LectureUnitManagementComponent', () => {
                 MockProvider(LectureService),
                 MockProvider(AlertService),
                 MockProvider(LectureTranscriptionService),
+                MockProvider(AttachmentVideoUnitService),
                 { provide: Router, useClass: MockRouter },
                 { provide: ActivatedRoute, useValue: route },
             ],
-        }).compileComponents();
+        })
+            .overrideComponent(LectureUnitManagementComponent, {
+                remove: { imports: [PdfDropZoneComponent] },
+                add: { imports: [PdfDropZoneStubComponent] },
+            })
+            .compileComponents();
         lectureUnitManagementComponentFixture = TestBed.createComponent(LectureUnitManagementComponent);
         lectureUnitManagementComponent = lectureUnitManagementComponentFixture.componentInstance;
         lectureService = TestBed.inject(LectureService);
         lectureUnitService = TestBed.inject(LectureUnitService);
         lectureTranscriptionService = TestBed.inject(LectureTranscriptionService);
         alertService = TestBed.inject(AlertService);
+        attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
         findLectureWithDetailsSpy = jest.spyOn(lectureService, 'findWithDetails');
         deleteLectureUnitSpy = jest.spyOn(lectureUnitService, 'delete');
         updateOrderSpy = jest.spyOn(lectureUnitService, 'updateOrder');
@@ -103,7 +119,7 @@ describe('LectureUnitManagementComponent', () => {
         course = new Course();
         course.id = 99;
         lecture = new Lecture();
-        lecture.id = 0;
+        lecture.id = 1;
         lecture.course = course;
         lecture.lectureUnits = [textUnit, exerciseUnit, attachmentVideoUnit];
         const returnValue = of(new HttpResponse({ body: lecture, status: 200 }));
@@ -375,6 +391,187 @@ describe('LectureUnitManagementComponent', () => {
             lectureUnitManagementComponent.retryProcessing(attachmentVideoUnit);
 
             expect(lectureUnitManagementComponent.isRetryingProcessing[attachmentVideoUnit.id!]).toBeFalse();
+        });
+    });
+
+    describe('PDF drop zone', () => {
+        it('should create attachment units from dropped PDF files', () => {
+            const alertService = TestBed.inject(AlertService);
+
+            const createdUnit = new AttachmentVideoUnit();
+            createdUnit.id = 42;
+            createdUnit.name = 'Test File';
+
+            const createSpy = jest.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile').mockReturnValue(of(new HttpResponse({ body: createdUnit, status: 201 })));
+            const successSpy = jest.spyOn(alertService, 'success');
+
+            lectureUnitManagementComponent.lecture = lecture;
+            lectureUnitManagementComponent.lectureId = lecture.id;
+
+            const pdfFile = new File(['content'], 'Test_File.pdf', { type: 'application/pdf' });
+            lectureUnitManagementComponent.onPdfFilesDropped([pdfFile]);
+
+            expect(createSpy).toHaveBeenCalledOnce();
+            expect(successSpy).toHaveBeenCalledWith('artemisApp.lecture.pdfUpload.success');
+        });
+
+        it('should navigate to edit page after upload', () => {
+            const router = TestBed.inject(Router);
+            const navigateSpy = jest.spyOn(router, 'navigate');
+
+            const createdUnit = new AttachmentVideoUnit();
+            createdUnit.id = 99;
+
+            jest.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile').mockReturnValue(of(new HttpResponse({ body: createdUnit, status: 201 })));
+
+            lectureUnitManagementComponent.lecture = lecture;
+            lectureUnitManagementComponent.lectureId = lecture.id;
+
+            const pdfFile = new File(['content'], 'test.pdf', { type: 'application/pdf' });
+            lectureUnitManagementComponent.onPdfFilesDropped([pdfFile]);
+
+            expect(navigateSpy).toHaveBeenCalledWith([
+                '/course-management',
+                lecture.course!.id,
+                'lectures',
+                lecture.id,
+                'unit-management',
+                'attachment-video-units',
+                createdUnit.id,
+                'edit',
+            ]);
+        });
+
+        it('should handle multiple PDF files sequentially', () => {
+            const alertService = TestBed.inject(AlertService);
+
+            let callCount = 0;
+            const createSpy = jest.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile').mockImplementation(() => {
+                callCount++;
+                const unit = new AttachmentVideoUnit();
+                unit.id = callCount;
+                return of(new HttpResponse({ body: unit, status: 201 }));
+            });
+            const successSpy = jest.spyOn(alertService, 'success');
+
+            lectureUnitManagementComponent.lecture = lecture;
+            lectureUnitManagementComponent.lectureId = lecture.id;
+
+            const pdfFiles = [
+                new File(['content1'], 'file1.pdf', { type: 'application/pdf' }),
+                new File(['content2'], 'file2.pdf', { type: 'application/pdf' }),
+                new File(['content3'], 'file3.pdf', { type: 'application/pdf' }),
+            ];
+
+            lectureUnitManagementComponent.onPdfFilesDropped(pdfFiles);
+
+            expect(createSpy).toHaveBeenCalledTimes(3);
+            expect(successSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should show error alert on upload failure', () => {
+            const alertService = TestBed.inject(AlertService);
+
+            // Use status 400 as status 500 intentionally doesn't show an alert (see onError in global.utils.ts)
+            jest.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile').mockReturnValue(throwError(() => ({ status: 400 })));
+            const errorSpy = jest.spyOn(alertService, 'error');
+
+            lectureUnitManagementComponent.lecture = lecture;
+            lectureUnitManagementComponent.lectureId = lecture.id;
+
+            const pdfFile = new File(['content'], 'test.pdf', { type: 'application/pdf' });
+            lectureUnitManagementComponent.onPdfFilesDropped([pdfFile]);
+
+            expect(errorSpy).toHaveBeenCalled();
+            expect(lectureUnitManagementComponent.isUploadingPdfs()).toBeFalse();
+        });
+
+        it('should not process if no files are provided', () => {
+            const createSpy = jest.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile');
+
+            lectureUnitManagementComponent.lecture = lecture;
+            lectureUnitManagementComponent.lectureId = lecture.id;
+
+            lectureUnitManagementComponent.onPdfFilesDropped([]);
+
+            expect(createSpy).not.toHaveBeenCalled();
+        });
+
+        it('should not process if lectureId is undefined', () => {
+            const createSpy = jest.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile');
+
+            lectureUnitManagementComponent.lecture = lecture;
+            lectureUnitManagementComponent.lectureId = undefined;
+
+            const pdfFile = new File(['content'], 'test.pdf', { type: 'application/pdf' });
+            lectureUnitManagementComponent.onPdfFilesDropped([pdfFile]);
+
+            expect(createSpy).not.toHaveBeenCalled();
+        });
+
+        it('should load data if navigation fails due to missing course', () => {
+            const loadDataSpy = jest.spyOn(lectureUnitManagementComponent, 'loadData');
+
+            const createdUnit = new AttachmentVideoUnit();
+            createdUnit.id = 99;
+
+            jest.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile').mockReturnValue(of(new HttpResponse({ body: createdUnit, status: 201 })));
+
+            // Lecture without course
+            const lectureWithoutCourse = new Lecture();
+            lectureWithoutCourse.id = 1;
+            lectureUnitManagementComponent.lecture = lectureWithoutCourse;
+            lectureUnitManagementComponent.lectureId = lectureWithoutCourse.id;
+
+            const pdfFile = new File(['content'], 'test.pdf', { type: 'application/pdf' });
+            lectureUnitManagementComponent.onPdfFilesDropped([pdfFile]);
+
+            expect(loadDataSpy).toHaveBeenCalled();
+        });
+
+        it('should set isUploadingPdfs during upload', () => {
+            const createdUnit = new AttachmentVideoUnit();
+            createdUnit.id = 1;
+
+            jest.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile').mockReturnValue(of(new HttpResponse({ body: createdUnit, status: 201 })));
+
+            lectureUnitManagementComponent.lecture = lecture;
+            lectureUnitManagementComponent.lectureId = lecture.id;
+
+            expect(lectureUnitManagementComponent.isUploadingPdfs()).toBeFalse();
+
+            const pdfFile = new File(['content'], 'test.pdf', { type: 'application/pdf' });
+            lectureUnitManagementComponent.onPdfFilesDropped([pdfFile]);
+
+            // After completion (synchronous in this test due to of())
+            expect(lectureUnitManagementComponent.isUploadingPdfs()).toBeFalse();
+        });
+
+        it('should navigate to last created unit when uploading multiple files', () => {
+            const router = TestBed.inject(Router);
+            const navigateSpy = jest.spyOn(router, 'navigate');
+
+            let callCount = 0;
+            jest.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile').mockImplementation(() => {
+                callCount++;
+                const unit = new AttachmentVideoUnit();
+                unit.id = callCount * 10; // 10, 20, 30
+                return of(new HttpResponse({ body: unit, status: 201 }));
+            });
+
+            lectureUnitManagementComponent.lecture = lecture;
+            lectureUnitManagementComponent.lectureId = lecture.id;
+
+            const pdfFiles = [
+                new File(['content1'], 'file1.pdf', { type: 'application/pdf' }),
+                new File(['content2'], 'file2.pdf', { type: 'application/pdf' }),
+                new File(['content3'], 'file3.pdf', { type: 'application/pdf' }),
+            ];
+
+            lectureUnitManagementComponent.onPdfFilesDropped(pdfFiles);
+
+            // Should navigate to the last created unit (id: 30)
+            expect(navigateSpy).toHaveBeenCalledWith(['/course-management', lecture.course!.id, 'lectures', lecture.id, 'unit-management', 'attachment-video-units', 30, 'edit']);
         });
     });
 });
