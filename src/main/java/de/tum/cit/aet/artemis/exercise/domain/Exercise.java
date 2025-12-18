@@ -854,7 +854,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         // Check if max score is set
         if (getMaxPoints() == null || getMaxPoints() <= 0) {
             // Correct invalid maxPoints to default value (prevents invalid state)
-            setMaxPoints(1.0);
+            throw new BadRequestAlertException("The max points needs to be greater than 0", "Exercise", "maxScoreInvalid");
         }
 
         if (getBonusPoints() == null || getBonusPoints() < 0) {
