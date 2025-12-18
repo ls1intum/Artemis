@@ -199,7 +199,7 @@ export class CourseManagementService {
                             this.courseNotificationService.updateNotificationCountMap(courseForDashboardDTO.course!.id, courseForDashboardDTO.courseNotificationCount);
 
                             // Setting the helper attribute in the course so we can use it in the course overview guard.
-                            courseForDashboardDTO.course.irisCourseChatEnabled = courseForDashboardDTO.irisCourseChatEnabled;
+                            courseForDashboardDTO.course.irisEnabledInCourse = courseForDashboardDTO.irisEnabledInCourse;
                         }
                         courses.push(courseForDashboardDTO.course);
                         this.saveScoresInStorage(courseForDashboardDTO);
@@ -230,7 +230,7 @@ export class CourseManagementService {
                         this.courseNotificationService.updateNotificationCountMap(courseForDashboardDTO.course!.id, courseForDashboardDTO.courseNotificationCount);
 
                         // Setting the helper attribute in the course so we can use it in the course overview guard.
-                        courseForDashboardDTO.course.irisCourseChatEnabled = courseForDashboardDTO.irisCourseChatEnabled;
+                        courseForDashboardDTO.course.irisEnabledInCourse = courseForDashboardDTO.irisEnabledInCourse;
                     }
                     this.saveScoresInStorage(courseForDashboardDTO);
 
