@@ -6,4 +6,4 @@ Team exercises
 
    Please refer to the following link for the most up-to-date information:
 
-   - **For Instructors**: `Team Exercise - Instructor Guide <https://docs.artemis.cit.tum.de/instructor/exercises/team-exercise>`_
+   - **For Instructors**: `Team Exercise - Instructor Guide <https://ls1intum.github.io/Artemis/instructor/exercises/team-exercise>`_

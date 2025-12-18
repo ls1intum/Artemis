@@ -8,5 +8,5 @@ Modeling exercise
 
    Please refer to the following links for the most up-to-date information:
 
-   - **For Instructors**: `Modeling Exercise - Instructor Guide <https://docs.artemis.cit.tum.de/instructor/exercises/modeling-exercise>`_
-   - **For Students**: `Modeling Exercise - Student Guide <https://docs.artemis.cit.tum.de/student/exercises/modeling-exercise>`_
+   - **For Instructors**: `Modeling Exercise - Instructor Guide <https://ls1intum.github.io/Artemis/instructor/exercises/modeling-exercise>`_
+   - **For Students**: `Modeling Exercise - Student Guide <https://ls1intum.github.io/Artemis/student/exercises/modeling-exercise>`_

@@ -8,5 +8,5 @@ Quiz exercise
 
    Please refer to the following links for the most up-to-date information:
 
-   - **For Instructors**: `Quiz Exercise - Instructor Guide <https://docs.artemis.cit.tum.de/instructor/exercises/quiz-exercise>`_
-   - **For Students**: `Quiz Exercise - Student Guide <https://docs.artemis.cit.tum.de/student/exercises/quiz-exercise>`_
+   - **For Instructors**: `Quiz Exercise - Instructor Guide <https://ls1intum.github.io/Artemis/instructor/exercises/quiz-exercise>`_
+   - **For Students**: `Quiz Exercise - Student Guide <https://ls1intum.github.io/Artemis/student/exercises/quiz-exercise>`_
