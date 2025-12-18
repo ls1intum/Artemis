@@ -35,34 +35,42 @@
         </div>
 
         <div class="row">
-            <div class="col">
-                <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="artemisApp.plagiarism.similarityThreshold"></label>
-                    <fa-icon [icon]="faQuestionCircle" placement="bottom auto" [ngbTooltip]="'artemisApp.plagiarism.similarityThresholdTooltip' | artemisTranslate" />
+            <div class="col-12 col-md-6 col-xl-3">
+                <div class="form-group d-flex flex-column h-100">
+                    <div class="label-row">
+                        <span class="form-control-label" jhiTranslate="artemisApp.plagiarism.similarityThreshold"></span>
+                        <fa-icon [icon]="faQuestionCircle" placement="bottom auto" [ngbTooltip]="'artemisApp.plagiarism.similarityThresholdTooltip' | artemisTranslate" />
+                    </div>
                     <input type="number" class="form-control" min="0" max="100" step="5" id="plagiarism-similarity-threshold" formControlName="similarityThreshold" required />
                 </div>
             </div>
 
-            <div class="col">
-                <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="artemisApp.plagiarism.minimumScore"></label>
-                    <fa-icon [icon]="faQuestionCircle" placement="bottom auto" [ngbTooltip]="'artemisApp.plagiarism.minimumScoreTooltip' | artemisTranslate" />
+            <div class="col-12 col-md-6 col-xl-3">
+                <div class="form-group d-flex flex-column h-100">
+                    <div class="label-row">
+                        <span class="form-control-label" jhiTranslate="artemisApp.plagiarism.minimumScore"></span>
+                        <fa-icon [icon]="faQuestionCircle" placement="bottom auto" [ngbTooltip]="'artemisApp.plagiarism.minimumScoreTooltip' | artemisTranslate" />
+                    </div>
                     <input type="number" class="form-control" min="0" max="100" id="plagiarism-minimum-score" formControlName="minimumScore" required />
                 </div>
             </div>
 
-            <div class="col">
-                <div class="form-group">
-                    <label class="form-control-label" [jhiTranslate]="getMinimumSizeLabel()"></label>
-                    <fa-icon [icon]="faQuestionCircle" placement="bottom auto" [ngbTooltip]="getMinimumSizeTooltip() | artemisTranslate" />
+            <div class="col-12 col-md-6 col-xl-3">
+                <div class="form-group d-flex flex-column h-100">
+                    <div class="label-row">
+                        <span class="form-control-label" [jhiTranslate]="getMinimumSizeLabel()"></span>
+                        <fa-icon [icon]="faQuestionCircle" placement="bottom auto" [ngbTooltip]="getMinimumSizeTooltip() | artemisTranslate" />
+                    </div>
                     <input type="number" class="form-control" min="0" max="100" id="plagiarism-minimum-size" formControlName="minimumSize" required />
                 </div>
             </div>
 
-            <div class="col">
-                <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="artemisApp.plagiarism.plagiarismCaseResponsePeriod"></label>
-                    <fa-icon [icon]="faQuestionCircle" placement="bottom auto" [ngbTooltip]="'artemisApp.plagiarism.plagiarismCaseResponsePeriodTooltip' | artemisTranslate" />
+            <div class="col-12 col-md-6 col-xl-3">
+                <div class="form-group d-flex flex-column h-100">
+                    <div class="label-row">
+                        <span class="form-control-label" jhiTranslate="artemisApp.plagiarism.plagiarismCaseResponsePeriod"></span>
+                        <fa-icon [icon]="faQuestionCircle" placement="bottom auto" [ngbTooltip]="'artemisApp.plagiarism.plagiarismCaseResponsePeriodTooltip' | artemisTranslate" />
+                    </div>
                     <input
                         type="number"
                         class="form-control"

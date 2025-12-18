@@ -54,7 +54,7 @@ describe('Component Tests', () => {
 
                 testValues.forEach((testValue, index) => {
                     comp.passwordToCheck = testValue;
-                    fixture.detectChanges();
+                    fixture.changeDetectorRef.detectChanges();
                     const filteredPoints = fixture.debugElement.queryAll(By.css('.point')).filter((element) => {
                         return element.styles['background-color'] === expectedResults[index].color;
                     });

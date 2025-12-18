@@ -126,11 +126,11 @@ describe('CourseExercisesComponent', () => {
 
     it('should toggle sidebar visibility based on isCollapsed property', () => {
         component.isCollapsed = true;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(fixture.nativeElement.querySelector('.sidebar-collapsed')).not.toBeNull();
 
         component.isCollapsed = false;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(fixture.nativeElement.querySelector('.sidebar-collapsed')).toBeNull();
     });
 
@@ -144,7 +144,7 @@ describe('CourseExercisesComponent', () => {
 
     it('should display "Please Select an Exercise" when no exercise is selected', () => {
         component.exerciseSelected = false;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         const noExerciseElement = fixture.debugElement.query(By.css('[jhiTranslate$=selectExercise]'));
         expect(noExerciseElement).toBeTruthy();
         expect(noExerciseElement.nativeElement.getAttribute('jhiTranslate')).toBe('artemisApp.courseOverview.exerciseDetails.selectExercise');
@@ -152,7 +152,7 @@ describe('CourseExercisesComponent', () => {
 
     it('should display the exercise details when an exercise is selected', () => {
         component.exerciseSelected = true;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(fixture.nativeElement.querySelector('router-outlet')).not.toBeNull();
     });
 

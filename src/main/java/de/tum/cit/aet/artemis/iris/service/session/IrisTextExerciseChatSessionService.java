@@ -21,7 +21,6 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisTextExerciseChatSession;
-import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettingsType;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
@@ -43,7 +42,8 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 @Lazy
 @Service
 @Profile(PROFILE_IRIS)
-public class IrisTextExerciseChatSessionService implements IrisChatBasedFeatureInterface<IrisTextExerciseChatSession>, IrisRateLimitedFeatureInterface {
+public class IrisTextExerciseChatSessionService
+        implements IrisChatBasedFeatureInterface<IrisTextExerciseChatSession>, IrisRateLimitedFeatureInterface<IrisTextExerciseChatSession> {
 
     private final IrisSettingsService irisSettingsService;
 
@@ -96,11 +96,11 @@ public class IrisTextExerciseChatSessionService implements IrisChatBasedFeatureI
         if (exercise.isExamExercise()) {
             throw new ConflictException("Iris is not supported for exam exercises", "Iris", "irisExamExercise");
         }
-        var settings = irisSettingsService.getCombinedIrisSettingsFor(exercise, false).irisTextExerciseChatSettings();
+        var course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        var settings = irisSettingsService.getSettingsForCourse(course);
         if (!settings.enabled()) {
             throw new ConflictException("Iris is not enabled for this exercise", "Iris", "irisDisabled");
         }
-        var course = exercise.getCourseViaExerciseGroupOrCourseMember();
         var user = userRepository.findByIdElseThrow(session.getUserId());
         // TODO: Once we can receive client form data through the IrisMessageResource, we should use that instead of fetching the latest submission to get the text
         var participation = studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), user.getLogin());
@@ -116,7 +116,7 @@ public class IrisTextExerciseChatSessionService implements IrisChatBasedFeatureI
         // @formatter:off
         pyrisPipelineService.executePipeline(
                 "text-exercise-chat",
-                settings.selectedVariant(),
+                settings.variant().jsonValue(),
                 Optional.empty(),
                 pyrisJobService.createTokenForJob(token -> new TextExerciseChatJob(token, course.getId(), exercise.getId(), session.getId())),
                 dto -> new PyrisTextExerciseChatPipelineExecutionDTO(PyrisTextExerciseDTO.of(exercise), session.getTitle(), chatHistory, new PyrisUserDTO(user), latestSubmissionText, dto.settings(), dto.initialStages(), settings.customInstructions()),
@@ -186,13 +186,14 @@ public class IrisTextExerciseChatSessionService implements IrisChatBasedFeatureI
     }
 
     @Override
-    public void checkIsFeatureActivatedFor(IrisTextExerciseChatSession session) {
+    public void checkIrisEnabledFor(IrisTextExerciseChatSession session) {
         var exercise = textRepositoryApi.orElseThrow(() -> new TextApiNotPresentException(TextApi.class)).findByIdElseThrow(session.getExerciseId());
-        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.TEXT_EXERCISE_CHAT, exercise);
+        var course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        irisSettingsService.ensureEnabledForCourseOrElseThrow(course);
     }
 
     @Override
-    public void checkRateLimit(User user) {
-        rateLimitService.checkRateLimitElseThrow(user);
+    public void checkRateLimit(User user, IrisTextExerciseChatSession session) {
+        rateLimitService.checkRateLimitElseThrow(session, user);
     }
 }
