@@ -192,7 +192,7 @@
             </div>
             <!-- Editable instructions or Diff view -->
             <div editorCenter class="d-flex flex-column h-100 instructions-wrapper__content card-body p-0">
-                @if (showDiff) {
+                @if (showDiff()) {
                     <!-- Diff review banner -->
                     <div class="alert alert-info d-flex justify-content-between align-items-center mb-2">
                         <span>

@@ -67,8 +67,6 @@ import { HyperionCodeGenerationApiService } from 'app/openapi/api/hyperionCodeGe
         ProgrammingExerciseStudentTriggerBuildButtonComponent,
         ProgrammingExerciseEditableInstructionComponent,
         ProgrammingExerciseInstructionComponent,
-        NgbTooltip,
-        ArtemisTranslatePipe,
         MarkdownDiffEditorMonacoComponent,
     ],
 })
@@ -259,9 +257,9 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     private lastExerciseId: number | undefined;
 
     // Diff mode properties
-    showDiff = false;
-    originalProblemStatement = '';
-    refinedProblemStatement = '';
+    showDiff = signal(false);
+    originalProblemStatement = signal('');
+    refinedProblemStatement = signal('');
     private diffContentSet = false;
 
     // Domain actions for diff editor toolbar
@@ -274,8 +272,8 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      * Used to set diff editor content when it becomes available.
      */
     ngAfterViewChecked(): void {
-        if (this.showDiff && this.diffEditor && !this.diffContentSet) {
-            this.diffEditor.setFileContents(this.originalProblemStatement, this.refinedProblemStatement, 'original.md', 'refined.md');
+        if (this.showDiff() && this.diffEditor && !this.diffContentSet) {
+            this.diffEditor.setFileContents(this.originalProblemStatement(), this.refinedProblemStatement(), 'original.md', 'refined.md');
             this.diffContentSet = true;
         }
     }
@@ -370,9 +368,10 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      * Accepts the refined problem statement and applies the changes.
      */
     acceptRefinement(): void {
-        if (this.refinedProblemStatement) {
-            this.exercise.problemStatement = this.refinedProblemStatement;
-            this.editableInstructions?.updateProblemStatement(this.refinedProblemStatement);
+        const refined = this.refinedProblemStatement();
+        if (refined) {
+            this.exercise.problemStatement = refined;
+            this.editableInstructions?.updateProblemStatement(refined);
             this.closeDiff();
             this.alertService.success('artemisApp.programmingExercise.problemStatement.changesApplied');
         }
@@ -389,9 +388,9 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      * Closes the diff view and resets diff state.
      */
     closeDiff(): void {
-        this.showDiff = false;
-        this.originalProblemStatement = '';
-        this.refinedProblemStatement = '';
+        this.showDiff.set(false);
+        this.originalProblemStatement.set('');
+        this.refinedProblemStatement.set('');
         this.diffContentSet = false;
     }
 
@@ -497,10 +496,10 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             .subscribe({
                 next: (response) => {
                     if (response.refinedProblemStatement && response.refinedProblemStatement.trim() !== '') {
-                        this.originalProblemStatement = this.exercise.problemStatement || '';
-                        this.refinedProblemStatement = response.refinedProblemStatement;
+                        this.originalProblemStatement.set(this.exercise.problemStatement || '');
+                        this.refinedProblemStatement.set(response.refinedProblemStatement);
                         this.diffContentSet = false;
-                        this.showDiff = true;
+                        this.showDiff.set(true);
 
                         this.inlineCommentService.markAllApplied(comments.map((c) => c.id));
                         this.alertService.success('artemisApp.programmingExercise.inlineComment.applyAllSuccess');
@@ -557,10 +556,10 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                 next: (response) => {
                     if (response.refinedProblemStatement && response.refinedProblemStatement.trim() !== '') {
                         // Store original and refined content for diff view
-                        this.originalProblemStatement = this.exercise.problemStatement || '';
-                        this.refinedProblemStatement = response.refinedProblemStatement;
+                        this.originalProblemStatement.set(this.exercise.problemStatement || '');
+                        this.refinedProblemStatement.set(response.refinedProblemStatement);
                         this.diffContentSet = false;
-                        this.showDiff = true;
+                        this.showDiff.set(true);
 
                         // Mark comment as applied and remove from pending
                         this.inlineCommentService.markApplied(comment.id);
