@@ -38,6 +38,7 @@ const sidebars: SidebarsConfig = {
         'integrated-code-lifecycle',
         'learning-analytics',
         'adaptive-learning',
+        'sharing',
     ],
 };
 
