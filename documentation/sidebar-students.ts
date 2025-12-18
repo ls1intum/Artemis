@@ -17,6 +17,8 @@ const sidebars: SidebarsConfig = {
         'exports',
         'grading',
         'integrated-code-lifecycle',
+        'learning-analytics',
+        'adaptive-learning',
     ],
 };
 
