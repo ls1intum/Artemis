@@ -371,7 +371,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      */
     acceptRefinement(): void {
         const refined = this.refinedProblemStatement();
-        if (refined) {
+        if (refined?.trim()) {
             this.exercise.problemStatement = refined;
             this.editableInstructions?.updateProblemStatement(refined);
             this.closeDiff();
