@@ -33,11 +33,10 @@ import { OnlineUnit } from 'app/lecture/shared/entities/lecture-unit/onlineUnit.
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { PROFILE_IRIS } from 'app/app.constants';
-import { IrisCourseSettings } from 'app/iris/shared/entities/settings/iris-settings.model';
-import { IrisLectureIngestionSubSettings } from 'app/iris/shared/entities/settings/iris-sub-settings.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { mockCourseSettings } from 'test/helpers/mocks/iris/mock-settings';
 import { LectureTranscriptionService } from 'app/lecture/manage/services/lecture-transcription.service';
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
 
@@ -115,7 +114,7 @@ describe('LectureUnitManagementComponent', () => {
         deleteLectureUnitSpy = jest.spyOn(lectureUnitService, 'delete');
         updateOrderSpy = jest.spyOn(lectureUnitService, 'updateOrder');
         getProfileInfo = jest.spyOn(profileService, 'getProfileInfo');
-        getCombinedCourseSettings = jest.spyOn(irisSettingsService, 'getCombinedCourseSettings');
+        getCombinedCourseSettings = jest.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit');
         textUnit = new TextUnit();
         textUnit.id = 0;
         exerciseUnit = new ExerciseUnit();
@@ -135,9 +134,7 @@ describe('LectureUnitManagementComponent', () => {
         deleteLectureUnitSpy.mockReturnValue(of(new HttpResponse({ body: attachmentVideoUnit, status: 200 })));
         const profileInfo = { activeProfiles: [PROFILE_IRIS] } as ProfileInfo;
         getProfileInfo.mockReturnValue(profileInfo);
-        const irisCourseSettings = new IrisCourseSettings();
-        irisCourseSettings.irisLectureIngestionSettings = new IrisLectureIngestionSubSettings();
-        irisCourseSettings.irisLectureIngestionSettings.enabled = true;
+        const irisCourseSettings = mockCourseSettings(course.id!, true);
         getCombinedCourseSettings.mockReturnValue(of(irisCourseSettings));
         lectureUnitManagementComponentFixture.detectChanges();
     });
@@ -154,12 +151,12 @@ describe('LectureUnitManagementComponent', () => {
     it('should emit edit button event', () => {
         const editButtonClickedSpy = jest.spyOn(lectureUnitManagementComponent, 'onEditButtonClicked');
         lectureUnitManagementComponent.emitEditEvents = true;
-        lectureUnitManagementComponentFixture.detectChanges();
+        lectureUnitManagementComponentFixture.changeDetectorRef.detectChanges();
         const buttons = lectureUnitManagementComponentFixture.debugElement.queryAll(By.css(`.edit`));
         for (const button of buttons) {
             button.nativeElement.click();
         }
-        lectureUnitManagementComponentFixture.detectChanges();
+        lectureUnitManagementComponentFixture.changeDetectorRef.detectChanges();
         expect(editButtonClickedSpy).toHaveBeenCalledTimes(buttons.length);
     });
 
@@ -220,9 +217,8 @@ describe('LectureUnitManagementComponent', () => {
         lectureUnitManagementComponent.lecture = lecture;
         lectureUnitManagementComponent.initializeProfileInfo();
         expect(profileService.getProfileInfo).toHaveBeenCalled();
-        expect(irisSettingsService.getCombinedCourseSettings).toHaveBeenCalledWith(lecture.course!.id);
+        expect(irisSettingsService.getCourseSettingsWithRateLimit).toHaveBeenCalledWith(lecture.course!.id);
         expect(lectureUnitManagementComponent.irisEnabled).toBeTrue();
-        expect(lectureUnitManagementComponent.lectureIngestionEnabled).toBeTrue();
     });
 
     it('should update ingestion states correctly when getIngestionState returns data', () => {

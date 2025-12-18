@@ -24,7 +24,7 @@ describe('PostingButtonComponent', () => {
 
     it('should have icon shown if property set', () => {
         component.buttonIcon = faPlus;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         const button = getElement(debugElement, 'fa-icon');
         expect(button).not.toBeNull();
     });
@@ -37,14 +37,14 @@ describe('PostingButtonComponent', () => {
 
     it('should show spinner if loading', () => {
         component.buttonLoading = true;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         const button = getElement(debugElement, '.posting-btn-loading-icon');
         expect(button.hasAttribute('hidden')).toBeFalse();
     });
 
     it('should not show spinner if not loading', () => {
         component.buttonLoading = false;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         const button = getElement(debugElement, '.posting-btn-loading-icon');
         expect(button.hasAttribute('hidden')).toBeTrue();
     });

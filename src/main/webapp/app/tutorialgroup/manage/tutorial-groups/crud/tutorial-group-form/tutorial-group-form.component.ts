@@ -35,7 +35,7 @@ export class UserWithLabel extends User {
     label: string;
 }
 
-export const titleRegex = new RegExp('^[a-zA-Z0-9]{1}[a-zA-Z0-9- ]{0,19}$');
+export const titleRegex = new RegExp('^[a-zA-Z0-9]{1}[a-zA-Z0-9: \\-]{0,19}$');
 
 @Component({
     selector: 'jhi-tutorial-group-form',

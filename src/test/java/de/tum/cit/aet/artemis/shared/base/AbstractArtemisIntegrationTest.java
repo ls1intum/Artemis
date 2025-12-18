@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 
@@ -263,10 +264,22 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
             }
 
             @Override
+            public Instant now() {
+                return defaultReader.now();
+            }
+
+            @Override
+            public ZoneOffset getTimeZoneAt(Instant when) {
+                return defaultReader.getTimeZoneAt(when);
+            }
+
+            @SuppressWarnings("deprecation")
+            @Override
             public long getCurrentTime() {
                 return defaultReader.getCurrentTime();
             }
 
+            @SuppressWarnings("deprecation")
             @Override
             public int getTimezone(long when) {
                 return defaultReader.getTimezone(when);
