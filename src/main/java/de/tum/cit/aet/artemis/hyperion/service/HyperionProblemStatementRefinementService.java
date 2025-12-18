@@ -112,12 +112,12 @@ public class HyperionProblemStatementRefinementService {
 
         if (originalProblemStatementText == null || originalProblemStatementText.isBlank()) {
             log.warn("Cannot refine empty problem statement for course [{}]", course.getId());
-            return new ProblemStatementRefinementResponseDTO("", originalProblemStatementText);
+            return new ProblemStatementRefinementResponseDTO("", java.util.Objects.toString(originalProblemStatementText, ""));
         }
 
         if (inlineComments == null || inlineComments.isEmpty()) {
             log.warn("No inline comments provided for refinement for course [{}]", course.getId());
-            return new ProblemStatementRefinementResponseDTO("", originalProblemStatementText);
+            return new ProblemStatementRefinementResponseDTO("", java.util.Objects.toString(originalProblemStatementText, ""));
         }
 
         if (chatClient == null) {
@@ -192,8 +192,11 @@ public class HyperionProblemStatementRefinementService {
                     "ProblemStatement", "refinedProblemStatementTooLong");
         }
 
-        // Refinement didn't change content
-        if (refinedProblemStatementText != null && refinedProblemStatementText.equals(originalProblemStatementText)) {
+        // Refinement didn't change content (compare trimmed values to detect
+        // semantically unchanged content)
+        String originalTrimmed = originalProblemStatementText == null ? null : originalProblemStatementText.trim();
+        String refinedTrimmed = refinedProblemStatementText == null ? null : refinedProblemStatementText.trim();
+        if (refinedTrimmed != null && refinedTrimmed.equals(originalTrimmed)) {
             log.warn("Refined problem statement unchanged for course [{}]", course.getId());
             throw new InternalServerErrorAlertException("Problem statement is the same after refinement", "ProblemStatement", "refinedProblemStatementUnchanged");
         }

@@ -28,7 +28,7 @@ export interface LineSelectionDisposable {
  */
 export function setupLineSelectionHandler(editor: monaco.editor.IStandaloneCodeEditor, callbacks: LineSelectionCallbacks, options: LineSelectionOptions): LineSelectionDisposable {
     const disposables: monaco.IDisposable[] = [];
-    let currentDecorations: string[] = [];
+    let decorationsCollection: monaco.editor.IEditorDecorationsCollection | undefined;
     let addButtonOverlay: HTMLElement | undefined;
     let currentSelection: { startLine: number; endLine: number } | undefined;
 
@@ -43,7 +43,7 @@ export function setupLineSelectionHandler(editor: monaco.editor.IStandaloneCodeE
 
         if (!selection || selection.isEmpty()) {
             // No selection - clear decorations
-            currentDecorations = editor.deltaDecorations(currentDecorations, []);
+            decorationsCollection?.clear();
             removeAddButton();
             currentSelection = undefined;
             return;
@@ -53,8 +53,13 @@ export function setupLineSelectionHandler(editor: monaco.editor.IStandaloneCodeE
         const endLine = selection.endLineNumber;
         currentSelection = { startLine, endLine };
 
+        // Create decorations collection if not exists
+        if (!decorationsCollection) {
+            decorationsCollection = editor.createDecorationsCollection();
+        }
+
         // Add gutter decoration for selected lines
-        currentDecorations = editor.deltaDecorations(currentDecorations, [
+        decorationsCollection.set([
             {
                 range: new monaco.Range(startLine, 1, endLine, 1),
                 options: {
@@ -167,7 +172,7 @@ export function setupLineSelectionHandler(editor: monaco.editor.IStandaloneCodeE
         // Small delay to allow click on the add button
         setTimeout(() => {
             if (!editor.hasTextFocus()) {
-                currentDecorations = editor.deltaDecorations(currentDecorations, []);
+                decorationsCollection?.clear();
                 removeAddButton();
                 currentSelection = undefined;
             }
@@ -178,7 +183,7 @@ export function setupLineSelectionHandler(editor: monaco.editor.IStandaloneCodeE
     return {
         dispose: () => {
             disposables.forEach((d) => d.dispose());
-            currentDecorations = editor.deltaDecorations(currentDecorations, []);
+            decorationsCollection?.clear();
             removeAddButton();
             currentSelection = undefined;
         },

@@ -256,6 +256,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     protected isAnyApplying = computed(() => !!this.applyingCommentId() || this.isApplyingAll());
     private currentRefinementSubscription: Subscription | undefined;
     private exerciseContextInitialized = false;
+    private lastExerciseId: number | undefined;
 
     // Diff mode properties
     showDiff = false;
@@ -285,9 +286,10 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     protected override applyDomainChange(domainType: any, domainValue: any): void {
         super.applyDomainChange(domainType, domainValue);
 
-        // Initialize inline comment service with exercise context (only once)
-        if (!this.exerciseContextInitialized && this.exercise?.id) {
+        // Initialize inline comment service with exercise context (reinitialize if exercise changes)
+        if (this.exercise?.id && (this.lastExerciseId !== this.exercise.id || !this.exerciseContextInitialized)) {
             this.inlineCommentService.setExerciseContext(this.exercise.id);
+            this.lastExerciseId = this.exercise.id;
             this.exerciseContextInitialized = true;
         }
     }
@@ -297,6 +299,9 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         this.currentRefinementSubscription?.unsubscribe();
         // Clear inline comment context when leaving the page
         this.inlineCommentService.clearContext();
+        // Reset context tracking so it reinitializes on component reuse
+        this.exerciseContextInitialized = false;
+        this.lastExerciseId = undefined;
     }
 
     /**
@@ -458,7 +463,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         }
 
         const courseId = this.exercise?.course?.id ?? this.exercise?.exerciseGroup?.exam?.course?.id;
-        if (!courseId || !this.exercise?.problemStatement) {
+        if (!courseId || !this.exercise?.problemStatement?.trim()) {
             this.alertService.error('artemisApp.programmingExercise.inlineComment.applyError');
             return;
         }
@@ -521,7 +526,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     private applySingleComment(comment: InlineComment): void {
         const courseId = this.exercise?.course?.id ?? this.exercise?.exerciseGroup?.exam?.course?.id;
 
-        if (!courseId || !this.exercise?.problemStatement) {
+        if (!courseId || this.exercise?.problemStatement == null) {
             this.alertService.error('artemisApp.programmingExercise.inlineComment.applyError');
             return;
         }
