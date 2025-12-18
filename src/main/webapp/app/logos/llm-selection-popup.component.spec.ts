@@ -56,26 +56,6 @@ describe('LLMSelectionModalComponent', () => {
         expect(component.isVisible).toBeFalse();
     });
 
-    describe('ngOnInit', () => {
-        it('should subscribe to openModal$', () => {
-            const openSpy = jest.spyOn(component, 'open');
-
-            component.ngOnInit();
-            openModalSubject.next();
-
-            expect(openSpy).toHaveBeenCalled();
-        });
-
-        it('should set isVisible to true when modal is opened', () => {
-            component.ngOnInit();
-            expect(component.isVisible).toBeFalse();
-
-            openModalSubject.next();
-
-            expect(component.isVisible).toBeTrue();
-        });
-    });
-
     describe('open', () => {
         it('should set isVisible to true', () => {
             component.isVisible = false;

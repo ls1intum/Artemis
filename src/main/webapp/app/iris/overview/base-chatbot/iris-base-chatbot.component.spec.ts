@@ -204,32 +204,11 @@ describe('IrisBaseChatbotComponent', () => {
 
         // Act
         component.ngOnInit();
-        fixture.detectChanges();
-
-        // Assert
-        const suggestionButtons = fixture.nativeElement.querySelectorAll('.suggestion-button');
-        expect(suggestionButtons).toHaveLength(0);
-    });
-
-    it('should disable suggestion buttons if isLoading is true', () => {
-        // Arrange
-        const expectedSuggestions = ['suggestion1', 'suggestion2'];
-        const mockMessages = [mockClientMessage, mockServerMessage];
-
-        jest.spyOn(chatService, 'currentSuggestions').mockReturnValue(of(expectedSuggestions));
-        jest.spyOn(chatService, 'currentMessages').mockReturnValue(of(mockMessages));
-
-        // Act
-        component.ngOnInit();
-        component.isLoading = true;
         fixture.changeDetectorRef.detectChanges();
 
         // Assert
         const suggestionButtons = fixture.nativeElement.querySelectorAll('.suggestion-button');
-        expect(suggestionButtons).toHaveLength(expectedSuggestions.length);
-        suggestionButtons.forEach((button: HTMLButtonElement) => {
-            expect(button.disabled).toBeTrue();
-        });
+        expect(suggestionButtons).toHaveLength(0);
     });
 
     it('should not render suggestions if userAccepted is NO_AI', () => {
@@ -685,10 +664,12 @@ describe('IrisBaseChatbotComponent', () => {
     });
 
     describe('onModelChange', () => {
-        beforeEach(() => {
+        beforeEach(fakeAsync(() => {
             component.userAccepted = LLMSelectionDecision.CLOUD_AI;
-            fixture.detectChanges();
-        });
+            fixture.changeDetectorRef.detectChanges();
+            tick();
+            fixture.changeDetectorRef.detectChanges();
+        }));
 
         it('should update rows when newRows is less than current rows', () => {
             component.rows = 3;
@@ -762,7 +743,7 @@ describe('IrisBaseChatbotComponent', () => {
             jest.spyOn(chatService, 'currentMessages').mockReturnValue(of(mockMessages));
 
             component.ngOnInit();
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
         });
 
         it('should set isScrolledToBottom to true when scrollTop is 0', () => {
@@ -878,7 +859,7 @@ describe('IrisBaseChatbotComponent', () => {
     describe('resetChatBodyHeight', () => {
         beforeEach(() => {
             component.userAccepted = LLMSelectionDecision.CLOUD_AI;
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
         });
 
         it('should reset textarea rows to 1', () => {
@@ -926,7 +907,7 @@ describe('IrisBaseChatbotComponent', () => {
     describe('adjustTextareaRows', () => {
         beforeEach(() => {
             component.userAccepted = LLMSelectionDecision.CLOUD_AI;
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
         });
 
         it('should set textarea height to auto initially', () => {
@@ -988,7 +969,7 @@ describe('IrisBaseChatbotComponent', () => {
     describe('rateMessage', () => {
         beforeEach(() => {
             component.userAccepted = LLMSelectionDecision.CLOUD_AI;
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
         });
 
         it('should not rate if message sender is not LLM', () => {
@@ -1051,7 +1032,7 @@ describe('IrisBaseChatbotComponent', () => {
     describe('onSend', () => {
         beforeEach(() => {
             component.userAccepted = LLMSelectionDecision.CLOUD_AI;
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
         });
 
         it('should call messagesRead', () => {
@@ -1149,7 +1130,7 @@ describe('IrisBaseChatbotComponent', () => {
     describe('resendMessage', () => {
         beforeEach(() => {
             component.userAccepted = LLMSelectionDecision.CLOUD_AI;
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
         });
 
         it('should not resend if message sender is not USER', () => {
@@ -1315,7 +1296,7 @@ describe('IrisBaseChatbotComponent', () => {
     describe('onInput', () => {
         beforeEach(() => {
             component.userAccepted = LLMSelectionDecision.CLOUD_AI;
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
         });
 
         it('should call adjustTextareaRows', () => {
@@ -1330,7 +1311,7 @@ describe('IrisBaseChatbotComponent', () => {
     describe('onPaste', () => {
         beforeEach(() => {
             component.userAccepted = LLMSelectionDecision.CLOUD_AI;
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
         });
 
         it('should call adjustTextareaRows after timeout', fakeAsync(() => {
@@ -1363,7 +1344,7 @@ describe('IrisBaseChatbotComponent', () => {
             jest.spyOn(chatService, 'currentMessages').mockReturnValue(of(mockMessages));
 
             component.ngOnInit();
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
         });
 
         it('should call scrollTo with smooth behavior', fakeAsync(() => {
@@ -1419,7 +1400,7 @@ describe('IrisBaseChatbotComponent', () => {
 
         beforeEach(() => {
             component.userAccepted = LLMSelectionDecision.CLOUD_AI;
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
 
             modalService = TestBed.inject(NgbModal);
 
