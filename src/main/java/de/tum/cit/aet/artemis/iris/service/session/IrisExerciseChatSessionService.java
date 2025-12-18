@@ -191,7 +191,7 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
     }
 
     /**
-     * Handles the new result event by checking if the user has accepted external LLM usage and
+     * Handles the new result event by checking if the user has accepted LLM usage and
      * if the participation is a student participation. If so, it checks if the build failed or if
      * the student needs intervention based on their recent score trajectory.
      *
