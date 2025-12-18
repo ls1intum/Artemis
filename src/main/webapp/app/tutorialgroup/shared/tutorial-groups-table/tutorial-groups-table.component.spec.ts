@@ -151,7 +151,7 @@ describe('TutorialGroupsTableComponent', () => {
         tutorialGroupTwo.language = Language.GERMAN;
 
         fixture.componentRef.setInput('tutorialGroups', [tutorialGroupOne, tutorialGroupTwo]);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(fixture.nativeElement.querySelector('#language-column')).not.toBeNull();
 
@@ -159,7 +159,7 @@ describe('TutorialGroupsTableComponent', () => {
         tutorialGroupTwo.language = Language.ENGLISH;
 
         fixture.componentRef.setInput('tutorialGroups', [tutorialGroupOne, tutorialGroupTwo]);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(fixture.nativeElement.querySelector('#language-column')).toBeNull();
     });
 

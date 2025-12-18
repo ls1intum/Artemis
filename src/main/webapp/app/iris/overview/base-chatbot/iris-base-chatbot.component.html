@@ -164,19 +164,30 @@
                 @if (
                     suggestions?.length &&
                     userAccepted &&
-                    !this.isLoading &&
                     this.active &&
                     (!this.rateLimitInfo?.rateLimit || this.rateLimitInfo?.currentMessageCount !== this.rateLimitInfo?.rateLimit) &&
                     !this.hasActiveStage
                 ) {
-                    <div @suggestionAnimation class="suggestions-container">
-                        @for (suggestion of suggestions; track suggestion) {
-                            <button class="suggestion-button" (click)="onSuggestionClick(suggestion)" [innerHTML]="suggestion"></button>
-                        }
+                    <div animate.enter="suggestion-entering" animate.leave="suggestion-leaving">
+                        <div class="suggestions-container">
+                            @for (suggestion of suggestions; track suggestion) {
+                                <button class="suggestion-button" (click)="onSuggestionClick(suggestion)" [disabled]="isLoading">
+                                    @if (clickedSuggestion === suggestion) {
+                                        <fa-icon [icon]="faCircleNotch" animation="spin" />
+                                    } @else {
+                                        <span [innerHTML]="suggestion"></span>
+                                    }
+                                </button>
+                            }
+                        </div>
                     </div>
                 }
                 @for (message of messages; track message.id; let i = $index) {
-                    <div @messageAnimation [@.disabled]="!shouldAnimate" [style.transform-origin]="message.sender === IrisSender.USER ? 'bottom right' : 'bottom left'">
+                    <div
+                        animate.enter="message-entering"
+                        [class.animate-enabled]="animatingMessageIds.has(message.id!)"
+                        [style.transform-origin]="message.sender === IrisSender.USER ? 'bottom right' : 'bottom left'"
+                    >
                         @for (content of message.content; track content.id) {
                             <div>
                                 @if (message.sender === IrisSender.USER) {
@@ -251,7 +262,7 @@
         </div>
         @if (error) {
             <div class="client-chat-error">
-                {{ error | artemisTranslate }}
+                {{ error | artemisTranslate: { hours: rateLimitInfo?.rateLimitTimeframeHours } }}
             </div>
         }
         @if (!active) {

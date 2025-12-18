@@ -18,7 +18,6 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisLectureChatSession;
-import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettingsType;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
@@ -37,7 +36,7 @@ import de.tum.cit.aet.artemis.lecture.config.LectureApiNotPresentException;
 @Lazy
 @Service
 @Profile(PROFILE_IRIS)
-public class IrisLectureChatSessionService implements IrisChatBasedFeatureInterface<IrisLectureChatSession>, IrisRateLimitedFeatureInterface {
+public class IrisLectureChatSessionService implements IrisChatBasedFeatureInterface<IrisLectureChatSession>, IrisRateLimitedFeatureInterface<IrisLectureChatSession> {
 
     private final IrisSettingsService irisSettingsService;
 
@@ -89,13 +88,13 @@ public class IrisLectureChatSessionService implements IrisChatBasedFeatureInterf
         var course = lecture.getCourse();
         var user = userRepository.findByIdElseThrow(session.getUserId());
 
-        var settings = irisSettingsService.getCombinedIrisSettingsFor(course, false).irisLectureChatSettings();
+        var settings = irisSettingsService.getSettingsForCourse(course);
         if (!settings.enabled()) {
             throw new ConflictException("Iris is not enabled for this lecture", "Iris", "irisDisabled");
         }
 
         var chatHistory = session.getMessages().stream().map(PyrisMessageDTO::of).toList();
-        pyrisPipelineService.executePipeline("lecture-chat", settings.selectedVariant(), Optional.empty(),
+        pyrisPipelineService.executePipeline("lecture-chat", settings.variant().jsonValue(), Optional.empty(),
                 pyrisJobService.createTokenForJob(token -> new LectureChatJob(token, course.getId(), lecture.getId(), session.getId())),
                 dto -> new PyrisLectureChatPipelineExecutionDTO(course.getId(), lecture.getId(), session.getTitle(), chatHistory, new PyrisUserDTO(user), dto.settings(),
                         dto.initialStages(), settings.customInstructions()),
@@ -163,13 +162,13 @@ public class IrisLectureChatSessionService implements IrisChatBasedFeatureInterf
     }
 
     @Override
-    public void checkIsFeatureActivatedFor(IrisLectureChatSession session) {
+    public void checkIrisEnabledFor(IrisLectureChatSession session) {
         var lecture = lectureRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureRepositoryApi.class)).findByIdElseThrow(session.getLectureId());
-        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.LECTURE_CHAT, lecture.getCourse());
+        irisSettingsService.ensureEnabledForCourseOrElseThrow(lecture.getCourse());
     }
 
     @Override
-    public void checkRateLimit(User user) {
-        irisRateLimitService.checkRateLimitElseThrow(user);
+    public void checkRateLimit(User user, IrisLectureChatSession session) {
+        irisRateLimitService.checkRateLimitElseThrow(session, user);
     }
 }

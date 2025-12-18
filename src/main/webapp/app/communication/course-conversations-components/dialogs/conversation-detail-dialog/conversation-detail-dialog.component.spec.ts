@@ -54,7 +54,7 @@ examples.forEach((activeConversation) => {
                     fixture = TestBed.createComponent(ConversationDetailDialogComponent);
                     component = fixture.componentInstance;
                     initializeDialog(component, fixture, { course, activeConversation, selectedTab: ConversationDetailTabs.INFO });
-                    fixture.detectChanges();
+                    fixture.changeDetectorRef.detectChanges();
                 });
         }));
 
@@ -77,7 +77,7 @@ examples.forEach((activeConversation) => {
 
         it('should react correctly to events from members tab', () => {
             component.selectedTab = ConversationDetailTabs.MEMBERS;
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
 
             const membersComponentDebug = fixture.debugElement.query(By.css('jhi-conversation-members'));
             expect(membersComponentDebug).toBeTruthy();
@@ -92,7 +92,7 @@ examples.forEach((activeConversation) => {
 
         it('should react correctly to events from info tab', () => {
             component.selectedTab = ConversationDetailTabs.INFO;
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
 
             const infoComponentDebug = fixture.debugElement.query(By.css('jhi-conversation-info'));
             expect(infoComponentDebug).toBeTruthy();
@@ -108,7 +108,7 @@ examples.forEach((activeConversation) => {
         it('should react correctly to events from settings tab', () => {
             if (!component.isOneToOneChat) {
                 component.selectedTab = ConversationDetailTabs.SETTINGS;
-                fixture.detectChanges();
+                fixture.changeDetectorRef.detectChanges();
 
                 const settingsComponentDebug = fixture.debugElement.query(By.css('jhi-conversation-settings'));
                 expect(settingsComponentDebug).toBeTruthy();
