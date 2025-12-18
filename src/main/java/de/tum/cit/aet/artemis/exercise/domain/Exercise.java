@@ -847,7 +847,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
 
     /**
      * Validates score settings
-     * 1. The maxScore needs to be greater than 0. If maxScore is null or <= 0, it is set to the default value 1.0.
+     * 1. The maxScore needs to be greater than 0
      * 2. If the specified amount of bonus points is valid depending on the IncludedInOverallScore value
      */
     public void validateScoreSettings() {
