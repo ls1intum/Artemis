@@ -53,7 +53,7 @@ describe('SshUserSettingsComponent', () => {
         fixture = TestBed.createComponent(SshUserSettingsComponent);
         comp = fixture.componentInstance;
         translateService = TestBed.inject(TranslateService);
-        translateService.currentLang = 'en';
+        translateService.use('en');
     });
 
     it('should initialize with User without keys', async () => {

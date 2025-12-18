@@ -205,7 +205,7 @@ describe('CourseArchiveComponent', () => {
             getCoursesForArchiveSpy.mockReturnValue(of(new HttpResponse({ body: courses, headers: new HttpHeaders() })));
             const mapCoursesIntoSemestersSpy = jest.spyOn(component, 'mapCoursesIntoSemesters');
             component.ngOnInit();
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             tick();
 
             expect(getCoursesForArchiveSpy).toHaveBeenCalledOnce();
@@ -218,7 +218,7 @@ describe('CourseArchiveComponent', () => {
 
             expect(button).not.toBeNull();
             button.click();
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
 
             expect(onSortSpy).toHaveBeenCalled();
             expect(component.isSortAscending).toBeFalse();
@@ -241,7 +241,7 @@ describe('CourseArchiveComponent', () => {
 
             component.ngOnInit();
             tick();
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             expect(component.courses).toHaveLength(7);
             expect(getCoursesForArchiveSpy).toHaveBeenCalledOnce();
             expect(mapCoursesIntoSemestersSpy).toHaveBeenCalledOnce();

@@ -41,7 +41,7 @@ describe('Register Component Tests', () => {
             translateService = TestBed.inject(TranslateService);
             comp = fixture.componentInstance;
             comp.isRegistrationEnabled = true;
-            translateService.currentLang = 'en';
+            translateService.use('en');
         });
 
         it('should ensure the two passwords entered match', () => {
