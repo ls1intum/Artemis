@@ -39,6 +39,7 @@ const sidebars: SidebarsConfig = {
         'learning-analytics',
         'adaptive-learning',
         'sharing',
+        'lti-configuration',
     ],
 };
 
