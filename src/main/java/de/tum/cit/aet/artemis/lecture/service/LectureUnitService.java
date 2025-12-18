@@ -37,7 +37,6 @@ import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
-import de.tum.cit.aet.artemis.iris.api.IrisLectureApi;
 import de.tum.cit.aet.artemis.lecture.api.LectureContentProcessingApi;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
@@ -64,8 +63,6 @@ public class LectureUnitService {
 
     private final FileService fileService;
 
-    private final Optional<IrisLectureApi> irisLectureApi;
-
     private final Optional<CompetencyProgressApi> competencyProgressApi;
 
     private final Optional<CourseCompetencyApi> courseCompetencyApi;
@@ -77,14 +74,13 @@ public class LectureUnitService {
     private final LectureContentProcessingApi contentProcessingApi;
 
     public LectureUnitService(LectureUnitRepository lectureUnitRepository, LectureRepository lectureRepository, LectureUnitCompletionRepository lectureUnitCompletionRepository,
-            FileService fileService, Optional<IrisLectureApi> irisLectureApi, Optional<CompetencyProgressApi> competencyProgressApi,
+            FileService fileService, Optional<CompetencyProgressApi> competencyProgressApi,
             Optional<CourseCompetencyApi> courseCompetencyApi, Optional<CompetencyRelationApi> competencyRelationApi, Optional<CompetencyRepositoryApi> competencyRepositoryApi,
             LectureContentProcessingApi contentProcessingApi) {
         this.lectureUnitRepository = lectureUnitRepository;
         this.lectureRepository = lectureRepository;
         this.lectureUnitCompletionRepository = lectureUnitCompletionRepository;
         this.fileService = fileService;
-        this.irisLectureApi = irisLectureApi;
         this.courseCompetencyApi = courseCompetencyApi;
         this.competencyProgressApi = competencyProgressApi;
         this.competencyRelationApi = competencyRelationApi;
