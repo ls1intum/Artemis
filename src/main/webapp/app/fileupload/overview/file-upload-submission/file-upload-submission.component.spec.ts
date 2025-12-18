@@ -131,7 +131,7 @@ describe('FileUploadSubmissionComponent', () => {
         submitFileButton.nativeElement.click();
         comp.submission!.submitted = true;
         comp.result = new Result();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         // check if fileUploadInput is available
         const fileUploadInput = debugElement.query(By.css('#fileUploadInput'));
@@ -154,7 +154,7 @@ describe('FileUploadSubmissionComponent', () => {
         const jhiErrorSpy = jest.spyOn(alertService, 'error');
         const event = { target: { files: [submissionFile] } };
         comp.setFileSubmissionForExercise(event);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         // check that properties are set properly
         expect(jhiErrorSpy).toHaveBeenCalledOnce();
@@ -181,7 +181,7 @@ describe('FileUploadSubmissionComponent', () => {
         const jhiErrorSpy = jest.spyOn(alertService, 'error');
         const event = { target: { files: [submissionFile] } };
         comp.setFileSubmissionForExercise(event);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         // check that properties are set properly
         expect(jhiErrorSpy).toHaveBeenCalledOnce();
@@ -244,7 +244,7 @@ describe('FileUploadSubmissionComponent', () => {
         tick();
 
         comp.result = result;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(comp.isLate).toBeTrue();
         const submitButton = debugElement.query(By.css('jhi-button'));
@@ -269,7 +269,7 @@ describe('FileUploadSubmissionComponent', () => {
 
         comp.fileUploadExercise.dueDate = dayjs().subtract(1, 'days');
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         tick();
 
         expect(comp.isActive).toBeFalse();
@@ -369,7 +369,7 @@ describe('FileUploadSubmissionComponent', () => {
 
         submission.participation.exercise = undefined;
         comp.ngOnInit();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         comp.submitExercise();
 
         expect(comp.isActive).toBeFalse();

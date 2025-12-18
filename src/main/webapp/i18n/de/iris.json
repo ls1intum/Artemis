@@ -3,8 +3,42 @@
         "iris": {
             "settings": {
                 "success": "Iris Einträge erfolgreich gespeichert",
+                "saved": "Alles gespeichert",
+                "unsaved": "Ungespeicherte Änderungen",
+                "enabled": "Aktiviert",
+                "disabled": "Deaktiviert",
+                "configure": "Konfigurieren",
+                "loading": "Einstellungen werden geladen...",
+                "enableLabel": "Iris aktivieren",
+                "enableHelp": "Wenn aktiviert, sind Iris-Funktionen für alle Studierenden in diesem Kurs verfügbar.",
+                "customInstructions": "Benutzerdefinierte Anweisungen",
+                "customInstructionsPlaceholder": "z.B. 'Dieser Kurs verwendet Python 3.12 und das pytest Framework'",
+                "customInstructionsHelp": "Gib Iris wichtigen Kontext über die Kursinhalte. Dies kann Programmiersprachen, Frameworks, Bibliotheken oder anderes kursspezifisches Wissen umfassen, das Iris hilft, deine Studierenden besser zu unterstützen.",
+                "adminSettings": "Administrator-Einstellungen",
+                "adminOnly": "Nur Administratoren können diese Einstellungen sehen und ändern.",
+                "variant": "Pipeline-Variante",
+                "variantHelp": "Wähle die KI-Pipeline-Variante für diesen Kurs.",
+                "rateLimit": "Rate-Limit-Überschreibung",
+                "rateLimitHelp": "Lass beide Felder leer, um Anwendungsstandards zu verwenden. Setze 0 Anfragen, um die Iris-Nutzung zu blockieren. Zeitrahmen muss mindestens 1 Stunde sein.",
+                "rateLimitRequests": "Maximale Anfragen",
+                "rateLimitRequestsPlaceholder": "Leer = Standard ({{ default }})",
+                "rateLimitTimeframe": "Zeitrahmen (Stunden)",
+                "rateLimitTimeframePlaceholder": "Leer = Standard ({{ default }})",
+                "rateLimitValidation": {
+                    "bothRequired": "Beide Felder müssen ausgefüllt oder beide leer sein. Lass beide leer, um Anwendungsstandards zu verwenden.",
+                    "requestsNonNegative": "Maximale Anfragen muss 0 oder größer sein (0 = keine Anfragen erlaubt).",
+                    "timeframePositive": "Zeitrahmen muss mindestens 1 Stunde sein."
+                },
+                "effectiveRateLimit": "Effektives Rate-Limit",
+                "requests": "Anfragen",
+                "per": "pro",
+                "hours": "Stunden",
+                "unlimited": "unbegrenzt",
+                "unlimitedTime": "∞",
                 "error": {
                     "save": "Fehler beim Speichern der Iris Einstellungen",
+                    "load": "Fehler beim Laden der Iris Einstellungen",
+                    "noCourseId": "Keine Kurs-ID angegeben",
                     "noSettings": "Iris Einstellungen konnten nicht geladen werden. Bitte kontaktiere einen Administrator, wenn das Problem weiterhin besteht."
                 },
                 "button": {
@@ -92,12 +126,7 @@
                         "placeholder": "Gib benutzerdefinierte Anweisungen für die KI ein (maximal 2048 Zeichen)"
                     }
                 },
-                "title": {
-                    "breadcrumb": "Iris Einstellungen",
-                    "global": "Globale Iris Einstellungen",
-                    "course": "Kurs Iris Einstellungen",
-                    "exercise": "Programmieraufgabe Iris Einstellungen"
-                }
+                "title": "Iris Einstellungen"
             },
             "error": {
                 "forbidden": "Artemis ist nicht konfiguriert, um Iris zu verwenden. (Ungültiges Token)",
@@ -126,8 +155,8 @@
                 "partiallyIngested": "Teilweise verarbeitet"
             },
             "ingestionAlert": {
-                "lectureUnitSuccess": "Vorlesungseinheit wird in Iris verarbeitet",
-                "lectureUnitError": "Fehler beim Senden der Vorlesungseinheit an Iris",
+                "lectureUnitSuccess": "Vorlesungsinhalt wird in Iris verarbeitet",
+                "lectureUnitError": "Fehler beim Senden des Vorlesungsinhalts an Iris",
                 "lectureSuccess": "Vorlesung wird in Iris verarbeitet",
                 "lectureError": "Fehler beim Senden der Vorlesung an Iris",
                 "allLecturesSuccess": "Alle Vorlesungen werden nun verarbeitet",
@@ -140,7 +169,7 @@
                 "transcriptionIngestionError": "Fehler beim Senden einer Vorlesungstranskription"
             },
             "controlCenter": {
-                "tooltip": "Durch das Umschalten aktivierst oder deaktivierst du ALLE Iris Features für diesen Kurs. Für eine gezieltere Kontrolle nutze bitte die Iris Einstellungen, indem du auf Benutzerdefinierst klickst."
+                "tooltip": "Aktiviere oder deaktiviere Iris für deinen Kurs. Um benutzerdefinierte Anweisungen zu konfigurieren, klicke auf die Schaltfläche 'Konfigurieren'."
             },
             "chatHistory": {
                 "title": "Chats",
