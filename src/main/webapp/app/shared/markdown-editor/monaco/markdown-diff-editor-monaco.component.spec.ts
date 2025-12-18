@@ -47,6 +47,7 @@ describe('MarkdownDiffEditorMonacoComponent', () => {
             executeEdits: jest.fn(),
             setPosition: jest.fn(),
             focus: jest.fn(),
+            updateOptions: jest.fn(),
         } as any;
 
         mockDiffEditor = {

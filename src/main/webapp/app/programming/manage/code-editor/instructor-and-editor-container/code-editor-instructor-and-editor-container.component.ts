@@ -527,7 +527,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     private applySingleComment(comment: InlineComment): void {
         const courseId = this.exercise?.course?.id ?? this.exercise?.exerciseGroup?.exam?.course?.id;
 
-        if (!courseId || this.exercise?.problemStatement == null) {
+        if (!courseId || !this.exercise?.problemStatement?.trim()) {
             this.alertService.error('artemisApp.programmingExercise.inlineComment.applyError');
             return;
         }
