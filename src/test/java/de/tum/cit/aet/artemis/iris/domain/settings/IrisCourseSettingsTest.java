@@ -7,13 +7,13 @@ import org.junit.jupiter.api.Test;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-class IrisCourseSettingsDTOTest {
+class IrisCourseSettingsTest {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Test
     void of_trimsBlankInstructionsAndDefaultsVariant() {
-        var dto = IrisCourseSettingsDTO.of(true, "  trimmed text  ", null, null);
+        var dto = IrisCourseSettings.of(true, "  trimmed text  ", null, null);
 
         assertThat(dto.customInstructions()).isEqualTo("trimmed text");
         assertThat(dto.variant()).isEqualTo(IrisPipelineVariant.DEFAULT);
@@ -23,7 +23,7 @@ class IrisCourseSettingsDTOTest {
 
     @Test
     void of_convertsEmptyInstructionsToNull() {
-        var dto = IrisCourseSettingsDTO.of(true, "   ", IrisPipelineVariant.ADVANCED, IrisRateLimitConfiguration.empty());
+        var dto = IrisCourseSettings.of(true, "   ", IrisPipelineVariant.ADVANCED, IrisRateLimitConfiguration.empty());
 
         assertThat(dto.customInstructions()).isNull();
         assertThat(dto.variant()).isEqualTo(IrisPipelineVariant.ADVANCED);
@@ -32,10 +32,10 @@ class IrisCourseSettingsDTOTest {
 
     @Test
     void jsonRoundtrip_preservesSanitizedPayload() throws JsonProcessingException {
-        var original = IrisCourseSettingsDTO.of(false, "  trimmed text  ", IrisPipelineVariant.ADVANCED, new IrisRateLimitConfiguration(10, 5));
+        var original = IrisCourseSettings.of(false, "  trimmed text  ", IrisPipelineVariant.ADVANCED, new IrisRateLimitConfiguration(10, 5));
 
         String serialized = objectMapper.writeValueAsString(original);
-        var deserialized = objectMapper.readValue(serialized, IrisCourseSettingsDTO.class);
+        var deserialized = objectMapper.readValue(serialized, IrisCourseSettings.class);
 
         assertThat(deserialized.enabled()).isFalse();
         assertThat(deserialized.customInstructions()).isEqualTo("trimmed text");

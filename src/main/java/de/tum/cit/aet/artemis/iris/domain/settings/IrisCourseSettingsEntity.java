@@ -20,7 +20,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @Table(name = "course_iris_settings")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class CourseIrisSettings {
+public class IrisCourseSettingsEntity {
 
     @Id
     @Column(name = "course_id", nullable = false)
@@ -28,7 +28,7 @@ public class CourseIrisSettings {
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "settings", nullable = false, columnDefinition = "json")
-    private IrisCourseSettingsDTO settings = IrisCourseSettingsDTO.defaultSettings();
+    private IrisCourseSettings settings = IrisCourseSettings.defaultSettings();
 
     public Long getCourseId() {
         return courseId;
@@ -38,11 +38,11 @@ public class CourseIrisSettings {
         this.courseId = courseId;
     }
 
-    public IrisCourseSettingsDTO getSettings() {
+    public IrisCourseSettings getSettings() {
         return settings;
     }
 
-    public void setSettings(IrisCourseSettingsDTO settings) {
-        this.settings = settings == null ? IrisCourseSettingsDTO.defaultSettings() : settings;
+    public void setSettings(IrisCourseSettings settings) {
+        this.settings = settings == null ? IrisCourseSettings.defaultSettings() : settings;
     }
 }

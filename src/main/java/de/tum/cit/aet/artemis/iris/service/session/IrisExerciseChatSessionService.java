@@ -32,7 +32,7 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisProgrammingExerciseChatSession;
-import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettingsDTO;
+import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.event.IrisEventType;
 import de.tum.cit.aet.artemis.iris.repository.IrisExerciseChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
@@ -154,7 +154,7 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
      */
     @Override
     public void requestAndHandleResponse(IrisProgrammingExerciseChatSession session) {
-        requestAndHandleResponse(session, Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty());
+        requestAndHandleResponse(session, Optional.empty(), Optional.empty(), Optional.empty());
     }
 
     /**
@@ -164,18 +164,19 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
      * @param session          The chat session to send to the LLM
      * @param event            The event to trigger on Pyris side
      * @param settings         Optional settings to use if already loaded elsewhere. If not provided, the settings will be fetched
-     * @param user             Optional user to use if already loaded elsewhere. If not provided, the user will be fetched
      * @param latestSubmission Optional latest submission to use if already loaded elsewhere. If not provided, the latest submission will be fetched
      */
-    public void requestAndHandleResponse(IrisProgrammingExerciseChatSession session, Optional<String> event, Optional<IrisCourseSettingsDTO> settings, Optional<User> user,
+    public void requestAndHandleResponse(IrisProgrammingExerciseChatSession session, Optional<String> event, Optional<IrisCourseSettings> settings,
             Optional<ProgrammingSubmission> latestSubmission) {
         var exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(session.getExerciseId());
         if (exercise.isExamExercise()) {
             throw new ConflictException("Iris is not supported for exam exercises", "Iris", "irisExamExercise");
         }
 
-        var course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        var actualSettings = settings.orElseGet(() -> course == null ? IrisCourseSettingsDTO.defaultSettings() : irisSettingsService.getSettingsForCourse(course));
+        var actualSettings = settings.orElseGet(() -> {
+            var course = exercise.getCourseViaExerciseGroupOrCourseMember();
+            return irisSettingsService.getSettingsForCourse(course);
+        });
         if (!actualSettings.enabled()) {
             throw new ConflictException("Iris is not enabled for this exercise", "Iris", "irisDisabled");
         }
@@ -232,8 +233,8 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
         var session = getCurrentSessionOrCreateIfNotExistsInternal(studentParticipation.getProgrammingExercise(), user, false);
         rateLimitService.checkRateLimitElseThrow(session, user);
         log.info("Build failed for user {}", user.getName());
-        CompletableFuture.runAsync(() -> requestAndHandleResponse(session, Optional.of(IrisEventType.BUILD_FAILED.name().toLowerCase()), Optional.of(settings), Optional.of(user),
-                Optional.of(submission)));
+        CompletableFuture
+                .runAsync(() -> requestAndHandleResponse(session, Optional.of(IrisEventType.BUILD_FAILED.name().toLowerCase()), Optional.of(settings), Optional.of(submission)));
     }
 
     /**
@@ -265,7 +266,7 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
                 rateLimitService.checkRateLimitElseThrow(session, user);
                 try {
                     CompletableFuture.runAsync(() -> requestAndHandleResponse(session, Optional.of(IrisEventType.PROGRESS_STALLED.name().toLowerCase()), Optional.of(settings),
-                            Optional.of(user), Optional.of(latestSubmission)));
+                            Optional.of(latestSubmission)));
                 }
                 catch (Exception e) {
                     log.error("Error while sending progress stalled message to Iris for user {}", studentParticipation.getParticipant().getName(), e);
