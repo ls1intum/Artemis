@@ -42,7 +42,7 @@ import {
     ProgrammingExerciseEditorSyncTarget,
 } from 'app/programming/manage/services/programming-exercise-editor-sync.service';
 import { FileOperation, RepositoryFileSyncService } from 'app/programming/manage/services/repository-file-sync.service';
-import { FileType, RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
+import { DomainType, FileType, RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 
 describe('CodeEditorInstructorAndEditorContainerComponent - Code Generation', () => {
     let fixture: ComponentFixture<CodeEditorInstructorAndEditorContainerComponent>;

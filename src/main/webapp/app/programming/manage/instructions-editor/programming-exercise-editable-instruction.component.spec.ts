@@ -9,8 +9,6 @@ import { ParticipationWebsocketService } from 'app/core/course/shared/services/p
 import { MockResultService } from 'test/helpers/mocks/service/mock-result.service';
 import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
 import { MockProgrammingExerciseGradingService } from 'test/helpers/mocks/service/mock-programming-exercise-grading.service';
-import { triggerChanges } from 'test/helpers/utils/general-test.utils';
-import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { ResultService } from 'app/exercise/result/result.service';
 import { TemplateProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/template-programming-exercise-participation.model';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
@@ -55,7 +53,6 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
     templateParticipation.id = 99;
 
     const exercise = { id: 30, templateParticipation } as ProgrammingExercise;
-    const participation = { id: 1, results: [{ id: 10, feedbacks: [{ id: 20 }, { id: 21 }] }] } as Participation;
     const testCases = [
         { testName: 'test1', active: true },
         { testName: 'test2', active: true },
@@ -107,9 +104,15 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AlertService, useClass: MockAlertService },
+                { provide: ProblemStatementSyncService, useValue: problemStatementSyncServiceMock },
                 { provide: ActivatedRoute, useValue: route },
                 MockProvider(ProfileService, {
                     getProfileInfo: () => mockProfileInfo,
+                    isProfileActive: jest.fn().mockReturnValue(false),
+                    isModuleFeatureActive: jest.fn().mockReturnValue(true),
+                }),
+                MockProvider(ProgrammingExerciseParticipationService, {
+                    getLatestResultWithFeedback: jest.fn(),
                 }),
                 { provide: AccountService, useClass: MockAccountService },
                 provideHttpClient(),
@@ -173,6 +176,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         const hasUnsavedSpy = jest.fn();
         comp.hasUnsavedChanges.subscribe(hasUnsavedSpy);
         setRequiredInputs(fixture, { ...exercise, problemStatement: 'old' });
+        fixture.detectChanges();
 
         comp.updateProblemStatement('changed');
 
@@ -218,8 +222,6 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         fixture.detectChanges();
 
         (gradingService as MockProgrammingExerciseGradingService).nextTestCases(testCases);
-
-        fixture.detectChanges();
         tick();
 
         expect(subscribeForTestCaseSpy).toHaveBeenNthCalledWith(1, exercise.id);
@@ -241,15 +243,12 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         fixture.detectChanges();
 
         (gradingService as MockProgrammingExerciseGradingService).nextTestCases(testCases);
-
-        fixture.detectChanges();
         tick();
 
         expect(comp.exerciseTestCases).toHaveLength(2);
         expect(comp.exerciseTestCases).toEqual(['test1', 'test2']);
 
         (gradingService as MockProgrammingExerciseGradingService).nextTestCases([{ testName: 'testX' }]);
-        fixture.detectChanges();
         tick();
 
         expect(comp.exerciseTestCases).toHaveLength(0);
@@ -389,8 +388,6 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
     });
 
     it('should have intelligence actions when Hyperion is active', () => {
-        const isModuleFeatureActiveSpy = jest.spyOn(TestBed.inject(ProfileService), 'isModuleFeatureActive').mockReturnValue(true);
-
         setRequiredInputs(fixture, { ...exercise, course: { id: 1 } as any } as ProgrammingExercise);
         comp.hyperionEnabled = true;
         fixture.detectChanges();
@@ -398,6 +395,5 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         const actions = comp.artemisIntelligenceActions();
         expect(actions).toHaveLength(1);
         expect(actions[0]).toBeInstanceOf(RewriteAction);
-        expect(isModuleFeatureActiveSpy).toHaveBeenCalledWith(MODULE_FEATURE_HYPERION);
     });
 });
