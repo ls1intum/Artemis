@@ -1,0 +1,87 @@
+import Callout from "../../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
+import Image, {ImageSize} from "../../../src/components/Image/Image";
+
+import currentQuizExercise from './assets/quiz/current-quiz-exercise.png';
+import openQuizButton from './assets/quiz/open-quiz-button.png';
+import pleaseWaitMessage from './assets/quiz/please-wait-message.png';
+import oneChoiceQuestion from './assets/quiz/one-choice-question.png';
+import submitButton from './assets/quiz/submit-button.png';
+import dragAndDropView from './assets/quiz/drag-and-drop-view.png';
+import finalQuiz from './assets/quiz/final-quiz.png';
+import showSampleSolutionButton from './assets/quiz/show-sample-solution.png';
+import solutionDragAndDrop from './assets/quiz/solution-drag-and-drop.png';
+
+# Quiz Exercise
+
+## Overview
+
+Quiz exercises allow you to test your knowledge through different types of questions including multiple-choice, drag-and-drop, and short-answer questions. Quizzes can be timed and may have specific start times depending on how your instructor configured them.
+
+## Participating in a Quiz
+
+If a quiz exercise is available on the Artemis home page as a current exercise, you will be able to see it in the course overview or inside the course where it belongs.
+
+<Image src={currentQuizExercise} alt="Current Quiz Exercise" size={ImageSize.medium} caption="Current Quiz Exercise Overview" />
+
+The current exercise box will show:
+- The name of the quiz
+- The button to start the quiz
+- The category
+- The message if the quiz is active
+- The due date
+
+To start the quiz, press the <img src={openQuizButton} alt="Open Quiz" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button.
+
+<Callout variant={CalloutVariant.info}>
+  <p>If the quiz is set to start at a specific time and you open it before, you will see a message asking you to wait until the quiz starts and displaying the remaining time.</p>
+</Callout>
+
+<Image src={pleaseWaitMessage} alt="Please Wait Message" size={ImageSize.medium} caption="Waiting for Quiz to Start" />
+
+## Solving the Quiz
+
+When the quiz starts, you can see the questions and solve them.
+
+<Image src={oneChoiceQuestion} alt="One Choice Question" size={ImageSize.medium} caption="Quiz Question View" />
+
+The quiz page is composed of:
+
+- **Number and title of the question**
+- **Points** for solving that question
+- **The quiz statement**
+- **Options**:
+  - Options with circles mean one choice could be correct
+  - Options with squares mean multiple options could be correct
+- **In the footer**:
+  - The number of questions and overall points
+  - Time left to complete the quiz
+  - Last time saved: The quiz will save all changes after they occur
+  - Connection status
+  - <img src={submitButton} alt="Submit" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button: To allow you to submit the quiz before the time ends
+
+<Callout variant={CalloutVariant.warning}>
+  <p>The quiz automatically saves your changes as you make them. However, when the quiz time's up, the answers will be submitted automatically.</p>
+</Callout>
+
+### Drag-and-Drop Questions
+
+In the case of Drag and Drop questions, the items to be dragged and dropped in the spots will be available on the right side.
+
+<Image src={dragAndDropView} alt="Drag and Drop View" size={ImageSize.large} caption="Drag-and-Drop Question View" />
+
+To submit and finish the quiz, press the <img src={submitButton} alt="Submit" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button. However, when the quiz time's up, the answers will be submitted automatically.
+
+## Viewing Results
+
+The assessment is automatic and you can see the result of the overall quiz and of specific questions. In the case of multiple-choice questions, the solution will be displayed.
+
+<Image src={finalQuiz} alt="Final Quiz" size={ImageSize.large} caption="Quiz Results Overview" />
+
+In the case of Drag and Drop questions, the solution is shown by clicking the <img src={showSampleSolutionButton} alt="Show Sample Solution" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button.
+
+<Image src={solutionDragAndDrop} alt="Solution Drag and Drop" size={ImageSize.large} caption="Drag-and-Drop Solution View" />
+
+<Callout variant={CalloutVariant.info}>
+  <p>After completing a quiz, you can review your answers and compare them with the correct solutions to learn from your mistakes.</p>
+</Callout>

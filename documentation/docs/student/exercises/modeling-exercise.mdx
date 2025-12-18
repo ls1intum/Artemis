@@ -1,0 +1,84 @@
+import Callout from "../../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
+import Image, {ImageSize} from "../../../src/components/Image/Image";
+
+import modelingExerciseCardStudentView from './assets/modeling/modeling-exercise-card-student-view.png';
+import startButton from './assets/modeling/start.png';
+import openModelingEditorButton from './assets/modeling/open-modeling-editor.png';
+import modelingExerciseStudentsInterface from './assets/modeling/modeling-exercise-students-interface.png';
+import automaticFeedbackRequestEditor from './assets/modeling/automatic-feedback-request-editor.png';
+import automaticFeedbackRequestAlert from './assets/modeling/automatic-feedback-request-alert.png';
+import automaticFeedbackRequestScore from './assets/modeling/automatic-feedback-request-score.png';
+import automaticFeedbackViewDetailed from './assets/modeling/automatic-feedback-view-detailed.png';
+import automaticFeedbackHistory from './assets/modeling/automatic-feedback-history.png';
+
+# Modeling Exercise
+
+## Overview
+
+Modeling exercises allow you to create and submit UML diagrams or other types of models using Artemis's integrated Apollon editor. You can work on various diagram types including class diagrams, activity diagrams, use case diagrams, and more.
+
+<Callout variant={CalloutVariant.info}>
+  <p><strong>Note:</strong> Artemis uses an npm package called <a href="https://www.npmjs.com/package/@ls1intum/apollon">Apollon</a> as its modeling editor. It has a standalone version which can be accessed via <a href="https://apollon.ase.in.tum.de/">https://apollon.ase.in.tum.de/</a>. The standalone version is free to use without the necessity of creating an account and offers additional features, including sharing and exporting diagrams. For more information, visit <a href="https://github.com/ls1intum/Apollon_standalone">Apollon Standalone</a>.</p>
+</Callout>
+
+## Student Submission
+
+When the exercise is released you can work on the exercise.
+
+<Image src={modelingExerciseCardStudentView} alt="Modeling Exercise Card Student View" size={ImageSize.large} caption="Modeling Exercise Overview - Student View" />
+
+You can start the exercise by clicking the <img src={startButton} alt="Start" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button.
+
+Once you start the exercise, you will have the option to work on it in an online modeling editor by clicking on the <img src={openModelingEditorButton} alt="Open Modeling Editor" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button.
+
+The screenshot below depicts the online modeling exercise interface. You can read the Problem Statement, work on the online editor and also provide an explanation to your solutions, if needed.
+
+<Image src={modelingExerciseStudentsInterface} alt="Modeling Exercise Students Interface" size={ImageSize.large} caption="Modeling Editor - Student View" />
+
+<Callout variant={CalloutVariant.info}>
+  <p>The modeling editor automatically saves your work as you make changes. You can continue working on your diagram until the due date.</p>
+</Callout>
+
+## Automatic Student Feedback
+
+<Callout variant={CalloutVariant.info}>
+  <p><strong>Why Automatic Student Feedback:</strong> In large courses, providing timely and personalized feedback on modeling exercises is challenging. Automated student feedback helps you identify misconceptions early, iterate on your work, and refine diagram modeling skills—all without waiting for an instructor or tutor to be available.</p>
+</Callout>
+
+**Overview:**
+
+When a modeling exercise is configured to allow automatic AI preliminary feedback requests, you can request preliminary AI feedback for your modeling submissions. The feedback is generated through the Athena Service, which analyzes both the **structure** and **layout** of your diagrams.
+
+**How to Request Automatic Feedback:**
+
+1. **Requesting Feedback**
+   - Navigate to a **Modeling Exercise** with the **Automatic Student Feedback** feature enabled
+   - Create a diagram in the modeling editor and submit it
+   - Feedback may be requested either from the exercise overview page or directly within the modeling editor
+
+<Image src={automaticFeedbackRequestEditor} alt="Automatic Feedback Request Editor" size={ImageSize.large} caption="Request Feedback Button" />
+
+2. **Viewing Feedback**
+   - After a feedback request is made, the system processes the diagram and generates preliminary feedback
+   - An alert appears at the top of the page to indicate that the feedback is ready
+
+<Image src={automaticFeedbackRequestAlert} alt="Automatic Feedback Request Alert" size={ImageSize.large} caption="Feedback Ready Notification" />
+
+   - A preliminary score is displayed in the top-right corner of the screen
+
+<Image src={automaticFeedbackRequestScore} alt="Automatic Feedback Request Score" size={ImageSize.large} caption="Preliminary Score Display" />
+
+   - Clicking on the score reveals detailed, inline feedback that highlights specific issues and provides suggestions directly within the diagram
+
+<Image src={automaticFeedbackViewDetailed} alt="Automatic Feedback View Detailed" size={ImageSize.medium} caption="Detailed AI Feedback View" />
+
+3. **Submission History**
+   - Feedback can be requested multiple times before the submission due date. All feedback requests are recorded in the submission history
+   - To review previous feedback, access the submission history section and click on an entry to display its detailed feedback
+
+<Image src={automaticFeedbackHistory} alt="Automatic Feedback History" size={ImageSize.medium} caption="Submission History with Feedback Requests" />
+
+<Callout variant={CalloutVariant.warning}>
+  <p>The automatic feedback is preliminary and may not reflect your final grade. Your instructor will provide the official assessment after the due date.</p>
+</Callout>

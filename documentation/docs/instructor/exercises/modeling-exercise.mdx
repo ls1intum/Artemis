@@ -1,0 +1,275 @@
+import Callout from "../../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
+import Image, {ImageSize} from "../../../src/components/Image/Image";
+
+import courseManagement from './assets/general/course-management.png';
+import courseDashboard from './assets/general/course-management-course-dashboard-exercises.png';
+import createNewModelingExercise from './assets/modeling/create-new-modeling-exercise.png';
+import createModelingExerciseForm1 from './assets/modeling/create-modeling-exercise-form-1.png';
+import createModelingExerciseForm2 from './assets/modeling/create-modeling-exercise-form-2.png';
+import createModelingExerciseForm3 from './assets/modeling/create-modeling-exercise-form-3.png';
+import hintIcon from './assets/modeling/hint.png';
+import createModelingExerciseFormHint from './assets/modeling/create-modeling-exercise-form-hint.png';
+import classDiagramDiagramType from './assets/modeling/class-diagram-diagram-type.png';
+import exampleSubmissionForAssessmentTraining from './assets/modeling/example-submission-for-assessment-training.png';
+import createExampleSubmission from './assets/modeling/create-example-submission.png';
+import useAsExampleSubmission from './assets/modeling/use-as-example-submission.png';
+import useInAssessmentTraining from './assets/modeling/use-in-assessment-training.png';
+import importModelingExercise from './assets/modeling/import-modeling-exercise.png';
+import importModelingExerciseModal from './assets/modeling/import-modeling-exercise-modal.png';
+import importButton from './assets/modeling/import.png';
+import courseDashboardExerciseModeling from './assets/modeling/course-dashboard-exercise-modeling.png';
+import editButton from './assets/modeling/edit.png';
+import scoresButton from './assets/modeling/scores.png';
+import participationButton from './assets/modeling/participation.png';
+import submissionButton from './assets/modeling/submission.png';
+import exampleSubmissionButton from './assets/modeling/example-submission.png';
+import deleteButton from './assets/modeling/delete.png';
+import assessmentDashboard from './assets/modeling/assessment-dashboard.png';
+import exerciseDashboard from './assets/modeling/exercise-dashboard.png';
+import submissionsDashboard from './assets/modeling/submissions-dashboard.png';
+import assessSubmission from './assets/modeling/assess-submission.png';
+import assessmentModal from './assets/modeling/assessment-modal.png';
+import assessmentInstruction from './assets/modeling/assessment-instruction.png';
+import addNewFeedback from './assets/general/add-new-feedback-button.png';
+import feedbackModal from './assets/general/feedback-modal.png';
+import saveButton from './assets/modeling/save.png';
+import submitButton from './assets/modeling/submit.png';
+import cancelButton from './assets/modeling/cancel.png';
+import exerciseDashboardButton from './assets/modeling/exercise-dashboard-button.png';
+import assessmentSuggestionsLoadingIndicator from './assets/modeling/assessment-suggestions-loading-indicator.png';
+import assessmentSuggestionsNotice from './assets/modeling/assessment-suggestions-notice.png';
+import referencedAssessmentSuggestion from './assets/modeling/referenced-assessment-suggestion.png';
+import unreferencedAssessmentSuggestion from './assets/modeling/unreferenced-assessment-suggestion.png';
+import automaticFeedbackRequestEditor from './assets/modeling/automatic-feedback-request-editor.png';
+import automaticFeedbackRequestAlert from './assets/modeling/automatic-feedback-request-alert.png';
+import automaticFeedbackRequestScore from './assets/modeling/automatic-feedback-request-score.png';
+import automaticFeedbackViewDetailed from './assets/modeling/automatic-feedback-view-detailed.png';
+import automaticFeedbackHistory from './assets/modeling/automatic-feedback-history.png';
+
+# Modeling Exercise
+
+## Overview
+
+Conducting a Modeling exercise consists of 3 steps:
+
+1. **Instructor prepares exercise:** Creates and configures the modeling exercise in Artemis.
+2. **Student solves exercise:** Student works on the exercise and submits the solution.
+3. **Tutors assess submissions:** Reviews the submitted exercises and creates results for the students.
+
+<Callout variant={CalloutVariant.info}>
+  <p><strong>Note:</strong> Artemis uses an npm package called <a href="https://www.npmjs.com/package/@ls1intum/apollon">Apollon</a> as its modeling editor. It has a standalone version which can be accessed via <a href="https://apollon.ase.in.tum.de/">https://apollon.ase.in.tum.de/</a>. The standalone version is free to use without the necessity of creating an account and offers additional features, including sharing and exporting diagrams. For more information, visit <a href="https://github.com/ls1intum/Apollon_standalone">Apollon Standalone</a>.</p>
+</Callout>
+
+## Setup
+
+The following sections describe the supported features and the process of creating a new modeling exercise.
+
+- Open <img src={courseManagement} alt="Course Management" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />
+- Navigate into **Exercises** of your preferred course
+
+<Image src={courseDashboard} alt="Course Dashboard" size={ImageSize.large} caption="Course Management Dashboard" />
+
+### Create New Modeling Exercise
+
+Click on **Create new modeling exercise**.
+
+<Image src={createNewModelingExercise} alt="Create New Modeling Exercise" size={ImageSize.large} caption="Create New Modeling Exercise Button" />
+
+The following screenshot illustrates the first section of the form. It consists of:
+
+- **Title**: Title of an exercise
+- **Categories**: Category of an exercise
+- **Difficulty**: Difficulty of an exercise (No level, Easy, Medium or Hard)
+- **Mode**: Solving mode of an exercise. *This cannot be changed afterward* (Individual or Team)
+- **Release Date**: Date after which students can access the exercise
+- **Due Date**: Date till when students can work on the exercise
+- **Assessment Due Date**: Date after which students can view the feedback of the assessments from the instructors
+- **Inclusion in course score calculation**: Option that determines whether or not to include exercise in course score calculation
+- **Points**: Total points of an exercise
+- **Bonus Points**: Bonus points of an exercise
+- **Diagram Type**: Type of diagram that is used throughout an exercise
+
+<Image src={createModelingExerciseForm1} alt="Create Modeling Exercise Form 1" size={ImageSize.large} caption="Modeling Exercise Creation Form (1/3)" />
+
+<Callout variant={CalloutVariant.danger}>
+  <p>Fields marked with red are mandatory to be filled.</p>
+</Callout>
+
+<Callout variant={CalloutVariant.warning}>
+  <p>The field <strong>Diagram Type</strong> determines the components that students/instructors can use while working on the exercise. This option cannot be changed after creating the exercise. For example: If you select class diagram as its diagram type, users (instructors/students) will now only be able to use components of class diagrams throughout the exercise.</p>
+</Callout>
+
+<Image src={classDiagramDiagramType} alt="Class Diagram Diagram Type" size={ImageSize.large} caption="Class Diagram Components Example" />
+
+The following screenshot illustrates the second section of the form. It consists of:
+
+- **Enable automatic assessment suggestions**: When enabled, Artemis tries to automatically suggest assessments for diagram elements based on previously graded submissions for this exercise
+- **Enable feedback suggestions from Athena**: When enabled, Artemis tries to automatically suggest assessments for diagram elements using the Athena service
+- **Problem Statement**: The task description of the exercise as seen by students
+- **Assessment Instructions**: Instructions for instructors while assessing the submission
+
+<Image src={createModelingExerciseForm2} alt="Create Modeling Exercise Form 2" size={ImageSize.large} caption="Modeling Exercise Creation Form (2/3)" />
+
+<Callout variant={CalloutVariant.info}>
+  <p>If you are not clear about any of the fields, you can access additional hints by hovering over the <img src={hintIcon} alt="Hint Icon" style={{display: 'inline', verticalAlign: 'middle', height: '1rem'}} /> icon for many of them.</p>
+</Callout>
+
+<Image src={createModelingExerciseFormHint} alt="Create Modeling Exercise Form Hint" size={ImageSize.medium} caption="Hint Icon Example" />
+
+The following screenshot illustrates the last section of the form. It consists of:
+
+- **Example Solution**: Example solution of an exercise
+- **Example Solution Explanation**: Explanation of the example solution
+- **Example Solution Publication Date**: Date after which the example solution is accessible for students. If you leave this field empty, the solution will only be published to tutors
+
+<Image src={createModelingExerciseForm3} alt="Create Modeling Exercise Form 3" size={ImageSize.large} caption="Modeling Exercise Creation Form (3/3)" />
+
+Once you are done defining the schema of an exercise, you can now create an exercise by clicking the <img src={saveButton} alt="Save" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button.
+
+You will then be redirected to **Example Submissions for Assessment Training** Page.
+
+<Image src={exampleSubmissionForAssessmentTraining} alt="Example Submission for Assessment Training" size={ImageSize.large} caption="Example Submissions for Assessment Training" />
+
+In this page, you can either *Create Example Submission* or *Use as Example Submission* for Assessment Training.
+Example submissions can be used to assess the submissions of students semi-automatically.
+Artemis uses those submissions to automatically apply the known assessment comments to similar model elements in other submissions as well.
+
+- Select <img src={createExampleSubmission} alt="Create Example Submission" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> if you want to create an example submission from scratch
+- Alternatively, after the exercise already started, you can also use some submissions submitted by students as an example submission. For that, click on <img src={useAsExampleSubmission} alt="Use as Example Submission" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />
+
+<Callout variant={CalloutVariant.info}>
+  <p>Artemis uses semi-automatic grading of modeling exercises using machine learning. You can train the model by selecting the <em>Use in Assessment Training</em> checkbox while creating an example submission.</p>
+</Callout>
+
+<Image src={useInAssessmentTraining} alt="Use in Assessment Training" size={ImageSize.medium} caption="Use in Assessment Training Option" />
+
+### Import Modeling Exercise
+
+Alternatively, you can also import modeling exercise from an existing one by clicking on **Import Modeling Exercise**.
+
+<Image src={importModelingExercise} alt="Import Modeling Exercise" size={ImageSize.large} caption="Import Modeling Exercise Button" />
+
+An import modal will prompt up, where you will have an option to select and import previous modeling exercises from the list by clicking the <img src={importButton} alt="Import" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button.
+
+<Image src={importModelingExerciseModal} alt="Import Modeling Exercise Modal" size={ImageSize.large} caption="Import Modeling Exercise Modal" />
+
+Once you import one of the exercises, you will then be redirected to a form which is similar to *Create new modeling exercise* form with all the fields filled from the imported exercise. You can now modify the fields as per your necessity to create a new Modeling Exercise.
+
+### Result
+
+<Image src={courseDashboardExerciseModeling} alt="Course Dashboard Exercise Modeling" size={ImageSize.large} caption="Modeling Exercise in Exercise Dashboard" />
+
+- Click the <img src={editButton} alt="Edit" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button of the modeling exercise and adapt the interactive problem statement. There you can also set release and due dates
+- Click the <img src={scoresButton} alt="Scores" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button to see the scores achieved by the students
+- Click the <img src={participationButton} alt="Participation" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button to see the list of students participated in the exercise
+- Click the <img src={submissionButton} alt="Submission" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button to see the list of submission submitted by students
+- Click the <img src={exampleSubmissionButton} alt="Example Submission" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button to modify/add example submission of the exercise
+- Click the <img src={deleteButton} alt="Delete" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button to delete the exercise
+- You can get an overview of the exercise by clicking on the title
+
+## Assessment
+
+When the due date is over you can assess the submissions.
+
+To assess the submissions, first click on **Assessment Dashboard**.
+
+<Image src={assessmentDashboard} alt="Assessment Dashboard" size={ImageSize.large} caption="Assessment Dashboard" />
+
+Then click on **Submissions** of the modeling exercise.
+
+<Image src={exerciseDashboard} alt="Exercise Dashboard" size={ImageSize.large} caption="Exercise Dashboard" />
+
+You will then be redirected to *Submissions and Assessments* Page.
+
+<Image src={submissionsDashboard} alt="Submissions Dashboard" size={ImageSize.large} caption="Submissions and Assessments Page" />
+
+Click on the <img src={assessSubmission} alt="Assess Submission" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button of specific student. You will then be redirected to the assessment page where you will be able to assess the submission of that student.
+
+You can now start assessing the elements of the model by double clicking it. Once you double click, you will get an assessment dialog where you can assign points, feedback and navigate through all other assessable components.
+
+<Image src={assessmentModal} alt="Assessment Modal" size={ImageSize.large} caption="Assessment Dialog" />
+
+Alternatively, you can also assess the diagram by dragging and dropping assessment instructions from the *Assessment Instructions* section.
+
+<Image src={assessmentInstruction} alt="Assessment Instruction" size={ImageSize.large} caption="Assessment Instructions Section" />
+
+Feedback to the entire submission can also be added by clicking on the <img src={addNewFeedback} alt="Add New Feedback" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button.
+
+<Image src={feedbackModal} alt="Feedback Modal" size={ImageSize.large} caption="Feedback Modal" />
+
+Once you're done assessing the solution, you can either:
+
+- Click on <img src={saveButton} alt="Save" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> to save the incomplete assessment so that you can continue it afterward
+- Click on <img src={submitButton} alt="Submit" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> to submit the assessment
+- Click on <img src={cancelButton} alt="Cancel" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> to cancel and release the lock of the assessment
+- Click on <img src={exerciseDashboardButton} alt="Exercise Dashboard" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> to navigate to exercise dashboard page
+
+## Automatic Assessment Suggestions
+
+If the checkbox **Automatic assessment suggestions enabled** is checked for a modeling exercise, Artemis generates assessment suggestions for submissions using the Athena service.
+
+<Callout variant={CalloutVariant.info}>
+  <p>To learn how to set up an instance of the Athena service and configure your Artemis installation accordingly, please refer to the section <a href="/admin/artemis-intelligence#athena-service">Athena Service</a>.</p>
+</Callout>
+
+After clicking on <img src={assessSubmission} alt="Assess Submission" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> on one of the submission entries on the Submissions and Assessments Page, assessment suggestions are loaded automatically as indicated by the following loading indicator:
+
+<Image src={assessmentSuggestionsLoadingIndicator} alt="Assessment Suggestions Loading Indicator" size={ImageSize.medium} caption="Loading Assessment Suggestions" />
+
+Once assessment suggestions have been retrieved, a notice on top of the page indicates that the current submission contains assessment suggestions created via generative AI.
+
+<Image src={assessmentSuggestionsNotice} alt="Assessment Suggestions Notice" size={ImageSize.large} caption="Assessment Suggestions Notice" />
+
+The suggestions themselves are shown as follows. If a suggestion directly references a diagram element, a dialog showing the suggested grading score for this specific suggestion as well as a suggestion on what could be improved is attached to the corresponding element.
+In this example, a remark is made that an element is present in the evaluated BPMN diagram without being mentioned in the problem statement.
+
+<Image src={referencedAssessmentSuggestion} alt="Referenced Assessment Suggestion" size={ImageSize.medium} caption="Referenced Assessment Suggestion" />
+
+If a suggestion addresses a more general aspect of the diagram, multiple diagram elements at once, or elements that are missing from the diagram, the suggestion is shown in a card overview below the diagram.
+These unreferenced suggestions can be accepted or discarded via buttons on the individual suggestion cards.
+
+<Image src={unreferencedAssessmentSuggestion} alt="Unreferenced Assessment Suggestion" size={ImageSize.medium} caption="Unreferenced Assessment Suggestion" />
+
+## Automatic Student Feedback
+
+<Callout variant={CalloutVariant.info}>
+  <p><strong>Why Automatic Student Feedback:</strong> In large courses, providing timely and personalized feedback on modeling exercises is challenging. Automated student feedback helps learners identify misconceptions early, iterate on their work, and refine diagram modeling skills—all without waiting for an instructor or tutor to be available.</p>
+</Callout>
+
+**Overview:**
+
+When a modeling exercise is configured to allow **Allow automatic AI preliminary feedback requests**, preliminary AI feedback can be requested for modeling submissions. The feedback is generated through the Athena Service, which analyzes both the **structure** and **layout** of the diagrams and produces feedback based on the provided **Grading Instructions**, **Problem Statement**, and **Sample Solution**.
+
+<Callout variant={CalloutVariant.warning}>
+  <p>It is recommended that comprehensive <strong>Grading Instructions</strong> be provided in the form of <strong>Structured Grading Instructions</strong> and that a Sample Solution is included (although not mandatory). This ensures that the AI-generated feedback aligns with the intended grading criteria and offers targeted, meaningful hints.</p>
+</Callout>
+
+**How to Request Automatic Feedback:**
+
+1. **Requesting Feedback**
+   - 1.1. Navigate to a **Modeling Exercise** with the **Automatic Student Feedback** feature enabled
+   - 1.2. Create a diagram in the modeling editor and submit it
+   - 1.3. Feedback may be requested either from the exercise overview page or directly within the modeling editor
+
+<Image src={automaticFeedbackRequestEditor} alt="Automatic Feedback Request Editor" size={ImageSize.large} caption="Request Feedback Button in Exercise Overview and Modeling Editor" />
+
+2. **Viewing Feedback**
+   - 2.1. After a feedback request is made, the system processes the diagram and generates preliminary feedback
+   - 2.2. An alert appears at the top of the page to indicate that the feedback is ready
+
+<Image src={automaticFeedbackRequestAlert} alt="Automatic Feedback Request Alert" size={ImageSize.large} caption="Notification Alert When AI Feedback is Ready" />
+
+   - 2.3. A preliminary score is displayed in the top-right corner of the screen
+
+<Image src={automaticFeedbackRequestScore} alt="Automatic Feedback Request Score" size={ImageSize.large} caption="Preliminary Score in Modeling Editor" />
+
+   - 2.4. Clicking on the score reveals detailed, inline feedback that highlights specific issues and provides suggestions directly within the diagram
+
+<Image src={automaticFeedbackViewDetailed} alt="Automatic Feedback View Detailed" size={ImageSize.medium} caption="Detailed AI Feedback" />
+
+3. **Submission History**
+   - Feedback can be requested multiple times before the submission due date. All feedback requests are recorded in the submission history
+   - To review previous feedback, access the submission history section and click on an entry to display its detailed feedback
+
+<Image src={automaticFeedbackHistory} alt="Automatic Feedback History" size={ImageSize.medium} caption="Submission History Section in Modeling Editor" />
