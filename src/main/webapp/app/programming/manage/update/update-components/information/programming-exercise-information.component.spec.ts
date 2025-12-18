@@ -3,7 +3,6 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MockProvider } from 'ng-mocks';
 import { ActivatedRoute } from '@angular/router';
 import { Subject, of } from 'rxjs';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
 import { ProgrammingExerciseInformationComponent } from 'app/programming/manage/update/update-components/information/programming-exercise-information.component';
 import { NgModel } from '@angular/forms';
@@ -28,7 +27,6 @@ describe('ProgrammingExerciseInformationComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [BrowserAnimationsModule],
             providers: [
                 MockProvider(AlertService),
                 { provide: ActivatedRoute, useValue: { queryParams: of({}) } },
@@ -102,7 +100,7 @@ describe('ProgrammingExerciseInformationComponent', () => {
             fixture.componentRef.setInput('isImport', true);
 
             comp.programmingExercise().title = 'Test Exercise';
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
 
             expect(comp.programmingExercise().shortName).toBe('l01e01');
         });
@@ -111,7 +109,7 @@ describe('ProgrammingExerciseInformationComponent', () => {
             fixture.componentRef.setInput('isSimpleMode', true);
 
             comp.programmingExercise().title = 'Test Exercise';
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
 
             expect(comp.programmingExercise().shortName).toMatch('TestExercise');
         });
@@ -121,7 +119,7 @@ describe('ProgrammingExerciseInformationComponent', () => {
             comp.alreadyUsedShortNames.set(new Set(['TestExercise']));
 
             comp.programmingExercise().title = 'Test Exercise';
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
 
             expect(comp.programmingExercise().shortName).toMatch('TestExercise1');
         });

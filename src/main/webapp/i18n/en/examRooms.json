@@ -1,5 +1,24 @@
 {
     "artemisApp": {
+        "exam": {
+            "examUsers": {
+                "changeLocationButton": "Change location",
+                "rooms": {
+                    "reseating": {
+                        "dialogTitle": "Reseat Student",
+                        "introText": "This dialog can be used to reseat a student. Moving a student out of their assigned room will automatically fill the gap that moving created. Moving a student to a different seat inside the same room will not automatically fill any created gap.",
+                        "isLocationKnown": "Location known",
+                        "isLocationKnownTooltip": "Shows if the seat you are assigning to will be viewable in the attendance checker iPad app",
+                        "selectedStudent": "Selected student: {{ studentLogin }} ({{ studentName }}); Room: '{{ plannedRoom }}', Seat: '{{ plannedSeat }}'",
+                        "selectRoom": "New room:",
+                        "selectSeat": "New seat:",
+                        "examRoomSearchPlaceholder": "Search by room number, name, and/or building. Alternatively set a custom room",
+                        "examSeatSearchPlaceholder": "Leave empty to automatically find a seat",
+                        "reseat": "Reseat"
+                    }
+                }
+            }
+        },
         "examRooms": {
             "management": {
                 "openButtonTitle": "Exam Room Management",

@@ -70,7 +70,7 @@ describe('VirtualScrollComponent', () => {
         comp.originalItems = undefined;
         comp.ngOnChanges(changes);
         tick();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(comp.originalItems).toBeDefined();
         expect(comp.originalItems).toBeEmpty();
@@ -86,7 +86,7 @@ describe('VirtualScrollComponent', () => {
         comp.ngOnChanges(changes);
 
         tick();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(comp.previousItemsHeight).toHaveLength(metisCoursePosts.length);
         expect(prepareDataItemsSpy).toHaveBeenCalledOnce();
@@ -117,7 +117,7 @@ describe('VirtualScrollComponent', () => {
         comp.ngOnChanges(changes);
 
         tick();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(comp.domTreeItems).toHaveLength(3);
         expect(comp.domTreeItems[0].title).toBe(updatedTitle);
@@ -135,7 +135,7 @@ describe('VirtualScrollComponent', () => {
         global.window.dispatchEvent(new Event('scroll'));
 
         tick();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         // simulate unintended scrolling that occurs on focus
         originalWindow.scrollY = 1000;
@@ -157,7 +157,7 @@ describe('VirtualScrollComponent', () => {
         global.window.dispatchEvent(new Event('scroll'));
 
         tick();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(comp.windowScrollTop).toBe(comp.minItemHeight * 7);
         expect(prepareDataItemsSpy).toHaveBeenCalledTimes(2);
@@ -170,7 +170,7 @@ describe('VirtualScrollComponent', () => {
         global.window.dispatchEvent(new Event('scroll'));
 
         tick();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(onEndOfOriginalItemsReachedSpy).toHaveBeenCalledOnce();
     }));
@@ -186,6 +186,6 @@ describe('VirtualScrollComponent', () => {
         comp.ngOnChanges(changes);
 
         tick();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
     }
 });

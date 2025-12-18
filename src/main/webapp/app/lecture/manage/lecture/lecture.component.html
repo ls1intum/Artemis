@@ -76,7 +76,7 @@
                         <fa-icon [icon]="faPlus" />
                         <span jhiTranslate="artemisApp.lecture.home.createLabel"></span>
                     </a>
-                    @if (lectureIngestionEnabled) {
+                    @if (irisEnabled) {
                         <button (click)="ingestLecturesInPyris()" class="btn btn-primary btn-sm jh-create-entity" id="ingest-trigger-button">
                             <fa-icon [icon]="faFileExport" />
                             <span jhiTranslate="artemisApp.lecture.home.ingestLecturesInPyrisLabel"></span>
@@ -86,7 +86,11 @@
             </div>
         </div>
     </div>
-    <br />
+
+    @if (lectures) {
+        <jhi-pdf-drop-zone [disabled]="isUploadingPdfs()" (filesDropped)="onPdfFilesDropped($event)" />
+    }
+
     @if (filteredLectures) {
         <div class="table-responsive">
             <table class="table table-striped">
@@ -120,7 +124,7 @@
                             <span jhiTranslate="artemisApp.lecture.endDate"></span>
                             <fa-icon [icon]="faSort" />
                         </th>
-                        @if (lectureIngestionEnabled) {
+                        @if (irisEnabled) {
                             <th jhiSortBy="ingested">
                                 <span jhiTranslate="artemisApp.lecture.ingestionState"></span>
                                 <fa-icon [icon]="faSort" />
@@ -146,7 +150,7 @@
                             -->
                             <td>{{ lecture.startDate | artemisDate }}</td>
                             <td>{{ lecture.endDate | artemisDate }}</td>
-                            @if (lectureIngestionEnabled) {
+                            @if (irisEnabled) {
                                 <td>
                                     @switch (lecture.ingested) {
                                         @case (IngestionState.NOT_STARTED) {

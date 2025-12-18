@@ -154,7 +154,7 @@ export class StudentsRoomDistributionDialogComponent {
      * @param token A string without any whitespace
      * @param subsequence A string that we want to check if it is a subsequence of the token
      */
-    private isSubsequence(token: string, subsequence: string): boolean {
+    public isSubsequence(token: string, subsequence: string): boolean {
         if (token.length < subsequence.length) {
             return false;
         }

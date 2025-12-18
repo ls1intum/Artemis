@@ -38,6 +38,9 @@ class IrisChatWebsocketTest extends AbstractIrisIntegrationTest {
     @Autowired
     private IrisChatSessionUtilService irisChatSessionUtilService;
 
+    @Autowired
+    private IrisRateLimitService irisRateLimitService;
+
     private ProgrammingExercise exercise;
 
     @BeforeEach
@@ -51,14 +54,16 @@ class IrisChatWebsocketTest extends AbstractIrisIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void sendMessage() {
-        IrisProgrammingExerciseChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(exercise,
-                userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        var user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        IrisProgrammingExerciseChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(exercise, user);
         IrisMessage message = IrisMessageFactory.createIrisMessageForSession(irisSession);
         message.addContent(createMockContent(), createMockContent());
         message.setMessageDifferentiator(101010);
         irisChatWebsocketService.sendMessage(irisSession, message, List.of());
+
+        var expectedRateLimitInfo = irisRateLimitService.getRateLimitInformation(irisSession, user);
         verify(websocketMessagingService, times(1)).sendMessageToUser(eq(TEST_PREFIX + "student1"), eq("/topic/iris/" + irisSession.getId()),
-                eq(new IrisChatWebsocketDTO(message, new IrisRateLimitService.IrisRateLimitInformation(0, -1, 0), List.of(), null, List.of(), List.of())));
+                eq(new IrisChatWebsocketDTO(message, expectedRateLimitInfo, List.of(), null, null, null)));
     }
 
     private IrisTextMessageContent createMockContent() {

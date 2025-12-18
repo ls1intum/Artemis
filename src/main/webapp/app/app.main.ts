@@ -32,7 +32,7 @@ bootstrapApplication(AppComponent, appConfig)
         // Perform initialization logic
         registerLocaleData(locale);
         dpConfig.minDate = { year: dayjs().subtract(100, 'year').year(), month: 1, day: 1 };
-        translateService.setDefaultLang('en');
+        translateService.setFallbackLang('en');
         const languageKey: string = sessionStorageService.retrieve('locale') || languageHelper.determinePreferredLanguage();
         translateService.use(languageKey);
         tooltipConfig.container = 'body';

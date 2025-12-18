@@ -15,8 +15,8 @@
 
 .lecture-unit-container {
     cursor: grab;
-    margin-top: 30px;
-    margin-bottom: 20px;
+    margin-top: 10px;
+    margin-bottom: 10px;
     display: flex;
     gap: 5px;
     flex-wrap: nowrap;
@@ -40,12 +40,12 @@
         .unit-badges {
             position: absolute;
             left: -0.75rem;
-            top: -20px;
+            top: -10px;
         }
     }
 
     &.attachment {
-        margin-top: 50px;
+        margin-top: 20px;
 
         .lecture-unit-type-container .unit-badges {
             > div {
@@ -69,4 +69,10 @@
 
 .creation-card-wrapper {
     flex: 1;
+}
+
+// Fixed width action buttons column
+.action-buttons {
+    width: 80px;
+    flex-shrink: 0;
 }

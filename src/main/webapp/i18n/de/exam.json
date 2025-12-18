@@ -32,6 +32,7 @@
                 "attendanceCheckPassed": "Anwesenheitskontrolle bestanden",
                 "didNotAttend": "Hat nicht teilgenommen",
                 "roomDistribute": "Verteilen",
+                "notFound": "Klausurteilnehmer:in konnte nicht gefunden werden",
                 "rooms": {
                     "dialogTitle": "Verteile Klausurteilnehmer",
                     "introText": "In diesem Dialogfeld kannst du die für eine Prüfung angemeldeten Studierenden auf verschiedene Räume verteilen. Artemis verteilt Studenten in der Reihenfolge der angegebenen Räume. Falls ein angebener Raum nicht gefunden werden kann, kannst du ihn über die Prüfungsraumverwaltung hinzufügen.",

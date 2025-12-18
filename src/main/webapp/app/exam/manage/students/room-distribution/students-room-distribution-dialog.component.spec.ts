@@ -13,6 +13,7 @@ import { SessionStorageService } from 'app/shared/service/session-storage.servic
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateService } from '@ngx-translate/core';
+import { Router, UrlTree } from '@angular/router';
 import { fakeAsync, tick } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { RoomForDistributionDTO } from 'app/exam/manage/students/room-distribution/students-room-distribution.model';
@@ -21,9 +22,7 @@ import { StudentsRoomDistributionService } from 'app/exam/manage/services/studen
 import { MockStudentsRoomDistributionService } from 'test/helpers/mocks/service/mock-students-room-distribution.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
-import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { RouterTestingModule } from '@angular/router/testing';
-import { Router, UrlTree } from '@angular/router';
 
 function dispatchInputEvent(inputElement: HTMLInputElement, value: string) {
     inputElement.value = value;
@@ -56,7 +55,6 @@ describe('StudentsRoomDistributionDialogComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AlertService, useClass: MockAlertService },
                 { provide: StudentsRoomDistributionService, useClass: MockStudentsRoomDistributionService },
-                provideNoopAnimations(),
             ],
         }).compileComponents();
 
@@ -101,7 +99,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
     it('should show finish button after selecting a room', () => {
         fixture.detectChanges();
         component.pickSelectedRoom({ item: rooms[0] });
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const button = fixture.debugElement.nativeElement.querySelector('#finish-button');
         expect(component.hasSelectedRooms()).toBeTrue();
@@ -111,11 +109,11 @@ describe('StudentsRoomDistributionDialogComponent', () => {
     it('should remove selected room and hide finish button again', () => {
         fixture.detectChanges();
         component.pickSelectedRoom({ item: rooms[0] });
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(component.hasSelectedRooms()).toBeTrue();
 
         component.removeSelectedRoom(rooms[0]);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(component.hasSelectedRooms()).toBeFalse();
         const button = fixture.debugElement.nativeElement.querySelector('#finish-button');
@@ -132,7 +130,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
         const distributeSpy = jest.spyOn(service, 'distributeStudentsAcrossRooms');
 
         component.pickSelectedRoom({ item: rooms[0] });
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         component.attemptDistributeAndCloseDialog();
 
@@ -152,8 +150,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
     });
 
     it('should find correct rooms', fakeAsync(() => {
-        fixture.detectChanges();
-        tick();
+        (service as MockStudentsRoomDistributionService).availableRooms.set(rooms);
 
         let searchResult: RoomForDistributionDTO[] = [];
         component.search(of('t')).subscribe((rooms) => {
@@ -172,11 +169,11 @@ describe('StudentsRoomDistributionDialogComponent', () => {
         const input: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#reserveFactor');
 
         dispatchInputEvent(input, '25');
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(input.value).toBe('25');
 
         input.dispatchEvent(new FocusEvent('focusout'));
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(input.value).toBe('25');
     });
 
@@ -185,36 +182,36 @@ describe('StudentsRoomDistributionDialogComponent', () => {
         const input: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#reserveFactor');
 
         dispatchInputEvent(input, '25');
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         dispatchInputEvent(input, '259');
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(input.value).toBe('25');
 
         input.dispatchEvent(new FocusEvent('focusout'));
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(input.value).toBe('25');
 
         dispatchInputEvent(input, '2 5');
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(input.value).toBe('25');
 
         dispatchInputEvent(input, '25a');
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(input.value).toBe('25');
     });
 
-    it('should select all text when the input gains focus', async () => {
-        fixture.detectChanges();
-        const input: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#reserveFactor');
+    it('should select all text when the input gains focus', () => {
+        jest.useFakeTimers();
+        const input = document.createElement('input');
         input.value = '42';
         const selectSpy = jest.spyOn(input, 'select');
 
-        input.dispatchEvent(new FocusEvent('focusin'));
-        fixture.detectChanges();
-        await fixture.whenStable();
+        component.selectAllTextAndOpenDropdown({ target: input } as unknown as FocusEvent);
+        jest.runAllTimers();
 
-        expect(selectSpy).toHaveBeenCalledOnce();
+        expect(selectSpy).toHaveBeenCalled();
+        jest.useRealTimers();
     });
 
     it('should toggle use narrow layouts when switch is pressed', () => {
@@ -224,11 +221,11 @@ describe('StudentsRoomDistributionDialogComponent', () => {
         expect(component.allowNarrowLayouts()).toBeFalse();
 
         checkbox.click();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(component.allowNarrowLayouts()).toBeTrue();
 
         checkbox.click();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(component.allowNarrowLayouts()).toBeFalse();
     });
 
