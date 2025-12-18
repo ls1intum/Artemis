@@ -252,6 +252,8 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     protected applyingCommentId = signal<string | undefined>(undefined);
     protected isApplyingAll = signal(false);
     protected isAnyApplying = computed(() => !!this.applyingCommentId() || this.isApplyingAll());
+    // Currently in this component, applying inline comments IS refinement. TODO: Add refinement button
+    protected isRefining = this.isAnyApplying;
     private currentRefinementSubscription: Subscription | undefined;
     private exerciseContextInitialized = false;
     private lastExerciseId: number | undefined;
