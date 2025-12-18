@@ -98,7 +98,7 @@ describe('PasskeyAuthenticationPageComponent', () => {
 
             component.redirectToOriginalUrlOrHome();
 
-            expect(navigateByUrlSpy).toHaveBeenCalledWith('/admin/metrics');
+            expect(navigateByUrlSpy).toHaveBeenCalledExactlyOnceWith('/admin/metrics');
         });
 
         it('should navigate to home when redirectToOriginalUrlOrHome is called without returnUrl', () => {
@@ -107,7 +107,7 @@ describe('PasskeyAuthenticationPageComponent', () => {
 
             component.redirectToOriginalUrlOrHome();
 
-            expect(navigateSpy).toHaveBeenCalledWith(['/']);
+            expect(navigateSpy).toHaveBeenCalledExactlyOnceWith(['/']);
         });
     });
 
@@ -120,8 +120,8 @@ describe('PasskeyAuthenticationPageComponent', () => {
 
             await component.setupPasskey();
 
-            expect(addNewPasskeySpy).toHaveBeenCalledWith(mockUser);
-            expect(alertSuccessSpy).toHaveBeenCalledWith('artemisApp.userSettings.passkeySettingsPage.success.registration');
+            expect(addNewPasskeySpy).toHaveBeenCalledExactlyOnceWith(mockUser);
+            expect(alertSuccessSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.userSettings.passkeySettingsPage.success.registration');
         });
 
         it('should show success alert after passkey setup', async () => {
@@ -132,7 +132,7 @@ describe('PasskeyAuthenticationPageComponent', () => {
 
             await component.setupPasskey();
 
-            expect(alertSuccessSpy).toHaveBeenCalledWith('artemisApp.userSettings.passkeySettingsPage.success.registration');
+            expect(alertSuccessSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.userSettings.passkeySettingsPage.success.registration');
         });
     });
 
@@ -146,7 +146,7 @@ describe('PasskeyAuthenticationPageComponent', () => {
             await component.signInWithPasskey();
 
             expect(loginSpy).toHaveBeenCalledOnce();
-            expect(identitySpy).toHaveBeenCalledWith(true);
+            expect(identitySpy).toHaveBeenCalledExactlyOnceWith(true);
             expect(redirectSpy).toHaveBeenCalledOnce();
         });
 
@@ -159,7 +159,7 @@ describe('PasskeyAuthenticationPageComponent', () => {
 
             await component.signInWithPasskey();
 
-            expect(alertErrorSpy).toHaveBeenCalledWith('global.menu.admin.usedPasskeyIsNotSuperAdminApproved');
+            expect(alertErrorSpy).toHaveBeenCalledExactlyOnceWith('global.menu.admin.usedPasskeyIsNotSuperAdminApproved');
             expect(redirectSpy).not.toHaveBeenCalled();
         });
 
@@ -170,7 +170,7 @@ describe('PasskeyAuthenticationPageComponent', () => {
 
             await component.signInWithPasskey();
 
-            expect(identitySpy).toHaveBeenCalledWith(true);
+            expect(identitySpy).toHaveBeenCalledExactlyOnceWith(true);
         });
     });
 
