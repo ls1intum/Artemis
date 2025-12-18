@@ -33,7 +33,7 @@ describe('DetailOverviewNavigationBar', () => {
 
     it('should initialize', () => {
         component.sectionHeadlines = sectionHeadlines;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(DetailOverviewNavigationBarComponent).not.toBeNull();
     });
 

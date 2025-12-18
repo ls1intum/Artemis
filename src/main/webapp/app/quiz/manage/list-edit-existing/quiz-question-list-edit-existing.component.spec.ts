@@ -173,7 +173,7 @@ describe('QuizQuestionListEditExistingComponent', () => {
             fixture.componentRef.setInput('courseId', 123);
             component.exams = [];
             component.courses = [];
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
 
             expect(getAllCoursesWithQuizExercisesSpy).not.toHaveBeenCalled();
             expect(findAllExamsAccessibleToUserSpy).not.toHaveBeenCalled();

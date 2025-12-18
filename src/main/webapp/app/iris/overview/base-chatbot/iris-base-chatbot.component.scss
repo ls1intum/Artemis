@@ -32,6 +32,91 @@
     }
 }
 
+// CSS animations for enter/leave (used with Angular's animate.enter/animate.leave)
+// Message enter animation using CSS Grid for height + scale transform
+// Only animate when both classes are present
+// animate.enter adds 'message-entering', shouldAnimate adds 'animate-enabled'
+.message-entering.animate-enabled {
+    display: grid;
+    grid-template-rows: 0fr;
+    transform: scale(0);
+    animation:
+        message-height 0.3s ease-in-out forwards,
+        message-scale 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+
+    > * {
+        overflow: hidden;
+    }
+}
+
+@keyframes message-height {
+    from {
+        grid-template-rows: 0fr;
+    }
+
+    to {
+        grid-template-rows: 1fr;
+    }
+}
+
+@keyframes message-scale {
+    from {
+        transform: scale(0);
+    }
+
+    to {
+        transform: scale(1);
+    }
+}
+
+// Suggestion enter animation using CSS Grid for height + opacity
+.suggestion-entering {
+    display: grid;
+    grid-template-rows: 0fr;
+    opacity: 0;
+    animation: suggestion-enter 0.3s 1.5s ease-in-out forwards;
+
+    > * {
+        overflow: hidden;
+    }
+}
+
+@keyframes suggestion-enter {
+    from {
+        grid-template-rows: 0fr;
+        opacity: 0;
+    }
+
+    to {
+        grid-template-rows: 1fr;
+        opacity: 1;
+    }
+}
+
+// Suggestion leave animation
+.suggestion-leaving {
+    display: grid;
+    grid-template-rows: 1fr;
+    opacity: 1;
+    animation: suggestion-leave 0.3s ease-in-out forwards;
+
+    > * {
+        overflow: hidden;
+    }
+}
+
+@keyframes suggestion-leave {
+    from {
+        grid-template-rows: 1fr;
+        opacity: 1;
+    }
+
+    to {
+        grid-template-rows: 0fr;
+        opacity: 0;
+    }
+}
+
 .suggestions-container {
     display: flex;
     flex-wrap: wrap;

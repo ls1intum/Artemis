@@ -10,7 +10,6 @@ import {
 } from 'app/exam/overview/services/exam-participation-live-events.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { input } from '@angular/core';
 
 describe('ExamLiveEventComponent', () => {
     let component: ExamLiveEventComponent;
@@ -18,6 +17,7 @@ describe('ExamLiveEventComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
+            imports: [ExamLiveEventComponent],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
@@ -30,10 +30,7 @@ describe('ExamLiveEventComponent', () => {
             eventType: ExamLiveEventType.EXAM_WIDE_ANNOUNCEMENT,
         } as ExamLiveEvent;
 
-        TestBed.runInInjectionContext(() => {
-            component.event = input(event);
-        });
-
+        fixture.componentRef.setInput('event', event);
         fixture.detectChanges();
 
         const typeElement = fixture.debugElement.query(By.css('.type')).nativeElement;
@@ -46,10 +43,7 @@ describe('ExamLiveEventComponent', () => {
             eventType: ExamLiveEventType.EXAM_ATTENDANCE_CHECK,
         } as ExamLiveEvent;
 
-        TestBed.runInInjectionContext(() => {
-            component.event = input(event);
-        });
-
+        fixture.componentRef.setInput('event', event);
         fixture.detectChanges();
 
         const typeElement = fixture.debugElement.query(By.css('.type')).nativeElement;
@@ -62,10 +56,7 @@ describe('ExamLiveEventComponent', () => {
             text: 'This is an announcement',
         } as ExamWideAnnouncementEvent;
 
-        TestBed.runInInjectionContext(() => {
-            component.event = input(event);
-        });
-
+        fixture.componentRef.setInput('event', event);
         fixture.detectChanges();
 
         const contentElement = fixture.debugElement.query(By.css('.content > div')).nativeElement;
@@ -80,10 +71,7 @@ describe('ExamLiveEventComponent', () => {
             courseWide: true,
         } as WorkingTimeUpdateEvent;
 
-        TestBed.runInInjectionContext(() => {
-            component.event = input(event);
-        });
-
+        fixture.componentRef.setInput('event', event);
         fixture.detectChanges();
 
         const previousTimeElement = fixture.debugElement.query(By.css('[data-testid="old-time"]')).nativeElement;
@@ -104,10 +92,7 @@ describe('ExamLiveEventComponent', () => {
             exerciseName: 'Programming Exercise',
         } as ProblemStatementUpdateEvent;
 
-        TestBed.runInInjectionContext(() => {
-            component.event = input(event);
-        });
-
+        fixture.componentRef.setInput('event', event);
         fixture.detectChanges();
 
         const typeElement = fixture.debugElement.query(By.css('.type')).nativeElement;
@@ -123,11 +108,8 @@ describe('ExamLiveEventComponent', () => {
             eventType: ExamLiveEventType.EXAM_WIDE_ANNOUNCEMENT,
         } as any as ExamLiveEvent;
 
-        TestBed.runInInjectionContext(() => {
-            component.event = input(mockEvent);
-            component.showAcknowledge = input(true);
-        });
-
+        fixture.componentRef.setInput('event', mockEvent);
+        fixture.componentRef.setInput('showAcknowledge', true);
         fixture.detectChanges();
 
         const acknowledgeSpy = jest.spyOn(component.onAcknowledge, 'emit');
@@ -142,11 +124,8 @@ describe('ExamLiveEventComponent', () => {
             eventType: ExamLiveEventType.PROBLEM_STATEMENT_UPDATE,
         } as any as ExamLiveEvent;
 
-        TestBed.runInInjectionContext(() => {
-            component.event = input(mockEvent);
-            component.showAcknowledge = input(true);
-        });
-
+        fixture.componentRef.setInput('event', mockEvent);
+        fixture.componentRef.setInput('showAcknowledge', true);
         fixture.detectChanges();
 
         const acknowledgeSpy = jest.spyOn(component.onNavigate, 'emit');

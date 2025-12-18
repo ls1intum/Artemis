@@ -88,28 +88,28 @@ describe('TextBlockFeedbackEditorComponent', () => {
         expect(confirm).toBeFalsy();
 
         component.feedback.credits = 1;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         button = compiled.querySelector('#dismiss-icon');
         confirm = compiled.querySelector('#confirm-icon');
         expect(button).toBeFalsy();
         expect(confirm).toBeTruthy();
 
         component.feedback.detailText = 'Lorem Ipsum';
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         button = compiled.querySelector('#dismiss-icon');
         confirm = compiled.querySelector('#confirm-icon');
         expect(button).toBeFalsy();
         expect(confirm).toBeTruthy();
 
         component.feedback.credits = 0;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         button = compiled.querySelector('#dismiss-icon');
         confirm = compiled.querySelector('#confirm-icon');
         expect(button).toBeFalsy();
         expect(confirm).toBeTruthy();
 
         component.feedback.detailText = '';
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         button = compiled.querySelector('#dismiss-icon');
         confirm = compiled.querySelector('#confirm-icon');
@@ -126,7 +126,7 @@ describe('TextBlockFeedbackEditorComponent', () => {
         });
         const textarea = fixture.nativeElement.querySelector('textarea');
         textarea.dispatchEvent(event);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(component.escKeyup).toHaveBeenCalledOnce();
     });
 
@@ -137,20 +137,20 @@ describe('TextBlockFeedbackEditorComponent', () => {
         const confirmSpy = jest.spyOn(component.confirmIconComponent, 'toggle');
 
         component.escKeyup();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(confirmSpy).toHaveBeenCalledOnce();
     });
 
     it('should show link icon when feedback is associated with grading instruction', () => {
         component.feedback.gradingInstruction = new GradingInstruction();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         const linkIcon = compiled.querySelector('.form-group jhi-grading-instruction-link-icon');
         expect(linkIcon).toBeTruthy();
     });
 
     it('should not show link icon when feedback is not associated with grading instruction', () => {
         component.feedback.gradingInstruction = undefined;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         const linkIcon = compiled.querySelector('.form-group jhi-grading-instruction-link-icon');
         expect(linkIcon).toBeFalsy();
     });
@@ -161,7 +161,7 @@ describe('TextBlockFeedbackEditorComponent', () => {
         //@ts-ignore
         const sendAssessmentEvent = jest.spyOn<any, any>(component.textAssessmentAnalytics, 'sendAssessmentEvent');
         component.dismiss();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(sendAssessmentEvent).toHaveBeenCalledWith(TextAssessmentEventType.DELETE_FEEDBACK, FeedbackType.MANUAL, TextBlockType.MANUAL);
     });
 

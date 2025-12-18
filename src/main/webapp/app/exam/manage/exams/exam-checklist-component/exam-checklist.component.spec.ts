@@ -19,7 +19,6 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { input } from '@angular/core';
 import { MODULE_FEATURE_TEXT } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
@@ -99,9 +98,7 @@ describe('ExamChecklistComponent', () => {
 
     beforeEach(() => {
         // reset exam
-        TestBed.runInInjectionContext(() => {
-            component.exam = input(exam);
-        });
+        examChecklistComponentFixture.componentRef.setInput('exam', exam);
     });
 
     afterEach(() => {

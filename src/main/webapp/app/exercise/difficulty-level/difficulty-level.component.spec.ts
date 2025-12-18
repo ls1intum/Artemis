@@ -23,7 +23,7 @@ describe('DifficultyLevelComponent', () => {
 
     it('should set coloredDifficultyLevel correctly for EASY', () => {
         component.difficultyLevel = 'EASY';
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(component.coloredDifficultyLevel.label).toBe('artemisApp.exercise.easy');
         expect(component.coloredDifficultyLevel.color).toEqual(['success', 'body', 'body']);
@@ -31,7 +31,7 @@ describe('DifficultyLevelComponent', () => {
 
     it('should set coloredDifficultyLevel correctly for MEDIUM', () => {
         component.difficultyLevel = 'MEDIUM';
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(component.coloredDifficultyLevel.label).toBe('artemisApp.exercise.medium');
         expect(component.coloredDifficultyLevel.color).toEqual(['warning', 'warning', 'body']);
@@ -39,7 +39,7 @@ describe('DifficultyLevelComponent', () => {
 
     it('should set coloredDifficultyLevel correctly for HARD', () => {
         component.difficultyLevel = 'HARD';
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(component.coloredDifficultyLevel.label).toBe('artemisApp.exercise.hard');
         expect(component.coloredDifficultyLevel.color).toEqual(['danger', 'danger', 'danger']);
@@ -47,14 +47,14 @@ describe('DifficultyLevelComponent', () => {
 
     it('should set coloredDifficultyLevel correctly for no level', () => {
         component.difficultyLevel = 'UNKNOWN';
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(component.coloredDifficultyLevel.label).toBe('artemisApp.exercise.noLevel');
         expect(component.coloredDifficultyLevel.color).toEqual(['body', 'body', 'body']);
     });
     it('should display the correct tooltip label', () => {
         component.difficultyLevel = 'EASY';
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const tooltipElement: HTMLElement = fixture.nativeElement.querySelector('#difficulty-level');
         tooltipElement.dispatchEvent(new Event('mouseenter'));
@@ -66,7 +66,7 @@ describe('DifficultyLevelComponent', () => {
 
     it('should apply the correct classes for difficulty colors', () => {
         component.difficultyLevel = 'EASY';
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         const skillBars: NodeListOf<HTMLElement> = fixture.nativeElement.querySelectorAll('.skill-bar');
         expect(skillBars).toHaveLength(3);
         expect(skillBars[0].classList).toContain('bg-success');
