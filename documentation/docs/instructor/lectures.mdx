@@ -36,21 +36,24 @@ import lectureDetails from './assets/lectures/lecture-details.png';
 
 ## Overview
 
-Instructors can upload files, such as lecture slides, and partition the lecture's content into individual lecture units. Lecture units can consist of files, text, external links, videos or livestreams (e.g., lecture recordings). To directly link the necessary knowledge to its application, regular course exercises can be added to the lecture as a unit, too. Instructors can also define learning goals so that students can keep track of the knowledge they should have after working with those lecture materials.
+Instructors can upload files, such as lecture slides, and partition the lecture's content into individual lecture units.
+Lecture units can consist of files, text, external links, videos or livestreams (e.g., lecture recordings).
+To directly link the necessary knowledge to its application, regular course exercises can be added to the lecture as a unit, too.
+Instructors can also define learning goals so that students can keep track of the knowledge they should have after working with those lecture materials.
 
 On the course management site, clicking on <img src={lecturesManagementBtn} alt="Lectures Management Button" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> opens the lecture management page.
 
-<Image src={lecturesManagement} alt="Lectures Management" size={ImageSize.large}></Image>
+<Image src={lecturesManagement} alt="Lectures Management" size={ImageSize.large} caption={"Lecture Management Page"}></Image>
 
 ## Managing Lectures
 
-Instructors have three options for creating a lecture.
+Instructors have two options for creating a lecture.
 
 ### Option 1: Create from Scratch
 
 Create a new lecture from scratch by clicking on <img src={createLectureBtn} alt="Create Lecture Button" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />. Lectures consist of a title, a description, optionally a start and end date, and the selection of automatic unit processing.
 
-<Image src={createLecture} alt="Create Lecture" size={ImageSize.large}></Image>
+<Image src={createLecture} alt="Create Lecture" size={ImageSize.large} caption={"Lecture Creation Form"}></Image>
 
 #### Automatic Unit Processing
 
@@ -60,7 +63,7 @@ If instructors decide to process units automatically by clicking on the <img src
 
 Once the units are processed, instructors can view how the units are split, beginning from a start page to an end page. A name is automatically generated for each lecture unit. Instructors can also customize the table entries by removing or adding new units. Additionally, they can enter keywords if they want particular slides to be removed. Slides containing one of the comma-separated keywords will be removed.
 
-<Image src={processedLectureUnits} alt="Processed Lecture Units" size={ImageSize.large}></Image>
+<Image src={processedLectureUnits} alt="Processed Lecture Units" size={ImageSize.large} caption={"Processed Lecture Units"}></Image>
 
 The following video shows how to split a lecture PDF into multiple units.
 
@@ -77,57 +80,39 @@ The following video shows how to split a lecture PDF into multiple units.
     Video tutorial of splitting lecture PDF into multiple units on TUM-Live.
 </iframe>
 
-### Option 2: Guided Lecture Creation
-
-In addition to creating a new lecture from the default mode, instructors can switch to the guided lecture creation by clicking on <img src={switchToGuidedModeBtn} alt="Switch to Guided Mode Button" style={{display: 'inline', verticalAlign: 'middle', height: '2.5rem'}} />. This guided mode helps creating a new lecture and adding its contents through a multi-step process. The following video shows an exemplary use of the guided mode.
-
-<iframe
-    src="https://live.rbg.tum.de/w/artemisintro/26853?video_only=1&t=0"
-    title="Guided lecture creation on TUM-Live"
-    width="600"
-    height="400"
-    allowFullScreen
-    loading="lazy"
-    allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
-    referrerPolicy="no-referrer-when-downgrade"
-    style={{border: 0}}>
-    Video tutorial of guided lecture creation on TUM-Live.
-</iframe>
-
-### Option 3: Import Lecture
+### Option 2: Import Lecture
 
 Alternatively, instructors can also import a lecture from any other course where they at least have *editor* access. Clicking on <img src={importLectureBtn} alt="Import Lecture Button" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> opens the import modal, where instructors can search for an existing lecture and import it.
 
-<Image src={importLecture} alt="Import Lecture" size={ImageSize.large}></Image>
+<Image src={importLecture} alt="Import Lecture" size={ImageSize.large} caption={"Lecture Import"}></Image>
 
 ## Lecture Attachments
 
 Once a lecture is created, instructors can add attachments to it. An attachment is a file (e.g., document, image) with a title and an optional release date.
 
-<Image src={createAttachment} alt="Create Attachment" size={ImageSize.large}></Image>
+<Image src={createAttachment} alt="Create Attachment" size={ImageSize.large} caption={"Lecture Attachment Creation"}></Image>
 
 ## Lecture Units
 
 Instructors can create lecture units on the lecture unit management page.
 
-<Image src={unitsManagementEmpty} alt="Empty Units Management" size={ImageSize.large}></Image>
+<Image src={unitsManagementEmpty} alt="Empty Units Management" size={ImageSize.large} caption={"Lecture Unit Management Page (empty)"}></Image>
 
 After adding lecture units, instructors may edit or delete each one with the buttons to the right of the unit. Using the arrow buttons, the order of the lecture units can be changed.
 
-<Image src={unitsManagement} alt="Units Management" size={ImageSize.large}></Image>
+<Image src={unitsManagement} alt="Units Management" size={ImageSize.large} caption={"Lecture Unit Management Page"}></Image>
 
 Students see all released lecture units on the lecture details page. Clicking on a unit opens its contents.
 
-<Image src={lectureDetails} alt="Lecture Details" size={ImageSize.large}></Image>
+<Image src={lectureDetails} alt="Lecture Details" size={ImageSize.large} caption={"Student Lecture Details Page"}></Image>
 
 ### Attachment Video Unit
 
-<details>
-<summary>Attachment Video Unit Details</summary>
+An attachment video unit consists of a name, file, an embedded video link, and optionally a description, a release date and a transcription.
+Artemis can convert the website link from common video sources to an embeddable URL using the arrow button.
+Students complete this unit when they watch the video for at least five minutes and download the attachment.
 
-An attachment video unit consists of a name, file, an embedded video link, and optionally a description, a release date and a transcription. Artemis can convert the website link from common video sources to an embeddable URL using the arrow button. Students complete this unit when they watch the video for at least five minutes and download the attachment.
-
-<Image src={createAttachmentVideoUnit} alt="Create Attachment Video Unit" size={ImageSize.large}></Image>
+<Image src={createAttachmentVideoUnit} alt="Create Attachment Video Unit" size={ImageSize.large} caption={"Create Attachment Video Unit"}></Image>
 
 #### Generating Transcriptions with Nebula
 
@@ -140,20 +125,22 @@ If your Artemis instance is connected to Nebula, you can generate transcriptions
 
 #### Iris Integration
 
-Either all Attachment Video Units of a lecture or specific Attachment Video Units can be sent to Iris, over the ingestion button in the lecture unit overview. Those transcriptions can be used to answer students' questions in the Iris chat.
+Either all Attachment Video Units of a lecture or specific Attachment Video Units can be sent to Iris, over the ingestion button in the lecture unit overview.
+Those transcriptions can be used to answer students' questions in the Iris chat.
 
 <div style={{display: 'flex', gap: '1rem', flexWrap: 'wrap'}}>
-    <Image src={sendAllLecturesToIris} alt="Send All Lectures to Iris" size={ImageSize.medium}></Image>
-    <Image src={sendOneUnitIris} alt="Send One Unit to Iris" size={ImageSize.medium}></Image>
+    <Image src={sendAllLecturesToIris} alt="Send All Lectures to Iris" size={ImageSize.large} caption={"Lecture Management Page (with Send All Lectures To Iris Button)"}></Image>
+    <Image src={sendOneUnitIris} alt="Send One Unit to Iris" size={ImageSize.large} caption={"Lecture View (with Send Unit to Iris Button for attachment lecture units)"}></Image>
 </div>
 
 #### Attachment Unit Management
 
 Instructors can preview the Attachment Unit by clicking the <img src={viewAttachmentUnitBtn} alt="View Attachment Unit Button" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button.
 
-<Image src={viewAttachmentUnit} alt="View Attachment Unit" size={ImageSize.large}></Image>
+<Image src={viewAttachmentUnit} alt="View Attachment Unit" size={ImageSize.large} caption={"Attachment Unit View"}></Image>
 
-In the preview, instructors can enlarge pages, delete them, reorder them, merge new files, or hide pages. This feature enables instructors to easily edit lecture materials within the platform, without relying on external tools.
+In the preview, instructors can enlarge pages, delete them, reorder them, merge new files, or hide pages.
+This feature enables instructors to easily edit lecture materials within the platform, without relying on external tools.
 
 The following video shows how to use all of the mentioned features effectively.
 
@@ -170,7 +157,8 @@ The following video shows how to use all of the mentioned features effectively.
     Video tutorial of attachment unit management on TUM-Live.
 </iframe>
 
-Pages can be hidden indefinitely, until a specific date, or until an exercise's due date. Hidden pages are invisible to students and cannot be referenced in the Communication section.
+Pages can be hidden indefinitely, until a specific date, or until an exercise's due date.
+Hidden pages are invisible to students and cannot be referenced in the Communication section.
 
 The following video shows how to observe the effects of hidden pages on the Student Version and slide references.
 
@@ -187,44 +175,32 @@ The following video shows how to observe the effects of hidden pages on the Stud
     Video tutorial showing effects of hidden pages on TUM-Live.
 </iframe>
 
-</details>
-
 ### Exercise Unit
 
-<details>
-<summary>Exercise Unit Details</summary>
+An exercise can be added as a unit to a lecture.
+For the exercise unit, Artemis uses the title, release date, etc. of the exercise itself.
+Students complete this unit when they participate in the exercise.
 
-An exercise can be added as a unit to a lecture. For the exercise unit, Artemis uses the title, release date, etc. of the exercise itself. Students complete this unit when they participate in the exercise.
-
-<Image src={createExerciseUnit} alt="Create Exercise Unit" size={ImageSize.large}></Image>
-
-</details>
+<Image src={createExerciseUnit} alt="Create Exercise Unit" size={ImageSize.large} caption={"Exercise Unit Creation"}></Image>
 
 ### Online Unit
 
-<details>
-<summary>Online Unit Details</summary>
+An online unit consists of a link to an external website, a name, and optionally a description and release date.
+Artemis automatically pre-fills the title and description from the website's metadata once the URL is set.
+Students complete this unit once they navigate to the external website.
 
-An online unit consists of a link to an external website, a name, and optionally a description and release date. Artemis automatically pre-fills the title and description from the website's metadata once the URL is set. Students complete this unit once they navigate to the external website.
-
-<Image src={createOnlineUnit} alt="Create Online Unit" size={ImageSize.large}></Image>
-
-</details>
+<Image src={createOnlineUnit} alt="Create Online Unit" size={ImageSize.large} caption={"Online Unit Creation"}></Image>
 
 ### Text Unit
 
-<details>
-<summary>Text Unit Details</summary>
-
 A text unit consists of a name, some rich-text content and optionally a release date. Students complete this unit as soon as they open it.
 
-<Image src={createTextUnit} alt="Create Text Unit" size={ImageSize.large}></Image>
-
-</details>
+<Image src={createTextUnit} alt="Create Text Unit" size={ImageSize.large} caption={"Text Unit Creation"}></Image>
 
 ## Competencies
 
-Instructors can create competencies, which are desired learning objectives, and link lecture units to them. See [Adaptive Learning](./adaptive-learning.mdx) for more information.
+Instructors can create competencies, which are desired learning objectives, and link lecture units to them.
+See [Adaptive Learning](./adaptive-learning.mdx) for more information.
 
 ## Lecture Series
 

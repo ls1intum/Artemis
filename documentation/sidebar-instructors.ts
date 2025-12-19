@@ -15,6 +15,7 @@ const sidebars: SidebarsConfig = {
                 'exercises/file-upload-exercise',
             ]
         },
+        'lectures',
         'lecture-series',
         'assessment',
         {

@@ -5,6 +5,7 @@ const sidebars: SidebarsConfig = {
         'intro',
         'general',
         'courses',
+        'lectures',
         'assessment',
         'quiz-training',
         'exams',
