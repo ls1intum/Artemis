@@ -541,18 +541,17 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Diff Editor', () => 
         expect(comp.refinedProblemStatement()).toBe('');
     });
 
-    it('should close diff and reset state', () => {
+    it('should close diff and reset public state', () => {
         comp.showDiff.set(true);
         comp.originalProblemStatement.set('Original');
         comp.refinedProblemStatement.set('Refined');
-        (comp as any).diffContentSet = true;
 
         comp.closeDiff();
 
+        // Verify observable behavior through public API
         expect(comp.showDiff()).toBeFalse();
         expect(comp.originalProblemStatement()).toBe('');
         expect(comp.refinedProblemStatement()).toBe('');
-        expect((comp as any).diffContentSet).toBeFalse();
     });
 });
 
@@ -628,24 +627,22 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Inline Comments', ()
         expect(mockInlineCommentService.clearAll).toHaveBeenCalled();
     });
 
-    it('should cancel inline comment apply operation via method call', () => {
-        // Test through public API - onCancelInlineCommentApply should call updateStatus
-        // when there's an applying comment. We configure the mock to simulate this.
+    it('should cancel inline comment apply operation when no comment is applying', () => {
+        // When no comment is being applied, calling cancel should not call updateStatus
         comp.onCancelInlineCommentApply();
 
-        // Method was called - verify behavior is triggered
-        // The actual state changes are internal, we verify the service interactions
-        expect(comp).toBeTruthy();
+        // updateStatus should not be called when there's no applying comment
+        expect(mockInlineCommentService.updateStatus).not.toHaveBeenCalled();
     });
 
-    it('should not apply all comments when pendingComments is empty', () => {
+    it('should not call refinement when applying empty comment list', () => {
         // Configure mock to return empty list
         mockInlineCommentService.getPendingComments.mockReturnValue(() => []);
 
         comp.applyAllComments();
 
-        // Verify no error is thrown and method completes
-        expect(comp).toBeTruthy();
+        // Verify no API call is made with empty comments
+        expect(mockInlineCommentService.updateStatus).not.toHaveBeenCalled();
     });
 
     it('should show error when applying comments without course id', () => {
