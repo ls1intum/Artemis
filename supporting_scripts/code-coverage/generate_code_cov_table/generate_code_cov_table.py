@@ -146,7 +146,8 @@ def get_coverage_artifact_for_key(artifacts, key):
             )
         )
 
-    return matching_artifacts[-1]["archive_download_url"]
+    most_recent_artifact = max(matching_artifacts, key=lambda artifact: artifact["created_at"])
+    return most_recent_artifact["archive_download_url"]
 
 
 def get_branch_name(repo_path: str) -> str:
