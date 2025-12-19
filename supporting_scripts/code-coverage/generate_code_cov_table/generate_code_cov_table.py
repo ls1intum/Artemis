@@ -138,13 +138,20 @@ def get_coverage_artifact_for_key(artifacts, key):
 
     if len(matching_artifacts) == 1:
         return matching_artifacts[0]["archive_download_url"]
-    else:
+    elif len(matching_artifacts) == 0:
         logging.error(
             "Expected exactly one artifact, found {} for key: {}".format(
                 len(matching_artifacts), key
             )
         )
         return None
+    else:
+        logging.info(
+            "Expected exactly one artifact, found {} for key: {}\nProceeding with most recent artifact...".format(
+                len(matching_artifacts), key
+            )
+        )
+        return matching_artifacts[-1]["archive_download_url"]
 
 
 def get_branch_name(repo_path: str) -> str:
