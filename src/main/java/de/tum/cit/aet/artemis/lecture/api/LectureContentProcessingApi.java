@@ -65,19 +65,6 @@ public class LectureContentProcessingApi extends AbstractLectureApi {
     }
 
     /**
-     * Cancels any ongoing processing (transcription or ingestion) for a lecture unit.
-     * Called before deleting a lecture unit to ensure external jobs are cancelled.
-     * <p>
-     * Note: This does not delete the processing state - that is handled automatically
-     * by database CASCADE DELETE when the lecture unit is deleted.
-     *
-     * @param lectureUnitId the ID of the lecture unit
-     */
-    public void cancelProcessingIfActive(Long lectureUnitId) {
-        lectureContentProcessingService.cancelProcessing(lectureUnitId);
-    }
-
-    /**
      * Handles cleanup when a lecture unit is being deleted.
      * This cancels any ongoing processing and removes the content from Pyris.
      *

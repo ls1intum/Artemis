@@ -5,7 +5,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -355,90 +354,7 @@ class LectureContentProcessingServiceTest {
         }
     }
 
-    // ==================== FLOW 3: Cancellation ====================
-
-    @Nested
-    class CancelProcessing {
-
-        @Test
-        void shouldCancelOnNebulaWhenTranscribing() {
-            // Given: Unit is currently transcribing
-            testState.setPhase(ProcessingPhase.TRANSCRIBING);
-            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
-            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-            doNothing().when(transcriptionApi).cancelNebulaTranscription(anyLong());
-
-            // When
-            service.cancelProcessing(testUnit.getId());
-
-            // Then: Should call Nebula cancel
-            verify(transcriptionApi).cancelNebulaTranscription(testUnit.getId());
-            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.IDLE);
-            assertThat(testState.getErrorKey()).isEqualTo("artemisApp.attachmentVideoUnit.processing.cancelled");
-        }
-
-        @Test
-        void shouldNotCallNebulaWhenNotTranscribing() {
-            // Given: Unit is idle (not transcribing)
-            testState.setPhase(ProcessingPhase.IDLE);
-            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
-            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-
-            // When
-            service.cancelProcessing(testUnit.getId());
-
-            // Then: Should NOT call Nebula cancel
-            verify(transcriptionApi, never()).cancelNebulaTranscription(anyLong());
-            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.IDLE);
-        }
-
-        @Test
-        void shouldCancelIngestingStateWithoutCallingPyris() {
-            // Given: Unit is currently ingesting
-            testState.setPhase(ProcessingPhase.INGESTING);
-            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
-            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-
-            // When
-            service.cancelProcessing(testUnit.getId());
-
-            // Then: Should NOT call Nebula cancel (not transcribing), and Pyris handles deduplication automatically
-            verify(transcriptionApi, never()).cancelNebulaTranscription(anyLong());
-            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.IDLE);
-            assertThat(testState.getErrorKey()).isEqualTo("artemisApp.attachmentVideoUnit.processing.cancelled");
-        }
-
-        @Test
-        void shouldHandleNebulaCancelFailureGracefully() {
-            // Given: Nebula cancel throws exception
-            testState.setPhase(ProcessingPhase.TRANSCRIBING);
-            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
-            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-            doThrow(new RuntimeException("Nebula unavailable")).when(transcriptionApi).cancelNebulaTranscription(anyLong());
-
-            // When
-            service.cancelProcessing(testUnit.getId());
-
-            // Then: Should still update local state despite Nebula failure
-            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.IDLE);
-            assertThat(testState.getErrorKey()).isEqualTo("artemisApp.attachmentVideoUnit.processing.cancelled");
-        }
-
-        @Test
-        void shouldDoNothingIfNoStateExists() {
-            // Given
-            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.empty());
-
-            // When
-            service.cancelProcessing(testUnit.getId());
-
-            // Then
-            verify(processingStateRepository, never()).save(any());
-            verify(transcriptionApi, never()).cancelNebulaTranscription(anyLong());
-        }
-    }
-
-    // ==================== FLOW 4: Transcription Complete ====================
+    // ==================== FLOW 3: Transcription Complete ====================
 
     @Nested
     class HandleTranscriptionComplete {
@@ -651,10 +567,13 @@ class LectureContentProcessingServiceTest {
 
         @Test
         void shouldRetryOnlyIfFailed() {
-            // Given
+            // Given: Failed state with retry count from previous attempts
             testState.setPhase(ProcessingPhase.FAILED);
             testState.setRetryCount(5);
-            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            testState.setId(42L); // Existing state in DB
+
+            // First call finds FAILED state, second call (after delete) returns empty
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState)).thenReturn(Optional.empty());
             when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
             when(tumLiveApi.getTumLivePlaylistLink(any())).thenReturn(Optional.of("https://playlist.m3u8"));
             when(transcriptionApi.startNebulaTranscription(anyLong(), anyLong(), any())).thenReturn("new-job");
@@ -662,8 +581,8 @@ class LectureContentProcessingServiceTest {
             // When
             service.retryProcessing(testUnit);
 
-            // Then
-            assertThat(testState.getRetryCount()).isEqualTo(0);
+            // Then: Old state deleted, fresh state created and processing started
+            verify(processingStateRepository).delete(testState);
             verify(transcriptionApi).startNebulaTranscription(anyLong(), anyLong(), any());
         }
 
@@ -838,24 +757,6 @@ class LectureContentProcessingServiceTest {
 
             // Then: Should go to ingestion without checking playlist
             verify(irisLectureApi).addLectureUnitToPyrisDB(testUnit);
-        }
-
-        @Test
-        void shouldNotCancelOnNebulaWhenApiNotAvailable() {
-            // Given: Service created without transcription API
-            service = new LectureContentProcessingService(processingStateRepository, transcriptionRepository, Optional.empty(), // No transcription API
-                    Optional.of(tumLiveApi), Optional.of(irisLectureApi), featureToggleService);
-
-            testState.setPhase(ProcessingPhase.TRANSCRIBING);
-            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
-            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-
-            // When
-            service.cancelProcessing(testUnit.getId());
-
-            // Then: Should still update local state
-            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.IDLE);
-            // No exception thrown, gracefully handled
         }
 
         @Test

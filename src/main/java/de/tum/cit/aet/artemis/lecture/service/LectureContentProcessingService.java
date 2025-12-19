@@ -15,7 +15,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
@@ -138,29 +137,21 @@ public class LectureContentProcessingService {
             return;
         }
 
-        // Get or create processing state (handle race condition with unique constraint)
-        LectureUnitProcessingState state;
-        try {
-            state = processingStateRepository.findByLectureUnit_Id(unit.getId()).orElseGet(() -> {
-                LectureUnitProcessingState newState = new LectureUnitProcessingState(unit);
-                return processingStateRepository.save(newState);
-            });
-        }
-        catch (DataIntegrityViolationException e) {
-            // Race condition: another thread created the state, re-fetch it
-            state = processingStateRepository.findByLectureUnit_Id(unit.getId())
-                    .orElseThrow(() -> new IllegalStateException("Processing state disappeared after constraint violation", e));
-        }
+        // Get existing state or create new (don't persist yet - IDLE should never be in DB)
+        Optional<LectureUnitProcessingState> existingState = processingStateRepository.findByLectureUnit_Id(unit.getId());
+        LectureUnitProcessingState state = existingState.orElseGet(() -> new LectureUnitProcessingState(unit));
 
-        // Detect and handle content changes
-        if (handleContentChanges(unit, state, hasVideo, hasPdf)) {
+        // Detect and handle content changes (updates hash/version in state object)
+        boolean contentChanged = handleContentChanges(unit, state, hasVideo, hasPdf);
+        if (contentChanged) {
             state.resetRetryCount();
-            // Transition to IDLE to allow reprocessing with new content
+            // Existing states may be DONE/FAILED - transition to IDLE so we reprocess
+            // (new states are already IDLE; state is only saved when starting TRANSCRIBING/INGESTING)
             state.transitionTo(ProcessingPhase.IDLE);
-            processingStateRepository.save(state);
         }
 
-        // Check if already processing or done
+        // Check if already processing or in terminal state
+        // (content changes already transition to IDLE above, so these checks are for unchanged content)
         if (state.isProcessing()) {
             log.debug("Unit {} already processing, skipping", unit.getId());
             return;
@@ -176,29 +167,8 @@ public class LectureContentProcessingService {
             return;
         }
 
-        // Start the state machine
+        // Start the state machine (will save state when actually starting processing)
         advanceProcessing(unit, state, hasVideo, hasPdf);
-    }
-
-    /**
-     * Cancel any ongoing processing for a lecture unit.
-     *
-     * @param lectureUnitId the ID of the lecture unit
-     */
-    public void cancelProcessing(Long lectureUnitId) {
-        processingStateRepository.findByLectureUnit_Id(lectureUnitId).ifPresent(state -> {
-            log.info("Cancelling processing for unit {}", lectureUnitId);
-
-            if (state.getPhase() == ProcessingPhase.TRANSCRIBING) {
-                cancelTranscriptionOnNebula(lectureUnitId);
-            }
-
-            // Note: No need to cancel on Pyris - when a new job starts, Pyris terminates old processes automatically
-
-            state.transitionTo(ProcessingPhase.IDLE);
-            state.setErrorKey("artemisApp.attachmentVideoUnit.processing.cancelled");
-            processingStateRepository.save(state);
-        });
     }
 
     /**
@@ -325,9 +295,9 @@ public class LectureContentProcessingService {
         processingStateRepository.findByLectureUnit_Id(lectureUnit.getId()).ifPresent(state -> {
             if (state.getPhase() == ProcessingPhase.FAILED) {
                 log.info("Retrying processing for unit {}", lectureUnit.getId());
-                state.resetRetryCount();
-                state.transitionTo(ProcessingPhase.IDLE);
-                processingStateRepository.save(state);
+                // Delete the failed state - triggerProcessing will create fresh
+                // (hash/version will be set correctly for the new state)
+                processingStateRepository.delete(state);
                 triggerProcessing(lectureUnit);
             }
         });
@@ -350,12 +320,13 @@ public class LectureContentProcessingService {
      */
     private void advanceProcessing(AttachmentVideoUnit unit, LectureUnitProcessingState state, boolean hasVideo, boolean hasPdf) {
         switch (state.getPhase()) {
-            case IDLE, FAILED -> startProcessingFromIdle(unit, state, hasVideo, hasPdf);
+            case IDLE -> startProcessingFromIdle(unit, state, hasVideo, hasPdf);
             case TRANSCRIBING, INGESTING -> {
                 // Wait for callbacks
             }
-            case DONE -> {
-                // Already done
+            case DONE, FAILED -> {
+                // DONE: Already done
+                // FAILED: Requires explicit retryProcessing() call (unreachable here due to early return)
             }
         }
     }
@@ -400,7 +371,19 @@ public class LectureContentProcessingService {
             startIngestion(state);
         }
         else {
-            // Nothing to do
+            // Nothing to do - don't persist IDLE state
+            // For new states (id=null): state won't be saved, backfill can retry later
+            // For existing states in IDLE (content changed but can't process): delete so backfill retries
+            // For existing states in other phase: shouldn't happen, but save hash/version updates
+            if (state.getId() != null) {
+                if (state.getPhase() == ProcessingPhase.IDLE) {
+                    processingStateRepository.delete(state);
+                    log.debug("Deleted IDLE state for unit {} to allow backfill retry", unit.getId());
+                }
+                else {
+                    processingStateRepository.save(state);
+                }
+            }
             log.debug("No processing possible for unit {} (no playlist and no PDF)", unit.getId());
         }
     }
