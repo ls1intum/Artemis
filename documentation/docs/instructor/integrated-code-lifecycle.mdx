@@ -1,0 +1,152 @@
+---
+id: integrated-code-lifecycle
+title: Integrated Code Lifecycle
+sidebar_label: Integrated Code Lifecycle
+---
+
+import Image, {ImageSize} from "../../src/components/Image/Image";
+
+import buildAgentSummaryImg from "./assets/integrated-code-lifecycle/build-agent-summary.png";
+import buildAgentDetailsImg from "./assets/integrated-code-lifecycle/build-agent-details.png";
+import buildQueueSystemAdministrationImg from "./assets/integrated-code-lifecycle/buildQueueSystemAdministration.png";
+import buildQueueCourseManagementImg from "./assets/integrated-code-lifecycle/buildQueueCourseManagement.png";
+import runningBuildJobsImg from "./assets/integrated-code-lifecycle/running-build-jobs.png";
+import queuedBuildJobsImg from "./assets/integrated-code-lifecycle/queued-build-jobs.png";
+import finishedBuildJobsImg from "./assets/integrated-code-lifecycle/finished-build-jobs.png";
+
+import openRepositoryInstructorParticipationsImg from "./assets/integrated-code-lifecycle/open-repository-instructor-participations.png";
+import courseManagementRepositoriesImg from "./assets/integrated-code-lifecycle/course-management-repositories.png";
+import openRepositoryButtonImg from "./assets/integrated-code-lifecycle/open-repository-button.png";
+
+# Integrated Code Lifecycle
+
+Artemis' Integrated Code Lifecycle consists of two main components: Local Version Control and Local Continuous Integration.
+
+## General Information
+
+Artemis offers the Integrated Code Lifecycle (ICL), a comprehensive feature designed to streamline the development process for programming exercises.
+ICL combines version control, secure communication, and continuous integration to provide a seamless experience for students and instructors.
+Understanding these components is crucial for effectively using Artemis, especially if you're new to concepts like SSH and Git. The key components of ICL are:
+
+- Local Version Control: Use the Local Version Control to interact with the repositories of programming exercises.
+- Repository Authentication Mechanisms: The different available and configurable repository authentication mechanisms.
+- Tokens: Use VCS access tokens to perform Git operations on repositories.
+- SSH: Use SSH to perform Git operations on repositories.
+- Local Continuous Integration: Exercise submissions are built and tested by the Local CI system.
+
+---
+
+## Continuous Integration
+
+Continuous Integration (CI) is a software development practice where developers frequently merge their code changes into a shared repository. Each change is automatically built and tested, which helps to:
+
+- Detect and address integration issues early
+- Ensure code quality and consistency
+- Streamline the development process
+
+Artemis Local CI is our implementation of these CI principles, tailored to support the Artemis learning platform.
+It provides tools and views to help users build and test in programming exercises effectively.
+
+This document will introduce you to the key components of Artemis Local CI: the Build Agent View and the Build Overview View.
+These tools will assist you throughout your development workflow on the Artemis platform.
+
+### Build Agent View
+
+Artemis offers a build agent view that shows the status of all build agents in the system. This view is available only to Administrators.
+The build agent view consists of two parts: the *Build Agent Summary View* and the *Build Agent Details*.
+
+The **Build Agent Summary View** shows a list of all build agents in the system, along with their status (idle and running), maximum number of concurrent builds, and running builds.
+The running builds can be canceled individually by clicking the red cancellation button next to the build. An Administrator can also cancel all running builds on a build agent by clicking the '*Cancel All*' button.
+Administrators also have the option to pause all build agents, which will prevent all build agents from accepting new build jobs. All build agents can also be resume with a button.
+They can also clear distributed data, this includes the build job queue, the results queue, the processing jobs distributed map, and the build agent information map.
+
+<Image src={buildAgentSummaryImg} alt={"Build Agent Summary View"} size={ImageSize.large} />
+
+The Build Agent Details View provides detailed information about a selected build agent.
+
+At the top, the view displays the build agent’s status, start and last build dates, average build duration, the maximum number of concurrent builds allowed on the agent, and the current Git revision.
+Administrators can pause the build agent using the Pause button.
+
+The Overview section presents a summary of build statistics, including the number of builds, successful builds, failed builds, canceled builds, and timed-out builds.
+A circular progress indicator visually represents these statistics. This section tracks data since the last boot-up of the build agent.
+If the build agent restarts, all values in this section reset. However, pausing the build agent does not affect these statistics.
+
+The Running Build Jobs section lists all currently active build jobs on the agent, displaying details such as the job ID, repository name, commit hash, submission date, build duration, and priority.
+Administrators can cancel all running jobs using the Cancel All button.
+
+The Finished Build Jobs section shows recent build jobs processed by the agent, including the job name, status, participation ID, commit hash, course ID, submission date, build start time, and build duration.
+Clicking on the participation ID navigates to the submission page, while selecting the commit hash leads to the commit details page.
+The course ID links to the course management page. A search function and filtering options allow administrators to find specific finished jobs, and the Refresh button updates the displayed information.
+
+<Image src={buildAgentDetailsImg} alt={"Build Agent Details"} size={ImageSize.large} />
+
+<iframe
+    src="https://live.rbg.tum.de/w/artemisintro/46914?video_only=1&t=0"
+    allowFullScreen="1"
+    frameBorder="0"
+    width="600"
+    height="400"
+/>
+
+### Build Overview View
+
+Artemis provides a build overview view that displays all queued, running, and finished build jobs. Access to the system-wide build overview is
+exclusively available to **Administrators** through the *System Administration* menu.
+
+<Image src={buildQueueSystemAdministrationImg} alt={"Build Overview System Administration"} size={ImageSize.large} />
+
+**Instructors** can access the build overview for a specific course through the *Build Overview* button located in *Course Management*.
+This view displays only the queued, running, and finished build jobs associated with the selected course.
+
+<Image src={buildQueueCourseManagementImg} alt={"Build Overview Course Management"} size={ImageSize.large} />
+
+The build overview view is divided into three sections:
+
+#### Running Build Jobs
+
+The "Running Build Jobs" section displays all build jobs currently being executed by a build agent.
+Jobs are dynamically added to and removed from the queue in real-time.
+Users have the ability to cancel any job in progress. The table provides the following information:
+
+<Image src={runningBuildJobsImg} alt={"Running Build Jobs"} size={ImageSize.large} />
+
+#### Queued Build Jobs
+
+The "Queued Build Jobs" section lists all build jobs currently awaiting execution.
+Jobs are continuously added to and removed from the queue in real-time.
+Users also have the option to cancel any job that is queued.
+The table below displays the following information:
+
+<Image src={queuedBuildJobsImg} alt={"Queued Build Jobs"} size={ImageSize.large} />
+
+#### Finished Build Jobs
+
+The "Finished Build Jobs" section displays all build jobs that have concluded, whether successfully completed, with or without a result, failed, or cancelled.
+Information about finished build jobs is progressively loaded as the user navigates through the pages.
+Instructors can also access build logs with detailed information about the build execution by clicking on **View build logs**. This is particularly helpful for failed builds.
+The table provides the following information:
+
+<Image src={finishedBuildJobsImg} alt={"Finished Build Jobs"} size={ImageSize.large} />
+
+<iframe
+    src="https://live.rbg.tum.de/w/artemisintro/46947?video_only=1&t=0"
+    allowFullScreen="1"
+    frameBorder="0"
+    width="600"
+    height="400"
+/>
+
+---
+
+## Local Version Control – Instructor Repositories
+
+As an instructor, you can use the repository to view the submissions of your students. For this purpose, you need to navigate to the exercise participations page.
+Here you can see all the students’ participations for the exercise and navigate to the repository of a student by pressing the '*Code*' button and clicking on <Image src={openRepositoryButtonImg} alt={"Open Repository Button"} size={ImageSize.small} style={{display:"inline", verticalAlign:"middle"}} />.
+This will show the repository of the student just like it is shown to the student.
+
+<Image src={openRepositoryInstructorParticipationsImg} alt={"Open Repository Button in Participations Page"} size={ImageSize.large} />
+
+You can also see the repositories for an exercises **solution**, **template** and **test** repositories on the exercise management page.
+You can navigate to these repositories by pressing the '*Code*' button and clicking <Image src={openRepositoryButtonImg} alt={"Open Repository Button"} size={ImageSize.small} style={{display:"inline", verticalAlign:"middle"}} /> as described above.
+
+<Image src={courseManagementRepositoriesImg} alt={"Solution, Template and Test Repositories in Exercise Management Page"} size={ImageSize.large} />
