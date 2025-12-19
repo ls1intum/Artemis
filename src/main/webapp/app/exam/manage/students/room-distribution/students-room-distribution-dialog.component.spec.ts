@@ -242,6 +242,6 @@ describe('StudentsRoomDistributionDialogComponent', () => {
         expect(navigateSpy).toHaveBeenCalledOnce();
 
         const [urlTree] = navigateSpy.mock.calls[0] as [UrlTree, unknown];
-        expect(router.serializeUrl(urlTree)).toContain('exam-rooms');
+        expect(router.serializeUrl(urlTree)).toContain('exams/rooms');
     });
 });

@@ -65,17 +65,6 @@ describe('AdminSidebarComponent', () => {
         expect(buildSystemGroup).toBeFalsy();
     });
 
-    it('should include Exam Rooms in System Configuration when examEnabled is true', () => {
-        fixture.componentRef.setInput('examEnabled', true);
-        fixture.detectChanges();
-
-        const groups = component.sidebarGroups();
-        const systemConfigGroup = groups.find((g) => g.translation === 'global.menu.admin.groups.systemConfiguration');
-        expect(systemConfigGroup).toBeTruthy();
-        const examRoomsItem = systemConfigGroup!.items.find((i) => i.routerLink === '/admin/exam-rooms');
-        expect(examRoomsItem).toBeTruthy();
-    });
-
     it('should emit toggleCollapseState when called', () => {
         const toggleSpy = jest.spyOn(component.toggleCollapseState, 'emit');
         component.toggleCollapseState.emit();
