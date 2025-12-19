@@ -126,7 +126,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         comp.participationSubscription = oldSubscription;
 
         triggerChanges(comp, { property: 'participation', currentValue: participation, previousValue: oldParticipation, firstChange: false });
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(getTestCasesSpy).toHaveBeenCalledOnce();
         expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledOnce();
@@ -167,7 +167,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         expect(noInstructionsAvailableSpy).not.toHaveBeenCalled();
         expect(comp.isInitial).toBeFalse();
         expect(comp.isLoading).toBeFalse();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(debugElement.query(By.css('#programming-exercise-instructions-loading'))).toBeNull();
         expect(debugElement.query(By.css('#programming-exercise-instructions-content'))).not.toBeNull();
     });
@@ -216,7 +216,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         comp.participation = participation;
         comp.isInitial = false;
         triggerChanges(comp, { property: 'exercise', currentValue: { ...comp.exercise, problemStatement: newProblemStatement }, firstChange: false });
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(comp.markdownExtensions).toHaveLength(2);
         expect(updateMarkdownStub).toHaveBeenCalledOnce();
         expect(loadInitialResult).not.toHaveBeenCalled();
@@ -291,12 +291,12 @@ describe('ProgrammingExerciseInstructionComponent', () => {
             taskName: 'Implement Merge Sort',
             testIds: [2],
         });
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(debugElement.query(By.css('.stepwizard'))).not.toBeNull();
         expect(debugElement.queryAll(By.css('.btn-circle'))).toHaveLength(2);
         tick();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         // TODO: make sure to exclude random numbers here that change after updates of dependencies
         const expectedHtml = problemStatementBubbleSortNotExecutedHtml.replaceAll('{{ANGULAR_VERSION}}', VERSION.full);
         expect(debugElement.query(By.css('.instructions__content__markdown')).nativeElement.innerHTML).toEqual(expectedHtml);
@@ -371,12 +371,12 @@ describe('ProgrammingExerciseInstructionComponent', () => {
             taskName: 'Merge Sort',
             testIds: [],
         });
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(debugElement.query(By.css('.stepwizard'))).not.toBeNull();
         expect(debugElement.queryAll(By.css('.btn-circle'))).toHaveLength(2);
         tick();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const expectedHtml = problemStatementEmptySecondTaskNotExecutedHtml.replaceAll('{{ANGULAR_VERSION}}', VERSION.full);
         // TODO: make sure to exclude random numbers here that change after updates of dependencies
@@ -462,7 +462,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         comp.isInitial = false;
         themeService.applyThemePreference(Theme.DARK);
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         // toObservable triggers a effect in the background on initial detectChanges
         expect(updateMarkdownStub).toHaveBeenCalledOnce();

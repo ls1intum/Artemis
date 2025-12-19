@@ -28,7 +28,7 @@ export class LectureDetailComponent implements OnInit {
     private irisSettingsService = inject(IrisSettingsService);
 
     lecture: Lecture;
-    lectureIngestionEnabled = false;
+    irisEnabled = false;
 
     // Icons
     faPencilAlt = faPencilAlt;
@@ -37,7 +37,6 @@ export class LectureDetailComponent implements OnInit {
     faFileExport = faFileExport;
 
     detailSections: DetailOverviewSection[];
-    irisEnabled = false;
 
     /**
      * Life cycle hook called by Angular to indicate that Angular is done creating the component
@@ -46,10 +45,10 @@ export class LectureDetailComponent implements OnInit {
         this.activatedRoute.data.subscribe(({ lecture }) => {
             this.lecture = lecture;
             this.getLectureDetailSections();
-            this.irisEnabled = this.profileService.isProfileActive(PROFILE_IRIS);
-            if (this.irisEnabled && this.lecture.course?.id) {
-                this.irisSettingsService.getCombinedCourseSettings(this.lecture.course?.id).subscribe((settings) => {
-                    this.lectureIngestionEnabled = settings?.irisLectureIngestionSettings?.enabled || false;
+            const irisProfileActive = this.profileService.isProfileActive(PROFILE_IRIS);
+            if (irisProfileActive && this.lecture.course?.id) {
+                this.irisSettingsService.getCourseSettingsWithRateLimit(this.lecture.course?.id).subscribe((response) => {
+                    this.irisEnabled = response?.settings?.enabled || false;
                 });
             }
         });

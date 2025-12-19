@@ -10,6 +10,8 @@ import { LeaderboardService } from './course-training-quiz/leaderboard/service/l
 import { LeaderboardDTO, LeaderboardEntry, LeaderboardSettingsDTO } from './course-training-quiz/leaderboard/leaderboard-types';
 import { LocationStrategy, PathLocationStrategy } from '@angular/common';
 import dayjs from 'dayjs/esm';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('CourseTrainingComponent', () => {
     let component: CourseTrainingComponent;
@@ -43,6 +45,7 @@ describe('CourseTrainingComponent', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 { provide: LocationStrategy, useClass: PathLocationStrategy },
+                { provide: TranslateService, useClass: MockTranslateService },
                 {
                     provide: ActivatedRoute,
                     useValue: {
@@ -59,7 +62,8 @@ describe('CourseTrainingComponent', () => {
 
         fixture = TestBed.createComponent(CourseTrainingComponent);
         component = fixture.componentInstance;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
     });
 
     afterEach(() => {

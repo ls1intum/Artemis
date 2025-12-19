@@ -1,0 +1,73 @@
+---
+id: courses
+title: Courses
+sidebar_label: Courses
+---
+
+import Image, {ImageSize} from "../../src/components/Image/Image";
+
+import courseSettingsImg from "./assets/courses/course_settings.png";
+import courseOverviewImg from "./assets/courses/course_overview.png";
+import courseHeaderImg from "./assets/courses/course_header.png";
+import courseManagementImg from "./assets/courses/course_management.png";
+import btnCourseOverview from "./assets/courses/course_overview_button.png";
+import btnCourseCreate from "./assets/courses/course_create.png";
+import btnCourseDelete from "./assets/courses/course_delete.png";
+import btnCourseEdit from "./assets/courses/course_edit.png";
+import btnCourseManagement from "./assets/courses/course_management_button.png";
+
+# Customizing Courses
+
+Courses contain :ref:`exercises <exercises>`, :ref:`exams <exams>` and lectures.
+Different roles can be attached to different sets of course participants: Instructors, Editors, Tutors and Users.
+You can find a detailed listing of the different roles and their corresponding permissions :ref:`here <admin_access_rights>`.
+
+---
+
+## Creating courses
+
+Administrators can create new courses by clicking on <Image src={btnCourseManagement} alt={"course management"} size={ImageSize.small} style={{display:"inline",verticalAlign:"middle"}} /> in the header
+and then clicking on <Image src={btnCourseCreate} alt={"course create"} size={ImageSize.small} style={{display:"inline",verticalAlign:"middle"}} />
+
+Administrators can then specify options in the creation form, Instructors can later change these values:
+
+- **Title** – Name of the course (shown in <Image src={btnCourseOverview} alt={"course overview"} size={ImageSize.small} style={{display:"inline",verticalAlign:"middle"}} />)
+- **Short Name** – Unique identifier (cannot be changed later)
+- **Color** – Used throughout UI including overview
+- **Course Description** – Shown during registration & course header
+- **Course Organizations** – Restricts course visibility based on user organization
+- **Start/End** – Active registration window
+- **Test Course** – Exercises/exams hidden from regular users
+- **Semester** – Used for grouping in dashboard
+- **Maximum number of points** – Used for grading key calculations
+- **Decimal precision for scoring**
+- **Default Programming Language**
+- **Customize group names** (Admin-only)
+- **Enable complaints**
+- **Enable more feedback requests**
+- **Enable postings by students**
+- **Online Course** (LTI integration, exclusive with registration)
+- **Student Course Registration Enabled**
+
+<Image src={courseSettingsImg} alt={"Course Settings"} size={ImageSize.large} />
+
+---
+
+## Managing courses
+
+After a course is created, access it via
+<Image src={btnCourseManagement} alt={"course management"} size={ImageSize.small} style={{display:"inline",verticalAlign:"middle"}} />.
+
+Courses are grouped by semester, test courses listed separately.
+
+<Image src={courseOverviewImg} alt={"Course Overview"} size={ImageSize.large} />
+
+<Image src={courseHeaderImg} alt={"Course Header"} size={ImageSize.large} />
+
+Clicking the course header opens management view allowing to
+<Image src={btnCourseEdit} alt={"course edit"} size={ImageSize.small} style={{display:"inline",verticalAlign:"middle"}} />
+or <Image src={btnCourseDelete} alt={"course delete"} size={ImageSize.small} style={{display:"inline",verticalAlign:"middle"}} /> a course, view statistics & administration options.
+
+Students, Tutors, Editors and Instructors can be added via **Course Details**.
+
+<Image src={courseManagementImg} alt={"Course Management"} size={ImageSize.large} />

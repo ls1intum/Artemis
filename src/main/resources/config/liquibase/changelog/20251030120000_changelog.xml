@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- Migration: Create new course_iris_settings table and migrate data from old tables.
+         Old tables (iris_settings, iris_sub_settings) are kept for now and will be removed in a later migration. -->
+    <changeSet id="20251030120000-course-iris-settings" author="bassner">
+        <createTable tableName="course_iris_settings">
+            <column name="course_id" type="BIGINT">
+                <constraints primaryKey="true" nullable="false" primaryKeyName="pk_course_iris_settings"/>
+            </column>
+            <column name="settings" type="json">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint baseTableName="course_iris_settings"
+                                 baseColumnNames="course_id"
+                                 referencedTableName="course"
+                                 referencedColumnNames="id"
+                                 onDelete="CASCADE"
+                                 constraintName="fk_course_iris_settings_course"/>
+
+        <!-- PostgreSQL: Migrate data from existing COURSE-level iris_settings -->
+        <sql dbms="postgresql">
+            INSERT INTO course_iris_settings (course_id, settings)
+            SELECT
+                cs.course_id,
+                jsonb_build_object(
+                    'enabled', COALESCE(pes.enabled, TRUE),
+                    'customInstructions', NULLIF(btrim(pes.custom_instructions), ''),
+                    'variant', LOWER(COALESCE(NULLIF(pes.selected_variant, ''), 'default')),
+                    'rateLimit', CASE
+                        WHEN pes.rate_limit IS NOT NULL AND pes.rate_limit_timeframe_hours IS NOT NULL THEN
+                            jsonb_build_object(
+                                'requests', pes.rate_limit,
+                                'timeframeHours', pes.rate_limit_timeframe_hours
+                            )
+                        ELSE NULL
+                    END
+                )::json
+            FROM iris_settings cs
+                LEFT JOIN iris_sub_settings pes ON cs.iris_chat_settings_id = pes.id
+            WHERE cs.discriminator = 'COURSE';
+        </sql>
+
+        <!-- MySQL: Migrate data from existing COURSE-level iris_settings -->
+        <sql dbms="mysql">
+            INSERT INTO course_iris_settings (course_id, settings)
+            SELECT
+                cs.course_id,
+                JSON_OBJECT(
+                    'enabled', CAST(IF(COALESCE(pes.enabled, 1), 'true', 'false') AS JSON),
+                    'customInstructions', NULLIF(TRIM(pes.custom_instructions), ''),
+                    'variant', LOWER(COALESCE(NULLIF(pes.selected_variant, ''), 'default')),
+                    'rateLimit', CASE
+                        WHEN pes.rate_limit IS NOT NULL AND pes.rate_limit_timeframe_hours IS NOT NULL THEN
+                            JSON_OBJECT(
+                                'requests', pes.rate_limit,
+                                'timeframeHours', pes.rate_limit_timeframe_hours
+                            )
+                        ELSE NULL
+                    END
+                )
+            FROM iris_settings cs
+                LEFT JOIN iris_sub_settings pes ON cs.iris_chat_settings_id = pes.id
+            WHERE cs.discriminator = 'COURSE';
+        </sql>
+
+        <!-- Rollback: Simply drop the new table (old tables are still intact) -->
+        <rollback>
+            <dropTable tableName="course_iris_settings"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

@@ -83,7 +83,7 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationIndependentTest {
         // 1 DB call to get the grading scale
         // 1 DB call to get the batch of a live quiz. No Batches of other quizzes are retrieved
         // 1 DB call to get the faqs, if they are enabled
-        // 1 DB call to determine the state of the Iris course chat (needed to display dashboard or not)
+        // 1 DB call to check if Iris is enabled in the course
         // 1 DB call to determine if the quiz training mode is enabled for the course
     }
 
