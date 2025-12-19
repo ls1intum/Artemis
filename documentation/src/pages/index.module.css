@@ -4,7 +4,7 @@
  */
 
 .heroBanner {
-  padding: 4rem 0;
+  padding: 2rem 0 1.5rem 0;
   text-align: center;
   position: relative;
   overflow: hidden;
@@ -12,16 +12,16 @@
 
 @media screen and (max-width: 996px) {
   .heroBanner {
-    padding: 2rem;
+    padding: 1.5rem;
   }
 }
 
 .tilesContainer {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 2rem;
-  margin-top: 3rem;
-  max-width: 800px;
+  gap: 1.25rem;
+  margin-top: 1.5rem;
+  max-width: 700px;
   margin-left: auto;
   margin-right: auto;
 }
@@ -29,8 +29,8 @@
 @media screen and (max-width: 768px) {
   .tilesContainer {
     grid-template-columns: 1fr;
-    gap: 1.5rem;
-    margin-top: 2rem;
+    gap: 1rem;
+    margin-top: 1.25rem;
   }
 }
 
@@ -46,20 +46,20 @@
 
 .tile .card__body {
   text-align: center;
-  padding: 2rem;
+  padding: 1.25rem;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1rem;
+  gap: 0.5rem;
 }
 
 .tileIcon {
   color: var(--ifm-color-primary);
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.25rem;
 }
 
 .tileTitle {
-  font-size: 1.75rem;
+  font-size: 1.35rem;
   font-weight: bold;
   margin: 0;
   color: var(--ifm-color-emphasis-900);
