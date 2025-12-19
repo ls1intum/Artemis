@@ -25,8 +25,6 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisCourseChatSession;
-import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettingsType;
-import de.tum.cit.aet.artemis.iris.domain.settings.event.IrisEventType;
 import de.tum.cit.aet.artemis.iris.repository.IrisCourseChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
@@ -102,9 +100,9 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
      * @param session The session to check
      */
     @Override
-    public void checkIsFeatureActivatedFor(IrisCourseChatSession session) {
+    public void checkIrisEnabledFor(IrisCourseChatSession session) {
         var course = courseRepository.findByIdElseThrow(session.getCourseId());
-        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.COURSE_CHAT, course);
+        irisSettingsService.ensureEnabledForCourseOrElseThrow(course);
     }
 
     @Override
@@ -113,8 +111,8 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
     }
 
     @Override
-    public void checkRateLimit(User user) {
-        rateLimitService.checkRateLimitElseThrow(user);
+    public void checkRateLimit(User user, IrisCourseChatSession session) {
+        rateLimitService.checkRateLimitElseThrow(session, user);
     }
 
     /**
@@ -126,11 +124,11 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
     @Override
     public void requestAndHandleResponse(IrisCourseChatSession session) {
         var course = courseRepository.findByIdElseThrow(session.getCourseId());
-        var settings = irisSettingsService.getCombinedIrisSettingsFor(course, false).irisCourseChatSettings();
+        var settings = irisSettingsService.getSettingsForCourse(course);
         if (!settings.enabled()) {
             throw new ConflictException("Iris is not enabled for this course", "Iris", "irisDisabled");
         }
-        requestAndHandleResponse(session, settings.selectedVariant(), settings.customInstructions(), null);
+        requestAndHandleResponse(session, settings.variant().jsonValue(), settings.customInstructions(), null);
     }
 
     private void requestAndHandleResponse(IrisCourseChatSession session, String variant, String customInstructions, Object object) {
@@ -158,15 +156,15 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
             return;
         }
 
-        var combinedSettings = irisSettingsService.getCombinedIrisSettingsFor(course, false);
-        var settings = combinedSettings.irisCourseChatSettings();
-        if (!settings.enabled() || !IrisSettingsService.isEventEnabledInSettings(combinedSettings, IrisEventType.JOL)) {
+        var settings = irisSettingsService.getSettingsForCourse(course);
+        if (!settings.enabled()) {
             return;
         }
 
         var session = getCurrentSessionOrCreateIfNotExistsInternal(course, user, false);
+        rateLimitService.checkRateLimitElseThrow(session, user);
 
-        var variant = settings.selectedVariant();
+        var variant = settings.variant().jsonValue();
         var customInstructions = settings.customInstructions();
 
         CompletableFuture.runAsync(() -> requestAndHandleResponse(session, variant, customInstructions, competencyJol));
@@ -183,7 +181,7 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
      */
     public IrisCourseChatSession getCurrentSessionOrCreateIfNotExists(Course course, User user, boolean sendInitialMessageIfCreated) {
         user.hasAcceptedExternalLLMUsageElseThrow();
-        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.COURSE_CHAT, course);
+        irisSettingsService.ensureEnabledForCourseOrElseThrow(course);
         return getCurrentSessionOrCreateIfNotExistsInternal(course, user, sendInitialMessageIfCreated);
     }
 
@@ -213,7 +211,7 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
      */
     public IrisCourseChatSession createSession(Course course, User user, boolean sendInitialMessage) {
         user.hasAcceptedExternalLLMUsageElseThrow();
-        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.COURSE_CHAT, course);
+        irisSettingsService.ensureEnabledForCourseOrElseThrow(course);
         return createSessionInternal(course, user, sendInitialMessage);
     }
 

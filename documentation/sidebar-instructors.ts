@@ -11,8 +11,11 @@ const sidebars: SidebarsConfig = {
                 id: 'exercises/intro'
             },
             items: [
+                'exercises/quiz-exercise',
+                'exercises/modeling-exercise',
                 'exercises/textual-exercise',
                 'exercises/file-upload-exercise',
+                'exercises/team-exercise',
             ]
         },
         'lecture-series',
@@ -31,7 +34,15 @@ const sidebars: SidebarsConfig = {
         },
         'faq',
         'tutorial-groups',
-        'plagiarism-check'
+        'plagiarism-check',
+        'courses',
+        'exports',
+        'grading',
+        'integrated-code-lifecycle',
+        'learning-analytics',
+        'adaptive-learning',
+        'sharing',
+        'lti-configuration',
     ],
 };
 
