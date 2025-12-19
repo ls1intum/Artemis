@@ -112,6 +112,9 @@ const moduleThresholds = {
         lines:      94.80,
     },
     hyperion: {
+        // Currently, there are no files under src/main/webapp/app/hyperion/,
+        // so thresholds mirror the current effective coverage (no files found → skipped by checker).
+        // Once client-side Hyperion code exists, update these to the measured coverage.
         statements: 0,
         branches:   0,
         functions:  0,
@@ -181,6 +184,9 @@ const moduleThresholds = {
 
 const metrics = ['statements', 'branches', 'functions', 'lines'];
 const AIMED_FOR_COVERAGE = 90;
+/**
+ * If the coverage is >= this value higher than the threshold, an upward arrow is shown to indicate the threshold should be bumped up.
+ */
 const SHOULD_BUMP_COVERAGE_DELTA = 0.1;
 
 const roundToTwoDigits = (value) => Math.round(value * 100) / 100;
