@@ -137,8 +137,8 @@ def get_coverage_artifact_for_key(artifacts, key):
     matching_artifacts = [artifact for artifact in artifacts if artifact["name"] == key]
 
     if len(matching_artifacts) == 0:
-            logging.error("Could not find an artifact for key: {}".format(key))
-            return None
+        logging.error("Could not find an artifact for key: {}".format(key))
+        return None
     elif len(matching_artifacts) > 1:
         logging.info(
             "Found {} artifacts for key: {}\nProceeding with most recent artifact...".format(
