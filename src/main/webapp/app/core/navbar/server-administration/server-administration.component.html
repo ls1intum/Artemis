@@ -1,6 +1,6 @@
 <li *jhiHasAnyAuthority="'ROLE_ADMIN'" class="nav-item pointer server-administration" routerLinkActive="active">
     @if (!isExamActive() && !isExamStarted()) {
-        <a class="nav-link py-0" routerLink="/admin" (click)="onLinkClick($event)" id="admin-menu">
+        <a class="nav-link py-0" routerLink="/admin" (click)="onLinkClick()" id="admin-menu">
             <span>
                 <fa-icon [icon]="faUserShield" />
                 <span jhiTranslate="global.menu.admin.main"></span>
@@ -8,4 +8,3 @@
         </a>
     }
 </li>
-<jhi-login-with-passkey-modal />
