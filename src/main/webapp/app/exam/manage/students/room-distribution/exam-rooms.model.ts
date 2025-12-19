@@ -24,19 +24,12 @@ export interface ExamRoomLayoutStrategyDTO {
     capacity: number;
 }
 
-export interface NumberOfStored {
+export interface NumberOfAvailable {
     examRooms: number;
     examSeats: number;
-    layoutStrategies: number;
-    uniqueExamRooms: number;
-    uniqueExamSeats: number;
-    uniqueLayoutStrategies: number;
 }
 
 export interface ExamRoomOverviewDTO {
-    numberOfStoredExamRooms: number;
-    numberOfStoredExamSeats: number;
-    numberOfStoredLayoutStrategies: number;
     newestUniqueExamRooms: ExamRoomDTO[];
 }
 

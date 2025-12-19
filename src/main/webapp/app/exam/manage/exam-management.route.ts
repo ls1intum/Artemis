@@ -881,13 +881,4 @@ export const examManagementRoutes: Routes = [
         },
         canActivate: [UserRouteAccessService],
     },
-    {
-        path: ':examId/exam-rooms',
-        loadComponent: () => import('app/exam/manage/students/room-distribution/exam-rooms.component').then((m) => m.ExamRoomsComponent),
-        data: {
-            authorities: IS_AT_LEAST_INSTRUCTOR,
-            pageTitle: 'artemisApp.examRooms.management.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
 ];

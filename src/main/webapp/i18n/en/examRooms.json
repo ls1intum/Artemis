@@ -23,6 +23,7 @@
             "management": {
                 "openButtonTitle": "Exam Room Management",
                 "title": "Exam Room Management",
+                "introText": "Upload a ZIP file containing exam room and seat data following the predefined format. The upload creates or updates exam rooms automatically. A detailed description of the required file structure will be added to the documentation soon.",
                 "uploadRoomData": "Upload Exam Room Data",
                 "invalidFile": "Something is wrong with the file you selected",
                 "fileSizeTooBig": "File size cannot exceed {{ MAX_FILE_SIZE }} MB",
@@ -47,19 +48,12 @@
                     "title": "Exam Room Overview",
                     "totalExamRooms": "Total exam rooms:",
                     "totalSeats": "Total seats:",
-                    "totalLayoutStrategies": "Total layout strategies:",
-                    "uniqueExamRooms": "Unique exam rooms:",
-                    "uniqueSeats": "Unique seats:",
-                    "uniqueLayoutStrategies": "Unique layout strategies:",
-                    "distinctLayoutStrategyNames": "All available layout strategies:",
                     "examRoomsTitle": "All available exam rooms",
-                    "id": "ID",
                     "roomNumber": "Room Number",
                     "roomName": "Room Name",
                     "building": "Building",
                     "defaultCapacity": "Default Capacity",
-                    "maxCapacity": "Maximum Capacity",
-                    "layoutStrategies": "Layout Strategies"
+                    "maxCapacity": "Maximum Capacity"
                 }
             }
         }

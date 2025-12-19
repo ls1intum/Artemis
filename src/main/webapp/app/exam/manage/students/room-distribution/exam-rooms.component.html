@@ -1,6 +1,9 @@
-<div>
+<div class="m-2">
     <div class="upload-container">
-        <h2><span jhiTranslate="artemisApp.examRooms.management.title"></span></h2>
+        <h2><span jhiTranslate="artemisApp.examRooms.management.title" class="large-text"></span></h2>
+        <div class="mt-2">
+            <span jhiTranslate="artemisApp.examRooms.management.introText"></span>
+        </div>
         <div class="mt-2">
             <input id="roomDataFileSelect" type="file" style="display: none" (change)="onFileSelectedAcceptZip($event)" accept=".zip" />
             <label for="roomDataFileSelect" class="btn btn-outline-primary">
@@ -51,16 +54,10 @@
             <h3>
                 <div jhiTranslate="artemisApp.examRooms.management.examRoomOverview.title"></div>
             </h3>
-            <div><span jhiTranslate="artemisApp.examRooms.management.examRoomOverview.totalExamRooms"></span> {{ numberOf()!.examRooms }}</div>
-            <div><span jhiTranslate="artemisApp.examRooms.management.examRoomOverview.totalSeats"></span> {{ numberOf()!.examSeats }}</div>
-            <div><span jhiTranslate="artemisApp.examRooms.management.examRoomOverview.totalLayoutStrategies"></span> {{ numberOf()!.layoutStrategies }}</div>
-            <div><span jhiTranslate="artemisApp.examRooms.management.examRoomOverview.uniqueExamRooms"></span> {{ numberOf()!.uniqueExamRooms }}</div>
-            <div><span jhiTranslate="artemisApp.examRooms.management.examRoomOverview.uniqueSeats"></span> {{ numberOf()!.uniqueExamSeats }}</div>
-            <div><span jhiTranslate="artemisApp.examRooms.management.examRoomOverview.uniqueLayoutStrategies"></span> {{ numberOf()!.uniqueLayoutStrategies }}</div>
-            <div>
-                <span jhiTranslate="artemisApp.examRooms.management.examRoomOverview.distinctLayoutStrategyNames"></span>
-                {{ distinctLayoutStrategyNames() }}
-            </div>
+            <strong>
+                <div class="m-1"><span jhiTranslate="artemisApp.examRooms.management.examRoomOverview.totalExamRooms"></span> {{ numberOfAvailable()!.examRooms }}</div>
+                <div class="m-1"><span jhiTranslate="artemisApp.examRooms.management.examRoomOverview.totalSeats"></span> {{ numberOfAvailable()!.examSeats }}</div>
+            </strong>
             <h4 class="mt-4"><span jhiTranslate="artemisApp.examRooms.management.examRoomOverview.examRoomsTitle"></span></h4>
             <div class="table-responsive">
                 <table class="table table-striped">

@@ -46,9 +46,6 @@ describe('ExamRoomsComponentTest', () => {
         jest.spyOn(service, 'getRoomOverview').mockReturnValue(
             of(
                 convertBodyToHttpResponse({
-                    numberOfStoredExamRooms: 0,
-                    numberOfStoredExamSeats: 0,
-                    numberOfStoredLayoutStrategies: 0,
                     newestUniqueExamRooms: [],
                 } as ExamRoomOverviewDTO),
             ),
@@ -75,14 +72,8 @@ describe('ExamRoomsComponentTest', () => {
         // THEN
         expect(service.getRoomOverview).toHaveBeenCalledOnce();
         expect(component.hasOverview()).toBeTrue();
-        expect(component.numberOf()!.examRooms).toBe(0);
-        expect(component.numberOf()!.examSeats).toBe(0);
-        expect(component.numberOf()!.layoutStrategies).toBe(0);
-        expect(component.numberOf()!.uniqueExamRooms).toBe(0);
-        expect(component.numberOf()!.uniqueExamSeats).toBe(0);
-        expect(component.numberOf()!.uniqueLayoutStrategies).toBe(0);
-
-        expect(component.distinctLayoutStrategyNames()).toBe('');
+        expect(component.numberOfAvailable()!.examRooms).toBe(0);
+        expect(component.numberOfAvailable()!.examSeats).toBe(0);
         expect(component.hasExamRoomData()).toBeFalse();
     });
 
@@ -97,14 +88,9 @@ describe('ExamRoomsComponentTest', () => {
         expect(component.hasOverview()).toBeTrue();
         expect(service.getRoomOverview).toHaveBeenCalledOnce();
 
-        expect(component.numberOf()!.examRooms).toBe(1);
-        expect(component.numberOf()!.examSeats).toBe(50);
-        expect(component.numberOf()!.layoutStrategies).toBe(1);
-        expect(component.numberOf()!.uniqueExamRooms).toBe(1);
-        expect(component.numberOf()!.uniqueExamSeats).toBe(50);
-        expect(component.numberOf()!.uniqueLayoutStrategies).toBe(1);
+        expect(component.numberOfAvailable()!.examRooms).toBe(1);
+        expect(component.numberOfAvailable()!.examSeats).toBe(50);
 
-        expect(component.distinctLayoutStrategyNames()).toBe('default');
         expect(component.hasExamRoomData()).toBeTrue();
         expect(component.examRoomData()).toHaveLength(1);
         expect(component.examRoomData()![0]).toEqual({
@@ -302,9 +288,6 @@ describe('ExamRoomsComponentTest', () => {
         jest.spyOn(service, 'getRoomOverview').mockReturnValue(
             of(
                 convertBodyToHttpResponse({
-                    numberOfStoredExamRooms: 1,
-                    numberOfStoredExamSeats: 50,
-                    numberOfStoredLayoutStrategies: 1,
                     newestUniqueExamRooms: [examRoom],
                 } as ExamRoomOverviewDTO),
             ),

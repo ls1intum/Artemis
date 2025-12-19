@@ -32,7 +32,7 @@ import de.tum.cit.aet.artemis.exam.service.ExamRoomService;
 @Conditional(ExamEnabled.class)
 @Lazy
 @RestController
-@RequestMapping("api/exam/")
+@RequestMapping("api/exam/rooms/")
 public class ExamRoomManagementResource {
 
     private static final Logger log = LoggerFactory.getLogger(ExamRoomManagementResource.class);
@@ -49,7 +49,7 @@ public class ExamRoomManagementResource {
     }
 
     /**
-     * POST /exam-rooms/upload: Upload a zip file containing room data to be parsed and added to Artemis.
+     * POST /exam/rooms/upload: Upload a zip file containing room data to be parsed and added to Artemis.
      *
      * @param zipFile The zip file to be uploaded. It needs to contain the `.json` files containing the room data in
      *                    the following format:
@@ -63,7 +63,7 @@ public class ExamRoomManagementResource {
      *
      * @return a response entity with status 200 and information about the upload process.
      */
-    @PostMapping(value = "exam-rooms/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @EnforceAtLeastInstructor
     public ResponseEntity<ExamRoomUploadInformationDTO> uploadRoomZip(@RequestParam("file") MultipartFile zipFile) {
         log.debug("REST request to parse rooms from a zip file: {}", zipFile.getOriginalFilename());
@@ -83,11 +83,11 @@ public class ExamRoomManagementResource {
     }
 
     /**
-     * GET /exam-rooms/overview: Get overview over the exam room DB status.
+     * GET /exam/rooms/overview: Get overview over the exam room DB status.
      *
      * @return a response entity with status 200 and information about the exam room DB status.
      */
-    @GetMapping("exam-rooms/overview")
+    @GetMapping("overview")
     @EnforceAtLeastInstructor
     public ResponseEntity<ExamRoomOverviewDTO> getExamRoomOverview() {
         log.info("REST request to get exam room admin overview");
@@ -97,11 +97,11 @@ public class ExamRoomManagementResource {
     }
 
     /**
-     * DELETE /exam-rooms/outdated-and-unused: Delete all outdated and unused exam rooms.
+     * DELETE /exam/rooms/outdated-and-unused: Delete all outdated and unused exam rooms.
      *
      * @return a response entity with status 200 and a summary of the deletion process.
      */
-    @DeleteMapping("exam-rooms/outdated-and-unused")
+    @DeleteMapping("outdated-and-unused")
     @EnforceAtLeastInstructor
     public ResponseEntity<ExamRoomDeletionSummaryDTO> deleteAllOutdatedAndUnusedExamRooms() {
         log.debug("REST request to delete all outdated and unused exam rooms");

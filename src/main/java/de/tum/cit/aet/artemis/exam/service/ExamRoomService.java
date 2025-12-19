@@ -7,8 +7,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.function.BinaryOperator;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -304,22 +302,14 @@ public class ExamRoomService {
      * @return A DTO that can be sent to the client, containing basic information about the state of the exam room DB.
      */
     public ExamRoomOverviewDTO getExamRoomOverview() {
-        final Set<ExamRoom> examRooms = examRoomRepository.findAllExamRoomsWithEagerLayoutStrategies();
+        final Set<ExamRoom> examRooms = examRoomRepository.findAllNewestExamRoomVersionsWithEagerLayoutStrategies();
 
-        final int numberOfStoredExamRooms = examRooms.size();
-        final int numberOfStoredExamSeats = examRooms.stream().mapToInt(er -> er.getSeats().size()).sum();
-        final int numberOfStoredLayoutStrategies = examRooms.stream().mapToInt(er -> er.getLayoutStrategies().size()).sum();
-
-        Map<String, ExamRoom> newestRoomByRoomNumberAndName = examRooms.stream().collect(Collectors.toMap(
-                // Use null character as a separator, as it is not allowed in room numbers or names
-                examRoom -> examRoom.getRoomNumber() + "\u0000" + examRoom.getName(), Function.identity(), BinaryOperator.maxBy(Comparator.comparing(ExamRoom::getCreatedDate))));
-
-        final Set<ExamRoomDTO> examRoomDTOS = newestRoomByRoomNumberAndName.values().stream()
+        final Set<ExamRoomDTO> examRoomDTOS = examRooms.stream()
                 .map(examRoom -> new ExamRoomDTO(examRoom.getRoomNumber(), examRoom.getName(), examRoom.getBuilding(), examRoom.getSeats().size(),
                         examRoom.getLayoutStrategies().stream().map(ls -> new ExamRoomLayoutStrategyDTO(ls.getName(), ls.getType(), ls.getCapacity())).collect(Collectors.toSet())))
                 .collect(Collectors.toSet());
 
-        return new ExamRoomOverviewDTO(numberOfStoredExamRooms, numberOfStoredExamSeats, numberOfStoredLayoutStrategies, examRoomDTOS);
+        return new ExamRoomOverviewDTO(examRoomDTOS);
     }
 
     /**

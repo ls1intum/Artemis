@@ -23,6 +23,7 @@
             "management": {
                 "openButtonTitle": "Prüfungsraumverwaltung",
                 "title": "Prüfungsraum Management",
+                "introText": "Lade eine ZIP-Datei mit Prüfungsraumdaten im vorgegeben Format hoch. Durch den Upload werden die Prüfungsräume automatisch erstellt oder aktualisiert. Eine detaillierte Beschreibung der erforderlichen Dateistruktur wird in Kürze zur Dokumentation hinzugefügt.",
                 "uploadRoomData": "Prüfungsraumdaten hochladen",
                 "invalidFile": "Mit der Datei die du hochgeladen hast ist etwas nicht in Ordnung",
                 "fileSizeTooBig": "Die Dateigröße darf {{ MAX_FILE_SIZE }} MB nicht überschreiten",
@@ -47,19 +48,12 @@
                     "title": "Prüfungsraumübersicht",
                     "totalExamRooms": "Gespeicherte Prüfungsräume:",
                     "totalSeats": "Gespeicherte Sitze:",
-                    "totalLayoutStrategies": "Gespeicherte Verteilungsstrategien:",
-                    "uniqueExamRooms": "Einzigartige Prüfungsräume:",
-                    "uniqueSeats": "Einzigartige Sitze:",
-                    "uniqueLayoutStrategies": "Einzigartige Verteilungsstrategien:",
-                    "distinctLayoutStrategyNames": "Alle verfügbaren Verteilungsstrategien:",
                     "examRoomsTitle": "Alle verfügbaren Prüfungsräume",
-                    "id": "ID",
                     "roomNumber": "Raumnummer",
                     "roomName": "Raumname",
                     "building": "Gebäude",
                     "defaultCapacity": "Standardkapazität",
-                    "maxCapacity": "Maximale Kapazität",
-                    "layoutStrategies": "Verfügbare Strategien"
+                    "maxCapacity": "Maximale Kapazität"
                 }
             }
         }

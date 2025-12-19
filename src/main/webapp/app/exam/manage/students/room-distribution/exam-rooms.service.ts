@@ -7,7 +7,7 @@ import { ExamRoomDeletionSummaryDTO, ExamRoomOverviewDTO, ExamRoomUploadInformat
 export class ExamRoomsService {
     private http = inject(HttpClient);
 
-    readonly baseUrl = 'api/exam/exam-rooms';
+    readonly baseUrl = 'api/exam/rooms';
 
     /**
      * Send a GET request to retrieve an overview over the stored exam rooms

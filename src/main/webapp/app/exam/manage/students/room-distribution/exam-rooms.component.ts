@@ -5,7 +5,7 @@ import {
     ExamRoomDeletionSummaryDTO,
     ExamRoomOverviewDTO,
     ExamRoomUploadInformationDTO,
-    NumberOfStored,
+    NumberOfAvailable,
 } from 'app/exam/manage/students/room-distribution/exam-rooms.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { SortDirective } from 'app/shared/sort/directive/sort.directive';
@@ -40,54 +40,35 @@ export class ExamRoomsComponent implements OnInit {
     private actionInformation: WritableSignal<ExamRoomUploadInformationDTO | ExamRoomDeletionSummaryDTO | undefined> = signal(undefined);
     private overview: WritableSignal<ExamRoomOverviewDTO | undefined> = signal(undefined);
 
-    hasSelectedFile: Signal<boolean> = computed(() => !!this.selectedFile());
-    selectedFileName: Signal<string | undefined> = computed(() => this.selectedFile()?.name?.trim());
-    canUpload: Signal<boolean> = computed(() => this.hasSelectedFile() && !this.isUploading());
-    isUploading: Signal<boolean> = computed(() => this.actionStatus() === 'uploading');
-    hasUploadInformation: Signal<boolean> = computed(() => this.actionStatus() === 'uploadSuccess' && !!this.uploadInformation());
-    isDeleting: Signal<boolean> = computed(() => this.actionStatus() === 'deleting');
-    hasDeletionInformation: Signal<boolean> = computed(() => this.actionStatus() === 'deletionSuccess' && !!this.deletionInformation());
-    uploadInformation: Signal<ExamRoomUploadInformationDTO | undefined> = computed(() => this.actionInformation() as ExamRoomUploadInformationDTO);
-    deletionInformation: Signal<ExamRoomDeletionSummaryDTO | undefined> = computed(() => this.actionInformation() as ExamRoomDeletionSummaryDTO);
-    /**
-     * Indicates if we have the {@link numberOf} and {@link distinctLayoutStrategyNames} fields
-     */
-    hasOverview: Signal<boolean> = computed(() => !!this.overview());
-    private numberOfUniqueExamRooms: Signal<number> = computed(() => this.overview()?.newestUniqueExamRooms?.length ?? 0);
-    private numberOfUniqueExamSeats: Signal<number> = computed(
+    readonly hasSelectedFile: Signal<boolean> = computed(() => !!this.selectedFile());
+    readonly selectedFileName: Signal<string | undefined> = computed(() => this.selectedFile()?.name?.trim());
+    readonly canUpload: Signal<boolean> = computed(() => this.hasSelectedFile() && !this.isUploading());
+    readonly isUploading: Signal<boolean> = computed(() => this.actionStatus() === 'uploading');
+    readonly hasUploadInformation: Signal<boolean> = computed(() => this.actionStatus() === 'uploadSuccess' && !!this.uploadInformation());
+    readonly isDeleting: Signal<boolean> = computed(() => this.actionStatus() === 'deleting');
+    readonly hasDeletionInformation: Signal<boolean> = computed(() => this.actionStatus() === 'deletionSuccess' && !!this.deletionInformation());
+    readonly uploadInformation: Signal<ExamRoomUploadInformationDTO | undefined> = computed(() => this.actionInformation() as ExamRoomUploadInformationDTO);
+    readonly deletionInformation: Signal<ExamRoomDeletionSummaryDTO | undefined> = computed(() => this.actionInformation() as ExamRoomDeletionSummaryDTO);
+    readonly hasOverview: Signal<boolean> = computed(() => !!this.overview());
+    private readonly numberOfUniqueExamRooms: Signal<number> = computed(() => this.overview()?.newestUniqueExamRooms?.length ?? 0);
+    private readonly numberOfUniqueExamSeats: Signal<number> = computed(
         () =>
             this.overview()
                 ?.newestUniqueExamRooms?.map((examRoomDTO) => examRoomDTO.numberOfSeats)
                 .reduce((acc, val) => acc + val, 0) ?? 0,
     );
-    private numberOfLayoutStrategiesOfUniqueRooms: Signal<number> = computed(
-        () =>
-            this.overview()
-                ?.newestUniqueExamRooms?.map((examRoomDTO) => examRoomDTO.layoutStrategies?.length ?? 0)
-                .reduce((acc, val) => acc + val, 0) ?? 0,
-    );
-    numberOf: Signal<NumberOfStored | undefined> = computed(() => {
+    readonly numberOfAvailable: Signal<NumberOfAvailable | undefined> = computed(() => {
         if (!this.hasOverview()) {
             return undefined;
         }
 
         return {
-            examRooms: this.overview()!.numberOfStoredExamRooms,
-            examSeats: this.overview()!.numberOfStoredExamSeats,
-            layoutStrategies: this.overview()!.numberOfStoredLayoutStrategies,
-            uniqueExamRooms: this.numberOfUniqueExamRooms(),
-            uniqueExamSeats: this.numberOfUniqueExamSeats(),
-            uniqueLayoutStrategies: this.numberOfLayoutStrategiesOfUniqueRooms(),
-        } as NumberOfStored;
+            examRooms: this.numberOfUniqueExamRooms(),
+            examSeats: this.numberOfUniqueExamSeats(),
+        } as NumberOfAvailable;
     });
-    distinctLayoutStrategyNames: Signal<string> = computed(() =>
-        [...new Set(this.overview()?.newestUniqueExamRooms?.flatMap((examRoomDTO) => examRoomDTO.layoutStrategies?.map((layoutStrategy) => layoutStrategy.name) ?? []) ?? [])]
-            .slice()
-            .sort()
-            .join(', '),
-    );
-    hasExamRoomData: Signal<boolean> = computed(() => !!this.numberOfUniqueExamRooms());
-    examRoomData: Signal<ExamRoomDTOExtended[] | undefined> = computed(() => this.calculateExamRoomData());
+    readonly hasExamRoomData: Signal<boolean> = computed(() => !!this.numberOfUniqueExamRooms());
+    readonly examRoomData: Signal<ExamRoomDTOExtended[] | undefined> = computed(() => this.calculateExamRoomData());
 
     // Fields for working with SortDirective
     sortAttribute: 'roomNumber' | 'name' | 'building' | 'defaultCapacity' | 'maxCapacity' = 'name';

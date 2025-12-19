@@ -124,7 +124,7 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
         Course course = courseUtilService.addEmptyCourse();
         Exam exam = examUtilService.addExam(course);
         examUtilService.registerUsersForExamAndSaveExam(exam, TEST_PREFIX, 200);
-        request.postMultipartFileOnly("/api/exam/exam-rooms/upload", ExamRoomZipFiles.zipFileSingleExamRoom, HttpStatus.OK);
+        request.postMultipartFileOnly("/api/exam/rooms/upload", ExamRoomZipFiles.zipFileSingleExamRoom, HttpStatus.OK);
 
         var ids = examRoomRepository.findAllIdsOfNewestExamRoomVersionsByRoomNumbers(Set.of("5602.EG.001"));
         request.post("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/distribute-registered-students", ids, HttpStatus.BAD_REQUEST);
@@ -163,7 +163,7 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
         Course course = courseUtilService.addEmptyCourse();
         Exam exam = examUtilService.addExam(course);
         examUtilService.registerUsersForExamAndSaveExam(exam, TEST_PREFIX, 200);
-        request.postMultipartFileOnly("/api/exam/exam-rooms/upload", ExamRoomZipFiles.zipFileFourExamRooms, HttpStatus.OK);
+        request.postMultipartFileOnly("/api/exam/rooms/upload", ExamRoomZipFiles.zipFileFourExamRooms, HttpStatus.OK);
 
         var ids = examRoomRepository.findAllIdsOfNewestExamRoomVersionsByRoomNumbers(Set.of("5602.EG.001", "0101.02.179"));
         request.postWithoutResponseBody("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/distribute-registered-students", ids, HttpStatus.OK);
