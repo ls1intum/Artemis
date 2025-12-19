@@ -110,9 +110,9 @@ class IrisLectureChatMessageIntegrationTest extends AbstractIrisIntegrationTest 
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void sendOneMessageWithCustomInstructions() throws Exception {
         String testCustomInstructions = "Please focus on grammar.";
-        var courseSettings = irisSettingsService.getRawIrisSettingsFor(lecture.getCourse());
-        courseSettings.getIrisLectureChatSettings().setCustomInstructions(testCustomInstructions);
-        irisSettingsService.saveIrisSettings(courseSettings);
+        var course = lecture.getCourse();
+        var currentSettings = irisSettingsService.getSettingsForCourse(course);
+        configureCourseSettings(course, testCustomInstructions, currentSettings.variant());
 
         // Prepare session and message
         var irisSession = createSessionForUser("student1");
@@ -286,10 +286,8 @@ class IrisLectureChatMessageIntegrationTest extends AbstractIrisIntegrationTest 
             pipelineDone.set(true);
         });
 
-        var globalSettings = irisSettingsService.getGlobalSettings();
-        globalSettings.getIrisProgrammingExerciseChatSettings().setRateLimit(1);
-        globalSettings.getIrisProgrammingExerciseChatSettings().setRateLimitTimeframeHours(10);
-        irisSettingsService.saveIrisSettings(globalSettings);
+        var course = lecture.getCourse();
+        configureCourseRateLimit(course, 1, 10);
 
         try {
             request.postWithoutResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend1, HttpStatus.CREATED);
@@ -304,9 +302,7 @@ class IrisLectureChatMessageIntegrationTest extends AbstractIrisIntegrationTest 
         }
         finally {
             // Reset to not interfere with other tests
-            globalSettings.getIrisProgrammingExerciseChatSettings().setRateLimit(null);
-            globalSettings.getIrisProgrammingExerciseChatSettings().setRateLimitTimeframeHours(null);
-            irisSettingsService.saveIrisSettings(globalSettings);
+            configureCourseRateLimit(course, null, null);
         }
     }
 
