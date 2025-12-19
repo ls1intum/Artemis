@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="20251219133000-comment-threads" author="codex">
+        <createTable tableName="comment_thread">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="group_id" type="bigint"/>
+            <column name="exercise_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="target_type" type="varchar(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="auxiliary_repo_id" type="bigint"/>
+            <column name="initial_version_id" type="bigint"/>
+            <column name="initial_commit_sha" type="varchar(255)"/>
+            <column name="file_path" type="varchar(500)"/>
+            <column name="initial_file_path" type="varchar(500)"/>
+            <column name="line_number" type="int"/>
+            <column name="initial_line_number" type="int"/>
+            <column name="outdated" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="resolved" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint baseTableName="comment_thread"
+                                 baseColumnNames="exercise_id"
+                                 constraintName="fk_comment_thread_exercise"
+                                 referencedTableName="exercise"
+                                 referencedColumnNames="id"/>
+
+        <addForeignKeyConstraint baseTableName="comment_thread"
+                                 baseColumnNames="initial_version_id"
+                                 constraintName="fk_comment_thread_initial_version"
+                                 referencedTableName="exercise_version"
+                                 referencedColumnNames="id"/>
+
+        <createIndex tableName="comment_thread" indexName="idx_comment_thread_exercise">
+            <column name="exercise_id"/>
+        </createIndex>
+
+        <createIndex tableName="comment_thread" indexName="idx_comment_thread_group">
+            <column name="group_id"/>
+        </createIndex>
+
+        <createIndex tableName="comment_thread" indexName="idx_comment_thread_target">
+            <column name="target_type"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="20251219133000-comments" author="codex">
+        <createTable tableName="comment">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="thread_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="author_id" type="bigint"/>
+            <column name="in_reply_to" type="bigint">
+                <constraints nullable="true"/>
+            </column>
+            <column name="type" type="varchar(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="content" type="json"/>
+            <column name="created_date" type="datetime(3)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_modified_date" type="datetime(3)"/>
+        </createTable>
+
+        <addForeignKeyConstraint baseTableName="comment"
+                                 baseColumnNames="thread_id"
+                                 constraintName="fk_comment_thread"
+                                 referencedTableName="comment_thread"
+                                 referencedColumnNames="id"/>
+
+        <addForeignKeyConstraint baseTableName="comment"
+                                 baseColumnNames="author_id"
+                                 constraintName="fk_comment_author"
+                                 referencedTableName="jhi_user"
+                                 referencedColumnNames="id"/>
+
+        <addForeignKeyConstraint baseTableName="comment"
+                                 baseColumnNames="in_reply_to"
+                                 constraintName="fk_comment_in_reply_to"
+                                 referencedTableName="comment"
+                                 referencedColumnNames="id"/>
+
+        <createIndex tableName="comment" indexName="idx_comment_thread">
+            <column name="thread_id"/>
+        </createIndex>
+
+        <createIndex tableName="comment" indexName="idx_comment_author">
+            <column name="author_id"/>
+        </createIndex>
+
+        <createIndex tableName="comment" indexName="idx_comment_in_reply_to">
+            <column name="in_reply_to"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>
