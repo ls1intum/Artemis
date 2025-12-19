@@ -43,7 +43,7 @@ import de.tum.cit.aet.artemis.core.util.CalendarEventType;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
-import de.tum.cit.aet.artemis.iris.api.IrisLectureApi;
+import de.tum.cit.aet.artemis.lecture.api.LectureContentProcessingApi;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
@@ -70,7 +70,7 @@ public class LectureService {
 
     private final ChannelService channelService;
 
-    private final Optional<IrisLectureApi> irisLectureApi;
+    private final LectureContentProcessingApi contentProcessingApi;
 
     private final Optional<CompetencyProgressApi> competencyProgressApi;
 
@@ -83,13 +83,13 @@ public class LectureService {
     private final LectureUnitRepository lectureUnitRepository;
 
     public LectureService(LectureRepository lectureRepository, AuthorizationCheckService authCheckService, ChannelRepository channelRepository, ChannelService channelService,
-            Optional<IrisLectureApi> irisLectureApi, Optional<CompetencyProgressApi> competencyProgressApi, Optional<CompetencyRelationApi> competencyRelationApi,
+            LectureContentProcessingApi contentProcessingApi, Optional<CompetencyProgressApi> competencyProgressApi, Optional<CompetencyRelationApi> competencyRelationApi,
             Optional<CompetencyApi> competencyApi, ExerciseService exerciseService, LectureUnitRepository lectureUnitRepository) {
         this.lectureRepository = lectureRepository;
         this.authCheckService = authCheckService;
         this.channelRepository = channelRepository;
         this.channelService = channelService;
-        this.irisLectureApi = irisLectureApi;
+        this.contentProcessingApi = contentProcessingApi;
         this.competencyProgressApi = competencyProgressApi;
         this.competencyRelationApi = competencyRelationApi;
         this.competencyApi = competencyApi;
@@ -172,14 +172,13 @@ public class LectureService {
      * @param updateCompetencyProgress whether the competency progress should be updated
      */
     public void delete(Lecture lecture, boolean updateCompetencyProgress) {
-        if (irisLectureApi.isPresent()) {
-            Lecture lectureWithAttachmentVideoUnits = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lecture.getId());
-            List<AttachmentVideoUnit> attachmentVideoUnitList = lectureWithAttachmentVideoUnits.getLectureUnits().stream()
-                    .filter(lectureUnit -> lectureUnit instanceof AttachmentVideoUnit).map(lectureUnit -> (AttachmentVideoUnit) lectureUnit).toList();
+        // Clean up external processing resources (cancel Nebula jobs, delete from Pyris)
+        Lecture lectureWithAttachmentVideoUnits = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lecture.getId());
+        List<AttachmentVideoUnit> attachmentVideoUnitList = lectureWithAttachmentVideoUnits.getLectureUnits().stream()
+                .filter(lectureUnit -> lectureUnit instanceof AttachmentVideoUnit).map(lectureUnit -> (AttachmentVideoUnit) lectureUnit).toList();
 
-            if (!attachmentVideoUnitList.isEmpty()) {
-                irisLectureApi.get().deleteLectureFromPyrisDB(attachmentVideoUnitList);
-            }
+        if (!attachmentVideoUnitList.isEmpty()) {
+            contentProcessingApi.handleUnitsDeletion(attachmentVideoUnitList);
         }
 
         if (updateCompetencyProgress && competencyProgressApi.isPresent()) {

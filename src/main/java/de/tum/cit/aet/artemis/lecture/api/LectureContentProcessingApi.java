@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.lecture.api;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.List;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
@@ -73,5 +75,25 @@ public class LectureContentProcessingApi extends AbstractLectureApi {
      */
     public void cancelProcessingIfActive(Long lectureUnitId) {
         lectureContentProcessingService.cancelProcessing(lectureUnitId);
+    }
+
+    /**
+     * Handles cleanup when a lecture unit is being deleted.
+     * This cancels any ongoing processing and removes the content from Pyris.
+     *
+     * @param unit the attachment video unit being deleted
+     */
+    public void handleUnitDeletion(AttachmentVideoUnit unit) {
+        lectureContentProcessingService.handleUnitsDeletion(List.of(unit));
+    }
+
+    /**
+     * Handles cleanup when multiple lecture units are being deleted (e.g., entire lecture deletion).
+     * This cancels any ongoing processing and removes all content from Pyris in a single batch call.
+     *
+     * @param units the attachment video units being deleted
+     */
+    public void handleUnitsDeletion(List<AttachmentVideoUnit> units) {
+        lectureContentProcessingService.handleUnitsDeletion(units);
     }
 }

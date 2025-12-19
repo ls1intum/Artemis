@@ -172,11 +172,11 @@ public class LectureUnitService {
     public void removeLectureUnit(@NonNull LectureUnit lectureUnit) {
         LectureUnit lectureUnitToDelete = lectureUnitRepository.findByIdWithCompetenciesAndSlidesElseThrow(lectureUnit.getId());
 
-        // Cancel any ongoing processing jobs (transcription, ingestion) on external services
-        // Processing state deletion is handled by DB cascade when lecture unit is deleted
-        contentProcessingApi.cancelProcessingIfActive(lectureUnit.getId());
-
         if (lectureUnitToDelete instanceof AttachmentVideoUnit attachmentVideoUnit) {
+            // Cancel ongoing processing and delete from Pyris vector database
+            // Processing state deletion is handled by DB cascade when lecture unit is deleted
+            contentProcessingApi.handleUnitDeletion(attachmentVideoUnit);
+
             if (attachmentVideoUnit.getAttachment() != null && attachmentVideoUnit.getAttachment().getLink() != null) {
                 fileService.schedulePathForDeletion(
                         FilePathConverter.fileSystemPathForExternalUri(URI.create(attachmentVideoUnit.getAttachment().getLink()), FilePathType.ATTACHMENT_UNIT), 5);

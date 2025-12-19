@@ -7,6 +7,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -161,6 +162,36 @@ public class LectureContentProcessingService {
             state.setErrorKey("artemisApp.lectureUnit.processing.cancelled");
             processingStateRepository.save(state);
         });
+    }
+
+    /**
+     * Clean up external resources when lecture units are being deleted.
+     * This cancels any ongoing processing and removes all content from Pyris in a single batch call.
+     *
+     * @param units the attachment video units being deleted
+     */
+    public void handleUnitsDeletion(List<AttachmentVideoUnit> units) {
+        if (units == null || units.isEmpty()) {
+            return;
+        }
+
+        log.info("Handling deletion cleanup for {} units", units.size());
+
+        // Cancel any ongoing transcription on Nebula for each unit
+        for (AttachmentVideoUnit unit : units) {
+            cancelTranscriptionOnNebula(unit.getId());
+        }
+
+        // Batch delete from Pyris vector database
+        if (irisLectureApi.isPresent()) {
+            try {
+                irisLectureApi.get().deleteLectureFromPyrisDB(units);
+                log.info("Deleted {} units from Pyris", units.size());
+            }
+            catch (Exception e) {
+                log.warn("Failed to delete units from Pyris: {}", e.getMessage());
+            }
+        }
     }
 
     /**
