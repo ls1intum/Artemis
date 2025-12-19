@@ -28,7 +28,6 @@
             "endDate": "Ende",
             "visibleDate": "Sichtbar ab",
             "course": "Kurs",
-            "ingestionState": "Iris-Verarbeitungsstatus",
             "detail": {
                 "title": "Vorlesung",
                 "sections": {

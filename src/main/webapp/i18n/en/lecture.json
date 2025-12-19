@@ -28,7 +28,6 @@
             "endDate": "End Date",
             "visibleDate": "Visible from",
             "course": "Course",
-            "ingestionState": "Iris Processing Status",
             "detail": {
                 "title": "Lecture",
                 "sections": {

@@ -70,7 +70,6 @@ describe('AttachmentVideoUnitComponent', () => {
         mockLectureTranscriptionService = {
             getTranscription: jest.fn(),
             getTranscriptionStatus: jest.fn(() => of(undefined)),
-            cancelTranscription: jest.fn(() => of(true)),
         };
 
         await TestBed.configureTestingModule({

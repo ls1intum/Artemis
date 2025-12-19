@@ -16,7 +16,6 @@ export class AttachmentVideoUnit extends LectureUnit {
 
 export enum TranscriptionStatus {
     PENDING = 'PENDING',
-    PROCESSING = 'PROCESSING',
     COMPLETED = 'COMPLETED',
     FAILED = 'FAILED',
 }

@@ -295,7 +295,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
 
     isTranscriptionPending(lectureUnit: AttachmentVideoUnit): boolean {
         const status = this.transcriptionStatus[lectureUnit.id!];
-        return status === TranscriptionStatus.PENDING || status === TranscriptionStatus.PROCESSING;
+        return status === TranscriptionStatus.PENDING;
     }
 
     isTranscriptionFailed(lectureUnit: AttachmentVideoUnit): boolean {
