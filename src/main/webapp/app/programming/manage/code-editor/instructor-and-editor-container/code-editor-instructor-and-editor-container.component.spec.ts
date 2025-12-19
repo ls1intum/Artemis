@@ -436,3 +436,230 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Consistency Checks',
         expect(comp.isCheckingConsistency()).toBeFalse();
     });
 });
+
+describe('CodeEditorInstructorAndEditorContainerComponent - Diff Editor', () => {
+    let fixture: ComponentFixture<CodeEditorInstructorAndEditorContainerComponent>;
+    let comp: CodeEditorInstructorAndEditorContainerComponent;
+    let alertService: AlertService;
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [CodeEditorInstructorAndEditorContainerComponent],
+            providers: [
+                { provide: AlertService, useClass: MockAlertService },
+                { provide: ProfileService, useClass: MockProfileService },
+                { provide: Router, useClass: MockRouter },
+                { provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService },
+                { provide: CourseExerciseService, useClass: MockCourseExerciseService },
+                { provide: DomainService, useValue: { setDomain: jest.fn() } },
+                { provide: Location, useValue: { replaceState: jest.fn() } },
+                { provide: ParticipationService, useClass: MockParticipationService },
+                { provide: ActivatedRoute, useValue: { params: of({}) } },
+                { provide: HyperionCodeGenerationApiService, useValue: { generateCode: jest.fn() } },
+                { provide: NgbModal, useValue: { open: jest.fn(() => ({ componentInstance: {}, result: Promise.resolve() })) } },
+                { provide: HyperionWebsocketService, useValue: { subscribeToJob: jest.fn(), unsubscribeFromJob: jest.fn() } },
+                { provide: CodeEditorRepositoryService, useValue: { pull: jest.fn(() => of(void 0)) } },
+                { provide: CodeEditorRepositoryFileService, useValue: { getRepositoryContent: jest.fn(() => of({} as any)) } },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ConsistencyCheckService, useValue: { checkConsistencyForProgrammingExercise: jest.fn() } },
+                { provide: ArtemisIntelligenceService, useValue: { consistencyCheck: jest.fn(), isLoading: () => false } },
+            ],
+        })
+            .overrideComponent(CodeEditorInstructorAndEditorContainerComponent, {
+                set: { template: '', imports: [] as any },
+            })
+            .compileComponents();
+
+        alertService = TestBed.inject(AlertService);
+        fixture = TestBed.createComponent(CodeEditorInstructorAndEditorContainerComponent);
+        comp = fixture.componentInstance;
+        comp.exercise = { id: 42, problemStatement: 'Original' } as any;
+    });
+
+    afterEach(() => {
+        fixture?.destroy();
+        jest.clearAllMocks();
+    });
+
+    it('should accept refinement and update problem statement', () => {
+        const successSpy = jest.spyOn(alertService, 'success');
+        comp.refinedProblemStatement.set('Refined problem statement');
+        comp.showDiff.set(true);
+
+        comp.acceptRefinement();
+
+        expect(comp.exercise.problemStatement).toBe('Refined problem statement');
+        expect(comp.showDiff()).toBeFalse();
+        expect(comp.refinedProblemStatement()).toBe('');
+        expect(successSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.problemStatement.changesApplied');
+    });
+
+    it('should not accept empty refinement', () => {
+        const successSpy = jest.spyOn(alertService, 'success');
+        comp.refinedProblemStatement.set('   '); // whitespace only
+        comp.showDiff.set(true);
+
+        comp.acceptRefinement();
+
+        expect(comp.exercise.problemStatement).toBe('Original');
+        expect(successSpy).not.toHaveBeenCalled();
+    });
+
+    it('should reject refinement and close diff', () => {
+        comp.showDiff.set(true);
+        comp.originalProblemStatement.set('Original');
+        comp.refinedProblemStatement.set('Refined');
+
+        comp.rejectRefinement();
+
+        expect(comp.showDiff()).toBeFalse();
+        expect(comp.originalProblemStatement()).toBe('');
+        expect(comp.refinedProblemStatement()).toBe('');
+    });
+
+    it('should close diff and reset state', () => {
+        comp.showDiff.set(true);
+        comp.originalProblemStatement.set('Original');
+        comp.refinedProblemStatement.set('Refined');
+        (comp as any).diffContentSet = true;
+
+        comp.closeDiff();
+
+        expect(comp.showDiff()).toBeFalse();
+        expect(comp.originalProblemStatement()).toBe('');
+        expect(comp.refinedProblemStatement()).toBe('');
+        expect((comp as any).diffContentSet).toBeFalse();
+    });
+});
+
+describe('CodeEditorInstructorAndEditorContainerComponent - Inline Comments', () => {
+    let fixture: ComponentFixture<CodeEditorInstructorAndEditorContainerComponent>;
+    let comp: CodeEditorInstructorAndEditorContainerComponent;
+    let alertService: AlertService;
+
+    const mockInlineCommentService = {
+        pendingComments: jest.fn(() => []),
+        pendingCount: jest.fn(() => 0),
+        hasPendingComments: jest.fn(() => false),
+        addExistingComment: jest.fn(),
+        removeComment: jest.fn(),
+        updateStatus: jest.fn(),
+        markApplied: jest.fn(),
+        markAllApplied: jest.fn(),
+        clearAll: jest.fn(),
+        getComment: jest.fn(),
+        setExerciseContext: jest.fn(),
+    };
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [CodeEditorInstructorAndEditorContainerComponent],
+            providers: [
+                { provide: AlertService, useClass: MockAlertService },
+                { provide: ProfileService, useClass: MockProfileService },
+                { provide: Router, useClass: MockRouter },
+                { provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService },
+                { provide: CourseExerciseService, useClass: MockCourseExerciseService },
+                { provide: DomainService, useValue: { setDomain: jest.fn() } },
+                { provide: Location, useValue: { replaceState: jest.fn() } },
+                { provide: ParticipationService, useClass: MockParticipationService },
+                { provide: ActivatedRoute, useValue: { params: of({}) } },
+                { provide: HyperionCodeGenerationApiService, useValue: { generateCode: jest.fn() } },
+                { provide: NgbModal, useValue: { open: jest.fn(() => ({ componentInstance: {}, result: Promise.resolve() })) } },
+                { provide: HyperionWebsocketService, useValue: { subscribeToJob: jest.fn(), unsubscribeFromJob: jest.fn() } },
+                { provide: CodeEditorRepositoryService, useValue: { pull: jest.fn(() => of(void 0)) } },
+                { provide: CodeEditorRepositoryFileService, useValue: { getRepositoryContent: jest.fn(() => of({} as any)) } },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ConsistencyCheckService, useValue: { checkConsistencyForProgrammingExercise: jest.fn() } },
+                { provide: ArtemisIntelligenceService, useValue: { consistencyCheck: jest.fn(), isLoading: () => false } },
+            ],
+        })
+            .overrideComponent(CodeEditorInstructorAndEditorContainerComponent, {
+                set: { template: '', imports: [] as any },
+            })
+            .compileComponents();
+
+        alertService = TestBed.inject(AlertService);
+        fixture = TestBed.createComponent(CodeEditorInstructorAndEditorContainerComponent);
+        comp = fixture.componentInstance;
+        comp.exercise = { id: 42, problemStatement: 'Test problem statement', course: { id: 1 } } as any;
+
+        // Replace the injected service with our mock
+        (comp as any).inlineCommentService = mockInlineCommentService;
+    });
+
+    afterEach(() => {
+        fixture?.destroy();
+        jest.clearAllMocks();
+    });
+
+    it('should save new inline comment', () => {
+        mockInlineCommentService.getComment.mockReturnValue(undefined);
+        const comment = { id: 'c1', startLine: 1, endLine: 2, instruction: 'Fix this', status: 'pending' as const, createdAt: new Date() };
+
+        comp.onSaveInlineComment(comment);
+
+        expect(mockInlineCommentService.addExistingComment).toHaveBeenCalledWith({ ...comment, status: 'pending' });
+    });
+
+    it('should update existing inline comment status', () => {
+        const existingComment = { id: 'c1', startLine: 1, endLine: 2, instruction: 'Fix this', status: 'applied' as const, createdAt: new Date() };
+        mockInlineCommentService.getComment.mockReturnValue(existingComment);
+
+        comp.onSaveInlineComment(existingComment);
+
+        expect(mockInlineCommentService.updateStatus).toHaveBeenCalledWith('c1', 'pending');
+        expect(mockInlineCommentService.addExistingComment).not.toHaveBeenCalled();
+    });
+
+    it('should delete inline comment', () => {
+        comp.onDeleteInlineComment('c1');
+
+        expect(mockInlineCommentService.removeComment).toHaveBeenCalledWith('c1');
+    });
+
+    it('should clear all comments', () => {
+        comp.clearAllComments();
+
+        expect(mockInlineCommentService.clearAll).toHaveBeenCalled();
+    });
+
+    it('should cancel inline comment apply operation', () => {
+        (comp as any).applyingCommentId.set('c1');
+        (comp as any).isApplyingAll.set(true);
+
+        comp.onCancelInlineCommentApply();
+
+        expect(mockInlineCommentService.updateStatus).toHaveBeenCalledWith('c1', 'pending');
+        expect((comp as any).applyingCommentId()).toBeUndefined();
+        expect((comp as any).isApplyingAll()).toBeFalse();
+    });
+
+    it('should not apply all comments when list is empty', () => {
+        (comp as any).pendingComments = () => [];
+
+        comp.applyAllComments();
+
+        expect((comp as any).isApplyingAll()).toBeFalse();
+    });
+
+    it('should show error when applying comments without course id', () => {
+        const errorSpy = jest.spyOn(alertService, 'error');
+        comp.exercise = { id: 42, problemStatement: 'Test' } as any; // no course
+        (comp as any).pendingComments = () => [{ id: 'c1', startLine: 1, endLine: 1, instruction: 'test', status: 'pending', createdAt: new Date() }];
+
+        comp.applyAllComments();
+
+        expect(errorSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.inlineComment.applyAllError');
+    });
+
+    it('should show error when applying comments with empty problem statement', () => {
+        const errorSpy = jest.spyOn(alertService, 'error');
+        comp.exercise = { id: 42, problemStatement: '   ', course: { id: 1 } } as any; // whitespace only
+        (comp as any).pendingComments = () => [{ id: 'c1', startLine: 1, endLine: 1, instruction: 'test', status: 'pending', createdAt: new Date() }];
+
+        comp.applyAllComments();
+
+        expect(errorSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.inlineComment.applyAllError');
+    });
+});
