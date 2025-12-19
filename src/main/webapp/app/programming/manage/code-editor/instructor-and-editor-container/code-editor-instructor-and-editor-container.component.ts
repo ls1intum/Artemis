@@ -19,7 +19,6 @@ import {
     faTimesCircle,
     faTriangleExclamation,
 } from '@fortawesome/free-solid-svg-icons';
-import { IrisSettings } from 'app/iris/shared/entities/settings/iris-settings.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ProgrammingExerciseInstructorExerciseStatusComponent } from '../../status/programming-exercise-instructor-exercise-status.component';
@@ -105,7 +104,6 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     faCircleExclamation = faCircleExclamation;
     faTriangleExclamation = faTriangleExclamation;
     faCircleInfo = faCircleInfo;
-    irisSettings?: IrisSettings;
 
     faSpinner = faSpinner;
     facArtemisIntelligence = facArtemisIntelligence;
@@ -431,14 +429,16 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      * the file triggers the normal load workflow.
      */
     onEditorLoaded() {
-        // File already loaded, file load event will not fire
-        if (this.codeEditorContainer.selectedFile === this.fileToJumpOn) {
-            this.onFileLoad(this.fileToJumpOn!);
-            return;
-        }
+        if (this.fileToJumpOn) {
+            // File already loaded, file load event will not fire
+            if (this.codeEditorContainer.selectedFile === this.fileToJumpOn) {
+                this.onFileLoad(this.fileToJumpOn!);
+                return;
+            }
 
-        // Will load file and signal to fileLoad when finished loading
-        this.codeEditorContainer.selectedFile = this.fileToJumpOn;
+            // Will load file and signal to fileLoad when finished loading
+            this.codeEditorContainer.selectedFile = this.fileToJumpOn;
+        }
     }
 
     /**
