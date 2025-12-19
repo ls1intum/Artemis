@@ -93,7 +93,7 @@
             @if (programmingExerciseCreationConfig.isImportFromExistingExercise && programmingExercise()) {
                 <jhi-programming-exercise-instructions
                     [exercise]="programmingExercise()!"
-                    [participation]="programmingExercise()?.templateParticipation"
+                    [participation]="programmingExercise()!.templateParticipation!"
                     [personalParticipation]="false"
                 />
             }
