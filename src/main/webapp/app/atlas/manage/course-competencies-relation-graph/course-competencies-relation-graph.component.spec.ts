@@ -1,9 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { CourseCompetenciesRelationGraphComponent } from 'app/atlas/manage/course-competencies-relation-graph/course-competencies-relation-graph.component';
 import { CompetencyRelationDTO, CompetencyRelationType, CourseCompetency, CourseCompetencyType } from 'app/atlas/shared/entities/competency.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { provideNoopAnimationsForTests } from 'test/helpers/animations';
 
 interface CourseCompetencyStyle {
     dimension: {
@@ -54,12 +54,13 @@ describe('CourseCompetenciesRelationGraphComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [CourseCompetenciesRelationGraphComponent, NoopAnimationsModule],
+            imports: [CourseCompetenciesRelationGraphComponent],
             providers: [
                 {
                     provide: TranslateService,
                     useClass: MockTranslateService,
                 },
+                provideNoopAnimationsForTests(),
             ],
         }).compileComponents();
 
