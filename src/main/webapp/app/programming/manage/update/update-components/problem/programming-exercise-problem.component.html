@@ -83,7 +83,7 @@
                     ></span>
                 </ngb-alert>
             }
-            @if (programmingExerciseCreationConfig.isImportFromExistingExercise && programmingExercise()) {
+            @if (programmingExerciseCreationConfig.isImportFromExistingExercise && programmingExercise()?.templateParticipation) {
                 <jhi-programming-exercise-instructions
                     [exercise]="programmingExercise()!"
                     [participation]="programmingExercise()!.templateParticipation!"
