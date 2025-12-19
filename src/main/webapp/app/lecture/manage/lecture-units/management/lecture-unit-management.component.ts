@@ -305,6 +305,10 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     }
 
     hasTranscriptionBadge(lectureUnit: AttachmentVideoUnit): boolean {
+        // Hidden when transcribing to avoid redundancy with "Transcribing" processing badge
+        if (this.isProcessingTranscribing(lectureUnit)) {
+            return false;
+        }
         return this.isTranscriptionPending(lectureUnit) || this.isTranscriptionFailed(lectureUnit) || this.hasTranscription(lectureUnit);
     }
 
@@ -371,17 +375,38 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     }
 
     getBadgeTopOffset(lectureUnit: LectureUnit) {
-        let badgeCount = 1; // Release date badge is always there
+        // Row 1: Release date badge (always)
+        // Row 2: Transcription + Processing badges side by side (for attachment video units)
+        let rowCount = 1;
         if (lectureUnit.type === LectureUnitType.ATTACHMENT_VIDEO) {
-            if (this.hasTranscriptionBadge(<AttachmentVideoUnit>lectureUnit)) {
-                badgeCount++;
-            }
-            if (this.hasProcessingBadge(<AttachmentVideoUnit>lectureUnit)) {
-                badgeCount++;
+            const hasSecondRow = this.hasTranscriptionBadge(<AttachmentVideoUnit>lectureUnit) || this.hasProcessingBadge(<AttachmentVideoUnit>lectureUnit);
+            if (hasSecondRow) {
+                rowCount++;
             }
         }
-        const offset = badgeCount > 1 ? -(badgeCount - 1) * 20 : 0;
-        return offset === 0 ? null : `${offset}px`;
+        // Each row is ~24px tall + 4px gap. Position so badges end above the card content.
+        // Stack height = rowCount * 24 + (rowCount - 1) * 4 = rowCount * 28 - 4
+        // Add 10px buffer above content (which has mt-2 = 8px margin)
+        const offset = -(rowCount * 28 - 4 + 10);
+        return `${offset}px`;
+    }
+
+    /**
+     * Calculate the margin-top needed for a lecture unit container to accommodate its badges.
+     * Returns the absolute value of the badge offset to create space above the unit.
+     */
+    getContainerMarginTop(lectureUnit: LectureUnit): string | null {
+        if (lectureUnit.type !== LectureUnitType.ATTACHMENT_VIDEO) {
+            return null;
+        }
+        let rowCount = 1;
+        const hasSecondRow = this.hasTranscriptionBadge(<AttachmentVideoUnit>lectureUnit) || this.hasProcessingBadge(<AttachmentVideoUnit>lectureUnit);
+        if (hasSecondRow) {
+            rowCount++;
+        }
+        // Match the offset calculation: margin = |offset| + small buffer
+        const margin = rowCount * 28 - 4 + 15;
+        return `${margin}px`;
     }
 
     /**
