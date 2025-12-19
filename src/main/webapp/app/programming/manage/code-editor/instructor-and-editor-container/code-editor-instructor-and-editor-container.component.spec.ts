@@ -700,7 +700,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Inline Comments', ()
         expect(mockInlineCommentService.addExistingComment).not.toHaveBeenCalled();
     });
 
-    it('should accept refinement with valid refined content', () => {
+    it('should close diff when closeDiff is called', () => {
         comp.exercise = createMockExercise();
 
         // Call closeDiff directly to test its behavior
