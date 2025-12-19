@@ -267,20 +267,20 @@ class ExamRoomIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     private void validateExamRoomOverview(ExamRoomOverviewDTO roomOverview, String... expectedNewRoomNames) {
-
         if (roomOverview.newestUniqueExamRooms() == null) {
             assertThat(expectedNewRoomNames).isEmpty();
             return;
         }
 
-        // Here we know that we have newestUniqueExamRooms != null
         List<String> newestRoomNames = roomOverview.newestUniqueExamRooms().stream().map(ExamRoomDTO::name).toList();
         assertThat(newestRoomNames).contains(expectedNewRoomNames);  // we want to test the subset containment
         // because `newestRoomNames` could contain older rooms we didn't upload in the latest run
 
-        List<ExamRoomDTO> newestUniqueExamRoomsFromDb = examRoomRepository.findAllNewestExamRoomVersionsWithEagerLayoutStrategies().stream()
-                .map(er -> new ExamRoomDTO(er.getRoomNumber(), er.getName(), er.getBuilding(), er.getSeats().size(),
-                        er.getLayoutStrategies().stream().map(ls -> new ExamRoomLayoutStrategyDTO(ls.getName(), ls.getType(), ls.getCapacity())).collect(Collectors.toSet())))
+        List<ExamRoomDTO> newestUniqueExamRoomsFromDb = examRoomRepository.findAllNewestExamRoomVersionsWithEagerLayoutStrategies().stream().map(er -> new ExamRoomDTO(
+                er.getRoomNumber(), er.getName(), er.getBuilding(), er.getSeats().size(),
+                // Because of the INCLUDE.NON_EMPTY on the admin overview, we need to map to null on empty lists to match the returned DTO
+                er.getLayoutStrategies().isEmpty() ? null
+                        : er.getLayoutStrategies().stream().map(ls -> new ExamRoomLayoutStrategyDTO(ls.getName(), ls.getType(), ls.getCapacity())).collect(Collectors.toSet())))
                 .toList();
 
         assertThat(roomOverview.newestUniqueExamRooms()).containsExactlyInAnyOrderElementsOf(newestUniqueExamRoomsFromDb);
