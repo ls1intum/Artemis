@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLecture.EnforceAtLeastEditorInLecture;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastEditorInLectureUnit;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastInstructorInLectureUnit;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastStudentInLectureUnit;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
@@ -243,7 +244,7 @@ public class LectureUnitResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @PostMapping("lectures/{lectureId}/lecture-units/{lectureUnitId}/retry-processing")
-    @EnforceAtLeastInstructorInLectureUnit
+    @EnforceAtLeastEditorInLectureUnit
     public ResponseEntity<Void> retryProcessing(@PathVariable Long lectureId, @PathVariable Long lectureUnitId) {
         log.info("REST request to retry processing of lecture unit: {}", lectureUnitId);
         LectureUnit lectureUnit = lectureUnitRepository.findByIdElseThrow(lectureUnitId);

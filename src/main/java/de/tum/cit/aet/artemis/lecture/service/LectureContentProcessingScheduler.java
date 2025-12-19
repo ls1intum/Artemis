@@ -240,6 +240,11 @@ public class LectureContentProcessingScheduler {
      */
     @Scheduled(fixedRate = 900000) // 15 minutes
     public void backfillUnprocessedUnits() {
+        if (!processingService.hasProcessingCapabilities()) {
+            log.debug("No processing services available, skipping backfill");
+            return;
+        }
+
         log.debug("Checking for unprocessed lecture units to backfill...");
 
         // Check how many jobs are currently processing

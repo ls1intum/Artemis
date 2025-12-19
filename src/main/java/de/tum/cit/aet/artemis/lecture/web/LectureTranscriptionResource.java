@@ -56,7 +56,7 @@ public class LectureTranscriptionResource {
      * GET /lecture-unit/{lectureUnitId}/transcript/status : Get the status of a transcription for a lecture unit.
      *
      * @param lectureUnitId the ID of the lecture unit to check
-     * @return ResponseEntity with the transcription status (PENDING, PROCESSING, COMPLETED, FAILED) or 404 if no transcription exists
+     * @return ResponseEntity with the transcription status (PENDING, COMPLETED, FAILED) or 404 if no transcription exists
      */
     @GetMapping("lecture-unit/{lectureUnitId}/transcript/status")
     @EnforceAtLeastEditorInLectureUnit

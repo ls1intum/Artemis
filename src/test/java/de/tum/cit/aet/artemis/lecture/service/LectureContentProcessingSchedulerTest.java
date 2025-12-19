@@ -270,8 +270,23 @@ class LectureContentProcessingSchedulerTest {
     class BackfillUnprocessedUnits {
 
         @Test
+        void shouldSkipBackfillWhenNoProcessingCapabilities() {
+            // Given: No processing capabilities available
+            when(processingService.hasProcessingCapabilities()).thenReturn(false);
+
+            // When
+            scheduler.backfillUnprocessedUnits();
+
+            // Then: Should not query for unprocessed units or trigger any processing
+            verify(processingStateRepository, never()).countByPhaseIn(anyList());
+            verify(attachmentVideoUnitRepository, never()).findUnprocessedUnitsFromActiveCourses(any(), any());
+            verify(processingService, never()).triggerProcessing(any());
+        }
+
+        @Test
         void shouldTriggerProcessingForUnprocessedUnits() {
-            // Given: Three unprocessed units from active courses, no current processing
+            // Given: Processing capabilities available, three unprocessed units, no current processing
+            when(processingService.hasProcessingCapabilities()).thenReturn(true);
             when(processingStateRepository.countByPhaseIn(anyList())).thenReturn(0L);
 
             AttachmentVideoUnit unit1 = new AttachmentVideoUnit();
@@ -295,7 +310,8 @@ class LectureContentProcessingSchedulerTest {
 
         @Test
         void shouldSkipBackfillWhenMaxConcurrentReached() {
-            // Given: Already 10 units processing (max concurrent)
+            // Given: Processing capabilities available, but already 10 units processing (max concurrent)
+            when(processingService.hasProcessingCapabilities()).thenReturn(true);
             when(processingStateRepository.countByPhaseIn(List.of(ProcessingPhase.TRANSCRIBING, ProcessingPhase.INGESTING))).thenReturn(10L);
 
             // When
@@ -308,7 +324,8 @@ class LectureContentProcessingSchedulerTest {
 
         @Test
         void shouldLimitToAvailableSlots() {
-            // Given: 7 units already processing, so only 3 slots available
+            // Given: Processing capabilities available, 7 units already processing, so only 3 slots available
+            when(processingService.hasProcessingCapabilities()).thenReturn(true);
             when(processingStateRepository.countByPhaseIn(List.of(ProcessingPhase.TRANSCRIBING, ProcessingPhase.INGESTING))).thenReturn(7L);
             when(attachmentVideoUnitRepository.findUnprocessedUnitsFromActiveCourses(any(ZonedDateTime.class), any())).thenReturn(List.of());
 
@@ -321,7 +338,8 @@ class LectureContentProcessingSchedulerTest {
 
         @Test
         void shouldHandleEmptyResultsGracefully() {
-            // Given: No unprocessed units
+            // Given: Processing capabilities available, no unprocessed units
+            when(processingService.hasProcessingCapabilities()).thenReturn(true);
             when(processingStateRepository.countByPhaseIn(anyList())).thenReturn(0L);
             when(attachmentVideoUnitRepository.findUnprocessedUnitsFromActiveCourses(any(ZonedDateTime.class), any())).thenReturn(List.of());
 
@@ -334,7 +352,8 @@ class LectureContentProcessingSchedulerTest {
 
         @Test
         void shouldCatchExceptionsAndContinueProcessingOtherUnits() {
-            // Given: Three units, middle one will throw exception
+            // Given: Processing capabilities available, three units, middle one will throw exception
+            when(processingService.hasProcessingCapabilities()).thenReturn(true);
             when(processingStateRepository.countByPhaseIn(anyList())).thenReturn(0L);
 
             AttachmentVideoUnit unit1 = new AttachmentVideoUnit();
@@ -361,7 +380,8 @@ class LectureContentProcessingSchedulerTest {
 
         @Test
         void shouldRequestMaxConcurrentSlotsWhenNoneProcessing() {
-            // Given: No units currently processing
+            // Given: Processing capabilities available, no units currently processing
+            when(processingService.hasProcessingCapabilities()).thenReturn(true);
             when(processingStateRepository.countByPhaseIn(anyList())).thenReturn(0L);
             when(attachmentVideoUnitRepository.findUnprocessedUnitsFromActiveCourses(any(ZonedDateTime.class), any())).thenReturn(List.of());
 
@@ -374,7 +394,8 @@ class LectureContentProcessingSchedulerTest {
 
         @Test
         void shouldPassCurrentTimeToRepository() {
-            // Given: Repository should receive current time for active course filtering
+            // Given: Processing capabilities available, repository should receive current time for active course filtering
+            when(processingService.hasProcessingCapabilities()).thenReturn(true);
             when(processingStateRepository.countByPhaseIn(anyList())).thenReturn(0L);
             when(attachmentVideoUnitRepository.findUnprocessedUnitsFromActiveCourses(any(ZonedDateTime.class), any())).thenReturn(List.of());
 

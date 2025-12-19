@@ -68,6 +68,18 @@ public class LectureContentProcessingService {
         this.irisLectureApi = irisLectureApi;
     }
 
+    /**
+     * Check if any processing service is available.
+     * Used by the scheduler to skip backfill when no services are configured.
+     *
+     * @return true if either transcription or ingestion is possible
+     */
+    public boolean hasProcessingCapabilities() {
+        boolean canTranscribe = transcriptionApi.isPresent() && tumLiveApi.isPresent();
+        boolean canIngest = irisLectureApi.isPresent();
+        return canTranscribe || canIngest;
+    }
+
     // -------------------- Public API --------------------
 
     /**
@@ -136,6 +148,11 @@ public class LectureContentProcessingService {
 
         if (state.getPhase() == ProcessingPhase.DONE) {
             log.debug("Unit {} already done, skipping", unit.getId());
+            return;
+        }
+
+        if (state.getPhase() == ProcessingPhase.FAILED) {
+            log.debug("Unit {} in failed state, skipping (use retryProcessing or change content)", unit.getId());
             return;
         }
 
@@ -257,7 +274,8 @@ public class LectureContentProcessingService {
 
         // Validate token - reject stale callbacks from old jobs
         if (!Objects.equals(jobToken, state.getIngestionJobToken())) {
-            log.info("Ignoring stale ingestion callback for unit {} (token mismatch: expected {}, got {})", lectureUnitId, state.getIngestionJobToken(), jobToken);
+            log.info("Ignoring stale ingestion callback for unit {} (token mismatch: expected {}, got {})", lectureUnitId, maskToken(state.getIngestionJobToken()),
+                    maskToken(jobToken));
             return;
         }
 
@@ -388,7 +406,7 @@ public class LectureContentProcessingService {
     private void startIngestion(LectureUnitProcessingState state) {
         if (irisLectureApi.isEmpty()) {
             log.debug("Iris API not available, skipping ingestion for unit {}", state.getLectureUnit().getId());
-            state.transitionTo(ProcessingPhase.IDLE);
+            state.transitionTo(ProcessingPhase.DONE);
             processingStateRepository.save(state);
             return;
         }
@@ -402,20 +420,22 @@ public class LectureContentProcessingService {
         }
 
         try {
-            state.transitionTo(ProcessingPhase.INGESTING);
-
+            // Call API FIRST, BEFORE transitioning state
             String jobToken = irisLectureApi.get().addLectureUnitToPyrisDB(attachmentUnit);
 
-            if (jobToken != null) {
-                // Store token for callback validation - rejects stale callbacks from old jobs
-                state.setIngestionJobToken(jobToken);
+            if (jobToken == null) {
+                // Not applicable (Iris disabled for course, tutorial lecture, etc.) - mark as done
+                log.debug("Ingestion not applicable for unit {} (course settings or content type)", unit.getId());
+                state.transitionTo(ProcessingPhase.DONE);
                 processingStateRepository.save(state);
-                log.info("Ingestion started for unit {} with token {}", unit.getId(), jobToken);
+                return;
             }
-            else {
-                log.warn("Ingestion returned null for unit {}", unit.getId());
-                handleIngestionFailure(state);
-            }
+
+            // Job started successfully - now transition to INGESTING
+            state.transitionTo(ProcessingPhase.INGESTING);
+            state.setIngestionJobToken(jobToken);
+            processingStateRepository.save(state);
+            log.info("Ingestion started for unit {} with token {}", unit.getId(), maskToken(jobToken));
         }
         catch (Exception e) {
             log.error("Failed to start ingestion for unit {}: {}", unit.getId(), e.getMessage());
@@ -655,5 +675,22 @@ public class LectureContentProcessingService {
         catch (NoSuchAlgorithmException e) {
             return String.valueOf(value.hashCode());
         }
+    }
+
+    /**
+     * Masks a token for safe logging by showing only the first and last 3 characters.
+     *
+     * @param token the token to mask
+     * @return the masked token (e.g., "abc...xyz")
+     */
+    private String maskToken(String token) {
+        if (token == null) {
+            return "null";
+        }
+        int len = token.length();
+        if (len <= 6) {
+            return "***";
+        }
+        return token.substring(0, 3) + "..." + token.substring(len - 3);
     }
 }
