@@ -35,7 +35,7 @@ describe('External Submission Dialog', () => {
         const modalRefMock = { componentInstance: {} } as NgbModalRef;
         const openMock = jest.spyOn(modalService, 'open').mockReturnValue(modalRefMock);
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         fixture.debugElement.query(By.css('.btn')).nativeElement.click();
 
         expect(openMock).toHaveBeenCalledOnce();

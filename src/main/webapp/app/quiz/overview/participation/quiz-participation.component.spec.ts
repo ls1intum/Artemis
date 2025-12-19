@@ -1,6 +1,6 @@
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { WebsocketService } from 'app/shared/service/websocket.service';
@@ -149,7 +149,7 @@ describe('QuizParticipationComponent', () => {
     });
 
     describe('live mode', () => {
-        beforeEach(waitForAsync(() => {
+        beforeEach(() => {
             MockBuilder(QuizParticipationComponent)
                 .keep(FaIconComponent)
                 .keep(MultipleChoiceQuestionComponent)
@@ -190,7 +190,7 @@ describe('QuizParticipationComponent', () => {
                     jest.spyOn(quizExerciseService, 'findForStudent').mockReturnValue(of({ body: { ...quizExercise } } as HttpResponse<QuizExercise>));
                     httpMock = fixture.debugElement.injector.get(HttpTestingController);
                 });
-        }));
+        });
 
         afterEach(() => {
             httpMock.verify();
@@ -202,7 +202,7 @@ describe('QuizParticipationComponent', () => {
         }));
 
         it('should initialize', () => {
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             expect(participationSpy).toHaveBeenCalledWith(quizExercise.id);
         });
 
@@ -281,7 +281,7 @@ describe('QuizParticipationComponent', () => {
             const updateSpy = jest.spyOn(component, 'updateDisplayedTimes');
             const refreshSpy = jest.spyOn(component, 'refreshQuiz').mockImplementation();
             tick(5000);
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             discardPeriodicTasks();
 
             expect(updateSpy).toHaveBeenCalledTimes(50);
@@ -306,7 +306,7 @@ describe('QuizParticipationComponent', () => {
             const updateSpy = jest.spyOn(component, 'updateDisplayedTimes');
             const refreshSpy = jest.spyOn(component, 'refreshQuiz').mockImplementation();
             tick(5000);
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             discardPeriodicTasks();
 
             expect(updateSpy).toHaveBeenCalledTimes(50);
@@ -320,7 +320,7 @@ describe('QuizParticipationComponent', () => {
 
             const checkQuizEndSpy = jest.spyOn(component, 'checkForQuizEnd');
             tick(5000);
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             discardPeriodicTasks();
 
             expect(checkQuizEndSpy).toHaveBeenCalledTimes(50);
@@ -338,7 +338,7 @@ describe('QuizParticipationComponent', () => {
             const checkQuizEndSpy = jest.spyOn(component, 'checkForQuizEnd');
 
             tick(2000);
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             discardPeriodicTasks();
 
             expect(checkQuizEndSpy).toHaveBeenCalledTimes(20);
@@ -362,7 +362,7 @@ describe('QuizParticipationComponent', () => {
                     },
                 } as HttpResponse<QuizExercise>),
             );
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
 
             const initLiveModeSpy = jest.spyOn(component, 'initLiveMode');
 
@@ -382,7 +382,7 @@ describe('QuizParticipationComponent', () => {
             [QuizMode.BATCHED, true],
             [QuizMode.INDIVIDUAL, false],
             [QuizMode.INDIVIDUAL, true],
-        ])('should join %s batches that have started %p', (quizMode, started) => {
+        ])('should join %s batches that have started %p', (quizMode: QuizMode, started: boolean) => {
             exerciseService = fixture.debugElement.injector.get(QuizExerciseService);
             const participationService = fixture.debugElement.injector.get(ParticipationService);
             const participation: StudentParticipation = {
@@ -426,12 +426,12 @@ describe('QuizParticipationComponent', () => {
             expect(submitButton).not.toBeNull();
 
             submitButton.click();
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
 
             const request = httpMock.expectOne({ method: 'POST' });
             request.flush({ submissionDate: now } as QuizSubmission);
             expect(request.request.url).toBe(`api/quiz/exercises/${quizExercise.id}/submissions/live`);
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
 
             expect(participationSpy).toHaveBeenCalledWith(quizExercise.id);
             expect(component.isSubmitting).toBeFalse();
@@ -472,12 +472,12 @@ describe('QuizParticipationComponent', () => {
             expect(submitButton).not.toBeNull();
 
             submitButton.click();
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
 
             const request = httpMock.expectOne({ method: 'POST' });
             request.flush({ submissionDate: now } as QuizSubmission);
             expect(request.request.url).toBe(`api/quiz/exercises/${quizExercise.id}/submissions/live`);
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
 
             expect(confirmSpy).toHaveBeenCalledOnce();
             expect(participationSpy).toHaveBeenCalledWith(quizExercise.id);
@@ -637,12 +637,12 @@ describe('QuizParticipationComponent', () => {
             expect(submitButton).not.toBeNull();
 
             submitButton.click();
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
 
             const request = httpMock.expectOne({ method: 'POST' });
             request.flush({ submission: { submissionDate: now, submitted: true } as QuizSubmission } as Result);
             expect(request.request.url).toBe(`api/quiz/exercises/${quizExercise.id}/submissions/preview`);
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
 
             expect(serviceSpy).toHaveBeenCalledWith(quizExercise.id);
         });
@@ -721,7 +721,7 @@ describe('QuizParticipationComponent', () => {
             expect(submitButton).not.toBeNull();
 
             submitButton.click();
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
 
             const request = httpMock.expectOne({ method: 'POST' });
             const quizSubmission: QuizSubmission = { submissionDate: now, submitted: true };
@@ -730,7 +730,7 @@ describe('QuizParticipationComponent', () => {
                 participation: { exercise: quizExerciseForPractice } as StudentParticipation,
             } as Result);
             expect(request.request.url).toBe(`api/quiz/exercises/${quizExerciseForPractice.id}/submissions/practice`);
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
 
             expect(serviceSpy).toHaveBeenCalledWith(quizExerciseForPractice.id);
         });
@@ -794,10 +794,10 @@ describe('QuizParticipationComponent', () => {
 
             // Test the error branches first
             component.quizExercise = {} as QuizExercise;
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
 
             component.updateDisplayedTimes();
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
 
             expect(component.remainingTimeSeconds).toBe(0);
             expect(component.remainingTimeText).toBe('?');
@@ -806,13 +806,13 @@ describe('QuizParticipationComponent', () => {
             // Now test the remaining non-error branches
             component.quizExercise = quizExerciseUnreleased;
             component.updateDisplayedTimes();
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
 
             component.quizExercise = quizExerciseForResults;
             component.endDate = component.quizExercise.dueDate;
             component.submission = { submissionDate: now, submitted: true } as QuizSubmission;
             component.updateDisplayedTimes();
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
 
             expect(component.remainingTimeText).toBe('artemisApp.showStatistic.quizHasEnded');
             expect(component.timeUntilStart).toBe('');

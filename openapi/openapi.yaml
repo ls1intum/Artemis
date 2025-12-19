@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   title: Artemis Application Server API
   contact: {name: Stephan Krusche, email: krusche@tum.de}
-  version: 8.4.0
+  version: 8.5.1
 servers:
 - {url: 'http://localhost:8080', description: Generated server url}
 paths:
@@ -150,7 +150,7 @@ paths:
                 items: {$ref: '#/components/schemas/TutorialGroupRegistrationImport'}
   /api/hyperion/programming-exercises/{programmingExerciseId}/consistency-check:
     post:
-      tags: [hyperion-review-and-refine]
+      tags: [hyperion-problem-statement]
       operationId: checkExerciseConsistency
       parameters:
       - name: programmingExerciseId
@@ -165,7 +165,7 @@ paths:
               schema: {$ref: '#/components/schemas/ConsistencyCheckResponse'}
   /api/hyperion/courses/{courseId}/problem-statements/rewrite:
     post:
-      tags: [hyperion-review-and-refine]
+      tags: [hyperion-problem-statement]
       operationId: rewriteProblemStatement
       parameters:
       - name: courseId
@@ -183,6 +183,46 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/ProblemStatementRewriteResponse'}
+  /api/hyperion/courses/{courseId}/problem-statements/generate:
+    post:
+      tags: [hyperion-problem-statement]
+      operationId: generateProblemStatement
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ProblemStatementGenerationRequest'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ProblemStatementGenerationResponse'}  
+  /api/hyperion/programming-exercises/{exerciseId}/generate-code:
+    post:
+      tags: [hyperion-code-generation]
+      operationId: generateCode
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CodeGenerationRequestDTO'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CodeGenerationJobStartDTO'}
   /api/tutorialgroup/tutorial-groups/{tutorialGroupId}/title:
     get:
       tags: [tutorial-group]
@@ -278,6 +318,25 @@ paths:
                 type: array
                 items: {type: string}
                 uniqueItems: true
+  /api/tutorialgroup/courses/{courseId}/tutorial-group-detail/{tutorialGroupId}:
+    get:
+      tags: [tutorial-group]
+      operationId: getTutorialGroupDetailGroupDTO
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: tutorialGroupId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/TutorialGroupDetailGroup'}
   /api/tutorialgroup/courses/{courseId}/tutorial-groups/{tutorialGroupId}/deregister/{studentLogin}:
     delete:
       tags: [tutorial-group]
@@ -299,6 +358,13 @@ paths:
         '200': {description: OK}
 components:
   schemas:
+    ProblemStatementGenerationRequest:
+      type: object
+      description: Request to generate a problem statement
+      properties:
+        userPrompt: {type: string, description: User prompt describing the problem
+            statement requirements, maxLength: 1000, minLength: 0}
+      required: [userPrompt]
     ProblemStatementRewriteResponse:
       type: object
       description: Response containing rewritten problem statement
@@ -357,6 +423,18 @@ components:
         language: {type: string}
         additionalInformation: {type: string}
         isOnline: {type: boolean}
+    CodeGenerationJobStartDTO:
+      type: object
+      properties:
+        jobId: {type: string}
+      required: [jobId]
+    ProblemStatementGenerationResponse:
+      type: object
+      description: Response containing generated problem statement
+      properties:
+        draftProblemStatement: {type: string, description: Draft problem statement
+            text}
+        error: {type: string, description: Error message if generation failed}
     Student:
       type: object
       properties:
@@ -371,6 +449,16 @@ components:
         notificationText: {type: string, maxLength: 1000, minLength: 1}
         updateTutorialGroupChannelName: {type: boolean}
       required: [tutorialGroup]
+    ExamSeat:
+      type: object
+      properties:
+        name: {type: string}
+        condition:
+          type: string
+          enum: [USABLE, NO_TABLE, DEFECT, WHEELCHAIR]
+        x: {type: number, format: double}
+        y: {type: number, format: double}
+      required: [condition, name]
     ConsistencyCheckResponse:
       type: object
       description: Response containing consistency check results
@@ -380,6 +468,18 @@ components:
           description: List of consistency issues found
           items: {$ref: '#/components/schemas/ConsistencyIssue'}
       required: [issues]
+    TutorialGroupDetailSession:
+      type: object
+      properties:
+        start: {type: string, format: date-time}
+        end: {type: string, format: date-time}
+        location: {type: string}
+        isCancelled: {type: boolean}
+        locationChanged: {type: boolean}
+        timeChanged: {type: boolean}
+        dateChanged: {type: boolean}
+        attendanceCount: {type: integer, format: int32}
+      required: [end, location, start]
     TutorialGroupFreePeriodRequest:
       type: object
       properties:
@@ -472,9 +572,37 @@ components:
         problemStatementText: {type: string, description: Original problem statement
             text to be improved, minLength: 1}
       required: [problemStatementText]
+    TutorialGroupDetailGroup:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        language: {type: string}
+        isOnline: {type: boolean}
+        teachingAssistantName: {type: string}
+        teachingAssistantLogin: {type: string}
+        teachingAssistantImageUrl: {type: string}
+        capacity: {type: integer, format: int32}
+        campus: {type: string}
+        groupChannelId: {type: integer, format: int64}
+        tutorChatId: {type: integer, format: int64}
+        sessions:
+          type: array
+          items: {$ref: '#/components/schemas/TutorialGroupDetailSession'}
+      required: [language, sessions, teachingAssistantLogin, teachingAssistantName,
+        title]
     StudentExport:
       type: object
       properties:
         registrationNumber: {type: string}
         firstName: {type: string}
         lastName: {type: string}
+    CodeGenerationRequestDTO:
+      type: object
+      description: Request DTO for code generation
+      properties:
+        repositoryType:
+          type: string
+          description: Type of repository to generate code for
+          enum: [TEMPLATE, SOLUTION, TESTS]
+          example: SOLUTION

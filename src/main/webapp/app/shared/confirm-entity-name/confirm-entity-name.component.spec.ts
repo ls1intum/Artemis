@@ -40,33 +40,33 @@ describe('ConfirmEntityNameComponent', () => {
 
         it('control should be valid with valid input', async () => {
             confirmEntityNameComponent.entityName = expectedEntityName;
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             confirmEntityNameComponent.control.setValue(expectedEntityName);
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             expect(confirmEntityNameComponent.control.valid).toBeTrue();
         });
 
         it('control should be invalid with invalid input', async () => {
             confirmEntityNameComponent.entityName = expectedEntityName;
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             confirmEntityNameComponent.control.setValue('');
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             expect(confirmEntityNameComponent.control.invalid).toBeTrue();
         });
 
         it('control should be valid for dynamic entity name', async () => {
             component.expectedEntityName = 'OtherTestEntityName';
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             confirmEntityNameComponent.control.setValue('OtherTestEntityName');
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             expect(confirmEntityNameComponent.control.valid).toBeTrue();
         });
 
         it('control should be invalid for dynamic entity name with previous entity name', async () => {
             component.expectedEntityName = 'OtherTestEntityName';
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             confirmEntityNameComponent.control.setValue('TestEntityName');
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             expect(confirmEntityNameComponent.control.invalid).toBeTrue();
         });
     });
@@ -90,13 +90,13 @@ describe('ConfirmEntityNameComponent', () => {
 
         it('should change warning text color', () => {
             component.warningTextColor = 'text-danger';
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             expect(fixture.nativeElement.querySelector('label[for="confirm-entity-name"]').classList.contains('text-danger')).toBeTruthy();
         });
 
         it('should display confirmation text', () => {
             component.confirmationText = 'foobar';
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             expect(fixture.nativeElement.querySelector('label[for="confirm-entity-name"]').textContent).toBe('foobar');
         });
     });
