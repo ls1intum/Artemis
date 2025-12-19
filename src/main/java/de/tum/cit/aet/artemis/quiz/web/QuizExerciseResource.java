@@ -127,7 +127,7 @@ public class QuizExerciseResource {
      * PUT /quiz-exercises/:quizExerciseId/:action : perform the specified action for the quiz now
      *
      * @param quizExerciseId the id of the quiz exercise to start
-     * @param action         the action to perform on the quiz (allowed actions: "start-now", "set-visible", "open-for-practice")
+     * @param action         the action to perform on the quiz (allowed actions: "start-now", "set-visible")
      * @return the response entity with status 200 if quiz was started, appropriate error code otherwise
      */
     @PutMapping("quiz-exercises/{quizExerciseId}/{action}")
@@ -187,23 +187,6 @@ public class QuizExerciseResource {
 
                 // set quiz to visible
                 quizExercise.setReleaseDate(ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS));
-            }
-            case OPEN_FOR_PRACTICE -> {
-                // check if quiz has ended
-                if (!quizExercise.isQuizEnded()) {
-                    return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "quizExercise", "quizNotEndedYet", "Quiz hasn't ended yet."))
-                            .build();
-                }
-                // check if quiz is already open for practice
-                if (quizExercise.isIsOpenForPractice()) {
-                    return ResponseEntity.badRequest()
-                            .headers(HeaderUtil.createFailureAlert(applicationName, true, "quizExercise", "quizAlreadyOpenForPractice", "Quiz is already open for practice."))
-                            .build();
-                }
-
-                // set quiz to open for practice
-                quizExercise.setIsOpenForPractice(true);
-                groupNotificationService.notifyStudentGroupAboutExercisePractice(quizExercise);
             }
             case START_BATCH -> {
                 // Use the start-batch endpoint for starting batches instead
