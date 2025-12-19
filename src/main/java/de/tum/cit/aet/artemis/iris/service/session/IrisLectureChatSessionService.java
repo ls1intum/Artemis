@@ -18,7 +18,6 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisLectureChatSession;
-import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettingsType;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
@@ -34,10 +33,12 @@ import de.tum.cit.aet.artemis.lecture.api.LectureRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.config.LectureApiNotPresentException;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 
+/**
+ * Service to handle the lecture chat subsystem of Iris.
+ */
 @Lazy
 @Service
 @Profile(PROFILE_IRIS)
-// now extending AbstractIrisChatSessionService
 public class IrisLectureChatSessionService extends AbstractIrisChatSessionService<IrisLectureChatSession> {
 
     private final IrisSettingsService irisSettingsService;
@@ -68,13 +69,6 @@ public class IrisLectureChatSessionService extends AbstractIrisChatSessionServic
         this.authCheckService = authCheckService;
     }
 
-    /*
-     * comparable to IrisCourseChatSessionService.java without:
-     * - CompetencyJOL and its methods getting/creating sessions
-     * - IrisCourseChatSessionRepository (used for CompetencyJOL methods)
-     * - MessageSource (used for CompetencyJOL methods)
-     */
-
     @Override
     public void sendOverWebsocket(IrisLectureChatSession session, IrisMessage message) {
         irisChatWebsocketService.sendMessage(session, message, null);
@@ -94,16 +88,26 @@ public class IrisLectureChatSessionService extends AbstractIrisChatSessionServic
         var lecture = api.findByIdWithLectureUnitsElseThrow(chatSession.getLectureId());
         var course = lecture.getCourse();
 
-        var settings = irisSettingsService.getCombinedIrisSettingsFor(course, false).irisLectureChatSettings();
+        if (course == null) {
+            throw new ConflictException("Lecture does not belong to a course", "Iris", "lectureNoCourse");
+        }
+
+        var settings = irisSettingsService.getSettingsForCourse(course);
         if (!settings.enabled()) {
             throw new ConflictException("Iris is not enabled for this lecture", "Iris", "irisDisabled");
         }
 
-        pyrisPipelineService.executeLectureChatPipeline(settings.selectedVariant(), settings.customInstructions(), chatSession, lecture);
+        pyrisPipelineService.executeLectureChatPipeline(settings.variant().jsonValue(), settings.customInstructions(), chatSession, lecture);
     }
 
-    // uses method of the superclass
-    // needs this wrapper compared to IrisCourseChatSessionService because of differing status dtos
+    /**
+     * Handles the status update of a LectureChatJob by converting the lecture-specific status update
+     * to a generic PyrisChatStatusUpdateDTO and delegating to the superclass.
+     *
+     * @param job          The job that was executed
+     * @param statusUpdate The lecture-specific status update of the job
+     * @return the same job record or a new job record with the same job id if changes were made
+     */
     public TrackedSessionBasedPyrisJob handleStatusUpdate(LectureChatJob job, PyrisLectureChatStatusUpdateDTO statusUpdate) {
         var enrichedUpdate = new PyrisChatStatusUpdateDTO(statusUpdate.result(), statusUpdate.stages(), statusUpdate.sessionTitle(), null, null, null, null);
         return handleStatusUpdate(job, enrichedUpdate);
@@ -134,7 +138,7 @@ public class IrisLectureChatSessionService extends AbstractIrisChatSessionServic
      *
      * @param user    The user to check
      * @param session The session to check
-     * @return weather the user has access to the session
+     * @return whether the user has access to the session
      */
     public boolean hasAccess(User user, IrisLectureChatSession session) {
         try {
@@ -147,23 +151,21 @@ public class IrisLectureChatSessionService extends AbstractIrisChatSessionServic
     }
 
     /**
-     * Checks if the lecture connected to IrisCourseChatSession has Iris enabled.
+     * Checks if the lecture connected to IrisLectureChatSession has Iris enabled.
      *
      * @param session The session to check
      */
     @Override
-    public void checkIsFeatureActivatedFor(IrisLectureChatSession session) {
+    public void checkIrisEnabledFor(IrisLectureChatSession session) {
         var lecture = lectureRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureRepositoryApi.class)).findByIdElseThrow(session.getLectureId());
-        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.LECTURE_CHAT, lecture.getCourse());
+        irisSettingsService.ensureEnabledForCourseOrElseThrow(lecture.getCourse());
     }
 
     @Override
-    public void checkRateLimit(User user) {
-        irisRateLimitService.checkRateLimitElseThrow(user);
+    public void checkRateLimit(User user, IrisLectureChatSession session) {
+        irisRateLimitService.checkRateLimitElseThrow(session, user);
     }
 
-    // now needed since extending AbstractIrisChatSessionService
-    // associated token usage to type of the chat
     @Override
     protected void setLLMTokenUsageParameters(LLMTokenUsageService.LLMTokenUsageBuilder builder, IrisLectureChatSession session) {
         LectureRepositoryApi api = lectureRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureRepositoryApi.class));

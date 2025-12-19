@@ -50,7 +50,7 @@ export class TeamExerciseSearchComponent {
 
     searchResultFormatter = (exercise: Exercise): string => {
         const { title, releaseDate } = exercise;
-        const date = releaseDate ? releaseDate.format(ArtemisDatePipe.format(this.translateService.currentLang, 'short-date')) : '';
+        const date = releaseDate ? releaseDate.format(ArtemisDatePipe.format(this.translateService.getCurrentLang(), 'short-date')) : '';
         return title + (releaseDate ? ` (${date})` : '');
     };
 

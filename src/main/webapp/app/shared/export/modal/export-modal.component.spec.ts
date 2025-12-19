@@ -35,7 +35,7 @@ describe('ExportModalComponent', () => {
     });
 
     it('should init with default options', () => {
-        jest.spyOn(translateService, 'currentLang', 'get').mockReturnValue('en');
+        jest.spyOn(translateService, 'getCurrentLang').mockReturnValue('en');
         component.ngOnInit();
         expect(component.options.fieldSeparator).toBe(CsvFieldSeparator.COMMA);
         expect(component.options.quoteCharacter).toBe(CsvQuoteStrings.QUOTES_DOUBLE);
@@ -44,7 +44,7 @@ describe('ExportModalComponent', () => {
     });
 
     it('should init with german default options', () => {
-        jest.spyOn(translateService, 'currentLang', 'get').mockReturnValue('de');
+        jest.spyOn(translateService, 'getCurrentLang').mockReturnValue('de');
         component.ngOnInit();
         expect(component.options.fieldSeparator).toBe(CsvFieldSeparator.SEMICOLON);
         expect(component.options.quoteCharacter).toBe(CsvQuoteStrings.QUOTES_DOUBLE);
