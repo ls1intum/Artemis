@@ -9,7 +9,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -22,7 +21,6 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.communication.domain.Faq;
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.iris.dto.IngestionState;
 import de.tum.cit.aet.artemis.iris.exception.IrisInternalPyrisErrorException;
@@ -62,21 +60,18 @@ public class PyrisWebhookService {
 
     private final Optional<LectureTranscriptionsRepositoryApi> lectureTranscriptionsRepositoryApi;
 
-    private final InstanceMessageSendService instanceMessageSendService;
-
     @Value("${server.url}")
     private String artemisBaseUrl;
 
     public PyrisWebhookService(PyrisConnectorService pyrisConnectorService, PyrisJobService pyrisJobService, IrisSettingsService irisSettingsService,
             Optional<LectureRepositoryApi> lectureRepositoryApi, Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi,
-            Optional<LectureTranscriptionsRepositoryApi> lectureTranscriptionsRepositoryApi, @Lazy InstanceMessageSendService instanceMessageSendService) {
+            Optional<LectureTranscriptionsRepositoryApi> lectureTranscriptionsRepositoryApi) {
         this.pyrisConnectorService = pyrisConnectorService;
         this.pyrisJobService = pyrisJobService;
         this.irisSettingsService = irisSettingsService;
         this.lectureRepositoryApi = lectureRepositoryApi;
         this.lectureUnitRepositoryApi = lectureUnitRepositoryApi;
         this.lectureTranscriptionsRepositoryApi = lectureTranscriptionsRepositoryApi;
-        this.instanceMessageSendService = instanceMessageSendService;
     }
 
     private String attachmentToBase64(AttachmentVideoUnit attachmentVideoUnit) {
@@ -146,27 +141,6 @@ public class PyrisWebhookService {
         Long lectureId = attachmentVideoUnit.getLecture().getId();
         Long courseId = attachmentVideoUnit.getLecture().getCourse().getId();
         return new PyrisLectureUnitWebhookDTO("", 0, null, lectureUnitId, "", lectureId, "", courseId, "", "", "", "");
-    }
-
-    /**
-     * send the updated / created attachment to Pyris for ingestion if autoLecturesUpdate is enabled
-     *
-     * @param newAttachmentVideoUnits the new attachment Units to be sent to pyris for ingestion
-     */
-    public void autoUpdateAttachmentVideoUnitsInPyris(List<AttachmentVideoUnit> newAttachmentVideoUnits) {
-        var course = newAttachmentVideoUnits.stream().map(AttachmentVideoUnit::getLecture).filter(Objects::nonNull).map(Lecture::getCourse).filter(Objects::nonNull).findFirst();
-
-        if (course.isEmpty()) {
-            return;
-        }
-
-        var settings = irisSettingsService.getSettingsForCourse(course.get());
-        if (!settings.enabled()) {
-            return;
-        }
-        for (AttachmentVideoUnit attachmentVideoUnit : newAttachmentVideoUnits) {
-            instanceMessageSendService.sendLectureUnitAutoIngestionSchedule(attachmentVideoUnit.getId());
-        }
     }
 
     /**
