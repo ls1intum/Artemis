@@ -114,7 +114,7 @@ public class PyrisWebhookService {
         Optional<LectureTranscription> lectureTranscription = transcriptionsRepositoryApi.findByLectureUnit_Id(attachmentVideoUnit.getId());
 
         LectureUnitRepositoryApi api = lectureUnitRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureUnitRepositoryApi.class));
-        api.save(attachmentVideoUnit);
+        attachmentVideoUnit = (AttachmentVideoUnit) api.save(attachmentVideoUnit);
 
         if (lectureTranscription.isPresent()) {
             LectureTranscription transcription = lectureTranscription.get();
@@ -124,7 +124,7 @@ public class PyrisWebhookService {
                     attachmentVideoUnit.getVideoSource());
         }
 
-        return new PyrisLectureUnitWebhookDTO(base64EncodedPdf, attachmentVideoUnit.getAttachment() != null ? attachmentVideoUnit.getAttachment().getVersion() : null, null,
+        return new PyrisLectureUnitWebhookDTO(base64EncodedPdf, attachmentVideoUnit.getAttachment() != null ? attachmentVideoUnit.getAttachment().getVersion() : -1, null,
                 lectureUnitId, lectureUnitName, lectureId, lectureTitle, courseId, courseTitle, courseDescription, lectureUnitLink, attachmentVideoUnit.getVideoSource());
     }
 

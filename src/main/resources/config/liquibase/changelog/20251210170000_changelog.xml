@@ -25,7 +25,7 @@
             <column name="attachment_version" type="INT">
                 <constraints nullable="true"/>
             </column>
-            <column name="error_key" type="VARCHAR(500)">
+            <column name="error_key" type="VARCHAR(255)">
                 <constraints nullable="true"/>
             </column>
             <column name="ingestion_job_token" type="VARCHAR(255)">
@@ -35,6 +35,9 @@
                 <constraints nullable="true"/>
             </column>
             <column name="last_updated" type="DATETIME">
+                <constraints nullable="true"/>
+            </column>
+            <column name="retry_eligible_at" type="DATETIME">
                 <constraints nullable="true"/>
             </column>
         </createTable>
@@ -51,16 +54,17 @@
             <column name="phase"/>
         </createIndex>
 
-        <!-- Composite index for findStuckStates: WHERE phase IN (?) AND started_at < ? -->
-        <createIndex tableName="lecture_unit_processing_state" indexName="idx_processing_state_phase_started">
+        <!-- Composite index for findStuckStates: WHERE phase IN (?) AND started_at < ? AND retry_eligible_at IS NULL -->
+        <createIndex tableName="lecture_unit_processing_state" indexName="idx_processing_state_stuck">
             <column name="phase"/>
             <column name="started_at"/>
+            <column name="retry_eligible_at"/>
         </createIndex>
 
-        <!-- Composite index for findStatesReadyForRetry: WHERE phase = ? AND retry_count > 0 AND last_updated < ? -->
-        <createIndex tableName="lecture_unit_processing_state" indexName="idx_processing_state_phase_updated">
+        <!-- Composite index for findStatesReadyForRetry: WHERE phase = ? AND retry_eligible_at IS NOT NULL AND retry_eligible_at < ? -->
+        <createIndex tableName="lecture_unit_processing_state" indexName="idx_processing_state_retry">
             <column name="phase"/>
-            <column name="last_updated"/>
+            <column name="retry_eligible_at"/>
         </createIndex>
 
         <rollback>

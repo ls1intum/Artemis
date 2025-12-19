@@ -71,7 +71,7 @@ public class LectureUnitProcessingState extends DomainObject {
      * Translation key for error message if processing failed.
      * Use i18n keys like "artemisApp.processing.error.transcriptionFailed".
      */
-    @Column(name = "error_key", length = 500)
+    @Column(name = "error_key", length = 255)
     private String errorKey;
 
     /**
@@ -94,6 +94,18 @@ public class LectureUnitProcessingState extends DomainObject {
      */
     @Column(name = "last_updated")
     private ZonedDateTime lastUpdated;
+
+    /**
+     * Timestamp when this state becomes eligible for retry.
+     * <p>
+     * - null: Not waiting for retry (either processing normally or retry already started)
+     * - non-null: Waiting for retry after the specified time (backoff period)
+     * <p>
+     * This field separates "waiting for retry" from "retry count" to prevent
+     * the scheduler from triggering multiple retries for the same failure.
+     */
+    @Column(name = "retry_eligible_at")
+    private ZonedDateTime retryEligibleAt;
 
     public LectureUnitProcessingState() {
         // Default constructor for JPA
@@ -178,6 +190,14 @@ public class LectureUnitProcessingState extends DomainObject {
         this.lastUpdated = lastUpdated;
     }
 
+    public ZonedDateTime getRetryEligibleAt() {
+        return retryEligibleAt;
+    }
+
+    public void setRetryEligibleAt(ZonedDateTime retryEligibleAt) {
+        this.retryEligibleAt = retryEligibleAt;
+    }
+
     /**
      * Increment the retry count.
      */
@@ -195,6 +215,7 @@ public class LectureUnitProcessingState extends DomainObject {
 
     /**
      * Transition to a new phase and update timestamps.
+     * Clears retry eligibility since we're starting fresh in the new phase.
      *
      * @param newPhase the new processing phase
      */
@@ -203,10 +224,12 @@ public class LectureUnitProcessingState extends DomainObject {
         this.startedAt = ZonedDateTime.now();
         this.lastUpdated = ZonedDateTime.now();
         this.errorKey = null; // Clear error on phase transition
+        this.retryEligibleAt = null; // Clear retry scheduling on phase transition
     }
 
     /**
      * Mark as failed with an error translation key.
+     * Clears retry eligibility since we're in a terminal state.
      *
      * @param key the i18n key for the error message
      */
@@ -214,6 +237,26 @@ public class LectureUnitProcessingState extends DomainObject {
         this.phase = ProcessingPhase.FAILED;
         this.errorKey = key;
         this.lastUpdated = ZonedDateTime.now();
+        this.retryEligibleAt = null; // No more retries in failed state
+    }
+
+    /**
+     * Schedule a retry after the specified backoff period.
+     * The scheduler will pick this up once the time has passed.
+     *
+     * @param backoffMinutes minutes to wait before retry becomes eligible
+     */
+    public void scheduleRetry(long backoffMinutes) {
+        this.retryEligibleAt = ZonedDateTime.now().plusMinutes(backoffMinutes);
+        this.lastUpdated = ZonedDateTime.now();
+    }
+
+    /**
+     * Clear retry eligibility, typically when a retry starts.
+     * This prevents the scheduler from triggering another retry for the same failure.
+     */
+    public void clearRetryEligibility() {
+        this.retryEligibleAt = null;
     }
 
     /**
@@ -237,6 +280,6 @@ public class LectureUnitProcessingState extends DomainObject {
     @Override
     public String toString() {
         return "LectureUnitProcessingState{" + "id=" + getId() + ", lectureUnitId=" + (lectureUnit != null ? lectureUnit.getId() : null) + ", phase=" + phase + ", retryCount="
-                + retryCount + ", lastUpdated=" + lastUpdated + '}';
+                + retryCount + ", retryEligibleAt=" + retryEligibleAt + ", lastUpdated=" + lastUpdated + '}';
     }
 }

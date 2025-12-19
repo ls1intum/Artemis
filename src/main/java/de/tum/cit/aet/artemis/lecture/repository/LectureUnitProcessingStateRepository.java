@@ -36,17 +36,11 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
     Optional<LectureUnitProcessingState> findByLectureUnit_Id(Long lectureUnitId);
 
     /**
-     * Find all processing states in a specific phase.
-     *
-     * @param phase the processing phase to search for
-     * @return list of processing states in the given phase
-     */
-    List<LectureUnitProcessingState> findByPhase(ProcessingPhase phase);
-
-    /**
      * Find processing states that are stuck (in active phases for too long).
      * Used for recovery after node restart or detecting hung processes.
-     * Applies to any retry count - a retry can also get stuck if callback is lost.
+     * <p>
+     * Only finds states that are NOT already scheduled for retry (retryEligibleAt IS NULL).
+     * This prevents stuck detection from interfering with states waiting for their backoff period.
      *
      * @param phases     the phases to check
      * @param cutoffTime the time before which states are considered stuck
@@ -56,24 +50,30 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
             SELECT ps FROM LectureUnitProcessingState ps
             WHERE ps.phase IN :phases
             AND ps.startedAt < :cutoffTime
+            AND ps.retryEligibleAt IS NULL
             """)
     List<LectureUnitProcessingState> findStuckStates(@Param("phases") List<ProcessingPhase> phases, @Param("cutoffTime") ZonedDateTime cutoffTime);
 
     /**
-     * Find processing states that failed and are ready for retry after backoff.
-     * Used by the scheduler to retry failed states with exponential backoff.
+     * Find processing states that are ready for retry (backoff period has passed).
+     * <p>
+     * Only finds states where:
+     * - retryEligibleAt is not null (explicitly scheduled for retry)
+     * - retryEligibleAt has passed (backoff period complete)
+     * <p>
+     * This query is mutually exclusive with findStuckStates (which requires retryEligibleAt IS NULL).
      *
-     * @param phase      the processing phase to check
-     * @param cutoffTime the time before which states are ready for retry
+     * @param phase the processing phase to check
+     * @param now   the current time to compare against retryEligibleAt
      * @return list of states ready for retry
      */
     @Query("""
             SELECT ps FROM LectureUnitProcessingState ps
             WHERE ps.phase = :phase
-            AND ps.retryCount > 0
-            AND ps.lastUpdated < :cutoffTime
+            AND ps.retryEligibleAt IS NOT NULL
+            AND ps.retryEligibleAt <= :now
             """)
-    List<LectureUnitProcessingState> findStatesReadyForRetry(@Param("phase") ProcessingPhase phase, @Param("cutoffTime") ZonedDateTime cutoffTime);
+    List<LectureUnitProcessingState> findStatesReadyForRetry(@Param("phase") ProcessingPhase phase, @Param("now") ZonedDateTime now);
 
     /**
      * Find all processing states for a lecture.

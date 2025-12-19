@@ -72,6 +72,7 @@ class LectureContentProcessingSchedulerTest {
             testState.setPhase(ProcessingPhase.TRANSCRIBING);
             testState.setRetryCount(1); // Already retried once
             testState.setStartedAt(ZonedDateTime.now().minusMinutes(130)); // Started 130 min ago (past 120 min timeout)
+            testState.setRetryEligibleAt(null); // Not already scheduled for retry
 
             // Only return state for TRANSCRIBING phase query
             when(processingStateRepository.findStuckStates(eq(List.of(ProcessingPhase.TRANSCRIBING)), any(ZonedDateTime.class))).thenReturn(List.of(testState));
@@ -85,8 +86,10 @@ class LectureContentProcessingSchedulerTest {
 
             // Then: Should increment retry count (now 2)
             assertThat(testState.getRetryCount()).isEqualTo(2);
-            // Should update startedAt to prevent re-detection
-            assertThat(testState.getStartedAt()).isAfter(ZonedDateTime.now().minusSeconds(5));
+            // Should schedule retry with backoff (2^2 = 4 minutes)
+            assertThat(testState.getRetryEligibleAt()).isNotNull();
+            assertThat(testState.getRetryEligibleAt()).isAfter(ZonedDateTime.now().plusMinutes(3));
+            assertThat(testState.getRetryEligibleAt()).isBefore(ZonedDateTime.now().plusMinutes(5));
             verify(processingStateRepository).save(testState);
         }
 
@@ -96,6 +99,7 @@ class LectureContentProcessingSchedulerTest {
             testState.setPhase(ProcessingPhase.TRANSCRIBING);
             testState.setRetryCount(MAX_PROCESSING_RETRIES - 1); // One more will hit max
             testState.setStartedAt(ZonedDateTime.now().minusMinutes(130));
+            testState.setRetryEligibleAt(null); // Not already scheduled for retry
 
             when(processingStateRepository.findStuckStates(eq(List.of(ProcessingPhase.TRANSCRIBING)), any(ZonedDateTime.class))).thenReturn(List.of(testState));
             when(processingStateRepository.findStuckStates(eq(List.of(ProcessingPhase.INGESTING)), any(ZonedDateTime.class))).thenReturn(List.of());
@@ -109,7 +113,8 @@ class LectureContentProcessingSchedulerTest {
             // Then: Should be marked as failed
             assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.FAILED);
             assertThat(testState.getRetryCount()).isEqualTo(MAX_PROCESSING_RETRIES);
-            assertThat(testState.getErrorKey()).isEqualTo("artemisApp.lectureUnit.processing.error.timeout");
+            assertThat(testState.getErrorKey()).isEqualTo("artemisApp.attachmentVideoUnit.processing.error.timeout");
+            assertThat(testState.getRetryEligibleAt()).isNull(); // No retry scheduled for failed state
         }
 
         @Test
@@ -118,6 +123,7 @@ class LectureContentProcessingSchedulerTest {
             testState.setPhase(ProcessingPhase.TRANSCRIBING);
             testState.setRetryCount(1);
             testState.setStartedAt(ZonedDateTime.now().minusMinutes(10)); // Only 10 min ago
+            testState.setRetryEligibleAt(null);
 
             // The query should not return this state (startedAt is not past cutoff)
             when(processingStateRepository.findStuckStates(anyList(), any(ZonedDateTime.class))).thenReturn(List.of());
@@ -136,16 +142,16 @@ class LectureContentProcessingSchedulerTest {
     class BackoffRetry {
 
         @Test
-        void shouldRetryStateAfterBackoffPeriod() {
-            // Given: A state that failed and has waited past the backoff period
+        void shouldRetryStateWhenRetryEligibleAtHasPassed() {
+            // Given: A state with retryEligibleAt in the past (ready for retry)
             testState.setPhase(ProcessingPhase.TRANSCRIBING);
             testState.setRetryCount(1);
-            testState.setLastUpdated(ZonedDateTime.now().minusMinutes(5)); // 5 min ago, backoff for retry 1 is 2 min
-            testState.setStartedAt(ZonedDateTime.now().minusMinutes(10)); // Not stuck (< 120 min)
+            testState.setRetryEligibleAt(ZonedDateTime.now().minusMinutes(1)); // Eligible 1 min ago
 
+            // Query returns the state because retryEligibleAt <= now
             when(processingStateRepository.findStuckStates(anyList(), any(ZonedDateTime.class))).thenReturn(List.of());
-            when(processingStateRepository.findStatesReadyForRetry(eq(ProcessingPhase.TRANSCRIBING), any())).thenReturn(List.of(testState));
-            when(processingStateRepository.findStatesReadyForRetry(eq(ProcessingPhase.INGESTING), any())).thenReturn(List.of());
+            when(processingStateRepository.findStatesReadyForRetry(eq(ProcessingPhase.TRANSCRIBING), any(ZonedDateTime.class))).thenReturn(List.of(testState));
+            when(processingStateRepository.findStatesReadyForRetry(eq(ProcessingPhase.INGESTING), any(ZonedDateTime.class))).thenReturn(List.of());
             when(processingStateRepository.findById(testState.getId())).thenReturn(Optional.of(testState));
 
             // When
@@ -156,13 +162,32 @@ class LectureContentProcessingSchedulerTest {
         }
 
         @Test
-        void shouldNotRetryStateBeforeBackoffPeriod() {
-            // Given: A state that failed but hasn't waited long enough
+        void shouldNotRetryStateWhenRetryEligibleAtIsInFuture() {
+            // Given: A state with retryEligibleAt in the future (not ready yet)
             testState.setPhase(ProcessingPhase.TRANSCRIBING);
-            testState.setRetryCount(3); // Backoff is 8 min for retry 3
-            testState.setLastUpdated(ZonedDateTime.now().minusMinutes(5)); // Only 5 min ago
+            testState.setRetryCount(1);
+            testState.setRetryEligibleAt(ZonedDateTime.now().plusMinutes(5)); // Not eligible for 5 more min
 
-            // The query should not return this state (lastUpdated is not past backoff cutoff)
+            // Query should NOT return this state (retryEligibleAt > now)
+            when(processingStateRepository.findStuckStates(anyList(), any(ZonedDateTime.class))).thenReturn(List.of());
+            when(processingStateRepository.findStatesReadyForRetry(any(), any())).thenReturn(List.of());
+
+            // When
+            scheduler.processScheduledRetries();
+
+            // Then: Should not retry
+            verify(processingService, never()).retryTranscription(any());
+        }
+
+        @Test
+        void shouldNotRetryStateWithNullRetryEligibleAt() {
+            // Given: A state that is actively processing (retryEligibleAt is null)
+            testState.setPhase(ProcessingPhase.TRANSCRIBING);
+            testState.setRetryCount(0);
+            testState.setRetryEligibleAt(null); // Not scheduled for retry
+            testState.setStartedAt(ZonedDateTime.now().minusMinutes(10)); // Not stuck yet
+
+            // Query should NOT return this state (retryEligibleAt IS NULL)
             when(processingStateRepository.findStuckStates(anyList(), any(ZonedDateTime.class))).thenReturn(List.of());
             when(processingStateRepository.findStatesReadyForRetry(any(), any())).thenReturn(List.of());
 
@@ -182,7 +207,7 @@ class LectureContentProcessingSchedulerTest {
             // Given: State was TRANSCRIBING when batch was read, but user reset it to IDLE
             testState.setPhase(ProcessingPhase.TRANSCRIBING);
             testState.setRetryCount(1);
-            testState.setLastUpdated(ZonedDateTime.now().minusMinutes(5));
+            testState.setRetryEligibleAt(ZonedDateTime.now().minusMinutes(1)); // Ready for retry
 
             // Batch query returns the state
             when(processingStateRepository.findStuckStates(anyList(), any(ZonedDateTime.class))).thenReturn(List.of());
@@ -207,6 +232,7 @@ class LectureContentProcessingSchedulerTest {
             testState.setPhase(ProcessingPhase.TRANSCRIBING);
             testState.setRetryCount(1);
             testState.setStartedAt(ZonedDateTime.now().minusMinutes(130)); // Stuck
+            testState.setRetryEligibleAt(null);
 
             // Batch query returns the state
             when(processingStateRepository.findStuckStates(eq(List.of(ProcessingPhase.TRANSCRIBING)), any(ZonedDateTime.class))).thenReturn(List.of(testState));
@@ -231,13 +257,14 @@ class LectureContentProcessingSchedulerTest {
 
         @Test
         void shouldEventuallyFailAfterRepeatedStuckRetries() {
-            // This tests the full scenario: retry gets stuck, detected, retried, gets stuck again...
+            // This tests the full scenario: retry gets stuck, detected, scheduled for retry, gets stuck again...
             // Eventually should fail after MAX_PROCESSING_RETRIES
 
             // Given: State at retry 3, stuck for 130 min
             testState.setPhase(ProcessingPhase.TRANSCRIBING);
             testState.setRetryCount(3);
             testState.setStartedAt(ZonedDateTime.now().minusMinutes(130));
+            testState.setRetryEligibleAt(null); // Not already scheduled
 
             when(processingStateRepository.findStuckStates(eq(List.of(ProcessingPhase.TRANSCRIBING)), any(ZonedDateTime.class))).thenReturn(List.of(testState));
             when(processingStateRepository.findStuckStates(eq(List.of(ProcessingPhase.INGESTING)), any(ZonedDateTime.class))).thenReturn(List.of());
@@ -248,12 +275,14 @@ class LectureContentProcessingSchedulerTest {
             // When: First stuck detection
             scheduler.processScheduledRetries();
 
-            // Then: retryCount should be 4
+            // Then: retryCount should be 4, and retryEligibleAt should be set
             assertThat(testState.getRetryCount()).isEqualTo(4);
             assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.TRANSCRIBING); // Not failed yet
+            assertThat(testState.getRetryEligibleAt()).isNotNull(); // Scheduled for retry
 
-            // Simulate another stuck scenario
-            testState.setStartedAt(ZonedDateTime.now().minusMinutes(130));
+            // Simulate: retry happened, then got stuck again
+            testState.setRetryEligibleAt(null); // Cleared when retry started
+            testState.setStartedAt(ZonedDateTime.now().minusMinutes(130)); // Stuck again
             when(processingStateRepository.findStuckStates(eq(List.of(ProcessingPhase.TRANSCRIBING)), any(ZonedDateTime.class))).thenReturn(List.of(testState));
 
             // When: Second stuck detection
@@ -262,7 +291,8 @@ class LectureContentProcessingSchedulerTest {
             // Then: Should now be failed (retryCount = 5 = MAX_PROCESSING_RETRIES)
             assertThat(testState.getRetryCount()).isEqualTo(5);
             assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.FAILED);
-            assertThat(testState.getErrorKey()).isEqualTo("artemisApp.lectureUnit.processing.error.timeout");
+            assertThat(testState.getErrorKey()).isEqualTo("artemisApp.attachmentVideoUnit.processing.error.timeout");
+            assertThat(testState.getRetryEligibleAt()).isNull(); // No retry for failed state
         }
     }
 

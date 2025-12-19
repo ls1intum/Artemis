@@ -89,7 +89,11 @@ public interface AttachmentVideoUnitRepository extends ArtemisJpaRepository<Atta
                 AND (c.endDate >= :now OR c.endDate IS NULL)
                 AND c.testCourse = FALSE
                 AND l.isTutorialLecture = FALSE
-                AND (avu.videoSource IS NOT NULL OR avu.attachment IS NOT NULL)
+                AND (
+                    (avu.videoSource IS NOT NULL AND avu.videoSource <> '')
+                    OR
+                    (avu.attachment IS NOT NULL AND avu.attachment.link LIKE '%.pdf')
+                )
             ORDER BY avu.id
             """)
     List<AttachmentVideoUnit> findUnprocessedUnitsFromActiveCourses(@Param("now") ZonedDateTime now, Pageable pageable);

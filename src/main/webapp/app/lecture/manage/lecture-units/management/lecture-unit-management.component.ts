@@ -271,6 +271,8 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
             next: (status) => {
                 if (status) {
                     this.transcriptionStatus[lectureUnitId] = status;
+                } else {
+                    delete this.transcriptionStatus[lectureUnitId];
                 }
             },
         });

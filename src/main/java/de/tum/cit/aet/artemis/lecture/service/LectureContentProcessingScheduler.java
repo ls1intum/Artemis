@@ -98,26 +98,17 @@ public class LectureContentProcessingScheduler {
     }
 
     /**
-     * Find and retry all failed states in a specific phase that have waited long enough.
-     * Uses exponential backoff: 2^retryCount minutes.
+     * Find and retry all states in a specific phase that are ready for retry.
+     * The query handles the backoff check via retryEligibleAt timestamp.
      *
      * @param phase the processing phase to check
      */
     private void retryFailedStates(ProcessingPhase phase) {
-        // Find states ready for retry at each backoff level
-        for (int retryCount = 1; retryCount < MAX_PROCESSING_RETRIES; retryCount++) {
-            long backoffMinutes = LectureContentProcessingService.calculateBackoffMinutes(retryCount);
-            ZonedDateTime cutoff = ZonedDateTime.now().minusMinutes(backoffMinutes);
+        ZonedDateTime now = ZonedDateTime.now();
+        List<LectureUnitProcessingState> states = processingStateRepository.findStatesReadyForRetry(phase, now);
 
-            List<LectureUnitProcessingState> readyStates = processingStateRepository.findStatesReadyForRetry(phase, cutoff);
-
-            // Filter to only states at this exact retry count (to avoid double-processing)
-            final int currentRetryCount = retryCount;
-            List<LectureUnitProcessingState> statesToRetry = readyStates.stream().filter(s -> s.getRetryCount() == currentRetryCount).toList();
-
-            for (LectureUnitProcessingState state : statesToRetry) {
-                retryState(state, phase);
-            }
+        for (LectureUnitProcessingState state : states) {
+            retryState(state, phase);
         }
     }
 
@@ -165,7 +156,6 @@ public class LectureContentProcessingScheduler {
 
     /**
      * Find and recover all states stuck in a specific phase (no callback received).
-     * Only applies to states that haven't failed yet (retryCount == 0).
      *
      * @param phase          the processing phase to check
      * @param timeoutMinutes the timeout threshold in minutes
@@ -187,8 +177,7 @@ public class LectureContentProcessingScheduler {
     /**
      * Recover a single stuck processing state.
      * Re-fetches state from DB to avoid overwriting concurrent user changes.
-     * Increments retry count and updates startedAt to prevent re-detection.
-     * The retryFailedStates method will handle the actual retry with backoff.
+     * Increments retry count and schedules retry with exponential backoff.
      *
      * @param state the stuck processing state to recover (used only for ID lookup)
      * @param phase the expected processing phase
@@ -206,6 +195,12 @@ public class LectureContentProcessingScheduler {
             return;
         }
 
+        // Double-check: shouldn't be already scheduled for retry (query excludes these, but defensive)
+        if (freshState.getRetryEligibleAt() != null) {
+            log.debug("State {} already scheduled for retry, skipping stuck recovery", freshState.getId());
+            return;
+        }
+
         if (freshState.getLectureUnit() == null) {
             log.warn("Cannot recover state {} - no associated lecture unit", freshState.getId());
             processingStateRepository.delete(freshState);
@@ -214,18 +209,19 @@ public class LectureContentProcessingScheduler {
 
         log.info("Recovering stuck processing state for unit {}, phase: {}", freshState.getLectureUnit().getId(), phase);
 
-        // Increment retry count - this marks it for retry with backoff
+        // Increment retry count for tracking
         freshState.incrementRetryCount();
-        // Update startedAt to prevent this state from being detected as stuck again
-        freshState.setStartedAt(java.time.ZonedDateTime.now());
 
         if (freshState.getRetryCount() >= MAX_PROCESSING_RETRIES) {
             log.warn("Max recovery attempts reached for unit {}, marking as failed", freshState.getLectureUnit().getId());
-            freshState.markFailed("artemisApp.lectureUnit.processing.error.timeout");
+            freshState.markFailed("artemisApp.attachmentVideoUnit.processing.error.timeout");
         }
         else {
-            // retryFailedStates will pick this up after backoff period
-            log.info("Stuck state for unit {} marked for retry (attempt {}/{})", freshState.getLectureUnit().getId(), freshState.getRetryCount(), MAX_PROCESSING_RETRIES);
+            // Schedule retry with exponential backoff
+            long backoffMinutes = LectureContentProcessingService.calculateBackoffMinutes(freshState.getRetryCount());
+            freshState.scheduleRetry(backoffMinutes);
+            log.info("Stuck state for unit {} scheduled for retry in {} minutes (attempt {}/{})", freshState.getLectureUnit().getId(), backoffMinutes, freshState.getRetryCount(),
+                    MAX_PROCESSING_RETRIES);
         }
 
         processingStateRepository.save(freshState);

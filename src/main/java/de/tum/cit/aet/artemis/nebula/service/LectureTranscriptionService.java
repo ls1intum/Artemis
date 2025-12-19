@@ -294,6 +294,7 @@ public class LectureTranscriptionService {
 
             // Only delete if cancellation was successful
             if (response.getStatusCode().is2xxSuccessful()) {
+                failureCountMap.remove(jobId);  // Clean up failure tracking
                 lectureTranscriptionsRepositoryApi.deleteById(transcription.getId());
                 lectureTranscriptionsRepositoryApi.flush();
                 log.info("Transcription cancelled and deleted successfully for lectureUnitId={}, jobId={}", lectureUnitId, jobId);

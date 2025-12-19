@@ -232,6 +232,27 @@ class LectureContentProcessingServiceTest {
             // Then: Should stay in IDLE (no processing possible)
             assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.IDLE);
         }
+
+        @Test
+        void shouldTransitionToIngestingWhenIngestionApiThrows() {
+            // Given: PDF-only unit, ingestion API throws exception
+            testUnit.setVideoSource(null);
+            Attachment pdfAttachment = new Attachment();
+            pdfAttachment.setLink("/path/to/file.pdf");
+            pdfAttachment.setVersion(1);
+            testUnit.setAttachment(pdfAttachment);
+
+            when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
+            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            when(irisLectureApi.addLectureUnitToPyrisDB(any())).thenThrow(new RuntimeException("Pyris unavailable"));
+
+            // When
+            service.triggerProcessing(testUnit);
+
+            // Then: Should transition to INGESTING so scheduler can retry
+            assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.INGESTING);
+            assertThat(testState.getRetryCount()).isEqualTo(1);
+        }
     }
 
     // ==================== FLOW 2: Video URL Changed ====================
@@ -344,7 +365,7 @@ class LectureContentProcessingServiceTest {
             // Then: Should call Nebula cancel
             verify(transcriptionApi).cancelNebulaTranscription(testUnit.getId());
             assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.IDLE);
-            assertThat(testState.getErrorKey()).isEqualTo("artemisApp.lectureUnit.processing.cancelled");
+            assertThat(testState.getErrorKey()).isEqualTo("artemisApp.attachmentVideoUnit.processing.cancelled");
         }
 
         @Test
@@ -375,7 +396,7 @@ class LectureContentProcessingServiceTest {
             // Then: Should NOT call Nebula cancel (not transcribing), and Pyris handles deduplication automatically
             verify(transcriptionApi, never()).cancelNebulaTranscription(anyLong());
             assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.IDLE);
-            assertThat(testState.getErrorKey()).isEqualTo("artemisApp.lectureUnit.processing.cancelled");
+            assertThat(testState.getErrorKey()).isEqualTo("artemisApp.attachmentVideoUnit.processing.cancelled");
         }
 
         @Test
@@ -391,7 +412,7 @@ class LectureContentProcessingServiceTest {
 
             // Then: Should still update local state despite Nebula failure
             assertThat(testState.getPhase()).isEqualTo(ProcessingPhase.IDLE);
-            assertThat(testState.getErrorKey()).isEqualTo("artemisApp.lectureUnit.processing.cancelled");
+            assertThat(testState.getErrorKey()).isEqualTo("artemisApp.attachmentVideoUnit.processing.cancelled");
         }
 
         @Test

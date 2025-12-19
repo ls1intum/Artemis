@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.iris.api.IrisLectureApi;
@@ -126,11 +127,19 @@ public class LectureContentProcessingService {
             return;
         }
 
-        // Get or create processing state
-        LectureUnitProcessingState state = processingStateRepository.findByLectureUnit_Id(unit.getId()).orElseGet(() -> {
-            LectureUnitProcessingState newState = new LectureUnitProcessingState(unit);
-            return processingStateRepository.save(newState);
-        });
+        // Get or create processing state (handle race condition with unique constraint)
+        LectureUnitProcessingState state;
+        try {
+            state = processingStateRepository.findByLectureUnit_Id(unit.getId()).orElseGet(() -> {
+                LectureUnitProcessingState newState = new LectureUnitProcessingState(unit);
+                return processingStateRepository.save(newState);
+            });
+        }
+        catch (DataIntegrityViolationException e) {
+            // Race condition: another thread created the state, re-fetch it
+            state = processingStateRepository.findByLectureUnit_Id(unit.getId())
+                    .orElseThrow(() -> new IllegalStateException("Processing state disappeared after constraint violation", e));
+        }
 
         // Detect and handle content changes
         if (handleContentChanges(unit, state, hasVideo, hasPdf)) {
@@ -176,7 +185,7 @@ public class LectureContentProcessingService {
             // Note: No need to cancel on Pyris - when a new job starts, Pyris terminates old processes automatically
 
             state.transitionTo(ProcessingPhase.IDLE);
-            state.setErrorKey("artemisApp.lectureUnit.processing.cancelled");
+            state.setErrorKey("artemisApp.attachmentVideoUnit.processing.cancelled");
             processingStateRepository.save(state);
         });
     }
@@ -414,7 +423,7 @@ public class LectureContentProcessingService {
         LectureUnit unit = state.getLectureUnit();
         if (!(unit instanceof AttachmentVideoUnit attachmentUnit)) {
             log.warn("Cannot ingest non-AttachmentVideoUnit");
-            state.markFailed("artemisApp.lectureUnit.processing.error.invalidUnitType");
+            state.markFailed("artemisApp.attachmentVideoUnit.processing.error.invalidUnitType");
             processingStateRepository.save(state);
             return;
         }
@@ -438,6 +447,8 @@ public class LectureContentProcessingService {
             log.info("Ingestion started for unit {} with token {}", unit.getId(), maskToken(jobToken));
         }
         catch (Exception e) {
+            // Transition to INGESTING so scheduler can retry (state may be in IDLE or TRANSCRIBING)
+            state.transitionTo(ProcessingPhase.INGESTING);
             log.error("Failed to start ingestion for unit {}: {}", unit.getId(), e.getMessage());
             handleIngestionFailure(state);
         }
@@ -461,13 +472,14 @@ public class LectureContentProcessingService {
             }
             else {
                 log.warn("Max transcription retries reached, marking as failed for unit {}", unit.getId());
-                state.markFailed("artemisApp.lectureUnit.processing.error.transcriptionFailed");
+                state.markFailed("artemisApp.attachmentVideoUnit.processing.error.transcriptionFailed");
                 processingStateRepository.save(state);
             }
         }
         else {
-            // Stay in TRANSCRIBING phase, scheduler will retry with exponential backoff
+            // Stay in TRANSCRIBING phase, scheduler will retry after backoff period
             long backoffMinutes = calculateBackoffMinutes(state.getRetryCount());
+            state.scheduleRetry(backoffMinutes);
             log.info("Transcription failed for unit {}, scheduled for retry in {} minutes (attempt {}/{})", state.getLectureUnit().getId(), backoffMinutes, state.getRetryCount(),
                     MAX_PROCESSING_RETRIES);
             processingStateRepository.save(state);
@@ -479,12 +491,13 @@ public class LectureContentProcessingService {
 
         if (state.getRetryCount() >= MAX_PROCESSING_RETRIES) {
             log.warn("Max ingestion retries reached, marking as failed");
-            state.markFailed("artemisApp.lectureUnit.processing.error.ingestionFailed");
+            state.markFailed("artemisApp.attachmentVideoUnit.processing.error.ingestionFailed");
             processingStateRepository.save(state);
         }
         else {
-            // Stay in INGESTING phase, scheduler will retry with exponential backoff
+            // Stay in INGESTING phase, scheduler will retry after backoff period
             long backoffMinutes = calculateBackoffMinutes(state.getRetryCount());
+            state.scheduleRetry(backoffMinutes);
             log.info("Ingestion failed for unit {}, scheduled for retry in {} minutes (attempt {}/{})", state.getLectureUnit().getId(), backoffMinutes, state.getRetryCount(),
                     MAX_PROCESSING_RETRIES);
             processingStateRepository.save(state);
@@ -511,17 +524,20 @@ public class LectureContentProcessingService {
     public void retryTranscription(LectureUnitProcessingState state) {
         LectureUnit unit = state.getLectureUnit();
         if (!(unit instanceof AttachmentVideoUnit attachmentUnit)) {
-            state.markFailed("artemisApp.lectureUnit.processing.error.invalidUnitType");
+            state.markFailed("artemisApp.attachmentVideoUnit.processing.error.invalidUnitType");
             processingStateRepository.save(state);
             return;
         }
+
+        // Clear retry eligibility - we're starting the retry now
+        state.clearRetryEligibility();
 
         // Refetch playlist URL
         Optional<String> playlistUrl = fetchPlaylistUrl(attachmentUnit);
 
         if (playlistUrl.isPresent()) {
             log.info("Retrying transcription for unit {} (attempt {}/{})", unit.getId(), state.getRetryCount(), MAX_PROCESSING_RETRIES);
-            // Update timestamps to mark retry start (prevents re-detection by scheduler)
+            // Update timestamps to mark retry start
             state.setStartedAt(java.time.ZonedDateTime.now());
             state.setLastUpdated(java.time.ZonedDateTime.now());
             processingStateRepository.save(state);
@@ -546,7 +562,7 @@ public class LectureContentProcessingService {
                 startIngestion(state);
             }
             else {
-                state.markFailed("artemisApp.lectureUnit.processing.error.noPlaylist");
+                state.markFailed("artemisApp.attachmentVideoUnit.processing.error.noPlaylist");
                 processingStateRepository.save(state);
             }
         }
@@ -560,7 +576,9 @@ public class LectureContentProcessingService {
      */
     public void retryIngestion(LectureUnitProcessingState state) {
         log.info("Retrying ingestion for unit {} (attempt {}/{})", state.getLectureUnit().getId(), state.getRetryCount(), MAX_PROCESSING_RETRIES);
-        // Update timestamps to mark retry start (prevents re-detection by scheduler)
+        // Clear retry eligibility - we're starting the retry now
+        state.clearRetryEligibility();
+        // Update timestamps to mark retry start
         state.setStartedAt(java.time.ZonedDateTime.now());
         state.setLastUpdated(java.time.ZonedDateTime.now());
         processingStateRepository.save(state);
@@ -629,11 +647,13 @@ public class LectureContentProcessingService {
 
     private void cleanupForReprocessing(AttachmentVideoUnit unit, boolean deleteTranscription) {
         if (deleteTranscription) {
+            // Cancel FIRST (needs transcription record to get jobId)
+            cancelTranscriptionOnNebula(unit.getId());
+            // Then delete
             transcriptionRepository.findByLectureUnit_Id(unit.getId()).ifPresent(transcription -> {
                 log.info("Deleting existing transcription for unit {}", unit.getId());
                 transcriptionRepository.delete(transcription);
             });
-            cancelTranscriptionOnNebula(unit.getId());
         }
 
         // Note: No need to cancel on Pyris - when a new job starts, Pyris terminates old processes automatically
@@ -673,7 +693,7 @@ public class LectureContentProcessingService {
             return HexFormat.of().formatHex(hash);
         }
         catch (NoSuchAlgorithmException e) {
-            return String.valueOf(value.hashCode());
+            throw new IllegalStateException("SHA-256 algorithm not available", e);
         }
     }
 
