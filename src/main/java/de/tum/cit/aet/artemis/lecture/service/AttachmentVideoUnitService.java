@@ -76,11 +76,6 @@ public class AttachmentVideoUnitService {
 
         if (attachment != null && file != null) {
             createAttachment(attachment, savedAttachmentVideoUnit, file, keepFilename);
-
-            // Split the new file into single slides if it is a PDF
-            if ("pdf".equalsIgnoreCase(FilenameUtils.getExtension(file.getOriginalFilename()))) {
-                slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(savedAttachmentVideoUnit);
-            }
         }
 
         // Trigger automated content processing (transcription and ingestion)
