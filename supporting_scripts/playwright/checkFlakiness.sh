@@ -40,6 +40,26 @@ echo "Target: $TEST_PATH"
 echo "Runs:   $NUM_RUNS headless + $HEADED_RUNS headed"
 echo "--------------------------------------------------"
 
+parse_playwright_list_output() {
+    local results_file="$1"
+    while IFS= read -r line; do
+        # Passed test lines
+        if echo "$line" | grep -qE '^\s*✓\s+[0-9]+'; then
+            # Extract test name: everything after first " › " and remove duration
+            test_name=$(echo "$line" | sed -E 's/.*[0-9]+[^›]*› //' | sed -E 's/ \([0-9.]+m?s\)$//' | sed -E 's/^[[:space:]]+|[[:space:]]+$//g')
+            if [ -n "$test_name" ]; then
+                echo "PASS|$test_name" >> "$results_file"
+            fi
+        # Failed test lines (various fail symbols)
+        elif echo "$line" | grep -qE '^\s*[✘×]\s+[0-9]+'; then
+            test_name=$(echo "$line" | sed -E 's/.*[0-9]+[^›]*› //' | sed -E 's/ \([0-9.]+m?s\)$//' | sed -E 's/^[[:space:]]+|[[:space:]]+$//g')
+            if [ -n "$test_name" ]; then
+                echo "FAIL|$test_name" >> "$results_file"
+            fi
+        fi
+    done
+}
+
 cd "$PLAYWRIGHT_DIR" || exit
 
 # Temporary file to store results (format: PASS|test_name or FAIL|test_name)
@@ -59,23 +79,8 @@ if [ "$PIPELINE_STATUS" -ne 0 ]; then
     exit "$PIPELINE_STATUS"
 fi
 
-# Parse individual test results (silently)
-echo "$OUTPUT" | while IFS= read -r line; do
-    # Check if line contains a test result (passed)
-    if echo "$line" | grep -qE '^\s*✓\s+[0-9]+'; then
-        # Extract test name: everything after first " › " and remove duration
-        test_name=$(echo "$line" | sed -E 's/.*[0-9]+[^›]*› //' | sed -E 's/ \([0-9.]+m?s\)$//' | sed -E 's/^[[:space:]]+|[[:space:]]+$//g')
-        if [ -n "$test_name" ]; then
-            echo "PASS|$test_name" >> "$RESULTS_FILE"
-        fi
-    # Check if line contains a test result (failed) - various fail symbols
-    elif echo "$line" | grep -qE '^\s*[✘×]\s+[0-9]+'; then
-        test_name=$(echo "$line" | sed -E 's/.*[0-9]+[^›]*› //' | sed -E 's/ \([0-9.]+m?s\)$//' | sed -E 's/^[[:space:]]+|[[:space:]]+$//g')
-        if [ -n "$test_name" ]; then
-            echo "FAIL|$test_name" >> "$RESULTS_FILE"
-        fi
-    fi
-done
+# Parse individual test results
+printf '%s\n' "$OUTPUT" | parse_playwright_list_output "$RESULTS_FILE"
 
 echo ""
 echo "========== HEADED MODE ($HEADED_RUNS runs) =========="
@@ -89,23 +94,8 @@ if [ "$PIPELINE_STATUS" -ne 0 ]; then
     exit "$PIPELINE_STATUS"
 fi
 
-# Parse individual test results (silently)
-echo "$OUTPUT" | while IFS= read -r line; do
-    # Check if line contains a test result (passed)
-    if echo "$line" | grep -qE '^\s*✓\s+[0-9]+'; then
-        # Extract test name: everything after first " › " and remove duration
-        test_name=$(echo "$line" | sed -E 's/.*[0-9]+[^›]*› //' | sed -E 's/ \([0-9.]+m?s\)$//' | sed -E 's/^[[:space:]]+|[[:space:]]+$//g')
-        if [ -n "$test_name" ]; then
-            echo "PASS|$test_name" >> "$RESULTS_FILE"
-        fi
-    # Check if line contains a test result (failed) - various fail symbols
-    elif echo "$line" | grep -qE '^\s*[✘×]\s+[0-9]+'; then
-        test_name=$(echo "$line" | sed -E 's/.*[0-9]+[^›]*› //' | sed -E 's/ \([0-9.]+m?s\)$//' | sed -E 's/^[[:space:]]+|[[:space:]]+$//g')
-        if [ -n "$test_name" ]; then
-            echo "FAIL|$test_name" >> "$RESULTS_FILE"
-        fi
-    fi
-done
+# Parse individual test results
+printf '%s\n' "$OUTPUT" | parse_playwright_list_output "$RESULTS_FILE"
 
 echo ""
 

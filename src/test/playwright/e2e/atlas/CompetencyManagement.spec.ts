@@ -61,11 +61,10 @@ async function setMarkdownDescription(page: Page, text: string) {
         await monaco.press('Control+A').catch(() => {});
         await monaco.press('Meta+A').catch(() => {});
         await monaco.press('Backspace');
-        // pressSequentially is used across other page objects for Monaco.
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const anyMonaco = monaco as any;
-        if (typeof anyMonaco.pressSequentially === 'function') {
-            await anyMonaco.pressSequentially(text);
+
+        const monacoWithPressSequentially = monaco as unknown as { pressSequentially?: (value: string) => Promise<void> };
+        if (typeof monacoWithPressSequentially.pressSequentially === 'function') {
+            await monacoWithPressSequentially.pressSequentially(text);
         } else {
             await monaco.fill(text);
         }
@@ -98,18 +97,13 @@ test.describe('Competency Management', { tag: '@fast' }, () => {
 
         await competencyManagement.goto(course!.id!);
 
-        // Create competency
+        // Create competency via UI
         await page.locator('a[href*="/competency-management/create"]').click();
         await page.getByRole('textbox', { name: 'Title' }).fill(competencyData.title);
         await setMarkdownDescription(page, competencyData.description);
 
-        // Set soft due date
         await selectDateInPicker(page, 'softDueDate', 2, 15);
-
-        // Set taxonomy
         await selectTaxonomy(page, competencyData.taxonomy);
-
-        // Submit
         await page.getByRole('button', { name: 'Submit' }).click();
 
         // Verify creation
@@ -128,12 +122,8 @@ test.describe('Competency Management', { tag: '@fast' }, () => {
         };
 
         test.beforeEach('Create competency', async ({ page, courseManagementAPIRequests, competencyManagement }) => {
-            // Create competency via API
             await courseManagementAPIRequests.createCompetency(course, competencyData.title, competencyData.description);
-
             await competencyManagement.goto(course!.id!);
-
-            // Verify creation
             await page.waitForLoadState('networkidle');
             await expect(page.getByRole('link', { name: competencyData.title })).toBeVisible();
         });
@@ -145,18 +135,13 @@ test.describe('Competency Management', { tag: '@fast' }, () => {
                 taxonomy: 'APPLY',
             };
 
-            // Scope edit to the row containing our competency title
             const row = page.locator('tr', { has: page.getByRole('link', { name: competencyData.title }) });
             await row.locator('a[href*="/competency-management/"][href$="/edit"]').click();
 
             // Update fields
             await page.getByRole('textbox', { name: 'Title' }).fill(updatedCompetencyData.title);
             await setMarkdownDescription(page, updatedCompetencyData.description);
-
-            // Update taxonomy
             await selectTaxonomy(page, updatedCompetencyData.taxonomy);
-
-            // Submit
             await page.getByRole('button', { name: 'Submit' }).click();
 
             // Verify update
@@ -174,7 +159,6 @@ test.describe('Competency Management', { tag: '@fast' }, () => {
         };
 
         test.beforeEach('Create competency', async ({ page, courseManagementAPIRequests, competencyManagement }) => {
-            // Create competency via API
             await courseManagementAPIRequests.createCompetency(course, competencyData.title, competencyData.description);
 
             await competencyManagement.goto(course!.id!);
@@ -186,7 +170,6 @@ test.describe('Competency Management', { tag: '@fast' }, () => {
             const row = page.locator('tr', { has: page.getByRole('link', { name: competencyData.title }) });
             await row.locator('button[jhideletebutton]').click();
 
-            // Confirm delete modal
             await expect(page.locator('#delete')).toBeDisabled();
             await page.locator('#confirm-entity-name').fill(competencyData.title);
             await page.locator('#delete').click();
@@ -223,13 +206,8 @@ test.describe('Prerequisite Management', { tag: '@fast' }, () => {
         await page.getByRole('textbox', { name: 'Prerequisites' }).fill(prerequisiteData.title);
         await setMarkdownDescription(page, prerequisiteData.description);
 
-        // Set soft due date
         await selectDateInPicker(page, 'softDueDate', 1, 15);
-
-        // Set taxonomy
         await selectTaxonomy(page, prerequisiteData.taxonomy);
-
-        // Submit
         await page.getByRole('button', { name: 'Submit' }).click();
 
         // Verify creation
@@ -243,10 +221,8 @@ test.describe('Prerequisite Management', { tag: '@fast' }, () => {
         test.beforeEach('Create prerequisite', async ({ page, courseManagementAPIRequests, competencyManagement }) => {
             // Create prerequisite via API
             await courseManagementAPIRequests.createPrerequisite(course, prerequisiteData.title, prerequisiteData.description);
-
             await competencyManagement.goto(course!.id!);
 
-            // Verify prerequisite was created
             await page.waitForLoadState('networkidle');
             await expect(page.getByRole('link', { name: prerequisiteData.title })).toBeVisible();
         });
@@ -258,19 +234,13 @@ test.describe('Prerequisite Management', { tag: '@fast' }, () => {
                 softDueDate: dayjs().add(2, 'months').endOf('month'),
                 taxonomy: 'APPLY',
             };
-
             // Edit prerequisite
             await page.locator('a[href*="/prerequisite-management/"][href$="/edit"]').first().click();
             await page.getByRole('textbox', { name: 'Prerequisites' }).fill(updatedPrerequisiteData.title);
             await setMarkdownDescription(page, updatedPrerequisiteData.description);
 
-            // Set updated soft due date
             await selectDateInPicker(page, 'softDueDate', 2, 15);
-
-            // Set updated taxonomy
             await selectTaxonomy(page, updatedPrerequisiteData.taxonomy);
-
-            // Submit
             await page.getByRole('button', { name: 'Submit' }).click();
 
             // Verify update
@@ -289,7 +259,6 @@ test.describe('Prerequisite Management', { tag: '@fast' }, () => {
         };
 
         test.beforeEach('Create prerequisite to delete', async ({ page, courseManagementAPIRequests, competencyManagement }) => {
-            // Create prerequisite via API
             await courseManagementAPIRequests.createPrerequisite(course, prerequisiteData.title, prerequisiteData.description);
 
             await competencyManagement.goto(course!.id!);
