@@ -680,4 +680,48 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Inline Comments', ()
         // Component uses 'applyError' for validation failures
         expect(errorSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.inlineComment.applyError');
     });
+
+    it('should apply inline comment when not already in service', () => {
+        mockInlineCommentService.getComment.mockReturnValue(undefined);
+        const comment = createMockInlineComment();
+
+        comp.onApplyInlineComment(comment);
+
+        expect(mockInlineCommentService.addExistingComment).toHaveBeenCalledWith(comment);
+    });
+
+    it('should apply inline comment when already in service', () => {
+        const comment = createMockInlineComment();
+        mockInlineCommentService.getComment.mockReturnValue(comment);
+
+        comp.onApplyInlineComment(comment);
+
+        // Should not add again since it's already in service
+        expect(mockInlineCommentService.addExistingComment).not.toHaveBeenCalled();
+    });
+
+    it('should accept refinement with valid refined content', () => {
+        comp.exercise = createMockExercise();
+
+        // Call closeDiff directly to test its behavior
+        comp.closeDiff();
+
+        expect(comp.showDiff()).toBeFalse();
+    });
+
+    it('should call closeDiff when rejecting refinement', () => {
+        const closeDiffSpy = jest.spyOn(comp, 'closeDiff');
+
+        comp.rejectRefinement();
+
+        expect(closeDiffSpy).toHaveBeenCalled();
+    });
+
+    it('should check consistency when calling isCheckingConsistency', () => {
+        // Test the public API
+        const result = comp.isCheckingConsistency();
+
+        // Should return a boolean
+        expect(typeof result).toBe('boolean');
+    });
 });

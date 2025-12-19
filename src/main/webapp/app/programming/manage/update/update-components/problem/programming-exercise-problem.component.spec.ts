@@ -364,4 +364,97 @@ describe('ProgrammingExerciseProblemComponent', () => {
 
         expect(mockInlineCommentService.removeComment).toHaveBeenCalledWith('c1');
     });
+
+    it('should return translated placeholder', () => {
+        const translateService = TestBed.inject(TranslateService);
+        translateService.instant = jest.fn().mockReturnValue('Translated placeholder');
+
+        const result = comp.getTranslatedPlaceholder();
+
+        expect(result).toBe('Translated placeholder');
+        expect(translateService.instant).toHaveBeenCalledWith('artemisApp.programmingExercise.problemStatement.examplePlaceholder');
+    });
+
+    it('should return exerciseId when exercise has id', () => {
+        const exercise = new ProgrammingExercise(undefined, undefined);
+        exercise.id = 123;
+        fixture.componentRef.setInput('programmingExercise', exercise);
+
+        expect(comp.exerciseId).toBe(123);
+    });
+
+    it('should return undefined exerciseId when exercise is undefined', () => {
+        fixture.componentRef.setInput('programmingExercise', undefined);
+
+        expect(comp.exerciseId).toBeUndefined();
+    });
+
+    it('should close diff and reset state', () => {
+        comp.showDiff = true;
+        comp.originalProblemStatement = 'original';
+        comp.refinedProblemStatement = 'refined';
+
+        comp.closeDiff();
+
+        expect(comp.showDiff).toBeFalse();
+        expect(comp.originalProblemStatement).toBe('');
+        expect(comp.refinedProblemStatement).toBe('');
+    });
+
+    it('should accept refinement and apply changes', () => {
+        const exercise = new ProgrammingExercise(undefined, undefined);
+        exercise.course = { id: 42 } as any;
+        fixture.componentRef.setInput('programmingExercise', exercise);
+
+        comp.showDiff = true;
+        comp.refinedProblemStatement = 'New refined statement';
+        comp.originalProblemStatement = 'Original';
+
+        comp.acceptRefinement();
+
+        expect(exercise.problemStatement).toBe('New refined statement');
+        expect(comp.showDiff).toBeFalse();
+    });
+
+    it('should not accept refinement with empty content', () => {
+        const exercise = new ProgrammingExercise(undefined, undefined);
+        exercise.problemStatement = 'Original statement';
+        fixture.componentRef.setInput('programmingExercise', exercise);
+
+        comp.refinedProblemStatement = '';
+
+        comp.acceptRefinement();
+
+        // Statement should not change
+        expect(exercise.problemStatement).toBe('Original statement');
+    });
+
+    it('should emit problemStatementChange on onProblemStatementChange', () => {
+        const emitSpy = jest.spyOn(comp.problemStatementChange, 'emit');
+
+        comp.onProblemStatementChange('New problem statement');
+
+        expect(emitSpy).toHaveBeenCalledWith('New problem statement');
+    });
+
+    it('should handle generate with existing non-empty problem statement', () => {
+        const exercise = new ProgrammingExercise(undefined, undefined);
+        exercise.course = { id: 42 } as any;
+        exercise.problemStatement = 'Existing statement';
+        fixture.componentRef.setInput('programmingExercise', exercise);
+        fixture.detectChanges();
+
+        // shouldShowGenerateButton should be false for existing content
+        expect(comp.shouldShowGenerateButton()).toBeFalse();
+    });
+
+    it('should reset generation state on cancel', () => {
+        // Set up state
+        comp.isGenerating.set(true);
+
+        comp.cancelGeneration();
+
+        // Verify state is reset
+        expect(comp.isGenerating()).toBeFalse();
+    });
 });
