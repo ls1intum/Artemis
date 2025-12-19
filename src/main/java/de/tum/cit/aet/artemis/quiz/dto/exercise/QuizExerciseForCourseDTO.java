@@ -32,9 +32,10 @@ public record QuizExerciseForCourseDTO(long id, @NotEmpty String title, boolean 
         if (quizExercise.getQuizBatches() != null) {
             batches = quizExercise.getQuizBatches().stream().map(QuizBatchForCourseDTO::of).collect(Collectors.toSet());
         }
+        // isOpenForPractice: quizzes are open for practice after they end (per PR #11709)
         return new QuizExerciseForCourseDTO(quizExercise.getId(), quizExercise.getTitle(), quizExercise.isQuizStarted(), quizExercise.isQuizEnded(), isEditable,
                 quizExercise.getDuration(), quizExercise.getMaxPoints(), quizExercise.getReleaseDate(), quizExercise.getStartDate(), quizExercise.getDueDate(),
-                quizExercise.getIncludedInOverallScore(), batches, quizExercise.getQuizMode(), quizExercise.isIsOpenForPractice());
+                quizExercise.getIncludedInOverallScore(), batches, quizExercise.getQuizMode(), quizExercise.isQuizEnded());
     }
 
     @Override

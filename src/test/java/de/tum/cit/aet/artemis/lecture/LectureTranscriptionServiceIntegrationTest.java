@@ -247,8 +247,9 @@ class LectureTranscriptionServiceIntegrationTest extends AbstractSpringIntegrati
 
     @Test
     void cancelNebulaTranscription_notFound() {
-        assertThatThrownBy(() -> lectureTranscriptionService.cancelNebulaTranscription(999L)).isInstanceOf(ResponseStatusException.class)
-                .hasMessageContaining("No transcription found");
+        // Should return silently when no transcription exists (nothing to cancel)
+        lectureTranscriptionService.cancelNebulaTranscription(999L);
+        // No exception thrown - method handles missing transcription gracefully
     }
 
     @Test
