@@ -6,14 +6,7 @@
         <div class="mb-4">
             <label for="userPrompt" class="form-label" jhiTranslate="artemisApp.programmingExercise.problemStatement.yourRequirements"></label>
             <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.problemStatement.generateDraftDescription" />
-            <textarea
-                id="userPrompt"
-                [(ngModel)]="userPrompt"
-                class="form-control"
-                rows="4"
-                [placeholder]="isGenerating() || isRefining() ? userPrompt : getTranslatedPlaceholder()"
-                [disabled]="isGenerating() || isRefining()"
-            >
+            <textarea id="userPrompt" [(ngModel)]="userPrompt" class="form-control" rows="4" [placeholder]="getTranslatedPlaceholder()" [disabled]="isGenerating() || isRefining()">
             </textarea>
         </div>
         <div class="d-flex justify-content-start gap-2">
