@@ -433,6 +433,11 @@ public final class Constants {
     public static final String MODULE_FEATURE_NEBULA = "nebula";
 
     /**
+     * The name of the module feature used for Sharing functionality.
+     */
+    public static final String MODULE_FEATURE_SHARING = "sharing";
+
+    /**
      * The name of the property used to enable or disable Atlas functionality.
      */
     public static final String ATLAS_ENABLED_PROPERTY_NAME = "artemis.atlas.enabled";
@@ -476,11 +481,6 @@ public final class Constants {
      * The name of the property used to enable or disable the sharing functionality.
      */
     public static final String SHARING_ENABLED_PROPERTY_NAME = "artemis.sharing.enabled";
-
-    /**
-     * The name of the module feature used for Sharing functionality.
-     */
-    public static final String MODULE_FEATURE_SHARING = "sharing";
 
     /**
      * The name of the property used to enable or disable nebula functionalities.
