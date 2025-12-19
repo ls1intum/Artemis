@@ -25,7 +25,7 @@ describe('SidebarCardDirective', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            declarations: [
+            imports: [
                 TestHostComponent,
                 SidebarCardDirective,
                 MockComponent(SidebarCardSmallComponent),
@@ -54,7 +54,7 @@ describe('SidebarCardDirective', () => {
         fixture = TestBed.createComponent(TestHostComponent);
         component = fixture.componentInstance;
         TestBed.inject(ActivatedRoute);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
     });
 
     afterEach(() => {
@@ -72,7 +72,7 @@ describe('SidebarCardDirective', () => {
         component.directive.sidebarItem = { title: 'exercise-TestTitle', id: '1', size: 'S' };
         component.directive.groupKey = 'exerciseChannels';
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         component.directive.ngOnInit();
 
         expect(createComponentSpy).toHaveBeenCalledWith(SidebarCardSmallComponent);
@@ -83,7 +83,7 @@ describe('SidebarCardDirective', () => {
         component.size = 'M';
         component.directive.sidebarItem = { title: 'exercise-TestTitle', id: '1', size: 'M' };
         component.directive.groupKey = 'exerciseChannels';
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         component.directive.ngOnInit();
 
         expect(createComponentSpy).toHaveBeenCalledWith(SidebarCardMediumComponent);
@@ -94,7 +94,7 @@ describe('SidebarCardDirective', () => {
         component.size = 'L';
         component.directive.sidebarItem = { title: 'exercise-TestTitle', id: '1', size: 'L' };
         component.directive.groupKey = 'exerciseChannels';
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         component.directive.ngOnInit();
 
         expect(createComponentSpy).toHaveBeenCalledWith(SidebarCardLargeComponent);

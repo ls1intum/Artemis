@@ -41,7 +41,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
  * A QuizExercise contains multiple quiz quizQuestions, which can be either multiple choice, drag and drop or short answer. Artemis supports live quizzes with a start and end time
  * which are
  * rated. Within this time, students can participate in the quiz and select their answers to the given quizQuestions. After the end time, the quiz is automatically evaluated
- * Instructors can choose to open the quiz for practice so that students can participate arbitrarily often with an unrated result
+ * and made available to the students to practice.
  */
 @Entity
 @DiscriminatorValue(value = "Q")
@@ -57,9 +57,6 @@ public class QuizExercise extends Exercise implements QuizConfiguration {
 
     @Transient
     private transient Integer remainingNumberOfAttempts;
-
-    @Column(name = "is_open_for_practice")
-    private Boolean isOpenForPractice;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "quiz_mode", columnDefinition = "varchar(63) default 'SYNCHRONIZED'", nullable = false)
@@ -115,14 +112,6 @@ public class QuizExercise extends Exercise implements QuizConfiguration {
 
     public void setRemainingNumberOfAttempts(Integer remainingNumberOfAttempts) {
         this.remainingNumberOfAttempts = remainingNumberOfAttempts;
-    }
-
-    public Boolean isIsOpenForPractice() {
-        return isOpenForPractice;
-    }
-
-    public void setIsOpenForPractice(Boolean isOpenForPractice) {
-        this.isOpenForPractice = isOpenForPractice;
     }
 
     public Integer getDuration() {
@@ -562,7 +551,6 @@ public class QuizExercise extends Exercise implements QuizConfiguration {
     @Override
     public String toString() {
         return "QuizExercise{" + "id=" + getId() + ", title='" + getTitle() + "'" + ", randomizeQuestionOrder='" + isRandomizeQuestionOrder() + "'" + ", allowedNumberOfAttempts='"
-                + getAllowedNumberOfAttempts() + "'" + ", isOpenForPractice='" + isIsOpenForPractice() + "'" + ", releaseDate='" + getReleaseDate() + "'" + ", duration='"
-                + getDuration() + "'" + ", dueDate='" + getDueDate() + "'" + "}";
+                + getAllowedNumberOfAttempts() + "'" + ", releaseDate='" + getReleaseDate() + "'" + ", duration='" + getDuration() + "'" + ", dueDate='" + getDueDate() + "'" + "}";
     }
 }

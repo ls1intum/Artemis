@@ -37,16 +37,6 @@
                                 <span jhiTranslate="artemisApp.programmingExercise.configureGrading.shortTitle"></span>
                             </a>
                         }
-                        @if (irisEnabled && programmingExercise.isAtLeastInstructor && programmingExercise.course && !isExamExercise) {
-                            <a
-                                [routerLink]="['/course-management', programmingExercise.course.id!, 'programming-exercises', programmingExercise.id, 'iris-settings']"
-                                ngbTooltip="{{ 'artemisApp.iris.settings.button.programmingExercise.tooltip' | artemisTranslate }}"
-                                class="btn btn-warning btn-sm"
-                            >
-                                <fa-icon [icon]="faRobot" />
-                                <span jhiTranslate="artemisApp.iris.settings.button.programmingExercise.title"></span>
-                            </a>
-                        }
                         @if (programmingExercise.isAtLeastTutor) {
                             <a [routerLink]="[baseResource, 'participations']" class="btn btn-primary btn-sm">
                                 <fa-icon [icon]="faListAlt" />

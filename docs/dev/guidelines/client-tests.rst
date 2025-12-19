@@ -4,10 +4,27 @@ Client Tests
 
 **If you are new to client testing, it is highly recommended that you work through the** `testing part <https://angular.dev/guide/testing>`_ **of the angular tutorial.**
 
-We use `Jest <https://jestjs.io>`__ as client testing framework.
+Most client tests use `Jest <https://jestjs.io>`__ as the testing framework.
 We use `NgMocks <https://www.npmjs.com/package/ng-mocks/>`_ for mocking the dependencies of an angular component.
 
-You can run all tests by invoking ``npm run testw8`` in the root directory of the Artemis project.
+.. note::
+   **Vitest for Zoneless Modules**: Modules migrated to Angular's zoneless change detection use
+   `Vitest <https://vitest.dev/>`__ instead of Jest. The authoritative list of Vitest modules is defined by the
+   ``include`` patterns in ``vitest.config.ts``.
+
+   **Running Vitest tests:**
+
+   - Watch mode: ``npm run vitest``
+   - Single run: ``npm run vitest:run``
+   - With coverage: ``npm run vitest:coverage``
+
+   **Key differences from Jest:**
+
+   - Use ``vi.spyOn()`` instead of ``jest.spyOn()``
+   - Use ``vi.fn()`` instead of ``jest.fn()``
+   - Use ``vi.clearAllMocks()`` instead of ``jest.clearAllMocks()``
+
+You can run all Jest tests by invoking ``npm run testw8`` in the root directory of the Artemis project.
 If you want to run individual tests, you can use the following commands:
 
 1. Run all tests in a file: ``npm run test:one -- --test-path-pattern='src/main/webapp/app/fileupload/manage/assess/file-upload-assessment\.component\.spec\.ts$'``

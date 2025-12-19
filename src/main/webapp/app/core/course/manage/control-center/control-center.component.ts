@@ -1,21 +1,17 @@
 import { Component, input } from '@angular/core';
 import { IrisEnabledComponent } from 'app/iris/manage/settings/shared/iris-enabled/iris-enabled.component';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { IrisSubSettingsType } from 'app/iris/shared/entities/settings/iris-sub-settings.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
-import { faRobot } from '@fortawesome/free-solid-svg-icons';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { CardWrapperComponent } from 'app/shared/card-wrapper/card-wrapper.component';
+import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 
 @Component({
     selector: 'jhi-control-center',
-    imports: [IrisEnabledComponent, TranslateDirective, HelpIconComponent, FaIconComponent, CardWrapperComponent],
+    imports: [IrisEnabledComponent, TranslateDirective, HelpIconComponent, IrisLogoComponent],
     templateUrl: './control-center.component.html',
 })
 export class ControlCenterComponent {
-    protected readonly IrisSubSettingsType = IrisSubSettingsType;
-    protected readonly faRobot = faRobot;
+    protected readonly IrisLogoSize = IrisLogoSize;
     course = input.required<Course>();
     irisEnabled = input.required<boolean>();
 }
