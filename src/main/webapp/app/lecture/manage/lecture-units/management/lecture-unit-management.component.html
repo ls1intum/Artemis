@@ -15,7 +15,12 @@
         }
         <div class="component-container" cdkDropList (cdkDropListDropped)="drop($event)">
             @for (lectureUnit of lectureUnits; track identify(i, lectureUnit); let i = $index) {
-                <div class="lecture-unit-container" [class.attachment]="lectureUnit.type === LectureUnitType.ATTACHMENT_VIDEO" cdkDrag>
+                <div
+                    class="lecture-unit-container"
+                    [class.attachment]="lectureUnit.type === LectureUnitType.ATTACHMENT_VIDEO"
+                    [style.margin-top]="getContainerMarginTop(lectureUnit)"
+                    cdkDrag
+                >
                     <div class="custom-handle d-none d-sm-flex">
                         <svg viewBox="3 1 5 13" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <circle cx="4.5" cy="2.5" r=".6" fill="currentColor" />
@@ -42,28 +47,57 @@
                                 }}
                             </div>
 
+                            <!-- Transcription + Processing badges in a row -->
                             @if (lectureUnit.type === LectureUnitType.ATTACHMENT_VIDEO) {
-                                @if (isTranscriptionPending(lectureUnit)) {
-                                    <div class="badge bg-info">
-                                        <fa-icon [icon]="faSpinner" animation="spin" class="me-1" />
-                                        <span jhiTranslate="artemisApp.attachmentVideoUnit.transcriptionProcessing"></span>
-                                    </div>
-                                } @else if (isTranscriptionFailed(lectureUnit)) {
-                                    <div class="badge bg-danger">
-                                        <fa-icon [icon]="faExclamationTriangle" class="me-1" />
-                                        <span jhiTranslate="artemisApp.attachmentVideoUnit.transcriptionFailed"></span>
-                                    </div>
-                                } @else if (hasTranscription(lectureUnit)) {
-                                    <div class="badge bg-success">
-                                        <fa-icon [icon]="faFileLines" class="me-1" />
-                                        <span jhiTranslate="artemisApp.attachmentVideoUnit.hasTranscription"></span>
-                                    </div>
-                                } @else if (canGenerateTranscription(lectureUnit)) {
-                                    <div class="badge bg-info">
-                                        <fa-icon [icon]="faFileLines" class="me-1" />
-                                        <span jhiTranslate="artemisApp.attachmentVideoUnit.transcriptAvailable"></span>
-                                    </div>
-                                }
+                                <div class="d-flex flex-row gap-1">
+                                    <!-- Transcription Status Badge (hidden when transcribing to avoid redundancy) -->
+                                    @if (!isProcessingTranscribing(lectureUnit)) {
+                                        @if (isTranscriptionPending(lectureUnit)) {
+                                            <div class="badge bg-info">
+                                                <fa-icon [icon]="faSpinner" animation="spin" class="me-1" />
+                                                <span jhiTranslate="artemisApp.attachmentVideoUnit.transcriptionProcessing"></span>
+                                            </div>
+                                        } @else if (isTranscriptionFailed(lectureUnit)) {
+                                            <div class="badge bg-danger">
+                                                <fa-icon [icon]="faExclamationTriangle" class="me-1" />
+                                                <span jhiTranslate="artemisApp.attachmentVideoUnit.transcriptionFailed"></span>
+                                            </div>
+                                        } @else if (hasTranscription(lectureUnit)) {
+                                            <div class="badge bg-success">
+                                                <fa-icon [icon]="faFileLines" class="me-1" />
+                                                <span jhiTranslate="artemisApp.attachmentVideoUnit.hasTranscription"></span>
+                                            </div>
+                                        }
+                                    }
+
+                                    <!-- Processing Pipeline Status Badge -->
+                                    @if (isAwaitingProcessing(lectureUnit)) {
+                                        <div class="badge bg-secondary">
+                                            <fa-icon [icon]="faClock" class="me-1" />
+                                            <span jhiTranslate="artemisApp.attachmentVideoUnit.awaitingProcessing"></span>
+                                        </div>
+                                    } @else if (isProcessingTranscribing(lectureUnit)) {
+                                        <div class="badge bg-info">
+                                            <fa-icon [icon]="faSpinner" animation="spin" class="me-1" />
+                                            <span jhiTranslate="artemisApp.attachmentVideoUnit.processingTranscribing"></span>
+                                        </div>
+                                    } @else if (isProcessingIngesting(lectureUnit)) {
+                                        <div class="badge bg-info">
+                                            <fa-icon [icon]="faSpinner" animation="spin" class="me-1" />
+                                            <span jhiTranslate="artemisApp.attachmentVideoUnit.processingIngesting"></span>
+                                        </div>
+                                    } @else if (isProcessingFailed(lectureUnit)) {
+                                        <div class="badge bg-danger" [ngbTooltip]="getProcessingErrorKey(lectureUnit) | artemisTranslate">
+                                            <fa-icon [icon]="faExclamationTriangle" class="me-1" />
+                                            <span jhiTranslate="artemisApp.attachmentVideoUnit.processingFailed"></span>
+                                        </div>
+                                    } @else if (isProcessingDone(lectureUnit)) {
+                                        <div class="badge bg-success">
+                                            <fa-icon [icon]="faFileLines" class="me-1" />
+                                            <span jhiTranslate="artemisApp.attachmentVideoUnit.processingComplete"></span>
+                                        </div>
+                                    }
+                                </div>
                             }
                         </div>
                         <div class="mt-2">
@@ -85,36 +119,22 @@
                     </div>
 
                     <div class="d-flex gap-1 flex-column justify-content-center action-buttons" role="group">
-                        <!-- Row 1: Generate Transcription + Send to Iris (only for attachment/video units) -->
-                        @if (lectureUnit.type === LectureUnitType.ATTACHMENT_VIDEO) {
+                        <!-- Row 1: Retry Processing (only for failed attachment/video units, editors+) -->
+                        @if (lecture.isAtLeastEditor && lectureUnit.type === LectureUnitType.ATTACHMENT_VIDEO && isProcessingFailed(lectureUnit)) {
                             <div class="d-flex gap-1 w-100">
                                 <button
                                     type="button"
-                                    class="btn btn-primary btn-sm flex-fill"
-                                    [disabled]="!canGenerateTranscription(lectureUnit)"
-                                    (click)="generateTranscription(lectureUnit)"
-                                    [ngbTooltip]="'artemisApp.attachmentVideoUnit.generateTranscription' | artemisTranslate"
+                                    class="btn btn-warning btn-sm flex-fill"
+                                    [disabled]="isRetryingProcessing[lectureUnit.id!]"
+                                    (click)="retryProcessing(lectureUnit)"
+                                    [ngbTooltip]="'artemisApp.lectureUnit.retryProcessing' | artemisTranslate"
                                 >
-                                    @if (isTranscriptionLoading[lectureUnit.id!]) {
+                                    @if (isRetryingProcessing[lectureUnit.id!]) {
                                         <fa-icon [icon]="faSpinner" animation="spin" />
                                     } @else {
-                                        <fa-icon [icon]="faFileAudio" />
+                                        <fa-icon [icon]="faRepeat" />
                                     }
                                 </button>
-                                @if (!lecture.isTutorialLecture && irisEnabled) {
-                                    <button
-                                        type="button"
-                                        class="btn btn-primary btn-sm flex-fill"
-                                        [ngClass]="{
-                                            error: getIcon(lectureUnit) === faRepeat,
-                                            'btn-success': getIcon(lectureUnit) === faCheckCircle,
-                                        }"
-                                        (click)="onIngestButtonClicked(lectureUnit.id!)"
-                                        [ngbTooltip]="'entity.action.sendToIris' | artemisTranslate"
-                                    >
-                                        <fa-icon [icon]="getIcon(lectureUnit)" />
-                                    </button>
-                                }
                             </div>
                         }
                         <!-- Row 2: View + Linked Competencies -->

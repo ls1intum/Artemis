@@ -6,7 +6,6 @@ import { Lecture, LectureSeriesCreateLectureDTO } from 'app/lecture/shared/entit
 import { AccountService } from 'app/core/auth/account.service';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
 import { convertDateFromClient, convertDateFromServer } from 'app/shared/util/date.utils';
-import { IngestionState } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
 
 type EntityResponseType = HttpResponse<Lecture>;
@@ -97,30 +96,6 @@ export class LectureService {
             );
     }
 
-    /**
-     * triggers the ingestion of All the lectures inside the course specified or one lecture inside of the course
-     *
-     * @param courseId Course containing the lecture(s)
-     * @param lectureId The lecture to be ingested in pyris
-     */
-    ingestLecturesInPyris(courseId: number, lectureId?: number): Observable<HttpResponse<void>> {
-        let params = new HttpParams();
-        if (lectureId !== undefined) {
-            params = params.set('lectureId', lectureId.toString());
-        }
-        return this.http.post<void>(`api/lecture/courses/${courseId}/ingest`, null, {
-            params: params,
-            observe: 'response',
-        });
-    }
-
-    /**
-     * Fetch the ingestion state of all the lectures inside the course specified
-     * @param courseId
-     */
-    getIngestionState(courseId: number): Observable<HttpResponse<Record<number, IngestionState>>> {
-        return this.http.get<Record<number, IngestionState>>(`api/iris/courses/${courseId}/lectures/ingestion-state`, { observe: 'response' });
-    }
     /**
      * Clones and imports the lecture to the course
      *
