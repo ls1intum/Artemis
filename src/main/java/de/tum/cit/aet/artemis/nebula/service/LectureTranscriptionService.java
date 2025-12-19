@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.nebula.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;
@@ -260,13 +261,18 @@ public class LectureTranscriptionService {
 
     /**
      * Cancels a transcription job with the Nebula service and permanently deletes the transcription record.
+     * Does nothing if no transcription exists for the lecture unit.
      *
      * @param lectureUnitId The lecture unit ID to cancel transcription for
-     * @throws ResponseStatusException if the job is not found, cancellation fails, or Nebula returns an invalid response
+     * @throws ResponseStatusException if cancellation fails or Nebula returns an invalid response
      */
     public void cancelNebulaTranscription(Long lectureUnitId) {
-        LectureTranscription transcription = lectureTranscriptionsRepositoryApi.findByLectureUnit_Id(lectureUnitId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No transcription found for lectureUnitId: " + lectureUnitId));
+        Optional<LectureTranscription> transcriptionOpt = lectureTranscriptionsRepositoryApi.findByLectureUnit_Id(lectureUnitId);
+        if (transcriptionOpt.isEmpty()) {
+            log.debug("No transcription found for lectureUnitId: {}, nothing to cancel", lectureUnitId);
+            return;
+        }
+        LectureTranscription transcription = transcriptionOpt.get();
 
         String jobId = transcription.getJobId();
         if (jobId == null) {

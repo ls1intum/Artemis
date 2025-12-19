@@ -61,6 +61,7 @@ class LectureContentProcessingSchedulerTest {
         testUnit.setLecture(testLecture);
 
         testState = new LectureUnitProcessingState(testUnit);
+        testState.setId(1L); // Simulate persisted entity
     }
 
     @Nested

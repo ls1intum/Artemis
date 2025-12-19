@@ -11,6 +11,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.ZonedDateTime;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -480,7 +481,7 @@ class LectureContentProcessingServiceTest {
         }
 
         @Test
-        void shouldIncrementRetryCountOnFailure() {
+        void shouldIncrementRetryCountAndSetRetryEligibleAtOnFailure() {
             // Given
             testState.setPhase(ProcessingPhase.TRANSCRIBING);
             testState.setRetryCount(0);
@@ -493,11 +494,18 @@ class LectureContentProcessingServiceTest {
             when(transcriptionRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(transcription));
             when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
+            ZonedDateTime beforeCall = ZonedDateTime.now();
+
             // When
             service.handleTranscriptionComplete(transcription);
 
             // Then
             assertThat(testState.getRetryCount()).isEqualTo(1);
+            assertThat(testState.getRetryEligibleAt()).isNotNull();
+            // Backoff for retry 1 is 2^1 = 2 minutes
+            ZonedDateTime expectedEligibleAt = beforeCall.plusMinutes(2);
+            assertThat(testState.getRetryEligibleAt()).isAfterOrEqualTo(expectedEligibleAt.minusSeconds(5));
+            assertThat(testState.getRetryEligibleAt()).isBeforeOrEqualTo(expectedEligibleAt.plusSeconds(5));
         }
 
         @Test
@@ -752,6 +760,25 @@ class LectureContentProcessingServiceTest {
 
             // Then: Should start new ingestion job
             verify(irisLectureApi).addLectureUnitToPyrisDB(any());
+        }
+
+        @Test
+        void shouldClearRetryEligibleAtWhenRetryStarts() {
+            // Given: State has retryEligibleAt set (was waiting for retry)
+            testState.setPhase(ProcessingPhase.TRANSCRIBING);
+            testState.setRetryCount(1);
+            testState.scheduleRetry(2); // Sets retryEligibleAt
+            assertThat(testState.getRetryEligibleAt()).isNotNull(); // Precondition
+
+            when(processingStateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            when(tumLiveApi.getTumLivePlaylistLink(any())).thenReturn(Optional.of("https://playlist.m3u8"));
+            when(transcriptionApi.startNebulaTranscription(anyLong(), anyLong(), any())).thenReturn("retry-job");
+
+            // When: Scheduler calls retryTranscription
+            service.retryTranscription(testState);
+
+            // Then: retryEligibleAt should be cleared after successful retry start
+            assertThat(testState.getRetryEligibleAt()).isNull();
         }
     }
 

@@ -127,14 +127,14 @@ public class LectureContentProcessingScheduler {
             return;
         }
 
-        if (freshState.getPhase() != phase) {
-            log.info("State for unit {} changed from {} to {} since batch read, skipping retry", freshState.getLectureUnit().getId(), phase, freshState.getPhase());
-            return;
-        }
-
         if (freshState.getLectureUnit() == null) {
             log.warn("Cannot retry state {} - no associated lecture unit", freshState.getId());
             processingStateRepository.delete(freshState);
+            return;
+        }
+
+        if (freshState.getPhase() != phase) {
+            log.info("State for unit {} changed from {} to {} since batch read, skipping retry", freshState.getLectureUnit().getId(), phase, freshState.getPhase());
             return;
         }
 
@@ -190,6 +190,12 @@ public class LectureContentProcessingScheduler {
             return;
         }
 
+        if (freshState.getLectureUnit() == null) {
+            log.warn("Cannot recover state {} - no associated lecture unit", freshState.getId());
+            processingStateRepository.delete(freshState);
+            return;
+        }
+
         if (freshState.getPhase() != phase) {
             log.info("State for unit {} changed from {} to {} since batch read, skipping recovery", freshState.getLectureUnit().getId(), phase, freshState.getPhase());
             return;
@@ -198,12 +204,6 @@ public class LectureContentProcessingScheduler {
         // Double-check: shouldn't be already scheduled for retry (query excludes these, but defensive)
         if (freshState.getRetryEligibleAt() != null) {
             log.debug("State {} already scheduled for retry, skipping stuck recovery", freshState.getId());
-            return;
-        }
-
-        if (freshState.getLectureUnit() == null) {
-            log.warn("Cannot recover state {} - no associated lecture unit", freshState.getId());
-            processingStateRepository.delete(freshState);
             return;
         }
 

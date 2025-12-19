@@ -398,15 +398,16 @@ public class LectureContentProcessingService {
 
     private void startTranscription(AttachmentVideoUnit unit, LectureUnitProcessingState state, String playlistUrl) {
         try {
-            state.transitionTo(ProcessingPhase.TRANSCRIBING);
-            processingStateRepository.save(state);
-
             NebulaTranscriptionRequestDTO request = new NebulaTranscriptionRequestDTO(playlistUrl, unit.getLecture().getId(), unit.getId());
             transcriptionApi.get().startNebulaTranscription(unit.getLecture().getId(), unit.getId(), request);
-
+            // Transition AFTER successful API call
+            state.transitionTo(ProcessingPhase.TRANSCRIBING);
+            processingStateRepository.save(state);
             log.info("Transcription job started for unit {}", unit.getId());
         }
         catch (Exception e) {
+            // Transition to TRANSCRIBING so scheduler can find and retry it
+            state.transitionTo(ProcessingPhase.TRANSCRIBING);
             log.error("Failed to start transcription for unit {}: {}", unit.getId(), e.getMessage());
             handleTranscriptionFailure(state);
         }
