@@ -16,6 +16,13 @@ import de.tum.cit.aet.artemis.exam.repository.ExamRoomRepository;
 public interface ExamRoomTestRepository extends ExamRoomRepository {
 
     @Query("""
+            SELECT er
+            FROM ExamRoom er
+            LEFT JOIN FETCH er.layoutStrategies
+            """)
+    Set<ExamRoom> findAllExamRoomsWithEagerLayoutStrategies();
+
+    @Query("""
             WITH latestRooms AS (
                 SELECT
                     roomNumber AS roomNumber,

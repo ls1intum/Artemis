@@ -557,7 +557,7 @@ public class ExamRoomService {
      * @return {@code true} iff the {@link #examRoomRepository} contains all the given ids
      */
     public boolean allRoomsExistAndAreNewestVersions(Set<Long> examRoomIds) {
-        return examRoomRepository.findAllIdsOfCurrentExamRooms().containsAll(examRoomIds);
+        return examRoomRepository.findAllIdsOfNewestExamRoomVersions().containsAll(examRoomIds);
     }
 
     /**

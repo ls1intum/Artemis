@@ -13,6 +13,7 @@ import org.springframework.stereotype.Repository;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.room.ExamRoom;
+import de.tum.cit.aet.artemis.exam.domain.room.LayoutStrategy;
 import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomForDistributionDTO;
 
 /**
@@ -22,13 +23,6 @@ import de.tum.cit.aet.artemis.exam.dto.room.ExamRoomForDistributionDTO;
 @Lazy
 @Repository
 public interface ExamRoomRepository extends ArtemisJpaRepository<ExamRoom, Long> {
-
-    @Query("""
-            SELECT er
-            FROM ExamRoom er
-            LEFT JOIN FETCH er.layoutStrategies
-            """)
-    Set<ExamRoom> findAllExamRoomsWithEagerLayoutStrategies();
 
     /**
      * Finds and returns all IDs of outdated and unused exam rooms.
@@ -107,7 +101,7 @@ public interface ExamRoomRepository extends ArtemisJpaRepository<ExamRoom, Long>
             )
             WHERE rowNumber = 1
             """)
-    Set<Long> findAllIdsOfCurrentExamRooms();
+    Set<Long> findAllIdsOfNewestExamRoomVersions();
 
     @EntityGraph(type = EntityGraph.EntityGraphType.LOAD, attributePaths = { "layoutStrategies" })
     Set<ExamRoom> findAllWithEagerLayoutStrategiesByIdIn(Set<Long> ids);
@@ -115,7 +109,7 @@ public interface ExamRoomRepository extends ArtemisJpaRepository<ExamRoom, Long>
     /**
      * Returns a collection of {@link ExamRoomForDistributionDTO}, which are derived from {@link ExamRoom}.
      *
-     * @implNote Uses the same PARTITION BY trick as explained in {@link #findAllIdsOfCurrentExamRooms}
+     * @implNote Uses the same PARTITION BY trick as explained in {@link #findAllIdsOfNewestExamRoomVersions}
      *
      * @return Basic room information for distribution
      */
@@ -183,6 +177,13 @@ public interface ExamRoomRepository extends ArtemisJpaRepository<ExamRoom, Long>
             """)
     boolean existsByRoomNumberAndIsConnectedToExam(@Param("roomNumber") String roomNumber, @Param("examId") long examId);
 
+    /**
+     * Finds all newest versions of {@link ExamRoom}s with eagerly loaded {@link LayoutStrategy}s
+     *
+     * @implNote Uses the same PARTITION BY trick as explained in {@link #findAllIdsOfNewestExamRoomVersions}
+     *
+     * @return Basic room information for distribution
+     */
     @Query("""
             WITH latestRooms AS (
                 SELECT
