@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.ARTEMIS_FILE_PATH_PRE
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.io.ByteArrayOutputStream;
@@ -442,6 +443,35 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         byte[] retrievedContent = request.get(responsePath, HttpStatus.OK, byte[].class);
         assertThat(retrievedContent).isEqualTo(file.getBytes());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testMarkdownFileCacheHeaders() throws Exception {
+        // Upload a markdown file
+        MockMultipartFile file = new MockMultipartFile("file", "test-image.png", "image/png", "test image content".getBytes());
+        JsonNode response = request.postWithMultipartFile("/api/core/markdown-file-upload?keepFileName=false", file.getOriginalFilename(), "file", file, JsonNode.class,
+                HttpStatus.CREATED);
+        String responsePath = response.get("path").asText();
+
+        // Verify cache headers (30 days = 2592000 seconds)
+        mockMvc.perform(get(responsePath)).andExpect(status().isOk()).andExpect(header().string("Cache-Control", "max-age=2592000, public"));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testExamUserSignatureCacheHeaders() throws Exception {
+        var course = courseUtilService.addEmptyCourse();
+        var exam = examUtilService.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course, 1);
+        var user = new ExamUserDTO(TEST_PREFIX + "student1", null, null, null, null, null, "", "", true, true, true, true, null, null, null, null, null, null, null, null);
+        var file = new MockMultipartFile("file", "signature.png", "image/png", "signature data".getBytes());
+
+        ExamUser examUser = request.postWithMultipartFile("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/exam-users", user, "examUserDTO", file,
+                ExamUser.class, HttpStatus.OK);
+        String requestUrl = String.format("%s%s", ARTEMIS_FILE_PATH_PREFIX, examUser.getSigningImagePath());
+
+        // Verify cache headers (30 days = 2592000 seconds)
+        mockMvc.perform(get(requestUrl)).andExpect(status().isOk()).andExpect(header().string("Cache-Control", "max-age=2592000, public"));
     }
 
 }

@@ -1,0 +1,34 @@
+---
+id: grading
+title: Grading
+sidebar_label: Grading
+---
+
+import Image, {ImageSize} from "../../src/components/Image/Image";
+import courseStatisticsAttainableImg from "./assets/grading/course_statistics_attainable.png";
+
+# Grading
+
+Artemis allows instructors to define grading keys for courses and exams.
+When the grading key is defined, the total points obtained by a student from all exercises are calculated and mapped to a grade.
+
+Grading Keys can be:
+
+- `Grade`
+- `Bonus`
+
+There are two special failing grades:
+
+- `Plagiarism Grade` (default `U`)
+- `No-participation Grade` (default `X`)
+
+---
+
+## Students
+
+During a semester, students can see their grade based on attainable points for a course.
+Attainable points are the sum of the maximum points for all exercises assessed so far, independent of a student's participation.
+
+> **Note:** The :ref:`Grades section <exam_grades>` explains reading grade boundaries.
+
+<Image src={courseStatisticsAttainableImg} alt={"Bonus Grade in Course Statistics"} size={ImageSize.large} />
