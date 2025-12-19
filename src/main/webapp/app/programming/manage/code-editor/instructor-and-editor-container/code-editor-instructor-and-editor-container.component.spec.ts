@@ -619,21 +619,34 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Inline Comments', ()
     });
 
     it('should cancel inline comment apply operation when no comment is applying', () => {
-        // When no comment is being applied, calling cancel should not call updateStatus
+        // Capture initial state
+        const errorSpy = jest.spyOn(alertService, 'error');
+        const successSpy = jest.spyOn(alertService, 'success');
+
+        // When no comment is being applied, calling cancel should be a safe no-op
         comp.onCancelInlineCommentApply();
 
-        // updateStatus should not be called when there's no applying comment
+        // Positive assertions: verify no service interactions occurred
         expect(mockInlineCommentService.updateStatus).not.toHaveBeenCalled();
+        // Verify no alerts were shown (method completed without errors)
+        expect(errorSpy).not.toHaveBeenCalled();
+        expect(successSpy).not.toHaveBeenCalled();
     });
 
     it('should not call refinement when applying empty comment list', () => {
-        // Configure mock to return empty list
+        // Capture initial state
+        const errorSpy = jest.spyOn(alertService, 'error');
+        // Configure mock to return empty array signal
         mockInlineCommentService.getPendingComments.mockReturnValue(() => []);
 
         comp.applyAllComments();
 
-        // Verify no API call is made with empty comments
+        // Verify early return - no API calls or status updates
         expect(mockInlineCommentService.updateStatus).not.toHaveBeenCalled();
+        // Verify showDiff state unchanged (method returned early)
+        expect(comp.showDiff()).toBeFalse();
+        // Verify no error alert was shown (clean early return)
+        expect(errorSpy).not.toHaveBeenCalled();
     });
 
     it('should show error when applying comments without course id', () => {
