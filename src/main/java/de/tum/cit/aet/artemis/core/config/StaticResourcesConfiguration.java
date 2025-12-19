@@ -21,16 +21,25 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import tech.jhipster.config.JHipsterProperties;
 
 /**
- * Configures serving of static resources from /public from both the resources folder and the host file system.
+ * Configures serving and caching of static resources.
+ * <p>
+ * This includes:
+ * <ul>
+ * <li>Static resources from /public (both classpath and file system)</li>
+ * <li>Uploaded files such as course icons, profile pictures, drag-and-drop images, markdown files, and exam user images</li>
+ * </ul>
+ * <p>
+ * Cache control headers are set to enable browser caching for these resources, improving performance
+ * by reducing redundant downloads of unchanged files.
  */
 @Profile(PROFILE_CORE)
 @Configuration
 @Lazy
-public class PublicResourcesConfiguration implements WebMvcConfigurer {
+public class StaticResourcesConfiguration implements WebMvcConfigurer {
 
     private final JHipsterProperties jHipsterProperties;
 
-    public PublicResourcesConfiguration(JHipsterProperties jHipsterProperties) {
+    public StaticResourcesConfiguration(JHipsterProperties jHipsterProperties) {
         this.jHipsterProperties = jHipsterProperties;
     }
 
@@ -64,6 +73,13 @@ public class PublicResourcesConfiguration implements WebMvcConfigurer {
                 .setCacheControl(defaultCacheControl);
 
         registry.addResourceHandler("/drag-and-drop/**").addResourceLocations("file:" + fileUploadPath + "/images/drag-and-drop/").setCacheControl(defaultCacheControl);
+
+        registry.addResourceHandler("/markdown/**").addResourceLocations("file:" + fileUploadPath + "/markdown/").setCacheControl(defaultCacheControl);
+
+        registry.addResourceHandler("/exam-user/signatures/**").addResourceLocations("file:" + fileUploadPath + "/images/exam-user/signatures/")
+                .setCacheControl(defaultCacheControl);
+
+        registry.addResourceHandler("/exam-user/**").addResourceLocations("file:" + fileUploadPath + "/images/exam-user/").setCacheControl(defaultCacheControl);
     }
 
     /**

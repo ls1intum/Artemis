@@ -27,6 +27,7 @@ import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.CourseChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.ExerciseChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.FaqIngestionWebhookJob;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureIngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.PyrisJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.TutorSuggestionJob;
@@ -125,6 +126,13 @@ public class PyrisJobService {
     public String addTutorSuggestionJob(Long postId, Long courseId, Long sessionId) {
         var token = generateJobIdToken();
         var job = new TutorSuggestionJob(token, postId, courseId, sessionId, null, null, null);
+        getPyrisJobMap().put(token, job);
+        return token;
+    }
+
+    public String addLectureChatJob(Long courseId, Long lectureId, Long sessionId, Long userMessageId) {
+        var token = generateJobIdToken();
+        var job = new LectureChatJob(token, courseId, lectureId, sessionId, null, userMessageId, null);
         getPyrisJobMap().put(token, job);
         return token;
     }
