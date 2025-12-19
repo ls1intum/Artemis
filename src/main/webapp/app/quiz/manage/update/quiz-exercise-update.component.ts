@@ -226,7 +226,6 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         const newQuiz = new QuizExercise(undefined, undefined);
         newQuiz.title = '';
         newQuiz.duration = 600;
-        newQuiz.isOpenForPractice = false;
         newQuiz.releaseDate = dayjs();
         newQuiz.randomizeQuestionOrder = true;
         newQuiz.quizQuestions = [];

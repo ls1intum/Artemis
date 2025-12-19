@@ -71,7 +71,6 @@ class QuizExerciseVersionIntegrationTest extends AbstractQuizExerciseIntegration
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testImportQuizExercise_createsExerciseVersion() throws Exception {
         QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
-        quizExercise.setIsOpenForPractice(true);
         quizExerciseService.handleDndQuizFileCreation(quizExercise,
                 List.of(new MockMultipartFile("files", "drag-and-drop/drag-items/dragItemImage2.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes()),
                         new MockMultipartFile("files", "drag-and-drop/drag-items/dragItemImage4.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes())));
@@ -121,7 +120,7 @@ class QuizExerciseVersionIntegrationTest extends AbstractQuizExerciseIntegration
     }
 
     @ParameterizedTest
-    @EnumSource(value = QuizAction.class, names = { "START_NOW", "END_NOW", "SET_VISIBLE", "OPEN_FOR_PRACTICE" })
+    @EnumSource(value = QuizAction.class, names = { "START_NOW", "END_NOW", "SET_VISIBLE" })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testPerformActionForQuizExercise_createsExerciseVersion(QuizAction action) throws Exception {
         QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
@@ -134,9 +133,6 @@ class QuizExerciseVersionIntegrationTest extends AbstractQuizExerciseIntegration
                 break;
             case SET_VISIBLE:
                 quizExercise.setReleaseDate(ZonedDateTime.now().plusHours(10));
-                break;
-            case OPEN_FOR_PRACTICE:
-                quizExercise.setDueDate(ZonedDateTime.now().minusHours(10));
                 break;
             default:
                 return;
