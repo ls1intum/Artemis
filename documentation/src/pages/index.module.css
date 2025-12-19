@@ -16,13 +16,51 @@
   }
 }
 
-.buttons {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 1rem;
+.tilesContainer {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2rem;
+  margin-top: 3rem;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
-.buttons:last-child {
-  margin-bottom: 0;
+@media screen and (max-width: 768px) {
+  .tilesContainer {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    margin-top: 2rem;
+  }
+}
+
+.tile {
+  text-decoration: none;
+  transition: background-color 0.3s ease;
+}
+
+.tile:hover {
+  background-color: var(--ifm-color-primary-lightest);
+  text-decoration: none;
+}
+
+.tile .card__body {
+  text-align: center;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.tileIcon {
+  color: var(--ifm-color-primary);
+  margin-bottom: 0.5rem;
+}
+
+.tileTitle {
+  font-size: 1.75rem;
+  font-weight: bold;
+  margin: 0;
+  color: var(--ifm-color-emphasis-900);
 }
