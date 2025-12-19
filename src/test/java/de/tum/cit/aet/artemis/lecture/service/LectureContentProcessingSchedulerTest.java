@@ -19,6 +19,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState;
@@ -40,6 +42,8 @@ class LectureContentProcessingSchedulerTest {
 
     private LectureContentProcessingService processingService;
 
+    private FeatureToggleService featureToggleService;
+
     private AttachmentVideoUnit testUnit;
 
     private LectureUnitProcessingState testState;
@@ -49,8 +53,12 @@ class LectureContentProcessingSchedulerTest {
         processingStateRepository = mock(LectureUnitProcessingStateRepository.class);
         attachmentVideoUnitRepository = mock(AttachmentVideoUnitTestRepository.class);
         processingService = mock(LectureContentProcessingService.class);
+        featureToggleService = mock(FeatureToggleService.class);
 
-        scheduler = new LectureContentProcessingScheduler(processingStateRepository, attachmentVideoUnitRepository, processingService);
+        // Enable the feature toggle by default
+        when(featureToggleService.isFeatureEnabled(Feature.LectureContentProcessing)).thenReturn(true);
+
+        scheduler = new LectureContentProcessingScheduler(processingStateRepository, attachmentVideoUnitRepository, processingService, featureToggleService);
 
         // Set up test data
         Lecture testLecture = new Lecture();

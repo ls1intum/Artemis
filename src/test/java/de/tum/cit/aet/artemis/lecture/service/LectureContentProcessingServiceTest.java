@@ -19,6 +19,8 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.iris.api.IrisLectureApi;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
@@ -58,6 +60,8 @@ class LectureContentProcessingServiceTest {
 
     private IrisLectureApi irisLectureApi;
 
+    private FeatureToggleService featureToggleService;
+
     private AttachmentVideoUnit testUnit;
 
     private Lecture testLecture;
@@ -71,9 +75,13 @@ class LectureContentProcessingServiceTest {
         transcriptionApi = mock(LectureTranscriptionApi.class);
         tumLiveApi = mock(TumLiveApi.class);
         irisLectureApi = mock(IrisLectureApi.class);
+        featureToggleService = mock(FeatureToggleService.class);
+
+        // Enable the feature toggle by default
+        when(featureToggleService.isFeatureEnabled(Feature.LectureContentProcessing)).thenReturn(true);
 
         service = new LectureContentProcessingService(processingStateRepository, transcriptionRepository, Optional.of(transcriptionApi), Optional.of(tumLiveApi),
-                Optional.of(irisLectureApi));
+                Optional.of(irisLectureApi), featureToggleService);
 
         // Set up test data
         testLecture = new Lecture();
@@ -791,7 +799,7 @@ class LectureContentProcessingServiceTest {
         void shouldSkipTranscriptionWhenNebulaNotAvailable() {
             // Given: Service created without transcription API
             service = new LectureContentProcessingService(processingStateRepository, transcriptionRepository, Optional.empty(), // No transcription API
-                    Optional.of(tumLiveApi), Optional.of(irisLectureApi));
+                    Optional.of(tumLiveApi), Optional.of(irisLectureApi), featureToggleService);
 
             Attachment pdfAttachment = new Attachment();
             pdfAttachment.setLink("/path/to/file.pdf");
@@ -814,7 +822,7 @@ class LectureContentProcessingServiceTest {
         void shouldSkipPlaylistCheckWhenTumLiveNotAvailable() {
             // Given: Service created without TUM Live API
             service = new LectureContentProcessingService(processingStateRepository, transcriptionRepository, Optional.of(transcriptionApi), Optional.empty(), // No TUM Live API
-                    Optional.of(irisLectureApi));
+                    Optional.of(irisLectureApi), featureToggleService);
 
             Attachment pdfAttachment = new Attachment();
             pdfAttachment.setLink("/path/to/file.pdf");
@@ -836,7 +844,7 @@ class LectureContentProcessingServiceTest {
         void shouldNotCancelOnNebulaWhenApiNotAvailable() {
             // Given: Service created without transcription API
             service = new LectureContentProcessingService(processingStateRepository, transcriptionRepository, Optional.empty(), // No transcription API
-                    Optional.of(tumLiveApi), Optional.of(irisLectureApi));
+                    Optional.of(tumLiveApi), Optional.of(irisLectureApi), featureToggleService);
 
             testState.setPhase(ProcessingPhase.TRANSCRIBING);
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
@@ -854,7 +862,7 @@ class LectureContentProcessingServiceTest {
         void shouldStillTranscribeWhenIrisNotAvailable() {
             // Given: Service created WITHOUT Iris API but WITH Nebula (transcription only deployment)
             service = new LectureContentProcessingService(processingStateRepository, transcriptionRepository, Optional.of(transcriptionApi), Optional.of(tumLiveApi),
-                    Optional.empty()); // No Iris API
+                    Optional.empty(), featureToggleService); // No Iris API
 
             // Unit has video (can transcribe) - transcription should still happen
             when(processingStateRepository.findByLectureUnit_Id(testUnit.getId())).thenReturn(Optional.of(testState));
@@ -873,7 +881,7 @@ class LectureContentProcessingServiceTest {
         void shouldSkipProcessingWhenNeitherNebulaNorIrisAvailable() {
             // Given: Service with NO Iris and NO Nebula (no processing possible)
             service = new LectureContentProcessingService(processingStateRepository, transcriptionRepository, Optional.empty(), // No Nebula
-                    Optional.of(tumLiveApi), Optional.empty()); // No Iris
+                    Optional.of(tumLiveApi), Optional.empty(), featureToggleService); // No Iris
 
             Attachment pdfAttachment = new Attachment();
             pdfAttachment.setLink("/path/to/file.pdf");
@@ -891,7 +899,7 @@ class LectureContentProcessingServiceTest {
         void shouldSkipPdfOnlyUnitWhenIrisNotAvailable() {
             // Given: Service WITHOUT Iris, unit has only PDF (no video)
             service = new LectureContentProcessingService(processingStateRepository, transcriptionRepository, Optional.of(transcriptionApi), Optional.of(tumLiveApi),
-                    Optional.empty()); // No Iris API
+                    Optional.empty(), featureToggleService); // No Iris API
 
             testUnit.setVideoSource(null); // No video
             Attachment pdfAttachment = new Attachment();
@@ -910,7 +918,7 @@ class LectureContentProcessingServiceTest {
         void shouldGoToIdleWhenNebulaUnavailableAndNoPdf() {
             // Given: Service without Nebula, unit has video but no PDF
             service = new LectureContentProcessingService(processingStateRepository, transcriptionRepository, Optional.empty(), // No transcription API
-                    Optional.of(tumLiveApi), Optional.of(irisLectureApi));
+                    Optional.of(tumLiveApi), Optional.of(irisLectureApi), featureToggleService);
 
             testUnit.setAttachment(null); // No PDF
 

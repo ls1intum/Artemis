@@ -14,6 +14,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState;
 import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
@@ -65,11 +67,14 @@ public class LectureContentProcessingScheduler {
 
     private final LectureContentProcessingService processingService;
 
+    private final FeatureToggleService featureToggleService;
+
     public LectureContentProcessingScheduler(LectureUnitProcessingStateRepository processingStateRepository, AttachmentVideoUnitRepository attachmentVideoUnitRepository,
-            LectureContentProcessingService processingService) {
+            LectureContentProcessingService processingService, FeatureToggleService featureToggleService) {
         this.processingStateRepository = processingStateRepository;
         this.attachmentVideoUnitRepository = attachmentVideoUnitRepository;
         this.processingService = processingService;
+        this.featureToggleService = featureToggleService;
     }
 
     /**
@@ -86,6 +91,11 @@ public class LectureContentProcessingScheduler {
      */
     @Scheduled(fixedRate = 300000) // 5 minutes
     public void processScheduledRetries() {
+        if (!featureToggleService.isFeatureEnabled(Feature.LectureContentProcessing)) {
+            log.debug("LectureContentProcessing feature is disabled, skipping scheduled retries");
+            return;
+        }
+
         log.debug("Checking for processing states that need attention...");
 
         // First, handle stuck states where callback was never received (increments retry count)
@@ -236,6 +246,11 @@ public class LectureContentProcessingScheduler {
      */
     @Scheduled(fixedRate = 900000) // 15 minutes
     public void backfillUnprocessedUnits() {
+        if (!featureToggleService.isFeatureEnabled(Feature.LectureContentProcessing)) {
+            log.debug("LectureContentProcessing feature is disabled, skipping backfill");
+            return;
+        }
+
         if (!processingService.hasProcessingCapabilities()) {
             log.debug("No processing services available, skipping backfill");
             return;

@@ -18,6 +18,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.iris.api.IrisLectureApi;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
@@ -60,13 +62,17 @@ public class LectureContentProcessingService {
 
     private final Optional<IrisLectureApi> irisLectureApi;
 
+    private final FeatureToggleService featureToggleService;
+
     public LectureContentProcessingService(LectureUnitProcessingStateRepository processingStateRepository, LectureTranscriptionRepository transcriptionRepository,
-            Optional<LectureTranscriptionApi> transcriptionApi, Optional<TumLiveApi> tumLiveApi, Optional<IrisLectureApi> irisLectureApi) {
+            Optional<LectureTranscriptionApi> transcriptionApi, Optional<TumLiveApi> tumLiveApi, Optional<IrisLectureApi> irisLectureApi,
+            FeatureToggleService featureToggleService) {
         this.processingStateRepository = processingStateRepository;
         this.transcriptionRepository = transcriptionRepository;
         this.transcriptionApi = transcriptionApi;
         this.tumLiveApi = tumLiveApi;
         this.irisLectureApi = irisLectureApi;
+        this.featureToggleService = featureToggleService;
     }
 
     /**
@@ -98,6 +104,11 @@ public class LectureContentProcessingService {
      * @param unit the attachment video unit to process
      */
     public void triggerProcessing(AttachmentVideoUnit unit) {
+        if (!featureToggleService.isFeatureEnabled(Feature.LectureContentProcessing)) {
+            log.debug("LectureContentProcessing feature is disabled, skipping processing");
+            return;
+        }
+
         if (unit == null || unit.getId() == null) {
             log.warn("Cannot process null or unsaved lecture unit");
             return;
