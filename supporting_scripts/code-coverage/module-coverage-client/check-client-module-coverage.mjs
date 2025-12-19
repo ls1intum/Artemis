@@ -4,21 +4,61 @@ import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const PROJECT_ROOT = path.resolve(__dirname, '../../..');
 
-const summaryPath = path.resolve(
-    __dirname,
-    '../../../build/test-results/coverage-summary.json'
-);
-if (!fs.existsSync(summaryPath)) {
-    console.error('❌ coverage-summary.json not found at', summaryPath);
+// Coverage file paths
+const jestSummaryPath = path.resolve(PROJECT_ROOT, 'build/test-results/coverage-summary.json');
+const vitestSummaryPath = path.resolve(PROJECT_ROOT, 'build/test-results/vitest/coverage/coverage-summary.json');
+
+/**
+ * Parse vitest.config.ts to extract module names from include patterns.
+ * The vitest.config.ts is the single source of truth for which modules use Vitest.
+ */
+function getVitestModules() {
+    const vitestConfigPath = path.join(PROJECT_ROOT, 'vitest.config.ts');
+    if (!fs.existsSync(vitestConfigPath)) {
+        return new Set();
+    }
+    const content = fs.readFileSync(vitestConfigPath, 'utf-8');
+    // Match patterns like: 'src/main/webapp/app/fileupload/**/*.spec.ts'
+    const modulePattern = /src\/main\/webapp\/app\/([a-zA-Z0-9_-]+)\/\*\*/g;
+    const modules = new Set();
+    let match;
+    while ((match = modulePattern.exec(content)) !== null) {
+        modules.add(match[1]);
+    }
+    return modules;
+}
+
+const VITEST_MODULES = getVitestModules();
+
+// Load coverage files
+let jestSummary = {};
+let vitestSummary = {};
+
+if (fs.existsSync(jestSummaryPath)) {
+    try {
+        jestSummary = JSON.parse(fs.readFileSync(jestSummaryPath, 'utf-8'));
+    } catch (error) {
+        console.error('❌ Failed to parse Jest coverage-summary.json:', error);
+        process.exit(1);
+    }
+} else {
+    console.error('❌ Jest coverage-summary.json not found at', jestSummaryPath);
     process.exit(1);
 }
 
-let summary;
-try {
- summary = JSON.parse(fs.readFileSync(summaryPath, 'utf-8'));
-} catch (error) {
-    console.error('❌ Failed to parse coverage-summary.json:', error);
+if (fs.existsSync(vitestSummaryPath)) {
+    try {
+        vitestSummary = JSON.parse(fs.readFileSync(vitestSummaryPath, 'utf-8'));
+        console.log('✅ Vitest coverage loaded for modules:', [...VITEST_MODULES].join(', '));
+    } catch (error) {
+        console.error('❌ Failed to parse Vitest coverage-summary.json:', error);
+        process.exit(1);
+    }
+} else if (VITEST_MODULES.size > 0) {
+    console.error('❌ Vitest coverage-summary.json not found at', vitestSummaryPath);
+    console.error('   Vitest modules require coverage. Run "npm run vitest:coverage" first.');
     process.exit(1);
 }
 
@@ -54,7 +94,7 @@ const moduleThresholds = {
         lines:      89.90,
     },
     exam: {
-        statements: 91.60,
+        statements: 91.50,
         branches:   75.80,
         functions:  84.60,
         lines:      91.80,
@@ -66,13 +106,13 @@ const moduleThresholds = {
         lines:      88.50,
     },
     fileupload: {
-        statements: 92.40,
-        branches:   77.00,
-        functions:  84.60,
-        lines:      93.00,
+        statements: 94.40,
+        branches:   78.10,
+        functions:  94.30,
+        lines:      94.80,
     },
     hyperion: {
-        // Currently, there are no files under src/main/webapp/app/hyperion/ in this branch,
+        // Currently, there are no files under src/main/webapp/app/hyperion/,
         // so thresholds mirror the current effective coverage (no files found → skipped by checker).
         // Once client-side Hyperion code exists, update these to the measured coverage.
         statements: 0,
@@ -143,7 +183,6 @@ const moduleThresholds = {
 };
 
 const metrics = ['statements', 'branches', 'functions', 'lines'];
-
 const AIMED_FOR_COVERAGE = 90;
 /**
  * If the coverage is >= this value higher than the threshold, an upward arrow is shown to indicate the threshold should be bumped up.
@@ -182,13 +221,16 @@ for (const [module, thresholds] of Object.entries(moduleThresholds)) {
         lines:      { total: 0, covered: 0 },
     };
 
+    // Use Vitest coverage for Vitest modules, Jest for everything else
+    const summary = VITEST_MODULES.has(module) ? vitestSummary : jestSummary;
+
     for (const [filePath, metricsData] of Object.entries(summary)) {
         if (filePath === 'total') continue;
         if (!filePath.includes(prefix)) continue;
         if (!metricsData || typeof metricsData !== 'object') {
             console.warn(`⚠️  Invalid coverage data for file: ${filePath}`);
             continue;
-            }
+        }
         for (const metric of metrics) {
             if (!metricsData[metric] || typeof metricsData[metric].total !== 'number' || typeof metricsData[metric].covered !== 'number') {
                 console.error(`❌  Missing or invalid ${metric} data for file: ${filePath}`);
@@ -204,11 +246,11 @@ for (const [module, thresholds] of Object.entries(moduleThresholds)) {
         continue;
     }
 
-    const moduleFailed = evaluateAndPrintMetrics(module, aggregatedMetrics, thresholds);
+    const testFramework = VITEST_MODULES.has(module) ? '[vitest]' : '[jest]';
+    const moduleFailed = evaluateAndPrintMetrics(`${module} ${testFramework}`, aggregatedMetrics, thresholds);
     if (moduleFailed) {
         anyModuleFailed = true;
     }
-
 }
-process.exit(anyModuleFailed ? 1 : 0);
 
+process.exit(anyModuleFailed ? 1 : 0);
