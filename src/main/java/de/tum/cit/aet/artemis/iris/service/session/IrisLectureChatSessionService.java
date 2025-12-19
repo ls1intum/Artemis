@@ -24,7 +24,6 @@ import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.lecture.PyrisLectureChatStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.TrackedSessionBasedPyrisJob;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
@@ -101,16 +100,14 @@ public class IrisLectureChatSessionService extends AbstractIrisChatSessionServic
     }
 
     /**
-     * Handles the status update of a LectureChatJob by converting the lecture-specific status update
-     * to a generic PyrisChatStatusUpdateDTO and delegating to the superclass.
+     * Handles the status update of a LectureChatJob by delegating to the superclass.
      *
      * @param job          The job that was executed
-     * @param statusUpdate The lecture-specific status update of the job
+     * @param statusUpdate The status update of the job
      * @return the same job record or a new job record with the same job id if changes were made
      */
-    public TrackedSessionBasedPyrisJob handleStatusUpdate(LectureChatJob job, PyrisLectureChatStatusUpdateDTO statusUpdate) {
-        var enrichedUpdate = new PyrisChatStatusUpdateDTO(statusUpdate.result(), statusUpdate.stages(), statusUpdate.sessionTitle(), null, null, null, null);
-        return handleStatusUpdate(job, enrichedUpdate);
+    public TrackedSessionBasedPyrisJob handleStatusUpdate(LectureChatJob job, PyrisChatStatusUpdateDTO statusUpdate) {
+        return handleStatusUpdate((TrackedSessionBasedPyrisJob) job, statusUpdate);
     }
 
     /**
