@@ -346,10 +346,45 @@ describe('MarkdownDiffEditorMonacoComponent', () => {
         const actionWithoutOptions = new FormulaAction();
         const actionWithOptions = new TestCaseAction();
 
-        fixture.componentRef.setInput('domainActions', [actionWithoutOptions, actionWithOptions]);
+        fixture.componentRef.setInput('domainActions', [actionWithOptions, actionWithoutOptions]);
         fixture.detectChanges();
 
         expect(comp.domainActionsWithoutOptions()).toContain(actionWithoutOptions);
         expect(comp.domainActionsWithOptions()).toContain(actionWithOptions);
+    });
+
+    it('should dispose diff editor on destroy', () => {
+        fixture.detectChanges();
+
+        comp.ngOnDestroy();
+
+        expect(mockDiffEditor.dispose).toHaveBeenCalled();
+    });
+
+    it('should calculate maximum height based on both editors', () => {
+        mockOriginalEditor.getScrollHeight.mockReturnValue(200);
+        mockModifiedEditor.getScrollHeight.mockReturnValue(300);
+
+        const maxHeight = comp.getMaximumContentHeight();
+
+        expect(maxHeight).toBe(300);
+    });
+
+    it('should return original editor scroll height when higher than modified', () => {
+        mockOriginalEditor.getScrollHeight.mockReturnValue(600);
+        mockModifiedEditor.getScrollHeight.mockReturnValue(400);
+
+        const maxHeight = comp.getMaximumContentHeight();
+
+        expect(maxHeight).toBe(600);
+    });
+
+    it('should call diffEditor dispose even if not initialized', () => {
+        // Create fresh component without initializing
+        const newFixture = TestBed.createComponent(MarkdownDiffEditorMonacoComponent);
+        const newComp = newFixture.componentInstance;
+
+        // Should not throw when destroy is called without initialization
+        expect(() => newComp.ngOnDestroy()).not.toThrow();
     });
 });

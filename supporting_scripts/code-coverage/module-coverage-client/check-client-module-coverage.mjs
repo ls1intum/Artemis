@@ -16,7 +16,7 @@ if (!fs.existsSync(summaryPath)) {
 
 let summary;
 try {
- summary = JSON.parse(fs.readFileSync(summaryPath, 'utf-8'));
+    summary = JSON.parse(fs.readFileSync(summaryPath, 'utf-8'));
 } catch (error) {
     console.error('❌ Failed to parse coverage-summary.json:', error);
     process.exit(1);
@@ -25,120 +25,120 @@ try {
 const moduleThresholds = {
     assessment: {
         statements: 90.00,
-        branches:   78.20,
-        functions:  83.30,
-        lines:      90.10,
+        branches: 78.20,
+        functions: 83.30,
+        lines: 90.10,
     },
     atlas: {
         statements: 91.30,
-        branches:   67.10,
-        functions:  84.70,
-        lines:      91.20,
+        branches: 67.10,
+        functions: 84.70,
+        lines: 91.20,
     },
     buildagent: {
         statements: 92.00,
-        branches:   73.60,
-        functions:  85.10,
-        lines:      92.10,
+        branches: 73.60,
+        functions: 85.10,
+        lines: 92.10,
     },
     communication: {
         statements: 92.40,
-        branches:   74.10,
-        functions:  89.50,
-        lines:      92.70,
+        branches: 74.10,
+        functions: 89.50,
+        lines: 92.70,
     },
     core: {
         statements: 89.90,
-        branches:   70.80,
-        functions:  81.70,
-        lines:      89.90,
+        branches: 70.80,
+        functions: 81.70,
+        lines: 89.90,
     },
     exam: {
         statements: 91.50,
-        branches:   75.80,
-        functions:  84.60,
-        lines:      91.80,
+        branches: 75.80,
+        functions: 84.60,
+        lines: 91.80,
     },
     exercise: {
         statements: 88.40,
-        branches:   76.60,
-        functions:  80.20,
-        lines:      88.50,
+        branches: 76.60,
+        functions: 80.20,
+        lines: 88.50,
     },
     fileupload: {
         statements: 92.40,
-        branches:   77.00,
-        functions:  84.60,
-        lines:      93.00,
+        branches: 77.00,
+        functions: 84.60,
+        lines: 93.00,
     },
     hyperion: {
         // Currently, there are no files under src/main/webapp/app/hyperion/ in this branch,
         // so thresholds mirror the current effective coverage (no files found → skipped by checker).
         // Once client-side Hyperion code exists, update these to the measured coverage.
         statements: 0,
-        branches:   0,
-        functions:  0,
-        lines:      0,
+        branches: 0,
+        functions: 0,
+        lines: 0,
     },
     iris: {
         statements: 88.5,
-        branches:   76.5,
-        functions:  84.0,
-        lines:      88.8,
+        branches: 76.5,
+        functions: 84.0,
+        lines: 88.8,
     },
     lecture: {
         statements: 92.50,
-        branches:   76.25,
-        functions:  88.30,
-        lines:      92.40,
+        branches: 76.25,
+        functions: 88.30,
+        lines: 92.40,
     },
     lti: {
         statements: 93.40,
-        branches:   80.80,
-        functions:  88.60,
-        lines:      93.20,
+        branches: 80.80,
+        functions: 88.60,
+        lines: 93.20,
     },
     modeling: {
         statements: 89.00,
-        branches:   73.00,
-        functions:  84.40,
-        lines:      89.20,
+        branches: 73.00,
+        functions: 84.40,
+        lines: 89.20,
     },
     plagiarism: {
         statements: 93.40,
-        branches:   81.90,
-        functions:  87.50,
-        lines:      93.50,
+        branches: 81.90,
+        functions: 87.50,
+        lines: 93.50,
     },
     programming: {
         statements: 89.40,
-        branches:   76.00,
-        functions:  81.20,
-        lines:      89.40,
+        branches: 76.00,
+        functions: 81.20,
+        lines: 89.40,
     },
     quiz: {
         statements: 88.80,
-        branches:   72.10,
-        functions:  82.70,
-        lines:      89.00,
+        branches: 72.10,
+        functions: 82.70,
+        lines: 89.00,
     },
     shared: {
         statements: 88.00,
-        branches:   72.00,
-        functions:  85.60,
-        lines:      87.80,
+        branches: 72.00,
+        functions: 85.60,
+        lines: 87.80,
     },
     text: {
         statements: 89.70,
-        branches:   69.00,
-        functions:  86.00,
-        lines:      90.00,
+        branches: 69.00,
+        functions: 86.00,
+        lines: 90.00,
     },
     tutorialgroup: {
         statements: 92.10,
-        branches:   72.90,
-        functions:  84.50,
-        lines:      92.00,
+        branches: 72.90,
+        functions: 84.50,
+        lines: 92.00,
     },
 };
 
@@ -177,9 +177,9 @@ for (const [module, thresholds] of Object.entries(moduleThresholds)) {
     const prefix = `src/main/webapp/app/${module}/`;
     const aggregatedMetrics = {
         statements: { total: 0, covered: 0 },
-        branches:   { total: 0, covered: 0 },
-        functions:  { total: 0, covered: 0 },
-        lines:      { total: 0, covered: 0 },
+        branches: { total: 0, covered: 0 },
+        functions: { total: 0, covered: 0 },
+        lines: { total: 0, covered: 0 },
     };
 
     for (const [filePath, metricsData] of Object.entries(summary)) {
@@ -188,13 +188,13 @@ for (const [module, thresholds] of Object.entries(moduleThresholds)) {
         if (!metricsData || typeof metricsData !== 'object') {
             console.warn(`⚠️  Invalid coverage data for file: ${filePath}`);
             continue;
-            }
+        }
         for (const metric of metrics) {
             if (!metricsData[metric] || typeof metricsData[metric].total !== 'number' || typeof metricsData[metric].covered !== 'number') {
                 console.error(`❌  Missing or invalid ${metric} data for file: ${filePath}`);
                 continue;
             }
-            aggregatedMetrics[metric].total   += metricsData[metric].total;
+            aggregatedMetrics[metric].total += metricsData[metric].total;
             aggregatedMetrics[metric].covered += metricsData[metric].covered;
         }
     }

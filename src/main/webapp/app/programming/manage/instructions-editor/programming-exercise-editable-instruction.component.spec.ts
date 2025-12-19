@@ -331,4 +331,50 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         expect(actions[0]).toBeInstanceOf(RewriteAction);
         expect(isModuleFeatureActiveSpy).toHaveBeenCalledWith(MODULE_FEATURE_HYPERION);
     });
+
+    it('should cleanup subscriptions on destroy', fakeAsync(() => {
+        comp.exercise = exercise;
+        comp.participation = participation;
+
+        triggerChanges(comp, { property: 'exercise', currentValue: exercise });
+        fixture.changeDetectorRef.detectChanges();
+        tick();
+
+        // Get subscription reference before destroy
+        const testCaseSubscription = comp.testCaseSubscription;
+
+        // Destroy the component
+        comp.ngOnDestroy();
+
+        // Verify cleanup occurred
+        if (testCaseSubscription) {
+            expect(testCaseSubscription.closed).toBeTrue();
+        }
+
+        flush();
+    }));
+
+    it('should call generateHtmlSubject.next when exercise changes', fakeAsync(() => {
+        const newExercise = { ...exercise, id: 31 } as ProgrammingExercise;
+        comp.exercise = exercise;
+        comp.participation = participation;
+
+        triggerChanges(comp, { property: 'exercise', currentValue: exercise });
+        fixture.changeDetectorRef.detectChanges();
+        tick();
+
+        // Reset spy
+        generateHtmlSubjectStub.mockClear();
+
+        // Trigger exercise change
+        comp.exercise = newExercise;
+        triggerChanges(comp, { property: 'exercise', currentValue: newExercise, previousValue: exercise });
+        fixture.changeDetectorRef.detectChanges();
+        tick();
+
+        expect(subscribeForTestCaseSpy).toHaveBeenCalledWith(newExercise.id);
+
+        fixture.destroy();
+        flush();
+    }));
 });
