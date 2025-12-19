@@ -195,6 +195,20 @@ describe('IrisEnabledComponent', () => {
 
             expect(updateSpy).not.toHaveBeenCalled();
         });
+
+        it('should keep optimistic update when response body is null', async () => {
+            const disabledSettings = { ...mockSettings, enabled: false };
+            comp.settings.set(disabledSettings);
+
+            const updateSpy = jest.spyOn(irisSettingsService, 'updateCourseSettings').mockReturnValue(of(new HttpResponse({ body: null })));
+
+            comp.setEnabled(true);
+
+            expect(updateSpy).toHaveBeenCalledOnce();
+            await Promise.resolve();
+            // Optimistic update should remain since response.body was null
+            expect(comp.settings()?.enabled).toBeTrue();
+        });
     });
 
     describe('getSettingsRoute', () => {
