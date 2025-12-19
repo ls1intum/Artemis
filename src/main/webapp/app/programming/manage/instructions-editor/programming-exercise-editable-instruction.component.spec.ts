@@ -354,7 +354,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         flush();
     }));
 
-    it('should call generateHtmlSubject.next when exercise changes', fakeAsync(() => {
+    it('should subscribe for test cases when exercise changes', fakeAsync(() => {
         const newExercise = { ...exercise, id: 31 } as ProgrammingExercise;
         comp.exercise = exercise;
         comp.participation = participation;
