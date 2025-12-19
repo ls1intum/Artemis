@@ -305,6 +305,21 @@ describe('ProgrammingExerciseProblemComponent', () => {
         expect(generateSpy).toHaveBeenCalled();
     });
 
+    it('should handle handleProblemStatementAction for refine', () => {
+        const programmingExercise = new ProgrammingExercise(undefined, undefined);
+        programmingExercise.course = { id: 42 } as any;
+        programmingExercise.problemStatement = 'Existing problem statement'; // Non-empty, should trigger refine
+        fixture.componentRef.setInput('programmingExercise', programmingExercise);
+        fixture.detectChanges(); // Trigger ngOnInit to set currentProblemStatement signal
+
+        const refineSpy = jest.spyOn(comp, 'refineProblemStatement');
+
+        comp.userPrompt = 'Improve this';
+        comp.handleProblemStatementAction();
+
+        expect(refineSpy).toHaveBeenCalled();
+    });
+
     it('should clear all comments', () => {
         comp.clearAllComments();
 
@@ -336,17 +351,17 @@ describe('ProgrammingExerciseProblemComponent', () => {
         expect(mockInlineCommentService.updateStatus).toHaveBeenCalledWith('c1', 'pending');
     });
 
+    it('should cancel inline comment apply operation gracefully', () => {
+        mockInlineCommentService.updateStatus.mockClear();
+
+        comp.onCancelInlineCommentApply();
+
+        expect(mockInlineCommentService.updateStatus).not.toHaveBeenCalled();
+    });
+
     it('should delete inline comment', () => {
         comp.onDeleteInlineComment('c1');
 
         expect(mockInlineCommentService.removeComment).toHaveBeenCalledWith('c1');
-    });
-
-    it('should cancel inline comment apply operation when no comment is applying', () => {
-        // When called with no applying comment, updateStatus should not be called
-        comp.onCancelInlineCommentApply();
-
-        // Verify no service interaction when there's nothing to cancel
-        expect(mockInlineCommentService.updateStatus).not.toHaveBeenCalled();
     });
 });

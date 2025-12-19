@@ -360,36 +360,23 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Code Generation', ()
     });
 
     it('should show timeout warning and cleanup when generation exceeds time limit', async () => {
+        jest.useFakeTimers();
         const addAlertSpy = jest.spyOn(alertService, 'addAlert');
         comp.selectedRepository = RepositoryType.SOLUTION;
         (codeGenerationApi.generateCode as jest.Mock).mockReturnValue(of({ jobId: 'job-7' }));
 
-        // Intercept setTimeout to capture the scheduled callback and invoke it immediately
-        const originalSetTimeout = window.setTimeout;
-        let timeoutCallback: (() => void) | undefined;
-        // @ts-ignore
-        window.setTimeout = ((fn: () => void, _delay?: number) => {
-            timeoutCallback = fn;
-            return 1 as any;
-        }) as any;
+        (ws.subscribeToJob as jest.Mock).mockReturnValue(new Subject<any>().asObservable());
+        comp.generateCode();
+        await Promise.resolve();
+        expect(comp.isGeneratingCode()).toBeTrue();
 
-        try {
-            (ws.subscribeToJob as jest.Mock).mockReturnValue(new Subject<any>().asObservable());
-            comp.generateCode();
-            await Promise.resolve();
-            expect(comp.isGeneratingCode()).toBeTrue();
+        jest.advanceTimersByTime(1_200_000); // 20 minutes - matches component timeout
 
-            // Simulate timeout
-            if (timeoutCallback) {
-                timeoutCallback();
-            }
+        expect(comp.isGeneratingCode()).toBeFalse();
+        expect(ws.unsubscribeFromJob).toHaveBeenCalledWith('job-7');
+        expect(addAlertSpy).toHaveBeenCalledWith(expect.objectContaining({ type: AlertType.WARNING, translationKey: 'artemisApp.programmingExercise.codeGeneration.timeout' }));
 
-            expect(comp.isGeneratingCode()).toBeFalse();
-            expect(ws.unsubscribeFromJob).toHaveBeenCalledWith('job-7');
-            expect(addAlertSpy).toHaveBeenCalledWith(expect.objectContaining({ type: AlertType.WARNING, translationKey: 'artemisApp.programmingExercise.codeGeneration.timeout' }));
-        } finally {
-            window.setTimeout = originalSetTimeout;
-        }
+        jest.useRealTimers();
     });
 });
 
