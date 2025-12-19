@@ -91,22 +91,15 @@ class ExamRoomServiceTest extends AbstractSpringIntegrationIndependentTest {
         var overview = examRoomService.getExamRoomOverview();
 
         assertThat(overview).isNotNull();
-        assertThat(overview.numberOfStoredExamRooms()).isZero();
-        assertThat(overview.numberOfStoredExamSeats()).isZero();
-        assertThat(overview.numberOfStoredLayoutStrategies()).isZero();
         assertThat(overview.newestUniqueExamRooms()).isEmpty();
     }
 
     @Test
-    void testGetExamRoomOverview_insertOnce() {
+    void testGetExamRoomOverview_insertSingleVersionOfRoom() {
         examRoomService.parseAndStoreExamRoomDataFromZipFile(ExamRoomZipFiles.zipFileSingleExamRoom);
         var overview = examRoomService.getExamRoomOverview();
 
         assertThat(overview).isNotNull();
-        assertThat(overview.numberOfStoredExamRooms()).isOne();
-        assertThat(overview.numberOfStoredExamSeats()).isEqualTo(528);
-        assertThat(overview.numberOfStoredLayoutStrategies()).isEqualTo(4);
-
         assertContainsOnlyFriedrichLBauerRoomDTO(overview.newestUniqueExamRooms());
     }
 
@@ -127,16 +120,13 @@ class ExamRoomServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    void testGetExamRoomOverview_insertMultipleTimes() {
+    void testGetExamRoomOverview_insertMultipleVersionsOfRoom() {
         for (int i = 0; i < 3; i++) {
             examRoomService.parseAndStoreExamRoomDataFromZipFile(ExamRoomZipFiles.zipFileSingleExamRoom);
         }
 
         var overview = examRoomService.getExamRoomOverview();
         assertThat(overview).isNotNull();
-        assertThat(overview.numberOfStoredExamRooms()).isEqualTo(3);
-        assertThat(overview.numberOfStoredExamSeats()).isEqualTo(528 * 3);
-        assertThat(overview.numberOfStoredLayoutStrategies()).isEqualTo(4 * 3);
 
         assertContainsOnlyFriedrichLBauerRoomDTO(overview.newestUniqueExamRooms());
     }

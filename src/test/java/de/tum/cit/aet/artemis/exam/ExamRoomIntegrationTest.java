@@ -253,7 +253,7 @@ class ExamRoomIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void testGetExamRoomOverviewEmpty() throws Exception {
         var roomOverview = request.get("/api/exam/rooms/overview", HttpStatus.OK, ExamRoomOverviewDTO.class);
 
-        validateExamRoomOverview(roomOverview, 0, 0, 0);
+        validateExamRoomOverview(roomOverview);
     }
 
     @Test
@@ -263,14 +263,10 @@ class ExamRoomIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         var roomOverview = request.get("/api/exam/rooms/overview", HttpStatus.OK, ExamRoomOverviewDTO.class);
 
-        validateExamRoomOverview(roomOverview, 4, 994, 15, ExamRoomZipFiles.fourExamRoomNames);
+        validateExamRoomOverview(roomOverview, ExamRoomZipFiles.fourExamRoomNames);
     }
 
-    private void validateExamRoomOverview(ExamRoomOverviewDTO roomOverview, int expectedNumberOfStoredRooms, int expectedNumberOfStoredSeats,
-            int expectedNumberOfStoredLayoutStrategies, String... expectedNewRoomNames) {
-        assertThat(roomOverview.numberOfStoredExamRooms()).isEqualTo(expectedNumberOfStoredRooms);
-        assertThat(roomOverview.numberOfStoredExamSeats()).isEqualTo(expectedNumberOfStoredSeats);
-        assertThat(roomOverview.numberOfStoredLayoutStrategies()).isEqualTo(expectedNumberOfStoredLayoutStrategies);
+    private void validateExamRoomOverview(ExamRoomOverviewDTO roomOverview, String... expectedNewRoomNames) {
 
         if (roomOverview.newestUniqueExamRooms() == null) {
             assertThat(expectedNewRoomNames).isEmpty();
@@ -278,15 +274,13 @@ class ExamRoomIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         }
 
         // Here we know that we have newestUniqueExamRooms != null
-        var newestRoomNames = roomOverview.newestUniqueExamRooms().stream().map(ExamRoomDTO::name).toList();
+        List<String> newestRoomNames = roomOverview.newestUniqueExamRooms().stream().map(ExamRoomDTO::name).toList();
         assertThat(newestRoomNames).contains(expectedNewRoomNames);  // we want to test the subset containment
         // because `newestRoomNames` could contain older rooms we didn't upload in the latest run
 
-        var newestUniqueExamRoomsFromDb = examRoomRepository.findAllNewestExamRoomVersionsWithEagerLayoutStrategies().stream().map(er -> new ExamRoomDTO(er.getRoomNumber(),
-                er.getName(), er.getBuilding(), er.getSeats().size(),
-                // Because of the INCLUDE.NON_EMPTY on the admin overview, we need to map to null on empty lists
-                er.getLayoutStrategies().isEmpty() ? null
-                        : er.getLayoutStrategies().stream().map(ls -> new ExamRoomLayoutStrategyDTO(ls.getName(), ls.getType(), ls.getCapacity())).collect(Collectors.toSet())))
+        List<ExamRoomDTO> newestUniqueExamRoomsFromDb = examRoomRepository.findAllNewestExamRoomVersionsWithEagerLayoutStrategies().stream()
+                .map(er -> new ExamRoomDTO(er.getRoomNumber(), er.getName(), er.getBuilding(), er.getSeats().size(),
+                        er.getLayoutStrategies().stream().map(ls -> new ExamRoomLayoutStrategyDTO(ls.getName(), ls.getType(), ls.getCapacity())).collect(Collectors.toSet())))
                 .toList();
 
         assertThat(roomOverview.newestUniqueExamRooms()).containsExactlyInAnyOrderElementsOf(newestUniqueExamRoomsFromDb);
@@ -300,7 +294,7 @@ class ExamRoomIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         }
 
         var roomOverview = request.get("/api/exam/rooms/overview", HttpStatus.OK, ExamRoomOverviewDTO.class);
-        validateExamRoomOverview(roomOverview, 4 * 3, 994 * 3, 15 * 3, ExamRoomZipFiles.fourExamRoomNames);
+        validateExamRoomOverview(roomOverview, ExamRoomZipFiles.fourExamRoomNames);
     }
 
     @Test
@@ -309,7 +303,7 @@ class ExamRoomIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         request.postMultipartFileOnly("/api/exam/rooms/upload", ExamRoomZipFiles.zipFileSingleRoomNoLayouts, HttpStatus.OK);
 
         var roomOverview = request.get("/api/exam/rooms/overview", HttpStatus.OK, ExamRoomOverviewDTO.class);
-        validateExamRoomOverview(roomOverview, 1, 101, 0, ExamRoomZipFiles.singleExamRoomNoLayoutsName);
+        validateExamRoomOverview(roomOverview, ExamRoomZipFiles.singleExamRoomNoLayoutsName);
     }
 
     @Test
@@ -321,7 +315,7 @@ class ExamRoomIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         }
 
         var roomOverview = request.get("/api/exam/rooms/overview", HttpStatus.OK, ExamRoomOverviewDTO.class);
-        validateExamRoomOverview(roomOverview, ITERATIONS, 528 * ITERATIONS, 4 * ITERATIONS, ExamRoomZipFiles.singleExamRoomName);
+        validateExamRoomOverview(roomOverview, ExamRoomZipFiles.singleExamRoomName);
     }
 
     @Test
@@ -331,7 +325,7 @@ class ExamRoomIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         request.postMultipartFileOnly("/api/exam/rooms/upload", ExamRoomZipFiles.zipFileSingleExamRoom, HttpStatus.OK);
 
         var roomOverview = request.get("/api/exam/rooms/overview", HttpStatus.OK, ExamRoomOverviewDTO.class);
-        validateExamRoomOverview(roomOverview, 59 + 1, 14_589 + 528, 212 + 4, ExamRoomZipFiles.singleExamRoomName);
+        validateExamRoomOverview(roomOverview, ExamRoomZipFiles.singleExamRoomName);
     }
 
     /* Tests for the DELETE /exam-rooms/outdated-and-unused endpoint */
