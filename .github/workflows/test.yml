@@ -210,12 +210,24 @@ jobs:
           with:
               name: Coverage Report Client Tests
               path: build/test-results/lcov-report/
+        - name: Upload Vitest Coverage Report
+          if: success() || failure()
+          uses: actions/upload-artifact@v5
+          with:
+              name: Vitest Coverage Report
+              path: build/test-results/vitest/coverage/
         - name: Upload JUnit Test Results
           if: success() || failure()
           uses: actions/upload-artifact@v5
           with:
             name: Client JUnit Test Results
             path: junit.xml
+        - name: Upload Vitest JUnit Test Results
+          if: success() || failure()
+          uses: actions/upload-artifact@v5
+          with:
+            name: Vitest JUnit Test Results
+            path: build/test-results/vitest/junit.xml
 
   client-tests-selected:
       runs-on: ubuntu-latest
