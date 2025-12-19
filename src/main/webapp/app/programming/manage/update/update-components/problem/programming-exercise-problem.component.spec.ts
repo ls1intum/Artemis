@@ -41,6 +41,8 @@ describe('ProgrammingExerciseProblemComponent', () => {
 
     const mockInlineCommentService = {
         getPendingComments: jest.fn(() => () => []),
+        pendingCount: jest.fn(() => 0),
+        hasPendingComments: jest.fn(() => false),
         updateStatus: jest.fn(),
         markApplied: jest.fn(),
         markAllApplied: jest.fn(),
