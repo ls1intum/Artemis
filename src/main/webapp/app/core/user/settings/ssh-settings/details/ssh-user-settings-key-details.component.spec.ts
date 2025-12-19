@@ -65,7 +65,7 @@ describe('SshUserSettingsComponent', () => {
         fixture = TestBed.createComponent(SshUserSettingsKeyDetailsComponent);
         comp = fixture.componentInstance;
         translateService = TestBed.inject(TranslateService);
-        translateService.currentLang = 'en';
+        translateService.use('en');
 
         router = TestBed.inject(Router);
         activatedRoute = TestBed.inject(ActivatedRoute) as unknown as MockActivatedRoute;

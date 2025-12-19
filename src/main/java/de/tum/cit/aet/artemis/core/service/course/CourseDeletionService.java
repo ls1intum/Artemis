@@ -24,6 +24,7 @@ import de.tum.cit.aet.artemis.communication.repository.UserCourseNotificationSet
 import de.tum.cit.aet.artemis.communication.repository.conversation.ConversationRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
+import de.tum.cit.aet.artemis.core.repository.CourseRequestRepository;
 import de.tum.cit.aet.artemis.core.service.user.UserService;
 import de.tum.cit.aet.artemis.exam.api.ExamDeletionApi;
 import de.tum.cit.aet.artemis.exam.api.ExamRepositoryApi;
@@ -86,6 +87,8 @@ public class CourseDeletionService {
 
     private final UserCourseNotificationSettingSpecificationRepository userCourseNotificationSettingSpecificationRepository;
 
+    private final CourseRequestRepository courseRequestRepository;
+
     public CourseDeletionService(ExerciseDeletionService exerciseDeletionService, UserService userService, Optional<LectureApi> lectureApi,
             Optional<TutorialGroupApi> tutorialGroupApi, Optional<ExamDeletionApi> examDeletionApi, Optional<ExamRepositoryApi> examRepositoryApi,
             GradingScaleRepository gradingScaleRepository, Optional<CompetencyRelationApi> competencyRelationApi, Optional<PrerequisitesApi> prerequisitesApi,
@@ -93,7 +96,7 @@ public class CourseDeletionService {
             CourseNotificationRepository courseNotificationRepository, ConversationRepository conversationRepository, FaqRepository faqRepository,
             CourseRepository courseRepository, Optional<CompetencyProgressApi> competencyProgressApi,
             UserCourseNotificationSettingPresetRepository userCourseNotificationSettingPresetRepository,
-            UserCourseNotificationSettingSpecificationRepository userCourseNotificationSettingSpecificationRepository) {
+            UserCourseNotificationSettingSpecificationRepository userCourseNotificationSettingSpecificationRepository, CourseRequestRepository courseRequestRepository) {
         this.exerciseDeletionService = exerciseDeletionService;
         this.userService = userService;
         this.lectureApi = lectureApi;
@@ -113,6 +116,7 @@ public class CourseDeletionService {
         this.competencyProgressApi = competencyProgressApi;
         this.userCourseNotificationSettingPresetRepository = userCourseNotificationSettingPresetRepository;
         this.userCourseNotificationSettingSpecificationRepository = userCourseNotificationSettingSpecificationRepository;
+        this.courseRequestRepository = courseRequestRepository;
     }
 
     /**
@@ -146,8 +150,8 @@ public class CourseDeletionService {
         deleteExamsOfCourse(courseId);
         deleteGradingScaleOfCourse(course);
         deleteFaqsOfCourse(course);
+        deleteCourseRequests(course.getId());
         learnerProfileApi.ifPresent(api -> api.deleteAllForCourse(course));
-        irisSettingsApi.ifPresent(api -> api.deleteSettingsFor(course));
         courseRepository.deleteById(course.getId());
         log.debug("Successfully deleted course {}.", course.getTitle());
     }
@@ -233,4 +237,7 @@ public class CourseDeletionService {
         faqRepository.deleteAllByCourseId(course.getId());
     }
 
+    private void deleteCourseRequests(Long courseId) {
+        courseRequestRepository.deleteAllByCreatedCourseId(courseId);
+    }
 }

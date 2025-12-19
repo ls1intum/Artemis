@@ -66,7 +66,7 @@ describe('ConsistencyCheckComponent', () => {
 
         // WHEN
         component.exercisesToCheck = Array.of(programmingExercise);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         // THEN
         expect(checkConsistencyForProgrammingExerciseStub).toHaveBeenCalledOnce();
@@ -79,7 +79,7 @@ describe('ConsistencyCheckComponent', () => {
 
         // WHEN
         component.exercisesToCheck = programmingExercises;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         // THEN
         expect(checkConsistencyForProgrammingExerciseStub).toHaveBeenCalledTimes(2);

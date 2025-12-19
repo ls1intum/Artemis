@@ -87,7 +87,7 @@ describe('ShortAnswerQuestionComponent', () => {
 
         const sub = component.submittedTextsChange.subscribe((v) => {
             fixture.componentRef.setInput('submittedTexts', v ?? []);
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
         });
 
         component.setSubmittedText();
@@ -131,13 +131,13 @@ describe('ShortAnswerQuestionComponent', () => {
         component.showingSampleSolution.set(true);
 
         fixture.componentRef.setInput('forceSampleSolution', false);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         fixture.componentRef.setInput('forceSampleSolution', true);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(component.showingSampleSolution()).toBeTruthy();
 
         fixture.componentRef.setInput('forceSampleSolution', false);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         component.hideSampleSolution();
 
         expect(component.showingSampleSolution()).toBeFalse();
@@ -153,7 +153,7 @@ describe('ShortAnswerQuestionComponent', () => {
         const tag = '[-spot 1]';
 
         fixture.componentRef.setInput('submittedTexts', [submitted]);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(component.getSubmittedTextSizeForSpot(tag)).toBe(submitted.text.length + 2);
     });
@@ -206,7 +206,7 @@ describe('ShortAnswerQuestionComponent', () => {
         component.shortAnswerQuestion().correctMappings = [];
         expect(component.classifyInputField(tag)).toBe('correct');
         fixture.componentRef.setInput('submittedTexts', []);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(component.classifyInputField(tag)).toBe('wrong');
         spot.invalid = true;
         expect(component.classifyInputField(tag)).toBe('invalid');

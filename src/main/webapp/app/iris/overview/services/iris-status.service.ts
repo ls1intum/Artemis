@@ -9,10 +9,10 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { PROFILE_IRIS } from 'app/app.constants';
 
 /**
- * The `IrisHeartbeatService` is responsible for monitoring the health status of Iris.
+ * The `IrisStatusService` is responsible for monitoring the health status of Iris.
  * It periodically sends HTTP requests to check if the system is available.
  * The availability status is distributed to other services.
- * It also manages the current ratelimts.
+ * It also manages the current rate limits, which are course-specific.
  */
 @Injectable({ providedIn: 'root' })
 export class IrisStatusService implements OnDestroy {
@@ -30,23 +30,36 @@ export class IrisStatusService implements OnDestroy {
 
     currentRatelimitInfoSubject = new BehaviorSubject<IrisRateLimitInformation>(new IrisRateLimitInformation(0, 0, 0));
 
+    private currentCourseId: number | undefined;
+
     /**
-     * Creates an instance of IrisHeartbeatService.
-     * @param websocketService The JhiWebsocketService for managing the websocket connection.
-     * @param httpSessionService The IrisHttpChatSessionService for HTTP operations related to sessions.
+     * Creates an instance of IrisStatusService.
      */
     constructor() {
         if (!this.profileService.isProfileActive(PROFILE_IRIS)) {
             return;
         }
-        this.checkHeartbeat();
+
+        this.websocketStatusSubscription = this.websocketService.connectionState.subscribe((status) => {
+            this.disconnected = !status.connected && status.wasEverConnectedBefore;
+        });
+
+        // Start heartbeat interval (will only fetch if courseId is set)
         this.intervalId = setInterval(() => {
             this.checkHeartbeat();
         }, this.HEARTBEAT_INTERVAL_MS);
+    }
 
-        this.websocketStatusSubscription = this.websocketService.connectionState.subscribe((status) => {
-            this.disconnected = !status.connected && !status.intendedDisconnect && status.wasEverConnectedBefore;
-        });
+    /**
+     * Sets the current course context and fetches updated status.
+     * Should be called when the user navigates to a different course.
+     * @param courseId The course ID to use for status checks
+     */
+    setCurrentCourse(courseId: number): void {
+        if (this.currentCourseId !== courseId) {
+            this.currentCourseId = courseId;
+            this.checkHeartbeat();
+        }
     }
 
     /**
@@ -75,10 +88,11 @@ export class IrisStatusService implements OnDestroy {
 
     /**
      * Checks the availability of Iris by sending a heartbeat request.
+     * Requires a course ID to be set via setCurrentCourse().
      */
     private checkHeartbeat(): void {
-        if (this.disconnected) return;
-        firstValueFrom(this.getIrisStatus()).then((response: HttpResponse<IrisStatusDTO>) => {
+        if (this.disconnected || !this.currentCourseId) return;
+        firstValueFrom(this.getIrisStatus(this.currentCourseId)).then((response: HttpResponse<IrisStatusDTO>) => {
             if (response.body) {
                 this.active = Boolean(response.body.active);
 
@@ -98,14 +112,15 @@ export class IrisStatusService implements OnDestroy {
      */
     ngOnDestroy(): void {
         if (this.intervalId !== undefined) clearInterval(this.intervalId);
-        this.websocketStatusSubscription.unsubscribe();
+        this.websocketStatusSubscription?.unsubscribe();
     }
 
     /**
-     * Checks whether Iris is active.
-     * @return An Observable of the HTTP response containing a boolean value indicating the status.
+     * Checks whether Iris is active for the given course.
+     * @param courseId The course ID to check status for
+     * @return An Observable of the HTTP response containing the status.
      */
-    private getIrisStatus(): Response<IrisStatusDTO> {
-        return this.httpClient.get<IrisStatusDTO>(`api/iris/status`, { observe: 'response' });
+    private getIrisStatus(courseId: number): Response<IrisStatusDTO> {
+        return this.httpClient.get<IrisStatusDTO>(`api/iris/courses/${courseId}/status`, { observe: 'response' });
     }
 }

@@ -1,6 +1,7 @@
 import { CourseConversationsComponent } from 'app/communication/shared/course-conversations/course-conversations.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseInformationSharingConfiguration } from 'app/core/course/shared/entities/course.model';
+import { WebsocketService } from 'app/shared/service/websocket.service';
 import { of } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FeatureActivationComponent } from 'app/shared/feature-activation/feature-activation.component';
@@ -26,6 +27,7 @@ import { MockMetisService } from 'test/helpers/mocks/service/mock-metis-service.
 import { AlertService } from 'app/shared/service/alert.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { EventManager } from 'app/shared/service/event-manager.service';
+import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 
 describe('CourseConversationComponent with communication disabled', () => {
     let component: CourseConversationsComponent;
@@ -72,6 +74,7 @@ describe('CourseConversationComponent with communication disabled', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: MetisConversationService, useClass: MockMetisConversationService },
+                { provide: WebsocketService, useClass: MockWebsocketService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 MockProvider(EventManager),
