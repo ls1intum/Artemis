@@ -17,6 +17,7 @@ import { ProblemStatementGenerationResponse } from 'app/openapi/model/problemSta
 import { AlertService } from 'app/shared/service/alert.service';
 import { ProblemStatementGenerationRequest } from 'app/openapi/model/problemStatementGenerationRequest';
 import { ProblemStatementRefinementResponse } from 'app/openapi/model/problemStatementRefinementResponse';
+import { InlineCommentService } from 'app/shared/monaco-editor/service/inline-comment.service';
 
 describe('ProgrammingExerciseProblemComponent', () => {
     let fixture: ComponentFixture<ProgrammingExerciseProblemComponent>;
@@ -59,6 +60,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: HyperionProblemStatementApiService, useValue: mockHyperionApiService },
                 { provide: AlertService, useValue: mockAlertService },
+                { provide: InlineCommentService, useValue: mockInlineCommentService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -74,9 +76,6 @@ describe('ProgrammingExerciseProblemComponent', () => {
 
         fixture.componentRef.setInput('programmingExercise', new ProgrammingExercise(undefined, undefined));
         fixture.componentRef.setInput('programmingExerciseCreationConfig', programmingExerciseCreationConfigMock);
-
-        // Replace the injected service with our mock
-        (comp as any).inlineCommentService = mockInlineCommentService;
     });
 
     afterEach(() => {
@@ -317,7 +316,14 @@ describe('ProgrammingExerciseProblemComponent', () => {
 
         comp.onSaveInlineComment(comment);
 
-        expect(mockInlineCommentService.addExistingComment).toHaveBeenCalledWith({ ...comment, status: 'pending' });
+        expect(mockInlineCommentService.addExistingComment).toHaveBeenCalledWith({
+            id: comment.id,
+            startLine: comment.startLine,
+            endLine: comment.endLine,
+            instruction: comment.instruction,
+            status: 'pending',
+            createdAt: comment.createdAt,
+        });
     });
 
     it('should update existing inline comment', () => {

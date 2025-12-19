@@ -36,6 +36,7 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { HyperionCodeGenerationApiService } from 'app/openapi/api/hyperionCodeGenerationApi.service';
 import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { InlineCommentService } from 'app/shared/monaco-editor/service/inline-comment.service';
 
 describe('CodeEditorInstructorAndEditorContainerComponent - Code Generation', () => {
     let fixture: ComponentFixture<CodeEditorInstructorAndEditorContainerComponent>;
@@ -572,6 +573,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Inline Comments', ()
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ConsistencyCheckService, useValue: { checkConsistencyForProgrammingExercise: jest.fn() } },
                 { provide: ArtemisIntelligenceService, useValue: { consistencyCheck: jest.fn(), isLoading: () => false } },
+                { provide: InlineCommentService, useValue: mockInlineCommentService },
             ],
         })
             .overrideComponent(CodeEditorInstructorAndEditorContainerComponent, {
@@ -583,9 +585,6 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Inline Comments', ()
         fixture = TestBed.createComponent(CodeEditorInstructorAndEditorContainerComponent);
         comp = fixture.componentInstance;
         comp.exercise = { id: 42, problemStatement: 'Test problem statement', course: { id: 1 } } as any;
-
-        // Replace the injected service with our mock
-        (comp as any).inlineCommentService = mockInlineCommentService;
     });
 
     afterEach(() => {
@@ -599,7 +598,14 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Inline Comments', ()
 
         comp.onSaveInlineComment(comment);
 
-        expect(mockInlineCommentService.addExistingComment).toHaveBeenCalledWith({ ...comment, status: 'pending' });
+        expect(mockInlineCommentService.addExistingComment).toHaveBeenCalledWith({
+            id: comment.id,
+            startLine: comment.startLine,
+            endLine: comment.endLine,
+            instruction: comment.instruction,
+            status: 'pending',
+            createdAt: comment.createdAt,
+        });
     });
 
     it('should update existing inline comment status', () => {
