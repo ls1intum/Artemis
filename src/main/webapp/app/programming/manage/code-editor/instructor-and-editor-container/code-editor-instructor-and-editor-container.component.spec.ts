@@ -575,6 +575,8 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Inline Comments', ()
     afterEach(() => {
         fixture?.destroy();
         jest.clearAllMocks();
+        // Clear the mutable array for test isolation
+        mockPendingComments.length = 0;
     });
 
     it('should save new inline comment', () => {
@@ -636,8 +638,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Inline Comments', ()
     it('should not call refinement when applying empty comment list', () => {
         // Capture initial state
         const errorSpy = jest.spyOn(alertService, 'error');
-        // Configure mock to return empty array signal
-        mockInlineCommentService.getPendingComments.mockReturnValue(() => []);
+        // mockPendingComments is already empty by default from beforeEach cleanup
 
         comp.applyAllComments();
 
@@ -656,9 +657,9 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Inline Comments', ()
         noCourseExercise.problemStatement = 'Test';
         comp.exercise = noCourseExercise;
 
-        // Configure mock to return a pending comment
+        // Add a pending comment to the mutable array so the early return is skipped
         const pendingComment = createMockInlineComment();
-        mockInlineCommentService.getPendingComments.mockReturnValue(() => [pendingComment]);
+        mockPendingComments.push(pendingComment);
 
         comp.applyAllComments();
 
@@ -670,9 +671,9 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Inline Comments', ()
         const errorSpy = jest.spyOn(alertService, 'error');
         comp.exercise = createMockExercise({ problemStatement: '   ' }); // whitespace only
 
-        // Configure mock to return a pending comment
+        // Add a pending comment to the mutable array so the early return is skipped
         const pendingComment = createMockInlineComment();
-        mockInlineCommentService.getPendingComments.mockReturnValue(() => [pendingComment]);
+        mockPendingComments.push(pendingComment);
 
         comp.applyAllComments();
 
