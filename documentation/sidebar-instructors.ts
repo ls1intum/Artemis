@@ -11,8 +11,11 @@ const sidebars: SidebarsConfig = {
                 id: 'exercises/intro'
             },
             items: [
+                'exercises/quiz-exercise',
+                'exercises/modeling-exercise',
                 'exercises/textual-exercise',
                 'exercises/file-upload-exercise',
+                'exercises/team-exercise',
             ]
         },
         'lectures',
