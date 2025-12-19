@@ -573,6 +573,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Inline Comments', ()
         clearAll: jest.fn(),
         getComment: jest.fn(),
         setExerciseContext: jest.fn(),
+        clearContext: jest.fn(),
     };
 
     beforeEach(async () => {
@@ -606,6 +607,9 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Inline Comments', ()
     });
 
     it('should update existing inline comment status', () => {
+        // Reset mocks to ensure clean state for this test
+        mockInlineCommentService.addExistingComment.mockClear();
+
         const existingComment = createMockInlineComment({ status: 'applied' });
         mockInlineCommentService.getComment.mockReturnValue(existingComment);
 
@@ -658,7 +662,8 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Inline Comments', ()
 
         comp.applyAllComments();
 
-        expect(errorSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.inlineComment.applyAllError');
+        // Component uses 'applyError' for validation failures
+        expect(errorSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.inlineComment.applyError');
     });
 
     it('should show error when applying comments with empty problem statement', () => {
@@ -671,6 +676,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Inline Comments', ()
 
         comp.applyAllComments();
 
-        expect(errorSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.inlineComment.applyAllError');
+        // Component uses 'applyError' for validation failures
+        expect(errorSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.inlineComment.applyError');
     });
 });
