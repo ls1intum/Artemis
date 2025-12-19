@@ -26,7 +26,6 @@ import { Course, isCommunicationEnabled } from 'app/core/course/shared/entities/
 import { PostingFooterComponent } from 'app/communication/posting-footer/posting-footer.component';
 import { getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
-import { animate, style, transition, trigger } from '@angular/animations';
 import { CdkConnectedOverlay, CdkOverlayOrigin } from '@angular/cdk/overlay';
 import { DOCUMENT, NgClass, NgStyle } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -49,12 +48,6 @@ import { CourseWideSearchConfig } from 'app/communication/course-conversations-c
     templateUrl: './post.component.html',
     styleUrls: ['./post.component.scss', './../metis.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    animations: [
-        trigger('fade', [
-            transition(':enter', [style({ opacity: 0 }), animate('300ms ease-in', style({ opacity: 1 }))]),
-            transition(':leave', [animate('300ms ease-out', style({ opacity: 0 }))]),
-        ]),
-    ],
     imports: [
         NgClass,
         FaIconComponent,
