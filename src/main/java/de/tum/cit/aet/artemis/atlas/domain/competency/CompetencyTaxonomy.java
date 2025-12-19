@@ -12,23 +12,6 @@ public enum CompetencyTaxonomy {
 
     REMEMBER, UNDERSTAND, APPLY, ANALYZE, EVALUATE, CREATE;
 
-    /**
-     * Get the Font Awesome icon name for this taxonomy level.
-     * This mapping ensures consistency across the application.
-     *
-     * @return the Font Awesome icon name
-     */
-    public String getIcon() {
-        return switch (this) {
-            case REMEMBER -> "brain";
-            case UNDERSTAND -> "comments";
-            case APPLY -> "pen-fancy";
-            case ANALYZE -> "magnifying-glass";
-            case EVALUATE -> "plus-minus";
-            case CREATE -> "cubes-stacked";
-        };
-    }
-
     @Converter
     public static class TaxonomyConverter implements AttributeConverter<CompetencyTaxonomy, String> {
 

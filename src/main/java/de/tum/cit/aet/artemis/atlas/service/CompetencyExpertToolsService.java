@@ -252,8 +252,8 @@ public class CompetencyExpertToolsService {
             return "Error: No competencies provided for preview.";
         }
 
-        List<CompetencyPreviewDTO> previewResponses = competencies.stream().map(comp -> new CompetencyPreviewDTO(comp.getTitle(), comp.getDescription(),
-                comp.getTaxonomy().toString(), comp.getTaxonomy().getIcon(), comp.getCompetencyId(), viewOnly)).toList();
+        List<CompetencyPreviewDTO> previewResponses = competencies.stream()
+                .map(comp -> new CompetencyPreviewDTO(comp.getTitle(), comp.getDescription(), comp.getTaxonomy().toString(), comp.getCompetencyId(), viewOnly)).toList();
 
         currentPreviews.set(previewResponses);
 
@@ -360,8 +360,8 @@ public class CompetencyExpertToolsService {
         // Store preview data in ThreadLocal so the interface can display cards for what was just saved
         // This ensures the cards appear in the response showing what was created/updated
         if (!successfulOperations.isEmpty()) {
-            List<CompetencyPreviewDTO> previewResponses = successfulOperations.stream().map(comp -> new CompetencyPreviewDTO(comp.getTitle(), comp.getDescription(),
-                    comp.getTaxonomy().toString(), comp.getTaxonomy().getIcon(), comp.getCompetencyId(), false)).toList();
+            List<CompetencyPreviewDTO> previewResponses = successfulOperations.stream()
+                    .map(comp -> new CompetencyPreviewDTO(comp.getTitle(), comp.getDescription(), comp.getTaxonomy().toString(), comp.getCompetencyId(), false)).toList();
 
             currentPreviews.set(previewResponses);
         }

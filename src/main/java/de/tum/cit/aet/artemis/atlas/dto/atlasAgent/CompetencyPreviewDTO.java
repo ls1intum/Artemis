@@ -18,5 +18,5 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param viewOnly     indicates whether this preview is read-only (true) or can be approved/saved (false/null)
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record CompetencyPreviewDTO(String title, String description, @NotNull String taxonomy, String icon, Long competencyId, Boolean viewOnly) {
+public record CompetencyPreviewDTO(String title, String description, @NotNull String taxonomy, Long competencyId, Boolean viewOnly) {
 }
