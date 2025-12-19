@@ -288,7 +288,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
     assessNext() {
         const exerciseId = this.exercise?.id;
         if (!exerciseId) {
-            this.onError('artemisApp.assessment.messages.exerciseNotLoaded');
+            this.onError('artemisApp.assessment.messages.loadSubmissionFailed');
             return;
         }
 
@@ -307,7 +307,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
                 const participationId = submission.participation?.id;
                 const submissionId = submission.id;
                 if (!participationId || !submissionId) {
-                    this.onError('artemisApp.assessment.messages.invalidSubmissionData');
+                    this.onError('artemisApp.assessment.messages.loadSubmissionFailed');
                     return;
                 }
 
@@ -332,7 +332,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
     onSaveAssessment() {
         const submissionId = this.submission?.id;
         if (!submissionId) {
-            this.onError('artemisApp.assessment.messages.submissionNotLoaded');
+            this.onError('artemisApp.assessment.messages.loadSubmissionFailed');
             return;
         }
 
@@ -362,7 +362,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
 
         const submissionId = this.submission?.id;
         if (!submissionId) {
-            this.onError('artemisApp.assessment.messages.submissionNotLoaded');
+            this.onError('artemisApp.assessment.messages.loadSubmissionFailed');
             return;
         }
 
@@ -526,7 +526,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
 
         const submissionId = this.submission?.id;
         if (!submissionId) {
-            this.onError('artemisApp.assessment.messages.submissionNotLoaded');
+            this.onError('artemisApp.assessment.messages.loadSubmissionFailed');
             assessmentAfterComplaint.onError();
             return;
         }
