@@ -202,7 +202,7 @@ describe('IrisEnabledComponent', () => {
 
             const updateSpy = jest
                 .spyOn(irisSettingsService, 'updateCourseSettings')
-                .mockReturnValue(of(new HttpResponse({ body: null }) as HttpResponse<IrisCourseSettingsWithRateLimitDTO>));
+                .mockReturnValue(of(new HttpResponse({ body: null }) as unknown as HttpResponse<IrisCourseSettingsWithRateLimitDTO>));
 
             comp.setEnabled(true);
 
