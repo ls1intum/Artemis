@@ -1,0 +1,1461 @@
+import Callout from "../../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
+import Image, {ImageSize} from "../../../src/components/Image/Image";
+
+import courseManagement from './assets/general/course-management.png';
+import courseDashboard from './assets/general/course-management-course-dashboard-exercises.png';
+import exerciseWorkflow from './assets/programming/ExerciseWorkflow.png';
+import courseManagementExerciseDashboard from './assets/programming/course-management-exercise-dashboard.png';
+import programmingOptionsNaming from './assets/programming/programming-options-naming.png';
+import programmingOptionsAuxiliaryRepositories from './assets/programming/programming-options-auxiliary-repositories.png';
+import programmingOptionsCategories from './assets/programming/programming-options-categories.png';
+import programmingOptionsParticipationMode from './assets/programming/programming-options-participation-mode.png';
+import programmingOptionsProgrammingLanguage from './assets/programming/programming-options-programming-language.png';
+import programmingOptionsVersionControl from './assets/programming/programming-options-version-control.png';
+import programmingOptionsScore from './assets/programming/programming-options-score.png';
+import programmingOptionsTimelineManual from './assets/programming/programming-options-timeline-manual.png';
+import programmingOptionsTimelineAutomatic from './assets/programming/programming-options-timeline-automatic.png';
+import programmingOptionsAssessment from './assets/programming/programming-options-assessment.png';
+import programmingOptionsSca from './assets/programming/programming-options-sca.png';
+import programmingOptionsProblemStatement from './assets/programming/programming-options-problem-statement.png';
+import programmingOptionsInstructions from './assets/programming/programming-options-instructions.png';
+import courseDashboardExerciseProgramming from './assets/programming/course-dashboard-exercise-programming.png';
+import instructorEditor from './assets/programming/instructor-editor.png';
+import checkoutPathsPreview from './assets/programming/checkout-paths-preview.png';
+import checkoutPathsEdit from './assets/programming/checkout-paths-edit.png';
+import timeoutSlider from './assets/programming/timeout-slider.png';
+import dockerFlagsEdit from './assets/programming/docker-flags-edit.png';
+import configureGradingTestCases from './assets/programming/configure-grading-test-cases.png';
+import configureGradingUpdateInformation from './assets/programming/configure-grading-update-information.png';
+import configureGradingCodeAnalysis from './assets/programming/configure-grading-code-analysis.png';
+import solutionTemplateResult from './assets/programming/solution-template-result.png';
+import courseManagementTemplateSolutionDiff from './assets/programming/course-management-template-solution-diff.png';
+import courseManagementTemplateSolutionDiffExample from './assets/programming/course-management-template-solution-diff-example.png';
+import programmingEditStatus from './assets/programming/programming-edit-status.png';
+import feedbackAnalysisOverview from './assets/programming/feedback-analysis-overview.png';
+import feedbackAnalysisFilters from './assets/programming/feedback-analysis-filters.png';
+import feedbackAnalysisAffectedStudents from './assets/programming/feedback-analysis-affected-students.png';
+import feedbackAnalysisDetail from './assets/programming/feedback-analysis-detail.png';
+import feedbackAnalysisChannel from './assets/programming/feedback-analysis-channel.png';
+import programmingExerciseImportButton from './assets/programming/programming-exercise-import-button.png';
+import courseManagementExerciseDashboardImport from './assets/programming/course-management-exercise-dashboard-import.png';
+import courseManagementExerciseDashboardImportModal from './assets/programming/course-management-exercise-dashboard-import-modal.png';
+import programmingImportOptions from './assets/programming/programming-import-options.png';
+import onlineEditorAssessment from './assets/programming/online-editor-assessment.png';
+import onlineEditorFeedback from './assets/programming/online-editor-feedback.png';
+import onlineEditorGeneralFeedback from './assets/programming/online-editor-general-feedback.png';
+import onlineEditorProblemStatementTask from './assets/programming/online-editor-problem-statement-task.png';
+import onlineEditorAddFeedbackButton from './assets/programming/online-editor-add-feedback-button.png';
+import onlineEditorCancelFeedbackButton from './assets/programming/online-editor-cancel-feedback-button.png';
+import addNewFeedbackButton from './assets/general/add-new-feedback-button.png';
+import submitAssessmentButton from './assets/general/submit-assessment-button.png';
+import saveButton from './assets/general/save-button.png';
+import submissionPolicyNoneForm from './assets/programming/submission-policy-none-form.png';
+import submissionPolicyLockRepositoryForm from './assets/programming/submission-policy-lock-repository-form.png';
+import submissionPolicySubmissionPenaltyForm from './assets/programming/submission-policy-submission-penalty-form.png';
+import submissionPenaltyFeedbackElement from './assets/programming/submission-penalty-feedback-element.png';
+import submissionPenaltyFeedbackElement2 from './assets/programming/submission-penalty-feedback-element-2.png';
+import submissionPolicyGradingPage from './assets/programming/submission-policy-grading-page.png';
+import generateButton from './assets/programming/generate-button.png';
+import edit from './assets/programming/edit.png';
+import view from './assets/programming/view.png';
+import editInEditor from './assets/programming/edit-in-editor.png';
+import submitButton from './assets/programming/submit.png';
+import gradingSave from './assets/programming/configure-grading-save.png';
+import gradingReset from './assets/programming/configure-grading-reset.png';
+import gradingReevaluateAll from './assets/programming/configure-grading-reevaluate-all.png';
+import gradingTriggerAll from './assets/programming/configure-grading-trigger-all.png';
+import reviewChangesButton from './assets/programming/course-management-template-solution-diff-review-changes-button.png';
+import notGradedLabel from './assets/programming/not-graded-label.png';
+import submissionPolicyUpdateButton from './assets/programming/submission-policy-update-button.png';
+import submissionPolicyDeactivateButton from './assets/programming/submission-policy-deactivate-button.png';
+import submissionPolicyActivateButton from './assets/programming/submission-policy-activate-button.png';
+
+# Programming Exercise
+
+## Overview
+
+Conducting a programming exercise consists of the following main steps:
+
+1. **Instructor prepares exercise**: Set up repositories containing the exercise code and test cases, configure build instructions, and set up the exercise in Artemis
+2. **Students work on exercise**: Students clone repositories, solve exercises, and submit solutions
+3. **Automated testing**: The continuous integration server verifies submissions by executing test cases and provides feedback
+4. **Instructor reviews results**: Review overall results of all students and react to common errors and problems
+
+<Image src={exerciseWorkflow} alt="Exercise Workflow" size={ImageSize.large} caption="Programming Exercise Workflow" />
+
+<Callout variant={CalloutVariant.info}>
+  <p>Artemis supports a wide range of programming languages and is independent of specific version control and continuous integration systems. Instructors have significant freedom in defining the test environment.</p>
+</Callout>
+
+## Exercise Templates
+
+Artemis supports templates for various programming languages to simplify exercise setup. The availability of features depends on the continuous integration system (Local CI or Jenkins) and the programming language.
+
+### Supported Programming Languages
+
+The following table provides an overview of supported programming languages and their corresponding templates:
+
+| No. | Programming Language | Local CI | Jenkins | Build System/Notes | Docker Image |
+|-----|---------------------|----------|---------|-------------------|--------------|
+| 1 | Java | yes | yes | Gradle, Maven, DejaGnu | [artemis-maven-docker](https://github.com/ls1intum/artemis-maven-docker) |
+| 2 | Python | yes | yes | pip | [artemis-python-docker](https://github.com/ls1intum/artemis-python-docker) |
+| 3 | C | yes | yes | Makefile, FACT, GCC | [artemis-c-docker](https://github.com/ls1intum/artemis-c-docker) |
+| 4 | Haskell | yes | yes | Stack | [artemis-haskell](https://github.com/uni-passau-artemis/artemis-haskell) |
+| 5 | Kotlin | yes | yes | Maven | [artemis-maven-docker](https://github.com/ls1intum/artemis-maven-docker) |
+| 6 | VHDL | yes | no | Makefile | [artemis-vhdl-docker](https://github.com/ls1intum/artemis-vhdl-docker) |
+| 7 | Assembler | yes | no | Makefile | [artemis-assembler-docker](https://github.com/ls1intum/artemis-assembler-docker) |
+| 8 | Swift | yes | yes | SwiftPM | [artemis-swift-swiftlint-docker](https://github.com/ls1intum/artemis-swift-swiftlint-docker) |
+| 9 | OCaml | yes | no | Dune | [artemis-ocaml-docker](https://github.com/ls1intum/artemis-ocaml-docker) |
+| 10 | Rust | yes | yes | cargo | [artemis-rust-docker](https://github.com/ls1intum/artemis-rust-docker) |
+| 11 | JavaScript | yes | yes | npm | [artemis-javascript-docker](https://github.com/ls1intum/artemis-javascript-docker) |
+| 12 | R | yes | yes | built-in | [artemis-r-docker](https://github.com/ls1intum/artemis-r-docker) |
+| 13 | C++ | yes | yes | CMake | [artemis-cpp-docker](https://github.com/ls1intum/artemis-cpp-docker) |
+| 14 | TypeScript | yes | yes | npm | [artemis-javascript-docker](https://github.com/ls1intum/artemis-javascript-docker) |
+| 15 | C# | yes | yes | dotnet | [artemis-csharp-docker](https://github.com/ls1intum/artemis-csharp-docker) |
+| 16 | Go | yes | yes | built-in | [artemis-go-docker](https://github.com/ls1intum/artemis-go-docker) |
+| 17 | Bash | yes | yes | built-in | [artemis-bash-docker](https://github.com/ls1intum/artemis-bash-docker) |
+| 18 | MATLAB | yes | no | built-in | [matlab](https://hub.docker.com/r/mathworks/matlab) |
+| 19 | Ruby | yes | yes | Rake | [artemis-ruby-docker](https://github.com/ls1intum/artemis-ruby-docker) |
+| 20 | Dart | yes | yes | built-in | [artemis-dart-docker](https://github.com/ls1intum/artemis-dart-docker) |
+
+### Feature Support by Language
+
+Not all templates support the same feature set. The table below provides an overview of supported features for each language:
+
+| No. | Language | Sequential Test Runs | Static Code Analysis | Plagiarism Check | Package Name | Project Type | Solution Repository Checkout | Auxiliary Repositories |
+|-----|----------|---------------------|---------------------|------------------|--------------|--------------|----------------------------|----------------------|
+| 1 | Java | yes | yes | yes | yes | Gradle, Maven, DejaGnu | no | L: yes, J: no |
+| 2 | Python | L: yes; J: no | L: yes; J: no | yes | no | n/a | no | L: yes, J: no |
+| 3 | C | no | L: yes; J: no | yes | no | FACT, GCC | no | L: yes, J: no |
+| 4 | Haskell | L: yes; J: no | no | no | no | n/a | L: yes; J: no | L: yes, J: no |
+| 5 | Kotlin | yes | no | yes | yes | n/a | no | L: yes, J: no |
+| 6 | VHDL | no | no | no | no | n/a | no | L: yes, J: no |
+| 7 | Assembler | no | no | no | no | n/a | no | L: yes, J: no |
+| 8 | Swift | no | yes | yes | yes | Plain | no | L: yes, J: no |
+| 9 | OCaml | no | no | no | no | n/a | yes | L: yes, J: no |
+| 10 | Rust | no | L: yes; J: no | yes | no | n/a | no | L: yes, J: no |
+| 11 | JavaScript | no | L: yes; J: no | yes | no | n/a | no | L: yes, J: no |
+| 12 | R | no | L: yes; J: no | yes | no | n/a | no | L: yes, J: no |
+| 13 | C++ | no | L: yes; J: no | yes | no | n/a | no | L: yes, J: no |
+| 14 | TypeScript | no | L: yes; J: no | yes | no | n/a | no | L: yes, J: no |
+| 15 | C# | no | no | yes | no | n/a | no | L: yes, J: no |
+| 16 | Go | no | no | yes | yes | n/a | no | L: yes, J: no |
+| 17 | Bash | no | no | no | no | n/a | no | L: yes, J: no |
+| 18 | MATLAB | no | no | no | no | n/a | no | L: yes, J: no |
+| 19 | Ruby | no | L: yes; J: no | no | no | n/a | no | L: yes, J: no |
+| 20 | Dart | no | L: yes; J: no | no | no | n/a | no | L: yes, J: no |
+
+**L** = Local CI, **J** = Jenkins
+
+<Callout variant={CalloutVariant.info}>
+  <p><strong>Note:</strong> Only some templates for Local CI support Sequential Test Runs. Static Code Analysis for some exercises is also only supported for Local CI. Instructors can still extend the generated programming exercises with additional features that are not available in a specific template.</p>
+</Callout>
+
+<Callout variant={CalloutVariant.tip}>
+  <p>Instructors are encouraged to contribute improvements to existing templates or provide new templates. Please contact the Artemis team or create pull requests in the GitHub repository.</p>
+</Callout>
+
+## Exercise Creation
+
+Creating a programming exercise consists of the following steps:
+
+1. Generate programming exercise in Artemis
+2. Update exercise code in the template, solution, and test repositories
+3. Adapt the build script (optional)
+4. Configure static code analysis (optional)
+5. Adapt the interactive problem statement
+6. Configure grading settings
+7. Verify the exercise configuration
+
+### Generate Programming Exercise
+
+Open <img src={courseManagement} alt="Course Management" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> and navigate to **Exercises** of your preferred course.
+
+<Image src={courseDashboard} alt="Course Dashboard" size={ImageSize.large} caption="Course Management - Exercises" />
+
+Click on **Generate new programming exercise**.
+
+<Image src={courseManagementExerciseDashboard} alt="Exercise Dashboard" size={ImageSize.large} caption="Exercise Dashboard" />
+
+<Callout variant={CalloutVariant.info}>
+  <p>The guided mode has been removed. Artemis now provides a validation bar to navigate through sections and help validate the form. Watch the screencast below for more information.</p>
+</Callout>
+
+<iframe
+    src="https://live.rbg.tum.de/w/artemisintro/45966?video_only=1&t=0"
+    title="Video tutorial for creating a new programming exercise on TUM-Live"
+    width="600"
+    height="350"
+    allowFullScreen
+    loading="lazy"
+    allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
+    referrerPolicy="no-referrer-when-downgrade"
+    style={{border: 0}}>
+    Video tutorial for creating a new programming exercise on TUM-Live.
+</iframe>
+
+Artemis provides various options to customize programming exercises:
+
+<details>
+<summary><strong>Naming Section</strong></summary>
+
+<Image src={programmingOptionsNaming} alt="Programming Options Naming" size={ImageSize.large} caption="Naming Configuration" />
+
+- **Title**: The title of the exercise. Used to create a project on the VCS server. Can be changed after creation
+- **Short Name**: Together with the course short name, this creates a unique identifier for the exercise across Artemis (including repositories and build plans). **Cannot be changed after creation**
+- **Preview**: Shows the generated repository and build plan names based on the short names
+
+</details>
+
+<details>
+<summary><strong>Auxiliary Repositories</strong></summary>
+
+<Image src={programmingOptionsAuxiliaryRepositories} alt="Programming Options Auxiliary Repositories" size={ImageSize.large} caption="Auxiliary Repositories Configuration" />
+
+- **Auxiliary Repositories**: Additional repositories with a name, checkout directory, and description. Created and added to the build plan when the exercise is created. **Cannot be changed after exercise creation**
+
+<Callout variant={CalloutVariant.info}>
+  <p>Auxiliary repositories are checked out to the specified directory during automatic testing if a checkout directory is set. This can be used for providing additional resources or overwriting template source code in testing exercises.</p>
+</Callout>
+
+</details>
+
+<details>
+<summary><strong>Categories</strong></summary>
+
+<Image src={programmingOptionsCategories} alt="Programming Options Categories" size={ImageSize.large} caption="Categories Configuration" />
+
+- **Categories**: Define up to two categories per exercise. Categories are visible to students and should be used consistently to group similar exercises
+
+</details>
+
+<details>
+<summary><strong>Participation Mode and Options</strong></summary>
+
+<Image src={programmingOptionsParticipationMode} alt="Programming Options Participation Mode" size={ImageSize.large} caption="Participation Mode Configuration" />
+
+- **Difficulty**: Information about the difficulty level for students
+- **Participation Mode**: Whether students work individually or in teams. **Cannot be changed after creation**. Learn more about [team exercises](/instructor/exercises/team-exercise)
+- **Team Size**: For team mode, provide recommended team size. Instructors/Tutors define actual teams after exercise creation
+- **Allow Offline IDE**: Allow students to clone their repository and work with their preferred IDE
+- **Allow Online Editor**: Allow students to use the Artemis Online Code Editor
+- **Publish Build Plan**: Allow students to access and edit their build plan. Useful for exercises where students configure parts of the build plan themselves
+
+<Callout variant={CalloutVariant.warning}>
+  <p>At least one of <strong>Allow Offline IDE</strong> or <strong>Allow Online Editor</strong> must be active.</p>
+</Callout>
+
+</details>
+
+<details>
+<summary><strong>Programming Language and Project Settings</strong></summary>
+
+<Image src={programmingOptionsProgrammingLanguage} alt="Programming Options Programming Language" size={ImageSize.large} caption="Programming Language Configuration" />
+
+- **Programming Language**: The programming language for the exercise. Artemis chooses the template accordingly
+- **Project Type**: Determines the project structure of the template. Not available for all languages
+- **With exemplary dependency**: (Java only) Adds an external Apache commons-lang dependency as an example
+- **Package Name**: The package name for this exercise. Not available for all languages
+- **Enable Static Code Analysis**: Enable automated code quality checks. **Cannot be changed after creation**. See Static Code Analysis Configuration section below
+- **Sequential Test Runs**: First run structural, then behavioral tests. Helps students focus on immediate challenges. Not compatible with static code analysis. **Cannot be changed after creation**
+- **Customize Build Plan**: Customize the build plan of your exercise. Available for all languages with Local CI and Jenkins. Can also be customized after creation
+
+</details>
+
+<details>
+<summary><strong>Version Control Settings</strong></summary>
+
+<Image src={programmingOptionsVersionControl} alt="Programming Options Version Control" size={ImageSize.large} caption="Version Control Configuration" />
+
+- **Allow Custom Branches**: Allow students to push to branches other than the default one
+
+<Callout variant={CalloutVariant.warning}>
+  <p>Artemis does not show custom branches in the UI and offers no merge support. Pushing to non-default branches does not trigger builds or create submissions. Students are fully responsible for managing their branches. Only activate if absolutely necessary!</p>
+</Callout>
+
+- **Regular Expression for branch name**: Custom branch names are matched against this Java regular expression. Pushing is only allowed if it matches
+
+</details>
+
+<details>
+<summary><strong>Score Configuration</strong></summary>
+
+<Image src={programmingOptionsScore} alt="Programming Options Score" size={ImageSize.large} caption="Score Configuration" />
+
+- **Should this exercise be included in the course/exam score calculation?**
+  - **Yes**: Define maximum **Points** and **Bonus points**. Total points count toward course/exam score
+  - **Bonus**: Achieved **Points** count as bonus toward course/exam score
+  - **No**: Achieved **Points** do not count toward course/exam score
+
+- **Submission Policy**: Configure initial submission policy. Choose between:
+  - **None**: Unlimited submissions
+  - **Lock Repository**: Limit submissions; lock repository when limit is reached
+  - **Submission Penalty**: Unlimited submissions with point deductions after limit
+
+  See Submission Policy Configuration section for details.
+
+<Callout variant={CalloutVariant.info}>
+  <p>Submission policies can only be edited on the Grading Page after initial exercise generation.</p>
+</Callout>
+
+</details>
+
+<details>
+<summary><strong>Timeline Configuration</strong></summary>
+
+<Image src={programmingOptionsTimelineManual} alt="Programming Options Timeline Manual" size={ImageSize.large} caption="Timeline Configuration - Manual Assessment" />
+
+<Image src={programmingOptionsTimelineAutomatic} alt="Programming Options Timeline Automatic" size={ImageSize.large} caption="Timeline Configuration - Automatic Assessment" />
+
+- **Release Date**: When the exercise becomes visible to students
+- **Start Date**: When students can start participating. If not set, students can participate immediately after release
+- **Automatic Tests**: Every commit triggers test execution (except tests specified to run after due date)
+- **Due Date**: Deadline for the exercise. Commits after this date are not graded
+- **Run Tests after Due Date**: Build and test the latest in-time submission of each student on this date. Must be after due date. Use for executing hidden tests
+- **Assessment Type**: Choose between **Automatic Assessment** or **Manual Assessment**. For manual assessment, tutors review submissions
+- **Assessment Due Date**: Deadline for manual reviews. All assessments are released to students on this date
+- **Example Solution Publication Date**: When the solution repository becomes available for students. If blank, never published
+
+</details>
+
+<details>
+<summary><strong>Assessment Options</strong></summary>
+
+<Image src={programmingOptionsAssessment} alt="Programming Options Assessment" size={ImageSize.large} caption="Assessment Configuration" />
+
+- **Complaint on Automatic Assessment**: Allow students to complain about automatic assessment after due date. Only available if complaints are enabled in the course or for exam exercises
+
+<Callout variant={CalloutVariant.info}>
+  <p>Using practice mode, students can still commit code and receive feedback after the due date. These results are not rated.</p>
+</Callout>
+
+- **Manual feedback requests**: Enable manual feedback requests, allowing students to request feedback before the deadline. Each student can make one request at a time
+- **Show Test Names to Students**: Show names of automated test cases to students. If disabled, students cannot differentiate between automatic and manual feedback
+- **Include tests into example solution**: Include test cases in the example solution so students can run tests locally
+
+</details>
+
+<details>
+<summary><strong>Static Code Analysis Configuration</strong></summary>
+
+<Image src={programmingOptionsSca} alt="Programming Options SCA" size={ImageSize.large} caption="Static Code Analysis Configuration" />
+
+- **Max Static Code Analysis Penalty**: Available if static code analysis is active. Maximum points that can be deducted for code quality issues as a percentage (0-100%) of **Points**. Defaults to 100% if empty
+
+<Callout variant={CalloutVariant.info}>
+  <p><strong>Example:</strong> Given an exercise with 10 Points and Max Static Code Analysis Penalty of 20%, at most 2 points will be deducted for code quality issues.</p>
+</Callout>
+
+</details>
+
+<details>
+<summary><strong>Problem Statement and Instructions</strong></summary>
+
+<Image src={programmingOptionsProblemStatement} alt="Programming Options Problem Statement" size={ImageSize.large} caption="Problem Statement Configuration" />
+
+- **Problem Statement**: The exercise description shown to students. See Adapt Interactive Problem Statement section
+
+<Image src={programmingOptionsInstructions} alt="Programming Options Instructions" size={ImageSize.large} caption="Grading Instructions Configuration" />
+
+- **Grading Instructions**: Available for **Manual Assessment**. Create instructions for tutors during manual assessment
+
+</details>
+
+Click <img src={generateButton} alt="Generate" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> to create the exercise.
+
+**Result: Programming Exercise Created**
+
+<Image src={courseDashboardExerciseProgramming} alt="Course Dashboard Exercise Programming" size={ImageSize.large} caption="Programming Exercise in Course Dashboard" />
+
+Artemis creates the following repositories:
+
+- **Template**: Template code that all students receive at the start. Can be empty
+- **Test**: Contains all test cases (e.g., JUnit-based) and optionally static code analysis configuration. Hidden from students
+- **Solution**: Solution code, typically hidden from students, can be made available after the exercise
+
+Artemis creates two build plans:
+
+- **Template** (BASE): Basic configuration for template + test repository. Used to create student build plans
+- **Solution** (SOLUTION): Configuration for solution + test repository. Used to verify exercise configuration
+
+### Update Exercise Code in Repositories
+
+You have two alternatives to update the exercise code:
+
+**Alternative 1: Clone and Edit Locally**
+
+1. Clone the 3 repositories and adapt the code on your local computer in your preferred IDE
+2. To execute tests locally:
+   - Copy template (or solution) code into an **assignment** folder (location depends on language)
+   - Execute tests (e.g., using `mvn clean test` for Java)
+3. Commit and push your changes via Git
+
+<details>
+<summary><strong>Special Notes for Haskell</strong></summary>
+
+The build file expects the solution repository in the **solution** subdirectory and allows a **template** subdirectory for easy local testing.
+
+Convenient checkout script:
+
+```bash
+#!/bin/sh
+# Arguments:
+# $1: exercise short name
+# $2: (optional) output folder name
+
+if [ -z "$1" ]; then
+  echo "No exercise short name supplied."
+  exit 1
+fi
+
+EXERCISE="$1"
+NAME="${2:-$1}"
+
+# Adapt BASE to your repository URL
+BASE="ssh://git@artemis.tum.de:7999/$EXERCISE/$EXERCISE"
+
+git clone "$BASE-tests.git" "$NAME" && \
+  git clone "$BASE-exercise.git" "$NAME/template" && \
+  git clone "$BASE-solution.git" "$NAME/solution" && \
+  cp -R "$NAME/template" "$NAME/assignment" && \
+  rm -r "$NAME/assignment/.git/"
+```
+
+</details>
+
+<details>
+<summary><strong>Special Notes for OCaml</strong></summary>
+
+Tests expect to be in a **tests** folder next to **assignment** and **solution** folders.
+
+Convenient checkout script:
+
+```bash
+#!/bin/sh
+# Arguments:
+# $1: exercise short name
+# $2: (optional) output folder name
+
+PREFIX=  # Set your course prefix
+
+if [ -z "$1" ]; then
+  echo "No exercise short name supplied."
+  exit 1
+fi
+
+EXERCISE="$PREFIX$1"
+NAME="${2:-$1}"
+
+BASE="ssh://git@artemis.tum.de:7999/$EXERCISE/$EXERCISE"
+
+git clone "$BASE-tests.git" "$NAME/tests"
+git clone "$BASE-exercise.git" "$NAME/template"
+git clone "$BASE-solution.git" "$NAME/solution"
+
+# Hardlink assignment interfaces
+rm "$NAME/template/src/assignment.mli"
+rm "$NAME/tests/assignment/assignment.mli"
+rm "$NAME/tests/solution/solution.mli"
+ln "$NAME/solution/src/assignment.mli" "$NAME/template/src/assignment.mli"
+ln "$NAME/solution/src/assignment.mli" "$NAME/tests/assignment/assignment.mli"
+ln "$NAME/solution/src/assignment.mli" "$NAME/tests/solution/solution.mli"
+```
+
+Test script:
+
+```bash
+#!/bin/sh
+dir="$(realpath ./)"
+
+cd .. || exit 1
+rm ./assignment
+ln -s "$dir" ./assignment
+cd tests || exit 1
+./run.sh
+```
+
+</details>
+
+**Alternative 2: Edit in Browser**
+
+Open <img src={editInEditor} alt="Edit in Editor" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> in Artemis and adapt the code in the online editor.
+
+<Image src={instructorEditor} alt="Instructor Editor" size={ImageSize.large} caption="Edit in Online Editor" />
+
+You can switch between different repositories and <img src={submitButton} alt="Submit" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> the code when done.
+
+### Testing Frameworks by Language
+
+Write test cases in the Test repository using language-specific frameworks:
+
+| No. | Language | Package Manager | Build System | Testing Framework |
+|-----|----------|----------------|--------------|-------------------|
+| 1 | Java | Maven / Gradle | Maven / Gradle | [JUnit 5](https://junit.org/junit5/) with [Ares](https://github.com/ls1intum/Ares) |
+| 2 | Python | pip | pip | [pytest](https://docs.pytest.org/) |
+| 3 | C | - | Makefile | Python scripts / [FACT](https://fact.readthedocs.io/) |
+| 4 | Haskell | Stack | Stack | [Tasty](https://hackage.haskell.org/package/tasty) |
+| 5 | Kotlin | Maven | Maven | [JUnit 5](https://junit.org/junit5/) with [Ares](https://github.com/ls1intum/Ares) |
+| 6 | VHDL | - | Makefile | Python scripts |
+| 7 | Assembler | - | Makefile | Python scripts |
+| 8 | Swift | SwiftPM | SwiftPM | [XCTest](https://developer.apple.com/documentation/xctest) |
+| 9 | OCaml | opam | Dune | [OUnit2](https://gildor478.github.io/ounit/ounit2/) |
+| 10 | Rust | cargo | cargo | [cargo test](https://doc.rust-lang.org/book/ch11-00-testing.html) |
+| 11 | JavaScript | npm | npm | [Jest](https://jestjs.io/) |
+| 12 | R | built-in | - | [testthat](https://testthat.r-lib.org/) |
+| 13 | C++ | - | CMake | [Catch2](https://github.com/catchorg/Catch2) |
+| 14 | TypeScript | npm | npm | [Jest](https://jestjs.io/) |
+| 15 | C# | NuGet | dotnet | [NUnit](https://nunit.org/) |
+| 16 | Go | built-in | built-in | [go testing](https://pkg.go.dev/testing) |
+| 17 | Bash | - | - | [Bats](https://bats-core.readthedocs.io/) |
+| 18 | MATLAB | mpminstall | - | [matlab.unittest](https://www.mathworks.com/help/matlab/matlab-unit-test-framework.html) |
+| 19 | Ruby | Gem | Rake | [minitest](https://docs.seattlerb.org/minitest/) |
+| 20 | Dart | pub | built-in | [package.test](https://dart.dev/tools/testing) |
+
+Check the build plan results:
+
+- Template and solution build plans should not have **Build Failed** status
+- If build fails, check build errors in the build plan
+
+<Callout variant={CalloutVariant.tip}>
+  <p><strong>Hint:</strong> Test cases should only reference code available in the template repository. If this is not possible, try the <strong>Sequential Test Runs</strong> option.</p>
+</Callout>
+
+### Adapt Build Script (Optional)
+
+This section is optional. The preconfigured build script usually does not need changes.
+
+If you need additional build steps or different configurations, activate **Customize Build Script** in the exercise create/edit/import screen. All changes apply to all builds (template, solution, student submissions).
+
+Predefined build scripts in bash exist for all languages, project types, and configurations. Most languages clone the test repository into the root folder and the assignment repository into the **assignment** folder.
+
+You can also use a custom Docker image. Make sure to:
+- Publish the image in a publicly available repository (e.g., DockerHub)
+- Build for both amd64 and arm64 architectures
+- Keep image size small (build agents download before execution)
+- Include all build dependencies to avoid downloading in every build
+
+<Callout variant={CalloutVariant.tip}>
+  <p>Test custom exercises locally before publishing Docker images and uploading to Artemis for better development experience.</p>
+</Callout>
+
+### Edit Repositories Checkout Paths (Optional)
+
+**Only available with Integrated Code Lifecycle**
+
+This section is optional. Preconfigured checkout paths usually don't need changes.
+
+Checkout paths depend on the programming language and project type:
+
+<Image src={checkoutPathsPreview} alt="Checkout Paths Preview" size={ImageSize.medium} caption="Checkout Paths Preview" />
+
+To change checkout paths, click **edit repositories checkout path**:
+
+<Image src={checkoutPathsEdit} alt="Checkout Paths Edit" size={ImageSize.large} caption="Edit Checkout Paths" />
+
+Update the build script accordingly (see Adapt Build Script section).
+
+<Callout variant={CalloutVariant.warning}>
+  <p><strong>Important:</strong></p>
+  <ul>
+    <li>Checkout paths can only be changed during exercise creation, not after</li>
+    <li>Depending on language/project type, some paths may be predefined and unchangeable</li>
+    <li>Changing paths can cause build errors if build script is not adapted</li>
+    <li>For C exercises with default Docker image, changing paths will cause build errors</li>
+  </ul>
+</Callout>
+
+### Edit Maximum Build Duration (Optional)
+
+**Only available with Integrated Code Lifecycle**
+
+This section is optional. The default maximum build duration (120 seconds) usually doesn't need changes.
+
+Use the slider to adjust the time limit for build plan execution:
+
+<Image src={timeoutSlider} alt="Timeout Slider" size={ImageSize.medium} caption="Maximum Build Duration Slider" />
+
+### Edit Container Configuration (Optional)
+
+**Only available with Integrated Code Lifecycle**
+
+This section is optional. Default container configuration usually doesn't need changes.
+
+Configure network access, environment variables, and resource limits:
+
+<Image src={dockerFlagsEdit} alt="Docker Flags Edit" size={ImageSize.large} caption="Container Configuration" />
+
+- **Internet Access**: Disable to prevent students from downloading dependencies during builds. Dependencies must be cached in Docker image
+- **Environment Variables**: Add specific variables required by the build process
+- **Resource Limits**: Configure CPU cores, memory, and memory swap allocation. Values may be limited by administrator settings
+
+### Configure Static Code Analysis
+
+If static code analysis was activated, the **Test** repository contains configuration files.
+
+For Java exercises, the *staticCodeAnalysisConfig* folder contains configuration files for each tool. Artemis generates default configurations with predefined rules. Instructors can freely customize these files.
+
+On exercise import, configurations are copied from the imported exercise.
+
+#### Supported Static Code Analysis Tools
+
+| No. | Language | Supported Tools | Configuration File |
+|-----|----------|----------------|-------------------|
+| 1 | Java | [Spotbugs](https://spotbugs.github.io/) | spotbugs-exclusions.xml |
+| | | [Checkstyle](https://checkstyle.org/) | checkstyle-configuration.xml |
+| | | [PMD](https://pmd.github.io/) | pmd-configuration.xml |
+| | | PMD CPD | (via PMD plugin) |
+| 2 | Python | [Ruff](https://docs.astral.sh/ruff/) | ruff-student.toml |
+| 3 | C | GCC | (via compiler flags) |
+| 8 | Swift | [SwiftLint](https://realm.github.io/SwiftLint/) | .swiftlint.yml |
+| 10 | Rust | [Clippy](https://doc.rust-lang.org/clippy/) | clippy.toml |
+| 11/14 | JavaScript/TypeScript | [ESLint](https://eslint.org/) | eslint.config.mjs |
+| 12 | R | [lintr](https://lintr.r-lib.org/) | .lintr |
+| 13 | C++ | [Clang-Tidy](https://clang.llvm.org/extra/clang-tidy/) | .clang-tidy |
+| 19 | Ruby | [Rubocop](https://rubocop.org/) | .rubocop.yml |
+| 20 | Dart | [dart analyze](https://dart.dev/tools/analysis) | analysis_options.yaml |
+
+<Callout variant={CalloutVariant.info}>
+  <p>Maven plugins for Java static code analysis tools provide additional configuration options. GCC can be configured by passing flags in the tasks. See <a href="https://gcc.gnu.org/onlinedocs/gcc-11.1.0/gcc/Static-Analyzer-Options.html">GCC Documentation</a>.</p>
+</Callout>
+
+<Callout variant={CalloutVariant.tip}>
+  <p>Instructors can completely disable specific tools by removing the plugin/dependency from the build file (pom.xml or build.gradle) or by altering the build plan script.</p>
+</Callout>
+
+### Adapt Interactive Problem Statement
+
+Click <img src={edit} alt="Edit" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> on the programming exercise or navigate to <img src={editInEditor} alt="Edit in Editor" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> and adapt the interactive problem statement.
+
+The initial example shows how to:
+- Integrate tasks
+- Link tests
+- Integrate interactive UML diagrams
+
+### Configure Grading
+
+The grading configuration determines how test cases contribute to the overall score and allows configuration of code quality issue penalties.
+
+#### General Actions
+
+<Image src={configureGradingUpdateInformation} alt="Configure Grading Update Information" size={ImageSize.large} caption="Grading Configuration Update Information" />
+
+- <img src={gradingSave} alt="Save" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> **Save**: Save current grading configuration
+- <img src={gradingReset} alt="Reset" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> **Reset**: Reset to default values
+- <img src={gradingReevaluateAll} alt="Re-evaluate All" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> **Re-evaluate All**: Re-evaluate scores using currently saved settings and existing feedback
+- <img src={gradingTriggerAll} alt="Trigger All" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> **Trigger All**: Trigger all build plans to create new results with updated configuration
+
+<Callout variant={CalloutVariant.warning}>
+  <p>Artemis always grades new submissions with the latest configuration, but existing submissions might use outdated configuration. Artemis warns about grading inconsistencies with the <strong>Updated grading</strong> badge.</p>
+</Callout>
+
+#### Test Case Configuration
+
+Adapt test case contribution to overall score or set grading based on tasks.
+
+<iframe
+    src="https://tum.live/w/artemisintro/40748/PRES?video_only=1&"
+    title="Video tutorial for configuring test case grading on TUM-Live"
+    width="600"
+    height="350"
+    allowFullScreen
+    loading="lazy"
+    allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
+    referrerPolicy="no-referrer-when-downgrade"
+    style={{border: 0}}>
+    Video tutorial for configuring test case grading on TUM-Live.
+</iframe>
+
+<Image src={configureGradingTestCases} alt="Configure Grading Test Cases" size={ImageSize.large} caption="Test Case Grading Configuration" />
+
+<Callout variant={CalloutVariant.info}>
+  <p>Artemis registers tasks and test cases from the <strong>Test</strong> repository using results from the <strong>Solution</strong> build plan. Test cases only appear after the first Solution build plan execution.</p>
+</Callout>
+
+<Callout variant={CalloutVariant.warning}>
+  <p>If your problem statement does not contain tasks, task-based grading is not available. You can still configure grading based on individual test cases.</p>
+</Callout>
+
+Left side configuration options:
+
+- **Task/Test Name**: Task names (bold) are from the problem statement. Test names are from the **Test** repository
+- **Weight**: Points for a test are proportional to weight (sum of weights as denominator). For tasks, weight is evenly distributed across test cases
+- **Bonus multiplier**: Multiply points for passing a test without affecting other test points. For tasks, multiplier applies to all contained tests
+- **Bonus points**: Add flat point bonus for passing a test. For tasks, bonus points are evenly distributed across test cases
+- **Visibility**: Control feedback visibility:
+  - **Always**: Feedback visible immediately after grading
+  - **After Due Date**: Feedback visible only after due date (or individual due dates)
+  - **Never**: Feedback never visible to students. Not considered in score calculation
+- **Passed %**: Statistics showing percentage of students passing/failing the test
+
+<Callout variant={CalloutVariant.warning}>
+  <p>Bonus points (score &gt; 100%) are only achievable if at least one bonus multiplier &gt; 1 or bonus points are given for a test case.</p>
+</Callout>
+
+<Callout variant={CalloutVariant.warning}>
+  <p>For manual assessments, all feedback details are visible to students even if the due date hasn't passed for others. Set an appropriate <strong>assessment due date</strong> to prevent information leakage.</p>
+</Callout>
+
+**Examples:**
+
+**Example 1:** Exercise with 3 test cases, max 10 points, 10 bonus points possible (max score 200%). TC A: weight 2, TC B & C: weight 1 (all multipliers 1, bonus points 0). Student passing only TC A receives 50% = 5 points.
+
+**Example 2:** Same as Example 1, but TC A has bonus multiplier 2. TC A: (2×2)/(2+1+1)×100 = 100% = 10 points. TC B/C: (1/4)×100 = 25% = 2.5 points each. Passing all: 150% = 10 points + 5 bonus points.
+
+**Example 3:** Same as Example 2, but TC B has 5 bonus points. TC B now: 2.5 + 5 = 7.5 points. Passing all: 10 + 7.5 + 2.5 = 20 points = 200%.
+
+Right side displays statistics:
+
+- **Weight Distribution**: Impact of each test on score
+- **Total Points**: Percentage of points awarded per test case across all students
+
+#### Code Analysis Configuration
+
+Configure visibility and grading of code quality issues by category.
+
+<Image src={configureGradingCodeAnalysis} alt="Configure Grading Code Analysis" size={ImageSize.large} caption="Code Analysis Grading Configuration" />
+
+<Callout variant={CalloutVariant.info}>
+  <p>The Code Analysis tab is only available if static code analysis is enabled for the exercise.</p>
+</Callout>
+
+Issues are grouped into categories. Category mappings for Java, Swift, and C are documented in the old documentation section on Static Code Analysis Default Configuration.
+
+Other languages use tool-specific categories:
+- **JavaScript, TypeScript, C++, R**: Use `Lint` category only
+- **Dart**: Uses analyzer categories (TODO, HINT, COMPILE_TIME_ERROR, etc.)
+- **Python**: Uses Ruff's tool names
+- **Ruby**: Uses Rubocop's Department names
+- **Rust**: Uses Clippy's lint groups
+
+Left side configuration:
+
+- **Category**: Category name
+- **State**:
+  - **INACTIVE**: Issues not shown, don't influence score
+  - **FEEDBACK**: Issues shown but don't influence score
+  - **GRADED**: Issues shown and deduct points according to Penalty/Max Penalty
+- **Penalty**: Points deducted per issue
+- **Max Penalty**: Limit on points deducted for this category
+- **Detected Issues**: Visualization of issue distribution
+
+### Verify Exercise Configuration
+
+Open the <img src={view} alt="View" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> page of the programming exercise.
+
+<Image src={solutionTemplateResult} alt="Solution Template Result" size={ImageSize.large} caption="Template and Solution Results" />
+
+Verify:
+- **Template result**: Score 0% with "0 of X passed" (or "0 of X passed, 0 issues" with SCA)
+- **Solution result**: Score 100% with "X of X passed" (or "X of X passed, 0 issues" with SCA)
+
+<Callout variant={CalloutVariant.info}>
+  <p>If static code analysis finds issues in template/solution, improve the code or disable the problematic rule.</p>
+</Callout>
+
+#### Review Template/Solution Differences
+
+Review differences between **template** and **solution** repositories to verify expected student changes.
+
+<Image src={courseManagementTemplateSolutionDiff} alt="Template Solution Diff" size={ImageSize.large} caption="Template/Solution Comparison in Exercise Management" />
+
+Click the <img src={reviewChangesButton} alt="Review Changes" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button to open the comparison view.
+
+<Image src={courseManagementTemplateSolutionDiffExample} alt="Template Solution Diff Example" size={ImageSize.large} caption="Template/Solution Comparison View" />
+
+#### Verify Problem Statement Integration
+
+Click <img src={edit} alt="Edit" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />. Below the problem statement, verify:
+- **Test cases**: OK
+- **Hints**: OK
+
+<Image src={programmingEditStatus} alt="Programming Edit Status" size={ImageSize.medium} caption="Problem Statement Verification Status" />
+
+### Feedback Analysis
+
+After verifying the exercise configuration, the **Feedback Analysis** feature helps identify common student mistakes and improve grading efficiency.
+
+**Accessing Feedback Analysis:**
+
+1. Navigate to **Exercise Management**
+2. Open the programming exercise
+3. Go to the grading section
+4. Click the **Feedback Analysis** tab
+
+<Image src={feedbackAnalysisOverview} alt="Feedback Analysis Overview" size={ImageSize.large} caption="Feedback Analysis Overview" />
+
+**Key Features:**
+
+1. **Filtering and Sorting**
+
+   Filter by tasks, test cases, error categories, and occurrence frequency. Sort based on count or relevance.
+
+   <Image src={feedbackAnalysisFilters} alt="Feedback Analysis Filters" size={ImageSize.large} caption="Filtering Options" />
+
+2. **Affected Students Overview**
+
+   View students affected by specific feedback and access their repositories for review.
+
+   <Image src={feedbackAnalysisAffectedStudents} alt="Feedback Analysis Affected Students" size={ImageSize.large} caption="Affected Students View" />
+
+3. **Aggregated Feedback**
+
+   Groups similar feedback together to highlight frequently occurring errors.
+
+4. **Detailed Inspection**
+
+   Click feedback entries to view full details in a modal window.
+
+   <Image src={feedbackAnalysisDetail} alt="Feedback Analysis Detail" size={ImageSize.large} caption="Detailed Feedback View" />
+
+5. **Communication & Collaboration**
+
+   Create discussion channels directly from the feedback analysis view for collaborative grading.
+
+   <Image src={feedbackAnalysisChannel} alt="Feedback Analysis Channel" size={ImageSize.large} caption="Creating a Feedback Discussion Channel" />
+
+<iframe
+    src="https://live.rbg.tum.de/w/artemisintro/56245?video_only=1&t=0"
+    title="Video tutorial for feedback analysis on TUM-Live"
+    width="600"
+    height="350"
+    allowFullScreen
+    loading="lazy"
+    allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
+    referrerPolicy="no-referrer-when-downgrade"
+    style={{border: 0}}>
+    Video tutorial for feedback analysis on TUM-Live.
+</iframe>
+
+## Exercise Import
+
+Exercise import copies repositories, build plans, interactive problem statement, and grading configuration from an existing exercise.
+
+### Import Steps
+
+1. **Open Course Management**
+
+   Open <img src={courseManagement} alt="Course Management" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> and navigate to **Exercises** of your preferred course.
+
+   <Image src={courseDashboard} alt="Course Dashboard" size={ImageSize.large} caption="Course Management - Exercises" />
+
+2. **Import Programming Exercise**
+
+   Click **Import Programming Exercise**.
+
+   <Image src={courseManagementExerciseDashboardImport} alt="Import Programming Exercise" size={ImageSize.large} caption="Import Programming Exercise Button" />
+
+   Select an exercise to import.
+
+   <Image src={courseManagementExerciseDashboardImportModal} alt="Import Modal" size={ImageSize.large} caption="Exercise Selection Modal" />
+
+   <Callout variant={CalloutVariant.info}>
+     <p>Instructors can import exercises from courses where they are registered as instructors.</p>
+   </Callout>
+
+3. **Configure Import Options**
+
+   <Image src={programmingImportOptions} alt="Import Options" size={ImageSize.large} caption="Import Options" />
+
+   - **Recreate Build Plans**: Create new build plans instead of copying from imported exercise
+   - **Update Template**: Update template files in repositories. Useful for outdated exercises. For Java, replaces JUnit4 with Ares (JUnit5) and updates dependencies. May require test case adaptation
+
+   <Callout variant={CalloutVariant.info}>
+     <p>Enabling/disabling static code analysis compared to the original automatically sets <strong>Recreate Build Plans</strong> and <strong>Update Template</strong>. Plugins, dependencies, and SCA configurations are added/deleted/copied accordingly.</p>
+   </Callout>
+
+4. **Complete Import**
+
+   Fill mandatory values and click <img src={programmingExerciseImportButton} alt="Import" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />.
+
+   <Callout variant={CalloutVariant.info}>
+     <p>The interactive problem statement can be edited after import. Some options like <strong>Sequential Test Runs</strong> cannot be changed on import.</p>
+   </Callout>
+
+## Manual Assessment
+
+You can use the online editor to assess student submissions directly in the browser.
+
+<Image src={onlineEditorAssessment} alt="Online Editor Assessment" size={ImageSize.large} caption="Manual Assessment in Online Editor" />
+
+The online editor provides features tailored to assessment:
+
+1. **File browser**: Shows student submission files. Changed files are highlighted in yellow
+2. **Build output**: Shows build process output, useful for build errors
+3. **Read-only editor**: View student code with changed lines highlighted
+4. **Instructions**: Provides structured grading criteria and problem statement, including tasks successfully solved (determined by test cases). Review test cases by clicking the passing test count next to tasks
+5. **Result**: Top right corner shows current submission result. Click to review test cases and feedback
+
+Add feedback directly in source code by hovering over a line and clicking <img src={onlineEditorAddFeedbackButton} alt="Add Feedback" style={{display: 'inline', verticalAlign: 'middle', height: '1.5rem'}} />. Alternatively, press "+" key when editor is focused to open feedback widget at cursor line.
+
+<Image src={onlineEditorFeedback} alt="Online Editor Feedback" size={ImageSize.large} caption="Editing Feedback in Online Editor" />
+
+After clicking <img src={onlineEditorAddFeedbackButton} alt="Add Feedback" style={{display: 'inline', verticalAlign: 'middle', height: '1.5rem'}} />:
+- Enter feedback comment and score
+- Or drag structured assessment criteria from instructions to feedback area
+- Click <img src={saveButton} alt="Save" style={{display: 'inline', verticalAlign: 'middle', height: '1.5rem'}} /> to save
+- Click <img src={onlineEditorCancelFeedbackButton} alt="Cancel" style={{display: 'inline', verticalAlign: 'middle', height: '1.5rem'}} /> to discard
+
+<Image src={onlineEditorGeneralFeedback} alt="General Feedback" size={ImageSize.large} caption="General Feedback in Online Editor" />
+
+Add general feedback (not tied to specific file/line) by scrolling to bottom and clicking <img src={addNewFeedbackButton} alt="Add General Feedback" style={{display: 'inline', verticalAlign: 'middle', height: '1.5rem'}} />.
+
+Save changes with <img src={saveButton} alt="Save" style={{display: 'inline', verticalAlign: 'middle', height: '1.5rem'}} /> (top right). Finalize assessment with <img src={submitAssessmentButton} alt="Submit Assessment" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />.
+
+<Callout variant={CalloutVariant.info}>
+  <p>You can save multiple times before submitting. Once submitted, you cannot make changes unless you are an instructor.</p>
+</Callout>
+
+## Repository Access Configuration
+
+If you are a student looking for repository access information, see the [student documentation on integrated code lifecycle setup](/student/integrated-code-lifecycle).
+
+The following sections explain repository types and access rights for different user roles.
+
+### Repository Types
+
+- **Base**: Repositories set up during exercise creation (template, solution, tests, auxiliary repositories)
+- **Student Assignment**: Student's assignment repository copied from template. Includes team assignments
+- **Teaching Assistant (TA) Assignment**: Assignment repository created by a TA for themselves
+- **Instructor Assignment**: Assignment repository created by editor/instructor. Not available for exam exercises
+- **Student Practice**: Student's practice repository (from template or assignment). Created after due date. Not available for exams
+- **TA Practice**: Practice repository created by TA. Not available for exams
+- **Instructor Practice**: Practice repository created by editor/instructor. Not available for exams
+- **Instructor Exam Test Run**: Test run repository for exam testing before release. Should be deleted before exam
+
+### User Roles
+
+- **Student (S)**: Course student
+- **Teaching Assistant (TA)**: Course tutor
+- **Editor**: Course editor
+- **Instructor (I)**: Course instructor
+
+<Callout variant={CalloutVariant.info}>
+  <p>Editors and instructors have the same access rights in the table below.</p>
+</Callout>
+
+### Time Periods
+
+- **Before start**: Before exercise/exam start date
+- **Working time**: After start date, before due/end date
+- **After due**: After due/end date
+
+<Callout variant={CalloutVariant.info}>
+  <p>For Instructor Exam Test Run, "Before start" is the test run start date and "After due" is the test run end date (both before exam start).</p>
+</Callout>
+
+**Read access (R)** includes `git fetch`, `git clone`, `git pull`.
+**Write access (W)** corresponds to `git push`.
+
+### Access Rights Table
+
+| Repository Type | Role | Time Period | Access |
+|----------------|------|-------------|--------|
+| Base | S | all | none |
+| | TA | all | R |
+| | I | all | R/W |
+| Student Assignment | S | Before start | none |
+| | S | Working time | R/W |
+| | S | After due | R¹ |
+| | TA | all | R |
+| | I | all | R/W |
+| TA Assignment | S | all | none |
+| | TA | Before start | R |
+| | TA | Working time | R/W |
+| | TA | After due | R |
+| | I | all | R/W |
+| Instructor Assignment | S | all | none |
+| | TA | all | R |
+| | I | all | R/W² |
+| Student Practice | S | Before start | none |
+| | S | Working time | none |
+| | S | After due | R/W |
+| | TA | Before start | none |
+| | TA | Working time | none |
+| | TA | After due | R |
+| | I | Before start | none |
+| | I | Working time | none |
+| | I | After due | R/W |
+| TA Practice | S | all | none |
+| | TA | Before start | none |
+| | TA | Working time | none |
+| | TA | After due | R/W |
+| | I | Before start | none |
+| | I | Working time | none |
+| | I | After due | R/W |
+| Instructor Practice | S | all | none |
+| | TA | Before start | none |
+| | TA | Working time | none |
+| | TA | After due | R |
+| | I | Before start | none |
+| | I | Working time | none |
+| | I | After due | R/W |
+| Instructor Exam Test Run | S | all | none |
+| | TA | all | R |
+| | I | all | R/W |
+
+**Notes:**
+
+1. Only valid for course exercises. Students cannot read exam exercise repositories after due date.
+
+2. Instructors can access Instructor Assignment repository via online editor from Course Management (Edit in editor) or Course Overview (Open code editor). After due date, push only via online editor from Course Management or local Git client. Online editor from Course Overview shows locked repository.
+
+<Callout variant={CalloutVariant.info}>
+  <p>Practice repositories, TA assignment, and instructor assignment repositories only exist for course exercises.</p>
+</Callout>
+
+## Testing with Ares
+
+Ares is a JUnit 5 extension for easy and secure Java testing on Artemis.
+
+Main features:
+
+- Security manager to prevent students crashing tests or cheating
+- More robust tests and builds with limits on time, threads, and I/O
+- Support for public and hidden Artemis tests with custom due dates
+- Utilities for improved feedback (multiline error messages, exception location hints)
+- Utilities to test exercises using System.out and System.in
+
+**For more information see** [Ares GitHub](https://github.com/ls1intum/Ares)
+
+## Best Practices for Writing Test Cases
+
+The following sections describe best practices for writing test cases. Examples are specifically for Java (using Ares/JUnit5), but practices can be generalized for other languages.
+
+### General Best Practices
+
+<details>
+<summary><strong>Write Meaningful Comments for Tests</strong></summary>
+
+Comments should contain:
+- What is tested specifically
+- Which task from problem statement is addressed
+- How many points the test is worth
+- Additional necessary information
+
+Keep information consistent with Artemis settings like test case weights.
+
+```java
+/**
+ * Tests that borrow() in Book successfully sets the available attribute to false
+ * Problem Statement Task 2.1
+ * Worth 1.5 Points (Weight: 1)
+ */
+@Test
+public void testBorrowInBook() {
+    // Test Code
+}
+```
+
+Better yet, use comments in display names for manual correction:
+
+```java
+@DisplayName("1.5 P | Books can be borrowed successfully")
+@Test
+public void testBorrowInBook() {
+    // Test Code
+}
+```
+
+</details>
+
+<details>
+<summary><strong>Use Appropriate and Descriptive Names for Test Cases</strong></summary>
+
+Test names are used for statistics. Avoid generic names like test1, test2, test3.
+
+```java
+@Test
+public void testBorrowInBook() {
+    // Test Code
+}
+```
+
+If tests are in different (nested) classes, add class name to avoid duplicates:
+
+```java
+@Test
+public void test_LinkedList_add() {
+    // Test Code
+}
+```
+
+<Callout variant={CalloutVariant.tip}>
+  <p>For Java: If all test methods are in a single class, this is unnecessary (compiler won't allow duplicate methods).</p>
+</Callout>
+
+</details>
+
+<details>
+<summary><strong>Use Appropriate Timeouts for Test Cases</strong></summary>
+
+For regular tests, `@StrictTimeout(1)` (1 second) is usually sufficient. For shorter timeouts:
+
+```java
+@Test
+@StrictTimeout(value = 500, unit = TimeUnit.MILLISECONDS)
+public void testBorrowInBook() {
+    // Test Code
+}
+```
+
+Can also be applied to entire test class.
+
+<Callout variant={CalloutVariant.warning}>
+  <p>Remember tests run on CI servers (build agents). Tests execute slower than on local machines.</p>
+</Callout>
+
+</details>
+
+<details>
+<summary><strong>Avoid Assert Statements</strong></summary>
+
+Use conditional `fail()` calls instead to hide confusing information from students.
+
+❌ **Not recommended:**
+
+```java
+@Test
+public void testBorrowInBook() {
+    Object book = newInstance("Book", 0, "Some title");
+    invokeMethod(book, "borrow");
+    assertFalse((Boolean) invokeMethod(book, "isAvailable"),
+                "A borrowed book must be unavailable!");
+}
+```
+
+Shows: `org.opentest4j.AssertionFailedError: A borrowed book must be unavailable! ==> Expected <false> but was <true>`
+
+✅ **Recommended:**
+
+```java
+@Test
+public void testBorrowInBook() {
+    Object book = newInstance("Book", 0, "Some title");
+    invokeMethod(book, "borrow");
+    if ((Boolean) invokeMethod(book, "isAvailable")) {
+        fail("A borrowed book is not available anymore!");
+    }
+}
+```
+
+Shows: `org.opentest4j.AssertionFailedError: A borrowed book is not available anymore!`
+
+</details>
+
+<details>
+<summary><strong>Write Tests Independent of Student Code</strong></summary>
+
+Students can break anything. Use reflective operations instead of direct code references.
+
+❌ **Not recommended (causes build errors):**
+
+```java
+@Test
+public void testBorrowInBook() {
+    Book book = new Book(0, "Some title");
+    book.borrow();
+    if (book.isAvailable()) {
+        fail("A borrowed book must be unavailable!");
+    }
+}
+```
+
+✅ **Recommended (provides meaningful errors):**
+
+```java
+@Test
+public void testBorrowInBook() {
+    Object book = newInstance("Book", 0, "Some title");
+    invokeMethod(book, "borrow");
+    if ((Boolean) invokeMethod(book, "isAvailable")) {
+        fail("A borrowed book must be unavailable!");
+    }
+}
+```
+
+Error message: `The class 'Book' was not found within the submission. Make sure to implement it properly.`
+
+</details>
+
+<details>
+<summary><strong>Check for Hard-Coded Student Solutions</strong></summary>
+
+Students may hardcode values to pass specific tests. Verify solutions fulfill actual requirements, especially in exams.
+
+</details>
+
+<details>
+<summary><strong>Avoid Relying on Specific Task Order</strong></summary>
+
+Tests should cover one aspect without requiring different parts to be implemented.
+
+Example: Testing `translate` and `runService` methods where `runService` calls `translate`.
+
+❌ **Not recommended (assumes translate is implemented):**
+
+```java
+@Test
+public void testRunServiceInTranslationServer() {
+    String result = translationServer.runService("French", "Dog");
+    assertEquals("Dog:French", result);
+}
+```
+
+✅ **Recommended (overrides translate to test runService independently):**
+
+```java
+@Test
+public void testRunServiceInTranslationServer() {
+    TranslationServer testServer = new TranslationServer() {
+        public String translate(String word, String language) {
+            return word + ":" + language;
+        }
+    };
+    String expected = "Dog:French";
+    String actual = testServer.runService("French", "Dog");
+    if(!expected.equals(actual)) fail("Descriptive fail message");
+}
+```
+
+<Callout variant={CalloutVariant.warning}>
+  <p>Handle students making classes/methods final via problem statement or tests to avoid compilation errors.</p>
+</Callout>
+
+</details>
+
+<details>
+<summary><strong>Catch Possible Student Errors</strong></summary>
+
+Handle student mistakes appropriately. For example, null returns can cause `NullPointerException`.
+
+```java
+@Test
+public void testBorrowInBook() {
+    Object book = newInstance("Book", 0, "Some title");
+    Object result = invokeMethod(book, "getTitle");
+    if (result == null) {
+        fail("getTitle() returned null!");
+    }
+    // Continue with test
+}
+```
+
+</details>
+
+### Java Best Practices
+
+<details>
+<summary><strong>Use Constant String Attributes for Base Package</strong></summary>
+
+Avoid repeating long package identifiers:
+
+```java
+private static final String BASE_PACKAGE = "de.tum.in.ase.pse.";
+
+@Test
+public void testBorrowInBook() {
+    Object book = newInstance(BASE_PACKAGE + "Book", 0, "Some title");
+    // Test Code
+}
+```
+
+</details>
+
+<details>
+<summary><strong>Use JUnit5 and Ares Features</strong></summary>
+
+More information: [JUnit5 Documentation](https://junit.org/junit5/docs/current/user-guide/#writing-tests) and [Ares GitHub](https://github.com/ls1intum/Ares)
+
+Useful features:
+
+- [Nested Tests](https://junit.org/junit5/docs/current/user-guide/#writing-tests-nested) to group tests
+- `@Order` to define custom test execution order
+- `assertDoesNotThrow` for exception handling with custom messages
+- `assertAll` to aggregate multiple assertion failures
+- [Dynamic Tests](https://junit.org/junit5/docs/current/user-guide/#writing-tests-dynamic-tests) for special needs
+- Custom [extensions](https://junit.org/junit5/docs/current/user-guide/#extensions)
+- [JUnit Platform Test Kit](https://junit.org/junit5/docs/current/user-guide/#testkit) for testing tests
+
+</details>
+
+<details>
+<summary><strong>Define Custom Annotations</strong></summary>
+
+Combine annotations for better readability:
+
+```java
+@Test
+@StrictTimeout(10)
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.METHOD})
+public @interface LongTest {
+}
+```
+
+</details>
+
+<details>
+<summary><strong>Consider Using jqwik for Property-Based Testing</strong></summary>
+
+[jqwik](https://jqwik.net) allows testing with arbitrary inputs and shrinks errors to excellent counter-examples (usually edge cases).
+
+</details>
+
+<details>
+<summary><strong>Eclipse Compiler and Best-Effort Compilation</strong></summary>
+
+Use Eclipse Java Compiler for partial, best-effort compilation. Useful for exam exercises and complicated generics.
+
+Compilation errors are transformed into errors thrown where code doesn't compile (method/class level). The body is replaced with `throw new Error("Unresolved compilation problems: ...")`.
+
+<Callout variant={CalloutVariant.warning}>
+  <p><strong>Important:</strong> Only method/class bodies should fail to compile, not complete test classes. Anything outside method/nested class bodies must compile, including method signatures, return types, parameter types, and lambdas. Use nested classes for fields/methods with student class types that might not compile.</p>
+</Callout>
+
+<Callout variant={CalloutVariant.info}>
+  <p>The Eclipse Compiler may not support the latest Java version. You can compile student code with the latest Java and test code with the previous version.</p>
+</Callout>
+
+See old documentation for Maven configuration examples.
+
+</details>
+
+<details>
+<summary><strong>Common Pitfalls / Problems</strong></summary>
+
+- **Reflection API limitation**: Constant attributes (static final primitives/Strings) are inlined at compile-time, making them impossible to change at runtime
+- **Long output**: Arrays or Strings with long output may be unreadable or truncated after 5000 characters
+
+</details>
+
+## Submission Policy Configuration
+
+Submission policies define the effect of a submission on participant progress. A programming exercise can have zero or one submission policy (never more than one). Policies are specified during exercise creation and can be adjusted in the grading configuration later.
+
+<Callout variant={CalloutVariant.info}>
+  <p><strong>Definition:</strong> One submission = one push to the exercise repository by the participant that triggers automatic tests resulting in feedback. Automatic test runs triggered by instructors are not counted as submissions.</p>
+</Callout>
+
+### Submission Policy Types
+
+Choosing the right policy depends on the exercise and teaching style. Lock repository and submission penalty policies combat trial-and-error solving approaches.
+
+#### 1. None
+
+No submission policy. Participants can submit as often as they want until the due date.
+
+<Image src={submissionPolicyNoneForm} alt="Submission Policy None" size={ImageSize.medium} caption="No Submission Policy" />
+
+#### 2. Lock Repository
+
+Participants can submit a fixed number of times. After reaching the limit, the repository is locked and further submissions are prevented.
+
+<Image src={submissionPolicyLockRepositoryForm} alt="Submission Policy Lock Repository" size={ImageSize.large} caption="Lock Repository Policy Configuration" />
+
+With the example configuration shown above, participants can submit 5 times. After the 5th submission, Artemis locks the repository, preventing further pushes.
+
+<Callout variant={CalloutVariant.warning}>
+  <p>If locking fails and the participant submits again, Artemis attempts to lock again and sets the new result to <img src={notGradedLabel} alt="Not Graded" style={{display: 'inline', verticalAlign: 'middle', height: '1.5rem'}} />.</p>
+</Callout>
+
+#### 3. Submission Penalty
+
+Participants can submit as often as they want. For each submission exceeding the limit, the penalty is deducted from the score.
+
+<Image src={submissionPolicySubmissionPenaltyForm} alt="Submission Policy Submission Penalty" size={ImageSize.large} caption="Submission Penalty Policy Configuration" />
+
+With the example configuration above:
+- First 3 submissions: no penalty
+- 4th submission: 1.5 points deducted
+- 5th submission: 3 points deducted (1.5 × 2 submissions exceeding limit)
+- Score cannot be negative
+
+Example: Student achieves 6 out of 12 points on 4th submission. With 1.5 point penalty, final score is 4.5 out of 12.
+
+Students receive feedback explaining the deduction:
+
+<Image src={submissionPenaltyFeedbackElement} alt="Submission Penalty Feedback" size={ImageSize.medium} caption="Submission Penalty Feedback Example" />
+
+<Image src={submissionPenaltyFeedbackElement2} alt="Submission Penalty Feedback 2" size={ImageSize.medium} caption="Submission Penalty Feedback Details" />
+
+### Updating Submission Policies
+
+After generating an exercise, submission policies can be updated on the grading page.
+
+<Image src={submissionPolicyGradingPage} alt="Submission Policy Grading Page" size={ImageSize.large} caption="Submission Policy Management on Grading Page" />
+
+#### (De)activating Submission Policies
+
+- **Active policy**: Shows <img src={submissionPolicyDeactivateButton} alt="Deactivate" style={{display: 'inline', verticalAlign: 'middle', height: '1.5rem'}} /> button
+- **Inactive policy**: Shows <img src={submissionPolicyActivateButton} alt="Activate" style={{display: 'inline', verticalAlign: 'middle', height: '1.5rem'}} /> button
+
+When deactivated, Artemis no longer enforces the policy. Locked repositories are unlocked. For submission penalty policies, press <img src={gradingReevaluateAll} alt="Re-evaluate All" style={{display: 'inline', verticalAlign: 'middle', height: '1.5rem'}} /> to apply changes.
+
+#### Updating Submission Policies
+
+Modify configuration and press <img src={submissionPolicyUpdateButton} alt="Update" style={{display: 'inline', verticalAlign: 'middle', height: '1.5rem'}} />. The effect of the former policy is removed and the new policy is applied. For submission penalty policies, press <img src={gradingReevaluateAll} alt="Re-evaluate All" style={{display: 'inline', verticalAlign: 'middle', height: '1.5rem'}} /> to update results.
+
+#### Deleting Submission Policies
+
+Select **None** as policy type and press <img src={submissionPolicyUpdateButton} alt="Update" style={{display: 'inline', verticalAlign: 'middle', height: '1.5rem'}} />. Locked repositories are unlocked. For submission penalty policies, press <img src={gradingReevaluateAll} alt="Re-evaluate All" style={{display: 'inline', verticalAlign: 'middle', height: '1.5rem'}} /> to revert effects.
+
+## Java DejaGnu: Blackbox Testing
+
+Classical testing frameworks like JUnit allow writing whitebox tests, which enforce assumptions about code structure (class names, method names, signatures). This requires specifying all structural aspects for tests to run on student submissions.
+
+For advanced courses, this is a downside: students cannot make their own structural decisions and gain experience in this important programming aspect.
+
+[DejaGnu](https://www.gnu.org/software/dejagnu/) enables blackbox tests for command line interfaces. Tests are written in Expect Script (extension of Tcl). Expect is a Unix utility for automatic interaction with programs exposing text terminal interfaces.
+
+Test scripts:
+- Start the program as a separate process
+- Interact via textual inputs (standard input)
+- Read outputs and make assertions (exact or regex matching)
+- Decide next inputs based on output, simulating user interaction
+
+For exercises, only specify:
+- Command line interface syntax
+- Rough output format guidance
+
+Source code structure is up to students.
+
+Source code structure quality assessment can be done manually after submission deadline. The template uses Maven to compile student code, so it can be extended with regular unit tests (e.g., [architecture tests](https://www.archunit.org/) for cyclic package dependencies).
+
+**Usage:** Consult [official documentation](https://www.gnu.org/software/dejagnu/manual/index.html) and initial test-repository content. DejaGnu files are in the `testsuite` directory. The `….tests` directory contains three example test execution scripts.
+
+Example: `PROGRAM_TEST {add x} {}` puts "add x" into the program and expects no output.
+
+Helper functions like `PROGRAM_TEST` are defined in `config/default.exp`.
+
+Variables in SCREAMING_SNAKE_CASE (e.g., `MAIN_CLASS`) are replaced with actual values in previous build plan steps. For example, the build plan finds the Java class with main method and replaces `MAIN_CLASS`.
+
+Best Expect documentation: [Exploring Expect](https://books.google.com.sg/books?id=t8C4pEDQ8s0C) book. The Artemis default template contains reusable helper functions in `config/default.exp` for common I/O use cases.
+
+This exercise type simplifies reusing existing exercises from the [Praktomat](https://github.com/KITPraktomatTeam/Praktomat) autograder system.
+
+## Sending Feedback back to Artemis
+
+By default, unit test results are extracted and sent to Artemis automatically. Only custom setups may need semi-automatic approaches.
+
+### Jenkins
+
+In Jenkins CI, test case feedback is extracted from XML files in JUnit format. The Jenkins plugin reads files from a `results` folder in the Jenkins workspace top level. Regular unit test files are copied automatically.
+
+For custom test case feedback, create a `customFeedbacks` folder at workspace top level. In this folder, create JSON files for each test case feedback:
+
+```json
+{
+  "name": string,
+  "successful": boolean,
+  "message": string
+}
+```
+
+- **name**: Test case name as shown on 'Configure Grading' page. Must be non-null and non-empty
+- **successful**: Indicates test case success/failure. Defaults to false if not present
+- **message**: Additional information shown to student. **Required for non-successful tests**, optional otherwise
+
+## Integrated Code Lifecycle
+
+The Artemis Integrated Code Lifecycle allows using programming exercises fully integrated within Artemis, without external tools. Find more information in the [Integrated Code Lifecycle documentation](/instructor/integrated-code-lifecycle).
