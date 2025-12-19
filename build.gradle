@@ -177,7 +177,7 @@ dependencies {
     implementation "org.codeability:SharingPluginPlatformAPI:1.2.1"
     // Required by Spring cloud
     implementation "org.apache.httpcomponents.client5:httpclient5:5.5.1"
-    implementation "org.apache.httpcomponents.core5:httpcore5:5.4"
+    implementation "org.apache.httpcomponents.core5:httpcore5:5.3.6"
     implementation "org.apache.httpcomponents:httpmime:4.5.14"
 
     implementation "jakarta.ws.rs:jakarta.ws.rs-api:4.0.0"

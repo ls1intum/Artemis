@@ -12,6 +12,8 @@ import { ScienceService } from 'app/shared/science/science.service';
 import { LectureTranscriptionService } from 'app/lecture/manage/services/lecture-transcription.service';
 import { LectureTranscriptionDTO } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { of } from 'rxjs';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { AlertService } from 'app/shared/service/alert.service';
 import {
     IconDefinition,
     faFile,
@@ -29,6 +31,9 @@ import {
 import { MockFileService } from 'test/helpers/mocks/service/mock-file.service';
 import { FileService } from 'app/shared/service/file.service';
 import urlParser from 'js-video-url-parser';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
 
 // Mock ResizeObserver for VideoPlayerComponent
 class MockResizeObserver {
@@ -59,7 +64,14 @@ describe('AttachmentVideoUnitComponent', () => {
         },
     };
 
+    let mockLectureTranscriptionService: any;
+
     beforeEach(async () => {
+        mockLectureTranscriptionService = {
+            getTranscription: jest.fn(),
+            getTranscriptionStatus: jest.fn(() => of(undefined)),
+        };
+
         await TestBed.configureTestingModule({
             imports: [AttachmentVideoUnitComponent],
             providers: [
@@ -67,8 +79,12 @@ describe('AttachmentVideoUnitComponent', () => {
                 provideHttpClientTesting(),
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: FileService, useClass: MockFileService },
+                { provide: AccountService, useClass: MockAccountService },
                 MockProvider(ScienceService),
-                MockProvider(LectureTranscriptionService),
+                { provide: LectureTranscriptionService, useValue: mockLectureTranscriptionService },
+                AttachmentVideoUnitService,
+                MockProvider(NgbModal),
+                MockProvider(AlertService),
             ],
         }).compileComponents();
 

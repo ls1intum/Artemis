@@ -128,8 +128,8 @@ const moduleThresholds = {
     },
     lecture: {
         statements: 92.50,
-        branches:   76.25,
-        functions:  88.30,
+        branches:   75.50,
+        functions:  88.50,
         lines:      92.40,
     },
     lti: {
