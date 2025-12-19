@@ -13,12 +13,10 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
-import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
 
 export interface AttachmentVideoUnitFormData {
     formProperties: FormProperties;
     fileProperties: FileProperties;
-    playlistUrl?: string;
 }
 
 // matches structure of the reactive form
@@ -97,9 +95,6 @@ export class AttachmentVideoUnitFormComponent {
     protected readonly allowedFileExtensions = ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE;
     protected readonly acceptedFileExtensionsFileBrowser = ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER;
 
-    private readonly attachmentVideoUnitService = inject(AttachmentVideoUnitService);
-    playlistUrl = signal<string | undefined>(undefined);
-
     formData = input<AttachmentVideoUnitFormData>();
     isEditMode = input<boolean>(false);
 
@@ -129,11 +124,6 @@ export class AttachmentVideoUnitFormComponent {
             const formData = this.formData();
             if (this.isEditMode() && formData) {
                 this.setFormValues(formData);
-
-                // Set playlist URL if available from formData (for existing videos)
-                if (formData.playlistUrl) {
-                    this.playlistUrl.set(formData.playlistUrl);
-                }
             }
         });
     }
@@ -201,17 +191,6 @@ export class AttachmentVideoUnitFormComponent {
         return this.form.get('urlHelper');
     }
 
-    checkPlaylistAvailability(originalUrl: string): void {
-        this.attachmentVideoUnitService.getPlaylistUrl(originalUrl).subscribe({
-            next: (playlist) => {
-                this.playlistUrl.set(playlist ?? undefined);
-            },
-            error: () => {
-                this.playlistUrl.set(undefined);
-            },
-        });
-    }
-
     submitForm() {
         const formValue = this.form.value;
         const formProperties: FormProperties = { ...formValue };
@@ -223,7 +202,6 @@ export class AttachmentVideoUnitFormComponent {
         this.formSubmitted.emit({
             formProperties,
             fileProperties,
-            playlistUrl: this.playlistUrl(),
         });
     }
 
@@ -253,8 +231,6 @@ export class AttachmentVideoUnitFormComponent {
         const originalUrl = this.urlHelperControl!.value;
         const embeddedUrl = this.extractEmbeddedUrl(originalUrl);
         this.videoSourceControl!.setValue(embeddedUrl);
-
-        this.checkPlaylistAvailability(originalUrl);
     }
 
     extractEmbeddedUrl(videoUrl: string) {

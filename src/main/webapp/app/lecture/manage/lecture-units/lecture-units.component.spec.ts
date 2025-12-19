@@ -115,7 +115,6 @@ describe('LectureUpdateUnitsComponent', () => {
         wizardUnitComponent.lecture = new Lecture();
         wizardUnitComponent.lecture.id = 1;
         attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
-        attachmentVideoUnitService.fetchAndUpdatePlaylistUrl = jest.fn((_, formData) => of(formData)) as any;
         wizardUnitComponent.editFormContainer = computed(() => ({ nativeElement: { scrollIntoView: jest.fn() } }) as unknown as ElementRef) as Signal<ElementRef | undefined>;
         mockUnitManagementComponent();
     });
@@ -141,9 +140,6 @@ describe('LectureUpdateUnitsComponent', () => {
     }));
 
     it('should open attachment form when clicked', fakeAsync(() => {
-        const attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
-        jest.spyOn(attachmentVideoUnitService, 'fetchAndUpdatePlaylistUrl').mockImplementation((_, formData) => of(formData));
-
         wizardUnitComponentFixture.detectChanges();
         tick();
         const unitCreationCard: UnitCreationCardComponent = wizardUnitComponentFixture.debugElement.query(By.directive(UnitCreationCardComponent)).componentInstance;
@@ -634,9 +630,6 @@ describe('LectureUpdateUnitsComponent', () => {
     }));
 
     it('should open edit attachment form when clicked', fakeAsync(() => {
-        const attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
-        jest.spyOn(attachmentVideoUnitService, 'fetchAndUpdatePlaylistUrl').mockImplementation((_, formData) => of(formData));
-
         wizardUnitComponentFixture.detectChanges();
         tick();
 
@@ -675,127 +668,6 @@ describe('LectureUpdateUnitsComponent', () => {
 
         expect(wizardUnitComponent).not.toBeNull();
         expect(wizardUnitComponent.isExerciseUnitFormOpen()).toBeTrue();
-    }));
-
-    it('should fetch playlist URL when starting to edit a video unit with videoSource', fakeAsync(() => {
-        wizardUnitComponentFixture.detectChanges();
-        tick();
-
-        const attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
-
-        const attachment = new Attachment();
-        attachment.id = 1;
-        attachment.version = 1;
-        attachment.attachmentType = AttachmentType.FILE;
-        attachment.name = 'test';
-        attachment.link = '/path/to/file';
-
-        const attachmentVideoUnit = new AttachmentVideoUnit();
-        attachmentVideoUnit.id = 1;
-        attachmentVideoUnit.attachment = attachment;
-        attachmentVideoUnit.videoSource = 'https://live.rbg.tum.de/w/test/123?video_only=1';
-
-        const playlistUrl = 'https://live.rbg.tum.de/playlist.m3u8';
-
-        // We need to construct the expected form data that the service would return
-        const expectedFormData: AttachmentVideoUnitFormData = {
-            formProperties: {
-                name: attachmentVideoUnit.name,
-                description: attachmentVideoUnit.description,
-                releaseDate: attachmentVideoUnit.releaseDate,
-                version: attachmentVideoUnit.attachment?.version,
-                videoSource: attachmentVideoUnit.videoSource,
-            },
-            fileProperties: {
-                fileName: attachmentVideoUnit.attachment?.link,
-            },
-            playlistUrl: playlistUrl,
-        };
-
-        const fetchAndUpdatePlaylistUrlSpy = jest.spyOn(attachmentVideoUnitService, 'fetchAndUpdatePlaylistUrl').mockReturnValue(of(expectedFormData));
-
-        wizardUnitComponent.startEditLectureUnit(attachmentVideoUnit);
-        tick();
-
-        expect(fetchAndUpdatePlaylistUrlSpy).toHaveBeenCalledWith(attachmentVideoUnit.videoSource, expect.anything());
-
-        wizardUnitComponentFixture.whenStable().then(() => {
-            expect(wizardUnitComponent.attachmentVideoUnitFormData?.playlistUrl).toBe(playlistUrl);
-        });
-    }));
-
-    it('should handle playlist URL fetch failure gracefully when editing a video unit', fakeAsync(() => {
-        wizardUnitComponentFixture.detectChanges();
-        tick();
-
-        const attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
-
-        const attachment = new Attachment();
-        attachment.id = 1;
-        attachment.version = 1;
-        attachment.attachmentType = AttachmentType.FILE;
-        attachment.name = 'test';
-        attachment.link = '/path/to/file';
-
-        const attachmentVideoUnit = new AttachmentVideoUnit();
-        attachmentVideoUnit.id = 1;
-        attachmentVideoUnit.attachment = attachment;
-        attachmentVideoUnit.videoSource = 'https://example.com/video';
-
-        // When fetch fails (or returns null), it returns the original form data
-        const originalFormData: AttachmentVideoUnitFormData = {
-            formProperties: {
-                name: attachmentVideoUnit.name,
-                description: attachmentVideoUnit.description,
-                releaseDate: attachmentVideoUnit.releaseDate,
-                version: attachmentVideoUnit.attachment?.version,
-                videoSource: attachmentVideoUnit.videoSource,
-            },
-            fileProperties: {
-                fileName: attachmentVideoUnit.attachment?.link,
-            },
-        };
-
-        const fetchAndUpdatePlaylistUrlSpy = jest.spyOn(attachmentVideoUnitService, 'fetchAndUpdatePlaylistUrl').mockReturnValue(of(originalFormData));
-
-        wizardUnitComponent.startEditLectureUnit(attachmentVideoUnit);
-        tick();
-
-        expect(fetchAndUpdatePlaylistUrlSpy).toHaveBeenCalledWith(attachmentVideoUnit.videoSource, expect.anything());
-
-        // Should still open the form even if playlist URL fetch fails
-        expect(wizardUnitComponent.isAttachmentVideoUnitFormOpen()).toBeTrue();
-        // playlistUrl should not be set
-        expect(wizardUnitComponent.attachmentVideoUnitFormData?.playlistUrl).toBeUndefined();
-    }));
-
-    it('should not fetch playlist URL when starting to edit a video unit without videoSource', fakeAsync(() => {
-        wizardUnitComponentFixture.detectChanges();
-        tick();
-
-        const attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
-
-        const attachment = new Attachment();
-        attachment.id = 1;
-        attachment.version = 1;
-        attachment.attachmentType = AttachmentType.FILE;
-        attachment.name = 'test';
-        attachment.link = '/path/to/file';
-
-        const attachmentVideoUnit = new AttachmentVideoUnit();
-        attachmentVideoUnit.id = 1;
-        attachmentVideoUnit.attachment = attachment;
-        // No videoSource set
-
-        const fetchAndUpdatePlaylistUrlSpy = jest.spyOn(attachmentVideoUnitService, 'fetchAndUpdatePlaylistUrl').mockImplementation((_, formData) => of(formData));
-
-        wizardUnitComponent.startEditLectureUnit(attachmentVideoUnit);
-        tick();
-
-        expect(wizardUnitComponent.isAttachmentVideoUnitFormOpen()).toBeTrue();
-
-        // Verify it was called with undefined videoSource
-        expect(fetchAndUpdatePlaylistUrlSpy).toHaveBeenCalledWith(undefined, expect.anything());
     }));
 
     describe('PDF drop zone', () => {
@@ -875,7 +747,6 @@ describe('LectureUpdateUnitsComponent', () => {
             createdUnit.name = 'Created Unit';
 
             jest.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile').mockReturnValue(of(new HttpResponse({ body: createdUnit, status: 201 })));
-            jest.spyOn(attachmentVideoUnitService, 'fetchAndUpdatePlaylistUrl').mockImplementation((_, formData) => of(formData));
 
             wizardUnitComponentFixture.detectChanges();
             tick();

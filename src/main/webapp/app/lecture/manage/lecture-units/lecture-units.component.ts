@@ -310,11 +310,6 @@ export class LectureUpdateUnitsComponent implements OnInit {
                         fileName: this.currentlyProcessedAttachmentVideoUnit.attachment?.link,
                     },
                 };
-                this.attachmentVideoUnitService.fetchAndUpdatePlaylistUrl(this.currentlyProcessedAttachmentVideoUnit.videoSource, this.attachmentVideoUnitFormData).subscribe({
-                    next: (updatedFormData) => {
-                        this.attachmentVideoUnitFormData = updatedFormData;
-                    },
-                });
                 break;
         }
     }
