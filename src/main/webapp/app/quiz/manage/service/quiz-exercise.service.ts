@@ -332,7 +332,7 @@ export class QuizExerciseService {
             return QuizStatus.INVISIBLE;
         }
         if (quizExercise.quizEnded) {
-            return quizExercise.isOpenForPractice ? QuizStatus.OPEN_FOR_PRACTICE : QuizStatus.CLOSED;
+            return QuizStatus.OPEN_FOR_PRACTICE;
         }
         if (quizExercise.quizBatches && quizExercise.quizBatches.some((batch) => batch.started)) {
             return QuizStatus.ACTIVE;
