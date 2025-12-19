@@ -1,4 +1,4 @@
-import { AfterViewChecked, Component, OnDestroy, ViewChild, computed, inject, signal } from '@angular/core';
+import { Component, OnDestroy, ViewChild, computed, effect, inject, signal } from '@angular/core';
 import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/programming/shared/actions/trigger-build-button/student/programming-exercise-student-trigger-build-button.component';
 import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor/container/code-editor-container.component';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
@@ -70,7 +70,7 @@ import { HyperionCodeGenerationApiService } from 'app/openapi/api/hyperionCodeGe
         MarkdownDiffEditorMonacoComponent,
     ],
 })
-export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorInstructorBaseContainerComponent implements OnDestroy, AfterViewChecked {
+export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorInstructorBaseContainerComponent implements OnDestroy {
     @ViewChild(UpdatingResultComponent, { static: false }) resultComp: UpdatingResultComponent;
     @ViewChild(ProgrammingExerciseEditableInstructionComponent, { static: false }) editableInstructions: ProgrammingExerciseEditableInstructionComponent;
     @ViewChild('diffEditor') diffEditor?: MarkdownDiffEditorMonacoComponent;
@@ -270,14 +270,17 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     metaActions: TextEditorAction[] = [new FullscreenAction()];
 
     /**
-     * Lifecycle hook called after every check of the component's view.
-     * Used to set diff editor content when it becomes available.
+     * Effect to set diff editor content when signals change.
+     * More efficient than ngAfterViewChecked as it only runs when signals change.
      */
-    ngAfterViewChecked(): void {
-        if (this.showDiff() && this.diffEditor && !this.diffContentSet) {
-            this.diffEditor.setFileContents(this.originalProblemStatement(), this.refinedProblemStatement(), 'original.md', 'refined.md');
-            this.diffContentSet = true;
-        }
+    constructor() {
+        super();
+        effect(() => {
+            if (this.showDiff() && this.diffEditor && !this.diffContentSet) {
+                this.diffEditor.setFileContents(this.originalProblemStatement(), this.refinedProblemStatement(), 'original.md', 'refined.md');
+                this.diffContentSet = true;
+            }
+        });
     }
 
     /**
