@@ -15,14 +15,12 @@
             <where>bonus_points IS NULL</where>
         </update>
 
+        <addDefaultValue tableName="exercise" columnName="max_points" defaultValueNumeric="1.0"/>
+        <addDefaultValue tableName="exercise" columnName="bonus_points" defaultValueNumeric="0.0"/>
+
         <addNotNullConstraint tableName="exercise" columnName="max_points" columnDataType="double"/>
         <addNotNullConstraint tableName="exercise" columnName="bonus_points" columnDataType="double"/>
 
-        <sql dbms="mysql">
-            ALTER TABLE exercise
-                MODIFY max_points DOUBLE NOT NULL DEFAULT 1.0,
-                MODIFY bonus_points DOUBLE NOT NULL DEFAULT 0.0;
-        </sql>
     </changeSet>
 
 </databaseChangeLog>

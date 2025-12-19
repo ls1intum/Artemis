@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="20251219202152-exercise-default-points-db-defaults" author="lezhen">
+        <sql dbms="mysql">
+            ALTER TABLE exercise
+                MODIFY max_points DOUBLE NOT NULL DEFAULT 1.0,
+                MODIFY bonus_points DOUBLE NOT NULL DEFAULT 0.0;
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>
