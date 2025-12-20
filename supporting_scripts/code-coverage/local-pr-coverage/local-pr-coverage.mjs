@@ -454,6 +454,7 @@ async function runClientTests(modules, options) {
                 cwd: PROJECT_ROOT,
                 stdio: options.verbose ? 'inherit' : 'pipe',
                 encoding: 'utf-8',
+                maxBuffer: 50 * 1024 * 1024, // 50MB buffer for large test outputs
             });
             if (vitestResult.status !== 0) {
                 warn(`Vitest exited with code ${vitestResult.status || 1}`);
@@ -505,6 +506,7 @@ async function runClientTests(modules, options) {
                 cwd: PROJECT_ROOT,
                 stdio: options.verbose ? 'inherit' : 'pipe',
                 encoding: 'utf-8',
+                maxBuffer: 50 * 1024 * 1024, // 50MB buffer for large test outputs
             });
             if (testResult.status !== 0) {
                 warn(`Jest tests exited with code ${testResult.status || 1}`);
@@ -616,6 +618,7 @@ async function runServerTests(modules, options) {
 
     try {
         // Use spawnSync with argument array for safety
+        // maxBuffer is set to 50MB to handle large test outputs (default is 1MB which can cause the process to be killed)
         const gradleResult = spawnSync(gradleWrapper, [
             'test',
             `-DincludeModules=${modulesArg}`,
@@ -626,6 +629,7 @@ async function runServerTests(modules, options) {
             stdio: options.verbose ? 'inherit' : 'pipe',
             encoding: 'utf-8',
             shell: process.platform === 'win32', // Windows needs shell for .bat files
+            maxBuffer: 50 * 1024 * 1024, // 50MB buffer for large test outputs
         });
         if (gradleResult.status !== 0) {
             warn(`Server tests exited with code ${gradleResult.status || 1}`);

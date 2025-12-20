@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.core.authentication;
 
 import static de.tum.cit.aet.artemis.core.user.util.UserFactory.USER_PASSWORD;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -215,26 +216,14 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
 
         var authentication = new UsernamePasswordAuthenticationToken(USERNAME, USER_PASSWORD);
 
-        try {
-            artemisInternalAuthenticationProvider.authenticate(authentication);
-            assertThat(false).as("Should have thrown UserNotActivatedException").isTrue();
-        }
-        catch (Exception e) {
-            assertThat(e.getMessage()).contains("was not activated");
-        }
+        assertThatThrownBy(() -> artemisInternalAuthenticationProvider.authenticate(authentication)).hasMessageContaining("was not activated");
     }
 
     @Test
     void testAuthenticateWithWrongPassword() {
         var authentication = new UsernamePasswordAuthenticationToken(USERNAME, "wrongPassword");
 
-        try {
-            artemisInternalAuthenticationProvider.authenticate(authentication);
-            assertThat(false).as("Should have thrown AuthenticationServiceException").isTrue();
-        }
-        catch (Exception e) {
-            assertThat(e.getMessage()).contains("Invalid password");
-        }
+        assertThatThrownBy(() -> artemisInternalAuthenticationProvider.authenticate(authentication)).hasMessageContaining("Invalid password");
     }
 
     @Test
