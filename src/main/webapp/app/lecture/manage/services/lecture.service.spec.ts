@@ -10,7 +10,6 @@ import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import dayjs from 'dayjs/esm';
-import { IngestionState } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 
 describe('Lecture Service', () => {
     let httpMock: HttpTestingController;
@@ -192,41 +191,6 @@ describe('Lecture Service', () => {
         it('should convert Dates from server', async () => {
             const results = service.convertLectureArrayDatesFromServer([elemDefault, elemDefault]);
             expect(results).toEqual([elemDefault, elemDefault]);
-        });
-
-        it('should fetch ingestion state for a course', () => {
-            const courseId = 123;
-            const expectedUrl = `api/iris/courses/${courseId}/lectures/ingestion-state`;
-            const expectedResponse = { 1: IngestionState.DONE, 2: IngestionState.NOT_STARTED };
-
-            service.getIngestionState(courseId).subscribe((resp) => {
-                expect(resp.body).toEqual(expectedResponse);
-            });
-
-            const req = httpMock.expectOne({
-                url: expectedUrl,
-                method: 'GET',
-            });
-
-            req.flush(expectedResponse);
-            expect(req.request.method).toBe('GET');
-        });
-
-        it('should send a POST request to ingest lectures and return an OK response', () => {
-            const courseId = 123;
-            const lectureId = 456;
-            const expectedUrl = `api/lecture/courses/123/ingest?lectureId=456`;
-            const expectedStatus = 200;
-
-            service.ingestLecturesInPyris(courseId, lectureId).subscribe((response) => {
-                expect(response.status).toBe(expectedStatus);
-            });
-
-            const req = httpMock.expectOne({
-                url: expectedUrl,
-                method: 'POST',
-            });
-            expect(req.request.method).toBe('POST');
         });
     });
 });

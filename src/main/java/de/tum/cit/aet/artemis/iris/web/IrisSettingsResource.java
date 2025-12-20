@@ -2,8 +2,6 @@ package de.tum.cit.aet.artemis.iris.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
-import java.util.Objects;
-
 import jakarta.validation.Valid;
 
 import org.springframework.context.annotation.Lazy;
@@ -16,14 +14,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettingsDTO;
-import de.tum.cit.aet.artemis.iris.domain.settings.IrisRateLimitConfiguration;
+import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
 import de.tum.cit.aet.artemis.iris.dto.IrisCourseSettingsWithRateLimitDTO;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 
@@ -39,14 +34,10 @@ public class IrisSettingsResource {
 
     private final AuthorizationCheckService authorizationCheckService;
 
-    private final UserRepository userRepository;
-
-    public IrisSettingsResource(CourseRepository courseRepository, IrisSettingsService irisSettingsService, AuthorizationCheckService authorizationCheckService,
-            UserRepository userRepository) {
+    public IrisSettingsResource(CourseRepository courseRepository, IrisSettingsService irisSettingsService, AuthorizationCheckService authorizationCheckService) {
         this.courseRepository = courseRepository;
         this.irisSettingsService = irisSettingsService;
         this.authorizationCheckService = authorizationCheckService;
-        this.userRepository = userRepository;
     }
 
     @GetMapping("courses/{courseId}/iris-settings")
@@ -65,38 +56,10 @@ public class IrisSettingsResource {
      */
     @PutMapping("courses/{courseId}/iris-settings")
     @EnforceAtLeastInstructorInCourse
-    public ResponseEntity<IrisCourseSettingsWithRateLimitDTO> updateCourseSettings(@PathVariable Long courseId, @Valid @RequestBody IrisCourseSettingsDTO update) {
+    public ResponseEntity<IrisCourseSettingsWithRateLimitDTO> updateCourseSettings(@PathVariable Long courseId, @Valid @RequestBody IrisCourseSettings update) {
         courseRepository.findByIdElseThrow(courseId);
-        var current = irisSettingsService.getSettingsForCourse(courseId);
-        var request = Objects.requireNonNullElse(update, current);
-        var sanitizedRequest = irisSettingsService.sanitizePayload(request);
-        var sanitizedCurrent = irisSettingsService.sanitizePayload(current);
-        var isAdmin = authorizationCheckService.isAdmin(userRepository.getUserWithGroupsAndAuthorities());
-        if (!isAdmin) {
-            enforceInstructorRestrictions(sanitizedRequest, sanitizedCurrent);
-        }
-        var saved = irisSettingsService.updateCourseSettings(courseId, sanitizedRequest);
+        var isAdmin = authorizationCheckService.isAdmin();
+        var saved = irisSettingsService.updateCourseSettings(courseId, update, isAdmin);
         return ResponseEntity.ok(saved);
-    }
-
-    private void enforceInstructorRestrictions(IrisCourseSettingsDTO request, IrisCourseSettingsDTO current) {
-        if (!Objects.equals(request.variant(), current.variant())) {
-            throw new AccessForbiddenAlertException("Only administrators can change the Iris pipeline variant", "IrisSettings", "irisVariantRestricted");
-        }
-
-        if (!sameRateLimit(request.rateLimit(), current.rateLimit())) {
-            throw new AccessForbiddenAlertException("Only administrators can change Iris rate limits", "IrisSettings", "irisRateLimitRestricted");
-        }
-    }
-
-    private boolean sameRateLimit(IrisRateLimitConfiguration left, IrisRateLimitConfiguration right) {
-        if (left == null && right == null) {
-            return true;
-        }
-        if (left == null || right == null) {
-            return false; // null vs {} must be treated as a change
-        }
-
-        return Objects.equals(left.requests(), right.requests()) && Objects.equals(left.timeframeHours(), right.timeframeHours());
     }
 }

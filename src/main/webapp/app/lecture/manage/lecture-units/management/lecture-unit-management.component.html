@@ -9,13 +9,18 @@
     <div>
         <!-- Lecture Unit Rows-->
         @if (showCreationCard) {
-            <div class="w-100 d-flex justify-content-end" [class.justify-content-center]="!lectureUnits?.length">
+            <div class="w-100 d-flex justify-content-end mb-5" [class.justify-content-center]="!lectureUnits?.length">
                 <jhi-unit-creation-card />
             </div>
         }
         <div class="component-container" cdkDropList (cdkDropListDropped)="drop($event)">
             @for (lectureUnit of lectureUnits; track identify(i, lectureUnit); let i = $index) {
-                <div class="lecture-unit-container" [class.attachment]="lectureUnit.type === LectureUnitType.ATTACHMENT_VIDEO" cdkDrag>
+                <div
+                    class="lecture-unit-container"
+                    [class.attachment]="lectureUnit.type === LectureUnitType.ATTACHMENT_VIDEO"
+                    [style.margin-top]="getContainerMarginTop(lectureUnit)"
+                    cdkDrag
+                >
                     <div class="custom-handle d-none d-sm-flex">
                         <svg viewBox="3 1 5 13" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <circle cx="4.5" cy="2.5" r=".6" fill="currentColor" />
@@ -41,34 +46,58 @@
                                         : ('artemisApp.lectureUnit.details.releaseDateNotSet' | artemisTranslate)
                                 }}
                             </div>
-                            @if (lectureUnit.type === LectureUnitType.ATTACHMENT_VIDEO && hasAttachment(lectureUnit)) {
-                                <div class="badge bg-info attachment-badge">
-                                    {{ ('artemisApp.lectureUnit.details.attachmentVersion' | artemisTranslate) + getAttachmentVersion(lectureUnit) }}
-                                </div>
-                            }
 
+                            <!-- Transcription + Processing badges in a row -->
                             @if (lectureUnit.type === LectureUnitType.ATTACHMENT_VIDEO) {
-                                @if (isTranscriptionPending(lectureUnit)) {
-                                    <div class="badge bg-info">
-                                        <fa-icon [icon]="faSpinner" animation="spin" class="me-1" />
-                                        <span jhiTranslate="artemisApp.attachmentVideoUnit.transcriptionProcessing"></span>
-                                    </div>
-                                } @else if (isTranscriptionFailed(lectureUnit)) {
-                                    <div class="badge bg-danger">
-                                        <fa-icon [icon]="faExclamationTriangle" class="me-1" />
-                                        <span jhiTranslate="artemisApp.attachmentVideoUnit.transcriptionFailed"></span>
-                                    </div>
-                                } @else if (hasTranscription(lectureUnit)) {
-                                    <div class="badge bg-success">
-                                        <fa-icon [icon]="faFileLines" class="me-1" />
-                                        <span jhiTranslate="artemisApp.attachmentVideoUnit.hasTranscription"></span>
-                                    </div>
-                                } @else if (canGenerateTranscription(lectureUnit)) {
-                                    <div class="badge bg-info">
-                                        <fa-icon [icon]="faFileLines" class="me-1" />
-                                        <span jhiTranslate="artemisApp.attachmentVideoUnit.transcriptAvailable"></span>
-                                    </div>
-                                }
+                                <div class="d-flex flex-row gap-1">
+                                    <!-- Transcription Status Badge (hidden when transcribing to avoid redundancy) -->
+                                    @if (!isProcessingTranscribing(lectureUnit)) {
+                                        @if (isTranscriptionPending(lectureUnit)) {
+                                            <div class="badge bg-info">
+                                                <fa-icon [icon]="faSpinner" animation="spin" class="me-1" />
+                                                <span jhiTranslate="artemisApp.attachmentVideoUnit.transcriptionProcessing"></span>
+                                            </div>
+                                        } @else if (isTranscriptionFailed(lectureUnit)) {
+                                            <div class="badge bg-danger">
+                                                <fa-icon [icon]="faExclamationTriangle" class="me-1" />
+                                                <span jhiTranslate="artemisApp.attachmentVideoUnit.transcriptionFailed"></span>
+                                            </div>
+                                        } @else if (hasTranscription(lectureUnit)) {
+                                            <div class="badge bg-success">
+                                                <fa-icon [icon]="faFileLines" class="me-1" />
+                                                <span jhiTranslate="artemisApp.attachmentVideoUnit.hasTranscription"></span>
+                                            </div>
+                                        }
+                                    }
+
+                                    <!-- Processing Pipeline Status Badge -->
+                                    @if (isAwaitingProcessing(lectureUnit)) {
+                                        <div class="badge bg-secondary">
+                                            <fa-icon [icon]="faClock" class="me-1" />
+                                            <span jhiTranslate="artemisApp.attachmentVideoUnit.awaitingProcessing"></span>
+                                        </div>
+                                    } @else if (isProcessingTranscribing(lectureUnit)) {
+                                        <div class="badge bg-info">
+                                            <fa-icon [icon]="faSpinner" animation="spin" class="me-1" />
+                                            <span jhiTranslate="artemisApp.attachmentVideoUnit.processingTranscribing"></span>
+                                        </div>
+                                    } @else if (isProcessingIngesting(lectureUnit)) {
+                                        <div class="badge bg-info">
+                                            <fa-icon [icon]="faSpinner" animation="spin" class="me-1" />
+                                            <span jhiTranslate="artemisApp.attachmentVideoUnit.processingIngesting"></span>
+                                        </div>
+                                    } @else if (isProcessingFailed(lectureUnit)) {
+                                        <div class="badge bg-danger" [ngbTooltip]="getProcessingErrorKey(lectureUnit) | artemisTranslate">
+                                            <fa-icon [icon]="faExclamationTriangle" class="me-1" />
+                                            <span jhiTranslate="artemisApp.attachmentVideoUnit.processingFailed"></span>
+                                        </div>
+                                    } @else if (isProcessingDone(lectureUnit)) {
+                                        <div class="badge bg-success">
+                                            <fa-icon [icon]="faFileLines" class="me-1" />
+                                            <span jhiTranslate="artemisApp.attachmentVideoUnit.processingComplete"></span>
+                                        </div>
+                                    }
+                                </div>
                             }
                         </div>
                         <div class="mt-2">
@@ -89,82 +118,66 @@
                         </div>
                     </div>
 
-                    <div class="d-flex gap-1 flex-column justify-content-center col-3 col-sm-2 col-lg-1" role="group">
-                        @if (!lecture.isTutorialLecture && irisEnabled && lectureUnit.type === LectureUnitType.ATTACHMENT_VIDEO) {
+                    <div class="d-flex gap-1 flex-column justify-content-center action-buttons" role="group">
+                        <!-- Row 1: Retry Processing (only for failed attachment/video units, editors+) -->
+                        @if (lecture.isAtLeastEditor && lectureUnit.type === LectureUnitType.ATTACHMENT_VIDEO && isProcessingFailed(lectureUnit)) {
                             <div class="d-flex gap-1 w-100">
-                                @if (lecture.course?.id && showCompetencies) {
-                                    <jhi-competencies-popover
-                                        class="flex-grow-1"
-                                        [courseId]="lecture.course!.id!"
-                                        [competencyLinks]="lectureUnit.competencyLinks || []"
-                                        [navigateTo]="'competencyManagement'"
-                                    />
-                                }
                                 <button
                                     type="button"
-                                    class="btn btn-primary btn-sm flex-grow-1"
-                                    [ngClass]="{
-                                        error: getIcon(lectureUnit) === faRepeat,
-                                        'btn-success': getIcon(lectureUnit) === faCheckCircle,
-                                    }"
-                                    (click)="onIngestButtonClicked(lectureUnit.id!)"
-                                    [ngbTooltip]="'entity.action.sendToIris' | artemisTranslate"
+                                    class="btn btn-warning btn-sm flex-fill"
+                                    [disabled]="isRetryingProcessing[lectureUnit.id!]"
+                                    (click)="retryProcessing(lectureUnit)"
+                                    [ngbTooltip]="'artemisApp.lectureUnit.retryProcessing' | artemisTranslate"
                                 >
-                                    <fa-icon [icon]="getIcon(lectureUnit)" />
+                                    @if (isRetryingProcessing[lectureUnit.id!]) {
+                                        <fa-icon [icon]="faSpinner" animation="spin" />
+                                    } @else {
+                                        <fa-icon [icon]="faRepeat" />
+                                    }
                                 </button>
                             </div>
-                        } @else {
-                            <div class="d-flex gap-1 w-100">
-                                @if (lecture.course?.id && showCompetencies) {
+                        }
+                        <!-- Row 2: View + Linked Competencies -->
+                        <div class="d-flex gap-1 w-100">
+                            @if (viewButtonAvailable[lectureUnit.id!]) {
+                                <div class="flex-fill">
+                                    <a
+                                        type="button"
+                                        class="btn btn-primary btn-sm w-100"
+                                        [routerLink]="[
+                                            '/course-management',
+                                            lecture.course?.id,
+                                            'lectures',
+                                            lecture.id,
+                                            'unit-management',
+                                            'attachment-video-units',
+                                            lectureUnit.id,
+                                            'view',
+                                        ]"
+                                        [ngbTooltip]="'entity.action.view' | artemisTranslate"
+                                    >
+                                        <fa-icon [icon]="faEye" />
+                                    </a>
+                                </div>
+                            }
+                            @if (lecture.course?.id && showCompetencies) {
+                                <div class="flex-fill">
                                     <jhi-competencies-popover
-                                        class="flex-grow-1"
                                         [courseId]="lecture.course!.id!"
                                         [competencyLinks]="lectureUnit.competencyLinks || []"
                                         [navigateTo]="'competencyManagement'"
+                                        [ngbTooltip]="'artemisApp.competency.competencyPopover.connectedCompetencies' | artemisTranslate"
                                     />
-                                }
-                            </div>
-                        }
-                        @if (lectureUnit.type === LectureUnitType.ATTACHMENT_VIDEO) {
-                            <button
-                                type="button"
-                                class="btn btn-primary btn-sm flex-grow-1"
-                                [disabled]="!canGenerateTranscription(lectureUnit)"
-                                (click)="generateTranscription(lectureUnit)"
-                                [ngbTooltip]="'artemisApp.attachmentVideoUnit.generateTranscription' | artemisTranslate"
-                            >
-                                @if (isTranscriptionLoading[lectureUnit.id!]) {
-                                    <fa-icon [icon]="faSpinner" animation="spin" />
-                                } @else {
-                                    <fa-icon [icon]="faFileAudio" />
-                                }
-                            </button>
-                        }
-                        @if (viewButtonAvailable[lectureUnit.id!]) {
-                            <a
-                                type="button"
-                                class="btn btn-primary btn-sm flex-grow-1"
-                                [routerLink]="[
-                                    '/course-management',
-                                    lecture.course?.id,
-                                    'lectures',
-                                    lecture.id,
-                                    'unit-management',
-                                    'attachment-video-units',
-                                    lectureUnit.id,
-                                    'view',
-                                ]"
-                                [ngbTooltip]="'entity.action.view' | artemisTranslate"
-                            >
-                                <fa-icon [icon]="faEye" />
-                            </a>
-                        }
+                                </div>
+                            }
+                        </div>
+                        <!-- Row 3: Edit + Delete -->
                         <div class="d-flex gap-1 w-100">
                             @if (this.emitEditEvents) {
                                 @if (editButtonAvailable(lectureUnit)) {
                                     <button
                                         type="button"
-                                        class="btn btn-primary btn-sm edit flex-grow-1"
+                                        class="btn btn-primary btn-sm edit flex-fill"
                                         (click)="onEditButtonClicked(lectureUnit)"
                                         [ngbTooltip]="'entity.action.edit' | artemisTranslate"
                                     >
@@ -175,7 +188,7 @@
                                 @if (editButtonAvailable(lectureUnit)) {
                                     <a
                                         type="button"
-                                        class="btn btn-primary btn-sm edit flex-grow-1"
+                                        class="btn btn-primary btn-sm edit flex-fill"
                                         [routerLink]="['./', routerEditLinksBase[lectureUnit.type!], lectureUnit.id, 'edit']"
                                         [ngbTooltip]="'entity.action.edit' | artemisTranslate"
                                     >
@@ -186,7 +199,7 @@
                             @if (lecture.isAtLeastInstructor) {
                                 <button
                                     type="button"
-                                    class="btn btn-danger btn-sm flex-grow-1"
+                                    class="btn btn-danger btn-sm flex-fill"
                                     jhiDeleteButton
                                     [renderButtonStyle]="false"
                                     [renderButtonText]="false"
@@ -206,5 +219,11 @@
                 </div>
             }
         </div>
+
+        @if (showDropZone) {
+            <div class="mt-4">
+                <jhi-pdf-drop-zone [disabled]="isUploadingPdfs()" (filesDropped)="onPdfFilesDropped($event)" />
+            </div>
+        }
     </div>
 }

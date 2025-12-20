@@ -18,7 +18,7 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record QuizExerciseForCourseDTO(long id, @NotEmpty String title, boolean quizStarted, boolean quizEnded, boolean isEditable, int duration, double maxPoints,
         ZonedDateTime releaseDate, ZonedDateTime startDate, ZonedDateTime dueDate, @NotNull IncludedInOverallScore includedInOverallScore, Set<QuizBatchForCourseDTO> quizBatches,
-        @NotNull QuizMode quizMode, Boolean isOpenForPractice) {
+        @NotNull QuizMode quizMode) {
 
     /**
      * Converts a QuizExercise to a QuizExerciseForCourseDTO
@@ -34,7 +34,7 @@ public record QuizExerciseForCourseDTO(long id, @NotEmpty String title, boolean 
         }
         return new QuizExerciseForCourseDTO(quizExercise.getId(), quizExercise.getTitle(), quizExercise.isQuizStarted(), quizExercise.isQuizEnded(), isEditable,
                 quizExercise.getDuration(), quizExercise.getMaxPoints(), quizExercise.getReleaseDate(), quizExercise.getStartDate(), quizExercise.getDueDate(),
-                quizExercise.getIncludedInOverallScore(), batches, quizExercise.getQuizMode(), quizExercise.isIsOpenForPractice());
+                quizExercise.getIncludedInOverallScore(), batches, quizExercise.getQuizMode());
     }
 
     @Override
@@ -80,9 +80,6 @@ public record QuizExerciseForCourseDTO(long id, @NotEmpty String title, boolean 
             return false;
         }
         if (quizMode != that.quizMode) {
-            return false;
-        }
-        if (!Objects.equals(isOpenForPractice, that.isOpenForPractice)) {
             return false;
         }
         boolean thisBatchesEmpty = quizBatches == null || quizBatches.isEmpty();
