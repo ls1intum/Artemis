@@ -227,21 +227,21 @@ describe('StudentsRoomDistributionDialogComponent', () => {
         expect(component.allowNarrowLayouts()).toBeFalse();
     });
 
-    it('the percentage in the not enough capacity warning message should never show 100%', () => {
+    it('should never show percentage >= 100 in the not enough capacity warning message', () => {
         const examWithUsers: Exam = {
             course,
             id: 2,
             title: 'Exam Title',
             examUsers: [] as ExamUser[],
         };
-        for (let i = 0; i < 300; i++) {
+        for (let i = 0; i < 1000; i++) {
             examWithUsers.examUsers!.push({} as ExamUser);
         }
 
         fixture.componentRef.setInput('exam', examWithUsers);
         (service as MockStudentsRoomDistributionService).capacityData.set({
-            combinedDefaultCapacity: 299,
-            combinedMaximumCapacity: 299,
+            combinedDefaultCapacity: 999,
+            combinedMaximumCapacity: 999,
         });
         component.selectedRooms.set([rooms[0]]);
 
@@ -255,5 +255,17 @@ describe('StudentsRoomDistributionDialogComponent', () => {
         const text = warningElement!.textContent ?? '';
         expect(text).toBe('artemisApp.exam.examUsers.rooms.notEnoughSeatsForStudents');
         expect(component.seatInfo().percentage).toBe(99);
+    });
+
+    it('should pre-select all used rooms on second distribution', () => {
+        jest.spyOn(service, 'loadRoomsUsedInExam').mockReturnValue(of([rooms[0], rooms[1]] as RoomForDistributionDTO[]));
+
+        component.openDialog();
+        fixture.changeDetectorRef.detectChanges();
+
+        expect(component.hasSelectedRooms()).toBeTrue();
+        expect(component.selectedRooms()).toHaveLength(2);
+        expect(component.selectedRooms()).toContain(rooms[0]);
+        expect(component.selectedRooms()).toContain(rooms[1]);
     });
 });
