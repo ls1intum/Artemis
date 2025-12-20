@@ -470,14 +470,14 @@ public class MetricsBean {
         updateMultiGaugeMetricsEntryForMinuteRanges(dueExerciseStudentMultiplierGauge, activeSince,
                 (now, endDate, _) -> exerciseRepository.countStudentsInExercisesWithDueDateBetweenGroupByExerciseType(now, endDate));
         updateMultiGaugeMetricsEntryForMinuteRanges(dueExerciseStudentMultiplierActive14DaysGauge, activeSince,
-                (now, endDate, activeSinceParam) -> exerciseRepository.countActiveStudentsInExercisesWithDueDateBetweenGroupByExerciseType(now, endDate, activeSinceParam));
+                exerciseRepository::countActiveStudentsInExercisesWithDueDateBetweenGroupByExerciseType);
 
         updateMultiGaugeMetricsEntryForMinuteRanges(releaseExerciseGauge, activeSince,
                 (now, endDate, _) -> exerciseRepository.countExercisesWithReleaseDateBetweenGroupByExerciseType(now, endDate));
         updateMultiGaugeMetricsEntryForMinuteRanges(releaseExerciseStudentMultiplierGauge, activeSince,
                 (now, endDate, _) -> exerciseRepository.countStudentsInExercisesWithReleaseDateBetweenGroupByExerciseType(now, endDate));
         updateMultiGaugeMetricsEntryForMinuteRanges(releaseExerciseStudentMultiplierActive14DaysGauge, activeSince,
-                (now, endDate, activeSinceParam) -> exerciseRepository.countActiveStudentsInExercisesWithReleaseDateBetweenGroupByExerciseType(now, endDate, activeSinceParam));
+                exerciseRepository::countActiveStudentsInExercisesWithReleaseDateBetweenGroupByExerciseType);
 
         // Exam metrics
         if (examMetricsApi.isPresent()) {
@@ -634,7 +634,7 @@ public class MetricsBean {
         if (!scheduledMetricsEnabled) {
             return;
         }
-        log.debug("start updatePublicArtemisMetrics");
+        log.info("start updatePublicArtemisMetrics");
 
         final long startDate = System.currentTimeMillis();
 
@@ -666,7 +666,7 @@ public class MetricsBean {
             examsGauge.set((int) api.count());
         }
 
-        log.debug("updatePublicArtemisMetrics took {}ms", System.currentTimeMillis() - startDate);
+        log.info("updatePublicArtemisMetrics took {}ms", System.currentTimeMillis() - startDate);
     }
 
     private void updateActiveUserMultiGauge(ZonedDateTime now) {
