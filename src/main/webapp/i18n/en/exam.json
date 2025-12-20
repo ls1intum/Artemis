@@ -495,6 +495,7 @@
             "numberOfExerciseGroups": "Number of exercise groups:",
             "numberOfExercisesInExam": "Number of exercises in exam",
             "numberOfExercisesInExamTooltip": "The number of exercises must be equal to the number of exercise groups",
+            "randomizeExerciseGroupsTooltip": "Students solve a random exercise per exercise group. Checking this option randomizes the order of the exercise groups as well",
             "numberOfCorrectionRoundsInExam": "Number of correction rounds in exam",
             "randomizeQuestionOrder": "Randomize order of exercise groups",
             "examWithAttendanceCheck": "Exam with attendance check",
