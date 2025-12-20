@@ -95,7 +95,7 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
     @Test
     @WithMockUser(username = "ab12cde")
     void registerForCourse_internalAuth_success() throws Exception {
-        final var student = userUtilService.createAndSaveUser("ab12cde");
+        userUtilService.createAndSaveUser("ab12cde");
 
         final var pastTimestamp = ZonedDateTime.now().minusDays(5);
         final var futureTimestamp = ZonedDateTime.now().plusDays(5);
@@ -169,7 +169,6 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void updateUserWithRemovedGroups_internalAuth_successful() throws Exception {
-        final var oldGroups = student.getGroups();
         final var newGroups = Set.of("foo", "bar");
         student.setGroups(newGroups);
         final var managedUserVM = new ManagedUserVM(student);
@@ -211,10 +210,15 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
 
     @Test
     void testAuthenticateWithInactiveUser() {
-        student.setActivated(false);
-        userTestRepository.save(student);
+        // Create a dedicated inactive user to avoid modifying the shared student field
+        String inactiveUsername = TEST_PREFIX + "inactive";
+        User inactiveUser = userUtilService.createAndSaveUser(inactiveUsername);
+        inactiveUser.setPassword(passwordService.hashPassword(USER_PASSWORD));
+        inactiveUser.setInternal(true);
+        inactiveUser.setActivated(false);
+        userTestRepository.save(inactiveUser);
 
-        var authentication = new UsernamePasswordAuthenticationToken(USERNAME, USER_PASSWORD);
+        var authentication = new UsernamePasswordAuthenticationToken(inactiveUsername, USER_PASSWORD);
 
         assertThatThrownBy(() -> artemisInternalAuthenticationProvider.authenticate(authentication)).hasMessageContaining("was not activated");
     }
