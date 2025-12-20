@@ -1,76 +1,77 @@
-import { AfterViewInit, Component, ElementRef, OnInit, ViewChild, inject } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, DestroyRef, ElementRef, OnInit, inject, signal, viewChild } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { PasswordStrengthBarComponent } from 'app/core/account/password/password-strength-bar.component';
 
 import { PasswordResetFinishService } from './password-reset-finish.service';
-import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from 'app/app.constants';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+
+interface PasswordResetForm {
+    newPassword: FormControl<string>;
+    confirmPassword: FormControl<string>;
+}
 
 @Component({
     selector: 'jhi-password-reset-finish',
     templateUrl: './password-reset-finish.component.html',
     imports: [TranslateDirective, RouterLink, FormsModule, ReactiveFormsModule, PasswordStrengthBarComponent, ArtemisTranslatePipe],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PasswordResetFinishComponent implements OnInit, AfterViewInit {
-    private passwordResetFinishService = inject(PasswordResetFinishService);
-    private route = inject(ActivatedRoute);
-    private fb = inject(FormBuilder);
+    private readonly passwordResetFinishService = inject(PasswordResetFinishService);
+    private readonly route = inject(ActivatedRoute);
+    private readonly destroyRef = inject(DestroyRef);
 
-    @ViewChild('newPassword', { static: false })
-    newPassword?: ElementRef;
+    readonly newPassword = viewChild<ElementRef>('newPassword');
 
     readonly PASSWORD_MIN_LENGTH = PASSWORD_MIN_LENGTH;
     readonly PASSWORD_MAX_LENGTH = PASSWORD_MAX_LENGTH;
 
-    initialized = false;
-    doNotMatch = false;
-    error = false;
-    success = false;
-    key = '';
+    readonly initialized = signal(false);
+    readonly doNotMatch = signal(false);
+    readonly error = signal(false);
+    readonly success = signal(false);
+    readonly key = signal('');
 
-    passwordForm: FormGroup;
+    readonly passwordForm = new FormGroup<PasswordResetForm>({
+        newPassword: new FormControl('', {
+            nonNullable: true,
+            validators: [Validators.required, Validators.minLength(PASSWORD_MIN_LENGTH), Validators.maxLength(PASSWORD_MAX_LENGTH)],
+        }),
+        confirmPassword: new FormControl('', {
+            nonNullable: true,
+            validators: [Validators.required, Validators.minLength(PASSWORD_MIN_LENGTH), Validators.maxLength(PASSWORD_MAX_LENGTH)],
+        }),
+    });
 
     ngOnInit() {
-        this.route.queryParams.subscribe((params) => {
+        this.route.queryParams.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
             if (params['key']) {
-                this.key = params['key'];
+                this.key.set(params['key']);
             }
-            this.initialized = true;
-        });
-        this.initializeForm();
-    }
-
-    private initializeForm() {
-        if (this.passwordForm) {
-            return;
-        }
-        this.passwordForm = this.fb.nonNullable.group({
-            newPassword: ['', [Validators.required, Validators.minLength(PASSWORD_MIN_LENGTH), Validators.maxLength(PASSWORD_MAX_LENGTH)]],
-            confirmPassword: ['', [Validators.required, Validators.minLength(PASSWORD_MIN_LENGTH), Validators.maxLength(PASSWORD_MAX_LENGTH)]],
+            this.initialized.set(true);
         });
     }
 
     ngAfterViewInit(): void {
-        if (this.newPassword) {
-            this.newPassword.nativeElement.focus();
-        }
+        this.newPassword()?.nativeElement.focus();
     }
 
     finishReset(): void {
-        this.doNotMatch = false;
-        this.error = false;
+        this.doNotMatch.set(false);
+        this.error.set(false);
 
-        const newPassword = this.passwordForm.get(['newPassword'])!.value;
-        const confirmPassword = this.passwordForm.get(['confirmPassword'])!.value;
+        const { newPassword, confirmPassword } = this.passwordForm.controls;
 
-        if (newPassword !== confirmPassword) {
-            this.doNotMatch = true;
+        if (newPassword.value !== confirmPassword.value) {
+            this.doNotMatch.set(true);
         } else {
-            this.passwordResetFinishService.save(this.key, newPassword).subscribe({
-                next: () => (this.success = true),
-                error: () => (this.error = true),
+            this.passwordResetFinishService.save(this.key(), newPassword.value).subscribe({
+                next: () => this.success.set(true),
+                error: () => this.error.set(true),
             });
         }
     }

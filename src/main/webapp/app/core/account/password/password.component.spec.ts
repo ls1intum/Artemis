@@ -1,6 +1,10 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+/**
+ * Vitest tests for PasswordComponent.
+ */
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { FormBuilder } from '@angular/forms';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { of, throwError } from 'rxjs';
@@ -16,6 +20,8 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('Password Component Tests', () => {
     describe('PasswordComponent', () => {
+        setupTestBed({ zoneless: true });
+
         let comp: PasswordComponent;
         let fixture: ComponentFixture<PasswordComponent>;
         let service: PasswordService;
@@ -24,7 +30,6 @@ describe('Password Component Tests', () => {
             TestBed.configureTestingModule({
                 imports: [PasswordComponent],
                 providers: [
-                    FormBuilder,
                     LocalStorageService,
                     SessionStorageService,
                     { provide: AccountService, useClass: MockAccountService },
@@ -32,18 +37,18 @@ describe('Password Component Tests', () => {
                     provideHttpClient(),
                     provideHttpClientTesting(),
                 ],
-            }).compileComponents();
+            })
+                .overrideTemplate(PasswordComponent, '')
+                .compileComponents();
         });
 
         beforeEach(() => {
             fixture = TestBed.createComponent(PasswordComponent);
             comp = fixture.componentInstance;
             service = TestBed.inject(PasswordService);
-            comp.passwordResetEnabled = true;
         });
 
         it('should show error if passwords do not match', () => {
-            comp.ngOnInit();
             // GIVEN
             comp.passwordForm.patchValue({
                 newPassword: 'password1',
@@ -52,9 +57,9 @@ describe('Password Component Tests', () => {
             // WHEN
             comp.changePassword();
             // THEN
-            expect(comp.doNotMatch).toBeTrue();
-            expect(comp.error).toBeFalse();
-            expect(comp.success).toBeFalse();
+            expect(comp.doNotMatch()).toBe(true);
+            expect(comp.error()).toBe(false);
+            expect(comp.success()).toBe(false);
         });
 
         it('should call Auth.changePassword when passwords match', () => {
@@ -64,9 +69,8 @@ describe('Password Component Tests', () => {
                 newPassword: 'myPassword',
             };
 
-            jest.spyOn(service, 'save').mockReturnValue(of(new HttpResponse({ body: true })));
+            vi.spyOn(service, 'save').mockReturnValue(of(new HttpResponse({ body: true })));
 
-            comp.ngOnInit();
             comp.passwordForm.patchValue({
                 currentPassword: passwordValues.currentPassword,
                 newPassword: passwordValues.newPassword,
@@ -82,8 +86,7 @@ describe('Password Component Tests', () => {
 
         it('should set success to true upon success', () => {
             // GIVEN
-            jest.spyOn(service, 'save').mockReturnValue(of(new HttpResponse({ body: true })));
-            comp.ngOnInit();
+            vi.spyOn(service, 'save').mockReturnValue(of(new HttpResponse({ body: true })));
             comp.passwordForm.patchValue({
                 newPassword: 'myPassword',
                 confirmPassword: 'myPassword',
@@ -93,15 +96,14 @@ describe('Password Component Tests', () => {
             comp.changePassword();
 
             // THEN
-            expect(comp.doNotMatch).toBeFalse();
-            expect(comp.error).toBeFalse();
-            expect(comp.success).toBeTrue();
+            expect(comp.doNotMatch()).toBe(false);
+            expect(comp.error()).toBe(false);
+            expect(comp.success()).toBe(true);
         });
 
         it('should notify of error if change password fails', () => {
             // GIVEN
-            jest.spyOn(service, 'save').mockReturnValue(throwError(() => new Error('ERROR')));
-            comp.ngOnInit();
+            vi.spyOn(service, 'save').mockReturnValue(throwError(() => new Error('ERROR')));
             comp.passwordForm.patchValue({
                 newPassword: 'myPassword',
                 confirmPassword: 'myPassword',
@@ -111,16 +113,16 @@ describe('Password Component Tests', () => {
             comp.changePassword();
 
             // THEN
-            expect(comp.doNotMatch).toBeFalse();
-            expect(comp.success).toBeFalse();
-            expect(comp.error).toBeTrue();
+            expect(comp.doNotMatch()).toBe(false);
+            expect(comp.success()).toBe(false);
+            expect(comp.error()).toBe(true);
         });
 
-        it('sets user on init', fakeAsync(() => {
-            fixture.detectChanges();
-            tick(1000);
+        it('sets user on init', async () => {
+            comp.ngOnInit();
+            await vi.waitFor(() => expect(comp.user()).toBeDefined());
             const expectedUser = { id: 99, login: 'admin' } as User;
-            expect(comp.user).toEqual(expectedUser);
-        }));
+            expect(comp.user()).toEqual(expectedUser);
+        });
     });
 });

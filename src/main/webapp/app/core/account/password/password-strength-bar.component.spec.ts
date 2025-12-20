@@ -1,4 +1,9 @@
+/**
+ * Vitest tests for PasswordStrengthBarComponent.
+ */
+import { beforeEach, describe, expect, it } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { By } from '@angular/platform-browser';
 import { PasswordStrengthBarComponent } from 'app/core/account/password/password-strength-bar.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -6,6 +11,8 @@ import { TranslateService } from '@ngx-translate/core';
 
 describe('Component Tests', () => {
     describe('PasswordStrengthBarComponent', () => {
+        setupTestBed({ zoneless: true });
+
         let comp: PasswordStrengthBarComponent;
         let fixture: ComponentFixture<PasswordStrengthBarComponent>;
 
@@ -53,8 +60,8 @@ describe('Component Tests', () => {
                 ];
 
                 testValues.forEach((testValue, index) => {
-                    comp.passwordToCheck = testValue;
-                    fixture.changeDetectorRef.detectChanges();
+                    fixture.componentRef.setInput('passwordToCheck', testValue);
+                    fixture.detectChanges();
                     const filteredPoints = fixture.debugElement.queryAll(By.css('.point')).filter((element) => {
                         return element.styles['background-color'] === expectedResults[index].color;
                     });

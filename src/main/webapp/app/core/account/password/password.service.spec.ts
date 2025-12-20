@@ -1,12 +1,19 @@
+/**
+ * Vitest tests for PasswordService.
+ */
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { MockHttpService } from 'test/helpers/mocks/service/mock-http.service';
 import { PasswordService } from 'app/core/account/password/password.service';
 import { HttpClient } from '@angular/common/http';
 
 describe('PasswordService', () => {
+    setupTestBed({ zoneless: true });
+
     let passwordService: PasswordService;
     let httpService: HttpClient;
-    let postStub: jest.SpyInstance;
+    let postStub: ReturnType<typeof vi.spyOn>;
 
     const postURL = 'api/core/account/change-password';
 
@@ -18,12 +25,12 @@ describe('PasswordService', () => {
             .then(() => {
                 passwordService = TestBed.inject(PasswordService);
                 httpService = TestBed.inject(HttpClient);
-                postStub = jest.spyOn(httpService, 'post');
+                postStub = vi.spyOn(httpService, 'post');
             });
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should set a new password for the current user', () => {

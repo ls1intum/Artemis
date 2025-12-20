@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, OnInit, ViewChild, inject } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, inject, viewChild } from '@angular/core';
 
 import { PasswordResetInitService } from './password-reset-init.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -16,23 +16,25 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     selector: 'jhi-password-reset-init',
     templateUrl: './password-reset-init.component.html',
     imports: [TranslateDirective, FormsModule, ArtemisTranslatePipe],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class PasswordResetInitComponent implements OnInit, AfterViewInit {
-    private passwordResetInitService = inject(PasswordResetInitService);
-    private profileService = inject(ProfileService);
-    private alertService = inject(AlertService);
-    private translateService = inject(TranslateService);
-    private modalService = inject(NgbModal);
+export class PasswordResetInitComponent implements AfterViewInit {
+    private readonly passwordResetInitService = inject(PasswordResetInitService);
+    private readonly profileService = inject(ProfileService);
+    private readonly alertService = inject(AlertService);
+    private readonly translateService = inject(TranslateService);
+    private readonly modalService = inject(NgbModal);
 
-    @ViewChild('emailUsername', { static: false })
-    emailUsernameElement?: ElementRef;
+    readonly emailUsernameElement = viewChild<ElementRef>('emailUsername');
+
     emailUsernameValue = '';
-    useExternal: boolean;
-    externalCredentialProvider: string;
-    externalPasswordResetLink?: string;
     externalResetModalRef: NgbModalRef | undefined;
 
-    ngOnInit() {
+    readonly useExternal: boolean;
+    readonly externalCredentialProvider: string;
+    readonly externalPasswordResetLink?: string;
+
+    constructor() {
         const profileInfo = this.profileService.getProfileInfo();
         this.useExternal = profileInfo.useExternal;
         this.externalCredentialProvider = profileInfo.externalCredentialProvider;
@@ -41,9 +43,7 @@ export class PasswordResetInitComponent implements OnInit, AfterViewInit {
     }
 
     ngAfterViewInit(): void {
-        if (this.emailUsernameElement) {
-            this.emailUsernameElement.nativeElement.focus();
-        }
+        this.emailUsernameElement()?.nativeElement.focus();
     }
 
     requestReset(): void {

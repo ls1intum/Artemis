@@ -2,18 +2,18 @@
     <div>
         <div class="row justify-content-center">
             <div class="col-md-8">
-                @if (account) {
-                    <h2 jhiTranslate="settings.title" [translateValues]="{ username: account.login }">
-                        User settings for [<b>{{ account.login }}</b
+                @if (account(); as currentAccount) {
+                    <h2 jhiTranslate="settings.title" [translateValues]="{ username: currentAccount.login }">
+                        User settings for [<b>{{ currentAccount.login }}</b
                         >]
                     </h2>
                 }
-                @if (success) {
+                @if (success()) {
                     <div class="alert alert-success" jhiTranslate="settings.messages.success">
                         <strong>Settings saved!</strong>
                     </div>
                 }
-                @if (account) {
+                @if (account()) {
                     <form name="form" role="form" (ngSubmit)="save()" [formGroup]="settingsForm" novalidate>
                         <div class="form-group">
                             <label class="form-control-label" for="firstName" jhiTranslate="settings.form.firstname"></label>
@@ -25,15 +25,15 @@
                                 placeholder="{{ 'settings.form.firstname.placeholder' | artemisTranslate }}"
                                 formControlName="firstName"
                             />
-                            @if (settingsForm.get('firstName')!.invalid && (settingsForm.get('firstName')!.dirty || settingsForm.get('firstName')!.touched)) {
+                            @if (settingsForm.controls.firstName.invalid && (settingsForm.controls.firstName.dirty || settingsForm.controls.firstName.touched)) {
                                 <div>
-                                    @if (settingsForm.get('firstName')?.errors?.required) {
+                                    @if (settingsForm.controls.firstName.errors?.required) {
                                         <small class="form-text text-danger" jhiTranslate="settings.messages.validate.firstname.required"></small>
                                     }
-                                    @if (settingsForm.get('firstName')?.errors?.minlength) {
+                                    @if (settingsForm.controls.firstName.errors?.minlength) {
                                         <small class="form-text text-danger" jhiTranslate="settings.messages.validate.firstname.minlength"></small>
                                     }
-                                    @if (settingsForm.get('firstName')?.errors?.maxlength) {
+                                    @if (settingsForm.controls.firstName.errors?.maxlength) {
                                         <small class="form-text text-danger" jhiTranslate="settings.messages.validate.firstname.maxlength"></small>
                                     }
                                 </div>
@@ -49,15 +49,15 @@
                                 placeholder="{{ 'settings.form.lastname.placeholder' | artemisTranslate }}"
                                 formControlName="lastName"
                             />
-                            @if (settingsForm.get('lastName')!.invalid && (settingsForm.get('lastName')!.dirty || settingsForm.get('lastName')!.touched)) {
+                            @if (settingsForm.controls.lastName.invalid && (settingsForm.controls.lastName.dirty || settingsForm.controls.lastName.touched)) {
                                 <div>
-                                    @if (settingsForm.get('lastName')?.errors?.required) {
+                                    @if (settingsForm.controls.lastName.errors?.required) {
                                         <small class="form-text text-danger" jhiTranslate="settings.messages.validate.lastname.required"></small>
                                     }
-                                    @if (settingsForm.get('lastName')?.errors?.minlength) {
+                                    @if (settingsForm.controls.lastName.errors?.minlength) {
                                         <small class="form-text text-danger" jhiTranslate="settings.messages.validate.lastname.minlength"></small>
                                     }
-                                    @if (settingsForm.get('lastName')?.errors?.maxlength) {
+                                    @if (settingsForm.controls.lastName.errors?.maxlength) {
                                         <small class="form-text text-danger" jhiTranslate="settings.messages.validate.lastname.maxlength"></small>
                                     }
                                 </div>
@@ -75,18 +75,18 @@
                                 placeholder="{{ 'global.form.email.placeholder' | artemisTranslate }}"
                                 formControlName="email"
                             />
-                            @if (settingsForm.get('email')!.invalid && (settingsForm.get('email')!.dirty || settingsForm.get('email')!.touched)) {
+                            @if (settingsForm.controls.email.invalid && (settingsForm.controls.email.dirty || settingsForm.controls.email.touched)) {
                                 <div>
-                                    @if (settingsForm.get('email')?.errors?.required) {
+                                    @if (settingsForm.controls.email.errors?.required) {
                                         <small class="form-text text-danger" jhiTranslate="global.messages.validate.email.required"></small>
                                     }
-                                    @if (settingsForm.get('email')?.errors?.email) {
+                                    @if (settingsForm.controls.email.errors?.email) {
                                         <small class="form-text text-danger" jhiTranslate="global.messages.validate.email.invalid"></small>
                                     }
-                                    @if (settingsForm.get('email')?.errors?.minlength) {
+                                    @if (settingsForm.controls.email.errors?.minlength) {
                                         <small class="form-text text-danger" jhiTranslate="global.messages.validate.email.minlength"></small>
                                     }
-                                    @if (settingsForm.get('email')?.errors?.maxlength) {
+                                    @if (settingsForm.controls.email.errors?.maxlength) {
                                         <small class="form-text text-danger" jhiTranslate="global.messages.validate.email.maxlength"></small>
                                     }
                                 </div>
