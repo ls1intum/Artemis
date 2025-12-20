@@ -271,7 +271,7 @@ describe('AgentChatModalComponent', () => {
 
         it('should handle response with null message by using fallback', fakeAsync(() => {
             const response = {
-                message: null as any,
+                message: null as unknown as string,
                 sessionId: 'test-session',
                 timestamp: new Date().toISOString(),
                 success: true,
@@ -290,7 +290,7 @@ describe('AgentChatModalComponent', () => {
 
         it('should handle response with undefined message by using fallback', fakeAsync(() => {
             const response = {
-                message: undefined as any,
+                message: undefined as unknown as string,
                 sessionId: 'test-session',
                 timestamp: new Date().toISOString(),
                 success: true,
@@ -477,7 +477,7 @@ describe('AgentChatModalComponent', () => {
 
     describe('Template integration', () => {
         beforeEach(() => {
-            mockTranslateService.instant.mockReturnValue('Welcome message');
+            jest.spyOn(mockTranslateService, 'instant').mockReturnValue('Welcome message');
             mockAgentChatService.getConversationHistory.mockReturnValue(of([]));
             component.ngOnInit();
             fixture.detectChanges();
@@ -496,7 +496,7 @@ describe('AgentChatModalComponent', () => {
                 isUser: false,
                 timestamp: new Date(),
             };
-            component.messages = [userMessage, agentMessage];
+            component.messages.set([userMessage, agentMessage]);
 
             fixture.changeDetectorRef.detectChanges();
 
