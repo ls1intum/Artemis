@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.lecture;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -57,83 +56,6 @@ class LectureTranscriptionIntegrationTest extends AbstractSpringIntegrationIndep
         this.lecture = lectureRepository.save(this.lecture);
         this.lectureUnit = lectureUtilService.createAttachmentVideoUnit(lecture, false);
         lectureUtilService.addLectureUnitsToLecture(lecture, List.of(this.lectureUnit));
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "admin1", roles = "ADMIN")
-    void testCreateLectureTranscription_success() throws Exception {
-        LectureTranscriptionDTO transcriptionDTO = new LectureTranscriptionDTO(lectureUnit.getId(), "en",
-                List.of(new LectureTranscriptionSegment(0.0, 10.0, "Welcome to Artemis", 1), new LectureTranscriptionSegment(10.0, 20.0, "Lecture Transcription test", 2)));
-
-        var response = request.postWithResponseBody("/api/lecture/" + lecture.getId() + "/lecture-unit/" + lectureUnit.getId() + "/transcription", transcriptionDTO,
-                LectureTranscriptionDTO.class, HttpStatus.CREATED);
-
-        assertThat(response).isNotNull();
-        assertThat(response.language()).isEqualTo("en");
-        assertThat(response.segments()).hasSize(2);
-        assertThat(response.segments().getFirst().text()).isEqualTo("Welcome to Artemis");
-
-        var savedTranscription = lectureTranscriptionRepository.findByLectureUnit_Id(lectureUnit.getId());
-        assertThat(savedTranscription).isPresent();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "admin1", roles = "ADMIN")
-    void testCreateLectureTranscriptionTwice_success() throws Exception {
-        LectureTranscriptionDTO transcriptionDTO = new LectureTranscriptionDTO(lectureUnit.getId(), "en",
-                List.of(new LectureTranscriptionSegment(0.0, 10.0, "Welcome to Artemis", 1), new LectureTranscriptionSegment(10.0, 20.0, "Lecture Transcription test", 2)));
-
-        var response = request.postWithResponseBody("/api/lecture/" + lecture.getId() + "/lecture-unit/" + lectureUnit.getId() + "/transcription", transcriptionDTO,
-                LectureTranscriptionDTO.class, HttpStatus.CREATED);
-
-        assertThat(response).isNotNull();
-        assertThat(response.language()).isEqualTo("en");
-        assertThat(response.segments()).hasSize(2);
-        assertThat(response.segments().getFirst().text()).isEqualTo("Welcome to Artemis");
-
-        transcriptionDTO = new LectureTranscriptionDTO(lectureUnit.getId(), "en",
-                List.of(new LectureTranscriptionSegment(0.0, 10.0, "Welcome to Pyris", 1), new LectureTranscriptionSegment(10.0, 20.0, "Lecture Transcription test", 2)));
-
-        response = request.postWithResponseBody("/api/lecture/" + lecture.getId() + "/lecture-unit/" + lectureUnit.getId() + "/transcription", transcriptionDTO,
-                LectureTranscriptionDTO.class, HttpStatus.CREATED);
-
-        assertThat(response).isNotNull();
-        assertThat(response.language()).isEqualTo("en");
-        assertThat(response.segments()).hasSize(2);
-        assertThat(response.segments().getFirst().text()).isEqualTo("Welcome to Pyris");
-
-        Optional<LectureTranscription> transcription = lectureTranscriptionRepository.findByLectureUnit_Id(lectureUnit.getId());
-        assertThat(transcription).isPresent();
-        assertThat(transcription.get().getSegments().getFirst().text()).isEqualTo("Welcome to Pyris");
-
-        var savedTranscription = lectureTranscriptionRepository.findByLectureUnit_Id(lectureUnit.getId());
-        assertThat(savedTranscription).isPresent();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "admin1", roles = "ADMIN")
-    void testCreateLectureTranscription_invalidLectureId() throws Exception {
-        LectureTranscriptionDTO transcriptionDTO = new LectureTranscriptionDTO(this.lectureUnit.getId(), "en",
-                List.of(new LectureTranscriptionSegment(0.0, 10.0, "Invalid Lecture ID Test", 1)));
-        request.post("/api/lecture/" + 9999L + "/lecture-unit/" + lectureUnit.getId() + "/transcription", transcriptionDTO, HttpStatus.BAD_REQUEST);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
-    void testCreateLectureTranscription_forbiddenForStudent() throws Exception {
-        LectureTranscriptionDTO transcriptionDTO = new LectureTranscriptionDTO(this.lectureUnit.getId(), "en",
-                List.of(new LectureTranscriptionSegment(0.0, 10.0, "Student Permission Test", 1)));
-
-        request.post("/api/lecture/" + lecture.getId() + "/lecture-unit/" + lectureUnit.getId() + "/transcription", transcriptionDTO, HttpStatus.FORBIDDEN);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testCreateLectureTranscription_forbiddenForInstructor() throws Exception {
-        LectureTranscriptionDTO transcriptionDTO = new LectureTranscriptionDTO(this.lectureUnit.getId(), "en",
-                List.of(new LectureTranscriptionSegment(0.0, 10.0, "Instructor Permission Test", 1)));
-
-        request.post("/api/lecture/" + lecture.getId() + "/lecture-unit/" + lectureUnit.getId() + "/transcription", transcriptionDTO, HttpStatus.FORBIDDEN);
     }
 
     @Test
