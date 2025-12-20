@@ -25,7 +25,7 @@ import de.tum.cit.aet.artemis.core.domain.GraphType;
 import de.tum.cit.aet.artemis.core.domain.SpanType;
 import de.tum.cit.aet.artemis.core.domain.StatisticsView;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.dto.ActiveUserWindowCounts;
+import de.tum.cit.aet.artemis.core.dto.ActiveUserWindowCountsDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseStatisticsAverageScore;
 import de.tum.cit.aet.artemis.core.dto.StatisticsEntry;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
@@ -114,7 +114,7 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
      * @return aggregated active user counts for multiple windows
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.core.dto.ActiveUserWindowCounts(
+            SELECT new de.tum.cit.aet.artemis.core.dto.ActiveUserWindowCountsDTO(
                 COUNT(DISTINCT CASE WHEN s.submissionDate >= :nowMinus1Day THEN student.id END),
                 COUNT(DISTINCT CASE WHEN s.submissionDate >= :nowMinus7Days THEN student.id END),
                 COUNT(DISTINCT CASE WHEN s.submissionDate >= :nowMinus14Days THEN student.id END),
@@ -126,7 +126,7 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
             WHERE s.submissionDate BETWEEN :nowMinus30Days AND :now
                 AND LOWER(student.login) NOT LIKE '%test%'
             """)
-    ActiveUserWindowCounts countActiveUsersByWindows(@Param("now") ZonedDateTime now, @Param("nowMinus1Day") ZonedDateTime nowMinus1Day,
+    ActiveUserWindowCountsDTO countActiveUsersByWindows(@Param("now") ZonedDateTime now, @Param("nowMinus1Day") ZonedDateTime nowMinus1Day,
             @Param("nowMinus7Days") ZonedDateTime nowMinus7Days, @Param("nowMinus14Days") ZonedDateTime nowMinus14Days, @Param("nowMinus30Days") ZonedDateTime nowMinus30Days);
 
     @Query("""
