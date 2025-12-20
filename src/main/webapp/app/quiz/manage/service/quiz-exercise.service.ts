@@ -178,7 +178,7 @@ export class QuizExerciseService {
      */
     start(quizExerciseId: number): Observable<EntityExerciseDateResponseType> {
         return this.http
-            .put<QuizExercise>(`${this.resourceUrl}/${quizExerciseId}/start-now`, null, { observe: 'response' })
+            .put<QuizExerciseDates>(`${this.resourceUrl}/${quizExerciseId}/start-now`, null, { observe: 'response' })
             .pipe(map((res: EntityExerciseDateResponseType) => QuizExerciseService.convertQuizExerciseDatesFromServer(res)));
     }
 
@@ -188,8 +188,8 @@ export class QuizExerciseService {
      */
     end(quizExerciseId: number): Observable<EntityExerciseDateResponseType> {
         return this.http
-            .put<QuizExercise>(`${this.resourceUrl}/${quizExerciseId}/end-now`, null, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => QuizExerciseService.convertQuizExerciseDatesFromServer(res)));
+            .put<QuizExerciseDates>(`${this.resourceUrl}/${quizExerciseId}/end-now`, null, { observe: 'response' })
+            .pipe(map((res: EntityExerciseDateResponseType) => QuizExerciseService.convertQuizExerciseDatesFromServer(res)));
     }
 
     /**
@@ -198,8 +198,8 @@ export class QuizExerciseService {
      */
     setVisible(quizExerciseId: number): Observable<EntityExerciseDateResponseType> {
         return this.http
-            .put<QuizExercise>(`${this.resourceUrl}/${quizExerciseId}/set-visible`, null, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => QuizExerciseService.convertQuizExerciseDatesFromServer(res)));
+            .put<QuizExerciseDates>(`${this.resourceUrl}/${quizExerciseId}/set-visible`, null, { observe: 'response' })
+            .pipe(map((res: EntityExerciseDateResponseType) => QuizExerciseService.convertQuizExerciseDatesFromServer(res)));
     }
 
     /**
