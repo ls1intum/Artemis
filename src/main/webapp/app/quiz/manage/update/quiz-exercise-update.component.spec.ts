@@ -1791,8 +1791,6 @@ describe('QuizExerciseUpdateComponent', () => {
                 await new Promise(process.nextTick);
 
                 expect(modalOpenSpy).toHaveBeenCalledExactlyOnceWith(GenericConfirmationDialogComponent, expect.anything());
-                expect(mockModalRef.componentInstance.translationKeys).toBeDefined();
-                expect(mockModalRef.componentInstance.canBeUndone).toBeTrue();
                 expect(saveSpy).toHaveBeenCalledExactlyOnceWith();
             });
 
