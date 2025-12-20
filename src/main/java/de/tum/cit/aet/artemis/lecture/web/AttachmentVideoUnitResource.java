@@ -199,7 +199,7 @@ public class AttachmentVideoUnitResource {
 
         AttachmentVideoUnit persistedUnit = attachmentVideoUnitService.saveAttachmentVideoUnit((AttachmentVideoUnit) updatedLecture.getLectureUnits().getLast(), attachment, file,
                 keepFilename);
-        // From now on, only use persistedUnit
+        // Split PDF into slides asynchronously (non-blocking for user request)
         if (attachment != null && file != null && Objects.equals(FilenameUtils.getExtension(file.getOriginalFilename()), "pdf")) {
             slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(persistedUnit);
         }

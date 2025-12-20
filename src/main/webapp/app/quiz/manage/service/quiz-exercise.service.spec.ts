@@ -176,7 +176,6 @@ describe('QuizExercise Service', () => {
                 randomizeQuestionOrder: true,
                 allowedNumberOfAttempts: 1,
                 isVisibleBeforeStart: true,
-                isOpenForPractice: true,
                 isPlannedToStart: true,
                 duration: 1,
             },
@@ -201,7 +200,6 @@ describe('QuizExercise Service', () => {
                 randomizeQuestionOrder: true,
                 allowedNumberOfAttempts: 1,
                 isVisibleBeforeStart: true,
-                isOpenForPractice: true,
                 isPlannedToStart: true,
                 duration: 1,
             },
@@ -223,7 +221,6 @@ describe('QuizExercise Service', () => {
                 randomizeQuestionOrder: true,
                 allowedNumberOfAttempts: 1,
                 isVisibleBeforeStart: true,
-                isOpenForPractice: true,
                 isPlannedToStart: true,
                 duration: 1,
             },
@@ -269,14 +266,13 @@ describe('QuizExercise Service', () => {
     it.each([
         [QuizStatus.INVISIBLE, false, false, false, false],
         [QuizStatus.VISIBLE, true, false, false, false],
-        [QuizStatus.CLOSED, true, true, false, false],
         [QuizStatus.OPEN_FOR_PRACTICE, true, true, false, true],
         [QuizStatus.ACTIVE, true, false, true, false],
         // all other combinations are not valid
     ])('should get status %p', (result, quizStarted, quizEnded, started, practice) => {
         elemDefault.quizStarted = quizStarted;
         elemDefault.quizEnded = quizEnded;
-        elemDefault.isOpenForPractice = practice;
+        elemDefault.dueDate = practice ? dayjs().subtract(1, 'day') : dayjs().add(1, 'day');
         if (started !== undefined) {
             elemDefault.quizBatches = [{ started }];
         }

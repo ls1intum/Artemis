@@ -19,7 +19,7 @@ import de.tum.cit.aet.artemis.quiz.dto.question.MultipleChoiceQuestionWithSoluti
 import de.tum.cit.aet.artemis.quiz.dto.question.ShortAnswerQuestionWithMappingDTO;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record QuizExerciseSnapshotDTO(Boolean randomizeQuestionOrder, Integer allowedNumberOfAttempts, Boolean isOpenForPractice, QuizMode quizMode, Integer duration,
+public record QuizExerciseSnapshotDTO(Boolean randomizeQuestionOrder, Integer allowedNumberOfAttempts, QuizMode quizMode, Integer duration,
         List<QuizQuestionSnapshotDTO> quizQuestions) implements Serializable {
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -55,8 +55,7 @@ public record QuizExerciseSnapshotDTO(Boolean randomizeQuestionOrder, Integer al
         if (quizQuestions != null) {
             questions = exercise.getQuizQuestions().stream().map(QuizQuestionSnapshotDTO::of).collect(Collectors.toCollection(ArrayList::new));
         }
-        return new QuizExerciseSnapshotDTO(exercise.isRandomizeQuestionOrder(), exercise.getAllowedNumberOfAttempts(), exercise.isIsOpenForPractice(), exercise.getQuizMode(),
-                exercise.getDuration(), questions);
+        return new QuizExerciseSnapshotDTO(exercise.isRandomizeQuestionOrder(), exercise.getAllowedNumberOfAttempts(), exercise.getQuizMode(), exercise.getDuration(), questions);
     }
 
 }
