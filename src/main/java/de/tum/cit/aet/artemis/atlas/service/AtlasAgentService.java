@@ -163,24 +163,11 @@ public class AtlasAgentService {
         if (chatClient == null) {
             return new AtlasAgentChatResponseDTO("Atlas Agent is not available. Please contact your administrator.", ZonedDateTime.now(), false, null);
         }
-
         try {
             CompetencyExpertToolsService.setCurrentSessionId(sessionId);
             resetCompetencyModifiedFlag();
 
             String response = delegateTheRightAgent(message, courseId, sessionId);
-            ChatClient.Builder clientBuilder = chatClient.mutate();
-            // Add memory advisor only for Atlas with conversation-specific session ID
-            if (chatMemory != null) {
-                clientBuilder.defaultAdvisors(MessageChatMemoryAdvisor.builder(chatMemory).conversationId(sessionId).build());
-            }
-
-            ChatClient atlasClient = clientBuilder.build();
-
-            // Load system prompt from external template
-            String resourcePath = "/prompts/atlas/agent_system_prompt.st";
-            Map<String, String> variables = Map.of();
-            String systemPrompt = templateService.render(resourcePath, variables);
 
             if (response.contains(DELEGATE_TO_COMPETENCY_EXPERT)) {
                 String brief = extractBriefFromDelegationMarker(response);
@@ -219,27 +206,24 @@ public class AtlasAgentService {
             else if (response.contains(RETURN_TO_MAIN_AGENT)) {
                 sessionAgentMap.put(sessionId, AgentType.MAIN_AGENT);
                 response = response.replace(RETURN_TO_MAIN_AGENT, "").trim();
-            AzureOpenAiChatOptions options = AzureOpenAiChatOptions.builder().deploymentName("gpt-4o").temperature(1.0).build();
-            ChatClientRequestSpec promptSpec = atlasClient.prompt().system(enhancedSystemPrompt).user(message).options(options);
-            // Add tools
-            if (toolCallbackProvider != null) {
-                promptSpec = promptSpec.toolCallbacks(toolCallbackProvider);
+
+                boolean competenciesModified = competencyModifiedInCurrentRequest.get();
+
+                List<CompetencyPreviewDTO> previews = CompetencyExpertToolsService.getAndClearPreviews();
+
+                String finalResponse = (!response.trim().isEmpty()) ? response : "I apologize, but I couldn't generate a response.";
+
+                // Embed preview data in response for chat memory persistence
+                String responseWithEmbeddedData = embedPreviewDataInResponse(finalResponse, previews);
+
+                // Update chat memory with embedded preview data if previews exist
+                updateChatMemoryWithEmbeddedData(sessionId, responseWithEmbeddedData, finalResponse);
+
+                return new AtlasAgentChatResponseDTO(finalResponse, ZonedDateTime.now(), competenciesModified, previews);
             }
 
-            boolean competenciesModified = competencyModifiedInCurrentRequest.get();
-
-            List<CompetencyPreviewDTO> previews = CompetencyExpertToolsService.getAndClearPreviews();
-
-            String finalResponse = (!response.trim().isEmpty()) ? response : "I apologize, but I couldn't generate a response.";
-
-            // Embed preview data in response for chat memory persistence
-            String responseWithEmbeddedData = embedPreviewDataInResponse(finalResponse, previews);
-
-            // Update chat memory with embedded preview data if previews exist
-            updateChatMemoryWithEmbeddedData(sessionId, responseWithEmbeddedData, finalResponse);
-
-            return new AtlasAgentChatResponseDTO(finalResponse, ZonedDateTime.now(), competenciesModified, previews);
-
+            // Default case: return the response as-is
+            return new AtlasAgentChatResponseDTO(response, ZonedDateTime.now(), competencyModifiedInCurrentRequest.get(), null);
         }
         catch (Exception e) {
             return new AtlasAgentChatResponseDTO("I apologize, but I'm having trouble processing your request right now. Please try again later.", ZonedDateTime.now(), false,
@@ -279,13 +263,17 @@ public class AtlasAgentService {
         // Append courseId to system prompt so that the Sub-Agents have course context (invisible to conversation history)
         String systemPromptWithContext = systemPrompt + "\n\nCONTEXT FOR THIS REQUEST:\nCourse ID: " + courseId;
 
+        // Build chat client with memory advisor for this specific session
+        ChatClient.Builder clientBuilder = chatClient.mutate();
+        // Add memory advisor only for Atlas with conversation-specific session ID
+        if (chatMemory != null) {
+            clientBuilder.defaultAdvisors(MessageChatMemoryAdvisor.builder(chatMemory).conversationId(sessionId).build());
+        }
+        ChatClient sessionClient = clientBuilder.build();
+
         ToolCallingChatOptions options = AzureOpenAiChatOptions.builder().deploymentName(deploymentName).temperature(temperature).build();
 
-        ChatClientRequestSpec promptSpec = chatClient.prompt().system(systemPromptWithContext).user(message).options(options);
-
-        if (chatMemory != null) {
-            promptSpec = promptSpec.advisors(MessageChatMemoryAdvisor.builder(chatMemory).conversationId(sessionId).build());
-        }
+        ChatClientRequestSpec promptSpec = sessionClient.prompt().system(systemPromptWithContext).user(message).options(options);
 
         if (agentType.equals(AgentType.MAIN_AGENT)) {
             if (mainAgentToolCallbackProvider != null) {
