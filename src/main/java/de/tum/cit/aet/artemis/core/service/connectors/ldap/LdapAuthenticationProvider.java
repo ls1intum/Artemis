@@ -33,7 +33,7 @@ import de.tum.cit.aet.artemis.core.service.user.UserCreationService;
  * This class is responsible for authenticating users against an LDAP server.
  * It retrieves user information from the LDAP server and creates or updates the user in the Artemis database.
  */
-@Component
+@Component("ldapAuthenticationProvider")
 @Profile(PROFILE_LDAP)
 @Lazy
 @Primary
@@ -62,7 +62,7 @@ public class LdapAuthenticationProvider implements ArtemisAuthenticationProvider
 
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-        User user = getOrCreateUser(authentication);
+        User user = authenticateUser(authentication);
         if (user != null) {
             return new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), user.getGrantedAuthorities());
         }
@@ -70,12 +70,15 @@ public class LdapAuthenticationProvider implements ArtemisAuthenticationProvider
     }
 
     /**
-     * Get or create a user based on the given authentication. This method will check the password in the external LDAP system
+     * Authenticate a user based on the given authentication against the connected LDAP. This method will check the password in the external LDAP system.
+     * It will retrieve the user information from the LDAP and compare it against an existing user in the database if it exists.
+     * In case a user already exists and information has changed, this will be updated.
+     * In case a user does not exist in the Artemis database yet, a new user will be created based on the LDAP user information.
      *
      * @param authentication The authentication object including the login and password
      * @return The user object or null if the user is internal
      */
-    private User getOrCreateUser(Authentication authentication) throws BadCredentialsException {
+    private User authenticateUser(Authentication authentication) throws BadCredentialsException {
         String loginOrEmail = authentication.getName().toLowerCase(Locale.ENGLISH);
         String password = authentication.getCredentials().toString();
 
@@ -100,12 +103,12 @@ public class LdapAuthenticationProvider implements ArtemisAuthenticationProvider
         // Use the given password to authenticate the user in the LDAP
         boolean isAuthenticated = ldapTemplate.authenticate("", String.format("(uid=%s)", ldapUserDto.getLogin()), password);
         if (!isAuthenticated) {
-            log.warn("LDAP login failed for {}", loginOrEmail);
             throw new BadCredentialsException("Wrong credentials");
         }
 
         // update the user details from ldapUserDto (because they might have changed, e.g. when the user changes the name)
         if (optionalUser.isPresent()) {
+            // TODO: make sure the user is not deactivated in the meantime
             return saveUserIfNeeded(optionalUser.get(), ldapUserDto);
         }
         else {
@@ -212,7 +215,7 @@ public class LdapAuthenticationProvider implements ArtemisAuthenticationProvider
 
     @Override
     public boolean supports(Class<?> authentication) {
-        return true;
+        return UsernamePasswordAuthenticationToken.class.isAssignableFrom(authentication);
     }
 
     /**
