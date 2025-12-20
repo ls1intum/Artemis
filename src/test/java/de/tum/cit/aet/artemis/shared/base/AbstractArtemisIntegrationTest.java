@@ -219,6 +219,15 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
      */
     private static void configureJGitSystemReader() {
         SystemReader defaultReader = SystemReader.getInstance();
+
+        // Force initialization of static platform detection fields before calling setInstance().
+        // This prevents a race condition where setInstance() -> init() -> setPlatformChecker()
+        // accesses static fields (isMacOS, isWindows) that haven't been initialized yet
+        // during parallel test execution, causing NullPointerException.
+        defaultReader.isMacOS();
+        defaultReader.isWindows();
+        defaultReader.isLinux();
+
         SystemReader.setInstance(new SystemReader() {
 
             @Override
