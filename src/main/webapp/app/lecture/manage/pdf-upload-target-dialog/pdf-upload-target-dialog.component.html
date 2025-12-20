@@ -17,8 +17,8 @@
     </div>
 
     <div class="target-options">
-        <div class="form-check target-option" [class.selected]="targetType() === 'new'">
-            <input class="form-check-input" type="radio" name="targetType" id="targetNew" [checked]="targetType() === 'new'" (change)="onTargetTypeChange('new')" />
+        <div class="form-check target-option" [class.selected]="targetType() === 'new'" (click)="onTargetTypeChange('new')">
+            <input class="form-check-input" type="radio" name="targetType" id="targetNew" [checked]="targetType() === 'new'" />
             <label class="form-check-label" for="targetNew">
                 <fa-icon [icon]="faFolderPlus" class="me-2" />
                 <span jhiTranslate="artemisApp.lecture.pdfUpload.newLecture"></span>
@@ -41,15 +41,8 @@
         }
 
         @if (lectures.length > 0) {
-            <div class="form-check target-option mt-3" [class.selected]="targetType() === 'existing'">
-                <input
-                    class="form-check-input"
-                    type="radio"
-                    name="targetType"
-                    id="targetExisting"
-                    [checked]="targetType() === 'existing'"
-                    (change)="onTargetTypeChange('existing')"
-                />
+            <div class="form-check target-option mt-3" [class.selected]="targetType() === 'existing'" (click)="onTargetTypeChange('existing')">
+                <input class="form-check-input" type="radio" name="targetType" id="targetExisting" [checked]="targetType() === 'existing'" />
                 <label class="form-check-label" for="targetExisting">
                     <fa-icon [icon]="faFolderOpen" class="me-2" />
                     <span jhiTranslate="artemisApp.lecture.pdfUpload.existingLecture"></span>

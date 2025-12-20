@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.core.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 /**
  * Aggregated active user counts for several rolling windows.
  *
@@ -8,5 +10,6 @@ package de.tum.cit.aet.artemis.core.dto;
  * @param activeUsers14Days users active within the last 14 days
  * @param activeUsers30Days users active within the last 30 days
  */
-public record ActiveUserWindowCounts(long activeUsers1Day, long activeUsers7Days, long activeUsers14Days, long activeUsers30Days) {
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+public record ActiveUserWindowCountsDTO(long activeUsers1Day, long activeUsers7Days, long activeUsers14Days, long activeUsers30Days) {
 }

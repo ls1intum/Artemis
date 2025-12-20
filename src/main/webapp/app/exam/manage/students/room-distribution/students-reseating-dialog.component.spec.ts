@@ -10,7 +10,6 @@ import { StudentsRoomDistributionService } from 'app/exam/manage/services/studen
 import { MockStudentsRoomDistributionService } from 'test/helpers/mocks/service/mock-students-room-distribution.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ExamUser } from 'app/exam/shared/entities/exam-user.model';
-import { provideNoopAnimations } from '@angular/platform-browser/animations';
 
 describe('StudentsReseatingDialogComponent', () => {
     let component: StudentsReseatingDialogComponent;
@@ -48,7 +47,6 @@ describe('StudentsReseatingDialogComponent', () => {
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: StudentsRoomDistributionService, useClass: MockStudentsRoomDistributionService },
-                provideNoopAnimations(),
             ],
         }).compileComponents();
         fixture = TestBed.createComponent(StudentsReseatingDialogComponent);
