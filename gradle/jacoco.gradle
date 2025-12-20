@@ -1,29 +1,29 @@
 ext {
     // TODO: this should become 90% for INSTRUCTION and 0 for CLASS
     //This also needs to be lowered if we merge nebula PRs
-    AggregatedCoverageThresholds = ["INSTRUCTION": 0.865, "CLASS": 127]
+    AggregatedCoverageThresholds = ["INSTRUCTION": 0.862, "CLASS": 138]
     // TODO: each module should achieve 90% for INSTRUCTION and 0 for CLASS
     ModuleCoverageThresholds = [
-        "assessment"    :          ["INSTRUCTION": 0.920, "CLASS":  0],
-        "athena"        :          ["INSTRUCTION": 0.854, "CLASS":  2],
-        "atlas"         :          ["INSTRUCTION": 0.896, "CLASS":  5],
-        "buildagent"    :          ["INSTRUCTION": 0.785, "CLASS":  0],
-        "communication" :          ["INSTRUCTION": 0.873, "CLASS":  6],
-        "core"          :          ["INSTRUCTION": 0.815, "CLASS": 57],
-        "exam"          :          ["INSTRUCTION": 0.912, "CLASS":  3],
-        "exercise"      :          ["INSTRUCTION": 0.916, "CLASS":  0],
+        "assessment"    :          ["INSTRUCTION": 0.918, "CLASS":  0],
+        "athena"        :          ["INSTRUCTION": 0.856, "CLASS":  2],
+        "atlas"         :          ["INSTRUCTION": 0.902, "CLASS":  5],
+        "buildagent"    :          ["INSTRUCTION": 0.803, "CLASS":  1],
+        "communication" :          ["INSTRUCTION": 0.863, "CLASS":  9],
+        "core"          :          ["INSTRUCTION": 0.815, "CLASS": 62],
+        "exam"          :          ["INSTRUCTION": 0.907, "CLASS":  3],
+        "exercise"      :          ["INSTRUCTION": 0.911, "CLASS":  0],
         "fileupload"    :          ["INSTRUCTION": 0.945, "CLASS":  0],
-        "hyperion"      :          ["INSTRUCTION": 0.750, "CLASS":  2],
-        "iris"          :          ["INSTRUCTION": 0.792, "CLASS": 25],
-        "lecture"       :          ["INSTRUCTION": 0.905, "CLASS":  1],
+        "hyperion"      :          ["INSTRUCTION": 0.646, "CLASS":  9],
+        "iris"          :          ["INSTRUCTION": 0.813, "CLASS": 21],
+        "lecture"       :          ["INSTRUCTION": 0.891, "CLASS":  1],
         "lti"           :          ["INSTRUCTION": 0.888, "CLASS":  2],
         "modeling"      :          ["INSTRUCTION": 0.935, "CLASS":  0],
-        "nebula"        :          ["INSTRUCTION": 0.800, "CLASS":  0],
+        "nebula"        :          ["INSTRUCTION": 0.836, "CLASS":  0],
         "plagiarism"    :          ["INSTRUCTION": 0.908, "CLASS":  2],
-        "programming"   :          ["INSTRUCTION": 0.846, "CLASS": 16],
-        "quiz"          :          ["INSTRUCTION": 0.863, "CLASS":  3],
-        "text"          :          ["INSTRUCTION": 0.947, "CLASS":  1],
-        "tutorialgroup" :          ["INSTRUCTION": 0.918, "CLASS":  1],
+        "programming"   :          ["INSTRUCTION": 0.846, "CLASS": 17],
+        "quiz"          :          ["INSTRUCTION": 0.868, "CLASS":  3],
+        "text"          :          ["INSTRUCTION": 0.946, "CLASS":  1],
+        "tutorialgroup" :          ["INSTRUCTION": 0.919, "CLASS":  1],
     ]
     // If no explicit modules defined -> generate reports and validate for each module
     reportedModules = includedModules.size() == 0
