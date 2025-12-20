@@ -152,6 +152,12 @@
                                     </div>
                                 </td>
                             </tr>
+                        } @empty {
+                            <tr>
+                                <td colspan="4" class="d-md-table-cell text-center">
+                                    <span jhiTranslate="artemisApp.exam.overview.noExams"></span>
+                                </td>
+                            </tr>
                         }
                     </tbody>
                 </table>
