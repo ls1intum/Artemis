@@ -99,6 +99,13 @@ public class AtlasAgentService {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
+    /**
+     * Thread-local storage for the session-specific ChatClient with memory advisor.
+     * This ensures each request uses a single ChatClient instance with memory configured once,
+     * avoiding duplicate memory advisor registrations during multi-agent delegation.
+     */
+    private static final ThreadLocal<ChatClient> sessionChatClient = new ThreadLocal<>();
+
     public Boolean getCompetencyModifiedInCurrentRequest() {
         return competencyModifiedInCurrentRequest.get();
     }
@@ -166,6 +173,14 @@ public class AtlasAgentService {
         try {
             CompetencyExpertToolsService.setCurrentSessionId(sessionId);
             resetCompetencyModifiedFlag();
+
+            // Build chat client with memory advisor once per request for this specific session
+            ChatClient.Builder clientBuilder = chatClient.mutate();
+            if (chatMemory != null) {
+                clientBuilder.defaultAdvisors(MessageChatMemoryAdvisor.builder(chatMemory).conversationId(sessionId).build());
+            }
+
+            sessionChatClient.set(clientBuilder.build());
 
             String response = delegateTheRightAgent(message, courseId, sessionId);
 
