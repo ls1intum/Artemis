@@ -20,6 +20,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
@@ -33,6 +34,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.vm.LoginVM;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 import de.tum.cit.aet.artemis.core.repository.AuthorityRepository;
+import de.tum.cit.aet.artemis.core.security.ArtemisInternalAuthenticationProvider;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
@@ -60,6 +62,9 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private ArtemisInternalAuthenticationProvider artemisInternalAuthenticationProvider;
 
     private User student;
 
@@ -181,5 +186,73 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
         assertThat(response).isNotNull();
         assertThat(student).as("Returned user is equal to sent update").isEqualTo(response);
         assertThat(student).as("Updated user in DB is equal to sent update").isEqualTo(updatedUserIndDB);
+    }
+
+    @Test
+    void testAuthenticateWithEmail() {
+        // Authenticate using email instead of username
+        var authentication = new UsernamePasswordAuthenticationToken(student.getEmail(), USER_PASSWORD);
+        var result = artemisInternalAuthenticationProvider.authenticate(authentication);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getName()).isEqualTo(student.getLogin());
+        assertThat(result.isAuthenticated()).isTrue();
+    }
+
+    @Test
+    void testAuthenticateWithNonExistentUser() {
+        var authentication = new UsernamePasswordAuthenticationToken("nonexistent@example.com", USER_PASSWORD);
+        var result = artemisInternalAuthenticationProvider.authenticate(authentication);
+
+        // Should return null for non-existent internal user (allows fallback to LDAP)
+        assertThat(result).isNull();
+    }
+
+    @Test
+    void testAuthenticateWithInactiveUser() {
+        student.setActivated(false);
+        userTestRepository.save(student);
+
+        var authentication = new UsernamePasswordAuthenticationToken(USERNAME, USER_PASSWORD);
+
+        try {
+            artemisInternalAuthenticationProvider.authenticate(authentication);
+            assertThat(false).as("Should have thrown UserNotActivatedException").isTrue();
+        }
+        catch (Exception e) {
+            assertThat(e.getMessage()).contains("was not activated");
+        }
+    }
+
+    @Test
+    void testAuthenticateWithWrongPassword() {
+        var authentication = new UsernamePasswordAuthenticationToken(USERNAME, "wrongPassword");
+
+        try {
+            artemisInternalAuthenticationProvider.authenticate(authentication);
+            assertThat(false).as("Should have thrown AuthenticationServiceException").isTrue();
+        }
+        catch (Exception e) {
+            assertThat(e.getMessage()).contains("Invalid password");
+        }
+    }
+
+    @Test
+    void testGetUsernameForEmail() {
+        var username = artemisInternalAuthenticationProvider.getUsernameForEmail(student.getEmail());
+        assertThat(username).isPresent();
+        assertThat(username.get()).isEqualTo(student.getLogin());
+    }
+
+    @Test
+    void testGetUsernameForNonExistentEmail() {
+        var username = artemisInternalAuthenticationProvider.getUsernameForEmail("nonexistent@example.com");
+        assertThat(username).isEmpty();
+    }
+
+    @Test
+    void testSupportsUsernamePasswordAuthenticationToken() {
+        assertThat(artemisInternalAuthenticationProvider.supports(UsernamePasswordAuthenticationToken.class)).isTrue();
+        assertThat(artemisInternalAuthenticationProvider.supports(Object.class)).isFalse();
     }
 }
