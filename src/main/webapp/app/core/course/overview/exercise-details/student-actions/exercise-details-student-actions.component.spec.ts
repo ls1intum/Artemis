@@ -193,7 +193,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         comp.startExercise();
         participationSubject.next(inactivePart);
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         tick();
 
         expect(comp.gradedParticipation?.initializationState).toEqual(InitializationState.UNINITIALIZED);
@@ -201,7 +201,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         expect(startExerciseStub).toHaveBeenCalledOnce();
         participationSubject.next(initPart);
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         tick();
 
         expect(comp.gradedParticipation?.initializationState).toEqual(InitializationState.INITIALIZED);
@@ -242,7 +242,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         comp.exercise.studentParticipations = [initPart];
         comp.practiceParticipation = initPart;
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         tick();
 
         startPracticeButton = fixture.debugElement.query(By.css('jhi-start-practice-mode-button'));
@@ -318,7 +318,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         comp.examMode = true;
         comp.updateParticipations();
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         tick();
 
         let startExerciseButton = debugElement.query(By.css('button.start-exercise'));
@@ -330,7 +330,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
 
         exercise.allowOfflineIde = true;
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         tick();
 
         startExerciseButton = debugElement.query(By.css('button.start-exercise'));
@@ -350,7 +350,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         comp.examMode = true;
         comp.updateParticipations();
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         tick();
 
         let startExerciseButton = debugElement.query(By.css('button.start-exercise'));
@@ -362,7 +362,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
 
         exercise.allowOfflineIde = true;
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         tick();
 
         startExerciseButton = debugElement.query(By.css('button.start-exercise'));
@@ -379,7 +379,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         fakeAsync((type: ExerciseType) => {
             comp.exercise = { type, releaseDate: dayjs().subtract(1, 'hour'), startDate: dayjs().add(1, 'hour') } as ProgrammingExercise;
 
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             tick();
 
             const startExerciseButton = debugElement.query(By.css('button.start-exercise'));
@@ -497,7 +497,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
             comp.ngOnInit();
             comp.ngOnChanges();
 
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             tick();
 
             const button = debugElement.query(By.css('button.open-exercise'));

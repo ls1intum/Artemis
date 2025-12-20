@@ -1,0 +1,102 @@
+---
+id: exports
+title: Exports
+sidebar_label: Exports
+---
+
+import Image, {ImageSize} from "../../src/components/Image/Image";
+
+import archiveCourseImg from "./assets/exports/archive_course.png";
+import archiveExamImg from "./assets/exports/archive_exam.png";
+import downloadArchiveImg from "./assets/exports/download_archive.png";
+import exportQuizImg from "./assets/exports/export_quiz.png";
+import exportResultsImg from "./assets/exports/export_results.png";
+import exportSubmissionsImg from "./assets/exports/export_submissions.png";
+import downloadExerciseImg from "./assets/exports/download_exercise.png";
+import downloadReposImg from "./assets/exports/download_repos.png";
+import downloadScoresImg from "./assets/exports/scores.png";
+import exportScoresImg from "./assets/exports/export_scores.png";
+import exportImg from "./assets/exports/export.png";
+import scoresNavigationBarImg from "./assets/exports/scores_navigation_bar.png";
+import privacyStatementImg from "./assets/exports/privacy_statement.png";
+import dataExportImg from "./assets/exports/data_export.png";
+
+# Exports
+
+## Overview
+
+Artemis offers several options to export or archive different data. The following table gives an overview of the available export options.
+
+| Export/Archive option                          |
+|------------------------------------------------|
+| Archive course/exam                            |
+| Export programming exercise material           |
+| Export programming exercise student repositories |
+| Export exercise results                        |
+| Export quiz questions                          |
+| Export exercise submissions                    |
+| Export user data                               |
+
+---
+
+## Archive course/exam
+
+Export all course/exam data, including all exercises and student submissions.
+To archive a course or an exam the end date of the entity needs to be in the past.
+You can archive a course by clicking <Image src={archiveCourseImg} alt={"Archive course"} size={ImageSize.small} style={{display:"inline", verticalAlign:"middle"}} /> on the course management overview page or an exam by clicking <Image src={archiveExamImg} alt={"Archive exam"} size={ImageSize.small} style={{display:"inline", verticalAlign:"middle"}} /> on the exam checklist page. This will create a zip file containing all exercises of the exam or course and all student submissions. For a course all exams are exported as well.
+For each exercise the problem statement and a JSON file with exercise details such as points are exported. For programming exercises, the template, solution, test, and auxiliary (if existing) repository is exported as well.
+The creation is done asynchronously. You will receive a notification once the archive is ready to download. You can then download the archive by clicking <Image src={downloadArchiveImg} alt={"Download archive"} size={ImageSize.small} style={{display:"inline", verticalAlign:"middle"}} /> on the course management overview page or the exam checklist page.
+
+---
+
+## Export programming exercise material
+
+Export the exercise material (template, solution, test, and auxiliary repositories as well as the problem statement and other general exercise information) of a programming exercise.
+To export the material click the <Image src={downloadExerciseImg} alt={"Download exercise"} size={ImageSize.small} style={{display:"inline", verticalAlign:"middle"}} /> button on the exercise details page.
+
+---
+
+## Export quiz exercise
+
+Exports the questions and the sample solution of a quiz in JSON format.
+You can export a a quiz exercise by clicking the <Image src={exportQuizImg} alt={"Export quiz"} size={ImageSize.small} style={{display:"inline", verticalAlign:"middle"}} /> button on the exercises overview page.
+
+---
+
+## Export programming exercise student repositories
+
+Export the student repositories (this can include the repositories for both graded and practice participations) of a programming exercise.
+To export the repositories click the <Image src={exportImg} alt={"Export"} size={ImageSize.small} style={{display:"inline", verticalAlign:"middle"}} /> button and then the <Image src={downloadReposImg} alt={"Download repos"} size={ImageSize.small} style={{display:"inline", verticalAlign:"middle"}} /> button on the <Image src={downloadScoresImg} alt={"Download scores"} size={ImageSize.small} style={{display:"inline", verticalAlign:"middle"}} /> page.
+
+---
+
+## Export exercise submissions
+
+Export the submissions of all students that participated in a specific exercise. This is supported for text, modeling and file upload exercises.
+Text submissions are exported as a zip file containing all submissions as text files.
+Modeling submissions are exported as a zip file containing all submissions as json files.
+File upload submissions are exported as a zip file containing all submitted files.
+To export the submissions click the <Image src={exportScoresImg} alt={"Export scores"} size={ImageSize.small} style={{display:"inline", verticalAlign:"middle"}} /> button and then the <Image src={exportSubmissionsImg} alt={"Export submissions"} size={ImageSize.small} style={{display:"inline", verticalAlign:"middle"}} /> button on the <Image src={downloadScoresImg} alt={"Download scores"} size={ImageSize.small} style={{display:"inline", verticalAlign:"middle"}} /> page.
+
+---
+
+## Export exercise results
+
+Export the results of students for a specific exercise as CSV file. This is supported for all exercise types.
+To export the results click the <Image src={exportImg} alt={"Export"} size={ImageSize.small} style={{display:"inline", verticalAlign:"middle"}} /> button and then the <Image src={exportResultsImg} alt={"Export results"} size={ImageSize.small} style={{display:"inline", verticalAlign:"middle"}} /> button on the <Image src={downloadScoresImg} alt={"Download scores"} size={ImageSize.small} style={{display:"inline", verticalAlign:"middle"}} /> page.
+
+---
+
+## Export course/exam scores
+
+Export the scores of all students that participated in a specific course or exam. This is supported for all exercise types.
+The scores are exported in CSV format.
+To export the scores of a course click on the <Image src={scoresNavigationBarImg} alt={"Scores navigation bar"} size={ImageSize.small} style={{display:"inline", verticalAlign:"middle"}} /> tab in the course management navigation bar and then the <Image src={exportScoresImg} alt={"Export scores"} size={ImageSize.small} style={{display:"inline", verticalAlign:"middle"}} /> button.
+For exams you can export the scores by clicking the <Image src={downloadScoresImg} alt={"Download scores"} size={ImageSize.small} style={{display:"inline", verticalAlign:"middle"}} /> button on the exam checklist page and then <Image src={exportScoresImg} alt={"Export scores"} size={ImageSize.small} style={{display:"inline", verticalAlign:"middle"}} /> button.
+
+---
+
+## Export user data
+
+Export all data Artemis stores about a specific user. This includes information such as name or email, exercise submissions, results, feedbacks the user received, messages they've sent.
+You can request a data export by clicking <Image src={privacyStatementImg} alt={"Privacy statement"} size={ImageSize.small} style={{display:"inline", verticalAlign:"middle"}} /> and <Image src={dataExportImg} alt={"Data export"} size={ImageSize.small} style={{display:"inline", verticalAlign:"middle"}} />. Once the export has been created you will receive an email with a download link.

@@ -71,7 +71,7 @@ describe('SystemNotificationManagementComponent', () => {
         notification.expireDate = dayjs();
         notification.notificationDate = dayjs();
         managementComponent.notifications = [notification];
-        managementComponentFixture.detectChanges();
+        managementComponentFixture.changeDetectorRef.detectChanges();
 
         const button = managementComponentFixture.debugElement.nativeElement.querySelector('#viewButton');
         button.click();
@@ -86,7 +86,7 @@ describe('SystemNotificationManagementComponent', () => {
         notification.expireDate = dayjs();
         notification.notificationDate = dayjs();
         managementComponent.notifications = [notification];
-        managementComponentFixture.detectChanges();
+        managementComponentFixture.changeDetectorRef.detectChanges();
 
         const button = managementComponentFixture.debugElement.nativeElement.querySelector('#editButton');
         button.click();
@@ -103,7 +103,7 @@ describe('SystemNotificationManagementComponent', () => {
 
     it('should transition on page change', fakeAsync(() => {
         managementComponent.notifications = [];
-        managementComponentFixture.detectChanges();
+        managementComponentFixture.changeDetectorRef.detectChanges();
 
         const pagination = managementComponentFixture.debugElement.nativeElement.querySelector('#pagination');
         pagination.dispatchEvent(new Event('pageChange'));

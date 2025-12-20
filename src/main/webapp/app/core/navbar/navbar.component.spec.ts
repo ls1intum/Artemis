@@ -147,6 +147,7 @@ describe('NavbarComponent', () => {
 
         fixture.detectChanges();
         component.currAccount = undefined;
+        fixture.changeDetectorRef.detectChanges();
         component.changeLanguage('elvish');
 
         expect(useSpy).toHaveBeenCalledWith('elvish');
@@ -286,15 +287,17 @@ describe('NavbarComponent', () => {
 
     it('should hide breadcrumb when exam is started', () => {
         (examParticipationService as any).examIsStarted$ = of(true);
-        component.isExamActive = true;
         const testUrl = '/courses/1/exams/2';
         router.setUrl(testUrl);
 
         fixture.detectChanges();
+        component.isExamActive = true;
+        fixture.changeDetectorRef.detectChanges();
         expect(fixture.nativeElement.querySelector('.breadcrumb')).toBeNull();
 
         component.isExamStarted = false;
-        fixture.detectChanges();
+        component.isExamActive = false;
+        fixture.changeDetectorRef.detectChanges();
         expect(fixture.nativeElement.querySelector('.breadcrumb')).not.toBeNull();
     });
 
@@ -328,6 +331,7 @@ describe('NavbarComponent', () => {
                 gracePeriod: 180,
             },
         } as StudentExam);
+        fixture.changeDetectorRef.detectChanges();
 
         expect(component.isExamActive).toBeFalse();
         tick(61000);

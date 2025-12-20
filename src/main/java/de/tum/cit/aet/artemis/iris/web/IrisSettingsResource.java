@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.iris.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
+import jakarta.validation.Valid;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
@@ -13,152 +15,51 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
-import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
-import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
-import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastStudentInExercise;
-import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
-import de.tum.cit.aet.artemis.iris.domain.settings.IrisExerciseSettings;
-import de.tum.cit.aet.artemis.iris.domain.settings.IrisSettings;
-import de.tum.cit.aet.artemis.iris.dto.IrisCombinedSettingsDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisCourseSettingsWithRateLimitDTO;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 
-/**
- * REST controller for managing {@link IrisSettings}.
- */
 @Profile(PROFILE_IRIS)
 @Lazy
 @RestController
 @RequestMapping("api/iris/")
 public class IrisSettingsResource {
 
-    private final UserRepository userRepository;
-
     private final CourseRepository courseRepository;
 
     private final IrisSettingsService irisSettingsService;
 
-    private final AuthorizationCheckService authCheckService;
+    private final AuthorizationCheckService authorizationCheckService;
 
-    private final ExerciseRepository exerciseRepository;
-
-    public IrisSettingsResource(UserRepository userRepository, CourseRepository courseRepository, IrisSettingsService irisSettingsService,
-            AuthorizationCheckService authCheckService, ExerciseRepository exerciseRepository) {
-        this.userRepository = userRepository;
+    public IrisSettingsResource(CourseRepository courseRepository, IrisSettingsService irisSettingsService, AuthorizationCheckService authorizationCheckService) {
         this.courseRepository = courseRepository;
         this.irisSettingsService = irisSettingsService;
-        this.authCheckService = authCheckService;
-        this.exerciseRepository = exerciseRepository;
+        this.authorizationCheckService = authorizationCheckService;
     }
 
-    /**
-     * GET global-iris-settings: Retrieve the raw iris settings for the course.
-     *
-     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the settings.
-     */
-    @GetMapping("global-iris-settings")
-    @EnforceAtLeastInstructor
-    public ResponseEntity<IrisSettings> getGlobalSettings() {
-        var irisSettings = irisSettingsService.getGlobalSettings();
-        return ResponseEntity.ok(irisSettings);
-    }
-
-    /**
-     * GET courses/{courseId}/raw-iris-settings: Retrieve the raw iris settings for the course.
-     *
-     * @param courseId of the course
-     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the settings, or with status {@code 404 (Not Found)} if the course could not be found.
-     */
-    @GetMapping("courses/{courseId}/raw-iris-settings")
-    @EnforceAtLeastTutorInCourse
-    public ResponseEntity<IrisSettings> getRawCourseSettings(@PathVariable Long courseId) {
-        var course = courseRepository.findByIdElseThrow(courseId);
-        var irisSettings = irisSettingsService.getRawIrisSettingsFor(course);
-        return ResponseEntity.ok(irisSettings);
-    }
-
-    /**
-     * GET exercises/{exerciseId}/raw-iris-settings: Retrieve the raw iris settings for the exercise.
-     *
-     * @param exerciseId of the exercise
-     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the settings, or with status {@code 404 (Not Found)} if the exercise could not be found.
-     */
-    @GetMapping("exercises/{exerciseId}/raw-iris-settings")
-    @EnforceAtLeastTutorInExercise
-    public ResponseEntity<IrisSettings> getRawExerciseSettings(@PathVariable Long exerciseId) {
-        var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        var combinedIrisSettings = irisSettingsService.getRawIrisSettingsFor(exercise);
-        return ResponseEntity.ok(combinedIrisSettings);
-    }
-
-    /**
-     * GET courses/{courseId}/iris-settings: Retrieve the actual iris settings for the course.
-     *
-     * @param courseId of the course
-     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the settings, or with status {@code 404 (Not Found)} if the course could not be found.
-     */
     @GetMapping("courses/{courseId}/iris-settings")
     @EnforceAtLeastStudentInCourse
-    public ResponseEntity<IrisCombinedSettingsDTO> getCourseSettings(@PathVariable Long courseId) {
-        var course = courseRepository.findByIdElseThrow(courseId);
-        var user = userRepository.getUserWithGroupsAndAuthorities();
-
-        // Editors can see the full settings, students only the reduced settings
-        var getReduced = !authCheckService.isAtLeastEditorInCourse(course, user);
-        var irisSettings = irisSettingsService.getCombinedIrisSettingsFor(course, getReduced);
-        return ResponseEntity.ok(irisSettings);
+    public ResponseEntity<IrisCourseSettingsWithRateLimitDTO> getCourseSettings(@PathVariable Long courseId) {
+        courseRepository.findByIdElseThrow(courseId);
+        return ResponseEntity.ok(irisSettingsService.getCourseSettingsWithRateLimit(courseId));
     }
 
     /**
-     * GET exercises/{exerciseId}/iris-settings: Retrieve the actual iris settings for the exercise.
+     * Updates the Iris settings for a course.
      *
-     * @param exerciseId of the exercise
-     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the settings, or with status {@code 404 (Not Found)} if the exercise could not be found.
+     * @param courseId the course id
+     * @param update   the new settings to apply
+     * @return the updated settings
      */
-    @GetMapping("exercises/{exerciseId}/iris-settings")
-    @EnforceAtLeastStudentInExercise
-    public ResponseEntity<IrisCombinedSettingsDTO> getExerciseSettings(@PathVariable Long exerciseId) {
-        var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        var user = userRepository.getUserWithGroupsAndAuthorities();
-
-        var combinedIrisSettings = irisSettingsService.getCombinedIrisSettingsFor(exercise, irisSettingsService.shouldShowMinimalSettings(exercise, user));
-        return ResponseEntity.ok(combinedIrisSettings);
-    }
-
-    /**
-     * PUT courses/{courseId}/raw-iris-settings: Update the raw iris settings for the course.
-     *
-     * @param courseId of the course
-     * @param settings the settings to update
-     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the updated settings, or with status {@code 404 (Not Found)} if the course could not be found.
-     */
-    @PutMapping("courses/{courseId}/raw-iris-settings")
+    @PutMapping("courses/{courseId}/iris-settings")
     @EnforceAtLeastInstructorInCourse
-    public ResponseEntity<IrisCourseSettings> updateCourseSettings(@PathVariable Long courseId, @RequestBody IrisCourseSettings settings) {
-        settings.setCourseId(courseId);
-        var updatedSettings = irisSettingsService.saveIrisSettings(settings);
-        return ResponseEntity.ok(updatedSettings);
-    }
-
-    /**
-     * PUT exercises/{exerciseId}/raw-iris-settings: Update the raw iris settings for the exercise.
-     *
-     * @param exerciseId of the exercise
-     * @param settings   the settings to update
-     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the updated settings, or with status {@code 404 (Not Found)} if the exercise could not be
-     *         found.
-     */
-    @PutMapping("exercises/{exerciseId}/raw-iris-settings")
-    @EnforceAtLeastInstructorInExercise
-    public ResponseEntity<IrisExerciseSettings> updateExerciseSettings(@PathVariable Long exerciseId, @RequestBody IrisExerciseSettings settings) {
-        settings.setExerciseId(exerciseId);
-        var updatedSettings = irisSettingsService.saveIrisSettings(settings);
-        return ResponseEntity.ok(updatedSettings);
+    public ResponseEntity<IrisCourseSettingsWithRateLimitDTO> updateCourseSettings(@PathVariable Long courseId, @Valid @RequestBody IrisCourseSettings update) {
+        courseRepository.findByIdElseThrow(courseId);
+        var isAdmin = authorizationCheckService.isAdmin();
+        var saved = irisSettingsService.updateCourseSettings(courseId, update, isAdmin);
+        return ResponseEntity.ok(saved);
     }
 }

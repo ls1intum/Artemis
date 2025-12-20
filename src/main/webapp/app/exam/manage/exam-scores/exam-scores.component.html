@@ -6,22 +6,22 @@
             </div>
         </div>
     }
-    @if (!isLoading && (!studentResults || !exerciseGroups)) {
+    @if (!isLoading && (!studentResults?.length || !exerciseGroups?.length)) {
         <div>
-            @if (!exerciseGroups) {
+            @if (!exerciseGroups?.length) {
                 <div class="alert alert-warning">
                     <fa-icon [icon]="faExclamationTriangle" />
                     <span jhiTranslate="artemisApp.examScores.noExerciseGroupAvailable"></span>
                 </div>
             }
-            @if (!studentResults) {
+            @if (!studentResults?.length) {
                 <div class="alert alert-info">
                     <span jhiTranslate="artemisApp.examScores.noStudentResultAvailable"></span>
                 </div>
             }
         </div>
     }
-    @if (!isLoading && studentResults && exerciseGroups) {
+    @if (!isLoading && studentResults?.length && exerciseGroups?.length) {
         <div>
             <div class="d-flex">
                 @if (examScoreDTO.title) {

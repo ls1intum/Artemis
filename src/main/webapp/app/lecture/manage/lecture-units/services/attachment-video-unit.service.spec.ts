@@ -11,14 +11,12 @@ import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachme
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
 import { objectToJsonBlob } from 'app/shared/util/blob-util';
 import { LectureUnitInformationDTO } from 'app/lecture/manage/lecture-units/attachment-video-units/attachment-video-units.component';
-import { AlertService } from 'app/shared/service/alert.service';
 
 describe('AttachmentVideoUnitService', () => {
     let service: AttachmentVideoUnitService;
     let httpMock: HttpTestingController;
     let elemDefault: AttachmentVideoUnit;
     let expectedResult: any;
-    let alertService: AlertService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -30,13 +28,11 @@ describe('AttachmentVideoUnitService', () => {
                         return res;
                     },
                 }),
-                MockProvider(AlertService),
             ],
         });
         expectedResult = {} as HttpResponse<AttachmentVideoUnit>;
         service = TestBed.inject(AttachmentVideoUnitService);
         httpMock = TestBed.inject(HttpTestingController);
-        alertService = TestBed.inject(AlertService);
 
         const attachment = new Attachment();
         attachment.id = 0;
@@ -362,101 +358,122 @@ describe('AttachmentVideoUnitService', () => {
             req.flush(expectedBlob);
         });
     });
-    describe('startTranscription', () => {
-        const lectureId = 7;
-        const lectureUnitId = 13;
-        const videoUrl = 'https://tum-live.de/stream/abc.m3u8';
 
-        it('should POST to the correct URL with expected body and show success alert on 200', fakeAsync(() => {
-            const successSpy = jest.spyOn(alertService, 'success');
-            let completed = false;
+    describe('getPlaylistUrl', () => {
+        it('should return playlist URL on success', fakeAsync(() => {
+            const pageUrl = 'https://tum-live.de/w/course/1';
+            const playlistUrl = 'https://stream.tum-live.de/video.m3u8';
+            let result: string | undefined;
 
             service
-                .startTranscription(lectureId, lectureUnitId, videoUrl)
+                .getPlaylistUrl(pageUrl)
                 .pipe(take(1))
-                .subscribe(() => (completed = true));
+                .subscribe((url) => (result = url));
 
-            const req = httpMock.expectOne({
-                method: 'POST',
-                url: `/api/nebula/${lectureId}/lecture-unit/${lectureUnitId}/transcriber`,
-            });
-
-            // Verify request shape
-            expect(req.request.method).toBe('POST');
+            const req = httpMock.expectOne((r) => r.method === 'GET' && r.url === '/api/nebula/video-utils/tum-live-playlist' && r.params.get('url') === pageUrl);
             expect(req.request.responseType).toBe('text');
-            expect(req.request.body).toEqual({
-                videoUrl,
-                lectureId,
-                lectureUnitId,
-            });
+            req.flush(playlistUrl);
 
-            // Simulate successful response
-            req.flush('transcription started', { status: 200, statusText: 'OK' });
-
-            expect(completed).toBeTrue();
-            expect(successSpy).toHaveBeenCalledWith('artemisApp.attachmentVideoUnit.transcription.started');
+            expect(result).toBe(playlistUrl);
         }));
 
-        it('should show error alert and handle server errors gracefully', fakeAsync(() => {
-            const errorSpy = jest.spyOn(alertService, 'error');
-            let completed = false;
+        it('should return undefined on error', fakeAsync(() => {
+            const pageUrl = 'https://invalid-url.com';
+            let result: string | undefined = 'initial';
 
             service
-                .startTranscription(lectureId, lectureUnitId, videoUrl)
+                .getPlaylistUrl(pageUrl)
                 .pipe(take(1))
-                .subscribe({
-                    next: () => (completed = true),
-                    complete: () => (completed = true),
-                });
+                .subscribe((url) => (result = url));
 
-            const req = httpMock.expectOne({
-                method: 'POST',
-                url: `/api/nebula/${lectureId}/lecture-unit/${lectureUnitId}/transcriber`,
-            });
+            const req = httpMock.expectOne((r) => r.method === 'GET' && r.url === '/api/nebula/video-utils/tum-live-playlist');
+            req.flush('Not found', { status: 404, statusText: 'Not Found' });
 
-            // Simulate server error
-            req.flush('Internal error', { status: 500, statusText: 'Server Error' });
+            expect(result).toBeUndefined();
+        }));
+    });
 
-            expect(completed).toBeTrue();
-            expect(errorSpy).toHaveBeenCalledWith('artemisApp.attachmentVideoUnit.transcription.error');
+    describe('createAttachmentVideoUnitFromFile', () => {
+        it('should create attachment unit with name derived from filename', fakeAsync(() => {
+            const file = new File(['content'], 'My_Lecture-Slides.pdf', { type: 'application/pdf' });
+            const lectureId = 42;
+            let result: any;
+
+            service
+                .createAttachmentVideoUnitFromFile(lectureId, file)
+                .pipe(take(1))
+                .subscribe((resp) => (result = resp));
+
+            const req = httpMock.expectOne((r) => r.method === 'POST' && r.url === `api/lecture/lectures/${lectureId}/attachment-video-units?keepFilename=true`);
+
+            // Verify FormData contents
+            const formData = req.request.body as FormData;
+            expect(formData.get('file')).toBe(file);
+
+            const attachmentVideoUnitBlob = formData.get('attachmentVideoUnit') as Blob;
+            const attachmentBlob = formData.get('attachment') as Blob;
+            expect(attachmentVideoUnitBlob).toBeTruthy();
+            expect(attachmentBlob).toBeTruthy();
+
+            req.flush({ id: 1, name: 'My Lecture Slides' });
+            expect(result.body).toEqual({ id: 1, name: 'My Lecture Slides' });
         }));
 
-        it('should send videoUrl verbatim even with special characters', fakeAsync(() => {
-            const specialUrl = 'https://live.rbg.tum.de/w/test/26?video_only=1&token=a+b%2F=';
-            const successSpy = jest.spyOn(alertService, 'success');
+        it('should handle filename with uppercase PDF extension', fakeAsync(() => {
+            const file = new File(['content'], 'Document.PDF', { type: 'application/pdf' });
+            let result: any;
 
-            service.startTranscription(lectureId, lectureUnitId, specialUrl).pipe(take(1)).subscribe();
+            service
+                .createAttachmentVideoUnitFromFile(1, file)
+                .pipe(take(1))
+                .subscribe((resp) => (result = resp));
 
-            const req = httpMock.expectOne({
-                method: 'POST',
-                url: `/api/nebula/${lectureId}/lecture-unit/${lectureUnitId}/transcriber`,
-            });
-
-            // Body should contain the exact string we passed in
-            expect(req.request.body).toEqual({
-                videoUrl: specialUrl,
-                lectureId,
-                lectureUnitId,
-            });
-
-            req.flush('ok', { status: 200, statusText: 'OK' });
-            expect(successSpy).toHaveBeenCalledWith('artemisApp.attachmentVideoUnit.transcription.started');
+            const req = httpMock.expectOne({ method: 'POST' });
+            req.flush({ id: 2, name: 'Document' });
+            expect(result.body.name).toBe('Document');
         }));
 
-        it('should handle errors with missing message gracefully', fakeAsync(() => {
-            const errorSpy = jest.spyOn(alertService, 'error');
+        it('should replace underscores and hyphens with spaces in unit name', fakeAsync(() => {
+            const file = new File(['content'], 'chapter_01-introduction_to_testing.pdf', { type: 'application/pdf' });
+            let result: any;
 
-            service.startTranscription(lectureId, lectureUnitId, videoUrl).pipe(take(1)).subscribe();
+            service
+                .createAttachmentVideoUnitFromFile(1, file)
+                .pipe(take(1))
+                .subscribe((resp) => (result = resp));
 
-            const req = httpMock.expectOne({
-                method: 'POST',
-                url: `/api/nebula/${lectureId}/lecture-unit/${lectureUnitId}/transcriber`,
-            });
+            const req = httpMock.expectOne({ method: 'POST' });
+            req.flush({ id: 3, name: 'chapter 01 introduction to testing' });
+            expect(result.body.name).toBe('chapter 01 introduction to testing');
+        }));
 
-            // Simulate error without message
-            req.error(new ProgressEvent('Network error'));
+        it('should trim whitespace from unit name', fakeAsync(() => {
+            const file = new File(['content'], '  spaced_name  .pdf', { type: 'application/pdf' });
+            let result: any;
 
-            expect(errorSpy).toHaveBeenCalledWith('artemisApp.attachmentVideoUnit.transcription.error');
+            service
+                .createAttachmentVideoUnitFromFile(1, file)
+                .pipe(take(1))
+                .subscribe((resp) => (result = resp));
+
+            const req = httpMock.expectOne({ method: 'POST' });
+            req.flush({ id: 4 });
+            expect(result.body).toBeTruthy();
+        }));
+
+        it('should set attachment type to FILE', fakeAsync(() => {
+            const file = new File(['content'], 'test.pdf', { type: 'application/pdf' });
+
+            service.createAttachmentVideoUnitFromFile(1, file).pipe(take(1)).subscribe();
+
+            const req = httpMock.expectOne({ method: 'POST' });
+            const capturedFormData: FormData | undefined = req.request.body as FormData;
+
+            // Parse the attachment blob to verify its content
+            const attachmentBlob = capturedFormData.get('attachment') as Blob;
+            expect(attachmentBlob.type).toBe('application/json');
+
+            req.flush({ id: 5 });
         }));
     });
 });

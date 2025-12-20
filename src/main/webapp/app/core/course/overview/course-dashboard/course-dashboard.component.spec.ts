@@ -50,7 +50,7 @@ describe('CourseDashboardComponent', () => {
                 {
                     provide: CourseStorageService,
                     useValue: {
-                        getCourse: () => ({ id: 123, studentCourseAnalyticsDashboardEnabled: true, irisCourseChatEnabled: true, learningPathsEnabled: true }),
+                        getCourse: () => ({ id: 123, studentCourseAnalyticsDashboardEnabled: true, irisEnabledInCourse: true, learningPathsEnabled: true }),
                         subscribeToCourseUpdates: () => ({ subscribe: jest.fn() }),
                     },
                 },
@@ -68,7 +68,7 @@ describe('CourseDashboardComponent', () => {
     });
 
     it('should display chatbot when iris is enabled', () => {
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const chatContainer = debugElement.query(By.css('.chat-container'));
         expect(chatContainer).toBeTruthy();
@@ -76,7 +76,7 @@ describe('CourseDashboardComponent', () => {
 
     it('should show loading spinner when isLoading is true', () => {
         component.isLoading = true;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const spinner = debugElement.query(By.css('.spinner-border'));
         expect(spinner).toBeTruthy();
@@ -84,7 +84,7 @@ describe('CourseDashboardComponent', () => {
 
     it('should show learning paths button if course has learningPathsEnabled', () => {
         component.atlasEnabled = true;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const learningPathButton = debugElement.query(By.css('button.btn-primary'));
         expect(learningPathButton).toBeTruthy();
@@ -93,7 +93,7 @@ describe('CourseDashboardComponent', () => {
 
     it('should navigate to learning paths when button is clicked', () => {
         component.atlasEnabled = true;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const navigateSpy = jest.spyOn(component, 'navigateToLearningPaths');
         const learningPathButton = debugElement.query(By.css('.btn.btn-primary'));
@@ -104,7 +104,7 @@ describe('CourseDashboardComponent', () => {
 
     it('should display competency accordion title when hasCompetencies is true', () => {
         component.hasCompetencies = true;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const competencyTitle = debugElement.query(By.css('h3'));
         expect(competencyTitle).toBeTruthy();
@@ -113,7 +113,7 @@ describe('CourseDashboardComponent', () => {
 
     it('should show no data message when hasCompetencies is false', () => {
         component.hasCompetencies = false;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const noDataMessage = debugElement.query(By.css('[jhiTranslate="artemisApp.studentAnalyticsDashboard.competencyAccordion.noData"]'));
         expect(noDataMessage).toBeTruthy();
@@ -124,7 +124,7 @@ describe('CourseDashboardComponent', () => {
         jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({
             id: 456,
             studentCourseAnalyticsDashboardEnabled: false,
-            irisCourseChatEnabled: true,
+            irisEnabledInCourse: true,
             learningPathsEnabled: true,
         });
         component.ngOnInit();
@@ -135,7 +135,7 @@ describe('CourseDashboardComponent', () => {
         jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({
             id: 456,
             studentCourseAnalyticsDashboardEnabled: true,
-            irisCourseChatEnabled: true,
+            irisEnabledInCourse: true,
             learningPathsEnabled: true,
         });
         component.ngOnInit();
