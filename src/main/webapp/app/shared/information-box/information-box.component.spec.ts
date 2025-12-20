@@ -30,7 +30,7 @@ describe('InformationBoxComponent', () => {
             content: { type: 'string', value: 'Test Content' },
             contentColor: 'primary',
         };
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const compiled = fixture.nativeElement as HTMLElement;
         const titleElement = compiled.querySelector('#test-title');
@@ -46,7 +46,7 @@ describe('InformationBoxComponent', () => {
             content: { type: 'string', value: 'Test Content' },
             contentColor: 'primary',
         };
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const compiled = fixture.nativeElement as HTMLElement;
         const contentElement = compiled.querySelector('#test-text');

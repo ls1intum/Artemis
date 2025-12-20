@@ -1,0 +1,58 @@
+---
+id: markdown-support
+title: Markdown Support
+sidebar_label: Markdown Support
+---
+
+import Image, {ImageSize} from "../../src/components/Image/Image";
+
+import markdownLectureExample from "./assets/markdown-support/markdown-lecture-example.png";
+import markdownLecturePreview from "./assets/markdown-support/markdown-lecture-preview.png";
+import markdownPostExtensions from "./assets/markdown-support/markdown-post-extensions.png";
+import markdownPostPreview from "./assets/markdown-support/markdown-post-extensions-preview.png";
+
+# Markdown Support
+
+<a href="https://daringfireball.net/projects/markdown/" target="_blank" rel="noopener noreferrer">Markdown</a> is an easy-to-read, easy-to-write syntax for formatting plain text.
+
+A markdown playground can be found <a href="https://markdown-it.github.io/" target="_blank" rel="noopener noreferrer">here</a>.
+
+Artemis extends the basic Markdown syntax to support Artemis-specific features.
+This Artemis flavored Markdown is used to format text content across the platform using an integrated markdown editor.
+
+---
+
+## Integrated Markdown Editor
+
+The markdown editor contains a formatting toolbar at the top, allowing users to format text without learning Markdown syntax.
+
+In addition, images can be uploaded and included by either dragging and dropping them into the editor field or by clicking at the footer of the editor, which brings up the file selection dialog.
+
+<Image src={markdownLectureExample} alt={"Markdown Lecture Example"} size={ImageSize.medium} />
+
+The user can switch to a preview of the formatted content by clicking on the Preview button.
+
+<Image src={markdownLecturePreview} alt={"Markdown Lecture Preview"} size={ImageSize.medium} />
+
+---
+
+## Markdown Extensions For Communication
+
+Markdown is also supported in the context of communication with other users.
+Here, the Markdown syntax is extended to allow users to reference other messages, lectures, exercises or FAQs.
+
+<Image src={markdownPostExtensions} alt={"Markdown Post Extensions"} size={ImageSize.medium} />
+
+<Image src={markdownPostPreview} alt={"Markdown Post Preview"} size={ImageSize.medium} />
+
+---
+
+## Supported Syntax
+
+The integrated markdown editor uses <a href="https://github.com/markdown-it/markdown-it" target="_blank" rel="noopener noreferrer">MarkdownIt</a>.
+A quick description of the supported syntax can be found <a href="https://www.markdownguide.org/basic-syntax/" target="_blank" rel="noopener noreferrer">here</a>.
+
+The following plugins are activated:
+
+- <a href="https://github.com/microsoft/vscode-markdown-it-katex" target="_blank" rel="noopener noreferrer">MarkdownIt Katex</a> (LaTeX / AsciiMath rendering)
+- <a href="https://github.com/valeriangalliat/markdown-it-highlightjs" target="_blank" rel="noopener noreferrer">MarkdownIt HighlightJS</a> (syntax highlighting in code blocks)

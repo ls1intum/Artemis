@@ -169,6 +169,18 @@ public class AtlasAgentService {
             resetCompetencyModifiedFlag();
 
             String response = delegateTheRightAgent(message, courseId, sessionId);
+            ChatClient.Builder clientBuilder = chatClient.mutate();
+            // Add memory advisor only for Atlas with conversation-specific session ID
+            if (chatMemory != null) {
+                clientBuilder.defaultAdvisors(MessageChatMemoryAdvisor.builder(chatMemory).conversationId(sessionId).build());
+            }
+
+            ChatClient atlasClient = clientBuilder.build();
+
+            // Load system prompt from external template
+            String resourcePath = "/prompts/atlas/agent_system_prompt.st";
+            Map<String, String> variables = Map.of();
+            String systemPrompt = templateService.render(resourcePath, variables);
 
             if (response.contains(DELEGATE_TO_COMPETENCY_EXPERT)) {
                 String brief = extractBriefFromDelegationMarker(response);
@@ -207,6 +219,11 @@ public class AtlasAgentService {
             else if (response.contains(RETURN_TO_MAIN_AGENT)) {
                 sessionAgentMap.put(sessionId, AgentType.MAIN_AGENT);
                 response = response.replace(RETURN_TO_MAIN_AGENT, "").trim();
+            AzureOpenAiChatOptions options = AzureOpenAiChatOptions.builder().deploymentName("gpt-4o").temperature(1.0).build();
+            ChatClientRequestSpec promptSpec = atlasClient.prompt().system(enhancedSystemPrompt).user(message).options(options);
+            // Add tools
+            if (toolCallbackProvider != null) {
+                promptSpec = promptSpec.toolCallbacks(toolCallbackProvider);
             }
 
             boolean competenciesModified = competencyModifiedInCurrentRequest.get();

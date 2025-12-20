@@ -4,25 +4,66 @@
  */
 
 .heroBanner {
-  padding: 4rem 0;
+  padding: 2rem 0 1.5rem 0;
   text-align: center;
   position: relative;
   overflow: hidden;
+    height: 100%;
 }
 
 @media screen and (max-width: 996px) {
   .heroBanner {
-    padding: 2rem;
+    padding: 1.5rem;
   }
 }
 
-.buttons {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 1rem;
+.tilesContainer {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.25rem;
+  margin-top: 1.5rem;
+  margin-bottom: 3rem;
+  padding-bottom: 3rem;
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
-.buttons:last-child {
-  margin-bottom: 0;
+@media screen and (max-width: 768px) {
+  .tilesContainer {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    margin-top: 1.25rem;
+  }
+}
+
+.tile {
+  text-decoration: none;
+  transition: background-color 0.3s ease;
+}
+
+.tile:hover {
+  background-color: var(--ifm-color-primary-lightest);
+  text-decoration: none;
+}
+
+.tile .card__body {
+  text-align: center;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.tileIcon {
+  color: var(--ifm-color-primary);
+  margin-bottom: 0.25rem;
+}
+
+.tileTitle {
+  font-size: 1.35rem;
+  font-weight: bold;
+  margin: 0;
+  color: var(--ifm-color-emphasis-900);
 }

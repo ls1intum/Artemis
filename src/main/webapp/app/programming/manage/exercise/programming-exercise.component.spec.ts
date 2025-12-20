@@ -86,7 +86,7 @@ describe('ProgrammingExercise Management Component', () => {
 
         // WHEN
         comp.course = course;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         comp.ngOnInit();
 
         // THEN

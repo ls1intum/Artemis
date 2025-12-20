@@ -866,6 +866,9 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
 
     @Test
     void testSelfPauseTriggersListenerAndEmailNotification() {
+        // Create the internal admin user so the listener can send the notification email
+        userUtilService.createAndSaveUser(localVCUsername);
+
         String memberAddress = distributedDataAccessService.getLocalMemberAddress();
         BuildAgentDTO buildAgentDTO = new BuildAgentDTO(buildAgentShortName, memberAddress, buildAgentDisplayName);
         BuildAgentInformation buildAgent = new BuildAgentInformation(buildAgentDTO, 0, 0, new ArrayList<>(List.of()), BuildAgentStatus.IDLE, null, null, 100);

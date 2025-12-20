@@ -369,7 +369,6 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     void testQuizSubmitPractice(QuizMode quizMode) throws Exception {
         QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().minusSeconds(10), ZonedDateTime.now().minusSeconds(8), quizMode);
         quizExercise.setDuration(2);
-        quizExercise.setIsOpenForPractice(true);
         quizExerciseService.save(quizExercise);
 
         // at the beginning there are no submissions and participants
@@ -443,7 +442,6 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     void testQuizSubmitPractice_badRequest() throws Exception {
         QuizExercise quizExerciseServer = quizExerciseUtilService.createQuiz(ZonedDateTime.now().minusSeconds(4), ZonedDateTime.now().minusSeconds(2), QuizMode.SYNCHRONIZED);
         quizExerciseServer.setDuration(2);
-        quizExerciseServer.setIsOpenForPractice(false);
         quizExerciseService.save(quizExerciseServer);
 
         assertThat(quizSubmissionTestRepository.findByParticipation_Exercise_Id(quizExerciseServer.getId())).isEmpty();
@@ -599,7 +597,6 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     void testQuizSubmitPractice_badRequest_missingSubmittedAnswer(QuizMode quizMode) throws Exception {
         QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().minusSeconds(10), ZonedDateTime.now().minusSeconds(8), quizMode);
         quizExercise.setDuration(2);
-        quizExercise.setIsOpenForPractice(true);
         quizExerciseService.save(quizExercise);
 
         QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 1, true, null);
@@ -637,7 +634,6 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     void testQuizSubmitPractice_badRequest_duplicateSubmittedAnswer(QuizMode quizMode) throws Exception {
         QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().minusSeconds(10), ZonedDateTime.now().minusSeconds(8), quizMode);
         quizExercise.setDuration(2);
-        quizExercise.setIsOpenForPractice(true);
         quizExerciseService.save(quizExercise);
 
         QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 1, true, null);

@@ -475,6 +475,108 @@ describe('AgentChatModalComponent', () => {
         });
     });
 
+    describe('Template integration', () => {
+        beforeEach(() => {
+            mockTranslateService.instant.mockReturnValue('Welcome message');
+            mockAgentChatService.getConversationHistory.mockReturnValue(of([]));
+            component.ngOnInit();
+            fixture.detectChanges();
+        });
+
+        it('should display messages in the template', () => {
+            const userMessage: ChatMessage = {
+                id: '1',
+                content: 'User message',
+                isUser: true,
+                timestamp: new Date(),
+            };
+            const agentMessage: ChatMessage = {
+                id: '2',
+                content: 'Agent response',
+                isUser: false,
+                timestamp: new Date(),
+            };
+            component.messages = [userMessage, agentMessage];
+
+            fixture.changeDetectorRef.detectChanges();
+
+            const messageElements = fixture.debugElement.nativeElement.querySelectorAll('.message-wrapper');
+            expect(messageElements).toHaveLength(2);
+
+            const userMessageElement = messageElements[0];
+            const agentMessageElement = messageElements[1];
+
+            expect(userMessageElement.classList.contains('user-message')).toBeTrue();
+            expect(agentMessageElement.classList.contains('agent-message')).toBeTrue();
+        });
+
+        it('should show typing indicator when isAgentTyping is true', () => {
+            component.isAgentTyping.set(true);
+
+            fixture.changeDetectorRef.detectChanges();
+
+            const typingIndicator = fixture.debugElement.nativeElement.querySelector('.typing-indicator');
+            expect(typingIndicator).toBeTruthy();
+        });
+
+        it('should hide typing indicator when isAgentTyping is false', () => {
+            component.isAgentTyping.set(false);
+
+            fixture.changeDetectorRef.detectChanges();
+
+            const typingIndicator = fixture.debugElement.nativeElement.querySelector('.typing-indicator');
+            expect(typingIndicator).toBeFalsy();
+        });
+
+        it('should prevent message sending when agent is typing', () => {
+            component.currentMessage.set('Valid message');
+            component.isAgentTyping.set(true);
+
+            expect(component.canSendMessage()).toBeFalse();
+            expect(component.isAgentTyping()).toBeTrue();
+        });
+
+        it('should disable send button when canSendMessage is false', () => {
+            component.currentMessage.set('');
+
+            fixture.changeDetectorRef.detectChanges();
+
+            const sendButton = fixture.debugElement.nativeElement.querySelector('.send-button');
+            expect(sendButton.disabled).toBeTrue();
+        });
+
+        it('should enable send button when canSendMessage is true', () => {
+            component.currentMessage.set('Valid message');
+            component.isAgentTyping.set(false);
+
+            fixture.changeDetectorRef.detectChanges();
+
+            const sendButton = fixture.debugElement.nativeElement.querySelector('.send-button');
+            expect(sendButton.disabled).toBeFalse();
+        });
+
+        it('should show character count in template', () => {
+            component.currentMessage.set('Test message');
+
+            fixture.changeDetectorRef.detectChanges();
+
+            const charCountElement = fixture.debugElement.nativeElement.querySelector('.text-end');
+            expect(charCountElement.textContent.trim()).toContain('12 / 8000');
+        });
+
+        it('should show error styling when message is too long', () => {
+            component.currentMessage.set('a'.repeat(component.MAX_MESSAGE_LENGTH + 1));
+
+            fixture.changeDetectorRef.detectChanges();
+
+            const charCountElement = fixture.debugElement.nativeElement.querySelector('.text-danger');
+            expect(charCountElement).toBeTruthy();
+
+            const errorMessage = fixture.debugElement.nativeElement.querySelector('small.text-danger.mt-1');
+            expect(errorMessage).toBeTruthy();
+        });
+    });
+
     describe('Modal interaction', () => {
         it('should close modal when closeModal is called', () => {
             const activeModalService = TestBed.inject(NgbActiveModal);

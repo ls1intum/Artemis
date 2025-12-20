@@ -172,11 +172,11 @@ describe('CourseCompetenciesDetails', () => {
 
     it('should detect if due date is passed', () => {
         component.competency = { softDueDate: dayjs().add(1, 'days') } as Competency;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(component.softDueDatePassed).toBeFalse();
 
         component.competency = { softDueDate: dayjs().subtract(1, 'days') } as Competency;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(component.softDueDatePassed).toBeTrue();
     });
 
@@ -185,7 +185,7 @@ describe('CourseCompetenciesDetails', () => {
         { competency: { softDueDate: dayjs().subtract(1, 'days') } as Competency, expectedBadge: 'danger' },
     ])('should have [ngClass] resolve to correct date badge', ({ competency, expectedBadge }) => {
         component.competency = competency;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         const badge = fixture.debugElement.query(By.css('#date-badge')).nativeElement;
         expect(badge.classList).toContain('bg-' + expectedBadge);
     });

@@ -19,7 +19,6 @@ import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisCourseChatSession;
-import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettingsType;
 import de.tum.cit.aet.artemis.iris.repository.IrisCourseChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
 import de.tum.cit.aet.artemis.iris.service.IrisSessionService;
@@ -93,7 +92,7 @@ public class IrisCourseChatSessionResource {
     public ResponseEntity<List<IrisCourseChatSession>> getAllSessions(@PathVariable Long courseId) {
         var course = courseRepository.findByIdElseThrow(courseId);
 
-        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.COURSE_CHAT, course);
+        irisSettingsService.ensureEnabledForCourseOrElseThrow(course);
         var user = userRepository.getUserWithGroupsAndAuthorities();
         user.hasAcceptedExternalLLMUsageElseThrow();
 

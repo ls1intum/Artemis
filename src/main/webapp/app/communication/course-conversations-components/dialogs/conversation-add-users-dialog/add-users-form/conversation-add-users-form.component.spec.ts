@@ -63,7 +63,7 @@ examples.forEach((activeConversation) => {
                 expect(fixture.debugElement.query(By.css('.individual-select')).nativeElement.hidden).toBeFalse();
                 expect(fixture.debugElement.query(By.css('.group-select')).nativeElement.hidden).toBeTrue();
                 fixture.debugElement.query(By.css('#group')).nativeElement.click();
-                fixture.detectChanges();
+                fixture.changeDetectorRef.detectChanges();
                 expect(component.mode).toBe('group');
                 expect(fixture.debugElement.query(By.css('.individual-select')).nativeElement.hidden).toBeTrue();
                 expect(fixture.debugElement.query(By.css('.group-select')).nativeElement.hidden).toBeFalse();
@@ -95,7 +95,7 @@ examples.forEach((activeConversation) => {
             if (isChannelDTO(activeConversation)) {
                 setFormValid();
                 fixture.debugElement.query(By.css('#group')).nativeElement.click();
-                fixture.detectChanges();
+                fixture.changeDetectorRef.detectChanges();
                 expect(component.mode).toBe('group');
                 expect(component.isSubmitPossible).toBeFalse();
             }
@@ -103,7 +103,7 @@ examples.forEach((activeConversation) => {
 
         it('should submit valid form in individual mode', fakeAsync(() => {
             setValidIndividualModeFormValues();
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             expect(component.form.valid).toBeTrue();
             expect(component.isSubmitPossible).toBeTrue();
             expect(component.mode).toBe('individual');
@@ -121,9 +121,9 @@ examples.forEach((activeConversation) => {
         it('should submit valid form in group mode', fakeAsync(() => {
             if (isChannelDTO(activeConversation)) {
                 fixture.debugElement.query(By.css('#group')).nativeElement.click();
-                fixture.detectChanges();
+                fixture.changeDetectorRef.detectChanges();
                 setValidGroupModeFormValues();
-                fixture.detectChanges();
+                fixture.changeDetectorRef.detectChanges();
                 expect(component.isSubmitPossible).toBeTrue();
                 expect(component.mode).toBe('group');
 
@@ -154,14 +154,14 @@ examples.forEach((activeConversation) => {
         };
 
         function checkFormIsInvalid() {
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             expect(component.form.invalid).toBeTrue();
             expect(component.isSubmitPossible).toBeFalse();
             clickSubmitButton(false);
         }
         function setFormValid() {
             setValidIndividualModeFormValues();
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             expect(component.form.valid).toBeTrue();
             expect(component.isSubmitPossible).toBeTrue();
         }
