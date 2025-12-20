@@ -1781,16 +1781,19 @@ describe('QuizExerciseUpdateComponent', () => {
                 jest.spyOn(comp, 'checkItemCountDragAndDrop').mockReturnValue(true);
 
                 const mockModalRef = {
-                    componentInstance: { initialize: jest.fn() },
+                    componentInstance: { initialize: jest.fn() } as any,
                     result: Promise.resolve(),
                 };
                 modalOpenSpy.mockReturnValue(mockModalRef as any);
-
                 comp.validateItemLimit();
 
                 await new Promise(process.nextTick);
 
                 expect(modalOpenSpy).toHaveBeenCalledExactlyOnceWith(GenericConfirmationDialogComponent, expect.anything());
+
+                expect(mockModalRef.componentInstance.translationKeys).toBeDefined();
+                expect(mockModalRef.componentInstance.canBeUndone).toBeTrue();
+
                 expect(saveSpy).toHaveBeenCalledExactlyOnceWith();
             });
 
