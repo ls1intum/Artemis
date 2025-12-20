@@ -189,7 +189,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         athenaService = TestBed.inject(AthenaService);
         router = TestBed.inject(Router);
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
     });
 
     afterEach(() => {
@@ -206,7 +206,7 @@ describe('TextSubmissionAssessmentComponent', () => {
 
     it('should show jhi-text-assessment-area', () => {
         component['setPropertiesFromServerResponse'](participation);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const textAssessmentArea = fixture.debugElement.query(By.directive(TextAssessmentAreaComponent));
         expect(textAssessmentArea).not.toBeNull();
@@ -219,7 +219,7 @@ describe('TextSubmissionAssessmentComponent', () => {
 
     it('should update score', () => {
         component['setPropertiesFromServerResponse'](participation);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const textAssessmentArea = fixture.debugElement.query(By.directive(TextAssessmentAreaComponent));
         const textAssessmentAreaComponent = textAssessmentArea.componentInstance as TextAssessmentAreaComponent;
@@ -234,7 +234,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         component['setPropertiesFromServerResponse'](participation);
         const handleFeedbackStub = jest.spyOn(submissionService, 'handleFeedbackCorrectionRoundTag');
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const result = getLatestSubmissionResult(submission);
         result!.assessmentNote = { id: 1, note: 'Note Text' };
@@ -322,7 +322,7 @@ describe('TextSubmissionAssessmentComponent', () => {
 
     it('should submit the assessment with correct parameters', () => {
         component['setPropertiesFromServerResponse'](participation);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const result = getLatestSubmissionResult(submission);
         result!.assessmentNote = { id: 1, note: 'Note Text' };
@@ -355,7 +355,7 @@ describe('TextSubmissionAssessmentComponent', () => {
     it('should handle error if saving fails', () => {
         component['setPropertiesFromServerResponse'](participation);
         component.assessmentsAreValid = true;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         const error = new HttpErrorResponse({ status: 404 });
         const errorStub = jest.spyOn(textAssessmentService, 'save').mockReturnValue(throwError(() => error));
 
@@ -380,7 +380,7 @@ describe('TextSubmissionAssessmentComponent', () => {
 
     it('should cancel assessment', () => {
         component['setPropertiesFromServerResponse'](participation);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const navigateBackSpy = jest.spyOn(component, 'navigateBack');
         const cancelAssessmentStub = jest.spyOn(textAssessmentService, 'cancelAssessment').mockReturnValue(of(undefined));
@@ -436,7 +436,7 @@ describe('TextSubmissionAssessmentComponent', () => {
     it('should recalculate text block refs correctly', () => {
         jest.useFakeTimers();
         component.recalculateTextBlockRefs();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         jest.advanceTimersByTime(300);
 
         expect(component.textBlockRefs).toHaveLength(2);
@@ -465,7 +465,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         // END: Adding a new block (with feedback) that overlaps with an existing block
 
         component['setPropertiesFromServerResponse'](participation);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(sortAndSetTextBlockRefsSpy).toHaveBeenCalled();
 

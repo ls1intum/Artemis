@@ -5,19 +5,18 @@ import 'app/shared/util/string.extension';
 import 'app/core/config/dayjs';
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import { DatePipe } from '@angular/common';
-import { HTTP_INTERCEPTORS, HttpClient, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
-import { ApplicationConfig, ErrorHandler, LOCALE_ID, importProvidersFrom, inject, provideAppInitializer } from '@angular/core';
+import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { ApplicationConfig, ErrorHandler, LOCALE_ID, importProvidersFrom, inject, provideAppInitializer, provideZoneChangeDetection } from '@angular/core';
 import { BrowserModule, Title } from '@angular/platform-browser';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { Router, RouterModule, provideRouter, withRouterConfig } from '@angular/router';
+import { Router, provideRouter, withRouterConfig } from '@angular/router';
 import { ServiceWorkerModule } from '@angular/service-worker';
 import { NgbDateAdapter } from '@ng-bootstrap/ng-bootstrap';
-import { MissingTranslationHandler, TranslateLoader, TranslateModule } from '@ngx-translate/core';
+import { MissingTranslationHandler, provideTranslateService } from '@ngx-translate/core';
 import * as Sentry from '@sentry/angular';
 import { TraceService } from '@sentry/angular';
 import routes from 'app/app.routes';
 import { NgbDateDayjsAdapter } from 'app/core/config/datepicker-adapter';
-import { missingTranslationHandler, translatePartialLoader } from 'app/core/config/translation.config';
+import { missingTranslationHandler, translateHttpLoaderProviders } from 'app/core/config/translation.config';
 import { ArtemisVersionInterceptor, WINDOW_INJECTOR_TOKEN } from 'app/core/interceptor/artemis-version.interceptor';
 import { AuthExpiredInterceptor } from 'app/core/interceptor/auth-expired.interceptor';
 import { BrowserFingerprintInterceptor } from 'app/core/interceptor/browser-fingerprint.interceptor.service';
@@ -38,23 +37,18 @@ export const appConfig: ApplicationConfig = {
         ArtemisTranslatePipe,
         importProvidersFrom(
             // TODO: we should exclude modules here in the future
-            BrowserAnimationsModule,
             BrowserModule,
-            RouterModule,
             ScrollingModule,
             OwlNativeDateTimeModule,
-            TranslateModule.forRoot({
-                loader: {
-                    provide: TranslateLoader,
-                    useFactory: translatePartialLoader,
-                    deps: [HttpClient],
-                },
-                missingTranslationHandler: {
-                    provide: MissingTranslationHandler,
-                    useFactory: missingTranslationHandler,
-                },
-            }),
         ),
+        provideTranslateService({
+            loader: translateHttpLoaderProviders,
+            missingTranslationHandler: {
+                provide: MissingTranslationHandler,
+                useFactory: missingTranslationHandler,
+            },
+        }),
+        provideZoneChangeDetection(),
 
         // TODO: we should add withComponentInputBinding here
         //  this would set non-route inputs to undefined, which not all components can handle, currently

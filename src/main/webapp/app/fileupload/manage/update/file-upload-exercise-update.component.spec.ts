@@ -1,352 +1,658 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { ActivatedRoute, Router, UrlSegment } from '@angular/router';
-import { LocalStorageService } from 'app/shared/service/local-storage.service';
-import { SessionStorageService } from 'app/shared/service/session-storage.service';
-import { Subject, of } from 'rxjs';
+/**
+ * Vitest tests for FileUploadExerciseUpdateComponent.
+ *
+ * vi.mock('monaco-editor') is required because MonacoTextEditorAdapter has static initializers
+ * that run before the path alias mock can take effect. vi.mock hoists to file top.
+ */
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { FileUploadExerciseUpdateComponent } from 'app/fileupload/manage/update/file-upload-exercise-update.component';
-import { FileUploadExerciseService } from 'app/fileupload/manage/services/file-upload-exercise.service';
-import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
-import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
-import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
-import { TranslateService } from '@ngx-translate/core';
-import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
+vi.mock('monaco-editor', () => ({
+    editor: { create: () => ({}), createModel: () => ({}), defineTheme: () => {}, setTheme: () => {} },
+    languages: { register: () => {}, setMonarchTokensProvider: () => {}, setLanguageConfiguration: () => {}, registerCompletionItemProvider: () => ({ dispose: () => {} }) },
+    Range: class {
+        constructor(
+            public startLineNumber: number,
+            public startColumn: number,
+            public endLineNumber: number,
+            public endColumn: number,
+        ) {}
+    },
+    Position: class {
+        constructor(
+            public lineNumber: number,
+            public column: number,
+        ) {}
+    },
+    KeyCode: {
+        Backspace: 1,
+        Tab: 2,
+        Enter: 3,
+        Escape: 9,
+        Delete: 10,
+        KeyA: 31,
+        KeyB: 32,
+        KeyC: 33,
+        KeyD: 34,
+        KeyE: 35,
+        KeyF: 36,
+        KeyG: 37,
+        KeyH: 38,
+        KeyI: 39,
+        KeyJ: 40,
+        KeyK: 41,
+        KeyL: 42,
+        KeyM: 43,
+        KeyN: 44,
+        KeyO: 45,
+        KeyP: 46,
+        KeyQ: 47,
+        KeyR: 48,
+        KeyS: 49,
+        KeyT: 50,
+        KeyU: 51,
+        KeyV: 52,
+        KeyW: 53,
+        KeyX: 54,
+        KeyY: 55,
+        KeyZ: 56,
+    },
+    KeyMod: { CtrlCmd: 2048, Shift: 1024, Alt: 512, WinCtrl: 256 },
+    MarkerSeverity: { Error: 8, Warning: 4, Info: 2, Hint: 1 },
+    Uri: { parse: (s: string) => ({ toString: () => s }) },
+}));
+
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { ActivatedRoute, Data, Params, UrlSegment, provideRouter } from '@angular/router';
+import { BehaviorSubject, of, throwError } from 'rxjs';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { TranslateModule } from '@ngx-translate/core';
+import { MockComponent, MockDirective } from 'ng-mocks';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import dayjs from 'dayjs/esm';
-import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
-import { Exam } from 'app/exam/shared/entities/exam.model';
-import { fileUploadExercise } from 'test/helpers/mocks/service/mock-file-upload-exercise.service';
-import { TeamConfigFormGroupComponent } from 'app/exercise/team-config-form-group/team-config-form-group.component';
-import { NgModel } from '@angular/forms';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+
+import 'app/shared/util/array.extension';
+
+import { FormsModule } from '@angular/forms';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+
+import { FileUploadExerciseUpdateComponent } from './file-upload-exercise-update.component';
+import { FileUploadExerciseService } from '../services/file-upload-exercise.service';
+import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
+import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
-import { MockComponent, MockProvider } from 'ng-mocks';
-import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
-import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
-import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
+import { IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { EditType } from 'app/exercise/util/exercise.utils';
+
+import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
+import { AlertService } from 'app/shared/service/alert.service';
+import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
+import { ExerciseUpdateWarningService } from 'app/exercise/exercise-update-warning/exercise-update-warning.service';
+import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 
-describe('FileUploadExerciseUpdateComponent', () => {
-    let comp: FileUploadExerciseUpdateComponent;
-    let fixture: ComponentFixture<FileUploadExerciseUpdateComponent>;
-    let service: FileUploadExerciseService;
+import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
+import { TeamConfigFormGroupComponent } from 'app/exercise/team-config-form-group/team-config-form-group.component';
+import { IncludedInOverallScorePickerComponent } from 'app/exercise/included-in-overall-score-picker/included-in-overall-score-picker.component';
+import { PresentationScoreComponent } from 'app/exercise/presentation-score/presentation-score.component';
+import { GradingInstructionsDetailsComponent } from 'app/exercise/structured-grading-criterion/grading-instructions-details/grading-instructions-details.component';
+import { DocumentationButtonComponent } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
+import { FormStatusBarComponent } from 'app/shared/form/form-status-bar/form-status-bar.component';
+import { FormFooterComponent } from 'app/shared/form/form-footer/form-footer.component';
+import { CategorySelectorComponent } from 'app/shared/category-selector/category-selector.component';
+import { DifficultyPickerComponent } from 'app/exercise/difficulty-picker/difficulty-picker.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
+import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
+// NOTE: Do NOT import MarkdownEditorMonacoComponent here - it transitively imports monaco-editor
+// which causes static initializers to run before mocks are applied.
+import { Component, Input, input, output, signal, viewChild } from '@angular/core';
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            imports: [OwlDateTimeModule, OwlNativeDateTimeModule],
+// Mock component to replace MarkdownEditorMonacoComponent without importing the real one
+@Component({ selector: 'jhi-markdown-editor-monaco', template: '', standalone: true })
+class MockMarkdownEditorMonacoComponent {
+    @Input() markdown: string = '';
+    @Input() domainActions: unknown[] = [];
+}
+
+// Stub for TitleChannelNameComponent to satisfy viewChild.required
+@Component({ selector: 'jhi-title-channel-name', template: '', standalone: true })
+class StubTitleChannelNameComponent {
+    isValid = signal(true);
+}
+
+// Stub for ExerciseTitleChannelNameComponent - ng-mocks MockComponent doesn't handle viewChild.required properly
+@Component({ selector: 'jhi-exercise-title-channel-name', template: '<jhi-title-channel-name />', standalone: true, imports: [StubTitleChannelNameComponent] })
+class StubExerciseTitleChannelNameComponent {
+    @Input() exercise: FileUploadExercise | undefined;
+    @Input() titlePattern: string = '';
+    @Input() minTitleLength: number = 0;
+    @Input() isExamMode: boolean = false;
+    @Input() isImport: boolean = false;
+    @Input() hideTitleLabel: boolean = false;
+    course = input<Course>();
+    isEditFieldDisplayedRecord = input<Record<string, boolean>>();
+    courseId = input<number>();
+    onTitleChange = output<string>();
+    onChannelNameChange = output<string>();
+    readonly titleChannelNameComponent = viewChild.required(StubTitleChannelNameComponent);
+}
+
+describe('FileUploadExerciseUpdateComponent', () => {
+    setupTestBed({ zoneless: true });
+
+    let component: FileUploadExerciseUpdateComponent;
+    let fixture: ComponentFixture<FileUploadExerciseUpdateComponent>;
+    let fileUploadExerciseService: FileUploadExerciseService;
+    let alertService: AlertService;
+    let navigationService: ArtemisNavigationUtilService;
+    let calendarService: CalendarService;
+
+    let routeData$: BehaviorSubject<Data>;
+    let routeUrl$: BehaviorSubject<UrlSegment[]>;
+    let routeParams$: BehaviorSubject<Params>;
+
+    const createCourse = (id = 123): Course => {
+        const course = new Course();
+        course.id = id;
+        return course;
+    };
+
+    const createExercise = (course?: Course, exerciseGroup?: ExerciseGroup): FileUploadExercise => {
+        const exercise = new FileUploadExercise(course, exerciseGroup);
+        exercise.id = undefined;
+        exercise.title = 'Test Exercise';
+        exercise.filePattern = 'pdf,png';
+        exercise.channelName = 'test-channel';
+        return exercise;
+    };
+
+    const createExistingExercise = (): FileUploadExercise => {
+        const exercise = createExercise(createCourse());
+        exercise.id = 456;
+        return exercise;
+    };
+
+    beforeEach(async () => {
+        routeData$ = new BehaviorSubject({ fileUploadExercise: createExercise(createCourse()) });
+        routeUrl$ = new BehaviorSubject([{ path: 'new' }] as UrlSegment[]);
+        routeParams$ = new BehaviorSubject({ courseId: 123 });
+
+        await TestBed.configureTestingModule({
+            imports: [FileUploadExerciseUpdateComponent, TranslateModule.forRoot()],
             providers: [
-                LocalStorageService,
-                SessionStorageService,
-                { provide: ActivatedRoute, useValue: new MockActivatedRoute({}) },
-                { provide: NgbModal, useClass: MockNgbModalService },
-                { provide: Router, useClass: MockRouter },
-                { provide: TranslateService, useClass: MockTranslateService },
-                { provide: ProfileService, useClass: MockProfileService },
-                MockComponent(FormDateTimePickerComponent),
                 provideHttpClient(),
                 provideHttpClientTesting(),
-                MockProvider(CalendarService),
+                provideRouter([]),
+                {
+                    provide: ActivatedRoute,
+                    useValue: {
+                        data: routeData$.asObservable(),
+                        url: routeUrl$.asObservable(),
+                        params: routeParams$.asObservable(),
+                    },
+                },
+                {
+                    provide: NgbModal,
+                    useValue: {
+                        open: vi.fn(),
+                        hasOpenModals: vi.fn().mockReturnValue(false),
+                    },
+                },
+                {
+                    provide: CourseManagementService,
+                    useValue: {
+                        find: vi.fn().mockReturnValue(of(new HttpResponse({ body: createCourse() }))),
+                        findAllCategoriesOfCourse: vi.fn().mockReturnValue(of(new HttpResponse({ body: [] }))),
+                    },
+                },
+                {
+                    provide: ExerciseService,
+                    useValue: {
+                        validateDate: vi.fn(),
+                        convertExerciseCategoriesAsStringFromServer: vi.fn().mockReturnValue([]),
+                    },
+                },
+                {
+                    provide: ArtemisNavigationUtilService,
+                    useValue: {
+                        navigateBackFromExerciseUpdate: vi.fn(),
+                        navigateForwardFromExerciseUpdateOrCreation: vi.fn(),
+                    },
+                },
+                {
+                    provide: ExerciseUpdateWarningService,
+                    useValue: {
+                        checkForExerciseUpdateWarning: vi.fn().mockReturnValue(of(undefined)),
+                        checkExerciseBeforeUpdate: vi.fn().mockResolvedValue(undefined),
+                    },
+                },
+                {
+                    provide: ExerciseGroupService,
+                    useValue: {
+                        find: vi.fn().mockReturnValue(of(new HttpResponse({ body: new ExerciseGroup() }))),
+                    },
+                },
+                {
+                    provide: CalendarService,
+                    useValue: {
+                        reloadEvents: vi.fn(),
+                    },
+                },
             ],
-        }).compileComponents();
+        })
+            .overrideComponent(FileUploadExerciseUpdateComponent, {
+                set: {
+                    imports: [
+                        FormsModule,
+                        MockDirective(TranslateDirective),
+                        FaIconComponent,
+                        NgbTooltip,
+                        ArtemisTranslatePipe,
+                        MockComponent(FormDateTimePickerComponent),
+                        StubExerciseTitleChannelNameComponent,
+                        MockComponent(TeamConfigFormGroupComponent),
+                        MockComponent(IncludedInOverallScorePickerComponent),
+                        MockComponent(PresentationScoreComponent),
+                        MockComponent(GradingInstructionsDetailsComponent),
+                        MockComponent(DocumentationButtonComponent),
+                        MockComponent(FormStatusBarComponent),
+                        MockComponent(FormFooterComponent),
+                        MockComponent(CategorySelectorComponent),
+                        MockComponent(DifficultyPickerComponent),
+                        MockComponent(HelpIconComponent),
+                        MockComponent(CompetencySelectionComponent),
+                        MockMarkdownEditorMonacoComponent,
+                    ],
+                },
+            })
+            .compileComponents();
 
-        fixture = TestBed.createComponent(FileUploadExerciseUpdateComponent);
-        comp = fixture.componentInstance;
-        service = TestBed.inject(FileUploadExerciseService);
+        fileUploadExerciseService = TestBed.inject(FileUploadExerciseService);
+        alertService = TestBed.inject(AlertService);
+        navigationService = TestBed.inject(ArtemisNavigationUtilService);
+        calendarService = TestBed.inject(CalendarService);
     });
 
-    describe('save', () => {
-        describe('new exercise', () => {
-            const course = { id: 1 } as Course;
-            const fileUploadExercise = new FileUploadExercise(course, undefined);
-            fileUploadExercise.channelName = 'test';
-
-            beforeEach(() => {
-                const route = TestBed.inject(ActivatedRoute);
-                route.data = of({ fileUploadExercise });
-                route.url = of([{ path: 'exercise-groups' } as UrlSegment]);
-            });
-
-            it('should call create service and refresh calendar on save for new entity', fakeAsync(() => {
-                // GIVEN
-                comp.ngOnInit();
-
-                const entity = { ...fileUploadExercise };
-                jest.spyOn(service, 'create').mockReturnValue(of(new HttpResponse({ body: entity })));
-
-                const calendarService = TestBed.inject(CalendarService);
-                const refreshSpy = jest.spyOn(calendarService, 'reloadEvents');
-
-                // WHEN
-                comp.save();
-                tick(); // simulate async
-
-                // THEN
-                expect(service.create).toHaveBeenCalledWith(entity);
-                expect(refreshSpy).toHaveBeenCalledOnce();
-                expect(comp.isSaving).toBeFalse();
-            }));
-        });
-
-        describe('existing exercise', () => {
-            const course = { id: 1 } as Course;
-            const fileUploadExercise = new FileUploadExercise(course, undefined);
-            fileUploadExercise.id = 123;
-            fileUploadExercise.channelName = 'test';
-
-            beforeEach(() => {
-                const route = TestBed.inject(ActivatedRoute);
-                route.data = of({ fileUploadExercise });
-                route.url = of([{ path: 'exercise-groups' } as UrlSegment]);
-            });
-
-            it('should call update service and refresh calendar on save for existing entity', fakeAsync(() => {
-                // GIVEN
-                const entity = { ...fileUploadExercise };
-                jest.spyOn(service, 'update').mockReturnValue(of(new HttpResponse({ body: entity })));
-                comp.ngOnInit();
-
-                const calendarService = TestBed.inject(CalendarService);
-                const refreshSpy = jest.spyOn(calendarService, 'reloadEvents');
-
-                // WHEN
-                comp.save();
-                tick(); // simulate async
-
-                // THEN
-                expect(service.update).toHaveBeenCalledWith(entity, {});
-                expect(refreshSpy).toHaveBeenCalledOnce();
-                expect(comp.isSaving).toBeFalse();
-            }));
-        });
+    afterEach(() => {
+        vi.clearAllMocks();
+        if (fixture) {
+            fixture.destroy();
+        }
     });
 
-    describe('ngOnInit with given exerciseGroup', () => {
-        const fileUploadExercise = new FileUploadExercise(undefined, new ExerciseGroup());
+    describe('initialization', () => {
+        it('should load exercise from route data', async () => {
+            const exercise = createExercise(createCourse());
+            routeData$.next({ fileUploadExercise: exercise });
 
-        beforeEach(() => {
-            const route = TestBed.inject(ActivatedRoute);
-            route.data = of({ fileUploadExercise });
-            route.url = of([{ path: 'exercise-groups' } as UrlSegment]);
-        });
-
-        it('should be in exam mode', fakeAsync(() => {
-            // WHEN
-            comp.ngOnInit();
-            tick(); // simulate async
-            // THEN
-            expect(comp.isExamMode).toBeTrue();
-            expect(comp.fileUploadExercise).toEqual(fileUploadExercise);
-        }));
-    });
-
-    describe('ngOnInit without given exerciseGroup', () => {
-        const fileUploadExercise = new FileUploadExercise(new Course(), undefined);
-
-        beforeEach(() => {
-            const route = TestBed.inject(ActivatedRoute);
-            route.data = of({ fileUploadExercise });
-            route.url = of([{ path: 'new' } as UrlSegment]);
-
-            global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
-                return new MockResizeObserver(callback);
-            });
-        });
-
-        it('should not be in exam mode', fakeAsync(() => {
-            // WHEN
-            comp.ngOnInit();
-            tick(); // simulate async
-            // THEN
-            expect(comp.isExamMode).toBeFalse();
-            expect(comp.fileUploadExercise).toEqual(fileUploadExercise);
-        }));
-
-        it('should calculate valid sections', () => {
-            const calculateValidSpy = jest.spyOn(comp, 'calculateFormSectionStatus');
-            comp.exerciseTitleChannelNameComponent().titleChannelNameComponent().isValid.set(false);
-            comp.teamConfigFormGroupComponent = { formValidChanges: new Subject() } as TeamConfigFormGroupComponent;
-            comp.bonusPoints = { valueChanges: new Subject(), valid: true } as unknown as NgModel;
-            comp.points = { valueChanges: new Subject(), valid: true } as unknown as NgModel;
-
-            comp.ngOnInit();
-            comp.ngAfterViewInit();
-
-            comp.exerciseTitleChannelNameComponent().titleChannelNameComponent().isValid.set(true);
+            fixture = TestBed.createComponent(FileUploadExerciseUpdateComponent);
+            component = fixture.componentInstance;
             fixture.detectChanges();
-            expect(calculateValidSpy).toHaveBeenCalledOnce();
-            expect(comp.formStatusSections).toBeDefined();
-            expect(comp.formStatusSections[0].valid).toBeTrue();
+            await fixture.whenStable();
 
-            comp.validateDate();
-            expect(calculateValidSpy).toHaveBeenCalledTimes(2);
-
-            comp.ngOnDestroy();
-        });
-    });
-    describe('imported exercise', () => {
-        const course = { id: 1 } as Course;
-        const fileUploadExercise = new FileUploadExercise(course, undefined);
-
-        beforeEach(() => {
-            const route = TestBed.inject(ActivatedRoute);
-            route.data = of({ fileUploadExercise });
-            route.url = of([{ path: 'exercise-groups' } as UrlSegment]);
+            expect(component.fileUploadExercise()).toBeDefined();
         });
 
-        it('should call import service on save for new entity', fakeAsync(() => {
-            // GIVEN
-            comp.ngOnInit();
-            comp.isImport = true;
+        it('should set isExamMode to true for exam exercises', async () => {
+            routeUrl$.next([{ path: 'exercise-groups' } as UrlSegment]);
+            const exerciseGroup = new ExerciseGroup();
+            const exercise = createExercise(undefined, exerciseGroup);
+            routeData$.next({ fileUploadExercise: exercise });
 
-            const entity = { ...fileUploadExercise };
-            jest.spyOn(service, 'import').mockReturnValue(of(new HttpResponse({ body: entity })));
+            fixture = TestBed.createComponent(FileUploadExerciseUpdateComponent);
+            component = fixture.componentInstance;
+            fixture.detectChanges();
+            await fixture.whenStable();
 
-            // WHEN
-            comp.save();
-            tick(1000); // simulate async
-
-            // THEN
-            expect(service.import).toHaveBeenCalledWith(entity);
-            expect(comp.isSaving).toBeFalse();
-        }));
-    });
-
-    describe('ngOnInit in import mode: Course to Course', () => {
-        const fileUploadExercise = new FileUploadExercise(new Course(), undefined);
-        fileUploadExercise.id = 1;
-        fileUploadExercise.releaseDate = dayjs();
-        fileUploadExercise.dueDate = dayjs();
-        fileUploadExercise.assessmentDueDate = dayjs();
-        fileUploadExercise.channelName = 'test';
-        const courseId = 1;
-
-        beforeEach(() => {
-            const route = TestBed.inject(ActivatedRoute);
-            route.params = of({ courseId });
-            route.url = of([{ path: 'import' } as UrlSegment]);
-            route.data = of({ fileUploadExercise });
+            expect(component.isExamMode()).toBe(true);
         });
 
-        it('should set isImport and remove all dates', fakeAsync(() => {
-            // WHEN
-            comp.ngOnInit();
-            tick(); // simulate async
-            // THEN
-            expect(comp.isImport).toBeTrue();
-            expect(comp.isExamMode).toBeFalse();
-            expect(comp.fileUploadExercise.assessmentDueDate).toBeUndefined();
-            expect(comp.fileUploadExercise.releaseDate).toBeUndefined();
-            expect(comp.fileUploadExercise.dueDate).toBeUndefined();
-        }));
-    });
-    describe('ngOnInit in import mode: Exam to Course', () => {
-        const fileUploadExercise = new FileUploadExercise(undefined, undefined);
-        fileUploadExercise.exerciseGroup = new ExerciseGroup();
-        fileUploadExercise.exerciseGroup.exam = new Exam();
-        fileUploadExercise.exerciseGroup.exam.course = new Course();
-        fileUploadExercise.exerciseGroup.exam.course.id = 1;
-        fileUploadExercise.id = 1;
-        fileUploadExercise.releaseDate = dayjs();
-        fileUploadExercise.dueDate = dayjs();
-        fileUploadExercise.assessmentDueDate = dayjs();
+        it('should set isExamMode to false for course exercises', async () => {
+            routeUrl$.next([{ path: 'new' } as UrlSegment]);
+            const exercise = createExercise(createCourse());
+            routeData$.next({ fileUploadExercise: exercise });
 
-        fileUploadExercise.channelName = 'test';
-        const courseId = 1;
+            fixture = TestBed.createComponent(FileUploadExerciseUpdateComponent);
+            component = fixture.componentInstance;
+            fixture.detectChanges();
+            await fixture.whenStable();
 
-        beforeEach(() => {
-            const route = TestBed.inject(ActivatedRoute);
-            route.params = of({ courseId });
-            route.url = of([{ path: 'import' } as UrlSegment]);
-            route.data = of({ fileUploadExercise });
+            expect(component.isExamMode()).toBe(false);
         });
 
-        it('should set isImport and remove all dates', fakeAsync(() => {
-            // WHEN
-            comp.ngOnInit();
-            tick(); // simulate async
-            // THEN
-            expect(comp.isImport).toBeTrue();
-            expect(comp.isExamMode).toBeFalse();
-            expect(comp.fileUploadExercise.assessmentDueDate).toBeUndefined();
-            expect(comp.fileUploadExercise.releaseDate).toBeUndefined();
-            expect(comp.fileUploadExercise.dueDate).toBeUndefined();
-        }));
-    });
+        it('should set isImport to true for import route', async () => {
+            routeUrl$.next([{ path: 'import' } as UrlSegment]);
+            const exercise = createExercise(createCourse());
+            routeData$.next({ fileUploadExercise: exercise });
 
-    describe('ngOnInit in import mode: Course to Exam', () => {
-        const fileUploadExercise = new FileUploadExercise(new Course(), undefined);
-        fileUploadExercise.id = 1;
-        fileUploadExercise.releaseDate = dayjs();
-        fileUploadExercise.dueDate = dayjs();
-        fileUploadExercise.assessmentDueDate = dayjs();
-        fileUploadExercise.channelName = 'test';
-        const groupId = 1;
+            fixture = TestBed.createComponent(FileUploadExerciseUpdateComponent);
+            component = fixture.componentInstance;
+            fixture.detectChanges();
+            await fixture.whenStable();
 
-        beforeEach(() => {
-            const route = TestBed.inject(ActivatedRoute);
-            route.params = of({ groupId });
-            route.url = of([{ path: 'exercise-groups' } as UrlSegment, { path: 'import' } as UrlSegment]);
-            route.data = of({ fileUploadExercise });
+            expect(component.isImport()).toBe(true);
         });
 
-        it('should set isImport and isExamMode and remove all dates', fakeAsync(() => {
-            // WHEN
-            comp.ngOnInit();
-            tick(); // simulate async
-            // THEN
-            expect(comp.isImport).toBeTrue();
-            expect(comp.isExamMode).toBeTrue();
-            expect(comp.fileUploadExercise.course).toBeUndefined();
-            expect(comp.fileUploadExercise.assessmentDueDate).toBeUndefined();
-            expect(comp.fileUploadExercise.releaseDate).toBeUndefined();
-            expect(comp.fileUploadExercise.dueDate).toBeUndefined();
-        }));
-    });
+        it('should load existing categories for course exercises', async () => {
+            const courseService = TestBed.inject(CourseManagementService);
+            const categories = ['category1', 'category2'];
+            vi.spyOn(courseService, 'findAllCategoriesOfCourse').mockReturnValue(of(new HttpResponse({ body: categories })));
 
-    describe('ngOnInit in import mode: Exam to Exam', () => {
-        const fileUploadExercise = new TextExercise(undefined, undefined);
-        fileUploadExercise.exerciseGroup = new ExerciseGroup();
-        fileUploadExercise.id = 1;
-        fileUploadExercise.releaseDate = dayjs();
-        fileUploadExercise.dueDate = dayjs();
-        fileUploadExercise.assessmentDueDate = dayjs();
-        fileUploadExercise.channelName = 'test';
-        const groupId = 1;
+            fixture = TestBed.createComponent(FileUploadExerciseUpdateComponent);
+            component = fixture.componentInstance;
+            fixture.detectChanges();
+            await fixture.whenStable();
 
-        beforeEach(() => {
-            const route = TestBed.inject(ActivatedRoute);
-            route.params = of({ groupId });
-            route.url = of([{ path: 'exercise-groups' } as UrlSegment, { path: 'import' } as UrlSegment]);
-            route.data = of({ fileUploadExercise });
+            expect(courseService.findAllCategoriesOfCourse).toHaveBeenCalled();
         });
 
-        it('should set isImport and isExamMode and remove all dates', fakeAsync(() => {
-            // WHEN
-            comp.ngOnInit();
-            tick(); // simulate async
-            // THEN
-            expect(comp.isImport).toBeTrue();
-            expect(comp.isExamMode).toBeTrue();
-            expect(comp.fileUploadExercise.assessmentDueDate).toBeUndefined();
-            expect(comp.fileUploadExercise.releaseDate).toBeUndefined();
-            expect(comp.fileUploadExercise.dueDate).toBeUndefined();
-        }));
+        it('should set isSaving to false on init', async () => {
+            fixture = TestBed.createComponent(FileUploadExerciseUpdateComponent);
+            component = fixture.componentInstance;
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(component.isSaving()).toBe(false);
+        });
     });
 
-    it('should updateCategories properly by making category available for selection again when removing it', () => {
-        comp.fileUploadExercise = fileUploadExercise;
-        comp.exerciseCategories = [];
-        const newCategories = [new ExerciseCategory('Easy', undefined), new ExerciseCategory('Hard', undefined)];
+    describe('save - new exercise', () => {
+        beforeEach(async () => {
+            const exercise = createExercise(createCourse());
+            routeData$.next({ fileUploadExercise: exercise });
+            routeUrl$.next([{ path: 'new' } as UrlSegment]);
 
-        comp.updateCategories(newCategories);
+            fixture = TestBed.createComponent(FileUploadExerciseUpdateComponent);
+            component = fixture.componentInstance;
+            fixture.detectChanges();
+            await fixture.whenStable();
+        });
 
-        expect(comp.fileUploadExercise.categories).toEqual(newCategories);
-        expect(comp.exerciseCategories).toEqual(newCategories);
+        it('should call create service for new exercise', async () => {
+            const createdExercise = Object.assign({}, component.fileUploadExercise(), { id: 789 });
+            vi.spyOn(fileUploadExerciseService, 'create').mockReturnValue(of(new HttpResponse({ body: createdExercise })));
+
+            await component.save();
+
+            expect(fileUploadExerciseService.create).toHaveBeenCalled();
+        });
+
+        it('should refresh calendar after successful creation', async () => {
+            const createdExercise = Object.assign({}, component.fileUploadExercise(), { id: 789 });
+            vi.spyOn(fileUploadExerciseService, 'create').mockReturnValue(of(new HttpResponse({ body: createdExercise })));
+
+            await component.save();
+
+            expect(calendarService.reloadEvents).toHaveBeenCalled();
+        });
+
+        it('should navigate forward after successful creation', async () => {
+            const createdExercise = Object.assign({}, component.fileUploadExercise(), { id: 789 });
+            vi.spyOn(fileUploadExerciseService, 'create').mockReturnValue(of(new HttpResponse({ body: createdExercise })));
+
+            await component.save();
+
+            expect(navigationService.navigateForwardFromExerciseUpdateOrCreation).toHaveBeenCalled();
+        });
+
+        it('should set isSaving to false after save completes', async () => {
+            const createdExercise = Object.assign({}, component.fileUploadExercise(), { id: 789 });
+            vi.spyOn(fileUploadExerciseService, 'create').mockReturnValue(of(new HttpResponse({ body: createdExercise })));
+
+            await component.save();
+
+            expect(component.isSaving()).toBe(false);
+        });
+    });
+
+    describe('save - existing exercise', () => {
+        beforeEach(async () => {
+            const exercise = createExistingExercise();
+            routeData$.next({ fileUploadExercise: exercise });
+            routeUrl$.next([{ path: 'edit' } as UrlSegment]);
+
+            fixture = TestBed.createComponent(FileUploadExerciseUpdateComponent);
+            component = fixture.componentInstance;
+            fixture.detectChanges();
+            await fixture.whenStable();
+        });
+
+        it('should call update service for existing exercise', async () => {
+            const updatedExercise = component.fileUploadExercise();
+            vi.spyOn(fileUploadExerciseService, 'update').mockReturnValue(of(new HttpResponse({ body: updatedExercise })));
+
+            await component.save();
+
+            expect(fileUploadExerciseService.update).toHaveBeenCalled();
+        });
+
+        it('should refresh calendar after successful update', async () => {
+            const updatedExercise = component.fileUploadExercise();
+            vi.spyOn(fileUploadExerciseService, 'update').mockReturnValue(of(new HttpResponse({ body: updatedExercise })));
+
+            await component.save();
+
+            expect(calendarService.reloadEvents).toHaveBeenCalled();
+        });
+    });
+
+    describe('save - import', () => {
+        beforeEach(async () => {
+            const exercise = createExistingExercise();
+            routeData$.next({ fileUploadExercise: exercise });
+            routeUrl$.next([{ path: 'import' } as UrlSegment]);
+
+            fixture = TestBed.createComponent(FileUploadExerciseUpdateComponent);
+            component = fixture.componentInstance;
+            fixture.detectChanges();
+            await fixture.whenStable();
+        });
+
+        it('should call import service for import', async () => {
+            const importedExercise = Object.assign({}, component.fileUploadExercise(), { id: 999 });
+            vi.spyOn(fileUploadExerciseService, 'import').mockReturnValue(of(new HttpResponse({ body: importedExercise })));
+
+            await component.save();
+
+            expect(fileUploadExerciseService.import).toHaveBeenCalled();
+        });
+    });
+
+    describe('save - error handling', () => {
+        beforeEach(async () => {
+            const exercise = createExercise(createCourse());
+            routeData$.next({ fileUploadExercise: exercise });
+
+            fixture = TestBed.createComponent(FileUploadExerciseUpdateComponent);
+            component = fixture.componentInstance;
+            fixture.detectChanges();
+            await fixture.whenStable();
+        });
+
+        it('should show error alert on save failure', async () => {
+            vi.spyOn(fileUploadExerciseService, 'create').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+            const alertSpy = vi.spyOn(alertService, 'addAlert');
+
+            await component.save();
+
+            expect(alertSpy).toHaveBeenCalled();
+        });
+
+        it('should set isSaving to false on error', async () => {
+            vi.spyOn(fileUploadExerciseService, 'create').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+
+            await component.save();
+
+            expect(component.isSaving()).toBe(false);
+        });
+
+        it('should show error title from error response', async () => {
+            const errorResponse = new HttpErrorResponse({
+                error: { title: 'Error Title', message: 'Error Message', params: {} },
+            });
+            vi.spyOn(fileUploadExerciseService, 'create').mockReturnValue(throwError(() => errorResponse));
+            const alertSpy = vi.spyOn(alertService, 'addErrorAlert');
+
+            await component.save();
+
+            expect(alertSpy).toHaveBeenCalledWith('Error Title', 'Error Message', {});
+        });
+    });
+
+    describe('previousState', () => {
+        beforeEach(async () => {
+            fixture = TestBed.createComponent(FileUploadExerciseUpdateComponent);
+            component = fixture.componentInstance;
+            fixture.detectChanges();
+            await fixture.whenStable();
+        });
+
+        it('should navigate back from exercise update', () => {
+            component.previousState();
+
+            expect(navigationService.navigateBackFromExerciseUpdate).toHaveBeenCalledWith(component.fileUploadExercise());
+        });
+    });
+
+    describe('validateDate', () => {
+        beforeEach(async () => {
+            fixture = TestBed.createComponent(FileUploadExerciseUpdateComponent);
+            component = fixture.componentInstance;
+            fixture.detectChanges();
+            await fixture.whenStable();
+        });
+
+        it('should call exercise service validate date', () => {
+            const exerciseService = TestBed.inject(ExerciseService);
+
+            component.validateDate();
+
+            expect(exerciseService.validateDate).toHaveBeenCalledWith(component.fileUploadExercise());
+        });
+
+        it('should recalculate form section status after validation', () => {
+            const calculateSpy = vi.spyOn(component, 'calculateFormSectionStatus');
+
+            component.validateDate();
+
+            expect(calculateSpy).toHaveBeenCalled();
+        });
+    });
+
+    describe('updateCategories', () => {
+        beforeEach(async () => {
+            fixture = TestBed.createComponent(FileUploadExerciseUpdateComponent);
+            component = fixture.componentInstance;
+            fixture.detectChanges();
+            await fixture.whenStable();
+        });
+
+        it('should update exercise categories', () => {
+            const categories = [new ExerciseCategory('cat1', undefined), new ExerciseCategory('cat2', undefined)];
+
+            component.updateCategories(categories);
+
+            expect(component.fileUploadExercise().categories).toEqual(categories);
+            expect(component.exerciseCategories()).toEqual(categories);
+        });
+    });
+
+    describe('editType', () => {
+        it('should return IMPORT when isImport is true', async () => {
+            routeUrl$.next([{ path: 'import' } as UrlSegment]);
+            const exercise = createExistingExercise();
+            routeData$.next({ fileUploadExercise: exercise });
+
+            fixture = TestBed.createComponent(FileUploadExerciseUpdateComponent);
+            component = fixture.componentInstance;
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(component.editType()).toBe(EditType.IMPORT);
+        });
+
+        it('should return CREATE for new exercise', async () => {
+            const exercise = createExercise(createCourse());
+            routeData$.next({ fileUploadExercise: exercise });
+            routeUrl$.next([{ path: 'new' } as UrlSegment]);
+
+            fixture = TestBed.createComponent(FileUploadExerciseUpdateComponent);
+            component = fixture.componentInstance;
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(component.editType()).toBe(EditType.CREATE);
+        });
+
+        it('should return UPDATE for existing exercise', async () => {
+            const exercise = createExistingExercise();
+            routeData$.next({ fileUploadExercise: exercise });
+            routeUrl$.next([{ path: 'edit' } as UrlSegment]);
+
+            fixture = TestBed.createComponent(FileUploadExerciseUpdateComponent);
+            component = fixture.componentInstance;
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(component.editType()).toBe(EditType.UPDATE);
+        });
+    });
+
+    describe('import mode handling', () => {
+        it('should clear dates when importing course to course', async () => {
+            const exercise = createExistingExercise();
+            exercise.releaseDate = dayjs();
+            exercise.dueDate = dayjs();
+            exercise.assessmentDueDate = dayjs();
+            routeData$.next({ fileUploadExercise: exercise });
+            routeUrl$.next([{ path: 'import' } as UrlSegment]);
+            routeParams$.next({ courseId: 123 });
+
+            fixture = TestBed.createComponent(FileUploadExerciseUpdateComponent);
+            component = fixture.componentInstance;
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(component.isImport()).toBe(true);
+        });
+
+        it('should load exercise group when importing to exam', async () => {
+            const exerciseGroupService = TestBed.inject(ExerciseGroupService);
+            const exercise = createExistingExercise();
+            routeData$.next({ fileUploadExercise: exercise });
+            routeUrl$.next([{ path: 'exercise-groups' } as UrlSegment, { path: 'import' } as UrlSegment]);
+            routeParams$.next({ courseId: 123, examId: 456, exerciseGroupId: 789 });
+
+            fixture = TestBed.createComponent(FileUploadExerciseUpdateComponent);
+            component = fixture.componentInstance;
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(exerciseGroupService.find).toHaveBeenCalled();
+        });
+    });
+
+    describe('exam mode settings', () => {
+        it('should set individual mode for exam exercises', async () => {
+            const exerciseGroup = new ExerciseGroup();
+            const exercise = createExercise(undefined, exerciseGroup);
+            exercise.includedInOverallScore = IncludedInOverallScore.NOT_INCLUDED;
+            routeData$.next({ fileUploadExercise: exercise });
+            routeUrl$.next([{ path: 'exercise-groups' } as UrlSegment]);
+
+            fixture = TestBed.createComponent(FileUploadExerciseUpdateComponent);
+            component = fixture.componentInstance;
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(component.isExamMode()).toBe(true);
+        });
     });
 });

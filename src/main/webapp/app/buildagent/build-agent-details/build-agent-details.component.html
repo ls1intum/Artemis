@@ -401,6 +401,7 @@
                                     <td class="finish-jobs-column-strings">
                                         <span
                                             [ngClass]="{
+                                                'wrap-long-text': true,
                                                 'text-success': finishedBuildJob.status === 'SUCCESSFUL',
                                                 'text-warning': finishedBuildJob.status === 'CANCELLED',
                                                 'text-danger': finishedBuildJob.status === 'FAILED' || finishedBuildJob.status === 'ERROR',
