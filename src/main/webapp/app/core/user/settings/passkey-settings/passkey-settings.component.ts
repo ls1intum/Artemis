@@ -55,10 +55,10 @@ export class PasskeySettingsComponent implements OnDestroy {
     protected readonly faKey = faKey;
     protected readonly MAX_PASSKEY_LABEL_LENGTH = 64;
 
-    protected alertService = inject(AlertService);
-    protected webauthnService = inject(WebauthnService);
-    private accountService = inject(AccountService);
-    private passkeySettingsApiService = inject(PasskeySettingsApiService);
+    protected readonly alertService = inject(AlertService);
+    protected readonly webauthnService = inject(WebauthnService);
+    private readonly accountService = inject(AccountService);
+    private readonly passkeySettingsApiService = inject(PasskeySettingsApiService);
 
     private dialogErrorSource = new Subject<string>();
 
