@@ -971,8 +971,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         // Update the original object as the server only sends a DTO over the websocket
                         // TODO: This is a dark hack to just make it work; the client assumes that ProgrammingSubmissionStateObj contains a submission
                         // TODO: but this is not always the case (only on the initial REST fetch call). WS submission updates are stripped down DTOs only.
-                        const base = exerciseForSubmission.studentParticipations?.[0] || {};
-                        exerciseForSubmission.studentParticipations[0] = { ...base, ...submissionStateObj.submission.participation };
+                        const studentParticipation = exerciseForSubmission.studentParticipations?.[0] || {};
+                        exerciseForSubmission.studentParticipations[0] = { ...studentParticipation, ...submissionStateObj.submission.participation } satisfies StudentParticipation;
                     }
                 }),
             )

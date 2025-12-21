@@ -22,7 +22,7 @@ import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 @Primary
 public interface CourseTestRepository extends CourseRepository {
 
-    @Transactional
+    @Transactional // ok because of modifying query
     @Modifying
     @Query("UPDATE Course c SET c.semester = NULL WHERE c.semester IS NOT NULL")
     void clearSemester();
@@ -49,5 +49,13 @@ public interface CourseTestRepository extends CourseRepository {
     @NonNull
     default Course findByIdWithExercisesAndLecturesAndLectureUnitsAndCompetenciesElseThrow(long courseId) {
         return getValueElseThrow(findWithEagerExercisesAndLecturesAndLectureUnitsAndCompetenciesById(courseId), courseId);
+    }
+
+    @EntityGraph(type = LOAD, attributePaths = { "lectures", "lectures.lectureUnits", "lectures.attachments" })
+    Optional<Course> findWithLecturesAndLectureUnitsAndAttachmentsById(long courseId);
+
+    @NonNull
+    default Course findWithLecturesAndLectureUnitsAndAttachmentsByIdElseThrow(long courseId) {
+        return getValueElseThrow(findWithLecturesAndLectureUnitsAndAttachmentsById(courseId), courseId);
     }
 }

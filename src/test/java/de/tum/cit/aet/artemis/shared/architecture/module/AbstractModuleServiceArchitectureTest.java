@@ -18,7 +18,6 @@ import com.tngtech.archunit.lang.ConditionEvents;
 import de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService;
 import de.tum.cit.aet.artemis.core.config.migration.MigrationService;
 import de.tum.cit.aet.artemis.core.management.SecurityMetersService;
-import de.tum.cit.aet.artemis.core.security.DomainUserDetailsService;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 import de.tum.cit.aet.artemis.lti.service.OAuth2JWKSService;
 import de.tum.cit.aet.artemis.programming.service.localci.LocalCIWebsocketMessagingService;
@@ -36,8 +35,8 @@ public abstract class AbstractModuleServiceArchitectureTest extends AbstractArch
     @Test
     void shouldBeInServicePackage() {
         ArchRule rule = classesOfThisModuleThat().areAnnotatedWith(Service.class).should().resideInAPackage("..service..").because("services should be in the package 'service'.");
-        final var exceptions = new Class[] { MigrationService.class, SecurityMetersService.class, DomainUserDetailsService.class, OAuth2JWKSService.class, JWTCookieService.class,
-                ResultWebsocketService.class, LocalCIWebsocketMessagingService.class };
+        final var exceptions = new Class[] { MigrationService.class, SecurityMetersService.class, OAuth2JWKSService.class, JWTCookieService.class, ResultWebsocketService.class,
+                LocalCIWebsocketMessagingService.class };
         final var classes = classesExcept(productionClasses, exceptions);
         rule.check(classes);
     }

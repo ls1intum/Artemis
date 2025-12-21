@@ -19,7 +19,7 @@ plugins {
     id "com.github.andygoossens.modernizer" version "${modernizer_plugin_version}"
     id "com.github.ben-manes.versions" version "0.53.0"
     id "com.github.node-gradle.node" version "${gradle_node_plugin_version}"
-    id "com.google.cloud.tools.jib" version "3.5.1"
+    id "com.google.cloud.tools.jib" version "3.5.2"
     id "com.gorylenko.gradle-git-properties" version "2.5.4"
     id "io.spring.dependency-management" version "1.1.7"
     id "nebula.lint" version "21.1.3"
@@ -32,7 +32,7 @@ plugins {
 }
 
 group = "de.tum.cit.aet.artemis"
-version = "8.6.3"
+version = "8.7.0"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -200,7 +200,7 @@ dependencies {
     implementation "de.jplag:typescript:${jplag_version}"
 
     // Align all Spring AI modules to the same version
-    implementation platform("org.springframework.ai:spring-ai-bom:1.1.0")
+    implementation platform("org.springframework.ai:spring-ai-bom:1.1.2")
     // Azure OpenAI (prod, or when you want Azure)
     implementation "org.springframework.ai:spring-ai-starter-model-azure-openai" // can also use non-azure models
     implementation "org.springframework.ai:spring-ai-starter-model-chat-memory-repository-jdbc"
@@ -218,7 +218,7 @@ dependencies {
     }
 
     // Sentry depends on this
-    implementation "org.apache.logging.log4j:log4j-to-slf4j:2.25.2"
+    implementation "org.apache.logging.log4j:log4j-to-slf4j:2.25.3"
 
     // Used for LTI (e.g. Moodle --> Artemis)
     implementation "uk.ac.ox.ctl:spring-security-lti13:0.3.3"
@@ -250,9 +250,8 @@ dependencies {
     implementation "io.sentry:sentry-logback:${sentry_version}"
     implementation "io.sentry:sentry-spring-boot-starter-jakarta:${sentry_version}"
 
-    // NOTE: the following dependencies use the newer versions explicitly to avoid other dependencies to use older versions
-    implementation "ch.qos.logback:logback-classic:${logback_version}"
-    implementation "ch.qos.logback:logback-core:${logback_version}"
+    implementation "ch.qos.logback:logback-classic"
+    implementation "ch.qos.logback:logback-core"
 
     // required by Saml2, should NOT be used in other places, we explicitly use the newest version to avoid security vulnerabilities
     implementation "org.apache.santuario:xmlsec:4.0.4"
@@ -260,23 +259,6 @@ dependencies {
     implementation "org.jsoup:jsoup:1.21.2"
     // needed by e.g. spring security saml2, we explicitly use the newest version to avoid security vulnerabilities
     implementation "commons-codec:commons-codec:1.20.0"
-
-    // use the latest version to avoid security vulnerabilities
-    implementation "org.springframework:spring-aop:${spring_framework_version}"
-    implementation "org.springframework:spring-aspects:${spring_framework_version}"
-    implementation "org.springframework:spring-beans:${spring_framework_version}"
-    implementation "org.springframework:spring-context:${spring_framework_version}"
-    implementation "org.springframework:spring-context-support:${spring_framework_version}"
-    implementation "org.springframework:spring-core:${spring_framework_version}"
-    implementation "org.springframework:spring-expression:${spring_framework_version}"
-    implementation "org.springframework:spring-jcl:${spring_framework_version}"
-    implementation "org.springframework:spring-jdbc:${spring_framework_version}"
-    implementation "org.springframework:spring-messaging:${spring_framework_version}"
-    implementation "org.springframework:spring-orm:${spring_framework_version}"
-    implementation "org.springframework:spring-tx:${spring_framework_version}"
-    implementation "org.springframework:spring-webmvc:${spring_framework_version}"
-    implementation "org.springframework:spring-web:${spring_framework_version}"
-    implementation "org.springframework:spring-websocket:${spring_framework_version}"
 
     implementation "com.vdurmont:semver4j:3.1.0"
 
@@ -294,8 +276,14 @@ dependencies {
     implementation "io.micrometer:micrometer-observation:${micrometer_version}"
     implementation "io.micrometer:micrometer-jakarta9:${micrometer_version}"
 
+    // required for exposing LLM traces to Langfuse
+    implementation "io.micrometer:micrometer-tracing-bridge-otel:${micrometer_tracing_version}"
+    // no need to specify version for opentelemetry as above micrometer tracing already brings in a compatible OpenTelemetry version
+    // Gradle will align the exporter to that version automatically
+    implementation "io.opentelemetry:opentelemetry-exporter-otlp:1.57.0"
+
     // Prometheus requires the protobuf-java dependency, but we explicitly use the latest version to avoid security vulnerabilities
-    implementation "com.google.protobuf:protobuf-java:4.33.1"
+    implementation "com.google.protobuf:protobuf-java:4.33.2"
 
     implementation "tech.jhipster:jhipster-framework:${jhipster_dependencies_version}"
 
@@ -314,28 +302,6 @@ dependencies {
     implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-xml:${fasterxml_version}"
     // Support YML serialization and deserialization
     implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${fasterxml_version}"
-
-    // Avoid outdated version of netty to prevent security issues
-    implementation("io.netty:netty-buffer") { version { 				strictly netty_version } }
-    implementation("io.netty:netty-codec") { version { 					strictly netty_version } }
-    implementation("io.netty:netty-codec-dns") { version { 				strictly netty_version } }
-    implementation("io.netty:netty-codec-http") { version { 			strictly netty_version } }
-    implementation("io.netty:netty-codec-http2") { version { 			strictly netty_version } }
-    implementation("io.netty:netty-codec-socks") { version { 			strictly netty_version } }
-    implementation("io.netty:netty-common") { version { 				strictly netty_version } }
-    implementation("io.netty:netty-resolver") { version { 	    		strictly netty_version } }
-    implementation("io.netty:netty-resolver-dns") { version { 			strictly netty_version } }
-    implementation("io.netty:netty-transport") { version { 				strictly netty_version } }
-    implementation("io.netty:netty-transport-classes-epoll") { version {strictly netty_version } }
-    implementation("io.netty:netty-transport-native-epoll") { version {	strictly netty_version } }
-    implementation("io.netty:netty-handler") { version { 				strictly netty_version } }
-    implementation("io.netty:netty-handler-proxy") { version { 			strictly netty_version } }
-
-    // only load netty-resolver-dns-native-macos on macos systems
-    if (osdetector.os == 'osx') {
-        def classifier = (osdetector.arch == 'aarch_64') ? 'osx-aarch_64' : 'osx-x86_64'
-        runtimeOnly("io.netty:netty-resolver-dns-native-macos:${netty_version}:${classifier}") { version { strictly netty_version } }
-    }
 
     // Avoid outdated version of netty to prevent security issues
     implementation("net.minidev:json-smart") { version {strictly "2.6.0" } }
@@ -370,26 +336,20 @@ dependencies {
         exclude group: "com.opencsv", module: "opencsv"
     }
 
-    implementation "org.springframework.boot:spring-boot-starter-validation:${spring_boot_version}"
-    implementation "org.springframework.boot:spring-boot-loader-tools:${spring_boot_version}"
-    implementation "org.springframework.boot:spring-boot-starter-mail:${spring_boot_version}"
-    implementation "org.springframework.boot:spring-boot-starter-logging:${spring_boot_version}"
-    implementation "org.springframework.boot:spring-boot-starter-actuator:${spring_boot_version}"
-    implementation "org.springframework.boot:spring-boot-starter-aop:${spring_boot_version}"
-    implementation "org.springframework.boot:spring-boot-starter-data-jpa:${spring_boot_version}"
-    implementation "org.springframework.boot:spring-boot-starter-security:${spring_boot_version}"
-    implementation "org.springframework.boot:spring-boot-starter-web:${spring_boot_version}"
-    implementation "org.springframework.boot:spring-boot-starter-tomcat:${spring_boot_version}"
-
-    implementation "org.apache.tomcat.embed:tomcat-embed-core:${tomcat_version}"
-    implementation "org.apache.tomcat.embed:tomcat-embed-el:${tomcat_version}"
-    implementation "org.apache.tomcat.embed:tomcat-embed-websocket:${tomcat_version}"
-    implementation "org.apache.tomcat:tomcat-annotations-api:${tomcat_version}"
-
-    implementation "org.springframework.boot:spring-boot-starter-websocket:${spring_boot_version}"
-    implementation "org.springframework.boot:spring-boot-starter-thymeleaf:${spring_boot_version}"
-    implementation "org.springframework.boot:spring-boot-starter-oauth2-resource-server:${spring_boot_version}"
-    implementation "org.springframework.boot:spring-boot-starter-oauth2-client:${spring_boot_version}"
+    implementation "org.springframework.boot:spring-boot-starter-validation"
+    implementation "org.springframework.boot:spring-boot-loader-tools"
+    implementation "org.springframework.boot:spring-boot-starter-mail"
+    implementation "org.springframework.boot:spring-boot-starter-logging"
+    implementation "org.springframework.boot:spring-boot-starter-actuator"
+    implementation "org.springframework.boot:spring-boot-starter-aop"
+    implementation "org.springframework.boot:spring-boot-starter-data-jpa"
+    implementation "org.springframework.boot:spring-boot-starter-security"
+    implementation "org.springframework.boot:spring-boot-starter-web"
+    implementation "org.springframework.boot:spring-boot-starter-tomcat"
+    implementation "org.springframework.boot:spring-boot-starter-websocket"
+    implementation "org.springframework.boot:spring-boot-starter-thymeleaf"
+    implementation "org.springframework.boot:spring-boot-starter-oauth2-resource-server"
+    implementation "org.springframework.boot:spring-boot-starter-oauth2-client"
 
     implementation "org.springframework.data:spring-data-jpa:3.5.6"
     implementation "org.springframework.data:spring-data-ldap:3.5.6"
@@ -408,21 +368,13 @@ dependencies {
 
     // passkey functionality to simplify login
     implementation "com.webauthn4j:webauthn4j-spring-security-core:0.11.2.RELEASE"
-    implementation "com.webauthn4j:webauthn4j-core:0.30.0.RELEASE"
+    implementation "com.webauthn4j:webauthn4j-core:0.30.1.RELEASE"
 
-    implementation "org.springframework.security:spring-security-config:${spring_security_version}"
-    implementation "org.springframework.security:spring-security-data:${spring_security_version}"
-    implementation "org.springframework.security:spring-security-core:${spring_security_version}"
-    implementation "org.springframework.security:spring-security-oauth2-core:${spring_security_version}"
-    implementation "org.springframework.security:spring-security-oauth2-client:${spring_security_version}"
+//    implementation "org.springframework.security:spring-security-data"
+    implementation "org.springframework.security:spring-security-messaging"
+    implementation "org.springframework.security:spring-security-ldap"
     // use newest version of nimbus-jose-jwt to avoid security issues through outdated dependencies
     implementation "com.nimbusds:nimbus-jose-jwt:10.6"
-
-    implementation "org.springframework.security:spring-security-oauth2-jose:${spring_security_version}"
-    implementation "org.springframework.security:spring-security-crypto:${spring_security_version}"
-    implementation "org.springframework.security:spring-security-web:${spring_security_version}"
-    implementation "org.springframework.security:spring-security-messaging:${spring_security_version}"
-    implementation "org.springframework.security:spring-security-ldap:${spring_security_version}"
 
     // Nullable annotations for improved static analysis
     implementation "org.jspecify:jspecify:1.0.0"
@@ -433,7 +385,7 @@ dependencies {
     implementation "org.opensaml:opensaml-saml-api:${opensaml_version}"
     implementation "org.opensaml:opensaml-saml-impl:${opensaml_version}"
 
-    implementation "org.springframework.security:spring-security-saml2-service-provider:${spring_security_version}"
+    implementation "org.springframework.security:spring-security-saml2-service-provider"
 
     implementation "io.jsonwebtoken:jjwt-api:${jwt_version}"
     runtimeOnly "io.jsonwebtoken:jjwt-impl:${jwt_version}"
@@ -454,7 +406,7 @@ dependencies {
     implementation "com.github.seancfoley:ipaddress:5.5.1"
 
     // used for testing and Java Template Upgrade Service
-    implementation "org.apache.maven:maven-model:3.9.11"
+    implementation "org.apache.maven:maven-model:3.9.12"
     implementation "org.apache.pdfbox:pdfbox:3.0.6"
     implementation "org.apache.commons:commons-csv:1.14.1"
     implementation "org.commonmark:commonmark:0.27.0"
@@ -493,7 +445,7 @@ dependencies {
     annotationProcessor "org.hibernate.orm:hibernate-jpamodelgen:${hibernate_version}"
     annotationProcessor "org.hibernate.orm:hibernate-core:${hibernate_version}"
     annotationProcessor "org.glassfish.jaxb:jaxb-runtime:${jaxb_runtime_version}"
-    annotationProcessor "org.springframework.boot:spring-boot-configuration-processor:${spring_boot_version}"
+    annotationProcessor "org.springframework.boot:spring-boot-configuration-processor"
 
     implementation "org.mnode.ical4j:ical4j:4.2.1"
 
@@ -508,10 +460,10 @@ dependencies {
 
     // ---- TEST DEPENDENCIES ----
 
-    testImplementation "org.springframework.boot:spring-boot-starter-test:${spring_boot_version}"
-    testImplementation "org.springframework.security:spring-security-test:${spring_security_version}"
-    testImplementation "org.springframework.boot:spring-boot-test:${spring_boot_version}"
-    testImplementation "org.springframework:spring-test:${spring_framework_version}"
+    testImplementation "org.springframework.boot:spring-boot-starter-test"
+    testImplementation "org.springframework.security:spring-security-test"
+    testImplementation "org.springframework.boot:spring-boot-test"
+    testImplementation "org.springframework:spring-test"
     testImplementation "org.assertj:assertj-core:3.27.6"
     testImplementation "org.mockito:mockito-core:${mockito_version}"
     // needed to add mockito as agent and avoid its warning

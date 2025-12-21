@@ -1,0 +1,52 @@
+.upload-summary {
+    padding: 0.75rem;
+    border: 1px solid var(--bs-border-color);
+    border-radius: 4px;
+
+    .file-list {
+        list-style: none;
+        padding-left: 1.75rem;
+        max-height: 120px;
+        overflow-y: auto;
+    }
+}
+
+.target-options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.target-option {
+    padding: 1rem;
+    border: 1px solid var(--bs-border-color);
+    border-radius: 8px;
+    cursor: pointer;
+    transition:
+        border-color 0.2s,
+        background-color 0.2s;
+
+    &:hover {
+        border-color: var(--bs-primary);
+    }
+
+    &.selected {
+        border-color: var(--bs-primary);
+        background-color: color-mix(in srgb, var(--bs-primary) 5%, transparent);
+    }
+
+    .form-check-input {
+        margin-left: 0.05rem;
+    }
+
+    .form-check-label {
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        margin-left: 1.25rem;
+    }
+}
+
+.lecture-select {
+    margin-left: 1.5rem;
+}

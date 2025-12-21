@@ -32,9 +32,9 @@ import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettingsType;
+import de.tum.cit.aet.artemis.iris.dto.IngestionState;
+import de.tum.cit.aet.artemis.iris.dto.IngestionStateResponseDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisHealthStatusDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisVariantDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.course.PyrisCourseChatPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.exercise.PyrisExerciseChatPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.lecture.PyrisLectureChatPipelineExecutionDTO;
@@ -74,6 +74,12 @@ public class IrisRequestMockProvider {
 
     @Value("${artemis.iris.url}/api/v1/memiris")
     private URL memirisApiURL;
+
+    @Value("${artemis.iris.url}")
+    private String irisBaseUrl;
+
+    @Value("${server.url}")
+    private String serverUrl;
 
     @Autowired
     private ObjectMapper mapper;
@@ -161,6 +167,10 @@ public class IrisRequestMockProvider {
         mockWebhookPost("/lectures/ingest", PyrisWebhookLectureIngestionExecutionDTO.class, responseConsumer);
     }
 
+    public void mockIngestionWebhookRunResponse(Consumer<PyrisWebhookLectureIngestionExecutionDTO> responseConsumer, ExpectedCount count) {
+        mockWebhookPost("/lectures/ingest", PyrisWebhookLectureIngestionExecutionDTO.class, responseConsumer, count);
+    }
+
     public void mockTranscriptionIngestionWebhookRunResponse(Consumer<PyrisWebhookTranscriptionIngestionExecutionDTO> responseConsumer) {
         mockWebhookPost("/transcriptions/ingest", PyrisWebhookTranscriptionIngestionExecutionDTO.class, responseConsumer);
     }
@@ -175,6 +185,10 @@ public class IrisRequestMockProvider {
 
     public void mockDeletionWebhookRunResponse(Consumer<PyrisWebhookLectureIngestionExecutionDTO> responseConsumer) {
         mockWebhookPost("/lectures/delete", PyrisWebhookLectureIngestionExecutionDTO.class, responseConsumer);
+    }
+
+    public void mockDeletionWebhookRunResponse(Consumer<PyrisWebhookLectureIngestionExecutionDTO> responseConsumer, ExpectedCount count) {
+        mockWebhookPost("/lectures/delete", PyrisWebhookLectureIngestionExecutionDTO.class, responseConsumer, count);
     }
 
     public void mockFaqDeletionWebhookRunResponse(Consumer<PyrisWebhookFaqIngestionExecutionDTO> responseConsumer) {
@@ -207,16 +221,6 @@ public class IrisRequestMockProvider {
 
     public void mockDeletionWebhookRunError(int httpStatus) {
         mockPostError(webhooksApiURL.toString(), "/lectures/delete", httpStatus);
-    }
-
-    public void mockVariantsResponse(IrisSubSettingsType feature) throws JsonProcessingException {
-        var irisModelDTO = new PyrisVariantDTO("TEST_MODEL", "Test model", "Test description");
-        var irisModelDTOArray = new PyrisVariantDTO[] { irisModelDTO };
-        // @formatter:off
-        mockServer.expect(ExpectedCount.once(), requestTo(variantsApiBaseURL + feature.name() + "/variants"))
-            .andExpect(method(HttpMethod.GET))
-            .andRespond(withSuccess(mapper.writeValueAsString(irisModelDTOArray), MediaType.APPLICATION_JSON));
-        // @formatter:on
     }
 
     public void mockStatusResponses() throws JsonProcessingException {
@@ -262,23 +266,16 @@ public class IrisRequestMockProvider {
     }
 
     private <T> void mockWebhookPost(String path, Class<T> dtoClass, Consumer<T> responseConsumer) {
-        mockServer.expect(ExpectedCount.once(), requestTo(webhooksApiURL + path)).andExpect(method(HttpMethod.POST)).andRespond(request -> {
+        mockWebhookPost(path, dtoClass, responseConsumer, ExpectedCount.once());
+    }
+
+    private <T> void mockWebhookPost(String path, Class<T> dtoClass, Consumer<T> responseConsumer, ExpectedCount count) {
+        mockServer.expect(count, requestTo(webhooksApiURL + path)).andExpect(method(HttpMethod.POST)).andRespond(request -> {
             var mockRequest = (MockClientHttpRequest) request;
             var dto = mapper.readValue(mockRequest.getBodyAsString(), dtoClass);
             responseConsumer.accept(dto);
             return MockRestResponseCreators.withRawStatus(HttpStatus.ACCEPTED.value()).createResponse(request);
         });
-    }
-
-    /**
-     * Mocks a get model error from the Pyris models endpoint
-     */
-    public void mockVariantsError(IrisSubSettingsType feature) {
-        // @formatter:off
-        mockServer.expect(ExpectedCount.once(), requestTo(variantsApiBaseURL + feature.name() + "/variants"))
-            .andExpect(method(HttpMethod.GET))
-            .andRespond(withRawStatus(418));
-        // @formatter:on
     }
 
     /** Healthy response with configurable module statuses. */
@@ -319,6 +316,34 @@ public class IrisRequestMockProvider {
         var dto = new PyrisHealthStatusDTO(overallHealthy != null && overallHealthy, modules); // allow null → false
         shortTimeoutMockServer.expect(ExpectedCount.once(), requestTo(healthApiURL.toString())).andExpect(method(HttpMethod.GET))
                 .andRespond(withSuccess(mapper.writeValueAsString(dto), MediaType.APPLICATION_JSON));
+    }
+
+    public void mockLectureUnitIngestionState(long courseId, long lectureId, long lectureUnitId, IngestionState state) throws JsonProcessingException {
+        var responseBody = new IngestionStateResponseDTO(state);
+        mockServer
+                .expect(ExpectedCount.once(),
+                        request -> assertThat(request.getURI().getPath())
+                                .isEqualTo("/api/v1/courses/" + courseId + "/lectures/" + lectureId + "/lectureUnits/" + lectureUnitId + "/ingestion-state"))
+                .andRespond(withSuccess(mapper.writeValueAsString(responseBody), MediaType.APPLICATION_JSON));
+    }
+
+    public void mockLectureUnitIngestionStateError(long courseId, long lectureId, long lectureUnitId, HttpStatus status) {
+        mockServer
+                .expect(ExpectedCount.once(),
+                        request -> assertThat(request.getURI().getPath())
+                                .isEqualTo("/api/v1/courses/" + courseId + "/lectures/" + lectureId + "/lectureUnits/" + lectureUnitId + "/ingestion-state"))
+                .andRespond(withRawStatus(status.value()));
+    }
+
+    public void mockFaqIngestionState(long courseId, long faqId, IngestionState state) throws JsonProcessingException {
+        var responseBody = new IngestionStateResponseDTO(state);
+        mockServer.expect(ExpectedCount.once(), request -> assertThat(request.getURI().getPath()).isEqualTo("/api/v1/courses/" + courseId + "/faqs/" + faqId + "/ingestion-state"))
+                .andRespond(withSuccess(mapper.writeValueAsString(responseBody), MediaType.APPLICATION_JSON));
+    }
+
+    public void mockFaqIngestionStateError(long courseId, long faqId, HttpStatus status) {
+        mockServer.expect(ExpectedCount.once(), request -> assertThat(request.getURI().getPath()).isEqualTo("/api/v1/courses/" + courseId + "/faqs/" + faqId + "/ingestion-state"))
+                .andRespond(withRawStatus(status.value()));
     }
 
     public void verify() {
