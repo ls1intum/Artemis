@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.core.web;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.when;
 
 import java.util.List;
 
@@ -16,6 +17,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.AdminPasskeyDTO;
 import de.tum.cit.aet.artemis.core.dto.PasskeyDTO;
 import de.tum.cit.aet.artemis.core.repository.PasskeyCredentialsRepository;
+import de.tum.cit.aet.artemis.core.service.PasskeyAuthenticationService;
 import de.tum.cit.aet.artemis.core.util.PasskeyCredentialUtilService;
 import de.tum.cit.aet.artemis.lecture.service.SlideUnhideScheduleService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
@@ -33,18 +35,12 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @MockitoBean
     private SlideUnhideScheduleService slideUnhideScheduleService;
 
-    private void createApprovedPasskeyForSuperAdmin() {
-        User superAdmin = userUtilService.getUserByLogin("superadmin");
-        PasskeyCredential passkeyCredential = passkeyCredentialUtilService.createAndSavePasskeyCredential(superAdmin);
-        passkeyCredential.setSuperAdminApproved(true);
-        passkeyCredentialsRepository.save(passkeyCredential);
-    }
+    @MockitoBean
+    private PasskeyAuthenticationService passkeyAuthenticationService;
 
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 2, 0, 0, 0);
-
-        createApprovedPasskeyForSuperAdmin();
     }
 
     @Test
@@ -101,6 +97,8 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = "superadmin", roles = "SUPER_ADMIN")
     void testUpdatePasskeyApproval_Success() throws Exception {
+        when(passkeyAuthenticationService.isAuthenticatedWithSuperAdminApprovedPasskey()).thenReturn(true);
+
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         PasskeyCredential existingCredential = passkeyCredentialUtilService.createAndSavePasskeyCredential(user);
         assertThat(existingCredential.isSuperAdminApproved()).isFalse();
@@ -131,6 +129,8 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = "superadmin", roles = "SUPER_ADMIN")
     void testUpdatePasskeyApproval_NotFound() throws Exception {
+        when(passkeyAuthenticationService.isAuthenticatedWithSuperAdminApprovedPasskey()).thenReturn(true);
+
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         PasskeyCredential existingCredential = passkeyCredentialUtilService.createAndSavePasskeyCredential(user);
         PasskeyDTO modifiedCredential = new PasskeyDTO(existingCredential.getCredentialId(), existingCredential.getLabel(), existingCredential.getCreatedDate(),
@@ -142,6 +142,8 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = "superadmin", roles = "SUPER_ADMIN")
     void testGetAllPasskeysForAdmin_Success() throws Exception {
+        when(passkeyAuthenticationService.isAuthenticatedWithSuperAdminApprovedPasskey()).thenReturn(true);
+
         User student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         User student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
 
@@ -185,6 +187,8 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = "superadmin", roles = "SUPER_ADMIN")
     void testGetAllPasskeysForAdmin_EmptyListWhenNoPasskeys() throws Exception {
+        when(passkeyAuthenticationService.isAuthenticatedWithSuperAdminApprovedPasskey()).thenReturn(true);
+
         passkeyCredentialsRepository.deleteAll();
 
         List<AdminPasskeyDTO> passkeys = request.getList("/api/core/passkey/admin", HttpStatus.OK, AdminPasskeyDTO.class);
