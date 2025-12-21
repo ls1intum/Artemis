@@ -378,6 +378,14 @@ public class UserUtilService {
             usersToAdd.add(admin);
             log.debug("Generate admin done");
         }
+        if (!userExistsWithLogin("superadmin")) {
+            log.debug("Generate super admin");
+            User admin = UserFactory.generateActivatedUser("superadmin", passwordService.hashPassword(UserFactory.USER_PASSWORD));
+            admin.setGroups(Set.of("superadmin"));
+            admin.setAuthorities(adminAuthorities);
+            usersToAdd.add(admin);
+            log.debug("Generate super admin done");
+        }
 
         // Before adding new users, existing users are removed from courses.
         // Otherwise, the amount users per course constantly increases while running the tests,

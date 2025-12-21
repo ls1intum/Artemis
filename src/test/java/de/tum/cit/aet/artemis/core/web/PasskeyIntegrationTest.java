@@ -28,7 +28,6 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 2, 0, 0, 0);
-        userUtilService.addSuperAdmin(TEST_PREFIX);
     }
 
     @Test
@@ -83,7 +82,7 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "superadmin", roles = "SUPER_ADMIN")
+    @WithMockUser(username = "superadmin", roles = "SUPER_ADMIN")
     void testUpdatePasskeyApproval_Success() throws Exception {
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         PasskeyCredential existingCredential = passkeyCredentialUtilService.createAndSavePasskeyCredential(user);
@@ -102,9 +101,9 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    @WithMockUser(username = "admin", roles = "ADMIN")
     void testUpdatePasskeyApproval_AccessDeniedBecauseNotSuperAdmin() throws Exception {
-        User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        User user = userUtilService.getUserByLogin("admin");
         PasskeyCredential existingCredential = passkeyCredentialUtilService.createAndSavePasskeyCredential(user);
         PasskeyDTO modifiedCredential = new PasskeyDTO(existingCredential.getCredentialId(), existingCredential.getLabel(), existingCredential.getCreatedDate(),
                 existingCredential.getLastUsed(), true);
@@ -113,7 +112,7 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "superadmin", roles = "SUPER_ADMIN")
+    @WithMockUser(username = "superadmin", roles = "SUPER_ADMIN")
     void testUpdatePasskeyApproval_NotFound() throws Exception {
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         PasskeyCredential existingCredential = passkeyCredentialUtilService.createAndSavePasskeyCredential(user);
