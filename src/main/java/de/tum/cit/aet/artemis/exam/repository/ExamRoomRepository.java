@@ -193,7 +193,7 @@ public interface ExamRoomRepository extends ArtemisJpaRepository<ExamRoom, Long>
                 FROM ExamRoom
                 GROUP BY roomNumber, name
             )
-            SELECT DISTINCT examRoom
+            SELECT examRoom
             FROM ExamRoom examRoom
             JOIN latestRooms latestRoom
                 ON examRoom.roomNumber = latestRoom.roomNumber
