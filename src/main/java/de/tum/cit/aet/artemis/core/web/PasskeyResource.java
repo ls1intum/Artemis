@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.core.repository.PasskeyCredentialsRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.repository.passkey.ArtemisUserCredentialRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceSuperAdmin;
 
 /**
  * REST controller for public endpoints regarding the webauthn (Web Authentication) API, e.g. used for passkeys.
@@ -165,7 +166,7 @@ public class PasskeyResource {
      * @return {@link ResponseEntity} with HTTP status 200 (OK) and the updated passkey if successful
      */
     @PutMapping("{credentialId}/approval")
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @EnforceSuperAdmin
     public ResponseEntity<PasskeyDTO> updatePasskeyApproval(@PathVariable @Base64Url String credentialId, @RequestBody PasskeyDTO passkeyWithUpdatedApproval) {
         log.debug("Updating approval status for passkey with id: {}", credentialId);
 
