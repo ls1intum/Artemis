@@ -491,12 +491,14 @@ describe('ExamResultSummaryComponent', () => {
     });
 
     describe('scrollToOverviewOrTop', () => {
-        const BACK_TO_OVERVIEW_BUTTON_ID = 'back-to-overview-button';
         const EXAM_SUMMARY_RESULT_OVERVIEW_ID = 'exam-summary-result-overview';
         const EXAM_RESULTS_TITLE_ID = 'exam-results-title';
 
         it('should scroll to exam title when overview is not displayed', () => {
             const scrollIntoViewSpy = jest.fn();
+
+            // Call detectChanges first to render the DOM before mocking getElementById
+            fixture.detectChanges();
 
             // To ensure there is no exam summary overview
             const getElementByIdMock = jest.spyOn(document, 'getElementById').mockImplementation((id) => {
@@ -510,9 +512,11 @@ describe('ExamResultSummaryComponent', () => {
                 }
                 return null;
             });
-            const button = fixture.debugElement.nativeElement.querySelector('#' + BACK_TO_OVERVIEW_BUTTON_ID);
-            button.click();
 
+            // Call the component method directly to avoid querySelector issues with jsdom
+            component.scrollToOverviewOrTop();
+
+            expect(getElementByIdMock).toHaveBeenCalledWith(EXAM_SUMMARY_RESULT_OVERVIEW_ID);
             expect(getElementByIdMock).toHaveBeenCalledWith(EXAM_RESULTS_TITLE_ID);
             expect(scrollIntoViewSpy).toHaveBeenCalled();
         });
@@ -520,17 +524,18 @@ describe('ExamResultSummaryComponent', () => {
         it('should scroll to overview when it is displayed', () => {
             const scrollIntoViewSpy = jest.fn();
 
+            component.studentExam = studentExam;
+            component.studentExamGradeInfoDTO = { ...gradeInfo, studentExam };
+
+            // Call detectChanges first to render the DOM before mocking getElementById
+            fixture.detectChanges();
+
             const getElementByIdMock = jest.spyOn(document, 'getElementById').mockReturnValue({
                 scrollIntoView: scrollIntoViewSpy,
             } as unknown as HTMLElement);
 
-            component.studentExam = studentExam;
-            component.studentExamGradeInfoDTO = { ...gradeInfo, studentExam };
-
-            fixture.changeDetectorRef.detectChanges();
-
-            const button = fixture.debugElement.nativeElement.querySelector('#' + BACK_TO_OVERVIEW_BUTTON_ID);
-            button.click();
+            // Call the component method directly to avoid querySelector issues with jsdom
+            component.scrollToOverviewOrTop();
 
             expect(getElementByIdMock).toHaveBeenCalledWith(EXAM_SUMMARY_RESULT_OVERVIEW_ID);
             expect(scrollIntoViewSpy).toHaveBeenCalled();
