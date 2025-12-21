@@ -8,7 +8,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.web.webauthn.api.Bytes;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -83,7 +82,7 @@ public class PasskeyResource {
      * @return list of {@link de.tum.cit.aet.artemis.core.dto.AdminPasskeyDTO} that contains all passkeys with user information
      */
     @GetMapping("admin")
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    @EnforceSuperAdmin
     public ResponseEntity<List<de.tum.cit.aet.artemis.core.dto.AdminPasskeyDTO>> getAllPasskeysForAdmin() {
         log.debug("Retrieving all passkeys for super admin management");
 
