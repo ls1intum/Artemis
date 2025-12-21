@@ -159,11 +159,11 @@ export class RegisterComponent implements AfterViewInit {
      * @param response - The HTTP error response from the registration attempt
      */
     private handleRegistrationError(response: HttpErrorResponse): void {
-        if (response.status === 400 && response.error.type.includes(LOGIN_ALREADY_USED_TYPE)) {
+        if (response.status === 400 && response.error?.type?.includes(LOGIN_ALREADY_USED_TYPE)) {
             this.errorUserExists.set(true);
-        } else if (response.status === 400 && response.error.type.includes(EMAIL_ALREADY_USED_TYPE)) {
+        } else if (response.status === 400 && response.error?.type?.includes(EMAIL_ALREADY_USED_TYPE)) {
             this.errorEmailExists.set(true);
-        } else if (response.status === 400 && response.error.type.includes(ACCOUNT_REGISTRATION_BLOCKED)) {
+        } else if (response.status === 400 && response.error?.type?.includes(ACCOUNT_REGISTRATION_BLOCKED)) {
             this.errorAccountRegistrationBlocked.set(true);
         } else {
             this.error.set(true);

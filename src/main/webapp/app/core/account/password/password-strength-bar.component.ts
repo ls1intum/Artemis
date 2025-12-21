@@ -42,20 +42,27 @@ export class PasswordStrengthBarComponent {
         // Reactively update the strength bar whenever the password input changes
         effect(() => {
             const password = this.passwordToCheck();
-            if (password) {
-                this.updateStrengthBar(password);
-            }
+            this.updateStrengthBar(password ?? '');
         });
     }
 
     /**
      * Updates the visual strength bar by coloring segments based on password strength.
      * Filled segments use the strength-appropriate color, unfilled segments are gray.
+     * Empty password clears all segments to inactive state.
      */
     private updateStrengthBar(password: string): void {
-        const strengthResult = this.getStrengthColorAndLevel(this.calculateStrengthScore(password));
         const hostElement = this.elementRef.nativeElement;
         const barSegments = hostElement.getElementsByTagName('li');
+
+        if (!password) {
+            for (let index = 0; index < barSegments.length; index++) {
+                this.renderer.setStyle(barSegments[index], 'backgroundColor', this.INACTIVE_SEGMENT_COLOR);
+            }
+            return;
+        }
+
+        const strengthResult = this.getStrengthColorAndLevel(this.calculateStrengthScore(password));
 
         for (let index = 0; index < barSegments.length; index++) {
             const isFilled = index < strengthResult.filledSegments;

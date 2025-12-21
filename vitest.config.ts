@@ -9,6 +9,8 @@ import tsconfigPaths from 'vite-tsconfig-paths';
 import path from 'node:path';
 
 export default defineConfig({
+    // Only show errors, suppress sourcemap warnings from node_modules packages
+    logLevel: 'error',
     resolve: {
         alias: {
             'monaco-editor': path.resolve(__dirname, 'src/test/javascript/spec/helpers/mocks/mock-monaco-editor.ts'),

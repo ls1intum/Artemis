@@ -14,16 +14,14 @@ describe('ExternalUserPasswordResetModalComponent', () => {
     let comp: ExternalUserPasswordResetModalComponent;
     let activeModal: NgbActiveModal;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             imports: [ExternalUserPasswordResetModalComponent],
             providers: [NgbActiveModal],
         })
             .overrideTemplate(ExternalUserPasswordResetModalComponent, '')
             .compileComponents();
-    });
 
-    beforeEach(() => {
         fixture = TestBed.createComponent(ExternalUserPasswordResetModalComponent);
         comp = fixture.componentInstance;
         activeModal = TestBed.inject(NgbActiveModal);
