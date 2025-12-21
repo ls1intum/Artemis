@@ -1,0 +1,67 @@
+<div class="container-fluid">
+    <h2 jhiTranslate="artemisApp.adminPasskeyManagement.title"></h2>
+
+    @if (isLoading()) {
+        <div class="d-flex justify-content-center">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden" jhiTranslate="loading"></span>
+            </div>
+        </div>
+    } @else if (passkeys().length === 0) {
+        <div class="alert alert-info" jhiTranslate="artemisApp.adminPasskeyManagement.noPasskeys"></div>
+    } @else {
+        <ngx-datatable class="bootstrap" [headerHeight]="50" [limit]="20" [columnMode]="'force'" [footerHeight]="50" [rowHeight]="'auto'" [rows]="passkeys()" [scrollbarH]="true">
+            <ngx-datatable-column name="{{ 'artemisApp.adminPasskeyManagement.userLogin' | artemisTranslate }}" prop="userLogin" [width]="150">
+                <ng-template ngx-datatable-cell-template let-value="value">
+                    {{ value }}
+                </ng-template>
+            </ngx-datatable-column>
+
+            <ngx-datatable-column name="{{ 'artemisApp.adminPasskeyManagement.userName' | artemisTranslate }}" prop="userName" [width]="200">
+                <ng-template ngx-datatable-cell-template let-value="value">
+                    {{ value || '-' }}
+                </ng-template>
+            </ngx-datatable-column>
+
+            <ngx-datatable-column name="{{ 'artemisApp.adminPasskeyManagement.label' | artemisTranslate }}" prop="label" [width]="200">
+                <ng-template ngx-datatable-cell-template let-value="value">
+                    {{ value || '-' }}
+                </ng-template>
+            </ngx-datatable-column>
+
+            <ngx-datatable-column name="{{ 'artemisApp.adminPasskeyManagement.created' | artemisTranslate }}" prop="created" [width]="150">
+                <ng-template ngx-datatable-cell-template let-value="value">
+                    {{ value | artemisDate }}
+                </ng-template>
+            </ngx-datatable-column>
+
+            <ngx-datatable-column name="{{ 'artemisApp.adminPasskeyManagement.lastUsed' | artemisTranslate }}" prop="lastUsed" [width]="150">
+                <ng-template ngx-datatable-cell-template let-value="value">
+                    {{ value ? (value | artemisDate) : '-' }}
+                </ng-template>
+            </ngx-datatable-column>
+
+            <ngx-datatable-column name="{{ 'artemisApp.adminPasskeyManagement.approved' | artemisTranslate }}" prop="isSuperAdminApproved" [width]="120">
+                <ng-template ngx-datatable-cell-template let-row="row" let-value="value">
+                    <div class="form-check form-switch">
+                        <input
+                            class="form-check-input"
+                            type="checkbox"
+                            [id]="'approval-' + row.credentialId"
+                            [checked]="value"
+                            (change)="onApprovalToggle(row)"
+                            [attr.aria-label]="'artemisApp.adminPasskeyManagement.toggleApproval' | artemisTranslate"
+                        />
+                        <label class="form-check-label" [for]="'approval-' + row.credentialId">
+                            @if (value) {
+                                <span jhiTranslate="artemisApp.adminPasskeyManagement.yes">Yes</span>
+                            } @else {
+                                <span jhiTranslate="artemisApp.adminPasskeyManagement.no">No</span>
+                            }
+                        </label>
+                    </div>
+                </ng-template>
+            </ngx-datatable-column>
+        </ngx-datatable>
+    }
+</div>

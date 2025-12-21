@@ -1,0 +1,19 @@
+{
+    "artemisApp": {
+        "adminPasskeyManagement": {
+            "title": "Passkey Management",
+            "userLogin": "User Login",
+            "userName": "User Name",
+            "label": "Label",
+            "created": "Created",
+            "lastUsed": "Last Used",
+            "approved": "Approved",
+            "yes": "Yes",
+            "no": "No",
+            "noPasskeys": "No passkeys found in the system.",
+            "approvalSuccess": "Passkey approved successfully",
+            "unapprovalSuccess": "Passkey approval removed successfully",
+            "toggleApproval": "Toggle approval status"
+        }
+    }
+}

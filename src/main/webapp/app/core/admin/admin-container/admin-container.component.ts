@@ -11,6 +11,7 @@ import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/f
 import { LayoutService } from 'app/shared/breakpoints/layout.service';
 import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.service';
 import { AccountService } from 'app/core/auth/account.service';
+import { IS_AT_LEAST_SUPER_ADMIN } from 'app/shared/constants/authority.constants';
 
 @Component({
     selector: 'jhi-admin-container',
@@ -48,7 +49,7 @@ export class AdminContainerComponent implements OnInit, OnDestroy {
         this.ltiEnabled = profileInfo.activeProfiles.includes(PROFILE_LTI);
         this.passkeyEnabled = profileInfo.activeModuleFeatures.includes(MODULE_FEATURE_PASSKEY);
         this.passkeyRequiredForAdmin = profileInfo.activeModuleFeatures.includes(MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN);
-        this.isSuperAdmin.set(this.accountService.isSuperAdmin());
+        this.isSuperAdmin.set(this.accountService.hasAnyAuthorityDirect(IS_AT_LEAST_SUPER_ADMIN));
 
         this.standardizedCompetencySubscription = this.featureToggleService.getFeatureToggleActive(FeatureToggle.StandardizedCompetencies).subscribe((isActive) => {
             this.standardizedCompetenciesEnabled = isActive;
