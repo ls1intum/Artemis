@@ -11,6 +11,7 @@ services:
             BASE_URL: 'https://artemis-nginx'
             ADMIN_USERNAME: '${ARTEMIS_ADMIN_USERNAME}'
             ADMIN_PASSWORD: '${ARTEMIS_ADMIN_PASSWORD}'
+            PLAYWRIGHT_RELEVANT_GLOBS: '${PLAYWRIGHT_RELEVANT_GLOBS}'
             PLAYWRIGHT_USERNAME_TEMPLATE: '${PLAYWRIGHT_USERNAME_TEMPLATE}'
             PLAYWRIGHT_PASSWORD_TEMPLATE: '${PLAYWRIGHT_PASSWORD_TEMPLATE}'
             ALLOW_GROUP_CUSTOMIZATION: 'true'
@@ -31,7 +32,7 @@ services:
           npm ci &&
           npm run playwright:setup &&
           npm run playwright:test;
-          rm ./test-reports/results-parallel.xml ./test-reports/results-sequential.xml
+                    find ./test-reports -maxdepth 1 -type f -name "results-*.xml" ! -name "results.xml" -delete
           '
         volumes:
             - ..:/app/artemis

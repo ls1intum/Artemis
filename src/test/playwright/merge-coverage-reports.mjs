@@ -24,8 +24,6 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const testReportsDir = path.join(__dirname, 'test-reports');
-const coverageParallelDir = path.join(testReportsDir, 'monocart-report-parallel');
-const coverageSequentialDir = path.join(testReportsDir,'monocart-report-sequential');
 const coverageDir = path.join(testReportsDir, 'client-coverage')
 const lcovDir = path.join(coverageDir, 'lcov-report');
 
@@ -34,36 +32,32 @@ console.log(`Merging coverage reports`);
 // Create a new combined coverage map
 let combinedMap = coverage.createCoverageMap({});
 
-// Check and load parallel coverage if it exists
-const parallelCoveragePath = path.join(coverageParallelDir, '/coverage/coverage-final.json');
-if (fs.existsSync(parallelCoveragePath)) {
-    try {
-        const coverageParallel = JSON.parse(fs.readFileSync(parallelCoveragePath, 'utf8'));
-        const filteredCoverageParallel = filterCoverageData(coverageParallel, coverageFilters);
-        const mapA = coverage.createCoverageMap(filteredCoverageParallel);
-        combinedMap.merge(mapA);
-        console.log('Loaded parallel coverage report');
-    } catch (err) {
-        console.error('Error loading parallel coverage report:', err.message);
-    }
-} else {
-    console.log('Parallel coverage report does not exist, skipping');
-}
+if (fs.existsSync(testReportsDir)) {
+    const reportDirs = fs
+        .readdirSync(testReportsDir, { withFileTypes: true })
+        .filter((d) => d.isDirectory() && d.name.startsWith('monocart-report-'))
+        .map((d) => path.join(testReportsDir, d.name));
 
-// Check and load sequential coverage if it exists
-const sequentialCoveragePath = path.join(coverageSequentialDir, '/coverage/coverage-final.json');
-if (fs.existsSync(sequentialCoveragePath)) {
-    try {
-        const coverageSequential = JSON.parse(fs.readFileSync(sequentialCoveragePath, 'utf8'));
-        const filteredCoverageSequential = filterCoverageData(coverageSequential, coverageFilters);
-        const mapB = coverage.createCoverageMap(filteredCoverageSequential);
-        combinedMap.merge(mapB);
-        console.log('Loaded sequential coverage report');
-    } catch (err) {
-        console.error('Error loading sequential coverage report:', err.message);
+    if (reportDirs.length === 0) {
+        console.log('No monocart coverage report directories found, skipping');
     }
-} else {
-    console.log('Sequential coverage report does not exist, skipping');
+
+    for (const reportDir of reportDirs) {
+        const coveragePath = path.join(reportDir, 'coverage', 'coverage-final.json');
+        if (!fs.existsSync(coveragePath)) {
+            continue;
+        }
+
+        try {
+            const coverageData = JSON.parse(fs.readFileSync(coveragePath, 'utf8'));
+            const filteredCoverageData = filterCoverageData(coverageData, coverageFilters);
+            const map = coverage.createCoverageMap(filteredCoverageData);
+            combinedMap.merge(map);
+            console.log(`Loaded coverage report: ${path.basename(reportDir)}`);
+        } catch (err) {
+            console.error(`Error loading coverage report from ${reportDir}:`, err.message);
+        }
+    }
 }
 
 // Ensure a coverage directory exists
@@ -85,13 +79,16 @@ lcovReport.execute(context);
 
 console.log(`Merged coverage reports successfully`);
 
-// Clean up directories only if they exist
-if (fs.existsSync(coverageParallelDir)) {
-    await fsAsync.rm(coverageParallelDir, { recursive: true, force: true });
-}
+// Clean up all monocart report directories
+if (fs.existsSync(testReportsDir)) {
+    const reportDirs = fs
+        .readdirSync(testReportsDir, { withFileTypes: true })
+        .filter((d) => d.isDirectory() && d.name.startsWith('monocart-report-'))
+        .map((d) => path.join(testReportsDir, d.name));
 
-if (fs.existsSync(coverageSequentialDir)) {
-    await fsAsync.rm(coverageSequentialDir, { recursive: true, force: true });
+    for (const reportDir of reportDirs) {
+        await fsAsync.rm(reportDir, { recursive: true, force: true });
+    }
 }
 
 // Bamboo can upload only files as an artifact, not directories

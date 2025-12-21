@@ -12,11 +12,25 @@ import path from 'path';
  */
 dotenv.config({ path: path.join(__dirname, 'playwright.env') });
 
+function parseGlobCsv(envVarName: string): string[] | undefined {
+    const raw = process.env[envVarName];
+    if (!raw) {
+        return undefined;
+    }
+    const values = raw
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean);
+    return values.length > 0 ? values : undefined;
+}
+
 /**
  * See https://playwright.dev/docs/test-configuration.
  */
 export default defineConfig({
     testDir: './',
+    testMatch: parseGlobCsv('PLAYWRIGHT_TEST_INCLUDE'),
+    testIgnore: parseGlobCsv('PLAYWRIGHT_TEST_IGNORE'),
     /* Run tests in files in parallel */
     fullyParallel: true,
     timeout: (parseNumber(process.env.TEST_TIMEOUT_SECONDS) ?? 3 * 60) * 1000,

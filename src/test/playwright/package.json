@@ -20,14 +20,14 @@
         "archiver": "7.0.1"
     },
     "scripts": {
-        "playwright:test": "cross-env NODE_OPTIONS='--max-old-space-size=8192' npm-run-all --serial --continue-on-error playwright:test:parallel playwright:test:sequential merge-junit-reports merge-coverage-reports",
+        "playwright:test": "node ./run-playwright.mjs",
         "playwright:test:parallel": "cross-env PLAYWRIGHT_TEST_TYPE=parallel playwright test e2e --project=fast-tests --project=slow-tests",
         "playwright:test:sequential": "cross-env PLAYWRIGHT_TEST_TYPE=sequential playwright test e2e --project=sequential-tests --workers 1",
         "playwright:open": "playwright test e2e --ui",
         "playwright:setup": "npx playwright install --with-deps chromium && playwright test init",
         "playwright:setup-local": "npx playwright install --with-deps chromium",
         "playwright:init": "playwright test init",
-        "merge-junit-reports": "junit-merge ./test-reports/results-parallel.xml ./test-reports/results-sequential.xml -o ./test-reports/results.xml",
+        "merge-junit-reports": "node ./merge-junit-reports.mjs",
         "merge-coverage-reports": "node ./merge-coverage-reports.mjs",
         "update": "ncu -i --format group",
         "pretest": "tsc --incremental -p tsconfig.json"

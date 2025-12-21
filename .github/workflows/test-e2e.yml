@@ -95,6 +95,64 @@ jobs:
         run: |
           chmod +x .ci/E2E-tests/cleanup.sh
           chmod +x .ci/E2E-tests/execute.sh
+          chmod +x .ci/E2E-tests/determine_relevant_playwright_globs.sh
+
+      - name: Determine relevant Playwright tests
+        id: relevant-tests
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
+          WORKFLOW_EVENT: ${{ github.event.workflow_run.event }}
+          REPO: ${{ github.repository }}
+          OWNER: ${{ github.repository_owner }}
+        run: |
+          set -euo pipefail
+
+          echo "Head SHA: ${HEAD_SHA}"
+          echo "Workflow event: ${WORKFLOW_EVENT}"
+
+          api() {
+            curl -sS -H "Authorization: token ${GH_TOKEN}" -H "Accept: application/vnd.github.v3+json" "$@"
+          }
+
+          BASE_SHA=""
+
+          if [ "${WORKFLOW_EVENT}" = "pull_request" ]; then
+            echo "Resolving PR for branch: ${HEAD_BRANCH}"
+            PR_RESPONSE=$(api "https://api.github.com/repos/${REPO}/pulls?head=${OWNER}:${HEAD_BRANCH}")
+            PR_NUMBER=$(echo "$PR_RESPONSE" | grep -o '"number": [0-9]*,' | head -1 | sed 's/"number": //g' | sed 's/,//g' | tr -d ' \t\n\r')
+
+            if [ -z "$PR_NUMBER" ] || [ "$PR_NUMBER" = "null" ]; then
+              echo "No PR found for ${HEAD_BRANCH}; falling back to parent commit diff."
+            else
+              PR_DETAIL=$(api "https://api.github.com/repos/${REPO}/pulls/${PR_NUMBER}")
+              BASE_SHA=$(echo "$PR_DETAIL" | grep -o '"base"[^{]*{[^}]*"sha": "[a-f0-9]*"' | head -1 | sed -E 's/.*"sha": "([a-f0-9]+)"/\1/')
+              echo "PR #${PR_NUMBER} base SHA: ${BASE_SHA}"
+            fi
+          fi
+
+          if [ -z "${BASE_SHA}" ]; then
+            COMMIT_DETAIL=$(api "https://api.github.com/repos/${REPO}/commits/${HEAD_SHA}")
+            BASE_SHA=$(echo "$COMMIT_DETAIL" | grep -o '"parents":\[[^]]*\]' | head -1 | grep -o '"sha": "[a-f0-9]*"' | head -1 | sed -E 's/"sha": "([a-f0-9]+)"/\1/')
+            echo "Parent/base SHA: ${BASE_SHA}"
+          fi
+
+          if [ -z "${BASE_SHA}" ]; then
+            echo "::warning::Could not determine base SHA; running full E2E suite."
+            echo "PLAYWRIGHT_RELEVANT_GLOBS=" >> "$GITHUB_ENV"
+            exit 0
+          fi
+
+          echo "Fetching changed files via compare API (${BASE_SHA}...${HEAD_SHA})"
+          COMPARE_JSON=$(api "https://api.github.com/repos/${REPO}/compare/${BASE_SHA}...${HEAD_SHA}")
+
+          echo "$COMPARE_JSON" | grep -o '"filename": "[^"]*"' | sed -E 's/"filename": "(.*)"/\1/' > changed-files.txt || true
+          echo "Changed files: $(wc -l < changed-files.txt | tr -d ' ')"
+
+          RELEVANT=$(.ci/E2E-tests/determine_relevant_playwright_globs.sh < changed-files.txt)
+          echo "Relevant Playwright globs: ${RELEVANT}"
+          echo "PLAYWRIGHT_RELEVANT_GLOBS=${RELEVANT}" >> "$GITHUB_ENV"
 
       - name: Run cleanup script (before E2E)
         run: .ci/E2E-tests/cleanup.sh
