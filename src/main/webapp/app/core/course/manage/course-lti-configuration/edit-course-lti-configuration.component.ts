@@ -21,6 +21,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
 import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
+import { IS_AT_LEAST_ADMIN } from 'app/shared/constants/authority.constants';
 
 @Component({
     selector: 'jhi-edit-course-lti-configuration',
@@ -47,10 +48,15 @@ import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.com
     ],
 })
 export class EditCourseLtiConfigurationComponent implements OnInit {
-    private route = inject(ActivatedRoute);
-    private courseService = inject(CourseManagementService);
-    private router = inject(Router);
-    private ltiConfigurationService = inject(LtiConfigurationService);
+    private readonly route = inject(ActivatedRoute);
+    private readonly courseService = inject(CourseManagementService);
+    private readonly router = inject(Router);
+    private readonly ltiConfigurationService = inject(LtiConfigurationService);
+
+    protected readonly IS_AT_LEAST_ADMIN = IS_AT_LEAST_ADMIN;
+
+    protected readonly faBan = faBan;
+    protected readonly faSave = faSave;
 
     @ViewChild('scrollableContent') scrollableContent: ElementRef;
 
@@ -65,10 +71,6 @@ export class EditCourseLtiConfigurationComponent implements OnInit {
 
     isSaving = false;
     loading = false;
-
-    // Icons
-    faBan = faBan;
-    faSave = faSave;
 
     /**
      * Gets the configuration for the course encoded in the route and prepares the form

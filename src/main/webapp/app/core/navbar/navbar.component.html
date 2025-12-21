@@ -131,13 +131,7 @@
                     </a>
                 </li>
             }
-            <li
-                *jhiHasAnyAuthority="['ROLE_TA', 'ROLE_EDITOR', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN']"
-                ngbDropdown
-                class="nav-item dropdown pointer"
-                routerLinkActive="active"
-                [routerLinkActiveOptions]="{ exact: true }"
-            >
+            <li *jhiHasAnyAuthority="IS_AT_LEAST_TUTOR" ngbDropdown class="nav-item dropdown pointer" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
                 @if (!isExamActive && !isExamStarted) {
                     <a class="nav-link py-0" routerLink="/course-management" (click)="collapseNavbar()" id="course-admin-menu">
                         <span>

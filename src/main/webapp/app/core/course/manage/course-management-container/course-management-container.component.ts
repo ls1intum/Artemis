@@ -54,6 +54,7 @@ import { Course, isCommunicationEnabled } from 'app/core/course/shared/entities/
 import { CourseDeletionSummaryDTO } from 'app/core/course/shared/entities/course-deletion-summary.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { IS_AT_LEAST_ADMIN } from 'app/shared/constants/authority.constants';
 
 @Component({
     selector: 'jhi-course-management-container',
@@ -99,6 +100,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     protected readonly faTrash = faTrash;
 
     protected readonly ButtonSize = ButtonSize;
+    protected readonly IS_AT_LEAST_ADMIN = IS_AT_LEAST_ADMIN;
 
     private eventSubscriber: Subscription;
     private featureToggleSub: Subscription;

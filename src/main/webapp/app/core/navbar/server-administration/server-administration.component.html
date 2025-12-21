@@ -1,4 +1,4 @@
-<li *jhiHasAnyAuthority="'ROLE_ADMIN'" class="nav-item pointer server-administration" routerLinkActive="active">
+<li *jhiHasAnyAuthority="IS_AT_LEAST_ADMIN" class="nav-item pointer server-administration" routerLinkActive="active">
     @if (!isExamActive() && !isExamStarted()) {
         <a class="nav-link py-0" routerLink="/admin" (click)="onLinkClick()" id="admin-menu">
             <span>

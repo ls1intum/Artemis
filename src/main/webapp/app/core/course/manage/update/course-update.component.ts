@@ -42,6 +42,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
 import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
 import { FileService } from 'app/shared/service/file.service';
+import { IS_AT_LEAST_ADMIN } from 'app/shared/constants/authority.constants';
 
 const DEFAULT_CUSTOM_GROUP_NAME = 'artemis-dev';
 
@@ -73,20 +74,30 @@ const DEFAULT_CUSTOM_GROUP_NAME = 'artemis-dev';
     ],
 })
 export class CourseUpdateComponent implements OnInit {
-    private eventManager = inject(EventManager);
-    private courseManagementService = inject(CourseManagementService);
-    private courseAdminService = inject(CourseAdminService);
-    private activatedRoute = inject(ActivatedRoute);
-    private fileService = inject(FileService);
-    private alertService = inject(AlertService);
-    private profileService = inject(ProfileService);
-    private organizationService = inject(OrganizationManagementService);
-    private modalService = inject(NgbModal);
-    private navigationUtilService = inject(ArtemisNavigationUtilService);
-    private router = inject(Router);
-    private accountService = inject(AccountService);
+    private readonly eventManager = inject(EventManager);
+    private readonly courseManagementService = inject(CourseManagementService);
+    private readonly courseAdminService = inject(CourseAdminService);
+    private readonly activatedRoute = inject(ActivatedRoute);
+    private readonly fileService = inject(FileService);
+    private readonly alertService = inject(AlertService);
+    private readonly profileService = inject(ProfileService);
+    private readonly organizationService = inject(OrganizationManagementService);
+    private readonly modalService = inject(NgbModal);
+    private readonly navigationUtilService = inject(ArtemisNavigationUtilService);
+    private readonly router = inject(Router);
+    private readonly accountService = inject(AccountService);
 
-    ProgrammingLanguage = ProgrammingLanguage;
+    protected readonly ProgrammingLanguage = ProgrammingLanguage;
+    protected readonly IS_AT_LEAST_ADMIN = IS_AT_LEAST_ADMIN;
+    protected readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
+
+    protected readonly faSave = faSave;
+    protected readonly faBan = faBan;
+    protected readonly faTimes = faTimes;
+    protected readonly faTrash = faTrash;
+    protected readonly faQuestionCircle = faQuestionCircle;
+    protected readonly faExclamationTriangle = faExclamationTriangle;
+    protected readonly faPen = faPen;
 
     @ViewChild('fileInput', { static: false }) fileInput: ElementRef<HTMLInputElement>;
     @ViewChild(ColorSelectorComponent, { static: false }) colorSelector: ColorSelectorComponent;
@@ -96,8 +107,6 @@ export class CourseUpdateComponent implements OnInit {
     tzClick$ = new Subject<string>();
     timeZones: string[] = [];
     originalTimeZone?: string;
-
-    readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
 
     courseForm: FormGroup;
     course: Course;
@@ -109,14 +118,6 @@ export class CourseUpdateComponent implements OnInit {
     customizeGroupNames = false;
     courseOrganizations: Organization[];
     isAdmin = false;
-    // Icons
-    faSave = faSave;
-    faBan = faBan;
-    faTimes = faTimes;
-    faTrash = faTrash;
-    faQuestionCircle = faQuestionCircle;
-    faExclamationTriangle = faExclamationTriangle;
-    faPen = faPen;
 
     faqEnabled = true;
     communicationEnabled = true;
