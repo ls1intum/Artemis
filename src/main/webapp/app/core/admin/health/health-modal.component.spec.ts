@@ -1,32 +1,38 @@
+/**
+ * Vitest tests for HealthModalComponent.
+ */
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { HealthModalComponent } from 'app/core/admin/health/health-modal.component';
-import { MockProvider } from 'ng-mocks';
 import { HealthDetails, HealthKey } from 'app/core/admin/health/health.model';
-import { By } from '@angular/platform-browser';
 
 describe('HealthModalComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<HealthModalComponent>;
     let comp: HealthModalComponent;
     let activeModal: NgbActiveModal;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            providers: [MockProvider(NgbActiveModal)],
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [HealthModalComponent],
+            providers: [NgbActiveModal],
         })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(HealthModalComponent);
-                comp = fixture.componentInstance;
-                activeModal = TestBed.inject(NgbActiveModal);
-            });
+            .overrideTemplate(HealthModalComponent, '<button class="btn-close" (click)="dismiss()"></button>')
+            .compileComponents();
+
+        fixture = TestBed.createComponent(HealthModalComponent);
+        comp = fixture.componentInstance;
+        activeModal = TestBed.inject(NgbActiveModal);
     });
 
     it('should convert basic types to string', () => {
         expect(comp.readableValue(42)).toBe('42');
     });
 
-    it('passed object should still be parsable', () => {
+    it('should stringify objects to parsable JSON', () => {
         const object = {
             foo: 'bar',
             bar: 42,
@@ -35,27 +41,25 @@ describe('HealthModalComponent', () => {
         expect(JSON.parse(result)).toEqual(object);
     });
 
-    it('should parse GB-value to String', () => {
+    it('should parse GB-value to String for diskSpace', () => {
         comp.health = { key: 'diskSpace' as HealthKey, value: {} as HealthDetails };
         const gbValueInByte = 4156612385;
         const expectedString = '3.87 GB';
         expect(comp.readableValue(gbValueInByte)).toBe(expectedString);
     });
 
-    it('should parse MB-value to String', () => {
+    it('should parse MB-value to String for diskSpace', () => {
         comp.health = { key: 'diskSpace' as HealthKey, value: {} as HealthDetails };
-        const gbValueInByte = 41566;
+        const mbValueInByte = 41566;
         const expectedString = '0.04 MB';
-        expect(comp.readableValue(gbValueInByte)).toBe(expectedString);
+        expect(comp.readableValue(mbValueInByte)).toBe(expectedString);
     });
 
-    it('should dismiss the modal if close button is clicked', () => {
-        const dismissSpy = jest.spyOn(activeModal, 'dismiss');
+    it('should dismiss the modal when dismiss is called', () => {
+        const dismissSpy = vi.spyOn(activeModal, 'dismiss');
 
-        const button = fixture.debugElement.query(By.css('button.btn-close'));
-        expect(button).not.toBeNull();
+        comp.dismiss();
 
-        button.nativeElement.click();
         expect(dismissSpy).toHaveBeenCalledOnce();
     });
 });

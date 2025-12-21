@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { faExclamationTriangle, faPencilAlt, faPlus, faSort, faTrash, faWrench } from '@fortawesome/free-solid-svg-icons';
@@ -22,9 +22,14 @@ import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
 
+/**
+ * Admin component for managing LTI platform configurations.
+ * Displays LTI URLs and allows CRUD operations on platform configurations.
+ */
 @Component({
     selector: 'jhi-lti-configuration',
     templateUrl: './lti-configuration.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         FormsModule,
         TranslateDirective,
@@ -46,31 +51,39 @@ import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
     ],
 })
 export class LtiConfigurationComponent implements OnInit {
-    private router = inject(Router);
-    private ltiConfigurationService = inject(LtiConfigurationService);
-    private sortService = inject(SortService);
-    private alertService = inject(AlertService);
-    private activatedRoute = inject(ActivatedRoute);
+    private readonly router = inject(Router);
+    private readonly ltiConfigurationService = inject(LtiConfigurationService);
+    private readonly sortService = inject(SortService);
+    private readonly alertService = inject(AlertService);
+    private readonly activatedRoute = inject(ActivatedRoute);
 
+    /** Course associated with LTI configuration */
     course: Course;
-    platforms: LtiPlatformConfiguration[];
-    ascending!: boolean;
-    activeTab = 1;
-    predicate = 'id';
-    reverse = false;
+    /** LTI platform configurations */
+    readonly platforms = signal<LtiPlatformConfiguration[]>([]);
+    /** Sort ascending flag */
+    readonly ascending = signal(true);
+    /** Active tab index */
+    readonly activeTab = signal(1);
+    /** Sort predicate */
+    readonly predicate = signal('id');
+    /** Reverse sort flag */
+    readonly reverse = signal(false);
 
     // page information
-    page = 1;
-    itemsPerPage = ITEMS_PER_PAGE;
-    totalItems = 0;
+    /** Current page number */
+    readonly page = signal(1);
+    /** Items per page */
+    readonly itemsPerPage = ITEMS_PER_PAGE;
+    /** Total items count */
+    readonly totalItems = signal(0);
 
-    // Icons
-    faSort = faSort;
-    faExclamationTriangle = faExclamationTriangle;
-    faWrench = faWrench;
-    faPencilAlt = faPencilAlt;
-    faTrash = faTrash;
-    faPlus = faPlus;
+    protected readonly faSort = faSort;
+    protected readonly faExclamationTriangle = faExclamationTriangle;
+    protected readonly faWrench = faWrench;
+    protected readonly faPencilAlt = faPencilAlt;
+    protected readonly faTrash = faTrash;
+    protected readonly faPlus = faPlus;
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -81,10 +94,10 @@ export class LtiConfigurationComponent implements OnInit {
     ngOnInit(): void {
         combineLatest({ data: this.activatedRoute.data, params: this.activatedRoute.queryParamMap }).subscribe(({ data, params }) => {
             const page = params.get('page');
-            this.page = page !== null ? +page : 1;
+            this.page.set(page !== null ? +page : 1);
             const sort = (params.get('sort') ?? data['defaultSort']).split(',');
-            this.predicate = sort[0];
-            this.ascending = sort[1] === 'asc';
+            this.predicate.set(sort[0]);
+            this.ascending.set(sort[1] === 'asc');
             this.loadData();
         });
     }
@@ -92,7 +105,7 @@ export class LtiConfigurationComponent implements OnInit {
     loadData(): void {
         this.ltiConfigurationService
             .query({
-                page: this.page - 1,
+                page: this.page() - 1,
                 size: this.itemsPerPage,
                 sort: this.sort(),
             })
@@ -102,8 +115,8 @@ export class LtiConfigurationComponent implements OnInit {
     transition(): void {
         this.router.navigate(['/admin/lti-configuration'], {
             queryParams: {
-                page: this.page,
-                sort: this.predicate + ',' + (this.ascending ? 'asc' : 'desc'),
+                page: this.page(),
+                sort: this.predicate() + ',' + (this.ascending() ? 'asc' : 'desc'),
             },
         });
     }
@@ -154,7 +167,9 @@ export class LtiConfigurationComponent implements OnInit {
      * Sorts the `platforms` array by the current `predicate` in `reverse` order.
      */
     sortRows() {
-        this.sortService.sortByProperty(this.platforms, this.predicate, this.reverse);
+        const platformsCopy = [...this.platforms()];
+        this.sortService.sortByProperty(platformsCopy, this.predicate(), this.reverse());
+        this.platforms.set(platformsCopy);
     }
 
     /**
@@ -168,7 +183,7 @@ export class LtiConfigurationComponent implements OnInit {
         this.ltiConfigurationService.deleteLtiPlatform(platformId).subscribe({
             next: () => {
                 this.dialogErrorSource.next('');
-                this.platforms = this.platforms.filter((platform) => platform.id !== platformId);
+                this.platforms.update((platforms) => platforms.filter((platform) => platform.id !== platformId));
             },
             error: (error: HttpErrorResponse) => {
                 this.dialogErrorSource.next(error.message);
@@ -178,15 +193,15 @@ export class LtiConfigurationComponent implements OnInit {
     }
 
     private sort(): string[] {
-        const result = [this.predicate + ',' + (this.ascending ? 'asc' : 'desc')];
-        if (this.predicate !== 'id') {
+        const result = [this.predicate() + ',' + (this.ascending() ? 'asc' : 'desc')];
+        if (this.predicate() !== 'id') {
             result.push('id');
         }
         return result;
     }
 
     private onSuccess(platforms: LtiPlatformConfiguration[] | null, headers: HttpHeaders): void {
-        this.totalItems = Number(headers.get('X-Total-Count'));
-        this.platforms = platforms || [];
+        this.totalItems.set(Number(headers.get('X-Total-Count')));
+        this.platforms.set(platforms || []);
     }
 }

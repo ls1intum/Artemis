@@ -1,5 +1,5 @@
 import { NgClass } from '@angular/common';
-import { Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { NgbModal, NgbModalRef, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { faCheck, faEdit, faExternalLinkAlt, faSync, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -20,9 +20,14 @@ import { regexValidator } from 'app/shared/form/shortname-validator.directive';
 import { getCurrentAndFutureSemesters } from 'app/shared/util/semester-utils';
 import { SHORT_NAME_PATTERN } from 'app/shared/constants/input.constants';
 
+/**
+ * Admin component for managing course creation requests.
+ * Allows administrators to review, accept, reject, or edit pending course requests.
+ */
 @Component({
     selector: 'jhi-course-requests-admin',
     templateUrl: './course-requests.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         NgClass,
         TranslateDirective,
@@ -38,10 +43,10 @@ import { SHORT_NAME_PATTERN } from 'app/shared/constants/input.constants';
     ],
 })
 export class CourseRequestsComponent implements OnInit {
-    private courseRequestService = inject(CourseRequestService);
-    private alertService = inject(AlertService);
-    private modalService = inject(NgbModal);
-    private fb = inject(FormBuilder);
+    private readonly courseRequestService = inject(CourseRequestService);
+    private readonly alertService = inject(AlertService);
+    private readonly modalService = inject(NgbModal);
+    private readonly fb = inject(FormBuilder);
 
     protected readonly ButtonType = ButtonType;
     protected readonly ButtonSize = ButtonSize;
@@ -54,16 +59,26 @@ export class CourseRequestsComponent implements OnInit {
     protected readonly SHORT_NAME_PATTERN = SHORT_NAME_PATTERN;
     protected readonly semesters = getCurrentAndFutureSemesters();
 
-    pendingRequests: CourseRequest[] = [];
-    decidedRequests: CourseRequest[] = [];
-    totalDecidedCount = 0;
-    decidedPage = 1; // NgbPagination uses 1-indexed pages
-    decidedPageSize = 20;
+    /** Pending course requests */
+    readonly pendingRequests = signal<CourseRequest[]>([]);
+    /** Decided course requests */
+    readonly decidedRequests = signal<CourseRequest[]>([]);
+    /** Total count of decided requests for pagination */
+    readonly totalDecidedCount = signal(0);
+    /** Current page for decided requests (NgbPagination uses 1-indexed pages) */
+    readonly decidedPage = signal(1);
+    /** Page size for decided requests */
+    readonly decidedPageSize = 20;
 
-    loading = false;
-    selectedRequest?: CourseRequest;
-    decisionReason = '';
-    reasonInvalid = false;
+    /** Loading state */
+    readonly loading = signal(false);
+    /** Currently selected request for modal operations */
+    readonly selectedRequest = signal<CourseRequest | undefined>(undefined);
+    /** Reason for rejection */
+    readonly decisionReason = signal('');
+    /** Whether reason is invalid */
+    readonly reasonInvalid = signal(false);
+    /** Modal reference */
     modalRef?: NgbModalRef;
 
     // Edit form
@@ -76,26 +91,28 @@ export class CourseRequestsComponent implements OnInit {
         testCourse: [false],
         reason: ['', [Validators.required]],
     });
-    editDateRangeInvalid = false;
-    isSubmittingEdit = false;
+    /** Whether edit date range is invalid */
+    readonly editDateRangeInvalid = signal(false);
+    /** Whether edit is being submitted */
+    readonly isSubmittingEdit = signal(false);
 
     ngOnInit() {
         this.load();
     }
 
     load() {
-        this.loading = true;
+        this.loading.set(true);
         // NgbPagination is 1-indexed, but API is 0-indexed
-        this.courseRequestService.findAdminOverview(this.decidedPage - 1, this.decidedPageSize).subscribe({
+        this.courseRequestService.findAdminOverview(this.decidedPage() - 1, this.decidedPageSize).subscribe({
             next: (overview) => {
-                this.pendingRequests = overview.pendingRequests;
-                this.decidedRequests = overview.decidedRequests;
-                this.totalDecidedCount = overview.totalDecidedCount;
-                this.loading = false;
+                this.pendingRequests.set(overview.pendingRequests);
+                this.decidedRequests.set(overview.decidedRequests);
+                this.totalDecidedCount.set(overview.totalDecidedCount);
+                this.loading.set(false);
             },
             error: (error) => {
                 onError(this.alertService, error);
-                this.loading = false;
+                this.loading.set(false);
             },
         });
     }
@@ -111,9 +128,9 @@ export class CourseRequestsComponent implements OnInit {
         this.courseRequestService.acceptRequest(request.id).subscribe({
             next: (updated) => {
                 // Move from pending to decided
-                this.pendingRequests = this.pendingRequests.filter((req) => req.id !== updated.id);
-                this.decidedRequests = [updated, ...this.decidedRequests];
-                this.totalDecidedCount++;
+                this.pendingRequests.update((reqs) => reqs.filter((req) => req.id !== updated.id));
+                this.decidedRequests.update((reqs) => [updated, ...reqs]);
+                this.totalDecidedCount.update((count) => count + 1);
                 this.alertService.success('artemisApp.courseRequest.admin.acceptSuccess', { title: updated.title, shortName: updated.shortName });
             },
             error: (error: HttpErrorResponse) => this.handleAcceptError(error, request),
@@ -134,30 +151,31 @@ export class CourseRequestsComponent implements OnInit {
     }
 
     openRejectModal(content: any, request: CourseRequest) {
-        this.selectedRequest = request;
-        this.decisionReason = '';
-        this.reasonInvalid = false;
+        this.selectedRequest.set(request);
+        this.decisionReason.set('');
+        this.reasonInvalid.set(false);
         this.modalRef = this.modalService.open(content, { size: 'lg' });
     }
 
     reject() {
-        if (!this.selectedRequest?.id) {
+        const currentRequest = this.selectedRequest();
+        if (!currentRequest?.id) {
             return;
         }
-        if (!this.decisionReason.trim()) {
-            this.reasonInvalid = true;
+        if (!this.decisionReason().trim()) {
+            this.reasonInvalid.set(true);
             return;
         }
-        this.courseRequestService.rejectRequest(this.selectedRequest.id, this.decisionReason).subscribe({
+        this.courseRequestService.rejectRequest(currentRequest.id, this.decisionReason()).subscribe({
             next: (updated) => {
                 // Move from pending to decided
-                this.pendingRequests = this.pendingRequests.filter((req) => req.id !== updated.id);
-                this.decidedRequests = [updated, ...this.decidedRequests];
-                this.totalDecidedCount++;
+                this.pendingRequests.update((reqs) => reqs.filter((req) => req.id !== updated.id));
+                this.decidedRequests.update((reqs) => [updated, ...reqs]);
+                this.totalDecidedCount.update((count) => count + 1);
                 this.alertService.success('artemisApp.courseRequest.admin.rejectSuccess', { title: updated.title });
                 this.modalRef?.close();
-                this.reasonInvalid = false;
-                this.selectedRequest = undefined;
+                this.reasonInvalid.set(false);
+                this.selectedRequest.set(undefined);
             },
             error: (error) => onError(this.alertService, error),
         });
@@ -190,9 +208,9 @@ export class CourseRequestsComponent implements OnInit {
     }
 
     openEditModal(content: any, request: CourseRequest) {
-        this.selectedRequest = request;
-        this.editDateRangeInvalid = false;
-        this.isSubmittingEdit = false;
+        this.selectedRequest.set(request);
+        this.editDateRangeInvalid.set(false);
+        this.isSubmittingEdit.set(false);
         this.editForm.reset({
             title: request.title,
             shortName: request.shortName,
@@ -206,8 +224,9 @@ export class CourseRequestsComponent implements OnInit {
     }
 
     saveEdit() {
-        this.editDateRangeInvalid = false;
-        if (this.editForm.invalid || !this.selectedRequest?.id) {
+        this.editDateRangeInvalid.set(false);
+        const currentRequest = this.selectedRequest();
+        if (this.editForm.invalid || !currentRequest?.id) {
             this.editForm.markAllAsTouched();
             return;
         }
@@ -215,7 +234,7 @@ export class CourseRequestsComponent implements OnInit {
         const startDate = this.editForm.get('startDate')!.value;
         const endDate = this.editForm.get('endDate')!.value;
         if (startDate && endDate && !startDate.isBefore(endDate)) {
-            this.editDateRangeInvalid = true;
+            this.editDateRangeInvalid.set(true);
             return;
         }
 
@@ -229,22 +248,27 @@ export class CourseRequestsComponent implements OnInit {
             reason: this.editForm.get('reason')!.value!,
         };
 
-        this.isSubmittingEdit = true;
-        this.courseRequestService.updateRequest(this.selectedRequest.id, payload).subscribe({
+        this.isSubmittingEdit.set(true);
+        this.courseRequestService.updateRequest(currentRequest.id, payload).subscribe({
             next: (updated) => {
                 // Update the request in the list
-                const index = this.pendingRequests.findIndex((req) => req.id === updated.id);
-                if (index !== -1) {
-                    this.pendingRequests[index] = updated;
-                }
+                this.pendingRequests.update((reqs) => {
+                    const index = reqs.findIndex((req) => req.id === updated.id);
+                    if (index !== -1) {
+                        const newReqs = [...reqs];
+                        newReqs[index] = updated;
+                        return newReqs;
+                    }
+                    return reqs;
+                });
                 this.alertService.success('artemisApp.courseRequest.admin.editSuccess');
                 this.modalRef?.close();
-                this.isSubmittingEdit = false;
-                this.selectedRequest = undefined;
+                this.isSubmittingEdit.set(false);
+                this.selectedRequest.set(undefined);
             },
             error: (error: HttpErrorResponse) => {
                 this.handleEditError(error);
-                this.isSubmittingEdit = false;
+                this.isSubmittingEdit.set(false);
             },
         });
     }

@@ -1,44 +1,44 @@
-@if (user) {
+@if (user(); as u) {
     <div>
         <h2>
-            <span jhiTranslate="artemisApp.userManagement.detail.title"></span>[<b>{{ user.login }}</b
+            <span jhiTranslate="artemisApp.userManagement.detail.title"></span>[<b>{{ u.login }}</b
             >]
         </h2>
         <dl class="row-md jh-entity-details">
             <dt><span jhiTranslate="artemisApp.userManagement.login"></span></dt>
             <dd>
-                <span>{{ user.login }}</span>
-                @if (user.activated) {
+                <span>{{ u.login }}</span>
+                @if (u.activated) {
                     <span class="badge badge-success" jhiTranslate="artemisApp.userManagement.activated"></span>
                 }
-                @if (!user.activated) {
+                @if (!u.activated) {
                     <span class="badge badge-danger" jhiTranslate="artemisApp.userManagement.deactivated"></span>
                 }
             </dd>
             <dt><span jhiTranslate="artemisApp.userManagement.internal"></span></dt>
-            <dd>{{ (user.internal ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</dd>
+            <dd>{{ (u.internal ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</dd>
             <dt><span jhiTranslate="artemisApp.userManagement.firstName"></span></dt>
-            <dd>{{ user.firstName }}</dd>
+            <dd>{{ u.firstName }}</dd>
             <dt><span jhiTranslate="artemisApp.userManagement.lastName"></span></dt>
-            <dd>{{ user.lastName }}</dd>
+            <dd>{{ u.lastName }}</dd>
             <dt><span jhiTranslate="artemisApp.userManagement.email"></span></dt>
-            <dd>{{ user.email }}</dd>
+            <dd>{{ u.email }}</dd>
             <dt><span jhiTranslate="artemisApp.userManagement.registrationNumber"></span></dt>
-            <dd>{{ user.visibleRegistrationNumber }}</dd>
+            <dd>{{ u.visibleRegistrationNumber }}</dd>
             <dt><span jhiTranslate="artemisApp.userManagement.langKey"></span></dt>
-            <dd>{{ user.langKey }}</dd>
+            <dd>{{ u.langKey }}</dd>
             <dt><span jhiTranslate="artemisApp.userManagement.createdBy"></span></dt>
-            <dd>{{ user.createdBy }}</dd>
+            <dd>{{ u.createdBy }}</dd>
             <dt><span jhiTranslate="artemisApp.userManagement.createdDate"></span></dt>
-            <dd>{{ user.createdDate | artemisDate }}</dd>
+            <dd>{{ u.createdDate | artemisDate }}</dd>
             <dt><span jhiTranslate="artemisApp.userManagement.lastModifiedBy"></span></dt>
-            <dd>{{ user.lastModifiedBy }}</dd>
+            <dd>{{ u.lastModifiedBy }}</dd>
             <dt><span jhiTranslate="artemisApp.userManagement.lastModifiedDate"></span></dt>
-            <dd>{{ user.lastModifiedDate | artemisDate }}</dd>
+            <dd>{{ u.lastModifiedDate | artemisDate }}</dd>
             <dt><span jhiTranslate="artemisApp.userManagement.profiles"></span></dt>
             <dd>
                 <ul class="list-unstyled">
-                    @for (authority of user.authorities; track authority) {
+                    @for (authority of u.authorities; track authority) {
                         <li>
                             <span class="badge bg-info">{{ authority }}</span>
                         </li>
@@ -48,7 +48,7 @@
             <dt><span jhiTranslate="artemisApp.userManagement.groups"></span></dt>
             <dd>
                 <ul class="list-unstyled">
-                    @for (group of user.groups; track group) {
+                    @for (group of u.groups; track group) {
                         <li>
                             <span>{{ group }}</span>
                         </li>

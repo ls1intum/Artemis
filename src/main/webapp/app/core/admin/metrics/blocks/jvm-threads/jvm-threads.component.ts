@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, effect, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { NgbModal, NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
 
 import { Thread, ThreadState } from 'app/core/admin/metrics/metrics.model';
@@ -13,44 +13,43 @@ import { DecimalPipe } from '@angular/common';
     imports: [TranslateDirective, NgbProgressbar, DecimalPipe],
 })
 export class JvmThreadsComponent {
-    threadStats = signal({
-        all: 0,
-        runnable: 0,
-        timedWaiting: 0,
-        waiting: 0,
-        blocked: 0,
-    });
+    private readonly modalService = inject(NgbModal);
 
-    private changeDetector = inject(ChangeDetectorRef);
-    private modalService = inject(NgbModal);
+    /** Thread data from parent */
+    readonly threads = input<Thread[]>([]);
 
-    threads = input<Thread[]>([]);
+    /** Computed thread statistics derived from threads input */
+    readonly threadStats = computed(() => {
+        let runnable = 0;
+        let waiting = 0;
+        let timedWaiting = 0;
+        let blocked = 0;
 
-    constructor() {
-        effect(() => this.computeThreadStats());
-    }
-
-    private computeThreadStats() {
         this.threads().forEach((thread) => {
             switch (thread.threadState) {
                 case ThreadState.Runnable:
-                    this.threadStats().runnable += 1;
+                    runnable += 1;
                     break;
                 case ThreadState.Waiting:
-                    this.threadStats().waiting += 1;
+                    waiting += 1;
                     break;
                 case ThreadState.TimedWaiting:
-                    this.threadStats().timedWaiting += 1;
+                    timedWaiting += 1;
                     break;
                 case ThreadState.Blocked:
-                    this.threadStats().blocked += 1;
+                    blocked += 1;
                     break;
             }
         });
 
-        this.threadStats().all = this.threadStats().runnable + this.threadStats().waiting + this.threadStats().timedWaiting + this.threadStats().blocked;
-        this.changeDetector.markForCheck();
-    }
+        return {
+            all: runnable + waiting + timedWaiting + blocked,
+            runnable,
+            timedWaiting,
+            waiting,
+            blocked,
+        };
+    });
 
     open(): void {
         const modalRef = this.modalService.open(MetricsModalThreadsComponent, { size: 'xl' });

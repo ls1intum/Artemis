@@ -1,151 +1,143 @@
-import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
+/**
+ * Vitest tests for DeleteUsersButtonComponent.
+ * Tests the component that handles bulk deletion of non-enrolled users.
+ */
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { of, throwError } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { TranslateService } from '@ngx-translate/core';
+
 import { DeleteUsersButtonComponent } from 'app/core/admin/user-management/delete-users-button/delete-users-button.component';
 import { AdminUserService } from 'app/core/user/shared/admin-user.service';
 import { DeleteDialogService } from 'app/shared/delete-dialog/service/delete-dialog.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import * as globalUtils from 'app/shared/util/global.utils';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { TranslateService } from '@ngx-translate/core';
 
 describe('DeleteUsersButtonComponent', () => {
-    let comp: DeleteUsersButtonComponent;
+    setupTestBed({ zoneless: true });
+
+    let component: DeleteUsersButtonComponent;
     let fixture: ComponentFixture<DeleteUsersButtonComponent>;
     let adminUserService: AdminUserService;
     let alertService: AlertService;
     let deleteDialogService: DeleteDialogService;
 
-    const dummyUserLogins: string[] = ['student42', 'tutor73'];
-    const dummyError: Error = new Error('Some server side error ...');
+    /** Sample user logins to be deleted */
+    const testUserLogins: string[] = ['student42', 'tutor73'];
+    /** Sample error for testing error handling */
+    const testError: Error = new Error('Some server side error ...');
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }, provideHttpClient()],
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [DeleteUsersButtonComponent],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }, provideHttpClient(), provideHttpClientTesting()],
         })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(DeleteUsersButtonComponent);
-                comp = fixture.componentInstance;
-                adminUserService = TestBed.inject(AdminUserService);
-                alertService = TestBed.inject(AlertService);
-                deleteDialogService = TestBed.inject(DeleteDialogService);
-            });
+            .overrideTemplate(DeleteUsersButtonComponent, '')
+            .compileComponents();
+
+        fixture = TestBed.createComponent(DeleteUsersButtonComponent);
+        component = fixture.componentInstance;
+        adminUserService = TestBed.inject(AdminUserService);
+        alertService = TestBed.inject(AlertService);
+        deleteDialogService = TestBed.inject(DeleteDialogService);
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     describe('loadUserList', () => {
-        it('List of users', fakeAsync(() => {
-            // GIVEN
-            jest.spyOn(comp, 'openDeleteDialog').mockImplementation(/*Show now dialog*/);
-            jest.spyOn(adminUserService, 'queryNotEnrolledUsers').mockReturnValue(
+        it('should load users and open delete dialog when users exist', () => {
+            vi.spyOn(component, 'openDeleteDialog').mockImplementation(() => {});
+            vi.spyOn(adminUserService, 'queryNotEnrolledUsers').mockReturnValue(
                 of(
                     new HttpResponse({
-                        body: dummyUserLogins,
+                        body: testUserLogins,
                     }),
                 ),
             );
 
-            // WHEN
-            comp.loadUserList();
+            component.loadUserList();
 
-            // THEN
             expect(adminUserService.queryNotEnrolledUsers).toHaveBeenCalledOnce();
-            expect(comp.openDeleteDialog).toHaveBeenCalledOnce();
-            expect(comp.users()).toEqual(dummyUserLogins);
-        }));
+            expect(component.openDeleteDialog).toHaveBeenCalledOnce();
+            expect(component.users()).toEqual(testUserLogins);
+        });
 
-        it('Nothing to delete message', fakeAsync(() => {
-            // GIVEN
-            jest.spyOn(adminUserService, 'queryNotEnrolledUsers').mockReturnValue(
+        it('should show info message when no users found to delete', () => {
+            vi.spyOn(adminUserService, 'queryNotEnrolledUsers').mockReturnValue(
                 of(
                     new HttpResponse({
                         body: [],
                     }),
                 ),
             );
-            jest.spyOn(alertService, 'info');
+            vi.spyOn(alertService, 'info');
 
-            // WHEN
-            comp.loadUserList();
+            component.loadUserList();
 
-            // THEN
             expect(adminUserService.queryNotEnrolledUsers).toHaveBeenCalledOnce();
-            expect(comp.users()).toBeEmpty();
+            expect(component.users()).toHaveLength(0);
             expect(alertService.info).toHaveBeenCalledWith('artemisApp.userManagement.notEnrolled.delete.cancel');
-        }));
+        });
 
-        it('Error response', fakeAsync(() => {
-            // GIVEN
-            jest.spyOn(adminUserService, 'queryNotEnrolledUsers').mockReturnValue(throwError(() => dummyError));
-            jest.spyOn(globalUtils, 'onError');
+        it('should handle error response and call onError', () => {
+            vi.spyOn(adminUserService, 'queryNotEnrolledUsers').mockReturnValue(throwError(() => testError));
+            vi.spyOn(globalUtils, 'onError');
 
-            // WHEN
-            comp.loadUserList();
+            component.loadUserList();
 
-            // THEN
             expect(adminUserService.queryNotEnrolledUsers).toHaveBeenCalledOnce();
-            expect(comp.users()).toBeUndefined();
-            expect(globalUtils.onError).toHaveBeenCalledWith(alertService, dummyError);
-        }));
+            expect(component.users()).toBeUndefined();
+            expect(globalUtils.onError).toHaveBeenCalledWith(alertService, testError);
+        });
     });
 
     describe('openDeleteDialog', () => {
-        it('calls method', fakeAsync(() => {
-            // GIVEN
-            jest.spyOn(deleteDialogService, 'openDeleteDialog').mockImplementation();
+        it('should call delete dialog service', () => {
+            vi.spyOn(deleteDialogService, 'openDeleteDialog').mockImplementation(() => {});
 
-            // WHEN
-            comp.openDeleteDialog();
+            component.openDeleteDialog();
 
-            // THEN
             expect(deleteDialogService.openDeleteDialog).toHaveBeenCalledOnce();
-        }));
+        });
     });
 
     describe('onConfirm', () => {
-        it('Users to delete', fakeAsync(() => {
-            // GIVEN
-            jest.spyOn(adminUserService, 'deleteUsers').mockReturnValue(of(new HttpResponse<void>()));
-            jest.spyOn(comp.deletionCompleted, 'emit');
-            comp.users.set(dummyUserLogins);
+        it('should delete users and emit completion event on success', () => {
+            vi.spyOn(adminUserService, 'deleteUsers').mockReturnValue(of(new HttpResponse<void>()));
+            vi.spyOn(component.deletionCompleted, 'emit');
+            component.users.set(testUserLogins);
 
-            //WHEN
-            comp.onConfirm();
+            component.onConfirm();
 
-            // THEN
-            expect(adminUserService.deleteUsers).toHaveBeenCalledWith(dummyUserLogins);
-            expect(comp.deletionCompleted.emit).toHaveBeenCalledOnce();
-        }));
+            expect(adminUserService.deleteUsers).toHaveBeenCalledWith(testUserLogins);
+            expect(component.deletionCompleted.emit).toHaveBeenCalledOnce();
+        });
 
-        it('Error response', fakeAsync(() => {
-            // GIVEN
-            jest.spyOn(adminUserService, 'deleteUsers').mockReturnValue(throwError(() => dummyError));
-            jest.spyOn(comp.deletionCompleted, 'emit');
-            comp.users.set(dummyUserLogins);
+        it('should not emit completion event when deletion fails', () => {
+            vi.spyOn(adminUserService, 'deleteUsers').mockReturnValue(throwError(() => testError));
+            vi.spyOn(component.deletionCompleted, 'emit');
+            component.users.set(testUserLogins);
 
-            //WHEN
-            comp.onConfirm();
+            component.onConfirm();
 
-            // THEN
-            expect(adminUserService.deleteUsers).toHaveBeenCalledWith(dummyUserLogins);
-            expect(comp.deletionCompleted.emit).not.toHaveBeenCalled();
-        }));
+            expect(adminUserService.deleteUsers).toHaveBeenCalledWith(testUserLogins);
+            expect(component.deletionCompleted.emit).not.toHaveBeenCalled();
+        });
 
-        it('Empty users list', fakeAsync(() => {
-            // GIVEN
-            jest.spyOn(adminUserService, 'deleteUsers').mockImplementation();
-            jest.spyOn(comp.deletionCompleted, 'emit');
+        it('should not call delete service when users list is empty', () => {
+            vi.spyOn(adminUserService, 'deleteUsers').mockImplementation(() => of(new HttpResponse<void>()));
+            vi.spyOn(component.deletionCompleted, 'emit');
 
-            //WHEN
-            comp.onConfirm();
+            component.onConfirm();
 
-            // THEN
             expect(adminUserService.deleteUsers).not.toHaveBeenCalled();
-            expect(comp.deletionCompleted.emit).not.toHaveBeenCalled();
-        }));
+            expect(component.deletionCompleted.emit).not.toHaveBeenCalled();
+        });
     });
 });

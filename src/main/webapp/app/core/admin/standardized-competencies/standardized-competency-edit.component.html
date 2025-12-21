@@ -1,26 +1,26 @@
 <div class="d-flex flex-column">
     <div class="mb-2">
         <div class="d-flex justify-content-between">
-            @if (competency.id !== undefined) {
-                <h4 [jhiTranslate]="'artemisApp.standardizedCompetency.details.title' + (isEditing ? 'Edit' : '')"></h4>
+            @if (competency().id !== undefined) {
+                <h4 [jhiTranslate]="'artemisApp.standardizedCompetency.details.title' + (isEditing() ? 'Edit' : '')"></h4>
             } @else {
                 <h4 jhiTranslate="artemisApp.standardizedCompetency.details.titleCreate"></h4>
             }
             <button type="button" class="btn-close" (click)="close()"></button>
         </div>
         <div>
-            @if (!isEditing) {
+            @if (!isEditing()) {
                 <jhi-button [btnType]="ButtonType.WARNING" [btnSize]="ButtonSize.SMALL" [title]="'entity.action.edit'" [icon]="faPencil" (onClick)="edit()" />
             }
             <!-- do not display the delete button when creating new competencies -->
-            @if (competency.id) {
+            @if (competency().id) {
                 <button
                     jhiDeleteButton
-                    [entityTitle]="competency.title ?? ''"
+                    [entityTitle]="competency().title ?? ''"
                     [deleteQuestion]="'artemisApp.standardizedCompetency.manage.deleteModal.question'"
                     [deleteConfirmationText]="'artemisApp.standardizedCompetency.manage.deleteModal.typeNameToConfirm'"
-                    (delete)="onDelete.emit(competency.id)"
-                    [dialogError]="dialogError"
+                    (delete)="onDelete.emit(competency().id!)"
+                    [dialogError]="dialogError()!"
                 >
                     <fa-icon [icon]="faTrash" />
                 </button>
@@ -44,7 +44,7 @@
         </div>
         <div class="form-group">
             <label jhiTranslate="artemisApp.standardizedCompetency.model.description"></label>
-            @if (isEditing) {
+            @if (isEditing()) {
                 <jhi-markdown-editor-monaco
                     [markdown]="form.controls.description.value"
                     (markdownChange)="updateDescriptionControl($event)"
@@ -69,7 +69,7 @@
         <div class="form-group">
             <label for="knowledge-area-select" jhiTranslate="artemisApp.standardizedCompetency.model.knowledgeArea"></label>
             <select id="knowledge-area-select" class="form-select" formControlName="knowledgeAreaId">
-                @for (knowledgeArea of knowledgeAreas; track knowledgeArea.id) {
+                @for (knowledgeArea of knowledgeAreas(); track knowledgeArea.id) {
                     <option [ngValue]="knowledgeArea.id">
                         {{ knowledgeArea.title }}
                     </option>
@@ -83,7 +83,7 @@
             <label for="source-select" jhiTranslate="artemisApp.standardizedCompetency.model.source"></label>
             <select id="source-select" class="form-select" formControlName="sourceId">
                 <option [ngValue]="undefined"></option>
-                @for (source of sources; track source.id) {
+                @for (source of sources(); track source.id) {
                     <option [ngValue]="source.id">
                         <!-- omit uri to keep the select short -->
                         {{ source.author ? source.author + '. ' : '' }}"{{ source.title }}"
@@ -92,7 +92,7 @@
             </select>
         </div>
     </div>
-    @if (isEditing) {
+    @if (isEditing()) {
         <div>
             <jhi-button [btnType]="ButtonType.SECONDARY" [btnSize]="ButtonSize.SMALL" [title]="'entity.action.cancel'" [icon]="faBan" (onClick)="cancel()" />
             <jhi-button

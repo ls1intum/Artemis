@@ -1,46 +1,69 @@
+/**
+ * Vitest tests for UserManagementResolve service.
+ * Tests the route resolver that fetches user data based on login parameter.
+ */
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { of } from 'rxjs';
 import { ActivatedRouteSnapshot } from '@angular/router';
+
 import { UserManagementResolve } from 'app/core/admin/user-management/user-management-resolve.service';
 import { User } from 'app/core/user/user.model';
-import { of } from 'rxjs';
 import { AdminUserService } from 'app/core/user/shared/admin-user.service';
-import { TestBed } from '@angular/core/testing';
 
 describe('UserManagementResolve', () => {
+    setupTestBed({ zoneless: true });
+
     let adminUserService: AdminUserService;
     let resolve: UserManagementResolve;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            providers: [UserManagementResolve, { provide: AdminUserService, useValue: { findUser: jest.fn() } }],
-        });
+    /** Mock service that provides a spy for the findUser method */
+    const mockAdminUserService = {
+        findUser: vi.fn(),
+    };
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            providers: [UserManagementResolve, { provide: AdminUserService, useValue: mockAdminUserService }],
+        }).compileComponents();
 
         adminUserService = TestBed.inject(AdminUserService);
         resolve = TestBed.inject(UserManagementResolve);
     });
 
-    it('should findUser the user', () => {
-        const mockReturnUser = { id: 1 } as User;
-        jest.spyOn(adminUserService, 'findUser').mockReturnValue(of(mockReturnUser));
+    beforeEach(() => {
+        vi.clearAllMocks();
+    });
 
-        const returned = resolve.resolve({ params: { login: 'test123' } } as any as ActivatedRouteSnapshot);
-        let returnedUser = undefined;
-        returned.subscribe((user) => (returnedUser = user));
+    it('should fetch user by login when login parameter is provided', () => {
+        const expectedUser = { id: 1 } as User;
+        const routeSnapshot = { params: { login: 'test123' } } as unknown as ActivatedRouteSnapshot;
 
-        expect(returnedUser).toBe(mockReturnUser);
+        vi.spyOn(adminUserService, 'findUser').mockReturnValue(of(expectedUser));
+
+        const result = resolve.resolve(routeSnapshot);
+        let resolvedUser: User | undefined;
+        result.subscribe((user) => (resolvedUser = user));
+
+        expect(resolvedUser).toBe(expectedUser);
         expect(adminUserService.findUser).toHaveBeenCalledOnce();
         expect(adminUserService.findUser).toHaveBeenCalledWith('test123');
     });
 
-    it('should should return new user if no login is given', () => {
-        const mockReturnUser = { id: 1 } as User;
-        jest.spyOn(adminUserService, 'findUser').mockReturnValue(of(mockReturnUser));
+    it('should return new User instance when login parameter is undefined', () => {
+        const existingUser = { id: 1 } as User;
+        const routeSnapshot = { params: { login: undefined } } as unknown as ActivatedRouteSnapshot;
 
-        const returned = resolve.resolve({ params: { login: undefined } } as any as ActivatedRouteSnapshot);
-        let returnedUser: any = undefined;
-        returned.subscribe((user) => (returnedUser = user));
+        vi.spyOn(adminUserService, 'findUser').mockReturnValue(of(existingUser));
 
-        expect(returnedUser).not.toBe(mockReturnUser);
-        expect(returnedUser).toBeInstanceOf(User);
+        const result = resolve.resolve(routeSnapshot);
+        let resolvedUser: User | undefined;
+        result.subscribe((user) => (resolvedUser = user));
+
+        // Should return a new User instance, not the mocked one
+        expect(resolvedUser).not.toBe(existingUser);
+        expect(resolvedUser).toBeInstanceOf(User);
         expect(adminUserService.findUser).not.toHaveBeenCalled();
     });
 });

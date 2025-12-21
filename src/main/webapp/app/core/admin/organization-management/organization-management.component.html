@@ -20,7 +20,7 @@
                 </tr>
             </thead>
             <tbody>
-                @for (organization of organizations; track trackIdentity($index, organization)) {
+                @for (organization of organizations(); track trackIdentity($index, organization)) {
                     <tr>
                         <td>
                             <span>{{ organization.id }}</span>

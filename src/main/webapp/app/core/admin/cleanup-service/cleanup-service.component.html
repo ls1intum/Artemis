@@ -14,7 +14,7 @@
                 </tr>
             </thead>
             <tbody>
-                @for (operation of cleanupOperations; track operation) {
+                @for (operation of cleanupOperations(); track operation) {
                     <tr>
                         <td>
                             <span [jhiTranslate]="'cleanupService.operation.' + operation.name"></span>

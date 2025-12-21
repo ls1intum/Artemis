@@ -20,7 +20,7 @@ import {
     faToggleOn,
     faUniversity,
     faUser,
-    faUserPlus,
+    faUserShield,
 } from '@fortawesome/free-solid-svg-icons';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { NgClass } from '@angular/common';
@@ -53,7 +53,7 @@ export interface AdminSidebarGroup {
 })
 export class AdminSidebarComponent {
     protected readonly faChevronRight = faChevronRight;
-    protected readonly faUserPlus = faUserPlus;
+    protected readonly faUserShield = faUserShield;
 
     isNavbarCollapsed = input<boolean>(false);
     localCIActive = input<boolean>(false);

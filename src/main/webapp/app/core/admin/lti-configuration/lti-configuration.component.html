@@ -2,7 +2,7 @@
     <div class="modal-header" style="margin-bottom: 20px">
         <h4 class="modal-title" jhiTranslate="artemisApp.lti.version13Configuration"></h4>
     </div>
-    <nav ngbNav #nav="ngbNav" [(activeId)]="activeTab" class="nav-tabs mt-4">
+    <nav ngbNav #nav="ngbNav" [activeId]="activeTab()" (activeIdChange)="activeTab.set($event)" class="nav-tabs mt-4">
         <ng-container ngbNavItem [ngbNavItem]="1">
             <a ngbNavLink jhiTranslate="artemisApp.lti.platformRegistration"></a>
             <ng-template ngbNavContent>
@@ -32,7 +32,14 @@
                         <div class="table-responsive">
                             <table class="table table-bordered">
                                 <thead class="thead-dark">
-                                    <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows()">
+                                    <tr
+                                        jhiSort
+                                        [predicate]="predicate()"
+                                        (predicateChange)="predicate.set($event)"
+                                        [ascending]="reverse()"
+                                        (ascendingChange)="reverse.set($event)"
+                                        (sortChange)="sortRows()"
+                                    >
                                         <th jhiSortBy="id">
                                             <span jhiTranslate="global.field.id"></span>
                                             <fa-icon [icon]="faSort" />
@@ -68,7 +75,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @for (platform of platforms; track platform) {
+                                    @for (platform of platforms(); track platform) {
                                         <tr id="platform-{{ platform.id }}">
                                             <td>{{ platform.id }}</td>
                                             <td>{{ platform.customName }}</td>
@@ -107,17 +114,17 @@
                         </div>
                         <div>
                             <div class="row justify-content-center">
-                                <jhi-item-count [params]="{ page: page, totalItems: totalItems, itemsPerPage: itemsPerPage }" />
+                                <jhi-item-count [params]="{ page: page(), totalItems: totalItems(), itemsPerPage: itemsPerPage }" />
                             </div>
                             <div class="row justify-content-center">
                                 <ngb-pagination
-                                    [collectionSize]="totalItems"
-                                    [(page)]="page"
+                                    [collectionSize]="totalItems()"
+                                    [page]="page()"
+                                    (pageChange)="page.set($event); transition()"
                                     [pageSize]="itemsPerPage"
                                     [maxSize]="5"
                                     [rotate]="true"
                                     [boundaryLinks]="true"
-                                    (pageChange)="transition()"
                                     [disabled]="false"
                                 />
                             </div>

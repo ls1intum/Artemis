@@ -43,7 +43,7 @@
                 <button id="cancelButton" type="button" class="btn btn-secondary" (click)="goToOverview()">
                     <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
                 </button>
-                <button id="saveButton" type="submit" [disabled]="editForm.form.invalid || isSaving" class="btn btn-primary">
+                <button id="saveButton" type="submit" [disabled]="editForm.form.invalid || isSaving()" class="btn btn-primary">
                     <fa-icon [icon]="faSave" />&nbsp;<span jhiTranslate="entity.action.save"></span>
                 </button>
             </div>

@@ -13,7 +13,7 @@
             </div>
         </div>
     </div>
-    @if (users) {
+    @if (users(); as userList) {
         <div class="table-responsive">
             <form [formGroup]="userSearchForm">
                 <div class="container-fluid">
@@ -33,12 +33,12 @@
                                 <button class="btn btn-primary ms-3" (click)="loadAll()">
                                     <span jhiTranslate="artemisApp.userManagement.search"></span>
                                 </button>
-                                @if (searchInvalid) {
+                                @if (searchInvalid()) {
                                     <div class="alert alert-danger ms-3 mb-0">
                                         <div jhiTranslate="artemisApp.userManagement.searchError"></div>
                                     </div>
                                 }
-                                @if (loadingSearchResult) {
+                                @if (loadingSearchResult()) {
                                     <span class="ms-3" jhiTranslate="artemisApp.userManagement.loading"></span>
                                 }
                             </div>
@@ -49,12 +49,12 @@
                                 <button
                                     jhiDeleteButton
                                     [buttonSize]="medium"
-                                    [entityTitle]="this.selectedUsers.length.toString()"
+                                    [entityTitle]="selectedUsers().length.toString()"
                                     deleteQuestion="artemisApp.userManagement.batch.delete.question"
                                     deleteConfirmationText="artemisApp.userManagement.batch.delete.typeNumberToConfirm"
-                                    (delete)="this.deleteAllSelectedUsers()"
-                                    [dialogError]="this.dialogError"
-                                    [disabled]="!this.selectedUsers.length"
+                                    (delete)="deleteAllSelectedUsers()"
+                                    [dialogError]="dialogError"
+                                    [disabled]="!selectedUsers().length"
                                 >
                                     <fa-icon [icon]="faTimes" />
                                 </button>
@@ -77,13 +77,20 @@
             </form>
             <table class="table table-striped user-management-table" aria-describedby="user-management-page-heading">
                 <thead>
-                    <tr jhiSort [(predicate)]="predicate" [(ascending)]="ascending" (sortChange)="transition()">
+                    <tr
+                        jhiSort
+                        [predicate]="predicate()"
+                        (predicateChange)="predicate.set($event)"
+                        [ascending]="ascending()"
+                        (ascendingChange)="ascending.set($event)"
+                        (sortChange)="transition()"
+                    >
                         <th class="user-management-select-all">
                             <span class="pe-1" jhiTranslate="artemisApp.userManagement.batch.all"></span>
                             <input
                                 class="form-check-input"
-                                [checked]="this.selectedUsers.length === this.usersWithoutCurrentUser.length"
-                                (change)="this.toggleAllUserSelection()"
+                                [checked]="selectedUsers().length === usersWithoutCurrentUser.length"
+                                (change)="toggleAllUserSelection()"
                                 type="checkbox"
                             />
                         </th>
@@ -134,108 +141,106 @@
                         <th></th>
                     </tr>
                 </thead>
-                @if (users) {
-                    <tbody>
-                        @for (user of users; track trackIdentity($index, user)) {
-                            <tr>
-                                <td>
-                                    <input
-                                        class="form-check-input"
-                                        [disabled]="!currentAccount || currentAccount.login === user.login"
-                                        [checked]="this.selectedUsers.includes(user)"
-                                        (change)="this.toggleUser(user)"
-                                        type="checkbox"
-                                    />
-                                </td>
-                                <td>
-                                    <a [routerLink]="['./', user.login]">{{ user.id }}</a>
-                                </td>
-                                <td>
-                                    <jhi-profile-picture
-                                        imageSizeInRem="1.5"
-                                        fontSizeInRem="0.6"
-                                        imageId="user-profile-picture"
-                                        defaultPictureId="user-default-profile-picture"
-                                        [authorId]="user.id"
-                                        [authorName]="user.name"
-                                        [imageUrl]="addPublicFilePrefix(user.imageUrl)"
-                                    />
-                                </td>
-                                <td>
-                                    <ngb-highlight [result]="user.login" [term]="searchTerm" />
-                                </td>
-                                <td>
-                                    <ngb-highlight [result]="user.email" [term]="searchTerm" />
-                                </td>
-                                <td>
-                                    <ngb-highlight [result]="user.visibleRegistrationNumber" [term]="searchTerm" />
-                                </td>
-                                <td>
-                                    <ngb-highlight [result]="user.name" [term]="searchTerm" />
-                                </td>
-                                <td>
-                                    @if (user.activated) {
-                                        <button
-                                            class="btn btn-success btn-sm"
-                                            (click)="setActive(user, false)"
-                                            [disabled]="!currentAccount || currentAccount.login === user.login"
-                                            jhiTranslate="artemisApp.userManagement.activated"
-                                        ></button>
-                                    } @else {
-                                        <button class="btn btn-danger btn-sm" (click)="setActive(user, true)" jhiTranslate="artemisApp.userManagement.deactivated"></button>
+                <tbody>
+                    @for (user of userList; track trackIdentity($index, user)) {
+                        <tr>
+                            <td>
+                                <input
+                                    class="form-check-input"
+                                    [disabled]="!currentAccount() || currentAccount()?.login === user.login"
+                                    [checked]="selectedUsers().includes(user)"
+                                    (change)="toggleUser(user)"
+                                    type="checkbox"
+                                />
+                            </td>
+                            <td>
+                                <a [routerLink]="['./', user.login]">{{ user.id }}</a>
+                            </td>
+                            <td>
+                                <jhi-profile-picture
+                                    imageSizeInRem="1.5"
+                                    fontSizeInRem="0.6"
+                                    imageId="user-profile-picture"
+                                    defaultPictureId="user-default-profile-picture"
+                                    [authorId]="user.id"
+                                    [authorName]="user.name"
+                                    [imageUrl]="addPublicFilePrefix(user.imageUrl)"
+                                />
+                            </td>
+                            <td>
+                                <ngb-highlight [result]="user.login" [term]="searchTerm" />
+                            </td>
+                            <td>
+                                <ngb-highlight [result]="user.email" [term]="searchTerm" />
+                            </td>
+                            <td>
+                                <ngb-highlight [result]="user.visibleRegistrationNumber" [term]="searchTerm" />
+                            </td>
+                            <td>
+                                <ngb-highlight [result]="user.name" [term]="searchTerm" />
+                            </td>
+                            <td>
+                                @if (user.activated) {
+                                    <button
+                                        class="btn btn-success btn-sm"
+                                        (click)="setActive(user, false)"
+                                        [disabled]="!currentAccount() || currentAccount()?.login === user.login"
+                                        jhiTranslate="artemisApp.userManagement.activated"
+                                    ></button>
+                                } @else {
+                                    <button class="btn btn-danger btn-sm" (click)="setActive(user, true)" jhiTranslate="artemisApp.userManagement.deactivated"></button>
+                                }
+                            </td>
+                            <td>{{ user.langKey }}</td>
+                            <td>{{ (user.internal ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</td>
+                            <td>{{ user.createdDate | artemisDate }}</td>
+                            <td>{{ user.lastModifiedBy }}</td>
+                            <td>{{ user.lastModifiedDate | artemisDate }}</td>
+                            <td class="text-end">
+                                <div class="btn-group flex-btn-group-container">
+                                    <a [routerLink]="['./', user.login]" class="btn btn-info btn-sm">
+                                        <fa-icon [icon]="faEye" />
+                                        <span class="d-none d-md-inline" jhiTranslate="entity.action.view"></span>
+                                    </a>
+                                    <a [routerLink]="['./', user.login, 'edit']" queryParamsHandling="merge" class="btn btn-warning btn-sm">
+                                        <fa-icon [icon]="faWrench" />
+                                        <span class="d-none d-md-inline" jhiTranslate="entity.action.edit"></span>
+                                    </a>
+                                    @if (isLdapProfileActive() && !user.internal) {
+                                        <button class="btn btn-success btn-sm" (click)="ldapSync(user.id!)" jhiTranslate="entity.action.ldap"></button>
                                     }
-                                </td>
-                                <td>{{ user.langKey }}</td>
-                                <td>{{ (user.internal ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</td>
-                                <td>{{ user.createdDate | artemisDate }}</td>
-                                <td>{{ user.lastModifiedBy }}</td>
-                                <td>{{ user.lastModifiedDate | artemisDate }}</td>
-                                <td class="text-end">
-                                    <div class="btn-group flex-btn-group-container">
-                                        <a [routerLink]="['./', user.login]" class="btn btn-info btn-sm">
-                                            <fa-icon [icon]="faEye" />
-                                            <span class="d-none d-md-inline" jhiTranslate="entity.action.view"></span>
-                                        </a>
-                                        <a [routerLink]="['./', user.login, 'edit']" queryParamsHandling="merge" class="btn btn-warning btn-sm">
-                                            <fa-icon [icon]="faWrench" />
-                                            <span class="d-none d-md-inline" jhiTranslate="entity.action.edit"></span>
-                                        </a>
-                                        @if (isLdapProfileActive && !user.internal) {
-                                            <button class="btn btn-success btn-sm" (click)="ldapSync(user.id!)" jhiTranslate="entity.action.ldap"></button>
-                                        }
-                                        <button
-                                            jhiDeleteButton
-                                            [entityTitle]="user.login!"
-                                            deleteQuestion="artemisApp.userManagement.delete.question"
-                                            (delete)="deleteUser(user.login!)"
-                                            [dialogError]="dialogError"
-                                            [disabled]="!currentAccount || currentAccount.login === user.login"
-                                        >
-                                            <fa-icon [icon]="faTimes" />
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                }
+                                    <button
+                                        jhiDeleteButton
+                                        [entityTitle]="user.login!"
+                                        deleteQuestion="artemisApp.userManagement.delete.question"
+                                        (delete)="deleteUser(user.login!)"
+                                        [dialogError]="dialogError"
+                                        [disabled]="!currentAccount() || currentAccount()?.login === user.login"
+                                    >
+                                        <fa-icon [icon]="faTimes" />
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
             </table>
         </div>
     }
-    @if (users) {
+    @if (users().length) {
         <div>
             <div class="row justify-content-center">
-                <jhi-item-count [params]="{ page: page, totalItems: totalItems, itemsPerPage: itemsPerPage }" />
+                <jhi-item-count [params]="{ page: page(), totalItems: totalItems(), itemsPerPage: itemsPerPage }" />
             </div>
             <div class="row justify-content-center">
                 <ngb-pagination
-                    [collectionSize]="totalItems"
-                    [(page)]="page"
+                    [collectionSize]="totalItems()"
+                    [page]="page()"
+                    (pageChange)="page.set($event); transition()"
                     [pageSize]="itemsPerPage"
                     [maxSize]="5"
                     [rotate]="true"
                     [boundaryLinks]="true"
-                    (pageChange)="transition()"
                 />
             </div>
         </div>

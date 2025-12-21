@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 
 import { ConfigurationService } from './configuration.service';
 import { Bean, PropertySource } from './configuration.model';
@@ -10,37 +10,73 @@ import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { JsonPipe, KeyValuePipe } from '@angular/common';
 
+/**
+ * Component for viewing application configuration.
+ * Displays beans and property sources with filtering and sorting.
+ */
 @Component({
     selector: 'jhi-configuration',
     templateUrl: './configuration.component.html',
     imports: [TranslateDirective, FormsModule, SortDirective, SortByDirective, FaIconComponent, JsonPipe, KeyValuePipe],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ConfigurationComponent implements OnInit {
-    private configurationService = inject(ConfigurationService);
+    private readonly configurationService = inject(ConfigurationService);
 
-    allBeans!: Bean[];
-    beans: Bean[] = [];
-    beansFilter = '';
-    beansAscending = true;
-    propertySources: PropertySource[] = [];
+    /** All beans before filtering */
+    private readonly allBeans = signal<Bean[]>([]);
 
-    // Icons
-    faSort = faSort;
+    /** Filter string for bean prefixes */
+    readonly beansFilter = signal('');
 
+    /** Sort direction for beans */
+    readonly beansAscending = signal(true);
+
+    /** Filtered and sorted beans for display (computed from other signals) */
+    readonly beans = computed(() => {
+        const allBeansValue = this.allBeans();
+        const filterValue = this.beansFilter();
+        const ascendingValue = this.beansAscending();
+        const ascendingMultiplier = ascendingValue ? -1 : 1;
+        const descendingMultiplier = ascendingValue ? 1 : -1;
+
+        return allBeansValue
+            .filter((bean) => !filterValue || bean.prefix.toLowerCase().includes(filterValue.toLowerCase()))
+            .sort((a, b) => (a.prefix < b.prefix ? ascendingMultiplier : descendingMultiplier));
+    });
+
+    /** Property sources from configuration */
+    readonly propertySources = signal<PropertySource[]>([]);
+
+    /** Icons */
+    protected readonly faSort = faSort;
+
+    /**
+     * Loads beans and property sources on initialization.
+     */
     ngOnInit(): void {
         this.configurationService.getBeans().subscribe((beans) => {
-            this.allBeans = beans;
-            this.filterAndSortBeans();
+            this.allBeans.set(beans);
         });
 
-        this.configurationService.getPropertySources().subscribe((propertySources) => (this.propertySources = propertySources));
+        this.configurationService.getPropertySources().subscribe((propertySources) => {
+            this.propertySources.set(propertySources);
+        });
     }
 
-    filterAndSortBeans(): void {
-        const beansAscendingValue = this.beansAscending ? -1 : 1;
-        const beansAscendingValueReverse = this.beansAscending ? 1 : -1;
-        this.beans = this.allBeans
-            .filter((bean) => !this.beansFilter || bean.prefix.toLowerCase().includes(this.beansFilter.toLowerCase()))
-            .sort((a, b) => (a.prefix < b.prefix ? beansAscendingValue : beansAscendingValueReverse));
+    /**
+     * Updates filter value for bean filtering.
+     * @param value - The filter string
+     */
+    updateBeansFilter(value: string): void {
+        this.beansFilter.set(value);
+    }
+
+    /**
+     * Updates sort direction.
+     * @param ascending - Sort direction
+     */
+    updateBeansAscending(ascending: boolean): void {
+        this.beansAscending.set(ascending);
     }
 }

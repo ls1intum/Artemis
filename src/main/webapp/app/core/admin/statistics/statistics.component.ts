@@ -1,18 +1,24 @@
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { Graphs, SpanType, StatisticsView } from 'app/exercise/shared/entities/statistics.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { StatisticsGraphComponent } from 'app/shared/statistics-graph/statistics-graph.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
+/**
+ * Component for displaying Artemis statistics with various graph types.
+ */
 @Component({
     selector: 'jhi-statistics',
     templateUrl: './statistics.component.html',
     imports: [TranslateDirective, StatisticsGraphComponent, ArtemisTranslatePipe],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class StatisticsComponent {
-    // html properties
-    SpanType = SpanType;
-    graphTypes = [
+    /** Enum for template access */
+    protected readonly SpanType = SpanType;
+
+    /** Available graph types to display */
+    protected readonly graphTypes = [
         Graphs.SUBMISSIONS,
         Graphs.ACTIVE_USERS,
         Graphs.LOGGED_IN_USERS,
@@ -25,10 +31,14 @@ export class StatisticsComponent {
         Graphs.CREATED_RESULTS,
         Graphs.CREATED_FEEDBACKS,
     ];
-    currentSpan: SpanType = SpanType.WEEK;
-    statisticsView: StatisticsView = StatisticsView.ARTEMIS;
+
+    /** Current time span for statistics */
+    readonly currentSpan = signal<SpanType>(SpanType.WEEK);
+
+    /** Statistics view type */
+    readonly statisticsView = signal<StatisticsView>(StatisticsView.ARTEMIS);
 
     onTabChanged(span: SpanType): void {
-        this.currentSpan = span;
+        this.currentSpan.set(span);
     }
 }

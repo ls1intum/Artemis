@@ -1,11 +1,19 @@
+/**
+ * Vitest tests for LtiConfigurationService.
+ */
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
+
 import { LtiPlatformConfiguration } from 'app/lti/shared/entities/lti-configuration.model';
 import { LtiConfigurationService } from 'app/core/admin/lti-configuration/lti-configuration.service';
 import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
-import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 
 describe('LtiConfigurationService', () => {
+    setupTestBed({ zoneless: true });
+
     let service: LtiConfigurationService;
     let httpMock: HttpTestingController;
 

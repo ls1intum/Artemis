@@ -1,5 +1,5 @@
 import { AlertService } from 'app/shared/service/alert.service';
-import { Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { finalize } from 'rxjs';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -10,26 +10,30 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
+/**
+ * Admin component for creating and editing LTI platform configurations.
+ */
 @Component({
     selector: 'jhi-edit-lti-configuration',
     templateUrl: './edit-lti-configuration.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [FormsModule, ReactiveFormsModule, TranslateDirective, HelpIconComponent, FaIconComponent],
 })
 export class EditLtiConfigurationComponent implements OnInit {
-    private route = inject(ActivatedRoute);
-    private ltiConfigurationService = inject(LtiConfigurationService);
-    private router = inject(Router);
-    private alertService = inject(AlertService);
+    private readonly route = inject(ActivatedRoute);
+    private readonly ltiConfigurationService = inject(LtiConfigurationService);
+    private readonly router = inject(Router);
+    private readonly alertService = inject(AlertService);
 
     platform: LtiPlatformConfiguration;
     platformConfigurationForm: FormGroup;
 
-    isSaving = false;
+    /** Whether save is in progress */
+    readonly isSaving = signal(false);
 
-    // Icons
-    faBan = faBan;
-    faSave = faSave;
-    faPlus = faPlus;
+    protected readonly faBan = faBan;
+    protected readonly faSave = faSave;
+    protected readonly faPlus = faPlus;
 
     /**
      * Gets the configuration for the course encoded in the route and prepares the form
@@ -54,7 +58,7 @@ export class EditLtiConfigurationComponent implements OnInit {
      * Create or update lti platform configuration
      */
     save() {
-        this.isSaving = true;
+        this.isSaving.set(true);
         const platformConfiguration = this.platformConfigurationForm.getRawValue();
         if (this.platform?.id) {
             this.updateLtiConfiguration(platformConfiguration);
@@ -71,7 +75,7 @@ export class EditLtiConfigurationComponent implements OnInit {
             .updateLtiPlatformConfiguration(platformConfiguration)
             .pipe(
                 finalize(() => {
-                    this.isSaving = false;
+                    this.isSaving.set(false);
                 }),
             )
             .subscribe({
@@ -90,7 +94,7 @@ export class EditLtiConfigurationComponent implements OnInit {
             .addLtiPlatformConfiguration(platformConfiguration)
             .pipe(
                 finalize(() => {
-                    this.isSaving = false;
+                    this.isSaving.set(false);
                 }),
             )
             .subscribe({
@@ -105,7 +109,7 @@ export class EditLtiConfigurationComponent implements OnInit {
      * Action on successful online course configuration or edit
      */
     private onSaveSuccess() {
-        this.isSaving = false;
+        this.isSaving.set(false);
         this.navigateToLtiConfigurationPage();
     }
 

@@ -1,32 +1,36 @@
+/**
+ * Vitest tests for CleanupServiceComponent.
+ */
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpResponse } from '@angular/common/http';
+import { of } from 'rxjs';
+import { signal } from '@angular/core';
 import dayjs from 'dayjs/esm';
 
 import { CleanupServiceComponent } from 'app/core/admin/cleanup-service/cleanup-service.component';
 import { CleanupOperation } from 'app/core/admin/cleanup-service/cleanup-operation.model';
 import { CleanupServiceExecutionRecordDTO, DataCleanupService } from 'app/core/admin/cleanup-service/data-cleanup.service';
-import { signal } from '@angular/core';
-import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { TranslateService } from '@ngx-translate/core';
 
 describe('CleanupServiceComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let comp: CleanupServiceComponent;
     let fixture: ComponentFixture<CleanupServiceComponent>;
     let cleanupService: DataCleanupService;
 
-    beforeEach(() => {
+    beforeEach(async () => {
         const mockCleanupService = {
-            getLastExecutions: jest.fn(),
+            getLastExecutions: vi.fn(),
         };
 
-        TestBed.configureTestingModule({
+        await TestBed.configureTestingModule({
             imports: [CleanupServiceComponent],
-            providers: [
-                { provide: DataCleanupService, useValue: mockCleanupService },
-                { provide: TranslateService, useClass: MockTranslateService },
-            ],
-        }).compileComponents();
+            providers: [{ provide: DataCleanupService, useValue: mockCleanupService }],
+        })
+            .overrideTemplate(CleanupServiceComponent, '')
+            .compileComponents();
 
         fixture = TestBed.createComponent(CleanupServiceComponent);
         comp = fixture.componentInstance;
@@ -39,12 +43,12 @@ describe('CleanupServiceComponent', () => {
             body: executionRecord,
         });
 
-        jest.spyOn(cleanupService, 'getLastExecutions').mockReturnValue(of(response));
+        vi.spyOn(cleanupService, 'getLastExecutions').mockReturnValue(of(response));
 
         comp.ngOnInit();
 
         expect(cleanupService.getLastExecutions).toHaveBeenCalledOnce();
-        expect(comp.cleanupOperations[0].lastExecuted).toEqual(dayjs(executionRecord[0].executionDate));
+        expect(comp.cleanupOperations()[0].lastExecuted).toEqual(dayjs(executionRecord[0].executionDate));
     });
 
     it('should validate date ranges correctly', () => {
@@ -67,7 +71,7 @@ describe('CleanupServiceComponent', () => {
         comp.validateDates(validOperation);
         comp.validateDates(invalidOperation);
 
-        expect(validOperation.datesValid()).toBeTrue();
-        expect(invalidOperation.datesValid()).toBeFalse();
+        expect(validOperation.datesValid()).toBe(true);
+        expect(invalidOperation.datesValid()).toBe(false);
     });
 });

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject, input, model, output } from '@angular/core';
 import { faBan, faPencil, faPlus, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { KnowledgeArea, KnowledgeAreaDTO, KnowledgeAreaValidators } from 'app/atlas/shared/entities/standardized-competency.model';
 import { ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
@@ -11,136 +11,201 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 
+/**
+ * Form structure for knowledge area editing.
+ */
+interface KnowledgeAreaForm {
+    title: FormControl<string | undefined>;
+    shortTitle: FormControl<string | undefined>;
+    description: FormControl<string | undefined>;
+    parentId: FormControl<number | undefined>;
+}
+
+/**
+ * Component for editing knowledge areas.
+ * Provides a form for creating and updating knowledge area details with hierarchy support.
+ */
 @Component({
     selector: 'jhi-knowledge-area-edit',
     templateUrl: './knowledge-area-edit.component.html',
     imports: [TranslateDirective, ButtonComponent, DeleteButtonDirective, FaIconComponent, FormsModule, ReactiveFormsModule, MarkdownEditorMonacoComponent, HtmlForMarkdownPipe],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class KnowledgeAreaEditComponent {
-    private formBuilder = inject(FormBuilder);
+    private readonly formBuilder = inject(FormBuilder);
 
-    // values for the knowledge area select
-    @Input() knowledgeAreas: KnowledgeArea[] = [];
-    @Input({ required: true }) set knowledgeArea(knowledgeArea: KnowledgeAreaDTO) {
-        this._knowledgeArea = knowledgeArea;
-        this.form = this.formBuilder.nonNullable.group({
-            title: [knowledgeArea.title, [Validators.required, Validators.maxLength(KnowledgeAreaValidators.TITLE_MAX)]],
-            shortTitle: [knowledgeArea.shortTitle, [Validators.required, Validators.maxLength(KnowledgeAreaValidators.SHORT_TITLE_MAX)]],
-            description: [knowledgeArea.description, [Validators.maxLength(KnowledgeAreaValidators.DESCRIPTION_MAX)]],
-            parentId: [knowledgeArea.parentId, [this.createNoCircularDependencyValidator()]],
-        });
-        if (!this.isEditing) {
-            this.form.disable();
-        }
-    }
+    /** Available knowledge areas for parent selection */
+    readonly knowledgeAreas = input<KnowledgeArea[]>([]);
 
-    get knowledgeArea() {
-        return this._knowledgeArea;
-    }
+    /** The knowledge area being edited (required) */
+    readonly knowledgeArea = input.required<KnowledgeAreaDTO>();
 
-    @Input() set isEditing(isEditing: boolean) {
-        this._isEditing = isEditing;
-        this.isEditingChange.emit(isEditing);
-        if (isEditing) {
-            this.form.enable();
-        } else {
-            this.form.disable();
-        }
-    }
+    /** Whether the form is in editing mode (two-way binding) */
+    readonly isEditing = model<boolean>(false);
 
-    get isEditing() {
-        return this._isEditing;
-    }
+    /** Observable for dialog error messages */
+    readonly dialogError = input<Observable<string>>();
 
-    @Input() dialogError: Observable<string>;
+    /** Emitted when the knowledge area is saved */
+    readonly onSave = output<KnowledgeAreaDTO>();
 
-    @Output() onSave = new EventEmitter<KnowledgeAreaDTO>();
-    @Output() onDelete = new EventEmitter<number>();
-    @Output() onOpenNewCompetency = new EventEmitter<number>();
-    @Output() onOpenNewKnowledgeArea = new EventEmitter<number>();
-    @Output() onClose = new EventEmitter<void>();
-    @Output() isEditingChange = new EventEmitter<boolean>();
+    /** Emitted when the knowledge area should be deleted */
+    readonly onDelete = output<number>();
 
-    private _isEditing: boolean;
-    private _knowledgeArea: KnowledgeAreaDTO;
-    form: FormGroup<{
-        title: FormControl<string | undefined>;
-        shortTitle: FormControl<string | undefined>;
-        description: FormControl<string | undefined>;
-        parentId: FormControl<number | undefined>;
-    }>;
+    /** Emitted when a new competency should be created under this knowledge area */
+    readonly onOpenNewCompetency = output<number>();
 
-    // icons
-    readonly faPencil = faPencil;
-    readonly faTrash = faTrash;
-    readonly faBan = faBan;
-    readonly faSave = faSave;
-    readonly faPlus = faPlus;
-    // other constants
+    /** Emitted when a new child knowledge area should be created */
+    readonly onOpenNewKnowledgeArea = output<number>();
+
+    /** Emitted when the edit panel should be closed */
+    readonly onClose = output<void>();
+
+    /** The reactive form for editing knowledge area properties */
+    form: FormGroup<KnowledgeAreaForm>;
+
+    /** Icons */
+    protected readonly faPencil = faPencil;
+    protected readonly faTrash = faTrash;
+    protected readonly faBan = faBan;
+    protected readonly faSave = faSave;
+    protected readonly faPlus = faPlus;
+
+    /** Constants */
     protected readonly ButtonSize = ButtonSize;
     protected readonly ButtonType = ButtonType;
     protected readonly validators = KnowledgeAreaValidators;
 
-    save() {
+    constructor() {
+        // Effect to initialize/update form when knowledgeArea input changes
+        effect(() => {
+            const ka = this.knowledgeArea();
+            this.initializeForm(ka);
+        });
+
+        // Effect to enable/disable form based on editing state
+        effect(() => {
+            const editing = this.isEditing();
+            if (this.form) {
+                if (editing) {
+                    this.form.enable();
+                } else {
+                    this.form.disable();
+                }
+            }
+        });
+    }
+
+    /**
+     * Initializes the form with the given knowledge area data.
+     * @param knowledgeArea - The knowledge area to populate the form with
+     */
+    private initializeForm(knowledgeArea: KnowledgeAreaDTO): void {
+        this.form = this.formBuilder.nonNullable.group({
+            title: [knowledgeArea.title, [Validators.required, Validators.maxLength(KnowledgeAreaValidators.TITLE_MAX)]],
+            shortTitle: [knowledgeArea.shortTitle, [Validators.required, Validators.maxLength(KnowledgeAreaValidators.SHORT_TITLE_MAX)]],
+            description: [knowledgeArea.description, [Validators.maxLength(KnowledgeAreaValidators.DESCRIPTION_MAX)]],
+            parentId: [knowledgeArea.parentId, [this.createNoCircularDependencyValidator(knowledgeArea)]],
+        });
+
+        // Apply initial editing state
+        if (!this.isEditing()) {
+            this.form.disable();
+        }
+    }
+
+    /**
+     * Saves the knowledge area with current form values.
+     */
+    save(): void {
         const updatedValues = this.form.getRawValue();
-        const updatedKnowledgeArea: KnowledgeAreaDTO = { ...this.knowledgeArea, ...updatedValues };
-        this.isEditing = false;
+        const updatedKnowledgeArea: KnowledgeAreaDTO = { ...this.knowledgeArea(), ...updatedValues };
+        this.isEditing.set(false);
         this.onSave.emit(updatedKnowledgeArea);
     }
 
-    delete() {
-        this.onDelete.emit(this.knowledgeArea.id);
+    /**
+     * Emits delete event for the current knowledge area.
+     */
+    delete(): void {
+        const id = this.knowledgeArea().id;
+        if (id !== undefined) {
+            this.onDelete.emit(id);
+        }
     }
 
-    openNewCompetency() {
-        this.onOpenNewCompetency.emit(this.knowledgeArea.id);
+    /**
+     * Opens the panel to create a new competency under this knowledge area.
+     */
+    openNewCompetency(): void {
+        const id = this.knowledgeArea().id;
+        if (id !== undefined) {
+            this.onOpenNewCompetency.emit(id);
+        }
     }
 
-    openNewKnowledgeArea() {
-        this.onOpenNewKnowledgeArea.emit(this.knowledgeArea.id);
+    /**
+     * Opens the panel to create a new child knowledge area.
+     */
+    openNewKnowledgeArea(): void {
+        const id = this.knowledgeArea().id;
+        if (id !== undefined) {
+            this.onOpenNewKnowledgeArea.emit(id);
+        }
     }
 
-    close() {
+    /**
+     * Closes the edit panel.
+     */
+    close(): void {
         this.onClose.emit();
     }
 
-    edit() {
-        this.isEditing = true;
+    /**
+     * Enables editing mode.
+     */
+    edit(): void {
+        this.isEditing.set(true);
     }
 
-    cancel() {
+    /**
+     * Cancels editing and resets the form.
+     * If creating a new knowledge area, closes the panel.
+     */
+    cancel(): void {
         this.form.reset();
-        this.isEditing = false;
+        this.isEditing.set(false);
 
-        // canceling when creating a new knowledge area closes it
-        if (this.knowledgeArea.id === undefined) {
+        // Canceling when creating a new knowledge area closes it
+        if (this.knowledgeArea().id === undefined) {
             this.onClose.emit();
         }
     }
 
     /**
-     * Updates description form on markdown change
-     * @param content markdown content
+     * Updates description form control on markdown change.
+     * @param content - The new markdown content
      */
-    updateDescriptionControl(content: string) {
+    updateDescriptionControl(content: string): void {
         this.form.controls.description.setValue(content);
         this.form.controls.description.markAsDirty();
     }
 
     /**
-     * Creates a validator that verifies that updating a knowledge area cannot lead to circular dependencies
+     * Creates a validator that verifies that updating a knowledge area cannot lead to circular dependencies.
      * (I.e. the new parent of a knowledge area must not be itself or one of its current descendants)
+     * @param knowledgeArea - The knowledge area being validated
      */
-    private createNoCircularDependencyValidator() {
-        // if the knowledgeArea is new, no validator is needed.
-        if (this.knowledgeArea.id === undefined) {
+    private createNoCircularDependencyValidator(knowledgeArea: KnowledgeAreaDTO) {
+        // If the knowledgeArea is new, no validator is needed
+        if (knowledgeArea.id === undefined) {
             return (_parentIdControl: FormControl<number | undefined>) => null;
         }
         return (parentIdControl: FormControl<number | undefined>) => {
             if (parentIdControl.value === undefined) {
                 return null;
             }
-            if (this.selfOrDescendantsHaveId(this.knowledgeArea, parentIdControl.value)) {
+            if (this.selfOrDescendantsHaveId(knowledgeArea, parentIdControl.value)) {
                 return {
                     circularDependency: true,
                 };
@@ -150,12 +215,11 @@ export class KnowledgeAreaEditComponent {
     }
 
     /**
-     * Checks if the given knowledge or one of its descendants have the given id
-     * @param knowledgeArea the knowledge area to check
-     * @param id the id to check for
-     * @private
+     * Checks if the given knowledge area or one of its descendants have the given id.
+     * @param knowledgeArea - The knowledge area to check
+     * @param id - The id to check for
      */
-    private selfOrDescendantsHaveId(knowledgeArea: KnowledgeAreaDTO, id: number) {
+    private selfOrDescendantsHaveId(knowledgeArea: KnowledgeAreaDTO, id: number): boolean {
         if (knowledgeArea.id === id) {
             return true;
         }

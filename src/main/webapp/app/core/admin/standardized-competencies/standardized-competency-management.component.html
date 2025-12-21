@@ -67,25 +67,27 @@
                     </div>
                 </ng-template>
             </jhi-knowledge-area-tree>
-            @if (selectedCompetency) {
+            @if (selectedCompetency(); as competency) {
                 <div class="card light-background d-flex flex-grow-1 w-100 h-100 p-3 ms-1">
                     <jhi-standardized-competency-edit
-                        [competency]="selectedCompetency"
+                        [competency]="competency"
                         [knowledgeAreas]="knowledgeAreasForSelect"
-                        [sources]="sourcesForSelect"
-                        [(isEditing)]="isEditing"
+                        [sources]="sourcesForSelect()"
+                        [isEditing]="isEditing()"
+                        (isEditingChange)="isEditing.set($event)"
                         (onSave)="saveCompetency($event)"
                         (onDelete)="deleteCompetency($event)"
                         (onClose)="closeCompetency()"
                         [dialogError]="dialogError"
                     />
                 </div>
-            } @else if (selectedKnowledgeArea) {
+            } @else if (selectedKnowledgeArea(); as knowledgeArea) {
                 <div class="card light-background d-flex flex-grow-1 w-100 h-100 p-3 ms-1">
                     <jhi-knowledge-area-edit
-                        [knowledgeArea]="selectedKnowledgeArea"
+                        [knowledgeArea]="knowledgeArea"
                         [knowledgeAreas]="knowledgeAreasForSelect"
-                        [(isEditing)]="isEditing"
+                        [isEditing]="isEditing()"
+                        (isEditingChange)="isEditing.set($event)"
                         (onSave)="saveKnowledgeArea($event)"
                         (onDelete)="deleteKnowledgeArea($event)"
                         (onOpenNewCompetency)="openNewCompetency($event)"
@@ -96,7 +98,7 @@
                 </div>
             }
         </div>
-    } @else if (isLoading) {
+    } @else if (isLoading()) {
         <div class="d-flex justify-content-center">
             <div class="spinner-border" role="status">
                 <span class="visually-hidden" jhiTranslate="loading"></span>

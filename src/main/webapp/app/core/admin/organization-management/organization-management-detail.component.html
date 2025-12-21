@@ -1,6 +1,6 @@
 <div>
     <h2>
-        <span jhiTranslate="artemisApp.organizationManagement.detail.title"></span> [<b>{{ organization.name }}</b
+        <span jhiTranslate="artemisApp.organizationManagement.detail.title"></span> [<b>{{ organization().name }}</b
         >]
     </h2>
     <div class="container">
@@ -8,19 +8,19 @@
             <div class="col">
                 <dl class="row-md jh-entity-details">
                     <dt><span jhiTranslate="global.field.id"></span></dt>
-                    <dd>{{ organization.id }}</dd>
+                    <dd>{{ organization().id }}</dd>
                     <dt><span jhiTranslate="artemisApp.organizationManagement.name"></span></dt>
-                    <dd>{{ organization.name }}</dd>
+                    <dd>{{ organization().name }}</dd>
                     <dt><span jhiTranslate="artemisApp.organizationManagement.shortName"></span></dt>
-                    <dd>{{ organization.shortName }}</dd>
+                    <dd>{{ organization().shortName }}</dd>
                     <dt><span jhiTranslate="artemisApp.organizationManagement.url"></span></dt>
-                    <dd>{{ organization.url }}</dd>
+                    <dd>{{ organization().url }}</dd>
                     <dt><span jhiTranslate="artemisApp.organizationManagement.logoUrl"></span></dt>
-                    <dd>{{ organization.logoUrl }}</dd>
+                    <dd>{{ organization().logoUrl }}</dd>
                     <dt><span jhiTranslate="artemisApp.organizationManagement.description"></span></dt>
-                    <dd>{{ organization.description }}</dd>
+                    <dd>{{ organization().description }}</dd>
                     <dt><span jhiTranslate="artemisApp.organizationManagement.emailPattern"></span></dt>
-                    <dd>{{ organization.emailPattern }}</dd>
+                    <dd>{{ organization().emailPattern }}</dd>
                 </dl>
             </div>
         </div>
@@ -38,7 +38,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @for (course of organization.courses; track course) {
+                        @for (course of organization().courses; track course) {
                             <tr>
                                 <td>
                                     <a [routerLink]="['/course-management/', course.id]">{{ course.id }}</a>
@@ -61,13 +61,13 @@
             <span jhiTranslate="artemisApp.organizationManagement.users"></span>
         </h3>
         <jhi-data-table
-            [isLoading]="isLoading"
-            [isSearching]="isSearching"
-            [searchFailed]="searchFailed"
-            [searchNoResults]="searchNoResults"
-            [isTransitioning]="isTransitioning"
+            [isLoading]="isLoading()"
+            [isSearching]="isSearching()"
+            [searchFailed]="searchFailed()"
+            [searchNoResults]="searchNoResults()"
+            [isTransitioning]="isTransitioning()"
             entityType="user"
-            [allEntities]="organization.users!"
+            [allEntities]="organization().users!"
             entitiesPerPageTranslation="artemisApp.organizationManagement.userSearch.usersPerPage"
             showAllEntitiesTranslation="artemisApp.organizationManagement.userSearch.showAllUsers"
             searchNoResultsTranslation="artemisApp.organizationManagement.userSearch.searchNoResults"

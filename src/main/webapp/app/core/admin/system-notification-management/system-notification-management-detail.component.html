@@ -1,22 +1,22 @@
-@if (notification) {
+@if (notification(); as notif) {
     <div>
         <h2>
             <span jhiTranslate="artemisApp.systemNotification.systemNotification"></span>
-            [{{ notification.id }}]
+            [{{ notif.id }}]
         </h2>
         <dl class="row-md jh-entity-details">
             <dt><span jhiTranslate="global.field.id"></span></dt>
             <dd>
-                <span>{{ notification.id }}</span>
+                <span>{{ notif.id }}</span>
             </dd>
             <dt><span jhiTranslate="artemisApp.systemNotification.title"></span></dt>
-            <dd>{{ notification.title }}</dd>
+            <dd>{{ notif.title }}</dd>
             <dt><span jhiTranslate="artemisApp.systemNotification.text"></span></dt>
-            <dd>{{ notification.text }}</dd>
+            <dd>{{ notif.text }}</dd>
             <dt><span jhiTranslate="artemisApp.systemNotification.type"></span></dt>
-            <dd>{{ notification.type }}</dd>
+            <dd>{{ notif.type }}</dd>
             <dt><span jhiTranslate="artemisApp.systemNotification.expireDate"></span></dt>
-            <dd>{{ notification.expireDate | artemisDate }}</dd>
+            <dd>{{ notif.expireDate | artemisDate }}</dd>
         </dl>
         <a id="editButton" [routerLink]="['edit']" class="btn btn-warning">
             <fa-icon [icon]="faWrench" />

@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Organization } from 'app/core/shared/entities/organization.model';
 import { OrganizationManagementService } from 'app/core/admin/organization-management/organization-management.service';
@@ -9,15 +9,21 @@ import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 
+/**
+ * Component for managing organizations.
+ * Displays a list of organizations with user and course counts.
+ */
 @Component({
     selector: 'jhi-organization-management',
     templateUrl: './organization-management.component.html',
     imports: [TranslateDirective, RouterLink, FaIconComponent, DeleteButtonDirective],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OrganizationManagementComponent implements OnInit {
-    private organizationService = inject(OrganizationManagementService);
+    private readonly organizationService = inject(OrganizationManagementService);
 
-    organizations: Organization[];
+    /** List of organizations */
+    readonly organizations = signal<Organization[]>([]);
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -28,23 +34,32 @@ export class OrganizationManagementComponent implements OnInit {
     faEye = faEye;
     faWrench = faWrench;
 
+    /**
+     * Loads organizations and their user/course counts on initialization.
+     */
     ngOnInit(): void {
         this.organizationService.getOrganizations().subscribe((organizations) => {
-            this.organizations = organizations;
+            this.organizations.set(organizations);
             this.organizationService.getNumberOfUsersAndCoursesOfOrganizations().subscribe((organizationCountDtos) => {
+                const orgs = this.organizations();
                 for (let i = 0; i < organizationCountDtos.length; i++) {
-                    this.organizations[i].numberOfUsers = organizationCountDtos[i].numberOfUsers;
-                    this.organizations[i].numberOfCourses = organizationCountDtos[i].numberOfCourses;
+                    orgs[i].numberOfUsers = organizationCountDtos[i].numberOfUsers;
+                    orgs[i].numberOfCourses = organizationCountDtos[i].numberOfCourses;
                 }
+                this.organizations.set([...orgs]);
             });
         });
     }
 
-    deleteOrganization(organizationId: number) {
+    /**
+     * Deletes an organization by ID.
+     * @param organizationId - The ID of the organization to delete
+     */
+    deleteOrganization(organizationId: number): void {
         this.organizationService.deleteOrganization(organizationId).subscribe({
             next: () => {
                 this.dialogErrorSource.next('');
-                this.organizations = this.organizations.filter((org) => org.id !== organizationId);
+                this.organizations.set(this.organizations().filter((org) => org.id !== organizationId));
             },
             error: (error: HttpErrorResponse) => {
                 this.dialogErrorSource.next('An error occurred while removing the organization: ' + error.message);

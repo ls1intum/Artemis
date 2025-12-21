@@ -1,32 +1,30 @@
+/**
+ * Vitest tests for OrganizationManagementService.
+ */
+import { beforeEach, describe, expect, it } from 'vitest';
+import { TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { Router } from '@angular/router';
+
 import { OrganizationManagementService } from 'app/core/admin/organization-management/organization-management.service';
 import { Organization } from 'app/core/shared/entities/organization.model';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
-import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { Router } from '@angular/router';
-import { TranslateService } from '@ngx-translate/core';
 import { User } from 'app/core/user/user.model';
 import { OrganizationCountDto } from 'app/core/admin/organization-management/organization-count-dto.model';
-import { provideHttpClient } from '@angular/common/http';
 
 describe('Organization Service', () => {
+    setupTestBed({ zoneless: true });
+
     let service: OrganizationManagementService;
     let httpMock: HttpTestingController;
     let elemDefault: Organization;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            providers: [
-                provideHttpClient(),
-                provideHttpClientTesting(),
-                { provide: Router, useClass: MockRouter },
-                LocalStorageService,
-                SessionStorageService,
-                { provide: TranslateService, useClass: MockTranslateService },
-            ],
+            providers: [provideHttpClient(), provideHttpClientTesting(), { provide: Router, useValue: { navigate: () => {} } }, LocalStorageService, SessionStorageService],
         });
         service = TestBed.inject(OrganizationManagementService);
         httpMock = TestBed.inject(HttpTestingController);
@@ -45,13 +43,12 @@ describe('Organization Service', () => {
         req.flush(JSON.stringify(elemDefault));
     });
 
-    it('should return an Organization with Users and Courses', fakeAsync(() => {
+    it('should return an Organization with Users and Courses', () => {
         service.getOrganizationByIdWithUsersAndCourses(0).subscribe((data) => expect(data).toEqual(elemDefault));
 
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(elemDefault);
-        tick();
-    }));
+    });
 
     it('should return all organizations', async () => {
         const returnElement = createTestReturnElement();
@@ -61,7 +58,7 @@ describe('Organization Service', () => {
         req.flush(JSON.stringify(returnElement));
     });
 
-    it('should return number of users and courses of organization', fakeAsync(() => {
+    it('should return number of users and courses of organization', () => {
         const returnElement = new OrganizationCountDto();
         returnElement.numberOfCourses = 2;
         returnElement.numberOfUsers = 17;
@@ -69,8 +66,7 @@ describe('Organization Service', () => {
 
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnElement);
-        tick();
-    }));
+    });
 
     it('should return all Organizations a course is assigned to', async () => {
         const returnElement = createTestReturnElement();
@@ -107,7 +103,7 @@ describe('Organization Service', () => {
     });
 
     it('should delete an Organization', async () => {
-        service.deleteOrganization(elemDefault.id!).subscribe((resp) => expect(resp.ok).toBeTrue());
+        service.deleteOrganization(elemDefault.id!).subscribe((resp) => expect(resp.ok).toBe(true));
         const req = httpMock.expectOne({ method: 'DELETE' });
         req.flush({ status: 200 });
     });
@@ -115,7 +111,7 @@ describe('Organization Service', () => {
     it('should add a user to an Organization', async () => {
         const user1 = new User();
         user1.login = 'testUser';
-        service.addUserToOrganization(elemDefault.id!, user1.login).subscribe((resp) => expect(resp.ok).toBeTrue());
+        service.addUserToOrganization(elemDefault.id!, user1.login).subscribe((resp) => expect(resp.ok).toBe(true));
         const req = httpMock.expectOne({ method: 'POST' });
         req.flush(JSON.stringify(elemDefault));
     });
@@ -123,7 +119,7 @@ describe('Organization Service', () => {
     it('should delete a user from an Organization', async () => {
         const user1 = new User();
         user1.login = 'testUser';
-        service.removeUserFromOrganization(elemDefault.id!, user1.login).subscribe((resp) => expect(resp.ok).toBeTrue());
+        service.removeUserFromOrganization(elemDefault.id!, user1.login).subscribe((resp) => expect(resp.ok).toBe(true));
         const req = httpMock.expectOne({ method: 'DELETE' });
         req.flush({ status: 200 });
     });

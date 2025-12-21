@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Organization } from 'app/core/shared/entities/organization.model';
 import { OrganizationManagementService } from 'app/core/admin/organization-management/organization-management.service';
@@ -8,27 +8,32 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CustomPatternValidatorDirective } from 'app/shared/validators/custom-pattern-validator.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
+/**
+ * Admin component for creating and updating organizations.
+ */
 @Component({
     selector: 'jhi-organization-management-update',
     templateUrl: './organization-management-update.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [FormsModule, TranslateDirective, CustomPatternValidatorDirective, FaIconComponent],
 })
 export class OrganizationManagementUpdateComponent implements OnInit {
-    private route = inject(ActivatedRoute);
-    private organizationService = inject(OrganizationManagementService);
+    private readonly route = inject(ActivatedRoute);
+    private readonly organizationService = inject(OrganizationManagementService);
 
-    organization: Organization;
-    isSaving: boolean;
+    /** The organization being edited */
+    organization: Organization = new Organization();
+    /** Whether save is in progress */
+    readonly isSaving = signal(false);
 
-    // Icons
-    faSave = faSave;
-    faBan = faBan;
+    protected readonly faSave = faSave;
+    protected readonly faBan = faBan;
 
     /**
      * Enable subscriptions to retrieve the organization based on the activated route on init
      */
     ngOnInit() {
-        this.isSaving = false;
+        this.isSaving.set(false);
         // create a new organization and only overwrite it if we fetch an organization to edit
         this.organization = new Organization();
         this.route.parent!.data.subscribe(({ organization }) => {
@@ -52,7 +57,7 @@ export class OrganizationManagementUpdateComponent implements OnInit {
      * Update or create user in the user management component
      */
     save() {
-        this.isSaving = true;
+        this.isSaving.set(true);
         if (this.organization.id) {
             this.organizationService.update(this.organization).subscribe({
                 next: () => this.onSaveSuccess(),
@@ -70,7 +75,7 @@ export class OrganizationManagementUpdateComponent implements OnInit {
      * Set isSaving to false and navigate to previous page
      */
     private onSaveSuccess() {
-        this.isSaving = false;
+        this.isSaving.set(false);
         this.previousState();
     }
 
@@ -78,6 +83,6 @@ export class OrganizationManagementUpdateComponent implements OnInit {
      * Set isSaving to false
      */
     private onSaveError() {
-        this.isSaving = false;
+        this.isSaving.set(false);
     }
 }

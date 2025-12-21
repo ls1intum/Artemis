@@ -1,43 +1,70 @@
-import { ActivatedRouteSnapshot } from '@angular/router';
+/**
+ * Vitest tests for SystemNotificationManagementResolve service.
+ * Tests the route resolver that fetches system notification data based on ID parameter.
+ */
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { of } from 'rxjs';
+import { HttpResponse } from '@angular/common/http';
+import { ActivatedRouteSnapshot } from '@angular/router';
+
 import { SystemNotificationManagementResolve } from 'app/core/admin/system-notification-management/system-notification-management-resolve.service';
 import { SystemNotification } from 'app/core/shared/entities/system-notification.model';
-import { HttpResponse } from '@angular/common/http';
-import { TestBed } from '@angular/core/testing';
 import { SystemNotificationService } from 'app/core/notification/system-notification/system-notification.service';
 
-describe('SystemNotificationManagementResolveService', () => {
-    let systemNotificationService: SystemNotificationService;
-    let systemNotificationManagementResolve: SystemNotificationManagementResolve;
+describe('SystemNotificationManagementResolve', () => {
+    setupTestBed({ zoneless: true });
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            providers: [SystemNotificationManagementResolve, { provide: SystemNotificationService, useValue: { find: jest.fn() } }],
-        });
+    let systemNotificationService: SystemNotificationService;
+    let resolver: SystemNotificationManagementResolve;
+
+    /** Mock service with spy method */
+    const mockSystemNotificationService = {
+        find: vi.fn(),
+    };
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            providers: [SystemNotificationManagementResolve, { provide: SystemNotificationService, useValue: mockSystemNotificationService }],
+        }).compileComponents();
 
         systemNotificationService = TestBed.inject(SystemNotificationService);
-        systemNotificationManagementResolve = TestBed.inject(SystemNotificationManagementResolve);
+        resolver = TestBed.inject(SystemNotificationManagementResolve);
     });
 
-    it('should search for notification by id', () => {
-        const toReturn = new HttpResponse<SystemNotification>({ body: new SystemNotification() });
-        const spy = jest.spyOn(systemNotificationService, 'find').mockReturnValue(of(toReturn));
-
-        let result = undefined;
-        // @ts-ignore
-        systemNotificationManagementResolve.resolve({ params: { id: '1' } } as any as ActivatedRouteSnapshot).subscribe((noti) => (result = noti));
-        expect(result).toBe(toReturn.body);
-        expect(spy).toHaveBeenCalledOnce();
-        expect(spy).toHaveBeenCalledWith(1);
+    beforeEach(() => {
+        vi.clearAllMocks();
     });
 
-    it('should return new notification if no id is given', () => {
-        const toReturn = new HttpResponse<SystemNotification>({ body: new SystemNotification() });
-        const spy = jest.spyOn(systemNotificationService, 'find').mockReturnValue(of(toReturn));
+    it('should fetch notification by id when id parameter is provided', () => {
+        const expectedNotification = new SystemNotification();
+        const httpResponse = new HttpResponse<SystemNotification>({ body: expectedNotification });
+        const routeSnapshot = { params: { id: '1' } } as unknown as ActivatedRouteSnapshot;
 
-        const result = systemNotificationManagementResolve.resolve({ params: { id: undefined } } as any as ActivatedRouteSnapshot);
-        expect(result).not.toBe(toReturn);
+        vi.spyOn(systemNotificationService, 'find').mockReturnValue(of(httpResponse));
+
+        let result: SystemNotification | undefined;
+        // @ts-ignore - resolve may return Observable or direct value
+        resolver.resolve(routeSnapshot).subscribe((notification: SystemNotification) => (result = notification));
+
+        expect(result).toBe(expectedNotification);
+        expect(systemNotificationService.find).toHaveBeenCalledOnce();
+        expect(systemNotificationService.find).toHaveBeenCalledWith(1);
+    });
+
+    it('should return new notification when id parameter is not provided', () => {
+        const existingNotification = new SystemNotification();
+        const httpResponse = new HttpResponse<SystemNotification>({ body: existingNotification });
+        const routeSnapshot = { params: { id: undefined } } as unknown as ActivatedRouteSnapshot;
+
+        vi.spyOn(systemNotificationService, 'find').mockReturnValue(of(httpResponse));
+
+        const result = resolver.resolve(routeSnapshot);
+
+        // Should return a new SystemNotification instance, not the mocked one
+        expect(result).not.toBe(existingNotification);
         expect(result).toBeInstanceOf(SystemNotification);
-        expect(spy).not.toHaveBeenCalled();
+        expect(systemNotificationService.find).not.toHaveBeenCalled();
     });
 });

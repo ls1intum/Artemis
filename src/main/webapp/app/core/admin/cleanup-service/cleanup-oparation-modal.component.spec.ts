@@ -1,53 +1,54 @@
+/**
+ * Vitest tests for CleanupOperationModalComponent.
+ */
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { signal } from '@angular/core';
+
 import { CleanupOperationModalComponent } from 'app/core/admin/cleanup-service/cleanup-operation-modal.component';
 import { DataCleanupService, PlagiarismComparisonCleanupCountDTO } from 'app/core/admin/cleanup-service/data-cleanup.service';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-
-import { signal } from '@angular/core';
-import { MockDirective } from 'ng-mocks';
-import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { TranslateService } from '@ngx-translate/core';
 
 describe('CleanupOperationModalComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let comp: CleanupOperationModalComponent;
     let fixture: ComponentFixture<CleanupOperationModalComponent>;
     let cleanupService: DataCleanupService;
     let activeModal: NgbActiveModal;
 
     const mockCleanupService = {
-        deletePlagiarismComparisons: jest.fn(),
-        countPlagiarismComparisons: jest.fn(),
+        deletePlagiarismComparisons: vi.fn(),
+        countPlagiarismComparisons: vi.fn(),
     };
 
     const mockActiveModal = {
-        close: jest.fn(),
+        close: vi.fn(),
     };
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             imports: [CleanupOperationModalComponent],
-            declarations: [MockDirective(TranslateDirective)],
             providers: [
                 { provide: DataCleanupService, useValue: mockCleanupService },
                 { provide: NgbActiveModal, useValue: mockActiveModal },
-                { provide: TranslateService, useClass: MockTranslateService },
             ],
         })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(CleanupOperationModalComponent);
-                comp = fixture.componentInstance;
-                cleanupService = TestBed.inject(DataCleanupService);
-                activeModal = TestBed.inject(NgbActiveModal);
-            });
+            .overrideTemplate(CleanupOperationModalComponent, '')
+            .compileComponents();
+
+        fixture = TestBed.createComponent(CleanupOperationModalComponent);
+        comp = fixture.componentInstance;
+        cleanupService = TestBed.inject(DataCleanupService);
+        activeModal = TestBed.inject(NgbActiveModal);
     });
 
     afterEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
     });
 
     it('should initialize and fetch counts on init', () => {
@@ -58,7 +59,7 @@ describe('CleanupOperationModalComponent', () => {
             plagiarismSubmissions: 1,
             plagiarismMatches: 1,
         };
-        jest.spyOn(cleanupService, 'countPlagiarismComparisons').mockReturnValue(of(new HttpResponse({ body: mockCounts })));
+        vi.spyOn(cleanupService, 'countPlagiarismComparisons').mockReturnValue(of(new HttpResponse({ body: mockCounts })));
 
         const operation = {
             name: 'deletePlagiarismComparisons',
@@ -71,7 +72,7 @@ describe('CleanupOperationModalComponent', () => {
         fixture.detectChanges();
 
         expect(cleanupService.countPlagiarismComparisons).toHaveBeenCalledOnce();
-        expect(comp.counts).toEqual(mockCounts);
+        expect(comp.counts()).toEqual(mockCounts);
     });
 
     it('should execute cleanup operation successfully', () => {
@@ -86,8 +87,8 @@ describe('CleanupOperationModalComponent', () => {
             plagiarismSubmissions: 1,
             plagiarismMatches: 1,
         };
-        jest.spyOn(cleanupService, 'deletePlagiarismComparisons').mockReturnValue(of(mockResponse));
-        jest.spyOn(cleanupService, 'countPlagiarismComparisons').mockReturnValue(of(new HttpResponse({ body: mockCounts })));
+        vi.spyOn(cleanupService, 'deletePlagiarismComparisons').mockReturnValue(of(mockResponse));
+        vi.spyOn(cleanupService, 'countPlagiarismComparisons').mockReturnValue(of(new HttpResponse({ body: mockCounts })));
 
         const operation = {
             name: 'deletePlagiarismComparisons',
@@ -102,8 +103,8 @@ describe('CleanupOperationModalComponent', () => {
 
         expect(cleanupService.deletePlagiarismComparisons).toHaveBeenCalledOnce();
         expect(cleanupService.countPlagiarismComparisons).toHaveBeenCalledOnce();
-        expect(comp.operationExecuted).toBeTrue();
-        expect(comp.counts).toEqual(mockCounts);
+        expect(comp.operationExecuted()).toBe(true);
+        expect(comp.counts()).toEqual(mockCounts);
     });
 
     it('should handle error during cleanup operation', () => {
@@ -111,10 +112,10 @@ describe('CleanupOperationModalComponent', () => {
             status: 500,
             statusText: 'Internal Server Error',
             error: 'Some error message',
-            url: 'https://artemis.ase.in.tum.de/api/plagiarism/admin/plagiarism-comparisons', // Mock URL
+            url: 'https://artemis.ase.in.tum.de/api/plagiarism/admin/plagiarism-comparisons',
         });
 
-        jest.spyOn(cleanupService, 'deletePlagiarismComparisons').mockReturnValue(throwError(() => errorResponse));
+        vi.spyOn(cleanupService, 'deletePlagiarismComparisons').mockReturnValue(throwError(() => errorResponse));
 
         let errorMessage: string | undefined;
         comp.dialogError.subscribe((error) => {
@@ -144,13 +145,13 @@ describe('CleanupOperationModalComponent', () => {
 
     it('should compute hasEntriesToDelete correctly', () => {
         let mockCounts: PlagiarismComparisonCleanupCountDTO = { totalCount: 0, plagiarismComparison: 0, plagiarismElements: 0, plagiarismSubmissions: 0, plagiarismMatches: 0 };
-        comp.counts = mockCounts;
+        comp.counts.set(mockCounts);
 
-        expect(comp.hasEntriesToDelete).toBeFalse();
+        expect(comp.hasEntriesToDelete()).toBe(false);
 
         mockCounts = { totalCount: 5, plagiarismComparison: 2, plagiarismElements: 1, plagiarismSubmissions: 1, plagiarismMatches: 1 };
-        comp.counts = mockCounts;
+        comp.counts.set(mockCounts);
 
-        expect(comp.hasEntriesToDelete).toBeTrue();
+        expect(comp.hasEntriesToDelete()).toBe(true);
     });
 });

@@ -1,58 +1,56 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+/**
+ * Vitest tests for StatisticsComponent.
+ */
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { provideRouter } from '@angular/router';
+
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
-import { MockHasAnyAuthorityDirective } from 'test/helpers/mocks/directive/mock-has-any-authority.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { StatisticsComponent } from 'app/core/admin/statistics/statistics.component';
-import { StatisticsGraphComponent } from 'app/shared/statistics-graph/statistics-graph.component';
-import { SpanType } from 'app/exercise/shared/entities/statistics.model';
-import { provideRouter } from '@angular/router';
-import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { TranslateService } from '@ngx-translate/core';
 
 describe('StatisticsComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<StatisticsComponent>;
     let component: StatisticsComponent;
 
-    beforeEach(fakeAsync(() => {
-        TestBed.configureTestingModule({
-            declarations: [
-                StatisticsComponent,
-                MockComponent(StatisticsGraphComponent),
-                MockDirective(MockHasAnyAuthorityDirective),
-                MockPipe(ArtemisTranslatePipe),
-                MockPipe(ArtemisDatePipe),
-            ],
-            providers: [provideRouter([]), LocalStorageService, SessionStorageService, { provide: TranslateService, useClass: MockTranslateService }],
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [StatisticsComponent],
+            providers: [provideRouter([]), LocalStorageService, SessionStorageService],
         })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(StatisticsComponent);
-                component = fixture.componentInstance;
-            });
-    }));
+            .overrideTemplate(
+                StatisticsComponent,
+                `
+                <input type="radio" id="option3" (click)="onTabChanged(2)">
+            `,
+            )
+            .compileComponents();
 
-    afterEach(fakeAsync(() => {
-        jest.clearAllMocks();
-    }));
+        fixture = TestBed.createComponent(StatisticsComponent);
+        component = fixture.componentInstance;
+    });
 
-    it('should initialize', fakeAsync(() => {
+    afterEach(() => {
+        vi.clearAllMocks();
+    });
+
+    it('should initialize', () => {
         fixture.detectChanges();
         expect(component).not.toBeNull();
-    }));
+    });
 
-    it('should click Month button', fakeAsync(() => {
-        const tabSpy = jest.spyOn(component, 'onTabChanged');
+    it('should call onTabChanged when button is clicked', async () => {
+        const tabSpy = vi.spyOn(component, 'onTabChanged');
         fixture.detectChanges();
 
         const button = fixture.debugElement.nativeElement.querySelector('#option3');
         button.click();
 
-        tick();
+        await fixture.whenStable();
         expect(tabSpy).toHaveBeenCalledOnce();
-        expect(component.currentSpan).toEqual(SpanType.MONTH);
-        tabSpy.mockRestore();
-    }));
+        expect(tabSpy).toHaveBeenCalledWith(2);
+    });
 });

@@ -4,7 +4,7 @@
             <h2 class="mb-1" jhiTranslate="artemisApp.courseRequest.admin.title"></h2>
             <p class="text-secondary mb-0" jhiTranslate="artemisApp.courseRequest.admin.subtitle"></p>
         </div>
-        <jhi-button [btnType]="ButtonType.SECONDARY" [icon]="faSync" (click)="load()" [disabled]="loading">
+        <jhi-button [btnType]="ButtonType.SECONDARY" [icon]="faSync" (click)="load()" [disabled]="loading()">
             {{ 'global.form.refresh' | artemisTranslate }}
         </jhi-button>
     </div>
@@ -25,12 +25,12 @@
                 </tr>
             </thead>
             <tbody>
-                @if (!pendingRequests.length) {
+                @if (!pendingRequests().length) {
                     <tr>
                         <td colspan="7" class="text-center text-secondary" jhiTranslate="artemisApp.courseRequest.admin.noPendingRequests"></td>
                     </tr>
                 }
-                @for (request of pendingRequests; track request.id) {
+                @for (request of pendingRequests(); track request.id) {
                     <tr>
                         <td>
                             <div class="fw-semibold">{{ request.title }}</div>
@@ -117,12 +117,12 @@
                 </tr>
             </thead>
             <tbody>
-                @if (!decidedRequests.length) {
+                @if (!decidedRequests().length) {
                     <tr>
                         <td colspan="6" class="text-center text-secondary" jhiTranslate="artemisApp.courseRequest.admin.noDecidedRequests"></td>
                     </tr>
                 }
-                @for (request of decidedRequests; track request.id) {
+                @for (request of decidedRequests(); track request.id) {
                     <tr>
                         <td>
                             <div class="fw-semibold">{{ request.title }}</div>
@@ -183,16 +183,16 @@
     </div>
 
     <!-- Pagination for Decided Requests -->
-    @if (totalDecidedCount > decidedPageSize) {
+    @if (totalDecidedCount() > decidedPageSize) {
         <div class="d-flex justify-content-center mt-3">
             <ngb-pagination
-                [collectionSize]="totalDecidedCount"
-                [(page)]="decidedPage"
+                [collectionSize]="totalDecidedCount()"
+                [page]="decidedPage()"
+                (pageChange)="decidedPage.set($event); onDecidedPageChange()"
                 [pageSize]="decidedPageSize"
                 [maxSize]="5"
                 [rotate]="true"
                 [boundaryLinks]="true"
-                (pageChange)="onDecidedPageChange()"
             />
         </div>
     }
@@ -209,11 +209,12 @@
             id="rejectReason"
             class="form-control"
             rows="4"
-            [(ngModel)]="decisionReason"
-            [class.is-invalid]="reasonInvalid"
+            [ngModel]="decisionReason()"
+            (ngModelChange)="decisionReason.set($event)"
+            [class.is-invalid]="reasonInvalid()"
             [placeholder]="'artemisApp.courseRequest.admin.rejectReasonPlaceholder' | artemisTranslate"
         ></textarea>
-        @if (reasonInvalid) {
+        @if (reasonInvalid()) {
             <div class="invalid-feedback d-block" jhiTranslate="entity.validation.required"></div>
         }
     </div>
@@ -230,11 +231,11 @@
     </div>
     <div class="modal-body">
         <form [formGroup]="editForm" novalidate>
-            <jhi-course-request-form [form]="editForm" [semesters]="semesters" [dateRangeInvalid]="editDateRangeInvalid" [showReasonPlaceholder]="false" idPrefix="edit" />
+            <jhi-course-request-form [form]="editForm" [semesters]="semesters" [dateRangeInvalid]="editDateRangeInvalid()" [showReasonPlaceholder]="false" idPrefix="edit" />
         </form>
     </div>
     <div class="modal-footer">
         <jhi-button [btnType]="ButtonType.SECONDARY" (click)="modal.dismiss()" [title]="'entity.action.cancel'" />
-        <jhi-button [btnType]="ButtonType.PRIMARY" [icon]="faCheck" (click)="saveEdit()" [disabled]="isSubmittingEdit" [title]="'entity.action.save'" />
+        <jhi-button [btnType]="ButtonType.PRIMARY" [icon]="faCheck" (click)="saveEdit()" [disabled]="isSubmittingEdit()" [title]="'entity.action.save'" />
     </div>
 </ng-template>
