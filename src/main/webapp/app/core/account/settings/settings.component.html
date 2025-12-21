@@ -2,7 +2,7 @@
     <div>
         <div class="row justify-content-center">
             <div class="col-md-8">
-                @if (account(); as currentAccount) {
+                @if (currentUser(); as currentAccount) {
                     <h2 jhiTranslate="settings.title" [translateValues]="{ username: currentAccount.login }">
                         User settings for [<b>{{ currentAccount.login }}</b
                         >]
@@ -13,8 +13,8 @@
                         <strong>Settings saved!</strong>
                     </div>
                 }
-                @if (account()) {
-                    <form name="form" role="form" (ngSubmit)="save()" [formGroup]="settingsForm" novalidate>
+                @if (currentUser()) {
+                    <form name="form" role="form" (ngSubmit)="saveSettings()" [formGroup]="settingsForm" novalidate>
                         <div class="form-group">
                             <label class="form-control-label" for="firstName" jhiTranslate="settings.form.firstname"></label>
                             <input
