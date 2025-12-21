@@ -6,6 +6,11 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { mergeMap } from 'rxjs/operators';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
+/**
+ * Component that handles user account activation via email confirmation link.
+ * Users receive an activation link after registration containing a unique key.
+ * This component extracts that key from the URL and validates it with the server.
+ */
 @Component({
     selector: 'jhi-activate',
     templateUrl: './activate.component.html',
@@ -18,8 +23,11 @@ export class ActivateComponent implements OnInit {
     private readonly profileService = inject(ProfileService);
     private readonly destroyRef = inject(DestroyRef);
 
+    /** Indicates whether the activation request failed */
     readonly error = signal(false);
+    /** Indicates whether the account was successfully activated */
     readonly success = signal(false);
+    /** Whether user registration is enabled on this Artemis instance */
     readonly isRegistrationEnabled: boolean;
 
     constructor() {
@@ -28,19 +36,24 @@ export class ActivateComponent implements OnInit {
     }
 
     /**
-     * Checks if the user can be activated with ActivateService
+     * Initiates the account activation process on component initialization.
+     * Only attempts activation if registration is enabled on the server.
      */
     ngOnInit() {
         if (this.isRegistrationEnabled) {
-            // only try to activate an account if the registration is enabled
             this.activateAccount();
         }
     }
 
+    /**
+     * Extracts the activation key from URL query parameters and sends it
+     * to the server for validation. Updates success/error signals based
+     * on the server response.
+     */
     activateAccount() {
         this.route.queryParams
             .pipe(
-                mergeMap((params) => this.activateService.get(params.key)),
+                mergeMap((params) => this.activateService.activate(params.key)),
                 takeUntilDestroyed(this.destroyRef),
             )
             .subscribe({

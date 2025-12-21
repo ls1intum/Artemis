@@ -60,16 +60,16 @@ describe('PasswordResetInitComponent', () => {
     });
 
     it('notifies of success upon successful requestReset', inject([PasswordResetInitService], (service: PasswordResetInitService) => {
-        vi.spyOn(service, 'save').mockReturnValue(of({}));
+        vi.spyOn(service, 'requestPasswordReset').mockReturnValue(of({}));
         comp.emailUsernameValue = 'user@domain.com';
 
         comp.requestReset();
 
-        expect(service.save).toHaveBeenCalledWith('user@domain.com');
+        expect(service.requestPasswordReset).toHaveBeenCalledWith('user@domain.com');
     }));
 
     it('no notification of success upon error response', inject([PasswordResetInitService], (service: PasswordResetInitService) => {
-        vi.spyOn(service, 'save').mockReturnValue(
+        vi.spyOn(service, 'requestPasswordReset').mockReturnValue(
             throwError(() => ({
                 status: 503,
                 data: 'something else',
@@ -79,7 +79,7 @@ describe('PasswordResetInitComponent', () => {
 
         comp.requestReset();
 
-        expect(service.save).toHaveBeenCalledWith('user@domain.com');
+        expect(service.requestPasswordReset).toHaveBeenCalledWith('user@domain.com');
         expect(comp.externalResetModalRef).toBeUndefined();
     }));
 
@@ -93,7 +93,7 @@ describe('PasswordResetInitComponent', () => {
         comp = fixture.componentInstance;
 
         const service = TestBed.inject(PasswordResetInitService);
-        vi.spyOn(service, 'save').mockReturnValue(
+        vi.spyOn(service, 'requestPasswordReset').mockReturnValue(
             throwError(() => ({
                 status: 400,
                 error: { errorKey: 'externalUser' },
@@ -102,7 +102,7 @@ describe('PasswordResetInitComponent', () => {
         comp.emailUsernameValue = 'user@domain.com';
         comp.requestReset();
 
-        expect(service.save).toHaveBeenCalledWith('user@domain.com');
+        expect(service.requestPasswordReset).toHaveBeenCalledWith('user@domain.com');
         expect(comp.externalResetModalRef).toBeDefined(); // External reference
     });
 

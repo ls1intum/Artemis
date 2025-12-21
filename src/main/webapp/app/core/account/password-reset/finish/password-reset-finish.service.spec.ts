@@ -34,12 +34,12 @@ describe('PasswordResetFinishService', () => {
     });
 
     it('should send a POST request to reset password with key and newPassword', () => {
-        const key = 'reset-key-123';
+        const resetKey = 'reset-key-123';
         const newPassword = 'newSecurePassword123';
 
-        service.save(key, newPassword).subscribe();
+        service.completePasswordReset(resetKey, newPassword).subscribe();
 
         expect(postSpy).toHaveBeenCalledOnce();
-        expect(postSpy).toHaveBeenCalledWith(postURL, { key, newPassword });
+        expect(postSpy).toHaveBeenCalledWith(postURL, { key: resetKey, newPassword });
     });
 });

@@ -9,6 +9,9 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FindLanguageFromKeyPipe } from 'app/shared/language/find-language-from-key.pipe';
 
+/**
+ * Type definition for the user settings form controls.
+ */
 interface SettingsForm {
     firstName: FormControl<string | undefined>;
     lastName: FormControl<string | undefined>;
@@ -16,6 +19,11 @@ interface SettingsForm {
     langKey: FormControl<string | undefined>;
 }
 
+/**
+ * Component for managing user account settings.
+ * Allows users to update their personal information (name) and language preference.
+ * Note: Email changes are currently not supported as they would require re-verification.
+ */
 @Component({
     selector: 'jhi-settings',
     templateUrl: './settings.component.html',
@@ -27,9 +35,13 @@ export class SettingsComponent implements OnInit {
     private readonly translateService = inject(TranslateService);
     private readonly profileService = inject(ProfileService);
 
+    /** Indicates the settings were successfully saved */
     readonly success = signal(false);
-    readonly account = signal<User | undefined>(undefined);
+    /** The current user's account data */
+    readonly currentUser = signal<User | undefined>(undefined);
+    /** List of available languages for the language selector */
     readonly languages = LANGUAGES;
+    /** Whether self-registration is enabled (affects UI display) */
     readonly isRegistrationEnabled: boolean;
 
     readonly settingsForm = new FormGroup<SettingsForm>({
@@ -52,6 +64,9 @@ export class SettingsComponent implements OnInit {
         this.isRegistrationEnabled = this.profileService.getProfileInfo().registrationEnabled || false;
     }
 
+    /**
+     * Loads the current user's account data and populates the form.
+     */
     ngOnInit() {
         this.accountService.identity().then((user) => {
             if (user) {
@@ -61,32 +76,39 @@ export class SettingsComponent implements OnInit {
                     email: user.email,
                     langKey: user.langKey,
                 });
-                this.account.set(user);
+                this.currentUser.set(user);
             }
         });
     }
 
     /**
-     * Saves the current user account, writing all changes made to the database.
+     * Saves the user's settings to the server.
+     * Updates first name, last name, and language preference.
+     * If the language changed, updates the application's display language.
+     * Note: Email changes are disabled as they would require sending a new activation link.
      */
-    save() {
+    saveSettings() {
         this.success.set(false);
-        const currentAccount = this.account();
-        if (!currentAccount) {
+
+        const userToUpdate = this.currentUser();
+        if (!userToUpdate) {
             return;
         }
 
-        // Note: changing the email is currently not supported, because we would need to send another activation link
-        currentAccount.firstName = this.settingsForm.controls.firstName.value || undefined;
-        currentAccount.lastName = this.settingsForm.controls.lastName.value || undefined;
-        currentAccount.langKey = this.settingsForm.controls.langKey.value || undefined;
+        // Update user object with form values
+        // Note: Email changes are not supported - would require re-verification
+        userToUpdate.firstName = this.settingsForm.controls.firstName.value || undefined;
+        userToUpdate.lastName = this.settingsForm.controls.lastName.value || undefined;
+        userToUpdate.langKey = this.settingsForm.controls.langKey.value || undefined;
 
-        this.accountService.save(currentAccount).subscribe({
+        this.accountService.save(userToUpdate).subscribe({
             next: () => {
                 this.success.set(true);
-                this.accountService.authenticate(currentAccount);
-                if (currentAccount.langKey !== this.translateService.getCurrentLang()) {
-                    this.translateService.use(currentAccount.langKey!);
+                this.accountService.authenticate(userToUpdate);
+
+                // Update UI language if the user changed their language preference
+                if (userToUpdate.langKey !== this.translateService.getCurrentLang()) {
+                    this.translateService.use(userToUpdate.langKey!);
                 }
             },
             error: () => this.success.set(false),

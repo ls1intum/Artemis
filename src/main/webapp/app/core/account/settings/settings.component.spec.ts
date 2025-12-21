@@ -77,8 +77,8 @@ describe('SettingsComponent', () => {
 
         // WHEN
         comp.ngOnInit();
-        await vi.waitFor(() => expect(comp.account()).toBeDefined());
-        comp.save();
+        await vi.waitFor(() => expect(comp.currentUser()).toBeDefined());
+        comp.saveSettings();
 
         // THEN
         expect(accountService.identity).toHaveBeenCalled();
@@ -94,8 +94,8 @@ describe('SettingsComponent', () => {
 
         // WHEN
         comp.ngOnInit();
-        await vi.waitFor(() => expect(comp.account()).toBeDefined());
-        comp.save();
+        await vi.waitFor(() => expect(comp.currentUser()).toBeDefined());
+        comp.saveSettings();
 
         // THEN
         expect(comp.success()).toBe(true);
@@ -108,19 +108,19 @@ describe('SettingsComponent', () => {
 
         // WHEN
         comp.ngOnInit();
-        await vi.waitFor(() => expect(comp.account()).toBeDefined());
-        comp.save();
+        await vi.waitFor(() => expect(comp.currentUser()).toBeDefined());
+        comp.saveSettings();
 
         // THEN
         expect(comp.success()).toBe(false);
     });
 
     it('should return early from save when account is undefined', () => {
-        // GIVEN: account is undefined (ngOnInit not called)
+        // GIVEN: currentUser is undefined (ngOnInit not called)
         const saveSpy = vi.spyOn(accountService, 'save');
 
         // WHEN
-        comp.save();
+        comp.saveSettings();
 
         // THEN
         expect(saveSpy).not.toHaveBeenCalled();
@@ -136,7 +136,7 @@ describe('SettingsComponent', () => {
         await vi.waitFor(() => Promise.resolve()); // Let promise resolve
 
         // THEN
-        expect(comp.account()).toBeUndefined();
+        expect(comp.currentUser()).toBeUndefined();
         // Form controls are not patched, so firstName stays at its initial value
         expect(comp.settingsForm.controls.firstName.value).toBeFalsy();
     });
@@ -152,8 +152,8 @@ describe('SettingsComponent', () => {
 
         // WHEN
         comp.ngOnInit();
-        await vi.waitFor(() => expect(comp.account()).toBeDefined());
-        comp.save();
+        await vi.waitFor(() => expect(comp.currentUser()).toBeDefined());
+        comp.saveSettings();
 
         // THEN
         expect(useSpy).toHaveBeenCalledWith('de');
@@ -169,8 +169,8 @@ describe('SettingsComponent', () => {
 
         // WHEN
         comp.ngOnInit();
-        await vi.waitFor(() => expect(comp.account()).toBeDefined());
-        comp.save();
+        await vi.waitFor(() => expect(comp.currentUser()).toBeDefined());
+        comp.saveSettings();
 
         // THEN
         expect(useSpy).not.toHaveBeenCalled();
@@ -184,7 +184,7 @@ describe('SettingsComponent', () => {
 
         // WHEN
         comp.ngOnInit();
-        await vi.waitFor(() => expect(comp.account()).toBeDefined());
+        await vi.waitFor(() => expect(comp.currentUser()).toBeDefined());
 
         // Clear form values to trigger || undefined branch
         comp.settingsForm.patchValue({
@@ -192,15 +192,15 @@ describe('SettingsComponent', () => {
             lastName: '',
             langKey: '',
         });
-        comp.save();
+        comp.saveSettings();
 
         // THEN
         expect(accountService.save).toHaveBeenCalled();
         // The account values should have undefined for empty string values
-        const savedAccount = comp.account();
-        expect(savedAccount?.firstName).toBeUndefined();
-        expect(savedAccount?.lastName).toBeUndefined();
-        expect(savedAccount?.langKey).toBeUndefined();
+        const savedUser = comp.currentUser();
+        expect(savedUser?.firstName).toBeUndefined();
+        expect(savedUser?.lastName).toBeUndefined();
+        expect(savedUser?.langKey).toBeUndefined();
     });
 
     describe('when registration is disabled', () => {

@@ -36,7 +36,7 @@ describe('PasswordResetInitService', () => {
     it('should send a POST request to init password reset with email', () => {
         const email = 'user@example.com';
 
-        service.save(email).subscribe();
+        service.requestPasswordReset(email).subscribe();
 
         expect(postSpy).toHaveBeenCalledOnce();
         expect(postSpy).toHaveBeenCalledWith(postURL, email);

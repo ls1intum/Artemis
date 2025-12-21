@@ -37,7 +37,7 @@ describe('PasswordService', () => {
         const newPassword = 'newPassword';
         const currentPassword = 'currentPassword';
 
-        passwordService.save(newPassword, currentPassword).subscribe();
+        passwordService.changePassword(newPassword, currentPassword).subscribe();
 
         expect(postStub).toHaveBeenCalledOnce();
         expect(postStub).toHaveBeenCalledWith(postURL, { currentPassword, newPassword });

@@ -69,7 +69,7 @@ describe('Password Component Tests', () => {
                 newPassword: 'myPassword',
             };
 
-            vi.spyOn(service, 'save').mockReturnValue(of(new HttpResponse({ body: true })));
+            vi.spyOn(service, 'changePassword').mockReturnValue(of(new HttpResponse({ body: true })));
 
             comp.passwordForm.patchValue({
                 currentPassword: passwordValues.currentPassword,
@@ -81,12 +81,12 @@ describe('Password Component Tests', () => {
             comp.changePassword();
 
             // THEN
-            expect(service.save).toHaveBeenCalledWith(passwordValues.newPassword, passwordValues.currentPassword);
+            expect(service.changePassword).toHaveBeenCalledWith(passwordValues.newPassword, passwordValues.currentPassword);
         });
 
         it('should set success to true upon success', () => {
             // GIVEN
-            vi.spyOn(service, 'save').mockReturnValue(of(new HttpResponse({ body: true })));
+            vi.spyOn(service, 'changePassword').mockReturnValue(of(new HttpResponse({ body: true })));
             comp.passwordForm.patchValue({
                 newPassword: 'myPassword',
                 confirmPassword: 'myPassword',
@@ -103,7 +103,7 @@ describe('Password Component Tests', () => {
 
         it('should notify of error if change password fails', () => {
             // GIVEN
-            vi.spyOn(service, 'save').mockReturnValue(throwError(() => new Error('ERROR')));
+            vi.spyOn(service, 'changePassword').mockReturnValue(throwError(() => new Error('ERROR')));
             comp.passwordForm.patchValue({
                 newPassword: 'myPassword',
                 confirmPassword: 'myPassword',

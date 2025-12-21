@@ -43,11 +43,11 @@ describe('ExternalUserPasswordResetModalComponent', () => {
         expect(comp.externalPasswordResetLink).toBe('https://example.com/reset');
     });
 
-    describe('clear', () => {
-        it('should dismiss the modal when clear is called', () => {
+    describe('dismiss', () => {
+        it('should dismiss the modal when dismiss is called', () => {
             const dismissSpy = vi.spyOn(activeModal, 'dismiss');
 
-            comp.clear();
+            comp.dismiss();
 
             expect(dismissSpy).toHaveBeenCalledOnce();
         });

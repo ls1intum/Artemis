@@ -67,7 +67,7 @@ describe('Register Component Tests', () => {
         });
 
         it('should update success to true after creating an account', () => {
-            vi.spyOn(registerService, 'save').mockReturnValue(of({} as any));
+            vi.spyOn(registerService, 'registerUser').mockReturnValue(of({} as any));
             comp.registerForm.patchValue({
                 password: 'password',
                 confirmPassword: 'password',
@@ -75,14 +75,14 @@ describe('Register Component Tests', () => {
 
             comp.register();
 
-            const user = new User();
-            user.email = '';
-            user.firstName = '';
-            user.lastName = '';
-            user.password = 'password';
-            user.login = '';
-            user.langKey = 'en';
-            expect(registerService.save).toHaveBeenCalledWith(user);
+            const expectedUser = new User();
+            expectedUser.email = '';
+            expectedUser.firstName = '';
+            expectedUser.lastName = '';
+            expectedUser.password = 'password';
+            expectedUser.login = '';
+            expectedUser.langKey = 'en';
+            expect(registerService.registerUser).toHaveBeenCalledWith(expectedUser);
             expect(comp.success()).toBe(true);
             expect(comp.errorUserExists()).toBe(false);
             expect(comp.errorEmailExists()).toBe(false);
@@ -90,7 +90,7 @@ describe('Register Component Tests', () => {
         });
 
         it('should notify of user existence upon 400/login already in use', () => {
-            vi.spyOn(registerService, 'save').mockReturnValue(
+            vi.spyOn(registerService, 'registerUser').mockReturnValue(
                 throwError(() => ({
                     status: 400,
                     error: { type: LOGIN_ALREADY_USED_TYPE },
@@ -109,7 +109,7 @@ describe('Register Component Tests', () => {
         });
 
         it('should notify of email existence upon 400/email address already in use', () => {
-            vi.spyOn(registerService, 'save').mockReturnValue(
+            vi.spyOn(registerService, 'registerUser').mockReturnValue(
                 throwError(() => ({
                     status: 400,
                     error: { type: EMAIL_ALREADY_USED_TYPE },
@@ -128,7 +128,7 @@ describe('Register Component Tests', () => {
         });
 
         it('should notify of generic error', () => {
-            vi.spyOn(registerService, 'save').mockReturnValue(
+            vi.spyOn(registerService, 'registerUser').mockReturnValue(
                 throwError(() => ({
                     status: 503,
                 })),
@@ -146,7 +146,7 @@ describe('Register Component Tests', () => {
         });
 
         it('should notify of account registration blocked upon 400/account registration blocked', () => {
-            vi.spyOn(registerService, 'save').mockReturnValue(
+            vi.spyOn(registerService, 'registerUser').mockReturnValue(
                 throwError(() => ({
                     status: 400,
                     error: { type: ACCOUNT_REGISTRATION_BLOCKED },
@@ -171,7 +171,7 @@ describe('Register Component Tests', () => {
             const focusSpy = vi.spyOn(mockElement, 'focus');
 
             // Mock the viewChild signal to return the element
-            vi.spyOn(comp, 'login').mockReturnValue({ nativeElement: mockElement } as ElementRef);
+            vi.spyOn(comp, 'loginInput').mockReturnValue({ nativeElement: mockElement } as ElementRef);
 
             comp.ngAfterViewInit();
 

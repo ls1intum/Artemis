@@ -9,12 +9,21 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { PasswordStrengthBarComponent } from './password-strength-bar.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
+/**
+ * Type definition for the password change form controls.
+ */
 interface PasswordForm {
     currentPassword: FormControl<string>;
     newPassword: FormControl<string>;
     confirmPassword: FormControl<string>;
 }
 
+/**
+ * Component that allows authenticated users to change their password.
+ * Requires the current password for verification and validates that
+ * the new password meets length requirements and matches confirmation.
+ * Only available for internal users (not external/SSO users).
+ */
 @Component({
     selector: 'jhi-password',
     templateUrl: './password.component.html',
@@ -25,13 +34,20 @@ export class PasswordComponent implements OnInit {
     private readonly passwordService = inject(PasswordService);
     private readonly accountService = inject(AccountService);
 
+    /** Minimum allowed password length exposed for template validation messages */
     readonly PASSWORD_MIN_LENGTH = PASSWORD_MIN_LENGTH;
+    /** Maximum allowed password length exposed for template validation messages */
     readonly PASSWORD_MAX_LENGTH = PASSWORD_MAX_LENGTH;
 
+    /** Indicates the new password and confirmation do not match */
     readonly doNotMatch = signal(false);
+    /** Indicates an error occurred during password change */
     readonly error = signal(false);
+    /** Indicates the password was successfully changed */
     readonly success = signal(false);
+    /** The currently authenticated user */
     readonly user = signal<User | undefined>(undefined);
+    /** Whether password reset is available (only for internal, non-SSO users) */
     readonly passwordResetEnabled = signal(false);
 
     readonly passwordForm = new FormGroup<PasswordForm>({
@@ -46,27 +62,35 @@ export class PasswordComponent implements OnInit {
         }),
     });
 
+    /**
+     * Loads the current user and determines if password change is available.
+     * Password change is only enabled for internal users (not SSO/external).
+     */
     ngOnInit() {
         this.accountService.identity().then((user) => {
             this.user.set(user);
+            // Only internal users can change their password; external/SSO users must use their identity provider
             this.passwordResetEnabled.set(user?.internal || false);
         });
     }
 
     /**
-     * Changes the current user's password. It will only try to change it if the values in both the new password field
-     * and the confirmation of the new password are the same.
+     * Attempts to change the user's password after validation.
+     * Validates that new password and confirmation match before submitting.
+     * Resets all status signals before attempting the change.
      */
     changePassword() {
+        // Reset status signals before attempting password change
         this.error.set(false);
         this.success.set(false);
         this.doNotMatch.set(false);
 
         const { newPassword, confirmPassword, currentPassword } = this.passwordForm.controls;
+
         if (newPassword.value !== confirmPassword.value) {
             this.doNotMatch.set(true);
         } else {
-            this.passwordService.save(newPassword.value, currentPassword.value).subscribe({
+            this.passwordService.changePassword(newPassword.value, currentPassword.value).subscribe({
                 next: () => this.success.set(true),
                 error: () => this.error.set(true),
             });

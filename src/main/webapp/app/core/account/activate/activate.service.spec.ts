@@ -34,13 +34,13 @@ describe('ActivateService', () => {
     });
 
     it('should send a request to the server to activate the user', () => {
-        const key = 'key';
+        const activationKey = 'key';
 
-        activateService.get(key).subscribe();
+        activateService.activate(activationKey).subscribe();
 
         expect(getStub).toHaveBeenCalledOnce();
         expect(getStub).toHaveBeenCalledWith(getURL, {
-            params: new HttpParams().set('key', key),
+            params: new HttpParams().set('key', activationKey),
         });
     });
 });

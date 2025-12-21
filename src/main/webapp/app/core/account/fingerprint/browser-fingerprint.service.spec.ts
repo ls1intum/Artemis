@@ -44,9 +44,9 @@ describe('BrowserFingerprintService', () => {
 
             // Wait for async operations
             await vi.waitFor(() => {
-                expect(service.fingerprint.value).toBe('test-visitor-id');
+                expect(service.browserFingerprint.value).toBe('test-visitor-id');
             });
-            expect(service.instanceIdentifier.value).toBeDefined();
+            expect(service.browserInstanceId.value).toBeDefined();
             expect(storeSpy).toHaveBeenCalledWith(BROWSER_INSTANCE_KEY, expect.any(String));
         });
 
@@ -57,9 +57,9 @@ describe('BrowserFingerprintService', () => {
             service.initialize(undefined);
 
             await vi.waitFor(() => {
-                expect(service.fingerprint.value).toBe('test-visitor-id');
+                expect(service.browserFingerprint.value).toBe('test-visitor-id');
             });
-            expect(service.instanceIdentifier.value).toBeDefined();
+            expect(service.browserInstanceId.value).toBeDefined();
             expect(storeSpy).toHaveBeenCalled();
         });
 
@@ -78,7 +78,7 @@ describe('BrowserFingerprintService', () => {
 
             service.initialize(true);
 
-            expect(service.instanceIdentifier.value).toBe(existingId);
+            expect(service.browserInstanceId.value).toBe(existingId);
             expect(storeSpy).not.toHaveBeenCalled();
         });
 
@@ -88,7 +88,7 @@ describe('BrowserFingerprintService', () => {
 
             service.initialize(true);
 
-            expect(service.instanceIdentifier.value).toBeDefined();
+            expect(service.browserInstanceId.value).toBeDefined();
             expect(storeSpy).toHaveBeenCalledWith(BROWSER_INSTANCE_KEY, expect.any(String));
         });
     });

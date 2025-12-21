@@ -35,17 +35,17 @@ describe('RegisterService', () => {
     });
 
     it('should send a POST request to register a new user', () => {
-        const user = new User();
-        user.login = 'testuser';
-        user.email = 'test@example.com';
-        user.firstName = 'Test';
-        user.lastName = 'User';
-        user.password = 'password123';
-        user.langKey = 'en';
+        const userData = new User();
+        userData.login = 'testuser';
+        userData.email = 'test@example.com';
+        userData.firstName = 'Test';
+        userData.lastName = 'User';
+        userData.password = 'password123';
+        userData.langKey = 'en';
 
-        service.save(user).subscribe();
+        service.registerUser(userData).subscribe();
 
         expect(postSpy).toHaveBeenCalledOnce();
-        expect(postSpy).toHaveBeenCalledWith(postURL, user);
+        expect(postSpy).toHaveBeenCalledWith(postURL, userData);
     });
 });

@@ -48,16 +48,16 @@ describe('ActivateComponent', () => {
         activateService = TestBed.inject(ActivateService);
     });
 
-    it('calls activate.get with the key from params', () => {
-        vi.spyOn(activateService, 'get').mockReturnValue(of());
+    it('calls activate with the key from params', () => {
+        vi.spyOn(activateService, 'activate').mockReturnValue(of());
 
         comp.activateAccount();
 
-        expect(activateService.get).toHaveBeenCalledWith('ABC123');
+        expect(activateService.activate).toHaveBeenCalledWith('ABC123');
     });
 
     it('should set success to true upon successful activation', () => {
-        vi.spyOn(activateService, 'get').mockReturnValue(of({}));
+        vi.spyOn(activateService, 'activate').mockReturnValue(of({}));
 
         comp.activateAccount();
 
@@ -66,7 +66,7 @@ describe('ActivateComponent', () => {
     });
 
     it('should set error to true upon activation failure', () => {
-        vi.spyOn(activateService, 'get').mockReturnValue(throwError(() => new Error('ERROR')));
+        vi.spyOn(activateService, 'activate').mockReturnValue(throwError(() => new Error('ERROR')));
 
         comp.activateAccount();
 

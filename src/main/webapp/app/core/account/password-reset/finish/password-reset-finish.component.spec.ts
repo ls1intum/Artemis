@@ -54,7 +54,7 @@ describe('Component Tests', () => {
 
         it('should define its initial state', () => {
             expect(comp.initialized()).toBe(true);
-            expect(comp.key()).toBe('XYZPDQ');
+            expect(comp.resetKey()).toBe('XYZPDQ');
         });
 
         it('sets focus after the view has been initialized', () => {
@@ -62,7 +62,7 @@ describe('Component Tests', () => {
             const focusSpy = vi.spyOn(mockElement, 'focus');
 
             // Mock the viewChild signal to return the element
-            vi.spyOn(comp, 'newPassword').mockReturnValue({ nativeElement: mockElement } as ElementRef);
+            vi.spyOn(comp, 'newPasswordInput').mockReturnValue({ nativeElement: mockElement } as ElementRef);
 
             comp.ngAfterViewInit();
 
@@ -81,7 +81,7 @@ describe('Component Tests', () => {
         });
 
         it('should update success to true after resetting password', () => {
-            vi.spyOn(passwordResetFinishService, 'save').mockReturnValue(of({}));
+            vi.spyOn(passwordResetFinishService, 'completePasswordReset').mockReturnValue(of({}));
             comp.passwordForm.patchValue({
                 newPassword: 'password',
                 confirmPassword: 'password',
@@ -89,12 +89,12 @@ describe('Component Tests', () => {
 
             comp.finishReset();
 
-            expect(passwordResetFinishService.save).toHaveBeenCalledWith('XYZPDQ', 'password');
+            expect(passwordResetFinishService.completePasswordReset).toHaveBeenCalledWith('XYZPDQ', 'password');
             expect(comp.success()).toBe(true);
         });
 
         it('should notify of generic error', () => {
-            vi.spyOn(passwordResetFinishService, 'save').mockReturnValue(throwError(() => new Error('ERROR')));
+            vi.spyOn(passwordResetFinishService, 'completePasswordReset').mockReturnValue(throwError(() => new Error('ERROR')));
             comp.passwordForm.patchValue({
                 newPassword: 'password',
                 confirmPassword: 'password',
@@ -102,7 +102,7 @@ describe('Component Tests', () => {
 
             comp.finishReset();
 
-            expect(passwordResetFinishService.save).toHaveBeenCalledWith('XYZPDQ', 'password');
+            expect(passwordResetFinishService.completePasswordReset).toHaveBeenCalledWith('XYZPDQ', 'password');
             expect(comp.success()).toBe(false);
             expect(comp.error()).toBe(true);
         });
