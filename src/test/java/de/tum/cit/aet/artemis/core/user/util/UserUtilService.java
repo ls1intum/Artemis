@@ -51,6 +51,8 @@ public class UserUtilService {
 
     private static final Authority adminAuthority = new Authority(Role.ADMIN.getAuthority());
 
+    private static final Authority superAdminAuthority = new Authority(Role.SUPER_ADMIN.getAuthority());
+
     private static final Set<Authority> studentAuthorities = Set.of(userAuthority);
 
     private static final Set<Authority> tutorAuthorities = Set.of(userAuthority, tutorAuthority);
@@ -60,6 +62,8 @@ public class UserUtilService {
     private static final Set<Authority> instructorAuthorities = Set.of(userAuthority, tutorAuthority, editorAuthority, instructorAuthority);
 
     private static final Set<Authority> adminAuthorities = Set.of(userAuthority, tutorAuthority, editorAuthority, instructorAuthority, adminAuthority);
+
+    private static final Set<Authority> superAdminAuthorities = Set.of(userAuthority, tutorAuthority, editorAuthority, instructorAuthority, adminAuthority, superAdminAuthority);
 
     @Autowired
     private AuthorityRepository authorityRepository;
@@ -480,6 +484,21 @@ public class UserUtilService {
         student.setAuthorities(studentAuthorities);
         student = userTestRepository.save(student);
         assertThat(student.getId()).as("Student has been created").isNotNull();
+    }
+
+    /**
+     * Creates and saves a User with super admin authorities.
+     *
+     * @param prefix The prefix for the super admin username
+     */
+    public void addSuperAdmin(final String prefix) {
+        String superAdminLogin = prefix + "superadmin";
+        User superAdmin = createOrReuseExistingUser(superAdminLogin, UserFactory.USER_PASSWORD);
+        String[] groups = new String[] { "superadmin", "testgroup" };
+        superAdmin.setGroups(Set.of(groups));
+        superAdmin.setAuthorities(superAdminAuthorities);
+        superAdmin = userTestRepository.save(superAdmin);
+        assertThat(superAdmin.getId()).as("Super admin has been created").isNotNull();
     }
 
     /**

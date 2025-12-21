@@ -28,6 +28,7 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 2, 0, 0, 0);
+        userUtilService.addSuperAdmin(TEST_PREFIX);
     }
 
     @Test
@@ -79,6 +80,47 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 false);
 
         request.put("/api/core/passkey/" + modifiedCredential.credentialId() + "idDoesNotExist", modifiedCredential, HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "superadmin", roles = "SUPER_ADMIN")
+    void testUpdatePasskeyApproval_Success() throws Exception {
+        User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        PasskeyCredential existingCredential = passkeyCredentialUtilService.createAndSavePasskeyCredential(user);
+        assertThat(existingCredential.isSuperAdminApproved()).isFalse();
+
+        PasskeyDTO modifiedCredential = new PasskeyDTO(existingCredential.getCredentialId(), existingCredential.getLabel(), existingCredential.getCreatedDate(),
+                existingCredential.getLastUsed(), true);
+
+        request.put("/api/core/passkey/" + modifiedCredential.credentialId() + "/approval", modifiedCredential, HttpStatus.OK);
+
+        PasskeyCredential modifiedCredentialInDatabase = passkeyCredentialsRepository.findByCredentialId(modifiedCredential.credentialId())
+                .orElseThrow(() -> new IllegalStateException("Credential not found"));
+
+        assertThat(modifiedCredentialInDatabase.getCredentialId()).isEqualTo(existingCredential.getCredentialId());
+        assertThat(modifiedCredentialInDatabase.isSuperAdminApproved()).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testUpdatePasskeyApproval_AccessDeniedBecauseNotSuperAdmin() throws Exception {
+        User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        PasskeyCredential existingCredential = passkeyCredentialUtilService.createAndSavePasskeyCredential(user);
+        PasskeyDTO modifiedCredential = new PasskeyDTO(existingCredential.getCredentialId(), existingCredential.getLabel(), existingCredential.getCreatedDate(),
+                existingCredential.getLastUsed(), true);
+
+        request.put("/api/core/passkey/" + modifiedCredential.credentialId() + "/approval", modifiedCredential, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "superadmin", roles = "SUPER_ADMIN")
+    void testUpdatePasskeyApproval_NotFound() throws Exception {
+        User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        PasskeyCredential existingCredential = passkeyCredentialUtilService.createAndSavePasskeyCredential(user);
+        PasskeyDTO modifiedCredential = new PasskeyDTO(existingCredential.getCredentialId(), existingCredential.getLabel(), existingCredential.getCreatedDate(),
+                existingCredential.getLastUsed(), true);
+
+        request.put("/api/core/passkey/idDoesNotExist/approval", modifiedCredential, HttpStatus.NOT_FOUND);
     }
 
 }
