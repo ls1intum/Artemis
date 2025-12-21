@@ -717,7 +717,7 @@ public class AuthorizationCheckService {
      */
     @CheckReturnValue
     public boolean isAdmin() {
-        return SecurityUtils.isCurrentUserInRole(Role.ADMIN.getAuthority());
+        return SecurityUtils.isCurrentUserInRole(Role.ADMIN.getAuthority()) || SecurityUtils.isCurrentUserInRole(Role.SUPER_ADMIN.getAuthority());
     }
 
     /**
@@ -731,7 +731,7 @@ public class AuthorizationCheckService {
         if (user == null) {
             return isAdmin();
         }
-        return user.getAuthorities().contains(Authority.ADMIN_AUTHORITY);
+        return user.getAuthorities().contains(Authority.ADMIN_AUTHORITY) || user.getAuthorities().contains(Authority.SUPER_ADMIN_AUTHORITY);
     }
 
     /**
