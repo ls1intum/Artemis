@@ -11,8 +11,6 @@
             "yes": "Ja",
             "no": "Nein",
             "noPasskeys": "Keine Passkeys im System gefunden.",
-            "approvalSuccess": "Passkey erfolgreich freigegeben",
-            "unapprovalSuccess": "Passkey-Freigabe erfolgreich entfernt",
             "toggleApproval": "Freigabestatus umschalten"
         }
     }

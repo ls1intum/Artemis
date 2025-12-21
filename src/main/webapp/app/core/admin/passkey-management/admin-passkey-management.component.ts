@@ -39,20 +39,15 @@ export class AdminPasskeyManagementComponent implements OnInit {
         });
     }
 
-    onApprovalToggle(passkey: AdminPasskeyDTO): void {
+    async onApprovalToggle(passkey: AdminPasskeyDTO): Promise<void> {
         const newApprovalStatus = !passkey.isSuperAdminApproved;
 
-        this.adminPasskeyService.updatePasskeyApproval(passkey.credentialId, newApprovalStatus).subscribe({
-            next: () => {
-                passkey.isSuperAdminApproved = newApprovalStatus;
-                this.passkeys.update((passkeys) => [...passkeys]);
-
-                const translationKey = newApprovalStatus ? 'artemisApp.adminPasskeyManagement.approvalSuccess' : 'artemisApp.adminPasskeyManagement.unapprovalSuccess';
-                this.alertService.success(translationKey);
-            },
-            error: (error: HttpErrorResponse) => {
-                onError(this.alertService, error);
-            },
-        });
+        try {
+            const passkey = await this.adminPasskeyService.updatePasskeyApproval(passkey.credentialId, newApprovalStatus);
+            passkey.isSuperAdminApproved = newApprovalStatus;
+            this.passkeys.update((passkeys) => [...passkeys]);
+        } catch (error) {
+            onError(this.alertService, error);
+        }
     }
 }
