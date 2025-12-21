@@ -1135,6 +1135,14 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     @Query("""
             SELECT COUNT(user) > 0
             FROM User user
+            WHERE user.login = :login
+                AND :#{T(de.tum.cit.aet.artemis.core.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities
+            """)
+    boolean isSuperAdmin(@Param("login") String login);
+
+    @Query("""
+            SELECT COUNT(user) > 0
+            FROM User user
                 INNER JOIN Course course ON user.login = :login AND course.id = :courseId
             WHERE (course.studentGroupName MEMBER OF user.groups)
                 OR (course.teachingAssistantGroupName MEMBER OF user.groups)

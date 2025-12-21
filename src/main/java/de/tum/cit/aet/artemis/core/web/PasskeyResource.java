@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.web.webauthn.api.Bytes;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -139,5 +140,31 @@ public class PasskeyResource {
 
         artemisUserCredentialRepository.delete(Bytes.fromBase64(credentialId));
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * PUT /passkey/:credentialId/approval : update the super admin approval status of a passkey
+     *
+     * @param credentialId               of the passkey to be updated
+     * @param passkeyWithUpdatedApproval containing the new approval status for the passkey
+     * @return {@link ResponseEntity} with HTTP status 200 (OK) and the updated passkey if successful
+     */
+    @PutMapping("{credentialId}/approval")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    public ResponseEntity<PasskeyDTO> updatePasskeyApproval(@PathVariable @Base64Url String credentialId, @RequestBody PasskeyDTO passkeyWithUpdatedApproval) {
+        log.debug("Updating approval status for passkey with id: {}", credentialId);
+
+        Optional<PasskeyCredential> credentialToBeUpdated = passkeyCredentialsRepository.findByCredentialId(credentialId);
+
+        if (credentialToBeUpdated.isEmpty()) {
+            return logAndReturnNotFound(credentialId);
+        }
+
+        PasskeyCredential passkeyCredential = credentialToBeUpdated.get();
+        passkeyCredential.setSuperAdminApproved(passkeyWithUpdatedApproval.isSuperAdminApproved());
+        PasskeyCredential updatedPasskey = passkeyCredentialsRepository.save(passkeyCredential);
+
+        log.debug("Successfully updated approval status for passkey with id: {}", credentialId);
+        return ResponseEntity.ok(updatedPasskey.toDto());
     }
 }
