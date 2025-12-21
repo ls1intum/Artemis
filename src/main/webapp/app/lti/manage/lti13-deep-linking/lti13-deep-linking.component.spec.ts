@@ -14,6 +14,7 @@ import { User } from 'app/core/user/user.model';
 import { TranslateService } from '@ngx-translate/core';
 import { DeepLinkingType } from 'app/lti/manage/lti13-deep-linking/lti.constants';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { IS_AT_LEAST_INSTRUCTOR } from 'app/shared/constants/authority.constants';
 
 describe('Lti13DeepLinkingComponent', () => {
     let component: Lti13DeepLinkingComponent;
@@ -104,8 +105,6 @@ describe('Lti13DeepLinkingComponent', () => {
         activatedRouteMock.params = of({});
         fixture = TestBed.createComponent(Lti13DeepLinkingComponent);
         component = fixture.componentInstance;
-        // Manually set the activatedRouteMock to component here
-        component.route = activatedRouteMock;
 
         component.ngOnInit();
         tick(1000);
@@ -408,6 +407,6 @@ describe('Lti13DeepLinkingComponent', () => {
 
     it('should invoke account service using jhiHasAnyAuthority directive', () => {
         fixture.changeDetectorRef.detectChanges();
-        expect(accountServiceMock.hasAnyAuthority).toHaveBeenCalledWith(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
+        expect(accountServiceMock.hasAnyAuthority).toHaveBeenCalledWith(IS_AT_LEAST_INSTRUCTOR);
     });
 });

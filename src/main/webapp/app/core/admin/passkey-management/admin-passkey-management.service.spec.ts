@@ -99,8 +99,8 @@ describe('AdminPasskeyManagementService', () => {
             const mockResponse: PasskeyDTO = {
                 credentialId,
                 label: 'My Passkey',
-                created: new Date('2023-01-01'),
-                lastUsed: new Date('2023-01-02'),
+                created: new Date('2023-01-01').toISOString(),
+                lastUsed: new Date('2023-01-02').toISOString(),
                 isSuperAdminApproved,
             };
 
@@ -121,8 +121,8 @@ describe('AdminPasskeyManagementService', () => {
             const mockResponse: PasskeyDTO = {
                 credentialId,
                 label: 'My Passkey 2',
-                created: new Date('2023-02-01'),
-                lastUsed: new Date('2023-02-02'),
+                created: new Date('2023-02-01').toISOString(),
+                lastUsed: new Date('2023-02-02').toISOString(),
                 isSuperAdminApproved,
             };
 
