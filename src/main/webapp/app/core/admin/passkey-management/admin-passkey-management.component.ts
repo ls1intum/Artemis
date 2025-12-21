@@ -43,7 +43,7 @@ export class AdminPasskeyManagementComponent implements OnInit {
         const newApprovalStatus = !passkey.isSuperAdminApproved;
 
         try {
-            const passkey = await this.adminPasskeyService.updatePasskeyApproval(passkey.credentialId, newApprovalStatus);
+            await this.adminPasskeyService.updatePasskeyApproval(passkey.credentialId, newApprovalStatus);
             passkey.isSuperAdminApproved = newApprovalStatus;
             this.passkeys.update((passkeys) => [...passkeys]);
         } catch (error) {
