@@ -1,18 +1,25 @@
 package de.tum.cit.aet.artemis.core.web;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.when;
+
+import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import de.tum.cit.aet.artemis.core.domain.PasskeyCredential;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.dto.AdminPasskeyDTO;
 import de.tum.cit.aet.artemis.core.dto.PasskeyDTO;
 import de.tum.cit.aet.artemis.core.repository.PasskeyCredentialsRepository;
+import de.tum.cit.aet.artemis.core.service.PasskeyAuthenticationService;
 import de.tum.cit.aet.artemis.core.util.PasskeyCredentialUtilService;
+import de.tum.cit.aet.artemis.lecture.service.SlideUnhideScheduleService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
@@ -24,6 +31,12 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private PasskeyCredentialUtilService passkeyCredentialUtilService;
+
+    @MockitoBean
+    private SlideUnhideScheduleService slideUnhideScheduleService;
+
+    @MockitoBean
+    private PasskeyAuthenticationService passkeyAuthenticationService;
 
     @BeforeEach
     void initTestCase() {
@@ -84,6 +97,8 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = "superadmin", roles = "SUPER_ADMIN")
     void testUpdatePasskeyApproval_Success() throws Exception {
+        when(passkeyAuthenticationService.isAuthenticatedWithSuperAdminApprovedPasskey()).thenReturn(true);
+
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         PasskeyCredential existingCredential = passkeyCredentialUtilService.createAndSavePasskeyCredential(user);
         assertThat(existingCredential.isSuperAdminApproved()).isFalse();
@@ -114,12 +129,71 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = "superadmin", roles = "SUPER_ADMIN")
     void testUpdatePasskeyApproval_NotFound() throws Exception {
+        when(passkeyAuthenticationService.isAuthenticatedWithSuperAdminApprovedPasskey()).thenReturn(true);
+
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         PasskeyCredential existingCredential = passkeyCredentialUtilService.createAndSavePasskeyCredential(user);
         PasskeyDTO modifiedCredential = new PasskeyDTO(existingCredential.getCredentialId(), existingCredential.getLabel(), existingCredential.getCreatedDate(),
                 existingCredential.getLastUsed(), true);
 
         request.put("/api/core/passkey/idDoesNotExist/approval", modifiedCredential, HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    @WithMockUser(username = "superadmin", roles = "SUPER_ADMIN")
+    void testGetAllPasskeysForAdmin_Success() throws Exception {
+        when(passkeyAuthenticationService.isAuthenticatedWithSuperAdminApprovedPasskey()).thenReturn(true);
+
+        User student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        User student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
+
+        PasskeyCredential credential1 = passkeyCredentialUtilService.createAndSavePasskeyCredential(student1);
+        PasskeyCredential credential2 = passkeyCredentialUtilService.createAndSavePasskeyCredential(student2);
+        credential2.setSuperAdminApproved(true);
+        passkeyCredentialsRepository.save(credential2);
+
+        List<AdminPasskeyDTO> passkeys = request.getList("/api/core/passkey/admin", HttpStatus.OK, AdminPasskeyDTO.class);
+
+        assertThat(passkeys).isNotEmpty();
+        assertThat(passkeys).hasSizeGreaterThanOrEqualTo(2);
+
+        AdminPasskeyDTO passkeyDto1 = passkeys.stream().filter(p -> p.credentialId().equals(credential1.getCredentialId())).findFirst().orElseThrow();
+        assertThat(passkeyDto1.userLogin()).isEqualTo(student1.getLogin());
+        assertThat(passkeyDto1.userName()).isEqualTo(student1.getName());
+        assertThat(passkeyDto1.userId()).isEqualTo(student1.getId());
+        assertThat(passkeyDto1.label()).isEqualTo(credential1.getLabel());
+        assertThat(passkeyDto1.isSuperAdminApproved()).isFalse();
+
+        AdminPasskeyDTO passkeyDto2 = passkeys.stream().filter(p -> p.credentialId().equals(credential2.getCredentialId())).findFirst().orElseThrow();
+        assertThat(passkeyDto2.userLogin()).isEqualTo(student2.getLogin());
+        assertThat(passkeyDto2.userName()).isEqualTo(student2.getName());
+        assertThat(passkeyDto2.userId()).isEqualTo(student2.getId());
+        assertThat(passkeyDto2.label()).isEqualTo(credential2.getLabel());
+        assertThat(passkeyDto2.isSuperAdminApproved()).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testGetAllPasskeysForAdmin_AccessDeniedBecauseNotSuperAdmin() throws Exception {
+        request.get("/api/core/passkey/admin", HttpStatus.FORBIDDEN, List.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetAllPasskeysForAdmin_AccessDeniedBecauseStudent() throws Exception {
+        request.get("/api/core/passkey/admin", HttpStatus.FORBIDDEN, List.class);
+    }
+
+    @Test
+    @WithMockUser(username = "superadmin", roles = "SUPER_ADMIN")
+    void testGetAllPasskeysForAdmin_EmptyListWhenNoPasskeys() throws Exception {
+        when(passkeyAuthenticationService.isAuthenticatedWithSuperAdminApprovedPasskey()).thenReturn(true);
+
+        passkeyCredentialsRepository.deleteAll();
+
+        List<AdminPasskeyDTO> passkeys = request.getList("/api/core/passkey/admin", HttpStatus.OK, AdminPasskeyDTO.class);
+
+        assertThat(passkeys).isEmpty();
     }
 
 }
