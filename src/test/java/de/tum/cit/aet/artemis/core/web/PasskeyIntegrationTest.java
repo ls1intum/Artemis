@@ -118,6 +118,7 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testUpdatePasskeyApproval_AccessDeniedBecauseNotSuperAdmin() throws Exception {
+        when(passkeyAuthenticationService.isAuthenticatedWithSuperAdminApprovedPasskey()).thenReturn(true);
         User user = userUtilService.getUserByLogin("admin");
         PasskeyCredential existingCredential = passkeyCredentialUtilService.createAndSavePasskeyCredential(user);
         PasskeyDTO modifiedCredential = new PasskeyDTO(existingCredential.getCredentialId(), existingCredential.getLabel(), existingCredential.getCreatedDate(),
