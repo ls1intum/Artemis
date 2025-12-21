@@ -659,20 +659,9 @@ async function runServerTests(modules, options) {
 }
 
 /**
- * Get client coverage for a specific file from coverage-summary.json
- * For files in Vitest modules (e.g., fileupload), uses Vitest coverage data
+ * Look up coverage for a file in a coverage summary
  */
-function getClientFileCoverage(filePath, jestCoverageSummary, vitestCoverageSummary = null) {
-    // The coverage summary uses full paths from src/main/webapp/
-    const fullPath = `src/main/webapp/app/${filePath}`;
-
-    // Check if file is in a Vitest module
-    const moduleName = filePath.split('/')[0];
-    const isVitestModule = VITEST_MODULES.has(moduleName);
-
-    // Use Vitest coverage for Vitest modules, Jest coverage for others
-    const coverageSummary = isVitestModule && vitestCoverageSummary ? vitestCoverageSummary : jestCoverageSummary;
-
+function lookupCoverageInSummary(fullPath, coverageSummary) {
     if (!coverageSummary) {
         return null;
     }
@@ -686,6 +675,38 @@ function getClientFileCoverage(filePath, jestCoverageSummary, vitestCoverageSumm
     }
 
     return null;
+}
+
+/**
+ * Get client coverage for a specific file from coverage-summary.json
+ * For files in Vitest modules (e.g., fileupload), prefers Vitest coverage data.
+ * Falls back to the other coverage source if not found in the primary source.
+ */
+function getClientFileCoverage(filePath, jestCoverageSummary, vitestCoverageSummary = null) {
+    // The coverage summary uses full paths from src/main/webapp/
+    const fullPath = `src/main/webapp/app/${filePath}`;
+
+    // Check if file is in a Vitest module
+    const moduleName = filePath.split('/')[0];
+    const isVitestModule = VITEST_MODULES.has(moduleName);
+
+    // For Vitest modules, check Vitest coverage first, then fall back to Jest
+    // For Jest modules, check Jest coverage first, then fall back to Vitest
+    if (isVitestModule) {
+        const vitestCoverage = lookupCoverageInSummary(fullPath, vitestCoverageSummary);
+        if (vitestCoverage !== null) {
+            return vitestCoverage;
+        }
+        // Fall back to Jest coverage (in case vitest coverage is unavailable)
+        return lookupCoverageInSummary(fullPath, jestCoverageSummary);
+    } else {
+        const jestCoverage = lookupCoverageInSummary(fullPath, jestCoverageSummary);
+        if (jestCoverage !== null) {
+            return jestCoverage;
+        }
+        // Fall back to Vitest coverage (in case file is covered transitively by vitest tests)
+        return lookupCoverageInSummary(fullPath, vitestCoverageSummary);
+    }
 }
 
 /**
@@ -1036,42 +1057,30 @@ function buildClientCoverageTable(clientFiles, options) {
         return null;
     }
 
-    // Check which coverage files are needed
-    const hasVitestFiles = Object.keys(clientFiles).some((filePath) => {
-        const moduleName = filePath.split('/')[0];
-        return VITEST_MODULES.has(moduleName);
-    });
-    const hasJestFiles = Object.keys(clientFiles).some((filePath) => {
-        const moduleName = filePath.split('/')[0];
-        return !VITEST_MODULES.has(moduleName);
-    });
-
-    // Load Jest coverage (for non-Vitest modules)
+    // Always try to load both coverage files for robustness
+    // The getClientFileCoverage function will check both sources with appropriate fallbacks
     let jestCoverageSummary = null;
-    if (hasJestFiles) {
-        if (!fs.existsSync(CLIENT_COVERAGE_SUMMARY)) {
-            log('Jest coverage-summary.json not found', options);
-        } else {
-            try {
-                jestCoverageSummary = JSON.parse(fs.readFileSync(CLIENT_COVERAGE_SUMMARY, 'utf-8'));
-            } catch (err) {
-                log(`Failed to parse Jest coverage data: ${err.message}`, options);
-            }
+    if (fs.existsSync(CLIENT_COVERAGE_SUMMARY)) {
+        try {
+            jestCoverageSummary = JSON.parse(fs.readFileSync(CLIENT_COVERAGE_SUMMARY, 'utf-8'));
+            log('Loaded Jest coverage-summary.json', options);
+        } catch (err) {
+            log(`Failed to parse Jest coverage data: ${err.message}`, options);
         }
+    } else {
+        log('Jest coverage-summary.json not found', options);
     }
 
-    // Load Vitest coverage (for Vitest modules like fileupload)
     let vitestCoverageSummary = null;
-    if (hasVitestFiles) {
-        if (!fs.existsSync(VITEST_COVERAGE_SUMMARY)) {
-            log('Vitest coverage-summary.json not found', options);
-        } else {
-            try {
-                vitestCoverageSummary = JSON.parse(fs.readFileSync(VITEST_COVERAGE_SUMMARY, 'utf-8'));
-            } catch (err) {
-                log(`Failed to parse Vitest coverage data: ${err.message}`, options);
-            }
+    if (fs.existsSync(VITEST_COVERAGE_SUMMARY)) {
+        try {
+            vitestCoverageSummary = JSON.parse(fs.readFileSync(VITEST_COVERAGE_SUMMARY, 'utf-8'));
+            log('Loaded Vitest coverage-summary.json', options);
+        } catch (err) {
+            log(`Failed to parse Vitest coverage data: ${err.message}`, options);
         }
+    } else {
+        log('Vitest coverage-summary.json not found', options);
     }
 
     if (!jestCoverageSummary && !vitestCoverageSummary) {
