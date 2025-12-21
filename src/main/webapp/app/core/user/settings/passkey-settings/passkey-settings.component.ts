@@ -18,7 +18,7 @@ import { CustomMaxLengthDirective } from 'app/shared/validators/custom-max-lengt
 import { WebauthnService } from 'app/core/user/settings/passkey-settings/webauthn.service';
 import { BadgeModule } from 'primeng/badge';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { Authority } from 'app/shared/constants/authority.constants';
+import { Authority, IS_AT_LEAST_ADMIN } from 'app/shared/constants/authority.constants';
 
 export interface DisplayedPasskey extends PasskeyDTO {
     isEditingLabel?: boolean;
@@ -69,8 +69,8 @@ export class PasskeySettingsComponent implements OnDestroy {
     currentUser = signal<User | undefined>(undefined);
 
     isAdmin = computed(() => {
-        const user = this.currentUser();
-        return (user?.authorities?.includes(Authority.ADMIN) || user?.authorities?.includes(Authority.SUPER_ADMIN)) ?? false;
+        const authorities = this.currentUser()?.authorities ?? [];
+        return authorities.some((authority) => IS_AT_LEAST_ADMIN.includes(authority as Authority));
     });
 
     deleteMessage = '';
