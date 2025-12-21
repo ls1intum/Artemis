@@ -134,11 +134,23 @@ public record AttendanceCheckerAppExamInformationDTO(
      * @param exam the exam
      * @param examRooms the rooms used in the exam
      * @return information for the attendance checker app
+     *
+     * @implNote To avoid deep copies this operation mutates the given exam's {@link Exam#getExamUsers()}.
+     * Re-fetch the {@link ExamUser}s if you want to perform additional operations on or with them afterward.
+     *
      */
     public static AttendanceCheckerAppExamInformationDTO from(Exam exam, Set<ExamRoom> examRooms) {
-        Set<ExamUser> examUsersWhoHaveBeenDistributed = exam.getExamUsers().stream()
-            .filter(examUser -> StringUtils.hasText(examUser.getPlannedRoom()) && StringUtils.hasText(examUser.getPlannedSeat()))
-            .collect(Collectors.toSet());
+        Set<ExamUser> examUsersWithUndistributedUsers = exam.getExamUsers().stream()
+            .peek(examUser -> {
+                    if (!StringUtils.hasText(examUser.getPlannedRoom())) {
+                        examUser.setPlannedRoom("No Room set");
+                    }
+
+                    if (!StringUtils.hasText(examUser.getPlannedSeat())) {
+                        examUser.setPlannedSeat("No Seat set");
+                    }
+                }
+            ).collect(Collectors.toSet());
 
         return new AttendanceCheckerAppExamInformationDTO(
             exam.getId(),
@@ -149,7 +161,7 @@ public record AttendanceCheckerAppExamInformationDTO(
             exam.getCourse().getId(),
             exam.getCourse().getTitle(),
             examRooms.stream().map(ExamRoomForAttendanceCheckerDTO::from).collect(Collectors.toSet()),
-            examUsersWhoHaveBeenDistributed.stream().map(ExamUserWithExamRoomAndSeatDTO::from).collect(Collectors.toSet())
+            examUsersWithUndistributedUsers.stream().map(ExamUserWithExamRoomAndSeatDTO::from).collect(Collectors.toSet())
         );
     }
 }
