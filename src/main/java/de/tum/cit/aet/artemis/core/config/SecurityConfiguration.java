@@ -268,7 +268,7 @@ public class SecurityConfiguration {
                     // Information and health endpoints do not need authentication
                     .requestMatchers("/management/info", "/management/health").permitAll()
                     // Admin area requires specific authority.
-                    .requestMatchers("/api/*/admin/**").hasAnyAuthority(Role.ADMIN.getAuthority(), Role.SUPER_ADMIN.getAuthority())
+                    .requestMatchers("/api/*/admin/**").hasAuthority(Role.ADMIN.getAuthority())
                     // Publicly accessible API endpoints (allowed for everyone, potentially with secret authentication).
                     .requestMatchers("/api/*/public/**").permitAll()
                     .requestMatchers("/api/*/internal/**").permitAll()

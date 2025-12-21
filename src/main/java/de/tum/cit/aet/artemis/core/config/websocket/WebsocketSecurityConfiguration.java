@@ -25,7 +25,7 @@ public class WebsocketSecurityConfiguration {
         // @formatter:off
         messages
             .nullDestMatcher().authenticated()
-            .simpDestMatchers("/topic").hasAnyAuthority(Role.ADMIN.getAuthority(), Role.SUPER_ADMIN.getAuthority())
+            .simpDestMatchers("/topic").hasAuthority(Role.ADMIN.getAuthority())
             // matches any destination that starts with /topic/
             // (i.e. cannot send messages directly to /topic/)
             // (i.e. cannot subscribe to /topic/messages/* to get messages sent to

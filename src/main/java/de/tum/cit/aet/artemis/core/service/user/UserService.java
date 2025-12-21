@@ -9,8 +9,8 @@ import static de.tum.cit.aet.artemis.core.config.Constants.USER_EMAIL_DOMAIN_AFT
 import static de.tum.cit.aet.artemis.core.config.Constants.USER_FIRST_NAME_AFTER_SOFT_DELETE;
 import static de.tum.cit.aet.artemis.core.config.Constants.USER_LAST_NAME_AFTER_SOFT_DELETE;
 import static de.tum.cit.aet.artemis.core.domain.Authority.SUPER_ADMIN_AUTHORITY;
+import static de.tum.cit.aet.artemis.core.security.Role.ADMIN;
 import static de.tum.cit.aet.artemis.core.security.Role.STUDENT;
-import static de.tum.cit.aet.artemis.core.security.Role.SUPER_ADMIN;
 import static org.apache.commons.lang3.StringUtils.lowerCase;
 
 import java.net.URI;
@@ -189,7 +189,7 @@ public class UserService {
         userDto.setCreatedBy("system");
         userDto.setLastModifiedBy("system");
         // needs to be mutable --> new HashSet<>(Set.of(...))
-        userDto.setAuthorities(new HashSet<>(Set.of(SUPER_ADMIN.getAuthority(), STUDENT.getAuthority())));
+        userDto.setAuthorities(new HashSet<>(Set.of(ADMIN.getAuthority(), STUDENT.getAuthority())));
         userDto.setGroups(new HashSet<>());
         return userDto;
     }
