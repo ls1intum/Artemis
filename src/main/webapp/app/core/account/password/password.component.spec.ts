@@ -4,7 +4,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { provideHttpClient } from '@angular/common/http';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { of, throwError } from 'rxjs';
@@ -69,7 +69,7 @@ describe('Password Component Tests', () => {
                 newPassword: 'myPassword',
             };
 
-            vi.spyOn(service, 'changePassword').mockReturnValue(of(new HttpResponse({ body: true })));
+            vi.spyOn(service, 'changePassword').mockReturnValue(of(void 0));
 
             comp.passwordForm.patchValue({
                 currentPassword: passwordValues.currentPassword,
@@ -86,7 +86,7 @@ describe('Password Component Tests', () => {
 
         it('should set success to true upon success', () => {
             // GIVEN
-            vi.spyOn(service, 'changePassword').mockReturnValue(of(new HttpResponse({ body: true })));
+            vi.spyOn(service, 'changePassword').mockReturnValue(of(void 0));
             comp.passwordForm.patchValue({
                 newPassword: 'myPassword',
                 confirmPassword: 'myPassword',
