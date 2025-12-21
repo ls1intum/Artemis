@@ -159,7 +159,8 @@
                     "imprint": "Imprint",
                     "privacy": "Privacy",
                     "notifications": "Notifications",
-                    "examRooms": "Exam Rooms"
+                    "examRooms": "Exam Rooms",
+                    "passkeyManagement": "Passkey Management"
                 },
                 "collapseMenu": "Collapse Menu (Ctrl + M)",
                 "expandMenu": "Expand Menu (Ctrl + M)",

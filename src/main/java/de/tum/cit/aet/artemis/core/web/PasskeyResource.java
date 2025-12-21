@@ -76,6 +76,21 @@ public class PasskeyResource {
         return ResponseEntity.ok(passkeys);
     }
 
+    /**
+     * GET /passkey/admin : retrieve all passkeys with user information for super admin management
+     *
+     * @return list of {@link de.tum.cit.aet.artemis.core.dto.AdminPasskeyDTO} that contains all passkeys with user information
+     */
+    @GetMapping("admin")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    public ResponseEntity<List<de.tum.cit.aet.artemis.core.dto.AdminPasskeyDTO>> getAllPasskeysForAdmin() {
+        log.debug("Retrieving all passkeys for super admin management");
+
+        List<de.tum.cit.aet.artemis.core.dto.AdminPasskeyDTO> passkeys = passkeyCredentialsRepository.findAll().stream().map(PasskeyCredential::toAdminDto).toList();
+
+        return ResponseEntity.ok(passkeys);
+    }
+
     private <T> ResponseEntity<T> logAndReturnNotFound(String credentialId) {
         log.warn("Credential with id {} not found in the repository", credentialId);
         return ResponseEntity.notFound().build();

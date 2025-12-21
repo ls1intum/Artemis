@@ -9,7 +9,7 @@ import { ltiConfigurationRoute } from 'app/core/admin/lti-configuration/lti-conf
 
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 import { UpcomingExamsAndExercisesComponent } from 'app/core/admin/upcoming-exams-and-exercises/upcoming-exams-and-exercises.component';
-import { IS_AT_LEAST_ADMIN } from 'app/shared/constants/authority.constants';
+import { IS_AT_LEAST_ADMIN, IS_AT_LEAST_SUPER_ADMIN } from 'app/shared/constants/authority.constants';
 import { AdminContainerComponent } from 'app/core/admin/admin-container/admin-container.component';
 
 const childRoutes: Routes = [
@@ -168,6 +168,14 @@ const childRoutes: Routes = [
         loadComponent: () => import('app/core/admin/course-requests/course-requests.component').then((m) => m.CourseRequestsComponent),
         data: {
             pageTitle: 'artemisApp.courseRequest.admin.title',
+        },
+    },
+    {
+        path: 'passkey-management',
+        loadComponent: () => import('app/core/admin/passkey-management/admin-passkey-management.component').then((m) => m.AdminPasskeyManagementComponent),
+        data: {
+            authorities: IS_AT_LEAST_SUPER_ADMIN,
+            pageTitle: 'artemisApp.adminPasskeyManagement.title',
         },
     },
     ...organizationMgmtRoute,

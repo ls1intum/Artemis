@@ -159,7 +159,8 @@
                     "imprint": "Impressum",
                     "privacy": "Datenschutz",
                     "notifications": "Mitteilungen",
-                    "examRooms": "Prüfungsräume"
+                    "examRooms": "Prüfungsräume",
+                    "passkeyManagement": "Passkey-Verwaltung"
                 },
                 "collapseMenu": "Menü einklappen (Strg + M)",
                 "expandMenu": "Menü ausklappen (Strg + M)",

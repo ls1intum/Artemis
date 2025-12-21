@@ -6,10 +6,11 @@ import { Subscription, filter } from 'rxjs';
 
 import { AdminSidebarComponent } from 'app/core/admin/admin-sidebar/admin-sidebar.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_EXAM, PROFILE_LOCALCI, PROFILE_LTI } from 'app/app.constants';
+import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_EXAM, MODULE_FEATURE_PASSKEY, MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN, PROFILE_LOCALCI, PROFILE_LTI } from 'app/app.constants';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { LayoutService } from 'app/shared/breakpoints/layout.service';
 import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.service';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     selector: 'jhi-admin-container',
@@ -22,6 +23,7 @@ export class AdminContainerComponent implements OnInit, OnDestroy {
     private readonly featureToggleService = inject(FeatureToggleService);
     private readonly layoutService = inject(LayoutService);
     private readonly router = inject(Router);
+    private readonly accountService = inject(AccountService);
 
     isNavbarCollapsed = signal<boolean>(false);
 
@@ -31,6 +33,9 @@ export class AdminContainerComponent implements OnInit, OnDestroy {
     atlasEnabled = false;
     examEnabled = false;
     standardizedCompetenciesEnabled = false;
+    passkeyEnabled = false;
+    passkeyRequiredForAdmin = false;
+    isSuperAdmin = signal<boolean>(false);
 
     private standardizedCompetencySubscription?: Subscription;
     private routerSubscription?: Subscription;
@@ -41,6 +46,9 @@ export class AdminContainerComponent implements OnInit, OnDestroy {
         this.examEnabled = profileInfo.activeModuleFeatures.includes(MODULE_FEATURE_EXAM);
         this.localCIActive = profileInfo.activeProfiles.includes(PROFILE_LOCALCI);
         this.ltiEnabled = profileInfo.activeProfiles.includes(PROFILE_LTI);
+        this.passkeyEnabled = profileInfo.activeModuleFeatures.includes(MODULE_FEATURE_PASSKEY);
+        this.passkeyRequiredForAdmin = profileInfo.activeModuleFeatures.includes(MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN);
+        this.isSuperAdmin.set(this.accountService.isSuperAdmin());
 
         this.standardizedCompetencySubscription = this.featureToggleService.getFeatureToggleActive(FeatureToggle.StandardizedCompetencies).subscribe((isActive) => {
             this.standardizedCompetenciesEnabled = isActive;

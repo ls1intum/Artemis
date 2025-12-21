@@ -9,6 +9,7 @@ import {
     faFlag,
     faGears,
     faHeart,
+    faKey,
     faList,
     faLock,
     faPlug,
@@ -61,6 +62,9 @@ export class AdminSidebarComponent {
     standardizedCompetenciesEnabled = input<boolean>(false);
     atlasEnabled = input<boolean>(false);
     examEnabled = input<boolean>(false);
+    passkeyEnabled = input<boolean>(false);
+    passkeyRequiredForAdmin = input<boolean>(false);
+    isSuperAdmin = input<boolean>(false);
 
     toggleCollapseState = output<void>();
 
@@ -263,6 +267,16 @@ export class AdminSidebarComponent {
                 title: 'Exam Rooms',
                 translation: 'global.menu.admin.sidebar.examRooms',
                 testId: 'admin-exam-rooms',
+            });
+        }
+
+        if (this.passkeyEnabled() && this.passkeyRequiredForAdmin() && this.isSuperAdmin()) {
+            systemConfigItems.push({
+                routerLink: '/admin/passkey-management',
+                icon: faKey,
+                title: 'Passkey Management',
+                translation: 'global.menu.admin.sidebar.passkeyManagement',
+                testId: 'admin-passkey-management',
             });
         }
 
