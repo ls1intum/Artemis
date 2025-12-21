@@ -70,7 +70,7 @@ export class PasskeySettingsComponent implements OnDestroy {
 
     isAdmin = computed(() => {
         const user = this.currentUser();
-        return user?.authorities?.includes(Authority.ADMIN) ?? false;
+        return (user?.authorities?.includes(Authority.ADMIN) || user?.authorities?.includes(Authority.SUPER_ADMIN)) ?? false;
     });
 
     deleteMessage = '';
