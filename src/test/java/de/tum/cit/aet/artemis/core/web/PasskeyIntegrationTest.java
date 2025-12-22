@@ -133,7 +133,6 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         when(passkeyAuthenticationService.isAuthenticatedWithSuperAdminApprovedPasskey()).thenReturn(true);
 
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        PasskeyCredential existingCredential = passkeyCredentialUtilService.createAndSavePasskeyCredential(user);
 
         request.put("/api/core/passkey/idDoesNotExist/approval", true, HttpStatus.NOT_FOUND);
     }
