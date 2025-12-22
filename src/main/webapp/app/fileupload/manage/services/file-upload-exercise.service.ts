@@ -43,7 +43,9 @@ export class FileUploadExerciseService implements ExerciseServicable<FileUploadE
             throw new Error('Cannot update exercise without an ID');
         }
         const options = createRequestOption(req);
-        const dto = toUpdateFileUploadExerciseDTO(fileUploadExercise);
+        let copy = FileUploadExerciseService.formatFilePattern(fileUploadExercise);
+        copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
+        const dto = toUpdateFileUploadExerciseDTO(copy);
         return this.http
             .put<FileUploadExercise>(`${this.resourceUrl}/${fileUploadExercise.id!}`, dto, { params: options, observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
@@ -90,7 +92,9 @@ export class FileUploadExerciseService implements ExerciseServicable<FileUploadE
             throw new Error('Cannot re-evaluate exercise without an ID');
         }
         const options = createRequestOption(req);
-        const dto = toUpdateFileUploadExerciseDTO(fileUploadExercise);
+        let copy = FileUploadExerciseService.formatFilePattern(fileUploadExercise);
+        copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
+        const dto = toUpdateFileUploadExerciseDTO(copy);
         return this.http
             .put<FileUploadExercise>(`${this.resourceUrl}/${fileUploadExercise.id}/re-evaluate`, dto, { params: options, observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
