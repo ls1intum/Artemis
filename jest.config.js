@@ -90,20 +90,22 @@ module.exports = {
         '!<rootDir>/**/node_modules/**',
         '!<rootDir>/src/main/webapp/app/openapi/**', // ignore openapi files because they are generated
         '!<rootDir>/src/main/webapp/app/fileupload/**', // fileupload module uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/core/account/**', // account module uses Vitest (see vitest.config.ts)
     ],
     coveragePathIgnorePatterns: [
         '<rootDir>/src/main/webapp/app/core/config/prod.config.ts',
         '<rootDir>/src/main/webapp/app/openapi/',
         '<rootDir>/src/main/webapp/app/fileupload/', // fileupload module uses Vitest
+        '<rootDir>/src/main/webapp/app/core/account/', // account module uses Vitest
     ],
     // Global coverage thresholds for Jest. Modules using Vitest (e.g., fileupload) have their own
     // coverage thresholds in vitest.config.ts. Per-module thresholds are enforced by check-client-module-coverage.mjs
     coverageThreshold: {
         global: {
-            statements: 90.1,
+            statements: 90.2,
             branches: 74.0,
-            functions: 84.1,
-            lines: 90.2,
+            functions: 84.2,
+            lines: 90.3,
         },
     },
     // 'json-summary' reporter is used by supporting_scripts/code-coverage/module-coverage-client/check-client-module-coverage.mjs
@@ -125,7 +127,7 @@ module.exports = {
     },
     modulePathIgnorePatterns: ['<rootDir>/src/main/resources/templates/', '<rootDir>/build/'],
     // Exclude modules migrated to Vitest (see vitest.config.ts)
-    testPathIgnorePatterns: ['<rootDir>/src/main/webapp/app/fileupload/'],
+    testPathIgnorePatterns: ['<rootDir>/src/main/webapp/app/fileupload/', '<rootDir>/src/main/webapp/app/core/account/'],
     testTimeout: 3000,
     testMatch: [
         '<rootDir>/src/main/webapp/app/**/*.spec.ts',

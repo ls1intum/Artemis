@@ -1,5 +1,10 @@
+/**
+ * Vitest tests for PasswordResetFinishComponent.
+ */
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ElementRef } from '@angular/core';
-import { ComponentFixture, TestBed, fakeAsync, inject, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { FormBuilder } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
@@ -15,8 +20,11 @@ import { provideHttpClient } from '@angular/common/http';
 
 describe('Component Tests', () => {
     describe('PasswordResetFinishComponent', () => {
+        setupTestBed({ zoneless: true });
+
         let fixture: ComponentFixture<PasswordResetFinishComponent>;
         let comp: PasswordResetFinishComponent;
+        let passwordResetFinishService: PasswordResetFinishService;
 
         beforeEach(() => {
             fixture = TestBed.configureTestingModule({
@@ -40,24 +48,25 @@ describe('Component Tests', () => {
         beforeEach(() => {
             fixture = TestBed.createComponent(PasswordResetFinishComponent);
             comp = fixture.componentInstance;
+            passwordResetFinishService = TestBed.inject(PasswordResetFinishService);
             comp.ngOnInit();
         });
 
         it('should define its initial state', () => {
-            expect(comp.initialized).toBeTrue();
-            expect(comp.key).toBe('XYZPDQ');
+            expect(comp.initialized()).toBe(true);
+            expect(comp.resetKey()).toBe('XYZPDQ');
         });
 
         it('sets focus after the view has been initialized', () => {
-            const node = {
-                focus(): void {},
-            };
-            comp.newPassword = new ElementRef(node);
-            jest.spyOn(node, 'focus');
+            const mockElement = document.createElement('input');
+            const focusSpy = vi.spyOn(mockElement, 'focus');
+
+            // Mock the viewChild signal to return the element
+            vi.spyOn(comp, 'newPasswordInput').mockReturnValue({ nativeElement: mockElement } as ElementRef);
 
             comp.ngAfterViewInit();
 
-            expect(node.focus).toHaveBeenCalledOnce();
+            expect(focusSpy).toHaveBeenCalledOnce();
         });
 
         it('should ensure the two passwords entered match', () => {
@@ -68,42 +77,34 @@ describe('Component Tests', () => {
 
             comp.finishReset();
 
-            expect(comp.doNotMatch).toBeTrue();
+            expect(comp.doNotMatch()).toBe(true);
         });
 
-        it('should update success to true after resetting password', inject(
-            [PasswordResetFinishService],
-            fakeAsync((service: PasswordResetFinishService) => {
-                jest.spyOn(service, 'save').mockReturnValue(of({}));
-                comp.passwordForm.patchValue({
-                    newPassword: 'password',
-                    confirmPassword: 'password',
-                });
+        it('should update success to true after resetting password', () => {
+            vi.spyOn(passwordResetFinishService, 'completePasswordReset').mockReturnValue(of({}));
+            comp.passwordForm.patchValue({
+                newPassword: 'password',
+                confirmPassword: 'password',
+            });
 
-                comp.finishReset();
-                tick();
+            comp.finishReset();
 
-                expect(service.save).toHaveBeenCalledWith('XYZPDQ', 'password');
-                expect(comp.success).toBeTrue();
-            }),
-        ));
+            expect(passwordResetFinishService.completePasswordReset).toHaveBeenCalledWith('XYZPDQ', 'password');
+            expect(comp.success()).toBe(true);
+        });
 
-        it('should notify of generic error', inject(
-            [PasswordResetFinishService],
-            fakeAsync((service: PasswordResetFinishService) => {
-                jest.spyOn(service, 'save').mockReturnValue(throwError(() => new Error('ERROR')));
-                comp.passwordForm.patchValue({
-                    newPassword: 'password',
-                    confirmPassword: 'password',
-                });
+        it('should notify of generic error', () => {
+            vi.spyOn(passwordResetFinishService, 'completePasswordReset').mockReturnValue(throwError(() => new Error('ERROR')));
+            comp.passwordForm.patchValue({
+                newPassword: 'password',
+                confirmPassword: 'password',
+            });
 
-                comp.finishReset();
-                tick();
+            comp.finishReset();
 
-                expect(service.save).toHaveBeenCalledWith('XYZPDQ', 'password');
-                expect(comp.success).toBeFalse();
-                expect(comp.error).toBeTrue();
-            }),
-        ));
+            expect(passwordResetFinishService.completePasswordReset).toHaveBeenCalledWith('XYZPDQ', 'password');
+            expect(comp.success()).toBe(false);
+            expect(comp.error()).toBe(true);
+        });
     });
 });
