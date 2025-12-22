@@ -30,7 +30,7 @@
                 "success": "Dein Passwort wurde zurückgesetzt.",
                 "success-part2": "Bitte melde dich an.",
                 "keymissing": "Der Reset-Schlüssel fehlt.",
-                "error": "Dein Passwort konnte nicht zurückgesetzt werden. Zur Erinnerung, deine Anfrage ist nur 24 Stunden gültig."
+                "error": "Dein Passwort konnte nicht zurückgesetzt werden. Der Link ist entweder ungültig, wurde bereits verwendet oder ist abgelaufen (24 Stunden gültig)."
             }
         }
     }
