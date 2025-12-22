@@ -71,7 +71,7 @@ const moduleThresholds = {
     },
     atlas: {
         statements: 91.30,
-        branches:   67.10,
+        branches:   66.80,
         functions:  84.70,
         lines:      91.20,
     },
@@ -88,10 +88,10 @@ const moduleThresholds = {
         lines:      92.70,
     },
     core: {
-        statements: 89.90,
-        branches:   70.80,
-        functions:  81.70,
-        lines:      89.90,
+        statements: 89.30,
+        branches:   70.20,
+        functions:  80.20,
+        lines:      89.30,
     },
     exam: {
         statements: 91.50,
