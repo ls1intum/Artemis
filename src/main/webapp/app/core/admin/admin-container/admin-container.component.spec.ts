@@ -77,6 +77,7 @@ describe('AdminContainerComponent', () => {
                     provide: FeatureToggleService,
                     useValue: {
                         getFeatureToggleActive: jest.fn().mockReturnValue(of(false)),
+                        unsubscribeFeatureToggleUpdates: jest.fn(), // added mock to avoid runtime error
                     },
                 },
                 {
