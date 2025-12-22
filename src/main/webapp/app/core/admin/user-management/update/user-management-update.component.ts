@@ -53,16 +53,21 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     ],
 })
 export class UserManagementUpdateComponent implements OnInit {
-    private languageHelper = inject(JhiLanguageHelper);
-    private userService = inject(AdminUserService);
-    private courseAdminService = inject(CourseAdminService);
-    private route = inject(ActivatedRoute);
-    private organizationService = inject(OrganizationManagementService);
-    private modalService = inject(NgbModal);
-    private navigationUtilService = inject(ArtemisNavigationUtilService);
-    private alertService = inject(AlertService);
-    private profileService = inject(ProfileService);
-    private fb = inject(FormBuilder);
+    private readonly languageHelper = inject(JhiLanguageHelper);
+    private readonly userService = inject(AdminUserService);
+    private readonly courseAdminService = inject(CourseAdminService);
+    private readonly route = inject(ActivatedRoute);
+    private readonly organizationService = inject(OrganizationManagementService);
+    private readonly modalService = inject(NgbModal);
+    private readonly navigationUtilService = inject(ArtemisNavigationUtilService);
+    private readonly alertService = inject(AlertService);
+    private readonly profileService = inject(ProfileService);
+    private readonly fb = inject(FormBuilder);
+
+    protected readonly faTimes = faTimes;
+    protected readonly faBan = faBan;
+    protected readonly faSave = faSave;
+    protected readonly editForm: FormGroup;
 
     readonly USERNAME_MIN_LENGTH = USERNAME_MIN_LENGTH;
     readonly USERNAME_MAX_LENGTH = USERNAME_MAX_LENGTH;
@@ -83,12 +88,6 @@ export class UserManagementUpdateComponent implements OnInit {
     separatorKeysCodes = [ENTER, COMMA, TAB];
 
     groupCtrl = new FormControl();
-
-    // Icons
-    faTimes = faTimes;
-    faBan = faBan;
-    faSave = faSave;
-    editForm: FormGroup;
 
     private oldLogin?: string;
     private isJenkins: boolean;
