@@ -11,14 +11,12 @@ import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachme
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
 import { objectToJsonBlob } from 'app/shared/util/blob-util';
 import { LectureUnitInformationDTO } from 'app/lecture/manage/lecture-units/attachment-video-units/attachment-video-units.component';
-import { AlertService } from 'app/shared/service/alert.service';
 
 describe('AttachmentVideoUnitService', () => {
     let service: AttachmentVideoUnitService;
     let httpMock: HttpTestingController;
     let elemDefault: AttachmentVideoUnit;
     let expectedResult: any;
-    let alertService: AlertService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -30,13 +28,11 @@ describe('AttachmentVideoUnitService', () => {
                         return res;
                     },
                 }),
-                MockProvider(AlertService),
             ],
         });
         expectedResult = {} as HttpResponse<AttachmentVideoUnit>;
         service = TestBed.inject(AttachmentVideoUnitService);
         httpMock = TestBed.inject(HttpTestingController);
-        alertService = TestBed.inject(AlertService);
 
         const attachment = new Attachment();
         attachment.id = 0;
@@ -362,103 +358,6 @@ describe('AttachmentVideoUnitService', () => {
             req.flush(expectedBlob);
         });
     });
-    describe('startTranscription', () => {
-        const lectureId = 7;
-        const lectureUnitId = 13;
-        const videoUrl = 'https://tum-live.de/stream/abc.m3u8';
-
-        it('should POST to the correct URL with expected body and show success alert on 200', fakeAsync(() => {
-            const successSpy = jest.spyOn(alertService, 'success');
-            let completed = false;
-
-            service
-                .startTranscription(lectureId, lectureUnitId, videoUrl)
-                .pipe(take(1))
-                .subscribe(() => (completed = true));
-
-            const req = httpMock.expectOne({
-                method: 'POST',
-                url: `/api/nebula/${lectureId}/lecture-unit/${lectureUnitId}/transcriber`,
-            });
-
-            // Verify request shape
-            expect(req.request.method).toBe('POST');
-            expect(req.request.responseType).toBe('text');
-            expect(req.request.body).toEqual({
-                videoUrl,
-                lectureId,
-                lectureUnitId,
-            });
-
-            // Simulate successful response
-            req.flush('transcription started', { status: 200, statusText: 'OK' });
-
-            expect(completed).toBeTrue();
-            expect(successSpy).toHaveBeenCalledWith('artemisApp.attachmentVideoUnit.transcription.started');
-        }));
-
-        it('should show error alert and handle server errors gracefully', fakeAsync(() => {
-            const errorSpy = jest.spyOn(alertService, 'error');
-            let completed = false;
-
-            service
-                .startTranscription(lectureId, lectureUnitId, videoUrl)
-                .pipe(take(1))
-                .subscribe({
-                    next: () => (completed = true),
-                    complete: () => (completed = true),
-                });
-
-            const req = httpMock.expectOne({
-                method: 'POST',
-                url: `/api/nebula/${lectureId}/lecture-unit/${lectureUnitId}/transcriber`,
-            });
-
-            // Simulate server error
-            req.flush('Internal error', { status: 500, statusText: 'Server Error' });
-
-            expect(completed).toBeTrue();
-            expect(errorSpy).toHaveBeenCalledWith('artemisApp.attachmentVideoUnit.transcription.error');
-        }));
-
-        it('should send videoUrl verbatim even with special characters', fakeAsync(() => {
-            const specialUrl = 'https://live.rbg.tum.de/w/test/26?video_only=1&token=a+b%2F=';
-            const successSpy = jest.spyOn(alertService, 'success');
-
-            service.startTranscription(lectureId, lectureUnitId, specialUrl).pipe(take(1)).subscribe();
-
-            const req = httpMock.expectOne({
-                method: 'POST',
-                url: `/api/nebula/${lectureId}/lecture-unit/${lectureUnitId}/transcriber`,
-            });
-
-            // Body should contain the exact string we passed in
-            expect(req.request.body).toEqual({
-                videoUrl: specialUrl,
-                lectureId,
-                lectureUnitId,
-            });
-
-            req.flush('ok', { status: 200, statusText: 'OK' });
-            expect(successSpy).toHaveBeenCalledWith('artemisApp.attachmentVideoUnit.transcription.started');
-        }));
-
-        it('should handle errors with missing message gracefully', fakeAsync(() => {
-            const errorSpy = jest.spyOn(alertService, 'error');
-
-            service.startTranscription(lectureId, lectureUnitId, videoUrl).pipe(take(1)).subscribe();
-
-            const req = httpMock.expectOne({
-                method: 'POST',
-                url: `/api/nebula/${lectureId}/lecture-unit/${lectureUnitId}/transcriber`,
-            });
-
-            // Simulate error without message
-            req.error(new ProgressEvent('Network error'));
-
-            expect(errorSpy).toHaveBeenCalledWith('artemisApp.attachmentVideoUnit.transcription.error');
-        }));
-    });
 
     describe('getPlaylistUrl', () => {
         it('should return playlist URL on success', fakeAsync(() => {
@@ -491,72 +390,6 @@ describe('AttachmentVideoUnitService', () => {
             req.flush('Not found', { status: 404, statusText: 'Not Found' });
 
             expect(result).toBeUndefined();
-        }));
-    });
-
-    describe('fetchAndUpdatePlaylistUrl', () => {
-        it('should return original form data when videoSource is undefined', fakeAsync(() => {
-            const formData = { name: 'test', playlistUrl: undefined };
-            let result: typeof formData | undefined;
-
-            service
-                .fetchAndUpdatePlaylistUrl(undefined, formData)
-                .pipe(take(1))
-                .subscribe((data) => (result = data));
-
-            // No HTTP request should be made
-            httpMock.expectNone('/api/nebula/video-utils/tum-live-playlist');
-
-            expect(result).toEqual(formData);
-        }));
-
-        it('should update form data with playlist URL when found', fakeAsync(() => {
-            const videoSource = 'https://tum-live.de/w/course/1';
-            const playlistUrl = 'https://stream.tum-live.de/video.m3u8';
-            const formData = { name: 'test', playlistUrl: undefined };
-            let result: { name: string; playlistUrl?: string } | undefined;
-
-            service
-                .fetchAndUpdatePlaylistUrl(videoSource, formData)
-                .pipe(take(1))
-                .subscribe((data) => (result = data));
-
-            const req = httpMock.expectOne((r) => r.method === 'GET' && r.url === '/api/nebula/video-utils/tum-live-playlist');
-            req.flush(playlistUrl);
-
-            expect(result).toEqual({ name: 'test', playlistUrl });
-        }));
-
-        it('should return original form data when playlist URL is not found', fakeAsync(() => {
-            const videoSource = 'https://youtube.com/watch?v=123';
-            const formData = { name: 'test', existingField: 'value', playlistUrl: undefined };
-            let result: typeof formData | undefined;
-
-            service
-                .fetchAndUpdatePlaylistUrl(videoSource, formData)
-                .pipe(take(1))
-                .subscribe((data) => (result = data));
-
-            const req = httpMock.expectOne((r) => r.method === 'GET' && r.url === '/api/nebula/video-utils/tum-live-playlist');
-            req.flush('', { status: 404, statusText: 'Not Found' });
-
-            expect(result).toEqual(formData);
-        }));
-
-        it('should return original form data when API returns empty string', fakeAsync(() => {
-            const videoSource = 'https://tum-live.de/w/course/1';
-            const formData = { name: 'test', playlistUrl: undefined };
-            let result: typeof formData | undefined;
-
-            service
-                .fetchAndUpdatePlaylistUrl(videoSource, formData)
-                .pipe(take(1))
-                .subscribe((data) => (result = data));
-
-            const req = httpMock.expectOne((r) => r.method === 'GET' && r.url === '/api/nebula/video-utils/tum-live-playlist');
-            req.flush('');
-
-            expect(result).toEqual(formData);
         }));
     });
 

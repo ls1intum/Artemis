@@ -2,11 +2,9 @@ import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/at
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { LectureUnitInformationDTO } from 'app/lecture/manage/lecture-units/attachment-video-units/attachment-video-units.component';
-import { AlertService } from 'app/shared/service/alert.service';
-import { of } from 'rxjs';
 import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachment.model';
 import { objectToJsonBlob } from 'app/shared/util/blob-util';
 import dayjs from 'dayjs/esm';
@@ -19,7 +17,6 @@ type EntityResponseType = HttpResponse<AttachmentVideoUnit>;
 export class AttachmentVideoUnitService {
     private httpClient = inject(HttpClient);
     private lectureUnitService = inject(LectureUnitService);
-    private alertService = inject(AlertService);
 
     private resourceURL = 'api/lecture';
 
@@ -100,29 +97,6 @@ export class AttachmentVideoUnitService {
             .pipe(map((res: EntityResponseType) => this.lectureUnitService.convertLectureUnitResponseDatesFromServer(res)));
     }
 
-    startTranscription(lectureId: number, lectureUnitId: number, videoUrl: string): Observable<void> {
-        const body = {
-            videoUrl,
-            lectureId,
-            lectureUnitId,
-        };
-
-        return this.httpClient
-            .post(`/api/nebula/${lectureId}/lecture-unit/${lectureUnitId}/transcriber`, body, {
-                observe: 'response',
-                responseType: 'text',
-            })
-            .pipe(
-                map(() => {
-                    this.alertService.success('artemisApp.attachmentVideoUnit.transcription.started');
-                }),
-                catchError((error: any) => {
-                    this.alertService.error('artemisApp.attachmentVideoUnit.transcription.error');
-                    return of();
-                }),
-            );
-    }
-
     /**
      * Resolves a video page URL to its underlying playlist URL (e.g., .m3u8).
      * This is used for video platforms that require an API call to get the actual playable URL.
@@ -133,29 +107,6 @@ export class AttachmentVideoUnitService {
     getPlaylistUrl(pageUrl: string): Observable<string | undefined> {
         const params = new HttpParams().set('url', pageUrl);
         return this.httpClient.get('/api/nebula/video-utils/tum-live-playlist', { params, responseType: 'text' }).pipe(catchError(() => of(undefined)));
-    }
-
-    /**
-     * Fetches playlist URL for a video source and updates the form data if found.
-     * This is a helper method to reduce code duplication when setting up video units for editing.
-     *
-     * @param videoSource - The video source URL to fetch playlist for
-     * @param currentFormData - The current form data to update
-     * @returns Observable that emits the updated form data with playlist URL, or original form data if not found
-     */
-    fetchAndUpdatePlaylistUrl<T extends { playlistUrl?: string }>(videoSource: string | undefined, currentFormData: T): Observable<T> {
-        if (!videoSource) {
-            return of(currentFormData);
-        }
-
-        return this.getPlaylistUrl(videoSource).pipe(
-            map((playlist) => {
-                if (playlist) {
-                    return { ...currentFormData, playlistUrl: playlist };
-                }
-                return currentFormData;
-            }),
-        );
     }
 
     /**
