@@ -30,7 +30,7 @@
                 "success": "Your password has been reset.",
                 "success-part2": "Please sign in.",
                 "keymissing": "The reset key is missing.",
-                "error": "Your password couldn't be reset. As a reminder, password reset requests are only valid for 24 hours."
+                "error": "Your password couldn't be reset. The reset link is either invalid, has already been used, or has expired (valid for 24 hours)."
             }
         }
     }

@@ -43,6 +43,8 @@ export class SettingsComponent implements OnInit {
     readonly languages = LANGUAGES;
     /** Whether self-registration is enabled (affects UI display) */
     readonly isRegistrationEnabled: boolean;
+    /** Whether the current user is an internal user (can edit their name) */
+    readonly isInternalUser = signal(false);
 
     readonly settingsForm = new FormGroup<SettingsForm>({
         firstName: new FormControl<string | undefined>(undefined, {
@@ -77,6 +79,7 @@ export class SettingsComponent implements OnInit {
                     langKey: user.langKey,
                 });
                 this.currentUser.set(user);
+                this.isInternalUser.set(user.internal || false);
             }
         });
     }

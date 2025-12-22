@@ -1,4 +1,4 @@
-@if (isRegistrationEnabled) {
+@if (isRegistrationEnabled || isInternalUser()) {
     <div>
         <div class="row justify-content-center">
             <div class="col-md-8">
@@ -24,6 +24,7 @@
                                 name="firstName"
                                 placeholder="{{ 'settings.form.firstname.placeholder' | artemisTranslate }}"
                                 formControlName="firstName"
+                                [disabled]="!isInternalUser()"
                             />
                             @if (settingsForm.controls.firstName.invalid && (settingsForm.controls.firstName.dirty || settingsForm.controls.firstName.touched)) {
                                 <div>
@@ -48,6 +49,7 @@
                                 name="lastName"
                                 placeholder="{{ 'settings.form.lastname.placeholder' | artemisTranslate }}"
                                 formControlName="lastName"
+                                [disabled]="!isInternalUser()"
                             />
                             @if (settingsForm.controls.lastName.invalid && (settingsForm.controls.lastName.dirty || settingsForm.controls.lastName.touched)) {
                                 <div>

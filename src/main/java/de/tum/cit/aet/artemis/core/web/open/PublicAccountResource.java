@@ -142,7 +142,7 @@ public class PublicAccountResource {
         }
         Optional<User> user = userService.activateRegistration(key);
         if (user.isEmpty()) {
-            throw new InternalServerErrorException("No user was found for this activation key");
+            throw new InternalServerErrorException("error.invalidActivationKey");
         }
         return ResponseEntity.ok().build();
     }
