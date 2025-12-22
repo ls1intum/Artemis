@@ -43,7 +43,7 @@ export class IrisChatbotWidgetComponent implements OnDestroy, AfterViewInit {
         });
     }
 
-    @HostListener('window:resize', ['$event'])
+    @HostListener('window:resize')
     onResize() {
         this.setPositionAndScale();
     }

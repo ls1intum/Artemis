@@ -10,6 +10,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -72,19 +73,19 @@ public class PublicUserJwtResource {
     }
 
     /**
-     * Authenticates a User
+     * Authenticate a User with username and password. This method is used for the login of users via the Artemis web application.
      *
      * @param loginVM   user credentials View Mode
-     * @param userAgent User Agent
+     * @param userAgent User Agent string from the request header, used to identify the client environment
      * @param tool      optional Tool Token Type to define the scope of the token
-     * @param response  HTTP response
-     * @param request   HTTP request
-     * @return the ResponseEntity with status 200 (ok), 401 (unauthorized) or 403 (Captcha required)
+     * @param request   HTTP request object, used to get the client environment information
+     * @param response  HTTP response object, used to set the JWT cookie
+     * @return if successful a map with the access_token information and status 200 (ok), if not successful an empty body with status 401 (unauthorized)
      */
     @PostMapping("authenticate")
     @EnforceNothing
     public ResponseEntity<Map<String, String>> authenticate(@Valid @RequestBody LoginVM loginVM, @RequestHeader(HttpHeaders.USER_AGENT) String userAgent,
-            @RequestParam(name = "tool", required = false) ToolTokenType tool, HttpServletResponse response, HttpServletRequest request) {
+            @RequestParam(name = "tool", required = false) @Nullable ToolTokenType tool, HttpServletRequest request, HttpServletResponse response) {
 
         var username = loginVM.getUsername();
         var password = loginVM.getPassword();

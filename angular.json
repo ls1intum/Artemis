@@ -52,7 +52,8 @@
                   "use-sync-external-store/shim",
                   "use-sync-external-store/shim/with-selector",
                   "webcola",
-                  "webstomp-client"
+                  "@stomp/rx-stomp",
+                  "@stomp/stompjs"
             ],
             "outputPath": {
                 "base": "build/resources/main/static/",

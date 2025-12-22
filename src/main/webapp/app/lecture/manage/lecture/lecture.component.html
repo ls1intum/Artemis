@@ -76,17 +76,15 @@
                         <fa-icon [icon]="faPlus" />
                         <span jhiTranslate="artemisApp.lecture.home.createLabel"></span>
                     </a>
-                    @if (lectureIngestionEnabled) {
-                        <button (click)="ingestLecturesInPyris()" class="btn btn-primary btn-sm jh-create-entity" id="ingest-trigger-button">
-                            <fa-icon [icon]="faFileExport" />
-                            <span jhiTranslate="artemisApp.lecture.home.ingestLecturesInPyrisLabel"></span>
-                        </button>
-                    }
                 </div>
             </div>
         </div>
     </div>
-    <br />
+
+    @if (lectures) {
+        <jhi-pdf-drop-zone [disabled]="isUploadingPdfs()" (filesDropped)="onPdfFilesDropped($event)" />
+    }
+
     @if (filteredLectures) {
         <div class="table-responsive">
             <table class="table table-striped">
@@ -120,12 +118,6 @@
                             <span jhiTranslate="artemisApp.lecture.endDate"></span>
                             <fa-icon [icon]="faSort" />
                         </th>
-                        @if (lectureIngestionEnabled) {
-                            <th jhiSortBy="ingested">
-                                <span jhiTranslate="artemisApp.lecture.ingestionState"></span>
-                                <fa-icon [icon]="faSort" />
-                            </th>
-                        }
                         <th></th>
                     </tr>
                 </thead>
@@ -146,30 +138,6 @@
                             -->
                             <td>{{ lecture.startDate | artemisDate }}</td>
                             <td>{{ lecture.endDate | artemisDate }}</td>
-                            @if (lectureIngestionEnabled) {
-                                <td>
-                                    @switch (lecture.ingested) {
-                                        @case (IngestionState.NOT_STARTED) {
-                                            <span jhiTranslate="artemisApp.iris.ingestionStates.notStarted"></span>
-                                        }
-                                        @case (IngestionState.IN_PROGRESS) {
-                                            <span jhiTranslate="artemisApp.iris.ingestionStates.inProgress"></span>
-                                        }
-                                        @case (IngestionState.PARTIALLY_INGESTED) {
-                                            <span jhiTranslate="artemisApp.iris.ingestionStates.partiallyIngested"></span>
-                                        }
-                                        @case (IngestionState.DONE) {
-                                            <span jhiTranslate="artemisApp.iris.ingestionStates.done"></span>
-                                        }
-                                        @case (IngestionState.ERROR) {
-                                            <span jhiTranslate="artemisApp.iris.ingestionStates.error"></span>
-                                        }
-                                        @default {
-                                            <span jhiTranslate="artemisApp.iris.ingestionStates.loading"></span>
-                                        }
-                                    }
-                                </td>
-                            }
                             <td class="text-end">
                                 <div class="btn-group flex-btn-group-container">
                                     <div class="btn-group-vertical me-1 mb-1">

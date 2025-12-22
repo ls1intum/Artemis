@@ -3,6 +3,7 @@ import type { SidebarsConfig } from '@docusaurus/plugin-content-docs';
 const sidebars: SidebarsConfig = {
     default: [
         'intro',
+        'artemis-intelligence',
         {
             type: 'category',
             label: 'Production Setup',
@@ -20,6 +21,7 @@ const sidebars: SidebarsConfig = {
             ]
         },
         'hyperion',
+        'adaptive-learning',
     ],
 };
 
