@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.core.authentication;
 
 import static de.tum.cit.aet.artemis.core.user.util.UserFactory.USER_PASSWORD;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -20,6 +21,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
@@ -33,6 +35,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.vm.LoginVM;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 import de.tum.cit.aet.artemis.core.repository.AuthorityRepository;
+import de.tum.cit.aet.artemis.core.security.ArtemisInternalAuthenticationProvider;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
@@ -60,6 +63,9 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private ArtemisInternalAuthenticationProvider artemisInternalAuthenticationProvider;
 
     private User student;
 
@@ -89,7 +95,7 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
     @Test
     @WithMockUser(username = "ab12cde")
     void registerForCourse_internalAuth_success() throws Exception {
-        final var student = userUtilService.createAndSaveUser("ab12cde");
+        userUtilService.createAndSaveUser("ab12cde");
 
         final var pastTimestamp = ZonedDateTime.now().minusDays(5);
         final var futureTimestamp = ZonedDateTime.now().plusDays(5);
@@ -163,7 +169,6 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void updateUserWithRemovedGroups_internalAuth_successful() throws Exception {
-        final var oldGroups = student.getGroups();
         final var newGroups = Set.of("foo", "bar");
         student.setGroups(newGroups);
         final var managedUserVM = new ManagedUserVM(student);
@@ -181,5 +186,66 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
         assertThat(response).isNotNull();
         assertThat(student).as("Returned user is equal to sent update").isEqualTo(response);
         assertThat(student).as("Updated user in DB is equal to sent update").isEqualTo(updatedUserIndDB);
+    }
+
+    @Test
+    void testAuthenticateWithEmail() {
+        // Authenticate using email instead of username
+        var authentication = new UsernamePasswordAuthenticationToken(student.getEmail(), USER_PASSWORD);
+        var result = artemisInternalAuthenticationProvider.authenticate(authentication);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getName()).isEqualTo(student.getLogin());
+        assertThat(result.isAuthenticated()).isTrue();
+    }
+
+    @Test
+    void testAuthenticateWithNonExistentUser() {
+        var authentication = new UsernamePasswordAuthenticationToken("nonexistent@example.com", USER_PASSWORD);
+        var result = artemisInternalAuthenticationProvider.authenticate(authentication);
+
+        // Should return null for non-existent internal user (allows fallback to LDAP)
+        assertThat(result).isNull();
+    }
+
+    @Test
+    void testAuthenticateWithInactiveUser() {
+        // Create a dedicated inactive user to avoid modifying the shared student field
+        String inactiveUsername = TEST_PREFIX + "inactive";
+        User inactiveUser = userUtilService.createAndSaveUser(inactiveUsername);
+        inactiveUser.setPassword(passwordService.hashPassword(USER_PASSWORD));
+        inactiveUser.setInternal(true);
+        inactiveUser.setActivated(false);
+        userTestRepository.save(inactiveUser);
+
+        var authentication = new UsernamePasswordAuthenticationToken(inactiveUsername, USER_PASSWORD);
+
+        assertThatThrownBy(() -> artemisInternalAuthenticationProvider.authenticate(authentication)).hasMessageContaining("was not activated");
+    }
+
+    @Test
+    void testAuthenticateWithWrongPassword() {
+        var authentication = new UsernamePasswordAuthenticationToken(USERNAME, "wrongPassword");
+
+        assertThatThrownBy(() -> artemisInternalAuthenticationProvider.authenticate(authentication)).hasMessageContaining("Invalid password");
+    }
+
+    @Test
+    void testGetUsernameForEmail() {
+        var username = artemisInternalAuthenticationProvider.getUsernameForEmail(student.getEmail());
+        assertThat(username).isPresent();
+        assertThat(username.get()).isEqualTo(student.getLogin());
+    }
+
+    @Test
+    void testGetUsernameForNonExistentEmail() {
+        var username = artemisInternalAuthenticationProvider.getUsernameForEmail("nonexistent@example.com");
+        assertThat(username).isEmpty();
+    }
+
+    @Test
+    void testSupportsUsernamePasswordAuthenticationToken() {
+        assertThat(artemisInternalAuthenticationProvider.supports(UsernamePasswordAuthenticationToken.class)).isTrue();
+        assertThat(artemisInternalAuthenticationProvider.supports(Object.class)).isFalse();
     }
 }
