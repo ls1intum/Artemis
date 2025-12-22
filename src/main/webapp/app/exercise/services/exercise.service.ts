@@ -380,7 +380,8 @@ export class ExerciseService {
     static parseExerciseCategories(exercise?: Exercise) {
         if (exercise?.categories) {
             exercise.categories = exercise.categories.map((category) => {
-                const categoryObj = JSON.parse(category as unknown as string);
+                // Handle both JSON strings (from some endpoints) and objects (from DTOs)
+                const categoryObj = typeof category === 'string' ? JSON.parse(category) : category;
                 return new ExerciseCategory(categoryObj.category, categoryObj.color);
             });
         }

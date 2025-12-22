@@ -1329,6 +1329,34 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
     }
 
     /**
+     * test that categories are included in QuizExerciseForCourseDTO
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testQuizExerciseForCourseDTOIncludesCategories() throws Exception {
+        // Create a quiz exercise with future release date (so it can be updated)
+        QuizExercise quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(1), ZonedDateTime.now().plusHours(2), QuizMode.SYNCHRONIZED);
+
+        // Add categories to the quiz
+        quizExercise.setCategories(new java.util.HashSet<>(Set.of("category1", "category2")));
+        QuizExercise updatedQuizExercise = updateQuizExerciseWithFiles(quizExercise, List.of(), OK);
+
+        long courseId = updatedQuizExercise.getCourseViaExerciseGroupOrCourseMember().getId();
+        long quizExerciseId = updatedQuizExercise.getId();
+
+        // Call the quiz-exercises API
+        List<QuizExerciseForCourseDTO> quizzes = request.getList("/api/quiz/courses/" + courseId + "/quiz-exercises", OK, QuizExerciseForCourseDTO.class);
+
+        // Find the DTO for the created quiz
+        QuizExerciseForCourseDTO dto = quizzes.stream().filter(q -> q.id() == quizExerciseId).findFirst().orElseThrow();
+
+        // Assert categories are included in the DTO
+        assertThat(dto.categories()).isNotNull();
+        assertThat(dto.categories()).hasSize(2);
+        assertThat(dto.categories()).containsExactlyInAnyOrder("category1", "category2");
+    }
+
+    /**
      * test create and update quiz exercise with competency
      */
     @Test

@@ -1,20 +1,51 @@
 jhi-category-selector {
+    display: block;
+    margin-bottom: 1rem;
+
     .category-chip-list {
         width: 100%;
 
+        /* Grey border like other form controls */
+        --mdc-outlined-text-field-outline-color: #ced4da;
+        --mdc-outlined-text-field-hover-outline-color: #adb5bd;
+        --mdc-outlined-text-field-focus-outline-color: #86b7fe;
+        --mdc-outlined-text-field-outline-width: 1px;
+
+        /* Override the notched outline border */
+        .mdc-notched-outline__leading,
+        .mdc-notched-outline__notch,
+        .mdc-notched-outline__trailing {
+            border-color: #ced4da !important;
+            border-width: 1px !important;
+        }
+
+        .mat-mdc-form-field-infix {
+            padding-top: 0.4rem !important;
+            padding-bottom: 0.4rem !important;
+            padding-left: 1rem !important;
+            min-height: 32px !important;
+        }
+
+        .mat-mdc-chip-grid {
+            margin: 0 !important;
+        }
+
         .category-chip {
             padding: 0 !important;
-            height: 30px !important;
+            height: 22px !important;
             border-radius: 0.25rem !important;
             background: transparent !important;
+            margin: 2px 4px 2px 0 !important;
 
             .custom-tag {
-                padding: 0.15rem 0.45rem;
+                padding: 0.1rem 0 0.1rem 0.4rem;
                 background: #ccc;
                 border-radius: 0.25rem;
                 color: #fff;
                 display: flex;
                 align-items: center;
+                font-size: 0.8rem;
+                height: 100%;
 
                 &:hover {
                     opacity: 0.8;
@@ -22,36 +53,43 @@ jhi-category-selector {
 
                 .category-chip-remove {
                     color: #fff;
+                    font-size: 0.7rem;
+                    margin-left: 0.25rem;
                 }
             }
+        }
+
+        /* Remove extra padding from chip action */
+        .mat-mdc-standard-chip.mdc-evolution-chip--with-trailing-action .mdc-evolution-chip__action--primary {
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+        }
+
+        /* Remove additional border from custom tags */
+        .mat-mdc-standard-chip .mdc-evolution-chip__action--primary::before {
+            border-style: none !important;
+        }
+
+        /* Ensure consistent input height */
+        input.category-chip-input {
+            height: 22px;
+            margin: 2px 0;
         }
     }
 
     .category-chip-input {
         color: var(--text-editor-color);
     }
-}
 
-.mdc-text-field--outlined .mat-mdc-form-field-infix,
-.mdc-text-field--no-label .mat-mdc-form-field-infix {
-    padding-top: var(--mat-form-field-container-vertical-padding, 0.5rem) !important;
-    padding-bottom: var(--mat-form-field-container-vertical-padding, 0.5rem) !important;
-    min-height: var(--mat-form-field-container-height, 1.75rem) !important;
-}
+    /* Hide subscript wrapper to prevent extra spacing */
+    .mat-mdc-form-field-subscript-wrapper {
+        display: none;
+    }
 
-.mat-mdc-standard-chip.mdc-evolution-chip--with-trailing-action .mdc-evolution-chip__action--primary {
-    padding-left: 0 !important;
-    padding-right: 0 !important;
-}
-
-/* Otherwise each custom tag will have an additional border */
-.mat-mdc-standard-chip .mdc-evolution-chip__action--primary::before {
-    border-style: none !important;
-}
-
-/* Otherwise the x will jump when opening the colorpicker */
-.remove-button::before {
-    position: absolute;
+    /* Prevent x icon from jumping when opening colorpicker */
+    .remove-button::before {
+        position: absolute;
+    }
 }
 
 .tag-option {

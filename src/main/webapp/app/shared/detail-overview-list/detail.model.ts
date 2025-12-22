@@ -10,6 +10,7 @@ import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared
 import { AuxiliaryRepository } from 'app/programming/shared/entities/programming-exercise-auxiliary-repository-model';
 import { ProgrammingExerciseParticipationType } from 'app/programming/shared/entities/programming-exercise-participation.model';
 import { RepositoryDiffInformation } from 'app/programming/shared/utils/diff.utils';
+import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 
 export type Detail = NotShownDetail | ShownDetail;
 
@@ -31,7 +32,8 @@ export type ShownDetail =
     | ProgrammingDiffReportDetail
     | ProgrammingProblemStatementDetail
     | ProgrammingTimelineDetail
-    | ProgrammingCheckoutDirectoriesDetail;
+    | ProgrammingCheckoutDirectoriesDetail
+    | ExerciseCategoriesDetail;
 
 export interface DetailBase {
     type: DetailType;
@@ -137,4 +139,9 @@ interface ProgrammingCheckoutDirectoriesDetail extends DetailBase {
         programmingLanguage?: ProgrammingLanguage;
         isLocal: boolean;
     };
+}
+
+export interface ExerciseCategoriesDetail extends DetailBase {
+    type: DetailType.ExerciseCategories;
+    data: { categories?: ExerciseCategory[] };
 }

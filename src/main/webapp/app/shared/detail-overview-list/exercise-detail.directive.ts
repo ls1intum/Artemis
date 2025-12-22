@@ -9,6 +9,7 @@ import { ProgrammingRepositoryButtonsDetailComponent } from 'app/shared/detail-o
 import { ProgrammingAuxiliaryRepositoryButtonsDetailComponent } from 'app/shared/detail-overview-list/components/programming-auxiliary-repository-buttons-detail/programming-auxiliary-repository-buttons-detail.component';
 import { ProgrammingTestStatusDetailComponent } from 'app/shared/detail-overview-list/components/programming-test-status-detail/programming-test-status-detail.component';
 import { ProgrammingDiffReportDetailComponent } from 'app/shared/detail-overview-list/components/programming-diff-report-detail/programming-diff-report-detail.component';
+import { ExerciseCategoriesDetailComponent } from 'app/shared/detail-overview-list/components/exercise-categories-detail/exercise-categories-detail.component';
 
 @Directive({
     selector: '[jhiExerciseDetail]',
@@ -36,6 +37,7 @@ export class ExerciseDetailDirective implements OnInit, OnDestroy {
                 | ProgrammingAuxiliaryRepositoryButtonsDetailComponent
                 | ProgrammingTestStatusDetailComponent
                 | ProgrammingDiffReportDetailComponent
+                | ExerciseCategoriesDetailComponent
             >;
         } = {
             [DetailType.Text]: TextDetailComponent,
@@ -46,6 +48,7 @@ export class ExerciseDetailDirective implements OnInit, OnDestroy {
             [DetailType.ProgrammingAuxiliaryRepositoryButtons]: ProgrammingAuxiliaryRepositoryButtonsDetailComponent,
             [DetailType.ProgrammingTestStatus]: ProgrammingTestStatusDetailComponent,
             [DetailType.ProgrammingDiffReport]: ProgrammingDiffReportDetailComponent,
+            [DetailType.ExerciseCategories]: ExerciseCategoriesDetailComponent,
         };
 
         const detailComponent = detailTypeToComponent[this.detail.type];
@@ -68,7 +71,7 @@ export class ExerciseDetailDirective implements OnInit, OnDestroy {
 
     private assignAttributes() {
         if (this.componentRef) {
-            this.componentRef.instance.detail = this.detail;
+            this.componentRef.setInput('detail', this.detail);
         }
     }
 }
