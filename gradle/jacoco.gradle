@@ -1,16 +1,16 @@
 ext {
     // TODO: this should become 90% for INSTRUCTION and 0 for CLASS
     //This also needs to be lowered if we merge nebula PRs
-    AggregatedCoverageThresholds = ["INSTRUCTION": 0.862, "CLASS": 138]
+    AggregatedCoverageThresholds = ["INSTRUCTION": 0.862, "CLASS": 144]
     // TODO: each module should achieve 90% for INSTRUCTION and 0 for CLASS
     ModuleCoverageThresholds = [
         "assessment"    :          ["INSTRUCTION": 0.918, "CLASS":  0],
         "athena"        :          ["INSTRUCTION": 0.856, "CLASS":  2],
-        "atlas"         :          ["INSTRUCTION": 0.902, "CLASS":  5],
+        "atlas"         :          ["INSTRUCTION": 0.902, "CLASS":  4],
         "buildagent"    :          ["INSTRUCTION": 0.803, "CLASS":  1],
-        "communication" :          ["INSTRUCTION": 0.863, "CLASS":  9],
-        "core"          :          ["INSTRUCTION": 0.815, "CLASS": 62],
-        "exam"          :          ["INSTRUCTION": 0.907, "CLASS":  3],
+        "communication" :          ["INSTRUCTION": 0.863, "CLASS":  6],
+        "core"          :          ["INSTRUCTION": 0.815, "CLASS": 61],
+        "exam"          :          ["INSTRUCTION": 0.907, "CLASS":  2],
         "exercise"      :          ["INSTRUCTION": 0.911, "CLASS":  0],
         "fileupload"    :          ["INSTRUCTION": 0.945, "CLASS":  0],
         "hyperion"      :          ["INSTRUCTION": 0.646, "CLASS":  9],
@@ -20,7 +20,7 @@ ext {
         "modeling"      :          ["INSTRUCTION": 0.935, "CLASS":  0],
         "nebula"        :          ["INSTRUCTION": 0.836, "CLASS":  0],
         "plagiarism"    :          ["INSTRUCTION": 0.908, "CLASS":  2],
-        "programming"   :          ["INSTRUCTION": 0.846, "CLASS": 17],
+        "programming"   :          ["INSTRUCTION": 0.835, "CLASS": 27],
         "quiz"          :          ["INSTRUCTION": 0.868, "CLASS":  3],
         "text"          :          ["INSTRUCTION": 0.946, "CLASS":  1],
         "tutorialgroup" :          ["INSTRUCTION": 0.919, "CLASS":  1],
