@@ -124,7 +124,7 @@ public class AdminUserResource {
 
         log.debug("REST request to save User : {}", managedUserVM);
 
-        if (managedUserVM.getAuthorities().contains(Authority.SUPER_ADMIN_AUTHORITY.toString()) && !this.authorizationCheckService.isSuperAdmin()) {
+        if (managedUserVM.getAuthorities().contains(Authority.SUPER_ADMIN_AUTHORITY.getName()) && !this.authorizationCheckService.isSuperAdmin()) {
             throw new AccessForbiddenException("Only super administrators are allowed to create other super administrators.");
         }
 
