@@ -81,20 +81,16 @@ public class ArtemisUserCredentialRepository implements UserCredentialRepository
         artemisPublicKeyCredentialUserEntityRepository
                 .findArtemisUserById(credentialRecord.getUserEntityUserId())
                 .ifPresent(user -> {
-                    // Check if user is super admin while the user is still in the Hibernate session
-                    // to avoid lazy initialization exceptions when accessing authorities
-                    boolean isSuperAdmin = authorizationCheckService.isSuperAdmin(user);
-
                     passkeyCredentialsRepository
                             .findByCredentialId(credentialRecord.getCredentialId().toBase64UrlString())
                             .map(existingCredential ->
                                     passkeyCredentialsRepository.save(
-                                            toPasskeyCredential(existingCredential, credentialRecord, user, isSuperAdmin)
+                                            toPasskeyCredential(existingCredential, credentialRecord, user)
                                     )
                             )
                             .orElseGet(() ->
                                     passkeyCredentialsRepository.save(
-                                            toPasskeyCredential(credentialRecord, user, isSuperAdmin)
+                                            toPasskeyCredential(credentialRecord, user)
                                     )
                             );
                 });
@@ -177,10 +173,9 @@ public class ArtemisUserCredentialRepository implements UserCredentialRepository
      * @param credential       the {@link PasskeyCredential} instance to update.
      * @param credentialRecord the data source containing credential metadata and WebAuthn information.
      * @param user             the {@link User} entity to associate the credential with.
-     * @param isSuperAdmin     whether the user is a super administrator.
      * @return the updated {@link PasskeyCredential} instance.
      */
-    private PasskeyCredential toPasskeyCredential(PasskeyCredential credential, CredentialRecord credentialRecord, User user, boolean isSuperAdmin) {
+    private PasskeyCredential toPasskeyCredential(PasskeyCredential credential, CredentialRecord credentialRecord, User user) {
         credential.setUser(user);
         credential.setLabel(credentialRecord.getLabel());
         credential.setCredentialType(PasskeyType.fromLabel(credentialRecord.getCredentialType().getValue()));
@@ -195,7 +190,7 @@ public class ArtemisUserCredentialRepository implements UserCredentialRepository
         credential.setLastUsed(credentialRecord.getLastUsed());
         credential.setCreatedDate(credentialRecord.getCreated());
 
-        // Automatically approve passkey for super admin users
+        boolean isSuperAdmin = authorizationCheckService.isSuperAdmin(user);
         if (isSuperAdmin) {
             credential.setSuperAdminApproved(true);
         }
@@ -213,10 +208,9 @@ public class ArtemisUserCredentialRepository implements UserCredentialRepository
      *
      * @param credentialRecord the record containing credential data to initialize the entity.
      * @param user             the {@link User} to associate the credential with.
-     * @param isSuperAdmin     whether the user is a super administrator.
      * @return a new {@link PasskeyCredential} populated from the credential record.
      */
-    private PasskeyCredential toPasskeyCredential(CredentialRecord credentialRecord, User user, boolean isSuperAdmin) {
-        return toPasskeyCredential(new PasskeyCredential(), credentialRecord, user, isSuperAdmin);
+    private PasskeyCredential toPasskeyCredential(CredentialRecord credentialRecord, User user) {
+        return toPasskeyCredential(new PasskeyCredential(), credentialRecord, user);
     }
 }
