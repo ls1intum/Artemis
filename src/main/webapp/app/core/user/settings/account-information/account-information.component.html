@@ -66,9 +66,9 @@
                 </div>
             }
             @if (!currentUser.imageUrl) {
-                <button (click)="triggerUserImageFileInput()" class="btn btn-primary mt-1">
+                <button (click)="triggerUserImageFileInput()" class="btn btn-primary btn-sm mt-1">
                     <fa-icon [icon]="faPlus" />
-                    <div class="d-inline" jhiTranslate="artemisApp.userSettings.accountInformationPage.addProfilePicture"></div>
+                    <span class="ms-1" jhiTranslate="artemisApp.userSettings.accountInformationPage.addProfilePicture"></span>
                 </button>
             }
         </div>
