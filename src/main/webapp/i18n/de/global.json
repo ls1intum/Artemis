@@ -140,6 +140,7 @@
                 "sidebar": {
                     "organizations": "Organisationen",
                     "users": "Benutzer",
+                    "passkeyManagement": "Passkeys",
                     "courseRequests": "Kursanfragen",
                     "iris": "Iris",
                     "lti": "LTI",
@@ -159,8 +160,7 @@
                     "imprint": "Impressum",
                     "privacy": "Datenschutz",
                     "notifications": "Mitteilungen",
-                    "examRooms": "Prüfungsräume",
-                    "passkeyManagement": "Passkey-Verwaltung"
+                    "examRooms": "Prüfungsräume"
                 },
                 "collapseMenu": "Menü einklappen (Strg + M)",
                 "expandMenu": "Menü ausklappen (Strg + M)",

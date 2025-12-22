@@ -140,6 +140,7 @@
                 "sidebar": {
                     "organizations": "Organizations",
                     "users": "Users",
+                    "passkeyManagement": "Passkeys",
                     "courseRequests": "Course Requests",
                     "iris": "Iris",
                     "lti": "LTI",
@@ -159,8 +160,7 @@
                     "imprint": "Imprint",
                     "privacy": "Privacy",
                     "notifications": "Notifications",
-                    "examRooms": "Exam Rooms",
-                    "passkeyManagement": "Passkey Management"
+                    "examRooms": "Exam Rooms"
                 },
                 "collapseMenu": "Collapse Menu (Ctrl + M)",
                 "expandMenu": "Expand Menu (Ctrl + M)",

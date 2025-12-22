@@ -79,24 +79,35 @@ export class AdminSidebarComponent {
         const groups: AdminSidebarGroup[] = [];
 
         // Group 1: User & Organization Management
+        const accountGroup: AdminSidebarItem[] = [
+            {
+                routerLink: '/admin/organization-management',
+                icon: faUniversity,
+                title: 'Organizations',
+                translation: 'global.menu.admin.sidebar.organizations',
+                testId: 'admin-organization-management',
+            },
+            {
+                routerLink: '/admin/user-management',
+                icon: faUser,
+                title: 'Users',
+                translation: 'global.menu.admin.sidebar.users',
+                testId: 'admin-user-management',
+            },
+        ];
+        if (this.passkeyEnabled() && this.passkeyRequiredForAdmin() && this.isSuperAdmin()) {
+            accountGroup.push({
+                routerLink: '/admin/passkey-management',
+                icon: faKey,
+                title: 'Passkey Management',
+                translation: 'global.menu.admin.sidebar.passkeyManagement',
+                testId: 'admin-passkey-management',
+            });
+        }
+
         groups.push({
             translation: 'global.menu.admin.groups.usersAndOrganizations',
-            items: [
-                {
-                    routerLink: '/admin/organization-management',
-                    icon: faUniversity,
-                    title: 'Organizations',
-                    translation: 'global.menu.admin.sidebar.organizations',
-                    testId: 'admin-organization-management',
-                },
-                {
-                    routerLink: '/admin/user-management',
-                    icon: faUser,
-                    title: 'Users',
-                    translation: 'global.menu.admin.sidebar.users',
-                    testId: 'admin-user-management',
-                },
-            ],
+            items: accountGroup,
         });
 
         // Group 2: Content & Learning
@@ -267,16 +278,6 @@ export class AdminSidebarComponent {
                 title: 'Exam Rooms',
                 translation: 'global.menu.admin.sidebar.examRooms',
                 testId: 'admin-exam-rooms',
-            });
-        }
-
-        if (this.passkeyEnabled() && this.passkeyRequiredForAdmin() && this.isSuperAdmin()) {
-            systemConfigItems.push({
-                routerLink: '/admin/passkey-management',
-                icon: faKey,
-                title: 'Passkey Management',
-                translation: 'global.menu.admin.sidebar.passkeyManagement',
-                testId: 'admin-passkey-management',
             });
         }
 
