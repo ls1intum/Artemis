@@ -14,12 +14,13 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { UserSettingsService } from 'app/core/user/settings/directive/user-settings.service';
+import { RouterLink } from '@angular/router';
 
 @Component({
     selector: 'jhi-account-information',
     templateUrl: './account-information.component.html',
     styleUrls: ['../user-settings.scss'],
-    imports: [TranslateDirective, ImageComponent, FaIconComponent, ArtemisDatePipe],
+    imports: [TranslateDirective, ImageComponent, FaIconComponent, ArtemisDatePipe, RouterLink],
 })
 export class AccountInformationComponent implements OnInit {
     protected readonly faPen = faPencil;
