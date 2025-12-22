@@ -2,16 +2,22 @@ package de.tum.cit.aet.artemis.fileupload.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.FILE_ENDING_PATTERN;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.TITLE_NAME_PATTERN;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.stream.Collectors;
 
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -34,7 +40,10 @@ import org.springframework.web.server.ResponseStatusException;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.atlas.api.AtlasMLApi;
+import de.tum.cit.aet.artemis.atlas.api.CompetencyApi;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
+import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
@@ -126,13 +135,15 @@ public class FileUploadExerciseResource {
 
     private final Optional<AtlasMLApi> atlasMLApi;
 
+    private final Optional<CompetencyApi> competencyApi;
+
     public FileUploadExerciseResource(FileUploadExerciseRepository fileUploadExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             CourseService courseService, ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService,
             FileUploadSubmissionExportService fileUploadSubmissionExportService, GradingCriterionRepository gradingCriterionRepository, CourseRepository courseRepository,
             ParticipationRepository participationRepository, GroupNotificationScheduleService groupNotificationScheduleService,
             FileUploadExerciseImportService fileUploadExerciseImportService, FileUploadExerciseService fileUploadExerciseService, ChannelService channelService,
             ExerciseVersionService exerciseVersionService, ChannelRepository channelRepository, Optional<CompetencyProgressApi> competencyProgressApi, Optional<SlideApi> slideApi,
-            Optional<AtlasMLApi> atlasMLApi) {
+            Optional<AtlasMLApi> atlasMLApi, Optional<CompetencyApi> competencyApi) {
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
         this.userRepository = userRepository;
         this.courseService = courseService;
@@ -152,6 +163,7 @@ public class FileUploadExerciseResource {
         this.competencyProgressApi = competencyProgressApi;
         this.slideApi = slideApi;
         this.atlasMLApi = atlasMLApi;
+        this.competencyApi = competencyApi;
     }
 
     /**
@@ -344,7 +356,7 @@ public class FileUploadExerciseResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
 
-        FileUploadExercise updatedFileUploadExercise = fileUploadExerciseService.updateFileUploadExercise(updateFileUploadExercisesDTO, fileUploadExerciseBeforeUpdate);
+        FileUploadExercise updatedFileUploadExercise = update(updateFileUploadExercisesDTO, fileUploadExerciseBeforeUpdate);
         // Validate the updated file upload exercise
         validateNewOrUpdatedFileUploadExercise(updatedFileUploadExercise);
 
@@ -525,9 +537,247 @@ public class FileUploadExerciseResource {
 
         // Check that the user is authorized to update the exercise
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
-        FileUploadExercise exerciseForReevaluation = fileUploadExerciseService.updateFileUploadExercise(updateFileUploadExercisesDTO, existingExercise);
+        FileUploadExercise exerciseForReevaluation = update(updateFileUploadExercisesDTO, existingExercise);
 
         exerciseService.reEvaluateExercise(exerciseForReevaluation, deleteFeedbackAfterGradingInstructionUpdate);
         return updateFileUploadExercise(updateFileUploadExercisesDTO, null, updateFileUploadExercisesDTO.id());
+    }
+
+    /**
+     * Validate the fileUpload exercise title.
+     * 1. Check presence and length of exercise title
+     * 2. Find forbidden patterns in exercise title
+     *
+     * @param fileUploadExercise FileUpload exercise to be validated
+     */
+    private void validateTitle(FileUploadExercise fileUploadExercise) {
+        // Check if exercise title is set
+        if (fileUploadExercise.getTitle() == null || fileUploadExercise.getTitle().isBlank() || fileUploadExercise.getTitle().length() < 3) {
+            throw new BadRequestAlertException("The title is not set or is too short.", ENTITY_NAME, "titleLengthInvalid");
+        }
+        // Check if the exercise title matches regex
+        Matcher titleMatcher = TITLE_NAME_PATTERN.matcher(fileUploadExercise.getTitle());
+        if (!titleMatcher.matches()) {
+            throw new BadRequestAlertException("The title is invalid.", ENTITY_NAME, "titlePatternInvalid");
+        }
+    }
+
+    /**
+     * Replaces the grading criteria of the given exercise according to PUT semantics.
+     * <p>
+     * If {@code dto.gradingCriteria()} is {@code null} or empty, all existing criteria are removed (if initialized).
+     * Otherwise, existing criteria are updated by id and new ones are created for DTOs without id.
+     *
+     * @param dto      the update DTO containing grading criteria
+     * @param exercise the exercise to mutate
+     */
+    private void updateGradingCriteria(UpdateFileUploadExercisesDTO dto, FileUploadExercise exercise) {
+        if (dto.gradingCriteria() == null || dto.gradingCriteria().isEmpty()) {
+            clearInitializedCollection(exercise.getGradingCriteria());
+            return;
+        }
+
+        Set<GradingCriterion> managedCriteria = ensureGradingCriteriaSet(exercise);
+
+        Map<Long, GradingCriterion> existingById = managedCriteria.stream().filter(gc -> gc.getId() != null)
+                .collect(Collectors.toMap(GradingCriterion::getId, gc -> gc, (a, b) -> a));
+
+        Set<GradingCriterion> updated = dto.gradingCriteria().stream().map(gcDto -> {
+            GradingCriterion criterion = (gcDto.id() != null) ? existingById.get(gcDto.id()) : null;
+            if (criterion == null) {
+                criterion = gcDto.toEntity();
+                criterion.setExercise(exercise);
+            }
+            else {
+                gcDto.applyTo(criterion);
+            }
+            return criterion;
+        }).collect(Collectors.toSet());
+
+        managedCriteria.clear();
+        managedCriteria.addAll(updated);
+    }
+
+    /**
+     * Ensures that the exercise has a mutable set for grading criteria.
+     * Creates and assigns a new {@link HashSet} if the current set is {@code null}.
+     *
+     * @param exercise the exercise to mutate
+     * @return the non-null mutable set of grading criteria
+     */
+    private Set<GradingCriterion> ensureGradingCriteriaSet(FileUploadExercise exercise) {
+        Set<GradingCriterion> managedCriteria = exercise.getGradingCriteria();
+        if (managedCriteria == null) {
+            managedCriteria = new HashSet<>();
+            exercise.setGradingCriteria(managedCriteria);
+        }
+        return managedCriteria;
+    }
+
+    /**
+     * Replaces the competency links of the given exercise according to PUT semantics.
+     * <p>
+     * If {@code dto.competencyLinks()} is {@code null} or empty, all existing links are removed (if initialized).
+     * Otherwise, weights are updated for existing links and missing links are created using managed competency references.
+     *
+     * <p>
+     * <b>Hibernate note:</b> Uses {@code competencyRepository.getReferenceById(...)} to avoid creating detached entities
+     * and to keep associations consistent with the persistence context.
+     *
+     * @param dto      the update DTO containing competency link updates
+     * @param exercise the exercise to mutate
+     * @throws BadRequestAlertException if a competency does not belong to the exercise's course
+     */
+    private void updateCompetencyLinks(UpdateFileUploadExercisesDTO dto, FileUploadExercise exercise) {
+        if (dto.competencyLinks() == null || dto.competencyLinks().isEmpty()) {
+            clearInitializedCollection(exercise.getCompetencyLinks());
+            return;
+        }
+        CompetencyApi api = competencyApi.orElseThrow(() -> new BadRequestAlertException("Competency links require Atlas to be enabled.", "CourseCompetency", "atlasDisabled"));
+
+        Set<CompetencyExerciseLink> managedLinks = ensureCompetencyLinksSet(exercise);
+
+        Map<Long, CompetencyExerciseLink> existingByCompetencyId = managedLinks.stream().filter(link -> link.getCompetency() != null && link.getCompetency().getId() != null)
+                .collect(Collectors.toMap(link -> link.getCompetency().getId(), link -> link, (a, b) -> a));
+
+        Long exerciseCourseId = exercise.getCourseViaExerciseGroupOrCourseMember() != null ? exercise.getCourseViaExerciseGroupOrCourseMember().getId() : null;
+
+        Set<CompetencyExerciseLink> updated = new HashSet<>();
+        for (var linkDto : dto.competencyLinks()) {
+
+            if (exerciseCourseId != null && linkDto.courseId() != null && !Objects.equals(exerciseCourseId, linkDto.courseId())) {
+                throw new BadRequestAlertException("The competency does not belong to the exercise's course.", "CourseCompetency", "wrongCourse");
+            }
+
+            var competencyDto = linkDto.courseCompetencyDTO();
+            Long competencyId = competencyDto.id();
+
+            CompetencyExerciseLink link = existingByCompetencyId.get(competencyId);
+            if (link == null) {
+                Competency competencyRef = api.getReference(competencyId);
+                validateCompetencyBelongsToExerciseCourse(exerciseCourseId, competencyRef);
+                link = new CompetencyExerciseLink(competencyRef, exercise, linkDto.weight());
+            }
+            else {
+                link.setWeight(linkDto.weight());
+            }
+
+            updated.add(link);
+        }
+
+        managedLinks.clear();
+        managedLinks.addAll(updated);
+    }
+
+    /**
+     * Ensures that the exercise has a mutable set for competency links.
+     * Creates and assigns a new {@link HashSet} if the current set is {@code null}.
+     *
+     * @param exercise the exercise to mutate
+     * @return the non-null mutable set of competency links
+     */
+    private Set<CompetencyExerciseLink> ensureCompetencyLinksSet(FileUploadExercise exercise) {
+        Set<CompetencyExerciseLink> managedLinks = exercise.getCompetencyLinks();
+        if (managedLinks == null) {
+            managedLinks = new HashSet<>();
+            exercise.setCompetencyLinks(managedLinks);
+        }
+        return managedLinks;
+    }
+
+    /**
+     * Validates that the given competency belongs to the same course as the exercise.
+     * If the exercise has no course (e.g. inconsistent state), this check is skipped.
+     *
+     * @param exerciseCourseId the course id of the exercise (maybe {@code null})
+     * @param competency       a managed competency entity or reference
+     * @throws BadRequestAlertException if the competency is associated with a different course
+     */
+    private void validateCompetencyBelongsToExerciseCourse(Long exerciseCourseId, Competency competency) {
+        if (exerciseCourseId == null) {
+            return;
+        }
+        var competencyCourse = competency.getCourse();
+        Long competencyCourseId = competencyCourse != null ? competencyCourse.getId() : null;
+
+        if (competencyCourseId != null && !Objects.equals(exerciseCourseId, competencyCourseId)) {
+            throw new BadRequestAlertException("The competency does not belong to the exercise's course.", "CourseCompetency", "wrongCourse");
+        }
+    }
+
+    /**
+     * Clears the given collection if it is initialized.
+     * <p>
+     * This avoids triggering lazy initialization in callers that do not fetch the collection.
+     * In this service, callers typically load the exercise with the required associations eagerly.
+     *
+     * @param set the set to clear
+     * @param <T> element type
+     */
+    private static <T> void clearInitializedCollection(Set<T> set) {
+        if (set != null && Hibernate.isInitialized(set)) {
+            set.clear();
+        }
+    }
+
+    /**
+     * Applies new updateFileUploadExercise's data to the given exercise, mutating it in place.
+     * <p>
+     * This method follows PUT semantics:
+     * <ul>
+     * <li>All fields in the DTO represent the new state.</li>
+     * <li>Required attributes (e.g. title) are validated here and must not be {@code null} or blank.</li>
+     * <li>Nullable attributes are explicitly overwritten, i.e. {@code null} means "clear existing value".</li>
+     * <li>Collections (grading criteria, competency links) are fully replaced; {@code null} or empty means "remove all".</li>
+     * </ul>
+     *
+     * @param updateFileUploadExercisesDTO the DTO containing the updated state for the exercise
+     * @param exercise                     the exercise to update (will be mutated)
+     * @return the same {@link FileUploadExercise} instance after applying the updates
+     * @throws BadRequestAlertException if required fields are missing/invalid or a competency from the DTO
+     *                                      does not belong to the exercise's course or otherwise violates domain constraints
+     */
+    private FileUploadExercise update(UpdateFileUploadExercisesDTO updateFileUploadExercisesDTO, FileUploadExercise exercise) {
+        if (updateFileUploadExercisesDTO == null) {
+            throw new BadRequestAlertException("No fileUpload exercise was provided.", ENTITY_NAME, "isNull");
+        }
+        exercise.setTitle(updateFileUploadExercisesDTO.title());
+        validateTitle(exercise);
+        exercise.setShortName(updateFileUploadExercisesDTO.shortName());
+        // problemStatement: null → empty string
+        String newProblemStatement = updateFileUploadExercisesDTO.problemStatement() == null ? "" : updateFileUploadExercisesDTO.problemStatement();
+        exercise.setProblemStatement(newProblemStatement);
+
+        exercise.setChannelName(updateFileUploadExercisesDTO.channelName());
+        exercise.setCategories(updateFileUploadExercisesDTO.categories());
+        exercise.setDifficulty(updateFileUploadExercisesDTO.difficulty());
+
+        exercise.setMaxPoints(updateFileUploadExercisesDTO.maxPoints());
+        exercise.setBonusPoints(updateFileUploadExercisesDTO.bonusPoints());
+        exercise.setIncludedInOverallScore(updateFileUploadExercisesDTO.includedInOverallScore());
+
+        exercise.setReleaseDate(updateFileUploadExercisesDTO.releaseDate());
+        exercise.setStartDate(updateFileUploadExercisesDTO.startDate());
+        exercise.setDueDate(updateFileUploadExercisesDTO.dueDate());
+        exercise.setAssessmentDueDate(updateFileUploadExercisesDTO.assessmentDueDate());
+        exercise.setExampleSolutionPublicationDate(updateFileUploadExercisesDTO.exampleSolutionPublicationDate());
+
+        // validates general settings: points, dates
+        exercise.validateGeneralSettings();
+
+        exercise.setAllowComplaintsForAutomaticAssessments(updateFileUploadExercisesDTO.allowComplaintsForAutomaticAssessments());
+        exercise.setAllowFeedbackRequests(updateFileUploadExercisesDTO.allowFeedbackRequests());
+        exercise.setPresentationScoreEnabled(updateFileUploadExercisesDTO.presentationScoreEnabled());
+        exercise.setSecondCorrectionEnabled(updateFileUploadExercisesDTO.secondCorrectionEnabled());
+        exercise.setFeedbackSuggestionModule(updateFileUploadExercisesDTO.feedbackSuggestionModule());
+        exercise.setGradingInstructions(updateFileUploadExercisesDTO.gradingInstructions());
+
+        exercise.setExampleSolution(updateFileUploadExercisesDTO.exampleSolution());
+        exercise.setFilePattern(updateFileUploadExercisesDTO.filePattern());
+
+        updateGradingCriteria(updateFileUploadExercisesDTO, exercise);
+        updateCompetencyLinks(updateFileUploadExercisesDTO, exercise);
+
+        return exercise;
     }
 }
