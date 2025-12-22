@@ -1,5 +1,7 @@
 .assessment-container {
     display: flex;
-    min-height: calc(100vh - 173px);
+    min-height: calc(100vh - var(--sidebar-header-footer-combined-height));
     flex-flow: column nowrap;
+    // Add padding at the bottom to ensure content is not hidden behind the fixed footer
+    padding-bottom: 2rem;
 }
