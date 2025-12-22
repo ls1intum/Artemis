@@ -334,7 +334,7 @@ public class FileUploadExerciseResource {
         log.debug("REST request to update FileUploadExercise : {}", updateFileUploadExercisesDTO);
         // TODO: The route has an exerciseId but we don't do anything useful with it.
         // Change route and client requests?
-        final var fileUploadExerciseBeforeUpdate = fileUploadExerciseRepository.findByIdWithExampleSubmissionsAndResultsAndCompetenciesAndGradingCriteria(exerciseId).orElseThrow();
+        final var fileUploadExerciseBeforeUpdate = fileUploadExerciseRepository.findByIdWithCompetenciesAndGradingCriteria(exerciseId).orElseThrow();
 
         ZonedDateTime oldDueDate = fileUploadExerciseBeforeUpdate.getDueDate();
         ZonedDateTime oldAssessmentDueDate = fileUploadExerciseBeforeUpdate.getAssessmentDueDate();
@@ -526,11 +526,10 @@ public class FileUploadExerciseResource {
             @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterGradingInstructionUpdate) {
         log.debug("REST request to re-evaluate FileUploadExercise : {}", updateFileUploadExercisesDTO);
 
-        final FileUploadExercise existingExercise = fileUploadExerciseRepository.findByIdWithExampleSubmissionsAndResultsAndCompetenciesAndGradingCriteria(exerciseId)
+        final FileUploadExercise existingExercise = fileUploadExerciseRepository.findByIdWithCompetenciesAndGradingCriteria(exerciseId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "FileUploadExercise not found"));
 
         // check that the exercise exists for given id
-        fileUploadExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkGivenExerciseIdSameForExerciseRequestBodyIdElseThrow(exerciseId, updateFileUploadExercisesDTO.id());
 
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(existingExercise);

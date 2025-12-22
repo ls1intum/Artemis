@@ -37,10 +37,10 @@ public record UpdateFileUploadExercisesDTO(long id, String title, String channel
          */
         public static CompetencyExerciseLinkDTO of(CompetencyExerciseLink competencyExerciseLink) {
             if (competencyExerciseLink == null) {
-                throw new BadRequestAlertException("No competency link was provided.", "competencyExerciseLink", "competencyExerciseLink.isNull");
+                throw new BadRequestAlertException("No competency link was provided.", "CompetencyExerciseLink", "competencyExerciseLink.isNull");
             }
             if (competencyExerciseLink.getCompetency() == null) {
-                throw new BadRequestAlertException("The competency link must reference a competency.", "competencyExerciseLink", "competencyExerciseLink.competencyMissing");
+                throw new BadRequestAlertException("The competency link must reference a competency.", "CompetencyExerciseLink", "competencyExerciseLink.competencyMissing");
             }
             if (competencyExerciseLink.getCompetency().getCourse() == null) {
                 throw new BadRequestAlertException("The competency referenced by this link is not associated with a course.", "competencyExerciseLink",

@@ -184,7 +184,7 @@
             "courseMissing": "Die referenzierte Kompetenz ist keinem Kurs zugeordnet."
         },
         "FileUploadExercise": {
-            "isNull": "Es wurde keine fileUpload Übungen übergeben.",
+            "isNull": "Es wurden keine File-Upload-Übungen übergeben.",
             "fileUploadExerciseTitleInvalid": "Der Titel ist nicht gesetzt oder zu kurz.",
             "titleInvalid": "Der Titel ist ungültig.",
             "courseIdMissing": "Die courseId ist erforderlich.",

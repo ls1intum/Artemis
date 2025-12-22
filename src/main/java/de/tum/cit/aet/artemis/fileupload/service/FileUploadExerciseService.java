@@ -27,8 +27,6 @@ public class FileUploadExerciseService {
 
     private final FileUploadExerciseRepository fileUploadExerciseRepository;
 
-    private static final String ENTITY_NAME = "FileUploadExercise";
-
     public FileUploadExerciseService(ExerciseSpecificationService exerciseSpecificationService, FileUploadExerciseRepository fileUploadExerciseRepository) {
         this.exerciseSpecificationService = exerciseSpecificationService;
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
