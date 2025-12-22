@@ -2,6 +2,8 @@
     "artemisApp": {
         "lectureUnit": {
             "deleted": "Content deleted",
+            "retryProcessing": "Retry processing",
+            "processingRetryStarted": "Processing retry started",
             "home": {
                 "title": "Lecture Content"
             },
@@ -91,6 +93,21 @@
             "transcriptionProcessing": "Transcription Processing",
             "transcriptionFailed": "Transcription Failed",
             "hasTranscription": "Transcription complete",
+            "awaitingProcessing": "Awaiting Processing",
+            "processingTranscribing": "Transcribing",
+            "processingIngesting": "Indexing",
+            "processingComplete": "Processing complete",
+            "processingFailed": "Processing Failed",
+            "processing": {
+                "cancelled": "Processing was cancelled",
+                "error": {
+                    "invalidUnitType": "Invalid lecture unit type for processing",
+                    "transcriptionFailed": "Transcription generation failed after multiple attempts",
+                    "ingestionFailed": "Content indexing failed after multiple attempts",
+                    "noPlaylist": "Video playlist is no longer available",
+                    "timeout": "Processing timed out after multiple attempts"
+                }
+            },
             "createAttachmentVideoUnits": {
                 "informativeText": {
                     "firstLine": "Artemis searches for the Outline (slide with title 'Outline' and bullet points with content headings) to split the PDF into content.",
@@ -186,7 +203,11 @@
                 "statusProcessing": "Please check the status of the transcription later",
                 "statusFailed": "Transcription generation failed for this video. You can try generating it again.",
                 "editStatusProcessing": "A transcription is currently being generated for this video.",
-                "editStatusFailed": "The previous transcription generation failed for this video."
+                "editStatusFailed": "The previous transcription generation failed for this video.",
+                "cancelButton": "Cancel Transcription",
+                "cancelSuccess": "Transcription cancelled successfully.",
+                "cancelError": "Failed to cancel transcription.",
+                "cancelConfirm": "Are you sure you want to cancel the ongoing transcription?"
             },
             "videoPlayer": {
                 "transcript": "Transcript",

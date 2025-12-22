@@ -60,8 +60,8 @@ class LectureServiceTest extends AbstractSpringIntegrationIndependentTest {
 
         List<Course> courses = courseUtilService.createCoursesWithExercisesAndLecturesAndLectureUnits(TEST_PREFIX, false, false, 0);
         // always use the lecture and course with the smallest/largest ID, otherwise tests below related to search might fail (in a flaky way)
-        course = courseRepository
-                .findWithLecturesAndLectureUnitsAndAttachmentsByIdElseThrow(courses.stream().min(Comparator.comparingLong(DomainObject::getId)).orElseThrow().getId());
+        course = courseRepository.findWithLecturesAndLectureUnitsAndAttachmentsById(courses.stream().min(Comparator.comparingLong(DomainObject::getId)).orElseThrow().getId())
+                .orElseThrow();
         lecture = course.getLectures().stream().min(Comparator.comparing(Lecture::getId)).orElseThrow();
 
         /* The visibleDate property of the Lecture entity is deprecated. We’re keeping the related logic temporarily to monitor for user feedback before full removal */
