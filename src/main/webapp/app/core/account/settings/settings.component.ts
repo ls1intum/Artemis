@@ -21,8 +21,7 @@ interface SettingsForm {
 
 /**
  * Component for managing user account settings.
- * Allows users to update their personal information (name) and language preference.
- * Note: Email changes are currently not supported as they would require re-verification.
+ * Allows users to update their personal information (name, email) and language preference.
  */
 @Component({
     selector: 'jhi-settings',
@@ -37,33 +36,47 @@ export class SettingsComponent implements OnInit {
 
     /** Indicates the settings were successfully saved */
     readonly success = signal(false);
+    /** Indicates email already exists error */
+    readonly errorEmailExists = signal(false);
     /** The current user's account data */
     readonly currentUser = signal<User | undefined>(undefined);
     /** List of available languages for the language selector */
     readonly languages = LANGUAGES;
     /** Whether self-registration is enabled (affects UI display) */
     readonly isRegistrationEnabled: boolean;
-    /** Whether the current user is an internal user (can edit their name) */
+    /** Whether the current user is an internal user (can edit their name and email) */
     readonly isInternalUser = signal(false);
+    /** Optional regex pattern restricting allowed email domains (e.g., university emails only) */
+    readonly allowedEmailPattern?: string;
+    /** Human-readable description of allowed email pattern for display in UI */
+    readonly allowedEmailPatternReadable?: string;
 
-    readonly settingsForm = new FormGroup<SettingsForm>({
-        firstName: new FormControl<string>('', {
-            nonNullable: true,
-            validators: [Validators.required, Validators.minLength(2), Validators.maxLength(50)],
-        }),
-        lastName: new FormControl<string>('', {
-            nonNullable: true,
-            validators: [Validators.required, Validators.minLength(2), Validators.maxLength(50)],
-        }),
-        email: new FormControl<string>('', {
-            nonNullable: true,
-            validators: [Validators.required, Validators.minLength(5), Validators.maxLength(100), Validators.email],
-        }),
-        langKey: new FormControl<string>('', { nonNullable: true }),
-    });
+    readonly settingsForm: FormGroup<SettingsForm>;
 
     constructor() {
-        this.isRegistrationEnabled = this.profileService.getProfileInfo().registrationEnabled || false;
+        const profileInfo = this.profileService.getProfileInfo();
+        this.isRegistrationEnabled = profileInfo.registrationEnabled || false;
+        this.allowedEmailPattern = profileInfo.allowedEmailPattern;
+        this.allowedEmailPatternReadable = profileInfo.allowedEmailPatternReadable;
+
+        this.settingsForm = new FormGroup<SettingsForm>({
+            firstName: new FormControl<string>('', {
+                nonNullable: true,
+                validators: [Validators.required, Validators.minLength(2), Validators.maxLength(50)],
+            }),
+            lastName: new FormControl<string>('', {
+                nonNullable: true,
+                validators: [Validators.required, Validators.minLength(2), Validators.maxLength(50)],
+            }),
+            email: new FormControl<string>('', {
+                nonNullable: true,
+                // Use pattern validation if email domain is restricted, otherwise standard email validation
+                validators: this.allowedEmailPattern
+                    ? [Validators.required, Validators.minLength(5), Validators.maxLength(100), Validators.pattern(this.allowedEmailPattern)]
+                    : [Validators.required, Validators.minLength(5), Validators.maxLength(100), Validators.email],
+            }),
+            langKey: new FormControl<string>('', { nonNullable: true }),
+        });
     }
 
     /**
@@ -86,12 +99,12 @@ export class SettingsComponent implements OnInit {
 
     /**
      * Saves the user's settings to the server.
-     * Updates first name, last name, and language preference.
+     * Updates first name, last name, email, and language preference.
      * If the language changed, updates the application's display language.
-     * Note: Email changes are disabled as they would require sending a new activation link.
      */
     saveSettings() {
         this.success.set(false);
+        this.errorEmailExists.set(false);
 
         const userToUpdate = this.currentUser();
         if (!userToUpdate) {
@@ -99,13 +112,14 @@ export class SettingsComponent implements OnInit {
         }
 
         // Update user object with form values
-        // Note: Email changes are not supported - would require re-verification
         const firstName = this.settingsForm.controls.firstName.value;
         const lastName = this.settingsForm.controls.lastName.value;
+        const email = this.settingsForm.controls.email.value;
         const langKey = this.settingsForm.controls.langKey.value;
 
         userToUpdate.firstName = firstName || undefined;
         userToUpdate.lastName = lastName || undefined;
+        userToUpdate.email = email || undefined;
         userToUpdate.langKey = langKey || undefined;
 
         this.accountService.save(userToUpdate).subscribe({
@@ -118,7 +132,13 @@ export class SettingsComponent implements OnInit {
                     this.translateService.use(langKey);
                 }
             },
-            error: () => this.success.set(false),
+            error: (response) => {
+                if (response.status === 400 && response.error?.type === 'https://www.jhipster.tech/problem/email-already-used') {
+                    this.errorEmailExists.set(true);
+                } else {
+                    this.success.set(false);
+                }
+            },
         });
     }
 }

@@ -12,6 +12,9 @@
                         <strong>Settings saved!</strong>
                     </div>
                 }
+                @if (errorEmailExists()) {
+                    <div class="alert alert-danger" jhiTranslate="settings.messages.error.emailExists"><strong>Email is already in use!</strong> Please choose another one.</div>
+                }
                 @if (currentUser()) {
                     <form name="form" role="form" (ngSubmit)="saveSettings()" [formGroup]="settingsForm" novalidate>
                         <div class="form-group">
@@ -64,13 +67,18 @@
                                 </div>
                             }
                         </div>
+                        @if (allowedEmailPatternReadable) {
+                            <div class="form-group">
+                                <strong jhiTranslate="global.form.email.pattern"></strong>
+                                {{ allowedEmailPatternReadable }}
+                            </div>
+                        }
                         <div class="form-group">
                             <label class="form-control-label" for="email" jhiTranslate="global.form.email"></label>
-                            <!-- Note: changing the email is currently not supported, because we would need to send another activation link -->
                             <input
                                 type="email"
                                 class="form-control"
-                                [disabled]="true"
+                                [disabled]="!isInternalUser()"
                                 id="email"
                                 name="email"
                                 placeholder="{{ 'global.form.email.placeholder' | artemisTranslate }}"
@@ -89,6 +97,9 @@
                                     }
                                     @if (settingsForm.controls.email.errors?.maxlength) {
                                         <small class="form-text text-danger" jhiTranslate="global.messages.validate.email.maxlength"></small>
+                                    }
+                                    @if (settingsForm.controls.email.errors?.pattern) {
+                                        <small class="form-text text-danger" jhiTranslate="global.messages.validate.email.pattern"></small>
                                     }
                                 </div>
                             }

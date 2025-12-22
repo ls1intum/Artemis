@@ -190,6 +190,7 @@ describe('SettingsComponent', () => {
         comp.settingsForm.patchValue({
             firstName: '',
             lastName: '',
+            email: '',
             langKey: '',
         });
         comp.saveSettings();
@@ -200,7 +201,49 @@ describe('SettingsComponent', () => {
         const savedUser = comp.currentUser();
         expect(savedUser?.firstName).toBeUndefined();
         expect(savedUser?.lastName).toBeUndefined();
+        expect(savedUser?.email).toBeUndefined();
         expect(savedUser?.langKey).toBeUndefined();
+    });
+
+    it('should set errorEmailExists when email is already used', async () => {
+        // GIVEN
+        vi.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(accountValues));
+        vi.spyOn(accountService, 'save').mockReturnValue(
+            throwError(() => ({
+                status: 400,
+                error: { type: 'https://www.jhipster.tech/problem/email-already-used' },
+            })),
+        );
+
+        // WHEN
+        comp.ngOnInit();
+        await vi.waitFor(() => expect(comp.currentUser()).toBeDefined());
+        comp.saveSettings();
+
+        // THEN
+        expect(comp.errorEmailExists()).toBe(true);
+        expect(comp.success()).toBe(false);
+    });
+
+    it('should update email when saving settings', async () => {
+        // GIVEN
+        vi.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(accountValues));
+        vi.spyOn(accountService, 'save').mockReturnValue(of(new HttpResponse({ body: {} })));
+
+        // WHEN
+        comp.ngOnInit();
+        await vi.waitFor(() => expect(comp.currentUser()).toBeDefined());
+
+        // Update email in form
+        comp.settingsForm.patchValue({
+            email: 'new.email@mail.com',
+        });
+        comp.saveSettings();
+
+        // THEN
+        expect(accountService.save).toHaveBeenCalled();
+        const savedUser = comp.currentUser();
+        expect(savedUser?.email).toBe('new.email@mail.com');
     });
 
     describe('when registration is disabled', () => {
@@ -217,6 +260,37 @@ describe('SettingsComponent', () => {
 
         it('should set isRegistrationEnabled to false when profile has registrationEnabled false', () => {
             expect(compDisabled.isRegistrationEnabled).toBe(false);
+        });
+    });
+
+    describe('when email pattern is configured', () => {
+        let compWithPattern: SettingsComponent;
+
+        beforeEach(() => {
+            // Override ProfileService mock to return email pattern
+            const profileService = TestBed.inject(ProfileService);
+            vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({
+                registrationEnabled: true,
+                allowedEmailPattern: '^.*@university\\.edu$',
+                allowedEmailPatternReadable: '@university.edu',
+            } as any);
+
+            const fixture = TestBed.createComponent(SettingsComponent);
+            compWithPattern = fixture.componentInstance;
+        });
+
+        it('should use email pattern validation when configured', () => {
+            expect(compWithPattern.allowedEmailPattern).toBe('^.*@university\\.edu$');
+            expect(compWithPattern.allowedEmailPatternReadable).toBe('@university.edu');
+
+            // Email that matches pattern should be valid
+            compWithPattern.settingsForm.patchValue({ email: 'test@university.edu' });
+            expect(compWithPattern.settingsForm.controls.email.valid).toBe(true);
+
+            // Email that doesn't match pattern should be invalid
+            compWithPattern.settingsForm.patchValue({ email: 'test@other.com' });
+            expect(compWithPattern.settingsForm.controls.email.valid).toBe(false);
+            expect(compWithPattern.settingsForm.controls.email.errors?.['pattern']).toBeTruthy();
         });
     });
 
