@@ -32,11 +32,13 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.domain.Authority;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.UserPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EmailAlreadyUsedException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
@@ -44,6 +46,7 @@ import de.tum.cit.aet.artemis.core.exception.LoginAlreadyUsedException;
 import de.tum.cit.aet.artemis.core.repository.AuthorityRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.ldap.LdapUserService;
 import de.tum.cit.aet.artemis.core.service.user.UserCreationService;
 import de.tum.cit.aet.artemis.core.service.user.UserService;
@@ -93,13 +96,16 @@ public class AdminUserResource {
 
     private final Optional<LdapUserService> ldapUserService;
 
+    private final AuthorizationCheckService authorizationCheckService;
+
     public AdminUserResource(UserRepository userRepository, UserService userService, UserCreationService userCreationService, AuthorityRepository authorityRepository,
-            Optional<LdapUserService> ldapUserService) {
+            Optional<LdapUserService> ldapUserService, AuthorizationCheckService authorizationCheckService) {
         this.userRepository = userRepository;
         this.userService = userService;
         this.userCreationService = userCreationService;
         this.authorityRepository = authorityRepository;
         this.ldapUserService = ldapUserService;
+        this.authorizationCheckService = authorizationCheckService;
     }
 
     /**
@@ -113,11 +119,14 @@ public class AdminUserResource {
      * @throws BadRequestAlertException 400 (Bad Request) if the login or email is already in use
      */
     @PostMapping("users")
-    public ResponseEntity<User> createUser(@Valid @RequestBody ManagedUserVM managedUserVM) throws URISyntaxException {
-
+    public ResponseEntity<User> createUser(@Valid @RequestBody ManagedUserVM managedUserVM) throws URISyntaxException, AccessForbiddenException {
         this.userService.checkUsernameAndPasswordValidityElseThrow(managedUserVM.getLogin(), managedUserVM.getPassword());
 
         log.debug("REST request to save User : {}", managedUserVM);
+
+        if (managedUserVM.getAuthorities().contains(Authority.SUPER_ADMIN_AUTHORITY.toString()) && !this.authorizationCheckService.isSuperAdmin()) {
+            throw new AccessForbiddenException("Only super administrators are allowed to create other super administrators.");
+        }
 
         if (managedUserVM.getId() != null) {
             throw new BadRequestAlertException("A new user cannot already have an ID", "userManagement", "idExists");
@@ -182,6 +191,11 @@ public class AdminUserResource {
         this.userService.checkUsernameAndPasswordValidityElseThrow(managedUserVM.getLogin(), managedUserVM.getPassword());
         log.debug("REST request to update User : {}", managedUserVM);
 
+        boolean isUpdatedUserIsSuperAdmin = managedUserVM.getAuthorities().contains(Authority.SUPER_ADMIN_AUTHORITY.toString());
+        if (isUpdatedUserIsSuperAdmin && !this.authorizationCheckService.isSuperAdmin()) {
+            throw new AccessForbiddenException("Only super administrators are allowed to manage other super administrators.");
+        }
+
         var existingUserByEmail = userRepository.findOneByEmailIgnoreCase(managedUserVM.getEmail());
         if (existingUserByEmail.isPresent() && (!existingUserByEmail.get().getId().equals(managedUserVM.getId()))) {
             throw new EmailAlreadyUsedException();
@@ -193,6 +207,10 @@ public class AdminUserResource {
         }
 
         var existingUser = userRepository.findByIdWithGroupsAndAuthoritiesAndOrganizationsElseThrow(managedUserVM.getId());
+
+        if (existingUser.getAuthorities().contains(Authority.SUPER_ADMIN_AUTHORITY) && !isUpdatedUserIsSuperAdmin) {
+            throw new AccessForbiddenException("Only super administrators can revoke the administrator rights of other super admins.");
+        }
 
         final boolean shouldActivateUser = !existingUser.getActivated() && managedUserVM.isActivated();
         var updatedUser = userCreationService.updateUser(existingUser, managedUserVM);
