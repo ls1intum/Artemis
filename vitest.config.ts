@@ -45,7 +45,7 @@ export default defineConfig({
             include: [
                 'src/main/webapp/app/fileupload/**/*.ts',       // include fileupload for code coverage
                 'src/main/webapp/app/core/account/**/*.ts',     // include core account for code coverage
-                'src/main/webapp/app/core/admin/**/*.spec.ts'   // include core admin for code coverage
+                'src/main/webapp/app/core/admin/**/*.ts'        // include core admin for code coverage
             ],
             exclude: ['**/node_modules/**', '**/*.spec.ts', '**/*.routes.ts', '**/*.model.ts'],
             thresholds: {
