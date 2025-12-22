@@ -67,7 +67,6 @@ export class UserManagementUpdateComponent implements OnInit {
     protected readonly faTimes = faTimes;
     protected readonly faBan = faBan;
     protected readonly faSave = faSave;
-    protected readonly editForm: FormGroup;
 
     readonly USERNAME_MIN_LENGTH = USERNAME_MIN_LENGTH;
     readonly USERNAME_MAX_LENGTH = USERNAME_MAX_LENGTH;
@@ -88,6 +87,7 @@ export class UserManagementUpdateComponent implements OnInit {
     separatorKeysCodes = [ENTER, COMMA, TAB];
 
     groupCtrl = new FormControl();
+    editForm: FormGroup;
 
     private oldLogin?: string;
     private isJenkins: boolean;
