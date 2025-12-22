@@ -6,6 +6,8 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
+import { addPublicFilePrefix } from 'app/app.constants';
 
 /**
  * Component for displaying user details in the admin user management.
@@ -14,7 +16,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 @Component({
     selector: 'jhi-user-management-detail',
     templateUrl: './user-management-detail.component.html',
-    imports: [TranslateDirective, RouterLink, FaIconComponent, RouterOutlet, ArtemisDatePipe, ArtemisTranslatePipe],
+    imports: [TranslateDirective, RouterLink, FaIconComponent, RouterOutlet, ArtemisDatePipe, ArtemisTranslatePipe, ProfilePictureComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class UserManagementDetailComponent implements OnInit {
@@ -25,6 +27,9 @@ export class UserManagementDetailComponent implements OnInit {
 
     /** Icons */
     protected readonly faWrench = faWrench;
+
+    /** Utility function to add public file prefix to image URLs */
+    protected readonly addPublicFilePrefix = addPublicFilePrefix;
 
     /**
      * Retrieves the user from the route data subscription.

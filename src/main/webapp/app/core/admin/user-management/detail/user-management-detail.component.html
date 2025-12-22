@@ -1,9 +1,19 @@
 @if (user(); as u) {
     <div>
-        <h2>
-            <span jhiTranslate="artemisApp.userManagement.detail.title"></span>[<b>{{ u.login }}</b
-            >]
-        </h2>
+        <div class="d-flex align-items-center mb-3">
+            <jhi-profile-picture
+                imageSizeInRem="3"
+                fontSizeInRem="1.2"
+                imageId="user-detail-profile-picture"
+                defaultPictureId="user-detail-default-profile-picture"
+                [authorId]="u.id"
+                [authorName]="u.name"
+                [imageUrl]="addPublicFilePrefix(u.imageUrl)"
+            />
+            <h2 class="ms-3 mb-0">
+                <span jhiTranslate="artemisApp.userManagement.detail.title"></span> <b>{{ u.login }}</b>
+            </h2>
+        </div>
         <dl class="row-md jh-entity-details">
             <dt><span jhiTranslate="artemisApp.userManagement.login"></span></dt>
             <dd>
@@ -35,7 +45,7 @@
             <dd>{{ u.lastModifiedBy }}</dd>
             <dt><span jhiTranslate="artemisApp.userManagement.lastModifiedDate"></span></dt>
             <dd>{{ u.lastModifiedDate | artemisDate }}</dd>
-            <dt><span jhiTranslate="artemisApp.userManagement.profiles"></span></dt>
+            <dt><span jhiTranslate="artemisApp.userManagement.globalRoles"></span></dt>
             <dd>
                 <ul class="list-unstyled">
                     @for (authority of u.authorities; track authority) {

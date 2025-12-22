@@ -90,7 +90,14 @@
             "registrationNumber": "Matrikelnummer",
             "activated": "Aktiv",
             "deactivated": "Deaktiviert",
-            "profiles": "Profile",
+            "globalRoles": "Globale Rollen",
+            "roles": {
+                "admin": "Administrator",
+                "instructor": "Lehrende:r",
+                "editor": "Editor:in",
+                "tutor": "Tutor:in",
+                "user": "Nutzer:in"
+            },
             "langKey": "Sprache",
             "internal": "Intern",
             "passwordTooltip": "Du kannst diese Einstellung nur für neue Nutzer:innen ändern. Bitte beachte, dass du nur Passwörter für interne Nutzer:innen setzen oder ändern kannst.",

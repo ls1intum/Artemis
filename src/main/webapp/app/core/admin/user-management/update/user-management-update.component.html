@@ -250,12 +250,19 @@
                     </div>
                 }
                 <div class="form-group">
-                    <label for="authority" jhiTranslate="artemisApp.userManagement.profiles"></label>
-                    <select id="authority" class="form-select" multiple name="authority" formControlName="authorities">
-                        @for (authority of authorities; track authority) {
-                            <option [value]="authority">{{ authority }}</option>
+                    <label class="form-control-label" jhiTranslate="artemisApp.userManagement.globalRoles"></label>
+                    <div class="global-roles-container">
+                        @for (authority of authorities(); track authority) {
+                            <div class="global-role-item" (click)="toggleAuthority(authority)">
+                                <div class="role-checkbox" [class.checked]="hasAuthority(authority)">
+                                    @if (hasAuthority(authority)) {
+                                        <fa-icon [icon]="faCheck" />
+                                    }
+                                </div>
+                                <span class="role-label">{{ getAuthorityTranslationKey(authority) | artemisTranslate }}</span>
+                            </div>
                         }
-                    </select>
+                    </div>
                 </div>
             </div>
             <div>

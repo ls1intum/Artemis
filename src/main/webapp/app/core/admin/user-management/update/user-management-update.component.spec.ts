@@ -118,7 +118,7 @@ describe('UserManagementUpdateComponent', () => {
             component.ngOnInit();
 
             expect(adminUserService.authorities).toHaveBeenCalledOnce();
-            expect(component.authorities).toEqual(['USER']);
+            expect(component.authorities()).toEqual(['USER']);
             expect(getAllSpy).toHaveBeenCalledOnce();
             expect(profileInfoSpy).toHaveBeenCalledOnce();
         });
@@ -612,6 +612,63 @@ describe('UserManagementUpdateComponent', () => {
             component.initializeForm();
 
             expect(component.editForm.get('internal')?.disabled).toBe(true);
+        });
+    });
+
+    describe('authority management', () => {
+        beforeEach(() => {
+            component.user = new User(123);
+            // @ts-ignore - accessing private method for testing
+            component.initializeForm();
+        });
+
+        it('should return translation key for known authority', () => {
+            expect(component.getAuthorityTranslationKey('ROLE_ADMIN')).toBe('artemisApp.userManagement.roles.admin');
+            expect(component.getAuthorityTranslationKey('ROLE_INSTRUCTOR')).toBe('artemisApp.userManagement.roles.instructor');
+            expect(component.getAuthorityTranslationKey('ROLE_EDITOR')).toBe('artemisApp.userManagement.roles.editor');
+            expect(component.getAuthorityTranslationKey('ROLE_TA')).toBe('artemisApp.userManagement.roles.tutor');
+            expect(component.getAuthorityTranslationKey('ROLE_USER')).toBe('artemisApp.userManagement.roles.user');
+        });
+
+        it('should return authority itself for unknown authority', () => {
+            expect(component.getAuthorityTranslationKey('ROLE_UNKNOWN')).toBe('ROLE_UNKNOWN');
+        });
+
+        it('should check if user has authority', () => {
+            component.editForm.get('authorities')?.setValue(['ROLE_ADMIN', 'ROLE_USER']);
+
+            expect(component.hasAuthority('ROLE_ADMIN')).toBe(true);
+            expect(component.hasAuthority('ROLE_USER')).toBe(true);
+            expect(component.hasAuthority('ROLE_INSTRUCTOR')).toBe(false);
+        });
+
+        it('should return false for hasAuthority when authorities is not an array', () => {
+            component.editForm.get('authorities')?.setValue(null);
+            expect(component.hasAuthority('ROLE_ADMIN')).toBe(false);
+        });
+
+        it('should toggle authority on when not present', () => {
+            component.editForm.get('authorities')?.setValue(['ROLE_USER']);
+
+            component.toggleAuthority('ROLE_ADMIN');
+
+            expect(component.editForm.get('authorities')?.value).toEqual(['ROLE_USER', 'ROLE_ADMIN']);
+        });
+
+        it('should toggle authority off when present', () => {
+            component.editForm.get('authorities')?.setValue(['ROLE_ADMIN', 'ROLE_USER']);
+
+            component.toggleAuthority('ROLE_ADMIN');
+
+            expect(component.editForm.get('authorities')?.value).toEqual(['ROLE_USER']);
+        });
+
+        it('should handle toggle when authorities is null', () => {
+            component.editForm.get('authorities')?.setValue(null);
+
+            component.toggleAuthority('ROLE_ADMIN');
+
+            expect(component.editForm.get('authorities')?.value).toEqual(['ROLE_ADMIN']);
         });
     });
 

@@ -8,7 +8,7 @@ import { OrganizationSelectorComponent } from 'app/shared/organization-selector/
 import { Organization } from 'app/core/shared/entities/organization.model';
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, PROFILE_JENKINS, USERNAME_MAX_LENGTH, USERNAME_MIN_LENGTH } from 'app/app.constants';
-import { faBan, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faCheck, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { COMMA, ENTER, TAB } from '@angular/cdk/keycodes';
 import { FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatChipGrid, MatChipInput, MatChipInputEvent, MatChipRemove, MatChipRow } from '@angular/material/chips';
@@ -85,7 +85,7 @@ export class UserManagementUpdateComponent implements OnInit {
     languages: string[];
 
     /** Available authorities for selection */
-    authorities: string[];
+    readonly authorities = signal<string[]>([]);
 
     /** Whether the form is currently being submitted */
     readonly isSaving = signal(false);
@@ -106,6 +106,16 @@ export class UserManagementUpdateComponent implements OnInit {
     protected readonly faTimes = faTimes;
     protected readonly faBan = faBan;
     protected readonly faSave = faSave;
+    protected readonly faCheck = faCheck;
+
+    /** Authority to translation key mapping */
+    private readonly authorityTranslationKeys: Record<string, string> = {
+        ROLE_ADMIN: 'artemisApp.userManagement.roles.admin',
+        ROLE_INSTRUCTOR: 'artemisApp.userManagement.roles.instructor',
+        ROLE_EDITOR: 'artemisApp.userManagement.roles.editor',
+        ROLE_TA: 'artemisApp.userManagement.roles.tutor',
+        ROLE_USER: 'artemisApp.userManagement.roles.user',
+    };
 
     /** The reactive form for editing user properties */
     editForm: FormGroup;
@@ -146,9 +156,8 @@ export class UserManagementUpdateComponent implements OnInit {
             );
         });
         this.isJenkins = this.profileService.isProfileActive(PROFILE_JENKINS);
-        this.authorities = [];
         this.userService.authorities().subscribe((authorities) => {
-            this.authorities = authorities;
+            this.authorities.set(authorities);
         });
         this.languages = this.languageHelper.getAll();
         // Empty array for new user
@@ -332,6 +341,38 @@ export class UserManagementUpdateComponent implements OnInit {
                 user.groups = [];
             }
             user.groups.push(groupString);
+        }
+    }
+
+    /**
+     * Get the translation key for an authority
+     * @param authority the authority string (e.g., ROLE_ADMIN)
+     */
+    getAuthorityTranslationKey(authority: string): string {
+        return this.authorityTranslationKeys[authority] ?? authority;
+    }
+
+    /**
+     * Check if the user has a specific authority
+     * @param authority the authority to check
+     */
+    hasAuthority(authority: string): boolean {
+        const authorities = this.editForm.get('authorities')?.value;
+        return Array.isArray(authorities) && authorities.includes(authority);
+    }
+
+    /**
+     * Toggle an authority on or off for the user
+     * @param authority the authority to toggle
+     */
+    toggleAuthority(authority: string): void {
+        const authoritiesControl = this.editForm.get('authorities');
+        const currentAuthorities: string[] = authoritiesControl?.value ?? [];
+
+        if (currentAuthorities.includes(authority)) {
+            authoritiesControl?.setValue(currentAuthorities.filter((a) => a !== authority));
+        } else {
+            authoritiesControl?.setValue([...currentAuthorities, authority]);
         }
     }
 }
