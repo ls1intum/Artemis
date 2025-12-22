@@ -95,7 +95,7 @@ test.describe('Lecture management', { tag: '@fast' }, () => {
 
         test('Can open page to add attachment unit to the lecture', async ({ lectureManagement, page }) => {
             await lectureManagement.openAttachmentUnitCreationPage(lecture.id!);
-            await expect(page.getByText('Create Attachment Unit')).toBeVisible();
+            await expect(page.getByText('Create File/Video Content')).toBeVisible();
         });
     });
 
