@@ -6,9 +6,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { AlertService } from 'app/shared/service/alert.service';
-import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
-import { firstValueFrom } from 'rxjs';
 
 @Component({
     selector: 'jhi-admin-passkey-management',
@@ -23,28 +21,31 @@ export class AdminPasskeyManagementComponent implements OnInit {
     isLoading = signal<boolean>(false);
 
     ngOnInit(): void {
-        this.loadPasskeys();
+        this.loadPasskeys().then();
     }
 
-    loadPasskeys(): void {
+    async loadPasskeys(): Promise<void> {
         this.isLoading.set(true);
-        this.adminPasskeyService.getAllPasskeys().subscribe({
-            next: (passkeys) => {
-                this.passkeys.set(passkeys);
-                this.isLoading.set(false);
-            },
-            error: (error: HttpErrorResponse) => {
-                this.isLoading.set(false);
-                onError(this.alertService, error);
-            },
-        });
+
+        try {
+            const loadedPasskeys = await this.adminPasskeyService.getAllPasskeys();
+            this.passkeys.set(loadedPasskeys);
+        } catch (error) {
+            onError(this.alertService, error);
+        }
+
+        this.isLoading.set(false);
     }
 
     async onApprovalToggle(passkey: AdminPasskeyDTO): Promise<void> {
         const newApprovalStatus = !passkey.isSuperAdminApproved;
 
-        await firstValueFrom(this.adminPasskeyService.updatePasskeyApproval(passkey.credentialId, newApprovalStatus));
-        passkey.isSuperAdminApproved = newApprovalStatus;
-        this.passkeys.update((passkeys) => [...passkeys]);
+        try {
+            await this.adminPasskeyService.updatePasskeyApproval(passkey.credentialId, newApprovalStatus);
+            passkey.isSuperAdminApproved = newApprovalStatus;
+            this.passkeys.update((passkeys) => [...passkeys]);
+        } catch (error) {
+            await this.loadPasskeys();
+        }
     }
 }
