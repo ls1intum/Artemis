@@ -108,12 +108,9 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         PasskeyCredential existingCredential = passkeyCredentialUtilService.createAndSavePasskeyCredential(user);
         assertThat(existingCredential.isSuperAdminApproved()).isFalse();
 
-        PasskeyDTO modifiedCredential = new PasskeyDTO(existingCredential.getCredentialId(), existingCredential.getLabel(), existingCredential.getCreatedDate(),
-                existingCredential.getLastUsed(), true);
+        request.put("/api/core/passkey/" + existingCredential.getCredentialId() + "/approval", true, HttpStatus.OK);
 
-        request.put("/api/core/passkey/" + modifiedCredential.credentialId() + "/approval", modifiedCredential, HttpStatus.OK);
-
-        PasskeyCredential modifiedCredentialInDatabase = passkeyCredentialsRepository.findByCredentialId(modifiedCredential.credentialId())
+        PasskeyCredential modifiedCredentialInDatabase = passkeyCredentialsRepository.findByCredentialId(existingCredential.getCredentialId())
                 .orElseThrow(() -> new IllegalStateException("Credential not found"));
 
         assertThat(modifiedCredentialInDatabase.getCredentialId()).isEqualTo(existingCredential.getCredentialId());
@@ -126,10 +123,8 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         when(passkeyAuthenticationService.isAuthenticatedWithSuperAdminApprovedPasskey()).thenReturn(true);
         User user = userUtilService.getUserByLogin("admin");
         PasskeyCredential existingCredential = passkeyCredentialUtilService.createAndSavePasskeyCredential(user);
-        PasskeyDTO modifiedCredential = new PasskeyDTO(existingCredential.getCredentialId(), existingCredential.getLabel(), existingCredential.getCreatedDate(),
-                existingCredential.getLastUsed(), true);
 
-        request.put("/api/core/passkey/" + modifiedCredential.credentialId() + "/approval", modifiedCredential, HttpStatus.FORBIDDEN);
+        request.put("/api/core/passkey/" + existingCredential.getCredentialId() + "/approval", true, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -139,10 +134,8 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         PasskeyCredential existingCredential = passkeyCredentialUtilService.createAndSavePasskeyCredential(user);
-        PasskeyDTO modifiedCredential = new PasskeyDTO(existingCredential.getCredentialId(), existingCredential.getLabel(), existingCredential.getCreatedDate(),
-                existingCredential.getLastUsed(), true);
 
-        request.put("/api/core/passkey/idDoesNotExist/approval", modifiedCredential, HttpStatus.NOT_FOUND);
+        request.put("/api/core/passkey/idDoesNotExist/approval", true, HttpStatus.NOT_FOUND);
     }
 
     @Test
@@ -216,10 +209,7 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(existingCredential.isSuperAdminApproved()).isTrue();
 
         // Revoke approval
-        PasskeyDTO modifiedCredential = new PasskeyDTO(existingCredential.getCredentialId(), existingCredential.getLabel(), existingCredential.getCreatedDate(),
-                existingCredential.getLastUsed(), false);
-
-        request.put("/api/core/passkey/" + modifiedCredential.credentialId() + "/approval", modifiedCredential, HttpStatus.OK);
+        request.put("/api/core/passkey/" + existingCredential.getCredentialId() + "/approval", false, HttpStatus.OK);
 
         // Verify the approval was revoked
         PasskeyCredential credentialInDatabase = passkeyCredentialsRepository.findByCredentialId(existingCredential.getCredentialId())
@@ -245,10 +235,7 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         passkeyCredentialsRepository.save(existingCredential);
 
         // Try to revoke approval
-        PasskeyDTO modifiedCredential = new PasskeyDTO(existingCredential.getCredentialId(), existingCredential.getLabel(), existingCredential.getCreatedDate(),
-                existingCredential.getLastUsed(), false);
-
-        request.put("/api/core/passkey/" + modifiedCredential.credentialId() + "/approval", modifiedCredential, HttpStatus.BAD_REQUEST);
+        request.put("/api/core/passkey/" + existingCredential.getCredentialId() + "/approval", false, HttpStatus.BAD_REQUEST);
 
         // Verify the approval was not revoked
         PasskeyCredential credentialInDatabase = passkeyCredentialsRepository.findByCredentialId(existingCredential.getCredentialId())

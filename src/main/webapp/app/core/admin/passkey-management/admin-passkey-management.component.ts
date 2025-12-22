@@ -8,6 +8,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { AlertService } from 'app/shared/service/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
+import { firstValueFrom } from 'rxjs';
 
 @Component({
     selector: 'jhi-admin-passkey-management',
@@ -42,12 +43,8 @@ export class AdminPasskeyManagementComponent implements OnInit {
     async onApprovalToggle(passkey: AdminPasskeyDTO): Promise<void> {
         const newApprovalStatus = !passkey.isSuperAdminApproved;
 
-        try {
-            await this.adminPasskeyService.updatePasskeyApproval(passkey.credentialId, newApprovalStatus);
-            passkey.isSuperAdminApproved = newApprovalStatus;
-            this.passkeys.update((passkeys) => [...passkeys]);
-        } catch (error) {
-            onError(this.alertService, error);
-        }
+        await firstValueFrom(this.adminPasskeyService.updatePasskeyApproval(passkey.credentialId, newApprovalStatus));
+        passkey.isSuperAdminApproved = newApprovalStatus;
+        this.passkeys.update((passkeys) => [...passkeys]);
     }
 }

@@ -111,7 +111,7 @@ describe('AdminPasskeyManagementService', () => {
 
             const req = httpMock.expectOne(`api/core/passkey/${credentialId}/approval`);
             expect(req.request.method).toBe('PUT');
-            expect(req.request.body).toEqual({ isSuperAdminApproved: true });
+            expect(req.request.body).toBeTrue();
             req.flush(mockResponse);
         });
 
@@ -133,7 +133,7 @@ describe('AdminPasskeyManagementService', () => {
 
             const req = httpMock.expectOne(`api/core/passkey/${credentialId}/approval`);
             expect(req.request.method).toBe('PUT');
-            expect(req.request.body).toEqual({ isSuperAdminApproved: false });
+            expect(req.request.body).toBeFalse();
             req.flush(mockResponse);
         });
 

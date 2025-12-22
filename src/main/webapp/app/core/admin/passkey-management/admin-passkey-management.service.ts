@@ -22,7 +22,6 @@ export class AdminPasskeyManagementService {
      * @param isSuperAdminApproved The new approval status
      */
     updatePasskeyApproval(credentialId: string, isSuperAdminApproved: boolean): Observable<PasskeyDTO> {
-        const passkeyDTO: Partial<PasskeyDTO> = { isSuperAdminApproved };
-        return this.http.put<PasskeyDTO>(`${this.resourceUrl}/${credentialId}/approval`, passkeyDTO);
+        return this.http.put<PasskeyDTO>(`${this.resourceUrl}/${credentialId}/approval`, isSuperAdminApproved);
     }
 }

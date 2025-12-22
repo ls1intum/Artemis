@@ -166,13 +166,13 @@ public class PasskeyResource {
     /**
      * PUT /passkey/:credentialId/approval : update the super admin approval status of a passkey
      *
-     * @param credentialId               of the passkey to be updated
-     * @param passkeyWithUpdatedApproval containing the new approval status for the passkey
+     * @param credentialId         of the passkey to be updated
+     * @param isSuperAdminApproved the new approval status for the passkey
      * @return {@link ResponseEntity} with HTTP status 200 (OK) and the updated passkey if successful
      */
     @PutMapping("{credentialId}/approval")
     @EnforceSuperAdmin
-    public ResponseEntity<PasskeyDTO> updatePasskeyApproval(@PathVariable @Base64Url String credentialId, @RequestBody PasskeyDTO passkeyWithUpdatedApproval) {
+    public ResponseEntity<PasskeyDTO> updatePasskeyApproval(@PathVariable @Base64Url String credentialId, @RequestBody boolean isSuperAdminApproved) {
         log.debug("Updating approval status for passkey with id: {}", credentialId);
 
         Optional<PasskeyCredential> credentialToBeUpdated = passkeyCredentialsRepository.findByCredentialId(credentialId);
@@ -184,12 +184,12 @@ public class PasskeyResource {
         PasskeyCredential passkeyCredential = credentialToBeUpdated.get();
         String userLogin = passkeyCredential.getUser().getLogin();
 
-        if (artemisInternalAdminUsername.isPresent() && artemisInternalAdminUsername.get().equals(userLogin) && !passkeyWithUpdatedApproval.isSuperAdminApproved()) {
+        if (artemisInternalAdminUsername.isPresent() && artemisInternalAdminUsername.get().equals(userLogin) && !isSuperAdminApproved) {
             throw new BadRequestAlertException("Cannot revoke approval for internal admin's passkey; if you want to revoke the approval delete the passkey instead.",
                     "PasskeyCredential", "passkeyAuth.cannotRevokeInternalAdminPasskeyApproval");
         }
 
-        passkeyCredential.setSuperAdminApproved(passkeyWithUpdatedApproval.isSuperAdminApproved());
+        passkeyCredential.setSuperAdminApproved(isSuperAdminApproved);
         PasskeyCredential updatedPasskey = passkeyCredentialsRepository.save(passkeyCredential);
 
         log.debug("Successfully updated approval status for passkey with id: {}", credentialId);
