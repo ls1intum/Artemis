@@ -96,7 +96,7 @@
                 "instructor": "Instructor",
                 "editor": "Editor",
                 "tutor": "Tutor",
-                "user": "User"
+                "user": "Student"
             },
             "langKey": "Language",
             "passwordTooltip": "This setting can only be changed for new users. Notice, that you can only set or change passwords for internal users.",

@@ -1,6 +1,5 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { Course } from 'app/core/course/shared/entities/course.model';
 import { faExclamationTriangle, faPencilAlt, faPlus, faSort, faTrash, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { LtiPlatformConfiguration } from 'app/lti/shared/entities/lti-configuration.model';
 import { LtiConfigurationService } from 'app/core/admin/lti-configuration/lti-configuration.service';
@@ -57,8 +56,6 @@ export class LtiConfigurationComponent implements OnInit {
     private readonly alertService = inject(AlertService);
     private readonly activatedRoute = inject(ActivatedRoute);
 
-    /** Course associated with LTI configuration */
-    course: Course;
     /** LTI platform configurations */
     readonly platforms = signal<LtiPlatformConfiguration[]>([]);
     /** Sort ascending flag */
