@@ -3,6 +3,7 @@ import { Channel, ChannelDTO } from 'app/communication/shared/entities/conversat
 import { GroupChat } from 'app/communication/shared/entities/conversation/group-chat.model';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { UserCredentials } from '../../users';
+import { clearTextField } from '../../utils';
 
 /**
  * A class which encapsulates UI selectors and actions for the Course Messages page.
@@ -272,8 +273,9 @@ export class CourseMessagesPage {
      * @param message - The message to be written.
      */
     async writeMessage(message: string) {
-        const messageField = this.page.locator('.markdown-editor .monaco-editor textarea');
-        await messageField.fill(message);
+        const editorContainer = this.page.locator('.markdown-editor .monaco-editor').first();
+        await editorContainer.click();
+        await this.page.keyboard.insertText(message);
     }
 
     /**
@@ -322,8 +324,11 @@ export class CourseMessagesPage {
         } else {
             await postLocator.locator('.reaction-button.edit').click();
         }
-        const editorLocator = postLocator.locator('.markdown-editor .monaco-editor textarea');
-        await editorLocator.fill(message);
+
+        const textInputField = postLocator.locator('.monaco-editor').first();
+        await clearTextField(textInputField);
+        await this.page.keyboard.insertText(message);
+
         const responsePromise = this.page.waitForResponse(`api/communication/courses/*/messages/*`);
         await postLocator.locator('#save').click();
         await responsePromise;
