@@ -5,7 +5,9 @@ import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -22,9 +24,11 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.TestSecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Authority;
 import de.tum.cit.aet.artemis.core.domain.CalendarSubscriptionTokenStore;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 import de.tum.cit.aet.artemis.core.repository.AuthorityRepository;
 import de.tum.cit.aet.artemis.core.repository.CalendarSubscriptionTokenStoreRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
@@ -213,7 +217,6 @@ public class UserUtilService {
      *
      * @param user                      The User to update
      * @param calendarSubscriptionToken The calendarSubscriptionToken to set
-     * @return The updated User
      */
     public void clearAllTokensAndSetTokenForUser(User user, String calendarSubscriptionToken) {
         calendarSubscriptionTokenStoreRepository.deleteAll();
@@ -586,5 +589,42 @@ public class UserUtilService {
             user.setGroups(Set.of(userPrefix + "instructor" + userSuffix));
             userTestRepository.save(user);
         }
+    }
+
+    /**
+     * Creates a ManagedUserVM for testing.
+     *
+     * @param login the login of the user
+     * @return the created ManagedUserVM
+     */
+    public ManagedUserVM createManagedUserVM(String login) {
+        ManagedUserVM userVM = new ManagedUserVM();
+        userVM.setLogin(login);
+        userVM.setPassword(UserFactory.USER_PASSWORD);
+        userVM.setFirstName("Firstname");
+        userVM.setLastName("Lastname");
+        userVM.setEmail(login + "@test.de");
+        userVM.setActivated(true);
+        userVM.setLangKey(Constants.DEFAULT_LANGUAGE);
+        userVM.setAuthorities(Set.of(Role.STUDENT.getAuthority()));
+        return userVM;
+    }
+
+    /**
+     * Creates a map containing counts for each user role.
+     *
+     * @param students    count of students
+     * @param tutors      count of tutors
+     * @param editors     count of editors
+     * @param instructors count of instructors
+     * @return a map with the counts
+     */
+    public Map<String, Integer> createUserCountMap(int students, int tutors, int editors, int instructors) {
+        Map<String, Integer> userCounts = new HashMap<>();
+        userCounts.put("student", students);
+        userCounts.put("tutor", tutors);
+        userCounts.put("editor", editors);
+        userCounts.put("instructor", instructors);
+        return userCounts;
     }
 }
