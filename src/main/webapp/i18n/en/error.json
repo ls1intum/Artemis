@@ -173,7 +173,8 @@
         "passkeyAuth": {
             "notAuthenticatedWithPasskey": "You are not authenticated with a passkey. Please authenticate using a passkey to access this resource.",
             "notSuperAdminApproved": "Your passkey is not approved by a super admin. Double check in the user settings whether your passkey was super admin approved and re-login in with the respective passkey.",
-            "loginRequiredButFeatureNotEnabled": "Passkey login is required but the feature is not enabled on this Artemis instance. Please enable the passkey feature on this Artemis instance."
+            "loginRequiredButFeatureNotEnabled": "Passkey login is required but the feature is not enabled on this Artemis instance. Please enable the passkey feature on this Artemis instance.",
+            "cannotRevokeInternalAdminPasskeyApproval": "Cannot revoke approval for internal admin's passkey; if you want to revoke the approval delete the passkey instead."
         }
     }
 }

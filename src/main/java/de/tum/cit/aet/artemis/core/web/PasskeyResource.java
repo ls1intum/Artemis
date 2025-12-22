@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.ResponseEntity;
@@ -23,6 +24,7 @@ import de.tum.cit.aet.artemis.core.domain.PasskeyCredential;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.domain.converter.BytesConverter;
 import de.tum.cit.aet.artemis.core.dto.PasskeyDTO;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.PasskeyCredentialsRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.repository.passkey.ArtemisUserCredentialRepository;
@@ -43,6 +45,8 @@ public class PasskeyResource {
 
     private static final Logger log = LoggerFactory.getLogger(PasskeyResource.class);
 
+    private Optional<String> artemisInternalAdminUsername;
+
     private final ArtemisUserCredentialRepository artemisUserCredentialRepository;
 
     private final UserRepository userRepository;
@@ -54,10 +58,12 @@ public class PasskeyResource {
      * @param artemisUserCredentialRepository for managing user credentials
      */
     public PasskeyResource(ArtemisUserCredentialRepository artemisUserCredentialRepository, UserRepository userRepository,
-            PasskeyCredentialsRepository passkeyCredentialsRepository) {
+            PasskeyCredentialsRepository passkeyCredentialsRepository,
+            @Value("${artemis.user-management.internal-admin.username:#{null}}") Optional<String> artemisInternalAdminUsername) {
         this.artemisUserCredentialRepository = artemisUserCredentialRepository;
         this.userRepository = userRepository;
         this.passkeyCredentialsRepository = passkeyCredentialsRepository;
+        this.artemisInternalAdminUsername = artemisInternalAdminUsername;
     }
 
     /**
@@ -176,6 +182,13 @@ public class PasskeyResource {
         }
 
         PasskeyCredential passkeyCredential = credentialToBeUpdated.get();
+        String userLogin = passkeyCredential.getUser().getLogin();
+
+        if (artemisInternalAdminUsername.isPresent() && artemisInternalAdminUsername.get().equals(userLogin) && !passkeyWithUpdatedApproval.isSuperAdminApproved()) {
+            throw new BadRequestAlertException("Cannot revoke approval for internal admin's passkey; if you want to revoke the approval delete the passkey instead.",
+                    "PasskeyCredential", "passkeyAuth.cannotRevokeInternalAdminPasskeyApproval");
+        }
+
         passkeyCredential.setSuperAdminApproved(passkeyWithUpdatedApproval.isSuperAdminApproved());
         PasskeyCredential updatedPasskey = passkeyCredentialsRepository.save(passkeyCredential);
 

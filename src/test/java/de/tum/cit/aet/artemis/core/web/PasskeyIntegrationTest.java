@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -11,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.core.domain.PasskeyCredential;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -31,6 +33,9 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private PasskeyCredentialUtilService passkeyCredentialUtilService;
+
+    @Autowired
+    private PasskeyResource passkeyResource;
 
     @MockitoBean
     private SlideUnhideScheduleService slideUnhideScheduleService;
@@ -195,6 +200,60 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         List<AdminPasskeyDTO> passkeys = request.getList("/api/core/passkey/admin", HttpStatus.OK, AdminPasskeyDTO.class);
 
         assertThat(passkeys).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = "superadmin", roles = "SUPER_ADMIN")
+    void testUpdatePasskeyApproval_RevokeApprovalForRegularUser() throws Exception {
+        when(passkeyAuthenticationService.isAuthenticatedWithSuperAdminApprovedPasskey()).thenReturn(true);
+
+        User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        PasskeyCredential existingCredential = passkeyCredentialUtilService.createAndSavePasskeyCredential(user);
+
+        // Approve the passkey first
+        existingCredential.setSuperAdminApproved(true);
+        passkeyCredentialsRepository.save(existingCredential);
+        assertThat(existingCredential.isSuperAdminApproved()).isTrue();
+
+        // Revoke approval
+        PasskeyDTO modifiedCredential = new PasskeyDTO(existingCredential.getCredentialId(), existingCredential.getLabel(), existingCredential.getCreatedDate(),
+                existingCredential.getLastUsed(), false);
+
+        request.put("/api/core/passkey/" + modifiedCredential.credentialId() + "/approval", modifiedCredential, HttpStatus.OK);
+
+        // Verify the approval was revoked
+        PasskeyCredential credentialInDatabase = passkeyCredentialsRepository.findByCredentialId(existingCredential.getCredentialId())
+                .orElseThrow(() -> new IllegalStateException("Credential not found"));
+        assertThat(credentialInDatabase.isSuperAdminApproved()).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = "superadmin", roles = "SUPER_ADMIN")
+    void testUpdatePasskeyApproval_CannotRevokeInternalAdminPasskeyApproval() throws Exception {
+        when(passkeyAuthenticationService.isAuthenticatedWithSuperAdminApprovedPasskey()).thenReturn(true);
+
+        // Set up internal admin username
+        String internalAdminLogin = "artemis_admin";
+        ReflectionTestUtils.setField(passkeyResource, "artemisInternalAdminUsername", Optional.of(internalAdminLogin));
+
+        // Create internal admin user and passkey
+        User internalAdminUser = userUtilService.createAndSaveUser(internalAdminLogin);
+        PasskeyCredential existingCredential = passkeyCredentialUtilService.createAndSavePasskeyCredential(internalAdminUser);
+
+        // Approve the passkey first
+        existingCredential.setSuperAdminApproved(true);
+        passkeyCredentialsRepository.save(existingCredential);
+
+        // Try to revoke approval
+        PasskeyDTO modifiedCredential = new PasskeyDTO(existingCredential.getCredentialId(), existingCredential.getLabel(), existingCredential.getCreatedDate(),
+                existingCredential.getLastUsed(), false);
+
+        request.put("/api/core/passkey/" + modifiedCredential.credentialId() + "/approval", modifiedCredential, HttpStatus.BAD_REQUEST);
+
+        // Verify the approval was not revoked
+        PasskeyCredential credentialInDatabase = passkeyCredentialsRepository.findByCredentialId(existingCredential.getCredentialId())
+                .orElseThrow(() -> new IllegalStateException("Credential not found"));
+        assertThat(credentialInDatabase.isSuperAdminApproved()).isTrue();
     }
 
 }
