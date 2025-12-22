@@ -261,7 +261,7 @@ class AtlasAgentIntegrationTest extends AbstractAtlasIntegrationTest {
             String sessionId = String.format("course_%d_user_%d", course.getId(), instructor.getId());
 
             // Simulate a message with embedded preview data (testing embedPreviewDataInResponse indirectly)
-            String messageWithPreviewData = "Here are the competencies [PREVIEW_DATA_START]{\"competencyPreviews\":[{\"title\":\"Test Competency\",\"description\":\"Test Description\",\"taxonomy\":\"APPLY\",\"competencyId\":null,\"viewOnly\":false}]}[PREVIEW_DATA_END]";
+            String messageWithPreviewData = "Here are the competencies %%PREVIEW_DATA_START%%{\"competencyPreviews\":[{\"title\":\"Test Competency\",\"description\":\"Test Description\",\"taxonomy\":\"APPLY\",\"competencyId\":null,\"viewOnly\":false}]}%%PREVIEW_DATA_END%%";
             chatMemory.add(sessionId, new UserMessage("Create a competency"));
             chatMemory.add(sessionId, new AssistantMessage(messageWithPreviewData));
 
