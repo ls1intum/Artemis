@@ -45,7 +45,7 @@ public class PasskeyResource {
 
     private static final Logger log = LoggerFactory.getLogger(PasskeyResource.class);
 
-    private Optional<String> artemisInternalAdminUsername;
+    private final Optional<String> artemisInternalAdminUsername;
 
     private final ArtemisUserCredentialRepository artemisUserCredentialRepository;
 
