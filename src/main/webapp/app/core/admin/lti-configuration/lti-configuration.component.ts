@@ -67,8 +67,6 @@ export class LtiConfigurationComponent implements OnInit {
     readonly activeTab = signal(1);
     /** Sort predicate */
     readonly predicate = signal('id');
-    /** Reverse sort flag */
-    readonly reverse = signal(false);
 
     // page information
     /** Current page number */
@@ -164,11 +162,11 @@ export class LtiConfigurationComponent implements OnInit {
     }
 
     /**
-     * Sorts the `platforms` array by the current `predicate` in `reverse` order.
+     * Sorts the `platforms` array by the current `predicate` in ascending/descending order.
      */
     sortRows() {
         const platformsCopy = [...this.platforms()];
-        this.sortService.sortByProperty(platformsCopy, this.predicate(), this.reverse());
+        this.sortService.sortByProperty(platformsCopy, this.predicate(), !this.ascending());
         this.platforms.set(platformsCopy);
     }
 

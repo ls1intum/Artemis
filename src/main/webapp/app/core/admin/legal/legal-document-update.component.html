@@ -33,7 +33,7 @@
             }
         </div>
         <div class="btn-below-editor">
-            <button type="submit" (click)="updateLegalDocument()" class="btn btn-primary" id="update-legal-document-btn" [disabled]="!currentContentTrimmed || isSaving()">
+            <button type="submit" (click)="updateLegalDocument()" class="btn btn-primary" id="update-legal-document-btn" [disabled]="!currentContentTrimmed() || isSaving()">
                 <fa-icon [icon]="faSave" />
                 <span jhiTranslate="entity.action.save"></span>
             </button>

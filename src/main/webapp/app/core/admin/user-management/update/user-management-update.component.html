@@ -204,7 +204,6 @@
                             @if (editForm.get('email')!.errors?.minlength) {
                                 <small
                                     class="form-text text-danger"
-                                    jhiTranslate="entity.validation.minlength"
                                     jhiTranslate="artemisApp.userManagement.inputConstraints"
                                     [translateValues]="{ min: EMAIL_MIN_LENGTH, max: EMAIL_MAX_LENGTH }"
                                 ></small>

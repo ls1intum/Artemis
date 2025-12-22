@@ -36,8 +36,8 @@
                                         jhiSort
                                         [predicate]="predicate()"
                                         (predicateChange)="predicate.set($event)"
-                                        [ascending]="reverse()"
-                                        (ascendingChange)="reverse.set($event)"
+                                        [ascending]="ascending()"
+                                        (ascendingChange)="ascending.set($event)"
                                         (sortChange)="sortRows()"
                                     >
                                         <th jhiSortBy="id">

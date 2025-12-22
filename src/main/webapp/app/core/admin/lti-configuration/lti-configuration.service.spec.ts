@@ -71,9 +71,9 @@ describe('LtiConfigurationService', () => {
                 size: ITEMS_PER_PAGE,
                 sort: ['id', 'desc'],
             })
-            .subscribe((platforms) => {
-                expect(platforms.body?.length).toHaveLength(2);
-                expect(platforms).toEqual(dummyLtiPlatforms);
+            .subscribe((response) => {
+                expect(response.body).toHaveLength(4);
+                expect(response.body).toEqual(dummyLtiPlatforms);
             });
 
         const req = httpMock.expectOne('api/lti/lti-platforms?page=0&size=50&sort=id&sort=desc');
@@ -141,22 +141,16 @@ describe('LtiConfigurationService', () => {
     });
 
     it('should handle errors when querying LTI platforms', () => {
-        const errorResponse = new HttpErrorResponse({
-            status: 404,
-            statusText: 'Not Found',
-            error: { message: 'No data found' },
-        });
-
         service.query({ page: 0, size: ITEMS_PER_PAGE, sort: ['id', 'desc'] }).subscribe({
             next: () => {},
-            error: (error) => {
+            error: (error: HttpErrorResponse) => {
                 expect(error.status).toBe(404);
-                expect(error.message).toContain('No data found');
+                expect(error.error.message).toBe('No data found');
             },
         });
 
         const req = httpMock.expectOne('api/lti/lti-platforms?page=0&size=50&sort=id&sort=desc');
         expect(req.request.method).toBe('GET');
-        req.flush(null, errorResponse);
+        req.flush({ message: 'No data found' }, { status: 404, statusText: 'Not Found' });
     });
 });

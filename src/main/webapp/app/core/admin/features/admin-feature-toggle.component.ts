@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
 
@@ -33,17 +34,27 @@ type FeatureToggleState = {
 })
 export class AdminFeatureToggleComponent implements OnInit {
     private readonly featureToggleService = inject(FeatureToggleService);
+    private readonly destroyRef = inject(DestroyRef);
 
     /** Available feature toggles with their current state */
     readonly availableToggles = signal<FeatureToggleState[]>([]);
 
     ngOnInit(): void {
-        this.featureToggleService.getFeatureToggles().subscribe((activeToggles) => {
-            this.availableToggles.set(Object.values(FeatureToggle).map((name, index) => ({ name, index, isActive: activeToggles.includes(name) })));
-        });
+        this.featureToggleService
+            .getFeatureToggles()
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe((activeToggles) => {
+                this.availableToggles.set(Object.values(FeatureToggle).map((name, index) => ({ name, index, isActive: activeToggles.includes(name) })));
+            });
     }
 
     onFeatureToggle(event: any, row: FeatureToggleState) {
-        this.featureToggleService.setFeatureToggleState(row.name, !row.isActive).subscribe();
+        const newState = !row.isActive;
+        this.featureToggleService
+            .setFeatureToggleState(row.name, newState)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe(() => {
+                this.availableToggles.update((toggles) => toggles.map((toggle) => (toggle.name === row.name ? { ...toggle, isActive: newState } : toggle)));
+            });
     }
 }

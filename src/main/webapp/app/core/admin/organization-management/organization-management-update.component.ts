@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Organization } from 'app/core/shared/entities/organization.model';
 import { OrganizationManagementService } from 'app/core/admin/organization-management/organization-management.service';
@@ -20,6 +20,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 export class OrganizationManagementUpdateComponent implements OnInit {
     private readonly route = inject(ActivatedRoute);
     private readonly organizationService = inject(OrganizationManagementService);
+    private readonly changeDetectorRef = inject(ChangeDetectorRef);
 
     /** The organization being edited */
     organization: Organization = new Organization();
@@ -41,6 +42,7 @@ export class OrganizationManagementUpdateComponent implements OnInit {
                 const organizationId = organization.body ? organization.body.id : organization.id;
                 this.organizationService.getOrganizationById(organizationId).subscribe((data) => {
                     this.organization = data;
+                    this.changeDetectorRef.markForCheck();
                 });
             }
         });
