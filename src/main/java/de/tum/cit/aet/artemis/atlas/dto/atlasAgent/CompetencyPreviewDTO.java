@@ -12,8 +12,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param title        the competency title
  * @param description  the competency description
  * @param taxonomy     the competency taxonomy level (e.g., "REMEMBER", "UNDERSTAND", "APPLY")
- *                         not null to ensure proper preview with icon
- * @param icon         Font Awesome icon name for the taxonomy level
+ *                         not null to ensure proper preview
  * @param competencyId the competency ID (null for create operations, set for update operations)
  * @param viewOnly     indicates whether this preview is read-only (true) or can be approved/saved (false/null)
  */
