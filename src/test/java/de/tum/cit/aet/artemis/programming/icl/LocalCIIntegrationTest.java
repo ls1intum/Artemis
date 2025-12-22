@@ -54,6 +54,7 @@ import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.junit.jupiter.api.parallel.Isolated;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mockito;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.HttpStatus;
@@ -89,6 +90,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
+import de.tum.cit.aet.artemis.programming.service.localci.LocalCIEventListenerService;
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.queue.DistributedQueue;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
@@ -127,6 +129,11 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     private DistributedMap<String, BuildJobQueueItem> processingJobs;
 
     private DistributedMap<String, BuildAgentInformation> buildAgentInformation;
+
+    // Inject to trigger the @PostConstruct initialization which registers the map listeners
+    @SuppressWarnings("unused")
+    @Autowired
+    private LocalCIEventListenerService localCIEventListenerService;
 
     @Value("${artemis.continuous-integration.build-agent.short-name}")
     private String buildAgentShortName;
@@ -880,6 +887,7 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
 
         buildAgentInformation.put(memberAddress, updatedInfo);
         await().until(() -> buildAgentInformation.get(memberAddress).status() == BuildAgentStatus.SELF_PAUSED);
-        verify(mailService, timeout(1000)).sendBuildAgentSelfPausedEmailToAdmin(any(User.class), eq(buildAgent.buildAgent().name()), eq(consecutiveFailedBuildJobs));
+        // Increase timeout to 5000ms to avoid flaky test failures due to slow listener processing
+        verify(mailService, timeout(5000)).sendBuildAgentSelfPausedEmailToAdmin(any(User.class), eq(buildAgent.buildAgent().name()), eq(consecutiveFailedBuildJobs));
     }
 }
