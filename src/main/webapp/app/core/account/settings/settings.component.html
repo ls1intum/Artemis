@@ -4,8 +4,7 @@
             <div class="col-md-8">
                 @if (currentUser(); as currentAccount) {
                     <h2 jhiTranslate="settings.title" [translateValues]="{ username: currentAccount.login }">
-                        User settings for [<b>{{ currentAccount.login }}</b
-                        >]
+                        User settings for <b>{{ currentAccount.login }}</b>
                     </h2>
                 }
                 @if (success()) {
