@@ -1,5 +1,73 @@
 {
-    "featureToggles": {
-        "title": "Feature Toggles"
+    "artemisApp": {
+        "featureToggle": {
+            "title": "Feature-Schalter",
+            "description": "Aktiviere oder deaktiviere Funktionen für alle Nutzer:innen. Änderungen werden sofort wirksam.",
+            "enabled": "Aktiviert",
+            "disabled": "Deaktiviert",
+            "viewDocumentation": "Dokumentation anzeigen",
+            "features": {
+                "ProgrammingExercises": {
+                    "name": "Programmieraufgaben",
+                    "description": "Ermöglicht Lehrenden das Erstellen von Programmieraufgaben mit automatischer Bewertung über CI/CD-Pipelines.",
+                    "disableWarning": "Studierende können nicht an Programmieraufgaben teilnehmen. Bestehende Abgaben bleiben zugänglich."
+                },
+                "PlagiarismChecks": {
+                    "name": "Plagiatserkennung",
+                    "description": "Aktiviert die Plagiatserkennung für Text-, Modellierungs- und Programmieraufgaben mittels JPlag.",
+                    "disableWarning": "Lehrende können keine Plagiatsüberprüfungen für Aufgaben durchführen."
+                },
+                "Exports": {
+                    "name": "Datenexporte",
+                    "description": "Ermöglicht das Exportieren von Kursdaten, Prüfungsergebnissen und Abgaben.",
+                    "disableWarning": "Nutzer:innen können keine Kurs- oder Prüfungsdaten exportieren."
+                },
+                "LearningPaths": {
+                    "name": "Lernpfade",
+                    "description": "Aktiviert personalisierte Lernpfade basierend auf Kompetenzen und Lernfortschritt.",
+                    "disableWarning": "Studierende sehen keine personalisierten Lernpfad-Empfehlungen."
+                },
+                "Science": {
+                    "name": "Forschungsdaten",
+                    "description": "Sammelt anonymisierte Nutzungsdaten für Forschungszwecke zur Verbesserung der Lernergebnisse.",
+                    "disableWarning": "Es werden keine Nutzungsdaten für Forschungsanalysen erhoben."
+                },
+                "StandardizedCompetencies": {
+                    "name": "Kompetenz-Import",
+                    "description": "Ermöglicht Lehrenden den Import von Kompetenzen aus standardisierten Rahmenwerken (z.B. Lehrpläne, Qualifikationsprofile) und deren Verknüpfung mit Kurskompetenzen für eine bessere Ausrichtung an Bildungsstandards.",
+                    "disableWarning": "Lehrende können keine standardisierten Kompetenzen importieren oder mit ihren Kursen verknüpfen."
+                },
+                "StudentCourseAnalyticsDashboard": {
+                    "name": "Analyse-Dashboard",
+                    "description": "Bietet Studierenden ein persönliches Dashboard mit Lernfortschritt, Leistungsmetriken, Aufgabenstatistiken und Kompetenz-Beherrschung - wenn von Kurslehrenden aktiviert.",
+                    "disableWarning": "Studierende haben keinen Zugriff auf ihr persönliches Analyse-Dashboard, selbst wenn Lehrende es für ihren Kurs aktivieren."
+                },
+                "TutorSuggestions": {
+                    "name": "KI-Tutor-Vorschläge",
+                    "description": "Nutzt den Athena-Service, um Tutor:innen bei der manuellen Bewertung von Text- und Programmieraufgaben Feedback- und Bewertungsvorschläge zu machen.",
+                    "disableWarning": "Tutor:innen erhalten keine KI-gestützten Vorschläge von Athena während der Bewertung."
+                },
+                "AtlasML": {
+                    "name": "Atlas Machine Learning",
+                    "description": "Nutzt maschinelles Lernen zur automatischen Generierung von Kompetenzempfehlungen basierend auf Kursinhalten, zur Vorhersage von Studierendenleistungen und für intelligente Vorschläge zur Lernpfad-Optimierung.",
+                    "disableWarning": "Automatische Kompetenzgenerierung, Leistungsvorhersagen und ML-basierte Lernempfehlungen sind nicht verfügbar."
+                },
+                "AtlasAgent": {
+                    "name": "Atlas-Agent",
+                    "description": "Aktiviert einen KI-Agenten, der Studierenden hilft, Kompetenzen zu verstehen und zu meistern, indem er personalisierte Erklärungen gibt, Fragen zu Lernzielen beantwortet und sie auf ihrem kompetenzbasierten Lernweg begleitet.",
+                    "disableWarning": "Studierende haben keinen Zugriff auf den KI-gestützten Kompetenz-Assistenten."
+                },
+                "Memiris": {
+                    "name": "Iris-Gedächtnissystem",
+                    "description": "Aktiviert das Langzeitgedächtnis für Iris-KI-Assistenten, sodass sie sich an den Kontext früherer Gespräche erinnern und im Laufe der Zeit personalisiertere, kontextbezogene Antworten geben können.",
+                    "disableWarning": "Iris speichert keinen Gesprächsverlauf zwischen Sitzungen, was zu weniger personalisierter KI-Unterstützung führt."
+                },
+                "LectureContentProcessing": {
+                    "name": "Videotranskription",
+                    "description": "Nutzt Nebula, um automatisch Transkriptionen aus Vorlesungsvideos zu generieren und diese an Pyris/Iris zu senden, sodass KI-Assistenten Fragen zu Vorlesungsinhalten beantworten und genauere, inhaltsbezogene Antworten geben können.",
+                    "disableWarning": "Vorlesungsvideos werden nicht von Nebula transkribiert und Iris kann in seinen Antworten nicht auf Vorlesungsinhalte Bezug nehmen."
+                }
+            }
+        }
     }
 }
