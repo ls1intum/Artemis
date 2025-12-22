@@ -27,6 +27,8 @@ import { MatOption } from '@angular/material/core';
 import { AsyncPipe } from '@angular/common';
 import { FindLanguageFromKeyPipe } from 'app/shared/language/find-language-from-key.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { AccountService } from 'app/core/auth/account.service';
+import { Authority } from 'app/shared/constants/authority.constants';
 
 @Component({
     selector: 'jhi-user-management-update',
@@ -53,6 +55,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     ],
 })
 export class UserManagementUpdateComponent implements OnInit {
+    private readonly accountService = inject(AccountService);
     private readonly languageHelper = inject(JhiLanguageHelper);
     private readonly userService = inject(AdminUserService);
     private readonly courseAdminService = inject(CourseAdminService);
@@ -126,7 +129,7 @@ export class UserManagementUpdateComponent implements OnInit {
         this.isJenkins = this.profileService.isProfileActive(PROFILE_JENKINS);
         this.authorities = [];
         this.userService.authorities().subscribe((authorities) => {
-            this.authorities = authorities;
+            this.authorities = this.accountService.isSuperAdmin() ? authorities : authorities.filter((authority) => authority !== Authority.SUPER_ADMIN);
         });
         this.languages = this.languageHelper.getAll();
         // Empty array for new user
