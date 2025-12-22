@@ -13,10 +13,10 @@ import { FindLanguageFromKeyPipe } from 'app/shared/language/find-language-from-
  * Type definition for the user settings form controls.
  */
 interface SettingsForm {
-    firstName: FormControl<string | undefined>;
-    lastName: FormControl<string | undefined>;
-    email: FormControl<string | undefined>;
-    langKey: FormControl<string | undefined>;
+    firstName: FormControl<string>;
+    lastName: FormControl<string>;
+    email: FormControl<string>;
+    langKey: FormControl<string>;
 }
 
 /**
@@ -47,19 +47,19 @@ export class SettingsComponent implements OnInit {
     readonly isInternalUser = signal(false);
 
     readonly settingsForm = new FormGroup<SettingsForm>({
-        firstName: new FormControl<string | undefined>(undefined, {
+        firstName: new FormControl<string>('', {
             nonNullable: true,
             validators: [Validators.required, Validators.minLength(2), Validators.maxLength(50)],
         }),
-        lastName: new FormControl<string | undefined>(undefined, {
+        lastName: new FormControl<string>('', {
             nonNullable: true,
             validators: [Validators.required, Validators.minLength(2), Validators.maxLength(50)],
         }),
-        email: new FormControl<string | undefined>(undefined, {
+        email: new FormControl<string>('', {
             nonNullable: true,
             validators: [Validators.required, Validators.minLength(5), Validators.maxLength(100), Validators.email],
         }),
-        langKey: new FormControl<string | undefined>(undefined, { nonNullable: true }),
+        langKey: new FormControl<string>('', { nonNullable: true }),
     });
 
     constructor() {
@@ -100,9 +100,13 @@ export class SettingsComponent implements OnInit {
 
         // Update user object with form values
         // Note: Email changes are not supported - would require re-verification
-        userToUpdate.firstName = this.settingsForm.controls.firstName.value || undefined;
-        userToUpdate.lastName = this.settingsForm.controls.lastName.value || undefined;
-        userToUpdate.langKey = this.settingsForm.controls.langKey.value || undefined;
+        const firstName = this.settingsForm.controls.firstName.value;
+        const lastName = this.settingsForm.controls.lastName.value;
+        const langKey = this.settingsForm.controls.langKey.value;
+
+        userToUpdate.firstName = firstName || undefined;
+        userToUpdate.lastName = lastName || undefined;
+        userToUpdate.langKey = langKey || undefined;
 
         this.accountService.save(userToUpdate).subscribe({
             next: () => {
@@ -110,8 +114,8 @@ export class SettingsComponent implements OnInit {
                 this.accountService.authenticate(userToUpdate);
 
                 // Update UI language if the user changed their language preference
-                if (userToUpdate.langKey !== this.translateService.getCurrentLang()) {
-                    this.translateService.use(userToUpdate.langKey!);
+                if (langKey && langKey !== this.translateService.getCurrentLang()) {
+                    this.translateService.use(langKey);
                 }
             },
             error: () => this.success.set(false),

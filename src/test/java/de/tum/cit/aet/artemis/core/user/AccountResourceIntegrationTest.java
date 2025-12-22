@@ -210,7 +210,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
     void activateAccountNoUser() throws Exception {
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("key", "");
-        request.get("/api/core/public/activate", HttpStatus.INTERNAL_SERVER_ERROR, String.class, params);
+        request.get("/api/core/public/activate", HttpStatus.BAD_REQUEST, String.class, params);
     }
 
     @Test
