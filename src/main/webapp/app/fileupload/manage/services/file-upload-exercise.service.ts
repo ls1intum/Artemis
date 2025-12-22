@@ -34,10 +34,14 @@ export class FileUploadExerciseService implements ExerciseServicable<FileUploadE
 
     /**
      * Sends request to update file upload exercise on the server
-     * @param fileUploadExercise that we want to update to
+     * @param fileUploadExercise that we want to update to (must have an id)
      * @param req request options passed to the server
+     * @throws Error if the exercise does not have an id
      */
     update(fileUploadExercise: FileUploadExercise, req?: any): Observable<EntityResponseType> {
+        if (fileUploadExercise.id === undefined) {
+            throw new Error('Cannot update exercise without an ID');
+        }
         const options = createRequestOption(req);
         const dto = toUpdateFileUploadExerciseDTO(fileUploadExercise);
         return this.http
@@ -77,10 +81,14 @@ export class FileUploadExerciseService implements ExerciseServicable<FileUploadE
     /**
      * Re-evaluates and updates a file upload exercise.
      *
-     * @param fileUploadExercise that should be updated of type {FileUploadExercise}
+     * @param fileUploadExercise that should be updated of type {FileUploadExercise} (must have an id)
      * @param req optional request options
+     * @throws Error if the exercise does not have an id
      */
     reevaluateAndUpdate(fileUploadExercise: FileUploadExercise, req?: any): Observable<EntityResponseType> {
+        if (fileUploadExercise.id === undefined) {
+            throw new Error('Cannot re-evaluate exercise without an ID');
+        }
         const options = createRequestOption(req);
         const dto = toUpdateFileUploadExerciseDTO(fileUploadExercise);
         return this.http
@@ -89,18 +97,24 @@ export class FileUploadExerciseService implements ExerciseServicable<FileUploadE
     }
 
     private static formatFilePattern(fileUploadExercise: FileUploadExercise): FileUploadExercise {
-        fileUploadExercise.filePattern = fileUploadExercise.filePattern!.replace(/\s/g, '').toLowerCase();
+        if (fileUploadExercise.filePattern) {
+            fileUploadExercise.filePattern = fileUploadExercise.filePattern.replace(/\s/g, '').toLowerCase();
+        }
         return fileUploadExercise;
     }
 
     /**
      * Imports a file upload exercise by cloning the entity itself plus example solutions and example submissions
      *
-     * @param adaptedSourceFileUploadExercise The exercise that should be imported, including adapted values for the
+     * @param adaptedSourceFileUploadExercise The exercise that should be imported (must have an id), including adapted values for the
      * new exercise. E.g. with another title than the original exercise. Old values that should get discarded
      * (like the old ID) will be handled by the server.
+     * @throws Error if the exercise does not have an id
      */
     import(adaptedSourceFileUploadExercise: FileUploadExercise) {
+        if (adaptedSourceFileUploadExercise.id === undefined) {
+            throw new Error('Cannot import exercise without an ID');
+        }
         let copy = ExerciseService.convertExerciseDatesFromClient(adaptedSourceFileUploadExercise);
         copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
         copy.categories = ExerciseService.stringifyExerciseCategories(copy);

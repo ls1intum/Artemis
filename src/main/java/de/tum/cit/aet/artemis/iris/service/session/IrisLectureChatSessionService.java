@@ -8,36 +8,37 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
-import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
-import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisLectureChatSession;
-import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettingsType;
+import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
-import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.lecture.PyrisLectureChatPipelineExecutionDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.lecture.PyrisLectureChatStatusUpdateDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisMessageDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisUserDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureChatJob;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.TrackedSessionBasedPyrisJob;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
 import de.tum.cit.aet.artemis.lecture.api.LectureRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.config.LectureApiNotPresentException;
+import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 
+/**
+ * Service to handle the lecture chat subsystem of Iris.
+ */
 @Lazy
 @Service
 @Profile(PROFILE_IRIS)
-public class IrisLectureChatSessionService implements IrisChatBasedFeatureInterface<IrisLectureChatSession>, IrisRateLimitedFeatureInterface {
+public class IrisLectureChatSessionService extends AbstractIrisChatSessionService<IrisLectureChatSession> {
 
     private final IrisSettingsService irisSettingsService;
 
@@ -45,33 +46,26 @@ public class IrisLectureChatSessionService implements IrisChatBasedFeatureInterf
 
     private final IrisRateLimitService irisRateLimitService;
 
-    private final IrisMessageService irisMessageService;
-
     private final Optional<LectureRepositoryApi> lectureRepositoryApi;
 
     private final PyrisPipelineService pyrisPipelineService;
-
-    private final PyrisJobService pyrisJobService;
 
     private final IrisChatWebsocketService irisChatWebsocketService;
 
     private final AuthorizationCheckService authCheckService;
 
-    private final UserRepository userRepository;
-
-    public IrisLectureChatSessionService(IrisSettingsService irisSettingsService, IrisSessionRepository irisSessionRepository, IrisRateLimitService rateLimitService,
-            IrisMessageService irisMessageService, Optional<LectureRepositoryApi> lectureRepositoryApi, PyrisPipelineService pyrisPipelineService, PyrisJobService pyrisJobService,
-            IrisChatWebsocketService irisChatWebsocketService, AuthorizationCheckService authCheckService, UserRepository userRepository) {
+    public IrisLectureChatSessionService(IrisMessageService irisMessageService, IrisMessageRepository irisMessageRepository, LLMTokenUsageService llmTokenUsageService,
+            IrisSettingsService irisSettingsService, IrisSessionRepository irisSessionRepository, IrisRateLimitService rateLimitService,
+            Optional<LectureRepositoryApi> lectureRepositoryApi, PyrisPipelineService pyrisPipelineService, IrisChatWebsocketService irisChatWebsocketService,
+            AuthorizationCheckService authCheckService, ObjectMapper objectMapper) {
+        super(irisSessionRepository, null, null, objectMapper, irisMessageService, irisMessageRepository, irisChatWebsocketService, llmTokenUsageService);
         this.irisSettingsService = irisSettingsService;
         this.irisSessionRepository = irisSessionRepository;
         this.irisRateLimitService = rateLimitService;
-        this.irisMessageService = irisMessageService;
         this.lectureRepositoryApi = lectureRepositoryApi;
         this.pyrisPipelineService = pyrisPipelineService;
-        this.pyrisJobService = pyrisJobService;
         this.irisChatWebsocketService = irisChatWebsocketService;
         this.authCheckService = authCheckService;
-        this.userRepository = userRepository;
     }
 
     @Override
@@ -79,27 +73,41 @@ public class IrisLectureChatSessionService implements IrisChatBasedFeatureInterf
         irisChatWebsocketService.sendMessage(session, message, null);
     }
 
-    // This is the message from the user sent to Iris
+    /**
+     * Sends all messages of the session to an LLM and handles the response by saving the message
+     * and sending it to the student via the Websocket.
+     *
+     * @param session The chat session to send to the LLM
+     */
     @Override
-    public void requestAndHandleResponse(IrisLectureChatSession lectureChatSession) {
+    public void requestAndHandleResponse(IrisLectureChatSession session) {
         LectureRepositoryApi api = lectureRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureRepositoryApi.class));
 
-        var session = (IrisLectureChatSession) irisSessionRepository.findByIdWithMessagesAndContents(lectureChatSession.getId());
-        var lecture = api.findByIdElseThrow(session.getLectureId());
+        var chatSession = (IrisLectureChatSession) irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
+        var lecture = api.findByIdWithLectureUnitsElseThrow(chatSession.getLectureId());
         var course = lecture.getCourse();
-        var user = userRepository.findByIdElseThrow(session.getUserId());
 
-        var settings = irisSettingsService.getCombinedIrisSettingsFor(course, false).irisLectureChatSettings();
+        if (course == null) {
+            throw new ConflictException("Lecture does not belong to a course", "Iris", "lectureNoCourse");
+        }
+
+        var settings = irisSettingsService.getSettingsForCourse(course);
         if (!settings.enabled()) {
             throw new ConflictException("Iris is not enabled for this lecture", "Iris", "irisDisabled");
         }
 
-        var chatHistory = session.getMessages().stream().map(PyrisMessageDTO::of).toList();
-        pyrisPipelineService.executePipeline("lecture-chat", settings.selectedVariant(), Optional.empty(),
-                pyrisJobService.createTokenForJob(token -> new LectureChatJob(token, course.getId(), lecture.getId(), session.getId())),
-                dto -> new PyrisLectureChatPipelineExecutionDTO(course.getId(), lecture.getId(), session.getTitle(), chatHistory, new PyrisUserDTO(user), dto.settings(),
-                        dto.initialStages(), settings.customInstructions()),
-                stages -> irisChatWebsocketService.sendMessage(session, null, stages));
+        pyrisPipelineService.executeLectureChatPipeline(settings.variant().jsonValue(), settings.customInstructions(), chatSession, lecture);
+    }
+
+    /**
+     * Handles the status update of a LectureChatJob by delegating to the superclass.
+     *
+     * @param job          The job that was executed
+     * @param statusUpdate The status update of the job
+     * @return the same job record or a new job record with the same job id if changes were made
+     */
+    public TrackedSessionBasedPyrisJob handleStatusUpdate(LectureChatJob job, PyrisChatStatusUpdateDTO statusUpdate) {
+        return handleStatusUpdate((TrackedSessionBasedPyrisJob) job, statusUpdate);
     }
 
     /**
@@ -111,6 +119,7 @@ public class IrisLectureChatSessionService implements IrisChatBasedFeatureInterf
      */
     @Override
     public void checkHasAccessTo(User user, IrisLectureChatSession session) {
+        user.hasAcceptedExternalLLMUsageElseThrow();
         if (session.getUserId() != user.getId()) {
             throw new AccessForbiddenException("Iris Lecture chat Session", session.getId());
         }
@@ -126,7 +135,7 @@ public class IrisLectureChatSessionService implements IrisChatBasedFeatureInterf
      *
      * @param user    The user to check
      * @param session The session to check
-     * @return weather the user has access to the session
+     * @return whether the user has access to the session
      */
     public boolean hasAccess(User user, IrisLectureChatSession session) {
         try {
@@ -139,37 +148,27 @@ public class IrisLectureChatSessionService implements IrisChatBasedFeatureInterf
     }
 
     /**
-     * Handles the status update of a lecture chat job.
+     * Checks if the lecture connected to IrisLectureChatSession has Iris enabled.
      *
-     * @param job          The job that is updated
-     * @param statusUpdate The status update
-     * @return The same job that was passed in
+     * @param session The session to check
      */
-    public LectureChatJob handleStatusUpdate(LectureChatJob job, PyrisLectureChatStatusUpdateDTO statusUpdate) {
-        // TODO: LLM Token Tracking - or better, make this class a subclass of AbstractIrisChatSessionService
-        var session = (IrisLectureChatSession) irisSessionRepository.findByIdElseThrow(job.sessionId());
-        String sessionTitle = AbstractIrisChatSessionService.setSessionTitle(session, statusUpdate.sessionTitle(), irisSessionRepository);
-        if (statusUpdate.result() != null) {
-            var message = session.newMessage();
-            message.addContent(new IrisTextMessageContent(statusUpdate.result()));
-            IrisMessage savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.LLM);
-            irisChatWebsocketService.sendMessage(session, savedMessage, statusUpdate.stages(), sessionTitle);
-        }
-        else {
-            irisChatWebsocketService.sendMessage(session, null, statusUpdate.stages(), sessionTitle);
-        }
-
-        return job;
-    }
-
     @Override
-    public void checkIsFeatureActivatedFor(IrisLectureChatSession session) {
+    public void checkIrisEnabledFor(IrisLectureChatSession session) {
         var lecture = lectureRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureRepositoryApi.class)).findByIdElseThrow(session.getLectureId());
-        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.LECTURE_CHAT, lecture.getCourse());
+        irisSettingsService.ensureEnabledForCourseOrElseThrow(lecture.getCourse());
     }
 
     @Override
-    public void checkRateLimit(User user) {
-        irisRateLimitService.checkRateLimitElseThrow(user);
+    public void checkRateLimit(User user, IrisLectureChatSession session) {
+        irisRateLimitService.checkRateLimitElseThrow(session, user);
+    }
+
+    @Override
+    protected void setLLMTokenUsageParameters(LLMTokenUsageService.LLMTokenUsageBuilder builder, IrisLectureChatSession session) {
+        LectureRepositoryApi api = lectureRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureRepositoryApi.class));
+        Lecture lecture = api.findByIdElseThrow(session.getLectureId());
+        if (lecture.getCourse() != null) {
+            builder.withCourse(lecture.getCourse().getId());
+        }
     }
 }

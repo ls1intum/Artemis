@@ -1,7 +1,7 @@
-import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { BuildAgentSummaryComponent } from 'app/buildagent/build-agent-summary/build-agent-summary.component';
 import { WebsocketService } from 'app/shared/service/websocket.service';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { BuildJob } from 'app/buildagent/shared/entities/build-job.model';
 import dayjs from 'dayjs/esm';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
@@ -16,6 +16,8 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { BuildAgentsService } from 'app/buildagent/build-agents.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('BuildAgentSummaryComponent', () => {
     let component: BuildAgentSummaryComponent;
@@ -23,8 +25,6 @@ describe('BuildAgentSummaryComponent', () => {
 
     const mockWebsocketService = {
         subscribe: jest.fn(),
-        unsubscribe: jest.fn(),
-        receive: jest.fn().mockReturnValue(of([])),
     };
 
     const mockBuildAgentsService = {
@@ -108,11 +108,12 @@ describe('BuildAgentSummaryComponent', () => {
             status: BuildAgentStatus.ACTIVE,
         },
     ];
+    let websocketSubject: Subject<BuildAgentInformation[]>;
     let alertService: AlertService;
     let alertServiceAddAlertStub: jest.SpyInstance;
     let modalService: NgbModal;
 
-    beforeEach(waitForAsync(() => {
+    beforeEach(async () => {
         TestBed.configureTestingModule({
             declarations: [],
             providers: [
@@ -120,47 +121,43 @@ describe('BuildAgentSummaryComponent', () => {
                 { provide: BuildAgentsService, useValue: mockBuildAgentsService },
                 { provide: DataTableComponent, useClass: DataTableComponent },
                 { provide: NgbModal, useClass: MockNgbModalService },
+                { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(AlertService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
-        }).compileComponents();
+        });
+
+        await TestBed.compileComponents();
 
         fixture = TestBed.createComponent(BuildAgentSummaryComponent);
         component = fixture.componentInstance;
         alertService = TestBed.inject(AlertService);
         modalService = TestBed.inject(NgbModal);
         alertServiceAddAlertStub = jest.spyOn(alertService, 'addAlert');
-    }));
 
-    beforeEach(() => {
+        websocketSubject = new Subject<BuildAgentInformation[]>();
+        mockWebsocketService.subscribe.mockReturnValue(websocketSubject.asObservable());
         jest.clearAllMocks();
     });
 
     it('should load build agents on initialization', () => {
         mockBuildAgentsService.getBuildAgentSummary.mockReturnValue(of(mockBuildAgents));
-        mockWebsocketService.receive.mockReturnValue(of(mockBuildAgents));
 
         component.ngOnInit();
 
         expect(mockBuildAgentsService.getBuildAgentSummary).toHaveBeenCalled();
         expect(component.buildAgents).toEqual(mockBuildAgents);
-    });
-
-    it('should initialize websocket subscription on initialization', () => {
-        mockWebsocketService.receive.mockReturnValue(of(mockBuildAgents));
-
-        component.ngOnInit();
-
-        expect(component.buildAgents).toEqual(mockBuildAgents);
         expect(mockWebsocketService.subscribe).toHaveBeenCalledWith('/topic/admin/build-agents');
-        expect(mockWebsocketService.receive).toHaveBeenCalledWith('/topic/admin/build-agents');
     });
 
     it('should unsubscribe from the websocket channel on destruction', () => {
+        component.ngOnInit();
+        const unsubscribeSpy = jest.spyOn(component.websocketSubscription!, 'unsubscribe');
+
         component.ngOnDestroy();
 
-        expect(mockWebsocketService.unsubscribe).toHaveBeenCalledWith('/topic/admin/build-agents');
+        expect(unsubscribeSpy).toHaveBeenCalled();
     });
 
     it('should cancel a build job', () => {
@@ -184,18 +181,16 @@ describe('BuildAgentSummaryComponent', () => {
     });
 
     it('should calculate the build capacity and current builds', () => {
-        mockWebsocketService.receive.mockReturnValue(of(mockBuildAgents));
-
         component.ngOnInit();
+        websocketSubject.next(mockBuildAgents);
 
         expect(component.buildCapacity).toBe(4);
         expect(component.currentBuilds).toBe(4);
     });
 
     it('should calculate the build capacity and current builds when there are no build agents', () => {
-        mockWebsocketService.receive.mockReturnValue(of([]));
-
         component.ngOnInit();
+        websocketSubject.next([]);
 
         expect(component.buildCapacity).toBe(0);
         expect(component.currentBuilds).toBe(0);

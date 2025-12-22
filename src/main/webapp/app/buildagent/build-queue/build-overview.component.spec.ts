@@ -1,4 +1,5 @@
-import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import { ComponentFixture, ComponentFixtureAutoDetect, TestBed, waitForAsync } from '@angular/core/testing';
+import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { BehaviorSubject, of } from 'rxjs';
 import { BuildOverviewComponent } from 'app/buildagent/build-queue/build-overview.component';
@@ -18,15 +19,22 @@ import * as DownloadUtil from '../../shared/util/download.util';
 import { FinishedBuildJobFilter } from 'app/buildagent/build-queue/finished-builds-filter-modal/finished-builds-filter-modal.component';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
+import { WebsocketService } from 'app/shared/service/websocket.service';
+import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 
 class ActivatedRouteStub {
     private params$ = new BehaviorSubject<{ [key: string]: any }>({});
+    private paramMap$ = new BehaviorSubject(convertToParamMap({}));
     params = this.params$.asObservable();
+    paramMap = this.paramMap$.asObservable();
     snapshot = { paramMap: convertToParamMap({}) };
+    url = of([{ path: 'build-queue' }]);
 
     setParamMap(params: Record<string, any>) {
         this.params$.next(params);
-        this.snapshot = { paramMap: convertToParamMap(params) };
+        const paramMapValue = convertToParamMap(params);
+        this.paramMap$.next(paramMapValue);
+        this.snapshot = { paramMap: paramMapValue };
     }
 }
 
@@ -267,9 +275,20 @@ describe('BuildQueueComponent', () => {
     let modalService: NgbModal;
 
     beforeEach(waitForAsync(() => {
+        // Set default return values for all methods
+        mockBuildQueueService.getQueuedBuildJobs.mockReturnValue(of([]));
+        mockBuildQueueService.getRunningBuildJobs.mockReturnValue(of([]));
+        mockBuildQueueService.getFinishedBuildJobs.mockReturnValue(of(new HttpResponse({ body: [] })));
+        mockBuildQueueService.getQueuedBuildJobsByCourseId.mockReturnValue(of([]));
+        mockBuildQueueService.getRunningBuildJobsByCourseId.mockReturnValue(of([]));
+        mockBuildQueueService.getFinishedBuildJobsByCourseId.mockReturnValue(of(new HttpResponse({ body: [] })));
+        mockBuildQueueService.getBuildJobStatistics.mockReturnValue(of({}));
+        mockBuildQueueService.getBuildJobStatisticsForCourse.mockReturnValue(of({}));
+
         TestBed.configureTestingModule({
             imports: [BuildOverviewComponent],
             providers: [
+                { provide: ComponentFixtureAutoDetect, useValue: false },
                 { provide: BuildOverviewService, useValue: mockBuildQueueService },
                 { provide: ActivatedRoute, useValue: routeStub },
                 { provide: AccountService, useValue: accountServiceMock },
@@ -277,7 +296,9 @@ describe('BuildQueueComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(AlertService),
                 { provide: NgbModal, useClass: MockNgbModalService },
+                { provide: WebsocketService, useClass: MockWebsocketService },
             ],
+            schemas: [NO_ERRORS_SCHEMA],
         }).compileComponents();
 
         fixture = TestBed.createComponent(BuildOverviewComponent);

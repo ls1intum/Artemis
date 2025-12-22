@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.iris.service.pyris;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
+import static de.tum.cit.aet.artemis.core.util.TimeUtil.toInstant;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -34,6 +35,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisCourseChatSession;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisLectureChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisProgrammingExerciseChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisTutorSuggestionSession;
 import de.tum.cit.aet.artemis.iris.exception.IrisException;
@@ -42,10 +44,13 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisPipelineExecutionSetti
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisEventDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.course.PyrisCourseChatPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.exercise.PyrisExerciseChatPipelineExecutionDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.lecture.PyrisLectureChatPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.tutorsuggestion.PyrisTutorSuggestionPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisCourseDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisExerciseWithStudentSubmissionsDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisExtendedCourseDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisLectureDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisLectureUnitDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisPostDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisProgrammingExerciseDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisSubmissionDTO;
@@ -53,6 +58,8 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisTextExerciseDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisUserDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
+import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
+import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 
@@ -148,6 +155,54 @@ public class PyrisPipelineService {
             log.error("Failed to prepare {} pipeline execution", name, e);
             statusUpdater.accept(List.of(preparing.error("An internal error occurred"), executing.notStarted()));
         }
+    }
+
+    /**
+     * Execute the lecture chat pipeline for the given session.
+     * It provides specific data for the lecture chat pipeline, including:
+     * - The lecture content
+     *
+     * @param variant            the variant of the pipeline
+     * @param customInstructions the custom instructions for the pipeline
+     * @param session            the chat session
+     * @param lecture            the lecture the session belongs to
+     */
+    public void executeLectureChatPipeline(String variant, String customInstructions, IrisLectureChatSession session, Lecture lecture) {
+        Course course = lecture.getCourse();
+        if (course == null) {
+            throw new IllegalStateException("Lecture " + lecture.getId() + " does not belong to a course");
+        }
+
+        var lastMessageId = session.getMessages().isEmpty() ? null : session.getMessages().getLast().getId();
+        var user = userRepository.findByIdElseThrow(session.getUserId());
+        if (!featureToggleService.isFeatureEnabled(Feature.Memiris)) {
+            user.setMemirisEnabled(false);
+        }
+        // @formatter:off
+        executePipeline(
+            "lecture-chat",
+            variant,
+            Optional.empty(),
+            pyrisJobService.addLectureChatJob(course.getId(), lecture.getId(), session.getId(), lastMessageId),
+            executionDto -> {
+                Long courseId = course.getId();
+                List<PyrisLectureUnitDTO> lectureUnits = lecture.getLectureUnits() == null ? List.of()
+                        : lecture.getLectureUnits().stream().map(unit -> {
+                            Integer attachmentVersion = null;
+                            if (unit instanceof AttachmentVideoUnit attachmentUnit && attachmentUnit.getAttachment() != null
+                                    && attachmentUnit.getAttachment().getVersion() != null) {
+                                attachmentVersion = attachmentUnit.getAttachment().getVersion();
+                            }
+                            return new PyrisLectureUnitDTO(unit.getId(), courseId, lecture.getId(), toInstant(unit.getReleaseDate()), unit.getName(), attachmentVersion);
+                        }).toList();
+                var lectureDto = new PyrisLectureDTO(lecture.getId(), lecture.getTitle(), lecture.getDescription(), lecture.getStartDate(), lecture.getEndDate(),
+                        lectureUnits);
+                return new PyrisLectureChatPipelineExecutionDTO(new PyrisCourseDTO(course), lectureDto, session.getTitle(),
+                        pyrisDTOService.toPyrisMessageDTOList(session.getMessages()), new PyrisUserDTO(user), executionDto.settings(), executionDto.initialStages(),
+                        customInstructions);
+            },
+            stages -> irisChatWebsocketService.sendStatusUpdate(session, stages));
+        // @formatter:on
     }
 
     /**

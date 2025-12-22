@@ -16,7 +16,7 @@ import { MockProfileService } from 'src/test/javascript/spec/helpers/mocks/servi
 import { MockLanguageHelper, MockTranslateService } from 'src/test/javascript/spec/helpers/mocks/service/mock-translate.service';
 import { MockRouter } from 'src/test/javascript/spec/helpers/mocks/mock-router';
 import * as testClassDiagram from 'src/test/javascript/spec/helpers/sample/modeling/test-models/class-diagram.json';
-import { UMLDiagramType, UMLModel } from '@ls1intum/apollon';
+import { ApollonEditor, UMLDiagramType, UMLModel } from '@ls1intum/apollon';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { MockCourseManagementService } from 'src/test/javascript/spec/helpers/mocks/service/mock-course-management.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -107,6 +107,12 @@ describe('ApollonDiagramDetail Component', () => {
         const svgRenderer = require('app/quiz/manage/apollon-diagrams/exercise-generation/svg-renderer');
         jest.spyOn(svgRenderer, 'convertRenderedSVGToPNG').mockReturnValue(of(new Blob()));
         jest.spyOn(apollonDiagramService, 'update').mockReturnValue(of(response));
+
+        // Mock ApollonEditor.exportModelAsSvg to avoid DOM issues in jsdom
+        jest.spyOn(ApollonEditor, 'exportModelAsSvg').mockResolvedValue({
+            svg: '<svg></svg>',
+            clip: { x: 0, y: 0, width: 100, height: 100 },
+        });
 
         await fixture.componentInstance.initializeApollonEditor(model);
         expect(fixture.componentInstance.apollonEditor()).toBeTruthy();

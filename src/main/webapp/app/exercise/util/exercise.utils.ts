@@ -1,10 +1,9 @@
 import { SimpleChanges } from '@angular/core';
-import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, ExerciseType, hasDueDatePassed } from 'app/exercise/shared/entities/exercise/exercise.model';
 import dayjs from 'dayjs/esm';
 import { InitializationState, Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
-import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { Observable, from, of } from 'rxjs';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseUpdateWarningService } from 'app/exercise/exercise-update-warning/exercise-update-warning.service';
@@ -174,8 +173,7 @@ export const isResumeExerciseAvailable = (exercise: Exercise, participation?: St
 export const isStartPracticeAvailable = (exercise: Exercise, participation?: StudentParticipation): boolean => {
     switch (exercise.type) {
         case ExerciseType.QUIZ:
-            const quizExercise = exercise as QuizExercise;
-            return !!(quizExercise.isOpenForPractice && quizExercise.quizEnded);
+            return hasDueDatePassed(exercise);
         case ExerciseType.PROGRAMMING:
             return exercise.dueDate != undefined && dayjs().isAfter(exercise.dueDate) && !exercise.teamMode && (!participation || programmingSetupNotFinished(participation));
         default:
