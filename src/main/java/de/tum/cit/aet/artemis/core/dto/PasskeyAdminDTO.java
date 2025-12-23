@@ -4,8 +4,6 @@ import java.time.Instant;
 
 import jakarta.validation.constraints.NotNull;
 
-import org.jspecify.annotations.Nullable;
-
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.config.validator.Base64Url;
@@ -15,6 +13,6 @@ import de.tum.cit.aet.artemis.core.config.validator.Base64Url;
  * This extends the basic PasskeyDTO with additional user details.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PasskeyAdminDTO(@NotNull @Base64Url String credentialId, @Nullable String label, @NotNull Instant created, @Nullable Instant lastUsed, boolean isSuperAdminApproved,
-        @NotNull Long userId, @NotNull String userLogin, @NotNull String userName) {
+public record PasskeyAdminDTO(@NotNull @Base64Url String credentialId, String label, @NotNull Instant created, Instant lastUsed, boolean isSuperAdminApproved, @NotNull Long userId,
+        @NotNull String userLogin, @NotNull String userName) {
 }
