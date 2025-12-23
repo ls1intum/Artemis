@@ -1,10 +1,10 @@
 @if (isLoading) {
-    <h1 jhiTranslate="artemisApp.userSettings.sshSettings"></h1>
+    <h2 jhiTranslate="artemisApp.userSettings.sshSettings"></h2>
 } @else {
     @if (!isCreateMode) {
-        <h1 jhiTranslate="artemisApp.userSettings.sshSettingsPage.sshKeyDetails"></h1>
+        <h2 jhiTranslate="artemisApp.userSettings.sshSettingsPage.sshKeyDetails"></h2>
     } @else {
-        <h1 jhiTranslate="artemisApp.userSettings.sshSettingsPage.addNewSshKey"></h1>
+        <h2 jhiTranslate="artemisApp.userSettings.sshSettingsPage.addNewSshKey"></h2>
     }
 
     <div class="list-group d-block">

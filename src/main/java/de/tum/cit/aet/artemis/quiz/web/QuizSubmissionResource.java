@@ -145,8 +145,16 @@ public class QuizSubmissionResource {
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, "submission", "Forbidden", "You are not allowed to participate in this exercise.")).body(null);
         }
 
+        boolean openForPractice = false;
+        if (quizExercise.isExamExercise() && quizExercise.isTestExamExercise()) {
+            openForPractice = true;
+        }
+        else if (quizExercise.isCourseExercise() && quizExercise.isQuizEnded()) {
+            openForPractice = true;
+        }
+
         // Note that exam quiz exercises do not have an end date, so we need to check in that order
-        if (!Boolean.TRUE.equals(quizExercise.isIsOpenForPractice()) || !quizExercise.isQuizEnded()) {
+        if (!openForPractice) {
             return ResponseEntity.badRequest().headers(
                     HeaderUtil.createFailureAlert(applicationName, true, "submission", "exerciseNotOpenForPractice", "The exercise is not open for practice or hasn't ended yet."))
                     .body(null);

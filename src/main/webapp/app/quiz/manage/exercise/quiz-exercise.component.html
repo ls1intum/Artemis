@@ -46,9 +46,6 @@
                             <td>{{ quizExercise.title }}</td>
                         }
                         <td>
-                            @if (quizExercise.status === QuizStatus.CLOSED) {
-                                <span jhiTranslate="artemisApp.quizExercise.quizStatus.closed"></span>
-                            }
                             @if (quizExercise.status === QuizStatus.INVISIBLE) {
                                 <span jhiTranslate="artemisApp.quizExercise.quizStatus.invisible"></span>
                             }

@@ -216,10 +216,13 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
         params.add("notificationText", "The notification text");
         request.putWithResponseBodyAndParams(endpoint, programmingExercise, ProgrammingExercise.class, HttpStatus.OK, params);
 
-        ExerciseVersion newVersion = exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1", ExerciseType.PROGRAMMING);
-        assertThat(newVersion.getId()).isNotEqualTo(originalVersion.getId());
-        assertThat(newVersion.getExerciseSnapshot()).usingRecursiveComparison().withEqualsForType(zonedDateTimeBiPredicate, ZonedDateTime.class)
-                .isNotEqualTo(originalVersion.getExerciseSnapshot());
+        await().untilAsserted(() -> {
+            ExerciseVersion newVersion = exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1",
+                    ExerciseType.PROGRAMMING);
+            assertThat(newVersion.getId()).isNotEqualTo(originalVersion.getId());
+            assertThat(newVersion.getExerciseSnapshot()).usingRecursiveComparison().withEqualsForType(zonedDateTimeBiPredicate, ZonedDateTime.class)
+                    .isNotEqualTo(originalVersion.getExerciseSnapshot());
+        });
 
     }
 

@@ -18,6 +18,7 @@ import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.iris.api.IrisLectureApi;
+import de.tum.cit.aet.artemis.lecture.api.LectureContentProcessingApi;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
@@ -43,12 +44,15 @@ public class LectureUnitImportService {
 
     private final Optional<IrisLectureApi> irisLectureApi;
 
+    private final LectureContentProcessingApi contentProcessingApi;
+
     public LectureUnitImportService(LectureUnitRepository lectureUnitRepository, AttachmentRepository attachmentRepository, SlideSplitterService slideSplitterService,
-            Optional<IrisLectureApi> irisLectureApi) {
+            Optional<IrisLectureApi> irisLectureApi, LectureContentProcessingApi contentProcessingApi) {
         this.lectureUnitRepository = lectureUnitRepository;
         this.attachmentRepository = attachmentRepository;
         this.slideSplitterService = slideSplitterService;
         this.irisLectureApi = irisLectureApi;
+        this.contentProcessingApi = contentProcessingApi;
     }
 
     /**
@@ -70,10 +74,10 @@ public class LectureUnitImportService {
         newLecture.setLectureUnits(lectureUnits);
         lectureUnitRepository.saveAll(lectureUnits);
 
-        // Send lectures to pyris
-        irisLectureApi
-                .ifPresent(lectureApi -> lectureApi.autoUpdateAttachmentVideoUnitsInPyris(lectureUnits.stream().filter(lectureUnit -> lectureUnit instanceof AttachmentVideoUnit)
-                        .map(lectureUnit -> (AttachmentVideoUnit) lectureUnit).filter(unit -> unit.getAttachment() != null).toList()));
+        // Trigger full content processing for attachment video units
+        // This will check for TUM Live playlist availability, generate transcriptions if possible, and ingest to Pyris
+        lectureUnits.stream().filter(lectureUnit -> lectureUnit instanceof AttachmentVideoUnit).map(lectureUnit -> (AttachmentVideoUnit) lectureUnit)
+                .forEach(contentProcessingApi::triggerProcessing);
     }
 
     /**
