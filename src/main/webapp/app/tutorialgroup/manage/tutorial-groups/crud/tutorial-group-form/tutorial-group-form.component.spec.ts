@@ -10,7 +10,7 @@ import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { User } from 'app/core/user/user.model';
 import { NgbTimepickerModule, NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, input, output } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ScheduleFormComponent, ScheduleFormData } from 'app/tutorialgroup/manage/tutorial-groups/crud/tutorial-group-form/schedule-form/schedule-form.component';
 import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
@@ -27,9 +27,9 @@ import { MockThemeService } from 'test/helpers/mocks/service/mock-theme.service'
 
 @Component({ selector: 'jhi-markdown-editor-monaco', template: '' })
 class MarkdownEditorStubComponent {
-    @Input() markdown: string;
-    @Input() enableResize = false;
-    @Output() markdownChange = new EventEmitter<string>();
+    markdown = input<string>();
+    enableResize = input(false);
+    markdownChange = output<string>();
 }
 
 describe('TutorialGroupFormComponent', () => {
@@ -158,9 +158,9 @@ describe('TutorialGroupFormComponent', () => {
             clickSubmit(false);
         }));
 
-        it('should correctly set form values in edit mode', () => {
+        it('should correctly set form values in edit mode', async () => {
             fixture.componentRef.setInput('isEditMode', true);
-            runOnPushChangeDetection(fixture);
+            await runOnPushChangeDetection(fixture);
             const formData: TutorialGroupFormData = {
                 title: validTitle,
                 teachingAssistant: validTeachingAssistant,
@@ -179,7 +179,7 @@ describe('TutorialGroupFormComponent', () => {
                 },
             };
             fixture.componentRef.setInput('formData', formData);
-            component.ngOnChanges();
+            await runOnPushChangeDetection(fixture);
 
             const groupFormControlNames: Array<keyof TutorialGroupFormData> = ['title', 'teachingAssistant', 'campus', 'capacity', 'isOnline', 'language'];
             for (const controlName of groupFormControlNames) {
@@ -228,9 +228,9 @@ describe('TutorialGroupFormComponent', () => {
             }
         }));
 
-        it('should correctly set form values in edit mode', () => {
+        it('should correctly set form values in edit mode', async () => {
             fixture.componentRef.setInput('isEditMode', true);
-            runOnPushChangeDetection(fixture);
+            await runOnPushChangeDetection(fixture);
             const formData: TutorialGroupFormData = {
                 title: validTitle,
                 teachingAssistant: validTeachingAssistant,
@@ -243,7 +243,7 @@ describe('TutorialGroupFormComponent', () => {
             };
 
             fixture.componentRef.setInput('formData', formData);
-            component.ngOnChanges();
+            await runOnPushChangeDetection(fixture);
 
             const formControlNames: Array<keyof TutorialGroupFormData> = ['title', 'teachingAssistant', 'campus', 'capacity', 'isOnline', 'language'];
             for (const controlName of formControlNames) {

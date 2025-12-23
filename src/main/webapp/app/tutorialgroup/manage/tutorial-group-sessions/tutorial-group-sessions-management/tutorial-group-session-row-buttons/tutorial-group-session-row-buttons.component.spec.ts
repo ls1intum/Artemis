@@ -91,15 +91,12 @@ describe('TutorialGroupSessionRowButtonsComponent', () => {
 
     it('should open the cancellation / activation dialog when the respective button is clicked', fakeAsync(() => {
         const modalService = TestBed.inject(NgbModal);
-        const mockCourse = { id: 1, title: 'Advanced Testing' };
-        const mockTutorialGroup = { id: 1, name: 'Group A' };
-        const mockSession = { id: 5, date: '2025-06-30', timeSlot: '10:00-11:00' };
 
         const mockModalRef = {
             componentInstance: {
-                course: signal(mockCourse),
-                tutorialGroup: signal(mockTutorialGroup),
-                tutorialGroupSession: signal(mockSession),
+                course: undefined as any,
+                tutorialGroupId: undefined as number | undefined,
+                tutorialGroupSession: undefined as TutorialGroupSession | undefined,
             },
             result: { then: () => Promise.resolve() },
         };
@@ -114,8 +111,8 @@ describe('TutorialGroupSessionRowButtonsComponent', () => {
             expect(modalOpenSpy).toHaveBeenCalledOnce();
             expect(modalOpenSpy).toHaveBeenCalledWith(CancellationModalComponent, { animation: false, backdrop: 'static', scrollable: false, size: 'lg' });
             expect(mockModalRef.componentInstance.tutorialGroupSession).toEqual(tutorialGroupSession);
-            expect(mockModalRef.componentInstance.course).toEqual(course);
-            expect(mockModalRef.componentInstance.tutorialGroup().id).toEqual(tutorialGroup.id);
+            expect(mockModalRef.componentInstance.course()).toEqual(course);
+            expect(mockModalRef.componentInstance.tutorialGroupId).toEqual(tutorialGroup.id);
         });
     }));
 

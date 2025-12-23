@@ -6,7 +6,7 @@ import { TutorialGroupFreePeriod } from 'app/tutorialgroup/shared/entities/tutor
 import { generateExampleTutorialGroupFreePeriod } from 'test/helpers/sample/tutorialgroup/tutorialGroupFreePeriodExampleModel';
 import dayjs from 'dayjs/esm';
 import { SortService } from 'app/shared/service/sort.service';
-import { Component, Input, IterableDiffers } from '@angular/core';
+import { Component, IterableDiffers, input } from '@angular/core';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -15,8 +15,8 @@ import { TutorialGroupFreeDaysOverviewComponent } from 'app/tutorialgroup/shared
 
 @Component({ selector: 'jhi-side-panel', template: '' })
 class MockSidePanelComponent {
-    @Input() panelHeader: string;
-    @Input() panelDescriptionHeader?: string;
+    panelHeader = input<string>();
+    panelDescriptionHeader = input<string>();
 }
 describe('TutorialGroupFreeDaysOverviewComponent', () => {
     let component: TutorialGroupFreeDaysOverviewComponent;

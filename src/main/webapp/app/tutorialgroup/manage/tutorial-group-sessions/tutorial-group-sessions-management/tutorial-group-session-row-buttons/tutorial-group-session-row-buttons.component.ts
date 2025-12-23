@@ -60,7 +60,7 @@ export class TutorialGroupSessionRowButtonsComponent implements OnDestroy {
     openCancellationDialog(session: TutorialGroupSession): void {
         const modalRef = this.modalService.open(CancellationModalComponent, { size: 'lg', scrollable: false, backdrop: 'static', animation: false });
         modalRef.componentInstance.tutorialGroupSession = session;
-        modalRef.componentInstance.course = this.course();
+        modalRef.componentInstance.course = this.course;
         modalRef.componentInstance.tutorialGroupId = this.tutorialGroup().id!;
 
         from(modalRef.result)

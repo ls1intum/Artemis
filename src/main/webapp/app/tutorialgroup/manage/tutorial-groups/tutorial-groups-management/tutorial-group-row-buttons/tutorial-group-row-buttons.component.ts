@@ -52,7 +52,7 @@ export class TutorialGroupRowButtonsComponent implements OnDestroy {
             animation: false,
             windowClass: 'session-management-dialog',
         });
-        modalRef.componentInstance.course = this.course();
+        modalRef.componentInstance.course = this.course;
         modalRef.componentInstance.tutorialGroupId = this.tutorialGroup().id!;
         modalRef.componentInstance.initialize();
         from(modalRef.result)
@@ -68,7 +68,7 @@ export class TutorialGroupRowButtonsComponent implements OnDestroy {
     openRegistrationDialog(event: MouseEvent) {
         event.stopPropagation();
         const modalRef: NgbModalRef = this.modalService.open(RegisteredStudentsComponent, { size: 'xl', scrollable: false, backdrop: 'static', animation: false });
-        modalRef.componentInstance.course = this.course();
+        modalRef.componentInstance.course = this.course;
         modalRef.componentInstance.tutorialGroupId = this.tutorialGroup().id!;
         modalRef.componentInstance.initialize();
         from(modalRef.result)

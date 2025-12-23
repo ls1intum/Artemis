@@ -92,8 +92,8 @@ describe('TutorialGroupSessionsManagement', () => {
                 tutorialGroupService = TestBed.inject(TutorialGroupsService);
                 getOneOfCourseSpy = jest.spyOn(tutorialGroupService, 'getOneOfCourse').mockReturnValue(of(new HttpResponse({ body: tutorialGroup })));
 
-                component.course = course;
-                component.tutorialGroupId = tutorialGroupId;
+                fixture.componentRef.setInput('course', course);
+                fixture.componentRef.setInput('tutorialGroupId', tutorialGroupId);
                 component.initialize();
                 fixture.detectChanges();
             });
@@ -109,7 +109,7 @@ describe('TutorialGroupSessionsManagement', () => {
         expect(getOneOfCourseSpy).toHaveBeenCalledWith(course.id!, tutorialGroupId);
         expect(component.tutorialGroup).toEqual(tutorialGroup);
         expect(component.tutorialGroupSchedule).toEqual(tutorialGroup.tutorialGroupSchedule);
-        expect(component.course).toEqual(course);
+        expect(component.course()).toEqual(course);
     });
 
     it('should open create session dialog', fakeAsync(() => {
@@ -130,8 +130,8 @@ describe('TutorialGroupSessionsManagement', () => {
         const calendarService = TestBed.inject(CalendarService);
         const refreshSpy = jest.spyOn(calendarService, 'reloadEvents').mockImplementation(() => {});
 
-        component.course = course;
-        component.tutorialGroupId = tutorialGroupId;
+        fixture.componentRef.setInput('course', course);
+        fixture.componentRef.setInput('tutorialGroupId', tutorialGroupId);
 
         const getOneOfCourseSpy = jest.spyOn(tutorialGroupService, 'getOneOfCourse').mockReturnValue(of(new HttpResponse({ body: tutorialGroup })));
 

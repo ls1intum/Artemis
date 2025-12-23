@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Input, OnDestroy, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, inject, input } from '@angular/core';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { AlertService } from 'app/shared/service/alert.service';
 import { finalize, takeUntil } from 'rxjs/operators';
@@ -29,14 +29,13 @@ export class CreateTutorialGroupSessionComponent implements OnDestroy {
     tutorialGroupSessionToCreate: TutorialGroupSessionDTO = new TutorialGroupSessionDTO();
     isLoading: boolean;
 
-    // Need to stick to @Input due to modelRef see https://github.com/ng-bootstrap/ng-bootstrap/issues/4688
-    @Input() tutorialGroup: TutorialGroup;
-    @Input() course: Course;
+    readonly tutorialGroup = input.required<TutorialGroup>();
+    readonly course = input.required<Course>();
 
     isInitialized = false;
 
     initialize() {
-        if (!this.course || !this.tutorialGroup) {
+        if (!this.course() || !this.tutorialGroup()) {
             captureException('Error: Component not fully configured');
         } else {
             this.isInitialized = true;
@@ -54,7 +53,7 @@ export class CreateTutorialGroupSessionComponent implements OnDestroy {
         this.isLoading = true;
 
         this.tutorialGroupSessionService
-            .create(this.course.id!, this.tutorialGroup.id!, this.tutorialGroupSessionToCreate)
+            .create(this.course().id!, this.tutorialGroup().id!, this.tutorialGroupSessionToCreate)
             .pipe(
                 finalize(() => {
                     this.isLoading = false;

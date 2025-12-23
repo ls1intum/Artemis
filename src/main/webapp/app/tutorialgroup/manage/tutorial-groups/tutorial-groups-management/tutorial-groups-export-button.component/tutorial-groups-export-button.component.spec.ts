@@ -6,7 +6,7 @@ import { MockComponent } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
 import { AlertService } from 'app/shared/service/alert.service';
-import { Directive, Input } from '@angular/core';
+import { Directive, input } from '@angular/core';
 import { of, throwError } from 'rxjs';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -15,7 +15,7 @@ import { TranslateService } from '@ngx-translate/core';
     selector: '[jhiTranslate]',
 })
 class MockTranslateDirective {
-    @Input() jhiTranslate: string;
+    jhiTranslate = input<string>();
 }
 describe('TutorialGroupsExportButtonComponent', () => {
     let component: TutorialGroupsExportButtonComponent;

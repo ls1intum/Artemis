@@ -1,7 +1,7 @@
 <div class="modal-header">
     <h4 class="modal-title">
         {{
-            (tutorialGroupSession.status === tutorialGroupSessionStatus.ACTIVE
+            (tutorialGroupSession().status === tutorialGroupSessionStatus.ACTIVE
                 ? 'artemisApp.pages.tutorialGroupSessionManagement.cancelActivateModal.cancelSession.title'
                 : 'artemisApp.pages.tutorialGroupSessionManagement.cancelActivateModal.activateSession.title'
             ) | artemisTranslate
@@ -12,13 +12,13 @@
 <div class="modal-body">
     <p>
         {{
-            (tutorialGroupSession.status === tutorialGroupSessionStatus.ACTIVE
+            (tutorialGroupSession().status === tutorialGroupSessionStatus.ACTIVE
                 ? 'artemisApp.pages.tutorialGroupSessionManagement.cancelActivateModal.cancelSession.question'
                 : 'artemisApp.pages.tutorialGroupSessionManagement.cancelActivateModal.activateSession.question'
-            ) | artemisTranslate: { label: generateSessionLabel(tutorialGroupSession) }
+            ) | artemisTranslate: { label: generateSessionLabel(tutorialGroupSession()) }
         }}
     </p>
-    @if (tutorialGroupSession.status === tutorialGroupSessionStatus.ACTIVE) {
+    @if (tutorialGroupSession().status === tutorialGroupSessionStatus.ACTIVE) {
         <form [formGroup]="form">
             <div class="form-group">
                 <label for="reason" jhiTranslate="artemisApp.pages.tutorialGroupSessionManagement.cancelActivateModal.cancelSession.explanation"></label>

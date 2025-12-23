@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Input, OnDestroy, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, inject, input } from '@angular/core';
 import { TutorialGroupFreePeriodFormData } from 'app/tutorialgroup/manage/tutorial-free-periods/crud/tutorial-free-period-form/tutorial-group-free-period-form.component';
 import { finalize, takeUntil } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -29,14 +29,13 @@ export class CreateTutorialGroupFreePeriodComponent implements OnDestroy {
     tutorialGroupFreePeriodToCreate: TutorialGroupFreePeriodDTO = new TutorialGroupFreePeriodDTO();
     isLoading: boolean;
 
-    // Need to stick to @Input due to modelRef see https://github.com/ng-bootstrap/ng-bootstrap/issues/4688
-    @Input() tutorialGroupConfigurationId: number;
-    @Input() course: Course;
+    readonly tutorialGroupConfigurationId = input.required<number>();
+    readonly course = input.required<Course>();
 
     isInitialized = false;
 
     initialize() {
-        if (!this.tutorialGroupConfigurationId || !this.course) {
+        if (!this.tutorialGroupConfigurationId() || !this.course()) {
             captureException('Error: Component not fully configured');
         } else {
             this.isInitialized = true;
@@ -51,7 +50,7 @@ export class CreateTutorialGroupFreePeriodComponent implements OnDestroy {
 
         this.isLoading = true;
         this.tutorialGroupFreePeriodService
-            .create(this.course.id!, this.tutorialGroupConfigurationId, this.tutorialGroupFreePeriodToCreate)
+            .create(this.course().id!, this.tutorialGroupConfigurationId(), this.tutorialGroupFreePeriodToCreate)
             .pipe(
                 finalize(() => {
                     this.isLoading = false;

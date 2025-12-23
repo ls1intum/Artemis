@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, input } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseTutorialGroupsComponent } from 'app/tutorialgroup/shared/course-tutorial-groups/course-tutorial-groups.component';
 import { MockDirective, MockProvider } from 'ng-mocks';
@@ -250,9 +250,9 @@ function getSidebarCardElementForTutorialGroup(tutorialGroup: TutorialGroup): Si
 
 @Component({ selector: 'jhi-sidebar', template: '' })
 class MockSidebarComponent {
-    @Input() itemSelected: any;
-    @Input() courseId: any;
-    @Input() sidebarData: any;
-    @Input() collapseState: any;
-    @Input() sidebarItemAlwaysShow: any;
+    itemSelected = input<any>();
+    courseId = input<any>();
+    sidebarData = input<any>();
+    collapseState = input<any>();
+    sidebarItemAlwaysShow = input<any>();
 }

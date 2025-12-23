@@ -118,12 +118,12 @@ describe('EditTutorialGroupFreePeriodComponent', () => {
         expect(closeSpy).toHaveBeenCalledOnce();
     });
 
-    it('should not initialize if inputs are missing', () => {
-        // Do not set any inputs
+    it('should throw error if required inputs are missing when accessing them', () => {
+        // With input.required<>(), accessing inputs before they're set throws an error
         fixture = TestBed.createComponent(EditTutorialGroupFreePeriodComponent);
         component = fixture.componentInstance;
-        component.initialize();
-        expect(component.isInitialized).toBeFalse();
+        // Required inputs throw when accessed without a value
+        expect(() => component.initialize()).toThrow();
     });
 
     it('should set startTime and endTime correctly when freePeriodWithinDay', () => {

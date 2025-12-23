@@ -6,7 +6,7 @@
                 <button type="button" class="btn-close" (click)="clear()"></button>
             </div>
             <div class="modal-body">
-                <jhi-tutorial-free-period-form [timeZone]="course?.timeZone!" [formData]="formData" [isEditMode]="true" (formSubmitted)="updateTutorialGroupFreePeriod($event)" />
+                <jhi-tutorial-free-period-form [timeZone]="course()?.timeZone!" [formData]="formData" [isEditMode]="true" (formSubmitted)="updateTutorialGroupFreePeriod($event)" />
             </div>
         </div>
     }

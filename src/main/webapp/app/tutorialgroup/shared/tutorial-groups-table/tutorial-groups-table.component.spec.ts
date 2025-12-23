@@ -8,7 +8,7 @@ import { SortService } from 'app/shared/service/sort.service';
 import { generateExampleTutorialGroup } from 'test/helpers/sample/tutorialgroup/tutorialGroupExampleModels';
 import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
-import { Component, SimpleChange, input, viewChild, viewChildren } from '@angular/core';
+import { Component, input, viewChild, viewChildren } from '@angular/core';
 import { TutorialGroupRowStubComponent } from 'test/helpers/stubs/tutorialgroup/tutorial-groups-table-stub.component';
 import { Course, Language } from 'app/core/course/shared/entities/course.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
@@ -163,37 +163,45 @@ describe('TutorialGroupsTableComponent', () => {
         expect(fixture.nativeElement.querySelector('#language-column')).toBeNull();
     });
 
-    it('should show the language column if multiple formats are present', () => {
-        tutorialGroupOne.isOnline = true;
-        tutorialGroupTwo.isOnline = false;
+    it('should show the language column if multiple formats are present', async () => {
+        // Create new objects to trigger signal change detection
+        const groupOnlineOne = { ...tutorialGroupOne, isOnline: true };
+        const groupOnlineTwo = { ...tutorialGroupTwo, isOnline: false };
 
-        component.ngOnChanges({ tutorialGroups: new SimpleChange([], [tutorialGroupOne, tutorialGroupTwo], true) });
-        runOnPushChangeDetection(fixture);
+        fixture.componentRef.setInput('tutorialGroups', [groupOnlineOne, groupOnlineTwo]);
+        TestBed.tick();
+        await runOnPushChangeDetection(fixture);
 
         expect(fixture.nativeElement.querySelector('#online-column')).not.toBeNull();
 
-        tutorialGroupOne.isOnline = true;
-        tutorialGroupTwo.isOnline = true;
+        // Both online - should not show column
+        const groupBothOnlineOne = { ...tutorialGroupOne, isOnline: true };
+        const groupBothOnlineTwo = { ...tutorialGroupTwo, isOnline: true };
 
-        component.ngOnChanges({ tutorialGroups: new SimpleChange([], [tutorialGroupOne, tutorialGroupTwo], true) });
-        runOnPushChangeDetection(fixture);
+        fixture.componentRef.setInput('tutorialGroups', [groupBothOnlineOne, groupBothOnlineTwo]);
+        TestBed.tick();
+        await runOnPushChangeDetection(fixture);
         expect(fixture.nativeElement.querySelector('#online-column')).toBeNull();
     });
 
-    it('should show the language column if multiple campuses are present', () => {
-        tutorialGroupOne.campus = 'Garching';
-        tutorialGroupTwo.campus = 'Munich';
+    it('should show the language column if multiple campuses are present', async () => {
+        // Create new objects to trigger signal change detection
+        const groupCampusOne = { ...tutorialGroupOne, campus: 'Garching' };
+        const groupCampusTwo = { ...tutorialGroupTwo, campus: 'Munich' };
 
-        component.ngOnChanges({ tutorialGroups: new SimpleChange([], [tutorialGroupOne, tutorialGroupTwo], true) });
-        runOnPushChangeDetection(fixture);
+        fixture.componentRef.setInput('tutorialGroups', [groupCampusOne, groupCampusTwo]);
+        TestBed.tick();
+        await runOnPushChangeDetection(fixture);
 
         expect(fixture.nativeElement.querySelector('#campus-column')).not.toBeNull();
 
-        tutorialGroupOne.campus = 'Garching';
-        tutorialGroupTwo.campus = 'Garching';
+        // Same campus - should not show column
+        const groupSameCampusOne = { ...tutorialGroupOne, campus: 'Garching' };
+        const groupSameCampusTwo = { ...tutorialGroupTwo, campus: 'Garching' };
 
-        component.ngOnChanges({ tutorialGroups: new SimpleChange([], [tutorialGroupOne, tutorialGroupTwo], true) });
-        runOnPushChangeDetection(fixture);
+        fixture.componentRef.setInput('tutorialGroups', [groupSameCampusOne, groupSameCampusTwo]);
+        TestBed.tick();
+        await runOnPushChangeDetection(fixture);
         expect(fixture.nativeElement.querySelector('#campus-column')).toBeNull();
     });
 

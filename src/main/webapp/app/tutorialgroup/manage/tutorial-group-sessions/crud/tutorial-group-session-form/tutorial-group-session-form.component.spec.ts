@@ -64,7 +64,7 @@ describe('TutorialGroupSessionForm', () => {
         expect(component).not.toBeNull();
     });
 
-    it('should correctly set form values in edit mode', () => {
+    it('should correctly set form values in edit mode', async () => {
         fixture.componentRef.setInput('isEditMode', true);
         const formData: TutorialGroupSessionFormData = {
             date: validDate,
@@ -72,7 +72,7 @@ describe('TutorialGroupSessionForm', () => {
             endTime: validEndTime,
         };
         fixture.componentRef.setInput('formData', formData);
-        component.ngOnChanges();
+        await runOnPushChangeDetection(fixture);
 
         const formControlNames = ['date', 'startTime', 'endTime'];
         formControlNames.forEach((control) => {

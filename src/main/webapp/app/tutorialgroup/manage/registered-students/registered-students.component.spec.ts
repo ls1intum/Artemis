@@ -6,7 +6,7 @@ import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { Observable, of } from 'rxjs';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, input, output } from '@angular/core';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { CourseGroupMembershipComponent } from 'app/core/course/manage/course-group-membership/course-group-membership.component';
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
@@ -23,31 +23,19 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 @Component({ selector: 'jhi-course-group', template: '' })
 class CourseGroupStubComponent {
-    @Input()
-    allGroupUsers: User[] = [];
-    @Input()
-    isLoadingAllGroupUsers = false;
-    @Input()
-    isAdmin = false;
-    @Input()
-    course: Course;
-    @Input()
-    tutorialGroup: TutorialGroup | undefined = undefined;
-    @Input()
-    courseGroup: CourseGroup;
-    @Input()
-    exportFileName: string;
-    @Input()
-    userSearch: () => Observable<HttpResponse<User[]>>;
-    @Input()
-    addUserToGroup: () => Observable<any> = () => of({});
-    @Input()
-    removeUserFromGroup: () => Observable<any> = () => of({});
-    @Input()
-    handleUsersSizeChange: () => void = () => {};
+    allGroupUsers = input<User[]>([]);
+    isLoadingAllGroupUsers = input(false);
+    isAdmin = input(false);
+    course = input<Course>();
+    tutorialGroup = input<TutorialGroup | undefined>(undefined);
+    courseGroup = input<CourseGroup>();
+    exportFileName = input<string>();
+    userSearch = input<() => Observable<HttpResponse<User[]>>>();
+    addUserToGroup = input<() => Observable<any>>(() => of({}));
+    removeUserFromGroup = input<() => Observable<any>>(() => of({}));
+    handleUsersSizeChange = input<() => void>(() => {});
 
-    @Output()
-    importFinish: EventEmitter<void> = new EventEmitter();
+    importFinish = output<void>();
 }
 
 describe('Registered Students Component', () => {
@@ -103,8 +91,8 @@ describe('Registered Students Component', () => {
 
                 tutorialGroup.registrations = [registrationOne, registrationTwo];
 
-                comp.course = course;
-                comp.tutorialGroupId = tutorialGroup.id!;
+                fixture.componentRef.setInput('course', course);
+                fixture.componentRef.setInput('tutorialGroupId', tutorialGroup.id!);
 
                 getTutorialGroupSpy = jest.spyOn(tutorialGroupService, 'getOneOfCourse').mockReturnValue(of(new HttpResponse({ body: tutorialGroup })));
 
@@ -124,7 +112,7 @@ describe('Registered Students Component', () => {
 
     describe('OnInit', () => {
         it('should load tutorial group', () => {
-            expect(comp.course).toEqual(course);
+            expect(comp.course()).toEqual(course);
             expect(comp.tutorialGroup).toEqual(tutorialGroup);
             expect(comp.courseGroup).toEqual(CourseGroup.STUDENTS);
             expect(getTutorialGroupSpy).toHaveBeenCalledOnce();

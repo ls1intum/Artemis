@@ -5,14 +5,14 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe } from 'ng-mocks';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { generateExampleTutorialGroup } from 'test/helpers/sample/tutorialgroup/tutorialGroupExampleModels';
-import { Component, Input } from '@angular/core';
+import { Component, input } from '@angular/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 
 @Component({ selector: 'jhi-side-panel', template: '' })
 class MockSidePanelComponent {
-    @Input() panelHeader: string;
-    @Input() panelDescriptionHeader?: string;
+    panelHeader = input<string>();
+    panelDescriptionHeader = input<string>();
 }
 
 describe('TutorialGroupsCourseInformationComponent', () => {

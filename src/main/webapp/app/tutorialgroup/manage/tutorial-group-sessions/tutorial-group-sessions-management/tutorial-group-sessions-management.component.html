@@ -53,7 +53,7 @@
             <div class="scrollbar table-wrapper-scroll-y border border-lightgrey p-3 modal-body">
                 <jhi-tutorial-group-sessions-table
                     [sessions]="sessions"
-                    [timeZone]="course.timeZone"
+                    [timeZone]="course().timeZone"
                     [showIdColumn]="true"
                     [tutorialGroup]="tutorialGroup"
                     (attendanceUpdated)="attendanceUpdated = true"
@@ -61,7 +61,7 @@
                     <ng-template let-session>
                         <jhi-tutorial-group-session-row-buttons
                             [tutorialGroupSession]="session()"
-                            [course]="course"
+                            [course]="course()"
                             [tutorialGroup]="tutorialGroup"
                             (cancelOrActivatePressed)="loadAll()"
                             (tutorialGroupSessionDeleted)="loadAll()"
