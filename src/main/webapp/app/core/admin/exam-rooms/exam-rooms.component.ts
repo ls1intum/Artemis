@@ -1,4 +1,4 @@
-import { Component, OnInit, Signal, WritableSignal, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, Signal, WritableSignal, computed, inject, signal } from '@angular/core';
 import {
     ExamRoomAdminOverviewDTO,
     ExamRoomDTO,
@@ -20,9 +20,14 @@ import { TranslateService } from '@ngx-translate/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/shared/service/alert.service';
 
+/**
+ * Admin component for managing exam rooms.
+ * Allows uploading room data via ZIP files and viewing/deleting exam room configurations.
+ */
 @Component({
     selector: 'jhi-exam-rooms',
     templateUrl: './exam-rooms.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [TranslateDirective, SortDirective, SortByDirective, FaIconComponent, ArtemisTranslatePipe],
 })
 export class ExamRoomsComponent implements OnInit {
@@ -30,10 +35,10 @@ export class ExamRoomsComponent implements OnInit {
 
     protected readonly faSort = faSort;
 
-    private examRoomsService: ExamRoomsService = inject(ExamRoomsService);
-    private sortService: SortService = inject(SortService);
-    private translateService: TranslateService = inject(TranslateService);
-    private alertService: AlertService = inject(AlertService);
+    private readonly examRoomsService = inject(ExamRoomsService);
+    private readonly sortService = inject(SortService);
+    private readonly translateService = inject(TranslateService);
+    private readonly alertService = inject(AlertService);
 
     private selectedFile: WritableSignal<File | undefined> = signal(undefined);
     private actionStatus: WritableSignal<'uploading' | 'uploadSuccess' | 'deleting' | 'deletionSuccess' | undefined> = signal(undefined);

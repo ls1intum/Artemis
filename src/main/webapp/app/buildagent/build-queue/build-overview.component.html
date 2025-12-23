@@ -4,8 +4,8 @@
     <div style="padding-bottom: 60px">
         <h3 id="build-queue-running-heading" jhiTranslate="artemisApp.buildAgents.runningBuildJobs"></h3>
         <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3"></div>
-        @if (runningBuildJobs) {
-            <jhi-data-table [showPageSizeDropdown]="false" [showSearchField]="false" entityType="buildJob" [allEntities]="runningBuildJobs!">
+        @if (runningBuildJobs()) {
+            <jhi-data-table [showPageSizeDropdown]="false" [showSearchField]="false" entityType="buildJob" [allEntities]="runningBuildJobs()">
                 <ng-template let-settings="settings" let-controls="controls">
                     <ngx-datatable
                         class="bootstrap"
@@ -238,8 +238,8 @@
     <div style="padding-bottom: 60px">
         <h3 id="build-queue-queued-heading" jhiTranslate="artemisApp.buildQueue.queuedBuildJobs"></h3>
         <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3"></div>
-        @if (queuedBuildJobs) {
-            <jhi-data-table [showPageSizeDropdown]="false" [showSearchField]="false" entityType="buildJob" [allEntities]="queuedBuildJobs!">
+        @if (queuedBuildJobs()) {
+            <jhi-data-table [showPageSizeDropdown]="false" [showSearchField]="false" entityType="buildJob" [allEntities]="queuedBuildJobs()">
                 <ng-template let-settings="settings" let-controls="controls">
                     <ngx-datatable
                         class="bootstrap"
@@ -429,7 +429,7 @@
                     <fa-icon [icon]="faSync" />
                     <span jhiTranslate="metrics.refresh.button"></span>
                 </button>
-                @if (this.isLoading) {
+                @if (isLoading()) {
                     <span class="ms-3" jhiTranslate="artemisApp.buildQueue.filter.search.loading"></span>
                 }
             </div>
@@ -447,7 +447,7 @@
             </div>
         </div>
         <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3"></div>
-        @if (finishedBuildJobs) {
+        @if (finishedBuildJobs()) {
             <div class="table-responsive">
                 <table class="table table-striped">
                     <thead>
@@ -504,7 +504,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @for (finishedBuildJob of finishedBuildJobs; track finishedBuildJob.id) {
+                        @for (finishedBuildJob of finishedBuildJobs(); track finishedBuildJob.id) {
                             <tr>
                                 <td class="finish-jobs-column-tiny">
                                     <span
@@ -655,10 +655,10 @@
                 </table>
             </div>
         }
-        @if (finishedBuildJobs) {
+        @if (finishedBuildJobs()) {
             <div>
                 <div class="row justify-content-center">
-                    <jhi-slice-navigator [config]="paginationConfig" [hasMoreItems]="hasMore()" [isLoading]="isLoading" (pageChange)="onPageChange($event)" />
+                    <jhi-slice-navigator [config]="paginationConfig" [hasMoreItems]="hasMore()" [isLoading]="isLoading()" (pageChange)="onPageChange($event)" />
                 </div>
             </div>
         }

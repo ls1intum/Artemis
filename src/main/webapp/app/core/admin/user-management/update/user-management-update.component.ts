@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { User } from 'app/core/user/user.model';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
@@ -8,7 +8,7 @@ import { OrganizationSelectorComponent } from 'app/shared/organization-selector/
 import { Organization } from 'app/core/shared/entities/organization.model';
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, PROFILE_JENKINS, USERNAME_MAX_LENGTH, USERNAME_MIN_LENGTH } from 'app/app.constants';
-import { faBan, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faCheck, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { COMMA, ENTER, TAB } from '@angular/cdk/keycodes';
 import { FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatChipGrid, MatChipInput, MatChipInputEvent, MatChipRemove, MatChipRow } from '@angular/material/chips';
@@ -28,6 +28,10 @@ import { AsyncPipe } from '@angular/common';
 import { FindLanguageFromKeyPipe } from 'app/shared/language/find-language-from-key.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
+/**
+ * Component for creating and updating users in the admin user management.
+ * Provides a form with validation for user properties, groups, and organizations.
+ */
 @Component({
     selector: 'jhi-user-management-update',
     templateUrl: './user-management-update.component.html',
@@ -51,54 +55,81 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
         FindLanguageFromKeyPipe,
         ArtemisTranslatePipe,
     ],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class UserManagementUpdateComponent implements OnInit {
-    private languageHelper = inject(JhiLanguageHelper);
-    private userService = inject(AdminUserService);
-    private courseAdminService = inject(CourseAdminService);
-    private route = inject(ActivatedRoute);
-    private organizationService = inject(OrganizationManagementService);
-    private modalService = inject(NgbModal);
-    private navigationUtilService = inject(ArtemisNavigationUtilService);
-    private alertService = inject(AlertService);
-    private profileService = inject(ProfileService);
-    private fb = inject(FormBuilder);
+    private readonly languageHelper = inject(JhiLanguageHelper);
+    private readonly userService = inject(AdminUserService);
+    private readonly courseAdminService = inject(CourseAdminService);
+    private readonly route = inject(ActivatedRoute);
+    private readonly organizationService = inject(OrganizationManagementService);
+    private readonly modalService = inject(NgbModal);
+    private readonly navigationUtilService = inject(ArtemisNavigationUtilService);
+    private readonly alertService = inject(AlertService);
+    private readonly profileService = inject(ProfileService);
+    private readonly fb = inject(FormBuilder);
 
+    /** Validation constants */
     readonly USERNAME_MIN_LENGTH = USERNAME_MIN_LENGTH;
     readonly USERNAME_MAX_LENGTH = USERNAME_MAX_LENGTH;
     readonly PASSWORD_MIN_LENGTH = PASSWORD_MIN_LENGTH;
     readonly PASSWORD_MAX_LENGTH = PASSWORD_MAX_LENGTH;
-
     readonly EMAIL_MIN_LENGTH = 5;
     readonly EMAIL_MAX_LENGTH = 100;
     readonly REGISTRATION_NUMBER_MAX_LENGTH = 20;
 
+    /** The user being edited */
     user: User;
+
+    /** Available languages for selection */
     languages: string[];
-    authorities: string[];
-    isSaving: boolean;
+
+    /** Available authorities for selection */
+    readonly authorities = signal<string[]>([]);
+
+    /** Whether the form is currently being submitted */
+    readonly isSaving = signal(false);
+
+    /** All available groups for autocomplete */
     allGroups: string[];
+
+    /** Filtered groups based on input */
     filteredGroups: Observable<string[]>;
 
-    separatorKeysCodes = [ENTER, COMMA, TAB];
+    /** Separator key codes for chip input */
+    readonly separatorKeysCodes = [ENTER, COMMA, TAB];
 
-    groupCtrl = new FormControl();
+    /** Form control for group autocomplete */
+    readonly groupCtrl = new FormControl();
 
-    // Icons
-    faTimes = faTimes;
-    faBan = faBan;
-    faSave = faSave;
+    /** Icons */
+    protected readonly faTimes = faTimes;
+    protected readonly faBan = faBan;
+    protected readonly faSave = faSave;
+    protected readonly faCheck = faCheck;
+
+    /** Authority to translation key mapping */
+    private readonly authorityTranslationKeys: Record<string, string> = {
+        ROLE_ADMIN: 'artemisApp.userManagement.roles.admin',
+        ROLE_INSTRUCTOR: 'artemisApp.userManagement.roles.instructor',
+        ROLE_EDITOR: 'artemisApp.userManagement.roles.editor',
+        ROLE_TA: 'artemisApp.userManagement.roles.tutor',
+        ROLE_USER: 'artemisApp.userManagement.roles.user',
+    };
+
+    /** The reactive form for editing user properties */
     editForm: FormGroup;
 
+    /** Original login for detecting changes */
     private oldLogin?: string;
+
+    /** Whether Jenkins profile is active */
     private isJenkins: boolean;
 
     /**
-     * Enable subscriptions to retrieve the user based on the activated route, all authorities and all languages on init
+     * Initializes the component by loading user data, authorities, languages, and groups.
      */
-    ngOnInit() {
-        this.isSaving = false;
-
+    ngOnInit(): void {
         // create a new user, and only overwrite it if we fetch a user to edit
         this.user = new User();
         this.route.parent!.data.subscribe(({ user }) => {
@@ -125,9 +156,8 @@ export class UserManagementUpdateComponent implements OnInit {
             );
         });
         this.isJenkins = this.profileService.isProfileActive(PROFILE_JENKINS);
-        this.authorities = [];
         this.userService.authorities().subscribe((authorities) => {
-            this.authorities = authorities;
+            this.authorities.set(authorities);
         });
         this.languages = this.languageHelper.getAll();
         // Empty array for new user
@@ -153,10 +183,11 @@ export class UserManagementUpdateComponent implements OnInit {
     }
 
     /**
-     * Update or create user in the user management component
+     * Saves the user (creates new or updates existing).
+     * Shows a warning for Jenkins users when login changes.
      */
-    save() {
-        this.isSaving = true;
+    save(): void {
+        this.isSaving.set(true);
         // temporarily store the user groups and organizations in variables, because they are not part of the edit form
         const userGroups = this.user.groups;
         const userOrganizations = this.user.organizations;
@@ -276,18 +307,18 @@ export class UserManagementUpdateComponent implements OnInit {
     }
 
     /**
-     * Set isSaving to false and navigate to previous page
+     * Handles successful save by resetting state and navigating to previous page.
      */
-    private onSaveSuccess() {
-        this.isSaving = false;
+    private onSaveSuccess(): void {
+        this.isSaving.set(false);
         this.previousState();
     }
 
     /**
-     * Set isSaving to false
+     * Handles save error by resetting the saving state.
      */
-    private onSaveError() {
-        this.isSaving = false;
+    private onSaveError(): void {
+        this.isSaving.set(false);
     }
 
     /**
@@ -310,6 +341,38 @@ export class UserManagementUpdateComponent implements OnInit {
                 user.groups = [];
             }
             user.groups.push(groupString);
+        }
+    }
+
+    /**
+     * Get the translation key for an authority
+     * @param authority the authority string (e.g., ROLE_ADMIN)
+     */
+    getAuthorityTranslationKey(authority: string): string {
+        return this.authorityTranslationKeys[authority] ?? authority;
+    }
+
+    /**
+     * Check if the user has a specific authority
+     * @param authority the authority to check
+     */
+    hasAuthority(authority: string): boolean {
+        const authorities = this.editForm.get('authorities')?.value;
+        return Array.isArray(authorities) && authorities.includes(authority);
+    }
+
+    /**
+     * Toggle an authority on or off for the user
+     * @param authority the authority to toggle
+     */
+    toggleAuthority(authority: string): void {
+        const authoritiesControl = this.editForm.get('authorities');
+        const currentAuthorities: string[] = authoritiesControl?.value ?? [];
+
+        if (currentAuthorities.includes(authority)) {
+            authoritiesControl?.setValue(currentAuthorities.filter((a) => a !== authority));
+        } else {
+            authoritiesControl?.setValue([...currentAuthorities, authority]);
         }
     }
 }
