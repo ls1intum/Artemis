@@ -14,6 +14,7 @@ const sidebars: SidebarsConfig = {
             },
             items: ['exercises/quiz-exercise', 'exercises/modeling-exercise'],
         },
+        'lectures',
         'assessment',
         'quiz-training',
         'exams',
