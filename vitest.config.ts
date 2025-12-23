@@ -27,7 +27,8 @@ export default defineConfig({
         include: [
             'src/main/webapp/app/fileupload/**/*.spec.ts',      // include fileupload tests
             'src/main/webapp/app/core/account/**/*.spec.ts',    // include core account tests
-            'src/main/webapp/app/core/admin/**/*.spec.ts'       // include core admin tests
+            'src/main/webapp/app/core/admin/**/*.spec.ts',      // include core admin tests
+            'src/main/webapp/app/buildagent/**/*.spec.ts'       // include build agent tests
         ],
         exclude: ['**/node_modules/**', '**/build/**'],
         testTimeout: 10000,
@@ -45,7 +46,8 @@ export default defineConfig({
             include: [
                 'src/main/webapp/app/fileupload/**/*.ts',       // include fileupload for code coverage
                 'src/main/webapp/app/core/account/**/*.ts',     // include core account for code coverage
-                'src/main/webapp/app/core/admin/**/*.ts'        // include core admin for code coverage
+                'src/main/webapp/app/core/admin/**/*.ts',       // include core admin for code coverage
+                'src/main/webapp/app/buildagent/**/*.ts'        // include buildagent for code coverage
             ],
             exclude: ['**/node_modules/**', '**/*.spec.ts', '**/*.routes.ts', '**/*.model.ts'],
             thresholds: {

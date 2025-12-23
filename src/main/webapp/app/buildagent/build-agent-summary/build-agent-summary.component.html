@@ -1,11 +1,11 @@
 <div style="padding-bottom: 60px">
-    @if (buildAgents) {
+    @if (buildAgents()) {
         <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
             <div>
                 <h3 id="build-agents-heading" jhiTranslate="artemisApp.buildAgents.summary"></h3>
                 <p>
-                    {{ buildAgents.length }} <span jhiTranslate="artemisApp.buildAgents.onlineAgents"></span>: {{ currentBuilds }}
-                    <span jhiTranslate="artemisApp.buildAgents.of"></span> {{ buildCapacity }} <span jhiTranslate="artemisApp.buildAgents.buildJobsRunning"></span>
+                    {{ buildAgents().length }} <span jhiTranslate="artemisApp.buildAgents.onlineAgents"></span>: {{ currentBuilds() }}
+                    <span jhiTranslate="artemisApp.buildAgents.of"></span> {{ buildCapacity() }} <span jhiTranslate="artemisApp.buildAgents.buildJobsRunning"></span>
                 </p>
             </div>
             <div>
@@ -23,7 +23,7 @@
                 </button>
             </div>
         </div>
-        <jhi-data-table [showPageSizeDropdown]="false" [showSearchField]="false" entityType="buildAgent" [allEntities]="buildAgents!">
+        <jhi-data-table [showPageSizeDropdown]="false" [showSearchField]="false" entityType="buildAgent" [allEntities]="buildAgents()">
             <ng-template let-settings="settings" let-controls="controls">
                 <ngx-datatable
                     class="bootstrap"
