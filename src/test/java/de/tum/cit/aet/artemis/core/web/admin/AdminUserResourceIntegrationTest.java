@@ -52,7 +52,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
 
         ManagedUserVM managedUserVM = userUtilService.createManagedUserVM("regularuser");
         managedUserVM.setId(regularUser.getId());
-        managedUserVM.setAuthorities(Set.of(Authority.SUPER_ADMIN_AUTHORITY.toString()));
+        managedUserVM.setAuthorities(Set.of(Authority.SUPER_ADMIN_AUTHORITY.getName()));
 
         mockMvc.perform(put("/api/core/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(managedUserVM)))
                 .andExpect(status().isForbidden());
@@ -140,7 +140,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
     @WithMockUser(username = "superadmin", roles = "SUPER_ADMIN")
     void createUser_createSuperAdminBySuperAdmin_success() throws Exception {
         ManagedUserVM managedUserVM = userUtilService.createManagedUserVM("newsuperadmin2");
-        managedUserVM.setAuthorities(Set.of(Authority.SUPER_ADMIN_AUTHORITY.toString()));
+        managedUserVM.setAuthorities(Set.of(Authority.SUPER_ADMIN_AUTHORITY.getName()));
 
         mockMvc.perform(post("/api/core/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(managedUserVM)))
                 .andExpect(status().isCreated());
@@ -148,7 +148,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
         // Verify user was created with super admin authority
         assertThat(userUtilService.userExistsWithLogin("newsuperadmin2")).isTrue();
         User createdUser = userUtilService.getUserByLogin("newsuperadmin2");
-        assertThat(createdUser.getAuthorities()).extracting(Authority::getName).contains(Authority.SUPER_ADMIN_AUTHORITY.toString());
+        assertThat(createdUser.getAuthorities()).extracting(Authority::getName).contains(Authority.SUPER_ADMIN_AUTHORITY.getName());
     }
 
     @Test
@@ -163,7 +163,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
         // Verify user was created
         assertThat(userUtilService.userExistsWithLogin("newregularuser")).isTrue();
         User createdUser = userUtilService.getUserByLogin("newregularuser");
-        assertThat(createdUser.getAuthorities()).extracting(Authority::getName).contains(Role.STUDENT.getAuthority()).doesNotContain(Authority.SUPER_ADMIN_AUTHORITY.toString());
+        assertThat(createdUser.getAuthorities()).extracting(Authority::getName).contains(Role.STUDENT.getAuthority()).doesNotContain(Authority.SUPER_ADMIN_AUTHORITY.getName());
     }
 
     // ==================== Super Admin updating users ====================
@@ -176,13 +176,13 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
 
         ManagedUserVM managedUserVM = userUtilService.createManagedUserVM(regularUser.getLogin());
         managedUserVM.setId(regularUser.getId());
-        managedUserVM.setAuthorities(Set.of(Authority.SUPER_ADMIN_AUTHORITY.toString()));
+        managedUserVM.setAuthorities(Set.of(Authority.SUPER_ADMIN_AUTHORITY.getName()));
 
         mockMvc.perform(put("/api/core/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(managedUserVM))).andExpect(status().isOk());
 
         // Verify user was updated to super admin
         User updatedUser = userTestRepository.findByIdWithGroupsAndAuthoritiesElseThrow(regularUser.getId());
-        assertThat(updatedUser.getAuthorities()).extracting(Authority::getName).contains(Authority.SUPER_ADMIN_AUTHORITY.toString());
+        assertThat(updatedUser.getAuthorities()).extracting(Authority::getName).contains(Authority.SUPER_ADMIN_AUTHORITY.getName());
     }
 
     @Test
@@ -199,8 +199,8 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
         mockMvc.perform(put("/api/core/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(managedUserVM))).andExpect(status().isOk());
 
         // Verify super admin authority was revoked
-        User updatedUser = userTestRepository.findById(superUser.getId()).orElseThrow();
-        assertThat(updatedUser.getAuthorities()).extracting(Authority::getName).doesNotContain(Authority.SUPER_ADMIN_AUTHORITY.toString()).contains(Role.STUDENT.getAuthority());
+        User updatedUser = userTestRepository.findByIdWithGroupsAndAuthoritiesElseThrow(superUser.getId());
+        assertThat(updatedUser.getAuthorities()).extracting(Authority::getName).doesNotContain(Authority.SUPER_ADMIN_AUTHORITY.getName()).contains(Role.STUDENT.getAuthority());
     }
 
     @Test
@@ -213,14 +213,14 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
         ManagedUserVM managedUserVM = userUtilService.createManagedUserVM(superUser.getLogin());
         managedUserVM.setId(superUser.getId());
         managedUserVM.setFirstName("UpdatedFirstName");
-        managedUserVM.setAuthorities(Set.of(Authority.SUPER_ADMIN_AUTHORITY.toString()));
+        managedUserVM.setAuthorities(Set.of(Authority.SUPER_ADMIN_AUTHORITY.getName()));
 
         mockMvc.perform(put("/api/core/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(managedUserVM))).andExpect(status().isOk());
 
         // Verify user was updated while maintaining super admin authority
-        User updatedUser = userTestRepository.findById(superUser.getId()).orElseThrow();
+        User updatedUser = userTestRepository.findByIdWithGroupsAndAuthoritiesElseThrow(superUser.getId());
         assertThat(updatedUser.getFirstName()).isEqualTo("UpdatedFirstName");
-        assertThat(updatedUser.getAuthorities()).extracting(Authority::getName).contains(Authority.SUPER_ADMIN_AUTHORITY.toString());
+        assertThat(updatedUser.getAuthorities()).extracting(Authority::getName).contains(Authority.SUPER_ADMIN_AUTHORITY.getName());
     }
 
     // ==================== Admin trying to delete super admin users ====================

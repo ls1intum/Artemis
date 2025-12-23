@@ -219,6 +219,13 @@ public class AdminUserResource {
                     "userManagement.onlySuperAdminCanManageSuperAdmins");
         }
 
+        // Prevent privilege escalation: non-super-admins cannot grant super admin authority
+        boolean isRequestTryingToSetSuperAdmin = managedUserVM.getAuthorities() != null && managedUserVM.getAuthorities().contains(Authority.SUPER_ADMIN_AUTHORITY.getName());
+        if (isRequestTryingToSetSuperAdmin && !this.authorizationCheckService.isSuperAdmin()) {
+            throw new AccessForbiddenAlertException("Only super administrators can grant super admin authority.", "userManagement",
+                    "userManagement.onlySuperAdminCanCreateSuperAdmin");
+        }
+
         final boolean shouldActivateUser = !existingUser.getActivated() && managedUserVM.isActivated();
         var updatedUser = userCreationService.updateUser(existingUser, managedUserVM);
 
