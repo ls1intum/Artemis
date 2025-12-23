@@ -186,8 +186,10 @@
             "competencyMissing": "The competency link must reference a competency.",
             "courseMissing": "The competency referenced by this link is not associated with a course."
         },
-        "titleLengthInvalid": "The title is not set or is too short.",
-        "titlePatternInvalid": "The title is invalid.",
+        "Exercise": {
+            "titleLengthInvalid": "The title is not set or is too short.",
+            "titlePatternInvalid": "The title is invalid."
+        },
         "FileUploadExercise": {
             "isNull": "No fileUpload exercise was provided.",
             "courseIdMissing": "The courseId is required.",

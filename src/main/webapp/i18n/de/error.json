@@ -186,8 +186,10 @@
             "competencyMissing": "Der Kompetenzlink muss eine Kompetenz referenzieren.",
             "courseMissing": "Die referenzierte Kompetenz ist keinem Kurs zugeordnet."
         },
-        "titleLengthInvalid": "Der Titel ist nicht gesetzt oder zu kurz.",
-        "titlePatternInvalid": "Der Titel ist ungültig.",
+        "Exercise": {
+            "titleLengthInvalid": "Der Titel ist nicht gesetzt oder zu kurz.",
+            "titlePatternInvalid": "Der Titel ist ungültig."
+        },
         "FileUploadExercise": {
             "isNull": "Es wurden keine File-Upload-Übungen übergeben.",
             "courseIdMissing": "Die courseId ist erforderlich.",
