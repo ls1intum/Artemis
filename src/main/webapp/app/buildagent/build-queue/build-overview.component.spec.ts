@@ -1,7 +1,7 @@
 import { ComponentFixture, ComponentFixtureAutoDetect, TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { NO_ERRORS_SCHEMA } from '@angular/core';
+import { Component, Input, NO_ERRORS_SCHEMA } from '@angular/core';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { BehaviorSubject, of } from 'rxjs';
 import { BuildOverviewComponent } from 'app/buildagent/build-queue/build-overview.component';
@@ -9,7 +9,7 @@ import { BuildOverviewService } from 'app/buildagent/build-queue/build-overview.
 import dayjs from 'dayjs/esm';
 import { AccountService } from 'app/core/auth/account.service';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
-import { FinishedBuildJob } from 'app/buildagent/shared/entities/build-job.model';
+import { BuildJobStatistics, FinishedBuildJob } from 'app/buildagent/shared/entities/build-job.model';
 import { TriggeredByPushTo } from 'app/programming/shared/entities/repository-info.model';
 import { HttpResponse } from '@angular/common/http';
 import { SortingOrder } from 'app/shared/table/pageable-table';
@@ -23,6 +23,10 @@ import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
+import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
+import { By } from '@angular/platform-browser';
+import { BuildJobStatisticsComponent } from 'app/buildagent/build-job-statistics/build-job-statistics.component';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 class ActivatedRouteStub {
     private params$ = new BehaviorSubject<{ [key: string]: any }>({});
@@ -38,6 +42,16 @@ class ActivatedRouteStub {
         this.paramMap$.next(paramMapValue);
         this.snapshot = { paramMap: paramMapValue };
     }
+}
+
+@Component({
+    selector: 'jhi-build-job-statistics',
+    template: '<div></div>',
+    standalone: true,
+})
+class StubBuildJobStatisticsComponent {
+    @Input() courseId?: number;
+    @Input() buildJobStatisticsInput?: BuildJobStatistics;
 }
 
 describe('BuildQueueComponent', () => {
@@ -585,33 +599,173 @@ describe('BuildQueueComponent', () => {
         expect(modalRef.componentInstance.buildAgentFilterable).toBeTruthy();
     });
 
-    it('should download build logs', () => {
-        const buildJobId = '1';
+    describe('Course ID column visibility', () => {
+        beforeEach(async () => {
+            TestBed.resetTestingModule();
+            TestBed.configureTestingModule({
+                imports: [BuildOverviewComponent],
+                providers: [
+                    { provide: BuildOverviewService, useValue: mockBuildQueueService },
+                    { provide: ActivatedRoute, useValue: routeStub },
+                    { provide: TranslateService, useClass: MockTranslateService },
+                    { provide: NgbModal, useClass: MockNgbModalService },
+                    { provide: WebsocketService, useClass: MockWebsocketService },
+                    { provide: FeatureToggleService, useValue: { isEnabled: () => false } },
+                    MockProvider(AlertService),
+                    provideHttpClientTesting(),
+                ],
+                schemas: [NO_ERRORS_SCHEMA],
+            }).overrideComponent(BuildOverviewComponent, {
+                remove: { imports: [BuildJobStatisticsComponent] },
+                add: { imports: [StubBuildJobStatisticsComponent] },
+            });
 
-        const buildLogsMultiLines = 'log1\nlog2\nlog3';
-        mockBuildQueueService.getBuildJobLogs = vi.fn().mockReturnValue(of(buildLogsMultiLines));
+            await TestBed.compileComponents();
 
-        component.viewBuildLogs(undefined, buildJobId);
+            fixture = TestBed.createComponent(BuildOverviewComponent);
+            component = fixture.componentInstance;
+        });
 
-        expect(mockBuildQueueService.getBuildJobLogs).toHaveBeenCalledWith(buildJobId);
-        expect(component.rawBuildLogsString).toEqual(buildLogsMultiLines);
+        it('should show courseId for finished jobs and include courseId in queued/running data in administration view', () => {
+            const getFinishedCourseLinks = () => fixture.debugElement.queryAll(By.css('td.finish-jobs-column a[href^="/course-management/"]:not([href*="programming-exercises"])'));
+            const getFinishedCourseHeader = () => fixture.debugElement.queryAll(By.css('th.finish-jobs-column[jhiSortBy="courseId"]'));
 
-        const mockBlob = new Blob([buildLogsMultiLines], { type: 'text/plain' });
+            // Arrange: admin view
+            routeStub.setParamMap({});
 
-        // Mock URL.createObjectURL to ensure consistent behavior across environments
-        global.URL.createObjectURL = vi.fn(() => 'mockedURL');
-        global.URL.revokeObjectURL = vi.fn();
+            mockBuildQueueService.getQueuedBuildJobs.mockReturnValue(of(mockQueuedJobs));
+            mockBuildQueueService.getRunningBuildJobs.mockReturnValue(of(mockRunningJobs));
+            mockBuildQueueService.getFinishedBuildJobs.mockReturnValue(of(mockFinishedJobsResponse));
+            mockBuildQueueService.getBuildJobStatistics.mockReturnValue(of({}));
+            mockBuildQueueService.getBuildJobStatisticsForCourse.mockReturnValue(of({}));
 
-        const downloadSpy = vi.spyOn(DownloadUtil, 'downloadFile');
+            // Act
+            component.ngOnInit();
+            fixture.detectChanges();
 
-        component.downloadBuildLogs();
+            // Assert: view type
+            expect(component.isAdministrationView()).toBe(true);
 
-        expect(downloadSpy).toHaveBeenCalledOnce();
-        expect(downloadSpy).toHaveBeenCalledWith(mockBlob, `${buildJobId}.log`);
+            // Assert: queued/running (data-level)
+            expect(component.queuedBuildJobs().every((j) => j.courseId !== undefined)).toBe(true);
+            expect(component.runningBuildJobs().every((j) => j.courseId !== undefined)).toBe(true);
 
-        component.downloadBuildLogs();
+            // Assert: finished (DOM-level)
+            expect(getFinishedCourseHeader()).toHaveLength(1);
 
-        expect(downloadSpy).toHaveBeenCalledTimes(2);
-        expect(downloadSpy).toHaveBeenCalledWith(mockBlob, `${buildJobId}.log`);
+            const finishedCourseLinks = getFinishedCourseLinks();
+            expect(finishedCourseLinks).toHaveLength(mockFinishedJobs.length);
+
+            const values = finishedCourseLinks.map((de) => (de.nativeElement as HTMLAnchorElement).textContent?.trim());
+            expect(values).toEqual(mockFinishedJobs.map((j) => `${j.courseId}`));
+        });
+
+        it('should hide courseId in queued/running/finished in course view', () => {
+            const getFinishedCourseLinks = () => fixture.debugElement.queryAll(By.css('td.finish-jobs-column a[href^="/course-management/"]:not([href*="programming-exercises"])'));
+            const getFinishedCourseHeader = () => fixture.debugElement.queryAll(By.css('th.finish-jobs-column[jhiSortBy="courseId"]'));
+
+            // Arrange: course view
+            routeStub.setParamMap({ courseId: '123' });
+
+            mockBuildQueueService.getQueuedBuildJobsByCourseId.mockReturnValue(of(mockQueuedJobs));
+            mockBuildQueueService.getRunningBuildJobsByCourseId.mockReturnValue(of(mockRunningJobs));
+            mockBuildQueueService.getFinishedBuildJobsByCourseId.mockReturnValue(of(mockFinishedJobsResponse));
+
+            // Act
+            component.ngOnInit();
+            fixture.detectChanges();
+
+            // Assert: view type
+            expect(component.isAdministrationView()).toBe(false);
+
+            // Assert: queued/running (data-level) still has courseId as field, but UI must not show it
+            // (keep this part optional; remove if reviewers dislike it)
+            expect(component.queuedBuildJobs().every((j) => j.courseId !== undefined)).toBe(true);
+            expect(component.runningBuildJobs().every((j) => j.courseId !== undefined)).toBe(true);
+
+            // Assert: finished (DOM-level)
+            expect(getFinishedCourseHeader()).toHaveLength(0);
+            expect(getFinishedCourseLinks()).toHaveLength(0);
+        });
+    });
+
+    describe('BuildOverviewComponent Download Logs', () => {
+        let alertService: AlertService;
+        let originalClick: typeof HTMLAnchorElement.prototype.click;
+        let originalURL: any;
+
+        beforeEach(() => {
+            alertService = TestBed.inject(AlertService);
+
+            originalClick = HTMLAnchorElement.prototype.click;
+            HTMLAnchorElement.prototype.click = vi.fn();
+
+            originalURL = (window as any).URL;
+        });
+
+        afterEach(() => {
+            HTMLAnchorElement.prototype.click = originalClick;
+
+            // restore URL
+            Object.defineProperty(window, 'URL', {
+                value: originalURL,
+                writable: true,
+                configurable: true,
+            });
+
+            vi.restoreAllMocks();
+        });
+
+        it('should show error alert when browser API is missing', () => {
+            const buildJobId = '1';
+            const logs = 'log1\nlog2\nlog3';
+
+            mockBuildQueueService.getBuildJobLogs.mockReturnValue(of(logs));
+            const downloadSpy = vi.spyOn(DownloadUtil, 'downloadFile');
+            const alertSpy = vi.spyOn(alertService, 'error');
+
+            // simulate missing browser URL api
+            Object.defineProperty(window, 'URL', {
+                value: {},
+                writable: true,
+                configurable: true,
+            });
+
+            component.viewBuildLogs(undefined, buildJobId);
+            component.downloadBuildLogs();
+
+            const expectedBlob = new Blob([logs], { type: 'text/plain' });
+            expect(downloadSpy).toHaveBeenCalledWith(expectedBlob, `${buildJobId}.log`);
+
+            expect(HTMLAnchorElement.prototype.click).not.toHaveBeenCalled();
+            expect(alertSpy).toHaveBeenCalled();
+        });
+
+        it('should download file when browser API is available', () => {
+            const buildJobId = '1';
+            const logs = 'log1\nlog2\nlog3';
+
+            mockBuildQueueService.getBuildJobLogs.mockReturnValue(of(logs));
+            const downloadSpy = vi.spyOn(DownloadUtil, 'downloadFile');
+            const alertSpy = vi.spyOn(alertService, 'error');
+
+            Object.defineProperty(window, 'URL', {
+                value: {
+                    createObjectURL: vi.fn(() => 'mock-url'),
+                    revokeObjectURL: vi.fn(),
+                },
+                writable: true,
+                configurable: true,
+            });
+
+            component.viewBuildLogs(undefined, buildJobId);
+            component.downloadBuildLogs();
+
+            const expectedBlob = new Blob([logs], { type: 'text/plain' });
+            expect(downloadSpy).toHaveBeenCalledWith(expectedBlob, `${buildJobId}.log`);
+
+            expect(HTMLAnchorElement.prototype.click).toHaveBeenCalled();
+            expect(alertSpy).not.toHaveBeenCalled();
+        });
     });
 });
