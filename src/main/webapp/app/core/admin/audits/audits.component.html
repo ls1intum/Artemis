@@ -7,20 +7,27 @@
                 <div class="input-group-prepend">
                     <span class="input-group-text" jhiTranslate="audits.filter.from"></span>
                 </div>
-                <input type="date" class="form-control" name="start" [(ngModel)]="fromDate" (ngModelChange)="transition()" required />
+                <input type="date" class="form-control" name="start" [ngModel]="fromDate()" (ngModelChange)="updateFromDate($event); transition()" required />
                 <div class="input-group-append">
                     <span class="input-group-text" jhiTranslate="audits.filter.to"></span>
                 </div>
-                <input type="date" class="form-control" name="end" [(ngModel)]="toDate" (ngModelChange)="transition()" required />
+                <input type="date" class="form-control" name="end" [ngModel]="toDate()" (ngModelChange)="updateToDate($event); transition()" required />
             </div>
         </div>
     </div>
-    @if (audits?.length) {
+    @if (audits().length) {
         <div class="table-responsive">
             <table class="table table-sm table-striped" aria-describedby="audits-page-heading">
                 <thead>
-                    @if (canLoad) {
-                        <tr jhiSort [(predicate)]="predicate" [(ascending)]="ascending" (sortChange)="transition()">
+                    @if (canLoad()) {
+                        <tr
+                            jhiSort
+                            [predicate]="predicate()"
+                            [ascending]="ascending()"
+                            (predicateChange)="predicate.set($event)"
+                            (ascendingChange)="ascending.set($event)"
+                            (sortChange)="transition()"
+                        >
                             <th scope="col" jhiSortBy="auditEventDate"><span jhiTranslate="audits.table.header.date"></span> <fa-icon [icon]="faSort" /></th>
                             <th scope="col" jhiSortBy="principal"><span jhiTranslate="audits.table.header.principal"></span> <fa-icon [icon]="faSort" /></th>
                             <th scope="col" jhiSortBy="auditEventType"><span jhiTranslate="audits.table.header.status"></span> <fa-icon [icon]="faSort" /></th>
@@ -36,7 +43,7 @@
                     }
                 </thead>
                 <tbody>
-                    @for (audit of audits; track audit) {
+                    @for (audit of audits(); track audit) {
                         <tr>
                             <td>{{ audit.timestamp | artemisDate: 'long' : true }}</td>
                             <td>
@@ -58,18 +65,18 @@
         </div>
         <div>
             <div class="row justify-content-center">
-                <jhi-item-count [params]="{ page: page, totalItems: totalItems, itemsPerPage: itemsPerPage }" />
+                <jhi-item-count [params]="{ page: page(), totalItems: totalItems(), itemsPerPage: itemsPerPage }" />
             </div>
             <div class="row justify-content-center">
                 <ngb-pagination
-                    [collectionSize]="totalItems"
-                    [(page)]="page"
+                    [collectionSize]="totalItems()"
+                    [page]="page()"
                     [pageSize]="itemsPerPage"
                     [maxSize]="5"
                     [rotate]="true"
                     [boundaryLinks]="true"
-                    (pageChange)="transition()"
-                    [disabled]="!canLoad"
+                    (pageChange)="updatePage($event); transition()"
+                    [disabled]="!canLoad()"
                 />
             </div>
         </div>

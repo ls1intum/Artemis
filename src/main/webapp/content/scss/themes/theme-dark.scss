@@ -298,3 +298,10 @@ input:-webkit-autofill:active {
     transition: background-color 5000s ease-in-out 0s;
     box-shadow: inset 0 0 20px 20px $input-color;
 }
+
+// Feature toggle cards
+:root {
+    --feature-card-bg: #2e4a3a;
+    --feature-card-disabled-bg: #4a2e2e;
+    --feature-card-heading-color: #fff;
+}

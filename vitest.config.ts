@@ -24,7 +24,12 @@ export default defineConfig({
         globals: true,
         environment: 'jsdom',
         setupFiles: ['src/test/javascript/spec/vitest-test-setup.ts'],
-        include: ['src/main/webapp/app/fileupload/**/*.spec.ts', 'src/main/webapp/app/core/account/**/*.spec.ts'],
+        include: [
+            'src/main/webapp/app/fileupload/**/*.spec.ts',      // include fileupload tests
+            'src/main/webapp/app/core/account/**/*.spec.ts',    // include core account tests
+            'src/main/webapp/app/core/admin/**/*.spec.ts',      // include core admin tests
+            'src/main/webapp/app/buildagent/**/*.spec.ts'       // include build agent tests
+        ],
         exclude: ['**/node_modules/**', '**/build/**'],
         testTimeout: 10000,
         reporters: ['default', 'junit'],
@@ -38,7 +43,12 @@ export default defineConfig({
             provider: 'v8',
             reporter: ['text', 'lcov', 'html', 'json-summary'],
             reportsDirectory: 'build/test-results/vitest/coverage',
-            include: ['src/main/webapp/app/fileupload/**/*.ts', 'src/main/webapp/app/core/account/**/*.ts'],
+            include: [
+                'src/main/webapp/app/fileupload/**/*.ts',       // include fileupload for code coverage
+                'src/main/webapp/app/core/account/**/*.ts',     // include core account for code coverage
+                'src/main/webapp/app/core/admin/**/*.ts',       // include core admin for code coverage
+                'src/main/webapp/app/buildagent/**/*.ts'        // include buildagent for code coverage
+            ],
             exclude: ['**/node_modules/**', '**/*.spec.ts', '**/*.routes.ts', '**/*.model.ts'],
             thresholds: {
                 statements: 92.40,
