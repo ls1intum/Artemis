@@ -107,6 +107,12 @@ public class ExamRoomService {
                     throw new BadRequestAlertException("Invalid room file name: missing room number", ENTITY_NAME, "room.missingRoomNumber");
                 }
 
+                if (roomNumber.startsWith(".")) {
+                    // ignore hidden files, see https://github.com/ls1intum/Artemis/pull/11788#pullrequestreview-3606138410
+                    // (Mac can create hidden files with garbage data when creating zip archives)
+                    continue;
+                }
+
                 try {
                     ExamRoomInput examRoomInput = objectMapper.readValue(zis.readAllBytes(), ExamRoomInput.class);
 
