@@ -110,8 +110,8 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractA
     @MockitoBean(name = "nebulaRestTemplate")
     protected RestTemplate nebulaRestTemplate;
 
-    // Mock PasskeyAuthenticationService to allow admin operations in tests
-    // The @EnforceAdmin annotation requires passkey authentication to be mocked
+    // Mock PasskeyAuthenticationService to allow super admin operations in tests
+    // The @EnforceSuperAdmin annotation requires passkey authentication to be mocked
     @MockitoBean
     protected PasskeyAuthenticationService passkeyAuthenticationService;
 
@@ -120,7 +120,7 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractA
         if (chatModel != null) {
             when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("Mocked AI response for testing")))));
         }
-        // Mock passkey authentication to always return true for admin operations in tests
+        // Mock passkey authentication to always return true for super admin operations in tests
         when(passkeyAuthenticationService.isAuthenticatedWithSuperAdminApprovedPasskey()).thenReturn(true);
     }
 
