@@ -192,6 +192,7 @@
             "titleInvalid": "Der Titel ist ungültig.",
             "courseIdMissing": "Die courseId ist erforderlich.",
             "courseIdInvalid": "Der Kurs darf nicht geändert werden."
+        },
         "ModelingExercise": {
             "isNull": "Es wurde keine Modellierungsaufgabe übermittelt.",
             "idMissing": "Die Modellierungsaufgabe muss gespeichert werden, bevor sie umgewandelt werden kann.",
