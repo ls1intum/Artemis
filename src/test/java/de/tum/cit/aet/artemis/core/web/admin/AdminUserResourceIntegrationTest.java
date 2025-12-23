@@ -94,7 +94,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
     @WithMockUser(username = "admin", roles = "ADMIN")
     void createUser_createSuperAdminByNonSuperAdmin_forbidden() throws Exception {
         ManagedUserVM managedUserVM = userUtilService.createManagedUserVM("newsuperadmin");
-        managedUserVM.setAuthorities(Set.of(Authority.SUPER_ADMIN_AUTHORITY.toString()));
+        managedUserVM.setAuthorities(Set.of(Authority.SUPER_ADMIN_AUTHORITY.getName()));
 
         mockMvc.perform(post("/api/core/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(managedUserVM)))
                 .andExpect(status().isForbidden());
