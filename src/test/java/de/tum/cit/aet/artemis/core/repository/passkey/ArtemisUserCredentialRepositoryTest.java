@@ -36,9 +36,16 @@ class ArtemisUserCredentialRepositoryTest extends AbstractSpringIntegrationIndep
 
     private User adminUser;
 
+    private User tutorUser;
+
+    private User editorUser;
+
+    private User instructorUser;
+
     enum UserTestCase {
 
-        SUPER_ADMIN("superadmin-passkey", true), REGULAR_USER("regular-user-passkey", false), ADMIN("admin-user-passkey", false);
+        SUPER_ADMIN("superadmin-passkey", true), REGULAR_USER("regular-user-passkey", false), ADMIN("admin-user-passkey", false), TUTOR("tutor-passkey", false),
+        EDITOR("editor-passkey", false), INSTRUCTOR("instructor-passkey", false);
 
         private final String label;
 
@@ -60,8 +67,11 @@ class ArtemisUserCredentialRepositoryTest extends AbstractSpringIntegrationIndep
 
     @BeforeAll
     void setUp() {
-        userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
+        userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
         regularUser = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        tutorUser = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
+        editorUser = userUtilService.getUserByLogin(TEST_PREFIX + "editor1");
+        instructorUser = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
 
         // Create super admin user
         superAdminUser = userUtilService.createAndSaveUser(TEST_PREFIX + "superadmin");
@@ -79,6 +89,9 @@ class ArtemisUserCredentialRepositoryTest extends AbstractSpringIntegrationIndep
             case SUPER_ADMIN -> superAdminUser;
             case REGULAR_USER -> regularUser;
             case ADMIN -> adminUser;
+            case TUTOR -> tutorUser;
+            case EDITOR -> editorUser;
+            case INSTRUCTOR -> instructorUser;
         };
     }
 
