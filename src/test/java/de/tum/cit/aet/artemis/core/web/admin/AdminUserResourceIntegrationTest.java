@@ -1,16 +1,19 @@
 package de.tum.cit.aet.artemis.core.web.admin;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.Set;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -19,6 +22,7 @@ import de.tum.cit.aet.artemis.core.domain.Authority;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.service.PasskeyAuthenticationService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndependentTest {
@@ -28,6 +32,14 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @MockitoBean
+    private PasskeyAuthenticationService passkeyAuthenticationService;
+
+    @BeforeEach
+    void initTestCase() {
+        when(passkeyAuthenticationService.isAuthenticatedWithSuperAdminApprovedPasskey()).thenReturn(true);
+    }
 
     // ==================== Admin trying to escalate privileges - Update User ====================
 
