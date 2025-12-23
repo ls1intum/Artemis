@@ -9,54 +9,659 @@ import {CalloutVariant} from "../../src/components/Callout/Callout.types";
 
 # Setup Guide
 
-This guide explains how to set up Artemis in your development or demo environment.
+This guide explains how to set up Artemis in your development environment or a demo production environment. For production setups, you would need to additionally consider topics discussed in the [Administration Setup](/admin).
+
+Running Artemis consists of two main steps:
+
+1. **Set up the development environment** (see [Development Environment Setup](#development-environment-setup)).
+2. **Set up Artemis** (see [Set up Artemis](#set-up-artemis)), which includes setting up optional but recommended features such as programming exercises. The installation guide provides two options for programming exercises, including version control and build system setup.
+
+Artemis is based on [JHipster](https://jhipster.github.io), combining:
+
+- [Spring Boot](http://projects.spring.io/spring-boot) (Java 25) for the application server.
+- [Angular 20](https://angular.dev) (TypeScript) for the web application that serves the user interface.
+
+To get an overview of the technology stack, visit the [JHipster Technology Stack](https://jhipster.github.io/tech-stack) and refer to other tutorials on the JHipster homepage.
 
 ---
 
 ## Development Environment Setup
 
-Install the following prerequisites:
+Before installing Artemis, install and configure the following dependencies:
+
+### Required Dependencies
 
 1. **Java JDK 25**
-2. **Database Server** (MySQL or PostgreSQL)
-3. **Node.js (LTS ≥ 24.7.0)** and **npm ≥ 11.5.1**
-4. *(Optional)* **Graphviz** — used for generating diagrams in exercises.
+   Download and install Java, e.g. from [Oracle JDK](https://www.oracle.com/java/technologies/javase-downloads.html).
+
+2. **Database Server**
+   Artemis uses Hibernate for database interactions and Liquibase for schema migrations.
+   You can either use MySQL or PostgreSQL as the database server. See [Database Setup](#database-setup) for details.
+
+3. **Node.js (LTS ≥ 24.7.0 < 25)**
+   Download from [Node.js](https://nodejs.org/en/download).
+   Required for compiling and running the Angular client.
+
+4. **npm (≥ 11.5.1)**
+   Installed automatically with Node.js but can be updated separately.
+
+5. **Graphviz (Optional, but Recommended for Production Setups)**
+   Install from [Graphviz](https://www.graphviz.org/download/) to enable graph generation in exercise descriptions.
 
 <Callout variant={CalloutVariant.warning}>
-    <p>Missing Graphviz in production may cause rendering errors for exercise descriptions.</p>
+    Missing Graphviz in production may cause rendering errors for exercise descriptions.
 </Callout>
 
 ---
 
-## IDE Setup
+### IDE Setup
 
-We recommend **IntelliJ IDEA Ultimate** for full Spring Boot support.
-The Community Edition lacks advanced Spring features.
+We recommend using [IntelliJ IDEA Ultimate](https://www.jetbrains.com/idea) for development.
+Refer to JHipster's guide on configuring an IDE: [JHipster IDE Setup](https://jhipster.github.io/configuring-ide).
 
-👉 [Compare Editions](https://www.jetbrains.com/idea/features/editions_comparison_matrix.html)
-
----
-
-## Setting Up Artemis
-
-After dependencies are installed:
-
-1. Configure the Artemis **server** (see `Server Setup` guide).
-2. Configure the **client** using the `Client Setup` guide.
-3. Optionally enable integrated **programming exercises**.
-
-<Callout variant={CalloutVariant.success}>
-    <p>When using local development, the integrated code lifecycle allows you to create programming exercises without
-        external Jenkins or GitLab.</p>
+<Callout variant={CalloutVariant.info}>
+    The Community Edition of IntelliJ IDEA lacks Spring Boot support. See the [comparison matrix](https://www.jetbrains.com/idea/features/editions_comparison_matrix.html) for details.
 </Callout>
 
 ---
 
-## Production Setup and Extensions
+## Set up Artemis
 
-For production environments, apply security best practices and consider optional extensions like:
+Once the development environment is set up, the next step is to configure the Artemis server. This includes optional features such as programming exercises, which require a version control and build system.
 
-- **Hermes:** mobile notifications
-- **Athena/Iris:** AI-based feedback generation
+Start by following the [Database Setup](#database-setup) guide, then proceed with [Server Setup](#server-setup) and [Client Setup](#client-setup).
 
-See *Extension Services Setup* for more details.
+---
+
+## Database Setup
+
+Artemis supports MySQL and PostgreSQL databases. The required Artemis schema is created or updated automatically when the server application starts.
+
+### MySQL Setup
+
+You can set up a MySQL database for Artemis using one of the following methods:
+
+#### 1. Using Docker (Recommended)
+
+The easiest way to set up a MySQL database for development is by using Docker.
+Run the following command to start a MySQL database using the provided Docker Compose file:
+
+```bash
+docker compose -f docker/mysql.yml up
+```
+
+This method simplifies setup and management, making it ideal for development environments.
+
+#### 2. Using a Local MySQL Installation
+
+If you prefer to install MySQL locally, download and install the [MySQL Community Server (9.2.x)](https://dev.mysql.com/downloads/mysql) from the official MySQL website.
+
+When running a local MySQL server, ensure the following settings for character encoding and collation:
+
+- **character-set:** `utf8mb4`
+- **collation:** `utf8mb4_unicode_ci`
+
+These settings can be configured using a `my.cnf` file located in `/etc`:
+
+```ini
+[client]
+default-character-set = utf8mb4
+[mysql]
+default-character-set = utf8mb4
+[mysqld]
+character-set-client-handshake = TRUE
+init-connect='SET NAMES utf8mb4'
+character-set-server = utf8mb4
+collation-server = utf8mb4_unicode_ci
+```
+
+Ensure that MySQL loads this configuration file when starting the server.
+For more details, refer to the official MySQL documentation: [MySQL Option Files](https://dev.mysql.com/doc/refman/9.2/en/option-files.html).
+
+#### Users for MySQL
+
+For the development environment, the default MySQL user is `root` with an empty password.
+(In case you want to use a different password, make sure to change the value in `application-local.yml` *(spring > datasource > password)* and in `liquibase.gradle` *(within the 'liquibaseCommand' as argument password)*).
+
+#### Set empty root password for MySQL 9
+
+If you have problems connecting to the MySQL 9 database using an empty root password, you can try the following command to reset the root password to an empty password:
+
+```bash
+mysql -u root --execute "ALTER USER 'root'@'localhost' IDENTIFIED WITH caching_sha2_password BY ''";
+```
+
+<Callout variant={CalloutVariant.warning}>
+    Empty root passwords should only be used in a development environment. The root password for a production environment must never be empty.
+</Callout>
+
+### PostgreSQL Setup
+
+No special PostgreSQL settings are required.
+You can either use your package manager's version, or set it up using a container.
+An example Docker Compose setup based on the [official container image](https://hub.docker.com/_/postgres) is provided in `docker/postgres.yml`.
+
+When setting up the Artemis server, the following values need to be added/updated in the server configuration (see setup steps below) to connect to PostgreSQL instead of MySQL:
+
+```yaml
+spring:
+    datasource:
+        url: jdbc:postgresql://localhost:5432/Artemis?ssl=false
+        username: Artemis
+    jpa:
+        database: POSTGRESQL
+```
+
+<Callout variant={CalloutVariant.info}>
+    This example assumes that you use the mentioned Docker Compose file on your localhost, leading to a database called `Artemis` that runs on port `5432` and where no password is necessary. You might have to update `spring.datasource.url` if you use another configuration and set the password in `spring.datasource.password`.
+</Callout>
+
+---
+
+## Server Setup
+
+To start the Artemis application server from the development environment, first import the project into IntelliJ IDEA.
+Make sure to install the **Spring Boot** plugins for IntelliJ IDEA, this will make it easier to run the server.
+
+Before starting the application, update the required configuration settings.
+
+### Configuration Setup
+
+Configuration settings are stored in `application-artemis.yml` (located in `src/main/resources/config`).
+However, **do not modify this file directly**, as it may lead to accidental commits of sensitive information.
+
+Instead, follow these best practices:
+
+1. **Create a custom configuration file**
+    - In `src/main/resources/config`, create a new file named `application-local.yml`.
+    - This file is used to override settings in application.yml for local development environments. It is configured to be ignored by Git to ensure that local configurations are not committed.
+
+2. **Customize configuration settings**
+    - If you want to change application properties, you should do that in `application-local.yml`.
+    - If needed, you can modify values such as database credentials, authentication and application settings.
+
+3. **Activate the correct profile**
+    - When running Artemis, ensure the `local` profile is selected in the run configurations.
+    - For additional custom configurations, create `application-<name>.yml` and activate the `<name>` profile.
+
+### Common Configuration Options
+
+For **development purposes, these settings are preconfigured, and no action is necessary** in this step.
+You only need to modify them if your specific work or production environments require changes.
+
+```yaml
+artemis:
+    repo-clone-path: ./repos/
+    legal-path: ./legal/
+    repo-download-clone-path: ./repos-download/
+    bcrypt-salt-rounds: 11   # The number of salt rounds for bcrypt password hashing.
+                             # Lower values improve speed but reduce security.
+                             # Use the bcrypt benchmark tool to determine an optimal value: https://github.com/ls1intum/bcrypt-Benchmark
+
+    user-management:
+        use-external: true # enables ldap authentication
+        password-reset:
+            links:
+                en: '<link>'
+                de: '<link>'
+        ldap:
+            url: <url>
+            user-dn: <user-dn>
+            password: <password>
+            base: <base>
+            allowed-username-pattern: '^([a-z]{2}\d{2}[a-z]{3})$'    # example for a TUM identifier, e.g. ab12cde
+
+    git:
+        name: Artemis
+        email: artemis@in.tum.de
+
+    athena:
+        # If you want to use Athena, refer to the dedicated configuration section. Under Administration Guide, Setup of Extension Services.
+```
+
+<Callout variant={CalloutVariant.info}>
+    If you use a password for authentication, update it in `gradle/liquibase.gradle`.
+</Callout>
+
+### Version Control & Continuous Integration Setup
+
+If you are setting up **programming exercises**, additional configuration is required for the version control and build system.
+Refer to one of the following guides based on your preferred setup:
+
+- **Integrated Code Lifecycle Setup (Recommended):** [Integrated Code Lifecycle Setup](#integrated-code-lifecycle-setup)
+- **LocalVC + Jenkins Setup:** See the old documentation under `/docs/dev/setup/jenkins-localvc.rst`
+
+### Run the server via a run configuration in IntelliJ
+
+The project comes with some pre-configured run / debug configurations that are stored in the `.idea` directory.
+When you import the project into IntelliJ the run configurations will also be imported.
+
+The recommended way is to run the server and the client separately. This provides fast rebuilds of the server and hot module replacement in the client.
+
+- **Artemis (Client):** Will execute `npm install` and `npm run start`. The client will be available at [http://localhost:9000/](http://localhost:9000/) with hot module replacement enabled (also see [Client Setup](#client-setup)).
+- **Artemis (Server, LocalVC & LocalCI):** The server will be started separated from the client with the profiles `dev,localci,localvc,artemis,scheduling,buildagent,core,atlas,ldap,local`.
+- **Artemis (Server, LocalVC & Jenkins):** The server will be started separated from the client with the profiles `dev,jenkins,localvc,artemis,scheduling,core,atlas,local`.
+- **Artemis (Server, LocalVC & LocalCI, Athena):** The server will be started separated from the client with `athena` profile and Local VC / CI enabled.
+- **Artemis (Server, LocalVC & LocalCI, Theia):** The server will be started separated from the client with `theia` profile and Local VC / CI enabled.
+- **Artemis (BuildAgent):** The server will be started separated from the client with the profiles `buildagent,local`. This configuration is used to run the build agent for the local CI. This configuration is rarely needed for development.
+
+<details>
+<summary>Deprecated Options</summary>
+
+- **Artemis (Server):** The server will be started separated from the client. The startup time decreases significantly.
+- **Artemis (Server & Client):** Will start the server and the client. The client will be available at [http://localhost:8080/](http://localhost:8080/) with hot module replacement disabled.
+
+</details>
+
+### Run the server via Docker
+
+<Callout variant={CalloutVariant.info}>
+    This method provides a fast way to start Artemis for demonstration purposes. It is **not recommended** for development, as it does not support code modifications or debugging.
+</Callout>
+
+Artemis provides a Docker image named `ghcr.io/ls1intum/artemis:<TAG/VERSION>`:
+
+- The **current develop branch** is available under the tag `develop`.
+- The **latest stable release** can be retrieved using the tag `latest`.
+- **Specific releases**, such as `7.10.8`, can be accessed with `ghcr.io/ls1intum/artemis:7.10.8`.
+- **Branches tied to a pull request** can be obtained using `PR-<PR NUMBER>`.
+
+#### Dockerfile
+
+You can find the latest Artemis Dockerfile at `docker/artemis/Dockerfile`.
+
+- The Dockerfile has [multiple stages](https://docs.docker.com/build/building/multi-stage/): A **builder** stage, building the `.war` file, an optional **external_builder** stage to import a pre-built `.war` file, a **war_file** stage to choose between the builder stages via build argument and a **runtime** stage with minimal dependencies just for running artemis.
+
+- The Dockerfile defines three Docker volumes (at the specified paths inside the container):
+
+    - **/opt/artemis/config:**
+
+      This can be used to store additional configurations of Artemis in YAML files.
+      The usage is optional, and we recommend using the environment files for overriding your custom configurations instead of using `src/main/resources/application-local.yml` as such an additional configuration file.
+      The other configurations like `src/main/resources/application.yml`, ... are built into the `.war` file and therefore are not needed in this directory.
+
+      <Callout variant={CalloutVariant.info}>
+        Instead of mounting this config directory, you can also use environment variables for the configuration as defined by the [Spring relaxed binding](https://github.com/spring-projects/spring-boot/wiki/Relaxed-Binding-2.0#environment-variables). You can either place those environment variables directly in the `environment` section, or create a [.env-file](https://docs.docker.com/compose/environment-variables/set-environment-variables/#substitute-with-an-env-file). When starting an Artemis container directly with the Docker-CLI, an .env-file can also be given via the `--env-file` option. To ease the transition of an existing set of YAML configuration files into the environment variable style, a [helper script](https://github.com/b-fein/spring-yaml-to-env) can be used.
+      </Callout>
+
+    - **/opt/artemis/data:**
+
+      This directory should be used for any data (e.g., local clone of repositories).
+      This is preconfigured in the `docker` Java Spring profile (which sets the following values: `artemis.repo-clone-path`, `artemis.repo-download-clone-path`, `artemis.course-archives-path`, `artemis.submission-export-path` `artemis.legal-path`, and `artemis.file-upload-path`).
+
+    - **/opt/artemis/public/content:**
+
+      This directory will be used for branding. You can specify a favicon here.
+
+- The Dockerfile assumes that the mounted volumes are located on a file system with the following locale settings (see [#4439](https://github.com/ls1intum/Artemis/issues/4439) for more details):
+
+    - LC_ALL `en_US.UTF-8`
+    - LANG `en_US.UTF-8`
+    - LANGUAGE `en_US.UTF-8`
+
+<Callout variant={CalloutVariant.warning}>
+    **ARM64 Image builds** might run out of memory if not provided with enough memory and/or swap space. On a *Apple M1* we had to set the **Docker Desktop** memory limit to 12GB or more.
+</Callout>
+
+#### Debugging with Docker
+
+The Docker containers have the possibility to enable Java Remote Debugging via Java environment variables.
+Java Remote Debugging lets you use your preferred debugger connected to port 5005.
+For IntelliJ, you can use the `Remote Java Debugging for Docker` profile shipped in the git repository.
+
+With the following Java environment variable, you can configure the Remote Java Debugging inside a container:
+
+```
+_JAVA_OPTIONS="-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"
+```
+
+This is already pre-set in the Docker Compose **Artemis-Dev-MySQL** Setup.
+For issues at the startup, you might have to suspend the java command until a Debugger is connected.
+This is possible by setting `suspend=y`.
+
+### Run the server with Spring Boot and Spring profiles
+
+The Artemis server should startup by running the main class `de.tum.cit.aet.artemis.ArtemisApp` using Spring Boot.
+
+<Callout variant={CalloutVariant.info}>
+    Artemis uses Spring profiles to segregate parts of the application configuration and make it only available in certain environments. For development purposes, the following program arguments can be used to enable the `dev` profile and the profiles for Jenkins and LocalVC:
+</Callout>
+
+```
+--spring.profiles.active=dev,jenkins,localvc,artemis,scheduling
+```
+
+If you use IntelliJ (Community or Ultimate) you can set the active profiles by:
+
+- Choosing `Run | Edit Configurations...`
+- Going to the `Configuration Tab`
+- Expanding the `Environment` section to reveal `VM Options` and setting them to `-Dspring.profiles.active=dev,jenkins,localvc,artemis,scheduling`
+
+#### Set Spring profiles with IntelliJ Ultimate
+
+If you use IntelliJ Ultimate, add the following entry to the section `Active Profiles` (within `Spring Boot`) in the server run configuration:
+
+```
+dev,jenkins,localvc,artemis,scheduling
+```
+
+### Run the server with the command line (Gradle wrapper)
+
+If you want to run the application via the command line instead, make sure to pass the active profiles to the `gradlew` command like this:
+
+```bash
+./gradlew bootRun --args='--spring.profiles.active=dev,jenkins,localvc,artemis,scheduling'
+```
+
+### Hyperion (Optional)
+
+Hyperion provides AI-assisted exercise creation features via Spring AI. No external Edutelligence service is required, only a LLM provider such as OpenAI or Azure OpenAI.
+
+<Callout variant={CalloutVariant.info}>
+    For local development with LM Studio (no cloud API keys required), see the [Spring AI Development Guide](/staff/spring-ai).
+</Callout>
+
+For production setup, see [Hyperion Service](/admin/hyperion) in the Administration Guide for instructions on enabling the module in production and configuring LLM credentials.
+
+---
+
+## Client Setup
+
+You need to install Node and npm on your local machine.
+
+### Using IntelliJ
+
+If you are using **IntelliJ** you can use the pre-configured `Artemis (Client)` run configuration that will be delivered with this repository:
+
+- Choose `Run | Edit Configurations...`
+- Select the `Artemis (Client)` configuration from the `npm section`
+- Now you can run the configuration in the upper right corner of IntelliJ
+
+### Using the command line
+
+You should be able to run the following command to install development tools and dependencies. You will only need to run this command when dependencies change in `package.json`.
+
+```bash
+npm install
+```
+
+To start the client application in the browser, use the following command:
+
+```bash
+npm run start
+```
+
+This compiles TypeScript code to JavaScript code, starts the live reloading feature (i.e. whenever you change a TypeScript file and save, the client is automatically reloaded with the new code) and will start the client application in your browser on `http://localhost:9000`. If you have configured `application-artemis.yml` correctly, then you should be able to login with your TUM Online account.
+
+<Callout variant={CalloutVariant.info}>
+    In case you encounter any problems regarding JavaScript heap memory leaks when executing `npm run start` or any other scripts from `package.json`, you can adjust a [memory limit parameter](https://nodejs.org/docs/latest-v24.x/api/cli.html#--max-old-space-sizesize-in-megabytes) (`node-options=--max-old-space-size=6144`) which is set by default in the project-wide `.npmrc` file. If you still face the issue, you can try to set a lower/higher value than 6144 MB. Recommended values are 3072 (3GB), 4096 (4GB), 5120 (5GB), 6144 (6GB), 7168 (7GB), and 8192 (8GB). You can override the project-wide `.npmrc` file by [using a per-user config file (~/.npmrc)](https://docs.npmjs.com/cli/v8/configuring-npm/npmrc). Make sure to **not commit changes** in the project-wide `.npmrc` unless the Github build also needs these settings.
+</Callout>
+
+For more information, review [Working with Angular](https://www.jhipster.tech/development/#working-with-angular).
+For further instructions on how to develop with JHipster, have a look at [Using JHipster in development](http://www.jhipster.tech/development).
+
+---
+
+## Integrated Code Lifecycle Setup
+
+This section describes how to set up a programming exercise environment based on the Integrated Code Lifecycle, which includes a local Version Control system and a local Continuous Integration system.
+These two systems are integrated into the Artemis server application, and thus, the setup is greatly simplified compared to the external options.
+This also reduces system requirements as you do not have to run any systems in addition to the Artemis server.
+
+If you are setting Artemis up for the first time, these are the steps you should follow:
+
+- Install and run Docker: https://docs.docker.com/get-docker (required for processing and testing student submissions)
+- Start the database: [Database Setup](#database-setup) (ignore if previously done, you should either have a database running locally or in a container)
+- [Configure Artemis](#configure-artemis-for-integrated-code-lifecycle)
+- (optional) [Configure Build Management](#configure-build-management)
+- [Start Artemis](#start-artemis-with-integrated-code-lifecycle)
+- [Test the Setup](#test-the-integrated-code-lifecycle-setup)
+
+You can see the configuration in the following video:
+
+<iframe
+    src="https://live.rbg.tum.de/w/artemisintro/34536?video_only=1&t=0"
+    title="Video version of the setup guide on TUM-Live"
+    width="600"
+    height="350"
+    allowFullScreen
+    loading="lazy"
+    allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
+    referrerPolicy="no-referrer-when-downgrade"
+    style={{border: 0}}>
+    Video version of the setup guide on TUM-Live.
+</iframe>
+
+### Configure Artemis for Integrated Code Lifecycle
+
+Create a file `src/main/resources/config/application-local.yml` with the following content:
+
+```yaml
+artemis:
+    user-management:
+        use-external: false # set to true if you want to use ldap as external user management system. For development, this should be false for easy setup.
+    version-control:
+        url: http://localhost:8080
+        # order and supported authentication mechanisms:
+        repository-authentication-mechanisms: password,token,ssh
+    continuous-integration:
+        # Only necessary on ARM-based systems, the default is amd64 for Intel/AMD systems
+        # ARM-based systems include Apple M-series, Raspberry Pi, etc.
+        image-architecture: arm64
+        # Only necessary on Windows:
+        docker-connection-uri: tcp://localhost:2375
+eureka:
+    client:
+        register-with-eureka: false
+        fetch-registry: false
+```
+
+The values configured here are sufficient for a basic Artemis setup that allows for running programming exercises with Integrated Code Lifecycle.
+The `repository-authentication-mechanisms` field configures the repository authentication mechanisms (password, token, or SSH).
+
+If you are running Artemis on Windows, you also need to add a property `artemis.continuous-integration.docker-connection-uri` with the value `tcp://localhost:2375` as shown above.
+If you are running Artemis inside of a docker container, use `tcp://host.docker.internal:2375` instead.
+Make sure that Artemis can access docker by activating the "Expose daemon on tcp://localhost:2375 without TLS" option under Settings > General in Docker Desktop.
+
+When you start Artemis for the first time, it will automatically create an admin user called "artemis_admin".
+You can then use that admin user to create further users in Artemis' internal user management system.
+
+### Configure Build Management
+
+This step is optional for development purposes.
+
+The Local CI subsystem of the Integrated Code Lifecycle is used to automatically build and test student submissions.
+By default, the number of concurrent builds that can be executed is determined by the number of available CPU cores.
+You can manually determine this number by adding the following property to the `src/main/resources/config/application-local.yml` file:
+
+```yaml
+artemis:
+    continuous-integration:
+        specify-concurrent-builds: true
+        # The number of concurrent builds that can be executed
+        concurrent-build-size: 2
+        # More options can be found in application-localci.yml and application-buildagent.yml
+```
+
+More options can be found in `src/main/resources/config/application-localci.yml` and `src/main/resources/config/application-buildagent.yml`.
+
+### Start Artemis with Integrated Code Lifecycle
+
+For the development environment, you can start Artemis with the following additional profiles: `localci`, `localvc` and `buildagent`.
+It is important to consider the **correct order** of the profiles, as the `core` profile needs to overwrite the `buildagent` profile, e.g.:
+
+```
+--spring.profiles.active=dev,localci,localvc,artemis,scheduling,buildagent,core,local
+```
+
+All of these profiles are enabled by default when using the `Artemis (Server, LocalVC & LocalCI)` run configuration in IntelliJ.
+Please read [Run the server via a run configuration in IntelliJ](#run-the-server-via-a-run-configuration-in-intellij) for more details.
+
+### Test the Integrated Code Lifecycle Setup
+
+You can now test the setup:
+
+To create a course with registered users, you can use the scripts from `supporting_scripts/course-setup-quickstart`.
+
+- Create a course and a programming exercise.
+
+<iframe
+    src="https://live.rbg.tum.de/w/artemisintro/34537?video_only=1&t=0"
+    title="Video of creating a programming exercise on TUM-Live"
+    width="600"
+    height="350"
+    allowFullScreen
+    loading="lazy"
+    allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
+    referrerPolicy="no-referrer-when-downgrade"
+    style={{border: 0}}>
+    Video of creating a programming exercise on TUM-Live.
+</iframe>
+
+- Log in as a student registered for that course and participate in the programming exercise, either from the online editor or by cloning the repository and pushing from your local environment.
+
+<iframe
+    src="https://live.rbg.tum.de/w/artemisintro/34538?video_only=1&t=0"
+    title="Video showcasing how to participate in a programming exercise from the online editor and from a local Git client on TUM-Live"
+    width="600"
+    height="350"
+    allowFullScreen
+    loading="lazy"
+    allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
+    referrerPolicy="no-referrer-when-downgrade"
+    style={{border: 0}}>
+    Video showcasing how to participate in a programming exercise from the online editor and from a local Git client on TUM-Live.
+</iframe>
+
+- Make sure that the result of your submission is displayed in the Artemis UI.
+- Users can access their repositories via HTTPS and SSH. For SSH to work, you must first [configure SSH](/admin/production-setup/security#ssh-access).
+
+For unauthorized access, your Git client will display the respective error message:
+
+<iframe
+    src="https://live.rbg.tum.de/w/artemisintro/34539?video_only=1&t=0"
+    title="Video showcasing unauthorized access to a local VC repository on TUM-Live"
+    width="600"
+    height="350"
+    allowFullScreen
+    loading="lazy"
+    allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
+    referrerPolicy="no-referrer-when-downgrade"
+    style={{border: 0}}>
+    Video showcasing unauthorized access to a local VC repository on TUM-Live.
+</iframe>
+
+### Setup with Docker Compose
+
+You can also use Docker Compose to set up Integrated Code Lifecycle. Using the following command, you can start the Artemis and MySQL containers:
+
+```bash
+docker compose -f docker/artemis-dev-local-vc-local-ci-mysql.yml up
+```
+
+<Callout variant={CalloutVariant.info}>
+    **Unix systems:** When running the Artemis container on a Unix system, you will have to give the user running the container permission to access the Docker socket by adding them to the `docker` group. You can do this by changing the value of `services.artemis-app.group_add` in the `docker/artemis-dev-local-vc-local-ci-mysql.yml` file to the group ID of the `docker` group on your system. You can find the group ID by running `getent group docker | cut -d: -f3`. The default value is `999`.
+</Callout>
+
+<Callout variant={CalloutVariant.info}>
+    **Windows:** If you want to run the Docker containers locally on Windows, you will have to change the value for the Docker connection URI. You can add `ARTEMIS_CONTINUOUSINTEGRATION_DOCKERCONNECTIONURI="tcp://host.docker.internal:2375"` to the environment file, found in `docker/artemis/config/dev-local-vc-local-ci.env`. This overwrites the default value `unix:///var/run/docker.sock` for this property defined in `src/main/resources/config/application-docker.yml`.
+</Callout>
+
+### Podman as Docker alternative
+
+[Podman](https://podman.io/) offers a container runtime that is API-compatible with Docker.
+Rather than having a system-wide socket that runs with administrative permissions, Podman allows creating containers with only user permissions.
+In single-user setups this might not be as relevant, but offers additional security in a production environment where the Artemis CI has to execute untrusted student code.
+
+<Callout variant={CalloutVariant.info}>
+    Podman is supported on a best-effort basis. We are relying on the API compatibility to provide support but are not actively testing against Podman on a test system or in continuous integration. If you notice any issues, feel free to open an issue or pull request so that we can try to fix them.
+</Callout>
+
+<Callout variant={CalloutVariant.info}>
+    These setup steps are mostly focused on Linux systems. On Mac and Windows, both Docker and Podman run the containers in a small virtual machine anyway. Therefore, there is little technical benefit relevant to Artemis for choosing one over the other in local development setups. If in doubt, we recommend using Docker, since that solution is most likely to be tested by Artemis developers.
+</Callout>
+
+#### Linux setup
+
+Podman itself should be available via your regular package manager.
+
+After the installation, you have to ensure that your user is allowed to create containers.
+This is managed by the files `/etc/subuid` and `/etc/subgid`.
+Ensure both files contain a line starting with your username.
+If not, you can generate the relevant lines by executing the following command:
+
+```bash
+#! /usr/bin/env sh
+
+printf "%s:%d:65536\n" "$USER" "$(( $(id -u) * 65536 ))" | tee -a /etc/subuid /etc/subgid
+```
+
+After that, enable the Podman user socket that provides the API for the container management:
+
+```bash
+systemctl --user enable --now podman.socket
+```
+
+Configure the connection to this socket in Artemis by replacing `${UID}` with your actual user id (`id -u`):
+
+```yaml
+artemis:
+    continuous-integration:
+        docker-connection-uri: "unix:///run/user/${UID}/podman/podman.sock"
+        # alternatively, if you use the `DOCKER_HOST` environment variable already
+        # to tell other tools to use the Podman socket instead of the Docker one:
+        # docker-connection-uri: "${DOCKER_HOST}"
+```
+
+#### Windows or Mac setup
+
+Podman offers a [desktop application](https://podman-desktop.io/) application similar to Docker desktop and [CLI tools](https://podman.io) for Windows, macOS, and Linux.
+As with Docker, to run containers on Windows or macOS, the runtime has to start a small virtual Linux machine that then actually runs the containers.
+You can probably connect to this VM similarly as described in the regular setup steps above ([additional Podman documentation](https://podman-desktop.io/docs/migrating-from-docker/using-the-docker_host-environment-variable)).
+
+<Callout variant={CalloutVariant.info}>
+    If you try out Podman on a Windows or Mac system and have additional setup tips, feel free to submit a pull request to extend this documentation section.
+</Callout>
+
+---
+
+## Common Setup Problems
+
+### General Setup Problems
+
+- Restarting IntelliJ with invalidated caches *(File > Invalidate Caches...)* might resolve the current issue.
+- When facing issues with deep dependencies and changes were made to the `package.json` file, executing `npm install --force` might resolve the issue.
+- When encountering a compilation error due to `invalid source release` make sure that you have set the Java version properly at 3 places:
+  - File > Project Structure > Project Settings > Project > Project SDK
+  - File > Project Structure > Project Settings > Project > Project Language Level
+  - File > Settings > Build, Execution, Deployment > Build Tools > Gradle > Gradle JVM
+
+### Database
+
+- On the first startup, there might be issues with the `text_block` table. You can resolve the issue by executing `ALTER TABLE text_block CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;` in your database.
+- One typical problem in the development setup is that an exception occurs during the database initialization. Artemis uses [Liquibase](https://www.liquibase.org) to automatically upgrade the database scheme after the data model has changed. This ensures that the changes can also be applied to the production server. In case you encounter errors with Liquibase checksum values:
+  - Run the following command in your terminal / command line: `./gradlew liquibaseClearChecksums`
+  - You can manually adjust the checksum for a breaking changelog: `UPDATE `DATABASECHANGELOG` SET `MD5SUM` = NULL WHERE `ID` = '<changelogId>'`
+
+### Client
+
+- If you are using a machine with limited RAM *(e.g. ~8 GB RAM)* you might have issues starting the Artemis Client. You can resolve this by following the description in [Using the command line](#using-the-command-line).
+
+---
+
+## Production Setup and Extension Services
+
+### Production Setup
+
+A production setup of these core services might need further adaptation to ensure security.
+For details on securing your production environment, see the [Administration Setup](/admin).
+
+### Extension Services
+
+Artemis allows extension with several additional services, such as:
+
+- Mobile notifications via **Hermes**
+- Automatic feedback generation using large language models (e.g., **Iris/Athena**)
+- And more...
+
+The setup for these additional services is described as part of the [Extension Service Setup](/admin).
