@@ -212,38 +212,38 @@ describe('UserManagementUpdateComponent', () => {
             expect(component.editForm.controls['id']).toBeDefined();
         });
 
-        it('should include SUPER_ADMIN authority when current user is a super admin', fakeAsync(() => {
+        it('should include SUPER_ADMIN authority when current user is a super admin', () => {
             // GIVEN
             const accountService = TestBed.inject(AccountService);
-            jest.spyOn(accountService, 'isSuperAdmin').mockReturnValue(true);
-            jest.spyOn(service, 'authorities').mockReturnValue(of([Authority.STUDENT, Authority.ADMIN, Authority.SUPER_ADMIN]));
-            jest.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue({ activeProfiles: ['jenkins'] } as ProfileInfo);
+            vi.spyOn(accountService, 'isSuperAdmin').mockReturnValue(true);
+            vi.spyOn(adminUserService, 'authorities').mockReturnValue(of([Authority.STUDENT, Authority.ADMIN, Authority.SUPER_ADMIN]));
+            vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeProfiles: ['jenkins'] } as ProfileInfo);
 
             // WHEN
-            comp.ngOnInit();
+            component.ngOnInit();
 
             // THEN
-            expect(service.authorities).toHaveBeenCalledOnce();
+            expect(adminUserService.authorities).toHaveBeenCalledOnce();
             expect(accountService.isSuperAdmin).toHaveBeenCalledOnce();
-            expect(comp.authorities).toEqual([Authority.STUDENT, Authority.ADMIN, Authority.SUPER_ADMIN]);
-        }));
+            expect(component.authorities()).toEqual([Authority.STUDENT, Authority.ADMIN, Authority.SUPER_ADMIN]);
+        });
 
-        it('should filter out SUPER_ADMIN authority when current user is not a super admin', fakeAsync(() => {
+        it('should filter out SUPER_ADMIN authority when current user is not a super admin', () => {
             // GIVEN
             const accountService = TestBed.inject(AccountService);
-            jest.spyOn(accountService, 'isSuperAdmin').mockReturnValue(false);
-            jest.spyOn(service, 'authorities').mockReturnValue(of([Authority.STUDENT, Authority.ADMIN, Authority.SUPER_ADMIN]));
-            jest.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue({ activeProfiles: ['jenkins'] } as ProfileInfo);
+            vi.spyOn(accountService, 'isSuperAdmin').mockReturnValue(false);
+            vi.spyOn(adminUserService, 'authorities').mockReturnValue(of([Authority.STUDENT, Authority.ADMIN, Authority.SUPER_ADMIN]));
+            vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeProfiles: ['jenkins'] } as ProfileInfo);
 
             // WHEN
-            comp.ngOnInit();
+            component.ngOnInit();
 
             // THEN
-            expect(service.authorities).toHaveBeenCalledOnce();
+            expect(adminUserService.authorities).toHaveBeenCalledOnce();
             expect(accountService.isSuperAdmin).toHaveBeenCalledOnce();
-            expect(comp.authorities).toEqual([Authority.STUDENT, Authority.ADMIN]);
-            expect(comp.authorities).not.toContain(Authority.SUPER_ADMIN);
-        }));
+            expect(component.authorities()).toEqual([Authority.STUDENT, Authority.ADMIN]);
+            expect(component.authorities()).not.toContain(Authority.SUPER_ADMIN);
+        });
     });
 
     describe('save', () => {
