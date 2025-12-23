@@ -1,0 +1,187 @@
+#!/bin/bash
+# =============================================================================
+# Local E2E Test Execution Script
+# =============================================================================
+# This script is designed for running E2E tests locally on developer machines.
+# It builds the Artemis Docker image from a pre-built WAR file and runs tests.
+#
+# Usage: ./execute-locally.sh <configuration> [test-filter]
+#   configuration: mysql-localci (default), mysql, postgres, multi-node
+#   test-filter: optional grep pattern to filter tests (e.g., "Quiz")
+#
+# Prerequisites:
+#   - WAR file must exist in build/libs/
+#   - Docker must be running
+#   - Port 3306 must be free (stop local MySQL if running)
+# =============================================================================
+
+set -e
+
+CONFIGURATION=${1:-mysql-localci}
+TEST_FILTER=$2
+DB="mysql"
+
+echo "========================================"
+echo "  Artemis E2E Local Test Runner"
+echo "========================================"
+echo "Configuration: $CONFIGURATION"
+[ -n "$TEST_FILTER" ] && echo "Test Filter: $TEST_FILTER"
+echo ""
+
+# Determine compose file based on configuration
+if [ "$CONFIGURATION" = "mysql" ]; then
+    COMPOSE_FILE="playwright-E2E-tests-mysql.yml"
+elif [ "$CONFIGURATION" = "postgres" ]; then
+    COMPOSE_FILE="playwright-E2E-tests-postgres.yml"
+    DB="postgres"
+elif [ "$CONFIGURATION" = "mysql-localci" ]; then
+    COMPOSE_FILE="playwright-E2E-tests-mysql-localci.yml"
+elif [ "$CONFIGURATION" = "multi-node" ]; then
+    COMPOSE_FILE="playwright-E2E-tests-multi-node.yml"
+else
+    echo "Invalid configuration. Choose: mysql, postgres, mysql-localci, or multi-node"
+    exit 1
+fi
+
+echo "Compose file: $COMPOSE_FILE"
+
+# Set hostname for server.url - MUST use "nginx" for SSH/Git operations to work
+# The playwright container uses Docker's bridge network, so SSH URLs like
+# ssh://git@nginx:7921/ can be resolved via Docker DNS to reach the nginx container,
+# which then forwards to artemis-app. Using $(hostname) would fail because
+# port 7921 is not exposed on the local machine.
+export HOST_HOSTNAME="nginx"
+
+# Set Docker tag (required by compose file, but we build locally so value doesn't matter)
+export ARTEMIS_DOCKER_TAG="${ARTEMIS_DOCKER_TAG:-local}"
+
+# Change to docker directory
+cd "$(dirname "$0")/../../docker"
+
+# Create override file if test filter is specified
+OVERRIDE_ARGS=""
+if [ -n "$TEST_FILTER" ]; then
+    echo "Creating test filter override..."
+    cat > playwright-local-override.yml << EOF
+# AUTO-GENERATED - DO NOT COMMIT
+services:
+    artemis-playwright:
+        command: >
+            sh -c '
+            cd /app/artemis/src/test/playwright &&
+            chmod 777 /root &&
+            npm ci &&
+            npm run playwright:setup &&
+            npm run playwright:test -- --grep "${TEST_FILTER}";
+            rm -f ./test-reports/results-parallel.xml ./test-reports/results-sequential.xml
+            '
+EOF
+    OVERRIDE_ARGS="-f playwright-local-override.yml"
+fi
+
+# Cleanup function
+cleanup() {
+    echo "Cleaning up temporary files..."
+    rm -f playwright-local-override.yml
+}
+trap cleanup EXIT
+
+# Pull required images (except artemis-app which we build)
+echo ""
+echo "Pulling Docker images..."
+docker compose -f $COMPOSE_FILE pull $DB nginx 2>/dev/null || true
+
+# Build Artemis image from external WAR file
+echo ""
+echo "Building Artemis Docker image from WAR file..."
+docker compose -f $COMPOSE_FILE build \
+    --build-arg WAR_FILE_STAGE=external_builder \
+    --no-cache \
+    --pull \
+    artemis-app
+
+# Run the tests
+echo ""
+echo "Starting containers and running tests..."
+echo "This may take 10-30 minutes..."
+echo ""
+
+# Disable exit on error to capture exit code
+set +e
+docker compose -f $COMPOSE_FILE $OVERRIDE_ARGS up --exit-code-from artemis-playwright
+EXIT_CODE=$?
+set -e
+
+# Copy test reports from container
+REPORT_DIR="../src/test/playwright/test-reports"
+mkdir -p "$REPORT_DIR"
+
+echo ""
+echo "Copying test reports..."
+docker cp artemis-app:/app/artemis/src/test/playwright/test-reports/. "$REPORT_DIR/" 2>/dev/null || true
+
+# Parse and display test summary from JUnit XML files
+echo ""
+echo "========================================"
+echo "  TEST RESULTS SUMMARY"
+echo "========================================"
+
+TOTAL_TESTS=0
+TOTAL_FAILURES=0
+TOTAL_ERRORS=0
+TOTAL_SKIPPED=0
+
+for xml_file in "$REPORT_DIR"/results*.xml; do
+    if [ -f "$xml_file" ]; then
+        # Extract test counts from JUnit XML
+        tests=$(grep -o 'tests="[0-9]*"' "$xml_file" | head -1 | grep -o '[0-9]*')
+        failures=$(grep -o 'failures="[0-9]*"' "$xml_file" | head -1 | grep -o '[0-9]*')
+        errors=$(grep -o 'errors="[0-9]*"' "$xml_file" | head -1 | grep -o '[0-9]*')
+        skipped=$(grep -o 'skipped="[0-9]*"' "$xml_file" | head -1 | grep -o '[0-9]*')
+
+        TOTAL_TESTS=$((TOTAL_TESTS + ${tests:-0}))
+        TOTAL_FAILURES=$((TOTAL_FAILURES + ${failures:-0}))
+        TOTAL_ERRORS=$((TOTAL_ERRORS + ${errors:-0}))
+        TOTAL_SKIPPED=$((TOTAL_SKIPPED + ${skipped:-0}))
+    fi
+done
+
+TOTAL_PASSED=$((TOTAL_TESTS - TOTAL_FAILURES - TOTAL_ERRORS - TOTAL_SKIPPED))
+
+if [ $TOTAL_TESTS -gt 0 ]; then
+    echo "  Total:   $TOTAL_TESTS tests"
+    echo "  Passed:  $TOTAL_PASSED"
+    echo "  Failed:  $TOTAL_FAILURES"
+    echo "  Errors:  $TOTAL_ERRORS"
+    echo "  Skipped: $TOTAL_SKIPPED"
+    echo "========================================"
+
+    # List failed tests if any
+    if [ $((TOTAL_FAILURES + TOTAL_ERRORS)) -gt 0 ]; then
+        echo ""
+        echo "FAILED TESTS:"
+        echo "-------------"
+        for xml_file in "$REPORT_DIR"/results*.xml; do
+            if [ -f "$xml_file" ]; then
+                # Extract failed test names from testcase elements with failure/error children
+                grep -B1 '<failure\|<error' "$xml_file" 2>/dev/null | \
+                    grep 'testcase' | \
+                    sed 's/.*name="\([^"]*\)".*/  - \1/' || true
+            fi
+        done
+        echo ""
+    fi
+else
+    echo "  No test results found"
+    echo "========================================"
+fi
+
+echo ""
+if [ $((TOTAL_FAILURES + TOTAL_ERRORS)) -eq 0 ] && [ $TOTAL_TESTS -gt 0 ]; then
+    echo "All tests passed!"
+else
+    echo "Tests failed. View HTML report:"
+    echo "  cd src/test/playwright && npx playwright show-report test-reports/monocart-report"
+fi
+
+exit $EXIT_CODE
