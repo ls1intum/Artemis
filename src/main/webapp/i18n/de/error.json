@@ -196,8 +196,8 @@
             "forbidChangeCourseId": "Die Übungskurs-ID stimmt nicht mit der gespeicherten Kurs-ID überein"
         },
         "userManagement": {
-            "onlySuperAdminCanCreateSuperAdmin": "Nur ein Super-Admin kann einen neuen Super-Admin-Nutzer erstellen.",
-            "onlySuperAdminCanManageSuperAdmins": "Nur ein Super-Admin kann Super-Admin-Nutzer verwalten."
+            "onlySuperAdminCanCreateSuperAdmin": "Nur ein Super-Admin kann einen neuen Super-Admins erstellen.",
+            "onlySuperAdminCanManageSuperAdmins": "Nur ein Super-Admin kann Super-Admins verwalten."
         }
     }
 }
