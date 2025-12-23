@@ -1,3 +1,6 @@
+/**
+ * Similar to {@link PasskeyDTO} but with additional user information for admin views.
+ */
 export interface AdminPasskeyDTO {
     /**
      * The credential ID of the passkey, encoded in Base64url format.
