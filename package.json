@@ -230,7 +230,7 @@
     "scripts": {
         "build": "npm run webapp:prod --",
         "clean-www": "rimraf build/resources/main/static/app/{src,build/}",
-        "compile:": "npm run prebuild && tsc --project tsconfig.app.json",
+        "compile": "npm run prebuild && tsc --project tsconfig.app.json",
         "compile:tests": "npm run prebuild && tsc --project tsconfig.spec.json",
         "coverage:check-module": "node supporting_scripts/code-coverage/module-coverage-client/check-client-module-coverage.mjs",
         "coverage:pr": "node supporting_scripts/code-coverage/local-pr-coverage/local-pr-coverage.mjs",
