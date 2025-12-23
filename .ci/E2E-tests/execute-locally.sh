@@ -55,6 +55,12 @@ export HOST_HOSTNAME="nginx"
 # Set Docker tag (required by compose file, but we build locally so value doesn't matter)
 export ARTEMIS_DOCKER_TAG="${ARTEMIS_DOCKER_TAG:-local}"
 
+# Set platform for ARM64 Macs (Apple Silicon)
+if [ "$(uname -m)" = "arm64" ]; then
+    export DOCKER_DEFAULT_PLATFORM="linux/arm64"
+    echo "Detected ARM64 architecture, using linux/arm64 platform"
+fi
+
 # Change to docker directory
 cd "$(dirname "$0")/../../docker"
 
@@ -72,8 +78,7 @@ services:
             chmod 777 /root &&
             npm ci &&
             npm run playwright:setup &&
-            npm run playwright:test -- --grep "${TEST_FILTER}";
-            rm -f ./test-reports/results-parallel.xml ./test-reports/results-sequential.xml
+            npx playwright test e2e --grep "${TEST_FILTER}" --reporter=list,junit,monocart-reporter
             '
 EOF
     OVERRIDE_ARGS="-f playwright-local-override.yml"
