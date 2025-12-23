@@ -26,7 +26,7 @@ describe('TutorialGroupFreePeriodService', () => {
     });
 
     it('getOneOfConfiguration', fakeAsync(() => {
-        const returnedFromService = Object.assign({}, elemDefault);
+        const returnedFromService = { ...elemDefault };
         service
             .getOneOfConfiguration(1, 1, 1)
             .pipe(take(1))
@@ -38,8 +38,8 @@ describe('TutorialGroupFreePeriodService', () => {
     }));
 
     it('create', fakeAsync(() => {
-        const returnedFromService = Object.assign({}, elemDefault, { id: 0 });
-        const expected = Object.assign({}, returnedFromService);
+        const returnedFromService = { ...elemDefault, id: 0 };
+        const expected = { ...returnedFromService };
         service
             .create(1, 1, new TutorialGroupFreePeriodDTO())
             .pipe(take(1))
@@ -51,8 +51,8 @@ describe('TutorialGroupFreePeriodService', () => {
     }));
 
     it('update', fakeAsync(() => {
-        const returnedFromService = Object.assign({}, elemDefault, { reason: 'Test' });
-        const expected = Object.assign({}, returnedFromService);
+        const returnedFromService = { ...elemDefault, reason: 'Test' };
+        const expected = { ...returnedFromService };
 
         service
             .update(1, 1, 1, new TutorialGroupFreePeriodDTO())

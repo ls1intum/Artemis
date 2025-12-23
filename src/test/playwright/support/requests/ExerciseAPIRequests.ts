@@ -119,19 +119,16 @@ export class ExerciseAPIRequests {
             programmingExerciseTemplate = javaProgrammingExerciseTemplate;
         }
 
-        const exercise = Object.assign(
-            {},
-            programmingExerciseTemplate,
-            {
-                title,
-                shortName: programmingShortName,
-                packageName,
-                channelName: 'exercise-' + titleLowercase(title),
-                assessmentType: ProgrammingExerciseAssessmentType[assessmentType],
-            },
-            course ? { course } : {},
-            exerciseGroup ? { exerciseGroup } : {},
-        ) as ProgrammingExercise;
+        const exercise = {
+            ...programmingExerciseTemplate,
+            title,
+            shortName: programmingShortName,
+            packageName,
+            channelName: 'exercise-' + titleLowercase(title),
+            assessmentType: ProgrammingExerciseAssessmentType[assessmentType],
+            ...(course ? { course } : {}),
+            ...(exerciseGroup ? { exerciseGroup } : {}),
+        } as ProgrammingExercise;
 
         if (!exerciseGroup) {
             exercise.releaseDate = releaseDate;
@@ -222,7 +219,11 @@ export class ExerciseAPIRequests {
         title = 'Text ' + generateUUID(),
         exerciseTemplate: any = textExerciseTemplate,
     ): Promise<TextExercise> {
-        const template = Object.assign({}, exerciseTemplate, { title, channelName: 'exercise-' + titleLowercase(title) });
+        const template = {
+            ...exerciseTemplate,
+            title,
+            channelName: 'exercise-' + titleLowercase(title),
+        };
         const textExercise = Object.assign({}, template, body);
         const response = await this.page.request.post(TEXT_EXERCISE_BASE, { data: textExercise });
         return response.json();
@@ -244,13 +245,14 @@ export class ExerciseAPIRequests {
         assessmentDueDate: dayjs.Dayjs,
         title = 'Text ' + generateUUID(),
     ): Promise<TextExercise> {
-        const template = Object.assign({}, textExerciseTemplate, {
+        const template = {
+            ...textExerciseTemplate,
             title,
             channelName: 'exercise-' + titleLowercase(title),
             releaseDate: releaseDate,
             dueDate: dueDate,
             assessmentDueDate: assessmentDueDate,
-        });
+        };
         const textExercise = Object.assign({}, template, body);
         const response = await this.page.request.post(TEXT_EXERCISE_BASE, { data: textExercise });
         return response.json();
@@ -291,7 +293,11 @@ export class ExerciseAPIRequests {
      * @returns A Promise<FileUploadExercise> representing the file upload exercise created.
      */
     async createFileUploadExercise(body: { course: Course } | { exerciseGroup: ExerciseGroup }, title = 'Upload ' + generateUUID()): Promise<FileUploadExercise> {
-        const template = Object.assign({}, fileUploadExerciseTemplate, { title, channelName: 'exercise-' + titleLowercase(title) });
+        const template = {
+            ...fileUploadExerciseTemplate,
+            title,
+            channelName: 'exercise-' + titleLowercase(title),
+        };
         const uploadExercise = Object.assign({}, template, body);
         const response = await this.page.request.post(UPLOAD_EXERCISE_BASE, { data: uploadExercise });
         return response.json();
@@ -335,7 +341,11 @@ export class ExerciseAPIRequests {
         dueDate = dayjs().add(1, 'days'),
         assessmentDueDate = dayjs().add(2, 'days'),
     ): Promise<ModelingExercise> {
-        const templateCopy = Object.assign({}, modelingExerciseTemplate, { title, channelName: 'exercise-' + titleLowercase(title) });
+        const templateCopy = {
+            ...modelingExerciseTemplate,
+            title,
+            channelName: 'exercise-' + titleLowercase(title),
+        };
         const dates = {
             releaseDate: dayjsToString(releaseDate),
             dueDate: dayjsToString(dueDate),
@@ -379,7 +389,11 @@ export class ExerciseAPIRequests {
      */
     async makeModelingExerciseSubmission(exerciseID: number, participation: Participation) {
         return this.page.request.put(`api/modeling/exercises/${exerciseID}/modeling-submissions`, {
-            data: Object.assign({}, modelingExerciseSubmissionTemplate, { id: participation.submissions![0].id, participation }),
+            data: {
+                ...modelingExerciseSubmissionTemplate,
+                id: participation.submissions![0].id,
+                participation,
+            },
         });
     }
 
@@ -425,7 +439,14 @@ export class ExerciseAPIRequests {
             quizMode = QuizMode.SYNCHRONIZED,
         } = options;
 
-        const quizExercise: any = Object.assign({}, quizTemplate, { title, quizQuestions, duration, quizMode, channelName: 'exercise-' + titleLowercase(title) });
+        const quizExercise: any = {
+            ...quizTemplate,
+            title,
+            quizQuestions,
+            duration,
+            quizMode,
+            channelName: 'exercise-' + titleLowercase(title),
+        };
 
         let url: string;
         let newQuizExercise: any;
@@ -438,10 +459,10 @@ export class ExerciseAPIRequests {
             if (startOfWorkingTime) {
                 quizBatches = [{ startTime: dayjsToString(startOfWorkingTime) }];
             }
-            newQuizExercise = Object.assign({}, quizExercise, { quizBatches }, dates, body);
+            newQuizExercise = { ...quizExercise, quizBatches, ...dates, ...body };
         } else {
             url = `api/quiz/exercise-groups/${body.exerciseGroup.id}/quiz-exercises`;
-            newQuizExercise = Object.assign({}, quizExercise, body);
+            newQuizExercise = { ...quizExercise, ...body };
         }
 
         const quizExerciseDTO = convertQuizExerciseToCreationDTO(newQuizExercise);
@@ -503,12 +524,16 @@ export class ExerciseAPIRequests {
      */
     async createMultipleChoiceSubmission(quizExercise: any, tickOptions: number[]) {
         const submittedAnswers = [
-            Object.assign({}, multipleChoiceSubmissionTemplate.submittedAnswers[0], {
+            {
+                ...multipleChoiceSubmissionTemplate.submittedAnswers[0],
                 quizQuestion: quizExercise.quizQuestions![0],
                 selectedOptions: tickOptions.map((option) => quizExercise.quizQuestions[0].answerOptions[option]),
-            }),
+            },
         ];
-        const multipleChoiceSubmission = Object.assign({}, multipleChoiceSubmissionTemplate, { submittedAnswers });
+        const multipleChoiceSubmission = {
+            ...multipleChoiceSubmissionTemplate,
+            submittedAnswers,
+        };
         await this.page.request.post(`api/quiz/exercises/${quizExercise.id}/submissions/live?submit=true`, { data: multipleChoiceSubmission });
     }
 
@@ -530,8 +555,17 @@ export class ExerciseAPIRequests {
                 },
             };
         });
-        const submittedAnswers = [Object.assign({}, shortAnswerSubmissionTemplate.submittedAnswers[0], { quizQuestion: quizExercise.quizQuestions[0], submittedTexts })];
-        const shortAnswerSubmission = Object.assign({}, shortAnswerSubmissionTemplate, { submittedAnswers });
+        const submittedAnswers = [
+            {
+                ...shortAnswerSubmissionTemplate.submittedAnswers[0],
+                quizQuestion: quizExercise.quizQuestions[0],
+                submittedTexts,
+            },
+        ];
+        const shortAnswerSubmission = {
+            ...shortAnswerSubmissionTemplate,
+            submittedAnswers,
+        };
         await this.page.request.post(`api/quiz/exercises/${quizExercise.id}/submissions/live?submit=true`, { data: shortAnswerSubmission });
     }
 

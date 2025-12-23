@@ -149,7 +149,10 @@ describe('Example Modeling Submission Component', () => {
     });
 
     it('should handle a new submission', () => {
-        route.snapshot = Object.assign({}, route.snapshot, { paramMap: convertToParamMap({ exerciseId: '22', exampleSubmissionId: 'new' }) }) as ActivatedRouteSnapshot;
+        route.snapshot = {
+            ...route.snapshot,
+            paramMap: convertToParamMap({ exerciseId: '22', exampleSubmissionId: 'new' }),
+        } as ActivatedRouteSnapshot;
 
         // WHEN
         fixture.detectChanges();
@@ -328,7 +331,7 @@ describe('Example Modeling Submission Component', () => {
     it('should update assessment explanation and example assessment', () => {
         // GIVEN
         comp.exercise = exercise;
-        comp.exampleSubmission = Object.assign({}, exampleSubmission, { assessmentExplanation: 'Explanation of the assessment' });
+        comp.exampleSubmission = { ...exampleSubmission, assessmentExplanation: 'Explanation of the assessment' };
         comp.referencedFeedback = [mockFeedbackWithReference];
         comp.unreferencedFeedback = [mockFeedbackWithoutReference];
 
@@ -350,7 +353,7 @@ describe('Example Modeling Submission Component', () => {
     it('should update assessment explanation but create error message on example assessment update failure', () => {
         // GIVEN
         comp.exercise = exercise;
-        comp.exampleSubmission = Object.assign({}, exampleSubmission, { assessmentExplanation: 'Explanation of the assessment' });
+        comp.exampleSubmission = { ...exampleSubmission, assessmentExplanation: 'Explanation of the assessment' };
         comp.referencedFeedback = [mockFeedbackWithReference, mockFeedbackWithoutReference];
 
         const alertSpy = jest.spyOn(alertService, 'error');

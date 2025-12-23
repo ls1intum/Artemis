@@ -49,7 +49,9 @@ describe('ProgrammingExercise Sharing Service', () => {
 
     describe('Service methods', () => {
         it('should get an shared exercise', fakeAsync(() => {
-            const returnedFromService = Object.assign({}, defaultShoppingBasket);
+            const returnedFromService = {
+                ...defaultShoppingBasket,
+            };
             service.getSharedExercises(defailtSharingInfo).subscribe((res: ShoppingBasket) => expect(res).toEqual(defaultShoppingBasket));
             const req = httpMock.expectOne({ method: 'GET' });
             req.flush(returnedFromService);

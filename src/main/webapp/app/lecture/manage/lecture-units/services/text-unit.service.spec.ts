@@ -45,7 +45,7 @@ describe('TextUnitService', () => {
     });
 
     it('should find a TextUnit', fakeAsync(() => {
-        const returnedFromService = Object.assign({}, elemDefault);
+        const returnedFromService = { ...elemDefault };
         service
             .findById(1, 1)
             .pipe(take(1))
@@ -56,8 +56,8 @@ describe('TextUnitService', () => {
     }));
 
     it('should create a TextUnit', fakeAsync(() => {
-        const returnedFromService = Object.assign({}, elemDefault, { id: 0 });
-        const expected = Object.assign({}, returnedFromService);
+        const returnedFromService = { ...elemDefault, id: 0 };
+        const expected = { ...returnedFromService };
         service
             .create(new TextUnit(), 1)
             .pipe(take(1))
@@ -68,8 +68,8 @@ describe('TextUnitService', () => {
     }));
 
     it('should update a TextUnit', fakeAsync(() => {
-        const returnedFromService = Object.assign({}, elemDefault, { name: 'Test' });
-        const expected = Object.assign({}, returnedFromService);
+        const returnedFromService = { ...elemDefault, name: 'Test' };
+        const expected = { ...returnedFromService };
         service
             .update(expected, 1)
             .pipe(take(1))

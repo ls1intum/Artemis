@@ -21,7 +21,10 @@ describe('Rating Service', () => {
     });
 
     it('should create a Rating', fakeAsync(() => {
-        const returnedFromService = Object.assign({ id: 0 }, elemDefault);
+        const returnedFromService = {
+            id: 0,
+            ...elemDefault,
+        };
         service.createRating(3, 0).pipe(take(1)).subscribe();
 
         const req = httpMock.expectOne({ method: 'POST' });
@@ -39,7 +42,10 @@ describe('Rating Service', () => {
     }));
 
     it('should update a Rating', fakeAsync(() => {
-        const returnedFromService = Object.assign({ id: 0 }, elemDefault);
+        const returnedFromService = {
+            id: 0,
+            ...elemDefault,
+        };
         service.updateRating(3, 0).pipe(take(1)).subscribe();
 
         const req = httpMock.expectOne({ method: 'PUT' });
@@ -49,7 +55,7 @@ describe('Rating Service', () => {
 
     it('should get Ratings for Dashboard', fakeAsync(() => {
         const returnedFromService = Object.assign({}, [elemDefault]);
-        const expected = Object.assign({}, returnedFromService);
+        const expected = { ...returnedFromService };
         service
             .getRatingsForDashboard(0)
             .pipe(take(1))

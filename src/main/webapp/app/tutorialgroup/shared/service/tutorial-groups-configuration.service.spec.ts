@@ -27,7 +27,7 @@ describe('TutorialGroupsConfigurationService', () => {
     });
 
     it('getOneOfCourse', fakeAsync(() => {
-        const returnedFromService = Object.assign({}, elemDefault);
+        const returnedFromService = { ...elemDefault };
         service
             .getOneOfCourse(1)
             .pipe(take(1))
@@ -39,8 +39,8 @@ describe('TutorialGroupsConfigurationService', () => {
     }));
 
     it('create', fakeAsync(() => {
-        const returnedFromService = Object.assign({}, elemDefault, { id: 0 });
-        const expected = Object.assign({}, returnedFromService);
+        const returnedFromService = { ...elemDefault, id: 0 };
+        const expected = { ...returnedFromService };
         service
             .create(new TutorialGroupsConfiguration(), 1, [])
             .pipe(take(1))
@@ -52,8 +52,8 @@ describe('TutorialGroupsConfigurationService', () => {
     }));
 
     it('update', fakeAsync(() => {
-        const returnedFromService = Object.assign({}, elemDefault, { location: 'Test' });
-        const expected = Object.assign({}, returnedFromService);
+        const returnedFromService = { ...elemDefault, location: 'Test' };
+        const expected = { ...returnedFromService };
 
         service
             .update(1, 1, new TutorialGroupsConfiguration(), [])

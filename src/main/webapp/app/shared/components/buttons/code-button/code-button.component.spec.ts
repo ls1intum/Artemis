@@ -464,7 +464,9 @@ describe('CodeButtonComponent', () => {
         getTheiaConfigStub.mockReturnValue(of(theiaConfig as ProgrammingExerciseTheiaConfig));
 
         // Expand the programmingExercise by given properties
-        fixture.componentRef.setInput('exercise', Object.assign({}, programmingExercise) as any);
+        fixture.componentRef.setInput('exercise', {
+            ...programmingExercise,
+        } as any);
 
         await component.ngOnInit();
 

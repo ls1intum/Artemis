@@ -96,12 +96,12 @@ export class LoadImageService {
                 original: {
                     base64: loadedImage.original.base64,
                     image: loadedImage.original.image,
-                    size: Object.assign({}, originalSize),
+                    size: { ...originalSize },
                 },
                 transformed: {
                     base64: loadedImage.original.base64,
                     image: loadedImage.original.image,
-                    size: Object.assign({}, originalSize),
+                    size: { ...originalSize },
                 },
                 exifTransform: loadedImage.exifTransform,
             };
@@ -121,7 +121,7 @@ export class LoadImageService {
             original: {
                 base64: loadedImage.original.base64,
                 image: loadedImage.original.image,
-                size: Object.assign({}, originalSize),
+                size: { ...originalSize },
             },
             transformed: {
                 base64: transformedBase64,

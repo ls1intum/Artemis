@@ -20,8 +20,10 @@ import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/ser
 jest.mock('pdf-lib', () => {
     const originalModule = jest.requireActual('pdf-lib');
 
-    return Object.assign({}, originalModule, {
-        PDFDocument: Object.assign({}, originalModule.PDFDocument, {
+    return {
+        ...originalModule,
+        PDFDocument: {
+            ...originalModule.PDFDocument,
             load: jest.fn().mockResolvedValue({
                 getPageCount: jest.fn().mockReturnValue(1),
                 copyPages: jest.fn().mockResolvedValue([{}]),
@@ -36,8 +38,8 @@ jest.mock('pdf-lib', () => {
                 embedPng: jest.fn().mockResolvedValue({}),
                 save: jest.fn().mockResolvedValue(new Uint8Array([1, 2, 3])),
             })),
-        }),
-    });
+        },
+    };
 });
 
 describe('PdfPreviewComponent', () => {
@@ -802,8 +804,8 @@ describe('PdfPreviewComponent', () => {
                 slide3: { date: date3, exerciseId: undefined },
             };
 
-            component.initialHiddenPages.set(Object.assign({}, initialHiddenPages));
-            component.hiddenPages.set(Object.assign({}, changedHiddenPages));
+            component.initialHiddenPages.set({ ...initialHiddenPages });
+            component.hiddenPages.set({ ...changedHiddenPages });
 
             expect(component.hiddenPagesChanged()).toBeTrue();
         });
@@ -817,8 +819,8 @@ describe('PdfPreviewComponent', () => {
                 slide2: { date: date2, exerciseId: undefined },
             };
 
-            component.initialHiddenPages.set(Object.assign({}, hiddenPages));
-            component.hiddenPages.set(Object.assign({}, hiddenPages));
+            component.initialHiddenPages.set({ ...hiddenPages });
+            component.hiddenPages.set({ ...hiddenPages });
 
             expect(component.hiddenPagesChanged()).toBeFalse();
         });

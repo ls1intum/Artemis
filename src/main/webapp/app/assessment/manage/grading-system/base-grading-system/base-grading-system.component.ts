@@ -757,21 +757,19 @@ export abstract class BaseGradingSystemComponent implements OnInit {
     mapCsvGradeStepsToGradeSteps(csvGradeSteps: CsvGradeStep[], gradeType: GradeType): GradeStep[] {
         return csvGradeSteps.map(
             (csvGradeStep: CsvGradeStep) =>
-                Object.assign(
-                    {
-                        gradeName:
-                            gradeType === GradeType.GRADE
-                                ? String(csvGradeStep[csvColumnsGrade.gradeName as keyof CsvGradeStep] ?? '')
-                                : String(csvGradeStep[csvColumnsBonus.bonusPoints as keyof CsvGradeStep] ?? ''),
-                        lowerBoundPercentage: csvGradeStep[csvColumnsGrade.lowerBoundPercentage as keyof CsvGradeStep]
-                            ? Number(csvGradeStep[csvColumnsGrade.lowerBoundPercentage as keyof CsvGradeStep])
-                            : undefined,
-                        upperBoundPercentage: csvGradeStep[csvColumnsGrade.upperBoundPercentage as keyof CsvGradeStep]
-                            ? Number(csvGradeStep[csvColumnsGrade.upperBoundPercentage as keyof CsvGradeStep])
-                            : undefined,
-                    },
-                    gradeType === GradeType.GRADE && { isPassingGrade: csvGradeStep[csvColumnsGrade.isPassingGrade as keyof CsvGradeStep] === 'TRUE' },
-                ) as GradeStep,
+                ({
+                    gradeName:
+                        gradeType === GradeType.GRADE
+                            ? String(csvGradeStep[csvColumnsGrade.gradeName as keyof CsvGradeStep] ?? '')
+                            : String(csvGradeStep[csvColumnsBonus.bonusPoints as keyof CsvGradeStep] ?? ''),
+                    lowerBoundPercentage: csvGradeStep[csvColumnsGrade.lowerBoundPercentage as keyof CsvGradeStep]
+                        ? Number(csvGradeStep[csvColumnsGrade.lowerBoundPercentage as keyof CsvGradeStep])
+                        : undefined,
+                    upperBoundPercentage: csvGradeStep[csvColumnsGrade.upperBoundPercentage as keyof CsvGradeStep]
+                        ? Number(csvGradeStep[csvColumnsGrade.upperBoundPercentage as keyof CsvGradeStep])
+                        : undefined,
+                    ...(gradeType === GradeType.GRADE && { isPassingGrade: csvGradeStep[csvColumnsGrade.isPassingGrade as keyof CsvGradeStep] === 'TRUE' }),
+                }) as GradeStep,
         );
     }
 
@@ -800,13 +798,13 @@ export abstract class BaseGradingSystemComponent implements OnInit {
      * @param gradeStep
      */
     convertToCsvRow(gradeStep: GradeStep): any {
-        return Object.assign(
-            {},
-            this.gradingScale.gradeType === GradeType.GRADE && { gradeName: gradeStep.gradeName ?? '' },
-            this.gradingScale.gradeType === GradeType.BONUS && { bonusPoints: gradeStep.gradeName ?? '' },
-            { lowerBoundPercentage: gradeStep.lowerBoundPercentage ?? '', upperBoundPercentage: gradeStep.upperBoundPercentage ?? '' },
-            this.gradingScale.gradeType === GradeType.GRADE && { isPassingGrade: gradeStep.isPassingGrade },
-        );
+        return {
+            ...(this.gradingScale.gradeType === GradeType.GRADE && { gradeName: gradeStep.gradeName ?? '' }),
+            ...(this.gradingScale.gradeType === GradeType.BONUS && { bonusPoints: gradeStep.gradeName ?? '' }),
+            lowerBoundPercentage: gradeStep.lowerBoundPercentage ?? '',
+            upperBoundPercentage: gradeStep.upperBoundPercentage ?? '',
+            ...(this.gradingScale.gradeType === GradeType.GRADE && { isPassingGrade: gradeStep.isPassingGrade }),
+        };
     }
 
     /**

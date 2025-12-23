@@ -252,7 +252,7 @@ describe('CourseExerciseDetailsComponent', () => {
 
         studentParticipation.exercise = exercise;
 
-        const exerciseDetail = { exercise: Object.assign({}, exercise, { studentParticipations: [studentParticipation] }), plagiarismCaseInfo: plagiarismCaseInfo };
+        const exerciseDetail = { exercise: { ...exercise, studentParticipations: [studentParticipation] }, plagiarismCaseInfo: plagiarismCaseInfo };
         const exerciseDetailResponse = of({ body: exerciseDetail });
 
         // return initial participation for websocketService
@@ -262,7 +262,7 @@ describe('CourseExerciseDetailsComponent', () => {
         // mock participationService, needed for team assignment
         mergeStudentParticipationMock.mockReturnValue([studentParticipation]);
         const changedParticipation = cloneDeep(studentParticipation);
-        const changedResult = Object.assign({}, result, { id: 2 });
+        const changedResult = { ...result, id: 2 };
 
         changedParticipation.submissions![0].results = [changedResult];
         subscribeForParticipationChangesMock.mockReturnValue(new BehaviorSubject<Participation | undefined>(changedParticipation));
@@ -285,7 +285,7 @@ describe('CourseExerciseDetailsComponent', () => {
     }));
 
     it('should not be a quiz exercise', () => {
-        comp.exercise = Object.assign({}, exercise);
+        comp.exercise = { ...exercise };
         expect(comp.quizExerciseStatus).toBeUndefined();
     });
 
@@ -296,7 +296,7 @@ describe('CourseExerciseDetailsComponent', () => {
         const artemisMarkdown = TestBed.inject(ArtemisMarkdownService);
 
         expect(comp.exampleSolutionInfo).toBeUndefined();
-        const newExercise = Object.assign({}, textExercise);
+        const newExercise = { ...textExercise };
         comp.showIfExampleSolutionPresent(newExercise);
         expect(comp.exampleSolutionInfo).toBe(exampleSolutionInfo);
         expect(exerciseServiceSpy).toHaveBeenCalledOnce();
@@ -305,10 +305,10 @@ describe('CourseExerciseDetailsComponent', () => {
 
     it('should collapse example solution for tutors', () => {
         expect(comp.exampleSolutionCollapsed).toBeUndefined();
-        comp.showIfExampleSolutionPresent(Object.assign({}, textExercise, { isAtLeastTutor: true }));
+        comp.showIfExampleSolutionPresent({ ...textExercise, isAtLeastTutor: true });
         expect(comp.exampleSolutionCollapsed).toBeTrue();
 
-        comp.showIfExampleSolutionPresent(Object.assign({}, textExercise, { isAtLeastTutor: false }));
+        comp.showIfExampleSolutionPresent({ ...textExercise, isAtLeastTutor: false });
         expect(comp.exampleSolutionCollapsed).toBeFalse();
     });
 
@@ -381,7 +381,7 @@ describe('CourseExerciseDetailsComponent', () => {
         const submissionId = 55;
         comp.gradedStudentParticipation = { submissions: [{ id: submissionId }] };
         comp.sortedHistoryResults = [{ id: 2 }];
-        comp.exercise = Object.assign({}, exercise);
+        comp.exercise = { ...exercise };
 
         comp.loadComplaintAndLatestRatedResult();
         tick();
@@ -399,18 +399,18 @@ describe('CourseExerciseDetailsComponent', () => {
         const participation: Participation = { submissions: [submission] } satisfies Participation;
         comp.gradedStudentParticipation = participation;
         comp.sortedHistoryResults = [{ id: 2 }];
-        comp.exercise = Object.assign({}, programmingExercise);
+        comp.exercise = { ...programmingExercise };
 
         comp.courseId = programmingExercise.course!.id!;
 
         comp.handleNewExercise({ exercise: programmingExercise });
         tick();
 
-        const newParticipation = Object.assign({}, participation, { submissions: [submission, { id: submissionId + 1 } satisfies Submission] }) satisfies Participation;
+        const newParticipation = { ...participation, submissions: [submission, { id: submissionId + 1 } satisfies Submission] } satisfies Participation;
 
         mergeStudentParticipationMock.mockReturnValue([newParticipation]);
 
-        participationWebsocketBehaviorSubject.next(Object.assign({}, newParticipation, { exercise: programmingExercise }));
+        participationWebsocketBehaviorSubject.next({ ...newParticipation, exercise: programmingExercise });
     }));
 
     it.each<[string[]]>([[[]], [[PROFILE_IRIS]]])(
@@ -453,7 +453,10 @@ describe('CourseExerciseDetailsComponent', () => {
     });
 
     it('should not show discussion section when communication is disabled', fakeAsync(() => {
-        const newExercise = Object.assign({}, exercise, { course: { id: 1, courseInformationSharingConfiguration: CourseInformationSharingConfiguration.DISABLED } });
+        const newExercise = {
+            ...exercise,
+            course: { id: 1, courseInformationSharingConfiguration: CourseInformationSharingConfiguration.DISABLED },
+        };
         getExerciseDetailsMock.mockReturnValue(of({ body: { exercise: newExercise } }));
 
         fixture.detectChanges();

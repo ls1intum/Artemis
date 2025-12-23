@@ -92,11 +92,7 @@ describe('TutorialGroupFreePeriodsManagementComponent', () => {
                 });
 
                 configuration = generateExampleTutorialGroupsConfiguration({});
-                configuration.tutorialGroupFreePeriods = [
-                    Object.assign({}, firstOfJanuaryPeriod),
-                    Object.assign({}, secondOfJanuaryPeriod),
-                    Object.assign({}, thirdOfJanuaryPeriod),
-                ];
+                configuration.tutorialGroupFreePeriods = [{ ...firstOfJanuaryPeriod }, { ...secondOfJanuaryPeriod }, { ...thirdOfJanuaryPeriod }];
 
                 configurationService = TestBed.inject(TutorialGroupsConfigurationService);
                 findConfigurationSpy = jest.spyOn(configurationService, 'getOneOfCourse').mockReturnValue(of(new HttpResponse({ body: configuration })));

@@ -337,9 +337,14 @@ describe('CourseManagementContainerComponent', () => {
     });
 
     it('should create sidebar items based on course properties', async () => {
-        component.course.set(
-            Object.assign({}, course1, { isAtLeastEditor: true, isAtLeastInstructor: true, tutorialGroupsConfiguration: {}, faqEnabled: true, onlineCourse: true }),
-        );
+        component.course.set({
+            ...course1,
+            isAtLeastEditor: true,
+            isAtLeastInstructor: true,
+            tutorialGroupsConfiguration: {},
+            faqEnabled: true,
+            onlineCourse: true,
+        });
         fixture.detectChanges();
 
         jest.spyOn(featureToggleService, 'getFeatureToggleActive').mockReturnValue(of(true));
@@ -365,12 +370,13 @@ describe('CourseManagementContainerComponent', () => {
         expect(sidebarItems.find((item) => item.title === 'FAQs')).toBeTruthy();
     });
     it('should not include sidebar items for disabled features for non-instructors', async () => {
-        const courseWithDisabledFeatures = Object.assign({}, course1, {
+        const courseWithDisabledFeatures = {
+            ...course1,
             isAtLeastEditor: true,
             isAtLeastInstructor: false,
             faqEnabled: false,
             courseInformationSharingConfiguration: CourseInformationSharingConfiguration.DISABLED,
-        });
+        };
         component.course.set(courseWithDisabledFeatures);
         const sidebarItems = component.getSidebarItems();
         expect(sidebarItems.find((item) => item.title === 'Communication')).toBeUndefined();
@@ -407,7 +413,10 @@ describe('CourseManagementContainerComponent', () => {
     });
 
     it('should fetch course deletion summary correctly', () => {
-        component.course.set(Object.assign({}, course1, { testCourse: true }));
+        component.course.set({
+            ...course1,
+            testCourse: true,
+        });
 
         component.fetchCourseDeletionSummary().subscribe((summary: EntitySummary) => {
             expect(summary['artemisApp.course.delete.summary.isTestCourse']).toBeTrue();
@@ -501,7 +510,10 @@ describe('CourseManagementContainerComponent', () => {
             return new Observable((subscriber) => subscriber.complete());
         });
 
-        component.course.set(Object.assign({}, course1, { courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING }));
+        component.course.set({
+            ...course1,
+            courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING,
+        });
         jest.spyOn(router, 'url', 'get').mockReturnValue('/course-management/1/communication');
         component.onSubRouteActivate({});
         fixture.detectChanges();
@@ -556,9 +568,9 @@ describe('CourseManagementContainerComponent', () => {
     });
 
     it('should correctly determine if course is active', () => {
-        const activeCourse = Object.assign({}, course1, { endDate: dayjs().add(1, 'day') }) as Course;
-        const inactiveCourse = Object.assign({}, course1, { endDate: dayjs().subtract(1, 'day') }) as Course;
-        const noEndDateCourse = Object.assign({}, course1, { endDate: null }) as unknown as Course;
+        const activeCourse = { ...course1, endDate: dayjs().add(1, 'day') } as Course;
+        const inactiveCourse = { ...course1, endDate: dayjs().subtract(1, 'day') } as Course;
+        const noEndDateCourse = { ...course1, endDate: null } as unknown as Course;
 
         expect(component.isCourseActive(activeCourse)).toBeTrue();
         expect(component.isCourseActive(inactiveCourse)).toBeFalse();
@@ -685,7 +697,10 @@ describe('CourseManagementContainerComponent', () => {
     it('should check for unread messages if messaging is enabled', () => {
         const checkForUnreadMessagesSpy = jest.spyOn(metisConversationService, 'checkForUnreadMessages');
         const subscribeToHasUnreadMessagesSpy = jest.spyOn(component as any, 'subscribeToHasUnreadMessages');
-        const courseWithMessaging = Object.assign({}, course1, { courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING });
+        const courseWithMessaging = {
+            ...course1,
+            courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING,
+        };
         component.course.set(courseWithMessaging);
 
         component.setupConversationService();
@@ -698,7 +713,10 @@ describe('CourseManagementContainerComponent', () => {
     it('should not check for unread messages if communication is disabled', () => {
         const checkForUnreadMessagesSpy = jest.spyOn(metisConversationService, 'checkForUnreadMessages');
 
-        component.course.set(Object.assign({}, course1, { courseInformationSharingConfiguration: CourseInformationSharingConfiguration.DISABLED }));
+        component.course.set({
+            ...course1,
+            courseInformationSharingConfiguration: CourseInformationSharingConfiguration.DISABLED,
+        });
 
         component.setupConversationService();
 

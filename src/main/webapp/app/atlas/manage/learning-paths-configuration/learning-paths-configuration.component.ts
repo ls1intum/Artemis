@@ -53,7 +53,10 @@ export class LearningPathsConfigurationComponent {
 
     protected toggleIncludeAllGradedExercises(): void {
         this.configHasBeenChanged.set(true);
-        this.learningPathsConfiguration.set(Object.assign({}, this.learningPathsConfiguration(), { includeAllGradedExercises: !this.includeAllGradedExercisesEnabled() }));
+        this.learningPathsConfiguration.set({
+            ...this.learningPathsConfiguration(),
+            includeAllGradedExercises: !this.includeAllGradedExercisesEnabled(),
+        });
     }
 
     protected async saveLearningPathsConfiguration(): Promise<void> {

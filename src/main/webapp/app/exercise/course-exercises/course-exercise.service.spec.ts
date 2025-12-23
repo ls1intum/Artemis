@@ -99,7 +99,7 @@ describe('Course Management Service', () => {
 
         exercises = [];
         course.exercises = exercises;
-        returnedFromService = Object.assign({}, course);
+        returnedFromService = { ...course };
     });
 
     const expectDateConversionToBeDone = (exerciseToCheck: Exercise, withoutAssessmentDueDate?: boolean) => {
@@ -174,7 +174,7 @@ describe('Course Management Service', () => {
         const participation = new StudentParticipation();
         participation.id = participationId;
         participation.exercise = programmingExercise;
-        returnedFromService = Object.assign({}, participation);
+        returnedFromService = { ...participation };
         const expected = Object.assign(
             {
                 initializationDate: undefined,
@@ -200,7 +200,7 @@ describe('Course Management Service', () => {
             const participation = new StudentParticipation();
             participation.id = participationId;
             participation.exercise = programmingExercise;
-            returnedFromService = Object.assign({}, participation);
+            returnedFromService = { ...participation };
             const expected = Object.assign(
                 {
                     initializationDate: undefined,
@@ -231,7 +231,7 @@ describe('Course Management Service', () => {
         const participation = new StudentParticipation();
         participation.id = participationId;
         participation.exercise = programmingExercise;
-        returnedFromService = Object.assign({}, participation);
+        returnedFromService = { ...participation };
         const expected = Object.assign(
             {
                 initializationDate: undefined,

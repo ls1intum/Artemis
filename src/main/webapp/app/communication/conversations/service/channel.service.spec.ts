@@ -35,8 +35,8 @@ describe('ChannelService', () => {
     });
 
     it('getChannelsOfCourse', fakeAsync(() => {
-        const returnedFromService = Object.assign({}, elemDefault, { title: 'Test' });
-        const expected = Object.assign({}, returnedFromService);
+        const returnedFromService = { ...elemDefault, title: 'Test' };
+        const expected = { ...returnedFromService };
 
         service
             .getChannelsOfCourse(1)
@@ -52,8 +52,8 @@ describe('ChannelService', () => {
     }));
 
     it('getPublicChannelsOfCourse', fakeAsync(() => {
-        const returnedFromService = Object.assign({}, elemDefault, { title: 'Test' });
-        const expected = Object.assign({}, returnedFromService);
+        const returnedFromService = { ...elemDefault, title: 'Test' };
+        const expected = { ...returnedFromService };
 
         service
             .getPublicChannelsOfCourse(1)
@@ -80,8 +80,8 @@ describe('ChannelService', () => {
     }));
 
     it('create', fakeAsync(() => {
-        const returnedFromService = Object.assign({}, elemDefault, { id: 0 });
-        const expected = Object.assign({}, returnedFromService);
+        const returnedFromService = { ...elemDefault, id: 0 };
+        const expected = { ...returnedFromService };
         service
             .create(1, new ChannelDTO())
             .pipe(take(1))
@@ -93,8 +93,8 @@ describe('ChannelService', () => {
     }));
 
     it('getChannelOfLecture', fakeAsync(() => {
-        const returnedFromService = Object.assign({}, elemDefault, { id: 0 });
-        const expected = Object.assign({}, returnedFromService);
+        const returnedFromService = { ...elemDefault, id: 0 };
+        const expected = { ...returnedFromService };
         service
             .getChannelOfLecture(1, 1)
             .pipe(take(1))
@@ -106,8 +106,8 @@ describe('ChannelService', () => {
     }));
 
     it('getChannelOfExercise', fakeAsync(() => {
-        const returnedFromService = Object.assign({}, elemDefault, { id: 0 });
-        const expected = Object.assign({}, returnedFromService);
+        const returnedFromService = { ...elemDefault, id: 0 };
+        const expected = { ...returnedFromService };
         service
             .getChannelOfExercise(1, 1)
             .pipe(take(1))
@@ -119,8 +119,8 @@ describe('ChannelService', () => {
     }));
 
     it('update', fakeAsync(() => {
-        const returnedFromService = Object.assign({}, elemDefault, { name: 'test' });
-        const expected = Object.assign({}, returnedFromService);
+        const returnedFromService = { ...elemDefault, name: 'test' };
+        const expected = { ...returnedFromService };
 
         service
             .update(1, 1, new ChannelDTO())
@@ -199,8 +199,8 @@ describe('ChannelService', () => {
     }));
 
     it('toggleChannelPrivacy', fakeAsync(() => {
-        const returnedFromService = Object.assign({}, elemDefault, { isPublic: false });
-        const expected = Object.assign({}, returnedFromService);
+        const returnedFromService = { ...elemDefault, isPublic: false };
+        const expected = { ...returnedFromService };
 
         service
             .toggleChannelPrivacy(1, 2)

@@ -84,7 +84,12 @@ describe('Submission Service', () => {
         const exerciseId = 1;
 
         const returnedFromService = [submission];
-        const expected = [Object.assign({}, submission, { latestResult: getLatestSubmissionResult(submission) })];
+        const expected = [
+            {
+                ...submission,
+                latestResult: getLatestSubmissionResult(submission),
+            },
+        ];
         service
             .getTestRunSubmissionsForExercise(exerciseId)
             .pipe(take(1))

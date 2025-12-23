@@ -17,16 +17,15 @@ export class MockActivatedRoute extends ActivatedRoute {
     setParameters(parameters: Params): void {
         this.queryParamsSubject.next(parameters);
         this.paramSubject.next(parameters);
-        this.dataSubject.next(
-            Object.assign({}, parameters, {
-                defaultSort: 'id,desc',
-                pagingParams: {
-                    page: 10,
-                    ascending: false,
-                    predicate: 'id',
-                },
-            }),
-        );
+        this.dataSubject.next({
+            ...parameters,
+            defaultSort: 'id,desc',
+            pagingParams: {
+                page: 10,
+                ascending: false,
+                predicate: 'id',
+            },
+        });
     }
 
     get root(): ActivatedRoute {

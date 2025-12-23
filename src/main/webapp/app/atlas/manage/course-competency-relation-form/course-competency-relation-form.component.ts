@@ -275,7 +275,7 @@ export class CourseCompetencyRelationFormComponent {
             this.relations.update((relations) =>
                 relations.map((relation) => {
                     if (relation.id === this.selectedRelationId()) {
-                        return Object.assign({}, relation, { relationType: newRelationType });
+                        return { ...relation, relationType: newRelationType };
                     }
                     return relation;
                 }),

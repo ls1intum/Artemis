@@ -162,9 +162,10 @@ describe('Plagiarism Cases Instructor View Component', () => {
         const translateServiceSpy = jest.spyOn(translateService, 'instant');
 
         const examTitle = 'Exam Title';
-        const examPlagiarismCase = Object.assign({}, plagiarismCase, {
-            exercise: Object.assign({}, exercise, { course: undefined, exerciseGroup: { exam: { id: 3, title: examTitle } } }),
-        });
+        const examPlagiarismCase = {
+            ...plagiarismCase,
+            exercise: { ...exercise, course: undefined, exerciseGroup: { exam: { id: 3, title: examTitle } } },
+        };
         component.plagiarismCase = examPlagiarismCase;
         component.currentAccount = { id: 99, name: 'user' } as User;
         component.createEmptyPost();
@@ -189,7 +190,11 @@ describe('Plagiarism Cases Instructor View Component', () => {
         const translateService = TestBed.inject(TranslateService);
         const translateServiceSpy = jest.spyOn(translateService, 'instant');
 
-        component.plagiarismCase = Object.assign({}, plagiarismCase, { student: undefined, exercise: undefined }) as PlagiarismCase;
+        component.plagiarismCase = {
+            ...plagiarismCase,
+            student: undefined,
+            exercise: undefined,
+        } as PlagiarismCase;
         component.currentAccount = { id: 99, name: 'user' } as User;
 
         component.createEmptyPost();

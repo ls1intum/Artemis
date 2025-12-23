@@ -54,7 +54,7 @@ describe('ExerciseHeadersInformationComponent', () => {
                 exerciseService = TestBed.inject(ExerciseService);
                 getExerciseDetailsMock = jest.spyOn(exerciseService, 'getExerciseDetails');
                 getExerciseDetailsMock.mockReturnValue(of({ body: { exercise: exercise } }));
-                component.exercise = Object.assign({}, exercise);
+                component.exercise = { ...exercise };
                 fixture.detectChanges();
             });
     });
@@ -170,7 +170,7 @@ describe('ExerciseHeadersInformationComponent', () => {
             startDate: dayjs().add(3, 'days'),
         } as unknown as Exercise;
 
-        component.exercise = Object.assign({}, exercise);
+        component.exercise = { ...exercise };
         const startDateContent: DateContent = {
             type: 'dateTime',
             value: dayjs().add(3, 'days'),

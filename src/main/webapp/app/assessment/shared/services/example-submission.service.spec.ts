@@ -71,8 +71,8 @@ describe('Example Submission Service', () => {
     describe('Service methods', () => {
         it('should create an example submission', fakeAsync(() => {
             const exerciseId = 1;
-            const returnedFromService = Object.assign({}, elemDefault, { id: 0 });
-            const expected = Object.assign({}, returnedFromService);
+            const returnedFromService = { ...elemDefault, id: 0 };
+            const expected = { ...returnedFromService };
             service
                 .create(elemDefault, exerciseId)
                 .pipe(take(1))
@@ -85,8 +85,8 @@ describe('Example Submission Service', () => {
 
         it('should update an example submission', fakeAsync(() => {
             const exerciseId = 1;
-            const returnedFromService = Object.assign({}, elemDefault);
-            const expected = Object.assign({}, returnedFromService);
+            const returnedFromService = { ...elemDefault };
+            const expected = { ...returnedFromService };
             service
                 .update(elemDefault, exerciseId)
                 .pipe(take(1))
@@ -109,8 +109,8 @@ describe('Example Submission Service', () => {
 
         it('should return an example submission', fakeAsync(() => {
             const exampleSubmissionId = 1;
-            const returnedFromService = Object.assign({}, elemDefault);
-            const expected = Object.assign({}, returnedFromService);
+            const returnedFromService = { ...elemDefault };
+            const expected = { ...returnedFromService };
             service
                 .get(exampleSubmissionId)
                 .pipe(take(1))
@@ -123,8 +123,8 @@ describe('Example Submission Service', () => {
 
         it('should import an example submission', fakeAsync(() => {
             const exerciseId = 1;
-            const returnedFromService = Object.assign({}, elemDefault);
-            const expected = Object.assign({}, returnedFromService);
+            const returnedFromService = { ...elemDefault };
+            const expected = { ...returnedFromService };
             service
                 .import(studentSubmission.id!, exerciseId)
                 .pipe(take(1))

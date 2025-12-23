@@ -28,7 +28,11 @@ describe('CourseNotificationComponent', () => {
             CourseNotificationCategory.COMMUNICATION,
             CourseNotificationViewingStatus.UNSEEN,
             dayjs(),
-            Object.assign({ courseTitle: 'Test Course', courseIconUrl: 'test-icon-url' }, parameters),
+            {
+                courseTitle: 'Test Course',
+                courseIconUrl: 'test-icon-url',
+                ...parameters,
+            },
             '/',
         );
     };

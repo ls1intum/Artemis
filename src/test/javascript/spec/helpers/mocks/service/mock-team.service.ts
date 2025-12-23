@@ -97,31 +97,34 @@ export const mockFileStudents = [
 ];
 
 export const mockFileTeamsConverted: Team[] = [
-    Object.assign({}, new Team(), {
+    {
+        ...new Team(),
         name: 'File Team 1',
         shortName: 'fileteam1',
         students: [
-            Object.assign({}, new User(), { firstName: 'Jack', lastName: 'Doe', login: 'jack_doe', name: 'Jack Doe', visibleRegistrationNumber: undefined }) as User,
-            Object.assign({}, new User(), { firstName: 'Jackie', lastName: 'Doen', login: 'jackie_doen', name: 'Jackie Doen', visibleRegistrationNumber: undefined }) as User,
+            { ...new User(), firstName: 'Jack', lastName: 'Doe', login: 'jack_doe', name: 'Jack Doe', visibleRegistrationNumber: undefined } as User,
+            { ...new User(), firstName: 'Jackie', lastName: 'Doen', login: 'jackie_doen', name: 'Jackie Doen', visibleRegistrationNumber: undefined } as User,
         ],
-    }) as Team,
-    Object.assign({}, new Team(), {
+    } as Team,
+    {
+        ...new Team(),
         name: 'File Team 2',
         shortName: 'fileteam2',
         students: [
-            Object.assign({}, new User(), { firstName: 'Alyson', lastName: 'Smithson', login: undefined, visibleRegistrationNumber: '23458', name: 'Alyson Smithson' }) as User,
-            Object.assign({}, new User(), { firstName: 'Alysia', lastName: 'Smith', login: undefined, visibleRegistrationNumber: '23459', name: 'Alysia Smith' }) as User,
+            { ...new User(), firstName: 'Alyson', lastName: 'Smithson', login: undefined, visibleRegistrationNumber: '23458', name: 'Alyson Smithson' } as User,
+            { ...new User(), firstName: 'Alysia', lastName: 'Smith', login: undefined, visibleRegistrationNumber: '23459', name: 'Alysia Smith' } as User,
         ],
-    }) as Team,
+    } as Team,
 ];
 
-export const mockTeamSearchUsers = [...mockTeamStudents, ...mockNonTeamStudents].map((student) =>
-    Object.assign({}, student, { assignedTeamId: mockTeamStudents.includes(student) ? mockTeam.id : null }),
-) as TeamSearchUser[];
+export const mockTeamSearchUsers = [...mockTeamStudents, ...mockNonTeamStudents].map((student) => ({
+    ...student,
+    assignedTeamId: mockTeamStudents.includes(student) ? mockTeam.id : null,
+})) as TeamSearchUser[];
 
 export class MockTeamService implements ITeamService {
     create(exercise: Exercise, team: Team) {
-        return MockTeamService.response(Object.assign({}, team, { id: 1 }));
+        return MockTeamService.response({ ...team, id: 1 });
     }
 
     update(exercise: Exercise, team: Team) {
@@ -157,7 +160,7 @@ export class MockTeamService implements ITeamService {
     }
 
     findCourseWithExercisesAndParticipationsForTeam(course: Course, team: Team): Observable<HttpResponse<Course>> {
-        return MockTeamService.response(Object.assign({}, mockCourse, { exercises: [Object.assign({}, mockExercise as Exercise, { teams: [mockTeam] })] }) as Course);
+        return MockTeamService.response({ ...mockCourse, exercises: [{ ...(mockExercise as Exercise), teams: [mockTeam] }] } as Course);
     }
 
     exportTeams(teams: Team[]) {}

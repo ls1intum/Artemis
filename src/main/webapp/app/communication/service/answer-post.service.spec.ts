@@ -19,8 +19,8 @@ describe('AnswerPost Service', () => {
 
     describe('Service methods', () => {
         it('should create a AnswerPost', fakeAsync(() => {
-            const returnedFromService = Object.assign({}, metisAnswerPostToCreateUser1, { id: 1 });
-            const expected = Object.assign({}, returnedFromService);
+            const returnedFromService = { ...metisAnswerPostToCreateUser1, id: 1 };
+            const expected = { ...returnedFromService };
             service
                 .create(1, metisAnswerPostToCreateUser1)
                 .pipe(take(1))
@@ -31,8 +31,8 @@ describe('AnswerPost Service', () => {
         }));
 
         it('should update a AnswerPost text field', fakeAsync(() => {
-            const returnedFromService = Object.assign({}, metisResolvingAnswerPostUser1, { content: 'This is another test answer' });
-            const expected = Object.assign({}, returnedFromService);
+            const returnedFromService = { ...metisResolvingAnswerPostUser1, content: 'This is another test answer' };
+            const expected = { ...returnedFromService };
             service
                 .update(1, expected)
                 .pipe(take(1))
@@ -43,8 +43,8 @@ describe('AnswerPost Service', () => {
         }));
 
         it('should update a AnswerPost resolvesPost field', fakeAsync(() => {
-            const returnedFromService = Object.assign({}, metisResolvingAnswerPostUser1, { resolvesPost: true });
-            const expected = Object.assign({}, returnedFromService);
+            const returnedFromService = { ...metisResolvingAnswerPostUser1, resolvesPost: true };
+            const expected = { ...returnedFromService };
             service
                 .update(1, expected)
                 .pipe(take(1))
@@ -64,11 +64,7 @@ describe('AnswerPost Service', () => {
 
         it('should get source answer posts by IDs', fakeAsync(() => {
             const answerPostIds = [1, 2, 3];
-            const returnedFromService = [
-                metisResolvingAnswerPostUser1,
-                Object.assign({}, metisResolvingAnswerPostUser1, { id: 2 }),
-                Object.assign({}, metisResolvingAnswerPostUser1, { id: 3 }),
-            ];
+            const returnedFromService = [metisResolvingAnswerPostUser1, { ...metisResolvingAnswerPostUser1, id: 2 }, { ...metisResolvingAnswerPostUser1, id: 3 }];
             const expected = returnedFromService;
 
             service

@@ -76,7 +76,14 @@ describe('ExerciseImportComponent', () => {
         quizExercise = new QuizExercise(undefined, undefined);
         quizExercise.id = 5;
         searchResult = { numberOfPages: 3, resultsOnPage: [quizExercise] };
-        state = Object.assign({ page: 1, pageSize: 10, searchTerm: 'initialSearchTerm', sortingOrder: SortingOrder.DESCENDING, sortedColumn: 'ID' }, searchResult);
+        state = {
+            page: 1,
+            pageSize: 10,
+            searchTerm: 'initialSearchTerm',
+            sortingOrder: SortingOrder.DESCENDING,
+            sortedColumn: 'ID',
+            ...searchResult,
+        };
         searchStub.mockReturnValue(of(searchResult));
     });
 
@@ -168,7 +175,7 @@ describe('ExerciseImportComponent', () => {
     }));
 
     const setStateAndCallOnInit = (middleExpectation: () => void) => {
-        comp.state = Object.assign({}, state);
+        comp.state = { ...state };
         comp.ngOnInit();
         middleExpectation();
         expect(comp.content).toEqual(searchResult);
@@ -181,7 +188,7 @@ describe('ExerciseImportComponent', () => {
         setStateAndCallOnInit(() => {
             comp.listSorting = true;
             tick(10);
-            expect(searchStub).toHaveBeenCalledWith(Object.assign({}, state, { sortingOrder: SortingOrder.ASCENDING }), { isCourseFilter: true, isExamFilter: true });
+            expect(searchStub).toHaveBeenCalledWith({ ...state, sortingOrder: SortingOrder.ASCENDING }, { isCourseFilter: true, isExamFilter: true });
             expect(comp.listSorting).toBeTrue();
         });
     }));
@@ -191,7 +198,7 @@ describe('ExerciseImportComponent', () => {
         setStateAndCallOnInit(() => {
             comp.onPageChange(5);
             tick(10);
-            expect(searchStub).toHaveBeenCalledWith(Object.assign({}, state, { page: 5 }), { isCourseFilter: true, isExamFilter: true });
+            expect(searchStub).toHaveBeenCalledWith({ ...state, page: 5 }, { isCourseFilter: true, isExamFilter: true });
             expect(comp.page).toBe(5);
         });
     }));
@@ -204,7 +211,7 @@ describe('ExerciseImportComponent', () => {
             tick(10);
             expect(searchStub).not.toHaveBeenCalled();
             tick(290);
-            expect(searchStub).toHaveBeenCalledWith(Object.assign({}, state, { searchTerm: givenSearchTerm }), { isCourseFilter: true, isExamFilter: true });
+            expect(searchStub).toHaveBeenCalledWith({ ...state, searchTerm: givenSearchTerm }, { isCourseFilter: true, isExamFilter: true });
             expect(comp.searchTerm).toEqual(givenSearchTerm);
         });
     }));
@@ -214,7 +221,7 @@ describe('ExerciseImportComponent', () => {
         setStateAndCallOnInit(() => {
             comp.sortedColumn = 'TITLE';
             tick(10);
-            expect(searchStub).toHaveBeenCalledWith(Object.assign({}, state, { sortedColumn: 'TITLE' }), { isCourseFilter: true, isExamFilter: true });
+            expect(searchStub).toHaveBeenCalledWith({ ...state, sortedColumn: 'TITLE' }, { isCourseFilter: true, isExamFilter: true });
             expect(comp.sortedColumn).toBe('TITLE');
         });
     }));

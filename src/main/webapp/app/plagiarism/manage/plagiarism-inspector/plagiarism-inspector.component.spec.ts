@@ -364,13 +364,14 @@ describe('Plagiarism Inspector Component', () => {
     });
 
     it('should sort comparisons for result', () => {
-        const unsortedResult = Object.assign({}, textPlagiarismResult, {
+        const unsortedResult = {
+            ...textPlagiarismResult,
             comparisons: [
                 { id: 1, similarity: 0.5 },
                 { id: 3, similarity: 0.9 },
                 { id: 2, similarity: 0.7 },
             ] as PlagiarismComparison[],
-        });
+        };
 
         comp.sortComparisonsForResult(unsortedResult);
 

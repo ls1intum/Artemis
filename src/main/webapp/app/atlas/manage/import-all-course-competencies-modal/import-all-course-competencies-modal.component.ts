@@ -59,7 +59,10 @@ export class ImportAllCourseCompetenciesModalComponent {
     importSettings = signal<CourseCompetencyImportSettings>(new CourseCompetencyImportSettings());
 
     public selectCourse(course: Course): void {
-        const courseCompetencyImportOptions = <CourseCompetencyImportOptionsDTO>Object.assign({ sourceCourseId: course.id }, this.importSettings());
+        const courseCompetencyImportOptions = <CourseCompetencyImportOptionsDTO>{
+            sourceCourseId: course.id,
+            ...this.importSettings(),
+        };
         this.activeModal.close(<ImportAllCourseCompetenciesResult>{
             course,
             courseCompetencyImportOptions,

@@ -99,7 +99,10 @@ describe('Plagiarism Cases Service', () => {
     }));
 
     it('should save plagiarism case verdict', fakeAsync(() => {
-        const returnedFromService = Object.assign({}, plagiarismCase1, { verdict: PlagiarismVerdict.PLAGIARISM });
+        const returnedFromService = {
+            ...plagiarismCase1,
+            verdict: PlagiarismVerdict.PLAGIARISM,
+        };
         service.saveVerdict(1, 1, { verdict: PlagiarismVerdict.PLAGIARISM }).pipe(take(1)).subscribe();
 
         const req = httpMock.expectOne({ method: 'PUT' });

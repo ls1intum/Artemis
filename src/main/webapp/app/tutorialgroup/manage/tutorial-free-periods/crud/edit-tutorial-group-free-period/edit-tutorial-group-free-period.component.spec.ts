@@ -91,7 +91,10 @@ describe('EditTutorialGroupFreePeriodComponent', () => {
     });
 
     it('should send PUT request upon form submission and navigate', () => {
-        const changedPeriod: TutorialGroupFreePeriod = Object.assign({}, examplePeriod, { reason: 'Changed' });
+        const changedPeriod: TutorialGroupFreePeriod = {
+            ...examplePeriod,
+            reason: 'Changed',
+        };
 
         const updateResponse: HttpResponse<TutorialGroupFreePeriod> = new HttpResponse({
             body: changedPeriod,

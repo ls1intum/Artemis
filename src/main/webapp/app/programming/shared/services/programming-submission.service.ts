@@ -475,9 +475,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
             submissionSubject.next(newSubmissionState);
         }
         // Inform exercise subscribers.
-        this.exerciseBuildState = Object.assign({}, this.exerciseBuildState, {
-            [exerciseId]: Object.assign({}, this.exerciseBuildState[exerciseId] || {}, { [participationId]: newSubmissionState }),
-        });
+        this.exerciseBuildState = { ...this.exerciseBuildState, [exerciseId]: { ...(this.exerciseBuildState[exerciseId] || {}), [participationId]: newSubmissionState } };
         const exerciseBuildStateSubject = this.exerciseBuildStateSubjects.get(exerciseId);
         if (exerciseBuildStateSubject) {
             exerciseBuildStateSubject.next(this.exerciseBuildState[exerciseId]);
@@ -641,7 +639,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                 catchError(() => of({})),
             )
             .subscribe((exerciseBuildState: ExerciseSubmissionState) => {
-                this.exerciseBuildState = Object.assign({}, this.exerciseBuildState, { [exerciseId]: exerciseBuildState });
+                this.exerciseBuildState = { ...this.exerciseBuildState, [exerciseId]: exerciseBuildState };
                 this.exerciseBuildStateSubjects.get(exerciseId)?.next(exerciseBuildState);
             });
         return this.exerciseBuildStateSubjects
@@ -747,8 +745,8 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
             }),
             // Now update the exercise build state object and start the build and result subscription regardless of the submission state.
             tap((submissionStateObj: ProgrammingSubmissionStateObj) => {
-                const exerciseSubmissionState: ExerciseSubmissionState = Object.assign({}, this.exerciseBuildState[exerciseId] || {}, { [participationId]: submissionStateObj });
-                this.exerciseBuildState = Object.assign({}, this.exerciseBuildState, { [exerciseId]: exerciseSubmissionState });
+                const exerciseSubmissionState: ExerciseSubmissionState = { ...(this.exerciseBuildState[exerciseId] || {}), [participationId]: submissionStateObj };
+                this.exerciseBuildState = { ...this.exerciseBuildState, [exerciseId]: exerciseSubmissionState };
                 this.subscribeForNewResult(participationId, exerciseId, personal);
             }),
         );
@@ -763,7 +761,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
             return {};
         }
         const { participationId, submission, submissionState } = programmingSubmissionState;
-        return Object.assign({}, exerciseSubmissionState, { [participationId]: { participationId, submissionState, submission } });
+        return { ...exerciseSubmissionState, [participationId]: { participationId, submissionState, submission } };
     }
 
     private didSubmissionStartProcessing(commitHash: string): boolean {
@@ -834,7 +832,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         const convertedSubmissions: ProgrammingSubmission[] = [];
         for (const submission of submissions) {
             this.convertItemWithLatestSubmissionResultFromServer(submission);
-            convertedSubmissions.push(Object.assign({}, submission));
+            convertedSubmissions.push({ ...submission });
         }
         return res.clone({ body: convertedSubmissions });
     }

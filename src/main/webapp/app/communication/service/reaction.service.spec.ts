@@ -20,8 +20,8 @@ describe('Reaction Service', () => {
 
     describe('Service methods', () => {
         it('should create a Reaction', fakeAsync(() => {
-            const returnedFromService = Object.assign({}, metisReactionToCreate);
-            const expected = Object.assign({}, returnedFromService);
+            const returnedFromService = { ...metisReactionToCreate };
+            const expected = { ...returnedFromService };
             service
                 .create(1, new Reaction())
                 .pipe(take(1))

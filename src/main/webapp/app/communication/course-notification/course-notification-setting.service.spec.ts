@@ -99,7 +99,10 @@ describe('CourseNotificationSettingService', () => {
                 },
             };
 
-            const updatedMockSettingInfo: CourseNotificationSettingInfo = Object.assign({}, mockSettingInfo, { selectedPreset: 2 });
+            const updatedMockSettingInfo: CourseNotificationSettingInfo = {
+                ...mockSettingInfo,
+                selectedPreset: 2,
+            };
 
             service.getSettingInfo(courseId).subscribe();
             const firstReq = httpMock.expectOne(`/api/communication/notification/${courseId}/settings`);

@@ -219,7 +219,8 @@ export class ExamRoomsComponent implements OnInit {
     private calculateExamRoomData() {
         return this.overview()?.newestUniqueExamRooms?.map(
             (examRoomDTO) =>
-                Object.assign({}, examRoomDTO, {
+                ({
+                    ...examRoomDTO,
                     defaultCapacity: this.getDefaultCapacityOfExamRoom(examRoomDTO),
                     maxCapacity: this.getMaxCapacityOfExamRoom(examRoomDTO),
                 }) as ExamRoomDTOExtended,

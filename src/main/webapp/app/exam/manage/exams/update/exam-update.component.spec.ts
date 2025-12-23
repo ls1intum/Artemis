@@ -220,7 +220,10 @@ describe('ExamUpdateComponent', () => {
             const updateSpy = jest.spyOn(examManagementService, 'update').mockReturnValue(
                 of(
                     new HttpResponse<Exam>({
-                        body: Object.assign({}, examWithoutExercises, { id: 1 }),
+                        body: {
+                            ...examWithoutExercises,
+                            id: 1,
+                        },
                     }),
                 ),
             );
@@ -455,7 +458,10 @@ describe('ExamUpdateComponent', () => {
             const createSpy = jest.spyOn(examManagementService, 'create').mockReturnValue(
                 of(
                     new HttpResponse<Exam>({
-                        body: Object.assign({}, examWithoutExercises, { id: 1 }),
+                        body: {
+                            ...examWithoutExercises,
+                            id: 1,
+                        },
                     }),
                 ),
             );
@@ -609,7 +615,15 @@ describe('ExamUpdateComponent', () => {
         examForImport.course = course2;
         examForImport.numberOfExamUsers = 1;
         examForImport.exerciseGroups = [exerciseGroup1];
-        examForImport.examUsers = [Object.assign({ didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false }, new User(5))];
+        examForImport.examUsers = [
+            {
+                didCheckImage: false,
+                didCheckLogin: false,
+                didCheckName: false,
+                didCheckRegistrationNumber: false,
+                ...new User(5),
+            },
+        ];
         examForImport.studentExams = [new StudentExam()];
 
         beforeEach(() => {

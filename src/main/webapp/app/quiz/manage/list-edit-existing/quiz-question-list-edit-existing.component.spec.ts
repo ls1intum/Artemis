@@ -344,15 +344,15 @@ describe('QuizQuestionListEditExistingComponent', () => {
         const fakeFile = new File([jsonContent], 'file.txt', { type: 'text/plain' });
         const questions = JSON.parse(jsonContent) as QuizQuestion[];
         const element = document.createElement('input');
-        const control = Object.assign({}, element, { value: 'test' });
+        const control = { ...element, value: 'test' };
         beforeEach(() => {
             component.importFile = fakeFile;
             readAsText = jest.fn();
             reader = new FileReader();
             // @ts-ignore
-            reader = Object.assign({}, reader, { result: jsonContent });
+            reader = { ...reader, result: jsonContent };
             // @ts-ignore
-            generateFileReaderStub = jest.spyOn(component, 'generateFileReader').mockReturnValue(Object.assign({}, reader, { onload: null, readAsText }));
+            generateFileReaderStub = jest.spyOn(component, 'generateFileReader').mockReturnValue({ ...reader, onload: null, readAsText });
             // @ts-ignore
             getElementStub = jest.spyOn(document, 'getElementById').mockReturnValue(control);
         });

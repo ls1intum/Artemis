@@ -84,7 +84,11 @@ export class BonusService {
      * @param bonus to be sent to the server
      */
     private filterBonusForRequest(bonus: Bonus) {
-        return Object.assign({}, bonus, { sourceGradingScale: bonus.sourceGradingScale ? { id: bonus.sourceGradingScale.id } : undefined, bonusToGradingScale: undefined });
+        return {
+            ...bonus,
+            sourceGradingScale: bonus.sourceGradingScale ? { id: bonus.sourceGradingScale.id } : undefined,
+            bonusToGradingScale: undefined,
+        };
     }
 
     /**

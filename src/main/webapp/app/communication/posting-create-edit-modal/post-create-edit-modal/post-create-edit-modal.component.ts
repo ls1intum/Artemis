@@ -149,8 +149,13 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
     private setPostProperties(post: Post): Post {
         post.title = this.formGroup.get('title')?.value;
         post.content = this.formGroup.get('content')?.value;
-        const currentContextSelectorOption: ContextSelectorOption = Object.assign({}, this.formGroup.get('context')?.value);
-        post = Object.assign({}, post, currentContextSelectorOption);
+        const currentContextSelectorOption: ContextSelectorOption = {
+            ...this.formGroup.get('context')?.value,
+        };
+        post = {
+            ...post,
+            ...currentContextSelectorOption,
+        };
         if (currentContextSelectorOption.conversation) {
             post.conversation = currentContextSelectorOption.conversation;
         }

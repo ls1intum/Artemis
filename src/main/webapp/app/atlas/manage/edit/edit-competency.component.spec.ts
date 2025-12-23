@@ -127,7 +127,11 @@ describe('EditCompetencyComponent', () => {
         expect(findByIdSpy).toHaveBeenCalledOnce();
         expect(editCompetencyComponent.competency).toEqual(competencyDatabase);
 
-        const changedUnit: Competency = Object.assign({}, competencyDatabase, { title: 'Changed', optional: false });
+        const changedUnit: Competency = {
+            ...competencyDatabase,
+            title: 'Changed',
+            optional: false,
+        };
 
         const updateResponse: HttpResponse<Competency> = new HttpResponse({
             body: changedUnit,

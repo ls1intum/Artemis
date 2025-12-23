@@ -99,7 +99,8 @@ export class QuizExerciseDetailComponent implements OnInit {
         }
         return [
             generalSection,
-            Object.assign({}, modeSection, {
+            {
+                ...modeSection,
                 details: [
                     ...modeSection.details,
                     { type: DetailType.Boolean, title: 'artemisApp.quizExercise.randomizeQuestionOrder', data: { boolean: exercise.randomizeQuestionOrder } },
@@ -114,7 +115,7 @@ export class QuizExerciseDetailComponent implements OnInit {
                         data: { text: this.translateService.instant('artemisApp.quizExercise.detail.questionCount.value', { mcCount, dndCount, shortCount }) },
                     },
                 ],
-            }),
+            },
             {
                 headline: 'artemisApp.exercise.sections.grading',
                 details: defaultGradingDetails,

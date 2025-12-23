@@ -111,7 +111,10 @@ describe('EditTutorialGroupComponent', () => {
         delete exampleTutorialGroup.teachingAssistantId;
         delete exampleTutorialGroup.teachingAssistantImageUrl;
 
-        const changedTutorialGroup = Object.assign({}, exampleTutorialGroup, { title: 'Changed' }) as TutorialGroup;
+        const changedTutorialGroup = {
+            ...exampleTutorialGroup,
+            title: 'Changed',
+        } as TutorialGroup;
 
         const updateResponse: HttpResponse<TutorialGroup> = new HttpResponse({
             body: changedTutorialGroup,

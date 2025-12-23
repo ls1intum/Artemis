@@ -90,7 +90,9 @@ export class ProgrammingExerciseService {
         return this.http
             .get<PlagiarismResultDTO>(`${this.resourceUrl}/${exerciseId}/check-plagiarism`, {
                 observe: 'response',
-                params: Object.assign({}, options?.toParams()),
+                params: {
+                    ...options?.toParams(),
+                },
             })
             .pipe(map((response: HttpResponse<PlagiarismResultDTO>) => response.body!));
     }
@@ -104,7 +106,9 @@ export class ProgrammingExerciseService {
         return this.http.get(`${this.resourceUrl}/${exerciseId}/check-plagiarism-jplag-report`, {
             observe: 'response',
             responseType: 'blob',
-            params: Object.assign({}, options?.toParams()),
+            params: {
+                ...options?.toParams(),
+            },
         });
     }
 
@@ -368,9 +372,10 @@ export class ProgrammingExerciseService {
      * @param exercise for which the data should be converted
      */
     convertDataFromClient(exercise: ProgrammingExercise) {
-        const copy = Object.assign({}, ExerciseService.convertExerciseDatesFromClient(exercise), {
+        const copy = {
+            ...ExerciseService.convertExerciseDatesFromClient(exercise),
             buildAndTestStudentSubmissionsAfterDueDate: convertDateFromClient(exercise.buildAndTestStudentSubmissionsAfterDueDate),
-        });
+        };
         // Remove exercise from template & solution participation to avoid circular dependency issues.
         // Also remove the results, as they can have circular structures as well and don't have to be saved here.
         if (copy.templateParticipation) {

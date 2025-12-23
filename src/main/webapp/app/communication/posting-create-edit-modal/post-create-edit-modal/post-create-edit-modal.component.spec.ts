@@ -66,7 +66,7 @@ describe('PostCreateEditModalComponent', () => {
 
     it('should init modal with correct context, title and content for post without id', () => {
         metisServiceGetPageTypeMock.mockReturnValue(PageType.OVERVIEW);
-        component.posting = Object.assign({}, metisPostToCreateUser1);
+        component.posting = { ...metisPostToCreateUser1 };
         component.ngOnInit();
         component.ngOnChanges();
         expect(component.pageType).toEqual(PageType.OVERVIEW);
@@ -83,7 +83,7 @@ describe('PostCreateEditModalComponent', () => {
 
     it('should reset context selection on changes', () => {
         metisServiceGetPageTypeMock.mockReturnValue(PageType.OVERVIEW);
-        component.posting = Object.assign({}, metisPostTechSupport);
+        component.posting = { ...metisPostTechSupport };
         component.ngOnInit();
         component.currentContextSelectorOption.conversation = { id: 1 } as Channel;
         component.ngOnChanges();
@@ -109,7 +109,11 @@ describe('PostCreateEditModalComponent', () => {
         expect(component.similarPosts).toEqual([]);
         // trigger the method that is called on clicking the save button
         component.confirm();
-        expect(metisServiceCreateStub).toHaveBeenCalledWith(Object.assign({}, component.posting, { content: newContent, title: newTitle }));
+        expect(metisServiceCreateStub).toHaveBeenCalledWith({
+            ...component.posting,
+            content: newContent,
+            title: newTitle,
+        });
         tick();
         expect(component.isLoading).toBeFalse();
         expect(onCreateSpy).toHaveBeenCalledOnce();
@@ -132,7 +136,11 @@ describe('PostCreateEditModalComponent', () => {
         });
         // trigger the method that is called on clicking the save button
         component.confirm();
-        expect(metisServiceCreateStub).toHaveBeenCalledWith(Object.assign({}, component.posting, { content: newContent, title: newTitle }));
+        expect(metisServiceCreateStub).toHaveBeenCalledWith({
+            ...component.posting,
+            content: newContent,
+            title: newTitle,
+        });
         // debounce time of title input field
         tick(800);
         expect(component.isLoading).toBeFalse();
@@ -156,7 +164,11 @@ describe('PostCreateEditModalComponent', () => {
         // debounce time of title input field
         tick(800);
         component.confirm();
-        expect(metisServiceUpdateStub).toHaveBeenCalledWith(Object.assign({}, component.posting, { content: updatedContent, title: updatedTitle }));
+        expect(metisServiceUpdateStub).toHaveBeenCalledWith({
+            ...component.posting,
+            content: updatedContent,
+            title: updatedTitle,
+        });
         tick();
         expect(component.isLoading).toBeFalse();
     }));

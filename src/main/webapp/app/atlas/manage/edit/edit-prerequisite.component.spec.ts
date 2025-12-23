@@ -132,7 +132,11 @@ describe('EditPrerequisiteComponent', () => {
         expect(findByIdSpy).toHaveBeenCalledOnce();
         expect(editPrerequisiteComponent.prerequisite).toEqual(competencyDatabase);
 
-        const changedUnit: Prerequisite = Object.assign({}, competencyDatabase, { title: 'Changed', optional: false });
+        const changedUnit: Prerequisite = {
+            ...competencyDatabase,
+            title: 'Changed',
+            optional: false,
+        };
 
         const updateResponse: HttpResponse<Prerequisite> = new HttpResponse({
             body: changedUnit,

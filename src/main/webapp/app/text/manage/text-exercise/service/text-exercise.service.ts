@@ -104,7 +104,9 @@ export class TextExerciseService implements ExerciseServicable<TextExercise> {
         return this.http
             .get<PlagiarismResultDTO>(`${this.resourceUrl}/${exerciseId}/check-plagiarism`, {
                 observe: 'response',
-                params: Object.assign({}, options?.toParams()),
+                params: {
+                    ...options?.toParams(),
+                },
             })
             .pipe(map((response: HttpResponse<PlagiarismResultDTO>) => response.body!));
     }

@@ -62,7 +62,10 @@ export class FeedbackChartService {
 
             subtrahend = Math.min(subtrahend + current, 0);
 
-            return Object.assign({}, node, { credits });
+            return {
+                ...node,
+                credits,
+            };
         });
     };
 
@@ -87,14 +90,20 @@ export class FeedbackChartService {
      * Sets credits in nodes to absolute value
      */
     private absCredits = (feedbackNodes: FeedbackNode[]) => {
-        return feedbackNodes.map((node) => Object.assign({}, node, { credits: Math.abs(node.credits ?? 0) }));
+        return feedbackNodes.map((node) => ({
+            ...node,
+            credits: Math.abs(node.credits ?? 0),
+        }));
     };
 
     /*
      * Sets credits to 0 for all feedback nodes
      */
     private clearCredits = (feedbackNodes: FeedbackNode[]) => {
-        return feedbackNodes.map((node) => Object.assign({}, node, { credits: 0 }));
+        return feedbackNodes.map((node) => ({
+            ...node,
+            credits: 0,
+        }));
     };
 
     private capCredits = (credits: number, maxCredits?: number): number => {

@@ -127,7 +127,10 @@ describe('Edit LTI Configuration Component', () => {
     });
 
     function updateConfiguration() {
-        const changedConfiguration = Object.assign({}, platformConfiguration, { customName: 'custom_name_2' }) as LtiPlatformConfiguration;
+        const changedConfiguration = {
+            ...platformConfiguration,
+            customName: 'custom_name_2',
+        } as LtiPlatformConfiguration;
 
         comp.platformConfigurationForm = new FormGroup({
             id: new FormControl(changedConfiguration.id),

@@ -43,8 +43,8 @@ describe('Attachment Service', () => {
 
     describe('Service methods', () => {
         it.each([new File([], 'testName.txt'), undefined])('should create an attachment in the database with file %s', async (file: File | undefined) => {
-            const returnedFromService = Object.assign({}, elemDefault);
-            const expected = Object.assign({}, returnedFromService);
+            const returnedFromService = { ...elemDefault };
+            const expected = { ...returnedFromService };
             service
                 .update(1, elemDefault, file)
                 .pipe(take(1))
@@ -58,8 +58,8 @@ describe('Attachment Service', () => {
         });
 
         it('should find an attachment in the database', async () => {
-            const returnedFromService = Object.assign({}, elemDefault);
-            const expected = Object.assign({}, returnedFromService);
+            const returnedFromService = { ...elemDefault };
+            const expected = { ...returnedFromService };
             const id = elemDefault.id!;
             service
                 .find(id)
@@ -90,7 +90,7 @@ describe('Attachment Service', () => {
         });
 
         it('should delete an attachment in the database', async () => {
-            const returnedFromService = Object.assign({}, elemDefault);
+            const returnedFromService = { ...elemDefault };
             const attachmentId = elemDefault.id!;
             service
                 .delete(attachmentId)

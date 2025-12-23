@@ -328,7 +328,10 @@ describe('ExerciseAssessmentDashboardComponent', () => {
             numberOfTutorRatings: 4,
         } as TutorLeaderboardElement;
 
-        const statsWithTutor = Object.assign({}, stats, { tutorLeaderboardEntries: [tutorLeaderBoardEntry] }) as StatsForDashboard;
+        const statsWithTutor = {
+            ...stats,
+            tutorLeaderboardEntries: [tutorLeaderBoardEntry],
+        } as StatsForDashboard;
 
         exerciseServiceGetStatsForTutorsStub.mockReturnValue(of(new HttpResponse({ body: statsWithTutor, headers: new HttpHeaders() })));
 

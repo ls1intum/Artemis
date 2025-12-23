@@ -79,7 +79,7 @@ export class CourseNotificationSettingService {
             if (copyPreset) {
                 currentValue.notificationTypeChannels = copyPreset.presetMap;
             }
-            const updatedValue = Object.assign({}, currentValue, { selectedPreset: presetTypeId });
+            const updatedValue = { ...currentValue, selectedPreset: presetTypeId };
             subject.next(updatedValue);
         }
 
@@ -111,7 +111,7 @@ export class CourseNotificationSettingService {
             } else {
                 currentValue.notificationTypeChannels[notificationSettingSpecification.identifier] = notificationSettingSpecification.channelSetting;
             }
-            const updatedValue = Object.assign({}, currentValue, { selectedPreset: 0 });
+            const updatedValue = { ...currentValue, selectedPreset: 0 };
             subject.next(updatedValue);
         }
 

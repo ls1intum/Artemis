@@ -17,7 +17,10 @@ import { Student } from 'app/openapi/model/student';
 import ErrorEnum = TutorialGroupRegistrationImport.ErrorEnum;
 jest.mock('papaparse', () => {
     const original = jest.requireActual('papaparse');
-    return Object.assign({}, original, { parse: jest.fn() });
+    return {
+        ...original,
+        parse: jest.fn(),
+    };
 });
 const mockedParse = parse as jest.MockedFunction<typeof parse>;
 
@@ -270,8 +273,8 @@ describe('TutorialGroupsRegistrationImportDialog', () => {
 
         const tutorialGroupService = TestBed.inject(TutorialGroupsService);
 
-        const returnedDTOOne = Object.assign({}, exampleOne, { importSuccessful: true });
-        const returnedDTOTwo = Object.assign({}, exampleTwo, { importSuccessful: false, errorMessage: 'error' });
+        const returnedDTOOne = { ...exampleOne, importSuccessful: true };
+        const returnedDTOTwo = { ...exampleTwo, importSuccessful: false, errorMessage: 'error' };
 
         const importSpy = jest.spyOn(tutorialGroupService, 'import').mockReturnValue(of(new HttpResponse({ body: [returnedDTOOne, returnedDTOTwo], status: 200 })));
 
@@ -356,7 +359,7 @@ describe('TutorialGroupsRegistrationImportDialog', () => {
 
     const generateDummyFile = (name?: string) => {
         let blob = new Blob(['']);
-        blob = Object.assign({}, blob, { name: name ?? 'filename', lastModifiedDate: '' }) as unknown as Blob;
+        blob = { ...blob, name: name ?? 'filename', lastModifiedDate: '' } as unknown as Blob;
         return <File>blob;
     };
 

@@ -167,8 +167,11 @@ describe('LearningPathLectureUnitComponent', () => {
     });
 
     it('should not show discussion section when communication is disabled', async () => {
-        const lecture = Object.assign({}, lectureUnit.lecture, { course: { courseInformationSharingConfiguration: CourseInformationSharingConfiguration.DISABLED } });
-        getLectureUnitByIdSpy.mockReturnValue(of(Object.assign({}, lectureUnit, { lecture })));
+        const lecture = {
+            ...lectureUnit.lecture,
+            course: { courseInformationSharingConfiguration: CourseInformationSharingConfiguration.DISABLED },
+        };
+        getLectureUnitByIdSpy.mockReturnValue(of({ ...lectureUnit, lecture }));
 
         fixture.detectChanges();
         await fixture.whenStable();

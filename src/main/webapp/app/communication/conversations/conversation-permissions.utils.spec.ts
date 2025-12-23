@@ -59,15 +59,15 @@ describe('ConversationPermissionUtils', () => {
             });
 
             it('creator cannot leave a channel', () => {
-                expect(canLeaveConversation(Object.assign({}, channelsThatCanBeLeft, { isCreator: true }))).toBeFalse();
+                expect(canLeaveConversation({ ...channelsThatCanBeLeft, isCreator: true })).toBeFalse();
             });
 
             it('non member cannot leave a channel', () => {
-                expect(canLeaveConversation(Object.assign({}, channelsThatCanBeLeft, { isMember: false }))).toBeFalse();
+                expect(canLeaveConversation({ ...channelsThatCanBeLeft, isMember: false })).toBeFalse();
             });
 
             it('member cannot leave a course-wide channel', () => {
-                expect(canLeaveConversation(Object.assign({}, channelsThatCanBeLeft, { isCourseWide: true }) as ChannelDTO)).toBeFalse();
+                expect(canLeaveConversation({ ...channelsThatCanBeLeft, isCourseWide: true } as ChannelDTO)).toBeFalse();
             });
         });
 
@@ -79,25 +79,21 @@ describe('ConversationPermissionUtils', () => {
             });
 
             it('should return false if the user is not a channel moderator and channel is public', () => {
-                expect(
-                    canAddUsersToConversation(Object.assign({}, channelWhereUsersCanBeAdded, { hasChannelModerationRights: false, isChannelModerator: false }) as ChannelDTO),
-                ).toBeFalse();
+                expect(canAddUsersToConversation({ ...channelWhereUsersCanBeAdded, hasChannelModerationRights: false, isChannelModerator: false } as ChannelDTO)).toBeFalse();
             });
 
             it('should return false if the user is not a channel moderator and channel is private', () => {
                 expect(
-                    canAddUsersToConversation(
-                        Object.assign({}, channelWhereUsersCanBeAdded, { hasChannelModerationRights: false, isPublic: false, isChannelModerator: false }) as ChannelDTO,
-                    ),
+                    canAddUsersToConversation({ ...channelWhereUsersCanBeAdded, hasChannelModerationRights: false, isPublic: false, isChannelModerator: false } as ChannelDTO),
                 ).toBeFalse();
             });
 
             it('should return true if the channel is archived', () => {
-                expect(canAddUsersToConversation(Object.assign({}, channelWhereUsersCanBeAdded, { isPublic: true, isArchived: true }) as ChannelDTO)).toBeTrue();
+                expect(canAddUsersToConversation({ ...channelWhereUsersCanBeAdded, isPublic: true, isArchived: true } as ChannelDTO)).toBeTrue();
             });
 
             it('should return false if the channel is course wide', () => {
-                expect(canAddUsersToConversation(Object.assign({}, channelWhereUsersCanBeAdded, { isCourseWide: true }) as ChannelDTO)).toBeFalse();
+                expect(canAddUsersToConversation({ ...channelWhereUsersCanBeAdded, isCourseWide: true } as ChannelDTO)).toBeFalse();
             });
         });
 
@@ -109,15 +105,15 @@ describe('ConversationPermissionUtils', () => {
             });
 
             it('should return false if the user is not a channel moderator', () => {
-                expect(canRemoveUsersFromConversation(Object.assign({}, channelsWhereUsersCanBeRemoved, { hasChannelModerationRights: false }) as ChannelDTO)).toBeFalse();
+                expect(canRemoveUsersFromConversation({ ...channelsWhereUsersCanBeRemoved, hasChannelModerationRights: false } as ChannelDTO)).toBeFalse();
             });
 
             it('should return true if the channel is archived', () => {
-                expect(canRemoveUsersFromConversation(Object.assign({}, channelsWhereUsersCanBeRemoved, { isArchived: true }) as ChannelDTO)).toBeTrue();
+                expect(canRemoveUsersFromConversation({ ...channelsWhereUsersCanBeRemoved, isArchived: true } as ChannelDTO)).toBeTrue();
             });
 
             it('should return true if the channel is public', () => {
-                expect(canRemoveUsersFromConversation(Object.assign({}, channelsWhereUsersCanBeRemoved, { isPublic: true }) as ChannelDTO)).toBeTrue();
+                expect(canRemoveUsersFromConversation({ ...channelsWhereUsersCanBeRemoved, isPublic: true } as ChannelDTO)).toBeTrue();
             });
         });
 
@@ -169,7 +165,7 @@ describe('ConversationPermissionUtils', () => {
             });
 
             it('cannot grant moderator role without moderation rights', () => {
-                expect(canGrantChannelModeratorRole(Object.assign({}, channelWhereRoleCanBeGranted, { hasChannelModerationRights: false }))).toBeFalse();
+                expect(canGrantChannelModeratorRole({ ...channelWhereRoleCanBeGranted, hasChannelModerationRights: false })).toBeFalse();
             });
         });
 
@@ -181,7 +177,7 @@ describe('ConversationPermissionUtils', () => {
             });
 
             it('cannot revoke moderator role without moderation rights', () => {
-                expect(canRevokeChannelModeratorRole(Object.assign({}, channelWhereRoleCanBeRevoked, { hasChannelModerationRights: false }))).toBeFalse();
+                expect(canRevokeChannelModeratorRole({ ...channelWhereRoleCanBeRevoked, hasChannelModerationRights: false })).toBeFalse();
             });
         });
 
@@ -193,7 +189,7 @@ describe('ConversationPermissionUtils', () => {
             });
 
             it('cannot archive channel without moderation rights', () => {
-                expect(canChangeChannelArchivalState(Object.assign({}, channelThatCanBeArchived, { hasChannelModerationRights: false }))).toBeFalse();
+                expect(canChangeChannelArchivalState({ ...channelThatCanBeArchived, hasChannelModerationRights: false })).toBeFalse();
             });
         });
 
@@ -205,11 +201,11 @@ describe('ConversationPermissionUtils', () => {
             });
 
             it('cannot change channel properties without moderation rights', () => {
-                expect(canChangeChannelProperties(Object.assign({}, channelThatCanBeChanged, { hasChannelModerationRights: false }))).toBeFalse();
+                expect(canChangeChannelProperties({ ...channelThatCanBeChanged, hasChannelModerationRights: false })).toBeFalse();
             });
 
             it('can change channel properties of channel that is already archived', () => {
-                expect(canChangeChannelProperties(Object.assign({}, channelThatCanBeChanged, { isArchived: true }))).toBeTrue();
+                expect(canChangeChannelProperties({ ...channelThatCanBeChanged, isArchived: true })).toBeTrue();
             });
         });
 
@@ -227,19 +223,19 @@ describe('ConversationPermissionUtils', () => {
             });
 
             it('can not join a channel twice', () => {
-                expect(canJoinChannel(Object.assign({}, channelThatCanBeJoined, { isMember: true }))).toBeFalse();
+                expect(canJoinChannel({ ...channelThatCanBeJoined, isMember: true })).toBeFalse();
             });
 
             it('can not join a private channel without moderation rights', () => {
-                expect(canJoinChannel(Object.assign({}, channelThatCanBeJoined, { isPublic: false }))).toBeFalse();
+                expect(canJoinChannel({ ...channelThatCanBeJoined, isPublic: false })).toBeFalse();
             });
 
             it('can join an archived public channel without moderation rights', () => {
-                expect(canJoinChannel(Object.assign({}, channelThatCanBeJoined, { isArchived: true }))).toBeTrue();
+                expect(canJoinChannel({ ...channelThatCanBeJoined, isArchived: true })).toBeTrue();
             });
 
             it('can join a private channel with moderation rights', () => {
-                expect(canJoinChannel(Object.assign({}, channelThatCanBeJoined, { isPublic: false, hasChannelModerationRights: true }))).toBeTrue();
+                expect(canJoinChannel({ ...channelThatCanBeJoined, isPublic: false, hasChannelModerationRights: true })).toBeTrue();
             });
         });
     });
@@ -296,7 +292,7 @@ describe('ConversationPermissionUtils', () => {
             });
 
             it('non member can not leave a group chat', () => {
-                expect(canLeaveConversation(Object.assign({}, groupChatThatCanBeLeft, { isMember: false }))).toBeFalse();
+                expect(canLeaveConversation({ ...groupChatThatCanBeLeft, isMember: false })).toBeFalse();
             });
         });
         describe('addUsersToConversation', () => {
@@ -307,7 +303,7 @@ describe('ConversationPermissionUtils', () => {
             });
 
             it('should return false if the user is not a member of the group chat', () => {
-                expect(canAddUsersToConversation(Object.assign({}, groupChatWhereUsersCanBeAdded, { isMember: false }))).toBeFalse();
+                expect(canAddUsersToConversation({ ...groupChatWhereUsersCanBeAdded, isMember: false })).toBeFalse();
             });
         });
 
@@ -319,7 +315,7 @@ describe('ConversationPermissionUtils', () => {
             });
 
             it('should return false if the user is not a member of the group chat', () => {
-                expect(canRemoveUsersFromConversation(Object.assign({}, groupChatWhereUsersCanBeRemoved, { isMember: false }))).toBeFalse();
+                expect(canRemoveUsersFromConversation({ ...groupChatWhereUsersCanBeRemoved, isMember: false })).toBeFalse();
             });
         });
 
@@ -331,7 +327,7 @@ describe('ConversationPermissionUtils', () => {
             });
 
             it('cannot change group chat properties without being a member', () => {
-                expect(canChangeGroupChatProperties(Object.assign({}, groupChatThatCanBeChanged, { isMember: false }))).toBeFalse();
+                expect(canChangeGroupChatProperties({ ...groupChatThatCanBeChanged, isMember: false })).toBeFalse();
             });
         });
     });

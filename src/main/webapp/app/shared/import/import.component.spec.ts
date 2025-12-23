@@ -60,7 +60,14 @@ describe('ImportComponent', () => {
 
     beforeEach(() => {
         searchResult = { numberOfPages: 3, resultsOnPage: [content] };
-        state = Object.assign({ page: 1, pageSize: 10, searchTerm: 'initialSearchTerm', sortingOrder: SortingOrder.DESCENDING, sortedColumn: 'ID' }, searchResult);
+        state = {
+            page: 1,
+            pageSize: 10,
+            searchTerm: 'initialSearchTerm',
+            sortingOrder: SortingOrder.DESCENDING,
+            sortedColumn: 'ID',
+            ...searchResult,
+        };
         searchStub.mockReturnValue(of(searchResult));
     });
 
@@ -80,7 +87,7 @@ describe('ImportComponent', () => {
     });
 
     const setStateAndCallOnInit = (middleExpectation: () => void) => {
-        comp.state = Object.assign({}, state);
+        comp.state = { ...state };
         comp.ngOnInit();
         middleExpectation();
         expect(comp.content).toEqual(searchResult);
@@ -93,7 +100,7 @@ describe('ImportComponent', () => {
         setStateAndCallOnInit(() => {
             comp.listSorting = true;
             tick(10);
-            expect(searchStub).toHaveBeenCalledWith(Object.assign({}, state, { sortingOrder: SortingOrder.ASCENDING }), undefined);
+            expect(searchStub).toHaveBeenCalledWith({ ...state, sortingOrder: SortingOrder.ASCENDING }, undefined);
             expect(comp.listSorting).toBeTrue();
         });
     }));
@@ -103,7 +110,7 @@ describe('ImportComponent', () => {
         setStateAndCallOnInit(() => {
             comp.onPageChange(5);
             tick(10);
-            expect(searchStub).toHaveBeenCalledWith(Object.assign({}, state, { page: 5 }), undefined);
+            expect(searchStub).toHaveBeenCalledWith({ ...state, page: 5 }, undefined);
             expect(comp.page).toBe(5);
         });
     }));
@@ -116,7 +123,7 @@ describe('ImportComponent', () => {
             tick(10);
             expect(searchStub).not.toHaveBeenCalled();
             tick(290);
-            expect(searchStub).toHaveBeenCalledWith(Object.assign({}, state, { searchTerm: givenSearchTerm }), undefined);
+            expect(searchStub).toHaveBeenCalledWith({ ...state, searchTerm: givenSearchTerm }, undefined);
             expect(comp.searchTerm).toEqual(givenSearchTerm);
         });
     }));
@@ -126,7 +133,7 @@ describe('ImportComponent', () => {
         setStateAndCallOnInit(() => {
             comp.sortedColumn = 'TITLE';
             tick(10);
-            expect(searchStub).toHaveBeenCalledWith(Object.assign({}, state, { sortedColumn: 'TITLE' }), undefined);
+            expect(searchStub).toHaveBeenCalledWith({ ...state, sortedColumn: 'TITLE' }, undefined);
             expect(comp.sortedColumn).toBe('TITLE');
         });
     }));
@@ -203,7 +210,7 @@ describe('ImportComponent', () => {
         setStateAndCallOnInit(() => {
             comp.searchTerm = state.searchTerm = 'newSearchTerm';
             tick(300);
-            expect(searchStub).toHaveBeenCalledWith(Object.assign({}, state), { test: true });
+            expect(searchStub).toHaveBeenCalledWith({ ...state }, { test: true });
             expect(createOptionsSpy).toHaveBeenCalled();
         });
     }));
@@ -214,7 +221,7 @@ describe('ImportComponent', () => {
         setStateAndCallOnInit(() => {
             comp.searchTerm = state.searchTerm = 'newSearchTerm';
             tick(300);
-            expect(searchStub).toHaveBeenCalledWith(Object.assign({}, state), undefined);
+            expect(searchStub).toHaveBeenCalledWith({ ...state }, undefined);
             expect(onSearchResultSpy).toHaveBeenCalled();
         });
     }));

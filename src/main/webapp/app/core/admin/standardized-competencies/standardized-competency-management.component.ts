@@ -335,12 +335,13 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
             return;
         }
         // set children and competencies to previous values as we do not get all descendants from the server
-        const knowledgeAreaForTree: KnowledgeAreaForTree = Object.assign({}, knowledgeArea, {
+        const knowledgeAreaForTree: KnowledgeAreaForTree = {
+            ...knowledgeArea,
             level: parent ? parent.level + 1 : 0,
             isVisible: true,
             children: previousKnowledgeArea.children,
             competencies: previousKnowledgeArea.competencies,
-        });
+        };
         // update level of descendants
         this.updateLevelOfSelfAndDescendants(knowledgeAreaForTree, knowledgeAreaForTree.level);
 

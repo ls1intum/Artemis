@@ -600,7 +600,10 @@ examples.forEach((activeConversation) => {
             const currentUser = { id: 99, internal: false };
             const otherUser = { id: 42, internal: false };
 
-            component._activeConversation = Object.assign({}, component._activeConversation, { lastReadDate });
+            component._activeConversation = {
+                ...component._activeConversation,
+                lastReadDate,
+            };
 
             component.currentUser = currentUser;
 
@@ -620,7 +623,10 @@ examples.forEach((activeConversation) => {
             const currentUser = { id: 99, internal: false };
             const otherUser = { id: 42, internal: false };
 
-            component._activeConversation = Object.assign({}, component._activeConversation, { lastReadDate });
+            component._activeConversation = {
+                ...component._activeConversation,
+                lastReadDate,
+            };
 
             component.currentUser = currentUser;
 

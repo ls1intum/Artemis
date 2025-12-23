@@ -92,7 +92,9 @@ describe('Edit Course LTI Configuration Component', () => {
     it('should save upon form submission and navigate', () => {
         fixture.detectChanges();
 
-        const changedConfiguration = Object.assign({}, onlineCourseConfiguration) as OnlineCourseConfiguration;
+        const changedConfiguration = {
+            ...onlineCourseConfiguration,
+        } as OnlineCourseConfiguration;
 
         comp.onlineCourseConfigurationForm = new FormGroup({
             id: new FormControl(changedConfiguration.id),

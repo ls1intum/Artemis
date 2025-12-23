@@ -175,7 +175,7 @@ examples.forEach((activeConversation) => {
                 const channelService = TestBed.inject(ChannelService);
                 const toggleSpy = jest
                     .spyOn(channelService, 'toggleChannelPrivacy')
-                    .mockReturnValue(of(new HttpResponse<ChannelDTO>({ body: Object.assign({}, activeConversation, { isPublic: false }) })));
+                    .mockReturnValue(of(new HttpResponse<ChannelDTO>({ body: { ...activeConversation, isPublic: false } })));
 
                 const privacyChangeSpy = jest.spyOn(component.channelPrivacyChange, 'emit');
 
@@ -200,9 +200,7 @@ examples.forEach((activeConversation) => {
                 fixture.detectChanges();
 
                 const channelService = TestBed.inject(ChannelService);
-                jest.spyOn(channelService, 'toggleChannelPrivacy').mockReturnValue(
-                    of(new HttpResponse<ChannelDTO>({ body: Object.assign({}, activeConversation, { isPublic: true }) })),
-                );
+                jest.spyOn(channelService, 'toggleChannelPrivacy').mockReturnValue(of(new HttpResponse<ChannelDTO>({ body: { ...activeConversation, isPublic: true } })));
 
                 component.toggleChannelPrivacy();
                 tick();
@@ -222,9 +220,7 @@ examples.forEach((activeConversation) => {
                 fixture.detectChanges();
 
                 const channelService = TestBed.inject(ChannelService);
-                jest.spyOn(channelService, 'toggleChannelPrivacy').mockReturnValue(
-                    of(new HttpResponse<ChannelDTO>({ body: Object.assign({}, activeConversation, { isPublic: false }) })),
-                );
+                jest.spyOn(channelService, 'toggleChannelPrivacy').mockReturnValue(of(new HttpResponse<ChannelDTO>({ body: { ...activeConversation, isPublic: false } })));
 
                 component.toggleChannelPrivacy();
                 tick();

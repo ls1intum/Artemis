@@ -157,7 +157,7 @@ describe('CourseGroupComponent', () => {
         });
 
         it('should not do anything if users has no login', () => {
-            const user = Object.assign({}, courseGroupUser);
+            const user = { ...courseGroupUser };
             delete user.login;
             comp.removeFromGroup(user);
             expect(removeUserStub).not.toHaveBeenCalled();
@@ -166,7 +166,7 @@ describe('CourseGroupComponent', () => {
     describe('searchResultFormatter', () => {
         it('should format user info into appropriate format', () => {
             const name = 'testName';
-            const user = Object.assign({}, courseGroupUser, { name });
+            const user = { ...courseGroupUser, name };
             expect(comp.searchResultFormatter(user)).toBe(`${name} (${user.login})`);
         });
     });
@@ -178,7 +178,7 @@ describe('CourseGroupComponent', () => {
         });
 
         it('should return empty string if user does not have login', () => {
-            const user = Object.assign({}, courseGroupUser);
+            const user = { ...courseGroupUser };
             delete user.login;
             expect(comp.searchTextFromUser(user)).toBe('');
         });

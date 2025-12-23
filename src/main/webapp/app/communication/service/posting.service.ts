@@ -16,7 +16,11 @@ export abstract class PostingService<T extends Posting> {
      * @return  {T}
      */
     protected convertPostingDateFromClient<T extends Posting>(posting: T): T {
-        return Object.assign({}, posting, { creationDate: convertDateFromClient(posting.creationDate), updatedDate: convertDateFromClient(posting.updatedDate) });
+        return {
+            ...posting,
+            creationDate: convertDateFromClient(posting.creationDate),
+            updatedDate: convertDateFromClient(posting.updatedDate),
+        };
     }
 
     /**

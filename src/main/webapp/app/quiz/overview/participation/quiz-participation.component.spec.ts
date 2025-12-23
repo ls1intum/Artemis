@@ -182,12 +182,12 @@ describe('QuizParticipationComponent', () => {
                     component = fixture.componentInstance;
 
                     participationService = fixture.debugElement.injector.get(ParticipationService);
-                    const participation: StudentParticipation = { exercise: Object.assign({}, quizExercise) };
+                    const participation: StudentParticipation = { exercise: { ...quizExercise } };
                     participationSpy = jest
                         .spyOn(participationService, 'startQuizParticipation')
                         .mockReturnValue(of({ body: participation } as HttpResponse<StudentParticipation>));
                     quizExerciseService = fixture.debugElement.injector.get(QuizExerciseService);
-                    jest.spyOn(quizExerciseService, 'findForStudent').mockReturnValue(of({ body: Object.assign({}, quizExercise) } as HttpResponse<QuizExercise>));
+                    jest.spyOn(quizExerciseService, 'findForStudent').mockReturnValue(of({ body: { ...quizExercise } } as HttpResponse<QuizExercise>));
                     httpMock = fixture.debugElement.injector.get(HttpTestingController);
                 });
         }));
@@ -225,7 +225,7 @@ describe('QuizParticipationComponent', () => {
                 invalid: false,
                 exportQuiz: false,
             };
-            component.quizExercise = Object.assign({}, quizExercise, { quizQuestions: [mockQuestion] });
+            component.quizExercise = { ...quizExercise, quizQuestions: [mockQuestion] };
 
             component['highlightQuestion'](0);
 
@@ -234,7 +234,7 @@ describe('QuizParticipationComponent', () => {
 
         it('should not highlight if question is not found', () => {
             const addTemporaryHighlightToQuestionSpy = jest.spyOn(QuizStepWizardUtil, 'addTemporaryHighlightToQuestion');
-            component.quizExercise = Object.assign({}, quizExercise, { quizQuestions: [] });
+            component.quizExercise = { ...quizExercise, quizQuestions: [] };
 
             component['highlightQuestion'](1);
 
@@ -243,7 +243,7 @@ describe('QuizParticipationComponent', () => {
 
         it('should not highlight if quizQuestions is undefined', () => {
             const addTemporaryHighlightToQuestionSpy = jest.spyOn(QuizStepWizardUtil, 'addTemporaryHighlightToQuestion');
-            component.quizExercise = Object.assign({}, quizExercise, { quizQuestions: undefined });
+            component.quizExercise = { ...quizExercise, quizQuestions: undefined };
 
             component['highlightQuestion'](1);
 
@@ -264,7 +264,7 @@ describe('QuizParticipationComponent', () => {
         });
 
         it('should update in intervals of individual quiz', fakeAsync(() => {
-            const individualQuizExercise = Object.assign({}, quizExercise);
+            const individualQuizExercise = { ...quizExercise };
             individualQuizExercise.quizMode = QuizMode.INDIVIDUAL;
             individualQuizExercise.quizStarted = false;
             individualQuizExercise.quizBatches = [
@@ -289,7 +289,7 @@ describe('QuizParticipationComponent', () => {
         }));
 
         it('should update in intervals of not individual quiz', fakeAsync(() => {
-            const notIndividualQuizExercise = Object.assign({}, quizExercise);
+            const notIndividualQuizExercise = { ...quizExercise };
             notIndividualQuizExercise.quizMode = QuizMode.SYNCHRONIZED;
             notIndividualQuizExercise.quizStarted = false;
             notIndividualQuizExercise.quizBatches = [
@@ -356,7 +356,10 @@ describe('QuizParticipationComponent', () => {
             // Returns the started exercise
             const findStudentSpy = jest.spyOn(exerciseService, 'findForStudent').mockReturnValue(
                 of({
-                    body: Object.assign({}, quizExercise, { quizEnded: true }),
+                    body: {
+                        ...quizExercise,
+                        quizEnded: true,
+                    },
                 } as HttpResponse<QuizExercise>),
             );
             fixture.detectChanges();
@@ -383,7 +386,12 @@ describe('QuizParticipationComponent', () => {
             exerciseService = fixture.debugElement.injector.get(QuizExerciseService);
             const participationService = fixture.debugElement.injector.get(ParticipationService);
             const participation: StudentParticipation = {
-                exercise: Object.assign({}, quizExercise, { quizBatches: [], quizMode, quizStarted: false }) as QuizExercise,
+                exercise: {
+                    ...quizExercise,
+                    quizBatches: [],
+                    quizMode,
+                    quizStarted: false,
+                } as QuizExercise,
             };
             participationSpy = jest.spyOn(participationService, 'startQuizParticipation').mockReturnValue(of({ body: participation } as HttpResponse<StudentParticipation>));
 
@@ -407,7 +415,7 @@ describe('QuizParticipationComponent', () => {
         });
 
         it('should submit quiz', () => {
-            const individualQuizExercise = Object.assign({}, quizExercise);
+            const individualQuizExercise = { ...quizExercise };
             individualQuizExercise.quizMode = QuizMode.INDIVIDUAL;
             participationSpy = jest
                 .spyOn(participationService, 'startQuizParticipation')
@@ -430,10 +438,10 @@ describe('QuizParticipationComponent', () => {
         });
 
         it('should return true if student didnt interact with any question', () => {
-            component.quizExercise = Object.assign({}, quizExercise, { quizQuestions: undefined });
+            component.quizExercise = { ...quizExercise, quizQuestions: undefined };
             expect(component.areAllQuestionsAnswered()).toBeTrue();
 
-            component.quizExercise = Object.assign({}, quizExercise, { quizQuestions: [] });
+            component.quizExercise = { ...quizExercise, quizQuestions: [] };
             expect(component.areAllQuestionsAnswered()).toBeTrue();
 
             component.quizExercise = quizExercise;
@@ -526,7 +534,13 @@ describe('QuizParticipationComponent', () => {
         it('should adjust release date of the quiz if it didnt start', () => {
             const releaseDate = dayjs().add(1, 'minutes');
             const timeUntilPlannedStart = 10;
-            const quizToApply = Object.assign({}, quizExercise, { started: false, isPlannedToStart: true, releaseDate, timeUntilPlannedStart });
+            const quizToApply = {
+                ...quizExercise,
+                started: false,
+                isPlannedToStart: true,
+                releaseDate,
+                timeUntilPlannedStart,
+            };
 
             component.applyQuizFull(quizToApply);
             expect(component.quizExercise).toEqual(quizToApply);
@@ -541,7 +555,7 @@ describe('QuizParticipationComponent', () => {
             };
             const result: Result = { id: 1, submission };
             submission.results = [result];
-            const endedQuizExercise = Object.assign({}, quizExercise, { quizEnded: true });
+            const endedQuizExercise = { ...quizExercise, quizEnded: true };
             const participation: StudentParticipation = { exercise: endedQuizExercise, submissions: [submission] };
 
             component.quizExercise = quizExercise;

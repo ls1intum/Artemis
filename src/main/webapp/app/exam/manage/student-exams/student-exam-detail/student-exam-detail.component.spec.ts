@@ -55,7 +55,16 @@ describe('StudentExamDetailComponent', () => {
         exam = {
             course,
             id: 1,
-            examUsers: [Object.assign({ didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false }, student, { user: student })],
+            examUsers: [
+                {
+                    didCheckImage: false,
+                    didCheckLogin: false,
+                    didCheckName: false,
+                    didCheckRegistrationNumber: false,
+                    ...student,
+                    user: student,
+                },
+            ],
             visibleDate: dayjs().add(120, 'seconds'),
             startDate: dayjs().add(200, 'seconds'),
             endDate: dayjs().add(7400, 'seconds'),
@@ -268,16 +277,18 @@ describe('StudentExamDetailComponent', () => {
         studentExamDetailComponent.passed = false;
         studentExamDetailComponent.isBonus = true;
 
-        const studentExamWithGradeFromServer = Object.assign({}, studentExamWithGrade, {
+        const studentExamWithGradeFromServer = {
+            ...studentExamWithGrade,
             gradeType: GradeType.GRADE,
-            studentResult: Object.assign({}, studentExamWithGrade.studentResult, {
+            studentResult: {
+                ...studentExamWithGrade.studentResult,
                 overallGrade: '1.3',
                 gradeWithBonus: {
                     bonusGrade: 0.3,
                     finalGrade: 1.0,
                 },
-            }),
-        });
+            },
+        };
 
         studentExamDetailComponent.setExamGrade(studentExamWithGradeFromServer);
 

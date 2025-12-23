@@ -11,7 +11,7 @@
 
 import { Inject, Injectable, Optional }                      from '@angular/core';
 import { HttpClient, HttpParams,
-         HttpResponse, HttpEvent, HttpContext
+         HttpResponse, HttpEvent, HttpContext 
         }       from '@angular/common/http';
 import { Observable }                                        from 'rxjs';
 
@@ -39,8 +39,8 @@ export class TutorialGroupApiService extends BaseService {
     }
 
     /**
-     * @param courseId
-     * @param tutorialGroupId
+     * @param courseId 
+     * @param tutorialGroupId 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      */
@@ -82,14 +82,22 @@ export class TutorialGroupApiService extends BaseService {
         let localVarPath = `/api/tutorialgroup/courses/${this.configuration.encodeParam({name: "courseId", value: courseId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/tutorial-groups/${this.configuration.encodeParam({name: "tutorialGroupId", value: tutorialGroupId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}`;
         const { basePath, withCredentials } = this.configuration;
         return this.httpClient.request<any>('delete', `${basePath}${localVarPath}`,
-            Object.assign({ context: localVarHttpContext, responseType: <any>responseType_ }, (withCredentials ? { withCredentials } : {}), { headers: localVarHeaders, observe: observe, transferCache: localVarTransferCache, reportProgress: reportProgress })
+            {
+                context: localVarHttpContext,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                transferCache: localVarTransferCache,
+                reportProgress: reportProgress
+            }
         );
     }
 
     /**
-     * @param courseId
-     * @param tutorialGroupId
-     * @param studentLogin
+     * @param courseId 
+     * @param tutorialGroupId 
+     * @param studentLogin 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      */
@@ -134,13 +142,21 @@ export class TutorialGroupApiService extends BaseService {
         let localVarPath = `/api/tutorialgroup/courses/${this.configuration.encodeParam({name: "courseId", value: courseId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/tutorial-groups/${this.configuration.encodeParam({name: "tutorialGroupId", value: tutorialGroupId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/deregister/${this.configuration.encodeParam({name: "studentLogin", value: studentLogin, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}`;
         const { basePath, withCredentials } = this.configuration;
         return this.httpClient.request<any>('delete', `${basePath}${localVarPath}`,
-            Object.assign({ context: localVarHttpContext, responseType: <any>responseType_ }, (withCredentials ? { withCredentials } : {}), { headers: localVarHeaders, observe: observe, transferCache: localVarTransferCache, reportProgress: reportProgress })
+            {
+                context: localVarHttpContext,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                transferCache: localVarTransferCache,
+                reportProgress: reportProgress
+            }
         );
     }
 
     /**
-     * @param courseId
-     * @param fields
+     * @param courseId 
+     * @param fields 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      */
@@ -180,13 +196,22 @@ export class TutorialGroupApiService extends BaseService {
         let localVarPath = `/api/tutorialgroup/courses/${this.configuration.encodeParam({name: "courseId", value: courseId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/tutorial-groups/export/csv`;
         const { basePath, withCredentials } = this.configuration;
         return this.httpClient.request('get', `${basePath}${localVarPath}`,
-            Object.assign({ context: localVarHttpContext, params: localVarQueryParameters, responseType: "blob" as const }, (withCredentials ? { withCredentials } : {}), { headers: localVarHeaders, observe: observe, transferCache: localVarTransferCache, reportProgress: reportProgress })
+            {
+                context: localVarHttpContext,
+                params: localVarQueryParameters,
+                responseType: "blob",
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                transferCache: localVarTransferCache,
+                reportProgress: reportProgress
+            }
         );
     }
 
     /**
-     * @param courseId
-     * @param fields
+     * @param courseId 
+     * @param fields 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      */
@@ -237,12 +262,21 @@ export class TutorialGroupApiService extends BaseService {
         let localVarPath = `/api/tutorialgroup/courses/${this.configuration.encodeParam({name: "courseId", value: courseId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/tutorial-groups/export/json`;
         const { basePath, withCredentials } = this.configuration;
         return this.httpClient.request<Array<TutorialGroupExport>>('get', `${basePath}${localVarPath}`,
-            Object.assign({ context: localVarHttpContext, params: localVarQueryParameters, responseType: <any>responseType_ }, (withCredentials ? { withCredentials } : {}), { headers: localVarHeaders, observe: observe, transferCache: localVarTransferCache, reportProgress: reportProgress })
+            {
+                context: localVarHttpContext,
+                params: localVarQueryParameters,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                transferCache: localVarTransferCache,
+                reportProgress: reportProgress
+            }
         );
     }
 
     /**
-     * @param courseId
+     * @param courseId 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      */
@@ -282,12 +316,20 @@ export class TutorialGroupApiService extends BaseService {
         let localVarPath = `/api/tutorialgroup/courses/${this.configuration.encodeParam({name: "courseId", value: courseId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/tutorial-groups`;
         const { basePath, withCredentials } = this.configuration;
         return this.httpClient.request<Array<any>>('get', `${basePath}${localVarPath}`,
-            Object.assign({ context: localVarHttpContext, responseType: <any>responseType_ }, (withCredentials ? { withCredentials } : {}), { headers: localVarHeaders, observe: observe, transferCache: localVarTransferCache, reportProgress: reportProgress })
+            {
+                context: localVarHttpContext,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                transferCache: localVarTransferCache,
+                reportProgress: reportProgress
+            }
         );
     }
 
     /**
-     * @param tutorialGroupId
+     * @param tutorialGroupId 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      */
@@ -327,12 +369,20 @@ export class TutorialGroupApiService extends BaseService {
         let localVarPath = `/api/tutorialgroup/tutorial-groups/${this.configuration.encodeParam({name: "tutorialGroupId", value: tutorialGroupId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/title`;
         const { basePath, withCredentials } = this.configuration;
         return this.httpClient.request<string>('get', `${basePath}${localVarPath}`,
-            Object.assign({ context: localVarHttpContext, responseType: <any>responseType_ }, (withCredentials ? { withCredentials } : {}), { headers: localVarHeaders, observe: observe, transferCache: localVarTransferCache, reportProgress: reportProgress })
+            {
+                context: localVarHttpContext,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                transferCache: localVarTransferCache,
+                reportProgress: reportProgress
+            }
         );
     }
 
     /**
-     * @param courseId
+     * @param courseId 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      */
@@ -372,12 +422,20 @@ export class TutorialGroupApiService extends BaseService {
         let localVarPath = `/api/tutorialgroup/courses/${this.configuration.encodeParam({name: "courseId", value: courseId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/tutorial-groups/campus-values`;
         const { basePath, withCredentials } = this.configuration;
         return this.httpClient.request<Array<string>>('get', `${basePath}${localVarPath}`,
-            Object.assign({ context: localVarHttpContext, responseType: <any>responseType_ }, (withCredentials ? { withCredentials } : {}), { headers: localVarHeaders, observe: observe, transferCache: localVarTransferCache, reportProgress: reportProgress })
+            {
+                context: localVarHttpContext,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                transferCache: localVarTransferCache,
+                reportProgress: reportProgress
+            }
         );
     }
 
     /**
-     * @param courseId
+     * @param courseId 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      */
@@ -417,13 +475,21 @@ export class TutorialGroupApiService extends BaseService {
         let localVarPath = `/api/tutorialgroup/courses/${this.configuration.encodeParam({name: "courseId", value: courseId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/tutorial-groups/language-values`;
         const { basePath, withCredentials } = this.configuration;
         return this.httpClient.request<Array<string>>('get', `${basePath}${localVarPath}`,
-            Object.assign({ context: localVarHttpContext, responseType: <any>responseType_ }, (withCredentials ? { withCredentials } : {}), { headers: localVarHeaders, observe: observe, transferCache: localVarTransferCache, reportProgress: reportProgress })
+            {
+                context: localVarHttpContext,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                transferCache: localVarTransferCache,
+                reportProgress: reportProgress
+            }
         );
     }
 
     /**
-     * @param courseId
-     * @param tutorialGroupRegistrationImport
+     * @param courseId 
+     * @param tutorialGroupRegistrationImport 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      */
@@ -475,14 +541,23 @@ export class TutorialGroupApiService extends BaseService {
         let localVarPath = `/api/tutorialgroup/courses/${this.configuration.encodeParam({name: "courseId", value: courseId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/tutorial-groups/import`;
         const { basePath, withCredentials } = this.configuration;
         return this.httpClient.request<Array<TutorialGroupRegistrationImport>>('post', `${basePath}${localVarPath}`,
-            Object.assign({ context: localVarHttpContext, body: tutorialGroupRegistrationImport, responseType: <any>responseType_ }, (withCredentials ? { withCredentials } : {}), { headers: localVarHeaders, observe: observe, transferCache: localVarTransferCache, reportProgress: reportProgress })
+            {
+                context: localVarHttpContext,
+                body: tutorialGroupRegistrationImport,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                transferCache: localVarTransferCache,
+                reportProgress: reportProgress
+            }
         );
     }
 
     /**
-     * @param courseId
-     * @param tutorialGroupId
-     * @param student
+     * @param courseId 
+     * @param tutorialGroupId 
+     * @param student 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      */
@@ -537,14 +612,23 @@ export class TutorialGroupApiService extends BaseService {
         let localVarPath = `/api/tutorialgroup/courses/${this.configuration.encodeParam({name: "courseId", value: courseId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/tutorial-groups/${this.configuration.encodeParam({name: "tutorialGroupId", value: tutorialGroupId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/register-multiple`;
         const { basePath, withCredentials } = this.configuration;
         return this.httpClient.request<Array<Student>>('post', `${basePath}${localVarPath}`,
-            Object.assign({ context: localVarHttpContext, body: student, responseType: <any>responseType_ }, (withCredentials ? { withCredentials } : {}), { headers: localVarHeaders, observe: observe, transferCache: localVarTransferCache, reportProgress: reportProgress })
+            {
+                context: localVarHttpContext,
+                body: student,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                transferCache: localVarTransferCache,
+                reportProgress: reportProgress
+            }
         );
     }
 
     /**
-     * @param courseId
-     * @param tutorialGroupId
-     * @param studentLogin
+     * @param courseId 
+     * @param tutorialGroupId 
+     * @param studentLogin 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      */
@@ -589,7 +673,15 @@ export class TutorialGroupApiService extends BaseService {
         let localVarPath = `/api/tutorialgroup/courses/${this.configuration.encodeParam({name: "courseId", value: courseId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/tutorial-groups/${this.configuration.encodeParam({name: "tutorialGroupId", value: tutorialGroupId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/register/${this.configuration.encodeParam({name: "studentLogin", value: studentLogin, in: "path", style: "simple", explode: false, dataType: "string", dataFormat: undefined})}`;
         const { basePath, withCredentials } = this.configuration;
         return this.httpClient.request<any>('post', `${basePath}${localVarPath}`,
-            Object.assign({ context: localVarHttpContext, responseType: <any>responseType_ }, (withCredentials ? { withCredentials } : {}), { headers: localVarHeaders, observe: observe, transferCache: localVarTransferCache, reportProgress: reportProgress })
+            {
+                context: localVarHttpContext,
+                responseType: <any>responseType_,
+                ...(withCredentials ? { withCredentials } : {}),
+                headers: localVarHeaders,
+                observe: observe,
+                transferCache: localVarTransferCache,
+                reportProgress: reportProgress
+            }
         );
     }
 

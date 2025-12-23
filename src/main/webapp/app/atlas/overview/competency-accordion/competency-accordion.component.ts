@@ -83,14 +83,15 @@ export class CompetencyAccordionComponent implements OnChanges {
             this.calculateProgressValues();
 
             const courseCompetencies = Object.values(this.metrics().competencyMetrics?.competencyInformation ?? {}).map((competency) => {
-                return Object.assign({}, competency, {
+                return {
+                    ...competency,
                     userProgress: [
                         {
                             progress: this.metrics().competencyMetrics?.progress?.[competency.id] ?? 0,
                             confidence: this.metrics().competencyMetrics?.confidence?.[competency.id] ?? 1,
                         },
                     ],
-                }) satisfies Competency;
+                } satisfies Competency;
             });
             this.promptForRating = CompetencyJol.shouldPromptForJol(
                 this.competency() satisfies Competency,
@@ -232,7 +233,8 @@ export class CompetencyAccordionComponent implements OnChanges {
     onRatingChange(newRating: number) {
         const competencyMetrics = this.metrics().competencyMetrics;
         if (competencyMetrics) {
-            competencyMetrics.currentJolValues = Object.assign({}, competencyMetrics.currentJolValues ?? {}, {
+            competencyMetrics.currentJolValues = {
+                ...(competencyMetrics.currentJolValues ?? {}),
                 [this.competency().id]: {
                     competencyId: this.competency().id,
                     jolValue: newRating,
@@ -240,7 +242,7 @@ export class CompetencyAccordionComponent implements OnChanges {
                     competencyProgress: this.progress,
                     competencyConfidence: this.confidence,
                 },
-            });
+            };
             this.calculateProgressValues();
         }
     }

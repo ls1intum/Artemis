@@ -481,6 +481,6 @@ async function createExam(course: Course, examAPIRequests: ExamAPIRequests, cust
         examMaxPoints: 10,
         numberOfExercisesInExam: 1,
     };
-    const examConfig = Object.assign({}, defaultExamConfig, customExamConfig);
+    const examConfig = { ...defaultExamConfig, ...customExamConfig };
     return await examAPIRequests.createExam(examConfig);
 }

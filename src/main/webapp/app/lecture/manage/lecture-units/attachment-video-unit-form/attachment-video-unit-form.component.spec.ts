@@ -734,7 +734,10 @@ describe('AttachmentVideoUnitFormComponent', () => {
 
         // Update formData with playlist URL
         const playlistUrl = 'https://live.rbg.tum.de/playlist.m3u8';
-        const formDataWithPlaylist: AttachmentVideoUnitFormData = Object.assign({}, formDataWithoutPlaylist, { playlistUrl: playlistUrl });
+        const formDataWithPlaylist: AttachmentVideoUnitFormData = {
+            ...formDataWithoutPlaylist,
+            playlistUrl: playlistUrl,
+        };
         attachmentVideoUnitFormComponentFixture.componentRef.setInput('formData', formDataWithPlaylist);
         attachmentVideoUnitFormComponentFixture.detectChanges();
 

@@ -191,7 +191,10 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             jest.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(
                 of(
                     new HttpResponse({
-                        body: Object.assign({}, entity, { id: 2 }),
+                        body: {
+                            ...entity,
+                            id: 2,
+                        },
                     }),
                 ),
             );
@@ -218,7 +221,10 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             jest.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(
                 of(
                     new HttpResponse({
-                        body: Object.assign({}, entity, { id: 1 }),
+                        body: {
+                            ...entity,
+                            id: 1,
+                        },
                     }),
                 ),
             );
@@ -718,7 +724,10 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             jest.spyOn(programmingExerciseService, 'importFromFile').mockReturnValue(
                 of(
                     new HttpResponse({
-                        body: Object.assign({}, entity, { id: 2 }),
+                        body: {
+                            ...entity,
+                            id: 2,
+                        },
                     }),
                 ),
             );
@@ -805,7 +814,10 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             jest.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(
                 of(
                     new HttpResponse({
-                        body: Object.assign({}, entity, { id: 2 }),
+                        body: {
+                            ...entity,
+                            id: 2,
+                        },
                     }),
                 ),
             );

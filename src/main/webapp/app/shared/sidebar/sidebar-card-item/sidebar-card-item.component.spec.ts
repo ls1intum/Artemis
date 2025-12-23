@@ -78,7 +78,10 @@ describe('SidebarCardItemComponent', () => {
 
     it('should display unread count and bold for non-muted conversations', () => {
         runInInjectionContext(fixture.debugElement.injector, () => {
-            component.sidebarItem = Object.assign({}, sidebarItemMock, { conversation: { unreadMessagesCount: 5, isMuted: false } });
+            component.sidebarItem = {
+                ...sidebarItemMock,
+                conversation: { unreadMessagesCount: 5, isMuted: false },
+            };
             component.sidebarType = 'conversation';
             component.unreadCount = input<number>(5);
             component.ngOnInit();
@@ -94,7 +97,10 @@ describe('SidebarCardItemComponent', () => {
 
     it('should not display unread count or bold for muted conversations', () => {
         runInInjectionContext(fixture.debugElement.injector, () => {
-            component.sidebarItem = Object.assign({}, sidebarItemMock, { conversation: { unreadMessagesCount: 5, isMuted: true } });
+            component.sidebarItem = {
+                ...sidebarItemMock,
+                conversation: { unreadMessagesCount: 5, isMuted: true },
+            };
             component.sidebarType = 'conversation';
             component.unreadCount = input<number>(5);
             component.ngOnInit();
