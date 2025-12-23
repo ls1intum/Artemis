@@ -307,6 +307,8 @@ public class BuildJobManagementService {
 
     /**
      * Finish the build job if an exception occurred while building and testing the repository.
+     * This method logs the error, provides user-friendly messaging for infrastructure issues,
+     * and ensures the container is properly stopped.
      *
      * @param buildJobId    The id of the build job that failed.
      * @param containerName The name of the Docker container that was used to execute the build job.
@@ -315,15 +317,47 @@ public class BuildJobManagementService {
     private void finishBuildJobExceptionally(String buildJobId, String containerName, Exception exception) {
         String msg = "Error while executing build job " + buildJobId + ": " + exception.getMessage();
         String stackTrace = stackTraceToString(exception);
-        buildLogsMap.appendBuildLogEntry(buildJobId, new BuildLogDTO(ZonedDateTime.now(), msg + "\n" + stackTrace));
-        log.error(msg, exception);
 
-        log.info("Getting ID of running container {}", containerName);
+        // Check if this is a tar archive failure (infrastructure issue)
+        boolean isTarFailure = isTarArchiveFailure(exception);
+        if (isTarFailure) {
+            String userFriendlyMsg = "Build failed due to a temporary infrastructure issue while preparing the build environment. "
+                    + "This is not caused by your code. Please try rerunning your build.";
+            buildLogsMap.appendBuildLogEntry(buildJobId, new BuildLogDTO(ZonedDateTime.now(), userFriendlyMsg));
+            log.error("Tar archive failure for build job {}: {}", buildJobId, exception.getMessage(), exception);
+        }
+        else {
+            buildLogsMap.appendBuildLogEntry(buildJobId, new BuildLogDTO(ZonedDateTime.now(), msg + "\n" + stackTrace));
+            log.error(msg, exception);
+        }
+
+        log.info("Getting ID of running container {} for cleanup after build job {} failure", containerName, buildJobId);
         String containerId = buildJobContainerService.getIDOfRunningContainer(containerName);
-        log.info("Stopping unresponsive container with ID {}", containerId);
         if (containerId != null) {
+            log.info("Stopping container with ID {} after build job {} failed", containerId, buildJobId);
             buildJobContainerService.stopUnresponsiveContainer(containerId);
         }
+        else {
+            log.debug("No running container found with name {} for build job {}", containerName, buildJobId);
+        }
+    }
+
+    /**
+     * Checks if the exception is related to a tar archive operation failure.
+     *
+     * @param exception the exception to check
+     * @return true if the exception is related to tar archive operations
+     */
+    private boolean isTarArchiveFailure(Exception exception) {
+        String message = exception.getMessage();
+        if (message == null) {
+            return false;
+        }
+
+        // Check for tar-related error messages
+        return message.contains("tar archive") || message.contains("Could not copy to container") || message.contains("Could not create tar")
+                || message.contains("Failed to retrieve archive") || (exception.getCause() != null && exception.getCause().getMessage() != null
+                        && (exception.getCause().getMessage().contains("tar") || exception.getCause().getMessage().contains("IOException")));
     }
 
     /**

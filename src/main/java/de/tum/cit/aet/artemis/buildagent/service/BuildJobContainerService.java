@@ -60,6 +60,10 @@ public class BuildJobContainerService {
 
     private static final Logger log = LoggerFactory.getLogger(BuildJobContainerService.class);
 
+    private static final int MAX_TAR_OPERATION_RETRIES = 3;
+
+    private static final int TAR_RETRY_BASE_DELAY_MS = 100;
+
     private final BuildAgentConfiguration buildAgentConfiguration;
 
     private final BuildLogsMap buildLogsMap;
@@ -217,15 +221,50 @@ public class BuildJobContainerService {
     }
 
     /**
-     * Retrieve an archive from a running Docker container.
+     * Retrieve an archive from a running Docker container with retry logic.
      *
      * @param containerId the id of the container.
      * @param path        the path to the file or directory to be retrieved.
+     * @param buildJobId  the build job ID for logging purposes (can be null).
      * @return a {@link TarArchiveInputStream} that can be used to read the archive.
+     * @throws NotFoundException if the path does not exist in the container after all retries.
      */
-    public TarArchiveInputStream getArchiveFromContainer(String containerId, String path) throws NotFoundException {
-        try (final var copyArchiveCommand = buildAgentConfiguration.getDockerClient().copyArchiveFromContainerCmd(containerId, path)) {
-            return new TarArchiveInputStream(copyArchiveCommand.exec());
+    public TarArchiveInputStream getArchiveFromContainer(String containerId, String path, String buildJobId) throws NotFoundException {
+        log.debug("Retrieving archive from container {} at path {}", containerId, path);
+
+        try {
+            return executeWithRetry(() -> {
+                try (final var copyArchiveCommand = buildAgentConfiguration.getDockerClient().copyArchiveFromContainerCmd(containerId, path)) {
+                    TarArchiveInputStream result = new TarArchiveInputStream(copyArchiveCommand.exec());
+                    log.debug("Successfully retrieved archive from container {} at path {}", containerId, path);
+                    return result;
+                }
+                catch (NotFoundException e) {
+                    // Don't retry NotFoundException - the path genuinely doesn't exist
+                    throw e;
+                }
+                catch (RuntimeException e) {
+                    // Wrap runtime exceptions (e.g., Docker connectivity issues) for retry handling
+                    throw new IOException("Failed to retrieve archive from container: " + e.getMessage(), e);
+                }
+            }, "Retrieve archive from container " + containerId, buildJobId);
+        }
+        catch (NotFoundException e) {
+            // Re-throw NotFoundException as-is (not wrapped in retry)
+            throw e;
+        }
+        catch (IOException e) {
+            // Check if the underlying cause was NotFoundException
+            if (e.getCause() instanceof NotFoundException nfe) {
+                throw nfe;
+            }
+            String errorMessage = "Could not retrieve archive from container " + containerId + " at path " + path + " after " + MAX_TAR_OPERATION_RETRIES + " attempts";
+            log.error(errorMessage, e);
+            if (buildJobId != null) {
+                buildLogsMap.appendBuildLogEntry(buildJobId,
+                        "Failed to retrieve build results after multiple attempts. This is an infrastructure issue, not a problem with your code. Please try rerunning your build.");
+            }
+            throw new LocalCIException(errorMessage, e);
         }
     }
 
@@ -381,6 +420,7 @@ public class BuildJobContainerService {
      * 6. Creates a script file for further processing or setup within the container.
      *
      * @param buildJobContainerId                    The identifier for the Docker container being prepared.
+     * @param buildJobId                             The identifier for the build job, used for logging purposes.
      * @param assignmentRepositoryPath               The filesystem path to the assignment repository.
      * @param testRepositoryPath                     The filesystem path to the test repository.
      * @param solutionRepositoryPath                 The optional filesystem path to the solution repository; can be null if not applicable.
@@ -394,9 +434,12 @@ public class BuildJobContainerService {
      * @param solutionCheckoutPath                   The directory within the container where the solution repository should be checked out; can be null if not applicable, default
      *                                                   would be used.
      */
-    public void populateBuildJobContainer(String buildJobContainerId, Path assignmentRepositoryPath, Path testRepositoryPath, Path solutionRepositoryPath,
+    public void populateBuildJobContainer(String buildJobContainerId, String buildJobId, Path assignmentRepositoryPath, Path testRepositoryPath, Path solutionRepositoryPath,
             Path[] auxiliaryRepositoriesPaths, String[] auxiliaryRepositoryCheckoutDirectories, ProgrammingLanguage programmingLanguage, String assignmentCheckoutPath,
             String testCheckoutPath, String solutionCheckoutPath) {
+
+        log.debug("Populating build job container {} for build job {} with repositories: assignment={}, test={}, solution={}", buildJobContainerId, buildJobId,
+                assignmentRepositoryPath, testRepositoryPath, solutionRepositoryPath);
 
         assignmentCheckoutPath = (!StringUtils.isBlank(assignmentCheckoutPath)) ? assignmentCheckoutPath
                 : RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(programmingLanguage);
@@ -411,22 +454,24 @@ public class BuildJobContainerService {
         executeDockerCommand(buildJobContainerId, null, false, false, true, "chmod", "-R", "777", LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/testing-dir");
 
         // Copy the test repository to the container and move it to the test checkout path (may be the working directory)
-        addAndPrepareDirectoryAndReplaceContent(buildJobContainerId, testRepositoryPath, LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/testing-dir/" + testCheckoutPath);
+        addAndPrepareDirectoryAndReplaceContent(buildJobContainerId, testRepositoryPath, LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/testing-dir/" + testCheckoutPath,
+                buildJobId);
         // Copy the assignment repository to the container and move it to the assignment checkout path
         addAndPrepareDirectoryAndReplaceContent(buildJobContainerId, assignmentRepositoryPath,
-                LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/testing-dir/" + assignmentCheckoutPath);
+                LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/testing-dir/" + assignmentCheckoutPath, buildJobId);
         if (solutionRepositoryPath != null) {
             solutionCheckoutPath = (!StringUtils.isBlank(solutionCheckoutPath)) ? solutionCheckoutPath
                     : RepositoryCheckoutPath.SOLUTION.forProgrammingLanguage(programmingLanguage);
             addAndPrepareDirectoryAndReplaceContent(buildJobContainerId, solutionRepositoryPath,
-                    LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/testing-dir/" + solutionCheckoutPath);
+                    LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/testing-dir/" + solutionCheckoutPath, buildJobId);
         }
         for (int i = 0; i < auxiliaryRepositoriesPaths.length; i++) {
             addAndPrepareDirectoryAndReplaceContent(buildJobContainerId, auxiliaryRepositoriesPaths[i],
-                    LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/testing-dir/" + auxiliaryRepositoryCheckoutDirectories[i]);
+                    LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/testing-dir/" + auxiliaryRepositoryCheckoutDirectories[i], buildJobId);
         }
 
         createScriptFile(buildJobContainerId);
+        log.debug("Successfully populated build job container {} for build job {}", buildJobContainerId, buildJobId);
     }
 
     private void createScriptFile(String buildJobContainerId) {
@@ -434,8 +479,8 @@ public class BuildJobContainerService {
         executeDockerCommand(buildJobContainerId, null, false, false, true, "bash", "-c", "chmod +x " + LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/script.sh");
     }
 
-    private void addAndPrepareDirectoryAndReplaceContent(String containerId, Path repositoryPath, String newDirectoryName) {
-        copyToContainer(repositoryPath, containerId);
+    private void addAndPrepareDirectoryAndReplaceContent(String containerId, Path repositoryPath, String newDirectoryName, String buildJobId) {
+        copyToContainer(repositoryPath, containerId, buildJobId);
         addDirectory(containerId, newDirectoryName, true);
         insertRepositoryFiles(containerId, LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/" + repositoryPath.getFileName().toString(), newDirectoryName);
     }
@@ -449,18 +494,117 @@ public class BuildJobContainerService {
         executeDockerCommand(containerId, null, false, false, true, command);
     }
 
-    private void copyToContainer(Path sourcePath, String containerId) {
-        try (final var uploadStream = new ByteArrayInputStream(createTarArchive(sourcePath).toByteArray());
-                final var copyToContainerCommand = buildAgentConfiguration.getDockerClient().copyArchiveToContainerCmd(containerId)
-                        .withRemotePath(LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY).withTarInputStream(uploadStream)) {
-            copyToContainerCommand.exec();
+    /**
+     * Functional interface for operations that can throw IOException and need retry logic.
+     *
+     * @param <T> the return type of the operation
+     */
+    @FunctionalInterface
+    private interface IOOperation<T> {
+
+        T execute() throws IOException;
+    }
+
+    /**
+     * Executes an IO operation with retry logic and exponential backoff.
+     * This method will retry the operation up to MAX_TAR_OPERATION_RETRIES times with delays of 100ms, 200ms, 400ms.
+     *
+     * @param <T>           the return type of the operation
+     * @param operation     the operation to execute
+     * @param operationName a descriptive name for the operation (used in logging)
+     * @param buildJobId    the build job ID for logging to build logs (can be null)
+     * @return the result of the operation
+     * @throws IOException if all retry attempts fail
+     */
+    private <T> T executeWithRetry(IOOperation<T> operation, String operationName, String buildJobId) throws IOException {
+        IOException lastException = null;
+
+        for (int attempt = 1; attempt <= MAX_TAR_OPERATION_RETRIES; attempt++) {
+            try {
+                T result = operation.execute();
+                if (attempt > 1) {
+                    log.info("{} succeeded on attempt {} of {}", operationName, attempt, MAX_TAR_OPERATION_RETRIES);
+                    if (buildJobId != null) {
+                        buildLogsMap.appendBuildLogEntry(buildJobId, operationName + " succeeded after " + attempt + " attempt(s).");
+                    }
+                }
+                return result;
+            }
+            catch (IOException e) {
+                lastException = e;
+                log.warn("{} failed on attempt {} of {}: {} - {}", operationName, attempt, MAX_TAR_OPERATION_RETRIES, e.getClass().getSimpleName(), e.getMessage());
+
+                if (attempt < MAX_TAR_OPERATION_RETRIES) {
+                    int delayMs = TAR_RETRY_BASE_DELAY_MS * (1 << (attempt - 1)); // Exponential backoff: 100, 200, 400
+                    log.debug("Retrying {} in {}ms...", operationName, delayMs);
+                    if (buildJobId != null) {
+                        buildLogsMap.appendBuildLogEntry(buildJobId, "Retrying " + operationName + " (attempt " + (attempt + 1) + " of " + MAX_TAR_OPERATION_RETRIES + ")...");
+                    }
+                    try {
+                        Thread.sleep(delayMs);
+                    }
+                    catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        throw new IOException("Interrupted while waiting to retry " + operationName, ie);
+                    }
+                }
+            }
+        }
+
+        // All retries exhausted
+        log.error("{} failed after {} attempts", operationName, MAX_TAR_OPERATION_RETRIES, lastException);
+        throw lastException;
+    }
+
+    private void copyToContainer(Path sourcePath, String containerId, String buildJobId) {
+        log.debug("Copying source path {} to container {}", sourcePath.toAbsolutePath(), containerId);
+
+        try {
+            // Use retry mechanism for the entire copy operation (tar creation + upload)
+            executeWithRetry(() -> {
+                ByteArrayOutputStream tarArchive = createTarArchiveWithRetry(sourcePath, buildJobId);
+                int tarArchiveSize = tarArchive.size();
+                log.debug("Created tar archive of size {} bytes for source path {} to upload to container {}", tarArchiveSize, sourcePath.toAbsolutePath(), containerId);
+
+                try (final var uploadStream = new ByteArrayInputStream(tarArchive.toByteArray());
+                        final var copyToContainerCommand = buildAgentConfiguration.getDockerClient().copyArchiveToContainerCmd(containerId)
+                                .withRemotePath(LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY).withTarInputStream(uploadStream)) {
+                    copyToContainerCommand.exec();
+                    log.debug("Successfully copied tar archive to container {}", containerId);
+                }
+                return null;
+            }, "Copy to container " + containerId, buildJobId);
         }
         catch (IOException e) {
-            throw new LocalCIException("Could not copy to container " + containerId, e);
+            String errorMessage = "Could not copy to container " + containerId + " from source path " + sourcePath.toAbsolutePath() + " after " + MAX_TAR_OPERATION_RETRIES
+                    + " attempts";
+            log.error(errorMessage, e);
+            if (buildJobId != null) {
+                buildLogsMap.appendBuildLogEntry(buildJobId,
+                        "Failed to copy files to build container after multiple attempts. This is an infrastructure issue, not a problem with your code. Please try rerunning your build.");
+            }
+            throw new LocalCIException(errorMessage, e);
         }
     }
 
-    private ByteArrayOutputStream createTarArchive(Path sourcePath) {
+    /**
+     * Creates a tar archive with retry logic. This is a wrapper around createTarArchive that handles
+     * LocalCIException by extracting the underlying IOException for retry handling.
+     */
+    private ByteArrayOutputStream createTarArchiveWithRetry(Path sourcePath, String buildJobId) throws IOException {
+        try {
+            return createTarArchive(sourcePath, buildJobId);
+        }
+        catch (LocalCIException e) {
+            // Extract the underlying IOException for retry handling
+            if (e.getCause() instanceof IOException ioException) {
+                throw ioException;
+            }
+            throw new IOException(e.getMessage(), e);
+        }
+    }
+
+    private ByteArrayOutputStream createTarArchive(Path sourcePath, String buildJobId) {
 
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 
@@ -473,34 +617,46 @@ public class BuildJobContainerService {
             addFileToTar(tarArchiveOutputStream, sourcePath, "");
         }
         catch (IOException e) {
-            throw new LocalCIException("Could not create tar archive", e);
+            String errorMessage = "Could not create tar archive for source path: " + sourcePath.toAbsolutePath() + " (Exception: " + e.getClass().getSimpleName() + " - "
+                    + e.getMessage() + ")";
+            log.error(errorMessage, e);
+            if (buildJobId != null) {
+                buildLogsMap.appendBuildLogEntry(buildJobId,
+                        "Failed to create tar archive for repository. This is an infrastructure issue, not a problem with your code. Please try rerunning your build.");
+            }
+            throw new LocalCIException(errorMessage, e);
         }
         return byteArrayOutputStream;
     }
 
     private void addFileToTar(TarArchiveOutputStream tarArchiveOutputStream, Path path, String parent) throws IOException {
-        TarArchiveEntry tarEntry = new TarArchiveEntry(path, parent + path.getFileName());
-        tarArchiveOutputStream.putArchiveEntry(tarEntry);
+        try {
+            TarArchiveEntry tarEntry = new TarArchiveEntry(path, parent + path.getFileName());
+            tarArchiveOutputStream.putArchiveEntry(tarEntry);
 
-        if (Files.isRegularFile(path)) {
-            try (InputStream is = Files.newInputStream(path)) {
-                byte[] buffer = new byte[1024];
-                int count;
-                while ((count = is.read(buffer)) != -1) {
-                    tarArchiveOutputStream.write(buffer, 0, count);
+            if (Files.isRegularFile(path)) {
+                try (InputStream is = Files.newInputStream(path)) {
+                    byte[] buffer = new byte[1024];
+                    int count;
+                    while ((count = is.read(buffer)) != -1) {
+                        tarArchiveOutputStream.write(buffer, 0, count);
+                    }
+                }
+                tarArchiveOutputStream.closeArchiveEntry();
+            }
+            else {
+                tarArchiveOutputStream.closeArchiveEntry();
+                try (Stream<Path> children = Files.list(path)) {
+                    for (Path child : children.toList()) {
+                        addFileToTar(tarArchiveOutputStream, child, parent + path.getFileName() + "/");
+                    }
                 }
             }
-            tarArchiveOutputStream.closeArchiveEntry();
         }
-        else {
-            tarArchiveOutputStream.closeArchiveEntry();
-            try (Stream<Path> children = Files.list(path)) {
-                for (Path child : children.toList()) {
-                    addFileToTar(tarArchiveOutputStream, child, parent + path.getFileName() + "/");
-                }
-            }
+        catch (IOException e) {
+            String operation = Files.isRegularFile(path) ? "reading file" : "listing directory";
+            throw new IOException("Failed " + operation + " while adding to tar archive: " + path.toAbsolutePath(), e);
         }
-
     }
 
     private void executeDockerCommandWithoutAwaitingResponse(String containerId, String... command) {
