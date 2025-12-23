@@ -120,6 +120,52 @@ export class Commands {
         throw new Error('Timed out while waiting for build to finish.');
     };
 
+    /**
+     * Waits for the build of a specific participation to finish.
+     * This method uses a student-accessible endpoint (by participation ID).
+     * Use this when logged in as a student who owns the participation.
+     *
+     * @param exerciseAPIRequests - ExerciseAPIRequests object.
+     * @param participationId - ID of the participation to wait for.
+     * @param interval - Interval in milliseconds between checks.
+     * @param timeout - Timeout in milliseconds to wait for the build to finish.
+     */
+    static waitForParticipationBuildToFinish = async (exerciseAPIRequests: ExerciseAPIRequests, participationId: number, interval: number = 2000, timeout: number = 60000) => {
+        const startTime = Date.now();
+
+        const countResults = (participation: StudentParticipation): number => {
+            return participation.submissions ? participation.submissions.reduce((sum, submission) => sum + (submission.results?.length ?? 0), 0) : 0;
+        };
+
+        let initialResultCount = 0;
+
+        // Get initial result count
+        try {
+            const participation = await exerciseAPIRequests.getParticipationWithLatestResult(participationId);
+            initialResultCount = countResults(participation);
+        } catch {
+            // Participation might not have results yet
+        }
+
+        console.log('Waiting for build of participation to finish...');
+        while (Date.now() - startTime < timeout) {
+            try {
+                const participation = await exerciseAPIRequests.getParticipationWithLatestResult(participationId);
+                const currentResultCount = countResults(participation);
+
+                if (currentResultCount > initialResultCount) {
+                    return participation;
+                }
+            } catch {
+                // Continue polling if request fails
+            }
+
+            await new Promise((resolve) => setTimeout(resolve, interval));
+        }
+
+        throw new Error(`Timed out waiting for build to finish for participation ${participationId}`);
+    };
+
     static toggleSidebar = async (page: Page) => {
         await page.keyboard.press('Control+m');
     };

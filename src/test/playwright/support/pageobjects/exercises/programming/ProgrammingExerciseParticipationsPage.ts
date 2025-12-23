@@ -51,10 +51,18 @@ export class ProgrammingExerciseParticipationsPage {
     async openRepositoryOnNewPage(participationId: number): Promise<RepositoryPage> {
         const participation = this.getParticipation(participationId);
         await participation.locator('.code-button').click();
-        // The link opens the repository in a new tab, so we need to wait for the new page to be created.
-        const pagePromise = this.page.context().waitForEvent('page');
-        await this.page.locator('.open-repository-button').click();
-        return new RepositoryPage(await pagePromise);
+        // Wait for the popover to appear and the button to be visible
+        const openRepoButton = this.page.locator('.open-repository-button');
+        await openRepoButton.waitFor({ state: 'visible' });
+        // Get the href from the link and open it in a new page directly
+        // This is more reliable than clicking when using Angular's routerLink with target="_blank"
+        const href = await openRepoButton.getAttribute('href');
+        if (!href) {
+            throw new Error('Could not find href on open-repository-button');
+        }
+        const newPage = await this.page.context().newPage();
+        await newPage.goto(href);
+        return new RepositoryPage(newPage);
     }
 
     async checkParticipationBuildPlan(participation: any) {

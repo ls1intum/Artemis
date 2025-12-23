@@ -78,7 +78,7 @@ services:
             chmod 777 /root &&
             npm ci &&
             npm run playwright:setup &&
-            npx playwright test e2e --grep "${TEST_FILTER}" --reporter=list,junit,monocart-reporter
+            PLAYWRIGHT_JUNIT_OUTPUT_NAME=test-reports/results.xml npx playwright test e2e --grep "${TEST_FILTER}" --reporter=list,junit,monocart-reporter
             '
 EOF
     OVERRIDE_ARGS="-f playwright-local-override.yml"
@@ -117,13 +117,8 @@ docker compose -f $COMPOSE_FILE $OVERRIDE_ARGS up --exit-code-from artemis-playw
 EXIT_CODE=$?
 set -e
 
-# Copy test reports from container
+# Test reports are in the mounted volume (no need to copy from container)
 REPORT_DIR="../src/test/playwright/test-reports"
-mkdir -p "$REPORT_DIR"
-
-echo ""
-echo "Copying test reports..."
-docker cp artemis-app:/app/artemis/src/test/playwright/test-reports/. "$REPORT_DIR/" 2>/dev/null || true
 
 # Parse and display test summary from JUnit XML files
 echo ""
@@ -177,15 +172,16 @@ if [ $TOTAL_TESTS -gt 0 ]; then
         echo ""
     fi
 else
-    echo "  No test results found"
+    echo "  No JUnit test results found in $REPORT_DIR"
     echo "========================================"
 fi
 
+# Use exit code as primary indicator of pass/fail
 echo ""
-if [ $((TOTAL_FAILURES + TOTAL_ERRORS)) -eq 0 ] && [ $TOTAL_TESTS -gt 0 ]; then
+if [ $EXIT_CODE -eq 0 ]; then
     echo "All tests passed!"
 else
-    echo "Tests failed. View HTML report:"
+    echo "Tests failed (exit code: $EXIT_CODE). View HTML report:"
     echo "  cd src/test/playwright && npx playwright show-report test-reports/monocart-report"
 fi
 

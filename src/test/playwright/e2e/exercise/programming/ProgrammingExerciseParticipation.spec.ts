@@ -221,7 +221,7 @@ test.describe('Programming exercise participation', { tag: '@sequential' }, () =
         });
 
         test.describe('Check team participation', () => {
-            test.beforeEach('Each team member makes a submission', async ({ login, waitForExerciseBuildToFinish, exerciseAPIRequests }) => {
+            test.beforeEach('Each team member makes a submission', async ({ login, waitForParticipationBuildToFinish, exerciseAPIRequests }) => {
                 for (const { student, submission } of submissions) {
                     await login(student);
                     const response = await exerciseAPIRequests.startExerciseParticipation(exercise.id!);
@@ -231,7 +231,8 @@ test.describe('Programming exercise participation', { tag: '@sequential' }, () =
                         await exerciseAPIRequests.createProgrammingExerciseFile(participation.id!, filename);
                     }
                     await exerciseAPIRequests.makeProgrammingExerciseSubmission(participation.id!, submission);
-                    await waitForExerciseBuildToFinish(exercise.id!);
+                    // Use student-accessible endpoint (by participation ID) instead of tutor-only endpoint (by exercise ID)
+                    await waitForParticipationBuildToFinish(participation.id!);
                 }
             });
 

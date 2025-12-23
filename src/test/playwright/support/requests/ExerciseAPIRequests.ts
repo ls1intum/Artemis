@@ -368,7 +368,7 @@ export class ExerciseAPIRequests {
      * @param due - The new assessment due date (optional, default: current date).
      */
     async updateModelingExerciseAssessmentDueDate(exercise: ModelingExercise, due = dayjs()) {
-        exercise.assessmentDueDate = due;
+        exercise.assessmentDueDate = dayjsToString(due) as any;
         return await this.updateExercise(exercise, ExerciseType.MODELING);
     }
 
@@ -404,7 +404,7 @@ export class ExerciseAPIRequests {
      * @param due - The new due date (optional, default: current date).
      */
     async updateModelingExerciseDueDate(exercise: ModelingExercise, due = dayjs()) {
-        exercise.dueDate = due;
+        exercise.dueDate = dayjsToString(due) as any;
         await this.updateExercise(exercise, ExerciseType.MODELING);
     }
 
@@ -578,12 +578,28 @@ export class ExerciseAPIRequests {
      */
     async getProgrammingExerciseParticipation(exerciseId: number): Promise<StudentParticipation> {
         // Use the endpoint that returns all participations for the exercise with latest results
+        // NOTE: This endpoint requires at least tutor permissions
         const response = await this.page.request.get(`api/exercise/exercises/${exerciseId}/participations?withLatestResults=true`);
         const participations = (await response.json()) as StudentParticipation[];
         if (!Array.isArray(participations) || participations.length === 0) {
             throw new Error(`No participations found for exercise ${exerciseId}`);
         }
         return participations[0];
+    }
+
+    /**
+     * Gets a specific participation with its latest results. This endpoint is accessible by students
+     * who own the participation.
+     *
+     * @param participationId - The ID of the participation to retrieve.
+     * @returns A Promise<StudentParticipation> representing the student participation with latest results.
+     */
+    async getParticipationWithLatestResult(participationId: number): Promise<StudentParticipation> {
+        const response = await this.page.request.get(`api/exercise/participations/${participationId}/with-latest-result`);
+        if (!response.ok()) {
+            throw new Error(`Failed to get participation ${participationId}: ${response.status()}`);
+        }
+        return (await response.json()) as StudentParticipation;
     }
 
     /**
