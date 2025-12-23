@@ -1,0 +1,51 @@
+<div class="feature-toggle-container">
+    <h2 jhiTranslate="artemisApp.featureToggle.title"></h2>
+    <p class="text-muted mb-4" jhiTranslate="artemisApp.featureToggle.description"></p>
+
+    <div class="feature-grid">
+        @for (featureInfo of featureToggles(); track featureInfo.feature) {
+            <div class="feature-card" [class.disabled]="!featureInfo.isActive">
+                <div class="feature-header">
+                    <div class="feature-title-row">
+                        <h5 class="feature-name">{{ getFeatureNameKey(featureInfo.feature) | artemisTranslate }}</h5>
+                        @if (featureInfo.documentationLink) {
+                            <a
+                                [href]="featureInfo.documentationLink"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="documentation-link"
+                                [ngbTooltip]="'artemisApp.featureToggle.viewDocumentation' | artemisTranslate"
+                            >
+                                <fa-icon [icon]="faExternalLinkAlt" />
+                            </a>
+                        }
+                    </div>
+                    <div class="form-check form-switch">
+                        <input
+                            class="form-check-input"
+                            type="checkbox"
+                            role="switch"
+                            [id]="'toggle-' + featureInfo.feature"
+                            [checked]="featureInfo.isActive"
+                            (change)="onFeatureToggle(featureInfo)"
+                        />
+                        <label class="form-check-label ms-2" [for]="'toggle-' + featureInfo.feature">
+                            @if (featureInfo.isActive) {
+                                <span class="badge bg-success" jhiTranslate="artemisApp.featureToggle.enabled"></span>
+                            } @else {
+                                <span class="badge bg-danger" jhiTranslate="artemisApp.featureToggle.disabled"></span>
+                            }
+                        </label>
+                    </div>
+                </div>
+                <p class="feature-description">{{ getFeatureDescriptionKey(featureInfo.feature) | artemisTranslate }}</p>
+                @if (!featureInfo.isActive) {
+                    <div class="feature-warning">
+                        <fa-icon [icon]="faQuestionCircle" class="me-1" />
+                        <span>{{ getFeatureWarningKey(featureInfo.feature) | artemisTranslate }}</span>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>

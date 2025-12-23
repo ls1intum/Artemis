@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject, input, model, output } from '@angular/core';
 import { faBan, faPencil, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { KnowledgeArea, Source, StandardizedCompetencyDTO, StandardizedCompetencyValidators } from 'app/atlas/shared/entities/standardized-competency.model';
 import { ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
@@ -13,6 +13,21 @@ import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco
 import { TaxonomySelectComponent } from 'app/atlas/manage/taxonomy-select/taxonomy-select.component';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 
+/**
+ * Form structure for standardized competency editing.
+ */
+interface StandardizedCompetencyForm {
+    title: FormControl<string | undefined>;
+    description: FormControl<string | undefined>;
+    taxonomy: FormControl<CompetencyTaxonomy | undefined>;
+    knowledgeAreaId: FormControl<number | undefined>;
+    sourceId: FormControl<number | undefined>;
+}
+
+/**
+ * Component for editing standardized competencies.
+ * Provides a form for creating and updating competency details.
+ */
 @Component({
     selector: 'jhi-standardized-competency-edit',
     templateUrl: './standardized-competency-edit.component.html',
@@ -27,16 +42,74 @@ import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
         TaxonomySelectComponent,
         HtmlForMarkdownPipe,
     ],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class StandardizedCompetencyEditComponent {
-    private formBuilder = inject(FormBuilder);
+    private readonly formBuilder = inject(FormBuilder);
 
-    // values for the knowledge area select
-    @Input() knowledgeAreas: KnowledgeArea[] = [];
-    // values for the source select
-    @Input() sources: Source[] = [];
-    @Input({ required: true }) set competency(competency: StandardizedCompetencyDTO) {
-        this._competency = competency;
+    /** Available knowledge areas for selection */
+    readonly knowledgeAreas = input<KnowledgeArea[]>([]);
+
+    /** Available sources for selection */
+    readonly sources = input<Source[]>([]);
+
+    /** The competency being edited (required) */
+    readonly competency = input.required<StandardizedCompetencyDTO>();
+
+    /** Whether the form is in editing mode (two-way binding) */
+    readonly isEditing = model<boolean>(false);
+
+    /** Observable for dialog error messages */
+    readonly dialogError = input<Observable<string>>();
+
+    /** Emitted when the competency is saved */
+    readonly onSave = output<StandardizedCompetencyDTO>();
+
+    /** Emitted when the competency should be deleted */
+    readonly onDelete = output<number>();
+
+    /** Emitted when the edit panel should be closed */
+    readonly onClose = output<void>();
+
+    /** The reactive form for editing competency properties */
+    protected form: FormGroup<StandardizedCompetencyForm>;
+
+    /** Icons */
+    protected readonly faPencil = faPencil;
+    protected readonly faTrash = faTrash;
+    protected readonly faBan = faBan;
+    protected readonly faSave = faSave;
+
+    /** Constants */
+    protected readonly ButtonSize = ButtonSize;
+    protected readonly ButtonType = ButtonType;
+    protected readonly validators = StandardizedCompetencyValidators;
+
+    constructor() {
+        // Effect to initialize/update form when competency input changes
+        effect(() => {
+            const comp = this.competency();
+            this.initializeForm(comp);
+        });
+
+        // Effect to enable/disable form based on editing state
+        effect(() => {
+            const editing = this.isEditing();
+            if (this.form) {
+                if (editing) {
+                    this.form.enable();
+                } else {
+                    this.form.disable();
+                }
+            }
+        });
+    }
+
+    /**
+     * Initializes the form with the given competency data.
+     * @param competency - The competency to populate the form with
+     */
+    private initializeForm(competency: StandardizedCompetencyDTO): void {
         this.form = this.formBuilder.nonNullable.group({
             title: [competency.title, [Validators.required, Validators.maxLength(StandardizedCompetencyValidators.TITLE_MAX)]],
             description: [competency.description, [Validators.maxLength(StandardizedCompetencyValidators.DESCRIPTION_MAX)]],
@@ -44,90 +117,66 @@ export class StandardizedCompetencyEditComponent {
             knowledgeAreaId: [competency.knowledgeAreaId, [Validators.required]],
             sourceId: [competency.sourceId],
         });
-        if (!this.isEditing) {
+
+        // Apply initial editing state
+        if (!this.isEditing()) {
             this.form.disable();
         }
     }
 
-    get competency() {
-        return this._competency;
-    }
-
-    @Input() set isEditing(isEditing: boolean) {
-        this._isEditing = isEditing;
-        this.isEditingChange.emit(isEditing);
-        if (isEditing) {
-            this.form.enable();
-        } else {
-            this.form.disable();
-        }
-    }
-
-    get isEditing() {
-        return this._isEditing;
-    }
-
-    @Input() dialogError: Observable<string>;
-
-    @Output() onSave = new EventEmitter<StandardizedCompetencyDTO>();
-    @Output() onDelete = new EventEmitter<number>();
-    @Output() onClose = new EventEmitter<void>();
-    @Output() isEditingChange = new EventEmitter<boolean>();
-
-    private _isEditing: boolean;
-    private _competency: StandardizedCompetencyDTO;
-    protected form: FormGroup<{
-        title: FormControl<string | undefined>;
-        description: FormControl<string | undefined>;
-        taxonomy: FormControl<CompetencyTaxonomy | undefined>;
-        knowledgeAreaId: FormControl<number | undefined>;
-        sourceId: FormControl<number | undefined>;
-    }>;
-
-    // icons
-    protected readonly faPencil = faPencil;
-    protected readonly faTrash = faTrash;
-    protected readonly faBan = faBan;
-    protected readonly faSave = faSave;
-    // other constants
-    protected readonly ButtonSize = ButtonSize;
-    protected readonly ButtonType = ButtonType;
-    protected readonly validators = StandardizedCompetencyValidators;
-
-    save() {
+    /**
+     * Saves the competency with current form values.
+     */
+    save(): void {
         const updatedValues = this.form.getRawValue();
-        const updatedCompetency: StandardizedCompetencyDTO = { ...this.competency, ...updatedValues };
-        this.isEditing = false;
+        const updatedCompetency: StandardizedCompetencyDTO = { ...this.competency(), ...updatedValues };
+        this.isEditing.set(false);
         this.onSave.emit(updatedCompetency);
     }
 
-    delete() {
-        this.onDelete.emit(this.competency.id);
+    /**
+     * Emits delete event for the current competency.
+     */
+    delete(): void {
+        const id = this.competency().id;
+        if (id !== undefined) {
+            this.onDelete.emit(id);
+        }
     }
 
-    close() {
+    /**
+     * Closes the edit panel.
+     */
+    close(): void {
         this.onClose.emit();
     }
 
-    edit() {
-        this.isEditing = true;
+    /**
+     * Enables editing mode.
+     */
+    edit(): void {
+        this.isEditing.set(true);
     }
 
-    cancel() {
+    /**
+     * Cancels editing and resets the form.
+     * If creating a new competency, closes the panel.
+     */
+    cancel(): void {
         this.form.reset();
-        this.isEditing = false;
+        this.isEditing.set(false);
 
-        // canceling when creating a new competency closes it
-        if (this.competency.id === undefined) {
+        // Canceling when creating a new competency closes it
+        if (this.competency().id === undefined) {
             this.onClose.emit();
         }
     }
 
     /**
-     * Updates description form on markdown change
-     * @param content markdown content
+     * Updates description form control on markdown change.
+     * @param content - The new markdown content
      */
-    updateDescriptionControl(content: string) {
+    updateDescriptionControl(content: string): void {
         this.form.controls.description.setValue(content);
         this.form.controls.description.markAsDirty();
     }

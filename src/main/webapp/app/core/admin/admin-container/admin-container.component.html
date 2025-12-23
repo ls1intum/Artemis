@@ -9,11 +9,11 @@
             <mat-sidenav disableClose class="module-bg rounded-3" [opened]="true" mode="side">
                 <jhi-admin-sidebar
                     [isNavbarCollapsed]="isNavbarCollapsed()"
-                    [localCIActive]="localCIActive"
-                    [ltiEnabled]="ltiEnabled"
-                    [standardizedCompetenciesEnabled]="standardizedCompetenciesEnabled"
-                    [atlasEnabled]="atlasEnabled"
-                    [examEnabled]="examEnabled"
+                    [localCIActive]="localCIActive()"
+                    [ltiEnabled]="ltiEnabled()"
+                    [standardizedCompetenciesEnabled]="standardizedCompetenciesEnabled()"
+                    [atlasEnabled]="atlasEnabled()"
+                    [examEnabled]="examEnabled()"
                     (toggleCollapseState)="toggleCollapseState()"
                 />
             </mat-sidenav>

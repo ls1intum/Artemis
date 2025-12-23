@@ -2,26 +2,26 @@
     <div class="row mb-5">
         <h2 class="col-md-2" id="statistics-page-heading" jhiTranslate="statistics.title"></h2>
         <div class="col-md-9 btn-group btn-group-toggle" data-toggle="buttons">
-            <label class="btn btn-secondary" [class.active]="currentSpan === SpanType.DAY">
+            <label class="btn btn-secondary" [class.active]="currentSpan() === SpanType.DAY">
                 <input type="radio" name="options" id="option1" (click)="onTabChanged(SpanType.DAY)" />{{ 'statistics.span.day' | artemisTranslate }}
             </label>
-            <label class="btn btn-secondary" [class.active]="currentSpan === SpanType.WEEK">
+            <label class="btn btn-secondary" [class.active]="currentSpan() === SpanType.WEEK">
                 <input type="radio" name="options" id="option2" checked (click)="onTabChanged(SpanType.WEEK)" />{{ 'statistics.span.week' | artemisTranslate }}
             </label>
-            <label class="btn btn-secondary" [class.active]="currentSpan === SpanType.MONTH">
+            <label class="btn btn-secondary" [class.active]="currentSpan() === SpanType.MONTH">
                 <input type="radio" name="options" id="option3" (click)="onTabChanged(SpanType.MONTH)" />{{ 'statistics.span.month' | artemisTranslate }}
             </label>
-            <label class="btn btn-secondary" [class.active]="currentSpan === SpanType.QUARTER">
+            <label class="btn btn-secondary" [class.active]="currentSpan() === SpanType.QUARTER">
                 <input type="radio" name="options" id="option4" (click)="onTabChanged(SpanType.QUARTER)" />{{ 'statistics.span.quarter' | artemisTranslate }}
             </label>
-            <label class="btn btn-secondary" [class.active]="currentSpan === SpanType.YEAR">
+            <label class="btn btn-secondary" [class.active]="currentSpan() === SpanType.YEAR">
                 <input type="radio" name="options" id="option5" (click)="onTabChanged(SpanType.YEAR)" />{{ 'statistics.span.year' | artemisTranslate }}
             </label>
         </div>
     </div>
     @for (graph of graphTypes; track graph; let i = $index) {
         <div id="graph-{{ i }}" class="graph">
-            <jhi-statistics-graph [graphType]="graph" [currentSpan]="currentSpan" [statisticsView]="statisticsView" />
+            <jhi-statistics-graph [graphType]="graph" [currentSpan]="currentSpan()" [statisticsView]="statisticsView()" />
         </div>
     }
 </div>

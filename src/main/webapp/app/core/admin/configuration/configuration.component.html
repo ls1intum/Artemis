@@ -1,18 +1,18 @@
-@if (allBeans) {
+@if (beans()) {
     <div>
         <h2 id="configuration-page-heading" jhiTranslate="configuration.title" data-cy="configurationPageHeading"></h2>
         <span jhiTranslate="configuration.filter"></span>
-        <input type="text" [(ngModel)]="beansFilter" (ngModelChange)="filterAndSortBeans()" class="form-control" />
+        <input type="text" [ngModel]="beansFilter()" (ngModelChange)="updateBeansFilter($event)" class="form-control" />
         <h3 id="spring-configuration">Spring configuration</h3>
         <table class="table table-striped table-bordered table-responsive d-table" aria-describedby="spring-configuration">
             <thead>
-                <tr jhiSort predicate="prefix" [(ascending)]="beansAscending" (sortChange)="filterAndSortBeans()">
+                <tr jhiSort predicate="prefix" [ascending]="beansAscending()" (ascendingChange)="updateBeansAscending($event)">
                     <th jhiSortBy="prefix" scope="col" class="w-40"><span jhiTranslate="configuration.table.prefix"></span> <fa-icon [icon]="faSort" /></th>
                     <th scope="col" class="w-60"><span jhiTranslate="configuration.table.properties"></span></th>
                 </tr>
             </thead>
             <tbody>
-                @for (bean of beans; track bean) {
+                @for (bean of beans(); track bean) {
                     <tr>
                         <td>
                             <span>{{ bean.prefix }}</span>
@@ -31,7 +31,7 @@
                 }
             </tbody>
         </table>
-        @for (propertySource of propertySources; track propertySource; let i = $index) {
+        @for (propertySource of propertySources(); track propertySource; let i = $index) {
             <div>
                 <h4 [id]="'property-source-' + i">
                     <span>{{ propertySource.name }}</span>

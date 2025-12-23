@@ -1,30 +1,30 @@
 <div class="d-flex flex-column">
     <div class="mb-2">
         <div class="d-flex justify-content-between">
-            @if (knowledgeArea.id !== undefined) {
-                <h4 [jhiTranslate]="'artemisApp.knowledgeArea.details.title' + (isEditing ? 'Edit' : '')"></h4>
+            @if (knowledgeArea().id !== undefined) {
+                <h4 [jhiTranslate]="'artemisApp.knowledgeArea.details.title' + (isEditing() ? 'Edit' : '')"></h4>
             } @else {
                 <h4 jhiTranslate="artemisApp.knowledgeArea.details.titleCreate"></h4>
             }
             <button type="button" class="btn-close" (click)="close()"></button>
         </div>
         <!-- do not allow these actions when creating a new knowledge area because it is not saved yet -->
-        @if (knowledgeArea.id) {
+        @if (knowledgeArea().id) {
             <div class="mb-1">
                 <jhi-button [icon]="faPlus" [btnSize]="ButtonSize.SMALL" title="artemisApp.knowledgeArea.details.createCompetencyButton" (onClick)="openNewCompetency()" />
                 <jhi-button [icon]="faPlus" [btnSize]="ButtonSize.SMALL" title="artemisApp.knowledgeArea.details.createKnowledgeAreaButton" (onClick)="openNewKnowledgeArea()" />
             </div>
-            @if (!isEditing) {
+            @if (!isEditing()) {
                 <jhi-button [btnType]="ButtonType.WARNING" [btnSize]="ButtonSize.SMALL" title="entity.action.edit" [icon]="faPencil" (onClick)="edit()" />
             }
             <button
                 class="me-0"
                 jhiDeleteButton
-                [entityTitle]="knowledgeArea.title ?? ''"
+                [entityTitle]="knowledgeArea().title ?? ''"
                 [deleteQuestion]="'artemisApp.knowledgeArea.manage.deleteModal.question'"
                 [deleteConfirmationText]="'artemisApp.knowledgeArea.manage.deleteModal.typeNameToConfirm'"
                 (delete)="delete()"
-                [dialogError]="dialogError"
+                [dialogError]="dialogError()!"
             >
                 <fa-icon [icon]="faTrash" />
             </button>
@@ -61,7 +61,7 @@
         </div>
         <div class="form-group">
             <label jhiTranslate="artemisApp.knowledgeArea.model.description"></label>
-            @if (isEditing) {
+            @if (isEditing()) {
                 <jhi-markdown-editor-monaco
                     [markdown]="form.controls.description.value"
                     (markdownChange)="updateDescriptionControl($event)"
@@ -83,7 +83,7 @@
             <label for="knowledge-area-select" jhiTranslate="artemisApp.knowledgeArea.model.parent"></label>
             <select id="knowledge-area-select" class="form-select" formControlName="parentId">
                 <option [ngValue]="undefined"></option>
-                @for (knowledgeArea of knowledgeAreas; track knowledgeArea.id) {
+                @for (knowledgeArea of knowledgeAreas(); track knowledgeArea.id) {
                     <option [ngValue]="knowledgeArea.id">
                         {{ knowledgeArea.title }}
                     </option>
@@ -94,7 +94,7 @@
             }
         </div>
     </div>
-    @if (isEditing) {
+    @if (isEditing()) {
         <div>
             <jhi-button [btnType]="ButtonType.SECONDARY" [btnSize]="ButtonSize.SMALL" [title]="'entity.action.cancel'" [icon]="faBan" (onClick)="cancel()" />
             <jhi-button
