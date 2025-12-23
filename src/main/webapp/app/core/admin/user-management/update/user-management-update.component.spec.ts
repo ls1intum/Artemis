@@ -25,6 +25,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
+import { AccountService } from 'app/core/auth/account.service';
 // Preliminary mock before import to prevent errors
 jest.mock('@sentry/angular', () => {
     const originalModule = jest.requireActual('@sentry/angular');
@@ -224,6 +225,39 @@ describe('UserManagementUpdateComponent', () => {
 
             // THEN
             expect(comp.editForm.controls['id']).toBeDefined();
+        }));
+
+        it('should include SUPER_ADMIN authority when current user is a super admin', fakeAsync(() => {
+            // GIVEN
+            const accountService = TestBed.inject(AccountService);
+            jest.spyOn(accountService, 'isSuperAdmin').mockReturnValue(true);
+            jest.spyOn(service, 'authorities').mockReturnValue(of([Authority.USER, Authority.ADMIN, Authority.SUPER_ADMIN]));
+            jest.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue({ activeProfiles: ['jenkins'] } as ProfileInfo);
+
+            // WHEN
+            comp.ngOnInit();
+
+            // THEN
+            expect(service.authorities).toHaveBeenCalledOnce();
+            expect(accountService.isSuperAdmin).toHaveBeenCalledOnce();
+            expect(comp.authorities).toEqual([Authority.USER, Authority.ADMIN, Authority.SUPER_ADMIN]);
+        }));
+
+        it('should filter out SUPER_ADMIN authority when current user is not a super admin', fakeAsync(() => {
+            // GIVEN
+            const accountService = TestBed.inject(AccountService);
+            jest.spyOn(accountService, 'isSuperAdmin').mockReturnValue(false);
+            jest.spyOn(service, 'authorities').mockReturnValue(of([Authority.USER, Authority.ADMIN, Authority.SUPER_ADMIN]));
+            jest.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue({ activeProfiles: ['jenkins'] } as ProfileInfo);
+
+            // WHEN
+            comp.ngOnInit();
+
+            // THEN
+            expect(service.authorities).toHaveBeenCalledOnce();
+            expect(accountService.isSuperAdmin).toHaveBeenCalledOnce();
+            expect(comp.authorities).toEqual([Authority.USER, Authority.ADMIN]);
+            expect(comp.authorities).not.toContain(Authority.SUPER_ADMIN);
         }));
     });
 
