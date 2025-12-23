@@ -74,10 +74,29 @@ export class Commands {
      * @param timeout - Timeout in milliseconds to wait for the build to finish.
      */
     static waitForExerciseBuildToFinish = async (page: Page, exerciseAPIRequests: ExerciseAPIRequests, exerciseId: number, interval: number = 2000, timeout: number = 60000) => {
-        let exerciseParticipation: StudentParticipation;
+        let exerciseParticipation: StudentParticipation | undefined;
         const startTime = Date.now();
 
-        exerciseParticipation = await exerciseAPIRequests.getProgrammingExerciseParticipation(exerciseId);
+        const getParticipation = async (): Promise<StudentParticipation | undefined> => {
+            try {
+                return await exerciseAPIRequests.getProgrammingExerciseParticipation(exerciseId);
+            } catch {
+                return undefined;
+            }
+        };
+
+        // Wait for participation to be available
+        while (Date.now() - startTime < timeout) {
+            exerciseParticipation = await getParticipation();
+            if (exerciseParticipation) {
+                break;
+            }
+            await new Promise((resolve) => setTimeout(resolve, interval));
+        }
+
+        if (!exerciseParticipation) {
+            throw new Error(`Timed out waiting for participation for exercise ${exerciseId}`);
+        }
 
         const numberOfBuildResults = exerciseParticipation.submissions
             ? exerciseParticipation.submissions.reduce((sum, submission) => sum + (submission.results?.length ?? 0), 0)
@@ -85,9 +104,9 @@ export class Commands {
 
         console.log('Waiting for build of an exercise to finish...');
         while (Date.now() - startTime < timeout) {
-            exerciseParticipation = await exerciseAPIRequests.getProgrammingExerciseParticipation(exerciseId);
+            exerciseParticipation = await getParticipation();
 
-            const currentBuildResultsCount = exerciseParticipation.submissions
+            const currentBuildResultsCount = exerciseParticipation?.submissions
                 ? exerciseParticipation.submissions.reduce((sum, submission) => sum + (submission.results?.length ?? 0), 0)
                 : 0;
 

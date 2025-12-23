@@ -580,7 +580,7 @@ export class ExerciseAPIRequests {
         // Use the endpoint that returns all participations for the exercise with latest results
         const response = await this.page.request.get(`api/exercise/exercises/${exerciseId}/participations?withLatestResults=true`);
         const participations = (await response.json()) as StudentParticipation[];
-        if (!participations || participations.length === 0) {
+        if (!Array.isArray(participations) || participations.length === 0) {
             throw new Error(`No participations found for exercise ${exerciseId}`);
         }
         return participations[0];
