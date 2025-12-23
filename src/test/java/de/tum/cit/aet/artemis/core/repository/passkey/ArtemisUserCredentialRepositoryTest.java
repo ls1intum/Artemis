@@ -6,8 +6,10 @@ import java.time.Instant;
 import java.util.Optional;
 import java.util.Set;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.web.webauthn.api.AuthenticatorTransport;
 import org.springframework.security.web.webauthn.api.Bytes;
@@ -23,6 +25,7 @@ import de.tum.cit.aet.artemis.core.domain.converter.BytesConverter;
 import de.tum.cit.aet.artemis.core.repository.PasskeyCredentialsRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ArtemisUserCredentialRepositoryTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "artemisusercredentialrepository";
@@ -39,7 +42,29 @@ class ArtemisUserCredentialRepositoryTest extends AbstractSpringIntegrationIndep
 
     private User adminUser;
 
-    @BeforeEach
+    enum UserTestCase {
+
+        SUPER_ADMIN("superadmin-passkey", true), REGULAR_USER("regular-user-passkey", false), ADMIN("admin-user-passkey", false);
+
+        private final String label;
+
+        private final boolean expectedAutoApproval;
+
+        UserTestCase(String label, boolean expectedAutoApproval) {
+            this.label = label;
+            this.expectedAutoApproval = expectedAutoApproval;
+        }
+
+        String getLabel() {
+            return label;
+        }
+
+        boolean isExpectedAutoApproval() {
+            return expectedAutoApproval;
+        }
+    }
+
+    @BeforeAll
     void setUp() {
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
         regularUser = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
@@ -55,10 +80,20 @@ class ArtemisUserCredentialRepositoryTest extends AbstractSpringIntegrationIndep
         userTestRepository.save(adminUser);
     }
 
-    @Test
-    void testSavePasskey_SuperAdminUser_ShouldBeAutoApproved() {
+    private User getUserForTestCase(UserTestCase testCase) {
+        return switch (testCase) {
+            case SUPER_ADMIN -> superAdminUser;
+            case REGULAR_USER -> regularUser;
+            case ADMIN -> adminUser;
+        };
+    }
+
+    @ParameterizedTest
+    @EnumSource(UserTestCase.class)
+    void testSavePasskey(UserTestCase testCase) {
         // Arrange
-        CredentialRecord credentialRecord = createCredentialRecord(superAdminUser, "superadmin-passkey");
+        User user = getUserForTestCase(testCase);
+        CredentialRecord credentialRecord = createCredentialRecord(user, testCase.getLabel());
 
         // Act
         artemisUserCredentialRepository.save(credentialRecord);
@@ -66,51 +101,21 @@ class ArtemisUserCredentialRepositoryTest extends AbstractSpringIntegrationIndep
         // Assert
         Optional<PasskeyCredential> savedCredential = passkeyCredentialsRepository.findByCredentialId(credentialRecord.getCredentialId().toBase64UrlString());
         assertThat(savedCredential).isPresent();
-        assertThat(savedCredential.get().isSuperAdminApproved()).isTrue();
-        assertThat(savedCredential.get().getUser()).isEqualTo(superAdminUser);
-        assertThat(savedCredential.get().getLabel()).isEqualTo("superadmin-passkey");
+        assertThat(savedCredential.get().isSuperAdminApproved()).isEqualTo(testCase.isExpectedAutoApproval());
+        assertThat(savedCredential.get().getUser()).isEqualTo(user);
+        assertThat(savedCredential.get().getLabel()).isEqualTo(testCase.getLabel());
     }
 
-    @Test
-    void testSavePasskey_RegularUser_ShouldNotBeAutoApproved() {
+    @ParameterizedTest
+    @EnumSource(UserTestCase.class)
+    void testUpdatePasskey(UserTestCase testCase) {
         // Arrange
-        CredentialRecord credentialRecord = createCredentialRecord(regularUser, "regular-user-passkey");
-
-        // Act
-        artemisUserCredentialRepository.save(credentialRecord);
-
-        // Assert
-        Optional<PasskeyCredential> savedCredential = passkeyCredentialsRepository.findByCredentialId(credentialRecord.getCredentialId().toBase64UrlString());
-        assertThat(savedCredential).isPresent();
-        assertThat(savedCredential.get().isSuperAdminApproved()).isFalse();
-        assertThat(savedCredential.get().getUser()).isEqualTo(regularUser);
-        assertThat(savedCredential.get().getLabel()).isEqualTo("regular-user-passkey");
-    }
-
-    @Test
-    void testSavePasskey_AdminUser_ShouldNotBeAutoApproved() {
-        // Arrange
-        CredentialRecord credentialRecord = createCredentialRecord(adminUser, "admin-user-passkey");
-
-        // Act
-        artemisUserCredentialRepository.save(credentialRecord);
-
-        // Assert
-        Optional<PasskeyCredential> savedCredential = passkeyCredentialsRepository.findByCredentialId(credentialRecord.getCredentialId().toBase64UrlString());
-        assertThat(savedCredential).isPresent();
-        assertThat(savedCredential.get().isSuperAdminApproved()).isFalse();
-        assertThat(savedCredential.get().getUser()).isEqualTo(adminUser);
-        assertThat(savedCredential.get().getLabel()).isEqualTo("admin-user-passkey");
-    }
-
-    @Test
-    void testUpdatePasskey_SuperAdminUser_ShouldBeAutoApproved() {
-        // Arrange
-        CredentialRecord initialCredential = createCredentialRecord(superAdminUser, "initial-label");
+        User user = getUserForTestCase(testCase);
+        CredentialRecord initialCredential = createCredentialRecord(user, "initial-label");
         artemisUserCredentialRepository.save(initialCredential);
 
         // Create updated credential record with same credential ID but different label
-        CredentialRecord updatedCredential = createCredentialRecord(superAdminUser, "updated-label", initialCredential.getCredentialId());
+        CredentialRecord updatedCredential = createCredentialRecord(user, "updated-label", initialCredential.getCredentialId());
 
         // Act
         artemisUserCredentialRepository.save(updatedCredential);
@@ -118,45 +123,7 @@ class ArtemisUserCredentialRepositoryTest extends AbstractSpringIntegrationIndep
         // Assert
         Optional<PasskeyCredential> savedCredential = passkeyCredentialsRepository.findByCredentialId(updatedCredential.getCredentialId().toBase64UrlString());
         assertThat(savedCredential).isPresent();
-        assertThat(savedCredential.get().isSuperAdminApproved()).isTrue();
-        assertThat(savedCredential.get().getLabel()).isEqualTo("updated-label");
-    }
-
-    @Test
-    void testUpdatePasskey_RegularUser_ShouldNotBeAutoApproved() {
-        // Arrange
-        CredentialRecord initialCredential = createCredentialRecord(regularUser, "initial-label");
-        artemisUserCredentialRepository.save(initialCredential);
-
-        // Create updated credential record with same credential ID but different label
-        CredentialRecord updatedCredential = createCredentialRecord(regularUser, "updated-label", initialCredential.getCredentialId());
-
-        // Act
-        artemisUserCredentialRepository.save(updatedCredential);
-
-        // Assert
-        Optional<PasskeyCredential> savedCredential = passkeyCredentialsRepository.findByCredentialId(updatedCredential.getCredentialId().toBase64UrlString());
-        assertThat(savedCredential).isPresent();
-        assertThat(savedCredential.get().isSuperAdminApproved()).isFalse();
-        assertThat(savedCredential.get().getLabel()).isEqualTo("updated-label");
-    }
-
-    @Test
-    void testUpdatePasskey_AdminUser_ShouldNotBeAutoApproved() {
-        // Arrange
-        CredentialRecord initialCredential = createCredentialRecord(adminUser, "initial-label");
-        artemisUserCredentialRepository.save(initialCredential);
-
-        // Create updated credential record with same credential ID but different label
-        CredentialRecord updatedCredential = createCredentialRecord(adminUser, "updated-label", initialCredential.getCredentialId());
-
-        // Act
-        artemisUserCredentialRepository.save(updatedCredential);
-
-        // Assert
-        Optional<PasskeyCredential> savedCredential = passkeyCredentialsRepository.findByCredentialId(updatedCredential.getCredentialId().toBase64UrlString());
-        assertThat(savedCredential).isPresent();
-        assertThat(savedCredential.get().isSuperAdminApproved()).isFalse();
+        assertThat(savedCredential.get().isSuperAdminApproved()).isEqualTo(testCase.isExpectedAutoApproval());
         assertThat(savedCredential.get().getLabel()).isEqualTo("updated-label");
     }
 
