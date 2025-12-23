@@ -155,27 +155,35 @@ export class Commands {
         try {
             const participation = await exerciseAPIRequests.getParticipationWithLatestResult(participationId);
             initialResultCount = countResults(participation);
-        } catch {
-            // Participation might not have results yet
+            console.log(`[waitForParticipationBuildToFinish] Initial result count for participation ${participationId}: ${initialResultCount}`);
+        } catch (e) {
+            console.log(`[waitForParticipationBuildToFinish] Could not get initial results for participation ${participationId}: ${e}`);
         }
 
-        console.log('Waiting for build of participation to finish...');
+        console.log(`[waitForParticipationBuildToFinish] Waiting for build of participation ${participationId} to finish (timeout: ${timeout}ms)...`);
+        let pollCount = 0;
         while (Date.now() - startTime < timeout) {
             try {
                 const participation = await exerciseAPIRequests.getParticipationWithLatestResult(participationId);
                 const currentResultCount = countResults(participation);
+                pollCount++;
+
+                if (pollCount % 5 === 0) {
+                    console.log(`[waitForParticipationBuildToFinish] Poll #${pollCount}: current result count = ${currentResultCount}, waiting for > ${initialResultCount}`);
+                }
 
                 if (currentResultCount > initialResultCount) {
+                    console.log(`[waitForParticipationBuildToFinish] Build finished! Result count increased from ${initialResultCount} to ${currentResultCount}`);
                     return participation;
                 }
-            } catch {
-                // Continue polling if request fails
+            } catch (e) {
+                console.log(`[waitForParticipationBuildToFinish] Poll failed: ${e}`);
             }
 
             await new Promise((resolve) => setTimeout(resolve, interval));
         }
 
-        throw new Error(`Timed out waiting for build to finish for participation ${participationId}`);
+        throw new Error(`Timed out waiting for build to finish for participation ${participationId}. Initial results: ${initialResultCount}, timeout: ${timeout}ms`);
     };
 
     static toggleSidebar = async (page: Page) => {

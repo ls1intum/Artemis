@@ -1,5 +1,5 @@
 import { BASE_API, ExerciseType } from '../../constants';
-import { Page } from 'playwright';
+import { Page, expect } from '@playwright/test';
 
 /**
  * Parent class for all exercise assessment pages.
@@ -27,7 +27,14 @@ export abstract class AbstractExerciseAssessmentPage {
     }
 
     async submitWithoutInterception() {
-        await this.page.locator('#submit').click();
+        const submitButton = this.page.locator('#submit');
+        // Wait for the submit button to be visible and enabled
+        await submitButton.waitFor({ state: 'visible' });
+        await expect(submitButton).toBeEnabled({ timeout: 10000 });
+        // Handle any confirmation dialogs that might appear (e.g., incomplete assessment warning)
+        this.page.once('dialog', (dialog) => dialog.accept());
+        // Use keyboard shortcut (Ctrl+Enter) which is more reliable than clicking
+        await this.page.keyboard.press('Control+Enter');
     }
 
     async submit() {
