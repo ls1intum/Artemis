@@ -585,14 +585,17 @@ describe('ExamUpdateComponent', () => {
         });
 
         it('should bind isSaving into jhi-button isLoading', () => {
-            component.isSaving = true;
             fixture.detectChanges();
+
+            component.isSaving = true;
+            fixture.changeDetectorRef.detectChanges();
 
             let button = fixture.debugElement.query(By.directive(ButtonComponent)).componentInstance;
             expect(button.isLoading).toBeTrue();
 
             component.isSaving = false;
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
+
             button = fixture.debugElement.query(By.directive(ButtonComponent)).componentInstance;
             expect(button.isLoading).toBeFalse();
         });
@@ -604,10 +607,10 @@ describe('ExamUpdateComponent', () => {
             examWithoutExercises.endDate = dayjs().add(3, 'hours');
             examWithoutExercises.workingTime = 3600;
 
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             const ngForm = fixture.debugElement.query(By.directive(NgForm)).injector.get(NgForm);
             const invalidSpy = jest.spyOn(ngForm.form, 'invalid', 'get').mockReturnValue(false);
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
 
             //Step 1: Test case where the configuration and the form are valid
             expect(component.isValidConfiguration).toBeTrue();
@@ -616,7 +619,7 @@ describe('ExamUpdateComponent', () => {
 
             // Step 2: Test case where the configuration is invalid
             examWithoutExercises.startDate = now.add(5, 'hours');
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
 
             expect(component.isValidConfiguration).toBeFalse();
             button = fixture.debugElement.query(By.directive(ButtonComponent)).componentInstance;
@@ -626,7 +629,7 @@ describe('ExamUpdateComponent', () => {
             examWithoutExercises.startDate = now.add(2, 'hours');
             examWithoutExercises.endDate = now.add(3, 'hours');
             invalidSpy.mockReturnValue(true);
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
 
             expect(component.isValidConfiguration).toBeTrue();
             button = fixture.debugElement.query(By.directive(ButtonComponent)).componentInstance;
