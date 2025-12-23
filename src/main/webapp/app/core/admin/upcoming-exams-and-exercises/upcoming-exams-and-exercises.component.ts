@@ -10,6 +10,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-bar-title.directive';
 
 /**
  * Admin component for viewing upcoming exams and exercises across all courses.
@@ -19,7 +20,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     templateUrl: './upcoming-exams-and-exercises.component.html',
     styles: ['.table {table-layout: fixed}'],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [TranslateDirective, RouterLink, ArtemisDatePipe, FaIconComponent, NgbTooltip, ArtemisTranslatePipe],
+    imports: [TranslateDirective, RouterLink, ArtemisDatePipe, FaIconComponent, NgbTooltip, ArtemisTranslatePipe, AdminTitleBarTitleDirective],
 })
 export class UpcomingExamsAndExercisesComponent implements OnInit {
     private readonly exerciseService = inject(ExerciseService);
