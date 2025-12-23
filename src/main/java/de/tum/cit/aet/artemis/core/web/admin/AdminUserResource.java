@@ -211,16 +211,7 @@ public class AdminUserResource {
         }
 
         var existingUser = userRepository.findByIdWithGroupsAndAuthoritiesAndOrganizationsElseThrow(managedUserVM.getId());
-
-        boolean isUpdatedUserIsSuperAdmin = existingUser.getAuthorities().contains(Authority.SUPER_ADMIN_AUTHORITY);
-        if (isUpdatedUserIsSuperAdmin && !this.authorizationCheckService.isSuperAdmin()) {
-            throw new AccessForbiddenAlertException("Only super administrators are allowed to manage other super administrators.", "userManagement",
-                    "userManagement.onlySuperAdminCanManageSuperAdmins");
-        }
-
-        boolean isTryingToEscalatePrivilegesToSuperAdmin = managedUserVM.getAuthorities() != null
-                && managedUserVM.getAuthorities().contains(Authority.SUPER_ADMIN_AUTHORITY.getName());
-        if (isTryingToEscalatePrivilegesToSuperAdmin && !this.authorizationCheckService.isSuperAdmin()) {
+        if (isIsNonSuperAdminUserTryingToCreateOrUpdateSuperAdmin(managedUserVM, existingUser)) {
             throw new AccessForbiddenAlertException("Only super administrators can grant super admin authority.", "userManagement",
                     "userManagement.onlySuperAdminCanCreateSuperAdmin");
         }
@@ -233,6 +224,21 @@ public class AdminUserResource {
         }
 
         return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "artemisApp.userManagement.updated", managedUserVM.getLogin())).body(new UserDTO(updatedUser));
+    }
+
+    private boolean isIsNonSuperAdminUserTryingToCreateOrUpdateSuperAdmin(ManagedUserVM managedUserVM, User existingUser) {
+        boolean isUpdatedUserIsSuperAdmin = existingUser.getAuthorities().contains(Authority.SUPER_ADMIN_AUTHORITY);
+        boolean isNonSuperAdminUserTryingToUpdateSuperAdmin = isUpdatedUserIsSuperAdmin && !this.authorizationCheckService.isSuperAdmin();
+        if (isNonSuperAdminUserTryingToUpdateSuperAdmin) {
+            throw new AccessForbiddenAlertException("Only super administrators are allowed to manage other super administrators.", "userManagement",
+                    "userManagement.onlySuperAdminCanManageSuperAdmins");
+        }
+
+        boolean isTryingToEscalatePrivilegesToSuperAdmin = managedUserVM.getAuthorities() != null
+                && managedUserVM.getAuthorities().contains(Authority.SUPER_ADMIN_AUTHORITY.getName());
+        // noinspection UnnecessaryLocalVariable: not inlined because the variable name improves readability
+        boolean isNonSuperAdminUserTryingToCreateSuperAdmin = isTryingToEscalatePrivilegesToSuperAdmin && !this.authorizationCheckService.isSuperAdmin();
+        return isNonSuperAdminUserTryingToCreateSuperAdmin;
     }
 
     /**
@@ -334,7 +340,9 @@ public class AdminUserResource {
         }
 
         User userToBeDeleted = userRepository.findOneWithGroupsAndAuthoritiesByLogin(login).orElseThrow(() -> new EntityNotFoundException("User", login));
-        if (userToBeDeleted.getAuthorities().contains(Authority.SUPER_ADMIN_AUTHORITY) && !this.authorizationCheckService.isSuperAdmin()) {
+        boolean isNonSuperAdminUserTryingToDeleteSuperAdmin = userToBeDeleted.getAuthorities().contains(Authority.SUPER_ADMIN_AUTHORITY)
+                && !this.authorizationCheckService.isSuperAdmin();
+        if (isNonSuperAdminUserTryingToDeleteSuperAdmin) {
             throw new AccessForbiddenAlertException("Only super administrators are allowed to manage other super administrators.", "userManagement",
                     "userManagement.onlySuperAdminCanManageSuperAdmins");
         }
