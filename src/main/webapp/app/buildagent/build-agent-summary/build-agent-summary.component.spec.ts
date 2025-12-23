@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { BuildAgentSummaryComponent } from 'app/buildagent/build-agent-summary/build-agent-summary.component';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { Subject, of, throwError } from 'rxjs';
@@ -16,6 +16,8 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { BuildAgentsService } from 'app/buildagent/build-agents.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('BuildAgentSummaryComponent', () => {
     let component: BuildAgentSummaryComponent;
@@ -111,7 +113,7 @@ describe('BuildAgentSummaryComponent', () => {
     let alertServiceAddAlertStub: jest.SpyInstance;
     let modalService: NgbModal;
 
-    beforeEach(waitForAsync(() => {
+    beforeEach(async () => {
         TestBed.configureTestingModule({
             declarations: [],
             providers: [
@@ -119,11 +121,14 @@ describe('BuildAgentSummaryComponent', () => {
                 { provide: BuildAgentsService, useValue: mockBuildAgentsService },
                 { provide: DataTableComponent, useClass: DataTableComponent },
                 { provide: NgbModal, useClass: MockNgbModalService },
+                { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(AlertService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
-        }).compileComponents();
+        });
+
+        await TestBed.compileComponents();
 
         fixture = TestBed.createComponent(BuildAgentSummaryComponent);
         component = fixture.componentInstance;
@@ -134,7 +139,7 @@ describe('BuildAgentSummaryComponent', () => {
         websocketSubject = new Subject<BuildAgentInformation[]>();
         mockWebsocketService.subscribe.mockReturnValue(websocketSubject.asObservable());
         jest.clearAllMocks();
-    }));
+    });
 
     it('should load build agents on initialization', () => {
         mockBuildAgentsService.getBuildAgentSummary.mockReturnValue(of(mockBuildAgents));

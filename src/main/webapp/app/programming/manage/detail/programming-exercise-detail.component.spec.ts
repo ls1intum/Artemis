@@ -33,6 +33,9 @@ import { MODULE_FEATURE_PLAGIARISM } from 'app/app.constants';
 import { RepositoryDiffInformation } from 'app/programming/shared/utils/diff.utils';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
 import { HttpHeaders } from '@angular/common/http';
+import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
+import { WebsocketService } from 'app/shared/service/websocket.service';
+import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 
 // Mock the diff.utils module to avoid Monaco Editor issues in tests
 jest.mock('app/programming/shared/utils/diff.utils', () => ({
@@ -136,7 +139,7 @@ describe('ProgrammingExerciseDetailComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot()],
+            imports: [TranslateModule.forRoot(), OwlNativeDateTimeModule],
             providers: [
                 MockProvider(AlertService),
                 MockProvider(ProgrammingLanguageFeatureService),
@@ -148,6 +151,7 @@ describe('ProgrammingExerciseDetailComponent', () => {
                 { provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService },
                 { provide: NgbModal, useValue: new MockNgbModalService() },
                 { provide: Router, useClass: MockRouter },
+                { provide: WebsocketService, useClass: MockWebsocketService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],

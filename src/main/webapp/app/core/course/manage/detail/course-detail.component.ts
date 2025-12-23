@@ -17,7 +17,6 @@ import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settin
 import { AccountService } from 'app/core/auth/account.service';
 import { DetailOverviewListComponent, DetailOverviewSection, DetailType } from 'app/shared/detail-overview-list/detail-overview-list.component';
 import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
-import { IrisSubSettingsType } from 'app/iris/shared/entities/settings/iris-sub-settings.model';
 import { Detail } from 'app/shared/detail-overview-list/detail.model';
 import { CourseDetailDoughnutChartComponent } from './course-detail-doughnut-chart.component';
 import { CourseDetailLineChartComponent } from './course-detail-line-chart.component';
@@ -44,7 +43,6 @@ export enum DoughnutChartType {
 export class CourseDetailComponent implements OnInit, OnDestroy {
     protected readonly DoughnutChartType = DoughnutChartType;
     protected readonly FeatureToggle = FeatureToggle;
-    protected readonly IrisSubSettingsType = IrisSubSettingsType;
 
     protected readonly faTimes = faTimes;
     protected readonly faEye = faEye;
@@ -103,9 +101,8 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
             this.getCourseDetailSections();
         });
         if (this.irisEnabled && this.course.isAtLeastInstructor) {
-            const irisSettings = await firstValueFrom(this.irisSettingsService.getUncombinedCourseSettings(this.course.id!));
-            // TODO: Outdated, as we now have a bunch more sub settings
-            this.irisChatEnabled = irisSettings?.irisProgrammingExerciseChatSettings?.enabled ?? false;
+            const irisSettings = await firstValueFrom(this.irisSettingsService.getCourseSettingsWithRateLimit(this.course.id!));
+            this.irisChatEnabled = irisSettings?.settings?.enabled ?? false;
         }
         this.paramSub = this.route.params.subscribe((params) => {
             const courseId = params['courseId'];

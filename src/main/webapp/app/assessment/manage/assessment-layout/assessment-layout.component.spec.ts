@@ -81,7 +81,7 @@ describe('AssessmentLayoutComponent', () => {
         expect(complaintsForTutorComponent).toBeFalsy();
 
         fixture.componentRef.setInput('complaint', new Complaint());
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         complaintsForTutorComponent = fixture.debugElement.query(By.directive(ComplaintsForTutorComponent));
         expect(complaintsForTutorComponent).toBeTruthy();
     });
@@ -90,7 +90,7 @@ describe('AssessmentLayoutComponent', () => {
         const mockResult = new Result();
         const mockAssessmentNote = { note: 'Test assessment note' } as AssessmentNote;
         fixture.componentRef.setInput('result', () => mockResult);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         component.setAssessmentNoteForResult(mockAssessmentNote);
         expect(component.result()!.assessmentNote).toBe(mockAssessmentNote);

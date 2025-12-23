@@ -295,7 +295,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
 
         // Use the service to get sidebar items
         const defaultItems = this.sidebarItemService.getStudentDefaultItems(
-            currentCourse?.studentCourseAnalyticsDashboardEnabled || currentCourse?.irisCourseChatEnabled,
+            currentCourse?.studentCourseAnalyticsDashboardEnabled || currentCourse?.irisEnabledInCourse,
             currentCourse?.trainingEnabled,
         );
         sidebarItems.push(...defaultItems);

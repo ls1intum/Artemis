@@ -238,7 +238,7 @@ describe('Student Exam Timeline Component', () => {
         component.fileUploadSubmissions = [fileUploadSubmission1];
         component.programmingSubmissions = [programmingSubmission1];
         component.submissionTimeStamps = [dayjs('2023-01-07'), dayjs('2023-02-07'), dayjs('2023-05-07')];
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         component.onPageChange({
             exercise: exercise,
@@ -270,7 +270,7 @@ describe('Student Exam Timeline Component', () => {
 
             //when
             component.onSliderInputChange();
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             //then
             if (dayjs(component.submissionTimeStamps[component.timestampIndex]).isSame(dayjs('2023-01-07'))) {
                 expect(component.currentSubmission).toEqual(submissionVersion);

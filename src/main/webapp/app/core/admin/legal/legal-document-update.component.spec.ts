@@ -72,7 +72,7 @@ describe('LegalDocumentUpdateComponent', () => {
         component.unsavedChanges = true;
         component.currentLanguage = LegalDocumentLanguage.ENGLISH;
         component.onLanguageChange(LegalDocumentLanguage.GERMAN);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(open).toHaveBeenCalledOnce();
         expect(open).toHaveBeenCalledWith(UnsavedChangesWarningComponent, { size: 'lg', backdrop: 'static' });
     });
@@ -110,7 +110,7 @@ describe('LegalDocumentUpdateComponent', () => {
             component.currentLanguage = LegalDocumentLanguage.GERMAN;
             component.unsavedChanges = false;
             component.onLanguageChange(LegalDocumentLanguage.ENGLISH);
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             expect(loadFile).toHaveBeenCalledOnce();
             expect(loadFile).toHaveBeenCalledWith(LegalDocumentLanguage.ENGLISH);
             expect(component.currentLanguage).toEqual(LegalDocumentLanguage.ENGLISH);
@@ -142,11 +142,11 @@ describe('LegalDocumentUpdateComponent', () => {
             component.onContentChanged('text');
             const expected = new LegalDocument(documentType, LegalDocumentLanguage.GERMAN);
             expected.text = 'text';
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             const button = fixture.nativeElement.querySelector('#update-legal-document-btn');
             button.click();
             tick();
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             expect(updateFile).toHaveBeenCalledOnce();
             expect(updateFile).toHaveBeenCalledWith(expected);
             expect(component.legalDocument.text).toBe('text');

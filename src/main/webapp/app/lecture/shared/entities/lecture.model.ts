@@ -4,7 +4,6 @@ import { Attachment } from 'app/lecture/shared/entities/attachment.model';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { LectureUnit } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
-import { IngestionState } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 
 export class Lecture implements BaseEntity {
     id?: number;
@@ -23,7 +22,6 @@ export class Lecture implements BaseEntity {
     channelName?: string;
     isAtLeastEditor?: boolean;
     isAtLeastInstructor?: boolean;
-    ingested?: IngestionState;
 }
 
 export class LectureSeriesCreateLectureDTO {

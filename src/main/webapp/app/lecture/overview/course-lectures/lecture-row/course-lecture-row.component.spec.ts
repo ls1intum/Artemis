@@ -69,7 +69,7 @@ describe('CourseLectureRow', () => {
 
         courseLectureRowComponent.lecture = lecture;
         courseLectureRowComponent.course = course;
-        courseLectureRowComponentFixture.detectChanges();
+        courseLectureRowComponentFixture.changeDetectorRef.detectChanges();
 
         const dateContainer = courseLectureRowComponentFixture.debugElement.query(By.css('.text-danger'));
         expect(dateContainer).not.toBeNull();
@@ -85,7 +85,7 @@ describe('CourseLectureRow', () => {
 
         courseLectureRowComponent.lecture = lecture;
         courseLectureRowComponent.course = course;
-        courseLectureRowComponentFixture.detectChanges();
+        courseLectureRowComponentFixture.changeDetectorRef.detectChanges();
 
         const dateContainer = courseLectureRowComponentFixture.debugElement.query(By.css('.text-danger'));
         expect(dateContainer).toBeNull();

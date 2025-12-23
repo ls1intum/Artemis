@@ -124,15 +124,15 @@ describe('SplitPaneHeaderComponent', () => {
         fixture1.componentRef.setInput('isLockFilesEnabled', lockFilesEnabled);
         fixture2.componentRef.setInput('isLockFilesEnabled', lockFilesEnabled);
 
-        fixture1.detectChanges();
-        fixture2.detectChanges();
+        fixture1.changeDetectorRef.detectChanges();
+        fixture2.changeDetectorRef.detectChanges();
 
         const handleFileSelectWithoutPropagationSpy = jest.spyOn(comp2, 'handleFileSelect');
 
         comp1.handleFileSelect(selectedFile.file, selectedFile.idx, true);
 
-        fixture1.detectChanges();
-        fixture2.detectChanges();
+        fixture1.changeDetectorRef.detectChanges();
+        fixture2.changeDetectorRef.detectChanges();
 
         expect(handleFileSelectWithoutPropagationSpy).toHaveBeenCalledExactlyOnceWith(selectedFile.file, selectedFile.idx, false);
     });
@@ -148,8 +148,8 @@ describe('SplitPaneHeaderComponent', () => {
         const handleFileSelect = jest.spyOn(comp1, 'handleFileSelect');
         const handleFileSelectWithoutPropagationSpy = jest.spyOn(comp2, 'handleFileSelect');
         comp1.handleFileSelect(selectedFile.file, selectedFile.idx, true);
-        fixture1.detectChanges();
-        fixture2.detectChanges();
+        fixture1.changeDetectorRef.detectChanges();
+        fixture2.changeDetectorRef.detectChanges();
 
         expect(handleFileSelectWithoutPropagationSpy).toHaveBeenCalledTimes(0);
         expect(handleFileSelect).toHaveBeenCalledOnce();
@@ -157,7 +157,7 @@ describe('SplitPaneHeaderComponent', () => {
 
     it('should trigger dropdown hover subject on mouseenter on the first file element', () => {
         comp1.showFiles = true;
-        fixture1.detectChanges();
+        fixture1.changeDetectorRef.detectChanges();
 
         const fileList = fixture1.debugElement.query(By.css('.split-pane-header-files'));
         expect(fileList).toBeTruthy();

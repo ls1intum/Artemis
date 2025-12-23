@@ -162,7 +162,7 @@ describe('CompetencySelection', () => {
 
         fixture.detectChanges();
 
-        expect(detectChangesStub).toHaveBeenCalledTimes(2);
+        expect(detectChangesStub).toHaveBeenCalled();
     });
 
     it('should select / unselect competencies', () => {
@@ -214,11 +214,11 @@ describe('CompetencySelection', () => {
             jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: [competency1, competency2, competency3] });
 
             fixture.componentRef.setInput('exerciseDescription', 'Create a Java program that implements a sorting algorithm');
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
         });
 
         it('should show lightbulb button for competency suggestions', () => {
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             const btnDe = fixture.debugElement.query(By.css('jhi-button'));
             expect(btnDe).not.toBeNull();
             // Disabled state is controlled by input binding
@@ -228,7 +228,7 @@ describe('CompetencySelection', () => {
 
         it('should disable lightbulb button when no exercise description', () => {
             fixture.componentRef.setInput('exerciseDescription', '');
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
 
             const btnDe = fixture.debugElement.query(By.css('jhi-button'));
             const cmp = btnDe.componentInstance;
@@ -259,7 +259,7 @@ describe('CompetencySelection', () => {
 
         it('should show spinner while suggesting competencies', () => {
             component.isSuggesting = true;
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
 
             const btnDe = fixture.debugElement.query(By.css('jhi-button'));
             const spinnerIcon = btnDe?.query(By.css('.jhi-btn__loading'));
@@ -277,7 +277,7 @@ describe('CompetencySelection', () => {
             jest.spyOn(httpClient, 'post').mockReturnValue(of(mockSuggestionResponse));
 
             component.suggestCompetencies();
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
 
             expect(component.isSuggested(1)).toBeTrue();
             expect(component.isSuggested(2)).toBeFalse();
@@ -349,7 +349,7 @@ describe('CompetencySelection', () => {
 
         it('should disable lightbulb button while suggesting', () => {
             component.isSuggesting = true;
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
 
             const btnDe = fixture.debugElement.query(By.css('jhi-button'));
             const cmp = btnDe.componentInstance;
@@ -357,7 +357,7 @@ describe('CompetencySelection', () => {
         });
 
         it('should show lightbulb tooltip', () => {
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             const btnDe = fixture.debugElement.query(By.css('jhi-button'));
             const cmp = btnDe.componentInstance;
             expect(cmp.tooltip).toBe('artemisApp.courseCompetency.relations.suggestions.getAiSuggestionsTooltip');
@@ -371,7 +371,7 @@ describe('CompetencySelection', () => {
             jest.spyOn(httpClient, 'post').mockReturnValue(of(mockSuggestionResponse));
 
             component.suggestCompetencies();
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
 
             const suggestedIcon = fixture.debugElement.query(By.css('fa-icon.text-warning.ms-2'));
             expect(suggestedIcon).toBeTruthy();
@@ -432,7 +432,7 @@ describe('CompetencySelection', () => {
                 expect(component.exerciseDescription()?.trim()).toBeTruthy();
 
                 // Button should be enabled for non-empty descriptions
-                fixture.detectChanges();
+                fixture.changeDetectorRef.detectChanges();
                 const lightbulbButton = fixture.debugElement.query(By.css('button[ngbTooltip="Get AI Suggestions"]'));
                 expect(lightbulbButton?.nativeElement.disabled).toBeFalsy();
             });

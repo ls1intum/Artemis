@@ -763,7 +763,7 @@ describe('Course Management Update Component', () => {
     describe('deleteIcon', () => {
         it('should create the delete button when croppedImage is present', () => {
             comp.croppedImage = 'some-image-url';
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             const deleteButton = getDeleteIconButton();
             expect(deleteButton).toBeTruthy();
         });
@@ -774,7 +774,7 @@ describe('Course Management Update Component', () => {
             setIcon();
             let deleteIconButton = getDeleteIconButton();
             deleteIconButton.dispatchEvent(new Event('click'));
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             const iconImage = fixture.debugElement.nativeElement.querySelector('jhi-image');
             deleteIconButton = getDeleteIconButton();
             expect(iconImage).toBeNull();
@@ -802,7 +802,7 @@ describe('Course Management Update Component', () => {
     describe('editIcon', () => {
         it('should create the edit button when croppedImage is present', () => {
             comp.croppedImage = 'some-image-url';
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             const editButton = getEditIconButton();
             expect(editButton).toBeTruthy();
         });
@@ -833,7 +833,7 @@ describe('Course Management Update Component', () => {
             const triggerFileInputSpy = jest.spyOn(comp, 'triggerFileInput').mockImplementation(() => {});
             fixture.detectChanges();
             comp.croppedImage = undefined;
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
             const noImageDiv = fixture.debugElement.nativeElement.querySelector('#no-image-placeholder');
             noImageDiv.dispatchEvent(new Event('click'));
             fixture.detectChanges();
@@ -868,7 +868,7 @@ describe('Course Management Update Component', () => {
 
         it('should allow adding / removing organizations if admin', () => {
             jest.spyOn(accountService, 'isAdmin').mockReturnValue(true);
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
 
             const addButton = fixture.debugElement.query(By.css('#addOrganizationButton'));
             const removeButton = fixture.debugElement.query(By.css('#removeOrganizationButton-' + organization.id));
@@ -879,7 +879,7 @@ describe('Course Management Update Component', () => {
 
         it('should not allow adding / removing organizations if not admin', () => {
             jest.spyOn(accountService, 'isAdmin').mockReturnValue(false);
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
 
             const addButton = fixture.debugElement.query(By.css('#addOrganizationButton'));
             const removeButton = fixture.debugElement.query(By.css('#removeOrganizationButton'));
@@ -1039,7 +1039,7 @@ describe('Course Management Student Course Analytics Dashboard Update', () => {
         });
 
         // Run change detection to update the view
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         // Try to find the form field in the DOM
         const formGroups = fixture.debugElement.queryAll(By.directive(FeatureToggleHideDirective));
@@ -1060,7 +1060,7 @@ describe('Course Management Student Course Analytics Dashboard Update', () => {
         });
 
         // Run change detection to update the view
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         // Try to find the form field in the DOM
         const formGroups = fixture.debugElement.queryAll(By.directive(FeatureToggleHideDirective));
@@ -1084,7 +1084,7 @@ describe('Course Management Student Course Analytics Dashboard Update', () => {
         });
 
         // Run change detection to update the view
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         // Try to find the form field in the DOM
         const formGroups = fixture.debugElement.queryAll(By.directive(FeatureToggleHideDirective));

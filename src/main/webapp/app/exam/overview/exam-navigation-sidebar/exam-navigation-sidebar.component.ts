@@ -224,7 +224,7 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
     }
 
     @HostListener('window:keydown.Control.m', ['$event'])
-    onKeyDownControlM(event: KeyboardEvent) {
+    onKeyDownControlM(event: Event) {
         event.preventDefault();
         this.toggleCollapseState();
     }

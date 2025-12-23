@@ -43,7 +43,7 @@ describe('SidebarCardMediumComponent', () => {
 
     it('should have success border class for easy difficulty', () => {
         component.sidebarItem.difficulty = DifficultyLevel.EASY;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         const element: HTMLElement = fixture.nativeElement.querySelector('#test-sidebar-card-medium');
         const classes = element.className;
         expect(classes).toContain('border-success');
@@ -51,7 +51,7 @@ describe('SidebarCardMediumComponent', () => {
 
     it('should have success border class for medium difficulty', () => {
         component.sidebarItem.difficulty = DifficultyLevel.MEDIUM;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         const element: HTMLElement = fixture.nativeElement.querySelector('#test-sidebar-card-medium');
         const classes = element.className;
         expect(classes).toContain('border-warning');
@@ -59,7 +59,7 @@ describe('SidebarCardMediumComponent', () => {
 
     it('should have success border class for hard difficulty', () => {
         component.sidebarItem.difficulty = DifficultyLevel.HARD;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         const element: HTMLElement = fixture.nativeElement.querySelector('#test-sidebar-card-medium');
         const classes = element.className;
         expect(classes).toContain('border-danger');
@@ -69,12 +69,12 @@ describe('SidebarCardMediumComponent', () => {
         jest.spyOn(component, 'storeTargetComponentSubRoute');
         jest.spyOn(component, 'refreshChildComponent');
         component.itemSelected = true;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
 
         const itemElement = fixture.nativeElement.querySelector('#test-sidebar-card-medium');
         itemElement.click();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
 
         expect(component.storeTargetComponentSubRoute).toHaveBeenCalled();
@@ -85,12 +85,12 @@ describe('SidebarCardMediumComponent', () => {
         jest.spyOn(component, 'storeTargetComponentSubRoute');
         jest.spyOn(component, 'refreshChildComponent');
         component.itemSelected = false;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
 
         const itemElement = fixture.nativeElement.querySelector('#test-sidebar-card-medium');
         itemElement.click();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
 
         expect(component.storeTargetComponentSubRoute).toHaveBeenCalled();

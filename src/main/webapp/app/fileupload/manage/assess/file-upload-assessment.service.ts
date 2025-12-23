@@ -58,7 +58,11 @@ export class FileUploadAssessmentService {
     }
 
     private convertResultEntityResponseTypeFromServer(res: EntityResponseType): EntityResponseType {
-        const result = this.convertItemFromServer(res.body!);
+        const body = res.body;
+        if (!body) {
+            return res;
+        }
+        const result = this.convertItemFromServer(body);
         result.completionDate = convertDateFromServer(result.completionDate);
         if (result.submission) {
             result.submission.submissionDate = convertDateFromServer(result.submission.submissionDate);

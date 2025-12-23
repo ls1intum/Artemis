@@ -193,7 +193,7 @@ describe('DragAndDropQuestionEditComponent', () => {
         component.draggingState = DragState.RESIZE_X;
         component.mouse.startX = 10;
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         // @ts-ignore
         component['mouseMoveAction'](event2, 0, 0, 10, 10);
 
@@ -455,7 +455,7 @@ describe('DragAndDropQuestionEditComponent', () => {
         questionUpdatedSpy = jest.spyOn(component.questionUpdated, 'emit');
         addFileSpy = jest.spyOn(component.addNewFile, 'emit');
         removeFileSpy = jest.spyOn(component.removeFile, 'emit');
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         component.changeToTextDragItem(component.question().dragItems![1]);
 
@@ -489,7 +489,7 @@ describe('DragAndDropQuestionEditComponent', () => {
         questionUpdatedSpy = jest.spyOn(component.questionUpdated, 'emit');
         addFileSpy = jest.spyOn(component.addNewFile, 'emit');
         removeFileSpy = jest.spyOn(component.removeFile, 'emit');
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const extension = 'png';
         const fileName = 'testFile.' + extension;
@@ -523,7 +523,7 @@ describe('DragAndDropQuestionEditComponent', () => {
         const q = new DragAndDropQuestion();
         q.title = 'alternativeBackupQuestionTitle';
         fixture.componentRef.setInput('question', q);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         component.backupQuestion = new DragAndDropQuestion();
         component.backupQuestion.title = title;
 
@@ -539,7 +539,7 @@ describe('DragAndDropQuestionEditComponent', () => {
         const currentQuestion = new DragAndDropQuestion();
         currentQuestion.title = 'alternativeBackupQuestionTitle';
         fixture.componentRef.setInput('question', currentQuestion);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const backupQuestion = {
             type: 'drag-and-drop',
@@ -573,7 +573,7 @@ describe('DragAndDropQuestionEditComponent', () => {
         const q = new DragAndDropQuestion();
         q.dragItems = [new DragItem(), new DragItem(), firstItem, new DragItem()];
         fixture.componentRef.setInput('question', q);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         component.backupQuestion = new DragAndDropQuestion();
         component.backupQuestion.dragItems = [secondItem];
 
@@ -592,7 +592,7 @@ describe('DragAndDropQuestionEditComponent', () => {
         const q = new DragAndDropQuestion();
         q.dropLocations = [new DropLocation(), new DropLocation(), firstItem, new DropLocation()];
         fixture.componentRef.setInput('question', q);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         component.backupQuestion = new DragAndDropQuestion();
         component.backupQuestion.dropLocations = [secondItem];
 
@@ -606,7 +606,7 @@ describe('DragAndDropQuestionEditComponent', () => {
         const q = new DragAndDropQuestion();
         q.text = 'should be removed';
         fixture.componentRef.setInput('question', q);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         component.togglePreview();
 
@@ -618,7 +618,7 @@ describe('DragAndDropQuestionEditComponent', () => {
         const q = new DragAndDropQuestion();
         q.text = 'should be removed';
         fixture.componentRef.setInput('question', q);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const newValue = 'new value';
         const initialCalls = questionUpdatedSpy.mock.calls.length;
@@ -635,7 +635,7 @@ describe('DragAndDropQuestionEditComponent', () => {
         q.explanation = 'explanation';
         q.hint = 'hint';
         fixture.componentRef.setInput('question', q);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         let textWithDomainAction: TextWithDomainAction;
 
         // explanation

@@ -240,7 +240,7 @@ public class FileResource {
     public ResponseEntity<byte[]> getMarkdownFile(@PathVariable String filename) {
         log.debug("REST request to get file : {}", filename);
         sanitizeFilenameElseThrow(filename);
-        return buildFileResponse(FilePathConverter.getMarkdownFilePath(), filename, false);
+        return buildFileResponse(FilePathConverter.getMarkdownFilePath(), filename, 30);
     }
 
     /**
@@ -415,7 +415,7 @@ public class FileResource {
         ExamUser examUser = api.findWithExamById(examUserId).orElseThrow();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, examUser.getExam().getCourse(), null);
 
-        return buildFileResponse(getActualPathFromPublicPathString(examUser.getSigningImagePath(), FilePathType.EXAM_USER_SIGNATURE), false);
+        return buildFileResponse(getActualPathFromPublicPathString(examUser.getSigningImagePath(), FilePathType.EXAM_USER_SIGNATURE), 30);
     }
 
     /**
@@ -433,7 +433,7 @@ public class FileResource {
         ExamUser examUser = api.findWithExamById(examUserId).orElseThrow();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, examUser.getExam().getCourse(), null);
 
-        return buildFileResponse(getActualPathFromPublicPathString(examUser.getStudentImagePath(), FilePathType.EXAM_USER_IMAGE), true);
+        return buildFileResponse(getActualPathFromPublicPathString(examUser.getStudentImagePath(), FilePathType.EXAM_USER_IMAGE), 30);
     }
 
     /**
@@ -690,6 +690,17 @@ public class FileResource {
     /**
      * Builds the response with headers, body and content type for specified path containing the file name
      *
+     * @param path      to the file including the file name
+     * @param cacheDays the number of days to cache the response
+     * @return response entity
+     */
+    private ResponseEntity<byte[]> buildFileResponse(Path path, int cacheDays) {
+        return buildFileResponse(path.getParent(), path.getFileName().toString(), Optional.empty(), cacheDays);
+    }
+
+    /**
+     * Builds the response with headers, body and content type for specified path containing the file name
+     *
      * @param path     to the file including the file name
      * @param filename the name of the file
      * @param cache    true if the response should contain a header that allows caching; false otherwise
@@ -697,6 +708,18 @@ public class FileResource {
      */
     private ResponseEntity<byte[]> buildFileResponse(Path path, String filename, boolean cache) {
         return buildFileResponse(path, filename, Optional.empty(), cache);
+    }
+
+    /**
+     * Builds the response with headers, body and content type for specified path containing the file name
+     *
+     * @param path      to the file including the file name
+     * @param filename  the name of the file
+     * @param cacheDays the number of days to cache the response
+     * @return response entity
+     */
+    private ResponseEntity<byte[]> buildFileResponse(Path path, String filename, int cacheDays) {
+        return buildFileResponse(path, filename, Optional.empty(), cacheDays);
     }
 
     /**
@@ -720,6 +743,19 @@ public class FileResource {
      * @return response entity
      */
     private ResponseEntity<byte[]> buildFileResponse(Path path, String filename, Optional<String> replaceFilename, boolean cache) {
+        return buildFileResponse(path, filename, replaceFilename, cache ? DAYS_TO_CACHE : 0);
+    }
+
+    /**
+     * Builds the response with headers, body and content type for specified path and file name
+     *
+     * @param path            to the file
+     * @param filename        the name of the file
+     * @param replaceFilename replaces the downloaded file's name, if provided
+     * @param cacheDays       the number of days to cache the response (0 for no caching)
+     * @return response entity
+     */
+    private ResponseEntity<byte[]> buildFileResponse(Path path, String filename, Optional<String> replaceFilename, int cacheDays) {
         try {
             Path actualPath = path.resolve(filename);
             byte[] file = fileService.getFileForPath(actualPath);
@@ -739,8 +775,8 @@ public class FileResource {
             headers.set("Filename", headerFilename);
 
             var response = ResponseEntity.ok().headers(headers).contentType(getMediaTypeFromFilename(filename)).header("filename", filename);
-            if (cache) {
-                var cacheControl = CacheControl.maxAge(Duration.ofDays(DAYS_TO_CACHE)).cachePublic();
+            if (cacheDays > 0) {
+                var cacheControl = CacheControl.maxAge(Duration.ofDays(cacheDays)).cachePublic();
                 response = response.cacheControl(cacheControl);
             }
             return response.body(file);

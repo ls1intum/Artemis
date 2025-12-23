@@ -53,10 +53,10 @@ describe('TextblockFeedbackDropdownComponent', () => {
     it('should display correct background colors for dropdown elements', () => {
         expect(component.getInstrColour(gradingInstruction)).toBe('var(--sgi-assessment-layout-positive-background)');
         gradingInstruction.credits = 0;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(component.getInstrColour(gradingInstruction)).toBe('var(--sgi-assessment-layout-zero-background)');
         gradingInstruction.credits = -1;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(component.getInstrColour(gradingInstruction)).toBe('var(--sgi-assessment-layout-negative-background)');
     });
 });

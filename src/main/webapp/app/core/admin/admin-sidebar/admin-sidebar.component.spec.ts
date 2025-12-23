@@ -31,7 +31,6 @@ describe('AdminSidebarComponent', () => {
     it('should have default input values as false', () => {
         expect(component.isNavbarCollapsed()).toBeFalse();
         expect(component.localCIActive()).toBeFalse();
-        expect(component.irisEnabled()).toBeFalse();
         expect(component.ltiEnabled()).toBeFalse();
         expect(component.standardizedCompetenciesEnabled()).toBeFalse();
         expect(component.atlasEnabled()).toBeFalse();
@@ -64,17 +63,6 @@ describe('AdminSidebarComponent', () => {
         const groups = component.sidebarGroups();
         const buildSystemGroup = groups.find((g) => g.translation === 'global.menu.admin.groups.buildSystem');
         expect(buildSystemGroup).toBeFalsy();
-    });
-
-    it('should include IRIS in Content & Learning group when irisEnabled is true', () => {
-        fixture.componentRef.setInput('irisEnabled', true);
-        fixture.detectChanges();
-
-        const groups = component.sidebarGroups();
-        const contentGroup = groups.find((g) => g.translation === 'global.menu.admin.groups.contentAndLearning');
-        expect(contentGroup).toBeTruthy();
-        const irisItem = contentGroup!.items.find((i) => i.routerLink === '/admin/iris');
-        expect(irisItem).toBeTruthy();
     });
 
     it('should include Exam Rooms in System Configuration when examEnabled is true', () => {
