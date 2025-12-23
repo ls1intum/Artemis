@@ -17,19 +17,14 @@ This guide has been moved to the new documentation. You can find:
 * `Integrated Code Lifecycle Setup <https://ls1intum.github.io/Artemis/staff/setup#integrated-code-lifecycle-setup>`_
 * `Common Setup Problems <https://ls1intum.github.io/Artemis/staff/setup#common-setup-problems>`_
 
-Legacy Documentation
---------------------
+Additional Setup Guides
+-----------------------
 
-For reference purposes, the following subsections contain links to legacy documentation that has not yet been migrated:
+The following setup guides have also been migrated to the new documentation:
 
-.. toctree::
-   :includehidden:
-   :maxdepth: 2
-   :hidden:
-
-   setup/jenkins-localvc
-   setup/aeolus
-   setup/openapi
-   setup/docker-compose
-   setup/docker-debugging
-   setup/local-database-tests
+* `Jenkins and LocalVC Setup <https://ls1intum.github.io/Artemis/staff/jenkins-localvc>`_
+* `Aeolus Setup <https://ls1intum.github.io/Artemis/staff/aeolus>`_
+* `OpenAPI and API-driven Development <https://ls1intum.github.io/Artemis/staff/openapi>`_
+* `Docker Compose Setup <https://ls1intum.github.io/Artemis/staff/docker-compose>`_
+* `Debugging Artemis in Docker <https://ls1intum.github.io/Artemis/staff/docker-debugging>`_
+* `Running Database Tests Locally <https://ls1intum.github.io/Artemis/staff/local-database-tests>`_

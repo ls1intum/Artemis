@@ -1,0 +1,61 @@
+---
+id: local-database-tests
+title: Running Database Tests Locally
+sidebar_label: Local Database Tests
+---
+
+import Callout from "../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../src/components/Callout/Callout.types";
+import Image, {ImageSize} from "../../src/components/Image/Image";
+import postgresTestsConfig from './assets/intellij-postgres-tests-run-configuration.png';
+
+# Running Database Tests Locally
+
+Database tests are the standard server integration tests executed against a real database (MySQL or Postgres) started as Docker containers. The Gradle test task will automatically pull the necessary images and start the containers.
+
+---
+
+## Prerequisites
+
+Before running those tests, make sure you have got a working Docker setup:
+
+1. Install [Docker Desktop](https://docs.docker.com/desktop/) or [Docker Engine and Docker CLI](https://docs.docker.com/engine/install/).
+2. Enable [remote access for the Docker daemon](https://docs.docker.com/config/daemon/remote-access/).
+
+---
+
+## Executing Tests from IntelliJ
+
+You can execute the database tests by running the run configurations provided in the repository:
+
+- **For MySQL tests:** `Artemis Server Tests MySQL`
+- **For Postgres tests:** `Artemis Server Tests Postgres`
+
+### Creating a Custom Configuration
+
+Alternatively, you can create a custom configuration. The screenshot below presents an example of such a run configuration:
+
+<Image
+    src={postgresTestsConfig}
+    alt="An example of IntelliJ run configuration for starting Postgres server tests"
+    size={ImageSize.medium}
+    caption="IntelliJ run configuration for Postgres server tests"
+/>
+
+---
+
+## Executing Tests from the Console
+
+You can execute the database tests by running the dedicated Gradle command:
+
+### MySQL Tests
+
+```bash
+SPRING_PROFILES_INCLUDE=mysql ./gradlew cleanTest test -x webapp
+```
+
+### Postgres Tests
+
+```bash
+SPRING_PROFILES_INCLUDE=postgres ./gradlew cleanTest test -x webapp
+```
