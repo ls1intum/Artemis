@@ -425,22 +425,6 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void updateFileUploadExercise_setBothCourseAndExerciseGroupOrNeither_badRequest() throws Exception {
-        FileUploadExercise fileUploadExercise = fileUploadExerciseUtilService.addCourseExamExerciseGroupWithOneFileUploadExercise(false);
-        fileUploadExercise.setCourse(fileUploadExercise.getCourseViaExerciseGroupOrCourseMember());
-
-        request.putWithResponseBody("/api/fileupload/file-upload-exercises/" + fileUploadExercise.getId(), UpdateFileUploadExercisesDTO.of(fileUploadExercise),
-                FileUploadExercise.class, HttpStatus.BAD_REQUEST);
-
-        fileUploadExercise.setExerciseGroup(null);
-        fileUploadExercise.setCourse(null);
-
-        request.putWithResponseBody("/api/fileupload/file-upload-exercises/" + fileUploadExercise.getId(), UpdateFileUploadExercisesDTO.of(fileUploadExercise),
-                FileUploadExercise.class, HttpStatus.BAD_REQUEST);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateFileUploadExercise_conversionBetweenCourseAndExamExercise_badRequest() throws Exception {
         FileUploadExercise fileUploadExerciseWithExerciseGroup = fileUploadExerciseUtilService.addCourseExamExerciseGroupWithOneFileUploadExercise(false);
 

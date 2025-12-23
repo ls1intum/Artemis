@@ -4,8 +4,6 @@ import java.time.ZonedDateTime;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import jakarta.validation.constraints.NotNull;
-
 import org.hibernate.Hibernate;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -13,7 +11,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.dto.GradingCriterionDTO;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
-import de.tum.cit.aet.artemis.atlas.dto.CourseCompetencyDTO;
+import de.tum.cit.aet.artemis.atlas.dto.CompetencyExerciseLinkDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
@@ -25,30 +23,6 @@ public record UpdateModelingExerciseDTO(long id, String title, String channelNam
         Boolean presentationScoreEnabled, Boolean secondCorrectionEnabled, String feedbackSuggestionModule, String gradingInstructions, ZonedDateTime releaseDate,
         ZonedDateTime startDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, ZonedDateTime exampleSolutionPublicationDate, String exampleSolutionModel,
         String exampleSolutionExplanation, Long courseId, Long exerciseGroupId, Set<GradingCriterionDTO> gradingCriteria, Set<CompetencyExerciseLinkDTO> competencyLinks) {
-
-    @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record CompetencyExerciseLinkDTO(@NotNull CourseCompetencyDTO courseCompetencyDTO, Double weight, Long courseId) {
-
-        /**
-         * Creates a DTO from a CompetencyExerciseLink entity.
-         *
-         * @param competencyExerciseLink CompetencyExerciseLink entity to convert
-         * @return a new CompetencyExerciseLinkDTO with data from the entity
-         */
-        public static CompetencyExerciseLinkDTO of(CompetencyExerciseLink competencyExerciseLink) {
-            if (competencyExerciseLink == null) {
-                throw new BadRequestAlertException("No competency link was provided.", "CompetencyExerciseLink", "isNull");
-            }
-            if (competencyExerciseLink.getCompetency() == null) {
-                throw new BadRequestAlertException("The competency link must reference a competency.", "CompetencyExerciseLink", "competencyMissing");
-            }
-            if (competencyExerciseLink.getCompetency().getCourse() == null) {
-                throw new BadRequestAlertException("The competency referenced by this link is not associated with a course.", "CompetencyExerciseLink", "courseMissing");
-            }
-            return new CompetencyExerciseLinkDTO(CourseCompetencyDTO.of(competencyExerciseLink.getCompetency()), competencyExerciseLink.getWeight(),
-                    competencyExerciseLink.getCompetency().getCourse().getId());
-        }
-    }
 
     /**
      * Creates a DTO from a ModelingExercise entity.

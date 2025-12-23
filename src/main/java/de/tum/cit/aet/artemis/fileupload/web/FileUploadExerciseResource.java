@@ -2,11 +2,6 @@ package de.tum.cit.aet.artemis.fileupload.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.FILE_ENDING_PATTERN;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-import static de.tum.cit.aet.artemis.core.config.Constants.TITLE_NAME_PATTERN;
-import static de.tum.cit.aet.artemis.modeling.web.ModelingExerciseResource.clearInitializedCollection;
-import static de.tum.cit.aet.artemis.modeling.web.ModelingExerciseResource.ensureCompetencyLinksSet;
-import static de.tum.cit.aet.artemis.modeling.web.ModelingExerciseResource.ensureGradingCriteriaSet;
-import static de.tum.cit.aet.artemis.modeling.web.ModelingExerciseResource.validateCompetencyBelongsToExerciseCourse;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -18,9 +13,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -70,6 +65,7 @@ import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.core.util.ResponseUtil;
+import de.tum.cit.aet.artemis.exam.repository.ExerciseGroupRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionExportOptionsDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
@@ -120,6 +116,8 @@ public class FileUploadExerciseResource {
 
     private final GradingCriterionRepository gradingCriterionRepository;
 
+    private final ExerciseGroupRepository exerciseGroupRepository;
+
     private final FileUploadSubmissionExportService fileUploadSubmissionExportService;
 
     private final FileUploadExerciseImportService fileUploadExerciseImportService;
@@ -143,7 +141,7 @@ public class FileUploadExerciseResource {
     public FileUploadExerciseResource(FileUploadExerciseRepository fileUploadExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             CourseService courseService, ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService,
             FileUploadSubmissionExportService fileUploadSubmissionExportService, GradingCriterionRepository gradingCriterionRepository, CourseRepository courseRepository,
-            ParticipationRepository participationRepository, GroupNotificationScheduleService groupNotificationScheduleService,
+            ParticipationRepository participationRepository, GroupNotificationScheduleService groupNotificationScheduleService, ExerciseGroupRepository exerciseGroupRepository,
             FileUploadExerciseImportService fileUploadExerciseImportService, FileUploadExerciseService fileUploadExerciseService, ChannelService channelService,
             ExerciseVersionService exerciseVersionService, ChannelRepository channelRepository, Optional<CompetencyProgressApi> competencyProgressApi, Optional<SlideApi> slideApi,
             Optional<AtlasMLApi> atlasMLApi, Optional<CompetencyApi> competencyApi) {
@@ -158,6 +156,7 @@ public class FileUploadExerciseResource {
         this.fileUploadSubmissionExportService = fileUploadSubmissionExportService;
         this.courseRepository = courseRepository;
         this.participationRepository = participationRepository;
+        this.exerciseGroupRepository = exerciseGroupRepository;
         this.fileUploadExerciseImportService = fileUploadExerciseImportService;
         this.fileUploadExerciseService = fileUploadExerciseService;
         this.channelService = channelService;
@@ -547,21 +546,17 @@ public class FileUploadExerciseResource {
     }
 
     /**
-     * Validate the fileUpload exercise title.
-     * 1. Check presence and length of exercise title
-     * 2. Find forbidden patterns in exercise title
+     * Clears the given collection if it is initialized.
+     * <p>
+     * This avoids triggering lazy initialization in callers that do not fetch the collection.
+     * In this service, callers typically load the exercise with the required associations eagerly.
      *
-     * @param fileUploadExercise FileUpload exercise to be validated
+     * @param set the set to clear
+     * @param <T> element type
      */
-    private void validateTitle(FileUploadExercise fileUploadExercise) {
-        // Check if exercise title is set
-        if (fileUploadExercise.getTitle() == null || fileUploadExercise.getTitle().isBlank() || fileUploadExercise.getTitle().length() < 3) {
-            throw new BadRequestAlertException("The title is not set or is too short.", ENTITY_NAME, "titleLengthInvalid");
-        }
-        // Check if the exercise title matches regex
-        Matcher titleMatcher = TITLE_NAME_PATTERN.matcher(fileUploadExercise.getTitle());
-        if (!titleMatcher.matches()) {
-            throw new BadRequestAlertException("The title is invalid.", ENTITY_NAME, "titlePatternInvalid");
+    private <T> void clearInitializedCollection(Set<T> set) {
+        if (set != null && Hibernate.isInitialized(set)) {
+            set.clear();
         }
     }
 
@@ -580,7 +575,7 @@ public class FileUploadExerciseResource {
             return;
         }
 
-        Set<GradingCriterion> managedCriteria = ensureGradingCriteriaSet(exercise);
+        Set<GradingCriterion> managedCriteria = exercise.ensureGradingCriteriaSet();
 
         Map<Long, GradingCriterion> existingById = managedCriteria.stream().filter(gc -> gc.getId() != null)
                 .collect(Collectors.toMap(GradingCriterion::getId, gc -> gc, (a, b) -> a));
@@ -622,7 +617,7 @@ public class FileUploadExerciseResource {
         }
         CompetencyApi api = competencyApi.orElseThrow(() -> new BadRequestAlertException("Competency links require Atlas to be enabled.", "CourseCompetency", "atlasDisabled"));
 
-        Set<CompetencyExerciseLink> managedLinks = ensureCompetencyLinksSet(exercise);
+        Set<CompetencyExerciseLink> managedLinks = exercise.ensureCompetencyLinksSet();
 
         Map<Long, CompetencyExerciseLink> existingByCompetencyId = managedLinks.stream().filter(link -> link.getCompetency() != null && link.getCompetency().getId() != null)
                 .collect(Collectors.toMap(link -> link.getCompetency().getId(), link -> link, (a, b) -> a));
@@ -641,8 +636,8 @@ public class FileUploadExerciseResource {
 
             CompetencyExerciseLink link = existingByCompetencyId.get(competencyId);
             if (link == null) {
-                Competency competencyRef = api.getReference(competencyId);
-                validateCompetencyBelongsToExerciseCourse(exerciseCourseId, competencyRef);
+                Competency competencyRef = api.loadCompetency(competencyId);
+                competencyRef.validateCompetencyBelongsToExerciseCourse(exerciseCourseId, competencyRef);
                 link = new CompetencyExerciseLink(competencyRef, exercise, linkDto.weight());
             }
             else {
@@ -678,7 +673,7 @@ public class FileUploadExerciseResource {
             throw new BadRequestAlertException("No fileUpload exercise was provided.", ENTITY_NAME, "isNull");
         }
         exercise.setTitle(updateFileUploadExercisesDTO.title());
-        validateTitle(exercise);
+        exercise.validateTitle();
         exercise.setShortName(updateFileUploadExercisesDTO.shortName());
         // problemStatement: null → empty string
         String newProblemStatement = updateFileUploadExercisesDTO.problemStatement() == null ? "" : updateFileUploadExercisesDTO.problemStatement();
@@ -700,6 +695,13 @@ public class FileUploadExerciseResource {
 
         // validates general settings: points, dates
         exercise.validateGeneralSettings();
+        if (exercise.isCourseExercise()) {
+            exercise.setCourse(courseRepository.findByIdElseThrow(updateFileUploadExercisesDTO.courseId()));
+        }
+        if (exercise.isExamExercise()) {
+            exercise.setExerciseGroup(exerciseGroupRepository.findByIdElseThrow(updateFileUploadExercisesDTO.exerciseGroupId()));
+        }
+        exercise.validateSetBothCourseAndExerciseGroupOrNeither();
 
         exercise.setAllowComplaintsForAutomaticAssessments(updateFileUploadExercisesDTO.allowComplaintsForAutomaticAssessments());
         exercise.setAllowFeedbackRequests(updateFileUploadExercisesDTO.allowFeedbackRequests());
