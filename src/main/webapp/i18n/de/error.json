@@ -178,7 +178,8 @@
             "loginRequiredButFeatureNotEnabled": "Für diese Funktion ist ein Passkey-Login erforderlich. Allerdings ist die Passkey-Authentifizierung auf dieser Artemis-Instanz nicht aktiviert. Bitte aktiviere die Passkey-Authentifizierung auf dieser Artemis Instanz."
         },
         "CourseCompetency": {
-            "wrongCourse": "Die Kompetenz gehört nicht zum Kurs der Übung."
+            "wrongCourse": "Die Kompetenz gehört nicht zum Kurs der Übung.",
+            "atlasDisabled": "Für die Verknüpfung von Kompetenzen muss Atlas aktiviert sein."
         },
         "CompetencyExerciseLink": {
             "isNull": "Es wurde kein Kompetenzlink übermittelt.",
@@ -191,6 +192,13 @@
             "titleInvalid": "Der Titel ist ungültig.",
             "courseIdMissing": "Die courseId ist erforderlich.",
             "courseIdInvalid": "Der Kurs darf nicht geändert werden."
+        "ModelingExercise": {
+            "isNull": "Es wurde keine Modellierungsaufgabe übermittelt.",
+            "idMissing": "Die Modellierungsaufgabe muss gespeichert werden, bevor sie umgewandelt werden kann.",
+            "titleLengthInvalid": "Der Titel ist nicht festgelegt oder zu kurz.",
+            "titlePatternInvalid": "Der Titel ist ungültig.",
+            "courseIdMissing": "Die Kurs ID ist erforderlich.",
+            "forbidChangeCourseId": "Die Übungskurs-ID stimmt nicht mit der gespeicherten Kurs-ID überein"
         }
     }
 }

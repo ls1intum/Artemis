@@ -406,8 +406,21 @@ public class ExerciseService {
      */
     @Async
     public void updatePointsInRelatedParticipantScores(Exercise originalExercise, Exercise updatedExercise) {
-        if (originalExercise.getMaxPoints().equals(updatedExercise.getMaxPoints()) && originalExercise.getBonusPoints().equals(updatedExercise.getBonusPoints())) {
-            return; // nothing to do since points are still correct
+        updatePointsInRelatedParticipantScores(originalExercise.getMaxPoints(), originalExercise.getBonusPoints(), updatedExercise);
+    }
+
+    /**
+     * Updates the points of related exercises if the points of exercises have changed
+     *
+     * @param originalMaxPoints   the original max points
+     * @param originalBonusPoints the original bonus points
+     * @param updatedExercise     the updatedExercise
+     */
+    @Async
+    public void updatePointsInRelatedParticipantScores(Double originalMaxPoints, Double originalBonusPoints, Exercise updatedExercise) {
+        boolean arePointsStillCorrect = Objects.equals(originalMaxPoints, updatedExercise.getMaxPoints()) && Objects.equals(originalBonusPoints, updatedExercise.getBonusPoints());
+        if (arePointsStillCorrect) {
+            return;
         }
 
         List<ParticipantScore> participantScoreList = participantScoreRepository.findAllByExercise(updatedExercise);
@@ -807,12 +820,38 @@ public class ExerciseService {
      * @param notificationText custom notification text
      */
     public void notifyAboutExerciseChanges(Exercise originalExercise, Exercise updatedExercise, String notificationText) {
-        if (originalExercise.isCourseExercise()) {
-            groupNotificationScheduleService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(originalExercise, updatedExercise, notificationText);
+        notifyAboutExerciseChanges(originalExercise.getReleaseDate(), originalExercise.getAssessmentDueDate(), originalExercise.getProblemStatement(), updatedExercise,
+                notificationText);
+    }
+
+    /**
+     * Notifies students about exercise changes.
+     * <p>
+     * For <b>course exercises</b>, this uses scheduled group notifications and relies on
+     * {@code originalReleaseDate} and {@code originalAssessmentDueDate} to decide which
+     * notifications to send.
+     * </p>
+     * <p>
+     * For <b>exam exercises</b>, {@code originalReleaseDate} and {@code originalAssessmentDueDate}
+     * are ignored. Instead, a live event is sent shortly before the exam start if – and only if –
+     * the problem statement has changed.
+     * </p>
+     *
+     * @param originalReleaseDate       the original release date of the course exercise
+     * @param originalAssessmentDueDate the original assessment due date of the course exercise
+     * @param originalProblemStatement  the original problem statement (used for both course and exam exercises)
+     * @param updatedExercise           the updated exercise
+     * @param notificationText          custom notification text shown to students
+     */
+    public void notifyAboutExerciseChanges(ZonedDateTime originalReleaseDate, ZonedDateTime originalAssessmentDueDate, String originalProblemStatement, Exercise updatedExercise,
+            String notificationText) {
+        if (updatedExercise.isCourseExercise()) {
+            groupNotificationScheduleService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(originalReleaseDate, originalAssessmentDueDate, updatedExercise,
+                    notificationText);
         }
         // start sending problem statement updates within the last 5 minutes before the exam starts
-        else if (now().plusMinutes(EXAM_START_WAIT_TIME_MINUTES).isAfter(originalExercise.getExam().getStartDate()) && originalExercise.isExamExercise()
-                && !Strings.CS.equals(originalExercise.getProblemStatement(), updatedExercise.getProblemStatement())) {
+        else if (now().plusMinutes(EXAM_START_WAIT_TIME_MINUTES).isAfter(updatedExercise.getExam().getStartDate()) && updatedExercise.isExamExercise()
+                && !Strings.CS.equals(originalProblemStatement, updatedExercise.getProblemStatement())) {
             ExamLiveEventsApi api = examLiveEventsApi.orElseThrow(() -> new ExamApiNotPresentException(ExamLiveEventsApi.class));
             api.createAndSendProblemStatementUpdateEvent(updatedExercise, notificationText);
         }

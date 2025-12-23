@@ -793,12 +793,6 @@ public class AuthorizationCheckService {
         checkGivenExerciseIdSameForExerciseRequestBodyIdElseThrow(exerciseId, exerciseInRequestBody.getId());
     }
 
-    public void checkGivenExerciseIdSameForExerciseRequestBodyIdElseThrow(@NonNull Long exerciseId, @NonNull Long exerciseInRequestBodyId) {
-        if (!exerciseId.equals(exerciseInRequestBodyId)) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "error.exerciseIdMismatch");
-        }
-    }
-
     public void checkIsAllowedToAssessExerciseElseThrow(Exercise exercise, User user, Long resultId) {
         if (!isAllowedToAssessExercise(exercise, user, resultId)) {
             throw new AccessForbiddenException("You are not allowed to assess this exercise!");
@@ -1081,6 +1075,12 @@ public class AuthorizationCheckService {
     public void checkIsAtLeastRoleInLectureElseThrow(Role role, long lectureId) {
         if (!isAtLeastRoleInLecture(role, lectureId)) {
             throw new AccessForbiddenException("Lecture", lectureId);
+        }
+    }
+
+    public void checkGivenExerciseIdSameForExerciseRequestBodyIdElseThrow(@NonNull Long exerciseId, @NonNull Long exerciseInRequestBodyId) {
+        if (!exerciseId.equals(exerciseInRequestBodyId)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "error.exerciseIdMismatch");
         }
     }
 }

@@ -1,5 +1,5 @@
-import { CompetencyExerciseLink } from 'app/atlas/shared/entities/competency.model';
 import { CourseCompetencyDTO, toCourseCompetencyDTO } from 'app/atlas/shared/dto/course-competency-dto';
+import { CompetencyExerciseLink } from 'app/atlas/shared/entities/competency.model';
 
 export interface CompetencyExerciseLinkDTO {
     courseCompetencyDTO: CourseCompetencyDTO;
