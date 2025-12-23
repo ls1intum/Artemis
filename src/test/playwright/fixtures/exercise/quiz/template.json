@@ -16,7 +16,6 @@
     "randomizeQuestionOrder": true,
     "releaseDate": null,
     "isVisibleBeforeStart": false,
-    "isOpenForPractice": false,
     "isPlannedToStart": false,
     "isActiveQuiz": false,
     "isPracticeModeAvailable": true,

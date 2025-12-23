@@ -52,7 +52,7 @@ import de.tum.cit.aet.artemis.fileupload.util.FileUploadExerciseFactory;
 import de.tum.cit.aet.artemis.modeling.domain.DiagramType;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
-import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
+import de.tum.cit.aet.artemis.modeling.test_repository.ModelingExerciseTestRepository;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseFactory;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -87,7 +87,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
     private SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseRepository;
 
     @Autowired
-    private ModelingExerciseRepository modelingExerciseRepository;
+    private ModelingExerciseTestRepository modelingExerciseRepository;
 
     @Autowired
     private QuizExerciseTestRepository quizExerciseRepository;
@@ -692,7 +692,6 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         Submission submission = participationUtilService.addSubmission(programmingExerciseStudentParticipation, new ProgrammingSubmission());
         Result result = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission);
         ProgrammingExerciseTestCase testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "test1");
-        testCase.setId(1L);
         Feedback feedback = new Feedback();
         feedback.setPositive(false);
         feedback.setDetailText("Some feedback");
@@ -723,7 +722,6 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         Submission submission2 = participationUtilService.addSubmission(programmingExerciseStudentParticipation2, new ProgrammingSubmission());
         Result result2 = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission2);
         ProgrammingExerciseTestCase testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "test1");
-        testCase.setId(1L);
 
         Feedback feedback1 = new Feedback();
         feedback1.setPositive(false);
@@ -779,7 +777,6 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         Submission submission2 = participationUtilService.addSubmission(programmingExerciseStudentParticipation2, new ProgrammingSubmission());
         Result result2 = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission2);
         ProgrammingExerciseTestCase testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "test1");
-        testCase.setId(1L);
 
         Feedback feedback1 = new Feedback();
         feedback1.setPositive(false);
@@ -821,7 +818,6 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         Result result = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission);
 
         ProgrammingExerciseTestCase testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "test1");
-        testCase.setId(1L);
         Feedback feedback = new Feedback();
         feedback.setPositive(false);
         feedback.setDetailText("Some feedback");
@@ -841,7 +837,6 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         Submission submission2 = participationUtilService.addSubmission(programmingExerciseStudentParticipation2, new ProgrammingSubmission());
         Result result2 = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission2);
         ProgrammingExerciseTestCase testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "test1");
-        testCase.setId(1L);
 
         Feedback feedback1 = new Feedback();
         feedback1.setPositive(false);
@@ -866,7 +861,6 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         Submission submission = participationUtilService.addSubmission(programmingExerciseStudentParticipation, new ProgrammingSubmission());
         Result result = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission);
         ProgrammingExerciseTestCase testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "test1");
-        testCase.setId(1L);
 
         Feedback feedback = new Feedback();
         feedback.setPositive(false);

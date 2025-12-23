@@ -416,7 +416,9 @@ class ArchitectureTest extends AbstractArchitectureTest {
     @Test
     void ensureSpringComponentsAreLazyAnnotated() {
         ArchRule rule = classes().that().areAnnotatedWith(Controller.class).or().areAnnotatedWith(RestController.class).or().areAnnotatedWith(Repository.class).or()
-                .areAnnotatedWith(Service.class).or().areAnnotatedWith(Component.class).or().areAnnotatedWith(Configuration.class).should().beAnnotatedWith(Lazy.class)
+                .areAnnotatedWith(Service.class).or().areAnnotatedWith(Component.class).or().areAnnotatedWith(Configuration.class)
+                // JacksonConfiguration must NOT be lazy because Jackson modules must be available when the ObjectMapper is created
+                .and().doNotHaveFullyQualifiedName("de.tum.cit.aet.artemis.core.config.JacksonConfiguration").should().beAnnotatedWith(Lazy.class)
                 .because("All Spring components should be lazy-loaded to improve startup time");
 
         rule.check(allClasses);
