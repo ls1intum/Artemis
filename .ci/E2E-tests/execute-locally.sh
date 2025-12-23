@@ -58,6 +58,7 @@ export ARTEMIS_DOCKER_TAG="${ARTEMIS_DOCKER_TAG:-local}"
 # Set platform for ARM64 Macs (Apple Silicon)
 if [ "$(uname -m)" = "arm64" ]; then
     export DOCKER_DEFAULT_PLATFORM="linux/arm64"
+    export ARTEMIS_CONTINUOUSINTEGRATION_IMAGEARCHITECTURE="arm64"
     echo "Detected ARM64 architecture, using linux/arm64 platform"
 fi
 

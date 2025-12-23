@@ -368,8 +368,26 @@ export class ExerciseAPIRequests {
      * @param due - The new assessment due date (optional, default: current date).
      */
     async updateModelingExerciseAssessmentDueDate(exercise: ModelingExercise, due = dayjs()) {
-        exercise.assessmentDueDate = dayjsToString(due) as any;
-        return await this.updateExercise(exercise, ExerciseType.MODELING);
+        // The PUT endpoint expects UpdateModelingExerciseDTO with specific fields
+        const updateDto = {
+            id: exercise.id,
+            title: exercise.title,
+            shortName: exercise.shortName,
+            releaseDate: exercise.releaseDate,
+            dueDate: exercise.dueDate,
+            assessmentDueDate: dayjsToString(due),
+            maxPoints: exercise.maxPoints,
+            bonusPoints: exercise.bonusPoints,
+            difficulty: exercise.difficulty,
+            problemStatement: exercise.problemStatement,
+            courseId: exercise.course?.id,
+            includedInOverallScore: exercise.includedInOverallScore,
+        };
+        const response = await this.page.request.put(MODELING_EXERCISE_BASE, { data: updateDto });
+        if (!response.ok()) {
+            throw new Error(`Failed to update modeling exercise assessment due date: ${response.status()} ${await response.text()}`);
+        }
+        return response;
     }
 
     /**
@@ -404,8 +422,25 @@ export class ExerciseAPIRequests {
      * @param due - The new due date (optional, default: current date).
      */
     async updateModelingExerciseDueDate(exercise: ModelingExercise, due = dayjs()) {
-        exercise.dueDate = dayjsToString(due) as any;
-        await this.updateExercise(exercise, ExerciseType.MODELING);
+        // The PUT endpoint expects UpdateModelingExerciseDTO with specific fields
+        const updateDto = {
+            id: exercise.id,
+            title: exercise.title,
+            shortName: exercise.shortName,
+            releaseDate: exercise.releaseDate,
+            dueDate: dayjsToString(due),
+            assessmentDueDate: exercise.assessmentDueDate,
+            maxPoints: exercise.maxPoints,
+            bonusPoints: exercise.bonusPoints,
+            difficulty: exercise.difficulty,
+            problemStatement: exercise.problemStatement,
+            courseId: exercise.course?.id,
+            includedInOverallScore: exercise.includedInOverallScore,
+        };
+        const response = await this.page.request.put(MODELING_EXERCISE_BASE, { data: updateDto });
+        if (!response.ok()) {
+            throw new Error(`Failed to update modeling exercise due date: ${response.status()} ${await response.text()}`);
+        }
     }
 
     /**
