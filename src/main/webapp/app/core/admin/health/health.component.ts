@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
@@ -12,20 +12,26 @@ import { KeyValuePipe, NgClass } from '@angular/common';
 import { JhiConnectionStatusComponent } from 'app/shared/connection-status/connection-status.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
+/**
+ * Component for displaying system health status.
+ * Shows health of various system components like database, mail, etc.
+ */
 @Component({
     selector: 'jhi-health',
     templateUrl: './health.component.html',
     imports: [TranslateDirective, FaIconComponent, NgClass, JhiConnectionStatusComponent, KeyValuePipe, ArtemisTranslatePipe],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HealthComponent implements OnInit {
-    private modalService = inject(NgbModal);
-    private healthService = inject(HealthService);
+    private readonly modalService = inject(NgbModal);
+    private readonly healthService = inject(HealthService);
 
-    health?: Health;
+    /** Current system health status */
+    readonly health = signal<Health | undefined>(undefined);
 
-    // Icons
-    faSync = faSync;
-    faEye = faEye;
+    /** Icons */
+    protected readonly faSync = faSync;
+    protected readonly faEye = faEye;
 
     ngOnInit() {
         this.refresh();
@@ -38,12 +44,17 @@ export class HealthComponent implements OnInit {
         return 'bg-danger';
     }
 
+    /**
+     * Refreshes the health status by fetching from the server.
+     */
     refresh(): void {
         this.healthService.checkHealth().subscribe({
-            next: (health) => (this.health = health),
+            next: (health) => {
+                this.health.set(health);
+            },
             error: (error: HttpErrorResponse) => {
                 if (error.status === 503) {
-                    this.health = error.error;
+                    this.health.set(error.error);
                 }
             },
         });
