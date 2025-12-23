@@ -33,4 +33,21 @@ public interface PasskeyCredentialsRepository extends ArtemisJpaRepository<Passk
             WHERE credential.user.id = :userId
             """)
     boolean existsByUserId(@Param("userId") long userId);
+
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.core.dto.AdminPasskeyDTO(
+                pc.credentialId,
+                pc.label,
+                pc.createdDate,
+                pc.lastUsed,
+                pc.isSuperAdminApproved,
+                u.id,
+                u.login,
+                u.name
+            )
+            FROM PasskeyCredential pc
+            JOIN pc.user u
+            WHERE :#{T(de.tum.cit.aet.artemis.core.domain.Authority).ADMIN_AUTHORITY} MEMBER OF u.authorities
+            """)
+    List<de.tum.cit.aet.artemis.core.dto.AdminPasskeyDTO> findPasskeysForAdminUsers();
 }

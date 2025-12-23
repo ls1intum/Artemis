@@ -83,16 +83,16 @@ public class PasskeyResource {
     }
 
     /**
-     * GET /passkey/admin : retrieve all passkeys with user information for super admin management
+     * GET /passkey/admin : retrieve all passkeys for admin users for super admin management
      *
-     * @return list of {@link de.tum.cit.aet.artemis.core.dto.AdminPasskeyDTO} that contains all passkeys with user information
+     * @return list of {@link de.tum.cit.aet.artemis.core.dto.AdminPasskeyDTO} that contains all passkeys of admin users with user information
      */
     @GetMapping("admin")
     @EnforceSuperAdmin
     public ResponseEntity<List<de.tum.cit.aet.artemis.core.dto.AdminPasskeyDTO>> getAllPasskeysForAdmin() {
-        log.debug("Retrieving all passkeys for super admin management");
+        log.debug("Retrieving all passkeys for admin users for super admin management");
 
-        List<de.tum.cit.aet.artemis.core.dto.AdminPasskeyDTO> passkeys = passkeyCredentialsRepository.findAll().stream().map(PasskeyCredential::toAdminDto).toList();
+        List<de.tum.cit.aet.artemis.core.dto.AdminPasskeyDTO> passkeys = passkeyCredentialsRepository.findPasskeysForAdminUsers();
 
         return ResponseEntity.ok(passkeys);
     }
