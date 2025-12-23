@@ -43,7 +43,7 @@ public interface PasskeyCredentialsRepository extends ArtemisJpaRepository<Passk
                 pc.isSuperAdminApproved,
                 u.id,
                 u.login,
-                u.name
+                CONCAT(u.firstName, ' ', u.lastName)
             )
             FROM PasskeyCredential pc
             JOIN pc.user u

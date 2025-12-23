@@ -5,6 +5,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -142,11 +143,17 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void testGetAllPasskeysForAdmin_Success() throws Exception {
         when(passkeyAuthenticationService.isAuthenticatedWithSuperAdminApprovedPasskey()).thenReturn(true);
 
-        User student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        User student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
+        // Create admin users with ADMIN authority
+        User admin1 = userUtilService.createAndSaveUser(TEST_PREFIX + "admin1");
+        admin1.setAuthorities(Set.of(de.tum.cit.aet.artemis.core.domain.Authority.ADMIN_AUTHORITY));
+        userTestRepository.save(admin1);
 
-        PasskeyCredential credential1 = passkeyCredentialUtilService.createAndSavePasskeyCredential(student1);
-        PasskeyCredential credential2 = passkeyCredentialUtilService.createAndSavePasskeyCredential(student2);
+        User admin2 = userUtilService.createAndSaveUser(TEST_PREFIX + "admin2");
+        admin2.setAuthorities(Set.of(de.tum.cit.aet.artemis.core.domain.Authority.ADMIN_AUTHORITY));
+        userTestRepository.save(admin2);
+
+        PasskeyCredential credential1 = passkeyCredentialUtilService.createAndSavePasskeyCredential(admin1);
+        PasskeyCredential credential2 = passkeyCredentialUtilService.createAndSavePasskeyCredential(admin2);
         credential2.setSuperAdminApproved(true);
         passkeyCredentialsRepository.save(credential2);
 
@@ -156,16 +163,16 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(passkeys).hasSizeGreaterThanOrEqualTo(2);
 
         AdminPasskeyDTO passkeyDto1 = passkeys.stream().filter(p -> p.credentialId().equals(credential1.getCredentialId())).findFirst().orElseThrow();
-        assertThat(passkeyDto1.userLogin()).isEqualTo(student1.getLogin());
-        assertThat(passkeyDto1.userName()).isEqualTo(student1.getName());
-        assertThat(passkeyDto1.userId()).isEqualTo(student1.getId());
+        assertThat(passkeyDto1.userLogin()).isEqualTo(admin1.getLogin());
+        assertThat(passkeyDto1.userName()).isEqualTo(admin1.getName());
+        assertThat(passkeyDto1.userId()).isEqualTo(admin1.getId());
         assertThat(passkeyDto1.label()).isEqualTo(credential1.getLabel());
         assertThat(passkeyDto1.isSuperAdminApproved()).isFalse();
 
         AdminPasskeyDTO passkeyDto2 = passkeys.stream().filter(p -> p.credentialId().equals(credential2.getCredentialId())).findFirst().orElseThrow();
-        assertThat(passkeyDto2.userLogin()).isEqualTo(student2.getLogin());
-        assertThat(passkeyDto2.userName()).isEqualTo(student2.getName());
-        assertThat(passkeyDto2.userId()).isEqualTo(student2.getId());
+        assertThat(passkeyDto2.userLogin()).isEqualTo(admin2.getLogin());
+        assertThat(passkeyDto2.userName()).isEqualTo(admin2.getName());
+        assertThat(passkeyDto2.userId()).isEqualTo(admin2.getId());
         assertThat(passkeyDto2.label()).isEqualTo(credential2.getLabel());
         assertThat(passkeyDto2.isSuperAdminApproved()).isTrue();
     }
@@ -192,6 +199,42 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         List<AdminPasskeyDTO> passkeys = request.getList("/api/core/passkey/admin", HttpStatus.OK, AdminPasskeyDTO.class);
 
         assertThat(passkeys).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = "superadmin", roles = "SUPER_ADMIN")
+    void testGetAllPasskeysForAdmin_OnlyReturnsAdminPasskeys() throws Exception {
+        when(passkeyAuthenticationService.isAuthenticatedWithSuperAdminApprovedPasskey()).thenReturn(true);
+
+        // Create admin users with ADMIN authority
+        User admin1 = userUtilService.createAndSaveUser(TEST_PREFIX + "adminuser1");
+        admin1.setAuthorities(Set.of(de.tum.cit.aet.artemis.core.domain.Authority.ADMIN_AUTHORITY));
+        userTestRepository.save(admin1);
+
+        // Create regular users (students, instructors, etc.) without ADMIN authority
+        User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        User instructor = userUtilService.createAndSaveUser(TEST_PREFIX + "instructor1");
+        instructor.setAuthorities(Set.of(de.tum.cit.aet.artemis.core.domain.Authority.INSTRUCTOR_AUTHORITY));
+        userTestRepository.save(instructor);
+
+        // Create passkeys for all users
+        PasskeyCredential adminCredential = passkeyCredentialUtilService.createAndSavePasskeyCredential(admin1);
+        PasskeyCredential studentCredential = passkeyCredentialUtilService.createAndSavePasskeyCredential(student);
+        PasskeyCredential instructorCredential = passkeyCredentialUtilService.createAndSavePasskeyCredential(instructor);
+
+        // Fetch all admin passkeys
+        List<AdminPasskeyDTO> passkeys = request.getList("/api/core/passkey/admin", HttpStatus.OK, AdminPasskeyDTO.class);
+
+        // Verify only admin passkey is returned
+        assertThat(passkeys).isNotEmpty();
+        assertThat(passkeys).anyMatch(passkey -> passkey.credentialId().equals(adminCredential.getCredentialId()));
+        assertThat(passkeys).noneMatch(passkey -> passkey.credentialId().equals(studentCredential.getCredentialId()));
+        assertThat(passkeys).noneMatch(passkey -> passkey.credentialId().equals(instructorCredential.getCredentialId()));
+
+        // Verify admin passkey details
+        AdminPasskeyDTO adminPasskeyDto = passkeys.stream().filter(passkey -> passkey.credentialId().equals(adminCredential.getCredentialId())).findFirst().orElseThrow();
+        assertThat(adminPasskeyDto.userLogin()).isEqualTo(admin1.getLogin());
+        assertThat(adminPasskeyDto.userId()).isEqualTo(admin1.getId());
     }
 
     @Test
