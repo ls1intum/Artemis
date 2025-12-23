@@ -112,13 +112,13 @@ import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.com
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 // NOTE: Do NOT import MarkdownEditorMonacoComponent here - it transitively imports monaco-editor
 // which causes static initializers to run before mocks are applied.
-import { Component, Input, input, output, signal, viewChild } from '@angular/core';
+import { Component, input, output, signal, viewChild } from '@angular/core';
 
 // Mock component to replace MarkdownEditorMonacoComponent without importing the real one
 @Component({ selector: 'jhi-markdown-editor-monaco', template: '', standalone: true })
 class MockMarkdownEditorMonacoComponent {
-    @Input() markdown: string = '';
-    @Input() domainActions: unknown[] = [];
+    markdown = input<string>('');
+    domainActions = input<unknown[]>([]);
 }
 
 // Stub for TitleChannelNameComponent to satisfy viewChild.required
@@ -130,12 +130,12 @@ class StubTitleChannelNameComponent {
 // Stub for ExerciseTitleChannelNameComponent - ng-mocks MockComponent doesn't handle viewChild.required properly
 @Component({ selector: 'jhi-exercise-title-channel-name', template: '<jhi-title-channel-name />', standalone: true, imports: [StubTitleChannelNameComponent] })
 class StubExerciseTitleChannelNameComponent {
-    @Input() exercise: FileUploadExercise | undefined;
-    @Input() titlePattern: string = '';
-    @Input() minTitleLength: number = 0;
-    @Input() isExamMode: boolean = false;
-    @Input() isImport: boolean = false;
-    @Input() hideTitleLabel: boolean = false;
+    exercise = input<FileUploadExercise | undefined>();
+    titlePattern = input<string>('');
+    minTitleLength = input<number>(0);
+    isExamMode = input<boolean>(false);
+    isImport = input<boolean>(false);
+    hideTitleLabel = input<boolean>(false);
     course = input<Course>();
     isEditFieldDisplayedRecord = input<Record<string, boolean>>();
     courseId = input<number>();
