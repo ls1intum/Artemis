@@ -10,6 +10,7 @@ import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -17,7 +18,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.core.domain.PasskeyCredential;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.dto.AdminPasskeyDTO;
+import de.tum.cit.aet.artemis.core.dto.PasskeyAdminDTO;
 import de.tum.cit.aet.artemis.core.dto.PasskeyDTO;
 import de.tum.cit.aet.artemis.core.repository.PasskeyCredentialsRepository;
 import de.tum.cit.aet.artemis.core.service.PasskeyAuthenticationService;
@@ -36,7 +37,7 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     private PasskeyCredentialUtilService passkeyCredentialUtilService;
 
     @Autowired
-    private PasskeyResource passkeyResource;
+    private ApplicationContext applicationContext;
 
     @MockitoBean
     private SlideUnhideScheduleService slideUnhideScheduleService;
@@ -157,19 +158,19 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         credential2.setSuperAdminApproved(true);
         passkeyCredentialsRepository.save(credential2);
 
-        List<AdminPasskeyDTO> passkeys = request.getList("/api/core/passkey/admin", HttpStatus.OK, AdminPasskeyDTO.class);
+        List<PasskeyAdminDTO> passkeys = request.getList("/api/core/passkey/admin", HttpStatus.OK, PasskeyAdminDTO.class);
 
         assertThat(passkeys).isNotEmpty();
         assertThat(passkeys).hasSizeGreaterThanOrEqualTo(2);
 
-        AdminPasskeyDTO passkeyDto1 = passkeys.stream().filter(p -> p.credentialId().equals(credential1.getCredentialId())).findFirst().orElseThrow();
+        PasskeyAdminDTO passkeyDto1 = passkeys.stream().filter(p -> p.credentialId().equals(credential1.getCredentialId())).findFirst().orElseThrow();
         assertThat(passkeyDto1.userLogin()).isEqualTo(admin1.getLogin());
         assertThat(passkeyDto1.userName()).isEqualTo(admin1.getName());
         assertThat(passkeyDto1.userId()).isEqualTo(admin1.getId());
         assertThat(passkeyDto1.label()).isEqualTo(credential1.getLabel());
         assertThat(passkeyDto1.isSuperAdminApproved()).isFalse();
 
-        AdminPasskeyDTO passkeyDto2 = passkeys.stream().filter(p -> p.credentialId().equals(credential2.getCredentialId())).findFirst().orElseThrow();
+        PasskeyAdminDTO passkeyDto2 = passkeys.stream().filter(p -> p.credentialId().equals(credential2.getCredentialId())).findFirst().orElseThrow();
         assertThat(passkeyDto2.userLogin()).isEqualTo(admin2.getLogin());
         assertThat(passkeyDto2.userName()).isEqualTo(admin2.getName());
         assertThat(passkeyDto2.userId()).isEqualTo(admin2.getId());
@@ -196,7 +197,7 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         passkeyCredentialsRepository.deleteAll();
 
-        List<AdminPasskeyDTO> passkeys = request.getList("/api/core/passkey/admin", HttpStatus.OK, AdminPasskeyDTO.class);
+        List<PasskeyAdminDTO> passkeys = request.getList("/api/core/passkey/admin", HttpStatus.OK, PasskeyAdminDTO.class);
 
         assertThat(passkeys).isEmpty();
     }
@@ -223,7 +224,7 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         PasskeyCredential instructorCredential = passkeyCredentialUtilService.createAndSavePasskeyCredential(instructor);
 
         // Fetch all admin passkeys
-        List<AdminPasskeyDTO> passkeys = request.getList("/api/core/passkey/admin", HttpStatus.OK, AdminPasskeyDTO.class);
+        List<PasskeyAdminDTO> passkeys = request.getList("/api/core/passkey/admin", HttpStatus.OK, PasskeyAdminDTO.class);
 
         // Verify only admin passkey is returned
         assertThat(passkeys).isNotEmpty();
@@ -232,7 +233,7 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(passkeys).noneMatch(passkey -> passkey.credentialId().equals(instructorCredential.getCredentialId()));
 
         // Verify admin passkey details
-        AdminPasskeyDTO adminPasskeyDto = passkeys.stream().filter(passkey -> passkey.credentialId().equals(adminCredential.getCredentialId())).findFirst().orElseThrow();
+        PasskeyAdminDTO adminPasskeyDto = passkeys.stream().filter(passkey -> passkey.credentialId().equals(adminCredential.getCredentialId())).findFirst().orElseThrow();
         assertThat(adminPasskeyDto.userLogin()).isEqualTo(admin1.getLogin());
         assertThat(adminPasskeyDto.userId()).isEqualTo(admin1.getId());
     }
@@ -266,6 +267,7 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         // Set up internal admin username
         String internalAdminLogin = "artemis_admin";
+        Object passkeyResource = applicationContext.getBean("passkeyResource");
         ReflectionTestUtils.setField(passkeyResource, "artemisInternalAdminUsername", Optional.of(internalAdminLogin));
 
         // Create internal admin user and passkey

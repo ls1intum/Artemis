@@ -240,16 +240,16 @@ public class PasskeyCredential extends AbstractAuditingEntity {
     }
 
     /**
-     * Converts the current {@link PasskeyCredential} entity into an {@link de.tum.cit.aet.artemis.core.dto.AdminPasskeyDTO} object.
+     * Converts the current {@link PasskeyCredential} entity into an {@link de.tum.cit.aet.artemis.core.dto.PasskeyAdminDTO} object.
      * <p>
-     * This method maps the fields of the {@link PasskeyCredential} entity to an {@link de.tum.cit.aet.artemis.core.dto.AdminPasskeyDTO},
+     * This method maps the fields of the {@link PasskeyCredential} entity to an {@link de.tum.cit.aet.artemis.core.dto.PasskeyAdminDTO},
      * which includes user information for administrative purposes.
      * </p>
      *
-     * @return An {@link de.tum.cit.aet.artemis.core.dto.AdminPasskeyDTO} object.
+     * @return An {@link de.tum.cit.aet.artemis.core.dto.PasskeyAdminDTO} object.
      */
-    public de.tum.cit.aet.artemis.core.dto.AdminPasskeyDTO toAdminDto() {
-        return new de.tum.cit.aet.artemis.core.dto.AdminPasskeyDTO(credentialId, label, getCreatedDate(), lastUsed, isSuperAdminApproved, user.getId(), user.getLogin(),
+    public de.tum.cit.aet.artemis.core.dto.PasskeyAdminDTO toAdminDto() {
+        return new de.tum.cit.aet.artemis.core.dto.PasskeyAdminDTO(credentialId, label, getCreatedDate(), lastUsed, isSuperAdminApproved, user.getId(), user.getLogin(),
                 user.getName());
     }
 }
