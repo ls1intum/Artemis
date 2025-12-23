@@ -201,12 +201,6 @@ public class AdminUserResource {
         this.userService.checkUsernameAndPasswordValidityElseThrow(managedUserVM.getLogin(), managedUserVM.getPassword());
         log.debug("REST request to update User : {}", managedUserVM);
 
-        boolean isUpdatedUserIsSuperAdmin = managedUserVM.getAuthorities().contains(Authority.SUPER_ADMIN_AUTHORITY.toString());
-        if (isUpdatedUserIsSuperAdmin && !this.authorizationCheckService.isSuperAdmin()) {
-            throw new AccessForbiddenAlertException("Only super administrators are allowed to manage other super administrators.", "userManagement",
-                    "userManagement.onlySuperAdminCanManageSuperAdmins");
-        }
-
         var existingUserByEmail = userRepository.findOneByEmailIgnoreCase(managedUserVM.getEmail());
         if (existingUserByEmail.isPresent() && (!existingUserByEmail.get().getId().equals(managedUserVM.getId()))) {
             throw new EmailAlreadyUsedException();
@@ -218,6 +212,12 @@ public class AdminUserResource {
         }
 
         var existingUser = userRepository.findByIdWithGroupsAndAuthoritiesAndOrganizationsElseThrow(managedUserVM.getId());
+
+        boolean isUpdatedUserIsSuperAdmin = existingUser.getAuthorities().contains(Authority.SUPER_ADMIN_AUTHORITY);
+        if (isUpdatedUserIsSuperAdmin && !this.authorizationCheckService.isSuperAdmin()) {
+            throw new AccessForbiddenAlertException("Only super administrators are allowed to manage other super administrators.", "userManagement",
+                    "userManagement.onlySuperAdminCanManageSuperAdmins");
+        }
 
         final boolean shouldActivateUser = !existingUser.getActivated() && managedUserVM.isActivated();
         var updatedUser = userCreationService.updateUser(existingUser, managedUserVM);
