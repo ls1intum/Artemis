@@ -84,7 +84,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
 
         mockMvc.perform(put("/api/core/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(managedUserVM))).andExpect(status().isOk());
 
-        User updatedUser = userTestRepository.findById(regularUser.getId()).orElseThrow();
+        User updatedUser = userTestRepository.findByIdWithGroupsAndAuthoritiesElseThrow(regularUser.getId());
         assertThat(updatedUser.getAuthorities()).extracting(Authority::getName).contains(Role.ADMIN.getAuthority());
     }
 
