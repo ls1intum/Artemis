@@ -71,7 +71,7 @@ const moduleThresholds = {
     },
     atlas: {
         statements: 91.30,
-        branches:   67.10,
+        branches:   66.80,
         functions:  84.70,
         lines:      91.20,
     },

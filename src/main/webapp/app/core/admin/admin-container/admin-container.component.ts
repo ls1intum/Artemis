@@ -1,4 +1,4 @@
-import { Component, HostListener, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { NgClass } from '@angular/common';
 import { MatSidenav, MatSidenavContainer, MatSidenavContent } from '@angular/material/sidenav';
@@ -13,11 +13,20 @@ import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.servic
 import { AccountService } from 'app/core/auth/account.service';
 import { IS_AT_LEAST_SUPER_ADMIN } from 'app/shared/constants/authority.constants';
 
+/**
+ * Container component for the admin section.
+ * Manages the sidebar layout and feature flags for admin functionality.
+ */
 @Component({
     selector: 'jhi-admin-container',
     templateUrl: './admin-container.component.html',
     styleUrls: ['./admin-container.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [NgClass, MatSidenavContainer, MatSidenavContent, MatSidenav, RouterOutlet, AdminSidebarComponent],
+    host: {
+        '(window:resize)': 'onResize()',
+        '(document:keydown.control.m)': 'onKeyDown($event)',
+    },
 })
 export class AdminContainerComponent implements OnInit, OnDestroy {
     private readonly profileService = inject(ProfileService);
@@ -26,14 +35,15 @@ export class AdminContainerComponent implements OnInit, OnDestroy {
     private readonly router = inject(Router);
     private readonly accountService = inject(AccountService);
 
-    isNavbarCollapsed = signal<boolean>(false);
+    /** Whether the navbar is collapsed */
+    readonly isNavbarCollapsed = signal(false);
 
-    // Feature flags
-    localCIActive = false;
-    ltiEnabled = false;
-    atlasEnabled = false;
-    examEnabled = false;
-    standardizedCompetenciesEnabled = false;
+    /** Feature flags */
+    readonly localCIActive = signal(false);
+    readonly ltiEnabled = signal(false);
+    readonly atlasEnabled = signal(false);
+    readonly examEnabled = signal(false);
+    readonly standardizedCompetenciesEnabled = signal(false);
     passkeyEnabled = false;
     passkeyRequiredForAdmin = false;
     isSuperAdmin = signal<boolean>(false);
@@ -43,16 +53,16 @@ export class AdminContainerComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         const profileInfo = this.profileService.getProfileInfo();
-        this.atlasEnabled = profileInfo.activeModuleFeatures.includes(MODULE_FEATURE_ATLAS);
-        this.examEnabled = profileInfo.activeModuleFeatures.includes(MODULE_FEATURE_EXAM);
-        this.localCIActive = profileInfo.activeProfiles.includes(PROFILE_LOCALCI);
-        this.ltiEnabled = profileInfo.activeProfiles.includes(PROFILE_LTI);
+        this.atlasEnabled.set(profileInfo.activeModuleFeatures.includes(MODULE_FEATURE_ATLAS));
+        this.examEnabled.set(profileInfo.activeModuleFeatures.includes(MODULE_FEATURE_EXAM));
+        this.localCIActive.set(profileInfo.activeProfiles.includes(PROFILE_LOCALCI));
+        this.ltiEnabled.set(profileInfo.activeProfiles.includes(PROFILE_LTI));
         this.passkeyEnabled = profileInfo.activeModuleFeatures.includes(MODULE_FEATURE_PASSKEY);
         this.passkeyRequiredForAdmin = profileInfo.activeModuleFeatures.includes(MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN);
         this.isSuperAdmin.set(this.accountService.hasAnyAuthorityDirect(IS_AT_LEAST_SUPER_ADMIN));
 
         this.standardizedCompetencySubscription = this.featureToggleService.getFeatureToggleActive(FeatureToggle.StandardizedCompetencies).subscribe((isActive) => {
-            this.standardizedCompetenciesEnabled = isActive;
+            this.standardizedCompetenciesEnabled.set(isActive);
         });
 
         // Check initial collapse state based on breakpoint
@@ -69,12 +79,10 @@ export class AdminContainerComponent implements OnInit, OnDestroy {
         this.routerSubscription?.unsubscribe();
     }
 
-    @HostListener('window:resize')
     onResize() {
         this.updateCollapseState();
     }
 
-    @HostListener('document:keydown.control.m', ['$event'])
     onKeyDown(event: Event) {
         if (this.layoutService.isBreakpointActive(CustomBreakpointNames.sidebarExpandable)) {
             event.preventDefault();

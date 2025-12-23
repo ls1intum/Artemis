@@ -1,4 +1,4 @@
-import { AfterContentChecked, ChangeDetectorRef, Component, OnInit, ViewChild, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal, viewChild } from '@angular/core';
 import { faBan, faCheckCircle, faCircleNotch, faExclamationTriangle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { LegalDocumentService } from 'app/core/legal/legal-document.service';
 import { NgbModal, NgbModalRef, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -13,43 +13,63 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ModePickerComponent } from 'app/exercise/mode-picker/mode-picker.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
+/**
+ * Admin component for updating legal documents (privacy statement and imprint).
+ * Supports multiple languages and markdown editing.
+ */
 @Component({
     selector: 'jhi-privacy-statement-update-component',
     styleUrls: ['./legal-document-update.component.scss'],
     templateUrl: './legal-document-update.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [TranslateDirective, MarkdownEditorMonacoComponent, FaIconComponent, NgbTooltip, ModePickerComponent, ArtemisTranslatePipe],
 })
-export class LegalDocumentUpdateComponent implements OnInit, AfterContentChecked {
-    private legalDocumentService = inject(LegalDocumentService);
-    private modalService = inject(NgbModal);
-    private route = inject(ActivatedRoute);
-    private languageHelper = inject(JhiLanguageHelper);
-    private changeDetectorRef = inject(ChangeDetectorRef);
+export class LegalDocumentUpdateComponent implements OnInit {
+    private readonly legalDocumentService = inject(LegalDocumentService);
+    private readonly modalService = inject(NgbModal);
+    private readonly route = inject(ActivatedRoute);
+    private readonly languageHelper = inject(JhiLanguageHelper);
 
-    readonly SUPPORTED_LANGUAGES: LegalDocumentLanguage[] = [LegalDocumentLanguage.GERMAN, LegalDocumentLanguage.ENGLISH];
-    readonly faBan = faBan;
-    readonly faSave = faSave;
-    readonly faExclamationTriangle = faExclamationTriangle;
-    readonly faCheckCircle = faCheckCircle;
-    readonly faCircleNotch = faCircleNotch;
-    readonly LANGUAGE_OPTIONS = this.SUPPORTED_LANGUAGES.map((language) => ({
+    protected readonly SUPPORTED_LANGUAGES: LegalDocumentLanguage[] = [LegalDocumentLanguage.GERMAN, LegalDocumentLanguage.ENGLISH];
+    protected readonly faBan = faBan;
+    protected readonly faSave = faSave;
+    protected readonly faExclamationTriangle = faExclamationTriangle;
+    protected readonly faCheckCircle = faCheckCircle;
+    protected readonly faCircleNotch = faCircleNotch;
+    protected readonly LANGUAGE_OPTIONS = this.SUPPORTED_LANGUAGES.map((language) => ({
         value: language,
         labelKey: 'artemisApp.legal.language.' + language,
         btnClass: 'btn-primary',
     }));
-    readonly DEFAULT_LANGUAGE = LegalDocumentLanguage.GERMAN;
-    readonly MAX_HEIGHT = MarkdownEditorHeight.EXTRA_LARGE;
-    readonly MIN_HEIGHT = MarkdownEditorHeight.MEDIUM;
+    protected readonly DEFAULT_LANGUAGE = LegalDocumentLanguage.GERMAN;
+    protected readonly MAX_HEIGHT = MarkdownEditorHeight.EXTRA_LARGE;
+    protected readonly MIN_HEIGHT = MarkdownEditorHeight.MEDIUM;
 
-    legalDocument: LegalDocument;
+    /** The legal document being edited */
+    readonly legalDocument = signal<LegalDocument | undefined>(undefined);
+
+    /** The type of legal document (privacy statement or imprint) */
     legalDocumentType: LegalDocumentType = LegalDocumentType.PRIVACY_STATEMENT;
-    unsavedChanges = false;
-    isSaving = false;
-    @ViewChild(MarkdownEditorMonacoComponent, { static: false }) markdownEditor: MarkdownEditorMonacoComponent;
 
-    currentContentTrimmed = '';
-    currentLanguage = this.DEFAULT_LANGUAGE;
+    /** Whether there are unsaved changes */
+    readonly unsavedChanges = signal(false);
+
+    /** Whether the document is currently being saved */
+    readonly isSaving = signal(false);
+
+    /** Reference to the markdown editor component */
+    readonly markdownEditor = viewChild(MarkdownEditorMonacoComponent);
+
+    /** Current trimmed content from the editor */
+    readonly currentContentTrimmed = signal('');
+
+    /** Currently selected language */
+    readonly currentLanguage = signal(this.DEFAULT_LANGUAGE);
+
+    /** Modal reference for unsaved changes warning */
     unsavedChangesWarning: NgbModalRef;
+
+    /** Translation key for the page title */
     titleKey: string;
 
     ngOnInit() {
@@ -69,9 +89,9 @@ export class LegalDocumentUpdateComponent implements OnInit, AfterContentChecked
         }
         this.languageHelper.updateTitle(this.titleKey);
 
-        this.legalDocument = new LegalDocument(this.legalDocumentType, this.DEFAULT_LANGUAGE);
+        this.legalDocument.set(new LegalDocument(this.legalDocumentType, this.DEFAULT_LANGUAGE));
         this.getLegalDocumentForUpdate(this.legalDocumentType, this.DEFAULT_LANGUAGE).subscribe((document) => {
-            this.legalDocument = document;
+            this.legalDocument.set(document);
         });
     }
 
@@ -84,41 +104,43 @@ export class LegalDocumentUpdateComponent implements OnInit, AfterContentChecked
     }
 
     updateLegalDocument() {
-        this.isSaving = true;
-        this.legalDocument.text = this.currentContentTrimmed;
+        const doc = this.legalDocument();
+        if (!doc) {
+            return;
+        }
+        this.isSaving.set(true);
+        doc.text = this.currentContentTrimmed();
         if (this.legalDocumentType === LegalDocumentType.PRIVACY_STATEMENT) {
-            this.legalDocumentService.updatePrivacyStatement(this.legalDocument).subscribe((statement) => {
+            this.legalDocumentService.updatePrivacyStatement(doc).subscribe((statement) => {
                 this.setUpdatedDocument(statement);
             });
         } else {
-            this.legalDocumentService.updateImprint(this.legalDocument).subscribe((imprint) => {
+            this.legalDocumentService.updateImprint(doc).subscribe((imprint) => {
                 this.setUpdatedDocument(imprint);
             });
         }
     }
 
     private setUpdatedDocument(updatedDocument: LegalDocument) {
-        this.legalDocument = updatedDocument;
-        this.unsavedChanges = false;
-        this.isSaving = false;
+        this.legalDocument.set(updatedDocument);
+        this.unsavedChanges.set(false);
+        this.isSaving.set(false);
     }
 
     onContentChanged(content: string) {
-        this.currentContentTrimmed = content.trim();
-        this.unsavedChanges = content !== this.legalDocument.text;
+        this.currentContentTrimmed.set(content.trim());
+        const doc = this.legalDocument();
+        this.unsavedChanges.set(content !== doc?.text);
     }
 
     onLanguageChange(legalDocumentLanguage: LegalDocumentLanguage) {
-        if (this.unsavedChanges) {
+        if (this.unsavedChanges()) {
             this.showWarning(legalDocumentLanguage);
         } else {
-            this.currentLanguage = legalDocumentLanguage;
+            this.currentLanguage.set(legalDocumentLanguage);
             this.getLegalDocumentForUpdate(this.legalDocumentType, legalDocumentLanguage).subscribe((document) => {
-                this.legalDocument = document;
-                this.markdownEditor.markdown = this.legalDocument.text;
-                // Ensure the new text is parsed and displayed in the preview
-                this.markdownEditor.parseMarkdown();
-                this.unsavedChanges = false;
+                this.legalDocument.set(document);
+                this.unsavedChanges.set(false);
             });
         }
     }
@@ -135,19 +157,11 @@ export class LegalDocumentUpdateComponent implements OnInit, AfterContentChecked
 
         this.unsavedChangesWarning.result
             .then(() => {
-                this.unsavedChanges = false;
+                this.unsavedChanges.set(false);
                 this.onLanguageChange(legalDocumentLanguage);
             })
             .catch(() => {
-                //ignore, just prevents the console from logging an error about a rejected promise
+                // Ignore - prevents console error about rejected promise
             });
-    }
-
-    /**
-     * This lifecycle hook is required to avoid causing "Expression has changed after it was checked"-error when dismissing all changes in the markdown editor
-     * on dismissing the unsaved changes warning modal -> we do not want to store changes in the legal document that are not saved
-     * */
-    ngAfterContentChecked() {
-        this.changeDetectorRef.detectChanges();
     }
 }

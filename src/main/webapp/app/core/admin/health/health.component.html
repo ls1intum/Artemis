@@ -12,9 +12,9 @@
                     <th scope="col" class="text-center" jhiTranslate="health.details.details"></th>
                 </tr>
             </thead>
-            @if (health) {
+            @if (health()) {
                 <tbody>
-                    @for (componentHealth of health.components | keyvalue; track componentHealth) {
+                    @for (componentHealth of health()!.components | keyvalue; track componentHealth) {
                         <tr [id]="componentHealth.key">
                             <td>
                                 {{ 'health.indicator.' + componentHealth.key | artemisTranslate }}

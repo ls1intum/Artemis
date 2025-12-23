@@ -1,7 +1,8 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { Subscription } from 'rxjs';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { Subject, Subscription } from 'rxjs';
+import { Subject } from 'rxjs';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import dayjs from 'dayjs/esm';
@@ -23,99 +24,127 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { SystemNotificationService } from 'app/core/notification/system-notification/system-notification.service';
 import { AdminSystemNotificationService } from 'app/core/notification/system-notification/admin-system-notification.service';
 
+/**
+ * Enum representing the state of a system notification.
+ */
 enum NotificationState {
     SCHEDULED = 'SCHEDULED',
     ACTIVE = 'ACTIVE',
     EXPIRED = 'EXPIRED',
 }
 
+/**
+ * Component for managing system notifications.
+ * Displays a paginated list of notifications with sorting and deletion capabilities.
+ */
 @Component({
     selector: 'jhi-system-notification-management',
     templateUrl: './system-notification-management.component.html',
     imports: [TranslateDirective, RouterLink, FaIconComponent, SortDirective, SortByDirective, DeleteButtonDirective, ItemCountComponent, NgbPagination, ArtemisDatePipe],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SystemNotificationManagementComponent implements OnInit, OnDestroy {
-    private systemNotificationService = inject(SystemNotificationService);
-    private adminSystemNotificationService = inject(AdminSystemNotificationService);
-    private alertService = inject(AlertService);
-    private accountService = inject(AccountService);
-    private parseLinks = inject(ParseLinks);
-    private activatedRoute = inject(ActivatedRoute);
-    private router = inject(Router);
-    private eventManager = inject(EventManager);
+    private readonly systemNotificationService = inject(SystemNotificationService);
+    private readonly adminSystemNotificationService = inject(AdminSystemNotificationService);
+    private readonly alertService = inject(AlertService);
+    private readonly accountService = inject(AccountService);
+    private readonly parseLinks = inject(ParseLinks);
+    private readonly activatedRoute = inject(ActivatedRoute);
+    private readonly router = inject(Router);
+    private readonly eventManager = inject(EventManager);
 
-    readonly SCHEDULED = NotificationState.SCHEDULED;
-    readonly ACTIVE = NotificationState.ACTIVE;
-    readonly EXPIRED = NotificationState.EXPIRED;
+    /** Subscriptions that need cleanup on destroy */
+    private routeDataSubscription?: Subscription;
+    private eventManagerSubscription?: Subscription;
 
-    currentAccount: User;
-    notifications: SystemNotification[];
-    error: string;
-    success: string;
-    routeData: Subscription;
-    links: any;
-    predicate = 'notificationDate';
-    previousPage: number;
-    reverse: boolean;
+    /** Notification state constants for template access */
+    protected readonly SCHEDULED = NotificationState.SCHEDULED;
+    protected readonly ACTIVE = NotificationState.ACTIVE;
+    protected readonly EXPIRED = NotificationState.EXPIRED;
 
-    // page information
-    page = 1; // We are at page 1 by default.
-    itemsPerPage = ITEMS_PER_PAGE;
-    totalItems = 0;
+    /** Current logged-in user */
+    readonly currentAccount = signal<User | undefined>(undefined);
 
-    private dialogErrorSource = new Subject<string>();
-    dialogError$ = this.dialogErrorSource.asObservable();
+    /** List of system notifications */
+    readonly notifications = signal<SystemNotification[]>([]);
 
-    // Icons
-    faSort = faSort;
-    faPlus = faPlus;
-    faTimes = faTimes;
-    faEye = faEye;
-    faWrench = faWrench;
+    /** Pagination links parsed from response headers */
+    readonly links = signal<Record<string, number>>({});
+
+    /** Total number of items for pagination */
+    readonly totalItems = signal(0);
+
+    /** Current page number (1-indexed) */
+    readonly page = signal(1);
+
+    /** Items per page for pagination */
+    readonly itemsPerPage = ITEMS_PER_PAGE;
+
+    /** Sort predicate (field name) */
+    readonly predicate = signal('notificationDate');
+
+    /** Previous page number for change detection */
+    private previousPage = 1;
+
+    /** Sort order (true = ascending) */
+    readonly reverse = signal(false);
+
+    /** Subject for dialog error messages */
+    private readonly dialogErrorSource = new Subject<string>();
+    readonly dialogError$ = this.dialogErrorSource.asObservable();
+
+    /** Icons for the template */
+    protected readonly faSort = faSort;
+    protected readonly faPlus = faPlus;
+    protected readonly faTimes = faTimes;
+    protected readonly faEye = faEye;
+    protected readonly faWrench = faWrench;
 
     constructor() {
-        this.routeData = this.activatedRoute.data.subscribe((data) => {
+        // Subscribe to route data for paging parameters
+        this.routeDataSubscription = this.activatedRoute.data.subscribe((data) => {
             const pagingParams = data['pagingParams'];
             if (pagingParams) {
-                this.page = pagingParams.page;
+                this.page.set(pagingParams.page);
                 this.previousPage = pagingParams.page;
-                this.reverse = pagingParams.ascending;
-                this.predicate = pagingParams.predicate;
+                this.reverse.set(pagingParams.ascending);
+                this.predicate.set(pagingParams.predicate);
             }
         });
     }
 
     /**
-     * Initializes current account and system notifications
+     * Initializes current account and loads system notifications.
      */
-    ngOnInit() {
+    ngOnInit(): void {
         this.accountService.identity().then((user: User) => {
-            this.currentAccount = user!;
+            this.currentAccount.set(user);
             this.loadAll();
-            this.registerChangeInUsers();
+            this.registerChangeInNotifications();
         });
     }
 
     /**
-     * Unsubscribe from routeData on component destruction
+     * Subscribes to notification list modifications to reload data.
+     * Subscription is cleaned up in ngOnDestroy.
      */
-    ngOnDestroy() {
-        this.routeData.unsubscribe();
-        this.dialogErrorSource.unsubscribe();
+    private registerChangeInNotifications(): void {
+        this.eventManagerSubscription = this.eventManager.subscribe('notificationListModification', () => this.loadAll());
     }
 
     /**
-     * Reloads notifications changes whenever notification list is modified
+     * Cleans up subscriptions when the component is destroyed.
      */
-    registerChangeInUsers() {
-        this.eventManager.subscribe('notificationListModification', () => this.loadAll());
+    ngOnDestroy(): void {
+        this.routeDataSubscription?.unsubscribe();
+        this.eventManagerSubscription?.unsubscribe();
     }
 
     /**
-     * Deletes notification
-     * @param notificationId the id of the notification that we want to delete
+     * Deletes a notification by ID.
+     * @param notificationId - The ID of the notification to delete
      */
-    deleteNotification(notificationId: number) {
+    deleteNotification(notificationId: number): void {
         this.adminSystemNotificationService.delete(notificationId).subscribe({
             next: () => {
                 this.eventManager.broadcast({
@@ -129,12 +158,12 @@ export class SystemNotificationManagementComponent implements OnInit, OnDestroy 
     }
 
     /**
-     * Loads system notifications
+     * Loads all system notifications for the current page.
      */
-    loadAll() {
+    loadAll(): void {
         this.systemNotificationService
             .query({
-                page: this.page - 1,
+                page: this.page() - 1,
                 size: this.itemsPerPage,
                 sort: this.sort(),
             })
@@ -145,22 +174,25 @@ export class SystemNotificationManagementComponent implements OnInit, OnDestroy 
     }
 
     /**
-     * Returns the unique identifier for items in the collection
-     * @param index of a user in the collection
-     * @param item current notification
+     * Track function for ngFor to optimize rendering.
+     * @param index - Index in the collection
+     * @param item - The notification item
+     * @returns The notification ID or -1 if not available
      */
-    trackIdentity(index: number, item: SystemNotification) {
+    trackIdentity(index: number, item: SystemNotification): number {
         return item.id ?? -1;
     }
 
     /**
-     * Checks if notification is currently active, expired or scheduled
-     * @param systemNotification which relevance will be checked
+     * Determines the current state of a notification (scheduled, active, or expired).
+     * @param systemNotification - The notification to check
+     * @returns The notification state
      */
     getNotificationState(systemNotification: SystemNotification): NotificationState {
-        if (systemNotification.notificationDate!.isAfter(dayjs())) {
+        const now = dayjs();
+        if (systemNotification.notificationDate!.isAfter(now)) {
             return NotificationState.SCHEDULED;
-        } else if (systemNotification.expireDate?.isAfter(dayjs()) ?? true) {
+        } else if (systemNotification.expireDate?.isAfter(now) ?? true) {
             return NotificationState.ACTIVE;
         } else {
             return NotificationState.EXPIRED;
@@ -168,46 +200,57 @@ export class SystemNotificationManagementComponent implements OnInit, OnDestroy 
     }
 
     /**
-     * Sorts parameters by specified order
+     * Creates sort parameters for the query.
+     * @returns Array of sort strings
      */
-    sort() {
-        const result = [];
-        if (this.predicate) {
-            result.push(this.predicate + ',' + (this.reverse ? 'asc' : 'desc'));
+    sort(): string[] {
+        const result: string[] = [];
+        const pred = this.predicate();
+        if (pred) {
+            result.push(`${pred},${this.reverse() ? 'asc' : 'desc'}`);
         }
-        if (this.predicate !== 'id') {
+        if (pred !== 'id') {
             result.push('id');
         }
         return result;
     }
 
     /**
-     * Loads specified page, if it is not the same as previous one
-     * @param page number of the page that will be loaded
+     * Loads a specific page if different from the current page.
+     * @param page - The page number to load
      */
-    loadPage(page: number) {
+    loadPage(page: number): void {
         if (page !== this.previousPage) {
             this.previousPage = page;
+            this.page.set(page);
             this.transition();
         }
     }
 
     /**
-     * Transitions to another page and/or sorting order
+     * Navigates to the updated route with current pagination and sorting.
      */
-    transition() {
+    transition(): void {
         this.router.navigate(['/admin/system-notification-management'], {
             queryParams: {
-                page: this.page,
-                sort: this.predicate + ',' + (this.reverse ? 'asc' : 'desc'),
+                page: this.page(),
+                sort: `${this.predicate()},${this.reverse() ? 'asc' : 'desc'}`,
             },
         });
         this.loadAll();
     }
 
-    private onSuccess(data: SystemNotification[], headers: HttpHeaders) {
-        this.links = this.parseLinks.parse(headers.get('link')!);
-        this.totalItems = Number(headers.get('X-Total-Count')!);
-        this.notifications = data;
+    /**
+     * Handles successful notification load response.
+     * @param data - The notification data
+     * @param headers - The response headers containing pagination info
+     */
+    private onSuccess(data: SystemNotification[], headers: HttpHeaders): void {
+        const linkHeader = headers.get('link');
+        if (linkHeader) {
+            this.links.set(this.parseLinks.parse(linkHeader));
+        }
+        this.totalItems.set(Number(headers.get('X-Total-Count') ?? 0));
+        this.notifications.set(data);
     }
 }
