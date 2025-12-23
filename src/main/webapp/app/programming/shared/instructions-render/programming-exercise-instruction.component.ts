@@ -150,7 +150,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                             this.generateHtmlSubscription.unsubscribe();
                         }
                         if (this.generateHtmlEvents) {
-                            this.generateHtmlEvents.subscribe(() => {
+                            this.generateHtmlSubscription = this.generateHtmlEvents.subscribe(() => {
                                 this.updateMarkdown();
                             });
                         }

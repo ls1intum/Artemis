@@ -137,6 +137,38 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         expect(comp.isInitial).toBeTrue();
     }));
 
+    it('should properly assign and cleanup generateHtmlSubscription when generateHtmlEvents is provided', fakeAsync(() => {
+        const exercise: ProgrammingExercise = {
+            id: 1,
+            numberOfAssessmentsOfCorrectionRounds: [],
+            secondCorrectionEnabled: false,
+            studentAssignedTeamIdComputed: false,
+            isAtLeastTutor: true,
+            problemStatement: 'lorem ipsum dolor sit amet',
+        };
+        const oldParticipation: Participation = { id: 1 };
+        const result: Result = { id: 1 };
+        const participation: Participation = { id: 2, submissions: [{ results: [result] }] };
+        const oldSubscription = new Subscription();
+        const generateHtmlEvents = of(undefined);
+
+        subscribeForLatestResultOfParticipationStub.mockReturnValue(of());
+        comp.exercise = exercise;
+        comp.participation = participation;
+        comp.generateHtmlEvents = generateHtmlEvents;
+        // @ts-ignore
+        comp.generateHtmlSubscription = oldSubscription;
+
+        triggerChanges(comp, { property: 'participation', currentValue: participation, previousValue: oldParticipation, firstChange: false });
+        fixture.changeDetectorRef.detectChanges();
+
+        // @ts-ignore - the generateHtmlSubscription should be reassigned, not left as the old one
+        expect(comp.generateHtmlSubscription).not.toEqual(oldSubscription);
+        // @ts-ignore - verify it's actually a subscription
+        expect(comp.generateHtmlSubscription).toBeInstanceOf(Subscription);
+        flush();
+    }));
+
     it('should process empty problem statement and show empty state', () => {
         const result: Result = { id: 1, feedbacks: [] };
         const participation: Participation = { id: 2 };
