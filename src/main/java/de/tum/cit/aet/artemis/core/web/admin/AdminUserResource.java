@@ -326,6 +326,12 @@ public class AdminUserResource {
         if (userRepository.isCurrentUser(login)) {
             throw new BadRequestAlertException("You cannot delete yourself", "userManagement", "cannotDeleteYourself");
         }
+
+        User userToBeDeleted = userRepository.findOneWithGroupsAndAuthoritiesByLogin(login).orElseThrow(() -> new EntityNotFoundException("User", login));
+        if (userToBeDeleted.getAuthorities().contains(Authority.SUPER_ADMIN_AUTHORITY) && !this.authorizationCheckService.isSuperAdmin()) {
+            throw new AccessForbiddenAlertException("Only super administrators are allowed to manage other super administrators.", "userManagement",
+                    "userManagement.onlySuperAdminCanManageSuperAdmins");
+        }
         userService.softDeleteUser(login);
         return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "artemisApp.userManagement.deleted", login)).build();
     }
