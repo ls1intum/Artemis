@@ -3,12 +3,13 @@ import {CalloutVariant} from "../../src/components/Callout/Callout.types";
 
 # Access Rights
 
-Artemis distinguishes between six different roles: **ADMIN**, **INSTRUCTOR**, **EDITOR**, **TA** (Teaching Assistant), **USER** and **ANONYMOUS**.
+Artemis distinguishes between seven different roles: **SUPER_ADMIN**, **ADMIN**, **INSTRUCTOR**, **EDITOR**, **TA** (Teaching Assistant), **USER** and **ANONYMOUS**.
 The roles are sorted in descending order. An INSTRUCTOR has at least all the permissions that an EDITOR has.
-An ADMIN has no restrictions, while an ANONYMOUS has hardly any rights.
+A SUPER_ADMIN has no restrictions, while an ANONYMOUS has hardly any rights.
 
 ## Roles Overview
 
+- **SUPER_ADMIN:** has all permissions that an ADMIN has and additional privileges for critical security operations (see [Super Admin vs Admin](#super-admin-vs-admin) for details)
 - **ADMIN:** can access all features that Artemis provides (includes features regarding the server administration, e.g. server health checks, user management and creating new courses)
 - **INSTRUCTOR:** can access all features related to the content of a course (includes creating and deleting exercises/exams/lectures and monitoring scores and submissions)
 - **EDITOR:** can create and edit the content of a course but cannot delete content and monitoring other course participants is limited
@@ -22,16 +23,31 @@ An ADMIN has no restrictions, while an ANONYMOUS has hardly any rights.
 
 In the following, the respective permissions illustrated. If a subordinated role has all permissions or a role does not have any access rights, it is not explicitly displayed.
 
+## Super Admin vs Admin
+
+While Super Admins have all the permissions of regular Admins, they have additional privileges in security-critical areas:
+
+### Passkey Approval
+
+Super Admins have the exclusive privilege to approve passkey registrations for administrators. This minimizes the attack surface for critical security operations by limiting passkey approval to a very small number of trusted users.
+
+For detailed information about passkey authentication, configuration, and the approval process, see the [Passkey Authentication](/admin/production-setup/security#passkey-authentication) section in the Security Configuration documentation.
+
+<Callout variant={CalloutVariant.info}>
+    Super Admin privileges are only relevant when passkeys are activated and passkey enforcement for administrators is enabled. In other configurations, Super Admins and Admins have identical permissions.
+</Callout>
+
 ## Navigation
 
-| Feature               | Admin | Instructor | Editor | Teaching Assistant | Student |
-|-----------------------|-------|------------|--------|--------------------|---------|
-| Course Overview       | ✔     | ✔          | ✔      | ✔                  | ✔       |
-| Course Management     | ✔     | ✔          | ✔      | ✔                  |         |
-| Edit Course           | ✔     | ✔          |        |                    |         |
-| Create new course     | ✔     |            |        |                    |         |
-| Delete Course         | ✔     |            |        |                    |         |
-| Server Administration | ✔     |            |        |                    |         |
+| Feature               | Super Admin | Admin | Instructor | Editor | Teaching Assistant | Student |
+|-----------------------|-------------|-------|------------|--------|--------------------|---------|
+| Course Overview       | ✔           | ✔     | ✔          | ✔      | ✔                  | ✔       |
+| Course Management     | ✔           | ✔     | ✔          | ✔      | ✔                  |         |
+| Edit Course           | ✔           | ✔     | ✔          |        |                    |         |
+| Create new course     | ✔           | ✔     |            |        |                    |         |
+| Delete Course         | ✔           | ✔     |            |        |                    |         |
+| Server Administration | ✔           | ✔     |            |        |                    |         |
+| Approve Passkeys      | ✔           |       |            |        |                    |         |
 
 ## Course
 
