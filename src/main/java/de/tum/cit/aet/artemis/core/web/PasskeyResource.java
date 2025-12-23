@@ -185,7 +185,9 @@ public class PasskeyResource {
         PasskeyCredential passkeyCredential = credentialToBeUpdated.get();
         String userLogin = passkeyCredential.getUser().getLogin();
 
-        if (artemisInternalAdminUsername.isPresent() && artemisInternalAdminUsername.get().equals(userLogin) && !isSuperAdminApproved) {
+        boolean isTryingToRevokeInternalAdminUserApproval = artemisInternalAdminUsername.isPresent() && artemisInternalAdminUsername.get().equals(userLogin)
+                && !isSuperAdminApproved;
+        if (isTryingToRevokeInternalAdminUserApproval) {
             throw new BadRequestAlertException("Cannot revoke approval for internal admin's passkey; if you want to revoke the approval delete the passkey instead.",
                     "PasskeyCredential", "passkeyAuth.cannotRevokeInternalAdminPasskeyApproval");
         }
