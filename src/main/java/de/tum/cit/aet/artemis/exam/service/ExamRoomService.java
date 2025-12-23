@@ -86,7 +86,7 @@ public class ExamRoomService {
         // We want to discard any duplicate rooms. Having duplicate rooms is only possible if you also nest the same
         // .json file in one or more subfolders. Doing this is either a (malicious) mistake, or perhaps a backup file,
         // and will thus raise an error, indicating the ambiguity.
-        Set<ExamRoom> examRooms = new TreeSet<>(Comparator.comparing(ExamRoom::getRoomNumber));
+        Set<ExamRoom> examRooms = new TreeSet<>(Comparator.comparing(ExamRoom::getRoomNumber, String.CASE_INSENSITIVE_ORDER));
 
         try (ZipInputStream zis = new ZipInputStream(zipFile.getInputStream())) {
             ZipEntry entry;
