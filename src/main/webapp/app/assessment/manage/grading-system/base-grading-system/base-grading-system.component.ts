@@ -66,6 +66,20 @@ export abstract class BaseGradingSystemComponent implements OnInit {
     course?: Course;
     exam?: Exam;
     maxPoints?: number;
+
+    /**
+     * Configuration for presentation settings in the grading system.
+     * This object is passed to the GradingSystemPresentationsComponent as an input.
+     * When the child component modifies presentation settings, it emits the updated
+     * config via its presentationsConfigChange output, and this parent component
+     * updates its local copy via onPresentationsConfigChange().
+     *
+     * This explicit synchronization mechanism ensures clear data flow between
+     * parent and child components rather than relying on implicit object mutation.
+     *
+     * The presentationsConfig is used during save() for validation and to sync
+     * presentationScore to the course entity.
+     */
     presentationsConfig: PresentationsConfig = { presentationType: PresentationType.NONE };
 
     // Icons
@@ -89,6 +103,17 @@ export abstract class BaseGradingSystemComponent implements OnInit {
                 this.handleFindObservable(this.gradingSystemService.findGradingScaleForCourse(this.courseId!));
             }
         });
+    }
+
+    /**
+     * Handles updates to the presentations configuration emitted by the child component.
+     * This method provides explicit synchronization between the GradingSystemPresentationsComponent
+     * and this parent component, replacing implicit object mutation with a clear data flow pattern.
+     *
+     * @param config - The updated presentations configuration from the child component
+     */
+    onPresentationsConfigChange(config: PresentationsConfig): void {
+        this.presentationsConfig = config;
     }
 
     private handleFindObservable(findObservable: Observable<EntityResponseType>) {

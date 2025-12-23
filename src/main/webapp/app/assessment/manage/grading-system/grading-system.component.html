@@ -60,7 +60,11 @@
                 }
             </div>
         </div>
-        <jhi-grading-system-presentations [gradingScale]="childComponent.gradingScale" [presentationsConfig]="childComponent.presentationsConfig" />
+        <jhi-grading-system-presentations
+            [gradingScale]="childComponent.gradingScale"
+            [presentationsConfig]="childComponent.presentationsConfig"
+            (presentationsConfigChange)="childComponent.onPresentationsConfigChange($event)"
+        />
     </div>
 }
 <div class="tab-bar" id="tab-bar">

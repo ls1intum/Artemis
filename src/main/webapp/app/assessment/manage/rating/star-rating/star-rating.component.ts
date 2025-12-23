@@ -80,33 +80,29 @@ export class StarRatingComponent {
 
     /**
      * The current rating value input. Supports decimal values for half-star display.
-     * Use the `currentValue` getter/setter for programmatic access to the internal value.
+     * Use the `currentRating` getter/setter for programmatic access to the internal value.
      */
-    // eslint-disable-next-line @angular-eslint/no-input-rename
-    readonly valueInput = input<number>(0, { alias: 'value' });
+    readonly value = input<number>(0);
 
     /**
      * The size of each star. Can be specified with or without 'px' suffix.
      * Use the `normalizedSize` getter for the value with guaranteed 'px' suffix.
      * @example '24px', '32', '48px'
      */
-    // eslint-disable-next-line @angular-eslint/no-input-rename
-    readonly sizeInput = input<string>('24px', { alias: 'size' });
+    readonly size = input<string>('24px');
 
     /**
      * When true, the rating cannot be changed by user interaction.
      * Stars will not respond to hover or click events.
      */
-    // eslint-disable-next-line @angular-eslint/no-input-rename
-    readonly readOnlyInput = input<boolean>(false, { alias: 'readOnly' });
+    readonly readOnly = input<boolean>(false);
 
     /**
      * The total number of stars to display.
-     * Use the `normalizedTotalStars` getter for the validated value.
+     * Use the `starCount` getter for the validated value.
      * Invalid values (<=0) default to 5.
      */
-    // eslint-disable-next-line @angular-eslint/no-input-rename
-    readonly totalStarsInput = input<number>(5, { alias: 'totalStars' });
+    readonly totalStars = input<number>(5);
 
     // =========================================================================
     // Internal State
@@ -142,8 +138,8 @@ export class StarRatingComponent {
     // Public Accessors (for template and external access)
     // =========================================================================
 
-    /** Gets the current rating value */
-    get value(): number {
+    /** Gets the current rating value from internal state */
+    get currentRating(): number {
         return this.currentValue();
     }
 
@@ -151,7 +147,7 @@ export class StarRatingComponent {
      * Sets the current rating value.
      * Falsy values (null, undefined, 0) are normalized to 0.
      */
-    set value(newValue: number) {
+    set currentRating(newValue: number) {
         const normalizedValue = newValue || 0;
         this.currentValue.set(normalizedValue);
     }
@@ -160,22 +156,22 @@ export class StarRatingComponent {
      * Gets the star size with 'px' suffix guaranteed.
      * @returns Size string with 'px' suffix (e.g., '24px')
      */
-    get size(): string {
-        const sizeValue = this.sizeInput() || '24px';
+    get normalizedSize(): string {
+        const sizeValue = this.size() || '24px';
         return sizeValue.includes('px') ? sizeValue : `${sizeValue}px`;
     }
 
     /** Gets whether the component is in read-only mode */
-    get readOnly(): boolean {
-        return this.readOnlyInput();
+    get isReadOnly(): boolean {
+        return this.readOnly();
     }
 
     /**
      * Gets the total number of stars to display.
      * Invalid values are normalized to 5.
      */
-    get totalStars(): number {
-        const inputValue = this.totalStarsInput();
+    get starCount(): number {
+        const inputValue = this.totalStars();
         return inputValue <= 0 ? 5 : Math.round(inputValue);
     }
 
@@ -200,9 +196,9 @@ export class StarRatingComponent {
      */
     private setupTotalStarsEffect(): void {
         effect(() => {
-            // Access totalStarsInput signal to subscribe to changes
-            // The value is used implicitly via this.totalStars getter in rebuildStarDisplay
-            void this.totalStarsInput();
+            // Access totalStars signal to subscribe to changes
+            // The value is used implicitly via this.starCount getter in rebuildStarDisplay
+            void this.totalStars();
             if (this.isInitialized()) {
                 this.rebuildStarDisplay();
             }
@@ -215,7 +211,7 @@ export class StarRatingComponent {
      */
     private setupValueInputSyncEffect(): void {
         effect(() => {
-            const externalValue = this.valueInput();
+            const externalValue = this.value();
             const normalizedValue = externalValue || 0;
             this.currentValue.set(normalizedValue);
         });
@@ -264,9 +260,9 @@ export class StarRatingComponent {
      */
     private setupSizeEffect(): void {
         effect(() => {
-            // Access sizeInput signal to subscribe to changes
-            // The value is used implicitly via this.size getter in applyStarSizes
-            void this.sizeInput();
+            // Access size signal to subscribe to changes
+            // The value is used implicitly via this.normalizedSize getter in applyStarSizes
+            void this.size();
             if (this.isInitialized()) {
                 this.applyStarSizes();
             }
@@ -278,9 +274,9 @@ export class StarRatingComponent {
      */
     private setupReadOnlyEffect(): void {
         effect(() => {
-            const isReadOnly = this.readOnlyInput();
+            const isReadOnlyValue = this.readOnly();
             if (this.isInitialized()) {
-                if (isReadOnly) {
+                if (isReadOnlyValue) {
                     this.disableInteraction();
                 } else {
                     this.enableInteraction();
@@ -330,7 +326,7 @@ export class StarRatingComponent {
         }
 
         const containerElement: HTMLDivElement = container.nativeElement;
-        const starIndices = [...Array(this.totalStars).keys()];
+        const starIndices = [...Array(this.starCount).keys()];
 
         // Clear existing stars
         this.starElements.length = 0;
@@ -358,7 +354,7 @@ export class StarRatingComponent {
         if (!container) {
             return;
         }
-        if (this.readOnly && !forceRender) {
+        if (this.isReadOnly && !forceRender) {
             return;
         }
 
@@ -366,9 +362,9 @@ export class StarRatingComponent {
             this.createStarElements();
         }
 
-        container.nativeElement.title = this.value;
+        container.nativeElement.title = this.currentRating;
 
-        const ratingValue = this.value;
+        const ratingValue = this.currentRating;
         const fullStarCount = Math.floor(ratingValue);
         let hasDecimalPart = ratingValue % 1 !== 0;
 
@@ -399,7 +395,7 @@ export class StarRatingComponent {
      * Also calculates and applies half-width for partial stars.
      */
     private applyStarSizes(): void {
-        if (!this.sizeInput()) {
+        if (!this.size()) {
             return;
         }
 
@@ -408,17 +404,17 @@ export class StarRatingComponent {
         }
 
         // Extract numeric value from size string (e.g., '24' from '24px')
-        const sizeMatch = this.size.match(/\d+/);
+        const sizeMatch = this.normalizedSize.match(/\d+/);
         if (!sizeMatch) {
             return;
         }
 
         const numericSize = Number(sizeMatch[0]);
-        const decimalPart = this.value - Math.floor(this.value);
+        const decimalPart = this.currentRating - Math.floor(this.currentRating);
         const halfStarWidth = numericSize * (1 - decimalPart);
 
         this.starElements.forEach((star) => {
-            star.style.setProperty(StarRatingComponent.VAR_SIZE, this.size);
+            star.style.setProperty(StarRatingComponent.VAR_SIZE, this.normalizedSize);
 
             // Apply special width for half stars to show partial fill
             if (star.classList.contains(StarRatingComponent.CLS_HALF_STAR)) {
@@ -502,7 +498,7 @@ export class StarRatingComponent {
         }
 
         container.nativeElement.style.cursor = 'pointer';
-        container.nativeElement.title = this.value;
+        container.nativeElement.title = this.currentRating;
 
         this.starElements.forEach((star) => {
             star.style.cursor = 'pointer';
@@ -520,7 +516,7 @@ export class StarRatingComponent {
         }
 
         container.nativeElement.style.cursor = 'default';
-        container.nativeElement.title = this.value;
+        container.nativeElement.title = this.currentRating;
 
         this.starElements.forEach((star) => {
             star.style.cursor = 'default';
@@ -534,13 +530,13 @@ export class StarRatingComponent {
      */
     private attachEventHandlers(): void {
         const container = this.starContainer();
-        if (!container || this.readOnly) {
+        if (!container || this.isReadOnly) {
             return;
         }
 
         container.nativeElement.addEventListener('mouseleave', this.handleMouseLeave.bind(this));
         container.nativeElement.style.cursor = 'pointer';
-        container.nativeElement.title = this.value;
+        container.nativeElement.title = this.currentRating;
 
         this.starElements.forEach((star) => {
             star.addEventListener('click', this.handleStarClick.bind(this));
@@ -555,16 +551,15 @@ export class StarRatingComponent {
      * Emits the rate output with old and new values.
      */
     private handleStarClick(event: MouseEvent): void {
-        if (this.readOnly) {
+        if (this.isReadOnly) {
             return;
         }
 
         const clickedStar = event.target as HTMLElement;
-        const previousValue = this.value;
-        const newValue = parseInt(clickedStar.dataset.index!, 10);
+        const previousValue = this.currentRating;
 
-        this.value = newValue;
-        this.rate.emit({ oldValue: previousValue, newValue: this.value });
+        this.currentRating = parseInt(clickedStar.dataset.index!, 10);
+        this.rate.emit({ oldValue: previousValue, newValue: this.currentRating });
     }
 
     /**
@@ -572,7 +567,7 @@ export class StarRatingComponent {
      * Highlights all stars up to the hovered position.
      */
     private handleStarHover(event: MouseEvent): void {
-        if (this.readOnly) {
+        if (this.isReadOnly) {
             return;
         }
 

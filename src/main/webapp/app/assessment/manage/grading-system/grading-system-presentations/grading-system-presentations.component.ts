@@ -1,4 +1,4 @@
-import { Component, effect, input } from '@angular/core';
+import { Component, effect, input, output } from '@angular/core';
 import { ModePickerComponent, ModePickerOption } from 'app/exercise/mode-picker/mode-picker.component';
 import { GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -110,10 +110,17 @@ export class GradingSystemPresentationsComponent {
 
     /**
      * Configuration object for tracking presentation settings.
-     * This object is mutated by this component to reflect user choices
-     * and should be kept in sync with the grading scale by the parent.
+     * This represents the current state of presentation configuration.
      */
     readonly presentationsConfig = input.required<PresentationsConfig>();
+
+    /**
+     * Emits whenever the presentations configuration changes.
+     * The parent component should subscribe to this output and update its local
+     * presentationsConfig copy to maintain synchronization. This ensures explicit
+     * data flow from child to parent rather than relying on implicit object mutation.
+     */
+    readonly presentationsConfigChange = output<PresentationsConfig>();
 
     // =========================================================================
     // Constructor
@@ -171,6 +178,20 @@ export class GradingSystemPresentationsComponent {
         // Sync graded presentation settings from scale to config
         config.presentationsNumber = scale.presentationsNumber;
         config.presentationsWeight = scale.presentationsWeight;
+
+        this.emitConfigChange();
+    }
+
+    // =========================================================================
+    // Config Change Emission
+    // =========================================================================
+
+    /**
+     * Emits the current presentations config to notify the parent of changes.
+     * This creates a shallow copy to ensure the parent receives a new object reference.
+     */
+    private emitConfigChange(): void {
+        this.presentationsConfigChange.emit({ ...this.presentationsConfig() });
     }
 
     // =========================================================================
@@ -212,6 +233,7 @@ export class GradingSystemPresentationsComponent {
      * 1. Updates the config with the new type
      * 2. Clears settings from the previous type
      * 3. Applies default values for the new type
+     * 4. Emits the updated config to the parent
      *
      * @param newPresentationType - The newly selected presentation type
      */
@@ -221,25 +243,27 @@ export class GradingSystemPresentationsComponent {
         switch (newPresentationType) {
             case PresentationType.NONE:
                 // Clear all presentation-related settings
-                this.updatePresentationScore(undefined);
-                this.updatePresentationsNumber(undefined);
-                this.updatePresentationsWeight(undefined);
+                this.updatePresentationScore(undefined, false);
+                this.updatePresentationsNumber(undefined, false);
+                this.updatePresentationsWeight(undefined, false);
                 break;
 
             case PresentationType.BASIC:
                 // Set default basic presentation score, clear graded settings
-                this.updatePresentationScore(2); // Default: 2 presentations required
-                this.updatePresentationsNumber(undefined);
-                this.updatePresentationsWeight(undefined);
+                this.updatePresentationScore(2, false); // Default: 2 presentations required
+                this.updatePresentationsNumber(undefined, false);
+                this.updatePresentationsWeight(undefined, false);
                 break;
 
             case PresentationType.GRADED:
                 // Set default graded settings, clear basic setting
-                this.updatePresentationScore(undefined);
-                this.updatePresentationsNumber(2); // Default: 2 presentations required
-                this.updatePresentationsWeight(20); // Default: 20% of final grade
+                this.updatePresentationScore(undefined, false);
+                this.updatePresentationsNumber(2, false); // Default: 2 presentations required
+                this.updatePresentationsWeight(20, false); // Default: 20% of final grade
                 break;
         }
+
+        this.emitConfigChange();
     }
 
     // =========================================================================
@@ -253,8 +277,9 @@ export class GradingSystemPresentationsComponent {
      * Invalid values (null, undefined, zero, negative) are normalized to undefined.
      *
      * @param presentationScore - The new presentation score, or undefined to clear
+     * @param emitChange - Whether to emit the config change (default: true)
      */
-    updatePresentationScore(presentationScore?: number): void {
+    updatePresentationScore(presentationScore?: number, emitChange: boolean = true): void {
         const scale = this.gradingScale();
         const config = this.presentationsConfig();
 
@@ -268,6 +293,10 @@ export class GradingSystemPresentationsComponent {
         // Update both config and the underlying course entity
         config.presentationScore = normalizedScore;
         scale.course.presentationScore = normalizedScore;
+
+        if (emitChange) {
+            this.emitConfigChange();
+        }
     }
 
     /**
@@ -277,8 +306,9 @@ export class GradingSystemPresentationsComponent {
      * Invalid values (null, undefined, zero, negative) are normalized to undefined.
      *
      * @param presentationsNumber - The new number of presentations, or undefined to clear
+     * @param emitChange - Whether to emit the config change (default: true)
      */
-    updatePresentationsNumber(presentationsNumber?: number): void {
+    updatePresentationsNumber(presentationsNumber?: number, emitChange: boolean = true): void {
         const config = this.presentationsConfig();
         const scale = this.gradingScale();
 
@@ -288,6 +318,10 @@ export class GradingSystemPresentationsComponent {
         // Update both config and the underlying grading scale entity
         config.presentationsNumber = normalizedNumber;
         scale.presentationsNumber = normalizedNumber;
+
+        if (emitChange) {
+            this.emitConfigChange();
+        }
     }
 
     /**
@@ -298,8 +332,9 @@ export class GradingSystemPresentationsComponent {
      * Note: Zero is a valid weight (presentations worth 0%).
      *
      * @param presentationsWeight - The new weight percentage, or undefined to clear
+     * @param emitChange - Whether to emit the config change (default: true)
      */
-    updatePresentationsWeight(presentationsWeight?: number): void {
+    updatePresentationsWeight(presentationsWeight?: number, emitChange: boolean = true): void {
         const config = this.presentationsConfig();
         const scale = this.gradingScale();
 
@@ -309,5 +344,9 @@ export class GradingSystemPresentationsComponent {
         // Update both config and the underlying grading scale entity
         config.presentationsWeight = normalizedWeight;
         scale.presentationsWeight = normalizedWeight;
+
+        if (emitChange) {
+            this.emitConfigChange();
+        }
     }
 }

@@ -22,7 +22,7 @@ describe('StarRatingComponent', () => {
         });
 
         it('should render 5 stars by default', () => {
-            expect(component.totalStars).toBe(5);
+            expect(component.starCount).toBe(5);
         });
     });
 
@@ -32,19 +32,19 @@ describe('StarRatingComponent', () => {
 
     describe('default values', () => {
         it('should have default totalStars of 5', () => {
-            expect(component.totalStars).toBe(5);
+            expect(component.starCount).toBe(5);
         });
 
         it('should have default value of 0', () => {
-            expect(component.value).toBe(0);
+            expect(component.value()).toBe(0);
         });
 
         it('should have default size of 24px', () => {
-            expect(component.size).toBe('24px');
+            expect(component.normalizedSize).toBe('24px');
         });
 
         it('should not be read-only by default', () => {
-            expect(component.readOnly).toBeFalse();
+            expect(component.isReadOnly).toBeFalse();
         });
 
         it('should have undefined checkedColor by default', () => {
@@ -61,29 +61,29 @@ describe('StarRatingComponent', () => {
     // =========================================================================
 
     describe('value handling', () => {
-        it('should allow setting value programmatically', () => {
-            component.value = 3;
-            expect(component.value).toBe(3);
+        it('should allow setting value programmatically via currentRating', () => {
+            component.currentRating = 3;
+            expect(component.currentRating).toBe(3);
         });
 
         it('should normalize undefined value to 0', () => {
-            component.value = undefined as unknown as number;
-            expect(component.value).toBe(0);
+            component.currentRating = undefined as unknown as number;
+            expect(component.currentRating).toBe(0);
         });
 
         it('should normalize null value to 0', () => {
-            component.value = null as unknown as number;
-            expect(component.value).toBe(0);
+            component.currentRating = null as unknown as number;
+            expect(component.currentRating).toBe(0);
         });
 
         it('should accept decimal values for half-star display', () => {
-            component.value = 3.5;
-            expect(component.value).toBe(3.5);
+            component.currentRating = 3.5;
+            expect(component.currentRating).toBe(3.5);
         });
 
         it('should accept value of 0', () => {
-            component.value = 0;
-            expect(component.value).toBe(0);
+            component.currentRating = 0;
+            expect(component.currentRating).toBe(0);
         });
     });
 
@@ -96,21 +96,21 @@ describe('StarRatingComponent', () => {
             fixture.componentRef.setInput('size', '32');
             fixture.detectChanges();
 
-            expect(component.size).toBe('32px');
+            expect(component.normalizedSize).toBe('32px');
         });
 
         it('should preserve px suffix when already provided', () => {
             fixture.componentRef.setInput('size', '48px');
             fixture.detectChanges();
 
-            expect(component.size).toBe('48px');
+            expect(component.normalizedSize).toBe('48px');
         });
 
         it('should default to 24px when size is empty', () => {
             fixture.componentRef.setInput('size', '');
             fixture.detectChanges();
 
-            expect(component.size).toBe('24px');
+            expect(component.normalizedSize).toBe('24px');
         });
     });
 
@@ -123,28 +123,28 @@ describe('StarRatingComponent', () => {
             fixture.componentRef.setInput('totalStars', -1);
             fixture.detectChanges();
 
-            expect(component.totalStars).toBe(5);
+            expect(component.starCount).toBe(5);
         });
 
         it('should normalize zero totalStars to 5', () => {
             fixture.componentRef.setInput('totalStars', 0);
             fixture.detectChanges();
 
-            expect(component.totalStars).toBe(5);
+            expect(component.starCount).toBe(5);
         });
 
         it('should round decimal totalStars to nearest integer', () => {
             fixture.componentRef.setInput('totalStars', 3.7);
             fixture.detectChanges();
 
-            expect(component.totalStars).toBe(4);
+            expect(component.starCount).toBe(4);
         });
 
         it('should accept custom totalStars value', () => {
             fixture.componentRef.setInput('totalStars', 10);
             fixture.detectChanges();
 
-            expect(component.totalStars).toBe(10);
+            expect(component.starCount).toBe(10);
         });
     });
 
@@ -157,14 +157,14 @@ describe('StarRatingComponent', () => {
             fixture.componentRef.setInput('readOnly', true);
             fixture.detectChanges();
 
-            expect(component.readOnly).toBeTrue();
+            expect(component.isReadOnly).toBeTrue();
         });
 
         it('should be editable when readOnly is false', () => {
             fixture.componentRef.setInput('readOnly', false);
             fixture.detectChanges();
 
-            expect(component.readOnly).toBeFalse();
+            expect(component.isReadOnly).toBeFalse();
         });
     });
 
@@ -210,20 +210,20 @@ describe('StarRatingComponent', () => {
     // =========================================================================
 
     describe('input changes', () => {
-        it('should update value when input changes', fakeAsync(() => {
+        it('should update currentRating when value input changes', fakeAsync(() => {
             fixture.componentRef.setInput('value', 4);
             fixture.detectChanges();
             tick();
 
-            expect(component.value).toBe(4);
+            expect(component.currentRating).toBe(4);
         }));
 
-        it('should update totalStars when input changes', fakeAsync(() => {
+        it('should update starCount when totalStars input changes', fakeAsync(() => {
             fixture.componentRef.setInput('totalStars', 7);
             fixture.detectChanges();
             tick();
 
-            expect(component.totalStars).toBe(7);
+            expect(component.starCount).toBe(7);
         }));
     });
 });

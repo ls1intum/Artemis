@@ -126,6 +126,10 @@ describe('GradingSystemPresentationsComponent', () => {
             expect(component.modePickerOptions).toBeDefined();
             expect(component.modePickerOptions).toHaveLength(3);
         });
+
+        it('should have presentationsConfigChange output defined', () => {
+            expect(component.presentationsConfigChange).toBeDefined();
+        });
     });
 
     // =========================================================================
@@ -378,6 +382,108 @@ describe('GradingSystemPresentationsComponent', () => {
     // =========================================================================
     // Presentation Type Changes
     // =========================================================================
+
+    // =========================================================================
+    // Output Emission
+    // =========================================================================
+
+    describe('presentationsConfigChange output', () => {
+        it('should emit config change on initialization', () => {
+            const gradingScale = createGradingScaleWithGradedPresentations();
+            const config = createDefaultPresentationsConfig();
+            const emitSpy = jest.spyOn(component.presentationsConfigChange, 'emit');
+
+            fixture.componentRef.setInput('gradingScale', gradingScale);
+            fixture.componentRef.setInput('presentationsConfig', config);
+            fixture.detectChanges();
+
+            expect(emitSpy).toHaveBeenCalled();
+            const emittedConfig = emitSpy.mock.calls[0][0];
+            expect(emittedConfig.presentationType).toBe(PresentationType.GRADED);
+        });
+
+        it('should emit config change when presentation type changes', () => {
+            const gradingScale = createGradingScaleWithoutPresentations();
+            const config = createDefaultPresentationsConfig();
+
+            fixture.componentRef.setInput('gradingScale', gradingScale);
+            fixture.componentRef.setInput('presentationsConfig', config);
+            fixture.detectChanges();
+
+            const emitSpy = jest.spyOn(component.presentationsConfigChange, 'emit');
+            component.onPresentationTypeChange(PresentationType.GRADED);
+
+            expect(emitSpy).toHaveBeenCalledOnce();
+            const emittedConfig = emitSpy.mock.calls[0][0];
+            expect(emittedConfig.presentationType).toBe(PresentationType.GRADED);
+            expect(emittedConfig.presentationsNumber).toBe(2);
+            expect(emittedConfig.presentationsWeight).toBe(20);
+        });
+
+        it('should emit config change when updating presentations number', () => {
+            const gradingScale = createGradingScaleWithGradedPresentations();
+            const config = createDefaultPresentationsConfig();
+
+            fixture.componentRef.setInput('gradingScale', gradingScale);
+            fixture.componentRef.setInput('presentationsConfig', config);
+            fixture.detectChanges();
+
+            const emitSpy = jest.spyOn(component.presentationsConfigChange, 'emit');
+            component.updatePresentationsNumber(5);
+
+            expect(emitSpy).toHaveBeenCalledOnce();
+            const emittedConfig = emitSpy.mock.calls[0][0];
+            expect(emittedConfig.presentationsNumber).toBe(5);
+        });
+
+        it('should emit config change when updating presentations weight', () => {
+            const gradingScale = createGradingScaleWithGradedPresentations();
+            const config = createDefaultPresentationsConfig();
+
+            fixture.componentRef.setInput('gradingScale', gradingScale);
+            fixture.componentRef.setInput('presentationsConfig', config);
+            fixture.detectChanges();
+
+            const emitSpy = jest.spyOn(component.presentationsConfigChange, 'emit');
+            component.updatePresentationsWeight(50);
+
+            expect(emitSpy).toHaveBeenCalledOnce();
+            const emittedConfig = emitSpy.mock.calls[0][0];
+            expect(emittedConfig.presentationsWeight).toBe(50);
+        });
+
+        it('should emit config change when updating presentation score', () => {
+            const gradingScale = createGradingScaleWithBasicPresentations();
+            const config = createDefaultPresentationsConfig();
+
+            fixture.componentRef.setInput('gradingScale', gradingScale);
+            fixture.componentRef.setInput('presentationsConfig', config);
+            fixture.detectChanges();
+
+            const emitSpy = jest.spyOn(component.presentationsConfigChange, 'emit');
+            component.updatePresentationScore(7);
+
+            expect(emitSpy).toHaveBeenCalledOnce();
+            const emittedConfig = emitSpy.mock.calls[0][0];
+            expect(emittedConfig.presentationScore).toBe(7);
+        });
+
+        it('should emit a shallow copy of the config to ensure immutability', () => {
+            const gradingScale = createGradingScaleWithGradedPresentations();
+            const config = createDefaultPresentationsConfig();
+
+            fixture.componentRef.setInput('gradingScale', gradingScale);
+            fixture.componentRef.setInput('presentationsConfig', config);
+            fixture.detectChanges();
+
+            const emitSpy = jest.spyOn(component.presentationsConfigChange, 'emit');
+            component.updatePresentationsNumber(10);
+
+            const emittedConfig = emitSpy.mock.calls[0][0];
+            // The emitted config should be a different object reference
+            expect(emittedConfig).not.toBe(config);
+        });
+    });
 
     describe('onPresentationTypeChange', () => {
         describe('changing to GRADED', () => {
