@@ -5,9 +5,7 @@ import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -608,23 +606,5 @@ public class UserUtilService {
         userVM.setLangKey(Constants.DEFAULT_LANGUAGE);
         userVM.setAuthorities(Set.of(Role.STUDENT.getAuthority()));
         return userVM;
-    }
-
-    /**
-     * Creates a map containing counts for each user role.
-     *
-     * @param students    count of students
-     * @param tutors      count of tutors
-     * @param editors     count of editors
-     * @param instructors count of instructors
-     * @return a map with the counts
-     */
-    public Map<String, Integer> createUserCountMap(int students, int tutors, int editors, int instructors) {
-        Map<String, Integer> userCounts = new HashMap<>();
-        userCounts.put("student", students);
-        userCounts.put("tutor", tutors);
-        userCounts.put("editor", editors);
-        userCounts.put("instructor", instructors);
-        return userCounts;
     }
 }
