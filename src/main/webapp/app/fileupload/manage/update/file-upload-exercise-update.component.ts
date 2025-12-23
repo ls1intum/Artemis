@@ -156,6 +156,15 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnInit 
                 this.handleImport(params);
             }
         });
+
+        // Effect to load existing categories when courseId becomes available
+        effect(() => {
+            const courseId = this.examCourseId();
+            const isExamMode = this.isExamMode();
+            if (!isExamMode && courseId) {
+                this.loadExistingCategories(courseId);
+            }
+        });
     }
 
     /**
@@ -259,15 +268,6 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnInit 
         const exercise = this.fileUploadExercise();
         if (!this.isExamMode()) {
             this.exerciseCategories.set(exercise.categories || []);
-            const courseId = this.examCourseId();
-            if (courseId) {
-                this.courseService.findAllCategoriesOfCourse(courseId).subscribe({
-                    next: (categoryRes: HttpResponse<string[]>) => {
-                        this.existingCategories.set(this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body ?? []));
-                    },
-                    error: (error: HttpErrorResponse) => onError(this.alertService, error),
-                });
-            }
         } else {
             // Lock individual mode for exam exercises
             exercise.mode = ExerciseMode.INDIVIDUAL;
@@ -277,6 +277,15 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnInit 
                 exercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
             }
         }
+    }
+
+    private loadExistingCategories(courseId: number) {
+        this.courseService.findAllCategoriesOfCourse(courseId).subscribe({
+            next: (categoryRes: HttpResponse<string[]>) => {
+                this.existingCategories.set(this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body ?? []));
+            },
+            error: (error: HttpErrorResponse) => onError(this.alertService, error),
+        });
     }
 
     async save() {

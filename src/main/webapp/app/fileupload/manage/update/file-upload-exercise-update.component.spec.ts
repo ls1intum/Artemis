@@ -353,6 +353,78 @@ describe('FileUploadExerciseUpdateComponent', () => {
             expect(courseService.findAllCategoriesOfCourse).toHaveBeenCalled();
         });
 
+        it('should populate existingCategories signal with converted categories', async () => {
+            const courseService = TestBed.inject(CourseManagementService);
+            const exerciseService = TestBed.inject(ExerciseService);
+            const rawCategories = ['category1', 'category2'];
+            const convertedCategories = [new ExerciseCategory('category1', '#1abc9c'), new ExerciseCategory('category2', '#3498db')];
+
+            vi.spyOn(courseService, 'findAllCategoriesOfCourse').mockReturnValue(of(new HttpResponse({ body: rawCategories })));
+            vi.spyOn(exerciseService, 'convertExerciseCategoriesAsStringFromServer').mockReturnValue(convertedCategories);
+
+            fixture = TestBed.createComponent(FileUploadExerciseUpdateComponent);
+            component = fixture.componentInstance;
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(exerciseService.convertExerciseCategoriesAsStringFromServer).toHaveBeenCalledWith(rawCategories);
+            expect(component.existingCategories()).toEqual(convertedCategories);
+        });
+
+        it('should not load existing categories for exam exercises', async () => {
+            const courseService = TestBed.inject(CourseManagementService);
+            vi.spyOn(courseService, 'findAllCategoriesOfCourse');
+
+            routeUrl$.next([{ path: 'exercise-groups' } as UrlSegment]);
+            const exerciseGroup = new ExerciseGroup();
+            const exercise = createExercise(undefined, exerciseGroup);
+            routeData$.next({ fileUploadExercise: exercise });
+
+            fixture = TestBed.createComponent(FileUploadExerciseUpdateComponent);
+            component = fixture.componentInstance;
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(courseService.findAllCategoriesOfCourse).not.toHaveBeenCalled();
+        });
+
+        it('should load existing categories when editing an existing exercise', async () => {
+            const courseService = TestBed.inject(CourseManagementService);
+            const exerciseService = TestBed.inject(ExerciseService);
+            const rawCategories = ['existing-cat1', 'existing-cat2'];
+            const convertedCategories = [new ExerciseCategory('existing-cat1', '#1abc9c'), new ExerciseCategory('existing-cat2', '#3498db')];
+
+            vi.spyOn(courseService, 'findAllCategoriesOfCourse').mockReturnValue(of(new HttpResponse({ body: rawCategories })));
+            vi.spyOn(exerciseService, 'convertExerciseCategoriesAsStringFromServer').mockReturnValue(convertedCategories);
+
+            const existingExercise = createExistingExercise();
+            existingExercise.categories = [new ExerciseCategory('assigned-cat', '#e74c3c')];
+            routeData$.next({ fileUploadExercise: existingExercise });
+            routeUrl$.next([{ path: 'edit' } as UrlSegment]);
+
+            fixture = TestBed.createComponent(FileUploadExerciseUpdateComponent);
+            component = fixture.componentInstance;
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(courseService.findAllCategoriesOfCourse).toHaveBeenCalledWith(123);
+            expect(component.existingCategories()).toEqual(convertedCategories);
+            expect(component.exerciseCategories()).toEqual([new ExerciseCategory('assigned-cat', '#e74c3c')]);
+        });
+
+        it('should handle error when loading existing categories', async () => {
+            const courseService = TestBed.inject(CourseManagementService);
+            vi.spyOn(courseService, 'findAllCategoriesOfCourse').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 400 })));
+            const alertSpy = vi.spyOn(alertService, 'error');
+
+            fixture = TestBed.createComponent(FileUploadExerciseUpdateComponent);
+            component = fixture.componentInstance;
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(alertSpy).toHaveBeenCalledWith('error.http.400');
+        });
+
         it('should set isSaving to false on init', async () => {
             fixture = TestBed.createComponent(FileUploadExerciseUpdateComponent);
             component = fixture.componentInstance;
