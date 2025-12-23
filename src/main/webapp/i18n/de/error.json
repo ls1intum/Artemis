@@ -188,8 +188,6 @@
         },
         "titleLengthInvalid": "Der Titel ist nicht gesetzt oder zu kurz.",
         "titlePatternInvalid": "Der Titel ist ungültig.",
-        "cannotSetBothCourseAndExerciseGroup": "Entweder muss ein Kurs oder eine Übungsgruppe gesetzt sein, aber nicht beides",
-        "courseOrExerciseGroupNotSet": "Entweder muss ein Kurs oder eine Übungsgruppe gesetzt sein",
         "FileUploadExercise": {
             "isNull": "Es wurden keine File-Upload-Übungen übergeben.",
             "courseIdMissing": "Die courseId ist erforderlich.",

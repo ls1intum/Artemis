@@ -550,7 +550,7 @@ public class FileUploadExerciseResource {
      * @param set the set to clear
      * @param <T> element type
      */
-    private <T> void clearInitializedCollection(Set<T> set) {
+    private static <T> void clearInitializedCollection(Set<T> set) {
         if (set != null && Hibernate.isInitialized(set)) {
             set.clear();
         }
@@ -691,8 +691,6 @@ public class FileUploadExerciseResource {
 
         // validates general settings: points, dates
         exercise.validateGeneralSettings();
-        // Valid exercises have set either a course or an exerciseGroup
-        exercise.validateSetBothCourseAndExerciseGroupOrNeither();
 
         exercise.setAllowComplaintsForAutomaticAssessments(updateFileUploadExerciseDTO.allowComplaintsForAutomaticAssessments());
         exercise.setAllowFeedbackRequests(updateFileUploadExerciseDTO.allowFeedbackRequests());

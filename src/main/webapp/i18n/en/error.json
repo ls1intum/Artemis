@@ -188,8 +188,6 @@
         },
         "titleLengthInvalid": "The title is not set or is too short.",
         "titlePatternInvalid": "The title is invalid.",
-        "cannotSetBothCourseAndExerciseGroup": "Either course or exerciseGroup must be set, but not both",
-        "courseOrExerciseGroupNotSet": "Either course or exerciseGroup must be set",
         "FileUploadExercise": {
             "isNull": "No fileUpload exercise was provided.",
             "courseIdMissing": "The courseId is required.",

@@ -903,18 +903,6 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         }
     }
 
-    /**
-     * Validate the exercise being either exam exercise or course exercise.
-     */
-    public void validateSetBothCourseAndExerciseGroupOrNeither() {
-        if (isExamExercise() && isCourseExercise()) {
-            throw new BadRequestAlertException("Either course or exerciseGroup must be set, but not both", "Exercise", "cannotSetBothCourseAndExerciseGroup");
-        }
-        if (!isExamExercise() && !isCourseExercise()) {
-            throw new BadRequestAlertException("Either course or exerciseGroup must be set", "Exercise", "courseOrExerciseGroupNotSet");
-        }
-    }
-
     public abstract ExerciseType getExerciseType();
 
     public abstract String getType();

@@ -584,7 +584,7 @@ public class ModelingExerciseResource {
      * @param set the set to clear
      * @param <T> element type
      */
-    private <T> void clearInitializedCollection(Set<T> set) {
+    private static <T> void clearInitializedCollection(Set<T> set) {
         if (set != null && Hibernate.isInitialized(set)) {
             set.clear();
         }
@@ -634,8 +634,6 @@ public class ModelingExerciseResource {
 
         // validates general settings: points, dates, etc.
         exercise.validateGeneralSettings();
-        // Valid exercises have set either a course or an exerciseGroup
-        exercise.validateSetBothCourseAndExerciseGroupOrNeither();
 
         exercise.setAllowComplaintsForAutomaticAssessments(updateModelingExerciseDTO.allowComplaintsForAutomaticAssessments());
         exercise.setAllowFeedbackRequests(updateModelingExerciseDTO.allowFeedbackRequests());
