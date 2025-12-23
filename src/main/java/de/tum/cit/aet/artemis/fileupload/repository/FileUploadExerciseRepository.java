@@ -54,6 +54,22 @@ public interface FileUploadExerciseRepository extends ArtemisJpaRepository<FileU
     Optional<FileUploadExercise> findByIdWithCompetenciesAndGradingCriteria(@Param("exerciseId") Long exerciseId);
 
     @Query("""
+            SELECT DISTINCT fileUploadExercise
+            FROM FileUploadExercise fileUploadExercise
+                LEFT JOIN FETCH fileUploadExercise.exampleSubmissions exampleSubmissions
+                LEFT JOIN FETCH exampleSubmissions.submission submission
+                LEFT JOIN FETCH submission.results results
+                LEFT JOIN FETCH results.feedbacks
+                LEFT JOIN FETCH results.assessor
+                LEFT JOIN FETCH fileUploadExercise.teamAssignmentConfig
+                LEFT JOIN FETCH fileUploadExercise.gradingCriteria
+                LEFT JOIN FETCH fileUploadExercise.competencyLinks cl
+                LEFT JOIN FETCH cl.competency
+            WHERE fileUploadExercise.id = :exerciseId
+            """)
+    Optional<FileUploadExercise> findByIdWithExampleSubmissionsAndResultsAndCompetenciesAndGradingCriteria(@Param("exerciseId") Long exerciseId);
+
+    @Query("""
             SELECT f
             FROM FileUploadExercise f
                 LEFT JOIN FETCH f.competencyLinks

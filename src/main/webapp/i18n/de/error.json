@@ -188,8 +188,8 @@
         },
         "FileUploadExercise": {
             "isNull": "Es wurden keine File-Upload-Übungen übergeben.",
-            "fileUploadExerciseTitleInvalid": "Der Titel ist nicht gesetzt oder zu kurz.",
-            "titleInvalid": "Der Titel ist ungültig.",
+            "titleLengthInvalid": "Der Titel ist nicht gesetzt oder zu kurz.",
+            "titlePatternInvalid": "Der Titel ist ungültig.",
             "courseIdMissing": "Die courseId ist erforderlich.",
             "courseIdInvalid": "Der Kurs darf nicht geändert werden."
         },

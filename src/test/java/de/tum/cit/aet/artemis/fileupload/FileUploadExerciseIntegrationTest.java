@@ -446,6 +446,7 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
 
         fileUploadExercise.setCourse(null);
         fileUploadExercise.setExerciseGroup(fileUploadExerciseWithExerciseGroup.getExerciseGroup());
+        fileUploadExercise = fileUploadExerciseRepository.saveAndFlush(fileUploadExercise);
 
         fileUploadExerciseWithExerciseGroup.setCourse(course);
         fileUploadExerciseWithExerciseGroup.setExerciseGroup(null);

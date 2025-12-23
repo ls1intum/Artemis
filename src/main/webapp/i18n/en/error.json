@@ -188,8 +188,8 @@
         },
         "FileUploadExercise": {
             "isNull": "No fileUpload exercise was provided.",
-            "fileUploadExerciseTitleInvalid": "The title is not set or is too short.",
-            "titleInvalid": "The title is invalid.",
+            "titleLengthInvalid": "The title is not set or is too short.",
+            "titlePatternInvalid": "The title is invalid.",
             "courseIdMissing": "The courseId is required.",
             "courseIdInvalid": "The course can not be changed."
         },

@@ -3,6 +3,10 @@ package de.tum.cit.aet.artemis.fileupload.web;
 import static de.tum.cit.aet.artemis.core.config.Constants.FILE_ENDING_PATTERN;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.TITLE_NAME_PATTERN;
+import static de.tum.cit.aet.artemis.modeling.web.ModelingExerciseResource.clearInitializedCollection;
+import static de.tum.cit.aet.artemis.modeling.web.ModelingExerciseResource.ensureCompetencyLinksSet;
+import static de.tum.cit.aet.artemis.modeling.web.ModelingExerciseResource.ensureGradingCriteriaSet;
+import static de.tum.cit.aet.artemis.modeling.web.ModelingExerciseResource.validateCompetencyBelongsToExerciseCourse;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -17,7 +21,6 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 
-import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -334,7 +337,8 @@ public class FileUploadExerciseResource {
         log.debug("REST request to update FileUploadExercise : {}", updateFileUploadExercisesDTO);
         // TODO: The route has an exerciseId but we don't do anything useful with it.
         // Change route and client requests?
-        final var fileUploadExerciseBeforeUpdate = fileUploadExerciseRepository.findByIdWithCompetenciesAndGradingCriteria(exerciseId).orElseThrow();
+        final FileUploadExercise fileUploadExerciseBeforeUpdate = fileUploadExerciseRepository.findByIdWithExampleSubmissionsAndResultsAndCompetenciesAndGradingCriteria(exerciseId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "FileUploadExercise not found"));
 
         ZonedDateTime oldDueDate = fileUploadExerciseBeforeUpdate.getDueDate();
         ZonedDateTime oldAssessmentDueDate = fileUploadExerciseBeforeUpdate.getAssessmentDueDate();
@@ -526,7 +530,7 @@ public class FileUploadExerciseResource {
             @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterGradingInstructionUpdate) {
         log.debug("REST request to re-evaluate FileUploadExercise : {}", updateFileUploadExercisesDTO);
 
-        final FileUploadExercise existingExercise = fileUploadExerciseRepository.findByIdWithCompetenciesAndGradingCriteria(exerciseId)
+        final FileUploadExercise existingExercise = fileUploadExerciseRepository.findByIdWithExampleSubmissionsAndResultsAndCompetenciesAndGradingCriteria(exerciseId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "FileUploadExercise not found"));
 
         // check that the exercise exists for given id
@@ -598,22 +602,6 @@ public class FileUploadExerciseResource {
     }
 
     /**
-     * Ensures that the exercise has a mutable set for grading criteria.
-     * Creates and assigns a new {@link HashSet} if the current set is {@code null}.
-     *
-     * @param exercise the exercise to mutate
-     * @return the non-null mutable set of grading criteria
-     */
-    private Set<GradingCriterion> ensureGradingCriteriaSet(FileUploadExercise exercise) {
-        Set<GradingCriterion> managedCriteria = exercise.getGradingCriteria();
-        if (managedCriteria == null) {
-            managedCriteria = new HashSet<>();
-            exercise.setGradingCriteria(managedCriteria);
-        }
-        return managedCriteria;
-    }
-
-    /**
      * Replaces the competency links of the given exercise according to PUT semantics.
      * <p>
      * If {@code dto.competencyLinks()} is {@code null} or empty, all existing links are removed (if initialized).
@@ -666,57 +654,6 @@ public class FileUploadExerciseResource {
 
         managedLinks.clear();
         managedLinks.addAll(updated);
-    }
-
-    /**
-     * Ensures that the exercise has a mutable set for competency links.
-     * Creates and assigns a new {@link HashSet} if the current set is {@code null}.
-     *
-     * @param exercise the exercise to mutate
-     * @return the non-null mutable set of competency links
-     */
-    private Set<CompetencyExerciseLink> ensureCompetencyLinksSet(FileUploadExercise exercise) {
-        Set<CompetencyExerciseLink> managedLinks = exercise.getCompetencyLinks();
-        if (managedLinks == null) {
-            managedLinks = new HashSet<>();
-            exercise.setCompetencyLinks(managedLinks);
-        }
-        return managedLinks;
-    }
-
-    /**
-     * Validates that the given competency belongs to the same course as the exercise.
-     * If the exercise has no course (e.g. inconsistent state), this check is skipped.
-     *
-     * @param exerciseCourseId the course id of the exercise (maybe {@code null})
-     * @param competency       a managed competency entity or reference
-     * @throws BadRequestAlertException if the competency is associated with a different course
-     */
-    private void validateCompetencyBelongsToExerciseCourse(Long exerciseCourseId, Competency competency) {
-        if (exerciseCourseId == null) {
-            return;
-        }
-        var competencyCourse = competency.getCourse();
-        Long competencyCourseId = competencyCourse != null ? competencyCourse.getId() : null;
-
-        if (competencyCourseId != null && !Objects.equals(exerciseCourseId, competencyCourseId)) {
-            throw new BadRequestAlertException("The competency does not belong to the exercise's course.", "CourseCompetency", "wrongCourse");
-        }
-    }
-
-    /**
-     * Clears the given collection if it is initialized.
-     * <p>
-     * This avoids triggering lazy initialization in callers that do not fetch the collection.
-     * In this service, callers typically load the exercise with the required associations eagerly.
-     *
-     * @param set the set to clear
-     * @param <T> element type
-     */
-    private static <T> void clearInitializedCollection(Set<T> set) {
-        if (set != null && Hibernate.isInitialized(set)) {
-            set.clear();
-        }
     }
 
     /**

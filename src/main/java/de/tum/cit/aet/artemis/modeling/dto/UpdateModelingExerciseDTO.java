@@ -37,14 +37,13 @@ public record UpdateModelingExerciseDTO(long id, String title, String channelNam
          */
         public static CompetencyExerciseLinkDTO of(CompetencyExerciseLink competencyExerciseLink) {
             if (competencyExerciseLink == null) {
-                throw new BadRequestAlertException("No competency link was provided.", "competencyExerciseLink", "competencyExerciseLink.isNull");
+                throw new BadRequestAlertException("No competency link was provided.", "CompetencyExerciseLink", "isNull");
             }
             if (competencyExerciseLink.getCompetency() == null) {
-                throw new BadRequestAlertException("The competency link must reference a competency.", "competencyExerciseLink", "competencyExerciseLink.competencyMissing");
+                throw new BadRequestAlertException("The competency link must reference a competency.", "CompetencyExerciseLink", "competencyMissing");
             }
             if (competencyExerciseLink.getCompetency().getCourse() == null) {
-                throw new BadRequestAlertException("The competency referenced by this link is not associated with a course.", "competencyExerciseLink",
-                        "competencyExerciseLink.courseMissing");
+                throw new BadRequestAlertException("The competency referenced by this link is not associated with a course.", "CompetencyExerciseLink", "courseMissing");
             }
             return new CompetencyExerciseLinkDTO(CourseCompetencyDTO.of(competencyExerciseLink.getCompetency()), competencyExerciseLink.getWeight(),
                     competencyExerciseLink.getCompetency().getCourse().getId());

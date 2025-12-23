@@ -548,7 +548,7 @@ public class ModelingExerciseResource {
      * @param exercise the exercise to mutate
      * @return the non-null mutable set of grading criteria
      */
-    private Set<GradingCriterion> ensureGradingCriteriaSet(ModelingExercise exercise) {
+    public static Set<GradingCriterion> ensureGradingCriteriaSet(Exercise exercise) {
         Set<GradingCriterion> managedCriteria = exercise.getGradingCriteria();
         if (managedCriteria == null) {
             managedCriteria = new HashSet<>();
@@ -619,7 +619,7 @@ public class ModelingExerciseResource {
      * @param exercise the exercise to mutate
      * @return the non-null mutable set of competency links
      */
-    private Set<CompetencyExerciseLink> ensureCompetencyLinksSet(ModelingExercise exercise) {
+    public static Set<CompetencyExerciseLink> ensureCompetencyLinksSet(Exercise exercise) {
         Set<CompetencyExerciseLink> managedLinks = exercise.getCompetencyLinks();
         if (managedLinks == null) {
             managedLinks = new HashSet<>();
@@ -636,7 +636,7 @@ public class ModelingExerciseResource {
      * @param competency       a managed competency entity or reference
      * @throws BadRequestAlertException if the competency is associated with a different course
      */
-    private void validateCompetencyBelongsToExerciseCourse(Long exerciseCourseId, Competency competency) {
+    public static void validateCompetencyBelongsToExerciseCourse(Long exerciseCourseId, Competency competency) {
         if (exerciseCourseId == null) {
             return;
         }
@@ -657,7 +657,7 @@ public class ModelingExerciseResource {
      * @param set the set to clear
      * @param <T> element type
      */
-    private static <T> void clearInitializedCollection(Set<T> set) {
+    public static <T> void clearInitializedCollection(Set<T> set) {
         if (set != null && Hibernate.isInitialized(set)) {
             set.clear();
         }
