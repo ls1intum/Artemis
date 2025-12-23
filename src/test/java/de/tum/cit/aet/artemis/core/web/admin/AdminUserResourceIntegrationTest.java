@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.core.web.admin;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -278,5 +279,133 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
         // Verify user was soft deleted
         User deletedUser = userTestRepository.findById(regularUser.getId()).orElseThrow();
         assertThat(deletedUser.isDeleted()).isTrue();
+    }
+
+    // ==================== Admin trying to manage super admin activation state ====================
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void activateUser_activateSuperAdminByNonSuperAdmin_forbidden() throws Exception {
+        // Create a deactivated super admin user
+        userUtilService.addSuperAdmin("test6");
+        User superUser = userUtilService.getUserByLogin("test6superadmin");
+        superUser.setActivated(false);
+        userTestRepository.save(superUser);
+
+        mockMvc.perform(patch("/api/core/admin/users/" + superUser.getId() + "/activate")).andExpect(status().isForbidden());
+
+        // Verify user was not activated
+        User unchangedUser = userTestRepository.findByIdWithGroupsAndAuthoritiesElseThrow(superUser.getId());
+        assertThat(unchangedUser.getActivated()).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void deactivateUser_deactivateSuperAdminByNonSuperAdmin_forbidden() throws Exception {
+        // Create an activated super admin user
+        userUtilService.addSuperAdmin("test7");
+        User superUser = userUtilService.getUserByLogin("test7superadmin");
+        superUser.setActivated(true);
+        userTestRepository.save(superUser);
+
+        mockMvc.perform(patch("/api/core/admin/users/" + superUser.getId() + "/deactivate")).andExpect(status().isForbidden());
+
+        // Verify user was not deactivated
+        User unchangedUser = userTestRepository.findByIdWithGroupsAndAuthoritiesElseThrow(superUser.getId());
+        assertThat(unchangedUser.getActivated()).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void activateUser_activateRegularUserByAdmin_success() throws Exception {
+        // Create a deactivated regular user
+        User regularUser = userUtilService.createAndSaveUser("regularuser6");
+        regularUser.setActivated(false);
+        userTestRepository.save(regularUser);
+
+        mockMvc.perform(patch("/api/core/admin/users/" + regularUser.getId() + "/activate")).andExpect(status().isOk());
+
+        // Verify user was activated
+        User activatedUser = userTestRepository.findByIdWithGroupsAndAuthoritiesElseThrow(regularUser.getId());
+        assertThat(activatedUser.getActivated()).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void deactivateUser_deactivateRegularUserByAdmin_success() throws Exception {
+        // Create an activated regular user
+        User regularUser = userUtilService.createAndSaveUser("regularuser7");
+        regularUser.setActivated(true);
+        userTestRepository.save(regularUser);
+
+        mockMvc.perform(patch("/api/core/admin/users/" + regularUser.getId() + "/deactivate")).andExpect(status().isOk());
+
+        // Verify user was deactivated
+        User deactivatedUser = userTestRepository.findByIdWithGroupsAndAuthoritiesElseThrow(regularUser.getId());
+        assertThat(deactivatedUser.getActivated()).isFalse();
+    }
+
+    // ==================== Super Admin managing activation state ====================
+
+    @Test
+    @WithMockUser(username = "superadmin", roles = "SUPER_ADMIN")
+    void activateUser_activateSuperAdminBySuperAdmin_success() throws Exception {
+        // Create a deactivated super admin user
+        userUtilService.addSuperAdmin("test8");
+        User superUser = userUtilService.getUserByLogin("test8superadmin");
+        superUser.setActivated(false);
+        userTestRepository.save(superUser);
+
+        mockMvc.perform(patch("/api/core/admin/users/" + superUser.getId() + "/activate")).andExpect(status().isOk());
+
+        // Verify user was activated
+        User activatedUser = userTestRepository.findByIdWithGroupsAndAuthoritiesElseThrow(superUser.getId());
+        assertThat(activatedUser.getActivated()).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = "superadmin", roles = "SUPER_ADMIN")
+    void deactivateUser_deactivateSuperAdminBySuperAdmin_success() throws Exception {
+        // Create an activated super admin user
+        userUtilService.addSuperAdmin("test9");
+        User superUser = userUtilService.getUserByLogin("test9superadmin");
+        superUser.setActivated(true);
+        userTestRepository.save(superUser);
+
+        mockMvc.perform(patch("/api/core/admin/users/" + superUser.getId() + "/deactivate")).andExpect(status().isOk());
+
+        // Verify user was deactivated
+        User deactivatedUser = userTestRepository.findByIdWithGroupsAndAuthoritiesElseThrow(superUser.getId());
+        assertThat(deactivatedUser.getActivated()).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = "superadmin", roles = "SUPER_ADMIN")
+    void activateUser_activateRegularUserBySuperAdmin_success() throws Exception {
+        // Create a deactivated regular user
+        User regularUser = userUtilService.createAndSaveUser("regularuser8");
+        regularUser.setActivated(false);
+        userTestRepository.save(regularUser);
+
+        mockMvc.perform(patch("/api/core/admin/users/" + regularUser.getId() + "/activate")).andExpect(status().isOk());
+
+        // Verify user was activated
+        User activatedUser = userTestRepository.findByIdWithGroupsAndAuthoritiesElseThrow(regularUser.getId());
+        assertThat(activatedUser.getActivated()).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = "superadmin", roles = "SUPER_ADMIN")
+    void deactivateUser_deactivateRegularUserBySuperAdmin_success() throws Exception {
+        // Create an activated regular user
+        User regularUser = userUtilService.createAndSaveUser("regularuser9");
+        regularUser.setActivated(true);
+        userTestRepository.save(regularUser);
+
+        mockMvc.perform(patch("/api/core/admin/users/" + regularUser.getId() + "/deactivate")).andExpect(status().isOk());
+
+        // Verify user was deactivated
+        User deactivatedUser = userTestRepository.findByIdWithGroupsAndAuthoritiesElseThrow(regularUser.getId());
+        assertThat(deactivatedUser.getActivated()).isFalse();
     }
 }
