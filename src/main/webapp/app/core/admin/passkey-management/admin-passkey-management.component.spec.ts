@@ -12,7 +12,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 describe('AdminPasskeyManagementComponent', () => {
     let component: AdminPasskeyManagementComponent;
     let fixture: ComponentFixture<AdminPasskeyManagementComponent>;
-    let service: AdminPasskeyManagementService;
+    let adminPasskeyManagementService: AdminPasskeyManagementService;
     let httpMock: HttpTestingController;
 
     const mockPasskeys: AdminPasskeyDTO[] = [
@@ -55,7 +55,7 @@ describe('AdminPasskeyManagementComponent', () => {
 
         fixture = TestBed.createComponent(AdminPasskeyManagementComponent);
         component = fixture.componentInstance;
-        service = TestBed.inject(AdminPasskeyManagementService);
+        adminPasskeyManagementService = TestBed.inject(AdminPasskeyManagementService);
         httpMock = TestBed.inject(HttpTestingController);
     });
 
@@ -69,7 +69,7 @@ describe('AdminPasskeyManagementComponent', () => {
     });
 
     it('should load passkeys on init', async () => {
-        const getAllPasskeysSpy = jest.spyOn(service, 'getAllPasskeys').mockReturnValue(Promise.resolve(mockPasskeys));
+        const getAllPasskeysSpy = jest.spyOn(adminPasskeyManagementService, 'getAllPasskeys').mockReturnValue(Promise.resolve(mockPasskeys));
 
         // let Angular run ngOnInit and resolve async Promises
         fixture.detectChanges();
@@ -80,28 +80,15 @@ describe('AdminPasskeyManagementComponent', () => {
         expect(component.isLoading()).toBeFalse();
     });
 
-    it('should set loading state to true when loading passkeys', async () => {
-        jest.spyOn(service, 'getAllPasskeys').mockReturnValue(Promise.resolve(mockPasskeys));
-
-        await component.loadPasskeys();
-
-        expect(component.passkeys()).toEqual(mockPasskeys);
-        expect(component.isLoading()).toBeFalse();
-    });
-
     it('should handle error when loading passkeys fails', async () => {
         const errorResponse = new HttpErrorResponse({
             error: 'Error loading passkeys',
             status: 500,
             statusText: 'Internal Server Error',
         });
-        jest.spyOn(service, 'getAllPasskeys').mockReturnValue(Promise.reject(errorResponse));
+        jest.spyOn(adminPasskeyManagementService, 'getAllPasskeys').mockReturnValue(Promise.reject(errorResponse));
 
-        try {
-            await component.loadPasskeys();
-        } catch {
-            // component may or may not rethrow; swallow to assert final state
-        }
+        await component.loadPasskeys();
 
         expect(component.isLoading()).toBeFalse();
     });
@@ -109,26 +96,26 @@ describe('AdminPasskeyManagementComponent', () => {
     it('should toggle approval status successfully', async () => {
         const passkey = { ...mockPasskeys[0] };
         const updatedPasskey = { ...passkey, isSuperAdminApproved: true };
-        jest.spyOn(service, 'updatePasskeyApproval').mockReturnValue(Promise.resolve(updatedPasskey));
+        jest.spyOn(adminPasskeyManagementService, 'updatePasskeyApproval').mockReturnValue(Promise.resolve(updatedPasskey));
 
         component.passkeys.set([passkey]);
 
         await component.onApprovalToggle(passkey);
 
-        expect(service.updatePasskeyApproval).toHaveBeenCalledWith('cred1', true);
+        expect(adminPasskeyManagementService.updatePasskeyApproval).toHaveBeenCalledWith('cred1', true);
         expect(passkey.isSuperAdminApproved).toBeTrue();
     });
 
     it('should toggle approval status from approved to not approved', async () => {
         const passkey = { ...mockPasskeys[1] };
         const updatedPasskey = { ...passkey, isSuperAdminApproved: false };
-        jest.spyOn(service, 'updatePasskeyApproval').mockReturnValue(Promise.resolve(updatedPasskey));
+        jest.spyOn(adminPasskeyManagementService, 'updatePasskeyApproval').mockReturnValue(Promise.resolve(updatedPasskey));
 
         component.passkeys.set([passkey]);
 
         await component.onApprovalToggle(passkey);
 
-        expect(service.updatePasskeyApproval).toHaveBeenCalledWith('cred2', false);
+        expect(adminPasskeyManagementService.updatePasskeyApproval).toHaveBeenCalledWith('cred2', false);
         expect(passkey.isSuperAdminApproved).toBeFalse();
     });
 
@@ -139,27 +126,27 @@ describe('AdminPasskeyManagementComponent', () => {
             status: 500,
             statusText: 'Internal Server Error',
         });
-        jest.spyOn(service, 'updatePasskeyApproval').mockReturnValue(Promise.reject(errorResponse));
+        jest.spyOn(adminPasskeyManagementService, 'updatePasskeyApproval').mockReturnValue(Promise.reject(errorResponse));
 
         component.passkeys.set([passkey]);
         const originalApprovalStatus = passkey.isSuperAdminApproved;
 
-        try {
-            await component.onApprovalToggle(passkey);
-        } catch {
-            // swallow if method rethrows
-        }
+        await component.onApprovalToggle(passkey);
 
         expect(passkey.isSuperAdminApproved).toBe(originalApprovalStatus);
     });
 
     it('should display empty state when no passkeys exist', async () => {
-        jest.spyOn(service, 'getAllPasskeys').mockReturnValue(Promise.resolve([]));
+        jest.spyOn(adminPasskeyManagementService, 'getAllPasskeys').mockReturnValue(Promise.resolve([]));
 
         fixture.detectChanges();
         await fixture.whenStable();
+        fixture.detectChanges();
 
         expect(component.passkeys()).toEqual([]);
         expect(component.passkeys()).toHaveLength(0);
+
+        const emptyStateElement = fixture.nativeElement.querySelector('div.alert.alert-info[jhiTranslate="artemisApp.adminPasskeyManagement.noPasskeys"]');
+        expect(emptyStateElement).toBeTruthy();
     });
 });
