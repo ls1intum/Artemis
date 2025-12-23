@@ -36,7 +36,7 @@ import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.lecture.PyrisLectureChatStatusUpdateDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
 import de.tum.cit.aet.artemis.iris.util.IrisMessageFactory;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
@@ -330,7 +330,7 @@ class IrisLectureChatMessageIntegrationTest extends AbstractIrisIntegrationTest 
 
     private void sendStatus(String jobId, String result, List<PyrisStageDTO> stages, String sessionTitle) throws Exception {
         var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + jobId))));
-        request.postWithoutResponseBody("/api/iris/internal/pipelines/lecture-chat/runs/" + jobId + "/status", new PyrisLectureChatStatusUpdateDTO(result, stages, sessionTitle),
-                HttpStatus.OK, headers);
+        request.postWithoutResponseBody("/api/iris/internal/pipelines/lecture-chat/runs/" + jobId + "/status",
+                new PyrisChatStatusUpdateDTO(result, stages, sessionTitle, null, null, null, null), HttpStatus.OK, headers);
     }
 }

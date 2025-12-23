@@ -17,6 +17,7 @@ import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
@@ -25,10 +26,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.ResourceUtils;
 
+import de.tum.cit.aet.artemis.core.connector.IrisRequestMockProvider;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.dto.LectureUnitSplitDTO;
@@ -55,6 +58,9 @@ class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndep
     @Autowired
     private LectureUnitProcessingService lectureUnitProcessingService;
 
+    @Autowired
+    private IrisRequestMockProvider irisRequestMockProvider;
+
     private LectureUnitSplitInformationDTO lectureUnitSplits;
 
     private Lecture lecture1;
@@ -63,6 +69,10 @@ class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndep
 
     @BeforeEach
     void initTestCase() {
+        irisRequestMockProvider.enableMockingOfRequests();
+        irisRequestMockProvider.mockIngestionWebhookRunResponse(dto -> {
+        }, ExpectedCount.manyTimes());
+
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
         this.lecture1 = lectureUtilService.createCourseWithLecture(true);
         this.invalidLecture = lectureUtilService.createLecture(null, null);
@@ -74,6 +84,11 @@ class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndep
         userUtilService.createAndSaveUser(TEST_PREFIX + "instructor42");
 
         slideRepository.deleteAll();
+    }
+
+    @AfterEach
+    void tearDown() throws Exception {
+        irisRequestMockProvider.reset();
     }
 
     @Test

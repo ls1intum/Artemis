@@ -1,9 +1,9 @@
 <div class="d-flex justify-content-between">
     <div>
-        <h1>
+        <h2>
             <!--UserSettingsCategory-->
             {{ 'artemisApp.userSettings.categories.' + userSettingsCategory | artemisTranslate }}
-        </h1>
+        </h2>
         <div class="d-flex userSettings-info">
             <fa-icon class="ng-fa-icon" [icon]="faInfoCircle" />
             <span class="ps-1" jhiTranslate="artemisApp.userSettings.scienceSettingsInfo"></span>
@@ -16,49 +16,34 @@
         }
     </div>
     @if (settingsChanged) {
-        <button type="button" class="btn btn-primary" id="apply-changes-button" (click)="this.saveSettings()">
-            <fa-icon class="ng" [icon]="faSave" />
-            {{ 'artemisApp.userSettings.saveChanges' | artemisTranslate }}
+        <button type="button" class="btn btn-primary btn-sm" (click)="this.saveSettings()">
+            <fa-icon [icon]="faSave" />
+            <span class="ms-1">{{ 'artemisApp.userSettings.saveChanges' | artemisTranslate }}</span>
         </button>
     }
 </div>
 @if (userSettings) {
     <div class="list-group d-block">
         @for (settingGroup of userSettings.groups; track settingGroup) {
-            <div>
-                <div *jhiHasAnyAuthority="settingGroup.restrictionLevels" class="list-group-item">
-                    <h3>
-                        <!--GroupName-->
-                        <!-- please look at the README.md file to understand how the translation works -->
-                        {{ 'artemisApp.userSettings.settingGroupNames.' + settingGroup.key | artemisTranslate }}
-                    </h3>
-                    @for (setting of settingGroup.settings; track setting) {
-                        <div>
-                            <dt>
-                                <!--SettingName-->
-                                {{ 'artemisApp.userSettings.settingNames.' + setting.key | artemisTranslate }}
-                            </dt>
-                            <span>
-                                <!--SettingDescription-->
+            <div *jhiHasAnyAuthority="settingGroup.restrictionLevels">
+                @for (setting of settingGroup.settings; track setting) {
+                    <div class="list-group-item">
+                        <div class="form-check form-switch">
+                            <input
+                                type="checkbox"
+                                class="form-check-input"
+                                [checked]="setting.active"
+                                id="{{ setting.settingId }}"
+                                value="{{ setting.active }}"
+                                (click)="toggleSetting($event)"
+                            />
+                            <label class="form-check-label" for="{{ setting.settingId }}">
+                                <span class="fw-medium">{{ 'artemisApp.userSettings.settingNames.' + setting.key | artemisTranslate }}:</span>
                                 {{ 'artemisApp.userSettings.settingDescriptions.' + setting.descriptionKey | artemisTranslate }}
-                            </span>
-                            <!--Setting Specific Properties-->
-                            <div class="d-flex">
-                                <div class="form-check pe-3">
-                                    <input
-                                        type="checkbox"
-                                        class="form-check-input"
-                                        [checked]="setting.active"
-                                        id="{{ setting.settingId }}"
-                                        value="{{ setting.active }}"
-                                        (click)="toggleSetting($event)"
-                                    />
-                                    <label class="form-check-label" for="{{ setting.settingId }}">active</label>
-                                </div>
-                            </div>
+                            </label>
                         </div>
-                    }
-                </div>
+                    </div>
+                }
             </div>
         }
     </div>

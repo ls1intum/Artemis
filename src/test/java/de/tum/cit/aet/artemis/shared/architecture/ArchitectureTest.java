@@ -91,7 +91,7 @@ import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.authorization.AuthorizationTestService;
 import de.tum.cit.aet.artemis.core.config.ApplicationConfiguration;
 import de.tum.cit.aet.artemis.core.config.ConditionalMetricsExclusionConfiguration;
-import de.tum.cit.aet.artemis.core.config.PublicResourcesConfiguration;
+import de.tum.cit.aet.artemis.core.config.StaticResourcesConfiguration;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.programming.service.GitService;
@@ -341,7 +341,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
     @Test
     void shouldNotUserAutowiredAnnotation() {
         ArchRule rule = noFields().should().beAnnotatedWith(Autowired.class).because("fields should not rely on field injection via @Autowired");
-        final var exceptions = new Class[] { PublicResourcesConfiguration.class };
+        final var exceptions = new Class[] { StaticResourcesConfiguration.class };
         JavaClasses classes = classesExcept(productionClasses, exceptions);
         rule.check(classes);
     }
@@ -416,7 +416,9 @@ class ArchitectureTest extends AbstractArchitectureTest {
     @Test
     void ensureSpringComponentsAreLazyAnnotated() {
         ArchRule rule = classes().that().areAnnotatedWith(Controller.class).or().areAnnotatedWith(RestController.class).or().areAnnotatedWith(Repository.class).or()
-                .areAnnotatedWith(Service.class).or().areAnnotatedWith(Component.class).or().areAnnotatedWith(Configuration.class).should().beAnnotatedWith(Lazy.class)
+                .areAnnotatedWith(Service.class).or().areAnnotatedWith(Component.class).or().areAnnotatedWith(Configuration.class)
+                // JacksonConfiguration must NOT be lazy because Jackson modules must be available when the ObjectMapper is created
+                .and().doNotHaveFullyQualifiedName("de.tum.cit.aet.artemis.core.config.JacksonConfiguration").should().beAnnotatedWith(Lazy.class)
                 .because("All Spring components should be lazy-loaded to improve startup time");
 
         rule.check(allClasses);
