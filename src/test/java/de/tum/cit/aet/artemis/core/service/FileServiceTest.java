@@ -14,7 +14,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.UUID;
 
-import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 
 import de.tum.cit.aet.artemis.core.util.FileUtil;
+import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 class FileServiceTest extends AbstractSpringIntegrationIndependentTest {
@@ -40,13 +40,13 @@ class FileServiceTest extends AbstractSpringIntegrationIndependentTest {
     @AfterEach
     void cleanup() throws IOException {
         Files.deleteIfExists(javaPath);
-        FileUtils.deleteDirectory(overridableBasePath.toFile());
+        RepositoryExportTestUtil.safeDeleteDirectory(overridableBasePath);
     }
 
     @AfterEach
     @BeforeEach
     void deleteFiles() throws IOException {
-        FileUtils.deleteDirectory(exportTestRootPath.toFile());
+        RepositoryExportTestUtil.safeDeleteDirectory(exportTestRootPath);
     }
 
     @Test

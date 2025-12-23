@@ -46,6 +46,7 @@ describe('IrisChatService', () => {
     const statusMock = {
         currentRatelimitInfo: jest.fn().mockReturnValue(of({})),
         handleRateLimitInfo: jest.fn(),
+        setCurrentCourse: jest.fn(),
     };
     const userMock = {
         acceptExternalLLMUsage: jest.fn(),

@@ -59,7 +59,7 @@ describe('ExamLiveAnnouncementCreateModalComponent', () => {
         jest.spyOn(mockExamManagementService, 'createAnnouncement').mockReturnValue(testingSubject.asObservable());
         component.submitAnnouncement();
         expect(component.status).toBe('submitting');
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         let contentSpan = fixture.debugElement.query(By.css('h2 > span'));
         expect(contentSpan).toBeTruthy();
@@ -67,7 +67,7 @@ describe('ExamLiveAnnouncementCreateModalComponent', () => {
         expect(mockExamManagementService.createAnnouncement).toHaveBeenCalled();
 
         testingSubject.next({ id: 1, text: 'new announcement' } as any as ExamWideAnnouncementEvent);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(component.status).toBe('submitted');
 
         contentSpan = fixture.debugElement.query(By.css('h2 > span'));

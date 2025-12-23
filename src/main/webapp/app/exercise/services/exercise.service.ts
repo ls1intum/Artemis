@@ -18,7 +18,6 @@ import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
 import { SafeHtml } from '@angular/platform-browser';
-import { IrisExerciseSettings } from 'app/iris/shared/entities/settings/iris-settings.model';
 import { PlagiarismCaseInfo } from 'app/plagiarism/shared/entities/PlagiarismCaseInfo';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
 
@@ -35,7 +34,6 @@ export type ExampleSolutionInfo = {
 export type EntityDetailsResponseType = HttpResponse<ExerciseDetailsType>;
 export type ExerciseDetailsType = {
     exercise: Exercise;
-    irisSettings?: IrisExerciseSettings;
     plagiarismCaseInfo?: PlagiarismCaseInfo;
 };
 
@@ -362,6 +360,10 @@ export class ExerciseService {
      */
     static stringifyExerciseCategories(exercise: Exercise) {
         return exercise.categories?.map((category) => JSON.stringify(category) as unknown as ExerciseCategory);
+    }
+
+    static stringifyExerciseDTOCategories(exercise: Exercise): string[] | undefined {
+        return exercise.categories?.map((category) => JSON.stringify(category));
     }
 
     /**

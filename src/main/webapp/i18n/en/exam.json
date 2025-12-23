@@ -32,6 +32,7 @@
                 "attendanceCheckPassed": "Attendance check passed",
                 "didNotAttend": "Did not attend",
                 "roomDistribute": "Distribute",
+                "notFound": "Student could not be found",
                 "rooms": {
                     "dialogTitle": "Distribute Students",
                     "introText": "This dialog can be used to distribute students who are registered for an exam to a selection of rooms. Artemis distributes students in order of the selected rooms.",

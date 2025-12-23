@@ -65,6 +65,7 @@ export class MetisService implements OnDestroy {
     private subscriptionChannel?: string;
     private courseWideTopicSubscription: Subscription;
     private activeConversationSubscription: Subscription;
+    private subscriptionChannelSubscription?: Subscription;
 
     private course: Course;
     // Expose FAQs as observable so consumers react once async loading finishes (setupMetis fetches from REST)
@@ -75,8 +76,7 @@ export class MetisService implements OnDestroy {
             this.user = user!;
 
             const conversationTopic = `/topic/user/${this.user.id}/notifications/conversations`;
-            this.websocketService.subscribe(conversationTopic);
-            this.activeConversationSubscription = this.websocketService.receive(conversationTopic).subscribe((postDTO: MetisPostDTO) => {
+            this.activeConversationSubscription = this.websocketService.subscribe<MetisPostDTO>(conversationTopic).subscribe((postDTO: MetisPostDTO) => {
                 this.handleNewOrUpdatedMessage(postDTO);
             });
         });
@@ -127,9 +127,7 @@ export class MetisService implements OnDestroy {
     }
 
     ngOnDestroy(): void {
-        if (this.subscriptionChannel) {
-            this.websocketService.unsubscribe(this.subscriptionChannel);
-        }
+        this.subscriptionChannelSubscription?.unsubscribe();
         if (this.courseWideTopicSubscription) {
             this.courseWideTopicSubscription.unsubscribe();
         }
@@ -176,8 +174,7 @@ export class MetisService implements OnDestroy {
             }
 
             const coursewideTopic = `/topic/metis/courses/${this.courseId}`;
-            this.websocketService.subscribe(coursewideTopic);
-            this.courseWideTopicSubscription = this.websocketService.receive(coursewideTopic).subscribe((postDTO: MetisPostDTO) => {
+            this.courseWideTopicSubscription = this.websocketService.subscribe<MetisPostDTO>(coursewideTopic).subscribe((postDTO: MetisPostDTO) => {
                 this.handleNewOrUpdatedMessage(postDTO);
             });
         }
@@ -642,14 +639,14 @@ export class MetisService implements OnDestroy {
         }
         // unsubscribe from existing channel subscription
         if (this.subscriptionChannel) {
-            this.websocketService.unsubscribe(this.subscriptionChannel);
+            this.subscriptionChannelSubscription?.unsubscribe();
             this.subscriptionChannel = undefined;
+            this.subscriptionChannelSubscription = undefined;
         }
 
         // create new subscription
         this.subscriptionChannel = channel;
-        this.websocketService.subscribe(this.subscriptionChannel);
-        this.websocketService.receive(this.subscriptionChannel).subscribe(this.handleNewOrUpdatedMessage);
+        this.subscriptionChannelSubscription = this.websocketService.subscribe<MetisPostDTO>(this.subscriptionChannel).subscribe(this.handleNewOrUpdatedMessage);
     }
 
     public savePost(post: Posting) {
@@ -833,8 +830,9 @@ export class MetisService implements OnDestroy {
         } else {
             // No need for extra subscription since messaging topics are covered by other services
             if (this.subscriptionChannel) {
-                this.websocketService.unsubscribe(this.subscriptionChannel);
+                this.subscriptionChannelSubscription?.unsubscribe();
                 this.subscriptionChannel = undefined;
+                this.subscriptionChannelSubscription = undefined;
             }
             return;
         }

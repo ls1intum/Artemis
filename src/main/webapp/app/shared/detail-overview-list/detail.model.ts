@@ -5,8 +5,6 @@ import { DetailType } from 'app/shared/detail-overview-list/detail-overview-list
 import { SafeHtml } from '@angular/platform-browser';
 import { UMLDiagramType, UMLModel } from '@ls1intum/apollon';
 import dayjs from 'dayjs/esm';
-import { IrisSubSettingsType } from 'app/iris/shared/entities/settings/iris-sub-settings.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { AuxiliaryRepository } from 'app/programming/shared/entities/programming-exercise-auxiliary-repository-model';
@@ -27,7 +25,6 @@ export type ShownDetail =
     | MarkdownDetail
     | GradingCriteriaDetail
     | ModelingEditorDetail
-    | ProgrammingIrisEnabledDetail
     | ProgrammingRepositoryButtonsDetail
     | ProgrammingAuxiliaryRepositoryButtonsDetail
     | ProgrammingTestStatusDetail
@@ -86,11 +83,6 @@ interface GradingCriteriaDetail extends DetailBase {
 interface ModelingEditorDetail extends DetailBase {
     type: DetailType.ModelingEditor;
     data: { isApollonProfileActive?: boolean; umlModel?: UMLModel; diagramType?: UMLDiagramType; title?: string };
-}
-
-interface ProgrammingIrisEnabledDetail extends DetailBase {
-    type: DetailType.ProgrammingIrisEnabled;
-    data: { exercise?: ProgrammingExercise; course?: Course; disabled: boolean; subSettingsType: IrisSubSettingsType };
 }
 
 export interface ProgrammingRepositoryButtonsDetail extends DetailBase {

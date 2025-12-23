@@ -236,6 +236,12 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
         registration.taskExecutor(createExecutor("ws-outbound-"));
     }
 
+    /**
+     * Creates and configures a thread pool executor for websocket message handling.
+     *
+     * @param threadNamePrefix the prefix to use for the executor thread names, distinguishing inbound and outbound channels
+     * @return a configured {@link ThreadPoolTaskExecutor} ready for websocket channel registration
+     */
     public ThreadPoolTaskExecutor createExecutor(String threadNamePrefix) {
         int cores = Runtime.getRuntime().availableProcessors();
         ThreadPoolTaskExecutor exec = new ThreadPoolTaskExecutor();

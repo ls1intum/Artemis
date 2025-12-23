@@ -58,7 +58,6 @@ export class FaqComponent implements OnInit, OnDestroy {
     courseId: number;
     hasCategories = false;
     isAtLeastInstructor = false;
-    faqIngestionEnabled = false;
     irisEnabled = false;
 
     private dialogErrorSource = new Subject<string>();
@@ -111,10 +110,10 @@ export class FaqComponent implements OnInit, OnDestroy {
                 this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(course);
             }
         });
-        this.irisEnabled = this.profileService.isProfileActive(PROFILE_IRIS);
-        if (this.irisEnabled) {
-            this.irisSettingsService.getCombinedCourseSettings(this.courseId).subscribe((settings) => {
-                this.faqIngestionEnabled = settings?.irisFaqIngestionSettings?.enabled || false;
+        const irisProfileActive = this.profileService.isProfileActive(PROFILE_IRIS);
+        if (irisProfileActive) {
+            this.irisSettingsService.getCourseSettingsWithRateLimit(this.courseId).subscribe((response) => {
+                this.irisEnabled = response?.settings?.enabled || false;
             });
         }
     }

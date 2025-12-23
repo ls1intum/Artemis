@@ -1,0 +1,39 @@
+package de.tum.cit.aet.artemis.lecture.dto;
+
+import java.time.ZonedDateTime;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+import de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState;
+import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
+
+/**
+ * DTO representing the processing status of a lecture unit.
+ * Used to show processing progress and errors in the UI.
+ */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+public record LectureUnitProcessingStatusDTO(Long lectureUnitId, ProcessingPhase phase, int retryCount, ZonedDateTime startedAt, String errorKey) {
+
+    /**
+     * Create a DTO from a processing state entity.
+     *
+     * @param state the processing state entity
+     * @return the DTO
+     */
+    public static LectureUnitProcessingStatusDTO of(LectureUnitProcessingState state) {
+        if (state == null || state.getLectureUnit() == null) {
+            throw new IllegalArgumentException("Processing state and lecture unit must not be null");
+        }
+        return new LectureUnitProcessingStatusDTO(state.getLectureUnit().getId(), state.getPhase(), state.getRetryCount(), state.getStartedAt(), state.getErrorKey());
+    }
+
+    /**
+     * Create a DTO for a lecture unit with no processing state (idle).
+     *
+     * @param lectureUnitId the ID of the lecture unit
+     * @return the DTO
+     */
+    public static LectureUnitProcessingStatusDTO idle(Long lectureUnitId) {
+        return new LectureUnitProcessingStatusDTO(lectureUnitId, ProcessingPhase.IDLE, 0, null, null);
+    }
+}

@@ -17,9 +17,6 @@ describe('ParticipationWebsocketService', () => {
     let receiveResultForParticipationSubject: Subject<Result>;
     let receiveResultForParticipation2Subject: Subject<Result>;
     let subscribeSpy: jest.SpyInstance;
-    let receiveStub: jest.SpyInstance;
-    let unsubscribeSpy: jest.SpyInstance;
-
     let participationWebsocketService: ParticipationWebsocketService;
 
     const exercise1 = new ProgrammingExercise(undefined, undefined);
@@ -59,24 +56,23 @@ describe('ParticipationWebsocketService', () => {
                 websocketService = TestBed.inject(WebsocketService);
 
                 subscribeSpy = jest.spyOn(websocketService, 'subscribe');
-                unsubscribeSpy = jest.spyOn(websocketService, 'unsubscribe');
-                receiveStub = jest.spyOn(websocketService, 'receive');
 
                 receiveResultForParticipationSubject = new Subject();
                 receiveResultForParticipation2Subject = new Subject();
                 receiveParticipationSubject = new Subject();
                 receiveParticipation2Subject = new Subject();
-                receiveStub.mockImplementation((arg1) => {
+                subscribeSpy.mockImplementation((arg1) => {
                     switch (arg1) {
                         case participationPersonalResultTopic:
-                            return receiveResultForParticipationSubject;
+                            return receiveResultForParticipationSubject.asObservable();
                         case participationInstructorResultTopic:
-                            return receiveResultForParticipation2Subject;
+                            return receiveResultForParticipation2Subject.asObservable();
                         case participationTopic:
-                            return receiveParticipationSubject;
+                            return receiveParticipationSubject.asObservable();
                         case participation2Topic:
-                            return receiveParticipation2Subject;
+                            return receiveParticipation2Subject.asObservable();
                     }
+                    return new Subject().asObservable();
                 });
             });
     });
@@ -89,9 +85,6 @@ describe('ParticipationWebsocketService', () => {
         participationWebsocketService.subscribeForLatestResultOfParticipation(participation.id!, false, exercise2.id);
         expect(subscribeSpy).toHaveBeenCalledOnce();
         expect(subscribeSpy).toHaveBeenCalledWith(participationInstructorResultTopic);
-        expect(receiveStub).toHaveBeenCalledOnce();
-        expect(receiveStub).toHaveBeenCalledWith(participationInstructorResultTopic);
-        expect(unsubscribeSpy).not.toHaveBeenCalled();
 
         expect(participationWebsocketService.cachedParticipations.size).toBe(0);
 
@@ -108,14 +101,11 @@ describe('ParticipationWebsocketService', () => {
         participationWebsocketService.subscribeForLatestResultOfParticipation(participation.id!, true);
         expect(subscribeSpy).toHaveBeenCalledOnce();
         expect(subscribeSpy).toHaveBeenCalledWith(participationPersonalResultTopic);
-        expect(receiveStub).toHaveBeenCalledOnce();
-        expect(receiveStub).toHaveBeenCalledWith(participationPersonalResultTopic);
-        expect(unsubscribeSpy).not.toHaveBeenCalled();
 
         expect(participationWebsocketService.cachedParticipations.size).toBe(0);
 
         expect(participationWebsocketService.openResultWebsocketSubscriptions.size).toBe(0);
-        expect(participationWebsocketService.openPersonalWebsocketSubscription).toBe(participationPersonalResultTopic);
+        expect(participationWebsocketService.openPersonalWebsocketSubscription).toBeDefined();
 
         expect(participationWebsocketService.resultObservables.size).toBe(1);
         expect(participationWebsocketService.resultObservables.has(participation.id!)).toBeTrue();
@@ -246,7 +236,7 @@ describe('ParticipationWebsocketService', () => {
         participationWebsocketService.addParticipation(participation);
         participationWebsocketService.addParticipation(participation2);
 
-        expect(participationWebsocketService.openPersonalWebsocketSubscription).toBe(participationPersonalResultTopic);
+        expect(participationWebsocketService.openPersonalWebsocketSubscription).toBeDefined();
         expect(participationWebsocketService.openResultWebsocketSubscriptions.size).toBe(1);
 
         participationWebsocketService.resetLocalCache();

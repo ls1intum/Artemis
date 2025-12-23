@@ -70,7 +70,7 @@ export class QuizExerciseDetailComponent implements OnInit {
         this.quizExerciseService.find(this.quizId).subscribe(async (response: HttpResponse<QuizExercise>) => {
             this.quizExercise = response.body!;
             this.quizExercise.quizBatches = this.quizExercise.quizBatches?.sort((a, b) => (a.id ?? 0) - (b.id ?? 0));
-            this.quizExercise.isEditable = isQuizEditable(this.quizExercise);
+            this.quizExercise.isEditable = (this.quizExercise.isEditable ?? true) && isQuizEditable(this.quizExercise);
             this.quizExercise.status = this.quizExerciseService.getStatus(this.quizExercise);
             this.quizExercise.startDate = this.quizExercise.dueDate && dayjs(this.quizExercise.dueDate).subtract(this.quizExercise.duration ?? 0, 'second');
             this.showStatistics = !this.quizExercise.releaseDate || dayjs(this.quizExercise.releaseDate).isBefore(dayjs());

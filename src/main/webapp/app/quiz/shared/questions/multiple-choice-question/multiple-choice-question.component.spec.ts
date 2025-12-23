@@ -46,7 +46,7 @@ describe('MultipleChoiceQuestionComponent', () => {
         };
 
         fixture.componentRef.setInput('question', question);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(component.renderedQuestion.text).toEqual(artemisMarkdownService.safeHtmlForMarkdown(question.text));
         expect(component.renderedQuestion.hint).toEqual(artemisMarkdownService.safeHtmlForMarkdown(question.hint));
@@ -74,7 +74,7 @@ describe('MultipleChoiceQuestionComponent', () => {
         };
 
         fixture.componentRef.setInput('question', question);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(component.renderedQuestion.text).toEqual(artemisMarkdownService.safeHtmlForMarkdown(question.text));
         expect(component.renderedQuestion.hint).toBe('');
         expect(component.renderedQuestion.explanation).toBe('');
@@ -131,7 +131,7 @@ describe('MultipleChoiceQuestionComponent', () => {
 
         fixture.componentRef.setInput('question', question);
         fixture.componentRef.setInput('clickDisabled', true);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         component.toggleSelection(answerOptions[1]);
         expect(component.isAnswerOptionSelected(answerOptions[0])).toBeFalse();
         expect(component.isAnswerOptionSelected(answerOptions[1])).toBeFalse();
@@ -155,11 +155,11 @@ describe('MultipleChoiceQuestionComponent', () => {
 
         fixture.componentRef.setInput('question', question);
         fixture.componentRef.setInput('selectedAnswerOptions', []);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         component.selectedAnswerOptionsChange.subscribe((v) => {
             fixture.componentRef.setInput('selectedAnswerOptions', v ?? []);
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
         });
 
         component.toggleSelection(answerOptions[1]);
@@ -204,11 +204,11 @@ describe('MultipleChoiceQuestionComponent', () => {
 
         fixture.componentRef.setInput('question', question);
         fixture.componentRef.setInput('selectedAnswerOptions', []);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         component.selectedAnswerOptionsChange.subscribe((v) => {
             fixture.componentRef.setInput('selectedAnswerOptions', v ?? []);
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
         });
 
         component.toggleSelection(answerOptions[1]);

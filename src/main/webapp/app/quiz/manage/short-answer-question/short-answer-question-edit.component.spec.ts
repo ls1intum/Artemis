@@ -457,7 +457,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
         component.shortAnswerQuestion.spots = [spot1, spot2];
         component.shortAnswerQuestion.correctMappings = [new ShortAnswerMapping(spot1, shortAnswerSolution1), new ShortAnswerMapping(spot2, shortAnswerSolution2)];
         fixture.componentRef.setInput('question', component.shortAnswerQuestion);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         component.addSpotAtCursorVisualMode();
 
@@ -547,7 +547,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
         const getNavigationSpy = jest.spyOn(document, 'getElementById').mockReturnValue(returnValue);
         const array = ['0'];
         component.textParts = [array, array];
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         component.setQuestionText('0-0-0-0');
 

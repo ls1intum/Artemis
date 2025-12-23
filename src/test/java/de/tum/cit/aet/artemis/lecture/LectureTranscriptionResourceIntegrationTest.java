@@ -1,8 +1,6 @@
 package de.tum.cit.aet.artemis.lecture;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -13,11 +11,8 @@ import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -27,7 +22,6 @@ import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscriptionSegment;
 import de.tum.cit.aet.artemis.lecture.domain.TranscriptionStatus;
-import de.tum.cit.aet.artemis.lecture.dto.LectureTranscriptionDTO;
 import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
@@ -47,9 +41,6 @@ class LectureTranscriptionResourceIntegrationTest extends AbstractSpringIntegrat
 
     @Autowired
     private UserTestRepository userRepository;
-
-    @Autowired
-    private ObjectMapper objectMapper;
 
     private Course course;
 
@@ -83,73 +74,6 @@ class LectureTranscriptionResourceIntegrationTest extends AbstractSpringIntegrat
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
-    void createLectureTranscription_success() throws Exception {
-        // Create transcription DTO
-        var segments = List.of(new LectureTranscriptionSegment(0.0, 5.0, "Hello world", 1), new LectureTranscriptionSegment(5.0, 10.0, "This is a test", 1));
-        var transcriptionDTO = new LectureTranscriptionDTO(lectureUnit.getId(), "en", segments);
-
-        // Perform POST request
-        restLectureTranscriptionMockMvc
-                .perform(post("/api/lecture/{lectureId}/lecture-unit/{lectureUnitId}/transcription", lecture.getId(), lectureUnit.getId()).contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(transcriptionDTO)))
-                .andExpect(status().isCreated()).andExpect(jsonPath("$.language").value("en")).andExpect(jsonPath("$.segments").isArray())
-                .andExpect(jsonPath("$.segments[0].startTime").value(0.0)).andExpect(jsonPath("$.segments[0].endTime").value(5.0))
-                .andExpect(jsonPath("$.segments[0].text").value("Hello world"));
-
-        // Verify transcription was saved
-        var savedTranscriptions = lectureTranscriptionRepository.findAll();
-        assertThat(savedTranscriptions).hasSize(1);
-        assertThat(savedTranscriptions.get(0).getLanguage()).isEqualTo("en");
-        assertThat(savedTranscriptions.get(0).getSegments()).hasSize(2);
-        assertThat(savedTranscriptions.get(0).getTranscriptionStatus()).isEqualTo(TranscriptionStatus.COMPLETED);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
-    void createLectureTranscription_wrongLecture_badRequest() throws Exception {
-        // Create another lecture
-        var otherLecture = new Lecture();
-        otherLecture.setTitle("Other Lecture");
-        otherLecture.setCourse(course);
-        otherLecture = lectureRepository.save(otherLecture);
-
-        var transcriptionDTO = new LectureTranscriptionDTO(lectureUnit.getId(), "en", List.of());
-
-        // Try to create transcription with wrong lecture ID
-        restLectureTranscriptionMockMvc.perform(post("/api/lecture/{lectureId}/lecture-unit/{lectureUnitId}/transcription", otherLecture.getId(), lectureUnit.getId())
-                .contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(transcriptionDTO))).andExpect(status().isBadRequest());
-
-        // Verify no transcription was saved
-        assertThat(lectureTranscriptionRepository.findAll()).isEmpty();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
-    void createLectureTranscription_replacesExisting() throws Exception {
-        // Create existing transcription
-        var existingTranscription = new LectureTranscription("de", List.of(), lectureUnit);
-        existingTranscription.setTranscriptionStatus(TranscriptionStatus.COMPLETED);
-        lectureTranscriptionRepository.save(existingTranscription);
-
-        // Create new transcription DTO
-        var segments = List.of(new LectureTranscriptionSegment(0.0, 5.0, "New content", 1));
-        var transcriptionDTO = new LectureTranscriptionDTO(lectureUnit.getId(), "en", segments);
-
-        // Perform POST request
-        restLectureTranscriptionMockMvc.perform(post("/api/lecture/{lectureId}/lecture-unit/{lectureUnitId}/transcription", lecture.getId(), lectureUnit.getId())
-                .contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(transcriptionDTO))).andExpect(status().isCreated())
-                .andExpect(jsonPath("$.language").value("en"));
-
-        // Verify old transcription was replaced
-        var savedTranscriptions = lectureTranscriptionRepository.findAll();
-        assertThat(savedTranscriptions).hasSize(1);
-        assertThat(savedTranscriptions.get(0).getLanguage()).isEqualTo("en");
-        assertThat(savedTranscriptions.get(0).getSegments().get(0).text()).isEqualTo("New content");
-        assertThat(savedTranscriptions.get(0).getTranscriptionStatus()).isEqualTo(TranscriptionStatus.COMPLETED);
-    }
-
-    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
     void getTranscript_success() throws Exception {
         // Create transcription
@@ -171,16 +95,6 @@ class LectureTranscriptionResourceIntegrationTest extends AbstractSpringIntegrat
     void getTranscript_notFound() throws Exception {
         // Perform GET request for non-existent transcription
         restLectureTranscriptionMockMvc.perform(get("/api/lecture/lecture-unit/{lectureUnitId}/transcript", lectureUnit.getId())).andExpect(status().isNotFound());
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student", roles = "USER")
-    void createLectureTranscription_asStudent_forbidden() throws Exception {
-        var transcriptionDTO = new LectureTranscriptionDTO(lectureUnit.getId(), "en", List.of());
-
-        // Students should not be able to create transcriptions
-        restLectureTranscriptionMockMvc.perform(post("/api/lecture/{lectureId}/lecture-unit/{lectureUnitId}/transcription", lecture.getId(), lectureUnit.getId())
-                .contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(transcriptionDTO))).andExpect(status().isForbidden());
     }
 
     @Test

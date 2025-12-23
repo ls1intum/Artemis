@@ -12,8 +12,7 @@
                     "filterFuture": "Zukünftige",
                     "filterUnspecifiedDates": "Ohne Zeitangaben"
                 },
-                "createOrEditLabel": "Vorlesung erstellen oder bearbeiten",
-                "ingestLecturesInPyrisLabel": "Vorlesungen an Iris senden"
+                "createOrEditLabel": "Vorlesung erstellen oder bearbeiten"
             },
             "created": "Vorlesung erstellt mit ID {{ param }}",
             "updated": "Vorlesung aktualisiert mit ID {{ param }}",
@@ -29,7 +28,6 @@
             "endDate": "Ende",
             "visibleDate": "Sichtbar ab",
             "course": "Kurs",
-            "ingestionState": "Iris-Verarbeitungsstatus",
             "detail": {
                 "title": "Vorlesung",
                 "sections": {
@@ -73,14 +71,14 @@
                 "title": "Titel",
                 "titleDescription": "Gib einen Titel und eine aussagekräftige Beschreibung für die Vorlesung ein.",
                 "period": "Zeitraum",
-                "periodDescription": "Lege das Start- und Enddatum der Vorlesung fest.",
+                "periodDescription": "Lege Start- und Enddatum der Vorlesung fest.",
                 "attachments": "Anhänge",
                 "attachmentsDescription": "Lade Anhänge für die Vorlesung hoch.",
-                "units": "Vorlesungseinheiten",
-                "unitsDescription": "Füge Inhalte zur Vorlesung hinzu, indem du Vorlesungseinheiten erstellst."
+                "units": "Inhalte",
+                "unitsDescription": "Füge Inhalte zur Vorlesung hinzu, indem du verschiedene Vorlesungsinhalte erstellst."
             },
-            "newLectureUnit": "Neue Vorlesungseinheit",
-            "editLectureUnit": "Vorlesungseinheit bearbeiten",
+            "newLectureUnit": "Neuer Vorlesungsinhalt",
+            "editLectureUnit": "Vorlesungsinhalt bearbeiten",
             "dismissChangesModal": {
                 "title": "Ungespeicherte Änderungen der Vorlesung verwerfen?",
                 "message": "Bist du sicher, dass du die ungespeicherten Änderungen verwerfen willst?",
@@ -95,6 +93,22 @@
                 "tutorialLectureTooltip": "Eine Tutoriumsvorlesung ist nur Teil des Tutoriumstabs und kann benutzt werden, um Tutoriumsinhalte zur Verfügung zu stellen.",
                 "tutorialLectureCheckboxLabel": "Das ist eine Tutoriumsvorlesung.",
                 "title": "Lektionen"
+            },
+            "pdfUpload": {
+                "dropZoneTitle": "PDF-Dateien hier ablegen, um Folien hinzuzufügen",
+                "dropZoneHint": "oder klicken, um Dateien auszuwählen",
+                "dialogTitle": "PDFs zur Vorlesung hinzufügen",
+                "newLecture": "Neue Vorlesung erstellen",
+                "existingLecture": "Zu bestehender Vorlesung hinzufügen",
+                "selectLecture": "Vorlesung auswählen",
+                "selectLecturePlaceholder": "-- Vorlesung auswählen --",
+                "lectureTitle": "Vorlesungstitel",
+                "lectureTitlePlaceholder": "Vorlesungstitel eingeben",
+                "confirm": "Erstellen",
+                "filesSelected": "{{ count }} PDF-Datei(en) ausgewählt",
+                "success": "PDF-Inhalte wurden erfolgreich hinzugefügt.",
+                "lectureCreated": "Vorlesung und Inhalte wurden erfolgreich erstellt.",
+                "fileTooLarge": "Eine oder mehrere Dateien überschreiten die maximale Größe von 20MB und wurden übersprungen."
             },
             "createSeries": {
                 "startAndEndDateExplanation": "Erstelle schnell eine Vorlesungsserie, indem du Title und Zeiten definierst. Füge Inhalte später hinzu. Definiere als erstes den Start und das Ende von mindestens einer Vorlesung, die du wöchentlich wiederholen willst:",
@@ -123,7 +137,7 @@
             "pdfPreview": {
                 "title": "Anhang",
                 "attachmentIDError": "Ungültiger Anhang oder ungültige Anhangs-ID.",
-                "attachmentVideoUnitIDError": "Ungültige Dateieinheit oder ungültige Dateieinheits-ID.",
+                "attachmentVideoUnitIDError": "Ungültiger Inhalt oder ungültige Inhalts-ID.",
                 "noPDFAvailable": "Kein PDF verfügbar",
                 "cancelButton": "Abbrechen",
                 "removePageButton": "Seiten entfernen",

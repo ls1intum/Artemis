@@ -138,7 +138,7 @@ describe('UserManagementUpdateComponent', () => {
                 translateService.use('en');
 
                 // THEN
-                languageHelper.language.subscribe((res) => expect(res).toEqual(translateService.currentLang));
+                languageHelper.language.subscribe((res) => expect(res).toEqual(translateService.getCurrentLang()));
             }),
         ));
 

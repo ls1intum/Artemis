@@ -19,8 +19,8 @@ import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
 
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.hyperion.domain.ConsistencyIssueCategory;
 import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyCheckResponseDTO;
-import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyIssueCategory;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExercisePart
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
+import io.micrometer.observation.ObservationRegistry;
 
 class HyperionConsistencyCheckServiceTest {
 
@@ -50,7 +51,9 @@ class HyperionConsistencyCheckServiceTest {
         // Wire minimal renderer with mocked dependencies
         HyperionProgrammingExerciseContextRendererService exerciseContextRenderer = new HyperionProgrammingExerciseContextRendererService(repositoryService,
                 new HyperionProgrammingLanguageContextFilterService());
-        this.hyperionConsistencyCheckService = new HyperionConsistencyCheckService(programmingExerciseRepository, chatClient, templateService, exerciseContextRenderer);
+        var observationRegistry = ObservationRegistry.create();
+        this.hyperionConsistencyCheckService = new HyperionConsistencyCheckService(programmingExerciseRepository, chatClient, templateService, exerciseContextRenderer,
+                observationRegistry);
     }
 
     @Test

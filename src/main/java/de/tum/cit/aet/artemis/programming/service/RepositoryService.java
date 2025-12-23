@@ -527,7 +527,7 @@ public class RepositoryService {
         if (!repository.isValidFile(newFile)) {
             throw new IllegalArgumentException("Existing path is not valid");
         }
-        if (gitService.getFileByName(repository, newFile.getPath()).isPresent()) {
+        if (gitService.getFileByName(repository, newFile.toString()).isPresent()) {
             throw new FileAlreadyExistsException("New path is not valid");
         }
         boolean isRenamed = existingFile.get().renameTo(newFile);

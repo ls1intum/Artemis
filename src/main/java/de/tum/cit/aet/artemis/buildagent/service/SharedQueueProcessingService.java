@@ -153,6 +153,27 @@ public class SharedQueueProcessingService {
     @Value("${artemis.continuous-integration.build-agent.display-name:}")
     private String buildAgentDisplayName;
 
+    /**
+     * Returns whether the build agent is currently paused.
+     *
+     * @return true if the build agent is paused, false otherwise
+     */
+    public boolean isPaused() {
+        return isPaused.get();
+    }
+
+    /**
+     * Resets the internal pause state of the build agent. This method should ONLY be used in tests
+     * to ensure proper test isolation when tests manipulate the pause/resume state.
+     * <p>
+     * This method resets both the {@code isPaused} flag and the {@code processResults} flag
+     * to their default (non-paused) state.
+     */
+    public void resetPauseState() {
+        isPaused.set(false);
+        processResults.set(true);
+    }
+
     public SharedQueueProcessingService(BuildAgentConfiguration buildAgentConfiguration, BuildJobManagementService buildJobManagementService, BuildLogsMap buildLogsMap,
             TaskScheduler taskScheduler, BuildAgentDockerService buildAgentDockerService, BuildAgentInformationService buildAgentInformationService,
             DistributedDataAccessService distributedDataAccessService) {

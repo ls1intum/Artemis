@@ -78,7 +78,7 @@ describe('DetailOverviewList', () => {
                 ],
             },
         ]);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         const detailListTitleDOMElements = fixture.nativeElement.querySelectorAll('dt[id^=detail-title]');
         expect(detailListTitleDOMElements).toHaveLength(1);
         const titleDetailTitle = fixture.nativeElement.querySelector('dt[id=detail-title-title]');
