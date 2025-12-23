@@ -29,9 +29,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.test.context.support.TestExecutionEvent;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.security.test.context.support.WithUserDetails;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 
@@ -1646,7 +1644,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     class GetCalendarEventSubscriptionTokenTests {
 
         @Test
-        @WithUserDetails(value = STUDENT_LOGIN, setupBefore = TestExecutionEvent.TEST_EXECUTION)
+        @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
         void shouldReuseExistingToken() throws Exception {
             String expectedToken = "921651b1118f216d04b190fc0659386b";
             userUtilService.clearAllTokensAndSetTokenForUser(student, expectedToken);
@@ -1658,7 +1656,7 @@ class CalendarIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         }
 
         @Test
-        @WithUserDetails(value = STUDENT_LOGIN, setupBefore = TestExecutionEvent.TEST_EXECUTION)
+        @WithMockUser(username = STUDENT_LOGIN, roles = "USER")
         void shouldGenerateNewToken() throws Exception {
             String url = "/api/core/calendar/subscription-token";
             String actualToken = request.get(url, HttpStatus.OK, String.class);

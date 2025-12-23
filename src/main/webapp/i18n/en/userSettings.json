@@ -18,7 +18,8 @@
             "idePreferencesPage": {
                 "description": "Choose the IDEs you want to use for opening programming exercises.",
                 "default": "Default",
-                "jetbrainsHelp": "To use JetBrains IDEs, please install the JetBrains Toolbox."
+                "jetbrainsHelp": "To use JetBrains IDEs, please install the JetBrains Toolbox.",
+                "addNewLanguage": "Add new language specific preferences"
             },
             "externalLLMUsageSettingsPage": {
                 "accepted": "You have accepted the usage of external LLMs on {{acceptedDate}}.",
@@ -39,7 +40,7 @@
                 "cancelSavingSshKey": "Cancel",
                 "editExistingSshKey": "Edit",
                 "viewExistingSshKey": "View",
-                "addNewSshKey": "Add SSH key",
+                "addNewSshKey": "Add new SSH key",
                 "sshKeyDetails": "SSH key details",
                 "deleteSshKey": "Delete",
                 "sshKeyDisplayedInformation": "This is your currently configured SSH key:",
@@ -96,7 +97,7 @@
                 "noneRegistered": "You have not registered any passkeys with Artemis yet.",
                 "deletePasskeyQuestion": "Do you really want to delete your passkey for passwordless authentication with Artemis?",
                 "noPasskeyRegistered": "You have not registered any passkeys with Artemis yet.",
-                "addNewPasskey": "Add a passkey",
+                "addNewPasskey": "Add new passkey",
                 "yourPasskeys": "Your passkeys",
                 "created": "Created on",
                 "lastUsed": "Last used on",
@@ -136,7 +137,8 @@
                 "joinedArtemis": "Joined Artemis on",
                 "profilePicture": "Profile Picture",
                 "addProfilePicture": "Add a profile picture",
-                "sshKey": "Public SSH Key"
+                "sshKey": "Public SSH Key",
+                "editAccountSettings": "Edit Account Settings"
             },
             "categories": {
                 "externalLLMUsage": "External LLM Usage Settings",

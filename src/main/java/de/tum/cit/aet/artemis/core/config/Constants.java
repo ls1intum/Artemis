@@ -159,6 +159,12 @@ public final class Constants {
     // This value limits the amount of characters allowed for custom instructions in Iris sub-settings.
     public static final int IRIS_CUSTOM_INSTRUCTIONS_MAX_LENGTH = 2048;
 
+    /**
+     * Maximum number of retry attempts for lecture content processing
+     * (transcription and ingestion) before marking as failed.
+     */
+    public static final int MAX_PROCESSING_RETRIES = 5;
+
     public static final String SETUP_COMMIT_MESSAGE = "Setup";
 
     public static final String ENROLL_IN_COURSE = "ENROLL_IN_COURSE";
@@ -431,6 +437,11 @@ public final class Constants {
      * The name of the module feature used for nebula functionality.
      */
     public static final String MODULE_FEATURE_NEBULA = "nebula";
+
+    /**
+     * The name of the module feature used for Sharing functionality.
+     */
+    public static final String MODULE_FEATURE_SHARING = "sharing";
 
     /**
      * The name of the property used to enable or disable Atlas functionality.

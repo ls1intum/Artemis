@@ -1,0 +1,61 @@
+import Image, {ImageSize} from "../../src/components/Image/Image";
+import generalMenuLecture from './assets/lectures/general-menu-lecture.png';
+import lectureOverviewCollapse from './assets/lectures/lecture-overview-collapse.png';
+import lectureOverviewCurrent from './assets/lectures/lecture-overview-current.png';
+import lectureOverviewPast from './assets/lectures/lecture-overview-past.png';
+import lectureDetails from './assets/lectures/lecture-details.png';
+
+# Lectures
+
+## Overview
+
+You can find published lectures of a course by clicking on the tab labeled *Lectures*.
+
+<Image src={generalMenuLecture} alt="Lectures Menu" size={ImageSize.small} caption={"Lectures Tab in Sidebar"}></Image>
+
+## Lecture Organization and Navigation
+
+The lecture overview provides an organized view of all course lectures.
+The sidebar displays lectures categorized by time periods to help navigate course content efficiently:
+
+- **Future:** Upcoming lectures that haven't started yet
+- **Current:** Lectures active in the current week
+- **Past:** Lectures whose end date has passed
+- **No Date:** Lectures without specific dates assigned
+
+<Image src={lectureOverviewCollapse} alt="Lecture Overview Sidebar" size={ImageSize.small} caption={"Lecture Sidebar with collapsed categories"}></Image>
+
+When a section (e.g., No date) contains more than 5 lectures, Artemis may create weekly subsections to improve navigation, though the exact grouping depends on lecture dates and distribution across weeks.
+
+<div style={{display: 'flex', gap: '1rem', flexWrap: 'wrap'}}>
+    <Image src={lectureOverviewCurrent} alt="Current Lectures Overview" size={ImageSize.small} caption={"Lecture Overview uncollapsed (1)"}></Image>
+    <Image src={lectureOverviewPast} alt="Past Lectures Overview" size={ImageSize.small} caption={"Lecture Overview uncollapsed (2)"}></Image>
+</div>
+
+## Lecture Details
+
+Clicking on a lecture leads to the lecture details page, where you can see the title, description, lecture units, and attachments.
+
+<Image src={lectureDetails} alt="Lecture Details Page" size={ImageSize.large} caption={"Student Lecture Details Page"}></Image>
+
+## Lecture Units
+
+Students see all released lecture units on the lecture details page.
+Clicking on a unit opens its contents.
+Artemis shows a flag icon with a popover next to the unit if it is associated with a learning goal.
+
+Students complete lecture units automatically (e.g., when they are opened) or manually by clicking the checkbox.
+
+### Unit Types
+
+Lectures can be divided into lecture units, which can be of the following types:
+
+- **Text unit:** A text with markup.
+- **Exercise unit:** An exercise from the same course.
+- **Attachment Video unit:** A file that the student may download and an embedded video stream or video from an external source. Students complete this unit when they watch the video for at least five minutes and download the attachment.
+- **Online unit:** A link to an external website. Students complete this unit once they navigate to the external website.
+
+## Competencies
+
+Instructors can create competencies, which are desired learning objectives, and link lecture units to them.
+See the [Adaptive Learning](./adaptive-learning.mdx) documentation for more information.

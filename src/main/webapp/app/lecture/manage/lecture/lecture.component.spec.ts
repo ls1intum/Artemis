@@ -15,7 +15,7 @@ import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
-import { Subject, of, throwError } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 import { LectureImportComponent } from 'app/lecture/manage/lecture-import/lecture-import.component';
@@ -23,7 +23,7 @@ import { DocumentationButtonComponent } from 'app/shared/components/buttons/docu
 import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { AttachmentVideoUnit, IngestionState } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
+import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
@@ -269,115 +269,6 @@ describe('Lecture', () => {
         expect(lectureComponent.filteredLectures).toContainEqual(unspecifiedLecture);
     });
 
-    it('should call the service to ingest lectures when ingestLecturesInPyris is called', () => {
-        lectureComponent.lectures = [lectureToIngest];
-        const ingestSpy = jest.spyOn(lectureService, 'ingestLecturesInPyris').mockImplementation(() => of(new HttpResponse<void>({ status: 200 })));
-        lectureComponent.ingestLecturesInPyris();
-        expect(ingestSpy).toHaveBeenCalledWith(lectureToIngest.course?.id);
-        expect(ingestSpy).toHaveBeenCalledOnce();
-    });
-
-    it('should update ingestion states correctly when getIngestionState returns data', () => {
-        lectureComponent.courseId = 99;
-        lectureComponent.lectures = [lectureToIngest, pastLecture];
-        const mockIngestionStates = {
-            1: IngestionState.DONE,
-            6: IngestionState.PARTIALLY_INGESTED,
-        };
-
-        jest.spyOn(lectureService, 'getIngestionState').mockReturnValue(
-            of(
-                new HttpResponse({
-                    body: mockIngestionStates,
-                    status: 200,
-                }),
-            ),
-        );
-
-        lectureComponent.updateIngestionStates();
-
-        expect(lectureService.getIngestionState).toHaveBeenCalledWith(lectureToIngest.course!.id!);
-        expect(lectureToIngest.ingested).toBe(IngestionState.DONE);
-        expect(pastLecture.ingested).toBe(IngestionState.PARTIALLY_INGESTED);
-    });
-
-    it('should not call the service if the first lecture does not exist', () => {
-        lectureComponent.lectures = [];
-        const ingestSpy = jest.spyOn(lectureService, 'ingestLecturesInPyris').mockImplementation(() => of(new HttpResponse<void>({ status: 200 })));
-        lectureComponent.ingestLecturesInPyris();
-        expect(ingestSpy).not.toHaveBeenCalled();
-    });
-
-    it('should do nothing when error occurs', () => {
-        lectureComponent.lectures = [lectureToIngest];
-        jest.spyOn(lectureService, 'ingestLecturesInPyris').mockReturnValue(throwError(() => new Error('Error while ingesting')));
-        lectureComponent.ingestLecturesInPyris();
-    });
-
-    function setupInitializationTests() {
-        const updateIngestionStatesSpy = jest.spyOn(lectureComponent, 'updateIngestionStates');
-        jest.spyOn(profileService, 'isProfileActive').mockReturnValue(true);
-
-        // Mock the services with Subjects to control when they emit
-        const lectureSubject = new Subject<HttpResponse<Lecture[]>>();
-        const settingsSubject = new Subject<any>();
-
-        jest.spyOn(lectureService, 'findAllByCourseId').mockReturnValue(lectureSubject.asObservable());
-        jest.spyOn(TestBed.inject(IrisSettingsService), 'getCourseSettingsWithRateLimit').mockReturnValue(settingsSubject.asObservable());
-
-        // Set up test data
-        const lectures = [lectureToIngest];
-        const enabledSettings = {
-            courseId: 1,
-            settings: {
-                enabled: true,
-                customInstructions: '',
-                variant: 'default',
-                rateLimit: { requests: 100, timeframeHours: 24 },
-            },
-            effectiveRateLimit: { requests: 100, timeframeHours: 24 },
-            applicationRateLimitDefaults: { requests: 50, timeframeHours: 12 },
-        };
-
-        return {
-            updateIngestionStatesSpy,
-            lectureSubject,
-            settingsSubject,
-            lectures,
-            enabledSettings,
-        };
-    }
-
-    it('should properly load ingestion state when lectures load first, then settings', () => {
-        const { updateIngestionStatesSpy, lectureSubject, settingsSubject, lectures, enabledSettings } = setupInitializationTests();
-
-        // Initialize component
-        lectureComponent.ngOnInit();
-
-        // Emit lectures first
-        lectureSubject.next(new HttpResponse({ body: lectures, status: 200 }));
-        expect(updateIngestionStatesSpy).not.toHaveBeenCalled();
-
-        // Then emit settings
-        settingsSubject.next(enabledSettings);
-        expect(updateIngestionStatesSpy).toHaveBeenCalledOnce();
-    });
-
-    it('should properly load ingestion state when settings load first, then lectures', () => {
-        const { updateIngestionStatesSpy, lectureSubject, settingsSubject, lectures, enabledSettings } = setupInitializationTests();
-
-        // Initialize component
-        lectureComponent.ngOnInit();
-
-        // Emit settings first
-        settingsSubject.next(enabledSettings);
-        expect(updateIngestionStatesSpy).not.toHaveBeenCalled();
-
-        // Then emit lectures
-        lectureSubject.next(new HttpResponse({ body: lectures, status: 200 }));
-        expect(updateIngestionStatesSpy).toHaveBeenCalledOnce();
-    });
-
     it('should return lecture id from trackId', () => {
         const lecture = new Lecture();
         lecture.id = 42;
@@ -455,18 +346,6 @@ describe('Lecture', () => {
 
         expect(errorSpy).toHaveBeenCalledWith('error.http.400');
     }));
-
-    it('should handle error when updating ingestion states fails', () => {
-        const alertService = TestBed.inject(AlertService);
-        const errorSpy = jest.spyOn(alertService, 'error');
-        lectureComponent.courseId = 1;
-        lectureComponent.lectures = [lectureToIngest];
-        jest.spyOn(lectureService, 'getIngestionState').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
-
-        lectureComponent.updateIngestionStates();
-
-        expect(errorSpy).toHaveBeenCalledWith('artemisApp.iris.ingestionAlert.pyrisError');
-    });
 
     describe('PDF drop zone functionality', () => {
         let attachmentVideoUnitService: AttachmentVideoUnitService;
