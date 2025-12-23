@@ -1,12 +1,10 @@
 import { Page, expect } from '@playwright/test';
 import { ExerciseCommit } from '../../../constants';
 import { Commands } from '../../../commands';
+import { BUILD_RESULT_TIMEOUT, POLLING_INTERVAL } from '../../../timeouts';
 
 export class RepositoryPage {
     private readonly page: Page;
-
-    private static readonly CHECK_BUILD_RESULT_INTERVAL = 2000;
-    private static readonly CHECK_BUILD_RESULT_TIMEOUT = 90000;
 
     constructor(page: Page) {
         this.page = page;
@@ -42,7 +40,7 @@ export class RepositoryPage {
                     // First wait for ANY result to appear (not filtered by expected text)
                     const anyResultLocator = commitRow.locator('#result-score');
                     console.log(`[checkCommitHistory] Waiting for result-score element to appear...`);
-                    await Commands.reloadUntilFound(this.page, anyResultLocator, RepositoryPage.CHECK_BUILD_RESULT_INTERVAL, RepositoryPage.CHECK_BUILD_RESULT_TIMEOUT);
+                    await Commands.reloadUntilFound(this.page, anyResultLocator, POLLING_INTERVAL, BUILD_RESULT_TIMEOUT);
 
                     // Now check if the actual result matches expected
                     const actualResult = await anyResultLocator.textContent();

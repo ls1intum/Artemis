@@ -53,6 +53,10 @@ services:
                 condition: service_healthy
         environment:
             PLAYWRIGHT_DB_TYPE: 'MySQL'
+            # Pass through configurable timeouts from host (for local vs CI)
+            BUILD_RESULT_TIMEOUT_MS: ${BUILD_RESULT_TIMEOUT_MS:-90000}
+            BUILD_FINISH_TIMEOUT_MS: ${BUILD_FINISH_TIMEOUT_MS:-60000}
+            EXAM_DASHBOARD_TIMEOUT_MS: ${EXAM_DASHBOARD_TIMEOUT_MS:-60000}
         network_mode: service:artemis-app
 
 networks:

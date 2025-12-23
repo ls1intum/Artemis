@@ -2,6 +2,7 @@ import { UserCredentials } from './users';
 import { Locator, Page, expect } from '@playwright/test';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ExerciseAPIRequests } from './requests/ExerciseAPIRequests';
+import { BUILD_FINISH_TIMEOUT, POLLING_INTERVAL } from './timeouts';
 
 /**
  * A class that encapsulates static helper command methods.
@@ -73,7 +74,13 @@ export class Commands {
      * @param interval - Interval in milliseconds between checks for the build to finish.
      * @param timeout - Timeout in milliseconds to wait for the build to finish.
      */
-    static waitForExerciseBuildToFinish = async (page: Page, exerciseAPIRequests: ExerciseAPIRequests, exerciseId: number, interval: number = 2000, timeout: number = 60000) => {
+    static waitForExerciseBuildToFinish = async (
+        page: Page,
+        exerciseAPIRequests: ExerciseAPIRequests,
+        exerciseId: number,
+        interval: number = POLLING_INTERVAL,
+        timeout: number = BUILD_FINISH_TIMEOUT,
+    ) => {
         let exerciseParticipation: StudentParticipation | undefined;
         const startTime = Date.now();
 
@@ -130,7 +137,12 @@ export class Commands {
      * @param interval - Interval in milliseconds between checks.
      * @param timeout - Timeout in milliseconds to wait for the build to finish.
      */
-    static waitForParticipationBuildToFinish = async (exerciseAPIRequests: ExerciseAPIRequests, participationId: number, interval: number = 2000, timeout: number = 60000) => {
+    static waitForParticipationBuildToFinish = async (
+        exerciseAPIRequests: ExerciseAPIRequests,
+        participationId: number,
+        interval: number = POLLING_INTERVAL,
+        timeout: number = BUILD_FINISH_TIMEOUT,
+    ) => {
         const startTime = Date.now();
 
         const countResults = (participation: StudentParticipation): number => {

@@ -423,13 +423,20 @@ export class ExerciseAPIRequests {
      */
     async updateModelingExerciseDueDate(exercise: ModelingExercise, due = dayjs()) {
         // The PUT endpoint expects UpdateModelingExerciseDTO with specific fields
+        // When setting dueDate to the past, all dates must be adjusted to maintain: releaseDate < dueDate < assessmentDueDate
+        const newDueDate = dayjsToString(due);
+        // Ensure releaseDate is before the new dueDate (at least 1 second before)
+        const newReleaseDate = dayjsToString(due.subtract(1, 'second'));
+        // Ensure assessmentDueDate is after the new dueDate (at least 1 second after)
+        const newAssessmentDueDate = dayjsToString(due.add(1, 'second'));
+
         const updateDto = {
             id: exercise.id,
             title: exercise.title,
             shortName: exercise.shortName,
-            releaseDate: exercise.releaseDate,
-            dueDate: dayjsToString(due),
-            assessmentDueDate: exercise.assessmentDueDate,
+            releaseDate: newReleaseDate,
+            dueDate: newDueDate,
+            assessmentDueDate: newAssessmentDueDate,
             maxPoints: exercise.maxPoints,
             bonusPoints: exercise.bonusPoints,
             difficulty: exercise.difficulty,
