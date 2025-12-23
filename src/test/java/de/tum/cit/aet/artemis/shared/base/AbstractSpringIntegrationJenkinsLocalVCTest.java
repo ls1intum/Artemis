@@ -13,6 +13,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
 import static de.tum.cit.aet.artemis.core.config.Constants.TEST_REPO_NAME;
 import static de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType.SOLUTION;
 import static de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType.TEMPLATE;
+import static org.mockito.Mockito.when;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.io.IOException;
@@ -24,6 +25,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.parallel.ResourceLock;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +35,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 import de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService;
@@ -40,6 +43,7 @@ import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificat
 import de.tum.cit.aet.artemis.core.connector.AeolusRequestMockProvider;
 import de.tum.cit.aet.artemis.core.connector.JenkinsRequestMockProvider;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.service.PasskeyAuthenticationService;
 import de.tum.cit.aet.artemis.exam.service.ExamLiveEventsService;
 import de.tum.cit.aet.artemis.programming.domain.AbstractBaseProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.AeolusTarget;
@@ -128,6 +132,11 @@ public abstract class AbstractSpringIntegrationJenkinsLocalVCTest extends Abstra
     @MockitoSpyBean
     protected ContinuousIntegrationTriggerService continuousIntegrationTriggerService;
 
+    // Mock PasskeyAuthenticationService to allow admin operations in tests
+    // The @EnforceAdmin annotation requires passkey authentication to be mocked
+    @MockitoBean
+    protected PasskeyAuthenticationService passkeyAuthenticationService;
+
     protected URI localVCBaseUri;
 
     @Value("${artemis.version-control.url}")
@@ -138,6 +147,12 @@ public abstract class AbstractSpringIntegrationJenkinsLocalVCTest extends Abstra
 
     @Value("${artemis.version-control.local-vcs-repo-path}")
     protected Path localVCBasePath;
+
+    @BeforeEach
+    protected void setupPasskeyAuthenticationMock() {
+        // Mock passkey authentication to always return true for admin operations in tests
+        when(passkeyAuthenticationService.isAuthenticatedWithSuperAdminApprovedPasskey()).thenReturn(true);
+    }
 
     @AfterEach
     @Override
