@@ -24,6 +24,9 @@ export class AdminPasskeyManagementComponent implements OnInit {
         this.loadPasskeys().then();
     }
 
+    /**
+     * @param showLoading can be set as false to avoid flickering on silent loading in background
+     */
     async loadPasskeys(showLoading: boolean = true): Promise<void> {
         if (showLoading) {
             this.isLoading.set(true);
