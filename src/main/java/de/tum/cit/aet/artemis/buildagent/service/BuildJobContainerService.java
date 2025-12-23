@@ -235,7 +235,11 @@ public class BuildJobContainerService {
         try {
             return executeWithRetry(() -> {
                 try (final var copyArchiveCommand = buildAgentConfiguration.getDockerClient().copyArchiveFromContainerCmd(containerId, path)) {
-                    TarArchiveInputStream result = new TarArchiveInputStream(copyArchiveCommand.exec());
+                    InputStream archiveStream = copyArchiveCommand.exec();
+                    if (archiveStream == null) {
+                        throw new IOException("Failed to retrieve archive from container " + containerId + " at path " + path + ": exec() returned null InputStream");
+                    }
+                    TarArchiveInputStream result = new TarArchiveInputStream(archiveStream);
                     log.debug("Successfully retrieved archive from container {} at path {}", containerId, path);
                     return result;
                 }
