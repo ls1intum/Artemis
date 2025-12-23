@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.programming;
 
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.doReturn;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -63,7 +63,7 @@ public abstract class AbstractProgrammingIntegrationLocalCILocalVCTestBase exten
 
     @BeforeEach
     protected void mockBuildAgentServices() {
-        when(buildAgentConfiguration.getDockerClient()).thenReturn(dockerClientMock);
+        doReturn(dockerClientMock).when(buildAgentConfiguration).getDockerClient();
         this.dockerClient = dockerClientMock;
     }
 

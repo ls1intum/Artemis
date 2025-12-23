@@ -8,7 +8,6 @@ import { QuizConfiguration } from 'app/quiz/shared/entities/quiz-configuration.m
 import { QuizParticipation } from 'app/quiz/shared/entities/quiz-participation.model';
 
 export enum QuizStatus {
-    CLOSED,
     OPEN_FOR_PRACTICE,
     ACTIVE,
     VISIBLE,
@@ -38,7 +37,6 @@ export class QuizExercise extends Exercise implements QuizConfiguration, QuizPar
     public allowedNumberOfAttempts?: number;
     public remainingNumberOfAttempts?: number;
     public randomizeQuestionOrder?: boolean;
-    public isOpenForPractice?: boolean;
     public duration?: number;
     public quizPointStatistic?: QuizPointStatistic;
     public quizQuestions?: QuizQuestion[];
@@ -59,7 +57,6 @@ export class QuizExercise extends Exercise implements QuizConfiguration, QuizPar
         this.course = course;
         this.exerciseGroup = exerciseGroup;
         this.randomizeQuestionOrder = true; // default value (set by server)
-        this.isOpenForPractice = false; // default value (set by server)
         this.isActiveQuiz = false; // default value (set by client, might need to be computed before evaluated)
         this.isPracticeModeAvailable = true; // default value (set by client, might need to be computed before evaluated)
         this.isEditable = false; // default value (set by client, might need to be computed before evaluated)

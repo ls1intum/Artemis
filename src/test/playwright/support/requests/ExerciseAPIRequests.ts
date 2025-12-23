@@ -574,13 +574,16 @@ export class ExerciseAPIRequests {
      *
      * @param exerciseId - The ID of the exercise for which to retrieve the participation data.
      * @returns A Promise<StudentParticipation> representing the student participation.
+     * @throws Error if no participations are found for the exercise.
      */
     async getProgrammingExerciseParticipation(exerciseId: number): Promise<StudentParticipation> {
-        // Updated to use the new endpoint provided in the Java controller
-        const response = await this.page.request.get(`api/exercise/programming-exercises/${exerciseId}/with-participations`);
-        const programmingExercise = await response.json();
-        const participations = programmingExercise.studentParticipations;
-        return participations?.[0];
+        // Use the endpoint that returns all participations for the exercise with latest results
+        const response = await this.page.request.get(`api/exercise/exercises/${exerciseId}/participations?withLatestResults=true`);
+        const participations = (await response.json()) as StudentParticipation[];
+        if (!participations || participations.length === 0) {
+            throw new Error(`No participations found for exercise ${exerciseId}`);
+        }
+        return participations[0];
     }
 
     /**
