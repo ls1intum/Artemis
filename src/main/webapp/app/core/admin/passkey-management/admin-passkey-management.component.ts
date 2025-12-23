@@ -24,8 +24,10 @@ export class AdminPasskeyManagementComponent implements OnInit {
         this.loadPasskeys().then();
     }
 
-    async loadPasskeys(): Promise<void> {
-        this.isLoading.set(true);
+    async loadPasskeys(showLoading: boolean = true): Promise<void> {
+        if (showLoading) {
+            this.isLoading.set(true);
+        }
 
         try {
             const loadedPasskeys = await this.adminPasskeyService.getAllPasskeys();
@@ -45,7 +47,7 @@ export class AdminPasskeyManagementComponent implements OnInit {
             passkey.isSuperAdminApproved = newApprovalStatus;
             this.passkeys.update((passkeys) => [...passkeys]);
         } catch (error) {
-            await this.loadPasskeys();
+            await this.loadPasskeys(false);
         }
     }
 }
