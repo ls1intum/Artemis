@@ -34,8 +34,9 @@ public class ExamRoom extends AbstractAuditingEntity {
 
     /**
      * The room number, e.g., '123.EG.01' or '123.456.78.9'. This is a room's unique identifier.
+     * Rooms with the same room number are divided into versions by their creation date.
      */
-    @Column(name = "room_number", nullable = false, length = 255, unique = true)
+    @Column(name = "room_number", nullable = false, length = 255)
     private String roomNumber;
 
     /**
