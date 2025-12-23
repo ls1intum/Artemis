@@ -29,12 +29,14 @@ While Super Admins have all the permissions of regular Admins, they have additio
 
 ### Passkey Approval
 
-Super Admins have the exclusive privilege to approve passkey registrations for administrators. This minimizes the attack surface for critical security operations by limiting passkey approval to a very small number of trusted users.
+Super Admins have the exclusive privilege to approve passkey registrations for administrators.
+This minimizes the attack surface for critical security operations by limiting passkey approval to a very small number of trusted users.
 
 For detailed information about passkey authentication, configuration, and the approval process, see the [Passkey Authentication](/admin/production-setup/security#passkey-authentication) section in the Security Configuration documentation.
 
 <Callout variant={CalloutVariant.info}>
-    Super Admin privileges are only relevant when passkeys are activated and passkey enforcement for administrators is enabled. In other configurations, Super Admins and Admins have identical permissions.
+    Super Admin privileges are only relevant when passkeys are activated and passkey enforcement for administrators is enabled.
+    In other configurations, Super Admins and Admins have identical permissions, except that Admins cannot modify the accounts of Super Admins.
 </Callout>
 
 ## Navigation
