@@ -280,12 +280,15 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnInit 
     }
 
     private loadExistingCategories(courseId: number) {
-        this.courseService.findAllCategoriesOfCourse(courseId).subscribe({
-            next: (categoryRes: HttpResponse<string[]>) => {
-                this.existingCategories.set(this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body ?? []));
-            },
-            error: (error: HttpErrorResponse) => onError(this.alertService, error),
-        });
+        this.courseService
+            .findAllCategoriesOfCourse(courseId)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (categoryRes: HttpResponse<string[]>) => {
+                    this.existingCategories.set(this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body ?? []));
+                },
+                error: (error: HttpErrorResponse) => onError(this.alertService, error),
+            });
     }
 
     async save() {
