@@ -2,17 +2,16 @@ import { Component, OnInit, ViewChild, inject } from '@angular/core';
 import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachment.model';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
-import { AttachmentVideoUnit, LectureTranscriptionDTO } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
+import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import dayjs from 'dayjs/esm';
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/shared/service/alert.service';
 import { AttachmentVideoUnitFormComponent, AttachmentVideoUnitFormData } from 'app/lecture/manage/lecture-units/attachment-video-unit-form/attachment-video-unit-form.component';
-import { combineLatest, of } from 'rxjs';
-import { catchError, finalize, map, switchMap } from 'rxjs/operators';
+import { combineLatest } from 'rxjs';
+import { finalize } from 'rxjs/operators';
 import { objectToJsonBlob } from 'app/shared/util/blob-util';
 import { LectureUnitLayoutComponent } from '../lecture-unit-layout/lecture-unit-layout.component';
-import { LectureTranscriptionService } from '../../services/lecture-transcription.service';
 
 @Component({
     selector: 'jhi-create-attachment-video-unit',
@@ -24,7 +23,6 @@ export class CreateAttachmentVideoUnitComponent implements OnInit {
     private router = inject(Router);
     private attachmentVideoUnitService = inject(AttachmentVideoUnitService);
     private alertService = inject(AlertService);
-    private lectureTranscriptionService = inject(LectureTranscriptionService);
 
     @ViewChild('attachmentVideoUnitForm')
     attachmentVideoUnitForm: AttachmentVideoUnitFormComponent;
@@ -46,10 +44,8 @@ export class CreateAttachmentVideoUnitComponent implements OnInit {
     }
 
     createAttachmentVideoUnit(attachmentVideoUnitFormData: AttachmentVideoUnitFormData): void {
-        const { name, videoSource, description, releaseDate, competencyLinks, generateTranscript } = attachmentVideoUnitFormData?.formProperties || {};
+        const { name, videoSource, description, releaseDate, competencyLinks } = attachmentVideoUnitFormData?.formProperties || {};
         const { file, fileName } = attachmentVideoUnitFormData?.fileProperties || {};
-        const { videoTranscription } = attachmentVideoUnitFormData?.transcriptionProperties || {};
-        const { playlistUrl } = attachmentVideoUnitFormData || {};
 
         if (!name || (!(file && fileName) && !videoSource)) {
             return;
@@ -81,54 +77,7 @@ export class CreateAttachmentVideoUnitComponent implements OnInit {
 
         this.attachmentVideoUnitService
             .create(formData, this.lectureId)
-            .pipe(
-                switchMap((response) => {
-                    const lectureUnit = response.body;
-                    if (!lectureUnit) {
-                        throw new Error('No lecture unit returned from create call');
-                    }
-                    const lectureUnitId = lectureUnit.id;
-
-                    // Handle automatic transcription generation if requested
-                    let transcriptionObservable = of(lectureUnit);
-                    if (generateTranscript && lectureUnitId) {
-                        const transcriptionUrl = playlistUrl ?? lectureUnit.videoSource;
-                        if (transcriptionUrl) {
-                            transcriptionObservable = this.attachmentVideoUnitService.startTranscription(this.lectureId, lectureUnitId, transcriptionUrl).pipe(
-                                map(() => lectureUnit),
-                                catchError((err) => {
-                                    onError(this.alertService, err);
-                                    return of(lectureUnit);
-                                }),
-                            );
-                        }
-                    }
-
-                    return transcriptionObservable.pipe(
-                        switchMap(() => {
-                            if (!videoTranscription || !lectureUnitId) {
-                                return of(lectureUnit);
-                            }
-                            let transcription: LectureTranscriptionDTO;
-                            try {
-                                transcription = JSON.parse(videoTranscription) as LectureTranscriptionDTO;
-                            } catch {
-                                this.alertService.error('artemisApp.lectureUnit.attachmentVideoUnit.transcriptionInvalidJson');
-                                return of(lectureUnit);
-                            }
-                            transcription.lectureUnitId = lectureUnitId;
-                            return this.lectureTranscriptionService.createTranscription(this.lectureId, lectureUnitId, transcription).pipe(
-                                map(() => lectureUnit),
-                                catchError((err) => {
-                                    onError(this.alertService, err);
-                                    return of(lectureUnit);
-                                }),
-                            );
-                        }),
-                    );
-                }),
-                finalize(() => (this.isLoading = false)),
-            )
+            .pipe(finalize(() => (this.isLoading = false)))
             .subscribe({
                 next: () => this.router.navigate(['../../'], { relativeTo: this.activatedRoute }),
                 error: (res: HttpErrorResponse | Error) => {
