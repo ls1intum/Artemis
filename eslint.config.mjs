@@ -52,6 +52,7 @@ export default tseslint.config(
     eslint.configs.recommended,
     {
         files: ['src/main/webapp/**/*.ts'],
+        ignores: ['src/main/webapp/**/*.spec.ts'],
         languageOptions: {
             parser: typescriptParser,
             parserOptions: {
@@ -142,12 +143,36 @@ export default tseslint.config(
                     ]
                 }
             ],
+            "no-restricted-properties": [
+                "error",
+                {
+                    object: "Object",
+                    property: "assign",
+                    message:
+                        "Do not use Object.assign to merge objects. Create a new object and manually enumerate properties instead.",
+                },
+            ],
+            "no-restricted-syntax": [
+                "error",
+                // Disallow object spread in object literals:
+                //   const x = { ...a, b: 1 };
+                {
+                    selector: "ObjectExpression > SpreadElement",
+                    message:
+                        "Do not use object spread to merge objects. Manually specify properties on the new object instead.",
+                },
+            ],
             'localRules/require-signal-reference-ngb-modal-input': 'error',
         },
     },
     {
         files: ['src/test/javascript/**','src/main/webapp/app/**/*.spec.ts'],
+        languageOptions: {
+            parser: typescriptParser,
+            parserOptions: { project: ['./tsconfig.spec.json'] },
+        },
         plugins: {
+            '@typescript-eslint': tsPlugin,
             jest: jestPlugin,
             'jest-extended': jestExtendedPlugin,
         },
