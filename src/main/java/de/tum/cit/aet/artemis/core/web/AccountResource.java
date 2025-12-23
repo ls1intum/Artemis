@@ -92,11 +92,14 @@ public class AccountResource {
     @PutMapping("account")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> saveAccount(@Valid @RequestBody UserDTO userDTO) {
-        if (accountService.isRegistrationDisabled()) {
+        User currentUser = userRepository.getUser();
+
+        // Allow internal users to update their account even when registration is disabled
+        if (accountService.isRegistrationDisabled() && !currentUser.isInternal()) {
             throw new AccessForbiddenException("Can't edit user information as user registration is disabled");
         }
 
-        final String userLogin = userRepository.getUser().getLogin();
+        final String userLogin = currentUser.getLogin();
         Optional<User> existingUser = userRepository.findOneByEmailIgnoreCase(userDTO.getEmail());
         if (existingUser.isPresent() && (!existingUser.get().getLogin().equalsIgnoreCase(userLogin))) {
             throw new EmailAlreadyUsedException();

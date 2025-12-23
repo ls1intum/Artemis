@@ -40,7 +40,7 @@ export interface DisplayedPasskey extends PasskeyDTO {
         ArtemisTranslatePipe,
     ],
     templateUrl: './passkey-settings.component.html',
-    styleUrl: './passkey-settings.component.scss',
+    styleUrls: ['../user-settings.scss'],
 })
 export class PasskeySettingsComponent implements OnDestroy {
     protected readonly ActionType = ActionType;

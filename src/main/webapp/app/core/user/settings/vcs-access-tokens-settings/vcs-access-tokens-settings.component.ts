@@ -3,7 +3,7 @@ import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { Subject, Subscription, tap } from 'rxjs';
 import dayjs from 'dayjs/esm';
-import { faBan, faEdit, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faPlus, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -32,7 +32,7 @@ import { CopyToClipboardButtonComponent } from 'app/shared/components/buttons/co
     ],
 })
 export class VcsAccessTokensSettingsComponent implements OnInit, OnDestroy {
-    protected readonly faEdit = faEdit;
+    protected readonly faPlus = faPlus;
     protected readonly faSave = faSave;
     protected readonly faTrash = faTrash;
     protected readonly faBan = faBan;

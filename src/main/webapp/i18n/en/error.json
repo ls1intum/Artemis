@@ -51,6 +51,8 @@
         "submissionPolicyActiveNull": "Submission policies must be activated or deactivated. Activation cannot be null.",
         "submissionPolicyUpdateFailedPolicyNotExist": "The submission policy could not be updated, because the programming exercise does not have a submission policy.",
         "oneActivePlagiarismCheck": "Please wait until the current plagiarism check in this course has finished until you start another one.",
+        "incorrectPassword": "The current password is incorrect.",
+        "invalidActivationKey": "The activation key is invalid. Please use the registration form to sign up.",
         "internalServerError": "Internal server error",
         "server.not.reachable": "Server not reachable",
         "url.not.found": "Not found",

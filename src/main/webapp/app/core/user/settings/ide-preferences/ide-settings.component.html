@@ -1,4 +1,4 @@
-<h1 jhiTranslate="artemisApp.userSettings.categories.IDE_PREFERENCES"></h1>
+<h2 jhiTranslate="artemisApp.userSettings.categories.IDE_PREFERENCES"></h2>
 <div class="list-group d-block">
     <div class="list-group-item pb-3">
         <dt>
@@ -26,8 +26,9 @@
     @if (remainingProgrammingLanguages.length) {
         <div class="list-group-item">
             <div ngbDropdown class="d-inline-block">
-                <button type="button" class="btn btn-primary" id="dropdown" ngbDropdownToggle>
+                <button type="button" class="btn btn-primary btn-sm" id="dropdown" ngbDropdownToggle>
                     <fa-icon [icon]="faPlus" />
+                    <span class="ms-1" jhiTranslate="artemisApp.userSettings.idePreferencesPage.addNewLanguage"></span>
                 </button>
                 <div ngbDropdownMenu aria-labelledby="dropdown">
                     @for (programmingLanguage of remainingProgrammingLanguages; track programmingLanguage) {
