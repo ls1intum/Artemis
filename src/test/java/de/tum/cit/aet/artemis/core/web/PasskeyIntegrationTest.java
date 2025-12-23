@@ -21,7 +21,6 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.PasskeyAdminDTO;
 import de.tum.cit.aet.artemis.core.dto.PasskeyDTO;
 import de.tum.cit.aet.artemis.core.repository.PasskeyCredentialsRepository;
-import de.tum.cit.aet.artemis.core.service.PasskeyAuthenticationService;
 import de.tum.cit.aet.artemis.core.util.PasskeyCredentialUtilService;
 import de.tum.cit.aet.artemis.lecture.service.SlideUnhideScheduleService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
@@ -41,9 +40,6 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @MockitoBean
     private SlideUnhideScheduleService slideUnhideScheduleService;
-
-    @MockitoBean
-    private PasskeyAuthenticationService passkeyAuthenticationService;
 
     @BeforeEach
     void initTestCase() {

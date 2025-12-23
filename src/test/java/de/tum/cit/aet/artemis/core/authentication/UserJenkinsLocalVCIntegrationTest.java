@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.core.authentication;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.when;
 
 import java.util.Set;
 
@@ -11,12 +10,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
-import de.tum.cit.aet.artemis.core.service.PasskeyAuthenticationService;
 import de.tum.cit.aet.artemis.core.service.user.PasswordService;
 import de.tum.cit.aet.artemis.core.user.util.UserTestService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCTest;
@@ -32,12 +29,8 @@ class UserJenkinsLocalVCIntegrationTest extends AbstractSpringIntegrationJenkins
     @Autowired
     private PasswordService passwordService;
 
-    @MockitoBean
-    private PasskeyAuthenticationService passkeyAuthenticationService;
-
     @BeforeEach
     void setUp() throws Exception {
-        when(passkeyAuthenticationService.isAuthenticatedWithSuperAdminApprovedPasskey()).thenReturn(true);
         userTestService.setup(TEST_PREFIX);
         jenkinsRequestMockProvider.enableMockingOfRequests();
     }
