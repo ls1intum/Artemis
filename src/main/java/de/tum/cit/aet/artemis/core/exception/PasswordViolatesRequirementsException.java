@@ -11,6 +11,6 @@ public class PasswordViolatesRequirementsException extends AbstractThrowableProb
     private static final long serialVersionUID = 1L;
 
     public PasswordViolatesRequirementsException() {
-        super(ErrorConstants.INVALID_PASSWORD_TYPE, "Incorrect password", Status.BAD_REQUEST);
+        super(ErrorConstants.INVALID_PASSWORD_TYPE, "error.incorrectPassword", Status.BAD_REQUEST);
     }
 }

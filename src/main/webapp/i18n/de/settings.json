@@ -1,6 +1,6 @@
 {
     "settings": {
-        "title": "Einstellungen für Nutzer:in [<b>{{username}}</b>]",
+        "title": "Einstellungen für Nutzer:in <b>{{username}}</b>",
         "form": {
             "firstname": "Vorname",
             "firstname.placeholder": "Vorname",
@@ -18,12 +18,12 @@
             "validate": {
                 "firstname": {
                     "required": "Dein Vorname wird benötigt.",
-                    "minlength": "Dein Vorname muss mindestens 1 Zeichen lang sein",
+                    "minlength": "Dein Vorname muss mindestens 2 Zeichen lang sein.",
                     "maxlength": "Dein Vorname darf nicht länger als 50 Zeichen sein"
                 },
                 "lastname": {
                     "required": "Dein Nachname wird benötigt.",
-                    "minlength": "Dein Nachname muss mindestens 1 Zeichen lang sein",
+                    "minlength": "Dein Nachname muss mindestens 2 Zeichen lang sein.",
                     "maxlength": "Dein Nachname darf nicht länger als 50 Zeichen sein"
                 }
             }

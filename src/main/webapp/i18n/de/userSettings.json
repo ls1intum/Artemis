@@ -18,7 +18,8 @@
             "idePreferencesPage": {
                 "description": "Wähle die IDEs, die du für das Öffnen von Programmieraufgaben verwenden möchtest.",
                 "default": "Standard",
-                "jetbrainsHelp": "Um JetBrains IDEs zu verwenden, installiere bitte die JetBrains Toolbox."
+                "jetbrainsHelp": "Um JetBrains IDEs zu verwenden, installiere bitte die JetBrains Toolbox.",
+                "addNewLanguage": "Neue sprachspezifische Einstellungen hinzufügen"
             },
             "externalLLMUsageSettingsPage": {
                 "accepted": "Du hast die Nutzung von externen LLMs am {{acceptedDate}} akzeptiert.",
@@ -39,7 +40,7 @@
                 "cancelSavingSshKey": "Abbrechen",
                 "editExistingSshKey": "Bearbeiten",
                 "viewExistingSshKey": "Ansehen",
-                "addNewSshKey": "SSH-Schlüssel hinzufügen",
+                "addNewSshKey": "Neuen SSH-Schlüssel hinzufügen",
                 "sshKeyDetails": "SSH-Schlüssel Informationen",
                 "deleteSshKey": "Löschen",
                 "sshKeyDisplayedInformation": "Das ist dein aktuell konfigurierter SSH-Schlüssel:",
@@ -136,7 +137,8 @@
                 "joinedArtemis": "Artemis beigetreten am",
                 "profilePicture": "Profilbild",
                 "addProfilePicture": "Profilbild hinzufügen",
-                "sshKey": "Öffentlicher SSH-Schlüssel"
+                "sshKey": "Öffentlicher SSH-Schlüssel",
+                "editAccountSettings": "Kontoeinstellungen bearbeiten"
             },
             "categories": {
                 "externalLLMUsage": "Externe LLM-Nutzungseinstellungen",

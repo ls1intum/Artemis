@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { Subject, tap } from 'rxjs';
-import { faEdit, faEllipsis, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faEdit, faEllipsis, faPlus, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { DocumentationType } from 'app/shared/components/buttons/documentation-button/documentation-button.component';
 import { ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -43,6 +43,7 @@ export class SshUserSettingsComponent implements OnInit, OnDestroy {
     readonly faSave = faSave;
     readonly faTrash = faTrash;
     readonly faEllipsis = faEllipsis;
+    readonly faPlus = faPlus;
     protected readonly ButtonType = ButtonType;
     protected readonly ButtonSize = ButtonSize;
     private dialogErrorSource = new Subject<string>();

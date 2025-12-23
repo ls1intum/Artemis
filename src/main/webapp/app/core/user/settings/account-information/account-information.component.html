@@ -1,4 +1,12 @@
-<h1 jhiTranslate="artemisApp.userSettings.accountInformation"></h1>
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0" jhiTranslate="artemisApp.userSettings.accountInformation"></h2>
+    @if (currentUser?.internal) {
+        <a class="btn btn-primary btn-sm" [routerLink]="['/account', 'settings']">
+            <fa-icon [icon]="faPen" />
+            <span class="d-none d-md-inline ms-1" jhiTranslate="artemisApp.userSettings.accountInformationPage.editAccountSettings"></span>
+        </a>
+    }
+</div>
 @if (currentUser) {
     <div class="list-group d-block">
         @if (currentUser.name) {
@@ -58,9 +66,9 @@
                 </div>
             }
             @if (!currentUser.imageUrl) {
-                <button (click)="triggerUserImageFileInput()" class="btn btn-primary mt-1">
+                <button (click)="triggerUserImageFileInput()" class="btn btn-primary btn-sm mt-1">
                     <fa-icon [icon]="faPlus" />
-                    <div class="d-inline" jhiTranslate="artemisApp.userSettings.accountInformationPage.addProfilePicture"></div>
+                    <span class="ms-1" jhiTranslate="artemisApp.userSettings.accountInformationPage.addProfilePicture"></span>
                 </button>
             }
         </div>
