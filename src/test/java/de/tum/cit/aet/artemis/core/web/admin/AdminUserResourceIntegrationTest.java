@@ -29,6 +29,8 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTe
 
 class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
+    private static final String TEST_PREFIX = "adminuserresource";
+
     @Autowired
     private MockMvc mockMvc;
 
@@ -49,9 +51,9 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
     @WithMockUser(username = "admin", roles = "ADMIN")
     void updateUser_setSuperAdminByNonSuperAdmin_forbidden() throws Exception {
         // Create a regular user first
-        User regularUser = userUtilService.createAndSaveUser("regularuser");
+        User regularUser = userUtilService.createAndSaveUser(TEST_PREFIX + "regularuser");
 
-        ManagedUserVM managedUserVM = userUtilService.createManagedUserVM("regularuser");
+        ManagedUserVM managedUserVM = userUtilService.createManagedUserVM(TEST_PREFIX + "regularuser");
         managedUserVM.setId(regularUser.getId());
         managedUserVM.setAuthorities(Set.of(Authority.SUPER_ADMIN_AUTHORITY.getName()));
 
@@ -63,8 +65,8 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
     @WithMockUser(username = "admin", roles = "ADMIN")
     void updateUser_revokeSuperAdminByNonSuperAdmin_forbidden() throws Exception {
         // Create and persist an existing super-admin user
-        userUtilService.addSuperAdmin("test");
-        User superUser = userUtilService.getUserByLogin("testsuperadmin");
+        userUtilService.addSuperAdmin(TEST_PREFIX);
+        User superUser = userUtilService.getUserByLogin(TEST_PREFIX + "superadmin");
 
         ManagedUserVM managedUserVM = userUtilService.createManagedUserVM(superUser.getLogin());
         managedUserVM.setId(superUser.getId());
@@ -78,7 +80,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
     @WithMockUser(username = "admin", roles = "ADMIN")
     void updateUser_addAdminRoleByAdmin_success() throws Exception {
         // Create a regular user
-        User regularUser = userUtilService.createAndSaveUser("regularuser2");
+        User regularUser = userUtilService.createAndSaveUser(TEST_PREFIX + "regularuser2");
 
         ManagedUserVM managedUserVM = userUtilService.createManagedUserVM(regularUser.getLogin());
         managedUserVM.setId(regularUser.getId());
@@ -95,43 +97,43 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void createUser_createSuperAdminByNonSuperAdmin_forbidden() throws Exception {
-        ManagedUserVM managedUserVM = userUtilService.createManagedUserVM("newsuperadmin");
+        ManagedUserVM managedUserVM = userUtilService.createManagedUserVM(TEST_PREFIX + "newsuperadmin");
         managedUserVM.setAuthorities(Set.of(Authority.SUPER_ADMIN_AUTHORITY.getName()));
 
         mockMvc.perform(post("/api/core/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(managedUserVM)))
                 .andExpect(status().isForbidden());
 
         // Verify user was not created
-        assertThat(userUtilService.userExistsWithLogin("newsuperadmin")).isFalse();
+        assertThat(userUtilService.userExistsWithLogin(TEST_PREFIX + "newsuperadmin")).isFalse();
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void createUser_createAdminByAdmin_success() throws Exception {
-        ManagedUserVM managedUserVM = userUtilService.createManagedUserVM("newadmin");
+        ManagedUserVM managedUserVM = userUtilService.createManagedUserVM(TEST_PREFIX + "newadmin");
         managedUserVM.setAuthorities(Set.of(Role.ADMIN.getAuthority()));
 
         mockMvc.perform(post("/api/core/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(managedUserVM)))
                 .andExpect(status().isCreated());
 
         // Verify user was created with correct authorities
-        assertThat(userUtilService.userExistsWithLogin("newadmin")).isTrue();
-        User createdUser = userUtilService.getUserByLogin("newadmin");
+        assertThat(userUtilService.userExistsWithLogin(TEST_PREFIX + "newadmin")).isTrue();
+        User createdUser = userUtilService.getUserByLogin(TEST_PREFIX + "newadmin");
         assertThat(createdUser.getAuthorities()).extracting(Authority::getName).contains(Role.ADMIN.getAuthority());
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void createUser_createRegularUserByAdmin_success() throws Exception {
-        ManagedUserVM managedUserVM = userUtilService.createManagedUserVM("newstudent");
+        ManagedUserVM managedUserVM = userUtilService.createManagedUserVM(TEST_PREFIX + "newstudent");
         managedUserVM.setAuthorities(Set.of(Role.STUDENT.getAuthority()));
 
         mockMvc.perform(post("/api/core/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(managedUserVM)))
                 .andExpect(status().isCreated());
 
         // Verify user was created with correct authorities
-        assertThat(userUtilService.userExistsWithLogin("newstudent")).isTrue();
-        User createdUser = userUtilService.getUserByLogin("newstudent");
+        assertThat(userUtilService.userExistsWithLogin(TEST_PREFIX + "newstudent")).isTrue();
+        User createdUser = userUtilService.getUserByLogin(TEST_PREFIX + "newstudent");
         assertThat(createdUser.getAuthorities()).extracting(Authority::getName).contains(Role.STUDENT.getAuthority()).doesNotContain(Role.SUPER_ADMIN.getAuthority());
     }
 
@@ -140,30 +142,30 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
     @Test
     @WithMockUser(username = "superadmin", roles = "SUPER_ADMIN")
     void createUser_createSuperAdminBySuperAdmin_success() throws Exception {
-        ManagedUserVM managedUserVM = userUtilService.createManagedUserVM("newsuperadmin2");
+        ManagedUserVM managedUserVM = userUtilService.createManagedUserVM(TEST_PREFIX + "newsuperadmin2");
         managedUserVM.setAuthorities(Set.of(Authority.SUPER_ADMIN_AUTHORITY.getName()));
 
         mockMvc.perform(post("/api/core/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(managedUserVM)))
                 .andExpect(status().isCreated());
 
         // Verify user was created with super admin authority
-        assertThat(userUtilService.userExistsWithLogin("newsuperadmin2")).isTrue();
-        User createdUser = userUtilService.getUserByLogin("newsuperadmin2");
+        assertThat(userUtilService.userExistsWithLogin(TEST_PREFIX + "newsuperadmin2")).isTrue();
+        User createdUser = userUtilService.getUserByLogin(TEST_PREFIX + "newsuperadmin2");
         assertThat(createdUser.getAuthorities()).extracting(Authority::getName).contains(Authority.SUPER_ADMIN_AUTHORITY.getName());
     }
 
     @Test
     @WithMockUser(username = "superadmin", roles = "SUPER_ADMIN")
     void createUser_createRegularUserBySuperAdmin_success() throws Exception {
-        ManagedUserVM managedUserVM = userUtilService.createManagedUserVM("newregularuser");
+        ManagedUserVM managedUserVM = userUtilService.createManagedUserVM(TEST_PREFIX + "newregularuser");
         managedUserVM.setAuthorities(Set.of(Role.STUDENT.getAuthority()));
 
         mockMvc.perform(post("/api/core/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(managedUserVM)))
                 .andExpect(status().isCreated());
 
         // Verify user was created
-        assertThat(userUtilService.userExistsWithLogin("newregularuser")).isTrue();
-        User createdUser = userUtilService.getUserByLogin("newregularuser");
+        assertThat(userUtilService.userExistsWithLogin(TEST_PREFIX + "newregularuser")).isTrue();
+        User createdUser = userUtilService.getUserByLogin(TEST_PREFIX + "newregularuser");
         assertThat(createdUser.getAuthorities()).extracting(Authority::getName).contains(Role.STUDENT.getAuthority()).doesNotContain(Authority.SUPER_ADMIN_AUTHORITY.getName());
     }
 
@@ -173,7 +175,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
     @WithMockUser(username = "superadmin", roles = "SUPER_ADMIN")
     void updateUser_setSuperAdminBySuperAdmin_success() throws Exception {
         // Create a regular user
-        User regularUser = userUtilService.createAndSaveUser("regularuser3");
+        User regularUser = userUtilService.createAndSaveUser(TEST_PREFIX + "regularuser3");
 
         ManagedUserVM managedUserVM = userUtilService.createManagedUserVM(regularUser.getLogin());
         managedUserVM.setId(regularUser.getId());
@@ -190,8 +192,8 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
     @WithMockUser(username = "superadmin", roles = "SUPER_ADMIN")
     void updateUser_revokeSuperAdminBySuperAdmin_success() throws Exception {
         // Create a super admin user
-        userUtilService.addSuperAdmin("test2");
-        User superUser = userUtilService.getUserByLogin("test2superadmin");
+        userUtilService.addSuperAdmin(TEST_PREFIX + "test2");
+        User superUser = userUtilService.getUserByLogin(TEST_PREFIX + "test2superadmin");
 
         ManagedUserVM managedUserVM = userUtilService.createManagedUserVM(superUser.getLogin());
         managedUserVM.setId(superUser.getId());
@@ -208,8 +210,8 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
     @WithMockUser(username = "superadmin", roles = "SUPER_ADMIN")
     void updateUser_updateAnotherSuperAdminBySuperAdmin_success() throws Exception {
         // Create a super admin user
-        userUtilService.addSuperAdmin("test3");
-        User superUser = userUtilService.getUserByLogin("test3superadmin");
+        userUtilService.addSuperAdmin(TEST_PREFIX + "test3");
+        User superUser = userUtilService.getUserByLogin(TEST_PREFIX + "test3superadmin");
 
         ManagedUserVM managedUserVM = userUtilService.createManagedUserVM(superUser.getLogin());
         managedUserVM.setId(superUser.getId());
@@ -230,8 +232,8 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
     @WithMockUser(username = "admin", roles = "ADMIN")
     void deleteUser_deleteSuperAdminByNonSuperAdmin_forbidden() throws Exception {
         // Create a super admin user
-        userUtilService.addSuperAdmin("test4");
-        User superUser = userUtilService.getUserByLogin("test4superadmin");
+        userUtilService.addSuperAdmin(TEST_PREFIX + "test4");
+        User superUser = userUtilService.getUserByLogin(TEST_PREFIX + "test4superadmin");
 
         mockMvc.perform(delete("/api/core/admin/users/" + superUser.getLogin())).andExpect(status().isForbidden());
 
@@ -243,7 +245,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
     @WithMockUser(username = "admin", roles = "ADMIN")
     void deleteUser_deleteRegularUserByAdmin_success() throws Exception {
         // Create a regular user
-        User regularUser = userUtilService.createAndSaveUser("regularuser4");
+        User regularUser = userUtilService.createAndSaveUser(TEST_PREFIX + "regularuser4");
 
         mockMvc.perform(delete("/api/core/admin/users/" + regularUser.getLogin())).andExpect(status().isOk());
 
@@ -258,8 +260,8 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
     @WithMockUser(username = "superadmin", roles = "SUPER_ADMIN")
     void deleteUser_deleteSuperAdminBySuperAdmin_success() throws Exception {
         // Create a super admin user
-        userUtilService.addSuperAdmin("test5");
-        User superUser = userUtilService.getUserByLogin("test5superadmin");
+        userUtilService.addSuperAdmin(TEST_PREFIX + "test5");
+        User superUser = userUtilService.getUserByLogin(TEST_PREFIX + "test5superadmin");
 
         mockMvc.perform(delete("/api/core/admin/users/" + superUser.getLogin())).andExpect(status().isOk());
 
@@ -272,7 +274,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
     @WithMockUser(username = "superadmin", roles = "SUPER_ADMIN")
     void deleteUser_deleteRegularUserBySuperAdmin_success() throws Exception {
         // Create a regular user
-        User regularUser = userUtilService.createAndSaveUser("regularuser5");
+        User regularUser = userUtilService.createAndSaveUser(TEST_PREFIX + "regularuser5");
 
         mockMvc.perform(delete("/api/core/admin/users/" + regularUser.getLogin())).andExpect(status().isOk());
 
@@ -287,8 +289,8 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
     @WithMockUser(username = "admin", roles = "ADMIN")
     void activateUser_activateSuperAdminByNonSuperAdmin_forbidden() throws Exception {
         // Create a deactivated super admin user
-        userUtilService.addSuperAdmin("test6");
-        User superUser = userUtilService.getUserByLogin("test6superadmin");
+        userUtilService.addSuperAdmin(TEST_PREFIX + "test6");
+        User superUser = userUtilService.getUserByLogin(TEST_PREFIX + "test6superadmin");
         superUser.setActivated(false);
         userTestRepository.save(superUser);
 
@@ -303,8 +305,8 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
     @WithMockUser(username = "admin", roles = "ADMIN")
     void deactivateUser_deactivateSuperAdminByNonSuperAdmin_forbidden() throws Exception {
         // Create an activated super admin user
-        userUtilService.addSuperAdmin("test7");
-        User superUser = userUtilService.getUserByLogin("test7superadmin");
+        userUtilService.addSuperAdmin(TEST_PREFIX + "test7");
+        User superUser = userUtilService.getUserByLogin(TEST_PREFIX + "test7superadmin");
         superUser.setActivated(true);
         userTestRepository.save(superUser);
 
@@ -319,7 +321,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
     @WithMockUser(username = "admin", roles = "ADMIN")
     void activateUser_activateRegularUserByAdmin_success() throws Exception {
         // Create a deactivated regular user
-        User regularUser = userUtilService.createAndSaveUser("regularuser6");
+        User regularUser = userUtilService.createAndSaveUser(TEST_PREFIX + "regularuser6");
         regularUser.setActivated(false);
         userTestRepository.save(regularUser);
 
@@ -334,7 +336,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
     @WithMockUser(username = "admin", roles = "ADMIN")
     void deactivateUser_deactivateRegularUserByAdmin_success() throws Exception {
         // Create an activated regular user
-        User regularUser = userUtilService.createAndSaveUser("regularuser7");
+        User regularUser = userUtilService.createAndSaveUser(TEST_PREFIX + "regularuser7");
         regularUser.setActivated(true);
         userTestRepository.save(regularUser);
 
@@ -351,8 +353,8 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
     @WithMockUser(username = "superadmin", roles = "SUPER_ADMIN")
     void activateUser_activateSuperAdminBySuperAdmin_success() throws Exception {
         // Create a deactivated super admin user
-        userUtilService.addSuperAdmin("test8");
-        User superUser = userUtilService.getUserByLogin("test8superadmin");
+        userUtilService.addSuperAdmin(TEST_PREFIX + "test8");
+        User superUser = userUtilService.getUserByLogin(TEST_PREFIX + "test8superadmin");
         superUser.setActivated(false);
         userTestRepository.save(superUser);
 
@@ -367,8 +369,8 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
     @WithMockUser(username = "superadmin", roles = "SUPER_ADMIN")
     void deactivateUser_deactivateSuperAdminBySuperAdmin_success() throws Exception {
         // Create an activated super admin user
-        userUtilService.addSuperAdmin("test9");
-        User superUser = userUtilService.getUserByLogin("test9superadmin");
+        userUtilService.addSuperAdmin(TEST_PREFIX + "test9");
+        User superUser = userUtilService.getUserByLogin(TEST_PREFIX + "test9superadmin");
         superUser.setActivated(true);
         userTestRepository.save(superUser);
 
@@ -383,7 +385,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
     @WithMockUser(username = "superadmin", roles = "SUPER_ADMIN")
     void activateUser_activateRegularUserBySuperAdmin_success() throws Exception {
         // Create a deactivated regular user
-        User regularUser = userUtilService.createAndSaveUser("regularuser8");
+        User regularUser = userUtilService.createAndSaveUser(TEST_PREFIX + "regularuser8");
         regularUser.setActivated(false);
         userTestRepository.save(regularUser);
 
@@ -398,7 +400,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
     @WithMockUser(username = "superadmin", roles = "SUPER_ADMIN")
     void deactivateUser_deactivateRegularUserBySuperAdmin_success() throws Exception {
         // Create an activated regular user
-        User regularUser = userUtilService.createAndSaveUser("regularuser9");
+        User regularUser = userUtilService.createAndSaveUser(TEST_PREFIX + "regularuser9");
         regularUser.setActivated(true);
         userTestRepository.save(regularUser);
 
