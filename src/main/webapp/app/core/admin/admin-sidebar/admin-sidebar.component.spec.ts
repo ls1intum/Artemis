@@ -1,23 +1,32 @@
+/**
+ * Vitest tests for AdminSidebarComponent.
+ */
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { provideRouter } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
-import { AdminSidebarComponent } from './admin-sidebar.component';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { Component } from '@angular/core';
+
+import { AdminSidebarComponent } from './admin-sidebar.component';
 
 @Component({ template: '', standalone: true })
 class MockEmptyComponent {}
 
 describe('AdminSidebarComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: AdminSidebarComponent;
     let fixture: ComponentFixture<AdminSidebarComponent>;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [AdminSidebarComponent, TranslateModule.forRoot()],
+            imports: [AdminSidebarComponent],
             providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([{ path: '**', component: MockEmptyComponent }])],
-        }).compileComponents();
+        })
+            .overrideTemplate(AdminSidebarComponent, '')
+            .compileComponents();
 
         fixture = TestBed.createComponent(AdminSidebarComponent);
         component = fixture.componentInstance;
@@ -29,19 +38,18 @@ describe('AdminSidebarComponent', () => {
     });
 
     it('should have default input values as false', () => {
-        expect(component.isNavbarCollapsed()).toBeFalse();
-        expect(component.localCIActive()).toBeFalse();
-        expect(component.ltiEnabled()).toBeFalse();
-        expect(component.standardizedCompetenciesEnabled()).toBeFalse();
-        expect(component.atlasEnabled()).toBeFalse();
-        expect(component.examEnabled()).toBeFalse();
+        expect(component.isNavbarCollapsed()).toBe(false);
+        expect(component.localCIActive()).toBe(false);
+        expect(component.ltiEnabled()).toBe(false);
+        expect(component.standardizedCompetenciesEnabled()).toBe(false);
+        expect(component.atlasEnabled()).toBe(false);
+        expect(component.examEnabled()).toBe(false);
     });
 
     it('should generate sidebar groups', () => {
         const groups = component.sidebarGroups();
         expect(groups.length).toBeGreaterThan(0);
 
-        // First group should be Users & Organizations
         expect(groups[0].translation).toBe('global.menu.admin.groups.usersAndOrganizations');
         expect(groups[0].items).toHaveLength(2);
     });
@@ -77,7 +85,7 @@ describe('AdminSidebarComponent', () => {
     });
 
     it('should emit toggleCollapseState when called', () => {
-        const toggleSpy = jest.spyOn(component.toggleCollapseState, 'emit');
+        const toggleSpy = vi.spyOn(component.toggleCollapseState, 'emit');
         component.toggleCollapseState.emit();
         expect(toggleSpy).toHaveBeenCalled();
     });

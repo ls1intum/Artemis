@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal, viewChild } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Organization } from 'app/core/shared/entities/organization.model';
@@ -21,34 +21,44 @@ const cssClasses = {
     newlyAddedMember: 'newly-added-member',
 };
 
+/**
+ * Admin component for viewing and managing organization details.
+ * Allows adding/removing users from organizations.
+ */
 @Component({
     selector: 'jhi-organization-management-detail',
     templateUrl: './organization-management-detail.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [TranslateDirective, RouterLink, DataTableComponent, NgxDatatableModule, FaIconComponent, DeleteButtonDirective],
 })
 export class OrganizationManagementDetailComponent implements OnInit {
-    private organizationService = inject(OrganizationManagementService);
-    private userService = inject(UserService);
-    private route = inject(ActivatedRoute);
+    private readonly organizationService = inject(OrganizationManagementService);
+    private readonly userService = inject(UserService);
+    private readonly route = inject(ActivatedRoute);
 
-    @ViewChild(DataTableComponent) dataTable: DataTableComponent;
-    organization: Organization;
+    /** Reference to the data table component */
+    readonly dataTable = viewChild(DataTableComponent);
+
+    /** The organization being viewed */
+    readonly organization = signal<Organization>(new Organization());
 
     readonly ActionType = ActionType;
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
-    filteredUsersSize = 0;
     paramSub: Subscription;
 
-    isLoading = false;
-    isSearching = false;
-    searchFailed = false;
-    searchNoResults = false;
-    isTransitioning = false;
-    rowClass: string;
+    /** Number of filtered users */
+    readonly filteredUsersSize = signal(0);
 
-    // Icons
-    faUserSlash = faUserSlash;
+    /** Loading and state flags */
+    readonly isLoading = signal(false);
+    readonly isSearching = signal(false);
+    readonly searchFailed = signal(false);
+    readonly searchNoResults = signal(false);
+    readonly isTransitioning = signal(false);
+    readonly rowClass = signal('');
+
+    protected readonly faUserSlash = faUserSlash;
 
     /**
      * Retrieve the organization from the organization management activated route data subscription
@@ -56,11 +66,11 @@ export class OrganizationManagementDetailComponent implements OnInit {
      */
     ngOnInit() {
         this.route.data.subscribe(({ organization }) => {
-            this.organization = new Organization();
+            this.organization.set(new Organization());
             if (organization) {
                 const organizationId = organization.body ? organization.body.id : organization.id;
                 this.organizationService.getOrganizationByIdWithUsersAndCourses(organizationId).subscribe((organizationWithUserAndCourses) => {
-                    this.organization = organizationWithUserAndCourses;
+                    this.organization.set(organizationWithUserAndCourses);
                 });
             }
         });
@@ -87,44 +97,45 @@ export class OrganizationManagementDetailComponent implements OnInit {
     searchAllUsers = (stream$: Observable<{ text: string; entities: User[] }>): Observable<User[]> => {
         return stream$.pipe(
             switchMap(({ text: loginOrName }) => {
-                this.searchFailed = false;
-                this.searchNoResults = false;
+                this.searchFailed.set(false);
+                this.searchNoResults.set(false);
                 if (loginOrName.length < 3) {
                     return of([]);
                 }
-                this.isSearching = true;
+                this.isSearching.set(true);
                 return this.userService
                     .search(loginOrName)
                     .pipe(map((usersResponse) => usersResponse.body!))
                     .pipe(
                         tap((users) => {
                             if (users.length === 0) {
-                                this.searchNoResults = true;
+                                this.searchNoResults.set(true);
                             }
                         }),
                         catchError(() => {
-                            this.searchFailed = true;
+                            this.searchFailed.set(true);
                             return of([]);
                         }),
                     );
             }),
             tap(() => {
-                this.isSearching = false;
+                this.isSearching.set(false);
             }),
             tap((users) => {
                 setTimeout(() => {
-                    for (let i = 0; i < this.dataTable.typeaheadButtons.length; i++) {
-                        if (this.organization.users === undefined) {
-                            this.organization.users = [];
-                        }
-                        const button = this.dataTable.typeaheadButtons[i];
-                        const isAlreadyInOrganization = this.organization.users!.map((user) => user.id).includes(users[i].id);
+                    const table = this.dataTable();
+                    if (!table) return;
+                    const org = this.organization();
+                    for (let i = 0; i < table.typeaheadButtons.length; i++) {
+                        const orgUsers = org.users ?? [];
+                        const button = table.typeaheadButtons[i];
+                        const isAlreadyInOrganization = orgUsers.map((user) => user.id).includes(users[i].id);
                         const hasIcon = button.querySelector('fa-icon');
                         if (!hasIcon) {
                             button.insertAdjacentHTML('beforeend', iconsAsHTML[isAlreadyInOrganization ? 'users' : 'users-plus']);
                         }
                         if (isAlreadyInOrganization) {
-                            this.dataTable.typeaheadButtons[i].classList.add(cssClasses.alreadyMember);
+                            table.typeaheadButtons[i].classList.add(cssClasses.alreadyMember);
                         }
                     }
                 });
@@ -138,13 +149,19 @@ export class OrganizationManagementDetailComponent implements OnInit {
      * @param user User that should be removed from the currently viewed organization
      */
     removeFromOrganization(user: User) {
+        const org = this.organization();
         if (user.login) {
-            this.organizationService.removeUserFromOrganization(this.organization.id!, user.login).subscribe({
+            this.organizationService.removeUserFromOrganization(org.id!, user.login).subscribe({
                 next: () => {
-                    this.organization.users = this.organization.users!.filter((u) => u.login !== user.login);
+                    this.organization.update((o) => ({
+                        ...o,
+                        users: o.users!.filter((u) => u.login !== user.login),
+                    }));
                     this.dialogErrorSource.next('');
                 },
-                error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+                error: (error: HttpErrorResponse) => {
+                    this.dialogErrorSource.next(error.message);
+                },
             });
         }
     }
@@ -153,14 +170,14 @@ export class OrganizationManagementDetailComponent implements OnInit {
      * Load all users of the viewed organization
      */
     loadAll() {
-        this.isLoading = true;
+        this.isLoading.set(true);
         this.route.data.subscribe(({ organization }) => {
-            this.organization = new Organization();
+            this.organization.set(new Organization());
             if (organization) {
                 const organizationId = organization.body ? organization.body.id : organization.id;
                 this.organizationService.getOrganizationByIdWithUsersAndCourses(organizationId).subscribe((organizationWithUserAndCourses) => {
-                    this.organization = organizationWithUserAndCourses;
-                    this.isLoading = false;
+                    this.organization.set(organizationWithUserAndCourses);
+                    this.isLoading.set(false);
                 });
             }
         });
@@ -174,15 +191,19 @@ export class OrganizationManagementDetailComponent implements OnInit {
      * @param callback Function that can be called with the selected user to trigger the DataTableComponent default behavior
      */
     onAutocompleteSelect = (user: User, callback: (user: User) => void): void => {
+        const org = this.organization();
         // If the user is not part of this organization yet, perform the server call to add them
-        if (!this.organization.users!.map((u) => u.id).includes(user.id) && user.login) {
-            this.isTransitioning = true;
-            this.organizationService.addUserToOrganization(this.organization.id!, user.login).subscribe({
+        if (!org.users!.map((u) => u.id).includes(user.id) && user.login) {
+            this.isTransitioning.set(true);
+            this.organizationService.addUserToOrganization(org.id!, user.login).subscribe({
                 next: () => {
-                    this.isTransitioning = false;
+                    this.isTransitioning.set(false);
 
                     // Add newly added user to the list of all users in the organization
-                    this.organization.users!.push(user);
+                    this.organization.update((o) => ({
+                        ...o,
+                        users: [...(o.users ?? []), user],
+                    }));
 
                     // Hand back over to the data table for updating
                     callback(user);
@@ -191,7 +212,7 @@ export class OrganizationManagementDetailComponent implements OnInit {
                     this.flashRowClass(cssClasses.newlyAddedMember);
                 },
                 error: () => {
-                    this.isTransitioning = false;
+                    this.isTransitioning.set(false);
                 },
             });
         } else {
@@ -214,7 +235,7 @@ export class OrganizationManagementDetailComponent implements OnInit {
      * Computes the row class that is being added to all rows of the datatable
      */
     dataTableRowClass = () => {
-        return this.rowClass;
+        return this.rowClass();
     };
 
     /**
@@ -223,8 +244,8 @@ export class OrganizationManagementDetailComponent implements OnInit {
      * @param className Name of the class to be applied to all rows
      */
     flashRowClass = (className: string) => {
-        this.rowClass = className;
-        setTimeout(() => (this.rowClass = ''));
+        this.rowClass.set(className);
+        setTimeout(() => this.rowClass.set(''));
     };
 
     /**
@@ -233,7 +254,7 @@ export class OrganizationManagementDetailComponent implements OnInit {
      * @param filteredUsersSize Total number of users after filters have been applied
      */
     handleUsersSizeChange = (filteredUsersSize: number) => {
-        this.filteredUsersSize = filteredUsersSize;
+        this.filteredUsersSize.set(filteredUsersSize);
     };
 
     /**
