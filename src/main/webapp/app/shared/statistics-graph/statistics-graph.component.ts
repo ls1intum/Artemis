@@ -70,7 +70,9 @@ export class StatisticsGraphComponent implements OnChanges {
      * @param {SimpleChanges} changes - Changes being made to the component
      */
     ngOnChanges(changes: SimpleChanges): void {
-        this.currentSpan = changes.currentSpan?.currentValue;
+        if (changes.currentSpan) {
+            this.currentSpan = changes.currentSpan.currentValue;
+        }
         this.barChartLabels = [];
         this.currentPeriod = 0;
         this.chartName = `statistics.${this.graphType.toString().toLowerCase()}`;
