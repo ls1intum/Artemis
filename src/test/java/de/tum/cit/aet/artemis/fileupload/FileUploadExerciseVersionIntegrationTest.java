@@ -20,7 +20,7 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseVersion;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseVersionUtilService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
-import de.tum.cit.aet.artemis.fileupload.dto.UpdateFileUploadExercisesDTO;
+import de.tum.cit.aet.artemis.fileupload.dto.UpdateFileUploadExerciseDTO;
 import de.tum.cit.aet.artemis.fileupload.repository.FileUploadExerciseRepository;
 import de.tum.cit.aet.artemis.fileupload.util.FileUploadExerciseFactory;
 
@@ -91,10 +91,10 @@ class FileUploadExerciseVersionIntegrationTest extends AbstractFileUploadIntegra
         FileUploadExercise updatedExercise;
         if (reEvaluate) {
             updatedExercise = request.putWithResponseBody("/api/fileupload/file-upload-exercises/" + exerciseId + "/re-evaluate?deleteFeedback=false",
-                    UpdateFileUploadExercisesDTO.of(fileUploadExercise), FileUploadExercise.class, HttpStatus.OK);
+                    UpdateFileUploadExerciseDTO.of(fileUploadExercise), FileUploadExercise.class, HttpStatus.OK);
         }
         else {
-            updatedExercise = request.putWithResponseBody("/api/fileupload/file-upload-exercises/" + exerciseId, UpdateFileUploadExercisesDTO.of(fileUploadExercise),
+            updatedExercise = request.putWithResponseBody("/api/fileupload/file-upload-exercises/" + exerciseId, UpdateFileUploadExerciseDTO.of(fileUploadExercise),
                     FileUploadExercise.class, HttpStatus.OK);
         }
 

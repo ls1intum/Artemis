@@ -18,7 +18,7 @@ import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record UpdateFileUploadExercisesDTO(long id, String title, String channelName, String shortName, String problemStatement, Set<String> categories, DifficultyLevel difficulty,
+public record UpdateFileUploadExerciseDTO(long id, String title, String channelName, String shortName, String problemStatement, Set<String> categories, DifficultyLevel difficulty,
         Double maxPoints, Double bonusPoints, IncludedInOverallScore includedInOverallScore, Boolean allowComplaintsForAutomaticAssessments, Boolean allowFeedbackRequests,
         Boolean presentationScoreEnabled, Boolean secondCorrectionEnabled, String feedbackSuggestionModule, String gradingInstructions, ZonedDateTime releaseDate,
         ZonedDateTime startDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, ZonedDateTime exampleSolutionPublicationDate, String exampleSolution, String filePattern,
@@ -29,9 +29,9 @@ public record UpdateFileUploadExercisesDTO(long id, String title, String channel
      * Used when you need to send exercise data to the client for editing.
      *
      * @param exercise the FileUploadExercise entity to convert
-     * @return a new UpdateFileUploadExercisesDTO with data from the entity
+     * @return a new UpdateFileUploadExerciseDTO with data from the entity
      */
-    public static UpdateFileUploadExercisesDTO of(FileUploadExercise exercise) {
+    public static UpdateFileUploadExerciseDTO of(FileUploadExercise exercise) {
         if (exercise == null) {
             throw new BadRequestAlertException("No fileUpload exercise was provided.", "FileUploadExercise", "isNull");
         }
@@ -56,7 +56,7 @@ public record UpdateFileUploadExercisesDTO(long id, String title, String channel
         else {
             competencyLinkDTOs = null;
         }
-        return new UpdateFileUploadExercisesDTO(exercise.getId(), exercise.getTitle(), exercise.getChannelName(), exercise.getShortName(), exercise.getProblemStatement(),
+        return new UpdateFileUploadExerciseDTO(exercise.getId(), exercise.getTitle(), exercise.getChannelName(), exercise.getShortName(), exercise.getProblemStatement(),
                 exercise.getCategories(), exercise.getDifficulty(), exercise.getMaxPoints(), exercise.getBonusPoints(), exercise.getIncludedInOverallScore(),
                 exercise.getAllowComplaintsForAutomaticAssessments(), exercise.getAllowFeedbackRequests(), exercise.getPresentationScoreEnabled(),
                 exercise.getSecondCorrectionEnabled(), exercise.getFeedbackSuggestionModule(), exercise.getGradingInstructions(), exercise.getReleaseDate(),

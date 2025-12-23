@@ -34,14 +34,13 @@ public class Competency extends CourseCompetency {
      * If the exercise has no course (e.g. inconsistent state), this check is skipped.
      *
      * @param exerciseCourseId the course id of the exercise (maybe {@code null})
-     * @param competency       a managed competency entity or reference
      * @throws BadRequestAlertException if the competency is associated with a different course
      */
-    public void validateCompetencyBelongsToExerciseCourse(Long exerciseCourseId, Competency competency) {
+    public void validateCompetencyBelongsToExerciseCourse(Long exerciseCourseId) {
         if (exerciseCourseId == null) {
             return;
         }
-        var competencyCourse = competency.getCourse();
+        var competencyCourse = getCourse();
         Long competencyCourseId = competencyCourse != null ? competencyCourse.getId() : null;
 
         if (competencyCourseId != null && !Objects.equals(exerciseCourseId, competencyCourseId)) {

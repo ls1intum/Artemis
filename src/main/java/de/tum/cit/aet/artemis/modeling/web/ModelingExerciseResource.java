@@ -62,7 +62,6 @@ import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.core.util.ResponseUtil;
-import de.tum.cit.aet.artemis.exam.repository.ExerciseGroupRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionExportOptionsDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
@@ -103,8 +102,6 @@ public class ModelingExerciseResource {
 
     private final ParticipationRepository participationRepository;
 
-    private final ExerciseGroupRepository exerciseGroupRepository;
-
     private final AuthorizationCheckService authCheckService;
 
     private final ModelingExerciseService modelingExerciseService;
@@ -137,14 +134,13 @@ public class ModelingExerciseResource {
 
     public ModelingExerciseResource(ModelingExerciseRepository modelingExerciseRepository, UserRepository userRepository, CourseService courseService,
             AuthorizationCheckService authCheckService, CourseRepository courseRepository, ParticipationRepository participationRepository,
-            ExerciseGroupRepository exerciseGroupRepository, ModelingExerciseService modelingExerciseService, ExerciseDeletionService exerciseDeletionService,
-            ModelingExerciseImportService modelingExerciseImportService, SubmissionExportService modelingSubmissionExportService, ExerciseService exerciseService,
-            GroupNotificationScheduleService groupNotificationScheduleService, GradingCriterionRepository gradingCriterionRepository, ChannelService channelService,
-            ChannelRepository channelRepository, ExerciseVersionService exerciseVersionService, Optional<CompetencyProgressApi> competencyProgressApi, Optional<SlideApi> slideApi,
-            Optional<AtlasMLApi> atlasMLApi, Optional<CompetencyApi> competencyApi) {
+            ModelingExerciseService modelingExerciseService, ExerciseDeletionService exerciseDeletionService, ModelingExerciseImportService modelingExerciseImportService,
+            SubmissionExportService modelingSubmissionExportService, ExerciseService exerciseService, GroupNotificationScheduleService groupNotificationScheduleService,
+            GradingCriterionRepository gradingCriterionRepository, ChannelService channelService, ChannelRepository channelRepository,
+            ExerciseVersionService exerciseVersionService, Optional<CompetencyProgressApi> competencyProgressApi, Optional<SlideApi> slideApi, Optional<AtlasMLApi> atlasMLApi,
+            Optional<CompetencyApi> competencyApi) {
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.courseService = courseService;
-        this.exerciseGroupRepository = exerciseGroupRepository;
         this.modelingExerciseService = modelingExerciseService;
         this.exerciseDeletionService = exerciseDeletionService;
         this.modelingExerciseImportService = modelingExerciseImportService;
@@ -565,7 +561,7 @@ public class ModelingExerciseResource {
             CompetencyExerciseLink link = existingByCompetencyId.get(competencyId);
             if (link == null) {
                 Competency competencyRef = api.loadCompetency(competencyId);
-                competencyRef.validateCompetencyBelongsToExerciseCourse(exerciseCourseId, competencyRef);
+                competencyRef.validateCompetencyBelongsToExerciseCourse(exerciseCourseId);
                 link = new CompetencyExerciseLink(competencyRef, exercise, linkDto.weight());
             }
             else {
@@ -638,12 +634,7 @@ public class ModelingExerciseResource {
 
         // validates general settings: points, dates, etc.
         exercise.validateGeneralSettings();
-        if (exercise.isCourseExercise()) {
-            exercise.setCourse(courseRepository.findByIdElseThrow(updateModelingExerciseDTO.courseId()));
-        }
-        if (exercise.isExamExercise()) {
-            exercise.setExerciseGroup(exerciseGroupRepository.findByIdElseThrow(updateModelingExerciseDTO.exerciseGroupId()));
-        }
+        // Valid exercises have set either a course or an exerciseGroup
         exercise.validateSetBothCourseAndExerciseGroupOrNeither();
 
         exercise.setAllowComplaintsForAutomaticAssessments(updateModelingExerciseDTO.allowComplaintsForAutomaticAssessments());
