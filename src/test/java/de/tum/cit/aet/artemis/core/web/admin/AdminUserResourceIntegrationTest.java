@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.core.web.admin;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -180,7 +181,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
         mockMvc.perform(put("/api/core/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(managedUserVM))).andExpect(status().isOk());
 
         // Verify user was updated to super admin
-        User updatedUser = userTestRepository.findById(regularUser.getId()).orElseThrow();
+        User updatedUser = userTestRepository.findByIdWithGroupsAndAuthoritiesElseThrow(regularUser.getId());
         assertThat(updatedUser.getAuthorities()).extracting(Authority::getName).contains(Authority.SUPER_ADMIN_AUTHORITY.toString());
     }
 
@@ -220,5 +221,62 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
         User updatedUser = userTestRepository.findById(superUser.getId()).orElseThrow();
         assertThat(updatedUser.getFirstName()).isEqualTo("UpdatedFirstName");
         assertThat(updatedUser.getAuthorities()).extracting(Authority::getName).contains(Authority.SUPER_ADMIN_AUTHORITY.toString());
+    }
+
+    // ==================== Admin trying to delete super admin users ====================
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void deleteUser_deleteSuperAdminByNonSuperAdmin_forbidden() throws Exception {
+        // Create a super admin user
+        userUtilService.addSuperAdmin("test4");
+        User superUser = userUtilService.getUserByLogin("test4superadmin");
+
+        mockMvc.perform(delete("/api/core/admin/users/" + superUser.getLogin())).andExpect(status().isForbidden());
+
+        // Verify user was not deleted
+        assertThat(userUtilService.userExistsWithLogin(superUser.getLogin())).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void deleteUser_deleteRegularUserByAdmin_success() throws Exception {
+        // Create a regular user
+        User regularUser = userUtilService.createAndSaveUser("regularuser4");
+
+        mockMvc.perform(delete("/api/core/admin/users/" + regularUser.getLogin())).andExpect(status().isOk());
+
+        // Verify user was soft deleted
+        User deletedUser = userTestRepository.findById(regularUser.getId()).orElseThrow();
+        assertThat(deletedUser.isDeleted()).isTrue();
+    }
+
+    // ==================== Super Admin deleting users ====================
+
+    @Test
+    @WithMockUser(username = "superadmin", roles = "SUPER_ADMIN")
+    void deleteUser_deleteSuperAdminBySuperAdmin_success() throws Exception {
+        // Create a super admin user
+        userUtilService.addSuperAdmin("test5");
+        User superUser = userUtilService.getUserByLogin("test5superadmin");
+
+        mockMvc.perform(delete("/api/core/admin/users/" + superUser.getLogin())).andExpect(status().isOk());
+
+        // Verify user was soft deleted
+        User deletedUser = userTestRepository.findById(superUser.getId()).orElseThrow();
+        assertThat(deletedUser.isDeleted()).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = "superadmin", roles = "SUPER_ADMIN")
+    void deleteUser_deleteRegularUserBySuperAdmin_success() throws Exception {
+        // Create a regular user
+        User regularUser = userUtilService.createAndSaveUser("regularuser5");
+
+        mockMvc.perform(delete("/api/core/admin/users/" + regularUser.getLogin())).andExpect(status().isOk());
+
+        // Verify user was soft deleted
+        User deletedUser = userTestRepository.findById(regularUser.getId()).orElseThrow();
+        assertThat(deletedUser.isDeleted()).isTrue();
     }
 }
