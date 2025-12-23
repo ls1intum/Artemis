@@ -178,8 +178,7 @@
         },
         "userManagement": {
             "onlySuperAdminCanCreateSuperAdmin": "Only super administrators are allowed to create other super administrators.",
-            "onlySuperAdminCanManageSuperAdmins": "Only super administrators are allowed to manage other super administrators.",
-            "onlySuperAdminCanRevokeSuperAdminRights": "Only super administrators can revoke the administrator rights of other super administrators."
+            "onlySuperAdminCanManageSuperAdmins": "Only super administrators are allowed to manage other super administrators."
         }
     }
 }

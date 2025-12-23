@@ -160,6 +160,10 @@ public class AdminUserResource {
     public ResponseEntity<UserDTO> activateUser(@PathVariable long userId) {
         log.debug("REST request to activate User {}", userId);
         return userRepository.findOneWithGroupsAndAuthoritiesById(userId).map(user -> {
+            if (user.getAuthorities().contains(Authority.SUPER_ADMIN_AUTHORITY) && !this.authorizationCheckService.isSuperAdmin()) {
+                throw new AccessForbiddenAlertException("Only super administrators are allowed to manage the activation state of other super administrators.", "userManagement",
+                        "userManagement.onlySuperAdminCanManageSuperAdmins");
+            }
             userCreationService.activateUser(user);
             return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "artemisApp.userManagement.activated", user.getLogin())).body(new UserDTO(user));
         }).orElseThrow(() -> new EntityNotFoundException("User", userId));
@@ -175,6 +179,10 @@ public class AdminUserResource {
     public ResponseEntity<UserDTO> deactivateUser(@PathVariable long userId) {
         log.debug("REST request to deactivate User {}", userId);
         return userRepository.findOneWithGroupsAndAuthoritiesById(userId).map(user -> {
+            if (user.getAuthorities().contains(Authority.SUPER_ADMIN_AUTHORITY) && !this.authorizationCheckService.isSuperAdmin()) {
+                throw new AccessForbiddenAlertException("Only super administrators are allowed to manage the activation state of other super administrators.", "userManagement",
+                        "userManagement.onlySuperAdminCanManageSuperAdmins");
+            }
             userCreationService.deactivateUser(user);
             return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "artemisApp.userManagement.deactivated", user.getLogin())).body(new UserDTO(user));
         }).orElseThrow(() -> new EntityNotFoundException("User", userId));
@@ -210,11 +218,6 @@ public class AdminUserResource {
         }
 
         var existingUser = userRepository.findByIdWithGroupsAndAuthoritiesAndOrganizationsElseThrow(managedUserVM.getId());
-
-        if (existingUser.getAuthorities().contains(Authority.SUPER_ADMIN_AUTHORITY) && !isUpdatedUserIsSuperAdmin) {
-            throw new AccessForbiddenAlertException("Only super administrators can revoke the administrator rights of other super admins.", "userManagement",
-                    "userManagement.onlySuperAdminCanRevokeSuperAdminRights");
-        }
 
         final boolean shouldActivateUser = !existingUser.getActivated() && managedUserVM.isActivated();
         var updatedUser = userCreationService.updateUser(existingUser, managedUserVM);

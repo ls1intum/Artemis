@@ -178,8 +178,7 @@
         },
         "userManagement": {
             "onlySuperAdminCanCreateSuperAdmin": "Nur ein Super-Admin kann einen neuen Super-Admin-Nutzer erstellen.",
-            "onlySuperAdminCanManageSuperAdmins": "Nur ein Super-Admin kann Super-Admin-Nutzer verwalten.",
-            "onlySuperAdminCanRevokeSuperAdminRights": "Nur ein Super-Admin kann die Super-Admin-Rechte eines Nutzers widerrufen."
+            "onlySuperAdminCanManageSuperAdmins": "Nur ein Super-Admin kann Super-Admin-Nutzer verwalten."
         }
     }
 }
