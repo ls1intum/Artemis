@@ -468,7 +468,7 @@ describe('GradingSystemPresentationsComponent', () => {
             expect(emittedConfig.presentationScore).toBe(7);
         });
 
-        it('should emit a shallow copy of the config to ensure immutability', () => {
+        it('should emit the same config object reference since child mutates parent object directly', () => {
             const gradingScale = createGradingScaleWithGradedPresentations();
             const config = createDefaultPresentationsConfig();
 
@@ -480,8 +480,8 @@ describe('GradingSystemPresentationsComponent', () => {
             component.updatePresentationsNumber(10);
 
             const emittedConfig = emitSpy.mock.calls[0][0];
-            // The emitted config should be a different object reference
-            expect(emittedConfig).not.toBe(config);
+            // The emitted config is the same object reference (child mutates parent's object)
+            expect(emittedConfig).toBe(config);
         });
     });
 

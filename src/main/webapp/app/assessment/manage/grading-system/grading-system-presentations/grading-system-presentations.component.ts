@@ -188,10 +188,11 @@ export class GradingSystemPresentationsComponent {
 
     /**
      * Emits the current presentations config to notify the parent of changes.
-     * This creates a shallow copy to ensure the parent receives a new object reference.
+     * Since the child mutates the parent's object directly, this emit serves
+     * as a notification that changes occurred rather than providing a new object.
      */
     private emitConfigChange(): void {
-        this.presentationsConfigChange.emit({ ...this.presentationsConfig() });
+        this.presentationsConfigChange.emit(this.presentationsConfig());
     }
 
     // =========================================================================

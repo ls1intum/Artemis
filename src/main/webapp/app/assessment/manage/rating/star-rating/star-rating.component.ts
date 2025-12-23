@@ -125,6 +125,19 @@ export class StarRatingComponent {
     private readonly isInitialized = signal(false);
 
     // =========================================================================
+    // Bound Event Handlers (stored to enable proper removal)
+    // =========================================================================
+
+    /** Bound reference to handleMouseLeave for container mouseleave event */
+    private readonly boundHandleMouseLeave = this.handleMouseLeave.bind(this);
+
+    /** Bound reference to handleStarClick for star click events */
+    private readonly boundHandleStarClick = this.handleStarClick.bind(this);
+
+    /** Bound reference to handleStarHover for star mouseenter events */
+    private readonly boundHandleStarHover = this.handleStarHover.bind(this);
+
+    // =========================================================================
     // Outputs
     // =========================================================================
 
@@ -317,7 +330,7 @@ export class StarRatingComponent {
 
     /**
      * Creates star DOM elements and adds them to the container.
-     * Clears any existing stars first.
+     * Clears any existing stars first, removing event listeners to prevent memory leaks.
      */
     private createStarElements(): void {
         const container = this.starContainer();
@@ -327,6 +340,9 @@ export class StarRatingComponent {
 
         const containerElement: HTMLDivElement = container.nativeElement;
         const starIndices = [...Array(this.starCount).keys()];
+
+        // Remove existing event listeners before clearing to prevent memory leaks
+        this.removeEventListeners();
 
         // Clear existing stars
         this.starElements.length = 0;
@@ -340,6 +356,22 @@ export class StarRatingComponent {
             starElement.title = starElement.dataset.index;
             containerElement.appendChild(starElement);
             this.starElements.push(starElement);
+        });
+    }
+
+    /**
+     * Removes all event listeners from star elements and the container.
+     * Must be called before clearing starElements to prevent memory leaks.
+     */
+    private removeEventListeners(): void {
+        const container = this.starContainer();
+        if (container) {
+            container.nativeElement.removeEventListener('mouseleave', this.boundHandleMouseLeave);
+        }
+
+        this.starElements.forEach((star) => {
+            star.removeEventListener('click', this.boundHandleStarClick);
+            star.removeEventListener('mouseenter', this.boundHandleStarHover);
         });
     }
 
@@ -527,6 +559,7 @@ export class StarRatingComponent {
     /**
      * Attaches mouse event handlers for rating interaction.
      * Only attaches if not in read-only mode.
+     * Uses stored bound handler references to enable proper removal later.
      */
     private attachEventHandlers(): void {
         const container = this.starContainer();
@@ -534,45 +567,80 @@ export class StarRatingComponent {
             return;
         }
 
-        container.nativeElement.addEventListener('mouseleave', this.handleMouseLeave.bind(this));
+        container.nativeElement.addEventListener('mouseleave', this.boundHandleMouseLeave);
         container.nativeElement.style.cursor = 'pointer';
         container.nativeElement.title = this.currentRating;
 
         this.starElements.forEach((star) => {
-            star.addEventListener('click', this.handleStarClick.bind(this));
-            star.addEventListener('mouseenter', this.handleStarHover.bind(this));
+            star.addEventListener('click', this.boundHandleStarClick);
+            star.addEventListener('mouseenter', this.boundHandleStarHover);
             star.style.cursor = 'pointer';
-            star.title = star.dataset.index!;
+            if (star.dataset.index) {
+                star.title = star.dataset.index;
+            }
         });
     }
 
     /**
      * Handles click on a star to set the rating.
      * Emits the rate output with old and new values.
+     * Defensively validates the clicked element and its data-index attribute.
      */
     private handleStarClick(event: MouseEvent): void {
         if (this.isReadOnly) {
             return;
         }
 
-        const clickedStar = event.target as HTMLElement;
-        const previousValue = this.currentRating;
+        const target = event.target as Element | undefined;
+        if (!target) {
+            return;
+        }
 
-        this.currentRating = parseInt(clickedStar.dataset.index!, 10);
+        // Find the star element (in case click was on a child element)
+        const starElement = target.closest('[data-index]') as HTMLElement | undefined;
+        if (!starElement) {
+            return;
+        }
+
+        const indexStr = starElement.dataset.index;
+        if (!indexStr) {
+            return;
+        }
+
+        const newValue = Number.parseInt(indexStr, 10);
+        if (!Number.isFinite(newValue) || newValue < 1 || newValue > this.starCount) {
+            return;
+        }
+
+        const previousValue = this.currentRating;
+        this.currentRating = newValue;
         this.rate.emit({ oldValue: previousValue, newValue: this.currentRating });
     }
 
     /**
      * Handles mouse hover over a star to show preview of potential rating.
      * Highlights all stars up to the hovered position.
+     * Defensively validates the hovered element and its data-index attribute.
      */
     private handleStarHover(event: MouseEvent): void {
         if (this.isReadOnly) {
             return;
         }
 
-        const hoveredStar = event.target as HTMLElement;
-        const hoveredIndex = parseInt(hoveredStar.dataset.index!, 10);
+        const target = event.target as HTMLElement | undefined;
+        if (!target) {
+            return;
+        }
+
+        const indexStr = target.dataset.index;
+        if (!indexStr) {
+            return;
+        }
+
+        const hoveredIndex = Number.parseInt(indexStr, 10);
+        if (!Number.isFinite(hoveredIndex) || hoveredIndex < 1 || hoveredIndex > this.starElements.length) {
+            return;
+        }
 
         // Highlight all stars up to and including the hovered one
         for (let i = 0; i < hoveredIndex; i++) {
