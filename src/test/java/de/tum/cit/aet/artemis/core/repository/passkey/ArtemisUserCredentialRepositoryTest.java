@@ -37,6 +37,8 @@ class ArtemisUserCredentialRepositoryTest extends AbstractSpringIntegrationIndep
 
     private User regularUser;
 
+    private User adminUser;
+
     @BeforeEach
     void setUp() {
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
@@ -46,6 +48,11 @@ class ArtemisUserCredentialRepositoryTest extends AbstractSpringIntegrationIndep
         superAdminUser = userUtilService.createAndSaveUser(TEST_PREFIX + "superadmin");
         superAdminUser.setAuthorities(Set.of(Authority.SUPER_ADMIN_AUTHORITY));
         userTestRepository.save(superAdminUser);
+
+        // Create normal admin user
+        adminUser = userUtilService.createAndSaveUser(TEST_PREFIX + "admin");
+        adminUser.setAuthorities(Set.of(Authority.ADMIN_AUTHORITY));
+        userTestRepository.save(adminUser);
     }
 
     @Test
@@ -81,6 +88,22 @@ class ArtemisUserCredentialRepositoryTest extends AbstractSpringIntegrationIndep
     }
 
     @Test
+    void testSavePasskey_AdminUser_ShouldNotBeAutoApproved() {
+        // Arrange
+        CredentialRecord credentialRecord = createCredentialRecord(adminUser, "admin-user-passkey");
+
+        // Act
+        artemisUserCredentialRepository.save(credentialRecord);
+
+        // Assert
+        Optional<PasskeyCredential> savedCredential = passkeyCredentialsRepository.findByCredentialId(credentialRecord.getCredentialId().toBase64UrlString());
+        assertThat(savedCredential).isPresent();
+        assertThat(savedCredential.get().isSuperAdminApproved()).isFalse();
+        assertThat(savedCredential.get().getUser()).isEqualTo(adminUser);
+        assertThat(savedCredential.get().getLabel()).isEqualTo("admin-user-passkey");
+    }
+
+    @Test
     void testUpdatePasskey_SuperAdminUser_ShouldBeAutoApproved() {
         // Arrange
         CredentialRecord initialCredential = createCredentialRecord(superAdminUser, "initial-label");
@@ -107,6 +130,25 @@ class ArtemisUserCredentialRepositoryTest extends AbstractSpringIntegrationIndep
 
         // Create updated credential record with same credential ID but different label
         CredentialRecord updatedCredential = createCredentialRecord(regularUser, "updated-label", initialCredential.getCredentialId());
+
+        // Act
+        artemisUserCredentialRepository.save(updatedCredential);
+
+        // Assert
+        Optional<PasskeyCredential> savedCredential = passkeyCredentialsRepository.findByCredentialId(updatedCredential.getCredentialId().toBase64UrlString());
+        assertThat(savedCredential).isPresent();
+        assertThat(savedCredential.get().isSuperAdminApproved()).isFalse();
+        assertThat(savedCredential.get().getLabel()).isEqualTo("updated-label");
+    }
+
+    @Test
+    void testUpdatePasskey_AdminUser_ShouldNotBeAutoApproved() {
+        // Arrange
+        CredentialRecord initialCredential = createCredentialRecord(adminUser, "initial-label");
+        artemisUserCredentialRepository.save(initialCredential);
+
+        // Create updated credential record with same credential ID but different label
+        CredentialRecord updatedCredential = createCredentialRecord(adminUser, "updated-label", initialCredential.getCredentialId());
 
         // Act
         artemisUserCredentialRepository.save(updatedCredential);
