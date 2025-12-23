@@ -13,6 +13,7 @@ import org.springframework.security.web.webauthn.management.UserCredentialReposi
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.config.PasskeyEnabled;
+import de.tum.cit.aet.artemis.core.domain.Authority;
 import de.tum.cit.aet.artemis.core.domain.PasskeyCredential;
 import de.tum.cit.aet.artemis.core.domain.PasskeyType;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -20,7 +21,6 @@ import de.tum.cit.aet.artemis.core.domain.converter.BytesConverter;
 import de.tum.cit.aet.artemis.core.dto.PasskeyDTO;
 import de.tum.cit.aet.artemis.core.repository.PasskeyCredentialsRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
-import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 
 /**
  * Repository implementation for managing user credentials in the context of WebAuthn authentication.
@@ -51,14 +51,11 @@ public class ArtemisUserCredentialRepository implements UserCredentialRepository
 
     private final UserRepository userRepository;
 
-    private final AuthorizationCheckService authorizationCheckService;
-
     public ArtemisUserCredentialRepository(ArtemisPublicKeyCredentialUserEntityRepository artemisPublicKeyCredentialUserEntityRepository,
-            PasskeyCredentialsRepository passkeyCredentialsRepository, UserRepository userRepository, AuthorizationCheckService authorizationCheckService) {
+            PasskeyCredentialsRepository passkeyCredentialsRepository, UserRepository userRepository) {
         this.artemisPublicKeyCredentialUserEntityRepository = artemisPublicKeyCredentialUserEntityRepository;
         this.passkeyCredentialsRepository = passkeyCredentialsRepository;
         this.userRepository = userRepository;
-        this.authorizationCheckService = authorizationCheckService;
     }
 
     @Override
@@ -190,7 +187,8 @@ public class ArtemisUserCredentialRepository implements UserCredentialRepository
         credential.setLastUsed(credentialRecord.getLastUsed());
         credential.setCreatedDate(credentialRecord.getCreated());
 
-        boolean isSuperAdmin = authorizationCheckService.isSuperAdmin(user);
+        // We check the user's authorities directly instead of calling a service to respect architecture rules
+        boolean isSuperAdmin = user.getAuthorities().contains(Authority.SUPER_ADMIN_AUTHORITY);
         if (isSuperAdmin) {
             credential.setSuperAdminApproved(true);
         }
