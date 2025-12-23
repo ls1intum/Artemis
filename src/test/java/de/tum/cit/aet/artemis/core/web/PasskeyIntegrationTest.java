@@ -134,8 +134,6 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void testUpdatePasskeyApproval_NotFound() throws Exception {
         when(passkeyAuthenticationService.isAuthenticatedWithSuperAdminApprovedPasskey()).thenReturn(true);
 
-        User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-
         request.put("/api/core/passkey/idDoesNotExist/approval", true, HttpStatus.NOT_FOUND);
     }
 

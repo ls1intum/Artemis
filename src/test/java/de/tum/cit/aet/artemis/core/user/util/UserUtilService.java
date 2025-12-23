@@ -383,7 +383,7 @@ public class UserUtilService {
             log.debug("Generate super admin");
             User admin = UserFactory.generateActivatedUser("superadmin", passwordService.hashPassword(UserFactory.USER_PASSWORD));
             admin.setGroups(Set.of("superadmin"));
-            admin.setAuthorities(adminAuthorities);
+            admin.setAuthorities(superAdminAuthorities);
             usersToAdd.add(admin);
             log.debug("Generate super admin done");
         }
