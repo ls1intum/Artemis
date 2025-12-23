@@ -383,10 +383,18 @@ export class ExerciseService {
      */
     static parseExerciseCategories(exercise?: Exercise) {
         if (exercise?.categories) {
-            exercise.categories = exercise.categories.map((category) => {
-                const categoryObj = JSON.parse(category as unknown as string);
-                return new ExerciseCategory(categoryObj.category, categoryObj.color);
-            });
+            exercise.categories = exercise.categories
+                .map((category) => {
+                    try {
+                        // Handle both JSON strings (from some endpoints) and objects (from DTOs)
+                        const categoryObj = typeof category === 'string' ? JSON.parse(category) : category;
+                        return new ExerciseCategory(categoryObj.category, categoryObj.color);
+                    } catch {
+                        // Skip malformed category entries
+                        return undefined;
+                    }
+                })
+                .filter((category): category is ExerciseCategory => category !== undefined);
         }
     }
 
