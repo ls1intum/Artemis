@@ -330,30 +330,48 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
 
         const cachedParticipation = this.cachedParticipations.get(participationId);
         if (!cachedParticipation) {
-            // we don't know this participation yet, hence nothing to update.
             return;
         }
+
         const submissions = cachedParticipation.submissions ?? [];
+
+        let matchedExistingSubmission = false;
 
         const updatedSubmissions: Submission[] = submissions.map((submission) => {
             if (submission.id !== result.submission!.id) {
                 return submission;
             }
 
+            matchedExistingSubmission = true;
+
             const oldResults = submission.results ?? [];
             const withoutSameId = oldResults.filter((r) => r.id !== result.id);
             const newResults = [...withoutSameId, result];
-            const updatedSubmission: Submission = {
+
+            return {
                 ...submission,
                 results: newResults,
             };
-
-            return updatedSubmission;
         });
+
+        let finalSubmissions = updatedSubmissions;
+
+        // If we did not find a submission with this id, create one from the result
+        if (!matchedExistingSubmission) {
+            const newSubmission: Submission = {
+                ...(result.submission as Submission),
+                // Make sure we have a proper participation reference
+                participation: cachedParticipation,
+                // Ensure we have a results array containing at least this result
+                results: [...(result.submission?.results ?? []), result].filter((r, index, arr) => r.id == null || arr.findIndex((other) => other.id === r.id) === index),
+            };
+
+            finalSubmissions = [...updatedSubmissions, newSubmission];
+        }
 
         const updatedParticipation: StudentParticipation = {
             ...cachedParticipation,
-            submissions: updatedSubmissions,
+            submissions: finalSubmissions,
         };
 
         this.cachedParticipations.set(participationId, updatedParticipation);

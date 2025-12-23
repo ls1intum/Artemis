@@ -156,7 +156,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     instructorActionItems: InstructorActionItem[] = [];
     exerciseIcon: IconProp;
     numberOfPracticeResults: number;
-    latestResultSubscriptions: Subscription[] = [];
 
     exampleSolutionInfo?: ExampleSolutionInfo;
 
@@ -346,7 +345,9 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                     exerciseId: changedParticipation?.exercise?.id,
                     otherStuff: changedParticipation?.submissions![changedParticipation?.submissions?.length! - 1],
                 });
-
+                this.logDebug('[Course ExerciseDetails] willTrigger update participations', {
+                    changedParticipation,
+                });
                 if (changedParticipation && this.exercise && changedParticipation.exercise?.id === this.exercise.id) {
                     // Notify student about late submission result
                     if (
@@ -584,7 +585,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this.teamAssignmentUpdateListener?.unsubscribe();
         this.submissionSubscription?.unsubscribe();
         this.paramsSubscription?.unsubscribe();
-        this.latestResultSubscriptions.forEach((s) => s.unsubscribe());
         this.irisSettingsSubscription?.unsubscribe();
     }
 
