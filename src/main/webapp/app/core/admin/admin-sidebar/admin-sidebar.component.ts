@@ -79,7 +79,7 @@ export class AdminSidebarComponent {
         const groups: AdminSidebarGroup[] = [];
 
         // Group 1: User & Organization Management
-        const accountGroup: AdminSidebarItem[] = [
+        const accountGroupItems: AdminSidebarItem[] = [
             {
                 routerLink: '/admin/organization-management',
                 icon: faUniversity,
@@ -96,7 +96,7 @@ export class AdminSidebarComponent {
             },
         ];
         if (this.passkeyEnabled() && this.passkeyRequiredForAdmin() && this.isSuperAdmin()) {
-            accountGroup.push({
+            accountGroupItems.push({
                 routerLink: '/admin/passkey-management',
                 icon: faKey,
                 title: 'Passkey Management',
@@ -107,7 +107,7 @@ export class AdminSidebarComponent {
 
         groups.push({
             translation: 'global.menu.admin.groups.usersAndOrganizations',
-            items: accountGroup,
+            items: accountGroupItems,
         });
 
         // Group 2: Content & Learning
