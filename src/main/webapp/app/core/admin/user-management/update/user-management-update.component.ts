@@ -8,7 +8,7 @@ import { OrganizationSelectorComponent } from 'app/shared/organization-selector/
 import { Organization } from 'app/core/shared/entities/organization.model';
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, PROFILE_JENKINS, USERNAME_MAX_LENGTH, USERNAME_MIN_LENGTH } from 'app/app.constants';
-import { faBan, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faCheck, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { COMMA, ENTER, TAB } from '@angular/cdk/keycodes';
 import { FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatChipGrid, MatChipInput, MatChipInputEvent, MatChipRemove, MatChipRow } from '@angular/material/chips';
@@ -72,8 +72,9 @@ export class UserManagementUpdateComponent implements OnInit {
     private readonly fb = inject(FormBuilder);
     private readonly accountService = inject(AccountService);
 
-    protected readonly faTimes = faTimes;
     protected readonly faBan = faBan;
+    protected readonly faCheck = faCheck;
+    protected readonly faTimes = faTimes;
     protected readonly faSave = faSave;
 
     /** Validation constants */
