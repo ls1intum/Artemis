@@ -52,8 +52,6 @@ export interface ProgrammingExerciseEditorFileFull {
     content: string;
 }
 
-export const EDITOR_SESSION_HEADER = 'X-Artemis-Client-Instance-ID';
-
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseEditorSyncService {
     private websocketService = inject(WebsocketService);
@@ -68,7 +66,7 @@ export class ProgrammingExerciseEditorSyncService {
     }
 
     get clientInstanceId(): string | undefined {
-        return this.browserFingerprintService.instanceIdentifier.value;
+        return this.browserFingerprintService.browserInstanceId.value;
     }
 
     sendSynchronizationUpdate(exerciseId: number, message: ProgrammingExerciseEditorSyncMessage): void {
