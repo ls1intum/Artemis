@@ -86,7 +86,7 @@ describe('Header Course Component', () => {
         component.course = courseWithShortDescription;
         component.course!.isAtLeastTutor = true;
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const manageButton = fixture.nativeElement.querySelector('#manage-button');
         expect(manageButton).toBeNull();
@@ -101,7 +101,7 @@ describe('Header Course Component', () => {
         component.course = courseWithShortDescription;
         component.course!.isAtLeastTutor = false;
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const manageButton = fixture.nativeElement.querySelector('#manage-button');
         expect(manageButton).toBeNull();

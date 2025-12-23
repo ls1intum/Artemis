@@ -87,11 +87,11 @@ describe('CompetencyManagementTableComponent', () => {
 
     it('should initialize values', () => {
         component.competencyType = CourseCompetencyType.COMPETENCY;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(competencyManagementTableComponent.service).toEqual(competencyService);
 
         component.competencyType = CourseCompetencyType.PREREQUISITE;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         expect(competencyManagementTableComponent.service).toEqual(prerequisiteService);
     });
 
@@ -112,7 +112,7 @@ describe('CompetencyManagementTableComponent', () => {
         const competency2 = { id: 2, type: CourseCompetencyType.COMPETENCY } as CourseCompetency;
         competencyManagementTableComponent.service = competencyService;
         component.courseCompetencies = [competency1, competency2];
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         competencyManagementTableComponent.deleteCompetency(1);
         expect(deleteSpy).toHaveBeenCalledOnce();

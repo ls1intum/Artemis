@@ -44,7 +44,7 @@ describe('DeleteDialogComponent', () => {
         comp.deleteConfirmationText = 'artemisApp.exercise.delete.typeNameToConfirm';
         comp.dialogError = new Observable<string>();
         comp.buttonType = ButtonType.ERROR;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const closeButton = fixture.debugElement.query(By.css('.btn-close'));
         expect(closeButton).not.toBeNull();
@@ -68,7 +68,7 @@ describe('DeleteDialogComponent', () => {
         comp.confirmEntityName = '';
         comp.dialogError = new Observable<string>();
         comp.buttonType = ButtonType.ERROR;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
         expect(comp.deleteForm.invalid).toBeTrue();
         // TODO: why do changes not propagate to the UI?
@@ -77,7 +77,7 @@ describe('DeleteDialogComponent', () => {
 
         // User entered some title
         comp.confirmEntityName = 'some title';
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
         expect(comp.deleteForm.invalid).toBeTrue();
         // TODO: why do changes not propagate to the UI?
@@ -86,7 +86,7 @@ describe('DeleteDialogComponent', () => {
 
         // User entered correct tile
         comp.confirmEntityName = 'title';
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
         expect(comp.deleteForm.invalid).toBeFalse();
         // TODO: why do changes not propagate to the UI?
@@ -102,19 +102,19 @@ describe('DeleteDialogComponent', () => {
         comp.dialogError = dialogErrorSource.asObservable();
         comp.delete = new EventEmitter<{ [p: string]: boolean }>();
         comp.buttonType = ButtonType.ERROR;
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         let deleteButton = debugElement.query(By.css('.btn.btn-danger'));
         expect(deleteButton.nativeElement.disabled).toBeFalse();
 
         // external component delete method was executed
         comp.confirmDelete();
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         deleteButton = debugElement.query(By.css('.btn.btn-danger'));
         expect(deleteButton.nativeElement.disabled).toBeTrue();
 
         // external component emits error to the dialog
         dialogErrorSource.next('example error');
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         deleteButton = debugElement.query(By.css('.btn.btn-danger'));
         expect(deleteButton.nativeElement.disabled).toBeFalse();
 

@@ -1,6 +1,7 @@
 import { ArtemisTextReplacementPlugin } from 'app/shared/markdown-editor/extensions/ArtemisTextReplacementPlugin';
 import DOMPurify, { Config } from 'dompurify';
-import type { PluginSimple, Token } from 'markdown-it';
+import type { PluginSimple } from 'markdown-it';
+import type Token from 'markdown-it/lib/token.mjs';
 import MarkdownItKatex from '@vscode/markdown-it-katex';
 import MarkdownItHighlightjs from 'markdown-it-highlightjs';
 import TurndownService from 'turndown';

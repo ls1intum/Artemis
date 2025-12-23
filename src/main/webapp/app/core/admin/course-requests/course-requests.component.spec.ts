@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { HttpErrorResponse } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { TranslateModule } from '@ngx-translate/core';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { of, throwError } from 'rxjs';
@@ -63,8 +63,10 @@ describe('CourseRequestsComponent', () => {
         } as unknown as jest.Mocked<AlertService>;
 
         await TestBed.configureTestingModule({
-            imports: [CourseRequestsComponent, HttpClientTestingModule, TranslateModule.forRoot()],
+            imports: [CourseRequestsComponent, TranslateModule.forRoot()],
             providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
                 { provide: CourseRequestService, useValue: courseRequestService },
                 { provide: AlertService, useValue: alertService },
                 { provide: NgbModal, useClass: MockNgbModalService },

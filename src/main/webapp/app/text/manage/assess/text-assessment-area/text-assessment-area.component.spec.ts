@@ -50,7 +50,7 @@ describe('TextAssessmentAreaComponent', () => {
 
         for (let i = 0; i < textBlockRefs.length; i++) {
             component.textBlockRefs = textBlockRefs.slice(0, i);
-            fixture.detectChanges();
+            fixture.changeDetectorRef.detectChanges();
 
             const all = fixture.debugElement.queryAll(By.directive(TextBlockAssessmentCardComponent));
             expect(all).toHaveLength(i);
@@ -80,7 +80,7 @@ describe('TextAssessmentAreaComponent', () => {
         jest.spyOn(component.textBlockRefsAddedRemoved, 'emit');
 
         component.addTextBlockRef(TextBlockRef.new());
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(component.textBlockRefsAddedRemoved.emit).toHaveBeenCalledOnce();
         expect(component.textBlockRefs).toHaveLength(5);
@@ -91,7 +91,7 @@ describe('TextAssessmentAreaComponent', () => {
         jest.spyOn(component.textBlockRefsAddedRemoved, 'emit');
 
         component.removeTextBlockRef(component.textBlockRefs[0]);
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(component.textBlockRefsAddedRemoved.emit).toHaveBeenCalledOnce();
         expect(component.textBlockRefs).toHaveLength(3);

@@ -39,6 +39,9 @@ import org.springframework.web.multipart.MultipartFile;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
+import de.tum.cit.aet.artemis.atlas.api.CourseCompetencyApi;
+import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationScheduleService;
@@ -52,6 +55,7 @@ import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventDTO;
 import de.tum.cit.aet.artemis.core.dto.calendar.QuizExerciseCalendarEventDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.CalendarEventType;
@@ -79,8 +83,12 @@ import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSolution;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSpot;
 import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
+import de.tum.cit.aet.artemis.quiz.dto.CompetencyExerciseLinkFromEditorDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseFromEditorDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseReEvaluateDTO;
+import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseWithQuestionsDTO;
+import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseWithSolutionDTO;
+import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseWithoutQuestionsDTO;
 import de.tum.cit.aet.artemis.quiz.dto.question.reevaluate.AnswerOptionReEvaluateDTO;
 import de.tum.cit.aet.artemis.quiz.dto.question.reevaluate.DragAndDropQuestionReEvaluateDTO;
 import de.tum.cit.aet.artemis.quiz.dto.question.reevaluate.DragItemReEvaluateDTO;
@@ -133,12 +141,14 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
 
     private final Optional<SlideApi> slideApi;
 
+    private final Optional<CourseCompetencyApi> courseCompetencyApi;
+
     public QuizExerciseService(QuizExerciseRepository quizExerciseRepository, ResultRepository resultRepository, QuizSubmissionRepository quizSubmissionRepository,
             InstanceMessageSendService instanceMessageSendService, QuizStatisticService quizStatisticService, QuizBatchService quizBatchService,
             ExerciseSpecificationService exerciseSpecificationService, DragAndDropMappingRepository dragAndDropMappingRepository,
             ShortAnswerMappingRepository shortAnswerMappingRepository, ExerciseService exerciseService, UserRepository userRepository, QuizBatchRepository quizBatchRepository,
             ChannelService channelService, GroupNotificationScheduleService groupNotificationScheduleService, Optional<CompetencyProgressApi> competencyProgressApi,
-            Optional<SlideApi> slideApi) {
+            Optional<SlideApi> slideApi, Optional<CourseCompetencyApi> courseCompetencyApi) {
         super(dragAndDropMappingRepository, shortAnswerMappingRepository);
         this.quizExerciseRepository = quizExerciseRepository;
         this.resultRepository = resultRepository;
@@ -154,6 +164,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         this.groupNotificationScheduleService = groupNotificationScheduleService;
         this.competencyProgressApi = competencyProgressApi;
         this.slideApi = slideApi;
+        this.courseCompetencyApi = courseCompetencyApi;
     }
 
     /**
@@ -595,8 +606,6 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         // fetch exercise again to make sure we have an updated version
         QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(exerciseId);
 
-        // for quizzes, we need to delete the statistics, and we need to reset the quiz to its original state
-        quizExercise.setIsOpenForPractice(Boolean.FALSE);
         if (!quizExercise.isExamExercise()) {
             // do not set the release date of exam exercises
             quizExercise.setReleaseDate(ZonedDateTime.now());
@@ -882,11 +891,6 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             quizPointStatistic.setQuiz(quizExercise);
         }
 
-        // Set released for practice to false if not set already
-        if (quizExercise.isIsOpenForPractice() == null) {
-            quizExercise.setIsOpenForPractice(Boolean.FALSE);
-        }
-
         // make sure the pointers in the statistics are correct
         quizExercise.recalculatePointCounters();
 
@@ -1007,12 +1011,45 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
     }
 
     /**
+     * Method to update competency exercise links for a quiz exercise.
+     *
+     * @param quizExercise The quiz exercise to update the competency links for
+     * @param competencies The competency links from the editor DTO
+     * @param course       The course the quiz exercise belongs to
+     * @return The updated set of competency exercise links
+     */
+    private Set<CompetencyExerciseLink> updateCompetencyExerciseLinks(QuizExercise quizExercise, Set<CompetencyExerciseLinkFromEditorDTO> competencies, Course course) {
+        if (courseCompetencyApi.isEmpty()) {
+            return Set.of();
+        }
+        CourseCompetencyApi courseCompetencyApi = this.courseCompetencyApi.get();
+        Set<CompetencyExerciseLink> updatedLinks = new HashSet<>();
+        Set<Long> competencyIds = competencies.stream().map(CompetencyExerciseLinkFromEditorDTO::competencyId).collect(Collectors.toSet());
+        Set<Competency> foundCompetencies = courseCompetencyApi.findCourseCompetenciesByIdsAndCourseId(competencyIds, course.getId());
+        for (CompetencyExerciseLinkFromEditorDTO dto : competencies) {
+            Optional<Competency> matchingCompetency = foundCompetencies.stream().filter(c -> c.getId().equals(dto.competencyId())).findFirst();
+            if (matchingCompetency.isPresent()) {
+                CompetencyExerciseLink link = new CompetencyExerciseLink();
+                link.setCompetency(matchingCompetency.get());
+                link.setWeight(dto.weight());
+                link.setExercise(quizExercise);
+                updatedLinks.add(link);
+            }
+            else {
+                throw new EntityNotFoundException("Competency with id " + dto.competencyId() + " not found in course " + course.getId());
+            }
+        }
+        return updatedLinks;
+    }
+
+    /**
      * Merges the properties of the QuizExerciseFromEditorDTO into the QuizExercise domain object.
      *
      * @param quizExercise              The QuizExercise domain object to be updated
      * @param quizExerciseFromEditorDTO The DTO containing the properties to be merged into the domain object.
+     * @param course                    The course the quiz exercise belongs to
      */
-    public void mergeDTOIntoDomainObject(QuizExercise quizExercise, QuizExerciseFromEditorDTO quizExerciseFromEditorDTO) {
+    public void mergeDTOIntoDomainObject(QuizExercise quizExercise, QuizExerciseFromEditorDTO quizExerciseFromEditorDTO, Course course) {
         if (quizExerciseFromEditorDTO.title() != null) {
             quizExercise.setTitle(quizExerciseFromEditorDTO.title());
         }
@@ -1023,8 +1060,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             quizExercise.setCategories(quizExerciseFromEditorDTO.categories());
         }
         if (quizExerciseFromEditorDTO.competencyLinks() != null) {
-            quizExercise.getCompetencyLinks().clear();
-            quizExercise.getCompetencyLinks().addAll(quizExerciseFromEditorDTO.competencyLinks());
+            quizExercise.setCompetencyLinks(updateCompetencyExerciseLinks(quizExercise, quizExerciseFromEditorDTO.competencyLinks(), course));
         }
         if (quizExerciseFromEditorDTO.difficulty() != null) {
             quizExercise.setDifficulty(quizExerciseFromEditorDTO.difficulty());
@@ -1245,5 +1281,39 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         }
         competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(result));
         return result;
+    }
+
+    /**
+     * Creates the appropriate DTO for a student based on the quiz state and batch.
+     *
+     * @param quizExercise the quiz exercise to map
+     * @param batch        the optional quiz batch associated with the student
+     * @return the mapped DTO (QuizExerciseWithoutQuestionsDTO, QuizExerciseWithQuestionsDTO, or QuizExerciseWithSolutionsDTO)
+     */
+    public Object createQuizExerciseDTOForStudent(QuizExercise quizExercise, Optional<QuizBatch> batch) {
+        if (quizExercise.isQuizEnded()) {
+            return QuizExerciseWithSolutionDTO.of(quizExercise);
+        }
+        else if (batch.isEmpty() || !batch.get().isSubmissionAllowed()) {
+            return QuizExerciseWithoutQuestionsDTO.of(quizExercise);
+        }
+        else {
+            return QuizExerciseWithQuestionsDTO.of(quizExercise);
+        }
+    }
+
+    /**
+     * Determines if the given quiz exercise is editable.
+     * A quiz exercise is considered editable if none of its associated quiz batches have started and the quiz has not ended.
+     *
+     * @param quizExercise the quiz exercise to check
+     * @return true if the quiz exercise is editable, false otherwise
+     */
+    public boolean isEditable(QuizExercise quizExercise) {
+        Set<QuizBatch> batches = quizBatchRepository.findAllByQuizExercise(quizExercise);
+        if (batches.stream().anyMatch(QuizBatch::isStarted)) {
+            return false;
+        }
+        return !quizExercise.isQuizEnded();
     }
 }

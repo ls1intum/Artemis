@@ -217,6 +217,7 @@ export class DataTableComponent implements OnInit, OnChanges {
         return {
             settings: {
                 limit: this.pageLimit,
+                sorts: [],
                 sortType: 'multi',
                 columnMode: 'force',
                 headerHeight: 50,

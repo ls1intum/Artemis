@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 
@@ -218,6 +219,15 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
      */
     private static void configureJGitSystemReader() {
         SystemReader defaultReader = SystemReader.getInstance();
+
+        // Force initialization of static platform detection fields before calling setInstance().
+        // This prevents a race condition where setInstance() -> init() -> setPlatformChecker()
+        // accesses static fields (isMacOS, isWindows) that haven't been initialized yet
+        // during parallel test execution, causing NullPointerException.
+        defaultReader.isMacOS();
+        defaultReader.isWindows();
+        defaultReader.isLinux();
+
         SystemReader.setInstance(new SystemReader() {
 
             @Override
@@ -263,10 +273,22 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
             }
 
             @Override
+            public Instant now() {
+                return defaultReader.now();
+            }
+
+            @Override
+            public ZoneOffset getTimeZoneAt(Instant when) {
+                return defaultReader.getTimeZoneAt(when);
+            }
+
+            @SuppressWarnings("deprecation")
+            @Override
             public long getCurrentTime() {
                 return defaultReader.getCurrentTime();
             }
 
+            @SuppressWarnings("deprecation")
             @Override
             public int getTimezone(long when) {
                 return defaultReader.getTimezone(when);

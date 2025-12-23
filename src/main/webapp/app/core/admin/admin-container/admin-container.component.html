@@ -1,0 +1,28 @@
+<div class="sidebar-wrapper">
+    <div class="vw-100 bg-body">
+        <mat-sidenav-container
+            class="vw-100"
+            [ngClass]="{
+                'container-closed': isNavbarCollapsed(),
+            }"
+        >
+            <mat-sidenav disableClose class="module-bg rounded-3" [opened]="true" mode="side">
+                <jhi-admin-sidebar
+                    [isNavbarCollapsed]="isNavbarCollapsed()"
+                    [localCIActive]="localCIActive"
+                    [ltiEnabled]="ltiEnabled"
+                    [standardizedCompetenciesEnabled]="standardizedCompetenciesEnabled"
+                    [atlasEnabled]="atlasEnabled"
+                    [examEnabled]="examEnabled"
+                    (toggleCollapseState)="toggleCollapseState()"
+                />
+            </mat-sidenav>
+
+            <mat-sidenav-content>
+                <div class="admin-body-container ms-2 module-bg rounded-3 scrollable-content p-3">
+                    <router-outlet />
+                </div>
+            </mat-sidenav-content>
+        </mat-sidenav-container>
+    </div>
+</div>

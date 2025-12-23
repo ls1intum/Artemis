@@ -14,7 +14,7 @@ import { Post } from 'app/communication/shared/entities/post.model';
 import { BehaviorSubject, of } from 'rxjs';
 import { Conversation, ConversationDTO, ConversationType } from 'app/communication/shared/entities/conversation/conversation.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from 'test/helpers/sample/conversationExampleModels';
-import { Directive, EventEmitter, Input, Output, QueryList, input, runInInjectionContext } from '@angular/core';
+import { Directive, EventEmitter, Input, Output, QueryList } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ChannelDTO, getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
@@ -437,10 +437,9 @@ examples.forEach((activeConversation) => {
             component.pinnedPosts = [pinnedPost];
             component.allPosts = [pinnedPost, regularPost];
 
-            runInInjectionContext(fixture.debugElement.injector, () => {
-                component.showOnlyPinned = input<boolean>(true);
-                component.applyPinnedMessageFilter();
-            });
+            fixture.componentRef.setInput('showOnlyPinned', true);
+            fixture.detectChanges();
+            component.applyPinnedMessageFilter();
 
             expect(component.posts).toEqual([pinnedPost]);
         });
@@ -450,10 +449,9 @@ examples.forEach((activeConversation) => {
             const regularPost = { id: 2, displayPriority: 'NONE' } as Post;
             component.pinnedPosts = [pinnedPost];
             component.allPosts = [pinnedPost, regularPost];
-            runInInjectionContext(fixture.debugElement.injector, () => {
-                component.showOnlyPinned = input<boolean>(false);
-                component.applyPinnedMessageFilter();
-            });
+            fixture.componentRef.setInput('showOnlyPinned', false);
+            fixture.detectChanges();
+            component.applyPinnedMessageFilter();
 
             expect(component.posts).toEqual([pinnedPost, regularPost]);
         });

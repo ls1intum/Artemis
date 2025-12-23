@@ -80,21 +80,17 @@ describe('ExerciseUtils', () => {
     });
 
     describe('isStartPracticeAvailable()', () => {
-        it.each([
-            { isOpenForPractice: true, quizEnded: true },
-            { isOpenForPractice: true, quizEnded: false },
-            { isOpenForPractice: undefined, quizEnded: true },
-        ])('should determine correctly if the student can practice a quiz', ({ isOpenForPractice, quizEnded }) => {
+        it.each([{ quizEnded: true }, { quizEnded: false }])('should determine correctly if the student can practice a quiz', ({ quizEnded }) => {
             const exercise: QuizExercise = {
                 numberOfAssessmentsOfCorrectionRounds: [],
                 secondCorrectionEnabled: false,
                 studentAssignedTeamIdComputed: false,
                 type: ExerciseType.QUIZ,
-                isOpenForPractice,
+                dueDate: quizEnded ? dayjs().subtract(1, 'day') : dayjs().add(1, 'day'),
                 quizEnded,
             };
 
-            expect(isStartPracticeAvailable(exercise)).toBe(!!isOpenForPractice && !!quizEnded);
+            expect(isStartPracticeAvailable(exercise)).toBe(!!quizEnded);
         });
 
         it.each([

@@ -63,14 +63,14 @@ describe('JhiStartPracticeModeButtonComponent', () => {
 
         comp.exercise = exercise;
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         tick();
 
         startPracticeStub.mockReturnValue(participationSubject);
         comp.startPractice(false);
         participationSubject.next(inactivePart);
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         tick();
 
         expect(alertServiceErrorStub).toHaveBeenCalledOnce();
@@ -80,7 +80,7 @@ describe('JhiStartPracticeModeButtonComponent', () => {
         comp.exercise.studentParticipations = [];
         participationSubject.next(initPart);
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         tick();
 
         expect(alertServiceSuccessStub).toHaveBeenCalledOnce();
@@ -106,14 +106,14 @@ describe('JhiStartPracticeModeButtonComponent', () => {
         comp.exercise = exercise;
         comp.exercise.studentParticipations = [gradedPart];
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         tick();
 
         startPracticeStub.mockReturnValue(participationSubject);
         comp.startPractice(false);
         participationSubject.next(inactivePart);
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         tick();
 
         expect(alertServiceErrorStub).toHaveBeenCalledOnce();
@@ -122,7 +122,7 @@ describe('JhiStartPracticeModeButtonComponent', () => {
 
         participationSubject.next(initPart);
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
         tick();
 
         expect(alertServiceSuccessStub).toHaveBeenCalledOnce();
