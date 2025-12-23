@@ -17,7 +17,7 @@ ext {
         "iris"          :          ["INSTRUCTION": 0.813, "CLASS": 21],
         "lecture"       :          ["INSTRUCTION": 0.891, "CLASS":  1],
         "lti"           :          ["INSTRUCTION": 0.888, "CLASS":  2],
-        "modeling"      :          ["INSTRUCTION": 0.935, "CLASS":  0],
+        "modeling"      :          ["INSTRUCTION": 0.907, "CLASS":  0],
         "nebula"        :          ["INSTRUCTION": 0.836, "CLASS":  0],
         "plagiarism"    :          ["INSTRUCTION": 0.908, "CLASS":  2],
         "programming"   :          ["INSTRUCTION": 0.835, "CLASS": 27],
