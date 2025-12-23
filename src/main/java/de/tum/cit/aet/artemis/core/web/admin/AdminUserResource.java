@@ -38,6 +38,7 @@ import de.tum.cit.aet.artemis.core.dto.StudentDTO;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.UserPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EmailAlreadyUsedException;
@@ -125,7 +126,8 @@ public class AdminUserResource {
         log.debug("REST request to save User : {}", managedUserVM);
 
         if (managedUserVM.getAuthorities().contains(Authority.SUPER_ADMIN_AUTHORITY.getName()) && !this.authorizationCheckService.isSuperAdmin()) {
-            throw new AccessForbiddenException("Only super administrators are allowed to create other super administrators.");
+            throw new AccessForbiddenAlertException("Only super administrators are allowed to create other super administrators.", "userManagement",
+                    "userManagement.onlySuperAdminCanCreateSuperAdmin");
         }
 
         if (managedUserVM.getId() != null) {
@@ -193,7 +195,8 @@ public class AdminUserResource {
 
         boolean isUpdatedUserIsSuperAdmin = managedUserVM.getAuthorities().contains(Authority.SUPER_ADMIN_AUTHORITY.toString());
         if (isUpdatedUserIsSuperAdmin && !this.authorizationCheckService.isSuperAdmin()) {
-            throw new AccessForbiddenException("Only super administrators are allowed to manage other super administrators.");
+            throw new AccessForbiddenAlertException("Only super administrators are allowed to manage other super administrators.", "userManagement",
+                    "userManagement.onlySuperAdminCanManageSuperAdmins");
         }
 
         var existingUserByEmail = userRepository.findOneByEmailIgnoreCase(managedUserVM.getEmail());
@@ -209,7 +212,8 @@ public class AdminUserResource {
         var existingUser = userRepository.findByIdWithGroupsAndAuthoritiesAndOrganizationsElseThrow(managedUserVM.getId());
 
         if (existingUser.getAuthorities().contains(Authority.SUPER_ADMIN_AUTHORITY) && !isUpdatedUserIsSuperAdmin) {
-            throw new AccessForbiddenException("Only super administrators can revoke the administrator rights of other super admins.");
+            throw new AccessForbiddenAlertException("Only super administrators can revoke the administrator rights of other super admins.", "userManagement",
+                    "userManagement.onlySuperAdminCanRevokeSuperAdminRights");
         }
 
         final boolean shouldActivateUser = !existingUser.getActivated() && managedUserVM.isActivated();
