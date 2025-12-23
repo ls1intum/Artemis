@@ -178,6 +178,23 @@
             "loginRequiredButFeatureNotEnabled": "Für diese Funktion ist ein Passkey-Login erforderlich. Allerdings ist die Passkey-Authentifizierung auf dieser Artemis-Instanz nicht aktiviert. Bitte aktiviere die Passkey-Authentifizierung auf dieser Artemis Instanz.",
             "cannotRevokeInternalAdminPasskeyApproval": "Die Freigabe des Passkeys eines internen Admins kann nicht widerrufen werden; wenn du die Freigabe widerrufen möchtest, lösche stattdessen den Passkey."
         },
+        "CourseCompetency": {
+            "wrongCourse": "Die Kompetenz gehört nicht zum Kurs der Übung.",
+            "atlasDisabled": "Für die Verknüpfung von Kompetenzen muss Atlas aktiviert sein."
+        },
+        "CompetencyExerciseLink": {
+            "isNull": "Es wurde kein Kompetenzlink übermittelt.",
+            "competencyMissing": "Der Kompetenzlink muss eine Kompetenz referenzieren.",
+            "courseMissing": "Die referenzierte Kompetenz ist keinem Kurs zugeordnet."
+        },
+        "ModelingExercise": {
+            "isNull": "Es wurde keine Modellierungsaufgabe übermittelt.",
+            "idMissing": "Die Modellierungsaufgabe muss gespeichert werden, bevor sie umgewandelt werden kann.",
+            "titleLengthInvalid": "Der Titel ist nicht festgelegt oder zu kurz.",
+            "titlePatternInvalid": "Der Titel ist ungültig.",
+            "courseIdMissing": "Die Kurs ID ist erforderlich.",
+            "forbidChangeCourseId": "Die Übungskurs-ID stimmt nicht mit der gespeicherten Kurs-ID überein"
+        },
         "userManagement": {
             "onlySuperAdminCanCreateSuperAdmin": "Nur ein Super-Admin kann einen neuen Super-Admin-Nutzer erstellen.",
             "onlySuperAdminCanManageSuperAdmins": "Nur ein Super-Admin kann Super-Admin-Nutzer verwalten."
