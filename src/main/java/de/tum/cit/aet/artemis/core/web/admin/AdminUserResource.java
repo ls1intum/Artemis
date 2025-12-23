@@ -39,7 +39,6 @@ import de.tum.cit.aet.artemis.core.dto.UserDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.UserPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
-import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EmailAlreadyUsedException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
@@ -120,7 +119,7 @@ public class AdminUserResource {
      * @throws BadRequestAlertException 400 (Bad Request) if the login or email is already in use
      */
     @PostMapping("users")
-    public ResponseEntity<User> createUser(@Valid @RequestBody ManagedUserVM managedUserVM) throws URISyntaxException, AccessForbiddenException {
+    public ResponseEntity<User> createUser(@Valid @RequestBody ManagedUserVM managedUserVM) throws URISyntaxException, AccessForbiddenAlertException {
         this.userService.checkUsernameAndPasswordValidityElseThrow(managedUserVM.getLogin(), managedUserVM.getPassword());
 
         log.debug("REST request to save User : {}", managedUserVM);
@@ -157,7 +156,7 @@ public class AdminUserResource {
      * @return the ResponseEntity with status 200 (OK) and with body the activated user, or with status 404 (Not Found)
      */
     @PatchMapping("users/{userId}/activate")
-    public ResponseEntity<UserDTO> activateUser(@PathVariable long userId) {
+    public ResponseEntity<UserDTO> activateUser(@PathVariable long userId) throws AccessForbiddenAlertException {
         log.debug("REST request to activate User {}", userId);
         return userRepository.findOneWithGroupsAndAuthoritiesById(userId).map(user -> {
             if (user.getAuthorities().contains(Authority.SUPER_ADMIN_AUTHORITY) && !this.authorizationCheckService.isSuperAdmin()) {
@@ -176,7 +175,7 @@ public class AdminUserResource {
      * @return the ResponseEntity with status 200 (OK) and with body the deactivated user, or with status 404 (Not Found)
      */
     @PatchMapping("users/{userId}/deactivate")
-    public ResponseEntity<UserDTO> deactivateUser(@PathVariable long userId) {
+    public ResponseEntity<UserDTO> deactivateUser(@PathVariable long userId) throws AccessForbiddenAlertException {
         log.debug("REST request to deactivate User {}", userId);
         return userRepository.findOneWithGroupsAndAuthoritiesById(userId).map(user -> {
             if (user.getAuthorities().contains(Authority.SUPER_ADMIN_AUTHORITY) && !this.authorizationCheckService.isSuperAdmin()) {
@@ -197,7 +196,7 @@ public class AdminUserResource {
      * @throws LoginAlreadyUsedException 400 (Bad Request) if the login is already in use
      */
     @PutMapping("users")
-    public ResponseEntity<UserDTO> updateUser(@Valid @RequestBody ManagedUserVM managedUserVM) {
+    public ResponseEntity<UserDTO> updateUser(@Valid @RequestBody ManagedUserVM managedUserVM) throws AccessForbiddenAlertException {
         this.userService.checkUsernameAndPasswordValidityElseThrow(managedUserVM.getLogin(), managedUserVM.getPassword());
         log.debug("REST request to update User : {}", managedUserVM);
 
