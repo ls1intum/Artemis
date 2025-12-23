@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { BuildAgentInformation } from 'app/buildagent/shared/entities/build-agent-information.model';
 import { Subject, Subscription, debounceTime, switchMap, tap } from 'rxjs';
 import { faCircleCheck, faExclamationCircle, faExclamationTriangle, faFilter, faPause, faPauseCircle, faPlay, faSort, faSync, faTimes } from '@fortawesome/free-solid-svg-icons';
@@ -71,18 +71,17 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     private readonly buildQueueService = inject(BuildOverviewService);
     private readonly alertService = inject(AlertService);
     private readonly modalService = inject(NgbModal);
-    private readonly changeDetectorRef = inject(ChangeDetectorRef);
 
     protected readonly TriggeredByPushTo = TriggeredByPushTo;
 
     /** Current build agent information including status and configuration */
-    buildAgent: BuildAgentInformation;
+    buildAgent = signal<BuildAgentInformation | undefined>(undefined);
 
     /** Aggregated statistics for build jobs processed by this agent */
-    buildJobStatistics: BuildJobStatistics = new BuildJobStatistics();
+    buildJobStatistics = signal<BuildJobStatistics>(new BuildJobStatistics());
 
     /** List of currently running build jobs on this agent */
-    runningBuildJobs: BuildJob[] = [];
+    runningBuildJobs = signal<BuildJob[]>([]);
 
     /** Name of the build agent being viewed, extracted from route query params */
     agentName: string;
@@ -121,7 +120,7 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     readonly runningBuildJobsChannel = '/topic/admin/running-jobs';
 
     /** List of finished build jobs for this agent with pagination */
-    finishedBuildJobs: FinishedBuildJob[] = [];
+    finishedBuildJobs = signal<FinishedBuildJob[]>([]);
 
     /** Signal indicating if more finished build jobs are available for pagination */
     hasMore = signal(true);
@@ -151,7 +150,7 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     finishedJobsSearchTrigger = new Subject<void>();
 
     /** Flag indicating if finished build jobs are currently being loaded */
-    isLoading = false;
+    isLoading = signal(false);
 
     /** Current search term for filtering finished build jobs */
     searchTerm?: string = undefined;
@@ -159,9 +158,6 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     /** Filter configuration for finished build jobs */
     finishedBuildJobFilter: FinishedBuildJobFilter;
     faFilter = faFilter;
-
-    /** Total number of finished build jobs (used for pagination) */
-    totalItems = 0;
 
     /** Number of items to display per page */
     itemsPerPage = ITEMS_PER_PAGE;
@@ -182,7 +178,7 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
             // Construct the WebSocket channel by combining base topic with agent name
             this.agentDetailsWebsocketChannel = this.agentUpdatesChannel + '/' + this.agentName;
             this.buildDurationInterval = setInterval(() => {
-                this.runningBuildJobs = this.updateBuildJobDuration(this.runningBuildJobs);
+                this.runningBuildJobs.set(this.updateBuildJobDuration(this.runningBuildJobs()));
             }, 1000); // 1 second
             this.loadAgentData();
             this.initWebsocketSubscription();
@@ -190,19 +186,17 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
             this.searchSubscription = this.finishedJobsSearchTrigger
                 .pipe(
                     debounceTime(UI_RELOAD_TIME),
-                    tap(() => (this.isLoading = true)),
+                    tap(() => this.isLoading.set(true)),
                     switchMap(() => this.fetchFinishedBuildJobs()),
                 )
                 .subscribe({
                     next: (response: HttpResponse<FinishedBuildJob[]>) => {
                         this.onSuccess(response.body || [], response.headers);
-                        this.isLoading = false;
-                        this.changeDetectorRef.markForCheck();
+                        this.isLoading.set(false);
                     },
                     error: (errorResponse: HttpErrorResponse) => {
                         onError(this.alertService, errorResponse);
-                        this.isLoading = false;
-                        this.changeDetectorRef.markForCheck();
+                        this.isLoading.set(false);
                     },
                 });
         });
@@ -232,7 +226,6 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
             .subscribe<BuildAgentInformation>(this.agentDetailsWebsocketChannel)
             .subscribe((buildAgent: BuildAgentInformation) => {
                 this.updateBuildAgent(buildAgent);
-                this.changeDetectorRef.markForCheck();
             });
 
         // Subscribe to all running jobs and filter to only show jobs for this agent
@@ -240,11 +233,10 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
             // Filter to only include jobs running on this specific agent
             const agentRunningJobs = allRunningBuildJobs.filter((buildJob: BuildJob) => buildJob.buildAgent?.name === this.agentName);
             if (agentRunningJobs.length > 0) {
-                this.runningBuildJobs = this.updateBuildJobDuration(agentRunningJobs);
+                this.runningBuildJobs.set(this.updateBuildJobDuration(agentRunningJobs));
             } else {
-                this.runningBuildJobs = [];
+                this.runningBuildJobs.set([]);
             }
-            this.changeDetectorRef.markForCheck();
         });
     }
 
@@ -256,30 +248,28 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     loadAgentData() {
         // Load running jobs for this agent
         this.runningJobsSubscription = this.buildQueueService.getRunningBuildJobs(this.agentName).subscribe((runningBuildJobs) => {
-            this.runningBuildJobs = this.updateBuildJobDuration(runningBuildJobs);
-            this.changeDetectorRef.markForCheck();
+            this.runningBuildJobs.set(this.updateBuildJobDuration(runningBuildJobs));
         });
 
         // Load agent details including status and statistics
         this.agentDetailsSubscription = this.buildAgentsService.getBuildAgentDetails(this.agentName).subscribe((buildAgent) => {
             this.updateBuildAgent(buildAgent);
             // Initialize filter with this agent's address to show only its finished jobs
-            this.finishedBuildJobFilter = new FinishedBuildJobFilter(this.buildAgent.buildAgent?.memberAddress);
+            this.finishedBuildJobFilter = new FinishedBuildJobFilter(this.buildAgent()?.buildAgent?.memberAddress);
             this.loadFinishedBuildJobs();
-            this.changeDetectorRef.markForCheck();
         });
     }
 
     private updateBuildAgent(buildAgent: BuildAgentInformation) {
-        this.buildAgent = buildAgent;
-        this.buildJobStatistics = {
-            successfulBuilds: this.buildAgent.buildAgentDetails?.successfulBuilds || 0,
-            failedBuilds: this.buildAgent.buildAgentDetails?.failedBuilds || 0,
-            cancelledBuilds: this.buildAgent.buildAgentDetails?.cancelledBuilds || 0,
-            timeOutBuilds: this.buildAgent.buildAgentDetails?.timedOutBuild || 0,
-            totalBuilds: this.buildAgent.buildAgentDetails?.totalBuilds || 0,
+        this.buildAgent.set(buildAgent);
+        this.buildJobStatistics.set({
+            successfulBuilds: buildAgent.buildAgentDetails?.successfulBuilds || 0,
+            failedBuilds: buildAgent.buildAgentDetails?.failedBuilds || 0,
+            cancelledBuilds: buildAgent.buildAgentDetails?.cancelledBuilds || 0,
+            timeOutBuilds: buildAgent.buildAgentDetails?.timedOutBuild || 0,
+            totalBuilds: buildAgent.buildAgentDetails?.totalBuilds || 0,
             missingBuilds: 0,
-        };
+        });
     }
 
     /**
@@ -294,8 +284,9 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
      * Cancels all running build jobs on this build agent.
      */
     cancelAllBuildJobs() {
-        if (this.buildAgent.buildAgent?.name) {
-            this.buildQueueService.cancelAllRunningBuildJobsForAgent(this.buildAgent.buildAgent?.name).subscribe();
+        const agent = this.buildAgent();
+        if (agent?.buildAgent?.name) {
+            this.buildQueueService.cancelAllRunningBuildJobsForAgent(agent.buildAgent.name).subscribe();
         }
     }
 
@@ -313,8 +304,9 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
      * Shows success/error alerts based on the operation result.
      */
     pauseBuildAgent(): void {
-        if (this.buildAgent.buildAgent?.name) {
-            this.buildAgentsService.pauseBuildAgent(this.buildAgent.buildAgent.name).subscribe({
+        const agent = this.buildAgent();
+        if (agent?.buildAgent?.name) {
+            this.buildAgentsService.pauseBuildAgent(agent.buildAgent.name).subscribe({
                 next: () => {
                     this.alertService.addAlert({
                         type: AlertType.SUCCESS,
@@ -341,8 +333,9 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
      * Shows success/error alerts based on the operation result.
      */
     resumeBuildAgent(): void {
-        if (this.buildAgent.buildAgent?.name) {
-            this.buildAgentsService.resumeBuildAgent(this.buildAgent.buildAgent.name).subscribe({
+        const agent = this.buildAgent();
+        if (agent?.buildAgent?.name) {
+            this.buildAgentsService.resumeBuildAgent(agent.buildAgent.name).subscribe({
                 next: () => {
                     this.alertService.addAlert({
                         type: AlertType.SUCCESS,
@@ -371,8 +364,8 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     openFilterModal() {
         const modalRef = this.modalService.open(FinishedBuildsFilterModalComponent as Component);
         modalRef.componentInstance.finishedBuildJobFilter = this.finishedBuildJobFilter;
-        modalRef.componentInstance.buildAgentAddress = this.buildAgent.buildAgent?.memberAddress;
-        modalRef.componentInstance.finishedBuildJobs = this.finishedBuildJobs;
+        modalRef.componentInstance.buildAgentAddress = this.buildAgent()?.buildAgent?.memberAddress;
+        modalRef.componentInstance.finishedBuildJobs = this.finishedBuildJobs();
         modalRef.result
             .then((result: FinishedBuildJobFilter) => {
                 this.finishedBuildJobFilter = result;
@@ -389,13 +382,11 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
         this.fetchFinishedBuildJobs().subscribe({
             next: (response: HttpResponse<FinishedBuildJob[]>) => {
                 this.onSuccess(response.body || [], response.headers);
-                this.isLoading = false;
-                this.changeDetectorRef.markForCheck();
+                this.isLoading.set(false);
             },
             error: (errorResponse: HttpErrorResponse) => {
                 onError(this.alertService, errorResponse);
-                this.isLoading = false;
-                this.changeDetectorRef.markForCheck();
+                this.isLoading.set(false);
             },
         });
     }
@@ -408,23 +399,23 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
      */
     private onSuccess(finishedBuildJobs: FinishedBuildJob[], headers: HttpHeaders) {
         this.hasMore.set(headers.get('x-has-next') === 'true');
-        this.finishedBuildJobs = finishedBuildJobs;
-        this.setFinishedBuildJobsDuration();
+        this.finishedBuildJobs.set(this.calculateFinishedBuildJobsDuration(finishedBuildJobs));
     }
 
     /**
-     * Set the duration of the finished build jobs
+     * Calculate the duration of the finished build jobs
+     * @param finishedBuildJobs The list of finished build jobs
+     * @returns A new list with calculated build durations
      */
-    setFinishedBuildJobsDuration() {
-        if (this.finishedBuildJobs) {
-            for (const buildJob of this.finishedBuildJobs) {
-                if (buildJob.buildStartDate && buildJob.buildCompletionDate) {
-                    const start = dayjs(buildJob.buildStartDate);
-                    const end = dayjs(buildJob.buildCompletionDate);
-                    buildJob.buildDuration = (end.diff(start, 'milliseconds') / 1000).toFixed(3) + 's';
-                }
+    private calculateFinishedBuildJobsDuration(finishedBuildJobs: FinishedBuildJob[]): FinishedBuildJob[] {
+        return finishedBuildJobs.map((buildJob) => {
+            if (buildJob.buildStartDate && buildJob.buildCompletionDate) {
+                const start = dayjs(buildJob.buildStartDate);
+                const end = dayjs(buildJob.buildCompletionDate);
+                return { ...buildJob, buildDuration: (end.diff(start, 'milliseconds') / 1000).toFixed(3) + 's' };
             }
-        }
+            return buildJob;
+        });
     }
 
     /**

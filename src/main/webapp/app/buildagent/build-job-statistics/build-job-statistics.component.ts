@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, effect, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, effect, inject, input, signal } from '@angular/core';
 import { BuildJobStatistics, SpanType } from 'app/buildagent/shared/entities/build-job.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { faAngleDown, faAngleRight } from '@fortawesome/free-solid-svg-icons';
@@ -37,7 +37,6 @@ export class BuildJobStatisticsComponent implements OnInit {
     private buildQueueService = inject(BuildOverviewService);
     private route = inject(ActivatedRoute);
     private alertService = inject(AlertService);
-    private changeDetectorRef = inject(ChangeDetectorRef);
 
     /**
      * Optional input signal for providing statistics directly from a parent component.
@@ -58,11 +57,11 @@ export class BuildJobStatisticsComponent implements OnInit {
     isCollapsed = false;
 
     /** Formatted percentage strings for display */
-    successfulBuildsPercentage: string;
-    failedBuildsPercentage: string;
-    cancelledBuildsPercentage: string;
-    timeoutBuildsPercentage: string;
-    missingBuildsPercentage: string;
+    successfulBuildsPercentage = signal('-%');
+    failedBuildsPercentage = signal('-%');
+    cancelledBuildsPercentage = signal('-%');
+    timeoutBuildsPercentage = signal('-%');
+    missingBuildsPercentage = signal('-%');
 
     /** Whether to show the time span selector tabs (hidden when statistics come from input) */
     displaySpanSelector = true;
@@ -71,7 +70,7 @@ export class BuildJobStatisticsComponent implements OnInit {
     displayMissingBuilds = true;
 
     /** Current build job statistics data */
-    buildJobStatistics = new BuildJobStatistics();
+    buildJobStatistics = signal<BuildJobStatistics>(new BuildJobStatistics());
 
     constructor() {
         effect(() => {
@@ -86,7 +85,7 @@ export class BuildJobStatisticsComponent implements OnInit {
     }
 
     /** Data array for the pie chart visualization (ngx-charts format) */
-    pieChartData: NgxChartsSingleSeriesDataEntry[] = [];
+    pieChartData = signal<NgxChartsSingleSeriesDataEntry[]>([]);
 
     /** Color scheme configuration for the pie chart segments */
     pieChartColorScheme = {
@@ -131,11 +130,9 @@ export class BuildJobStatisticsComponent implements OnInit {
                 this.buildQueueService.getBuildJobStatisticsForCourse(courseId, span).subscribe({
                     next: (statistics: BuildJobStatistics) => {
                         this.updateDisplayedBuildJobStatistics(statistics);
-                        this.changeDetectorRef.markForCheck();
                     },
                     error: (errorResponse: HttpErrorResponse) => {
                         onError(this.alertService, errorResponse);
-                        this.changeDetectorRef.markForCheck();
                     },
                 });
             } else {
@@ -143,11 +140,9 @@ export class BuildJobStatisticsComponent implements OnInit {
                 this.buildQueueService.getBuildJobStatistics(span).subscribe({
                     next: (statistics: BuildJobStatistics) => {
                         this.updateDisplayedBuildJobStatistics(statistics);
-                        this.changeDetectorRef.markForCheck();
                     },
                     error: (errorResponse: HttpErrorResponse) => {
                         onError(this.alertService, errorResponse);
-                        this.changeDetectorRef.markForCheck();
                     },
                 });
             }
@@ -160,32 +155,32 @@ export class BuildJobStatisticsComponent implements OnInit {
      * @param statistics The new build job statistics to display
      */
     updateDisplayedBuildJobStatistics(statistics: BuildJobStatistics) {
-        this.buildJobStatistics = statistics;
+        this.buildJobStatistics.set(statistics);
 
         // Calculate percentages, using placeholder for zero builds case
         if (statistics.totalBuilds === 0) {
-            this.successfulBuildsPercentage = '-%';
-            this.failedBuildsPercentage = '-%';
-            this.cancelledBuildsPercentage = '-%';
-            this.timeoutBuildsPercentage = '-%';
-            this.missingBuildsPercentage = '-%';
+            this.successfulBuildsPercentage.set('-%');
+            this.failedBuildsPercentage.set('-%');
+            this.cancelledBuildsPercentage.set('-%');
+            this.timeoutBuildsPercentage.set('-%');
+            this.missingBuildsPercentage.set('-%');
         } else {
             const totalBuilds = statistics.totalBuilds;
-            this.successfulBuildsPercentage = ((statistics.successfulBuilds / totalBuilds) * 100).toFixed(2) + '%';
-            this.failedBuildsPercentage = ((statistics.failedBuilds / totalBuilds) * 100).toFixed(2) + '%';
-            this.cancelledBuildsPercentage = ((statistics.cancelledBuilds / totalBuilds) * 100).toFixed(2) + '%';
-            this.timeoutBuildsPercentage = ((statistics.timeOutBuilds / totalBuilds) * 100).toFixed(2) + '%';
-            this.missingBuildsPercentage = ((statistics.missingBuilds / totalBuilds) * 100).toFixed(2) + '%';
+            this.successfulBuildsPercentage.set(((statistics.successfulBuilds / totalBuilds) * 100).toFixed(2) + '%');
+            this.failedBuildsPercentage.set(((statistics.failedBuilds / totalBuilds) * 100).toFixed(2) + '%');
+            this.cancelledBuildsPercentage.set(((statistics.cancelledBuilds / totalBuilds) * 100).toFixed(2) + '%');
+            this.timeoutBuildsPercentage.set(((statistics.timeOutBuilds / totalBuilds) * 100).toFixed(2) + '%');
+            this.missingBuildsPercentage.set(((statistics.missingBuilds / totalBuilds) * 100).toFixed(2) + '%');
         }
 
         // Update pie chart data with current statistics
-        this.pieChartData = [
+        this.pieChartData.set([
             { name: 'Successful', value: statistics.successfulBuilds },
             { name: 'Failed', value: statistics.failedBuilds },
             { name: 'Cancelled', value: statistics.cancelledBuilds },
             { name: 'Timeout', value: statistics.timeOutBuilds },
             { name: 'Missing', value: statistics.missingBuilds },
-        ];
+        ]);
     }
 
     /**

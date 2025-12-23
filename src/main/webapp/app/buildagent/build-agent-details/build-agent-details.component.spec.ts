@@ -148,7 +148,7 @@ describe('BuildAgentDetailsComponent', () => {
             buildSubmissionDate: dayjs('2023-01-05'),
             buildStartDate: dayjs('2023-01-05'),
             buildCompletionDate: dayjs('2023-01-05'),
-            buildDuration: undefined,
+            buildDuration: '0.000s',
             commitHash: 'abc127',
         },
         {
@@ -165,7 +165,7 @@ describe('BuildAgentDetailsComponent', () => {
             triggeredByPushTo: TriggeredByPushTo.USER,
             buildStartDate: dayjs('2023-01-06'),
             buildCompletionDate: dayjs('2023-01-06'),
-            buildDuration: undefined,
+            buildDuration: '0.000s',
             commitHash: 'abc128',
         },
     ];
@@ -249,7 +249,7 @@ describe('BuildAgentDetailsComponent', () => {
         component.ngOnInit();
 
         expect(mockBuildAgentsService.getBuildAgentDetails).toHaveBeenCalled();
-        expect(component.buildAgent).toEqual(mockBuildAgent);
+        expect(component.buildAgent()).toEqual(mockBuildAgent);
         expect(mockBuildQueueService.getRunningBuildJobs).toHaveBeenCalledWith(mockBuildAgent.buildAgent?.name);
         expect(mockBuildQueueService.getFinishedBuildJobs).toHaveBeenCalledWith(request, filterOptionsEmpty);
     });
@@ -257,8 +257,8 @@ describe('BuildAgentDetailsComponent', () => {
     it('should initialize websocket subscription on initialization', () => {
         component.ngOnInit();
 
-        expect(component.buildAgent).toEqual(mockBuildAgent);
-        expect(mockWebsocketService.subscribe).toHaveBeenCalledWith('/topic/admin/build-agent/' + component.buildAgent.buildAgent?.name);
+        expect(component.buildAgent()).toEqual(mockBuildAgent);
+        expect(mockWebsocketService.subscribe).toHaveBeenCalledWith('/topic/admin/build-agent/' + component.buildAgent()?.buildAgent?.name);
         expect(mockWebsocketService.subscribe).toHaveBeenCalledWith('/topic/admin/running-jobs');
     });
 
@@ -298,7 +298,7 @@ describe('BuildAgentDetailsComponent', () => {
     });
 
     it('should show an alert when pausing build agent without a name', () => {
-        component.buildAgent = { ...mockBuildAgent, buildAgent: { ...mockBuildAgent.buildAgent, name: '' } };
+        component.buildAgent.set({ ...mockBuildAgent, buildAgent: { ...mockBuildAgent.buildAgent, name: '' } });
         component.pauseBuildAgent();
 
         expect(alertServiceAddAlertStub).toHaveBeenCalledWith({
@@ -308,7 +308,7 @@ describe('BuildAgentDetailsComponent', () => {
     });
 
     it('should show an alert when resuming build agent without a name', () => {
-        component.buildAgent = { ...mockBuildAgent, buildAgent: { ...mockBuildAgent.buildAgent, name: '' } };
+        component.buildAgent.set({ ...mockBuildAgent, buildAgent: { ...mockBuildAgent.buildAgent, name: '' } });
         component.resumeBuildAgent();
 
         expect(alertServiceAddAlertStub).toHaveBeenCalledWith({
@@ -318,7 +318,7 @@ describe('BuildAgentDetailsComponent', () => {
     });
 
     it('should show success alert when pausing build agent', () => {
-        component.buildAgent = mockBuildAgent;
+        component.buildAgent.set(mockBuildAgent);
         fixture.changeDetectorRef.detectChanges();
 
         component.pauseBuildAgent();
@@ -330,7 +330,7 @@ describe('BuildAgentDetailsComponent', () => {
 
     it('should show error alert when pausing build agent fails', () => {
         mockBuildAgentsService.pauseBuildAgent.mockReturnValue(throwError(() => new Error()));
-        component.buildAgent = mockBuildAgent;
+        component.buildAgent.set(mockBuildAgent);
         fixture.changeDetectorRef.detectChanges();
 
         component.pauseBuildAgent();
@@ -341,7 +341,7 @@ describe('BuildAgentDetailsComponent', () => {
     });
 
     it('should show success alert when resuming build agent', () => {
-        component.buildAgent = mockBuildAgent;
+        component.buildAgent.set(mockBuildAgent);
         fixture.changeDetectorRef.detectChanges();
 
         component.resumeBuildAgent();
@@ -353,7 +353,7 @@ describe('BuildAgentDetailsComponent', () => {
 
     it('should show error alert when resuming build agent fails', () => {
         mockBuildAgentsService.resumeBuildAgent.mockReturnValue(throwError(() => new Error()));
-        component.buildAgent = mockBuildAgent;
+        component.buildAgent.set(mockBuildAgent);
         fixture.changeDetectorRef.detectChanges();
 
         component.resumeBuildAgent();
@@ -383,8 +383,8 @@ describe('BuildAgentDetailsComponent', () => {
         component.ngOnInit();
         fixture.changeDetectorRef.detectChanges();
 
-        expect(component.finishedBuildJobs).toEqual(mockFinishedJobs);
-        for (const finishedBuildJob of component.finishedBuildJobs) {
+        expect(component.finishedBuildJobs()).toEqual(mockFinishedJobs);
+        for (const finishedBuildJob of component.finishedBuildJobs()) {
             const { buildDuration, buildCompletionDate, buildStartDate } = finishedBuildJob;
             if (buildDuration && buildCompletionDate && buildStartDate) {
                 expect(buildDuration).toEqual((buildCompletionDate.diff(buildStartDate, 'milliseconds') / 1000).toFixed(3) + 's');
@@ -402,8 +402,8 @@ describe('BuildAgentDetailsComponent', () => {
             result: Promise.resolve('close'),
         } as NgbModalRef;
         const openSpy = vi.spyOn(modalService, 'open').mockReturnValue(modalRef);
-        component.finishedBuildJobs = mockFinishedJobs;
-        component.buildAgent = mockBuildAgent;
+        component.finishedBuildJobs.set(mockFinishedJobs);
+        component.buildAgent.set(mockBuildAgent);
         component.finishedBuildJobFilter = new FinishedBuildJobFilter(mockBuildAgent.buildAgent!.memberAddress!);
         fixture.changeDetectorRef.detectChanges();
 
@@ -412,7 +412,7 @@ describe('BuildAgentDetailsComponent', () => {
         expect(openSpy).toHaveBeenCalledOnce();
         expect(modalRef.componentInstance.finishedBuildJobFilter).toEqual(filterOptionsEmpty);
         expect(modalRef.componentInstance.buildAgentAddress).toEqual(mockBuildAgent.buildAgent?.memberAddress);
-        expect(modalRef.componentInstance.finishedBuildJobs).toEqual(component.finishedBuildJobs);
+        expect(modalRef.componentInstance.finishedBuildJobs).toEqual(component.finishedBuildJobs());
     });
 
     it('should correctly open build log', () => {

@@ -65,7 +65,7 @@ describe('BuildJobStatisticsComponent', () => {
         component.onTabChange(SpanType.DAY);
 
         expect(mockBuildQueueService.getBuildJobStatistics).toHaveBeenCalledTimes(2);
-        expect(component.buildJobStatistics).toEqual(mockBuildJobStatistics);
+        expect(component.buildJobStatistics()).toEqual(mockBuildJobStatistics);
     });
 
     it('should not get build job statistics when span is the same', () => {
@@ -76,7 +76,7 @@ describe('BuildJobStatisticsComponent', () => {
         component.onTabChange(SpanType.WEEK);
 
         expect(mockBuildQueueService.getBuildJobStatistics).toHaveBeenCalledOnce();
-        expect(component.buildJobStatistics).toEqual(mockBuildJobStatistics);
+        expect(component.buildJobStatistics()).toEqual(mockBuildJobStatistics);
     });
 
     it('should get build job statistics for course when courseId is present', () => {
@@ -88,7 +88,7 @@ describe('BuildJobStatisticsComponent', () => {
         component.onTabChange(SpanType.WEEK);
 
         expect(mockBuildQueueService.getBuildJobStatisticsForCourse).toHaveBeenNthCalledWith(1, testCourseId, SpanType.WEEK);
-        expect(component.buildJobStatistics).toEqual(mockBuildJobStatistics);
+        expect(component.buildJobStatistics()).toEqual(mockBuildJobStatistics);
     });
 
     it('should use stats from input', () => {
@@ -100,7 +100,7 @@ describe('BuildJobStatisticsComponent', () => {
 
         expect(mockBuildQueueService.getBuildJobStatistics).toHaveBeenCalledTimes(0);
         expect(mockBuildQueueService.getBuildJobStatisticsForCourse).toHaveBeenCalledTimes(0);
-        expect(component.buildJobStatistics).toEqual(mockBuildJobStatistics);
+        expect(component.buildJobStatistics()).toEqual(mockBuildJobStatistics);
         expect(component.displayMissingBuilds).toBeFalsy();
         expect(component.displaySpanSelector).toBeFalsy();
     });
