@@ -122,7 +122,7 @@ public class ExamRoomService {
 
         }
         catch (IOException e) {
-            throw new BadRequestAlertException(e.getMessage(), ENTITY_NAME, "room.parseIoException", Map.of("errorMessage", e.getMessage()));
+            throw new BadRequestAlertException(e.getMessage(), ENTITY_NAME, "room.parseIoException");
         }
 
         examRoomRepository.saveAll(examRooms);

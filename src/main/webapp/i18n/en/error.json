@@ -123,7 +123,7 @@
             "fileTooLarge": "The uploaded file exceeds the maximum file size of {{ maxSize }}",
             "malformedJson": "Couldn't parse {{ roomNumber }}, the JSON appears to be malformed",
             "missingRoomNumber": "Missing room number: please ensure none of your .json files have a blank name",
-            "parseIoException": "An internal error has occurred: {{ errorMessage }}",
+            "parseIoException": "An internal error has occurred while trying to parse the rooms",
             "missingNameOrBuilding": "Room {{ roomNumber }} doesn't specify a room name and/or building",
             "missingSeats": "Couldn't parse seats from room {{ roomNumber }}",
             "malformedRow": "Room {{ roomNumber }} has a missing or otherwise malformed row",

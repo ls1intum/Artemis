@@ -123,7 +123,7 @@
             "fileTooLarge": "Die hochgeladene Datei überschreitet die maximal zulässige Dateigröße von {{ maxSize }}",
             "malformedJson": "Konnte {{ roomNumber }} nicht verarbeiten, der JSON Inhalt scheint falsch formatiert zu sein",
             "missingRoomNumber": "Fehlende Raumnummer. Bitte stelle sicher, dass keine .json Datei einen leeren Namen hat",
-            "parseIoException": "Ein interner Fehler ist aufgetreten: {{ errorMessage }}",
+            "parseIoException": "Ein interner Fehler ist beim Verarbeiten der Räume aufgetreten",
             "missingNameOrBuilding": "Raum {{ roomNumber }} spezifiziert keinen Raumnamen und/oder Gebäude",
             "missingSeats": "Konnte die Sitze von Raum {{ roomNumber }} nicht verarbeiten",
             "malformedRow": "Raum {{ roomNumber }} hat eine fehlende oder anderweitig fehlerhafte Reihe",
