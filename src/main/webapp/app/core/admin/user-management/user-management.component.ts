@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, TemplateRef, ViewChild, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, TemplateRef, inject, signal, viewChild } from '@angular/core';
 import { HttpErrorResponse, HttpHeaders, HttpParams, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
@@ -96,6 +96,10 @@ export enum UserStorageKey {
 
 type Filter = typeof AuthorityFilter | typeof OriginFilter | typeof StatusFilter | typeof RegistrationNumberFilter;
 
+/**
+ * Component for managing users in the admin area.
+ * Provides search, filtering, pagination, and user management capabilities.
+ */
 @Component({
     selector: 'jhi-user-management',
     templateUrl: './user-management.component.html',
@@ -120,73 +124,108 @@ type Filter = typeof AuthorityFilter | typeof OriginFilter | typeof StatusFilter
         ArtemisDatePipe,
         ArtemisTranslatePipe,
     ],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class UserManagementComponent implements OnInit, OnDestroy {
-    private adminUserService = inject(AdminUserService);
-    private alertService = inject(AlertService);
-    private accountService = inject(AccountService);
-    private activatedRoute = inject(ActivatedRoute);
-    private router = inject(Router);
-    private eventManager = inject(EventManager);
-    private localStorageService = inject(LocalStorageService);
-    private modalService = inject(NgbModal);
-    private profileService = inject(ProfileService);
+    private readonly adminUserService = inject(AdminUserService);
+    private readonly alertService = inject(AlertService);
+    private readonly accountService = inject(AccountService);
+    private readonly activatedRoute = inject(ActivatedRoute);
+    private readonly router = inject(Router);
+    private readonly eventManager = inject(EventManager);
+    private readonly localStorageService = inject(LocalStorageService);
+    private readonly modalService = inject(NgbModal);
+    private readonly profileService = inject(ProfileService);
 
-    @ViewChild('filterModal') filterModal: TemplateRef<any>;
+    /** Reference to the filter modal template */
+    readonly filterModal = viewChild<TemplateRef<any>>('filterModal');
 
-    search = new Subject<void>();
-    loadingSearchResult = false;
-    currentAccount?: User;
-    users: User[];
-    selectedUsers: User[] = [];
-    userListSubscription?: Subscription;
-    totalItems = 0;
-    itemsPerPage = ITEMS_PER_PAGE;
-    page!: number;
-    predicate!: string;
-    ascending!: boolean;
-    searchTermString = '';
-    searchInvalid = false;
-    isLdapProfileActive: boolean;
+    /** Subject to trigger search */
+    readonly search = new Subject<void>();
 
-    // filters
+    /** Whether a search is in progress */
+    readonly loadingSearchResult = signal(false);
+
+    /** Current logged-in user */
+    readonly currentAccount = signal<User | undefined>(undefined);
+
+    /** List of users displayed in the table */
+    readonly users = signal<User[]>([]);
+
+    /** Selected users for batch operations */
+    readonly selectedUsers = signal<User[]>([]);
+
+    /** Subscription for user list modifications */
+    private userListSubscription?: Subscription;
+
+    /** Total number of items for pagination */
+    readonly totalItems = signal(0);
+
+    /** Items per page for pagination */
+    readonly itemsPerPage = ITEMS_PER_PAGE;
+
+    /** Current page number */
+    readonly page = signal(1);
+
+    /** Sort predicate (field name) */
+    readonly predicate = signal('id');
+
+    /** Sort order (true = ascending) */
+    readonly ascending = signal(true);
+
+    /** Current search term */
+    private searchTermString = '';
+
+    /** Whether search input is invalid (less than 3 characters) */
+    readonly searchInvalid = signal(false);
+
+    /** Whether LDAP profile is active */
+    readonly isLdapProfileActive = signal(false);
+
+    /** User filters */
     filters: UserFilter = new UserFilter();
-    faFilter = faFilter;
-    authorityKey = UserStorageKey.AUTHORITY;
-    statusKey = UserStorageKey.STATUS;
-    originKey = UserStorageKey.ORIGIN;
-    registrationKey = UserStorageKey.REGISTRATION_NUMBER;
 
-    private dialogErrorSource = new Subject<string>();
-    dialogError = this.dialogErrorSource.asObservable();
+    /** Filter storage keys */
+    protected readonly faFilter = faFilter;
+    protected readonly authorityKey = UserStorageKey.AUTHORITY;
+    protected readonly statusKey = UserStorageKey.STATUS;
+    protected readonly originKey = UserStorageKey.ORIGIN;
+    protected readonly registrationKey = UserStorageKey.REGISTRATION_NUMBER;
+
+    /** Subject for dialog error messages */
+    private readonly dialogErrorSource = new Subject<string>();
+    readonly dialogError = this.dialogErrorSource.asObservable();
+
+    /** Search form */
     userSearchForm: FormGroup;
 
-    // Icons
-    faSort = faSort;
-    faPlus = faPlus;
-    faTimes = faTimes;
-    faEye = faEye;
-    faWrench = faWrench;
+    /** Icons */
+    protected readonly faSort = faSort;
+    protected readonly faPlus = faPlus;
+    protected readonly faTimes = faTimes;
+    protected readonly faEye = faEye;
+    protected readonly faWrench = faWrench;
 
-    readonly medium = ButtonSize.MEDIUM;
-    readonly ButtonType = ButtonType;
+    /** Button constants */
+    protected readonly medium = ButtonSize.MEDIUM;
+    protected readonly ButtonType = ButtonType;
 
     /**
-     * Retrieves the current user and calls the {@link loadAll} and {@link registerChangeInUsers} methods on init
+     * Initializes the component, sets up search subscription, and loads user data.
      */
     ngOnInit(): void {
         this.initFilters();
         this.search
             .pipe(
-                tap(() => (this.loadingSearchResult = true)),
+                tap(() => this.loadingSearchResult.set(true)),
                 switchMap(() =>
                     this.adminUserService.query(
                         {
-                            page: this.page - 1,
+                            page: this.page() - 1,
                             pageSize: this.itemsPerPage,
                             searchTerm: this.searchTermString,
-                            sortingOrder: this.ascending ? SortingOrder.ASCENDING : SortingOrder.DESCENDING,
-                            sortedColumn: this.predicate,
+                            sortingOrder: this.ascending() ? SortingOrder.ASCENDING : SortingOrder.DESCENDING,
+                            sortedColumn: this.predicate(),
                             filters: this.filters,
                         },
                         this.filters,
@@ -195,11 +234,11 @@ export class UserManagementComponent implements OnInit, OnDestroy {
             )
             .subscribe({
                 next: (res: HttpResponse<User[]>) => {
-                    this.loadingSearchResult = false;
+                    this.loadingSearchResult.set(false);
                     this.onSuccess(res.body || [], res.headers);
                 },
                 error: (res: HttpErrorResponse) => {
-                    this.loadingSearchResult = false;
+                    this.loadingSearchResult.set(false);
                     onError(this.alertService, res);
                 },
             });
@@ -208,11 +247,11 @@ export class UserManagementComponent implements OnInit, OnDestroy {
             searchControl: new FormControl('', { updateOn: 'change' }),
         });
         this.accountService.identity().then((user) => {
-            this.currentAccount = user!;
+            this.currentAccount.set(user!);
             this.userListSubscription = this.eventManager.subscribe('userListModification', () => this.loadAll());
             this.handleNavigation();
         });
-        this.isLdapProfileActive = this.profileService.isProfileActive(PROFILE_LDAP);
+        this.isLdapProfileActive.set(this.profileService.isProfileActive(PROFILE_LDAP));
     }
 
     /**
@@ -411,32 +450,33 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      */
     toggleAllUserSelection() {
         const usersWithoutCurrentUser = this.usersWithoutCurrentUser;
-        if (this.selectedUsers.length === usersWithoutCurrentUser.length) {
+        if (this.selectedUsers().length === usersWithoutCurrentUser.length) {
             // Clear all users
-            this.selectedUsers = [];
+            this.selectedUsers.set([]);
         } else {
             // Add all users
-            this.selectedUsers = [...usersWithoutCurrentUser];
+            this.selectedUsers.set([...usersWithoutCurrentUser]);
         }
     }
 
     /**
      * Gets the users without the current user.
      */
-    get usersWithoutCurrentUser() {
-        return this.users.filter((user) => this.currentAccount && this.currentAccount.login !== user.login);
+    get usersWithoutCurrentUser(): User[] {
+        const account = this.currentAccount();
+        return this.users().filter((user) => account && account.login !== user.login);
     }
 
     /**
      * Selects/Unselects a user.
      */
     toggleUser(user: User) {
-        const index = this.selectedUsers.indexOf(user);
+        const currentSelected = this.selectedUsers();
+        const index = currentSelected.indexOf(user);
         if (index > -1) {
-            this.selectedUsers.splice(index, 1);
+            this.selectedUsers.set(currentSelected.filter((u) => u !== user));
         } else {
-            // Add all users
-            this.selectedUsers.push(user);
+            this.selectedUsers.set([...currentSelected, user]);
         }
     }
 
@@ -444,14 +484,14 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      * Delete all selected users.
      */
     deleteAllSelectedUsers() {
-        const logins = this.selectedUsers.map((user) => user.login!);
+        const logins = this.selectedUsers().map((user) => user.login!);
         this.adminUserService.deleteUsers(logins).subscribe({
             next: () => {
                 this.eventManager.broadcast({
                     name: 'userListModification',
                     content: 'Deleted users',
                 });
-                this.selectedUsers = [];
+                this.selectedUsers.set([]);
                 this.dialogErrorSource.next('');
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
@@ -474,10 +514,10 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     loadAll() {
         this.searchTerm = this.searchControl.value;
         if (this.searchTerm.length >= 3 || this.searchTerm.length === 0) {
-            this.searchInvalid = false;
+            this.searchInvalid.set(false);
             this.search.next();
         } else {
-            this.searchInvalid = true;
+            this.searchInvalid.set(true);
         }
     }
 
@@ -497,8 +537,8 @@ export class UserManagementComponent implements OnInit, OnDestroy {
         this.router.navigate(['/admin/user-management'], {
             relativeTo: this.activatedRoute.parent,
             queryParams: {
-                page: this.page,
-                sort: `${this.predicate},${this.ascending ? ASC : DESC}`,
+                page: this.page(),
+                sort: `${this.predicate()},${this.ascending() ? ASC : DESC}`,
             },
         });
     }
@@ -508,11 +548,11 @@ export class UserManagementComponent implements OnInit, OnDestroy {
             data: this.activatedRoute.data,
             params: this.activatedRoute.queryParamMap,
         }).subscribe(({ data, params }) => {
-            const page = params.get('page');
-            this.page = page != undefined ? +page : 1;
+            const pageParam = params.get('page');
+            this.page.set(pageParam != undefined ? +pageParam : 1);
             const sort = (params.get(SORT) ?? data['defaultSort']).split(',');
-            this.predicate = sort[0];
-            this.ascending = sort[1] === ASC;
+            this.predicate.set(sort[0]);
+            this.ascending.set(sort[1] === ASC);
             this.loadAll();
         });
     }
@@ -540,9 +580,14 @@ export class UserManagementComponent implements OnInit, OnDestroy {
         });
     }
 
-    private onSuccess(users: User[], headers: HttpHeaders) {
-        this.totalItems = Number(headers.get('X-Total-Count'));
-        this.users = users;
+    /**
+     * Handles successful user load response.
+     * @param users - The loaded users
+     * @param headers - Response headers containing pagination info
+     */
+    private onSuccess(users: User[], headers: HttpHeaders): void {
+        this.totalItems.set(Number(headers.get('X-Total-Count')));
+        this.users.set(users);
     }
 
     set searchTerm(searchTerm: string) {
