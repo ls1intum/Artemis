@@ -562,7 +562,7 @@ public class BuildJobContainerService {
         try {
             // Use retry mechanism for the entire copy operation (tar creation + upload)
             executeWithRetry(() -> {
-                ByteArrayOutputStream tarArchive = createTarArchiveWithRetry(sourcePath, buildJobId);
+                ByteArrayOutputStream tarArchive = createTarArchiveWithRetry(sourcePath);
                 int tarArchiveSize = tarArchive.size();
                 log.debug("Created tar archive of size {} bytes for source path {} to upload to container {}", tarArchiveSize, sourcePath.toAbsolutePath(), containerId);
 
@@ -591,9 +591,9 @@ public class BuildJobContainerService {
      * Creates a tar archive with retry logic. This is a wrapper around createTarArchive that handles
      * LocalCIException by extracting the underlying IOException for retry handling.
      */
-    private ByteArrayOutputStream createTarArchiveWithRetry(Path sourcePath, String buildJobId) throws IOException {
+    private ByteArrayOutputStream createTarArchiveWithRetry(Path sourcePath) throws IOException {
         try {
-            return createTarArchive(sourcePath, buildJobId);
+            return createTarArchive(sourcePath);
         }
         catch (LocalCIException e) {
             // Extract the underlying IOException for retry handling
@@ -604,26 +604,22 @@ public class BuildJobContainerService {
         }
     }
 
-    private ByteArrayOutputStream createTarArchive(Path sourcePath, String buildJobId) {
+    private ByteArrayOutputStream createTarArchive(Path sourcePath) {
 
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 
-        TarArchiveOutputStream tarArchiveOutputStream = new TarArchiveOutputStream(byteArrayOutputStream);
+        try (TarArchiveOutputStream tarArchiveOutputStream = new TarArchiveOutputStream(byteArrayOutputStream)) {
+            // This needs to be done in case the files have a long name
+            tarArchiveOutputStream.setLongFileMode(TarArchiveOutputStream.LONGFILE_POSIX);
 
-        // This needs to be done in case the files have a long name
-        tarArchiveOutputStream.setLongFileMode(TarArchiveOutputStream.LONGFILE_POSIX);
-
-        try {
             addFileToTar(tarArchiveOutputStream, sourcePath, "");
+            tarArchiveOutputStream.finish();
         }
         catch (IOException e) {
+            // Only log to application logs here - user-facing messages are logged by the caller after all retries fail
             String errorMessage = "Could not create tar archive for source path: " + sourcePath.toAbsolutePath() + " (Exception: " + e.getClass().getSimpleName() + " - "
                     + e.getMessage() + ")";
-            log.error(errorMessage, e);
-            if (buildJobId != null) {
-                buildLogsMap.appendBuildLogEntry(buildJobId,
-                        "Failed to create tar archive for repository. This is an infrastructure issue, not a problem with your code. Please try rerunning your build.");
-            }
+            log.warn(errorMessage, e);
             throw new LocalCIException(errorMessage, e);
         }
         return byteArrayOutputStream;
