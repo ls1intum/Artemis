@@ -23,6 +23,7 @@ import de.tum.cit.aet.artemis.core.config.validator.Base64Url;
 import de.tum.cit.aet.artemis.core.domain.PasskeyCredential;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.domain.converter.BytesConverter;
+import de.tum.cit.aet.artemis.core.dto.AdminPasskeyDTO;
 import de.tum.cit.aet.artemis.core.dto.PasskeyDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.PasskeyCredentialsRepository;
@@ -85,14 +86,14 @@ public class PasskeyResource {
     /**
      * GET /passkey/admin : retrieve all passkeys for admin users for super admin management
      *
-     * @return list of {@link de.tum.cit.aet.artemis.core.dto.AdminPasskeyDTO} that contains all passkeys of admin users with user information
+     * @return list of {@link AdminPasskeyDTO} that contains all passkeys of admin users with user information
      */
     @GetMapping("admin")
     @EnforceSuperAdmin
-    public ResponseEntity<List<de.tum.cit.aet.artemis.core.dto.AdminPasskeyDTO>> getAllPasskeysForAdmin() {
+    public ResponseEntity<List<AdminPasskeyDTO>> getAllPasskeysForAdmin() {
         log.debug("Retrieving all passkeys for admin users for super admin management");
 
-        List<de.tum.cit.aet.artemis.core.dto.AdminPasskeyDTO> passkeys = passkeyCredentialsRepository.findPasskeysForAdminUsers();
+        List<AdminPasskeyDTO> passkeys = passkeyCredentialsRepository.findPasskeysForAdminUsers();
 
         return ResponseEntity.ok(passkeys);
     }
